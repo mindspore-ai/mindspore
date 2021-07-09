@@ -62,8 +62,10 @@ constexpr auto kMaskedSelect = "MaskedSelect";
 constexpr auto kMaskedSelectGrad = "MaskedSelectGrad";
 constexpr auto kDynamicStitch = "DynamicStitch";
 constexpr auto kSearchSorted = "SearchSorted";
-const std::set<std::string> kCustAiCpuKernelOps{kIdentity, kMaskedSelect, kMaskedSelectGrad, kDynamicStitch,
-                                                kSearchSorted};
+constexpr auto kResizeBilinear = "ResizeBilinear";
+constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
+const std::set<std::string> kCustAiCpuKernelOps{kIdentity,     kMaskedSelect,   kMaskedSelectGrad,  kDynamicStitch,
+                                                kSearchSorted, kResizeBilinear, kResizeBilinearGrad};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
                                             kPadAndShift, kDropout3D,      kDropout2D};
 
