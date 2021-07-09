@@ -282,8 +282,8 @@ class Bernoulli(Distribution):
 
         Args:
             dist (str): The type of the distributions. Should be "Bernoulli" in this case.
-            probs1_b (Union[Tensor, numbers.Number]): `probs1` of distribution b.
-            probs1_a (Union[Tensor, numbers.Number]): `probs1` of distribution a. Default: self.probs.
+            probs1_b (Tensor, Number): `probs1` of distribution b.
+            probs1_a (Tensor, Number): `probs1` of distribution a. Default: self.probs.
 
         .. math::
             KL(a||b) = probs1_a * \log(\frac{probs1_a}{probs1_b}) +

@@ -29,6 +29,7 @@ class Invert(Bijector):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.bijector as msb
@@ -44,6 +45,8 @@ class Invert(Bijector):
         >>> forward = Net()
         >>> x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
         >>> ans = forward(Tensor(x, dtype=mindspore.float32))
+        >>> print(ans.shape)
+        (4,)
     """
 
     def __init__(self,

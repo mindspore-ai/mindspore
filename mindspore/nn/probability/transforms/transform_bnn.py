@@ -161,7 +161,9 @@ class TransformToBNN:
             ``Ascend`` ``GPU``
 
         Examples:
-            >>> net = Net()
+            >>> import mindspore.nn as nn
+            >>> from mindspore.nn.probability import bnn_layers
+            >>> net = LeNet()
             >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = nn.AdamWeightDecay(params=net.trainable_params(), learning_rate=0.0001)
             >>> net_with_loss = nn.WithLossCell(net, criterion)
