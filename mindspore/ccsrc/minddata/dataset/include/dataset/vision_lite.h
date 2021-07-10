@@ -323,12 +323,13 @@ class Rotate final : public TensorTransform {
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
   ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] expand A boolean representing whether the image is expanded after rotation.
-  /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
+  /// \param[in] center A float vector of size 2 or empty, representing the x and y center of rotation
+  ///     or the center of the image.
   /// \param[in] fill_value A vector representing the value to fill the area outside the transform
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
   Rotate(float degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
-         std::vector<float> center = {-1, -1}, std::vector<uint8_t> fill_value = {0, 0, 0});
+         std::vector<float> center = {}, std::vector<uint8_t> fill_value = {0, 0, 0});
 
   /// \brief Destructor.
   ~Rotate() = default;

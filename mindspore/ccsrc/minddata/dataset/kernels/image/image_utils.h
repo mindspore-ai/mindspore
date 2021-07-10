@@ -183,13 +183,12 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
 /// \brief Returns rotated image
 /// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-/// \param fx: rotation center x coordinate
-/// \param fy: rotation center y coordinate
+/// \param center: rotation center
 /// \param degree: degree to rotate
 /// \param expand: if reshape is necessary
 /// \param output: rotated image of same input type.
-Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float fx, float fy, float degree,
-              InterpolationMode interpolation = InterpolationMode::kNearestNeighbour, bool expand = false,
+Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> center,
+              float degree, InterpolationMode interpolation = InterpolationMode::kNearestNeighbour, bool expand = false,
               uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
 /// \brief Returns Normalized image

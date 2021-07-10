@@ -20,8 +20,9 @@ import numpy as np
 from mindspore._c_dataengine import TensorOp, TensorOperation
 
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
-    check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
-    check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff, check_value_ratio, check_odd
+    check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, parse_user_args, type_check, \
+    type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff, check_value_ratio, \
+    check_odd
 from .utils import Inter, Border, ImageBatchFormat, SliceMode
 
 
@@ -427,7 +428,7 @@ def check_resample_expand_center_fill_value_params(resample, expand, center, fil
         check_2tuple(center, "center")
         for value in center:
             type_check(value, (int, float), "center")
-            check_value(value, [-1, INT32_MAX], "center")
+            check_value(value, [INT32_MIN, INT32_MAX], "center")
     check_fill_value(fill_value)
 
 
@@ -527,6 +528,7 @@ def check_slice_patches(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
 
 def check_random_perspective(method):
     """Wrapper method to check the parameters of random perspective."""
