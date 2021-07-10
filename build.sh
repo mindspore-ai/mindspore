@@ -588,6 +588,7 @@ build_lite()
         COMPILE_MINDDATA_LITE="off"
         CMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
         CMAKE_TOOLCHAIN_NAME=${TOOLCHAIN_NAME}
+        CMAKE_BUILD_TYPE=${LITE_BUILD_TYPE}
       else
         CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
         ANDROID_NATIVE_API_LEVEL="19"
