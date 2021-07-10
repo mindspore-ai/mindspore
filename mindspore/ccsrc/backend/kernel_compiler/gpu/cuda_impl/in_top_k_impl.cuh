@@ -20,7 +20,7 @@
 #include <cuda_runtime.h>
 
 template <typename T>
-void CalInTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output, size_t class_id_count,
-               int64_t k, cudaStream_t cuda_stream);
+void CalInTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output, size_t batch_size,
+               size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_IN_TOP_K_CUH_

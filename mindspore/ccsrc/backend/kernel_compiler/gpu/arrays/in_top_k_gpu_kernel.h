@@ -22,6 +22,7 @@
 
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/cast_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/in_top_k_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/topk_impl.cuh"
 
@@ -47,12 +48,29 @@ class InTopKGpuKernel : public GpuKernel {
     T *top_k_output_device = GetDeviceAddress<T>(workspace, 0);
     int32_t *top_k_indices_device = GetDeviceAddress<int32_t>(workspace, 1);
 
-    // topk sorts the input along the last dimension
-    FastTopK(outer_size_, inner_size_, predictions_device, static_cast<int32_t>(k_), top_k_output_device,
-             top_k_indices_device, top_k_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (std::is_same<T, half>::value) {
+      // remove later! urgent fix for bug: topk has incorrect output for float16
+      float top_k_init = std::numeric_limits<float>::lowest();
 
-    CalInTopK(predictions_device, targets_device, output_device, top_k_output_device, input_shape_[0], k_,
-              reinterpret_cast<cudaStream_t>(stream_ptr));
+      // cast to float32
+      float *casted_float32_input = GetDeviceAddress<float>(workspace, 2);
+      float *top_k_output_device_float32 = GetDeviceAddress<float>(workspace, 3);
+
+      Cast(input_size_, predictions_device, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+      FastTopK(outer_size_, inner_size_, casted_float32_input, static_cast<int32_t>(k_), top_k_output_device_float32,
+               top_k_indices_device, top_k_init, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+      CalInTopK(casted_float32_input, targets_device, output_device, top_k_output_device_float32, input_shape_[0],
+                input_shape_[1], k_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      // topk sorts the input along the last dimension
+      FastTopK(outer_size_, inner_size_, predictions_device, static_cast<int32_t>(k_), top_k_output_device,
+               top_k_indices_device, top_k_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+      CalInTopK(predictions_device, targets_device, output_device, top_k_output_device, input_shape_[0],
+                input_shape_[1], k_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
 
     return true;
   }
@@ -114,6 +132,12 @@ class InTopKGpuKernel : public GpuKernel {
     output_size_list_.push_back(input_shape_[0] * sizeof(bool));
     workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(T));
     workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(int32_t));
+
+    // remove later! urgent fix for bug: topk has incorrect output for float16
+    if (std::is_same<T, half>::value) {
+      workspace_size_list_.push_back(input_size_ * sizeof(float));
+      workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(float));
+    }
   }
 
  private:
