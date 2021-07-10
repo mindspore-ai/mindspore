@@ -27,6 +27,9 @@ class StandardNormal(PrimitiveWithInfer):
     Returns the tensor with the given shape, the random numbers in it drawn from normal distributions
     whose mean is 0 and standard deviation is 1.
 
+    .. math::
+        f(x)=\frac{1}{\sqrt{2 \pi}} e^{\left(-\frac{x^{2}}{2}\right)}
+
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
         seed2 (int): Random seed2, must be non-negative. Default: 0.
@@ -270,6 +273,9 @@ class UniformInt(PrimitiveWithInfer):
 
     .. math::
         \text{P}(i|a,b) = \frac{1}{b-a+1},
+
+    where the :math:`a` indicates the min distribution parameter,
+    the :math:`b` indicates the max distribution parameter.
 
     Note:
         The number in tensor minval must be strictly less than maxval at any position after broadcasting.

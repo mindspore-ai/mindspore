@@ -161,7 +161,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         - **groundtruth_box** (Tensor) - Ground truth boxes. Which has the same shape with anchor_box.
 
     Outputs:
-        Tensor, encoded bounding boxes.
+        Tensor, encoded bounding boxes. It has the same data type and shape as input `anchor_box`.
 
     Raises:
         TypeError: If `means` or `stds` is not a tuple.
@@ -222,7 +222,7 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         - **deltas** (Tensor) - Delta of boxes. Which has the same shape with `anchor_box`.
 
     Outputs:
-        Tensor, decoded boxes.
+        Tensor, decoded boxes. It has the same data type and shape as `anchor_box`.
 
     Raises:
         TypeError: If `means`, `stds` or `max_shape` is not a tuple.
