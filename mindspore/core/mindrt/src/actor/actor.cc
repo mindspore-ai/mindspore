@@ -20,6 +20,7 @@
 #include "actor/iomgr.h"
 
 namespace mindspore {
+ActorBase::ActorBase() : actorPolicy(nullptr), id("", ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
 
 ActorBase::ActorBase(const std::string &name)
     : actorPolicy(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}

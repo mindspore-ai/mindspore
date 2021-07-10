@@ -18,17 +18,27 @@
 #define MINDSPORE_CORE_MINDRT_RUNTIME_HQUEUE_H_
 #include <atomic>
 #include <vector>
+#include "actor/log.h"
 
 namespace mindspore {
 // implement a lock-free queue
 // refer to https://www.cs.rochester.edu/u/scott/papers/1996_PODC_queues.pdf
 
 template <typename T>
+class HQueue;
+
+struct Pointer {
+  int32_t index = -1;
+  uint32_t version = 0;
+  bool operator==(const Pointer &that) { return (index == that.index && version == that.version); }
+  bool operator!=(const Pointer &that) { return !(*this == that); }
+};
+
+template <typename T>
 struct HQNode {
-  HQNode() {}
-  HQNode(const T &t_, HQNode<T> *n) : t(t_), next(n) {}
-  T t;
-  std::atomic<HQNode<T> *> next = nullptr;
+  std::atomic<Pointer> next;
+  T *value = nullptr;
+  std::atomic_bool free = {true};
 };
 
 template <typename T>
@@ -37,94 +47,123 @@ class HQueue {
   HQueue(const HQueue &) = delete;
   HQueue &operator=(const HQueue &) = delete;
   HQueue() {}
-  virtual ~HQueue() {
-    // delete dummy head
-    HQNode<T> *node = this->qhead;
-    delete node;
-  }
+  virtual ~HQueue() {}
 
-  bool Init() {
-    HQNode<T> *dummyHead = new HQNode<T>();
-    if (!dummyHead) {
-      return false;
-    }
-    qhead = dummyHead;
-    qtail = dummyHead;
-    return true;
-  }
-
-  bool Enqueue(const T &data) {
-    HQNode<T> *node = new HQNode<T>(data, nullptr);
-    if (!node) {
-      return false;
+  void Init(int32_t sz) {
+    for (int32_t i = 0; i < sz; i++) {
+      auto node = new HQNode<T>();
+      node->value = nullptr;
+      node->free = true;
+      node->next = {-1, 0};
+      nodes.template emplace_back(node);
     }
 
-    HQNode<T> *tail = nullptr;
-    HQNode<T> *next = nullptr;
+    // init first node as dummy head
+    qhead = {0, 0};
+    qtail = {0, 0};
+    nodes[0]->free = false;
+    return;
+  }
+
+  void Clean() {
+    for (auto node : nodes) {
+      delete node;
+    }
+    nodes.clear();
+  }
+
+  bool Enqueue(T *t) {
+    HQNode<T> *node = nullptr;
+    int32_t nodeIdx;
+    for (nodeIdx = 0; nodeIdx < static_cast<int32_t>(nodes.size()); nodeIdx++) {
+      bool expected = true;
+      if (nodes[nodeIdx]->free.compare_exchange_strong(expected, false)) {
+        node = nodes[nodeIdx];
+        break;
+      }
+    }
+    if (node == nullptr) {
+      return false;
+    }
+    node->value = t;
+    node->next = {-1, 0};
+
     while (true) {
-      tail = this->qtail;
-      next = tail->next;
+      Pointer tail = qtail;
+      if (tail.index == -1) {
+        continue;
+      }
+      Pointer next = nodes[tail.index]->next;
 
       if (tail != this->qtail) {
         continue;
       }
 
-      if (next == nullptr) {
-        if (tail->next.compare_exchange_strong(next, node)) {
-          break;
-        }
-      } else {
-        this->qtail.compare_exchange_strong(tail, next);
+      if (next.index != -1) {
+        this->qtail.compare_exchange_strong(tail, {next.index, tail.version + 1});
+        continue;
+      }
+
+      if (nodes[tail.index]->next.compare_exchange_strong(next, {nodeIdx, next.version + 1})) {
+        this->qtail.compare_exchange_strong(tail, {nodeIdx, tail.version + 1});
+        break;
       }
     }
-    this->qtail.compare_exchange_weak(tail, node);
+
     return true;
   }
 
-  bool Dequeue(T *data) {
-    HQNode<T> *head = nullptr;
-    HQNode<T> *tail = nullptr;
-    HQNode<T> *next = nullptr;
+  T *Dequeue() {
     while (true) {
-      head = this->qhead;
-      tail = this->qtail;
-      next = head->next;
+      T *ret = nullptr;
+      Pointer head = qhead;
+      Pointer tail = qtail;
+      if (head.index == -1) {
+        continue;
+      }
+      Pointer next = nodes[head.index]->next;
+
       if (head != this->qhead) {
         continue;
       }
 
-      if (head == tail) {
-        if (next == nullptr) {
-          return false;
+      if (head.index == tail.index) {
+        if (next.index == -1) {
+          return nullptr;
         }
-        this->qtail.compare_exchange_strong(tail, next);
+        this->qtail.compare_exchange_strong(tail, {next.index, tail.version + 1});
       } else {
-        *data = next->t;
-        if (this->qhead.compare_exchange_strong(head, next)) {
-          break;
+        if (next.index == -1) {
+          continue;
+        }
+        ret = nodes[next.index]->value;
+        if (this->qhead.compare_exchange_strong(head, {next.index, head.version + 1})) {
+          // free head
+          nodes[head.index]->free = true;
+          return ret;
         }
       }
     }
-
-    delete head;
-    return true;
   }
 
   bool Empty() {
-    HQNode<T> *head = this->qhead;
-    HQNode<T> *tail = this->qtail;
-    HQNode<T> *next = head->next;
-
-    if (head == this->qhead && head == tail && next == nullptr) {
+    Pointer head = qhead;
+    Pointer tail = qtail;
+    if (head.index < 0) {
       return false;
     }
+    Pointer next = nodes[head.index]->next;
 
-    return true;
+    if (head == this->qhead && head.index == tail.index && next.index == -1) {
+      return true;
+    }
+
+    return false;
   }
 
- private:
-  std::atomic<HQNode<T> *> qhead;
-  std::atomic<HQNode<T> *> qtail;
+  std::atomic<Pointer> qhead;
+  std::atomic<Pointer> qtail;
+  std::vector<HQNode<T> *> nodes;
 };
 
 }  // namespace mindspore

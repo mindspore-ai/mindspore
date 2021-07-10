@@ -27,6 +27,7 @@
 #endif
 #include "actor/actor.h"
 #include "thread/actor_threadpool.h"
+#include "thread/hqueue.h"
 
 namespace mindspore {
 
@@ -64,13 +65,13 @@ class ActorMgr {
   inline const std::string &GetDelegate() const { return delegate; }
 
   inline void SetDelegate(const std::string &d) { delegate = d; }
-  inline void SetActorReady(const std::shared_ptr<ActorBase> &actor) const {
+  inline void SetActorReady(std::shared_ptr<ActorBase> &actor) const {
     auto pool = actor->pool_;
     if (pool == nullptr) {
-      MS_LOG(ERROR) << "ThreadPOol is nullptr, actor: " << actor->GetAID().Name();
+      MS_LOG(ERROR) << "ThreadPool is nullptr, actor: " << actor->GetAID().Name();
       return;
     }
-    pool->PushActorToQueue(actor);
+    pool->PushActorToQueue(actor.get());
   }
   void SetActorStatus(const AID &pid, bool start);
 
