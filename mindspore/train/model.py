@@ -889,7 +889,7 @@ class Model:
             >>> loss_scale_manager = FixedLossScaleManager()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
-            >>> model.infer_train_layout(dataset)
+            >>> layout_dict = model.infer_train_layout(dataset)
         """
         self._infer_train_check(train_dataset, dataset_sink_mode, sink_size)
 
