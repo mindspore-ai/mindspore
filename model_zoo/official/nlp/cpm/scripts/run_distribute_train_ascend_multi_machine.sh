@@ -59,7 +59,7 @@ for((i=0;i<=3;i++));
 do
     rm -rf ${current_exec_path}/device$i
     mkdir ${current_exec_path}/device$i
-    cd ${current_exec_path}/device$i
+    cd ${current_exec_path}/device$i || exit
     cp ../../*.py ./
     cp -r ../../src ./
     cp -r ../*.sh ./
@@ -67,16 +67,16 @@ do
     export DEVICE_ID=$i
     echo "start training for device $DEVICE_ID, rank $RANK_ID"
     python ../../train.py --dataset $DATASET --pretrain_ckpt_path $PRECKPT --multi_machine True > log_cpm.log 2>&1 &
-    cd ${current_exec_path}
+    cd ${current_exec_path} || exit
 done
-cd ${current_exec_path}
+cd ${current_exec_path} || exit
 
 
 for((i=4;i<=7;i++));
 do
     rm -rf ${current_exec_path}/device$i
     mkdir ${current_exec_path}/device$i
-    cd ${current_exec_path}/device$i
+    cd ${current_exec_path}/device$i || exit
     cp ../../*.py ./
     cp -r ../../src ./
     cp -r ../*.sh ./
@@ -84,7 +84,6 @@ do
     export DEVICE_ID=$i
     echo "start training for device $DEVICE_ID, rank $RANK_ID"
     python ../../train.py --dataset $DATASET --pretrain_ckpt_path $PRECKPT --multi_machine True > log_cpm.log 2>&1 &
-    cd ${current_exec_path}
+    cd ${current_exec_path} || exit
 done
-cd ${current_exec_path}
-
+cd ${current_exec_path} || exit

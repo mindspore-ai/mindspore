@@ -60,7 +60,7 @@ for((ckptepoch=4;ckptepoch<=10;ckptepoch++));
 do
   rm -rf ${current_exec_path}/eval_${ckptepoch}
   mkdir ${current_exec_path}/eval_${ckptepoch}
-  cd ${current_exec_path}/eval_${ckptepoch}
+  cd ${current_exec_path}/eval_${ckptepoch} || exit
   cp -r ../../*.py ./
   cp -r ../../src ./
   cp -r ../../scripts/*.sh ./
@@ -75,8 +75,8 @@ do
        --ckpt_epoch $ckptepoch --result_path $result_path \
        --distribute False --has_train_strategy True> log_cpm.log 2>&1
 
-  cd ${current_exec_path}
+  cd ${current_exec_path} || exit
 done
 
-cd ${current_exec_path}
+cd ${current_exec_path} || exit
 python ../sort.py --result_path=$result_path > log_result.log 2>&1
