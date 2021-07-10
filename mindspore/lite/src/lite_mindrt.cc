@@ -381,8 +381,7 @@ int LiteOpActor::SetInputData() {
 
     if (src_tensor->data_type() != dst_tensor->data_type()) {
       CastInputData(dst_tensor, src_tensor);
-    } else if (src_tensor->allocator() == nullptr && !(src_tensor->IsConst()) && !(src_tensor->IsGraphInput()) &&
-               src_tensor->own_data()) {
+    } else if (src_tensor->allocator() == nullptr && !(src_tensor->IsConst()) && !(src_tensor->IsGraphInput())) {
       // delegate graph kernel output tensor
       CopyInputData(dst_tensor, src_tensor);
     } else {

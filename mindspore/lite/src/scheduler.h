@@ -91,10 +91,14 @@ class Scheduler {
                                                const std::vector<lite::Tensor *> *in_tensors,
                                                const std::vector<lite::Tensor *> *out_tensors,
                                                kernel::SubGraphType type);
-  bool MergeOpIsReady(const kernel::LiteKernel *kernel, std::map<const kernel::LiteKernel *, bool> is_kernel_finish);
   bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const kernel::LiteKernel &kernel);
   std::vector<kernel::LiteKernel *> FindAllSubGraphKernels(
     std::vector<kernel::LiteKernel *> head_kernels, std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
+  std::vector<kernel::LiteKernel *> ScheduleMainSubGraphToKernels();
+  kernel::LiteKernel *SchedulePartialToSubGraphKernel(const int &subgraph_index);
+  kernel::SubGraphType PartialSubGraphType(const std::vector<kernel::LiteKernel *> &kernels);
+  bool IsControlFlowParttern(const std::vector<kernel::LiteKernel *> &kernels);
+  int ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels);
 
   // other methods
   static TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
@@ -106,6 +110,7 @@ class Scheduler {
   void SubGraphMarkScheduled(const int &index);
   void SetSubgraphForPartialNode();
   bool IsControlFlowPattern(const lite::Model::Node &partial_node);
+  int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
 
  protected:
   const InnerContext *context_ = nullptr;
