@@ -170,6 +170,8 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
 
 CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input, size_t index);
 
+STATUS GetTensorInfoFromAbstract(tensor::TensorPtr *tensor_info, const CNodePtr &cnode, size_t index);
+
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
