@@ -25,6 +25,7 @@
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
+#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,7 +37,8 @@ void ConvBnReduceFusionPass::MatchConvBnreduce(const CNodePtr &cnode, const sess
   MS_EXCEPTION_IF_NULL(manager);
   auto conv = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(conv);
-  if (conv->isa<CNode>() && AnfAlgo::GetCNodeName(conv) == prim::kPrimConv2D->name()) {
+  if (conv->isa<CNode>() && AnfAlgo::GetCNodeName(conv) == prim::kPrimConv2D->name() &&
+      GetNodeOutputTotalUsedNum(kernel_graph, conv) == kConvOutputUsedTotalNum) {
     std::unordered_set<AnfNodePtr> record{cnode, conv};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
