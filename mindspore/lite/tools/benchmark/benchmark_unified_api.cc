@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/benchmark/benchmark.h"
+#include "tools/benchmark/benchmark_unified_api.h"
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 #undef __STDC_FORMAT_MACROS
@@ -43,19 +43,22 @@
 namespace mindspore {
 namespace lite {
 
-int Benchmark::GenerateInputData() {
-  for (auto tensor : ms_inputs_) {
+int BenchmarkUnifiedApi::GenerateInputData() {
+  for (auto tensor : ms_inputs_for_api_) {
     MS_ASSERT(tensor != nullptr);
-    auto input_data = tensor->MutableData();
+    auto input_data = tensor.MutableData();
     if (input_data == nullptr) {
       MS_LOG(ERROR) << "MallocData for inTensor failed";
       return RET_ERROR;
     }
     int status;
-    if (tensor->data_type() == kObjectTypeString) {
-      status = StringsToMSTensor({"you're the best."}, tensor);
+    if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {
+      std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
+      MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
+      return RET_ERROR;
+      //      status = StringsToMSTensor({"you're the best."}, tensor);
     } else {
-      status = GenerateRandomData(tensor->Size(), input_data, static_cast<float>(tensor->data_type()));
+      status = GenerateRandomData(tensor.DataSize(), input_data, static_cast<int>(tensor.DataType()));
     }
     if (status != RET_OK) {
       std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
@@ -66,8 +69,8 @@ int Benchmark::GenerateInputData() {
   return RET_OK;
 }
 
-int Benchmark::ReadInputFile() {
-  if (ms_inputs_.empty()) {
+int BenchmarkUnifiedApi::ReadInputFile() {
+  if (ms_inputs_for_api_.empty()) {
     return RET_OK;
   }
 
@@ -76,7 +79,7 @@ int Benchmark::ReadInputFile() {
     return RET_ERROR;
   } else {
     for (size_t i = 0; i < flags_->input_data_list_.size(); i++) {
-      auto cur_tensor = ms_inputs_.at(i);
+      auto cur_tensor = ms_inputs_for_api_.at(i);
       MS_ASSERT(cur_tensor != nullptr);
       size_t size;
       char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
@@ -84,16 +87,13 @@ int Benchmark::ReadInputFile() {
         MS_LOG(ERROR) << "ReadFile return nullptr";
         return RET_ERROR;
       }
-      if (cur_tensor->data_type() == kObjectTypeString) {
-        std::string str(bin_buf, size);
-        auto ret = StringsToMSTensor({str}, cur_tensor);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "write strings to tensor failed";
-          delete[] bin_buf;
-          return RET_ERROR;
-        }
+      if (static_cast<int>(cur_tensor.DataType()) == kObjectTypeString) {
+        std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
+        MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
+        return RET_ERROR;
+
       } else {
-        auto tensor_data_size = cur_tensor->Size();
+        auto tensor_data_size = cur_tensor.DataSize();
         if (size != tensor_data_size) {
           std::cerr << "Input binary file size error, required: " << tensor_data_size << ", in fact: " << size
                     << std::endl;
@@ -101,7 +101,7 @@ int Benchmark::ReadInputFile() {
           delete[] bin_buf;
           return RET_ERROR;
         }
-        auto input_data = cur_tensor->MutableData();
+        auto input_data = cur_tensor.MutableData();
         if (input_data == nullptr) {
           MS_LOG(ERROR) << "input_data is nullptr.";
           return RET_ERROR;
@@ -114,15 +114,15 @@ int Benchmark::ReadInputFile() {
   return RET_OK;
 }
 
-int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
-                              const std::vector<size_t> &dims) {
+int BenchmarkUnifiedApi::ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
+                                        const std::vector<size_t> &dims) {
   std::string line;
   getline(in_file_stream, line);
   std::stringstream line_stream(line);
   if (this->benchmark_data_.find(tensor_name) != this->benchmark_data_.end()) {
     return RET_OK;
   }
-  tensor::MSTensor *tensor = GetTensorByNameOrShape(tensor_name, dims);
+  mindspore::MSTensor tensor = GetMSTensorByNameOrShape(tensor_name, dims);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
     return RET_ERROR;
@@ -130,7 +130,7 @@ int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &
   std::vector<float> data;
   std::vector<std::string> strings_data;
   size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
-  if (tensor->data_type() == kObjectTypeString) {
+  if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {
     strings_data.push_back(line);
     for (size_t i = 1; i < shape_size; i++) {
       getline(in_file_stream, line);
@@ -152,47 +152,48 @@ int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &
   return RET_OK;
 }
 
-void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
-  auto &cpu_device_ctx = context->device_list_[0];
-  if (flags_->cpu_bind_mode_ == MID_CPU || flags_->cpu_bind_mode_ == HIGHER_CPU) {
-    cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = CpuBindMode(flags_->cpu_bind_mode_);
-  } else {
-    cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
-  }
-  cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = flags_->enable_fp16_;
+void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
+  context->SetThreadNum(flags_->num_threads_);
+  context->SetEnableParallel(flags_->enable_parallel_);
+  context->SetThreadAffinity(flags_->cpu_bind_mode_);
+  auto &device_list = context->MutableDeviceInfo();
+
+  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
+  device_info->SetEnableFP16(flags_->enable_fp16_);
+  device_list.push_back(device_info);
 
   if (flags_->device_ == "GPU") {
-    DeviceContext gpu_device_ctx{DT_GPU, {false}};
-    gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = flags_->enable_fp16_;
-    context->device_list_.push_back(gpu_device_ctx);
+    std::shared_ptr<MaliGPUDeviceInfo> gpu_device_info = std::make_shared<MaliGPUDeviceInfo>();
+    gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
+    device_list.push_back(gpu_device_info);
   }
 
   if (flags_->device_ == "NPU") {
-    DeviceContext npu_device_ctx{DT_NPU};
-    npu_device_ctx.device_info_.npu_device_info_.frequency_ = 3;
-    context->device_list_.push_back(npu_device_ctx);
+    std::shared_ptr<KirinNPUDeviceInfo> npu_device_info = std::make_shared<KirinNPUDeviceInfo>();
+    npu_device_info->SetFrequency(3);
+    device_list.push_back(npu_device_info);
   }
-
-  context->thread_num_ = flags_->num_threads_;
-  context->enable_parallel_ = flags_->enable_parallel_;
 }
 
-int Benchmark::CompareOutput() {
+int BenchmarkUnifiedApi::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
   int total_size = 0;
   for (const auto &calib_tensor : benchmark_data_) {
     std::string node_or_tensor_name = calib_tensor.first;
-    tensor::MSTensor *tensor = GetTensorByNameOrShape(node_or_tensor_name, calib_tensor.second->shape);
+    mindspore::MSTensor tensor = GetMSTensorByNameOrShape(node_or_tensor_name, calib_tensor.second->shape);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Get tensor failed, tensor name: " << node_or_tensor_name;
       return RET_ERROR;
     }
     int ret;
-    if (tensor->data_type() == kObjectTypeString) {
-      ret = CompareStringData(node_or_tensor_name, tensor);
+    if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {
+      std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
+      MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
+      return RET_ERROR;
+      // ret = CompareStringData(node_or_tensor_name, tensor);
     } else {
-      ret = CompareDataGetTotalBiasAndSize(node_or_tensor_name, tensor, &total_bias, &total_size);
+      ret = CompareDataGetTotalBiasAndSize(node_or_tensor_name, &tensor, &total_bias, &total_size);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Error in CompareData";
@@ -219,34 +220,29 @@ int Benchmark::CompareOutput() {
   return RET_OK;
 }
 
-tensor::MSTensor *Benchmark::GetTensorByNodeShape(const std::vector<size_t> &node_shape) {
-  std::vector<tensor::MSTensor *> match_tensors;
-  std::vector<int> shape_vector;
-  (void)std::transform(node_shape.begin(), node_shape.end(), std::back_inserter(shape_vector),
-                       [](const size_t &value) { return static_cast<int>(value); });
-  auto tensors = session_->GetOutputs();
+mindspore::MSTensor BenchmarkUnifiedApi::GetMSTensorByNodeShape(const std::vector<size_t> &node_shape) {
+  std::vector<mindspore::MSTensor> match_tensors;
+  std::vector<int64_t> shape_vector = ConverterToInt64Vector<size_t>(node_shape);
+  auto tensors = ms_model_.GetOutputs();
   for (auto &out_tensor_pair : tensors) {
-    if (out_tensor_pair.second->shape() == shape_vector) {
-      match_tensors.emplace_back(out_tensor_pair.second);
+    if (out_tensor_pair.Shape() == shape_vector) {
+      match_tensors.emplace_back(out_tensor_pair);
     }
   }
-  if (match_tensors.empty() || match_tensors.size() != 1) {
-    MS_LOG(ERROR) << "get tensor by node shape failed";
-    return nullptr;
-  }
+
   return match_tensors.front();
 }
 
-tensor::MSTensor *Benchmark::GetTensorByNameOrShape(const std::string &node_or_tensor_name,
-                                                    const std::vector<size_t> &dims) {
-  tensor::MSTensor *tensor = nullptr;
-  auto tensors = session_->GetOutputsByNodeName(node_or_tensor_name);
+mindspore::MSTensor BenchmarkUnifiedApi::GetMSTensorByNameOrShape(const std::string &node_or_tensor_name,
+                                                                  const std::vector<size_t> &dims) {
+  mindspore::MSTensor tensor;
+  auto tensors = ms_model_.GetOutputsByNodeName(node_or_tensor_name);
   if (tensors.empty() || tensors.size() != 1) {
     MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
                  << " or node has more than one output tensor, switch to GetOutputByTensorName";
-    tensor = session_->GetOutputByTensorName(node_or_tensor_name);
+    tensor = ms_model_.GetOutputByTensorName(node_or_tensor_name);
     if (tensor == nullptr) {
-      return GetTensorByNodeShape(dims);
+      return GetMSTensorByNodeShape(dims);
     }
   } else {
     tensor = tensors.front();
@@ -254,42 +250,42 @@ tensor::MSTensor *Benchmark::GetTensorByNameOrShape(const std::string &node_or_t
   return tensor;
 }
 
-int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
-                                              int *total_size) {
+int BenchmarkUnifiedApi::CompareDataGetTotalBiasAndSize(const std::string &name, mindspore::MSTensor *tensor,
+                                                        float *total_bias, int *total_size) {
   float bias = 0;
   auto mutableData = tensor->MutableData();
   if (mutableData == nullptr) {
     MS_LOG(ERROR) << "mutableData is nullptr.";
     return RET_ERROR;
   }
-  switch (tensor->data_type()) {
+  switch (static_cast<int>(tensor->DataType())) {
     case TypeId::kNumberTypeFloat:
     case TypeId::kNumberTypeFloat32: {
-      bias = CompareData<float>(name, tensor->shape(), mutableData);
+      bias = CompareData<float>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt8: {
-      bias = CompareData<int8_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int8_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeUInt8: {
-      bias = CompareData<uint8_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<uint8_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt32: {
-      bias = CompareData<int32_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int32_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt16: {
-      bias = CompareData<int16_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int16_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeBool: {
-      bias = CompareData<bool>(name, tensor->shape(), mutableData);
+      bias = CompareData<bool>(name, tensor->Shape(), mutableData);
       break;
     }
     default:
-      MS_LOG(ERROR) << "Datatype " << tensor->data_type() << " is not supported.";
+      MS_LOG(ERROR) << "Datatype " << static_cast<int>(tensor->DataType()) << " is not supported.";
       return RET_ERROR;
   }
   if (bias < 0) {
@@ -301,15 +297,17 @@ int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::M
   return RET_OK;
 }
 
-int Benchmark::MarkPerformance() {
+int BenchmarkUnifiedApi::MarkPerformance() {
   MS_LOG(INFO) << "Running warm up loops...";
   std::cout << "Running warm up loops..." << std::endl;
+  std::vector<MSTensor> outputs;
+
   for (int i = 0; i < flags_->warm_up_loop_count_; i++) {
-    auto status = session_->RunGraph();
-    if (status != 0) {
-      MS_LOG(ERROR) << "Inference error " << status;
-      std::cerr << "Inference error " << status << std::endl;
-      return status;
+    auto status = ms_model_.Predict(ms_inputs_for_api_, &outputs);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "Inference error ";
+      std::cerr << "Inference error " << std::endl;
+      return RET_ERROR;
     }
   }
 
@@ -320,17 +318,16 @@ int Benchmark::MarkPerformance() {
   uint64_t time_avg = 0;
 
   for (int i = 0; i < flags_->loop_count_; i++) {
-    auto inputs = session_->GetInputs();
+    auto inputs = ms_model_.GetInputs();
     for (auto tensor : inputs) {
-      tensor->MutableData();  // prepare data
+      tensor.MutableData();  // prepare data
     }
-    session_->BindThread(true);
     auto start = GetTimeUs();
-    auto status = session_->RunGraph(before_call_back_, after_call_back_);
-    if (status != 0) {
-      MS_LOG(ERROR) << "Inference error " << status;
-      std::cerr << "Inference error " << status;
-      return status;
+    auto status = ms_model_.Predict(ms_inputs_for_api_, &outputs, ms_before_call_back_, ms_after_call_back_);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "Inference error ";
+      std::cerr << "Inference error ";
+      return RET_ERROR;
     }
 
     auto end = GetTimeUs();
@@ -338,7 +335,6 @@ int Benchmark::MarkPerformance() {
     time_min = std::min(time_min, time);
     time_max = std::max(time_max, time);
     time_avg += time;
-    session_->BindThread(false);
   }
 
   if (flags_->time_profiling_) {
@@ -381,7 +377,7 @@ int Benchmark::MarkPerformance() {
   return RET_OK;
 }
 
-int Benchmark::MarkAccuracy() {
+int BenchmarkUnifiedApi::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   std::cout << "MarkAccuracy" << std::endl;
 
@@ -391,11 +387,12 @@ int Benchmark::MarkAccuracy() {
     std::cerr << "PrintInputData error " << status << std::endl;
     return status;
   }
-  status = session_->RunGraph(before_call_back_, after_call_back_);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Inference error " << status;
-    std::cerr << "Inference error " << status << std::endl;
-    return status;
+  std::vector<MSTensor> outputs;
+  auto ret = ms_model_.Predict(ms_inputs_for_api_, &outputs, ms_before_call_back_, ms_after_call_back_);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Inference error ";
+    std::cerr << "Inference error " << std::endl;
+    return RET_ERROR;
   }
   status = ReadCalibData();
   if (status != RET_OK) {
@@ -412,23 +409,20 @@ int Benchmark::MarkAccuracy() {
   return RET_OK;
 }
 
-int Benchmark::PrintInputData() {
-  for (size_t i = 0; i < ms_inputs_.size(); i++) {
-    auto input = ms_inputs_[i];
+int BenchmarkUnifiedApi::PrintInputData() {
+  for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
+    auto input = ms_inputs_for_api_[i];
     MS_ASSERT(input != nullptr);
-    auto tensor_data_type = input->data_type();
+    auto tensor_data_type = static_cast<int>(input.DataType());
 
     std::cout << "InData" << i << ": ";
     if (tensor_data_type == TypeId::kObjectTypeString) {
-      std::vector<std::string> output_strings = MSTensorToStrings(input);
-      size_t print_num = std::min(output_strings.size(), static_cast<size_t>(20));
-      for (size_t j = 0; j < print_num; j++) {
-        std::cout << output_strings[j] << std::endl;
-      }
-      continue;
+      std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
+      MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
+      return RET_ERROR;
     }
-    size_t print_num = std::min(input->ElementsNum(), 20);
-    const void *in_data = input->MutableData();
+    size_t print_num = std::min(static_cast<int>(input.ElementNum()), 20);
+    const void *in_data = input.MutableData();
     if (in_data == nullptr) {
       MS_LOG(ERROR) << "in_data is nullptr.";
       return RET_ERROR;
@@ -457,7 +451,7 @@ int Benchmark::PrintInputData() {
   return RET_OK;
 }
 
-int Benchmark::RunBenchmark() {
+int BenchmarkUnifiedApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
   // Load graph
   std::string model_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
@@ -471,47 +465,36 @@ int Benchmark::RunBenchmark() {
     std::cerr << "Read model file failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
-  auto model = std::shared_ptr<Model>(lite::Model::Import(graph_buf, size));
-  delete[](graph_buf);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model file failed while running " << model_name.c_str();
-    std::cerr << "Import model file failed while running " << model_name.c_str() << std::endl;
-    return RET_ERROR;
-  }
-  auto context = std::make_shared<Context>();
+
+  auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
     MS_LOG(ERROR) << "New context failed while running " << model_name.c_str();
     std::cerr << "New context failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
 
-  (void)InitContext(context);
-
-  session_ = session::LiteSession::CreateSession(context.get());
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
-    std::cout << "CreateSession failed while running ", model_name.c_str();
+  (void)InitMSContext(context);
+  auto ret = ms_model_.Build(graph_buf, size, kMindIR, context);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "ms_model_.Build failed while running ", model_name.c_str();
+    std::cout << "ms_model_.Build failed while running ", model_name.c_str();
     return RET_ERROR;
   }
-  auto ret = session_->CompileGraph(model.get());
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileGraph failed while running ", model_name.c_str();
-    std::cout << "CompileGraph failed while running ", model_name.c_str();
-    return ret;
-  }
+
   if (!flags_->resize_dims_.empty()) {
-    ret = session_->Resize(session_->GetInputs(), flags_->resize_dims_);
-    if (ret != RET_OK) {
+    std::vector<std::vector<int64_t>> resize_dims;
+    (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims),
+                         [&](auto &shapes) { return this->ConverterToInt64Vector<int>(shapes); });
+
+    ret = ms_model_.Resize(ms_model_.GetInputs(), resize_dims);
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "Input tensor resize failed.";
       std::cout << "Input tensor resize failed.";
-      return ret;
+      return RET_ERROR;
     }
   }
-  if (model != nullptr && !flags_->dump_tensor_data_) {
-    model->Free();
-  }
 
-  ms_inputs_ = session_->GetInputs();
+  ms_inputs_for_api_ = ms_model_.GetInputs();
   auto end_prepare_time = GetTimeUs();
   MS_LOG(INFO) << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
   std::cout << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms" << std::endl;
@@ -551,22 +534,22 @@ int Benchmark::RunBenchmark() {
   return RET_OK;
 }
 
-int Benchmark::InitTimeProfilingCallbackParameter() {
+int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const CallBackParam &call_param) {
+  ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
+                             const std::vector<mindspore::MSTensor> &before_outputs,
+                             const MSCallBackParam &call_param) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
     }
     if (before_outputs.empty()) {
       MS_LOG(INFO) << "The num of beforeOutputs is empty";
     }
-    if (op_times_by_type_.find(call_param.node_type) == op_times_by_type_.end()) {
-      op_times_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, 0.0f)));
+    if (op_times_by_type_.find(call_param.node_type_) == op_times_by_type_.end()) {
+      op_times_by_type_.insert(std::make_pair(call_param.node_type_, std::make_pair(0, 0.0f)));
     }
-    if (op_times_by_name_.find(call_param.node_name) == op_times_by_name_.end()) {
-      op_times_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, 0.0f)));
+    if (op_times_by_name_.find(call_param.node_name_) == op_times_by_name_.end()) {
+      op_times_by_name_.insert(std::make_pair(call_param.node_name_, std::make_pair(0, 0.0f)));
     }
 
     op_call_times_total_++;
@@ -575,9 +558,8 @@ int Benchmark::InitTimeProfilingCallbackParameter() {
   };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
+                            const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
     uint64_t opEnd = GetTimeUs();
 
     if (after_inputs.empty()) {
@@ -593,16 +575,16 @@ int Benchmark::InitTimeProfilingCallbackParameter() {
       cost = static_cast<float>(gpu_param.execute_time);
     }
     op_cost_total_ += cost;
-    op_times_by_type_[call_param.node_type].first++;
-    op_times_by_type_[call_param.node_type].second += cost;
-    op_times_by_name_[call_param.node_name].first++;
-    op_times_by_name_[call_param.node_name].second += cost;
+    op_times_by_type_[call_param.node_type_].first++;
+    op_times_by_type_[call_param.node_type_].second += cost;
+    op_times_by_name_[call_param.node_name_].first++;
+    op_times_by_name_[call_param.node_name_].second += cost;
     return true;
   };
   return RET_OK;
 }
 
-int Benchmark::InitPerfProfilingCallbackParameter() {
+int BenchmarkUnifiedApi::InitPerfProfilingCallbackParameter() {
 #ifndef ENABLE_ARM64
   MS_LOG(ERROR) << "Only support perf_profiling on arm64.";
   return RET_ERROR;
@@ -646,20 +628,20 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
   zero.value[0] = 0;
   zero.value[1] = 0;
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const CallBackParam &call_param) {
+  ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
+                             const std::vector<mindspore::MSTensor> &before_outputs,
+                             const MSCallBackParam &call_param) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
     }
     if (before_outputs.empty()) {
       MS_LOG(INFO) << "The num of beforeOutputs is empty";
     }
-    if (op_perf_by_type_.find(call_param.node_type) == op_perf_by_type_.end()) {
-      op_perf_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, zero)));
+    if (op_perf_by_type_.find(call_param.node_type_) == op_perf_by_type_.end()) {
+      op_perf_by_type_.insert(std::make_pair(call_param.node_type_, std::make_pair(0, zero)));
     }
-    if (op_perf_by_name_.find(call_param.node_name) == op_perf_by_name_.end()) {
-      op_perf_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, zero)));
+    if (op_perf_by_name_.find(call_param.node_name_) == op_perf_by_name_.end()) {
+      op_perf_by_name_.insert(std::make_pair(call_param.node_name_, std::make_pair(0, zero)));
     }
 
     op_call_times_total_++;
@@ -669,9 +651,8 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
   };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
+                            const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
     struct PerfResult res;
     ioctl(perf_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
     read(perf_fd, &res, sizeof(struct PerfResult));
@@ -686,12 +667,12 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
     float cost2 = static_cast<float>(res.values[1].value);
     op_cost_total_ += cost1;
     op_cost2_total_ += cost2;
-    op_perf_by_type_[call_param.node_type].first++;
-    op_perf_by_type_[call_param.node_type].second.value[0] += cost1;
-    op_perf_by_type_[call_param.node_type].second.value[1] += cost2;
-    op_perf_by_name_[call_param.node_name].first++;
-    op_perf_by_name_[call_param.node_name].second.value[0] += cost1;
-    op_perf_by_name_[call_param.node_name].second.value[1] += cost2;
+    op_perf_by_type_[call_param.node_type_].first++;
+    op_perf_by_type_[call_param.node_type_].second.value[0] += cost1;
+    op_perf_by_type_[call_param.node_type_].second.value[1] += cost2;
+    op_perf_by_name_[call_param.node_name_].first++;
+    op_perf_by_name_[call_param.node_name_].second.value[0] += cost1;
+    op_perf_by_name_[call_param.node_name_].second.value[1] += cost2;
     return true;
   };
 #endif
@@ -712,32 +693,32 @@ std::string DataToString(void *data, size_t data_number) {
   return oss.str();
 }
 
-std::string DumpMSTensor(tensor::MSTensor *tensor) {
+std::string DumpMSTensor(mindspore::MSTensor *tensor) {
   if (tensor == nullptr) {
     return "Tensor is nullptr";
   }
   std::ostringstream oss;
-  oss << " DataType: " << tensor->data_type();
+  oss << " DataType: " << static_cast<int>(tensor->DataType());
   oss << " Shape:";
-  for (auto &dim : tensor->shape()) {
+  for (auto &dim : tensor->Shape()) {
     oss << " " << dim;
   }
   oss << std::endl << " Data:";
-  switch (tensor->data_type()) {
+  switch (static_cast<int>(tensor->DataType())) {
     case kNumberTypeFloat32: {
-      oss << DataToString<float>(tensor->data(), tensor->ElementsNum());
+      oss << DataToString<float>(tensor->MutableData(), tensor->ElementNum());
     } break;
     case kNumberTypeFloat16: {
-      oss << DataToString<int16_t>(tensor->data(), tensor->ElementsNum());
+      oss << DataToString<int16_t>(tensor->MutableData(), tensor->ElementNum());
     } break;
     case kNumberTypeInt32: {
-      oss << DataToString<int32_t>(tensor->data(), tensor->ElementsNum());
+      oss << DataToString<int32_t>(tensor->MutableData(), tensor->ElementNum());
     } break;
     case kNumberTypeInt16: {
-      oss << DataToString<int16_t>(tensor->data(), tensor->ElementsNum());
+      oss << DataToString<int16_t>(tensor->MutableData(), tensor->ElementNum());
     } break;
     case kNumberTypeInt8: {
-      oss << DataToString<int8_t>(tensor->data(), tensor->ElementsNum());
+      oss << DataToString<int8_t>(tensor->MutableData(), tensor->ElementNum());
     } break;
     default:
       oss << "Unsupported data type to print";
@@ -746,8 +727,8 @@ std::string DumpMSTensor(tensor::MSTensor *tensor) {
   return oss.str();
 }
 
-std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &op_name, const std::string &file_type,
-                                   const size_t &idx) {
+std::string GenerateOutputFileName(mindspore::MSTensor *tensor, const std::string &op_name,
+                                   const std::string &file_type, const size_t &idx) {
   std::string file_name = op_name;
   auto pos = file_name.find_first_of('/');
   while (pos != std::string::npos) {
@@ -755,61 +736,58 @@ std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &
     pos = file_name.find_first_of('/');
   }
   file_name += "_" + file_type + "_" + std::to_string(idx) + "_shape_";
-  for (const auto &dim : tensor->shape()) {
+  for (const auto &dim : tensor->Shape()) {
     file_name += std::to_string(dim) + "_";
   }
-  if (TYPE_ID_MAP.find(tensor->data_type()) != TYPE_ID_MAP.end()) {
-    file_name += TYPE_ID_MAP.at(tensor->data_type());
+  if (TYPE_ID_MAP.find(static_cast<int>(tensor->DataType())) != TYPE_ID_MAP.end()) {
+    file_name += TYPE_ID_MAP.at(static_cast<int>(tensor->DataType()));
   }
-  auto tensor_format = static_cast<schema::Format>(static_cast<lite::Tensor *>(tensor)->format());
-  if (TENSOR_FORMAT_MAP.find(tensor_format) != TENSOR_FORMAT_MAP.end()) {
-    file_name += "_" + TENSOR_FORMAT_MAP.at(tensor_format) + ".bin";
-  }
+
+  file_name += +".bin";
   return file_name;
 }
 }  // namespace
 
-int Benchmark::InitPrintTensorDataCallbackParameter() {
+int BenchmarkUnifiedApi::InitPrintTensorDataCallbackParameter() {
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const CallBackParam &call_param) { return true; };
+  ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
+                             const std::vector<mindspore::MSTensor> &before_outputs,
+                             const MSCallBackParam &call_param) { return true; };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
+                            const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
     std::cout << "================================================================" << std::endl;
-    std::cout << call_param.node_name << " inputs : " << std::endl;
+    std::cout << call_param.node_name_ << " inputs : " << std::endl;
     for (auto ms_tensor : after_inputs) {
-      std::cout << DumpMSTensor(ms_tensor) << std::endl;
+      std::cout << DumpMSTensor(&ms_tensor) << std::endl;
     }
     std::cout << "----------------------------------------------------------------" << std::endl;
-    std::cout << call_param.node_name << " outputs : " << std::endl;
-    for (const auto ms_tensor : after_outputs) {
-      std::cout << DumpMSTensor(ms_tensor) << std::endl;
+    std::cout << call_param.node_name_ << " outputs : " << std::endl;
+    for (auto ms_tensor : after_outputs) {
+      std::cout << DumpMSTensor(&ms_tensor) << std::endl;
     }
     std::cout << "================================================================" << std::endl;
     return true;
   };
   return RET_OK;
 }
-int Benchmark::InitDumpTensorDataCallbackParameter() {
+int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const CallBackParam &call_param) {
+  ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
+                             const std::vector<mindspore::MSTensor> &before_outputs,
+                             const MSCallBackParam &call_param) {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
 
-    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
+    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
       if (input_output_mode == 0 || input_output_mode == 1) {
         for (size_t i = 0; i < before_inputs.size(); i++) {
           auto ms_tensor = before_inputs.at(i);
-          auto file_name = GenerateOutputFileName(ms_tensor, call_param.node_name, "input", i);
+          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name_, "input", i);
           auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
-          if (WriteToBin(abs_file_path, ms_tensor->data(), ms_tensor->Size()) != RET_OK) {  // save to file
+          if (WriteToBin(abs_file_path, ms_tensor.MutableData(), ms_tensor.DataSize()) != RET_OK) {  // save to file
             MS_LOG(ERROR) << "write tensor data to file failed.";
             return false;
           }
@@ -820,20 +798,19 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
   };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
+                            const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
 
-    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
+    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
       if (input_output_mode == 0 || input_output_mode == 2) {
         for (size_t i = 0; i < after_outputs.size(); i++) {
           auto ms_tensor = after_outputs.at(i);
-          auto file_name = GenerateOutputFileName(ms_tensor, call_param.node_name, "output", i);
+          auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name_, "output", i);
           auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
-          if (WriteToBin(abs_file_path, ms_tensor->data(), ms_tensor->Size()) != RET_OK) {  // save to file
+          if (WriteToBin(abs_file_path, ms_tensor.MutableData(), ms_tensor.DataSize()) != RET_OK) {  // save to file
             MS_LOG(ERROR) << "write tensor data to file failed.";
             return false;
           }
@@ -845,7 +822,7 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
   return RET_OK;
 }
 
-Benchmark::~Benchmark() { delete (session_); }
+BenchmarkUnifiedApi::~BenchmarkUnifiedApi() {}
 
 }  // namespace lite
 }  // namespace mindspore
