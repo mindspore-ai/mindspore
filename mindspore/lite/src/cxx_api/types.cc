@@ -21,12 +21,13 @@
 #include "include/api/status.h"
 #include "include/api/dual_abi_helper.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
-#include "src/common/string_util.h"
-#include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #include "include/version.h"
 
 namespace mindspore {
+namespace {
+constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
+}
 class Buffer::Impl {
  public:
   Impl() : data_() { MS_LOG(ERROR) << "Unsupported feature."; }
@@ -72,28 +73,37 @@ bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
 
 bool MSTensor::operator!=(std::nullptr_t) const { return impl_ != nullptr; }
 
+bool MSTensor::operator==(const MSTensor &tensor) const { return impl_->lite_tensor() == tensor.impl_->lite_tensor(); }
+
 MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                  const void *data, size_t data_len) noexcept {
   if (data_len < 0 || data_len > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "data_len is error.";
     return nullptr;
   }
-  auto new_data = malloc(data_len);
-  if (new_data == nullptr) {
-    MS_LOG(ERROR) << "Allocate data failed.";
-    return nullptr;
+  void *new_data = nullptr;
+  if (data != nullptr) {
+    new_data = malloc(data_len);
+    if (new_data == nullptr) {
+      MS_LOG(ERROR) << "Allocate data failed.";
+      return nullptr;
+    }
+    ::memcpy(new_data, data, data_len);
   }
-  ::memcpy(new_data, data, data_len);
   auto impl = Impl::CreateTensorImpl(CharToString(name), type, shape, new_data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
-    free(new_data);
+    if (new_data != nullptr) {
+      free(new_data);
+    }
     return nullptr;
   }
   auto ms_tensor = new (std::nothrow) MSTensor(impl);
   if (ms_tensor == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
-    free(new_data);
+    if (new_data != nullptr) {
+      free(new_data);
+    }
     return nullptr;
   }
   impl->set_own_data(true);
@@ -173,7 +183,7 @@ MSTensor *MSTensor::Clone() const {
 
 std::vector<char> MSTensor::CharName() const {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
+    MS_LOG(ERROR) << "Invalid tensor implement.";
     return std::vector<char>();
   }
   return StringToChar(impl_->Name());
@@ -181,7 +191,7 @@ std::vector<char> MSTensor::CharName() const {
 
 int64_t MSTensor::ElementNum() const {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
+    MS_LOG(ERROR) << "Invalid tensor implement.";
     return -1;
   }
   return impl_->ElementNum();
@@ -189,7 +199,7 @@ int64_t MSTensor::ElementNum() const {
 
 enum DataType MSTensor::DataType() const {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
+    MS_LOG(ERROR) << "Invalid tensor implement.";
     return DataType::kTypeUnknown;
   }
   return impl_->DataType();
@@ -198,7 +208,7 @@ enum DataType MSTensor::DataType() const {
 const std::vector<int64_t> &MSTensor::Shape() const {
   static std::vector<int64_t> empty;
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
+    MS_LOG(ERROR) << "Invalid tensor implement.";
     return empty;
   }
   return impl_->Shape();
@@ -206,7 +216,7 @@ const std::vector<int64_t> &MSTensor::Shape() const {
 
 std::shared_ptr<const void> MSTensor::Data() const {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
+    MS_LOG(ERROR) << "Invalid tensor implement.";
     return nullptr;
   }
   return impl_->Data();
@@ -214,7 +224,7 @@ std::shared_ptr<const void> MSTensor::Data() const {
 
 void *MSTensor::MutableData() {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
+    MS_LOG(ERROR) << "Invalid tensor implement.";
     return nullptr;
   }
   return impl_->MutableData();
@@ -222,7 +232,7 @@ void *MSTensor::MutableData() {
 
 size_t MSTensor::DataSize() const {
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid tensor inpmlement.";
+    MS_LOG(ERROR) << "Invalid tensor implement.";
     return 0;
   }
   return impl_->DataSize();
@@ -237,6 +247,70 @@ void MSTensor::DestroyTensorPtr(MSTensor *tensor) noexcept {
   if (tensor != nullptr) {
     delete tensor;
   }
+}
+
+void MSTensor::SetShape(const std::vector<int64_t> &shape) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  impl_->SetShape(shape);
+}
+
+void MSTensor::SetDataType(enum DataType data_type) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  impl_->SetDataType(data_type);
+}
+
+void MSTensor::SetTensorName(const std::string &name) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  impl_->SetName(name);
+}
+
+void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  return impl_->SetAllocator(allocator);
+}
+
+std::shared_ptr<Allocator> MSTensor::allocator() const {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return nullptr;
+  }
+  return impl_->allocator();
+}
+
+void MSTensor::SetFormat(mindspore::Format format) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  return impl_->SetFormat(format);
+}
+
+mindspore::Format MSTensor::format() const {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return mindspore::Format::NHWC;
+  }
+  return impl_->format();
+}
+
+void MSTensor::SetData(void *data) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  return impl_->SetData(data);
 }
 
 Buffer::Buffer() : impl_(nullptr) { MS_LOG(ERROR) << "Unsupported feature."; }
