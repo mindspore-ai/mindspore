@@ -122,6 +122,9 @@ def get_config():
     pprint(default)
     args = parse_cli_to_yaml(parser=parser, cfg=default, helper=helper, choices=choices, cfg_path=path_args.config_path)
     final_config = merge(args, default)
-    return Config(final_config)
+    final_config = Config(final_config)
+    if final_config.host_device_mix == 1:
+        final_config.sparse = True
+    return final_config
 
 config = get_config()
