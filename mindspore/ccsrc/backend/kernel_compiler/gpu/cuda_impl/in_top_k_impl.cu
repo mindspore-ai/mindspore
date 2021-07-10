@@ -21,9 +21,9 @@
 
 template <typename T>
 __global__ void InTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output,
-                       size_t class_id_count, int64_t k) {
+                       size_t batch_size, size_t class_id_count, int64_t k) {
   size_t gt_id = blockIdx.x * blockDim.x + threadIdx.x;
-  for (; gt_id < class_id_count; gt_id += blockDim.x * gridDim.x) {
+  for (; gt_id < batch_size; gt_id += blockDim.x * gridDim.x) {
     int32_t target_index = targets[gt_id];
     T predicted_value = predictions[gt_id * class_id_count + target_index];
     T top_k_smallest_value = top_k_output[k - 1];
@@ -33,14 +33,15 @@ __global__ void InTopK(const T *predictions, const int32_t *targets, bool *outpu
 }
 
 template <typename T>
-void CalInTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output, size_t class_id_count,
-               int64_t k, cudaStream_t cuda_stream) {
+void CalInTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output, size_t batch_size,
+               size_t class_id_count, int64_t k, cudaStream_t cuda_stream) {
   InTopK<<<GET_BLOCKS(class_id_count), GET_THREADS, 0, cuda_stream>>>(predictions, targets, output, top_k_output,
-                                                                      class_id_count, k);
+                                                                      batch_size, class_id_count, k);
 }
 
 template void CalInTopK<half>(const half *predictions, const int32_t *targets, bool *output, const half *top_k_output,
-                              size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
+                              size_t batch_size, size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
 
 template void CalInTopK<float>(const float *predictions, const int32_t *targets, bool *output,
-                               const float *top_k_output, size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
+                               const float *top_k_output, size_t batch_size, size_t class_id_count, int64_t k,
+                               cudaStream_t cuda_stream);
