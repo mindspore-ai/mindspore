@@ -18,8 +18,8 @@ import datetime
 import json
 import sys
 import traceback
+from tbe.common.rl_bank.bank_manager import set_current_op_name
 from te.platform.cce_conf import te_set_version
-from te_fusion.fusion_manager import set_current_op_name
 from te_fusion.fusion_util import fusion_op, dump_fusion_json
 from te_fusion.parallel_compilation import init_multi_process_env, get_finished_compilation_task, \
     deinit_multi_process_env, start_ga_multi_process
@@ -331,13 +331,14 @@ class TbeTuner:
             raise ValueError("Json string Errors, key:fusion_op not found.")
         kernel_name = json_info["fusion_op"]["fusion_op_name"]
         full_name = json_info["fusion_op"]["full_name"]
+        reset_op_info = json_info["reset_op_info"]
         set_current_op_name(kernel_name)
         converted_json = fusion_to_fusion(json.dumps(json_info), tune_mode="RL")
         job_type = RL_COMPILE
         base_kernel = './kernel_meta/' + kernel_name + '.o'
         compile_info = None
         try:
-            fusion_op(converted_json)
+            fusion_op(converted_json, reset_op_info=reset_op_info)
         # pylint: disable=broad-except
         except Exception:
             exc_type, exc_value, _ = sys.exc_info()
