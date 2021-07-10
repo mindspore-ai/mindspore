@@ -70,9 +70,6 @@ public class CustomTokenizer {
         for (int i = 0; i < idsLines.size(); ++i) {
             vocabs.put(vocabLines.get(i), Integer.parseInt(idsLines.get(i)));
         }
-        if (!trainMod) {
-            maxSeqLen = 256;
-        }
     }
 
     // is chinses or punctuation
