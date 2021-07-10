@@ -285,6 +285,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = GetOptPassA1(irpass);
   opt::OptPassConfig a_2 = opt::OptPassConfig(
     {
+      irpass.switch_simplify_,
       irpass.cast_eliminate_,
       irpass.specialize_transform_,
       irpass.merge_addn_,
