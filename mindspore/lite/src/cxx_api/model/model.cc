@@ -97,12 +97,10 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
 
 std::vector<MSTensor> Model::GetInputs() {
   std::vector<MSTensor> empty;
-  // std::cout << "Model::GetInputs " << std::endl;
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return empty;
   }
-  // std::cout << "Model2::GetInputs " << std::endl;
   return impl_->GetInputs();
 }
 
