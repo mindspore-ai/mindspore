@@ -68,7 +68,7 @@ efficientnet_b0_config_imagenet = EasyDict({
     'workers': 8,
     'amp_level': 'O0',
     'opt': 'rmsprop',
-    'num_classes': 10,
+    'num_classes': 1000,
     #'Type of global pool, "avg", "max", "avgmax", "avgmaxc"
     'gp': 'avg',
     'momentum': 0.9,
