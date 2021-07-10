@@ -51,7 +51,7 @@ class TrainSession : virtual public lite::LiteSession {
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   int CompileGraph(lite::Model *model) override;
-  virtual int CompileTrainGraph(lite::Model *model);
+  virtual int CompileTrainGraph(std::shared_ptr<Model> model);
 
   virtual int Init(const Context *context, const TrainCfg *train_cfg);
 
@@ -112,7 +112,7 @@ class TrainSession : virtual public lite::LiteSession {
   virtual void CompileTrainOutputs();
   virtual void CompileEvalOutputs();
   virtual int InitCallBack();
-  Model *model_ = nullptr;
+  std::shared_ptr<Model> model_ = nullptr;
   // TrainCfg train_cfg_;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;

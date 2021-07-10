@@ -1,0 +1,4 @@
+*.mindir
+*.ms
+msl
+package-*

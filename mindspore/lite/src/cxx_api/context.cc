@@ -347,4 +347,5 @@ enum DataType Ascend310DeviceInfo::GetOutputType() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return DataType::kTypeUnknown;
 }
+
 }  // namespace mindspore
