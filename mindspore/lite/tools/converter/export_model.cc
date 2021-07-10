@@ -232,9 +232,6 @@ STATUS ExportModel(const FuncGraphPtr &graph) {
   }
 
   delete meta_graph;
-  oss << "CONVERT RESULT SUCCESS:" << status;
-  MS_LOG(INFO) << oss.str();
-  std::cout << oss.str() << std::endl;
   return status;
 }
 
