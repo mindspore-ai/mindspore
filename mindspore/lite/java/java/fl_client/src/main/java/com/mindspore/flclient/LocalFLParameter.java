@@ -29,8 +29,8 @@ public class LocalFLParameter {
     private List<String> albertWeightName = new ArrayList<>();
 
     private String flID;
-    private String encryptLevel = "NotEncrypt";
-    private String earlyStopMod = "NotEarlyStop";
+    private String encryptLevel = EncryptLevel.NOT_ENCRYPT.toString();
+    private String earlyStopMod = EarlyStopMod.NOT_EARLY_STOP.toString();
     private String serverMod = ServerMod.HYBRID_TRAINING.toString();
     private String safeMod = "The cluster is in safemode.";
 
