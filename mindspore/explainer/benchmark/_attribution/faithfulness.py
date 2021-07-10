@@ -423,7 +423,9 @@ class Faithfulness(LabelSensitiveMetric):
             >>> from mindspore import nn
             >>> from mindspore.explainer.benchmark import Faithfulness
             >>> from mindspore.explainer.explanation import Gradient
+            >>> from mindspore import context
             >>>
+            >>> context.set_context(mode=context.PYNATIVE_MODE)
             >>> # init a `Faithfulness` object
             >>> num_labels = 10
             >>> metric = "InsertionAUC"
