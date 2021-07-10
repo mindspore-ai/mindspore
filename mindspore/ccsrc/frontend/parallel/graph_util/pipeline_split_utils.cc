@@ -98,6 +98,11 @@ void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const F
   if (IsPrimitiveCNode(cnode, prim::kPrimReceive) || !cnode->in_forward_flag()) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool enable_parallel_optimizer = ParallelContext::GetInstance()->enable_parallel_optimizer();
+  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && enable_parallel_optimizer) {
+    return;
+  }
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
     MS_LOG(WARNING) << cnode->DebugString() << " can not insert _VirtualAssignAdd.";

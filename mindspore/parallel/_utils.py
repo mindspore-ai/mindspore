@@ -79,16 +79,18 @@ def _to_full_shapes(shapes, device_num):
     return new_shapes
 
 
-def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
+def _to_full_tensor(elem, global_device_num, global_rank, scaling_sens=None):
     """Convert numpy to tensor, expanding batch dimension according to device_num, adapt to feed the data
        from host solution.
     """
     lst = []
+    device_num = global_device_num // _get_pipeline_stages()
+    stage_rank = global_rank % device_num
     if not isinstance(elem, (tuple, list)):
         elem = [elem]
-    if global_rank >= device_num:
+    if stage_rank >= device_num:
         raise ValueError("The global rank must be smaller than device number, the global rank is {}, "
-                         "the device num is {}".format(global_rank, device_num))
+                         "the device num is {}".format(stage_rank, device_num))
 
     for data in elem:
         if isinstance(data, np.ndarray):
@@ -106,7 +108,7 @@ def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
             else:
                 new_shape += (item,)
         new_tensor_numpy = np.zeros(new_shape, dtype_to_nptype(type_))
-        start = global_rank * batchsize_per_device
+        start = stage_rank * batchsize_per_device
         new_tensor_numpy[start: start + batchsize_per_device] = data.asnumpy()
         new_tensor = Tensor(new_tensor_numpy)
         lst.append(new_tensor)
