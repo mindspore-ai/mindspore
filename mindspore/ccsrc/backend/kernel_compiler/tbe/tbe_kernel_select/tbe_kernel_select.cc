@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <utility>
+#include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
@@ -272,9 +273,10 @@ void TbeKernelSelect::SetTbeBuildCommonInfo(const mindspore::kernel::OpInfo &op_
                                             mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder *builder) {
   MS_EXCEPTION_IF_NULL(builder);
   builder->SetProcessor(AICORE);
-  std::string fusion_type = op_info.fusion_type();
-  if (tbe::GetFusionType(fusion_type) != UNKNOWN_FUSION_TYPE) {
-    builder->SetFusionType(tbe::GetFusionType(fusion_type));
+  std::string fusion_name = op_info.fusion_type();
+  auto fusion_type = kernel::GetFusionTypeByName(fusion_name);
+  if (fusion_type != UNKNOWN_FUSION_TYPE) {
+    builder->SetFusionType(fusion_type);
   }
   builder->SetOpPattern(op_info.op_pattern());
   builder->SetKernelType(TBE_KERNEL);

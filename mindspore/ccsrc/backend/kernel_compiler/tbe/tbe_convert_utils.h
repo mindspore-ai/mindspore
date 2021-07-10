@@ -32,8 +32,6 @@ std::string TypeIdToString(TypeId type_id);
 
 size_t GetDtypeNbyte(const std::string &dtypes);
 
-FusionType GetFusionType(const std::string &pattern);
-
 std::string GetProcessor(const AnfNodePtr &anf_node);
 }  // namespace tbe
 }  // namespace kernel

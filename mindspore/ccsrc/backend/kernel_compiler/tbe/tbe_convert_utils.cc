@@ -61,11 +61,6 @@ const std::unordered_map<std::string, size_t> type_nbyte_maps = {
   {"uint32", sizeof(int)},        {"uint64", sizeof(int) * 2}, {"bool", sizeof(char)},
 };
 
-const std::unordered_map<std::string, FusionType> fusion_type_maps = {
-  {"CONVLUTION", FusionType::CONVLUTION}, {"ELEMWISE", FusionType::ELEMWISE}, {"COMMREDUCE", FusionType::COMMREDUCE},
-  {"SEGMENT", FusionType::SEGMENT},       {"OPAQUE", FusionType::OPAQUE},
-};
-
 TypeId DtypeToTypeId(const std::string &dtypes) {
   auto iter = type_str_id_maps.find(dtypes);
   if (iter == type_str_id_maps.end()) {
@@ -86,15 +81,6 @@ size_t GetDtypeNbyte(const std::string &dtypes) {
   auto iter = type_nbyte_maps.find(dtypes);
   if (iter == type_nbyte_maps.end()) {
     MS_LOG(EXCEPTION) << "Illegal input dtype: " << dtypes;
-  }
-  return iter->second;
-}
-
-FusionType GetFusionType(const std::string &pattern) {
-  auto iter = fusion_type_maps.find(pattern);
-  if (iter == fusion_type_maps.end()) {
-    MS_LOG(INFO) << "Illegal fusion pattern: " << pattern;
-    return UNKNOWN_FUSION_TYPE;
   }
   return iter->second;
 }

@@ -96,7 +96,7 @@ static KernelGraphPtr CreateKernelGraph() {
   builder.SetOutputsFormat({kOpFormat_NCHW});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(mindspore::kernel::CONVLUTION);
+  builder.SetFusionType(mindspore::kernel::CONV);
   builder.SetProcessor(kernel::Processor::AICORE);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), kernelptr_first.get());
 

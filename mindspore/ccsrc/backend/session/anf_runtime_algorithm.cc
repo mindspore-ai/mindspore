@@ -1257,7 +1257,9 @@ kernel::FusionType AnfRuntimeAlgorithm::GetFusionType(const AnfNodePtr &node) {
   auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
+  if (build_info == nullptr) {
+    return kernel::FusionType::UNKNOWN_FUSION_TYPE;
+  }
   return build_info->fusion_type();
 }
 

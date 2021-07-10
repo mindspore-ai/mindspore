@@ -17,7 +17,7 @@
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 sparse_apply_ftrl_d_op_info = TBERegOp("SparseApplyFtrl") \
-    .fusion_type("DYNAMIC") \
+    .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("sparse_apply_ftrl.so") \
     .compute_cost(10) \

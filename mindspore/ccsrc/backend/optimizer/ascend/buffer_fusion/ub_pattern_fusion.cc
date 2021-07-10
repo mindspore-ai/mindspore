@@ -43,23 +43,6 @@ constexpr size_t kFusionNodeNumThreshold = 2;
 constexpr auto kOpAttrFusionId = "fusion_id";
 
 #ifdef DEBUG
-std::string GetFusionTypeName(const kernel::FusionType &type) {
-  switch (type) {
-    case kernel::FusionType::COMMREDUCE:
-      return "COMMREDUCE";
-    case kernel::FusionType::SEGMENT:
-      return "SEGMENT";
-    case kernel::FusionType::ELEMWISE:
-      return "ELEMWISE";
-    case kernel::FusionType::CONVLUTION:
-      return "CONVLUTION";
-    case kernel::FusionType::OPAQUE:
-      return "OPAQUE";
-    default:
-      return "OPAQUE";
-  }
-}
-
 void DumpFusionScopeInfo(const kernel::FusionScopeInfo &info) {
   MS_LOG(INFO) << "=== Dump FusionScopeInfo start id: " << info.scope_id;
   for (auto &node : info.input_nodes) {
@@ -69,8 +52,8 @@ void DumpFusionScopeInfo(const kernel::FusionScopeInfo &info) {
     MS_LOG(INFO) << "=== Output: " << node->DebugString();
   }
   for (auto &node : info.compute_nodes) {
-    MS_LOG(INFO) << "=== Compute: (" << node->DebugString() << ")-(" << GetFusionTypeName(AnfAlgo::GetFusionType(node))
-                 << ")";
+    MS_LOG(INFO) << "=== Compute: (" << node->DebugString() << ")-("
+                 << mindspore::kekernel::tbe::GetFusionTypeName(AnfAlgo::GetFusionType(node)) << ")";
   }
   MS_LOG(INFO) << "=== Dump FusionScopeInfo end";
 }

@@ -149,8 +149,6 @@ void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::stri
     }
     transform(result.begin(), result.end(), result.begin(), ::toupper);
     AnfAlgo::SetNodeAttr(kAttrFusionType, MakeValue(result), node);
-    FusionType fusion_type = tbe::GetFusionType(result);
-    builder->SetFusionType(fusion_type);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
   }
   (void)pre_task_map_.erase(task_iter);
