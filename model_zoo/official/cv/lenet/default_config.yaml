@@ -9,8 +9,8 @@ load_path: "/cache/checkpoint_path"
 device_target: Ascend
 enable_profiling: False
 
-ckpt_path: '/cache/data/'
-ckpt_file: '/cache/data/checkpoint_lenet-10_1875.ckpt'
+ckpt_path: '/cache/train/'
+ckpt_file: '/cache/train/checkpoint_lenet-10_1875.ckpt'
 
 # ==============================================================================
 # Training options
@@ -38,8 +38,8 @@ save_checkpoint: True
 save_checkpoint_epochs: 2
 
 # lenet acc calculation
-result_path: '' # "result files path."
-img_path: ''    # "image file path."
+result_path: ''
+img_path: ''
 
 ---
 # Config description for each option
@@ -53,7 +53,8 @@ device_target: 'Target device type'
 enable_profiling: 'Whether enable profiling while training, default: False'
 file_name: 'output file name.'
 file_format: 'file format'
-
+result_path: "result files path."
+img_path: "image file path."
 ---
 device_target: ['Ascend', 'GPU', 'CPU']
 file_format: ['AIR', 'ONNX', 'MINDIR']
