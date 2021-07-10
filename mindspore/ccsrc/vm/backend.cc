@@ -862,8 +862,9 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
   if (output_node->isa<ValueNode>()) {
     auto value = output_node->cast<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueTuple>() && (value->cast<ValueTuplePtr>()->size() == 0)) {
-      outputs->emplace_back(VectorRef());
+    if (value->isa<ValueTuple>()) {
+      outputs->emplace_back(value);
+      (*output_position) += CountValueNum(value->cast<ValueTuplePtr>());
       return;
     }
   }

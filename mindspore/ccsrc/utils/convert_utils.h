@@ -63,6 +63,8 @@ bool Isomorphic(const FuncGraphPtr &g1, const FuncGraphPtr &g2, FuncGraphPairMap
 tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 
 void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors);
+
+size_t CountValueNum(const ValueTuplePtr &value_tuple);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_H_
