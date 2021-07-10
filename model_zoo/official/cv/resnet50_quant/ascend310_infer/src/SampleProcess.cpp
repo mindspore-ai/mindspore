@@ -82,8 +82,8 @@ Result SampleProcess::InitResource(const char *aclConfigPath) {
 }
 
 void SampleProcess::GetAllFiles(std::string path, std::vector<string> *files) {
-    DIR *pDir;
-    struct dirent* ptr;
+    DIR *pDir = nullptr;
+    struct dirent* ptr = nullptr;
     if (!(pDir = opendir(path.c_str())))
         return;
     while ((ptr = readdir(pDir)) != 0) {
