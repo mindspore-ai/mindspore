@@ -21,7 +21,6 @@
 #include "utils/log_adapter.h"
 
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
-constexpr auto kModelOptionCpuThreadAffinity = "mindspore.option.cpu.thread_affinity";
 constexpr auto kModelOptionMaliGpuEnableFP16 = "mindspore.option.mali_gpu.enable_fp16";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionDeviceID = "mindspore.option.device_id";
@@ -48,7 +47,9 @@ class Allocator {};
 struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
   int32_t thread_num;
-  std::shared_ptr<Allocator> allocator;
+  bool enable_parallel_ = false;
+  std::vector<int32_t> affinity_core_list_;
+  int affinity_mode_ = 2;
 };
 
 struct DeviceInfoContext::Data {
@@ -84,13 +85,31 @@ int32_t Context::GetThreadNum() const {
   return data_->thread_num;
 }
 
-void Context::SetAllocator(const std::shared_ptr<Allocator> &allocator) {
+void Context::SetEnableParallel(bool is_parallel) {
   MS_EXCEPTION_IF_NULL(data_);
-  data_->allocator = allocator;
+  data_->enable_parallel_ = is_parallel;
 }
-std::shared_ptr<Allocator> Context::GetAllocator() const {
+
+bool Context::GetEnableParallel() const {
   MS_EXCEPTION_IF_NULL(data_);
-  return data_->allocator;
+  return data_->enable_parallel_;
+}
+void Context::SetThreadAffinity(int mode) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->affinity_mode_ = mode;
+}
+int Context::GetThreadAffinityMode() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return data_->affinity_mode_;
+}
+
+void Context::SetThreadAffinity(const std::vector<int> &core_list) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->affinity_core_list_ = core_list;
+}
+std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return data_->affinity_core_list_;
 }
 
 std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
@@ -107,15 +126,6 @@ void CPUDeviceInfo::SetEnableFP16(bool is_fp16) {
 bool CPUDeviceInfo::GetEnableFP16() const {
   MS_EXCEPTION_IF_NULL(data_);
   return GetValue<bool>(data_, kModelOptionCpuEnableFP16);
-}
-
-void CPUDeviceInfo::SetThreadAffinity(int affinity) {
-  MS_EXCEPTION_IF_NULL(data_);
-  data_->params[kModelOptionCpuThreadAffinity] = affinity;
-}
-int CPUDeviceInfo::GetThreadAffinity() const {
-  MS_EXCEPTION_IF_NULL(data_);
-  return GetValue<bool>(data_, kModelOptionCpuThreadAffinity);
 }
 
 void MaliGPUDeviceInfo::SetEnableFP16(bool is_fp16) {

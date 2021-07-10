@@ -16,16 +16,12 @@
 
 #include "src/cxx_api/model/model_impl.h"
 #include <memory>
-#include <unordered_map>
 #include <algorithm>
 #include "include/api/types.h"
 #include "include/api/context.h"
-#include "include/api/dual_abi_helper.h"
 #include "include/lite_session.h"
 #include "include/context.h"
-#include "src/lite_model.h"
 #include "src/runtime/inner_allocator.h"
-#include "src/common/string_util.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/cxx_api/tensor_utils.h"
@@ -34,6 +30,96 @@
 namespace mindspore {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+
+lite::CpuBindMode ModelImpl::GetCpuBindMode() {
+  auto affinity_mode = context_->GetThreadAffinityMode();
+  switch (affinity_mode) {
+    case 0:
+      return lite::NO_BIND;
+    case 1:
+      return lite::HIGHER_CPU;
+    case 2:
+      return lite::MID_CPU;
+    default:
+      return lite::NO_BIND;
+  }
+}
+
+Status ModelImpl::ConverterContext(const std::shared_ptr<Context> &context, lite::Context *model_context) {
+  auto device_list = context->MutableDeviceInfo();
+  if (device_list.size() == 0) {
+    MS_LOG(ERROR) << "Invalid device list.";
+    return kLiteInputParamInvalid;
+  }
+  if (device_list.size() > 2) {
+    MS_LOG(ERROR) << "Only CPU/CPU & GPU/CPU & NPU mode is supported.";
+    return kLiteInputParamInvalid;
+  }
+
+  model_context->thread_num_ = context->GetThreadNum();
+  model_context->enable_parallel_ = context->GetEnableParallel();
+  model_context->affinity_core_list_ = context->GetThreadAffinityCoreList();
+  model_context->device_list_.clear();
+  if (device_list[0]->GetDeviceType() != kCPU) {
+    MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
+    return kLiteInputParamInvalid;
+  }
+
+  auto cpu_context = device_list[0]->Cast<CPUDeviceInfo>();
+  model_context->allocator = cpu_context->GetAllocator();
+  if (model_context->allocator == nullptr) {
+    model_context->allocator = Allocator::Create();
+    if (model_context->allocator == nullptr) {
+      MS_LOG(ERROR) << "Create Allocator failed.";
+      return kLiteNullptr;
+    }
+    MS_LOG(DEBUG) << "Set new allocator.";
+    cpu_context->SetAllocator(model_context->allocator);
+  }
+
+  lite::CpuBindMode mode = GetCpuBindMode();
+  lite::DeviceInfo cpu_info = {0};
+  cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
+  model_context->device_list_.push_back({lite::DT_CPU, cpu_info, cpu_context->GetProvider(),
+                                         cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
+  if (device_list.size() == 2) {
+    lite::DeviceInfo device_info = {0};
+    if (device_list[1]->GetDeviceType() == kMaliGPU) {
+      auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
+      device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
+      model_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
+                                             gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
+    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
+      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
+      device_info.npu_device_info_ = {npu_context->GetFrequency()};
+      model_context->device_list_.push_back({lite::DT_NPU, device_info});
+    } else {
+      MS_LOG(ERROR) << "Invalid device.";
+      return kLiteInputParamInvalid;
+    }
+  }
+  return kSuccess;
+}
+
+Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
+                        const std::shared_ptr<Context> &ms_context) {
+  lite::Context lite_context;
+  auto status = ConverterContext(ms_context, &lite_context);
+  if (status != kSuccess) {
+    return status;
+  }
+
+  auto session = std::shared_ptr<session::LiteSession>(
+    session::LiteSession::CreateSession(static_cast<const char *>(model_data), data_size, &lite_context));
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "Allocate session failed.";
+    return kLiteNullptr;
+  }
+
+  session_.swap(session);
+  MS_LOG(DEBUG) << "Build model success.";
+  return kSuccess;
+}
 
 Status ModelImpl::Build() {
   MS_LOG(DEBUG) << "Start build model.";
@@ -51,63 +137,11 @@ Status ModelImpl::Build() {
     return kLiteNullptr;
   }
   lite::Context model_context;
-  auto device_list = context_->MutableDeviceInfo();
-  if (device_list.size() == 0) {
-    MS_LOG(ERROR) << "Invalid device list.";
-    return kLiteInputParamInvalid;
+  auto status = ConverterContext(context_, &model_context);
+  if (status != kSuccess) {
+    return status;
   }
-  if (device_list.size() > 2) {
-    MS_LOG(ERROR) << "Only CPU/CPU & GPU/CPU & NPU mode is supported.";
-    return kLiteInputParamInvalid;
-  }
-  model_context.allocator = context_->GetAllocator();
-  if (model_context.allocator == nullptr) {
-    model_context.allocator = Allocator::Create();
-    if (model_context.allocator == nullptr) {
-      MS_LOG(ERROR) << "Create Allocator failed.";
-      return kLiteNullptr;
-    }
-    MS_LOG(DEBUG) << "Set new allocator.";
-    context_->SetAllocator(model_context.allocator);
-  }
-  model_context.thread_num_ = context_->GetThreadNum();
-  model_context.device_list_.clear();
-  if (device_list[0]->GetDeviceType() != kCPU) {
-    MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
-    return kLiteInputParamInvalid;
-  }
-  auto cpu_context = device_list[0]->Cast<CPUDeviceInfo>();
-  lite::CpuBindMode mode;
-  if (cpu_context->GetThreadAffinity() == 0) {
-    mode = lite::NO_BIND;
-  } else if (cpu_context->GetThreadAffinity() == 1) {
-    mode = lite::HIGHER_CPU;
-  } else if (cpu_context->GetThreadAffinity() == 2) {
-    mode = lite::MID_CPU;
-  } else {
-    MS_LOG(ERROR) << "Invalid thread affinity.";
-    return kLiteInputParamInvalid;
-  }
-  lite::DeviceInfo cpu_info = {0};
-  cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
-  model_context.device_list_.push_back({lite::DT_CPU, cpu_info, cpu_context->GetProvider(),
-                                        cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
-  if (device_list.size() == 2) {
-    lite::DeviceInfo device_info = {0};
-    if (device_list[1]->GetDeviceType() == kMaliGPU) {
-      auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
-      device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
-      model_context.device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
-                                            gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
-    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
-      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
-      device_info.npu_device_info_ = {npu_context->GetFrequency()};
-      model_context.device_list_.push_back({lite::DT_NPU, device_info});
-    } else {
-      MS_LOG(ERROR) << "Invalid device.";
-      return kLiteInputParamInvalid;
-    }
-  }
+
   auto session = std::shared_ptr<session::LiteSession>(session::LiteSession::CreateSession(&model_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
@@ -130,7 +164,36 @@ static void ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MS
   }
 }
 
-Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  if (before == nullptr || after == nullptr) {
+    auto ret = session_->RunGraph();
+    return static_cast<StatusCode>(ret);
+  }
+  auto before_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                              const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                              const CallBackParam &call_param) {
+    std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
+    std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
+    MSCallBackParam mscall_param;
+    mscall_param.node_name_ = call_param.node_name;
+    mscall_param.node_type_ = call_param.node_type;
+    return before(inputs, outputs, mscall_param);
+  };
+  auto after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                             const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                             const CallBackParam &call_param) {
+    std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
+    std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
+    MSCallBackParam mscall_param;
+    mscall_param.node_name_ = call_param.node_name;
+    mscall_param.node_type_ = call_param.node_type;
+    return after(inputs, outputs, mscall_param);
+  };
+  auto ret = session_->RunGraph(before_call_back, after_call_back);
+  return static_cast<StatusCode>(ret);
+}
+Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                          const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (outputs == nullptr) {
     MS_LOG(ERROR) << "outputs is nullptr.";
     return kLiteError;
@@ -188,13 +251,11 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       }
     }
   }
-  session_->BindThread(true);
-  auto ret = session_->RunGraph();
-  session_->BindThread(false);
+  auto ret = RunGraph(before, after);
   ResetTensorData(old_data, input_tensors);
-  if (ret != RET_OK) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
-    return static_cast<StatusCode>(ret);
+    return ret;
   }
   MS_LOG(DEBUG) << "Run graph success.";
   auto res = GetOutputs();

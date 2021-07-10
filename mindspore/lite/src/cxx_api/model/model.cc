@@ -22,6 +22,19 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode) {
+  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
+  }
+  Status ret = impl_->Build(model_data, data_size, model_type, model_context);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  return kSuccess;
+}
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context) {
   if (impl_ != nullptr) {
     MS_LOG(DEBUG) << "Model has been already built.";
@@ -53,12 +66,13 @@ Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std:
   return impl_->Resize(inputs, dims);
 }
 
-Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                      const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteNullptr;
   }
-  return impl_->Predict(inputs, outputs);
+  return impl_->Predict(inputs, outputs, before, after);
 }
 
 Model::Model() : impl_(nullptr) {}

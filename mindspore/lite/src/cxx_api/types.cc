@@ -24,6 +24,7 @@
 #include "src/common/string_util.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
+#include "include/version.h"
 
 namespace mindspore {
 class Buffer::Impl {
@@ -271,4 +272,7 @@ bool Buffer::SetData(const void *data, size_t data_len) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return false;
 }
+
+std::vector<char> CharVersion() { return StringToChar(lite::Version()); }
+
 }  // namespace mindspore

@@ -27,16 +27,6 @@
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
-constexpr char kDecModeAesGcm[] = "AES-GCM";
-
-struct MS_API Key {
-  const size_t max_key_len = 32;
-  size_t len;
-  unsigned char key[32];
-  Key() : len(0) {}
-  Key(const char *dec_key, size_t key_len);
-};
-
 class MS_API Serialization {
  public:
   inline static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
