@@ -17,6 +17,7 @@
 if [[ $# -lt 4 || $# -gt 5 ]]; then
     echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [DEVICE_ID]
     NET_TYPE can choose from [resnet18, resnet34, se-resnet50, resnet50, resnet101]
+    DATASET can choose from [cifar10, imagenet]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
@@ -36,7 +37,13 @@ else
   exit 1
 fi
 
-dataset=$3
+if [ $3 == 'cifar10' ] || [ $3 == 'imagenet' ]; then
+  dataset=$3
+else
+  echo "DATASET can choose from [cifar10, imagenet]"
+  exit 1
+fi
+
 data_path=$(get_real_path $4)
 
 device_id=0
