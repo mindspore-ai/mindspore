@@ -205,7 +205,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
           first_shape.Print(shape1);
           old_tensor->shape().Print(shape2);
           RETURN_STATUS_UNEXPECTED(
-            "Invalid data, expect same shape for each data row, but got inconsistent data shapes in column " +
+            "Invalid data, batch operation expect same shape for each data row, but got inconsistent shape in column " +
             std::to_string(i) + " expected shape for this column is:" + shape1.str() + ", got shape:" + shape2.str());
         }
       }

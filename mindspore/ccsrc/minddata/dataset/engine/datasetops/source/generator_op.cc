@@ -101,7 +101,7 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
       "Invalid data, Generator should return same number of NumPy arrays as specified in column_names, the size of"
       " column_names is:" +
         std::to_string(column_names_.size()) +
-        "and number of returned NumPy array is:" + std::to_string(py_row.size()));
+        " and number of returned NumPy array is:" + std::to_string(py_row.size()));
   }
   // Iterate over two containers simultaneously for memory copy
   for (int i = 0; i < py_row.size(); ++i) {
