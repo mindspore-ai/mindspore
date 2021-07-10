@@ -117,6 +117,8 @@ class LiteSession : public session::LiteSession {
 
   bool IfUseMindrtExecutor();
 
+  bool IsIsolatedSubGraph(kernel::LiteKernel *kernel);
+
  protected:
   InnerContext *context_ = nullptr;
   std::vector<kernel::LiteKernel *> kernels_;
