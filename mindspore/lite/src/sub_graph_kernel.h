@@ -103,6 +103,8 @@ class SubGraphKernel : public LiteKernel {
 
   void InitOutTensorInitRefCount() override;
 
+  void InitInputTensorInitRefCount();
+
   int Init() override { return mindspore::lite::RET_OK; }
 
   std::string ToString() const override;
