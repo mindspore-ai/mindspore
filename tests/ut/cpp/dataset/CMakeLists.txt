@@ -28,6 +28,7 @@ SET(DE_UT_SRCS
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
         c_api_dataset_ops_test.cc
+        c_api_dataset_qmnist_test.cc
         c_api_dataset_randomdata_test.cc
         c_api_dataset_save.cc
         c_api_dataset_sbu_test.cc
