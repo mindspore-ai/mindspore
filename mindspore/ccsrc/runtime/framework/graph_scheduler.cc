@@ -474,23 +474,12 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   (void)actorMgr->Spawn(base_actor, false);
 
   // Create and schedule recorder actor.
-  bool recorder_actor_need = false;
-  if (profiler::ProfilerManager::GetInstance()->GetEnableRecorderActorFlag()) {
-    recorder_actor_need = true;
-  }
-#ifdef ENABLE_DUMP_IR
-  if (mindspore::RecorderManager::Instance().RdrEnable()) {
-    recorder_actor_need = true;
-  }
-#endif
-  if (recorder_actor_need) {
-    auto recorder_actor = std::make_shared<RecorderActor>();
-    MS_EXCEPTION_IF_NULL(recorder_actor);
-    recorder_aid_ = &(recorder_actor->GetAID());
-    auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
-    base_recorder_actor->set_thread_pool(thread_pool_);
-    (void)actorMgr->Spawn(base_recorder_actor, true);
-  }
+  auto recorder_actor = std::make_shared<RecorderActor>();
+  MS_EXCEPTION_IF_NULL(recorder_actor);
+  recorder_aid_ = &(recorder_actor->GetAID());
+  auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
+  base_recorder_actor->set_thread_pool(thread_pool_);
+  (void)actorMgr->Spawn(base_recorder_actor, true);
 
   // Create and schedule debug actor.
   bool debugger_actor_need = DumpJsonParser::GetInstance().e2e_dump_enabled();
