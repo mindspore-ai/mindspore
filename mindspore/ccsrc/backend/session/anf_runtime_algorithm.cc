@@ -140,15 +140,13 @@ AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
   return kg->NewValueNode(kUMonad->ToAbstract(), kUMonad);
 }
 
-// Convert:
-// a = former(xxx)
-// b = latter(x, xxx)
-// To:
-// a = former(xxx)
-// d1 = Depend(x, a)
-// b = latter(d1, xxx)
-// ...
-// out = Depend(out, latter)
+// Convert: a = former(xxx)
+//          b = latter(x, xxx)
+// To:      a = former(xxx)
+//          d1 = Depend(x, a)
+//          b = latter(d1, xxx)
+//          ...
+//          out = Depend(out, latter)
 void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter) {
   if (latter->isa<CNode>()) {
     auto latter_cnode = latter->cast<CNodePtr>();

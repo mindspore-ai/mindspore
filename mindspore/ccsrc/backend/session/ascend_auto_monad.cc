@@ -42,6 +42,9 @@ using GraphArgPair = std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>;
 // We start label id from 0, and use 0xFFFFFFFF to indicate label not set.
 constexpr uint32_t kNoLabel = 0xFFFFFFFF;
 
+// We start input index from 2 for AssignOp, as for inputs[2] is input, inputs[1] is output;
+constexpr size_t kInputIndex = 2;
+
 // Primitive attribute for argument link assign.
 const char LINK[] = "link";
 
@@ -874,9 +877,8 @@ class AscendAutoMonadConverter {
                      std::vector<CNodePtr> *stack_pushs) {
     uint32_t start_index = 1;
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimAssign)) {
-      start_index = 2;
+      start_index = kInputIndex;
     }
-    // auto node_inputs = node->inputs();
     for (uint32_t i = start_index; i < node->inputs().size(); i++) {
       auto node_input = node->input(i);
       // not need to save monad.
