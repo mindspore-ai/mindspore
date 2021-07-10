@@ -22,8 +22,8 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
-#define WEIGHT_NEED_FREE 0b01
-#define BIAS_NEED_FREE 0b10
+#define WEIGHT_NEED_FREE 0001
+#define BIAS_NEED_FREE 0010
 
 namespace mindspore::kernel {
 class ConvolutionDelegateFP16CPUKernel : public InnerKernel {

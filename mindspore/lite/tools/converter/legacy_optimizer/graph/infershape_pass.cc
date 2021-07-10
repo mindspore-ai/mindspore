@@ -96,7 +96,7 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
   auto lite_tensor_list = reinterpret_cast<TensorList *>(lite_tensor.get());
   std::vector<Tensor *> tensors{};
   if (!tensor_shape.empty() && tensor_shape.front() == -1) {
-    MS_LOG(ERROR) << "tensor_shape is -1, tensor name: " << lite_tensor->tensor_name();
+    MS_LOG(INFO) << "tensor_shape is -1, tensor name: " << lite_tensor->tensor_name();
   }
   if (!tensor_shape.empty() && tensor_shape.front() != -1) {
     for (int32_t i = 0; i < tensor_shape.front(); ++i) {
