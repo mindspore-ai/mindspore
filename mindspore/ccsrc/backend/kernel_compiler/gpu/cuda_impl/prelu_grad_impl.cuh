@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_PRELU_GRAD_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_PRELU_GRAD_H_
 
 #include "runtime/device/gpu/cuda_common.h"
-template <typename T>
-void CalReLU(int input_size, T *input_addr, T *output_addr, cudaStream_t cuda_stream);
 
 template <typename T>
-void ReluV2(const size_t num, const T *x, T *y, uint32_t *mask, cudaStream_t cuda_stream);
-template <typename T>
-void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream);
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_H_
+void CalPReLUGrad(size_t input_size, size_t weight_size, size_t per_channel_size,
+                  const T *dy, const T *x, const T *w, T *dx, T *dw, float *dw_array, cudaStream_t cuda_stream);
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_PRELU_GRAD_H_

@@ -2151,6 +2151,7 @@ class Conv2DTranspose(Conv2DBackpropInput):
         >>> print(output.shape)
         (10, 32, 32, 32)
     """
+
     @prim_attr_register
     def __init__(self, out_channel, kernel_size, pad_mode="valid", pad=0,
                  pad_list=None, mode=1, stride=1, dilation=1, group=1, data_format="NCHW"):
@@ -3638,16 +3639,18 @@ class PReLU(PrimitiveWithInfer):
     .. math::
         prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
 
-    where :math:`x_i` is an element of an channel of the input.
+    where :math:`x_i` is an element of an channel of the input, `w` is the weight of the channel.
 
     Note:
-        1-dimensional input_x is not supported.
+        0-D or 1-D input_x is not supported on Ascend.
 
     Inputs:
-        - **input_x** (Tensor) - Float tensor, representing the output of the preview layer.
-          With data type of float16 or float32.
-        - **weight** (Tensor) -  Float Tensor, w > 0, there are only two shapes are legitimate,
-          1 or the number of channels of the input. With data type of float16 or float32.
+        - **input_x** (Tensor) - The first input tensor. The data type is float16 or float32.
+          Represents the output of the preview layer.
+        - **weight** (Tensor) -  The second input tensor. The data type is float16 or float32.
+          There are only two shapes are legitimate, 1 or the number of channels of the `input_x`.
+          Channel dim is the 2nd dim of input. When input is 0-D or 1-D tensor, the number of channels is 1.
+
 
     Outputs:
         Tensor, with the same type as `input_x`.
@@ -3656,9 +3659,9 @@ class PReLU(PrimitiveWithInfer):
 
     Raises:
         TypeError: If dtype of `input_x` or `weight` is neither float16 nor float32.
-        TypeError: If `input_x` or `weight` is not a Tensor.
-        ValueError: If length of shape of `input_x` is equal to 1.
-        ValueError: If length of shape of `weight` is not equal to 1.
+        TypeError: If the `input_x` or the `weight` is not a Tensor.
+        ValueError: If the `input_x` is a 0-D or 1-D Tensor on Ascned.
+        ValueError: If the `weight` is not a 1-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -3677,12 +3680,17 @@ class PReLU(PrimitiveWithInfer):
         ...         result = self.prelu(input_x, weight)
         ...         return result
         ...
-        >>> input_x = Tensor(np.random.randint(-3, 3, (2, 3, 2)), mindspore.float32)
+        >>> input_x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
         >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
         >>> net = Net()
         >>> output = net(input_x, weight)
-        >>> print(output.shape)
-        (2, 3, 2)
+        >>> print(output)
+        [[[-0.60 -0.50]
+          [-2.40 -1.80]
+          [ 0.60  0.30]]
+         [[ 0.00  1.00]
+          [ 2.00  3.00]
+          [ 4.0   5.00]]]
     """
 
     @prim_attr_register
@@ -3691,25 +3699,29 @@ class PReLU(PrimitiveWithInfer):
 
     def infer_shape(self, input_x_shape, weight_shape):
         input_x_dim = len(input_x_shape)
+        if input_x_dim in (0, 1):
+            if context.get_context("device_target") == "Ascend":
+                raise ValueError(f"For '{self.name}', the 0-D or 1-D 'input_x' is not supported on Ascend.")
+            channel_num = 1
+        else:
+            channel_num = input_x_shape[1]
+
         weight_dim = len(weight_shape)
-
-        if input_x_dim == 1:
-            raise ValueError(f'For \'{self.name}\' input_x rank 1 is not supported.')
-
         if weight_dim != 1:
-            raise ValueError(f'For \'{self.name}\' weight_dim must be 1, while weight_dim is {weight_dim}.')
-
-        if weight_shape[0] != input_x_shape[1] and weight_shape[0] != 1:
-            raise ValueError(f'For \'{self.name}\' channel of input_x and weight must be matched,'
-                             f' while channel of input_x is {input_x_shape[1]},'
-                             f' weight_shape[0] is {weight_shape[0]}.')
-
+            raise ValueError(f"For '{self.name}', the weight dimension should be 1, while got {weight_dim}.")
+        if weight_shape[0] != 1 and weight_shape[0] != channel_num:
+            raise ValueError(f"For '{self.name}', the weight shape should be (1,) or "
+                             f"matched with input channel ({channel_num},), but got {weight_shape}")
         return input_x_shape
 
     def infer_dtype(self, input_x_dtype, weight_dtype):
         valid_dtypes = (mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid("input_x", input_x_dtype, valid_dtypes, self.name)
-        validator.check_tensor_dtype_valid("weight", weight_dtype, valid_dtypes, self.name)
+        args = {"input_x": input_x_dtype, "weight": weight_dtype}
+        if context.get_context("device_target") == "GPU":
+            validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
+        else:
+            validator.check_tensor_dtype_valid("input_x", input_x_dtype, valid_dtypes, self.name)
+            validator.check_tensor_dtype_valid("weight", weight_dtype, valid_dtypes, self.name)
         return input_x_dtype
 
 
@@ -7882,6 +7894,7 @@ class AvgPool3D(Primitive):
         [[[[[ 5.  6.]]]
           [[[17. 18.]]]]]
     """
+
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", pad=0, ceil_mode=False,
                  count_include_pad=True, divisor_override=0, data_format="NCDHW"):
@@ -8403,7 +8416,6 @@ class CTCLossV2Grad(Primitive):
         self.add_prim_attr("reduction", reduction)
         validator.check_value_type("zero_infinity", zero_infinity, [bool], self.name)
         self.add_prim_attr("zero_infinity", zero_infinity)
-
 
 
 class Conv3DTranspose(PrimitiveWithInfer):

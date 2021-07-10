@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/nn/prelu_grad_kernel.h"
+#include "backend/kernel_compiler/gpu/nn/prelu_grad_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,7 +25,7 @@ MS_REG_GPU_KERNEL_ONE(PReLUGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      PReLUGpuGradKernel, float)
+                      PReLUGradGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(PReLUGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -33,6 +33,6 @@ MS_REG_GPU_KERNEL_ONE(PReLUGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      PReLUGpuGradKernel, half)
+                      PReLUGradGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
