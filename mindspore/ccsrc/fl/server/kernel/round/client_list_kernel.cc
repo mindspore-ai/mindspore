@@ -109,7 +109,6 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
 bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                               const std::vector<AddressPtr> &outputs) {
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
-  // bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   MS_LOG(INFO) << "Iteration number is " << iter_num << ", ClientListKernel total duration is " << total_duration;
@@ -139,7 +138,6 @@ bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
                            "GetClientList is nullptr or ClientListRsp builder is nullptr.", client_list,
                            std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
       } else {
-        // response = DealClient(iter_num, get_clients_req, fbb);
         DealClient(iter_num, get_clients_req, fbb);
       }
     }

@@ -71,11 +71,19 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
 }
 
 bool CipherInit::Check_Parames() {
-  if (featuremap_ < 1 || secrets_minnums_ < 1 || share_clients_num_need_ < reconstruct_clients_num_need_ ||
-      reconstruct_clients_num_need_ <= secrets_minnums_ || client_num_need_ < share_clients_num_need_) {
-    MS_LOG(ERROR) << "CIPHER Init Params are illegal.";
+  if (featuremap_ < 1) {
+    MS_LOG(ERROR) << "Featuremap size should be positive, but got " << featuremap_;
     return false;
   }
+
+  if (share_clients_num_need_ < reconstruct_clients_num_need_) {
+    MS_LOG(ERROR)
+      << "reconstruct_clients_num_need (which is reconstruct_secrets_threshold + 1) should not be larger "
+         "than share_clients_num_need (which is start_fl_job_threshold*share_secrets_ratio), but got they are:"
+      << reconstruct_clients_num_need_ << ", " << share_clients_num_need_;
+    return false;
+  }
+
   return true;
 }
 
