@@ -19,6 +19,7 @@ from .._checkparam import Rel
 from ..common import dtype as mstype
 from ..nn import acc
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell, _TrainPipelineAccuStepCell
+from ..nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
 from ..ops import functional as F
 from ..parallel._utils import _get_parallel_mode, _get_pipeline_stages
 from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
@@ -184,8 +185,12 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
                 raise ValueError("Only `loss_scale_manager=None` or "
                                  "`loss_scale_manager=FixedLossScaleManager(drop_overflow_update=False)`"
                                  "are supported on device `CPU`. ")
-            network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
-                                                       scale_sense=update_cell).set_train()
+            if _get_pipeline_stages() > 1:
+                network = _TrainPipelineWithLossScaleCell(network, optimizer,
+                                                          scale_sense=update_cell).set_train()
+            else:
+                network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
+                                                           scale_sense=update_cell).set_train()
             return network
     if _get_pipeline_stages() > 1:
         network = _TrainPipelineAccuStepCell(network, optimizer).set_train()

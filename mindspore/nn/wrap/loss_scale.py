@@ -15,6 +15,7 @@
 """Loss scale cell for loss scale training."""
 import mindspore.context as context
 from mindspore.context import ParallelMode
+from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from .cell_wrapper import TrainOneStepCell
 from ..cell import Cell
 from ...common import Tensor, RowTensor
@@ -430,3 +431,100 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         if self.loss_scaling_manager is not None:
             return self.loss_scaling_manager(self.scale_sense, overflow)
         return overflow
+
+
+grad_scale = C.MultitypeFuncGraph("grad_scale")
+shard_grad_scale = C.MultitypeFuncGraph("shard_grad_scale")
+reciprocal = P.Reciprocal()
+
+
+@grad_scale.register("Tensor", "Tensor", "Tensor")
+def tensor_grad_scale_pipeline(scale, grad, accu_grad):
+    accu_grad = F.depend(accu_grad, grad)
+    new_grad = accu_grad * reciprocal(scale)
+    accu_grad = F.depend(accu_grad, new_grad)
+    zeros = F.tensor_mul(accu_grad, 0.0)
+    new_grad = F.depend(new_grad, F.assign(accu_grad, zeros))
+    return new_grad
+
+
+@shard_grad_scale.register("Tensor", "Tensor", "Tensor")
+def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
+    new_grad = grad * reciprocal(scale)
+    accu_grad = F.depend(accu_grad, new_grad)
+    new_grad = F.depend(new_grad, F.assign(accu_grad, F.zeros_like(accu_grad)))
+    return new_grad
+
+
+class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
+    """
+    Append an optimizer to the training network after that the construct
+    function can be called to create the backward graph.
+
+    Args:
+        network (Cell): The training network. Note that loss function should have been added.
+        optimizer (Optimizer): Optimizer for updating the weights.
+        scale_sense (Cell): Cell to do the loss scale.
+    """
+    def __init__(self, network, optimizer, scale_sense):
+        super(_TrainPipelineWithLossScaleCell, self).__init__(network, optimizer, sens=None)
+        self.network = network
+        self.network.add_flags(defer_inline=True)
+        self.weights = optimizer.parameters
+        self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
+        self.optimizer = optimizer
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
+        self.grad_reducer = F.identity
+        self.degree = 1
+        self.cast = P.Cast()
+        self.alloc_status = P.NPUAllocFloatStatus()
+        self.get_status = P.NPUGetFloatStatus()
+        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+        self.base = Tensor(1, mstype.float32)
+        self.less_equal = P.LessEqual()
+        self.hyper_map = C.HyperMap()
+        self.reshape = P.Reshape()
+        self.loss_scaling_manager = None
+        if isinstance(scale_sense, Cell):
+            self.loss_scaling_manager = scale_sense
+            self.scale_sense = Parameter(Tensor(scale_sense.get_loss_scale(), dtype=mstype.float32),
+                                         name="scale_sense")
+        elif isinstance(scale_sense, Tensor):
+            if scale_sense.shape == (1,) or scale_sense.shape == ():
+                self.scale_sense = Parameter(scale_sense, name='scale_sense')
+            else:
+                raise ValueError("The shape of scale_sense must be (1,) or (), but got {}".format(scale_sense.shape))
+        else:
+            raise TypeError("The scale_sense must be Cell or Tensor, but got {}".format(type(scale_sense)))
+        self.opt_shard = _get_enable_parallel_optimizer()
+
+    def construct(self, *inputs):
+        weights = self.weights
+        loss = self.network(*inputs)
+        scaling_sens = self.scale_sense
+        init = self.alloc_status()
+        status_clear = self.clear_before_grad(init)
+        scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
+        grads = self.grad(self.network, weights)(*inputs, scaling_sens_filled)
+        init = F.depend(init, grads)
+        get_status = self.get_status(init)
+        init = F.depend(init, get_status)
+        flag_sum = self.reduce_sum(init, (0,))
+        loss = F.depend(loss, status_clear)
+        if self.opt_shard:
+            grads = self.grad_reducer(grads)
+            grads = self.hyper_map(F.partial(shard_grad_scale, scaling_sens * self.degree), grads, self.accu_grads)
+        else:
+            accu_grads = self.grad_reducer(self.accu_grads)
+            grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads, accu_grads)
+        cond = self.less_equal(self.base, flag_sum)
+        overflow = cond
+        if self.loss_scaling_manager is not None:
+            overflow = self.loss_scaling_manager(self.scale_sense, cond)
+        if overflow:
+            succ = False
+        else:
+            succ = self.optimizer(grads)
+        ret = (loss, overflow, scaling_sens)
+        return F.depend(ret, succ)

@@ -29,6 +29,18 @@
 
 namespace mindspore {
 namespace parallel {
+const std::set<PrimitivePtr> END_NODE_BLACK_LIST = {prim::kPrimDepend, prim::kPrimTupleGetItem,
+                                                    prim::kPrimSoftmaxCrossEntropyWithLogits};
+
+static bool IsInEndNodeBlackList(const CNodePtr &cnode) {
+  for (auto &prim : END_NODE_BLACK_LIST) {
+    if (IsPrimitiveCNode(cnode, prim)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 AnfNodePtr FindAccuGrad(const CNodePtr &cnode) {
   auto pre_node = cnode->input(1);
   while (true) {
@@ -392,7 +404,7 @@ void BroadCastMicroBatch(const CNodePtr &node, NodeUsersMap *node_users_map, con
 AnfNodePtr GetPreNode(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+  if (IsInEndNodeBlackList(cnode)) {
     return GetPreNode(cnode->input(1));
   }
   return cnode;

@@ -3045,6 +3045,9 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     }
     std::string cloned_param_name = cloned_parameter_node->cast<ParameterPtr>()->name();
     auto cloned_param_layout = cloned_parameter_node->user_data<TensorLayout>();
+    if (cloned_param_layout == nullptr) {
+      continue;
+    }
     tensor_info_map[cloned_param_name] = cloned_param_layout;
   }
   if (StrategyCheckpoint::GetInstance().Save(stra_map, tensor_info_map, &manual_shape_map) != SUCCESS) {
