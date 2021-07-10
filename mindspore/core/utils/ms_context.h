@@ -89,6 +89,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_SAVE_COMPILE_CACHE,
   MS_CTX_LOAD_COMPILE_CACHE,
   MS_CTX_ENABLE_MINDRT,
+  MS_CTX_ALREADY_SET_ENABLE_MINDRT,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int
