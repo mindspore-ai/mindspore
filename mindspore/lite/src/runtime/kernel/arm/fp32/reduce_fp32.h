@@ -54,7 +54,6 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
   }
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
   int CallReduceUnit(int task_id);
 

@@ -52,7 +52,7 @@ int ReduceOnSelectedAxes(const TensorC *input, size_t num_axes, const int *actua
 
 int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
+  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
@@ -70,11 +70,11 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   bool keep_dims = param->keep_dims_;
   int out_shape[MAX_SHAPE_SIZE] = {0};
   const size_t out_shape_size = 0;
-  // get axes from input tensor
-  const TensorC *axes_input = inputs[1];
-  if (axes_input->shape_size_ == 1 && axes_input->shape_[0] == 0) {
+  if (inputs_size == 1) {
     return ReduceOnAllAxes(input, output, out_shape, out_shape_size, keep_dims);
   }
+  // get axes from input tensor
+  const TensorC *axes_input = inputs[1];
   int *axes = (int *)axes_input->data_;
   if (axes == NULL) {
     return NNACL_NULL_PTR;
