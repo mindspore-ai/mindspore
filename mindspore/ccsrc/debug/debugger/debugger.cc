@@ -37,6 +37,7 @@
 #include "utils/comm_manager.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "debug/anf_ir_dump.h"
+#include "debug/anf_ir_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/proto_exporter.h"
 #else
@@ -604,13 +605,13 @@ void Debugger::CheckDatasetGraph() {
   // print parameter node names
   const auto &params = graph_ptr_->inputs();
   for (const auto &param : params) {
-    MS_LOG(INFO) << "param: " << param->fullname_with_scope();
+    MS_LOG(INFO) << "param: " << GetKernelNodeName(param);
   }
   // check if there is GetNext or InitDataSetQueue node
   const auto &nodes = graph_ptr_->execution_order();
   for (const auto &node : nodes) {
     auto node_name = AnfAlgo::GetCNodeName(node);
-    MS_LOG(INFO) << "node: " << node->fullname_with_scope();
+    MS_LOG(INFO) << "node: " << GetKernelNodeName(node);
     if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
       MS_LOG(INFO) << "Not enabling debugger for graph " << graph_ptr_->graph_id() << ": found dataset graph node "
                    << node_name;
@@ -1299,7 +1300,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   }
   // for parameters and value nodes, set its execution order to be 0;
   int exec_order = 0;
-  std::string node_name = anf_node->fullname_with_scope();
+  std::string node_name = GetKernelNodeName(anf_node);
   GetFileKernelName(NOT_NULL(&node_name));
   // check if output adde exists, if not, return;
   if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
@@ -1372,7 +1373,7 @@ void Debugger::LoadGraphOutputs() {
   int exec_order = 1;
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
-    std::string kernel_name = node->fullname_with_scope();
+    std::string kernel_name = GetKernelNodeName(node);
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     if (partial_memory_) {
       if (!debug_services_->IsWatchPoint(kernel_name, node)) {
@@ -1381,7 +1382,7 @@ void Debugger::LoadGraphOutputs() {
     }
     for (size_t j = 0; j < output_size; ++j) {
       if (!AnfAlgo::OutputAddrExist(node, j)) {
-        MS_LOG(INFO) << "Cannot find output addr for slot " << j << " for " << node->fullname_with_scope();
+        MS_LOG(INFO) << "Cannot find output addr for slot " << j << " for " << kernel_name;
         continue;
       }
       auto addr = AnfAlgo::GetOutputAddr(node, j);
