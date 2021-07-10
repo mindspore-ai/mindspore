@@ -442,6 +442,11 @@ void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
 }
 
 void Debugger::PostExecuteGraphDebugger() {
+  // On CPU, update dump iteration， Parameters and consts are not dumped here
+  if (device_target_ == kCPUDevice) {
+    DumpJsonParser::GetInstance().UpdateDumpIter();
+    return;
+  }
   // Only GPU is supported for MindRTBackend
   if (device_target_ != kGPUDevice) {
     return;
