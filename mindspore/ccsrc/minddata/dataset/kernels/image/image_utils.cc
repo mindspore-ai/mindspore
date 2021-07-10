@@ -627,8 +627,9 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   }
 }
 
-Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float fx, float fy, float degree,
-              InterpolationMode interpolation, bool expand, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
+Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> center,
+              float degree, InterpolationMode interpolation, bool expand, uint8_t fill_r, uint8_t fill_g,
+              uint8_t fill_b) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
@@ -642,12 +643,14 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     if (input_img.cols > (MAX_INT_PRECISION * 2) || input_img.rows > (MAX_INT_PRECISION * 2)) {
       RETURN_STATUS_UNEXPECTED("Rotate: image is too large and center is not precise.");
     }
-    // default to center of image
-    if (fx == -1) {
+    float fx = 0, fy = 0;
+    if (center.empty()) {
+      // default to center of image
       fx = (input_img.cols - 1) / 2.0;
-    }
-    if (fy == -1) {
       fy = (input_img.rows - 1) / 2.0;
+    } else {
+      fx = center[0];
+      fy = center[1];
     }
     cv::Mat output_img;
     cv::Scalar fill_color = cv::Scalar(fill_b, fill_g, fill_r);

@@ -37,8 +37,9 @@ std::string RotateOperation::Name() const { return kRotateOperation; }
 Status RotateOperation::ValidateParams() {
 #ifndef ENABLE_ANDROID
   // center
-  if (center_.empty() || center_.size() != 2) {
-    std::string err_msg = "Rotate: center must be a vector of two values, got: " + std::to_string(center_.size());
+  if (center_.size() != 0 && center_.size() != 2) {
+    std::string err_msg =
+      "Rotate: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -62,7 +63,7 @@ std::shared_ptr<TensorOp> RotateOperation::Build() {
   }
 
   std::shared_ptr<RotateOp> tensor_op =
-    std::make_shared<RotateOp>(degrees_, interpolation_mode_, expand_, center_[0], center_[1], fill_r, fill_g, fill_b);
+    std::make_shared<RotateOp>(degrees_, interpolation_mode_, expand_, center_, fill_r, fill_g, fill_b);
   return tensor_op;
 #else
   return rotate_op_;
