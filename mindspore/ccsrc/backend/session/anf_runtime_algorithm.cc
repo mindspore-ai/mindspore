@@ -319,19 +319,31 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
     return ret;
   }
 
+  // Value node need get all the elements.
+  if (node->isa<ValueNode>()) {
+    auto value = node->cast<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<ValueTuple>()) {
+      auto value_tuple = value->cast<ValueTuplePtr>();
+      auto value_tuple_size = CountValueNum(value_tuple);
+      for (size_t i = 0; i < value_tuple_size; ++i) {
+        ret.push_back({node, i});
+      }
+    } else {
+      ret.push_back({node, 0});
+    }
+    return ret;
+  }
+
   const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimMakeTuple};
   size_t outputs_num = 1;
-  // Value node may be tuple which has multi outputs.
-  if (IsRealCNodeKernel(node) || node->isa<ValueNode>()) {
+  if (IsRealCNodeKernel(node)) {
     outputs_num = AnfAlgo::GetOutputTensorNum(node);
   }
   // The output may be the tuple of node, so need visit all the outputs of node.
   for (size_t i = 0; i < outputs_num; ++i) {
     auto output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false, return_types);
     MS_EXCEPTION_IF_NULL(output_with_index.first);
-    if (node->isa<ValueNode>()) {
-      output_with_index.second = i;
-    }
 
     // The depend and makeTuple node need recurse.
     if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimDepend) ||
@@ -339,15 +351,6 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
       auto output_vector = GetAllOutputWithIndex(output_with_index.first);
       (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
       continue;
-    }
-
-    // Skip the empty value node.
-    if (output_with_index.first->isa<ValueNode>()) {
-      auto value = output_with_index.first->cast<ValueNodePtr>()->value();
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<ValueTuple>() && (value->cast<ValueTuplePtr>()->size() == 0)) {
-        continue;
-      }
     }
 
     // Ignore the output of front call node.
