@@ -251,7 +251,7 @@ Status SaveToDisk::Save() {
   auto mr_writer = std::make_unique<mindrecord::ShardWriter>();
   std::vector<std::string> blob_fields;
   if (mindrecord::SUCCESS != mindrecord::ShardWriter::initialize(&mr_writer, file_names)) {
-    RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardWriter.");
+    RETURN_STATUS_UNEXPECTED("Error: failed to initialize ShardWriter, please check above `ERROR` level message.");
   }
 
   std::unordered_map<std::string, int32_t> column_name_id_map;

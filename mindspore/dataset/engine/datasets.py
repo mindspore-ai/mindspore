@@ -814,7 +814,7 @@ class Dataset:
             count (int): Number of elements in the dataset to be skipped.
 
         Returns:
-            SkipDataset, dataset skipped.
+            SkipDataset, dataset that containing rows like origin rows subtract skipped rows.
 
         Examples:
             >>> # dataset is an instance of Dataset object.
@@ -1709,8 +1709,11 @@ class Dataset:
                 (isinstance(num_batch, int) and num_batch <= 0):
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
-            raise RuntimeError("Sync_update batch size can only be positive, got : {}.".format(num_batch))
+            raise RuntimeError("Sync_update batch size can only be positive integer, got : {}.".format(num_batch))
         notifiers_dict = self.get_sync_notifiers()
+        if not isinstance(condition_name, str):
+            raise TypeError("Argument condition_name with value {} is not of type str, but got {}."
+                            .format(condition_name, type(condition_name)))
         if condition_name not in notifiers_dict:
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
