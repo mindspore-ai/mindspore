@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-#include "tools/benchmark/run_benchmark.h"
-#include "include/version.h"
+#ifndef MINNIE_BENCHMARK_RUN_BENCHMARK_H_
+#define MINNIE_BENCHMARK_RUN_BENCHMARK_H_
+#include "tools/benchmark/benchmark.h"
+#include "tools/benchmark/benchmark_unified_api.h"
 
-int main(int argc, const char **argv) {
-  MS_LOG(INFO) << mindspore::lite::Version();
-  return mindspore::lite::RunBenchmark(argc, argv);
-}
+namespace mindspore::lite {
+
+int MS_API RunBenchmark(int argc, const char **argv);
+
+}  // namespace mindspore::lite
+#endif  // MINNIE_BENCHMARK_RUN_BENCHMARK_H_

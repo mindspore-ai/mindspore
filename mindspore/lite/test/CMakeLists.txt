@@ -141,6 +141,9 @@ set(TEST_LITE_SRC ${TEST_LITE_SRC} ${KERNEL_REG_SRC})
 if(MSLITE_ENABLE_TOOLS)
     set(TEST_LITE_SRC
         ${TEST_LITE_SRC}
+        ${LITE_DIR}/tools/benchmark/run_benchmark.cc
+        ${LITE_DIR}/tools/benchmark/benchmark_base.cc
+        ${LITE_DIR}/tools/benchmark/benchmark_unified_api.cc
         ${LITE_DIR}/tools/benchmark/benchmark.cc
         ${LITE_DIR}/test/st/benchmark_test.cc
         )
@@ -384,6 +387,8 @@ if(ENABLE_FP16 AND SUPPORT_TRAIN)
     list(APPEND TEST_SRC ${TEST_CASE_KERNEL_FP16_SRC_GRAD})
 endif()
 
+file(GLOB_RECURSE API_SRC ${LITE_DI}/src/cxx_api/*.cc)
+set(TEST_SRC ${TEST_SRC} ${API_SRC})
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
 

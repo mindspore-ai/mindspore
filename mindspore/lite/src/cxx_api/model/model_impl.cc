@@ -43,6 +43,7 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
 
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
+  context_ = ms_context;
   lite::Context lite_context;
   auto status = A2L_ConvertContext(ms_context.get(), &lite_context);
   if (status != kSuccess) {

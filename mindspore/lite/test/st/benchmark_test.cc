@@ -16,7 +16,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include "common/common_test.h"
-#include "tools/benchmark/benchmark.h"
+#include "tools/benchmark/run_benchmark.h"
 
 namespace mindspore {
 namespace lite {
