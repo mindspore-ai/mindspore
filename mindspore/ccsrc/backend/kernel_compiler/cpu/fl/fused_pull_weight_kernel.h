@@ -63,6 +63,7 @@ class FusedPullWeightKernel : public CPUKernel {
       fl_iteration_ = 1;
     }
 
+    MS_LOG(INFO) << "Start pulling weight for federated learning iteration " << fl_iteration_;
     if (!BuildPullWeightReq(fbb)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPullWeight failed.";
       return false;
