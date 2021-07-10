@@ -508,9 +508,9 @@ class _Executor:
         key = generate_key(phase, dic)
         obj.phase_prefix = str(key[1])
         if 'export' in phase:
-            phase = phase + '.' + obj.phase_prefix + '.' + str(obj.create_time)
+            phase = phase + '.' + obj.phase_prefix + '.' + str(obj.create_time) + '.' + str(id(obj))
         else:
-            phase = obj.phase_prefix + phase + '.' + str(obj.create_time)
+            phase = obj.phase_prefix + phase + '.' + str(obj.create_time) + '.' + str(id(obj))
 
         if phase in self.compile_cache.keys():
             logger.debug("%r graph has existed.", phase)
@@ -582,15 +582,15 @@ class _Executor:
         return self._executor.updata_param_node_default_input(phase, new_param)
 
     def _get_shard_strategy(self, obj):
-        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time)
+        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj))
         return self._executor.get_strategy(real_phase)
 
     def _get_num_parallel_ops(self, obj):
-        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time)
+        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj))
         return self._executor.get_num_parallel_ops(real_phase)
 
     def _get_allreduce_fusion(self, obj):
-        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time)
+        real_phase = obj.phase_prefix + obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj))
         return self._executor.get_allreduce_fusion(real_phase)
 
     def has_compiled(self, phase='predict'):
@@ -632,9 +632,9 @@ class _Executor:
             Tensor/Tuple, return execute result.
         """
         if phase == 'save':
-            return self._executor((), phase + '.' + str(obj.create_time))
+            return self._executor((), phase + '.' + str(obj.create_time) + '.' + str(id(obj)))
 
-        phase_real = obj.phase_prefix + phase + '.' + str(obj.create_time)
+        phase_real = obj.phase_prefix + phase + '.' + str(obj.create_time) + '.' + str(id(obj))
         if self.has_compiled(phase_real):
             return self._exec_pip(obj, *args, phase=phase_real)
         raise KeyError('{} graph is not exist.'.format(phase_real))
