@@ -82,6 +82,7 @@ bool TfGeLUFusion::CheckPattern(const EquivPtr &equiv) const {
   if (mul3_x < 0 || fabs(mul3_x - MUL3_X) > DIFF_THRESHOLD) {
     return false;
   }
+  approximate_ = true;
   return true;
 }
 }  // namespace opt

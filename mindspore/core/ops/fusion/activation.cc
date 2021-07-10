@@ -54,6 +54,14 @@ ActivationType Activation::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
+
+void Activation::set_approximate(bool approximate) { this->AddAttr(kApproximate, MakeValue(approximate)); }
+
+bool Activation::get_approximate() const {
+  auto value_ptr = this->GetAttr(kApproximate);
+  return GetValue<bool>(value_ptr);
+}
+
 void Activation::Init(const float alpha, const float min_val, const float max_val,
                       const ActivationType &activation_type) {
   this->set_alpha(alpha);

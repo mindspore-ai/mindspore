@@ -251,6 +251,7 @@ constexpr auto kNumberSplit = "number_split";
 constexpr auto kSplitDim = "split_dim";
 constexpr auto kPadTop = "pad_top";
 constexpr auto kTransFormat = "trans_format";
+constexpr auto kApproximate = "approximate";
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
 

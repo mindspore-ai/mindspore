@@ -41,6 +41,9 @@ class GeLUFusion : public PatternProcessPass {
 
  private:
   CNodePtr CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
+
+ protected:
+  mutable bool approximate_{false};
 };
 }  // namespace opt
 }  // namespace mindspore
