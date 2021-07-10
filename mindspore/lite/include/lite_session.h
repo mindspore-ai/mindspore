@@ -128,29 +128,6 @@ class MS_API LiteSession {
   /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
   virtual int Resize(const Vector<tensor::MSTensor *> &inputs, const Vector<Vector<int>> &dims) = 0;
 
-  /// \brief Static method to create a TrainSession object
-  ///
-  /// \param[in] filename name of flatbuffer that holds the flatbuffer
-  /// \param[in] context Defines the context of the session to be created
-  /// \param[in] train_mode training mode to initialize Session with
-  /// \param[in] cfg training configuration, set to null for default configuration
-  ///
-  /// \return Pointer of MindSpore LiteSession
-  static LiteSession *CreateTrainSession(const std::string &filename, const lite::Context *context,
-                                         bool train_mode = false, const lite::TrainCfg *cfg = nullptr);
-
-  /// \brief Static method to create a TransferSession object
-  ///
-  /// \param[in] filename_backbone Filename to read backbone net flatbuffer from
-  /// \param[in] filename_head Filename to read head net flatbuffer from
-  /// \param[in] context Defines the context of the session to be created
-  /// \param[in] train_mode training mode to initialize Session with
-  ///
-  /// \return Pointer of MindSpore LiteSession
-  static LiteSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
-                                            const lite::Context *context, bool train_mode = false,
-                                            const lite::TrainCfg *cfg = nullptr);
-
   /// \brief Set model to train mode
   /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h
   virtual int Train() { return mindspore::lite::RET_ERROR; }
