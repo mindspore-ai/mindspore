@@ -398,6 +398,20 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   if (prim != nullptr) {
     prim->AddAttr(attr_name, converted_ret);
   }
+
+  if (attr_name == "primitive_target") {
+    MS_EXCEPTION_IF_NULL(converted_ret);
+    if (!converted_ret->isa<StringImm>()) {
+      MS_LOG(EXCEPTION) << "Only support string CPU|GPU|Ascend for primitive_target";
+    }
+
+    auto target = GetValue<std::string>(converted_ret);
+    if (target != kCPUDevice && target != kGPUDevice) {
+      auto context_ptr = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context_ptr);
+      context_ptr->set_param<bool>(MS_CTX_ALREADY_SET_ENABLE_MINDRT, true);
+    }
+  }
 }
 
 void PrimitivePyAdapter::DelPyAttr(const py::str &name) {

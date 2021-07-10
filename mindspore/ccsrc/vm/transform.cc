@@ -566,6 +566,10 @@ BackendPtr CreateBackend() {
 void SetMindRTEnable() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<bool>(MS_CTX_ALREADY_SET_ENABLE_MINDRT)) {
+    return;
+  }
+
   std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if ((target != kGPUDevice) && (target != kCPUDevice)) {
     return;
