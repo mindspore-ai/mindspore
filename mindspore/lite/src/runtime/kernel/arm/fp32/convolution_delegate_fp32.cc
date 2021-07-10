@@ -168,7 +168,7 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
     } else {
 #ifdef ENABLE_AVX
       if (conv_param->input_channel_ / op_parameter_->thread_num_ > 64 ||
-          conv_param->input_h_ < conv_param->thread_num_) {
+          conv_param->input_h_ < conv_param->thread_num_ || conv_param->kernel_h_ >= 7 || conv_param->kernel_w_ >= 7) {
         kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
           origin_weight_, origin_bias_);
