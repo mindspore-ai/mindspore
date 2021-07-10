@@ -96,7 +96,7 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
                                    args_inputs);
   }
-  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context());
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
 
   if (out_node->isa<CNode>()) {
     auto out_cnode = out_node->cast<CNodePtr>();
@@ -181,7 +181,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   }
   ScopeGuard scope_guard(scope);
   AnfNodePtr new_vnode = NewValueNode(new_graph);
-  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_vnode, out_conf->context());
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_vnode, out_conf->context(), out_conf->func_graph());
 
   return engine->ForwardConfig(out_conf, fn_conf);
 }
@@ -263,7 +263,7 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   constexpr size_t source_node_index = 2;
   AnfNodePtr new_node =
     MixedPrecisionCastHelper(out_node_inputs[source_node_index], args_spec_list[1], out_node_inputs[1], func_graph);
-  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context());
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
 
   if (new_node->isa<CNode>()) {
     auto new_cnode = new_node->cast<CNodePtr>();
@@ -813,7 +813,7 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
     new_cnode = func_graph->NewCNode({new_cnode});
   }
   AnalysisEnginePtr eng = old_conf->engine();
-  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, old_conf->context());
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, old_conf->context(), old_conf->func_graph());
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
@@ -859,7 +859,7 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engin
   func_graph->ReplaceInOrder(out_node, new_node);
 
   AnalysisEnginePtr eng = out_conf->engine();
-  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context());
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
@@ -1277,7 +1277,7 @@ class PartialEvaluator : public Evaluator {
     ScopeGuard scope_guard(scope);
 
     CNodePtr new_cnode = func_graph->NewCNode(new_nodes_inputs);
-    AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context());
+    AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
     return engine->ForwardConfig(out_conf, fn_conf);
   }
 };
