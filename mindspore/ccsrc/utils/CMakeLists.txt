@@ -1,4 +1,8 @@
 file(GLOB_RECURSE _UTILS_SRC_LIST ./*.cc)
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    file(GLOB_RECURSE _UTILS_SIGNAL_SRC_FILES ./signal_util.cc)
+    list(REMOVE_ITEM _UTILS_SRC_LIST ${_UTILS_SIGNAL_SRC_FILES})
+endif()
 
 if(NOT ENABLE_GE)
     file(GLOB_RECURSE _UTILS_GE_SRC_FILES ./callbacks_ge.cc)

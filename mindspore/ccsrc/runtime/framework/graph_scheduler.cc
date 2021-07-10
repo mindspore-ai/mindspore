@@ -27,6 +27,9 @@
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 #include "utils/ms_context.h"
+#if !defined(_WIN32) && !defined(_WIN64)
+#include "utils/signal_util.h"
+#endif
 #include "common/trans.h"
 #include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DUMP_IR
@@ -402,6 +405,14 @@ bool RunInStepMode(const ActorSet *actor_set, const std::vector<TensorPtr> *inpu
   MsException::Instance().CheckException();
   return result_future.IsOK();
 }
+
+#if !defined(_WIN32) && !defined(_WIN64)
+void IntHandler(int, siginfo_t *, void *) {
+  int this_pid = getpid();
+  MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
+  (void)kill(this_pid, SIGTERM);
+}
+#endif
 }  // namespace
 
 void GraphScheduler::Clear() {
@@ -749,7 +760,9 @@ void GraphScheduler::PrepareDataForControlNode(HostQueueDataSourceActor *host_da
 bool GraphScheduler::Run(const ActorSet *actor_set, GraphExecutionStrategy strategy,
                          const std::vector<TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(actor_set);
-
+#if !defined(_WIN32) && !defined(_WIN64)
+  SignalGuard sg(IntHandler);
+#endif
   if (strategy == GraphExecutionStrategy::kStep) {
     return RunInStepMode(actor_set, input_tensors);
   }

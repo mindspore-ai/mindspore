@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "runtime/device/ascend/signal_util.h"
+#include "utils/signal_util.h"
 #include <csignal>
 #include "utils/log_adapter.h"
 #include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
-SignalGuard::SignalGuard() { RegisterHandlers(); }
+SignalGuard::SignalGuard(IntHandlerFunc IntHandler) { RegisterHandlers(IntHandler); }
 
 SignalGuard::~SignalGuard() {
   if (old_handler != nullptr) {
@@ -32,23 +32,16 @@ SignalGuard::~SignalGuard() {
   }
 }
 
-void SignalGuard::RegisterHandlers() {
+void SignalGuard::RegisterHandlers(IntHandlerFunc IntHandler) {
   struct sigaction old_int_action;
   (void)sigaction(SIGINT, nullptr, &old_int_action);
   if (old_int_action.sa_sigaction != nullptr) {
     MS_LOG(DEBUG) << "The signal has been registered";
     old_handler = old_int_action.sa_sigaction;
   }
-  int_action.sa_sigaction = &IntHandler;
+  int_action.sa_sigaction = IntHandler;
   (void)sigemptyset(&int_action.sa_mask);
   int_action.sa_flags = SA_RESTART | SA_SIGINFO;
   (void)sigaction(SIGINT, &int_action, nullptr);
-}
-
-void SignalGuard::IntHandler(int, siginfo_t *, void *) {
-  kernel::AscendKernelBuildClient::Instance().Close();
-  int this_pid = getpid();
-  MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
-  (void)kill(this_pid, SIGTERM);
 }
 }  // namespace mindspore
