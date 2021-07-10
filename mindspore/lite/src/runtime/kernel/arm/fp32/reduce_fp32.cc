@@ -53,8 +53,6 @@ int ReduceCPUKernel::Init() {
   return ReSize();
 }
 
-int ReduceCPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
-
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
   if (data_type_ == kDataTypeFloat) {
     if (!reducer_) {
