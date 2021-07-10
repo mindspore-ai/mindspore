@@ -14,7 +14,6 @@
 # ============================================================================
 """export checkpoint file into air, onnx, mindir models"""
 
-import re
 import numpy as np
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
@@ -22,15 +21,6 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 from src.maskrcnn.mask_rcnn_r50 import MaskRcnn_Infer
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
-
-lss = [int(re.findall(r'[0-9]+', i)[0]) for i in config.feature_shapes]
-config.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
-config.roi_layer = dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
-config.warmup_ratio = 1/3.0
-config.mask_shape = (28, 28)
-train_cls = [i for i in re.findall(r'[a-zA-Z\s]+', config.coco_classes) if i != ' ']
-config.coco_classes = np.array(train_cls)
-config.batch_size = config.batch_size_export
 
 if not config.enable_modelarts:
     config.ckpt_file = config.ckpt_file_local
@@ -45,6 +35,7 @@ def modelarts_process():
 @moxing_wrapper(pre_process=modelarts_process)
 def export_maskrcnn():
     """ export_maskrcnn """
+    config.test_batch_size = config.batch_size
     net = MaskRcnn_Infer(config=config)
     param_dict = load_checkpoint(config.ckpt_file)
 

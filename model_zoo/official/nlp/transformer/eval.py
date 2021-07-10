@@ -106,7 +106,7 @@ def load_weights(model_path):
 
 def modelarts_pre_process():
     config.output_file = os.path.join(config.output_path, config.output_file)
-    config.data_file = os.path.join(config.data_file, 'ende-l128-mindrecord_128_00')
+    config.data_file = os.path.join(config.data_file, config.data_file_name)
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_transformer_eval():

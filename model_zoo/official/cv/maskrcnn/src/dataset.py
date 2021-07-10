@@ -17,7 +17,6 @@
 from __future__ import division
 
 import os
-import re
 import numpy as np
 from numpy import random
 import cv2
@@ -28,8 +27,6 @@ from mindspore.mindrecord import FileWriter
 
 from .model_utils.config import config
 
-
-config.mask_shape = (28, 28)
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.
@@ -390,10 +387,7 @@ def create_coco_label(is_training):
         data_type = config.train_data_type
 
     # Classes need to train or test.
-    # train_cls = config.coco_classes
-    train_cls = [i for i in re.findall(r'[a-zA-Z\s]+', config.coco_classes) if i != ' ']
-    train_cls = np.array(train_cls)
-    print(train_cls)
+    train_cls = config.coco_classes
 
     train_cls_dict = {}
     for i, cls in enumerate(train_cls):
