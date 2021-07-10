@@ -127,18 +127,17 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
                          [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
     MS_EXCEPTION_IF_NULL(func_graph_manager_);
     func_graph_manager_->AddFuncGraph(func_graph);
-
     root_func_graph_ = func_graph;
-
-    AnalysisContextPtr empty_context = AnalysisContext::DummyContext();
 
     // Running the analyzer.
     ResetFunctionCallDepth();
     ResetStackFrameDepth();
-    AnalysisContextPtr root_context = Run(func_graph, empty_context, args_conf_list);
+    AnalysisContextPtr dummy_context = AnalysisContext::DummyContext();
+    AnalysisContextPtr root_context = Run(func_graph, dummy_context, args_conf_list);
     MS_EXCEPTION_IF_NULL(root_context);
-    MS_EXCEPTION_IF_NULL(root_context->func_graph());
-    AnfNodeConfigPtr output_conf = MakeConfig(root_context->func_graph()->get_return(), root_context);
+    auto root_context_fg = root_context->func_graph();
+    MS_EXCEPTION_IF_NULL(root_context_fg);
+    AnfNodeConfigPtr output_conf = MakeConfig(root_context_fg->get_return(), root_context, root_context_fg);
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_LOG(INFO) << func_graph->ToString() << ": Run finished.";
 
@@ -291,7 +290,8 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   return out;
 }
 
-AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context) {
+AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,
+                                                         const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
@@ -300,29 +300,29 @@ AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, 
   AnfNodePtr func_node = inputs[0];
   MS_EXCEPTION_IF_NULL(func_node);
   MS_LOG(DEBUG) << "Current CNode function: " << func_node->DebugString();
-  AnfNodeConfigPtr func_conf = MakeConfig(func_node, context);
+  AnfNodeConfigPtr func_conf = MakeConfig(func_node, context, func_graph);
   MS_EXCEPTION_IF_NULL(func_conf);
   // Keep it in a local variable, otherwise smart pointer will free it.
-  auto maybe_func_eval_result = func_conf->ObtainEvalResult();
-  AbstractBasePtr maybe_func = maybe_func_eval_result->abstract();
-  if (maybe_func == nullptr) {
+  auto possible_func_eval_result = func_conf->ObtainEvalResult();
+  AbstractBasePtr possible_func = possible_func_eval_result->abstract();
+  if (possible_func == nullptr) {
     MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString();
   }
-  return maybe_func;
+  return possible_func;
 }
 
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
-  AbstractBasePtr maybe_func = GetCNodeOperatorAbstract(cnode, conf->context());
-  if (maybe_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+  AbstractBasePtr possible_func = GetCNodeOperatorAbstract(cnode, conf->context(), conf->func_graph());
+  if (possible_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
     MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
-    return std::make_shared<EvalResult>(maybe_func->Clone(), std::make_shared<AttrValueMap>());
+    return std::make_shared<EvalResult>(possible_func->Clone(), std::make_shared<AttrValueMap>());
   }
 
-  AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
+  AbstractFunctionPtr func = dyn_cast<AbstractFunction>(possible_func);
   if (func == nullptr) {
-    MS_LOG(ERROR) << "Can not cast to a AbstractFunction: " << maybe_func->ToString() << ".";
+    MS_LOG(ERROR) << "Can not cast to a AbstractFunction: " << possible_func->ToString() << ".";
     MS_EXCEPTION(ValueError) << "This may be not defined, and it can't be a operator. Please check code.";
   }
 
@@ -331,7 +331,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   auto &inputs = cnode->inputs();
   for (std::size_t i = 1; i < inputs.size(); i++) {
     const AnfNodePtr &node = inputs[i];
-    args_conf_list.push_back(MakeConfig(node, conf->context()));
+    args_conf_list.push_back(MakeConfig(node, conf->context(), conf->func_graph()));
   }
   std::vector<EvaluatorPtr> evaluators;
 

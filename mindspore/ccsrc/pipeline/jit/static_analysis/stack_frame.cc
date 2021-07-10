@@ -25,7 +25,7 @@ AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &eng
   AbstractBasePtrList args_abs_list;
   auto &inputs = current_cnode->inputs();
   for (std::size_t i = 1; i < inputs.size(); i++) {
-    auto config = engine->MakeConfig(inputs[i], current_context_);
+    auto config = engine->MakeConfig(inputs[i], current_context_, current_context_->func_graph());
     auto abs = config->ObtainEvalResult()->abstract();
     args_abs_list.push_back(abs);
   }
@@ -90,7 +90,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   for (size_t i = 0; i < nargs; i++) {
     const auto &arg_abs = args_abs_list[i];
     const auto &node = fg->parameters()[i];
-    AnfNodeConfigPtr conf = engine->MakeConfig(node, new_context);
+    AnfNodeConfigPtr conf = engine->MakeConfig(node, new_context, new_context->func_graph());
     engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg_abs, nullptr));
   }
 
@@ -107,14 +107,14 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
     return nullptr;
   }
   auto cnode = current_node->cast<CNodePtr>();
-  auto maybe_func = engine->GetCNodeOperatorAbstract(cnode, current_context_);
+  auto maybe_func = engine->GetCNodeOperatorAbstract(cnode, current_context_, current_context_->func_graph());
   if (!maybe_func->isa<abstract::MetaFuncGraphAbstractClosure>() &&
       !maybe_func->isa<abstract::FuncGraphAbstractClosure>()) {
     return nullptr;  // Not call FuncGraph or MetaFuncGraph.
   }
 
   // It's FuncGraph Call or MetaFuncGraph Call. `maybe_func` is definitely a AbstractFunction.
-  AnfNodeConfigPtr call_node_conf = engine->MakeConfig(cnode, current_context_);
+  AnfNodeConfigPtr call_node_conf = engine->MakeConfig(cnode, current_context_, current_context_->func_graph());
   // Enter the call CNode.
   trace::TraceEvalCNodeEnter(call_node_conf);
   auto res = DoJump(engine, cnode, dyn_cast<AbstractFunction>(maybe_func));
@@ -129,7 +129,7 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   auto &current_node = NextNode();
   MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
                 << ", current_context_: " << current_context_->ToString();
-  AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_);
+  AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_, current_context_->func_graph());
   auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
   MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString()
                 << ") = " << node_eval_result->abstract()->ToString();
@@ -153,7 +153,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   auto &current_node = NextNode();
   MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
                 << ", current_context_: " << current_context_->ToString();
-  AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_);
+  AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_, current_context_->func_graph());
   engine->SaveEvalResultInCache(node_conf, result);
 
   // Leave the call CNode.

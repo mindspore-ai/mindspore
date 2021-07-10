@@ -91,8 +91,13 @@ using ConfigPtrList = std::vector<ConfigPtr>;
 // Config to a certain node in a certain context.
 class AnfNodeConfig : public Config {
  public:
-  AnfNodeConfig(const AnalysisEnginePtr &engine, const AnfNodePtr &node, const AnalysisContextPtr &context)
-      : Config(), engine_(std::weak_ptr<AnalysisEngine>(engine)), node_(node), context_(nullptr) {
+  AnfNodeConfig(const AnalysisEnginePtr &engine, const AnfNodePtr &node, const AnalysisContextPtr &context,
+                const FuncGraphPtr &func_graph)
+      : Config(),
+        engine_(std::weak_ptr<AnalysisEngine>(engine)),
+        node_(node),
+        context_(nullptr),
+        func_graph_(func_graph) {
     FuncGraphPtr fg;
     if (IsValueNode<FuncGraph>(node)) {
       auto v = node->cast<ValueNodePtr>();
@@ -123,6 +128,8 @@ class AnfNodeConfig : public Config {
 
   AnfNodePtr node() const { return node_; }
 
+  FuncGraphPtr func_graph() const { return func_graph_; }
+
   AnalysisEnginePtr engine() const { return engine_.lock(); }
 
   // used by unordered_map;
@@ -132,13 +139,14 @@ class AnfNodeConfig : public Config {
     if (context_->IsDummyContext() && other.context_->IsDummyContext()) {
       return true;
     }
+    // Don't check `func_graph_` equality.
     return (node_ == other.node_) && (context_ == other.context_);
   }
 
   std::string ToString() const override {
     std::ostringstream buffer;
     buffer << "Node: " << node_ << "/" << node_->DebugString() << "-uid(" << node_->UniqueId()
-           << "), Context: " << context_ << "/" << context_->ToString();
+           << "), Context: " << context_ << "/" << context_->ToString() << ", FuncGraph: " << func_graph_->ToString();
     return buffer.str();
   }
 
@@ -148,7 +156,10 @@ class AnfNodeConfig : public Config {
   // weak_ptr to break Config cycle.
   std::weak_ptr<AnalysisEngine> engine_;
   AnfNodePtr node_;
+  // Which context the node would be called, usually in owner func graph context.
   AnalysisContextPtr context_;
+  // Where to call the node.
+  FuncGraphPtr func_graph_;
 };
 
 using AnfNodeConfigPtr = std::shared_ptr<AnfNodeConfig>;
@@ -236,15 +247,17 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   // Return the Evaluator for the given function.
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
 
-  AbstractBasePtr GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context);
+  AbstractBasePtr GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,
+                                           const FuncGraphPtr &func_graph);
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf);
   EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
   EvalResultPtr Execute(const AbstractFunctionPtr &fn, const AbstractBasePtrList &args_spec_list);
   void Clear();
   void ClearEvaluatorCache();
-  AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node, const AnalysisContextPtr &context) {
-    return std::make_shared<AnfNodeConfig>(shared_from_this(), node, context);
+  AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node, const AnalysisContextPtr &context,
+                              const FuncGraphPtr &func_graph) {
+    return std::make_shared<AnfNodeConfig>(shared_from_this(), node, context, func_graph);
   }
   // Overloaded function.
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &fn);

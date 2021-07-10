@@ -79,7 +79,7 @@ TEST_F(TestAbstract, TestParseDataClass) {
   ValuePtr obj = std::make_shared<parse::ClassObject>(fn, "TestFoo");
 
   ValueNodePtr fn_node = NewValueNode(obj);
-  AnfNodeConfigPtr fn_conf = std::make_shared<AnfNodeConfig>(nullptr, fn_node, nullptr);
+  AnfNodeConfigPtr fn_conf = std::make_shared<AnfNodeConfig>(nullptr, fn_node, nullptr, nullptr);
   AbstractBasePtr foo = ToAbstract(obj, nullptr, fn_conf);
   ASSERT_TRUE(foo != nullptr);
 
