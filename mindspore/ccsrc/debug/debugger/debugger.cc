@@ -188,39 +188,6 @@ void Debugger::EnableDebugger() {
   debug_services_ = std::make_unique<DebugServices>();
 }
 
-void Debugger::SetOpOverflowBinPath(uint32_t graph_id) {
-#ifdef ENABLE_D
-  // set operation overflow info
-  overflow_bin_path_.insert(std::pair<uint32_t, std::string>(
-    graph_id, DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_id, device_id_)));
-  // new overflow dump files will have a timestamp greater than last_overflow_bin_
-  auto overflow_bin_path = overflow_bin_path_.find(graph_id)->second;
-  MS_LOG(INFO) << "overflow_bin_path = " << overflow_bin_path;
-  DIR *d = opendir(overflow_bin_path.c_str());
-  if (d != nullptr) {
-    struct dirent *dir;
-    while ((dir = readdir(d)) != nullptr) {
-      if (dir->d_type == DT_REG) {
-        std::string file_path = overflow_bin_path;
-        file_path.append(dir->d_name);
-        std::size_t found = file_path.find_last_of(".");
-        if (found == std::string::npos) {
-          continue;
-        }
-        std::string overflow_time = file_path.substr(found + 1);
-        if (stod(overflow_time) <= last_overflow_bin_) {
-          MS_LOG(INFO) << "Old op overflow bin folder" << file_path;
-          continue;
-        }
-        last_overflow_bin_ = stod(overflow_time);
-      }
-    }
-    MS_LOG(INFO) << "last op overflow bin folder" << last_overflow_bin_;
-    closedir(d);
-  }
-#endif
-}
-
 void Debugger::CheckDatasetSinkMode() {
   if (CheckDebuggerDumpEnabled() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     MS_EXCEPTION(NotSupportError)
@@ -572,9 +539,6 @@ void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
       // add new graph proto to graph_proto_list_
       graph_proto_list_.push_back(graph_proto);
       graph_ptr_list_.push_back(graph_ptr);
-#ifdef ENABLE_D
-      SetOpOverflowBinPath(graph_ptr->graph_id());
-#endif
       not_dataset_graph_sum_++;
     }
     // reset is_dataset_graph to be false
@@ -1175,83 +1139,59 @@ uint64_t BytestoUInt64(const std::vector<char> &buffer) {
 }
 
 std::vector<std::string> Debugger::CheckOpOverflow() {
-  std::vector<double> bin_list;
   std::vector<std::string> op_names;
-  for (const auto &[graph_id, overflow_bin_path] : overflow_bin_path_) {
-    DIR *d = opendir(overflow_bin_path.c_str());
-    MS_LOG(INFO) << "processing bin file path " << overflow_bin_path << ", graph id " << graph_id;
-    if (d != nullptr) {
-      struct dirent *dir = nullptr;
-      while ((dir = readdir(d)) != nullptr) {
-        if (dir->d_type == DT_REG) {
-          std::string file_path = overflow_bin_path;
-          file_path.append(dir->d_name);
-          std::string file_name = dir->d_name;
-          std::size_t found = file_name.find_last_of(".");
-          if (found == std::string::npos) {
-            continue;
-          }
-          std::string overflow_time = file_name.substr(found + 1);
-          if (stod(overflow_time) <= last_overflow_bin_) {
-            MS_LOG(INFO) << "File already processed " << file_name;
-            continue;
-          }
-          bin_list.push_back(stod(overflow_time));
-          std::fstream infile;
-          infile.open(file_path.c_str(), std::ios::binary | std::ios::in);
-          if (!infile.is_open()) {
-            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
-            continue;
-          }
-          MS_LOG(INFO) << "Open overflow bin file " << file_name;
-          const uint32_t offset = 321;
-          (void)infile.seekg(offset, std::ios::beg);
-          std::vector<char> buffer;
-          const size_t buf_size = 256;
-          buffer.resize(buf_size);
-          (void)infile.read(buffer.data(), buf_size);
-          const uint8_t stream_id_offset = 16;
-          const uint8_t task_id_offset = 24;
-          // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
-          // byte values currently.
-          uint64_t stream_id = BytestoUInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
-          uint64_t task_id = BytestoUInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
-          MS_LOG(INFO) << "Overflow stream_id " << stream_id << ", task_id " << task_id << ".";
-          auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
-          if (op != debugger_->stream_task_to_opname_.end()) {
-            MS_LOG(ERROR) << "Overflow detected on node " << op->second << std::endl;
-            op_names.push_back(op->second);
-          } else {
-            MS_LOG(INFO) << "No overflow is detected " << std::endl;
-          }
-          infile.close();
+  std::string overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id());
+  MS_LOG(INFO) << "Processing bin file path " << overflow_bin_path;
+  DIR *d = opendir(overflow_bin_path.c_str());
+  if (d != nullptr) {
+    struct dirent *dir = nullptr;
+    while ((dir = readdir(d)) != nullptr) {
+      if (dir->d_type == DT_REG) {
+        std::string file_path = overflow_bin_path;
+        std::string file_name = dir->d_name;
+        file_path.append(file_name);
+        std::fstream infile;
+        infile.open(file_path.c_str(), std::ios::binary | std::ios::in);
+        if (!infile.is_open()) {
+          MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
+          continue;
         }
+        // start of op overflow data in bin file
+        const uint32_t offset = 321;
+        (void)infile.seekg(offset, std::ios::beg);
+        std::vector<char> buffer;
+        // size of op overflow info section
+        const size_t buf_size = 256;
+        buffer.resize(buf_size);
+        (void)infile.read(buffer.data(), buf_size);
+        const uint8_t stream_id_offset = 16;
+        const uint8_t task_id_offset = 24;
+        // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
+        // byte values currently.
+        uint64_t stream_id = BytestoUInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
+        uint64_t task_id = BytestoUInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
+        MS_LOG(INFO) << "Overflow bin file " << file_name << ", overflow stream_id " << stream_id << ", task_id "
+                     << task_id << ".";
+        auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
+        if (op != debugger_->stream_task_to_opname_.end()) {
+          MS_LOG(INFO) << "Overflow detected on node " << op->second << std::endl;
+          op_names.push_back(op->second);
+        } else {
+          MS_LOG(INFO) << "No overflow is detected " << std::endl;
+        }
+        infile.close();
       }
-    } else {
-      MS_LOG(INFO) << "OverFlow bin directory does not exist!";
     }
-    closedir(d);
+  } else {
+    MS_LOG(INFO) << "OverFlow bin directory does not exist!";
   }
+  closedir(d);
 
   if (!op_names.empty()) {
-    MS_LOG(ERROR) << "These operation overflows are detected " << op_names;
+    MS_LOG(INFO) << "These operation overflows are detected " << op_names;
   }
 
-  for (auto &i : bin_list) {
-    if (i > last_overflow_bin_) {
-      last_overflow_bin_ = i;
-    }
-  }
-
-  auto iter_op_names = overflow_ops_.find(num_step_);
-  if (iter_op_names == overflow_ops_.end()) {
-    overflow_ops_.insert(std::pair<uint32_t, std::vector<std::string>>(num_step_, op_names));
-
-    return op_names;
-  }
-  iter_op_names->second.insert(std::end(iter_op_names->second), std::begin(op_names), std::end(op_names));
-
-  return iter_op_names->second;
+  return op_names;
 }
 
 void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
