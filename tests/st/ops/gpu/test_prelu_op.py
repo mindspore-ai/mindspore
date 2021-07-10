@@ -51,8 +51,7 @@ def judge_result_correct(result, expect):
     assert np.allclose(result, expect, rtol=1.e-2)
 
 
-def test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode):
-    context.set_context(mode=mode)
+def test_prelu(x, weight, expect_forward, expect_dx, expect_dw):
     prelu_forward = PReLUOpNet()
     prelu_backward = PReLUOpGradNet(prelu_forward)
     forward_output = prelu_forward(x, weight)
@@ -64,14 +63,14 @@ def test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode):
     judge_result_correct(backward_output[1], expect_dw)
 
 
+context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
+dtypes = [mstype.float16, mstype.float32]
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight():
-    context.set_context(device_target="GPU")
-    dtypes = [mstype.float16, mstype.float32]
-    modes = [context.GRAPH_MODE, context.GRAPH_MODE]
-
     x = np.arange(-10, 26).reshape((2, 3, 2, 3)) * 0.7
     weight = np.array([0.6])
     expect_forward = np.where(x >= 0, x, weight * x)
@@ -79,23 +78,18 @@ def test_prelu_single_weight():
     expect_dw = np.sum(np.where(x >= 0, 0, x)).reshape((1,))
 
     for dtype in dtypes:
-        for mode in modes:
-            x = Tensor(x, dtype)
-            weight = Tensor(weight, dtype)
-            expect_forward = Tensor(expect_forward, dtype)
-            expect_dx = Tensor(expect_dx, dtype)
-            expect_dw = Tensor(expect_dw, dtype)
-            test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode)
+        x = Tensor(x, dtype)
+        weight = Tensor(weight, dtype)
+        expect_forward = Tensor(expect_forward, dtype)
+        expect_dx = Tensor(expect_dx, dtype)
+        expect_dw = Tensor(expect_dw, dtype)
+        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_multiple_weight():
-    context.set_context(device_target="GPU")
-    dtypes = [mstype.float16, mstype.float32]
-    modes = [context.GRAPH_MODE, context.GRAPH_MODE]
-
     x = np.arange(-10, 26).reshape((2, 3, 2, 3)) * 0.6
     weight = np.array([0.2, 0.3, 0.4])
     expect_forward = np.array([[[[-1.20, -1.08, -0.96],
@@ -125,23 +119,18 @@ def test_prelu_multiple_weight():
     expect_dw = np.array([-27.0, -6.0, 0.0])
 
     for dtype in dtypes:
-        for mode in modes:
-            x = Tensor(x, dtype)
-            weight = Tensor(weight, dtype)
-            expect_forward = Tensor(expect_forward, dtype)
-            expect_dx = Tensor(expect_dx, dtype)
-            expect_dw = Tensor(expect_dw, dtype)
-            test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode)
+        x = Tensor(x, dtype)
+        weight = Tensor(weight, dtype)
+        expect_forward = Tensor(expect_forward, dtype)
+        expect_dx = Tensor(expect_dx, dtype)
+        expect_dw = Tensor(expect_dw, dtype)
+        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight_0_D():
-    context.set_context(device_target="GPU")
-    dtypes = [mstype.float16, mstype.float32]
-    modes = [context.GRAPH_MODE, context.GRAPH_MODE]
-
     x = np.array(-0.8)
     weight = np.array([0.6])
     expect_forward = np.array(-0.48)
@@ -149,23 +138,18 @@ def test_prelu_single_weight_0_D():
     expect_dw = np.array([-0.8])
 
     for dtype in dtypes:
-        for mode in modes:
-            x = Tensor(x, dtype)
-            weight = Tensor(weight, dtype)
-            expect_forward = Tensor(expect_forward, dtype)
-            expect_dx = Tensor(expect_dx, dtype)
-            expect_dw = Tensor(expect_dw, dtype)
-            test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode)
+        x = Tensor(x, dtype)
+        weight = Tensor(weight, dtype)
+        expect_forward = Tensor(expect_forward, dtype)
+        expect_dx = Tensor(expect_dx, dtype)
+        expect_dw = Tensor(expect_dw, dtype)
+        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight_1_D():
-    context.set_context(device_target="GPU")
-    dtypes = [mstype.float16, mstype.float32]
-    modes = [context.GRAPH_MODE, context.GRAPH_MODE]
-
     x = np.arange(-10, 26).reshape((36,)) * 0.7
     weight = np.array([0.6])
     expect_forward = np.where(x >= 0, x, weight * x)
@@ -173,23 +157,18 @@ def test_prelu_single_weight_1_D():
     expect_dw = np.sum(np.where(x >= 0, 0, x)).reshape((1,))
 
     for dtype in dtypes:
-        for mode in modes:
-            x = Tensor(x, dtype)
-            weight = Tensor(weight, dtype)
-            expect_forward = Tensor(expect_forward, dtype)
-            expect_dx = Tensor(expect_dx, dtype)
-            expect_dw = Tensor(expect_dw, dtype)
-            test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode)
+        x = Tensor(x, dtype)
+        weight = Tensor(weight, dtype)
+        expect_forward = Tensor(expect_forward, dtype)
+        expect_dx = Tensor(expect_dx, dtype)
+        expect_dw = Tensor(expect_dw, dtype)
+        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight_2_D():
-    context.set_context(device_target="GPU")
-    dtypes = [mstype.float16, mstype.float32]
-    modes = [context.GRAPH_MODE, context.GRAPH_MODE]
-
     x = np.arange(-10, 26).reshape((4, 9)) * 0.7
     weight = np.array([0.6])
     expect_forward = np.where(x >= 0, x, weight * x)
@@ -197,23 +176,18 @@ def test_prelu_single_weight_2_D():
     expect_dw = np.sum(np.where(x >= 0, 0, x)).reshape((1,))
 
     for dtype in dtypes:
-        for mode in modes:
-            x = Tensor(x, dtype)
-            weight = Tensor(weight, dtype)
-            expect_forward = Tensor(expect_forward, dtype)
-            expect_dx = Tensor(expect_dx, dtype)
-            expect_dw = Tensor(expect_dw, dtype)
-            test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode)
+        x = Tensor(x, dtype)
+        weight = Tensor(weight, dtype)
+        expect_forward = Tensor(expect_forward, dtype)
+        expect_dx = Tensor(expect_dx, dtype)
+        expect_dw = Tensor(expect_dw, dtype)
+        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_multiple_weight_2_D():
-    context.set_context(device_target="GPU")
-    dtypes = [mstype.float16, mstype.float32]
-    modes = [context.GRAPH_MODE, context.GRAPH_MODE]
-
     x = np.arange(-6, 6).reshape((3, 4)) * 0.6
     weight = np.array([0.2, 0.4, 0.7, 0.9])
     expect_forward = np.array([[-0.72, -1.20, -1.68, -1.62],
@@ -225,10 +199,9 @@ def test_prelu_multiple_weight_2_D():
     expect_dw = np.array([-4.8, -3.6, -2.4, -1.8])
 
     for dtype in dtypes:
-        for mode in modes:
-            x = Tensor(x, dtype)
-            weight = Tensor(weight, dtype)
-            expect_forward = Tensor(expect_forward, dtype)
-            expect_dx = Tensor(expect_dx, dtype)
-            expect_dw = Tensor(expect_dw, dtype)
-            test_prelu(x, weight, expect_forward, expect_dx, expect_dw, mode)
+        x = Tensor(x, dtype)
+        weight = Tensor(weight, dtype)
+        expect_forward = Tensor(expect_forward, dtype)
+        expect_dx = Tensor(expect_dx, dtype)
+        expect_dw = Tensor(expect_dw, dtype)
+        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)

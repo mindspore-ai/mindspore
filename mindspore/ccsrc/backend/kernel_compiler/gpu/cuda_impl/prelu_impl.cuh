@@ -21,5 +21,5 @@
 
 template <typename T>
 void CalPReLU(size_t input_size, size_t weight_size, size_t per_channel_size,
-              const T *input_addr, const T *weight_addr, T *output_addr, cudaStream_t cuda_stream);
+              const T *input, const T *weight, T *output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_PRELU_H_
