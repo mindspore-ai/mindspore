@@ -258,7 +258,8 @@ class Cell(Cell_):
 
     def get_func_graph_proto(self):
         """Return graph binary proto."""
-        return _executor._get_func_graph_proto(self, self.phase + "." + str(self.create_time), "anf_ir", True)
+        return _executor._get_func_graph_proto(self, self.phase + "." + str(self.create_time) + '.' + str(id(self)),
+                                               "anf_ir", True)
 
     def __getattr__(self, name):
         if '_params' in self.__dict__:
