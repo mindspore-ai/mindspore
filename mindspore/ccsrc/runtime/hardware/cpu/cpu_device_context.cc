@@ -73,6 +73,9 @@ void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(address->ptr_);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (!address->from_mem_pool()) {
+    return;
+  }
   mem_manager_->FreeMemFromMemPool(address->ptr_);
   address->ptr_ = nullptr;
 }

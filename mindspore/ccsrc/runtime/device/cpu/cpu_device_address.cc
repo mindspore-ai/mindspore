@@ -17,11 +17,23 @@
 #include <vector>
 #include <memory>
 #include "runtime/device/convert_tensor_utils.h"
+#include "runtime/hardware/cpu/cpu_memory_pool.h"
 #include "debug/data_dump/dump_json_parser.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
+
+CPUDeviceAddress::~CPUDeviceAddress() {
+  if (ptr_ == nullptr) {
+    return;
+  }
+  if (from_mem_pool_) {
+    CPUMemoryPool::GetInstance().FreeTensorMem(ptr_);
+    ptr_ = nullptr;
+  }
+}
+
 bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &, const ShapeVector &host_shape,
                                      TypeId host_type, bool) const {
   bool ret = false;
@@ -56,7 +68,10 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
       return true;
     }
     auto ret_code = memcpy_s(host_ptr, size, ptr_, size);
-    if (ret_code != EOK) {
+    // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
+    if (ret_code == ERANGE) {
+      ConvertSameType(host_ptr, ptr_, size, type);
+    } else if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";
       return false;
     }
@@ -94,14 +109,17 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /* shape */, size_t 
 
   if (type == type_id_) {
     if (size > size_) {
-      MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+      MS_LOG(WARNING) << "No need sync, host size: " << size << ", device size: " << size_;
       return true;
     }
-    auto ret_code = memcpy_s(ptr_, size, host_ptr, size);
-    if (ret_code != EOK) {
-      MS_LOG(ERROR) << "Failed to copy tensor!";
-      return false;
+    // Use the tensor host ptr to set the device ptr.
+    if (from_mem_pool_) {
+      CPUMemoryPool::GetInstance().FreeTensorMem(ptr_);
+      from_mem_pool_ = false;
     }
+    ptr_ = const_cast<void *>(host_ptr);
+    original_ref_count_ = SIZE_MAX;
+    ref_count_ = SIZE_MAX;
   } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat16) {
     HalfToFloat(ptr_, host_ptr, size >> 1);
   } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
