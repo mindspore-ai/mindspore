@@ -28,6 +28,7 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "include/train/train_cfg.h"
+#include "include/train/train_session.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 #include "src/kernel_registry.h"
@@ -102,7 +103,7 @@ TEST_F(NetworkTest, efficient_net) {
   context->thread_num_ = 1;
 
   std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
-  auto session = session::LiteSession::CreateTrainSession(net, context, false);
+  auto session = session::TrainSession::CreateTrainSession(net, context, false);
   ASSERT_NE(session, nullptr);
 
   std::string in = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
@@ -150,7 +151,7 @@ TEST_F(NetworkTest, noname) {
 
   lite::TrainCfg cfg;
   cfg.loss_name_ = "nhwc";
-  auto session = mindspore::session::LiteSession::CreateTrainSession(net, &context, true, &cfg);
+  auto session = mindspore::session::TrainSession::CreateTrainSession(net, &context, true, &cfg);
   ASSERT_NE(session, nullptr);
   auto tensors_map = session->GetOutputs();
   auto tensor_names = session->GetOutputTensorNames();
@@ -170,7 +171,7 @@ TEST_F(NetworkTest, setname) {
   lite::TrainCfg train_cfg;
   train_cfg.loss_name_ = "nhwc";
 
-  auto session = mindspore::session::LiteSession::CreateTrainSession(net, &context, true, &train_cfg);
+  auto session = mindspore::session::TrainSession::CreateTrainSession(net, &context, true, &train_cfg);
   ASSERT_NE(session, nullptr);
 
   auto tensors_map = session->GetOutputs();

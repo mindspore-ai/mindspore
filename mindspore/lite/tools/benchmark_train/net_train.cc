@@ -30,6 +30,7 @@
 #include "include/version.h"
 #include "include/model.h"
 #include "include/train/train_cfg.h"
+#include "include/train/train_session.h"
 
 namespace mindspore {
 namespace lite {
@@ -338,7 +339,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
       MS_LOG(INFO) << "CreateTransferSession from models files" << filename << " and " << bb_filename;
       std::cout << "CreateTranferSession from model file " << filename << " and " << bb_filename << std::endl;
       session = std::unique_ptr<session::LiteSession>(
-        session::LiteSession::CreateTransferSession(bb_filename, filename, &context, true, &train_cfg));
+        session::TrainSession::CreateTransferSession(bb_filename, filename, &context, true, &train_cfg));
       if (session == nullptr) {
         MS_LOG(ERROR) << "RunNetTrain CreateTranferSession failed while running " << model_name.c_str();
         std::cout << "RunNetTrain CreateTranferSession failed while running " << model_name.c_str() << std::endl;
@@ -349,7 +350,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
       MS_LOG(INFO) << "CreateTrainSession from model file" << filename.c_str();
       std::cout << "CreateTrainSession from model file " << filename.c_str() << std::endl;
       session = std::unique_ptr<session::LiteSession>(
-        session::LiteSession::CreateTrainSession(filename, &context, true, &train_cfg));
+        session::TrainSession::CreateTrainSession(filename, &context, true, &train_cfg));
       if (session == nullptr) {
         MS_LOG(ERROR) << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str();
         std::cout << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str() << std::endl;

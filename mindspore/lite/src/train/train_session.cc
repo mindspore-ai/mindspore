@@ -741,8 +741,8 @@ int TrainSession::UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &featu
 }
 }  // namespace lite
 
-session::LiteSession *session::LiteSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
-                                                               bool train_mode, const lite::TrainCfg *cfg) {
+session::LiteSession *session::TrainSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
+                                                                bool train_mode, const lite::TrainCfg *cfg) {
   auto session = std::make_unique<lite::TrainSession>();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
