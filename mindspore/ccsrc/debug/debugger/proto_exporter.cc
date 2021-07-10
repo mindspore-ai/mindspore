@@ -23,6 +23,7 @@
 #include <utility>
 #include <algorithm>
 
+#include "debug/anf_ir_utils.h"
 #include "debug/common.h"
 #include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
@@ -436,8 +437,9 @@ void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CN
     node_proto->set_scope(node->scope()->name());
 
     // add full_name for debugger
-    node_proto->set_full_name(node->fullname_with_scope());
-    MS_LOG(INFO) << "full_name: " << node->fullname_with_scope();
+    std::string full_name = GetKernelNodeName(node);
+    node_proto->set_full_name(full_name);
+    MS_LOG(INFO) << "full_name: " << full_name;
 
     std::ostringstream buffer;
     auto traces = mindspore::trace::GetSourceLineList(node);

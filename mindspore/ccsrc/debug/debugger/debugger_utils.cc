@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "debug/anf_ir_utils.h"
 #include "debug/debugger/debugger.h"
 #include "runtime/device/gpu/gpu_device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
@@ -58,7 +59,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uin
   auto input_size = AnfAlgo::GetInputTensorNum(cnode);
   for (size_t j = 0; j < input_size; ++j) {
     auto input_kernel = cnode->input(j + 1);
-    std::string input_kernel_name = input_kernel->fullname_with_scope();
+    std::string input_kernel_name = GetKernelNodeName(input_kernel);
     auto addr = kernel_inputs[j];
     auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
     // For example, this happens with the Depend op
@@ -84,7 +85,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, ui
   auto kernel_outputs = launch_info_->outputs_;
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   auto node_name = AnfAlgo::GetCNodeName(cnode);
-  std::string kernel_name = cnode->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(cnode);
   std::vector<int> real_outputs = CheckRealOutput(node_name, output_size);
 
   for (int j : real_outputs) {
@@ -116,7 +117,7 @@ bool CheckReadData(const CNodePtr &cnode) {
   bool read_data = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   bool dump_enabled = debugger->DumpDataEnabledIteration();
-  std::string kernel_name = cnode->fullname_with_scope();
+  std::string kernel_name = GetKernelNodeName(cnode);
   if (dump_enabled) {
     auto dump_mode = dump_json_parser.dump_mode();
     // dump the node if dump_mode is 0, which means all kernels, or if this kernel is in the kernels list

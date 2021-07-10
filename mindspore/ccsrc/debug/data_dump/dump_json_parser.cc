@@ -21,6 +21,7 @@
 #include "utils/convert_utils_base.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/data_dump/npy_header.h"
+#include "debug/anf_ir_utils.h"
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";
@@ -544,15 +545,15 @@ void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *>
   for (const auto &kernel : kernel_graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
-        DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {
+        DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel))) {
       auto input_size = AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
         auto input_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
         auto input = input_with_index.first;
         if (input->isa<CNode>()) {
-          MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << kernel->fullname_with_scope()
-                       << " Input:" << input->fullname_with_scope();
-          update_kernels.try_emplace(input->fullname_with_scope(), 0);
+          MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << GetKernelNodeName(kernel)
+                       << " Input:" << GetKernelNodeName(input);
+          update_kernels.try_emplace(GetKernelNodeName(input), 0);
         }
       }
     }

@@ -46,6 +46,15 @@ using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 
+std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
+  std::string kernel_name = anf_node->fullname_with_scope();
+  if (kernel_name.empty()) {
+    kernel_name = anf_node->ToString();
+  }
+  MS_LOG(DEBUG) << "Full scope kernel name is " << kernel_name << ".";
+  return kernel_name;
+}
+
 // ============================================= MindSpore IR Exporter =============================================
 
 std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
