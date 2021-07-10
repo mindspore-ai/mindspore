@@ -53,11 +53,43 @@ MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
 
 MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                     KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat64)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddInputAttr(kNumberTypeFloat64)
+                      .AddOutputAttr(kNumberTypeFloat64),
+                    MaskedSelectGradCPUKernel, double);
+
+MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat16)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddInputAttr(kNumberTypeFloat16)
+                      .AddOutputAttr(kNumberTypeFloat16),
+                    MaskedSelectGradCPUKernel, float16);
+
+MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
+                    KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
                     MaskedSelectGradCPUKernel, int);
+
+MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeInt64)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddInputAttr(kNumberTypeInt64)
+                      .AddOutputAttr(kNumberTypeInt64),
+                    MaskedSelectGradCPUKernel, int64_t);
+
+MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeInt16)
+                      .AddInputAttr(kNumberTypeBool)
+                      .AddInputAttr(kNumberTypeInt16)
+                      .AddOutputAttr(kNumberTypeInt16),
+                    MaskedSelectGradCPUKernel, int16_t);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_GRAD_CPU_KERNEL_H_
