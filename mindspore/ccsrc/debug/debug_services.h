@@ -319,6 +319,7 @@ class DebugServices {
 
  private:
   std::mutex lock_;
+  std::mutex wp_lock_;
 
   // to keep track of watchpoints that have been checked already for a tensor in current step
   std::unordered_map<std::string, std::set<int32_t>> wp_id_cache;

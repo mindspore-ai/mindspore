@@ -168,7 +168,12 @@ void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, 
     if (wp.change_condition() && !step_end) continue;
     // if recheck, ignore the cache results and reanalyze everything.
     // if not a recheck, check only unanalyzed tensors
-    if (!recheck && wp_id_cache[tensor_name].count(wp.id)) continue;
+    if (!recheck) {
+      wp_lock_.lock();
+      bool wp_cache_hit = wp_id_cache[tensor_name].count(wp.id);
+      wp_lock_.unlock();
+      if (wp_cache_hit) continue;
+    }
     std::string found = wp.FindQualifiedTensorName(tensor_name_no_slot);
     if (!found.empty()) {
       *qualified_tensor_name = found;
@@ -186,7 +191,9 @@ void DebugServices::AddAnalyzedTensorToCache(const bool recheck, const unsigned 
                                              const std::string &tensor_name) {
   // add analyzed tensor to cache
   if (!recheck) {
+    wp_lock_.lock();
     wp_id_cache[tensor_name].insert(id);
+    wp_lock_.unlock();
   }
 }
 
