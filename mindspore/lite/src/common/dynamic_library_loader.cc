@@ -57,7 +57,7 @@ int DynamicLibraryLoader::Open(const char *lib_path) {
 #endif
 
   if (handler_ == nullptr) {
-    LOG_ERROR("open path failed");
+    LOG_ERROR("handler is nullptr.");
     return RET_ERROR;
   }
   return RET_OK;
