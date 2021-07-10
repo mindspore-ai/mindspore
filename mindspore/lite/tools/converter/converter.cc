@@ -77,15 +77,16 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
   }
 
   // load plugin
+  static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
   if (!flag->pluginsPath.empty()) {
-    DynamicLibraryLoader dynamic_library_loader{};
     for (auto &path : flag->pluginsPath) {
-      auto status = dynamic_library_loader.Open(path.c_str());
+      auto dl_loader = std::make_shared<DynamicLibraryLoader>();
+      auto status = dl_loader->Open(path.c_str());
       if (status != RET_OK) {
         MS_LOG(ERROR) << "open dynamic library failed. " << path;
         return nullptr;
       }
-      dynamic_library_loader.Close();
+      dl_loaders.emplace_back(dl_loader);
     }
   }
 
