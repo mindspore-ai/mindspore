@@ -33,7 +33,7 @@ eval_data_dir=$4
 load_ckpt_path=$5
 
 mkdir -p ms_log
-PROJECT_DIR=$(cd "$(dirname "$0")"; pwd)
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
