@@ -248,7 +248,14 @@ void PrepareDataForControlWeightNode(
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
-  if (device_tensors.empty()) {
+  bool need_update_device_tensor_store = (device_tensors.size() == 0) ? true : false;
+  for (auto &device_tensor : device_tensors) {
+    if (device_tensor->GetPtr() == nullptr) {
+      need_update_device_tensor_store = true;
+      break;
+    }
+  }
+  if (need_update_device_tensor_store) {
     PrepareDataForWeightNode(node, front_node, tensor, device_context);
   }
 
@@ -455,7 +462,7 @@ void GraphScheduler::Initialize() {
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the computed OMP thread number : " << OMP_thread_num
-               << ", the used OMP thread number : " << stoi(OMP_thread_num_used);
+               << ", the used OMP thread number : " << OMP_thread_num_used;
 
   BuildAndScheduleGlobalActor();
 }
@@ -2708,20 +2715,27 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
 
     for (auto &input_node : graph->input_nodes()) {
       MS_EXCEPTION_IF_NULL(input_node);
-      AnfNodePtr front_node = nullptr;
+      AnfNodePtr sub_front_node = nullptr;
       if (IsInternalParameter(input_node, graph)) {
         auto front_node_with_index = graph->GetFrontNodeByInternalParameter(input_node);
         MS_EXCEPTION_IF_NULL(front_node_with_index.first);
         const auto &front_output_with_index =
           AnfAlgo::VisitKernelWithReturnType(front_node_with_index.first, front_node_with_index.second, false);
-        front_node = front_output_with_index.first;
-      } else if (IsPersistentDeviceTensor(input_node)) {
-        front_node = FetchFrontNodeByBackendNode(input_node, graph);
+        sub_front_node = front_output_with_index.first;
+      } else if (IsPersistentDeviceTensor(input_node) || HasAbstractRef(input_node)) {
+        sub_front_node = FetchFrontNodeByBackendNode(input_node, graph);
       }
-      if (front_node == nullptr) {
+      if (sub_front_node == nullptr) {
         continue;
       }
 
+      // The sub front nodes share the device tensor store with the root front node.
+      auto front_node = sub_front_node;
+      if (graph_compiler_info.control_node_parser_ != nullptr) {
+        front_node = graph_compiler_info.control_node_parser_->FetchRootGraphFrontNodeBySubFrontNode(sub_front_node);
+      }
+      MS_LOG(DEBUG) << "Graph id:" << graph->graph_id() << ", sub front node:" << sub_front_node->DebugString()
+                    << ", root front node:" << front_node->DebugString();
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       if (IsPersistentDeviceTensor(input_node)) {
@@ -3080,7 +3094,12 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       if (!IsPersistentDeviceTensor(input_node)) {
         continue;
       }
-      const auto &front_node = FetchFrontNodeByBackendNode(input_node, graph);
+      const auto &sub_front_node = FetchFrontNodeByBackendNode(input_node, graph);
+      // The sub front nodes share the device tensor store with the root front node.
+      auto front_node = sub_front_node;
+      if (graph_compiler_info.control_node_parser_ != nullptr) {
+        front_node = graph_compiler_info.control_node_parser_->FetchRootGraphFrontNodeBySubFrontNode(sub_front_node);
+      }
       const auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
       ofs << "\t\tdevcie tensor key:" << front_node->fullname_with_scope() << "\tvalue size:" << device_tensors.size()
           << "\n";
