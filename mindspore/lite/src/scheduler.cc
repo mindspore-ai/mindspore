@@ -873,9 +873,14 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
     std::vector<Tensor *> inputs;
     std::vector<Tensor *> outputs;
     FindNodeInoutTensors(*node, &inputs, &outputs);
-    TypeId data_type =
-      (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(inputs);
-    if (data_type != kNumberTypeFloat32 || data_type != kNumberTypeFloat16) {
+
+    if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) {
+      *prefer_data_type = kNumberTypeFloat32;
+      return RET_OK;
+    }
+
+    TypeId data_type = GetFirstFp32Fp16OrInt8Type(inputs);
+    if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16) {
       *prefer_data_type = kNumberTypeFloat32;
       return RET_OK;
     }

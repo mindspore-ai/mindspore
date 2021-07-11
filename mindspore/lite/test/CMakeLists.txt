@@ -360,8 +360,13 @@ if(ENABLE_FP16)
     file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/*.cc
             )
+    file(GLOB_RECURSE KERNEL_FP16_SRC
+            ${LITE_DIR}/src/runtime/kernel/arm/fp16/*.cc
+            )
+
     set(TEST_SRC
             ${TEST_SRC}
+            ${KERNEL_FP16_SRC}
             ${TEST_CASE_KERNEL_FP16_SRC}
             )
 endif()

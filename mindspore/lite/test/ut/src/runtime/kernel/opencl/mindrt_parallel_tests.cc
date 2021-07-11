@@ -85,4 +85,54 @@ TEST_F(TestOpenCL_MindrtParallel, Runtime) {
 
   delete session;
 }
+
+int CheckRuntime2(mindspore::session::LiteSession *session) {
+  mindspore::lite::LiteSession *lite_session = reinterpret_cast<mindspore::lite::LiteSession *>(session);
+  auto kernels = lite_session->get_kernels();
+
+  for (auto kernel : kernels) {
+    if (kernel->subgraph_type() != mindspore::kernel::kCpuFP16SubGraph) {
+      return -1;
+    }
+  }
+
+  if (kernels.size() != 6) {
+    return -2;
+  }
+
+  return 0;
+}
+
+TEST_F(TestOpenCL_MindrtParallel, RuntimeFp16) {
+  size_t size = 0;
+  char *graph_buf = lite::ReadFile("./test_data/mindrt_parallel/mindrt_parallel_model.ms", &size);
+  ASSERT_NE(graph_buf, nullptr);
+
+  auto model = std::shared_ptr<lite::Model>(mindspore::lite::Model::Import(graph_buf, size));
+  delete[](graph_buf);
+  ASSERT_NE(model, nullptr);
+
+  auto context = std::make_shared<lite::Context>();
+  ASSERT_NE(context, nullptr);
+  context->enable_parallel_ = true;
+  auto &cpu_device_ctx = context->device_list_[0];
+  cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = true;
+
+  session::LiteSession *session = session::LiteSession::CreateSession(context.get());
+  ASSERT_NE(session, nullptr);
+
+  int benchmark_ret = session->CompileGraph(model.get());
+  ASSERT_EQ(benchmark_ret, lite::RET_OK);
+
+  ASSERT_EQ(CheckRuntime2(session), 0);
+
+  auto inputs = session->GetInputs();
+  for (auto in : inputs) {
+    in->MutableData();
+  }
+  benchmark_ret = session->RunGraph(nullptr, nullptr);
+  ASSERT_EQ(benchmark_ret, lite::RET_OK);
+
+  delete session;
+}
 }  // namespace mindspore::lite::opencl::test
