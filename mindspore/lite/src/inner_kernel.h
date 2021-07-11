@@ -30,7 +30,7 @@
 #include "schema/model_generated.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "include/api/context.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 
 namespace mindspore::kernel {
 class InnerKernel : public Kernel {

@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 #include <utility>
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/npu_executor.h"
 

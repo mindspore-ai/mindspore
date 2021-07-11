@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 namespace mindspore {
 const schema::Primitive *DelegateModel::GetPrimitive(kernel::Kernel *kernel) const {
   if (primitives_.find(kernel) != primitives_.end()) {

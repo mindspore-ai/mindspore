@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "src/delegate/npu/npu_executor.h"
 
 namespace mindspore {

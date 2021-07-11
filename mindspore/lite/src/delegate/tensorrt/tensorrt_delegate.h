@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 #include "src/delegate/tensorrt/tensorrt_subgraph.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 

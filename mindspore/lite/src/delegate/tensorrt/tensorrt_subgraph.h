@@ -19,7 +19,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "src/delegate/tensorrt/tensorrt_runtime.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 

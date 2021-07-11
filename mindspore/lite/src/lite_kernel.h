@@ -32,10 +32,10 @@
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "include/context.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/inner_kernel.h"
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN = kCPU, kKernelArch_MAX = kAPU };
