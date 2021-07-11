@@ -278,7 +278,7 @@ Status Serialization::ExportModel(const Model &, ModelType, Buffer *) {
   return kMEFailed;
 }
 
-Status Serialization::ExportModel(const Model &, ModelType, const std::string &) {
+Status Serialization::ExportModel(const Model &, ModelType, const std::string &, QuantizationType, bool) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }

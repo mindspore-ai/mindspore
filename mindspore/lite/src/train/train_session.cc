@@ -129,7 +129,7 @@ int TrainSession::InitCallBack() {
     auto in_size = node->input_indices_.size();
     bool force_fp16 = false;
     for (std::size_t k = 0; k < in_size; k++) {
-      schema::Tensor *tensor = model_->all_tensors_.at(node->input_indices_[k]);
+      schema::Tensor *tensor = model_.get()->all_tensors_.at(node->input_indices_[k]);
       if ((tensor->dataType() == kNumberTypeFloat16) && (tensor->nodeType() == NodeType_ValueNode)) {
         force_fp16 = true;
         break;
@@ -161,7 +161,7 @@ int TrainSession::InitCallBack() {
 
 int TrainSession::CompileGraph(lite::Model *model) { return lite::RET_ERROR; }
 
-int TrainSession::CompileTrainGraph(mindspore::lite::Model *model) {
+int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
   model_ = model;
   auto restore = ReplaceOps();
   sched_cb_ = std::make_unique<SchedulerCb>(sched_mix_precision_callback_);
@@ -170,7 +170,7 @@ int TrainSession::CompileTrainGraph(mindspore::lite::Model *model) {
     return RET_ERROR;
   }
 
-  auto ret = lite::LiteSession::CompileGraph(model);
+  auto ret = lite::LiteSession::CompileGraph(model_.get());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "failed to compile train model";
     return RET_ERROR;
@@ -193,13 +193,7 @@ int TrainSession::CompileTrainGraph(mindspore::lite::Model *model) {
   return RET_OK;
 }
 
-TrainSession::~TrainSession() {
-  FreeWorkSpace();
-  if (model_ != nullptr) {
-    delete model_;
-    model_ = nullptr;
-  }
-}
+TrainSession::~TrainSession() { FreeWorkSpace(); }
 
 int TrainSession::ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
                               const std::vector<kernel::LiteKernel *> &run_kernels) {
@@ -690,14 +684,14 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
   bool orig_train_state = IsTrain();
   Eval();
   TrainExport texport(file_name);
-  int status = texport.ExportInit(model_->name_, model_->version_);
+  int status = texport.ExportInit(model_.get()->name_, model_.get()->version_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot init export";
     return status;
   }
   status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_,
-                             (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_, model_,
-                             quant_type);
+                             (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_,
+                             model_.get(), quant_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot export Network";
     return status;
@@ -766,7 +760,7 @@ session::LiteSession *session::TrainSession::CreateTrainSession(const std::strin
     filename = filename + ".ms";
   }
 
-  auto *model = mindspore::lite::Model::Import(filename.c_str());
+  auto model = std::shared_ptr<lite::Model>(lite::Model::Import(filename.c_str()));
   if (model == nullptr) {
     MS_LOG(ERROR) << "create model for train session failed " << filename;
     return nullptr;

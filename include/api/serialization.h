@@ -37,7 +37,8 @@ class MS_API Serialization {
                             const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
   static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
   static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data);
-  static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file);
+  static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
+                            QuantizationType quantization_type = kNoQuant, bool export_inference_only = true);
 
  private:
   static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph, const Key &dec_key,

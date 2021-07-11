@@ -60,9 +60,18 @@ echo 'run common ut tests'
 # test cases specific for train
 
 echo 'run train ut tests'
-## ./lite-test --gtest_filter=NetworkTest.efficient_net
-## ./lite-test --gtest_filter="NetworkTest.tuning_layer"
-## ./lite-test --gtest_filter="NetworkTest.lenetnet"
+# ./lite-test --gtest_filter="TestConvolutionGradFp32*"
+# ./lite-test --gtest_filter="TestActGradFp32*"
+# ./lite-test --gtest_filter="TestSoftmaxGradFp32*"
+# ./lite-test --gtest_filter="TestSoftmaxCrossEntropyFp32*"
+# ./lite-test --gtest_filter="TestDeConvolutionGradFp32*"
+# ./lite-test --gtest_filter="TestBiasGradFp32*"
+
+# test cases specific for CXX_API
+
+# ./lite-test --gtest_filter="TestCxxApiLiteModel*"
+# ./lite-test --gtest_filter="TestCxxApiLiteSerialization*"
+
 echo 'run inference ut tests'
 ./lite-test --gtest_filter="ControlFlowTest.TestMergeWhileModel"
 
