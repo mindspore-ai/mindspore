@@ -133,11 +133,7 @@ int SubGraphKernel::ReSize() {
   }
   return RET_OK;
 }
-
-void SubGraphKernel::InitOutTensorInitRefCount() {
-  for (auto *node : nodes_) {
-    node->InitOutTensorInitRefCount();
-  }
+void SubGraphKernel::InitInputTensorInitRefCount() {
   for (auto &input : this->in_tensors()) {
     int input_init_ref_count = input->init_ref_count();
     for (auto *node : nodes_) {
@@ -146,6 +142,12 @@ void SubGraphKernel::InitOutTensorInitRefCount() {
       }
     }
     input->set_init_ref_count(input_init_ref_count);
+  }
+}
+
+void SubGraphKernel::InitOutTensorInitRefCount() {
+  for (auto *node : nodes_) {
+    node->InitOutTensorInitRefCount();
   }
 }
 

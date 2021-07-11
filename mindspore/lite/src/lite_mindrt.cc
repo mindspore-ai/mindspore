@@ -335,6 +335,7 @@ int LiteOpActor::CastInputData(Tensor *dst, Tensor *src) {
     MS_LOG(ERROR) << "not support dst_data_type: " << dst_data_type << " src_data_type: " << src_data_type;
     return RET_NOT_SUPPORT;
   }
+  src->DecRefCount();
   return RET_OK;
 #endif
   src->DecRefCount();

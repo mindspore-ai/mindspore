@@ -543,6 +543,22 @@ int LiteSession::CompileGraph(Model *model) {
   return RET_OK;
 }
 
+bool LiteSession::IsIsolatedSubGraph(kernel::LiteKernel *kernel) {
+  auto cur_in_tensors = kernel->in_tensors();
+  for (auto cur_kernel : this->kernels_) {
+    if (cur_kernel == kernel) {
+      continue;
+    }
+    auto out_tensors = cur_kernel->out_tensors();
+    for (auto tensor : cur_in_tensors) {
+      if (IsContain(out_tensors, tensor)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   std::vector<kernel::LiteKernel *> all_kernels;
   // find in_kernels and out_kernels for subgraphs
@@ -567,6 +583,9 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
 
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
+    if (IsIsolatedSubGraph(kernel)) {
+      static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
+    }
     kernel->InitOutTensorInitRefCount();
   }
   AdjustModelOutputTensorInitRefCount(model);
