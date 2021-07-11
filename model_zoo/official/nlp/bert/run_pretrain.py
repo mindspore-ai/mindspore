@@ -62,6 +62,9 @@ def _set_bert_all_reduce_split():
             context.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
         else:
             context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
+            if device_target == 'Ascend' and enable_graph_kernel and device_num == 8:
+                context.set_auto_parallel_context(all_reduce_fusion_config=[
+                    0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 50, 70, 93, 148, 203, 258, 313, 368, 397])
 
 
 def _get_optimizer(args_opt, network):

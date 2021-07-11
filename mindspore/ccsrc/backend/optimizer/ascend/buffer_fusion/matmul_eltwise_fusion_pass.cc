@@ -21,6 +21,7 @@
 #include "debug/anf_ir_dump.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "base/core_ops.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
 
@@ -56,6 +57,14 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+      if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
+          AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
+          AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimAddN)) {
+        continue;
+      }
+    }
+
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&

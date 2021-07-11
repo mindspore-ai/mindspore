@@ -61,7 +61,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   pm->AddPass(std::make_shared<CommonSubexpressionElimination>("cse1"), OptLevel_1);
 
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
-  pm->AddPass(std::make_shared<SplitAssign>(), OptLevel_1);
+  pm->AddPass(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu);
 
   // Spread the MakeTuple input of UpdateState
   pm->AddPass(std::make_shared<SpreadUpdateState>(), OptLevel_1);
