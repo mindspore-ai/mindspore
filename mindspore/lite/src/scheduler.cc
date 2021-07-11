@@ -278,7 +278,13 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   parameter->quant_type_ = node->quant_type_;
   parameter->thread_num_ = context_->thread_num_;
 
-  op_parameters_[node->output_indices_.at(0)] = parameter;
+  if (op_parameters_.find(node->output_indices_.at(0)) != op_parameters_.end()) {
+    free(parameter);
+    parameter = op_parameters_[node->output_indices_.at(0)];
+  } else {
+    op_parameters_[node->output_indices_.at(0)] = parameter;
+  }
+
   if (IsCallNode(primitive)) {
     return InferCallShape(node);
   }
@@ -780,6 +786,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
                     << node->name_;
       if (status == RET_ERROR) {
+        op_parameters_.erase(node->output_indices_.at(0));
         auto ret = InferNodeShape(node);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
           op_parameter = op_parameters_[node->output_indices_.at(0)];
@@ -801,6 +808,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       MS_LOG(DEBUG) << "Get fp16 op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
                     << node->name_;
       if (status == RET_ERROR) {
+        op_parameters_.erase(node->output_indices_.at(0));
         auto ret = InferNodeShape(node);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
           op_parameter = op_parameters_[node->output_indices_.at(0)];
@@ -821,6 +829,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     if (status == RET_OK) {
       return kernel;
     } else if (status == RET_ERROR) {
+      op_parameters_.erase(node->output_indices_.at(0));
       auto ret = InferNodeShape(node);
       if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
         MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
