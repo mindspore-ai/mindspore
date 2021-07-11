@@ -297,4 +297,18 @@ void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *
     tensors->emplace_back(tensor);
   }
 }
+
+size_t CountValueNum(const ValueTuplePtr &value_tuple) {
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  size_t cnt = 0;
+  const auto &value_list = value_tuple->value();
+  for (const auto &value : value_list) {
+    if (!value->isa<ValueTuple>()) {
+      cnt++;
+    } else {
+      cnt += CountValueNum(value->cast<ValueTuplePtr>());
+    }
+  }
+  return cnt;
+}
 }  // namespace mindspore
