@@ -20,7 +20,7 @@
 #include <NvInfer.h>
 #include <string>
 #include <vector>
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 

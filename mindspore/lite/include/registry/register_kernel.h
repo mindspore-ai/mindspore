@@ -24,7 +24,7 @@
 #include "schema/model_generated.h"
 #include "include/api/context.h"
 #include "include/api/types.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {

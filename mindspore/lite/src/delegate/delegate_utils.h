@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_DELEGATE_DELEGATE_UTILS
 #include <vector>
 #include "include/ms_tensor.h"
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 #include "src/common/log_adapter.h"
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 

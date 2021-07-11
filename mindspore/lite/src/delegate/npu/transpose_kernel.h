@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "include/graph/op/all_ops.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 

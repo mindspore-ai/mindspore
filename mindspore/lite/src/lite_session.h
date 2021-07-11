@@ -31,7 +31,7 @@
 #include "src/executor.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 #if GPU_OPENCL
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #elif GPU_VULKAN

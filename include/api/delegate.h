@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include "schema/model_generated.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 
 namespace mindspore {
 typedef enum {
