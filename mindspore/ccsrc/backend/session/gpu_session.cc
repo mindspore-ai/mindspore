@@ -94,6 +94,7 @@ namespace gpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using CollectiveInitializer = device::gpu::CollectiveInitializer;
 using GetLocalRankId = device::gpu::GetLocalRankId;
+using InitNCCLComm = device::gpu::InitNCCLComm;
 
 void GPUSession::Init(uint32_t device_id) {
   const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
@@ -113,7 +114,14 @@ void GPUSession::Init(uint32_t device_id) {
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   if (collective_inited) {
     rank_id_ = GetRankId();
+    if (collective_handle_ != nullptr) {
+      auto init_nccl_comm_funcptr =
+        reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle_), "InitNCCLComm"));
+      MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
+      (*init_nccl_comm_funcptr)();
+    }
   }
+
   auto &json_parser = DumpJsonParser::GetInstance();
   // Dump json config file if dump is enabled
   json_parser.CopyJsonToDir(rank_id_);

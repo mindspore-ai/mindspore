@@ -90,6 +90,9 @@ def run_e2e_dump():
     if context.get_context("device_target") == "Ascend":
         assert len(os.listdir(dump_file_path)) == 5
         output_name = "Add.Add-op1.0.0.*.output.0.DefaultFormat.npy"
+    elif context.get_context("device_target") == "CPU":
+        assert len(os.listdir(dump_file_path)) == 5
+        output_name = "Add.Add-op3.0.0.*.output.0.DefaultFormat.npy"
     else:
         assert len(os.listdir(dump_file_path)) == 3
         output_name = "Add.Add-op3.0.0.*.output.0.DefaultFormat.npy"
