@@ -34,6 +34,7 @@ void KernelActor::Init() {
   is_dynamic_shape_ = AnfAlgo::IsDynamicShape(kernel_);
 
   // Init the device tensors and kernel launch info.
+  copy_input_device_tensors_.resize(real_input_num_);
   input_device_tensors_.resize(real_input_num_);
   for (auto &input_address : input_device_tensors_) {
     memory_free_list_.emplace_back(input_address);
@@ -277,6 +278,42 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
   }
 }
 
+void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(input_data);
+  if ((input_data->data_ == nullptr) || (input_data->data_->DeviceType() == device_context_->GetDeviceAddressType())) {
+    return;
+  }
+
+  MS_LOG(DEBUG) << "Copy from device type: " << input_data->data_->DeviceType()
+                << " to device type: " << device_context_->GetDeviceAddressType() << " in " << GetAID().Name();
+  if (copy_input_device_tensors_[input_data->index_] == nullptr) {
+    copy_input_device_tensors_[input_data->index_] = device_context_->CreateDeviceAddress(
+      nullptr, input_data->data_->GetSize(), input_data->data_->format(), input_data->data_->type_id());
+  }
+  // Dynamic shape need update size.
+  copy_input_device_tensors_[input_data->index_]->SetSize(input_data->data_->GetSize());
+
+  if (copy_input_device_tensors_[input_data->index_]->GetPtr() == nullptr) {
+    if (!device_context_->AllocateMemory(copy_input_device_tensors_[input_data->index_].get(),
+                                         copy_input_device_tensors_[input_data->index_]->GetSize())) {
+      std::string error_info =
+        "Device(id:" + std::to_string(device_context_->device_context_key().device_id_) +
+        ") memory isn't enough and alloc failed, actor name: " + GetAID().Name() +
+        ", alloc size: " + std::to_string(copy_input_device_tensors_[input_data->index_]->GetSize());
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+  }
+
+  if (!Copy(copy_input_device_tensors_[input_data->index_].get(), input_data->data_)) {
+    std::string error_info = "Copy device tensor failed: " + GetAID().Name();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
+
+  // Update by the copy input device tensor.
+  input_device_tensors_[input_data->index_] = copy_input_device_tensors_[input_data->index_].get();
+  memory_free_list_[input_data->index_] = copy_input_device_tensors_[input_data->index_].get();
+}
+
 void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_context_);
@@ -289,6 +326,7 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
         input_device_tensors_[input_data->index_] = input_data->data_;
         memory_free_list_[input_data->index_] = input_data->data_;
       }
+      CopyInputDeviceTensor(input_data, context);
     }
   }
 

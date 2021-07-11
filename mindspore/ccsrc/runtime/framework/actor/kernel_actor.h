@@ -91,6 +91,7 @@ class KernelActor : public DebugAwareActor {
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
   void FetchOutputDeviceTensor();
+  void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context);
   // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
   void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
@@ -144,6 +145,9 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> input_device_tensors_;
   std::vector<DeviceTensor *> output_device_tensors_;
   std::vector<DeviceTensor *> workspace_device_tensors_;
+  // The received input device type may be different from the device context type in the control flow and host device
+  // scenarios, so it needs to be copied from the input device type to the device context type.
+  std::vector<DeviceTensorPtr> copy_input_device_tensors_;
 
   // The device tensors for memory alloc and free.
   // output + workspace

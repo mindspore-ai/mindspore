@@ -1290,6 +1290,13 @@ void ControlNodeParser::FetchHostParameterToWeight(const RealToFormalNode &front
     std::vector<AnfNodePtr> dest_nodes;
     FetchWeightbyHostParameter(pair.first, &dest_nodes, front_to_front_parameters);
     host_parameter_to_weights_[pair.first] = dest_nodes;
+
+    if (std::find(root_graph_parameters_.begin(), root_graph_parameters_.end(), pair.first) !=
+        root_graph_parameters_.end()) {
+      for (auto &sub_front_node : dest_nodes) {
+        sub_front_node_to_root_front_node_[sub_front_node] = pair.first;
+      }
+    }
   }
 }
 
@@ -1586,6 +1593,13 @@ void ControlNodeParser::FetchAutoMonadNode(const std::vector<AnfNodePtr> &contro
       }
     }
   }
+}
+
+AnfNodePtr ControlNodeParser::FetchRootGraphFrontNodeBySubFrontNode(const AnfNodePtr &sub_front_node) {
+  if (sub_front_node_to_root_front_node_.count(sub_front_node) == 0) {
+    return sub_front_node;
+  }
+  return sub_front_node_to_root_front_node_[sub_front_node];
 }
 }  // namespace runtime
 }  // namespace mindspore
