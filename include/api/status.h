@@ -78,6 +78,7 @@ enum StatusCode : uint32_t {
   kLiteMemoryFailed = kLite | (0x0FFFFFFF & -6),    /**< Fail to create memory. */
   kLiteNotSupport = kLite | (0x0FFFFFFF & -7),      /**< Fail to support. */
   kLiteThreadPoolError = kLite | (0x0FFFFFFF & -8), /**< Error occur in thread pool. */
+  kLiteUninitializedObj = kLite | (0x0FFFFFFF & -9), /**< Object is not initialized. */
 
   // Executor error code, range: [-100,-200)
   kLiteOutOfTensorRange = kLite | (0x0FFFFFFF & -100), /**< Failed to check range. */

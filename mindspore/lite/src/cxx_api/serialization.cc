@@ -23,6 +23,7 @@
 #include "include/api/types.h"
 #include "include/model.h"
 #include "include/ms_tensor.h"
+#include "src/cxx_api/converters.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/cxx_api/model/model_impl.h"
 #include "src/common/log_adapter.h"
@@ -88,7 +89,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     return kLiteInputParamInvalid;
   }
 
-  std::string filename = file.data();
+  std::string filename(file.data(), file.size());
   if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
     filename = filename + ".ms";
   }
@@ -123,8 +124,23 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, Buff
   return kMEFailed;
 }
 
-Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::string &model_file) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return kMEFailed;
+Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
+                                  QuantizationType quantization_type, bool export_inference_only) {
+  if (model.impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteUninitializedObj;
+  }
+  if (!model.impl_->IsTrainModel()) {
+    MS_LOG(ERROR) << "Model is not TrainModel.";
+    return kLiteError;
+  }
+  if (model_type != kFlatBuffer) {
+    MS_LOG(ERROR) << "Unsupported Export Format " << model_type;
+    return kLiteParamInvalid;
+  }
+  auto ret = model.impl_->session_->Export(model_file, export_inference_only ? lite::MT_INFERENCE : lite::MT_TRAIN,
+                                           A2L_ConvertQT(quantization_type), lite::FT_FLATBUFFERS);
+
+  return (ret == mindspore::lite::RET_OK) ? kSuccess : kLiteError;
 }
 }  // namespace mindspore

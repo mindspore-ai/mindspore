@@ -25,11 +25,19 @@
 #include "include/api/types.h"
 #include "include/api/graph.h"
 #include "include/api/context.h"
+#include "include/api/callback/callback.h"
 #include "include/api/cell.h"
+#include "include/api/cfg.h"
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 class ModelImpl;
+class Metrics;
+
+namespace dataset {
+class Dataset;
+}  // namespace dataset
+
 
 class MS_API Model {
  public:
@@ -38,7 +46,8 @@ class MS_API Model {
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
 
-  Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr);
+  Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr,
+               const std::shared_ptr<TrainCfg> &train_cfg = nullptr);
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
@@ -47,6 +56,9 @@ class MS_API Model {
   std::vector<MSTensor> GetInputs();
   inline MSTensor GetInputByTensorName(const std::string &tensor_name);
 
+  Status InitMetrics(std::vector<Metrics *> metrics);
+  std::vector<Metrics *> GetMetrics();
+
   std::vector<MSTensor> GetOutputs();
   inline std::vector<std::string> GetOutputTensorNames();
   inline MSTensor GetOutputByTensorName(const std::string &tensor_name);
@@ -54,11 +66,16 @@ class MS_API Model {
 
   static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
 
+  Status SetTrainMode(bool train);
+  bool GetTrainMode() const;
+  Status Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
+  Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
                const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
                const std::string &dec_mode = kDecModeAesGcm);
 
  private:
+  friend class Serialization;
   // api without std::string
   MSTensor GetInputByTensorName(const std::vector<char> &tensor_name);
   std::vector<std::vector<char>> GetOutputTensorNamesChar();

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H
-#define MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H
+#ifndef MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H_
+#define MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H_
 
 #include <string>
 #include <vector>
@@ -36,9 +36,12 @@ class Graph::GraphData {
 
   std::shared_ptr<lite::Model> lite_model() { return lite_model_; }
 
+  bool IsTrainModel() { return true; }
+
  private:
   std::shared_ptr<lite::Model> lite_model_ = nullptr;
+  std::string file_name_;
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H
+#endif  // MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H_

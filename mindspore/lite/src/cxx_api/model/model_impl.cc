@@ -22,89 +22,29 @@
 #include "include/lite_session.h"
 #include "include/context.h"
 #include "src/runtime/inner_allocator.h"
+#include "src/cxx_api/converters.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/cxx_api/tensor_utils.h"
 #include "src/common/log_adapter.h"
+#include "src/train/train_session.h"
 
 namespace mindspore {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-lite::CpuBindMode ModelImpl::GetCpuBindMode() {
-  auto affinity_mode = context_->GetThreadAffinityMode();
-  switch (affinity_mode) {
-    case 0:
-      return lite::NO_BIND;
-    case 1:
-      return lite::HIGHER_CPU;
-    case 2:
-      return lite::MID_CPU;
-    default:
-      return lite::NO_BIND;
+CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto) {
+  static CreateTrainSessionProto *proto_ = nullptr;
+  if (proto != nullptr) {
+    proto_ = proto;
   }
-}
-
-Status ModelImpl::ConverterContext(const std::shared_ptr<Context> &context, lite::Context *model_context) {
-  auto device_list = context->MutableDeviceInfo();
-  if (device_list.size() == 0) {
-    MS_LOG(ERROR) << "Invalid device list.";
-    return kLiteInputParamInvalid;
-  }
-  if (device_list.size() > 2) {
-    MS_LOG(ERROR) << "Only CPU/CPU & GPU/CPU & NPU mode is supported.";
-    return kLiteInputParamInvalid;
-  }
-
-  model_context->thread_num_ = context->GetThreadNum();
-  model_context->enable_parallel_ = context->GetEnableParallel();
-  model_context->affinity_core_list_ = context->GetThreadAffinityCoreList();
-  model_context->device_list_.clear();
-  if (device_list[0]->GetDeviceType() != kCPU) {
-    MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
-    return kLiteInputParamInvalid;
-  }
-
-  auto cpu_context = device_list[0]->Cast<CPUDeviceInfo>();
-  model_context->allocator = cpu_context->GetAllocator();
-  if (model_context->allocator == nullptr) {
-    model_context->allocator = Allocator::Create();
-    if (model_context->allocator == nullptr) {
-      MS_LOG(ERROR) << "Create Allocator failed.";
-      return kLiteNullptr;
-    }
-    MS_LOG(DEBUG) << "Set new allocator.";
-    cpu_context->SetAllocator(model_context->allocator);
-  }
-
-  lite::CpuBindMode mode = GetCpuBindMode();
-  lite::DeviceInfo cpu_info = {0};
-  cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
-  model_context->device_list_.push_back({lite::DT_CPU, cpu_info, cpu_context->GetProvider(),
-                                         cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
-  if (device_list.size() == 2) {
-    lite::DeviceInfo device_info = {0};
-    if (device_list[1]->GetDeviceType() == kMaliGPU) {
-      auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
-      device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
-      model_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
-                                             gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
-    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
-      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
-      device_info.npu_device_info_ = {npu_context->GetFrequency()};
-      model_context->device_list_.push_back({lite::DT_NPU, device_info});
-    } else {
-      MS_LOG(ERROR) << "Invalid device.";
-      return kLiteInputParamInvalid;
-    }
-  }
-  return kSuccess;
+  return proto_;
 }
 
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
   lite::Context lite_context;
-  auto status = ConverterContext(ms_context, &lite_context);
+  auto status = A2L_ConvertContext(ms_context.get(), &lite_context);
   if (status != kSuccess) {
     return status;
   }
@@ -123,25 +63,38 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
 Status ModelImpl::Build() {
   MS_LOG(DEBUG) << "Start build model.";
-  auto model = graph_->graph_data_->lite_model();
-  if (graph_ == nullptr || graph_->graph_data_ == nullptr || model == nullptr) {
+  if (graph_ == nullptr || graph_->graph_data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid graph.";
     return kLiteNullptr;
   }
-  if (model->buf == nullptr) {
-    MS_LOG(ERROR) << "Lite model has been freed.";
-    return kLiteError;
-  }
+
   if (context_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return kLiteNullptr;
   }
+
   lite::Context model_context;
-  auto status = ConverterContext(context_, &model_context);
+  auto status = A2L_ConvertContext(context_.get(), &model_context);
   if (status != kSuccess) {
+    MS_LOG(ERROR) << "Failed to convert Context to Lite Context";
     return status;
   }
 
+  auto create_callback = CreateTrainSessionCallbackHolder();
+  if (create_callback != nullptr) {
+    auto session = create_callback(graph_->graph_data_, cfg_, &model_context);
+    if (session != nullptr) {
+      session_ = session;
+      MS_LOG(DEBUG) << "Build model success.";
+      return kSuccess;
+    }
+  }
+
+  auto model = graph_->graph_data_->lite_model();
+  if (model == nullptr || model->buf == nullptr) {
+    MS_LOG(ERROR) << "Lite model has been freed.";
+    return kLiteError;
+  }
   auto session = std::shared_ptr<session::LiteSession>(session::LiteSession::CreateSession(&model_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
@@ -193,6 +146,9 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
   auto ret = session_->RunGraph(before_call_back, after_call_back);
   return static_cast<StatusCode>(ret);
 }
+
+bool ModelImpl::IsTrainModel() { return (graph_ && graph_->graph_data_ && graph_->graph_data_->IsTrainModel()); }
+
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (outputs == nullptr) {
@@ -460,4 +416,5 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   auto ret = session_->Resize(inner_input, truncated_shape);
   return static_cast<StatusCode>(ret);
 }
+
 }  // namespace mindspore

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H
-#define MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H
+#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H_
+#define MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H_
 
 #include <functional>
 #include <map>
@@ -28,8 +28,30 @@
 #include "include/api/context.h"
 #include "include/api/cell.h"
 #include "include/lite_session.h"
+#include "src/cxx_api/graph/graph_data.h"
+
+template <class T>
+void clearVectorOfPointers(std::vector<T> *v) {
+  if (v != nullptr) {
+    for (typename std::vector<T>::iterator it = v->begin(); it != v->end(); ++it) {
+      delete (*it);
+    }
+    v->clear();
+  }
+}
 
 namespace mindspore {
+
+typedef std::shared_ptr<session::LiteSession>(CreateTrainSessionProto)(std::shared_ptr<Graph::GraphData> graph_data,
+                                                                       std::shared_ptr<TrainCfg> cfg,
+                                                                       lite::Context *context);
+CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
+
+namespace session {
+class Metrics;
+class TrainLoopCallBack;
+}  // namespace session
+
 class ModelImpl {
  public:
   ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {}
@@ -51,18 +73,36 @@ class ModelImpl {
   std::vector<MSTensor> GetOutputsByNodeName(const std::string &name);
 
   static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
+  bool IsTrainModel();
+
+  Status InitMetrics(std::vector<Metrics *> metrics) {
+    metrics_ = metrics;
+    return kSuccess;
+  }
+  std::vector<Metrics *> GetMetrics() { return metrics_; }
+
+ protected:
+  // Utility methods
+  Status ConvertCallbacks(Model *model, std::vector<TrainCallBack *> *i_cbs,
+                          std::vector<session::TrainLoopCallBack *> *o_cbs,
+                          std::vector<session::TrainLoopCallBack *> *adapter_cbs);
+  Status PrepareMetrics(Model *model, std::vector<session::Metrics *> *o_ms,
+                        std::vector<session::Metrics *> *adapter_ms);
 
  private:
   friend class Model;
-  std::shared_ptr<Graph> graph_;
-  std::shared_ptr<session::LiteSession> session_;
-  std::shared_ptr<Context> context_;
+  friend class Serialization;
+  std::shared_ptr<Graph> graph_ = nullptr;
+  std::shared_ptr<session::LiteSession> session_ = nullptr;
+  std::shared_ptr<Context> context_ = nullptr;
+  std::shared_ptr<TrainCfg> cfg_ = nullptr;
+  std::vector<Metrics *> metrics_;
   void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
   void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
+  void SetConfig(const std::shared_ptr<TrainCfg> cfg) { cfg_ = cfg; }
   lite::CpuBindMode GetCpuBindMode();
-  Status ConverterContext(const std::shared_ptr<Context> &context, lite::Context *model_context);
   Status RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after);
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H
+#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H_

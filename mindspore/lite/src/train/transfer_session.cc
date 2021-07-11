@@ -207,7 +207,7 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
       return status;
     }
   }
-  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_, quant_type);
+  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_.get(), quant_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot serialize head";
     return status;
@@ -257,7 +257,7 @@ static session::LiteSession *CreateTransferSessionInt(const char *model_buf_back
     return nullptr;
   }
 
-  auto model = lite::Model::Import(model_buf_head, size_head);
+  auto model = std::shared_ptr<lite::Model>(lite::Model::Import(model_buf_head, size_head));
   if (model == nullptr) {
     MS_LOG(ERROR) << "create model for head train session failed";
     delete session;
