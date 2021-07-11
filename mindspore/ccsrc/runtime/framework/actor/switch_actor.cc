@@ -99,10 +99,7 @@ void SwitchActor::ParsePartialInput(const AnfNodePtr &node, const size_t branch_
     }
 
     auto func_graph = GetValueNode<FuncGraphPtr>(partial_inputs[kPartialFuncGraphPos]);
-    if (func_graph->output()->isa<ValueNode>()) {
-      AddInput(func_graph->output(), branch_id);
-      return;
-    } else if (AnfAlgo::CheckPrimitiveType(func_graph->output(), prim::kPrimPartial)) {
+    if (AnfAlgo::CheckPrimitiveType(func_graph->output(), prim::kPrimPartial)) {
       // If the funcgraph called by the partial returns a partial node, the switch actor should call the funcgraph
       // of the sub partial. Similarly, the input node should also be the input of the sub partial.
       is_mulit_call_ = true;
@@ -138,6 +135,9 @@ void SwitchActor::ParsePartialInput(const AnfNodePtr &node, const size_t branch_
     for (size_t j = kPartialInputStartPos; j < partial_inputs.size(); ++j) {
       AddInput(partial_inputs[j], branch_id);
     }
+  } else if (IsValueNode<FuncGraph>(node)) {
+    const auto func_graph = GetValueNode<FuncGraphPtr>(node);
+    branch_func_graph_[branch_id] = func_graph;
   } else {
     AddInput(node, branch_id);
   }
@@ -308,6 +308,12 @@ void SwitchActor::AddInput(const AnfNodePtr &node, const size_t branch) {
     for (size_t i = 0; i < call_output_num; ++i) {
       AddInput({real_input.first, i}, branch);
     }
+  } else if (real_input.first->isa<ValueNode>() && real_input.first->cast<ValueNodePtr>()->value()->isa<ValueTuple>()) {
+    const auto &value = real_input.first->cast<ValueNodePtr>()->value();
+    const auto &tuple_value = value->cast<ValueTuplePtr>();
+    for (size_t i = 0; i < tuple_value->value().size(); ++i) {
+      AddInput({real_input.first, i}, branch);
+    }
   } else {
     AddInput(real_input, branch);
   }
@@ -410,6 +416,11 @@ void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
     auto device_tensor =
       DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
     if (device_tensor == nullptr) {
+      // When the output of the graph is a valuenode, it does not need to be obtained from the store, and the valuenode
+      // is sent directly.
+      if (input_nodes_[device_tensor_store_key.first].first->isa<ValueNode>()) {
+        continue;
+      }
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
         ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
@@ -457,6 +468,13 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     size_t from_index = branch_inputs_pos_[index][result_arrow->from_output_index_];
 
     MS_LOG(DEBUG) << "Switch actor:" << GetAID() << " send result addr:" << input_device_tensors_[from_index];
+
+    // When result is valuenode, send valuenode directly without device address.
+    if (input_device_tensors_[from_index] == nullptr && input_nodes_[from_index].first->isa<ValueNode>()) {
+      Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, input_nodes_[from_index].first,
+            input_nodes_[from_index].second, result_arrow->to_input_index_, context);
+      continue;
+    }
     bool is_send = false;
     for (const auto &backend_node : backend_parameters_[from_index]) {
       for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(backend_node.first); ++j) {
@@ -490,6 +508,13 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     MS_EXCEPTION_IF_NULL(data);
     data->data_ = input_device_tensors_[data_arrow->from_output_index_];
+    if (data->data_ == nullptr && branch_func_graph_[index] != nullptr &&
+        (!branch_func_graph_[index]->output()->isa<ValueNode>())) {
+      MS_LOG(WARNING) << "Switch actor:" + GetAID().Name() +
+                           " input:" + std::to_string(data_arrow->from_output_index_) +
+                           " device address is null, node:" +
+                           AnfAlgo::GetNodeDebugString(input_nodes_[data_arrow->from_output_index_].first);
+    }
     Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
   }
 

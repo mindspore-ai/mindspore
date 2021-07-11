@@ -69,6 +69,9 @@ void FetchParameterBySwitchNode(const AnfNodePtr &switch_node, FuncGraphToParame
 
   for (size_t i = kSwitchTrueBranchPos; i < kSwitchInputNum; ++i) {
     const auto &partial_node = switch_inputs[i];
+    if (IsValueNode<FuncGraph>(partial_node)) {
+      continue;
+    }
     const auto &func_graph = GetFuncGraphFromPartial(partial_node);
     std::vector<AnfNodePtr> parameters;
     const auto &partial_inputs = partial_node->cast<CNodePtr>()->inputs();
@@ -516,6 +519,26 @@ FuncGraphPtr FetchFuncGraphInNode(const auto &node) {
 }
 }  // namespace
 
+AnfNodePtr FetchRealOutputByCallNode(const AnfNodePtr &node, std::set<AnfNodePtr> *call_nodes) {
+  const auto &real_node = AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem}).first;
+  if (!IsCallNode(real_node)) {
+    return real_node;
+  }
+  if ((*call_nodes).find(real_node) != (*call_nodes).end()) {
+    return nullptr;
+  }
+  (*call_nodes).insert(real_node);
+
+  const auto &func_graphs = FetchFuncGraphbyCallNode(real_node);
+  for (const auto &func_graph : func_graphs) {
+    const auto &output = FetchRealOutputByCallNode(func_graph->output(), call_nodes);
+    if (output != nullptr) {
+      return output;
+    }
+  }
+  return nullptr;
+}
+
 // Return true if the node has Ref abstract.
 bool HasAbstractRef(const AnfNodePtr &node) {
   if (node == nullptr) {
@@ -602,6 +625,8 @@ std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const AnfNodePtr &node) {
       for (size_t i = kSwitchTrueBranchPos; i < cnode_inputs.size(); ++i) {
         if (IsPrimitiveCNode(cnode_inputs[i], prim::kPrimPartial)) {
           func_graphs.emplace_back(GetFuncGraphFromPartial(cnode_inputs[i]));
+        } else if (IsValueNode<FuncGraph>(cnode_inputs[i])) {
+          func_graphs.emplace_back(GetValueNode<FuncGraphPtr>(cnode_inputs[i]));
         }
       }
     } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer) &&
@@ -659,6 +684,11 @@ size_t FetchOutputSizebyCallNode(const AnfNodePtr &node, std::vector<AnfNodePtr>
             break;
           }
           total_num += call_output_num;
+        } else if (inputs[i]->isa<ValueNode>() && inputs[i]->cast<ValueNodePtr>()->value()->isa<ValueTuple>()) {
+          auto value_tuple = inputs[i]->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>();
+          MS_EXCEPTION_IF_NULL(value_tuple);
+          auto tuple_value = value_tuple->value();
+          total_num += tuple_value.size();
         } else if (!HasAbstractMonad(inputs[i])) {
           ++total_num;
         }
@@ -750,6 +780,9 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   RealToFormalNode formal_to_real_front_parameters;
   for (const auto real_to_formal_front_parameter : real_to_formal_front_parameters) {
     for (const auto formal_parameter : real_to_formal_front_parameter.second) {
+      MS_LOG(DEBUG) << "Control node parser front node pair, key:"
+                    << real_to_formal_front_parameter.first->DebugString()
+                    << " value:" << formal_parameter->DebugString();
       formal_to_real_front_parameters[formal_parameter].emplace_back(real_to_formal_front_parameter.first);
     }
   }
@@ -1113,10 +1146,6 @@ void ControlNodeParser::FetchFuncGraphCallNum(const std::vector<AnfNodePtr> &con
 
       for (const auto &func_graph : func_graphs) {
         MS_EXCEPTION_IF_NULL(func_graph);
-        if (func_graph->output()->isa<ValueNode>()) {
-          continue;
-        }
-
         if (func_graph_to_call_num_.find(func_graph) == func_graph_to_call_num_.end()) {
           func_graph_to_call_num_[func_graph] = 1;
         } else {
@@ -1150,13 +1179,6 @@ void ControlNodeParser::CreateBranchIDForFuncGraph(const std::vector<AnfNodePtr>
   for (const auto &control_node : control_nodes) {
     // Root funcgraph does not need to create a gather actor.
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
-      const auto &cnode = control_node->cast<CNodePtr>();
-      const auto &inputs = cnode->inputs();
-      // If the output of funcgraph is a value node, no need to create gather actor.
-      if (inputs[kReturnInputPos]->isa<ValueNode>()) {
-        continue;
-      }
-
       auto func_graph = control_node->func_graph();
       func_graph_to_branch_id_[func_graph] = branch_id++;
     }
