@@ -36,6 +36,7 @@ enum DeviceType {
 };
 
 class Allocator;
+class Delegate;
 class DeviceInfoContext;
 
 class MS_API Context {
@@ -56,6 +57,9 @@ class MS_API Context {
   std::vector<int32_t> GetThreadAffinityCoreList() const;
   void SetEnableParallel(bool is_parallel);
   bool GetEnableParallel() const;
+
+  void SetDelegate(const std::shared_ptr<Delegate> &delegate);
+  std::shared_ptr<Delegate> GetDelegate() const;
 
   std::vector<std::shared_ptr<DeviceInfoContext>> &MutableDeviceInfo();
 

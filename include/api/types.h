@@ -23,6 +23,7 @@
 #include <functional>
 #include "include/api/data_type.h"
 #include "include/api/dual_abi_helper.h"
+#include "ir/format.h"
 
 #ifdef _WIN32
 #define MS_API __declspec(dllexport)
@@ -41,6 +42,7 @@ enum ModelType : uint32_t {
   kUnknownType = 0xFFFFFFFF
 };
 
+class Allocator;
 class MS_API MSTensor {
  public:
   class Impl;
@@ -76,6 +78,17 @@ class MS_API MSTensor {
   MSTensor *Clone() const;
   bool operator==(std::nullptr_t) const;
   bool operator!=(std::nullptr_t) const;
+  bool operator==(const MSTensor &tensor) const;
+
+  void SetShape(const std::vector<int64_t> &shape);
+  void SetDataType(enum DataType data_type);
+  void SetTensorName(const std::string &name);
+  void SetAllocator(std::shared_ptr<Allocator> allocator);
+  std::shared_ptr<Allocator> allocator() const;
+  void SetFormat(mindspore::Format format);
+  mindspore::Format format() const;
+  void SetData(void *data);
+  const std::shared_ptr<Impl> impl() const { return impl_; }
 
  private:
   // api without std::string

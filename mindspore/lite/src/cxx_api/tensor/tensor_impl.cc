@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/cxx_api/tensor/tensor_impl.h"
 #include <cstddef>
 #include <numeric>
 #include <memory>
@@ -21,12 +22,10 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/cxx_api/tensor_utils.h"
 #include "include/api/types.h"
 #include "include/api/status.h"
 #include "include/ms_tensor.h"
-#include "src/common/string_util.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
@@ -37,7 +36,12 @@ using mindspore::lite::RET_OK;
 std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::string &name, enum DataType type,
                                                                  const std::vector<int64_t> &shape, const void *data,
                                                                  size_t data_len) {
-  std::vector<int32_t> truncated_shape = TruncateShape(shape, static_cast<enum TypeId>(type), data_len, true);
+  std::vector<int32_t> truncated_shape;
+  if (data_len == 0) {
+    truncated_shape = TruncateShape(shape, static_cast<enum TypeId>(type), data_len, false);
+  } else {
+    truncated_shape = TruncateShape(shape, static_cast<enum TypeId>(type), data_len, true);
+  }
   if (truncated_shape.empty() && !(shape.empty())) {
     MS_LOG(ERROR) << "Invalid shape for creating tensor.";
     return nullptr;

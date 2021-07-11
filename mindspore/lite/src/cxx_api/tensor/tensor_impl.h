@@ -26,9 +26,9 @@
 #include <functional>
 #include "include/api/types.h"
 #include "include/api/status.h"
+#include "include/errorcode.h"
 #include "include/lite_utils.h"
 #include "include/ms_tensor.h"
-#include "src/tensor.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
@@ -38,7 +38,7 @@ class MSTensor::Impl {
  public:
   Impl() {}
 
-  virtual ~Impl() {
+  ~Impl() {
     if (lite_tensor_ == nullptr) {
       return;
     }
@@ -72,7 +72,7 @@ class MSTensor::Impl {
     return lite::MSTensorToStrings(lite_tensor);
   }
 
-  virtual const std::string &Name() const {
+  const std::string &Name() const {
     static std::string empty = "";
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
@@ -81,12 +81,28 @@ class MSTensor::Impl {
     return tensor_name_;
   }
 
-  virtual enum DataType DataType() const {
+  void SetName(const std::string &name) {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return;
+    }
+    lite_tensor_->set_tensor_name(name);
+  }
+
+  enum DataType DataType() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return DataType::kTypeUnknown;
     }
     return static_cast<enum DataType>(lite_tensor_->data_type());
+  }
+
+  void SetDataType(enum DataType data_type) {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return;
+    }
+    lite_tensor_->set_data_type(static_cast<enum TypeId>(data_type));
   }
 
   int64_t ElementNum() const {
@@ -97,7 +113,7 @@ class MSTensor::Impl {
     return static_cast<int64_t>(lite_tensor_->ElementsNum());
   }
 
-  virtual const std::vector<int64_t> &Shape() {
+  const std::vector<int64_t> &Shape() {
     static std::vector<int64_t> empty;
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
@@ -109,7 +125,50 @@ class MSTensor::Impl {
     return shape_;
   }
 
-  virtual std::shared_ptr<const void> Data() const {
+  void SetShape(const std::vector<int64_t> &shape) {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return;
+    }
+    std::vector<int> tensor_shape;
+    tensor_shape.resize(shape.size());
+    std::transform(shape.begin(), shape.end(), tensor_shape.begin(), [](int64_t c) { return static_cast<int>(c); });
+    lite_tensor_->set_shape(tensor_shape);
+  }
+
+  std::shared_ptr<Allocator> allocator() const {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return nullptr;
+    }
+    return lite_tensor_->allocator();
+  }
+
+  void SetAllocator(std::shared_ptr<Allocator> allocator) {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return;
+    }
+    lite_tensor_->set_allocator(allocator);
+  }
+
+  mindspore::Format format() {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return mindspore::Format::NHWC;
+    }
+    return lite_tensor_->format();
+  }
+
+  void SetFormat(mindspore::Format format) {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return;
+    }
+    lite_tensor_->set_format(format);
+  }
+
+  std::shared_ptr<const void> Data() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
@@ -123,14 +182,15 @@ class MSTensor::Impl {
     return std::shared_ptr<const void>(lite_tensor_->data(), [](const void *) {});
   }
 
-  virtual void *MutableData() {
+  void *MutableData() {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
     }
     return lite_tensor_->MutableData();
   }
-  virtual size_t DataSize() const {
+
+  size_t DataSize() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return 0;
@@ -138,7 +198,15 @@ class MSTensor::Impl {
     return lite_tensor_->Size();
   }
 
-  virtual bool IsDevice() const { return false; }
+  void SetData(void *data) {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return;
+    }
+    lite_tensor_->set_data(data);
+  }
+
+  bool IsDevice() const { return false; }
 
   tensor::MSTensor *lite_tensor() const { return lite_tensor_; }
 
