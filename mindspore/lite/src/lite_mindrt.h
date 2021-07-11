@@ -53,6 +53,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
       isolate_input_tensor->set_data(nullptr);
       delete isolate_input_tensor;
     }
+    delete call_node_;
+    delete partial_node_;
   }
   void RunOpData(OpData<lite::Tensor> *input_data, OpContext<lite::Tensor> *context = nullptr) override;
   virtual int CompileArrow();
@@ -109,7 +111,12 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 class LiteSwitchOpActor : public LiteOpActor {
  public:
   explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}
-  ~LiteSwitchOpActor() override = default;
+  ~LiteSwitchOpActor() override {
+    delete call_node_;
+    delete switch_node_;
+    delete true_partial_node_;
+    delete false_partial_node_;
+  };
   void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override;
   int CompileArrow() override;
   int PrepareOutputData() override;
