@@ -143,9 +143,9 @@ int SgdCPUKernel::Run() {
   auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
   auto error_code = RET_OK;
   if (*stat > 0.0f) {
-    error_code = ParallelLaunch(this->context_, SgdRunInit, this, thread_count_);
+    error_code = ParallelLaunch(this->ms_context_, SgdRunInit, this, thread_count_);
   } else {
-    error_code = ParallelLaunch(this->context_, SgdRun, this, thread_count_);
+    error_code = ParallelLaunch(this->ms_context_, SgdRun, this, thread_count_);
   }
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SGD function error error_code[" << error_code << "]";

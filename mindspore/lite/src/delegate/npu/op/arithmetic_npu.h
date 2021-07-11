@@ -25,24 +25,24 @@
 namespace mindspore {
 class ArithmeticNPUOp : public NPUOp {
  public:
-  ArithmeticNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                  const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  ArithmeticNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                  const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : NPUOp(primitive, in_tensors, out_tensors, name) {}
 
   ~ArithmeticNPUOp() override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-           const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+           const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors,
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
-  int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors, const std::vector<ge::Operator *> &npu_inputs,
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<ge::Operator *> &npu_inputs,
                    const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) override;
 
   ge::Operator *GetNPUOp() override;

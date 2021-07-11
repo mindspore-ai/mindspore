@@ -16,8 +16,8 @@
 
 #include "src/delegate/npu/op/avg_pooling_npu.h"
 namespace mindspore {
-int AvgPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors) {
+int AvgPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors) {
   auto pooling_prim = primitive->value_as_AvgPoolFusion();
   if (pooling_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -71,8 +71,8 @@ int AvgPoolingNPUOp::SetPoolingParam(const schema::AvgPoolFusion *pooling_prim) 
   return RET_OK;
 }
 
-int AvgPoolingNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                          const std::vector<tensor::MSTensor *> &out_tensors) {
+int AvgPoolingNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                          const std::vector<mindspore::MSTensor> &out_tensors) {
   pooling_ = new (std::nothrow) hiai::op::PoolingD(name_ + "_pooling");
   if (pooling_ == nullptr) {
     MS_LOG(ERROR) << "New pooling npu operator for op " << name_ << " failed.";
@@ -99,8 +99,8 @@ int AvgPoolingNPUOp::Init(const schema::Primitive *primitive, const std::vector<
   return RET_OK;
 }
 
-int AvgPoolingNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors,
+int AvgPoolingNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors,
                                   const std::vector<ge::Operator *> &npu_inputs) {
   pooling_->set_input_x(*npu_inputs[0]);
   return RET_OK;

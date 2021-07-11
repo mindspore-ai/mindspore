@@ -16,7 +16,6 @@
 
 #include "src/delegate/npu/pass/npu_pass_utils.h"
 #include <algorithm>
-#include "nnacl/scale.h"
 #include "src/delegate/npu/op/scale_npu.h"
 #include "src/delegate/npu/op/transpose_npu.h"
 
@@ -26,8 +25,8 @@ std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index{
   {schema::PrimitiveType_PadFusion, {1}},
   {schema::PrimitiveType_StridedSlice, {1, 2, 3}}};
 
-NPUOp *NPUPassUtils::CreateNchw2NhwcOp(const std::vector<tensor::MSTensor *> &in_tensors,
-                                       const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name) {
+NPUOp *NPUPassUtils::CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
+                                       const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name) {
   std::vector<int> perm = {0, 2, 3, 1};
   auto npu_op = new (std::nothrow) TransposeNPUOp(in_tensors, out_tensors, perm, name);
   if (npu_op == nullptr) {
@@ -37,8 +36,8 @@ NPUOp *NPUPassUtils::CreateNchw2NhwcOp(const std::vector<tensor::MSTensor *> &in
   return npu_op;
 }
 
-NPUOp *NPUPassUtils::CreateNhwc2NchwOp(const std::vector<tensor::MSTensor *> &in_tensors,
-                                       const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name) {
+NPUOp *NPUPassUtils::CreateNhwc2NchwOp(const std::vector<mindspore::MSTensor> &in_tensors,
+                                       const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name) {
   std::vector<int> perm = {0, 3, 1, 2};
   auto npu_op = new (std::nothrow) TransposeNPUOp(in_tensors, out_tensors, perm, name);
   if (npu_op == nullptr) {
@@ -49,8 +48,8 @@ NPUOp *NPUPassUtils::CreateNhwc2NchwOp(const std::vector<tensor::MSTensor *> &in
 }
 
 void NPUPassUtils::UpdateOp(NPUOp *op, const std::vector<NPUOp *> &in_ops, const std::vector<NPUOp *> &out_ops,
-                            const std::vector<tensor::MSTensor *> &in_tensors,
-                            const std::vector<tensor::MSTensor *> &outputs) {
+                            const std::vector<mindspore::MSTensor> &in_tensors,
+                            const std::vector<mindspore::MSTensor> &outputs) {
   op->set_inputs(in_tensors);
   op->set_outputs(outputs);
   op->set_in_ops(in_ops);
@@ -112,7 +111,7 @@ void NPUPassUtils::UpdateNC2NHPostOpInTensors(NPUOp *op, NPUOp *trans_op, NPUOp 
 void NPUPassUtils::UpdateNC2NHTransNodePostOp(NPUOp *op, NPUOp *trans_op, NPUOp *post_op) {
   // The input tensor should be replaced with the output tensor of trans_op.
   auto post_in_tensors = post_op->inputs();
-  tensor::MSTensor *old_in_tensor = nullptr;
+  mindspore::MSTensor old_in_tensor;
   // find out which input tensor of post_op should be updated
   for (size_t i = 0; i < post_in_tensors.size(); ++i) {
     if (OpInputFromOp(post_op, post_in_tensors.at(i)) == op) {
@@ -169,7 +168,7 @@ bool NPUPassUtils::IsNchw2Nhwc(NPUOp *op) {
   return true;
 }
 
-NPUOp *NPUPassUtils::OpInputFromOp(NPUOp *op, tensor::MSTensor *in_tensor) {
+NPUOp *NPUPassUtils::OpInputFromOp(NPUOp *op, mindspore::MSTensor in_tensor) {
   // given op and input tensor index, get which op output this tensor.
   // If input tensor is graph input, return nullptr.
   if (op == nullptr) {
@@ -187,15 +186,15 @@ NPUOp *NPUPassUtils::OpInputFromOp(NPUOp *op, tensor::MSTensor *in_tensor) {
   return *it;
 }
 
-std::vector<tensor::MSTensor *> NPUPassUtils::GetNonConstInputs(NPUOp *op) {
+std::vector<mindspore::MSTensor> NPUPassUtils::GetNonConstInputs(NPUOp *op) {
   if (op == nullptr) {
-    return std::vector<tensor::MSTensor *>{};
+    return std::vector<mindspore::MSTensor>{};
   }
   auto type = op->type();
   auto it = nodes2const_index.find(type);
   if (it != nodes2const_index.end()) {
     auto const_input_indices = it->second;
-    std::vector<tensor::MSTensor *> non_const_in_tensors;
+    std::vector<mindspore::MSTensor> non_const_in_tensors;
     auto in_tensors = op->inputs();
     for (auto i = 0; i < in_tensors.size(); ++i) {
       if (const_input_indices.find(i) == const_input_indices.end()) {
@@ -218,7 +217,7 @@ bool NPUPassUtils::Scale4dCase(NPUOp *op) {
   auto axis = scale_op->GetAxis();
   auto in_tensor = op->inputs().at(0);
   auto scale_tensor = op->inputs().at(1);
-  return in_tensor->shape().size() == 4 && scale_tensor->shape().size() == 1 && (axis == 3 || axis == -1);
+  return in_tensor.Shape().size() == 4 && scale_tensor.Shape().size() == 1 && (axis == 3 || axis == -1);
 }
 
 void NPUPassUtils::AssistDataNHWC2NCHW(int *data, size_t unit_size) {

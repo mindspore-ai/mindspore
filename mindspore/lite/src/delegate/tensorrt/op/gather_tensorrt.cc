@@ -18,8 +18,8 @@
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
-int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors) {
+int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 3) {
     MS_LOG(ERROR) << "invalid input tensor size: " << in_tensors.size();
     return RET_ERROR;
@@ -28,12 +28,12 @@ int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     MS_LOG(ERROR) << "invalid output tensor size: " << out_tensors.size();
     return RET_ERROR;
   }
-  if (in_tensors[1]->data_type() != kNumberTypeInt32) {
+  if (in_tensors[1].DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(ERROR) << "Gather indices only support Int32";
     return RET_ERROR;
   }
-  if (in_tensors[2]->ElementsNum() == 1) {
-    axis_ = static_cast<int *>(in_tensors[2]->data())[0];
+  if (in_tensors[2].ElementNum() == 1) {
+    axis_ = static_cast<int *>(in_tensors[2].MutableData())[0];
   } else {
     MS_LOG(ERROR) << "TensorRT axis is attribute.";
     return RET_ERROR;

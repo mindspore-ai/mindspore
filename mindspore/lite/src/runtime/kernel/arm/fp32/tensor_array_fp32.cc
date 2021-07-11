@@ -71,7 +71,7 @@ inline int TensorArrayCPUKernel::Run() {
   // set handle to outputs, fake malloc, call set_data
   lite::Tensor *output = out_tensors_.at(kOutputIndex);
   void *tensor_list = static_cast<void *>(this->tensor_list_.get());
-  void *delta = InnerKernel::context_->allocator->Malloc(sizeof(tensor_list));
+  void *delta = InnerKernel::ms_context_->allocator->Malloc(sizeof(tensor_list));
   MSLITE_CHECK_PTR(delta);
   memcpy(delta, &tensor_list, sizeof(tensor_list));
   output->set_data(delta);

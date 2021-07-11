@@ -18,29 +18,28 @@
 
 #include <vector>
 #include <string>
-#include "include/graph/op/all_ops.h"
 #include "include/graph/compatible/all_ops.h"
 #include "src/delegate/npu/op/npu_op.h"
 
 namespace mindspore {
 class BatchnormNPUOp : public NPUOp {
  public:
-  BatchnormNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                 const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  BatchnormNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                 const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : NPUOp(primitive, in_tensors, out_tensors, name) {}
 
   ~BatchnormNPUOp() override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override {
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override {
     return RET_OK;
   }
 
-  int Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-           const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+           const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors,
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
   ge::Operator *GetNPUOp() override;

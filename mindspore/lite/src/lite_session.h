@@ -84,7 +84,7 @@ class LiteSession : public session::LiteSession {
 
   int ConvertTensors(const lite::Model *model);
 
-  void InitGraphInOutTensors(const lite::Model *model);
+  void InitGraphInOutTensorsMap(const lite::Model *model);
 
   void IsolateOutputTensor();
 
@@ -119,8 +119,11 @@ class LiteSession : public session::LiteSession {
 
   bool IsIsolatedSubGraph(kernel::LiteKernel *kernel);
 
+  int InitMSContext(const Context *context);
+
  protected:
   InnerContext *context_ = nullptr;
+  mindspore::Context *ms_context_ = nullptr;
   std::vector<kernel::LiteKernel *> kernels_;
   std::vector<Tensor *> tensors_;
   // graph input tensors

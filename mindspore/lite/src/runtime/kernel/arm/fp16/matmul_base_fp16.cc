@@ -46,7 +46,7 @@ MatmulBaseFP16CPUKernel::~MatmulBaseFP16CPUKernel() {
 
 void MatmulBaseFP16CPUKernel::FreeResizeBufA() {
   if (a_pack_ptr_ != nullptr) {
-    context_->allocator->Free(a_pack_ptr_);
+    ms_context_->allocator->Free(a_pack_ptr_);
     a_pack_ptr_ = nullptr;
   }
   return;
@@ -54,7 +54,7 @@ void MatmulBaseFP16CPUKernel::FreeResizeBufA() {
 
 void MatmulBaseFP16CPUKernel::FreeResizeBufB() {
   if (b_pack_ptr_ != nullptr) {
-    context_->allocator->Free(b_pack_ptr_);
+    ms_context_->allocator->Free(b_pack_ptr_);
     b_pack_ptr_ = nullptr;
   }
   return;
@@ -135,7 +135,7 @@ void MatmulBaseFP16CPUKernel::ResizeParameter() {
 
 int MatmulBaseFP16CPUKernel::InitBufferA() {
   a_pack_ptr_ = reinterpret_cast<float16_t *>(
-    context_->allocator->Malloc(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float16_t)));
+    ms_context_->allocator->Malloc(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float16_t)));
   if (a_pack_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
@@ -150,7 +150,7 @@ int MatmulBaseFP16CPUKernel::InitBufferB() {
   }
 
   b_pack_ptr_ = reinterpret_cast<float16_t *>(
-    context_->allocator->Malloc(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float16_t)));
+    ms_context_->allocator->Malloc(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float16_t)));
   if (b_pack_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
@@ -326,7 +326,7 @@ int MatmulBaseFP16CPUKernel::Run() {
       batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
       batch_c_ptr_ = c_ptr + i * params_->row_ * params_->col_;
     }
-    auto ret = ParallelLaunch(this->context_, MatmulBaseFP16Run, this, thread_count_);
+    auto ret = ParallelLaunch(this->ms_context_, MatmulBaseFP16Run, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
       return ret;

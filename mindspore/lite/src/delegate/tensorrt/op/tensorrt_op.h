@@ -27,8 +27,8 @@
 namespace mindspore::lite {
 class TensorRTOp {
  public:
-  explicit TensorRTOp(const schema::Primitive *primitive, std::vector<tensor::MSTensor *> in_tensors,
-                      std::vector<tensor::MSTensor *> out_tensors, std::string name)
+  explicit TensorRTOp(const schema::Primitive *primitive, std::vector<mindspore::MSTensor> in_tensors,
+                      std::vector<mindspore::MSTensor> out_tensors, std::string name)
       : op_primitive_(primitive),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
@@ -40,8 +40,8 @@ class TensorRTOp {
 
   virtual ~TensorRTOp() = default;
 
-  virtual int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                        const std::vector<tensor::MSTensor *> &out_tensors) = 0;
+  virtual int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                        const std::vector<mindspore::MSTensor> &out_tensors) = 0;
 
   virtual int AddInnerOp(nvinfer1::INetworkDefinition *network) = 0;
 
@@ -57,9 +57,9 @@ class TensorRTOp {
 
   std::string GetOpName();
 
-  std::vector<tensor::MSTensor *> &inputs();
+  std::vector<mindspore::MSTensor> &inputs();
 
-  std::vector<tensor::MSTensor *> &outputs();
+  std::vector<mindspore::MSTensor> &outputs();
 
   schema::PrimitiveType type() const;
 
@@ -76,9 +76,9 @@ class TensorRTOp {
 
   const schema::Primitive *op_primitive_;
 
-  std::vector<tensor::MSTensor *> in_tensors_;
+  std::vector<mindspore::MSTensor> in_tensors_;
 
-  std::vector<tensor::MSTensor *> out_tensors_;
+  std::vector<mindspore::MSTensor> out_tensors_;
 
   std::vector<nvinfer1::ITensor *> tensorrt_in_tensors_;
 
@@ -94,8 +94,8 @@ class TensorRTOp {
 };
 
 template <class T>
-TensorRTOp *GetTensorRTOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                          const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name) {
+TensorRTOp *GetTensorRTOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                          const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name) {
   auto *op = new (std::nothrow) T(primitive, in_tensors, out_tensors, name);
   if (op == nullptr) {
     MS_LOG(ERROR) << "TensorRT is nullptr.";

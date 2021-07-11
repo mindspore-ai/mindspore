@@ -56,7 +56,7 @@ int NPUInsertTransformPass::GetInsertState(NPUOp *op) {
 
   // current op is target op
   // use out ops to count how many out lines from current op
-  std::vector<tensor::MSTensor *> inputs = NPUPassUtils::GetNonConstInputs(op);
+  std::vector<mindspore::MSTensor> inputs = NPUPassUtils::GetNonConstInputs(op);
   size_t in_out_tensor_num =
     inputs.size() + std::max(std::max(op->out_ops().size(), static_cast<size_t>(1)), op->outputs().size());
   size_t transpose_input_num = 0;
@@ -108,7 +108,7 @@ int NPUInsertTransformPass::InsertNode(NPUOp *op, NPUOp *post_op, size_t post_in
                                        std::vector<NPUOp *> *trans_ops) {
   // Op and post_op can't be nullptr at the same time.
   std::string op_name;
-  tensor::MSTensor *in_tensor = nullptr;
+  mindspore::MSTensor in_tensor;
 
   std::vector<NPUOp *> out_ops;
   // If post_op equals nullptr, op is the output of whole graph.
@@ -124,33 +124,33 @@ int NPUInsertTransformPass::InsertNode(NPUOp *op, NPUOp *post_op, size_t post_in
     op_name = op->name() + "_post";
     in_tensor = op->outputs()[0];
   }
-  std::vector<int> nhwc_shape = in_tensor->shape();
+  auto nhwc_shape = in_tensor.Shape();
   if (nhwc_shape.size() < 4) {
     MS_LOG(ERROR) << "nhwc_shape size < " << 4;
     return RET_ERROR;
   }
-  std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
+  std::vector<int64_t> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
 
   auto nh2nc_name = op_name + "_nh2nc_" + std::to_string(total++);
   auto nh2nc_tensor =
-    tensor::MSTensor::CreateTensor(nh2nc_name + "/output0", in_tensor->data_type(), nchw_shape, nullptr, 0);
+    mindspore::MSTensor::CreateTensor(nh2nc_name + "/output0", in_tensor.DataType(), nchw_shape, nullptr, 0);
   if (nh2nc_tensor == nullptr) {
     MS_LOG(ERROR) << "New nchw tensor failed when inserting nchw2nhwc op.";
     return RET_ERROR;
   }
-  nh2nc_tensor->set_tensor_name(nh2nc_name + "/output0");
-  std::vector<tensor::MSTensor *> nh2nc_tensors = {nh2nc_tensor};
-  all_tensors_->push_back(nh2nc_tensors[0]);
+  nh2nc_tensor->SetTensorName(nh2nc_name + "/output0");
+  std::vector<mindspore::MSTensor> nh2nc_tensors = {*nh2nc_tensor};
+  all_tensors_->push_back(nh2nc_tensor);
 
   auto nc2nh_name = op_name + "_nc2nh_" + std::to_string(total++);
   auto nc2nh_tensor =
-    tensor::MSTensor::CreateTensor(nc2nh_name + "/output0", in_tensor->data_type(), nhwc_shape, nullptr, 0);
+    mindspore::MSTensor::CreateTensor(nc2nh_name + "/output0", in_tensor.DataType(), nhwc_shape, nullptr, 0);
   if (nc2nh_tensor == nullptr) {
     MS_LOG(ERROR) << "New nhwc tensor failed when inserting nhwc2nchw op.";
     return RET_ERROR;
   }
-  std::vector<tensor::MSTensor *> nc2nh_tensors = {nc2nh_tensor};
-  all_tensors_->push_back(nc2nh_tensors[0]);
+  std::vector<mindspore::MSTensor> nc2nh_tensors = {*nc2nh_tensor};
+  all_tensors_->push_back(nc2nh_tensor);
 
   auto *nh2nc_op = NPUPassUtils::CreateNhwc2NchwOp({in_tensor}, nh2nc_tensors, nh2nc_name);
   trans_ops->push_back(nh2nc_op);
@@ -167,9 +167,9 @@ int NPUInsertTransformPass::InsertNode(NPUOp *op, NPUOp *post_op, size_t post_in
     NPUPassUtils::UpdateNC2NHTransNodePostOp(op, nc2nh_op, post_op);
   } else {
     // post_op nullptr mean output, we remain graph output tensor name unchanged
-    auto graph_output_name = in_tensor->tensor_name();
-    in_tensor->set_tensor_name(graph_output_name + "_before_" + name_);
-    nc2nh_tensor->set_tensor_name(graph_output_name);
+    auto graph_output_name = in_tensor.Name();
+    in_tensor.SetTensorName(graph_output_name + "_before_" + name_);
+    nc2nh_tensor->SetTensorName(graph_output_name);
   }
   return RET_OK;
 }

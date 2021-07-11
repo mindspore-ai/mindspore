@@ -270,5 +270,15 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
   }
   return RET_OK;
 }
+
+std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::Tensor *> &lite_tensors) {
+  std::vector<mindspore::MSTensor> tensors;
+  std::transform(lite_tensors.begin(), lite_tensors.end(), std::back_inserter(tensors), [](lite::Tensor *tensor) {
+    return mindspore::MSTensor(std::make_shared<mindspore::MSTensor::Impl>(tensor));
+  });
+
+  return tensors;
+}
+
 }  // namespace lite
 }  // namespace mindspore

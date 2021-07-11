@@ -92,7 +92,7 @@ int PReluCPUKernel::Run() {
   auto negative_slope_tensor = in_tensors_.at(1);
   prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->data_c());
 
-  auto ret = ParallelLaunch(this->context_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PRelu Run error: error_code[" << ret << "]";
     return RET_ERROR;

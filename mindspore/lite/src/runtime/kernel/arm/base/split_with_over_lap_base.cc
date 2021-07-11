@@ -115,7 +115,7 @@ int SplitWithOverlapBaseCPUKernel::Run() {
     output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data_c()));
   }
 
-  auto ret = ParallelLaunch(this->context_, SplitWithOverlapRun, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, SplitWithOverlapRun, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch for SplitWIthOverlapRun run fail. errorcode:[" << ret << "]";
     return RET_ERROR;

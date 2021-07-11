@@ -18,17 +18,17 @@
 #include <memory>
 
 namespace mindspore {
-int UnsqueezeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors) {
-  if (in_tensors[0]->shape().size() > 3) {
+int UnsqueezeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (in_tensors[0].Shape().size() > 3) {
     MS_LOG(WARNING) << "The dimension of output not support bigger than 4.";
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
 }
 
-int UnsqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                         const std::vector<tensor::MSTensor *> &out_tensors) {
+int UnsqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                         const std::vector<mindspore::MSTensor> &out_tensors) {
   unsqueeze_ = new (std::nothrow) hiai::op::ExpandDims(name_);
   if (unsqueeze_ == nullptr) {
     MS_LOG(ERROR) << "New unsqueeze npu operator for op " << name_ << " failed.";
@@ -51,8 +51,8 @@ int UnsqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<t
   return RET_OK;
 }
 
-int UnsqueezeNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                 const std::vector<tensor::MSTensor *> &out_tensors,
+int UnsqueezeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                 const std::vector<mindspore::MSTensor> &out_tensors,
                                  const std::vector<ge::Operator *> &npu_inputs) {
   unsqueeze_->set_input_x(*npu_inputs[0]);
   return RET_OK;

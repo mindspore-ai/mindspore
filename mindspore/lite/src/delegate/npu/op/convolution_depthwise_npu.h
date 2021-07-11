@@ -18,28 +18,27 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_DEPTHWISE_NPU_H_
 #include <vector>
 #include <string>
-#include "include/graph/op/all_ops.h"
 #include "include/graph/compatible/all_ops.h"
 #include "src/delegate/npu/op/convolution_base_npu.h"
 namespace mindspore {
 class ConvolutionDepthwiseNPUOp : public ConvolutionBaseNPUOp {
  public:
-  ConvolutionDepthwiseNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                            const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  ConvolutionDepthwiseNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                            const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : ConvolutionBaseNPUOp(primitive, in_tensors, out_tensors, name) {}
 
   ~ConvolutionDepthwiseNPUOp() override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override {
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override {
     return RET_OK;
   }
 
-  int Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-           const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+           const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors,
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
   ge::Operator *GetNPUOp() override;

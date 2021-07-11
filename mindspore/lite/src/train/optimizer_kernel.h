@@ -63,12 +63,12 @@ class OptimizerKernel : public InnerKernel {
   int SetOptimizerMode(WeightUpdateMode mod) {
     if (mod == WeightUpdateMode::VIRTUAL_BATCH) {
       if (grad_sum_ != nullptr) {
-        context_->allocator->Free(grad_sum_);
+        ms_context_->allocator->Free(grad_sum_);
         grad_sum_ = nullptr;
       }
       size_t size = in_tensors_.at(grad_idx_)->Size();
       size_t elem_num = in_tensors_.at(grad_idx_)->ElementsNum();
-      grad_sum_ = reinterpret_cast<float *>(context_->allocator->Malloc(size));
+      grad_sum_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(size));
       if (grad_sum_ == nullptr) {
         MS_LOG(ERROR) << "failed to malloc grad sum tensor, size=" << size;
         return RET_ERROR;
@@ -79,7 +79,7 @@ class OptimizerKernel : public InnerKernel {
     } else {
       if (grad_sum_ != nullptr) {
         OptimizerStep();
-        context_->allocator->Free(grad_sum_);
+        ms_context_->allocator->Free(grad_sum_);
         grad_sum_ = nullptr;
       }
     }
@@ -90,7 +90,7 @@ class OptimizerKernel : public InnerKernel {
     auto gradient = reinterpret_cast<float *>(in_tensors_.at(grad_idx_)->MutableData());
     int length = in_tensors_.at(grad_idx_)->ElementsNum();
 
-    int stride = UP_DIV(length, context_->thread_num_);
+    int stride = UP_DIV(length, ms_context_->thread_num_);
     int count = MSMIN(stride, length - stride * task_id);
     int start = stride * task_id;
     int end = start + count;
@@ -117,7 +117,7 @@ class OptimizerKernel : public InnerKernel {
       return ret;
     }
 
-    auto ctx = static_cast<const lite::InnerContext *>(this->context_);
+    auto ctx = static_cast<const lite::InnerContext *>(this->ms_context_);
     if (ctx->IsCpuFloat16Enabled()) {
       auto t = in_tensors_.at(grad_idx_);
       auto gradient = reinterpret_cast<float *>(t->data_c());

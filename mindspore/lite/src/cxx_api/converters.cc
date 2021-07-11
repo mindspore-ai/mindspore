@@ -82,7 +82,7 @@ Status A2L_ConvertContext(Context *a_context, lite::Context *l_context) {
       return kLiteInputParamInvalid;
     }
   }
-
+  l_context->delegate = a_context->GetDelegate();
   return kSuccess;
 }
 }  // namespace mindspore

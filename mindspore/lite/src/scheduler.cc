@@ -32,6 +32,7 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "src/common/prim_util.h"
+#include "src/common/tensor_util.h"
 #include "src/runtime/infer_manager.h"
 #include "src/sub_graph_split.h"
 #include "src/weight_decoder.h"
@@ -170,7 +171,10 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
   for (size_t i = 0; i < dst_kernels->size(); i++) {
     kernels.push_back((*dst_kernels)[i]->kernel());
   }
-  DelegateModel *model = new (std::nothrow) DelegateModel(&kernels, primitives_);
+
+  auto schema_version = static_cast<SchemaVersion>(VersionManager::GetInstance()->GetSchemaVersion());
+  DelegateModel *model = new (std::nothrow) DelegateModel(
+    &kernels, LiteTensorsToMSTensors(inputs_), LiteTensorsToMSTensors(outputs_), primitives_, schema_version);
   if (model == nullptr) {
     MS_LOG(ERROR) << "New delegate model failed.";
     return RET_NULL_PTR;
@@ -208,7 +212,8 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
         return RET_NULL_PTR;
       }
       kernel::KernelKey delegate_desc{
-        kernel::kDelegate, kernel->inputs()[0]->data_type(), schema::PrimitiveType_NONE, "", "", delegate_};
+        kernel::kDelegate, static_cast<TypeId>(kernel->inputs()[0].DataType()), schema::PrimitiveType_NONE, "", "",
+        delegate_};
       lite_kernel->set_desc(delegate_desc);
       dst_kernels->push_back(lite_kernel);
     }
@@ -656,7 +661,8 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
       return RET_NOT_SUPPORT;
     }
   }
-  ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, cpu_desc, op_parameter, kernel);
+  ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, cpu_desc, op_parameter,
+                                                 kernel);
   if (ret == RET_OK) {
     MS_LOG(DEBUG) << "Get TypeId(" << kernel_data_type << ") op success: " << PrimitiveCurVersionTypeName(op_type);
     if (is_train_session_) {
@@ -694,7 +700,8 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
       MS_LOG(DEBUG) << "CopyConstTensorsData failed: " << ret;
       return RET_NOT_SUPPORT;
     }
-    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, gpu_desc, op_parameter, kernel);
+    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, gpu_desc,
+                                                   op_parameter, kernel);
     if (ret == RET_OK) {
       MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type);
     } else {
@@ -712,8 +719,8 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   auto prim_type = GetPrimitiveType(node->primitive_);
   if (prim_type == schema::PrimitiveType_Custom) {
     kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, "", ""};
-    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
-                                                   node->primitive_);
+    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
+                                                   kernel, node->primitive_);
     if (ret == RET_OK && *kernel != nullptr) {
       return ret;
     }
@@ -729,8 +736,8 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
     if (!device.provider_.empty()) {
       kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, device.provider_device_,
                              device.provider_};
-      ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
-                                                     node->primitive_);
+      ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
+                                                     kernel, node->primitive_);
       if (ret == RET_OK && *kernel != nullptr) {
         return ret;
       }
@@ -1182,18 +1189,18 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   }
   std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
   std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
+  kernel::SubGraphKernel *sub_graph = nullptr;
   if (type == kernel::kCustomSubGraph) {
-    return CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, innerkernel);
+    sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, innerkernel);
   }
   if (type == kernel::kGpuSubGraph) {
 #if GPU_OPENCL
-    auto sub_kernel = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, innerkernel);
-    if (sub_kernel == nullptr) {
+    sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, innerkernel);
+    if (sub_graph == nullptr) {
       MS_LOG(ERROR) << "Create OpenCLSubGraph failed";
       delete innerkernel;
       return nullptr;
     }
-    return sub_kernel;
 #elif GPU_VULKAN
     delete innerkernel;
     return nullptr;
@@ -1204,8 +1211,8 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   }
   if (type == kernel::kCpuFP16SubGraph) {
 #ifdef ENABLE_FP16
-    auto sub_kernel = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, innerkernel);
-    if (sub_kernel == nullptr) {
+    sub_graph = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, innerkernel);
+    if (sub_graph == nullptr) {
       MS_LOG(ERROR) << "FP16 subgraph new failed.";
       delete innerkernel;
       return nullptr;
@@ -1215,7 +1222,6 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
         out_tensor->set_data_type(kNumberTypeFloat16);
       }
     }
-    return sub_kernel;
 #else
     delete innerkernel;
     MS_LOG(ERROR) << "FP16 subgraph is not supported!";
@@ -1223,15 +1229,19 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
 #endif
   }
   if (type == kernel::kCpuFP32SubGraph) {
-    auto sub_kernel = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, innerkernel);
-    if (sub_kernel == nullptr) {
+    sub_graph = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, innerkernel);
+    if (sub_graph == nullptr) {
       MS_LOG(ERROR) << "FP32 subgraph new failed.";
       delete innerkernel;
       return nullptr;
     }
-    return sub_kernel;
   }
-  return nullptr;
+  if (sub_graph == nullptr) {
+    MS_LOG(ERROR) << "create sub graph failed.";
+    return nullptr;
+  }
+  sub_graph->set_context(context_);
+  return sub_graph;
 }
 
 TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors) {

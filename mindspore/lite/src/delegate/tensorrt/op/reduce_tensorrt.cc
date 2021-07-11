@@ -17,8 +17,8 @@
 #include "src/delegate/tensorrt/op/reduce_tensorrt.h"
 
 namespace mindspore::lite {
-int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors) {
+int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors) {
   auto reduce_op = primitive->value_as_ReduceFusion();
   if (reduce_op == nullptr) {
     MS_LOG(ERROR) << "convert failed";
@@ -53,16 +53,16 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   bool keep_dims = reduce_op->keep_dims();
   // axis
   uint32_t reduceAxes = 0;
-  tensor::MSTensor *axis_tensor = this->in_tensors_[1];
-  if (axis_tensor->data() == nullptr) {
+  mindspore::MSTensor axis_tensor = this->in_tensors_[1];
+  if (axis_tensor.Data() == nullptr) {
     MS_LOG(ERROR) << "invalid axis_tensor";
     return RET_ERROR;
   }
-  if (axis_tensor->data_type() != TypeId::kNumberTypeInt32) {
+  if (axis_tensor.DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << "not int data type";
   }
-  int *axis_data = reinterpret_cast<int *>(axis_tensor->data());
-  for (int i = 0; i < axis_tensor->ElementsNum(); i++) {
+  int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
+  for (int i = 0; i < axis_tensor.ElementNum(); i++) {
     reduceAxes |= (16 - (1u << *axis_data));
     axis_data++;
   }
@@ -79,7 +79,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "addReduce output tensor create failed for TensorRT.";
     return RET_ERROR;
   }
-  out_tensor->setName(out_tensors_[0]->tensor_name().c_str());
+  out_tensor->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(out_tensor);
   return RET_OK;
 }

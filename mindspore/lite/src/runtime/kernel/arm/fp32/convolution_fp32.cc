@@ -151,7 +151,7 @@ int ConvolutionCPUKernel::Run() {
     PackWeight();
   }
 
-  ret = ParallelLaunch(this->context_, ConvolutionImpl, this, thread_count_);
+  ret = ParallelLaunch(this->ms_context_, ConvolutionImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << ret << "]";
   }

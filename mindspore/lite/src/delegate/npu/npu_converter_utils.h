@@ -19,29 +19,36 @@
 #include <string>
 #include <memory>
 #include <vector>
+#ifdef ENABLE_ARM64
+#include <arm_neon.h>
+#endif
 #include "schema/ops_generated.h"
 #include "include/graph/tensor.h"
 #include "include/graph/op/array_defs.h"
-#include "include/ms_tensor.h"
+#include "include/api/types.h"
+#include "include/api/data_type.h"
 
 namespace mindspore {
+#ifdef ENABLE_ARM64
+void Float32ToFloat16(const float *__restrict input, float16_t *__restrict output, int number);
 
-std::shared_ptr<ge::Tensor> ConverterToNPUTensor(tensor::MSTensor *src);
+void Float16ToFloat32(const float16_t *__restrict input, float *__restrict output, int number);
+#endif
 
-hiai::op::Data *ConverterToNPUData(tensor::MSTensor *src, const std::string &name);
+std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src);
+
+hiai::op::Data *ConverterToNPUData(mindspore::MSTensor src, const std::string &name);
 
 ge::Format ConverterToNPUFormat(schema::Format format);
 
-ge::DataType ConverterToNPUDataType(TypeId type_id);
+ge::DataType ConverterToNPUDataType(DataType type_id);
 
-ge::Shape ConverterToNPUShape(const std::vector<int> &src_shape);
-
-int ConverterToNPUActMode(schema::ActivationType type);
+ge::Shape ConverterToNPUShape(const std::vector<int64_t> &src_shape);
 
 int ConverterToNPUEltwiseMode(schema::EltwiseMode mode);
 
 int TransFormAxis(int axis);
 
-bool IsContainMSTensor(const std::vector<tensor::MSTensor *> &tensor_vec, const tensor::MSTensor *tensor);
+bool IsContainMSTensor(const std::vector<mindspore::MSTensor> &tensor_vec, const mindspore::MSTensor tensor);
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_CONVERTER_UITLS_H_

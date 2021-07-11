@@ -28,12 +28,12 @@ NPUGraph::~NPUGraph() {
   for (auto *op : npu_ops_) {
     delete op;
   }
-  for (auto *tensor : insert_tensors_) {
+  for (auto tensor : insert_tensors_) {
     delete tensor;
   }
 }
 
-void NPUGraph::set_input(tensor::MSTensor *in_tensor, int index) {
+void NPUGraph::set_input(mindspore::MSTensor in_tensor, int index) {
   MS_ASSERT(index < inputs_.size());
   auto origin_tensor = this->inputs_[index];
   for (auto kernel : all_kernels_) {
@@ -46,7 +46,7 @@ void NPUGraph::set_input(tensor::MSTensor *in_tensor, int index) {
   this->inputs_[index] = in_tensor;
 }
 
-void NPUGraph::set_output(tensor::MSTensor *out_tensor, int index) {
+void NPUGraph::set_output(mindspore::MSTensor out_tensor, int index) {
   MS_ASSERT(index < outputs_.size());
   auto origin_tensor = this->outputs_[index];
   for (auto kernel : all_kernels_) {
@@ -199,7 +199,7 @@ int NPUGraph::Prepare() {
     }
     for (auto output : all_kernels_[i]->outputs()) {
       if (find(outputs_.begin(), outputs_.end(), output) == outputs_.end()) {
-        output->MutableData();
+        output.MutableData();
       }
     }
   }
@@ -211,7 +211,7 @@ int NPUGraph::Execute() {
     // 1. malloc graph output data
     for (auto output : all_kernels_[i]->outputs()) {
       if (find(outputs_.begin(), outputs_.end(), output) != outputs_.end()) {
-        output->MutableData();
+        output.MutableData();
       }
     }
     // 2. execute

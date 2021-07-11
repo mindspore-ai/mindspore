@@ -19,8 +19,8 @@
 
 namespace mindspore::lite {
 int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
-                                   const std::vector<tensor::MSTensor *> &in_tensors,
-                                   const std::vector<tensor::MSTensor *> &out_tensors) {
+                                   const std::vector<mindspore::MSTensor> &in_tensors,
+                                   const std::vector<mindspore::MSTensor> &out_tensors) {
   std::map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> element_wise_ops = {
     {schema::PrimitiveType_AddFusion, nvinfer1::ElementWiseOperation::kSUM},
     {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
@@ -43,15 +43,16 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
   }
   return RET_OK;
 }
+
 int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network or input tensor size is invalid";
     return RET_ERROR;
   }
   // create ITensor from MS scalar
-  if (this->in_tensors_[1]->shape().size() == 0) {
+  if (this->in_tensors_[1].Shape().size() == 0) {
     nvinfer1::ITensor *scalar_input =
-      lite::ConvertScalarToITensor(network, this->in_tensors_[0]->shape().size(), this->in_tensors_[1]->data());
+      lite::ConvertScalarToITensor(network, this->in_tensors_[0].Shape().size(), this->in_tensors_[1].MutableData());
     if (scalar_input == nullptr) {
       MS_LOG(ERROR) << "create Itensor from scalar failed";
       return RET_ERROR;
@@ -95,7 +96,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
   }
 
-  op_out_tensor->setName(out_tensors_[0]->tensor_name().c_str());
+  op_out_tensor->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(op_out_tensor);
   return RET_OK;
 }

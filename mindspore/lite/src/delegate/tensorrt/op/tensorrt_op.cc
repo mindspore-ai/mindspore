@@ -29,9 +29,9 @@ std::vector<nvinfer1::ITensor *> &TensorRTOp::GetInnerInTensors() { return this-
 
 std::string TensorRTOp::GetOpName() { return this->op_name_; }
 
-std::vector<tensor::MSTensor *> &TensorRTOp::inputs() { return this->in_tensors_; }
+std::vector<mindspore::MSTensor> &TensorRTOp::inputs() { return this->in_tensors_; }
 
-std::vector<tensor::MSTensor *> &TensorRTOp::outputs() { return this->out_tensors_; }
+std::vector<mindspore::MSTensor> &TensorRTOp::outputs() { return this->out_tensors_; }
 
 schema::PrimitiveType TensorRTOp::type() const { return this->type_; }
 

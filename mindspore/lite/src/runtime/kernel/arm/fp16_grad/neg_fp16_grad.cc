@@ -55,7 +55,7 @@ int NegGradCPUKernelFp16::DoNegGrad(int task_id) {
 int NegGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int NegGradCPUKernelFp16::Run() {
-  int ret = ParallelLaunch(this->context_, NegGradRun, this, thread_count_);
+  int ret = ParallelLaunch(this->ms_context_, NegGradRun, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parallel launch fail!ret: " << ret;
     return ret;

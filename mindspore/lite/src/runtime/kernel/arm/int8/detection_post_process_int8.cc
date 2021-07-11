@@ -50,7 +50,7 @@ int DequantizeInt8ToFp32Run(void *cdata, int task_id, float lhs_scale, float rhs
 
 int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **data) {
   data_int8_ = reinterpret_cast<int8_t *>(tensor->data_c());
-  *data = reinterpret_cast<float *>(context_->allocator->Malloc(tensor->ElementsNum() * sizeof(float)));
+  *data = reinterpret_cast<float *>(ms_context_->allocator->Malloc(tensor->ElementsNum() * sizeof(float)));
   if (*data == nullptr) {
     MS_LOG(ERROR) << "Malloc data failed.";
     return RET_ERROR;
@@ -64,10 +64,10 @@ int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **
   quant_size_ = tensor->ElementsNum();
   thread_n_stride_ = UP_DIV(quant_size_, op_parameter_->thread_num_);
 
-  auto ret = ParallelLaunch(this->context_, DequantizeInt8ToFp32Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, DequantizeInt8ToFp32Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "QuantDTypeCastRun error error_code[" << ret << "]";
-    context_->allocator->Free(*data);
+    ms_context_->allocator->Free(*data);
     return RET_ERROR;
   }
   return RET_OK;
@@ -90,43 +90,43 @@ int DetectionPostProcessInt8CPUKernel::GetInputData() {
 
 void DetectionPostProcessInt8CPUKernel::FreeAllocatedBuffer() {
   if (params_->decoded_boxes_ != nullptr) {
-    context_->allocator->Free(params_->decoded_boxes_);
+    ms_context_->allocator->Free(params_->decoded_boxes_);
     params_->decoded_boxes_ = nullptr;
   }
   if (params_->nms_candidate_ != nullptr) {
-    context_->allocator->Free(params_->nms_candidate_);
+    ms_context_->allocator->Free(params_->nms_candidate_);
     params_->nms_candidate_ = nullptr;
   }
   if (params_->indexes_ != nullptr) {
-    context_->allocator->Free(params_->indexes_);
+    ms_context_->allocator->Free(params_->indexes_);
     params_->indexes_ = nullptr;
   }
   if (params_->scores_ != nullptr) {
-    context_->allocator->Free(params_->scores_);
+    ms_context_->allocator->Free(params_->scores_);
     params_->scores_ = nullptr;
   }
   if (params_->all_class_indexes_ != nullptr) {
-    context_->allocator->Free(params_->all_class_indexes_);
+    ms_context_->allocator->Free(params_->all_class_indexes_);
     params_->all_class_indexes_ = nullptr;
   }
   if (params_->all_class_scores_ != nullptr) {
-    context_->allocator->Free(params_->all_class_scores_);
+    ms_context_->allocator->Free(params_->all_class_scores_);
     params_->all_class_scores_ = nullptr;
   }
   if (params_->single_class_indexes_ != nullptr) {
-    context_->allocator->Free(params_->single_class_indexes_);
+    ms_context_->allocator->Free(params_->single_class_indexes_);
     params_->single_class_indexes_ = nullptr;
   }
   if (params_->selected_ != nullptr) {
-    context_->allocator->Free(params_->selected_);
+    ms_context_->allocator->Free(params_->selected_);
     params_->selected_ = nullptr;
   }
   if (input_boxes_ != nullptr) {
-    context_->allocator->Free(input_boxes_);
+    ms_context_->allocator->Free(input_boxes_);
     input_boxes_ = nullptr;
   }
   if (input_scores_ != nullptr) {
-    context_->allocator->Free(input_scores_);
+    ms_context_->allocator->Free(input_scores_);
     input_scores_ = nullptr;
   }
 }

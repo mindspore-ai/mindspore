@@ -164,7 +164,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   return parameter;
 }
 kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
-                                  lite::InnerContext *context) {
+                                  lite::InnerContext *context, mindspore::Context *ms_context) {
   MS_ASSERT(cnode != nullptr && context != nullptr);
   auto prim_t = lite::GetPrimitiveT(cnode->input(0));
   if (prim_t == nullptr) {
@@ -199,7 +199,8 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   auto data_type = inputs.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(parameter->type_)};
   kernel::LiteKernel *lite_kernel;
-  ret = lite::KernelRegistry::GetInstance()->GetKernel(inputs, *outputs, context, desc, parameter, &lite_kernel);
+  ret = lite::KernelRegistry::GetInstance()->GetKernel(inputs, *outputs, context, ms_context, desc, parameter,
+                                                       &lite_kernel);
   if (ret != lite::RET_OK) {
     free(parameter);
     return nullptr;
@@ -330,7 +331,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       FreeTensors(&input_tensors, &output_tensors);
       return nullptr;
     }
-    auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, input_cnode, context_.get());
+    auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, input_cnode, context_.get(), ms_context_.get());
     if (lite_kernel == nullptr) {
       FreeTensors(&input_tensors, &output_tensors);
       MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";

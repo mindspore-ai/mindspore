@@ -144,7 +144,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   for (int stage = 0; stage < static_cast<int>(threads.size()); stage++) {
     stage_ = stage;
     threads_ = threads.at(stage);
-    int error_code = ParallelLaunch(this->context_, SparseSoftmaxCrossEntropyWithLogitsRun, this, threads_);
+    int error_code = ParallelLaunch(this->ms_context_, SparseSoftmaxCrossEntropyWithLogitsRun, this, threads_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogits function error error_code[" << error_code << "]";
       return RET_ERROR;

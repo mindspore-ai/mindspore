@@ -72,7 +72,7 @@ int ExpCPUKernel::Run() {
   output_addr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   exp_parameter_->element_num_ = in_tensors_.front()->ElementsNum();
 
-  auto ret = ParallelLaunch(this->context_, ExpRun, this, exp_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ExpRun, this, exp_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Exp error: error_code[" << ret << "]";
     return RET_ERROR;

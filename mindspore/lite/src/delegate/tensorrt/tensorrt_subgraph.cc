@@ -90,13 +90,13 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     for (auto in_tensor : cur_op->inputs()) {
       // Data From CPU
       if (IsSubGraphInputTensor(this->inputs(), in_tensor)) {
-        auto cuda_dtype = ConvertDataType(in_tensor->data_type());
+        auto cuda_dtype = ConvertDataType(in_tensor.DataType());
         if (static_cast<int>(cuda_dtype) == -1) {
-          MS_LOG(ERROR) << "Unsupported input data type " << in_tensor->data_type();
+          MS_LOG(ERROR) << "Unsupported input data type " << static_cast<int>(in_tensor.DataType());
           return RET_ERROR;
         }
         auto trt_tensor =
-          this->network_->addInput(in_tensor->tensor_name().c_str(), cuda_dtype, ConvertCudaDims(in_tensor->shape()));
+          this->network_->addInput(in_tensor.Name().c_str(), cuda_dtype, ConvertCudaDims(in_tensor.Shape()));
         cur_op->AddInnerInTensors(trt_tensor);
         continue;
       }
@@ -129,7 +129,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     for (auto out_op : this->out_ops_) {
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {
-          out_op->GetInnerOutTensor()[index]->setName(out_tensor->tensor_name().c_str());
+          out_op->GetInnerOutTensor()[index]->setName(out_tensor.Name().c_str());
           this->network_->markOutput(*out_op->GetInnerOutTensor()[index]);
         }
       }
@@ -166,18 +166,18 @@ int TensorRTSubGraph::Prepare() {
   }
 
   for (auto tensor : inputs_) {
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor->Size());
-    int index = this->engine_->getBindingIndex(tensor->tensor_name().c_str());
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());
+    int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;
-    trt_in_tensor_name_.push_back(tensor->tensor_name());
+    trt_in_tensor_name_.push_back(tensor.Name());
   }
 
   for (auto tensor : outputs_) {
-    tensor->MutableData();
-    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor->Size());
-    int index = this->engine_->getBindingIndex(tensor->tensor_name().c_str());
+    tensor.MutableData();
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());
+    int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;
-    trt_out_tensor_name_.push_back(tensor->tensor_name());
+    trt_out_tensor_name_.push_back(tensor.Name());
   }
   return RET_OK;
 }
@@ -192,7 +192,7 @@ int TensorRTSubGraph::Execute() {
     return RET_ERROR;
   }
   for (size_t i = 0; i < outputs_.size(); i++) {
-    if (outputs_[i]->MutableData() == nullptr) {
+    if (outputs_[i].MutableData() == nullptr) {
       MS_LOG(ERROR) << "Malloc output tensor data failed.";
     }
     runtime_->GetAllocator()->SyncMemInHostAndDevice(outputs_[i], trt_out_tensor_name_[i], false);
@@ -200,7 +200,7 @@ int TensorRTSubGraph::Execute() {
   return RET_OK;
 }
 
-nvinfer1::ITensor *TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, tensor::MSTensor *in_tensor) {
+nvinfer1::ITensor *TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, mindspore::MSTensor in_tensor) {
   for (auto input_op : cur_op->in_ops()) {
     for (size_t i = 0; i < input_op->outputs().size(); i++) {
       auto out_tensor = input_op->outputs().at(i);

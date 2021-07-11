@@ -227,7 +227,7 @@ int QuantizedAddCPUKernel::Run() {
   input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->data_c());
   output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->data_c());
 
-  ParallelLaunch(this->context_, AddInt8Run, this, thread_count_);
+  ParallelLaunch(this->ms_context_, AddInt8Run, this, thread_count_);
 
   return RET_OK;
 }

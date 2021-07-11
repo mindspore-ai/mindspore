@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "mindspore/lite/src/tensor.h"
+#include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/option.h"
 #include "include/errorcode.h"

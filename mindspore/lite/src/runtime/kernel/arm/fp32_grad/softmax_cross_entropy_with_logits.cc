@@ -90,7 +90,7 @@ int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, 
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, SoftmaxCrossEntropyWithLogitsRun, this, 1);
+  int error_code = ParallelLaunch(this->ms_context_, SoftmaxCrossEntropyWithLogitsRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SoftmaxCrossEntropy function error error_code[" << error_code << "]";
     return RET_ERROR;

@@ -19,14 +19,14 @@
 #include "src/delegate/npu/pass/npu_pass_utils.h"
 
 namespace mindspore {
-int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                                 const std::vector<tensor::MSTensor *> &out_tensors) {
+int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                                 const std::vector<mindspore::MSTensor> &out_tensors) {
   // Only onnx StridedSlice has 5 in_tensors, of which the 4th input is axes and the 5th input is strides.
   if (in_tensors.size() == 5) {
     vector<int> axes;
-    size_t size = in_tensors[3]->shape()[0];
+    size_t size = in_tensors[3].Shape()[0];
     axes.resize(size);
-    memcpy(axes.data(), in_tensors[3]->data(), sizeof(int) * size);
+    memcpy(axes.data(), in_tensors[3].Data().get(), sizeof(int) * size);
     for (int i = 0; i < axes.size(); ++i) {
       if (i != axes[i]) {
         MS_LOG(WARNING) << "Does not support setting axis, so the axis must be continuous.";
@@ -37,8 +37,8 @@ int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::
   return RET_OK;
 }
 
-int StridedSliceNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                            const std::vector<tensor::MSTensor *> &out_tensors) {
+int StridedSliceNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                            const std::vector<mindspore::MSTensor> &out_tensors) {
   strided_slice_ = new (std::nothrow) hiai::op::StridedSlice(name_);
   if (strided_slice_ == nullptr) {
     MS_LOG(ERROR) << "New stridedSlice npu operator for op " << name_ << " failed.";
@@ -57,8 +57,8 @@ int StridedSliceNPUOp::Init(const schema::Primitive *primitive, const std::vecto
   return RET_OK;
 }
 
-int StridedSliceNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                    const std::vector<tensor::MSTensor *> &out_tensors,
+int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                    const std::vector<mindspore::MSTensor> &out_tensors,
                                     const std::vector<ge::Operator *> &npu_inputs) {
   strided_slice_->set_attr_begin_mask(begins_mask_);
   strided_slice_->set_attr_ellipsis_mask(ellipsis_mask_);

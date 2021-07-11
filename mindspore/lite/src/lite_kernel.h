@@ -33,6 +33,7 @@
 #include "schema/model_generated.h"
 #include "include/context.h"
 #include "include/kernel.h"
+#include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/inner_kernel.h"
 #include "include/delegate.h"
 
@@ -231,8 +232,12 @@ class LiteKernel {
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensors(in_tensors);
     } else {
-      std::vector<mindspore::tensor::MSTensor *> ms_tensors(in_tensors.begin(), in_tensors.end());
-      kernel_->set_inputs(ms_tensors);
+      std::vector<MSTensor> tensors_in;
+      std::transform(in_tensors.begin(), in_tensors.begin(), std::back_inserter(tensors_in), [](lite::Tensor *tensor) {
+        auto impl = std::make_shared<mindspore::MSTensor::Impl>(tensor);
+        return mindspore::MSTensor(impl);
+      });
+      kernel_->set_inputs(tensors_in);
     }
   }
 
@@ -242,8 +247,9 @@ class LiteKernel {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensor(in_tensor, index);
     } else {
       MS_ASSERT(index < kernel_->inputs().size());
-      mindspore::tensor::MSTensor *ms_tensors(in_tensor);
-      kernel_->set_input(ms_tensors, index);
+      auto impl = std::make_shared<mindspore::MSTensor::Impl>(in_tensor);
+      auto tensor_in = mindspore::MSTensor(impl);
+      kernel_->set_input(tensor_in, index);
     }
   }
 
@@ -252,8 +258,13 @@ class LiteKernel {
     if (desc_.provider == kBuiltin) {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensors(out_tensors);
     } else {
-      std::vector<mindspore::tensor::MSTensor *> ms_tensors(out_tensors.begin(), out_tensors.end());
-      kernel_->set_outputs(ms_tensors);
+      std::vector<MSTensor> tensors_out;
+      std::transform(out_tensors.begin(), out_tensors.begin(), std::back_inserter(tensors_out),
+                     [](lite::Tensor *tensor) {
+                       auto impl = std::make_shared<mindspore::MSTensor::Impl>(tensor);
+                       return mindspore::MSTensor(impl);
+                     });
+      kernel_->set_outputs(tensors_out);
     }
   }
 
@@ -263,8 +274,9 @@ class LiteKernel {
       std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensor(out_tensor, index);
     } else {
       MS_ASSERT(index < kernel_->outputs().size());
-      mindspore::tensor::MSTensor *ms_tensors(out_tensor);
-      kernel_->set_output(ms_tensors, index);
+      auto impl = std::make_shared<mindspore::MSTensor::Impl>(out_tensor);
+      auto tensor_out = mindspore::MSTensor(impl);
+      kernel_->set_output(tensor_out, index);
     }
   }
 
@@ -275,8 +287,9 @@ class LiteKernel {
     } else {
       auto &ms_tensors = kernel_->inputs();
       mutable_in_tensors_.resize(ms_tensors.size());
-      (void)std::transform(ms_tensors.begin(), ms_tensors.end(), mutable_in_tensors_.begin(),
-                           [](mindspore::tensor::MSTensor *tensor) { return static_cast<lite::Tensor *>(tensor); });
+      (void)std::transform(
+        ms_tensors.begin(), ms_tensors.end(), mutable_in_tensors_.begin(),
+        [](const mindspore::MSTensor &tensor) { return static_cast<lite::Tensor *>(tensor.impl()->lite_tensor()); });
 
       return mutable_in_tensors_;
     }
@@ -289,8 +302,9 @@ class LiteKernel {
     } else {
       auto &ms_tensors = kernel_->outputs();
       mutable_out_tensors_.resize(ms_tensors.size());
-      (void)std::transform(ms_tensors.begin(), ms_tensors.end(), mutable_out_tensors_.begin(),
-                           [](mindspore::tensor::MSTensor *tensor) { return static_cast<lite::Tensor *>(tensor); });
+      (void)std::transform(
+        ms_tensors.begin(), ms_tensors.end(), mutable_out_tensors_.begin(),
+        [](const mindspore::MSTensor &tensor) { return static_cast<lite::Tensor *>(tensor.impl()->lite_tensor()); });
       return mutable_out_tensors_;
     }
   }
@@ -325,10 +339,9 @@ class LiteKernel {
 
   SubGraphType subgraph_type() const { return this->subgraph_type_; }
 
-  const lite::InnerContext *Context() const {
-    MS_ASSERT(kernel_ != nullptr);
-    return static_cast<const lite::InnerContext *>(kernel_->context());
-  }
+  void set_context(const lite::InnerContext *context) { context_ = context; }
+
+  const lite::InnerContext *Context() const { return context_; }
 
   virtual std::string ToString() const;
 
@@ -344,6 +357,7 @@ class LiteKernel {
   mutable std::vector<lite::Tensor *> mutable_out_tensors_;
   bool is_model_output_ = false;
   SubGraphType subgraph_type_ = kNotSubGraph;
+  const lite::InnerContext *context_;
 };
 
 typedef InnerKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,

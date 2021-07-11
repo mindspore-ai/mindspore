@@ -18,8 +18,8 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int SliceNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                     const std::vector<tensor::MSTensor *> &out_tensors) {
+int SliceNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                     const std::vector<mindspore::MSTensor> &out_tensors) {
   slice_ = new (std::nothrow) hiai::op::Slice(name_);
   if (slice_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -28,8 +28,8 @@ int SliceNPUOp::Init(const schema::Primitive *primitive, const std::vector<tenso
   return RET_OK;
 }
 
-int SliceNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors,
+int SliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
   slice_->set_input_x(*npu_inputs[0]);
   slice_->set_input_offsets(*npu_inputs[1]);

@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_KERNEL_H_
-#define MINDSPORE_LITE_SRC_KERNEL_H_
+#ifndef MINDSPORE_INCLUDE_API_KERNEL_H
+#define MINDSPORE_INCLUDE_API_KERNEL_H
 #include <vector>
 #include <string>
 #include <utility>
 #include "schema/model_generated.h"
-#include "include/lite_utils.h"
-#include "include/context.h"
+#include "include/api/types.h"
+#include "include/api/context.h"
 
 namespace mindspore::kernel {
 class Kernel {
  public:
   Kernel() = default;
 
-  Kernel(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
-         const schema::Primitive *primitive, const lite::Context *ctx)
+  Kernel(const std::vector<mindspore::MSTensor> &inputs, const std::vector<mindspore::MSTensor> &outputs,
+         const schema::Primitive *primitive, const mindspore::Context *ctx)
       : inputs_(std::move(inputs)), outputs_(std::move(outputs)), primitive_(primitive), context_(ctx) {
     if (primitive != nullptr) {
       type_ = primitive->value_type();
@@ -46,33 +46,34 @@ class Kernel {
 
   virtual schema::PrimitiveType type() const { return type_; }
 
-  virtual void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) { this->inputs_ = in_tensors; }
-  virtual void set_input(mindspore::tensor::MSTensor *in_tensor, int index) { this->inputs_[index] = in_tensor; }
+  virtual void set_inputs(const std::vector<mindspore::MSTensor> &in_tensors) { this->inputs_ = in_tensors; }
 
-  virtual void set_outputs(const std::vector<mindspore::tensor::MSTensor *> &out_tensors) {
-    this->outputs_ = out_tensors;
-  }
+  virtual void set_input(mindspore::MSTensor in_tensor, int index) { this->inputs_[index] = in_tensor; }
 
-  virtual void set_output(mindspore::tensor::MSTensor *out_tensor, int index) { this->outputs_[index] = out_tensor; }
+  virtual void set_outputs(const std::vector<mindspore::MSTensor> &out_tensors) { this->outputs_ = out_tensors; }
 
-  virtual const std::vector<mindspore::tensor::MSTensor *> &inputs() { return this->inputs_; }
+  virtual void set_output(mindspore::MSTensor out_tensor, int index) { this->outputs_[index] = out_tensor; }
 
-  virtual const std::vector<mindspore::tensor::MSTensor *> &outputs() { return this->outputs_; }
+  virtual const std::vector<mindspore::MSTensor> &inputs() { return this->inputs_; }
+
+  virtual const std::vector<mindspore::MSTensor> &outputs() { return this->outputs_; }
 
   std::string name() const { return this->name_; }
 
   void set_name(const std::string &name) { this->name_ = name; }
-  const lite::Context *context() const { return this->context_; }
+
+  const mindspore::Context *context() const { return this->context_; }
+
   const schema::Primitive *primitive() const { return this->primitive_; }
 
  protected:
-  std::vector<mindspore::tensor::MSTensor *> inputs_;
-  std::vector<mindspore::tensor::MSTensor *> outputs_;
+  std::vector<mindspore::MSTensor> inputs_;
+  std::vector<mindspore::MSTensor> outputs_;
   schema::PrimitiveType type_ = schema::PrimitiveType_NONE;
   std::string name_;
   const schema::Primitive *primitive_ = nullptr;
-  const lite::Context *context_ = nullptr;
+  const mindspore::Context *context_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_KERNEL_H_
+#endif  // MINDSPORE_INCLUDE_API_KERNEL_H

@@ -17,8 +17,8 @@
 #include "src/delegate/npu/op/convolution_npu.h"
 #include "src/delegate/npu/op/convolution_depthwise_npu.h"
 namespace mindspore {
-int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                                const std::vector<tensor::MSTensor *> &out_tensors) {
+int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                                const std::vector<mindspore::MSTensor> &out_tensors) {
   auto conv_prim = primitive->value_as_Conv2DFusion();
   if (conv_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -26,7 +26,7 @@ int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::v
   }
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
-  auto in_shape = in_tensors[0]->shape();  // default format: nhwc, RunPass not called
+  auto in_shape = in_tensors[0].Shape();  // default format: nhwc, RunPass not called
   if (stride_h > in_shape[1] || stride_w > in_shape[2]) {
     MS_LOG(WARNING) << "Npu convolution does not support stride greater than input size.";
     return RET_NOT_SUPPORT;
@@ -61,8 +61,8 @@ int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
   return RET_OK;
 }
 
-int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors) {
+int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors) {
   // set conv attr param
   conv_ = new (std::nothrow) hiai::op::Convolution(name_ + "_conv");
   if (conv_ == nullptr) {
@@ -90,8 +90,8 @@ int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector
   return RET_OK;
 }
 
-int ConvolutionNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                   const std::vector<tensor::MSTensor *> &out_tensors,
+int ConvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                   const std::vector<mindspore::MSTensor> &out_tensors,
                                    const std::vector<ge::Operator *> &npu_inputs) {
   auto ret = InitWeightConst(in_tensors);
   if (ret != RET_OK) {
@@ -125,30 +125,30 @@ ConvolutionNPUOp::~ConvolutionNPUOp() {
     conv_ = nullptr;
   }
 }
-
-NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                    const std::vector<tensor::MSTensor *> &out_tensors, std::string name) {
-  auto shape = out_tensors.front()->shape();
+NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                    const std::vector<mindspore::MSTensor> &out_tensors, std::string name) {
+  auto shape = out_tensors.front().Shape();
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
     MS_LOG(ERROR) << "NPU does not support runtime inference shape.";
     return nullptr;
   }
 
-  if (in_tensors[0]->shape().size() > 4) {
+  if (in_tensors[0].Shape().size() > 4) {
     MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
     return nullptr;
   }
 
-  if (in_tensors[0]->data_type() != kNumberTypeFloat32 && in_tensors[0]->data_type() != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "Npu does not support datatype " << in_tensors[0]->data_type();
+  if (in_tensors[0].DataType() != DataType::kNumberTypeFloat32 &&
+      in_tensors[0].DataType() != DataType::kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Npu does not support datatype " << static_cast<int>(in_tensors[0].DataType());
     return nullptr;
   }
 
   NPUOp *op = nullptr;
   auto conv_prim = primitive->value_as_Conv2DFusion();
   auto group = static_cast<int>(conv_prim->group());
-  auto input_channel = in_tensors.front()->shape()[3];
-  auto output_channel = out_tensors.front()->shape()[3];
+  auto input_channel = in_tensors.front().Shape()[3];
+  auto output_channel = out_tensors.front().Shape()[3];
   if (group == input_channel && group == output_channel) {
     op = new (std::nothrow) ConvolutionDepthwiseNPUOp(primitive, in_tensors, out_tensors, name);
   } else {

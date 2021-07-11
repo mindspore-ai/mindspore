@@ -16,7 +16,6 @@
 
 #include "src/delegate/npu/op/arithmetic_self_npu.h"
 #include <string>
-#include "include/graph/op/all_ops.h"
 
 namespace mindspore {
 template <typename T>
@@ -29,8 +28,8 @@ ge::Operator *CreateOperator(const std::string &name) {
   return op;
 }
 
-int ArithmeticSelfNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors) {
+int ArithmeticSelfNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors) {
   switch (type_) {
     case schema::PrimitiveType_Cos:
       op_ = CreateOperator<hiai::op::Cos>(name_);
@@ -86,8 +85,8 @@ void SetInputs(const std::vector<ge::Operator *> &npu_inputs, ge::Operator *op) 
   return;
 }
 
-int ArithmeticSelfNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                      const std::vector<tensor::MSTensor *> &out_tensors,
+int ArithmeticSelfNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                      const std::vector<mindspore::MSTensor> &out_tensors,
                                       const std::vector<ge::Operator *> &npu_inputs) {
   switch (type_) {
     case schema::PrimitiveType_Cos:

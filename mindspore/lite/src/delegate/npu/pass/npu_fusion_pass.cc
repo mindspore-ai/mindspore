@@ -136,7 +136,7 @@ int UpdatePreTensors(NPUOp *cur_op) {
       MS_LOG(ERROR) << "in_tensors/out_tensors/in_ops is empty.";
       return RET_ERROR;
     }
-    tensor::MSTensor *cur_tensor = nullptr;
+    mindspore::MSTensor cur_tensor;
     auto in_tensor = in_op->inputs()[0];
     auto out_tensor = in_op->outputs()[0];
     auto pre_op = in_op->in_ops()[0];
@@ -182,12 +182,12 @@ int UpdatePostTensors(NPUOp *cur_op) {
     return RET_OK;
   }
 
-  auto nhwc_shape = tensor->shape();
+  auto nhwc_shape = tensor.Shape();
   if (nhwc_shape.size() < kNumDims) {
     MS_LOG(ERROR) << "nhwc_shape < " << kNumDims;
     return RET_ERROR;
   }
-  tensor->set_shape({nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]});
+  tensor.SetShape({nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]});
   for (auto out_op : cur_op->out_ops()) {
     auto out_tensor = out_op->outputs()[0];
     if (out_op->out_ops().empty()) {
@@ -315,16 +315,16 @@ int NPUFusionPass::StridedSliceFusion(NPUOp *cur_op) {
     return RET_ERROR;
   }
   auto begin_tensor = cur_op->inputs().at(1);
-  int *begin = reinterpret_cast<int *>(begin_tensor->data());
+  int *begin = reinterpret_cast<int *>(begin_tensor.MutableData());
   (void)NPUPassUtils::AssistDataNHWC2NCHW(begin, 1);
   auto end_tensor = cur_op->inputs().at(2);
-  int *end = reinterpret_cast<int *>(end_tensor->data());
+  int *end = reinterpret_cast<int *>(end_tensor.MutableData());
   NPUPassUtils::AssistDataNHWC2NCHW(end, 1);
   auto stride_tensor = cur_op->inputs().at(3);
   if (cur_op->inputs().size() == 5) {
     stride_tensor = cur_op->inputs().at(4);
   }
-  int *stride = reinterpret_cast<int *>(stride_tensor->data());
+  int *stride = reinterpret_cast<int *>(stride_tensor.MutableData());
   NPUPassUtils::AssistDataNHWC2NCHW(stride, 1);
 
   auto stride_slice_op = static_cast<StridedSliceNPUOp *>(cur_op);
@@ -349,8 +349,8 @@ int NPUFusionPass::FormatFusion(NPUOp *cur_op) {
       cur_op->in_ops()[0]->set_outputs({trans_op->outputs()[0]});
       // in fp16 mode, tensor data type fp16 need to be changed back.
       auto tensor = cur_op->in_ops()[0]->outputs()[0];
-      if (tensor->data_type() == kNumberTypeFloat16) {
-        tensor->set_data_type(kNumberTypeFloat32);
+      if (tensor.DataType() == DataType::kNumberTypeFloat16) {
+        tensor.SetDataType(DataType::kNumberTypeFloat32);
       }
     }
     for (const auto &post_op : trans_op->out_ops()) {

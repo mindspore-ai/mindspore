@@ -68,7 +68,7 @@ int SmoothL1LossGradRun(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int SmoothL1LossGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, SmoothL1LossGradRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, SmoothL1LossGradRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1LossGrad function error error_code[" << error_code << "]";
     return RET_ERROR;

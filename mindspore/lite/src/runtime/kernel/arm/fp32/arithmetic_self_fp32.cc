@@ -114,7 +114,7 @@ int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int ArithmeticSelfCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
   }

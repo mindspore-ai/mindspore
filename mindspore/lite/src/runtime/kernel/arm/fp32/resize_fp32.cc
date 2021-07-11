@@ -169,7 +169,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto input_data = reinterpret_cast<float *>(input->data_c());
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  MSLITE_CHECK_PTR(context_);
+  MSLITE_CHECK_PTR(ms_context_);
   MSLITE_CHECK_PTR(input_data);
   MSLITE_CHECK_PTR(output_data);
 
@@ -204,7 +204,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
 }
 
 int ResizeCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, ResizeImpl, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, ResizeImpl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

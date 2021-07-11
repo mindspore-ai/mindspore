@@ -167,12 +167,12 @@ int TransposeCPUKernel::Run() {
   }
   GetNHNCTransposeFunc(in_tensor, out_tensor);
   if (NHNCTransposeFunc_ != nullptr) {
-    return ParallelLaunch(this->context_, TransposeImpl, this, op_parameter_->thread_num_);
+    return ParallelLaunch(this->ms_context_, TransposeImpl, this, op_parameter_->thread_num_);
   }
   if (out_tensor->shape().size() <= DIMENSION_6D) {
     return TransposeDim2to6();
   } else {
-    return ParallelLaunch(this->context_, TransposeImpl, this, op_parameter_->thread_num_);
+    return ParallelLaunch(this->ms_context_, TransposeImpl, this, op_parameter_->thread_num_);
   }
 }
 

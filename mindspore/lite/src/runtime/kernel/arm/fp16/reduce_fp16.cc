@@ -89,7 +89,7 @@ int ReduceFp16CPUKernel::Run() {
     outer_size_ = outer_sizes_.at(i);
     inner_size_ = inner_sizes_.at(i);
     axis_size_ = axis_sizes_.at(i);
-    auto error_code = ParallelLaunch(this->context_, ReduceFp16Impl, this, op_parameter_->thread_num_);
+    auto error_code = ParallelLaunch(this->ms_context_, ReduceFp16Impl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -104,7 +104,7 @@ int ReduceFp16CPUKernel::Run() {
   outer_size_ = outer_sizes_.back();
   inner_size_ = inner_sizes_.back();
   axis_size_ = axis_sizes_.back();
-  auto error_code = ParallelLaunch(this->context_, ReduceFp16Impl, this, op_parameter_->thread_num_);
+  auto error_code = ParallelLaunch(this->ms_context_, ReduceFp16Impl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     FreeTmpBuffer();
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -118,7 +118,7 @@ int ReduceFp16CPUKernel::Run() {
 void ReduceFp16CPUKernel::FreeTmpBuffer() {
   for (auto &buffer : data_buffers_) {
     if (buffer != nullptr) {
-      context_->allocator->Free(buffer);
+      ms_context_->allocator->Free(buffer);
       buffer = nullptr;
     }
   }
@@ -128,7 +128,7 @@ void ReduceFp16CPUKernel::FreeTmpBuffer() {
 int ReduceFp16CPUKernel::MallocTmpBuffer() {
   data_buffers_.clear();
   for (auto size : buffer_sizes_) {
-    float16_t *buffer = reinterpret_cast<float16_t *>(context_->allocator->Malloc(size * sizeof(float16_t)));
+    float16_t *buffer = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(size * sizeof(float16_t)));
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed";
       return RET_ERROR;

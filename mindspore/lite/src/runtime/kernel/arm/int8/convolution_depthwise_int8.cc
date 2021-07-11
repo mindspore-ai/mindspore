@@ -124,7 +124,7 @@ int ConvDwInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int ConvolutionDepthwiseInt8CPUKernel::InitBuffer() {
   int output_row_size = conv_param_->thread_num_ * conv_param_->output_w_ * conv_param_->output_channel_;
-  row_buffer_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(output_row_size * sizeof(int)));
+  row_buffer_ = reinterpret_cast<int32_t *>(ms_context_->allocator->Malloc(output_row_size * sizeof(int)));
   if (row_buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -136,7 +136,7 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
-    context_->allocator->Free(row_buffer_);
+    ms_context_->allocator->Free(row_buffer_);
     row_buffer_ = nullptr;
     return ret;
   }
@@ -147,11 +147,11 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->MutableData());
 
-  ret = ParallelLaunch(this->context_, ConvDwInt8Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, ConvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwInt8Run error: error_code[" << ret << "]";
   }
-  context_->allocator->Free(row_buffer_);
+  ms_context_->allocator->Free(row_buffer_);
   row_buffer_ = nullptr;
   return ret;
 }

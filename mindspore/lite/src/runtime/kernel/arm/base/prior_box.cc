@@ -165,7 +165,7 @@ int RunPriorBox(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int PriorBoxCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, RunPriorBox, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, RunPriorBox, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "PriorBox run error, error_code[" << error_code << "]";
     return RET_ERROR;

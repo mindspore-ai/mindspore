@@ -15,7 +15,6 @@
  */
 
 #include "src/delegate/npu/npu_converter_utils.h"
-#include <arm_neon.h>
 #include "src/common/log_adapter.h"
 namespace mindspore {
 #define C8NUM 8
@@ -54,7 +53,7 @@ void Float16ToFloat32(const float16_t *__restrict input, float *__restrict outpu
 }
 #endif
 
-ge::Shape ConverterToNPUShape(const std::vector<int> &src_shape) {
+ge::Shape ConverterToNPUShape(const std::vector<int64_t> &src_shape) {
   vector<int64_t> shapes;
   shapes.reserve(src_shape.size());
   for (int i = 0; i < src_shape.size(); i++) {
@@ -82,27 +81,26 @@ ge::Format ConverterToNPUFormat(schema::Format format) {
   return ge_format;
 }
 
-ge::DataType ConverterToNPUDataType(TypeId type_id) {
+ge::DataType ConverterToNPUDataType(DataType type_id) {
   ge::DataType data_type;
   switch (type_id) {
-    case kNumberTypeFloat:
-    case kNumberTypeFloat32:
-    case kNumberTypeFloat16:
+    case DataType::kNumberTypeFloat32:
+    case DataType::kNumberTypeFloat16:
       data_type = ge::DT_FLOAT;
       break;
-    case kNumberTypeInt8:
+    case DataType::kNumberTypeInt8:
       data_type = ge::DT_INT8;
       break;
-    case kNumberTypeUInt8:
+    case DataType::kNumberTypeUInt8:
       data_type = ge::DT_UINT8;
       break;
-    case kNumberTypeInt16:
+    case DataType::kNumberTypeInt16:
       data_type = ge::DT_INT16;
       break;
-    case kNumberTypeInt32:
+    case DataType::kNumberTypeInt32:
       data_type = ge::DT_INT32;
       break;
-    case kNumberTypeUInt32:
+    case DataType::kNumberTypeUInt32:
       data_type = ge::DT_UINT32;
       break;
     default:
@@ -112,43 +110,41 @@ ge::DataType ConverterToNPUDataType(TypeId type_id) {
   return data_type;
 }
 
-hiai::op::Data *ConverterToNPUData(tensor::MSTensor *src, const std::string &name) {
+hiai::op::Data *ConverterToNPUData(mindspore::MSTensor src, const std::string &name) {
   auto data = new (std::nothrow) hiai::op::Data(name);
   if (data == nullptr) {
     MS_LOG(ERROR) << "new data failed.";
     return data;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ge::FORMAT_NCHW,
-                             ConverterToNPUDataType(src->data_type()));
+  ge::TensorDesc tensor_desc(ConverterToNPUShape(src.Shape()), ge::FORMAT_NCHW, ConverterToNPUDataType(src.DataType()));
   data->update_input_desc_x(tensor_desc);
   return data;
 }
 
-std::shared_ptr<ge::Tensor> ConverterToNPUTensor(tensor::MSTensor *src) {
+std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src) {
   std::shared_ptr<ge::Tensor> ge_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
   if (ge_tensor == nullptr) {
     MS_LOG(ERROR) << "new ge_tensor failed.";
     return nullptr;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ge::FORMAT_NCHW,
-                             ConverterToNPUDataType(src->data_type()));
+  ge::TensorDesc tensor_desc(ConverterToNPUShape(src.Shape()), ge::FORMAT_NCHW, ConverterToNPUDataType(src.DataType()));
 
   ge_tensor->SetTensorDesc(tensor_desc);
 
-  if (src->data() != nullptr) {
-    if (src->data_type() == kNumberTypeFloat16) {
+  if (src.Data() != nullptr) {
+    if (src.DataType() == DataType::kNumberTypeFloat16) {
 #ifdef ENABLE_ARM64
-      auto fp32_data = malloc(src->ElementsNum() * sizeof(float));
-      Float16ToFloat32(reinterpret_cast<float16_t *>(src->data()), reinterpret_cast<float *>(fp32_data),
-                       src->ElementsNum());
-      ge_tensor->SetData(reinterpret_cast<const uint8_t *>(fp32_data), src->ElementsNum() * sizeof(float));
+      auto fp32_data = malloc(src.ElementNum() * sizeof(float));
+      Float16ToFloat32(reinterpret_cast<float16_t *>(src.MutableData()), reinterpret_cast<float *>(fp32_data),
+                       src.ElementNum());
+      ge_tensor->SetData(reinterpret_cast<const uint8_t *>(fp32_data), src.ElementNum() * sizeof(float));
       free(fp32_data);
 #else
       MS_LOG(ERROR) << "This platform does not support fp16.";
       return nullptr;
 #endif
     } else {
-      ge_tensor->SetData(reinterpret_cast<const uint8_t *>(src->data()), src->Size());
+      ge_tensor->SetData(reinterpret_cast<const uint8_t *>(src.MutableData()), src.DataSize());
     }
   }
   return ge_tensor;
@@ -189,7 +185,7 @@ int TransFormAxis(int axis) {
   }
 }
 
-bool IsContainMSTensor(const std::vector<tensor::MSTensor *> &tensor_vec, const tensor::MSTensor *tensor) {
+bool IsContainMSTensor(const std::vector<mindspore::MSTensor> &tensor_vec, const mindspore::MSTensor tensor) {
   return find(tensor_vec.begin(), tensor_vec.end(), tensor) != tensor_vec.end();
 }
 }  // namespace mindspore

@@ -48,7 +48,7 @@ NPUSubGraph::~NPUSubGraph() {
   op_buffer_.clear();
 }
 
-void NPUSubGraph::set_input(tensor::MSTensor *in_tensor, int index) {
+void NPUSubGraph::set_input(mindspore::MSTensor in_tensor, int index) {
   MS_ASSERT(index < inputs_.size());
   auto origin_tensor = inputs_[index];
   // only in_ops_ input tensors list used in execute function
@@ -62,7 +62,7 @@ void NPUSubGraph::set_input(tensor::MSTensor *in_tensor, int index) {
   this->inputs_[index] = in_tensor;
 }
 
-void NPUSubGraph::set_output(tensor::MSTensor *out_tensor, int index) {
+void NPUSubGraph::set_output(mindspore::MSTensor out_tensor, int index) {
   MS_ASSERT(index < out_tensor_sorted_.size());
   auto origin_tensor = outputs_[index];
   for (size_t i = 0; i < out_tensor_sorted_.size(); i++) {
@@ -217,7 +217,7 @@ int NPUSubGraph::BuildNPUInputOp() {
   return RET_OK;
 }
 
-bool NPUSubGraph::IsSubGraphInputTensor(tensor::MSTensor *input) {
+bool NPUSubGraph::IsSubGraphInputTensor(mindspore::MSTensor input) {
   if (find(this->inputs().begin(), this->inputs().end(), input) != this->inputs().end()) {
     return true;
   }

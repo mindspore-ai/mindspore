@@ -42,8 +42,8 @@ int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_p
 }
 
 int ConvolutionDepthwiseNPUOp::Init(const schema::Primitive *primitive,
-                                    const std::vector<tensor::MSTensor *> &in_tensors,
-                                    const std::vector<tensor::MSTensor *> &out_tensors) {
+                                    const std::vector<mindspore::MSTensor> &in_tensors,
+                                    const std::vector<mindspore::MSTensor> &out_tensors) {
   conv_dw_ = new (std::nothrow) hiai::op::ConvolutionDepthwise(name_ + "_conv_depthwise");
   if (conv_dw_ == nullptr) {
     MS_LOG(ERROR) << "New convolution depthwise operator for op " << name_ << " failed.";
@@ -70,8 +70,8 @@ int ConvolutionDepthwiseNPUOp::Init(const schema::Primitive *primitive,
   return RET_OK;
 }
 
-int ConvolutionDepthwiseNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                            const std::vector<tensor::MSTensor *> &out_tensors,
+int ConvolutionDepthwiseNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                            const std::vector<mindspore::MSTensor> &out_tensors,
                                             const std::vector<ge::Operator *> &npu_inputs) {
   auto ret = InitWeightConst(in_tensors);
   if (ret != RET_OK) {
