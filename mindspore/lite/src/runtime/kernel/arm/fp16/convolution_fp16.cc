@@ -160,7 +160,7 @@ int ConvolutionFP16CPUKernel::Run() {
     }
     is_repack_ = false;
   }
-  ret = ParallelLaunch(this->context_, ConvolutionFp16Impl, this, thread_count_);
+  ret = ParallelLaunch(this->ms_context_, ConvolutionFp16Impl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv fp16 error ret[" << ret << "]";
   }

@@ -123,7 +123,7 @@ int StridedSliceFp16GradImpl(void *cdata, int task_id, float lhs_scale, float rh
 }
 
 int StridedSliceGradCPUKernelFp16::Run() {
-  int error_code = ParallelLaunch(this->context_, StridedSliceFp16GradImpl, this, 1);
+  int error_code = ParallelLaunch(this->ms_context_, StridedSliceFp16GradImpl, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Strided slice error error_code[" << error_code << "]";
     return RET_ERROR;

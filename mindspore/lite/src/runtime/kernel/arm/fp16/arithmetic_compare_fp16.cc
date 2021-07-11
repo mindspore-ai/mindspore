@@ -160,15 +160,15 @@ int ArithmeticCompareFP16CPUKernel::Run() {
   is_input0_fp32_ = in_tensors_.at(0)->data_type() == kNumberTypeFloat32;
   is_input1_fp32_ = in_tensors_.at(1)->data_type() == kNumberTypeFloat32;
 
-  input0_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(0), static_cast<const lite::InnerContext *>(this->context_));
-  input1_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->context_));
+  input0_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(0), static_cast<const lite::InnerContext *>(this->ms_context_));
+  input1_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->ms_context_));
   output_fp16_ = reinterpret_cast<uint8_t *>(output_tensor->MutableData());
   if (input0_fp16_ == nullptr || input1_fp16_ == nullptr || output_fp16_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->context_, ArithmeticsRunFp16, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRunFp16, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRunFp16 run error error_code[" << ret << "]";
   }
@@ -178,11 +178,11 @@ int ArithmeticCompareFP16CPUKernel::Run() {
 
 void ArithmeticCompareFP16CPUKernel::FreeTmpBuffer() {
   if (is_input0_fp32_) {
-    context_->allocator->Free(input0_fp16_);
+    ms_context_->allocator->Free(input0_fp16_);
     input0_fp16_ = nullptr;
   }
   if (is_input1_fp32_) {
-    context_->allocator->Free(input1_fp16_);
+    ms_context_->allocator->Free(input1_fp16_);
     input1_fp16_ = nullptr;
   }
 }

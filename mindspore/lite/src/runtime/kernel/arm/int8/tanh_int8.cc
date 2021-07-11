@@ -70,7 +70,7 @@ int TanhInt8CPUKernel::Run() {
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
 
-  auto ret = ParallelLaunch(this->context_, TanhInt8Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, TanhInt8Run, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TanhInt8 Run failed";
     return ret;

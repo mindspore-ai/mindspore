@@ -22,6 +22,7 @@
 #include "src/scheduler.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/executor.h"
+#include "src/common/context_util.h"
 #include "src/common/utils.h"
 #include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
@@ -356,10 +357,8 @@ void LiteSession::AdjustModelOutputTensorInitRefCount(const lite::Model *model) 
   }
 }
 
-void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
-  InitGraphInputTensors(model);
+void LiteSession::InitGraphInOutTensorsMap(const lite::Model *model) {
   InitGraphInputMSTensors();
-  InitGraphOutputTensors(model);
   InitGraphInputMap(model);
   InitGraphOutputNodeMap(model);
   InitGraphOutputTensorMap(model);
@@ -489,8 +488,10 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+  InitGraphInputTensors(model);
+  InitGraphOutputTensors(model);
   // scheduler kernels
-  Scheduler scheduler(context_, model, &tensors_, is_train_session_, delegate_);
+  Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, delegate_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
@@ -498,7 +499,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  InitGraphInOutTensors(model);
+  InitGraphInOutTensorsMap(model);
 
   bool use_mindrt_run = IfUseMindrtExecutor();
 
@@ -537,9 +538,6 @@ int LiteSession::CompileGraph(Model *model) {
     FreePackOpWeight(kernels_);
   }
   is_running_.store(false);
-  if (delegate_ != nullptr) {
-    delegate_->build_hook_(delegate_);
-  }
   return RET_OK;
 }
 
@@ -583,6 +581,9 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
 
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
+    if (kernel->desc().delegate != nullptr) {
+      continue;
+    }
     if (IsIsolatedSubGraph(kernel)) {
       static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
     }
@@ -622,9 +623,6 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "RunGraph failed : " << ret;
   }
   is_running_.store(false);
-  if (delegate_ != nullptr) {
-    delegate_->run_hook_(delegate_);
-  }
   return ret;
 }
 
@@ -695,11 +693,13 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
-
-  is_running_.store(false);
-  if (delegate_ != nullptr) {
-    delegate_->init_hook_(delegate_);
+  ms_context_ = MSContextFromContext(context);
+  if (ms_context_ == nullptr) {
+    MS_LOG(ERROR) << "transfer context to ms context failed.";
+    is_running_.store(false);
+    return RET_NULL_PTR;
   }
+  is_running_.store(false);
   return RET_OK;
 }
 
@@ -754,6 +754,8 @@ LiteSession::~LiteSession() {
 #if GPU_OPENCL
   delete opencl_runtime_wrapper_;
 #endif
+  delete ms_context_;
+  ms_context_ = nullptr;
   delete this->context_;
   this->context_ = nullptr;
   delete (model_);

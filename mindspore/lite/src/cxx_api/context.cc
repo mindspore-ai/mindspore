@@ -101,6 +101,7 @@ bool Context::GetEnableParallel() const {
     MS_LOG(ERROR) << "Invalid context.";
     return false;
   }
+
   return data_->enable_parallel_;
 }
 

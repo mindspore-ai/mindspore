@@ -98,7 +98,7 @@ int PoolingGradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 
 int PoolingGradCPUKernel::Run() {
   thread_num_ = op_parameter_->thread_num_;
-  int error_code = ParallelLaunch(this->context_, PoolingGradImpl, this, thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, PoolingGradImpl, this, thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;

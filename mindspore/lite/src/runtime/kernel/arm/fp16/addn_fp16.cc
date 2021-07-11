@@ -88,7 +88,7 @@ int AddNFp16CPUKernel::Run() {
   in1_addr_ = input0_data;
   in2_addr_ = input1_data;
   out_addr_ = out_data;
-  auto ret = ParallelLaunch(this->context_, AddNLaunch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, AddNLaunch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "addn launch fail!ret: " << ret;
     return RET_ERROR;
@@ -96,7 +96,7 @@ int AddNFp16CPUKernel::Run() {
   for (size_t i = 2; i < in_tensors_.size(); ++i) {
     in1_addr_ = reinterpret_cast<float16_t *>(in_tensors_[i]->MutableData());
     in2_addr_ = out_data;
-    ret = ParallelLaunch(this->context_, AddNLaunch, this, op_parameter_->thread_num_);
+    ret = ParallelLaunch(this->ms_context_, AddNLaunch, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "addn launch fail!ret: " << ret << ", input index: " << i;
       return RET_ERROR;

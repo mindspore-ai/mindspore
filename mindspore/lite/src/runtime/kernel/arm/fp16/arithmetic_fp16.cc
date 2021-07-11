@@ -131,13 +131,13 @@ void ArithmeticFP16CPUKernel::InitRunFunction(int primitive_type) {
 int ArithmeticFP16CPUKernel::ConstTensorBroadCast() {
   int ret;
   if (in_tensors_[0]->data_c() != nullptr) {
-    ret = ConvertFp32TensorToFp16(in_tensors_[0], static_cast<const lite::InnerContext *>(this->context_));
+    ret = ConvertFp32TensorToFp16(in_tensors_[0], static_cast<const lite::InnerContext *>(this->ms_context_));
     if (ret != RET_OK) {
       return ret;
     }
   }
   if (in_tensors_[1]->data_c() != nullptr) {
-    ret = ConvertFp32TensorToFp16(in_tensors_[1], static_cast<const lite::InnerContext *>(this->context_));
+    ret = ConvertFp32TensorToFp16(in_tensors_[1], static_cast<const lite::InnerContext *>(this->ms_context_));
     if (ret != RET_OK) {
       return ret;
     }
@@ -171,18 +171,18 @@ int ArithmeticFP16CPUKernel::Run() {
     return RET_ERROR;
   }
   if (!input0_broadcast_) {
-    input0_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), static_cast<const lite::InnerContext *>(this->context_));
+    input0_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), static_cast<const lite::InnerContext *>(this->ms_context_));
   }
   if (!input1_broadcast_) {
-    input1_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->context_));
+    input1_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->ms_context_));
   }
   auto output_tensor = out_tensors_.at(0);
-  output_ptr_ = MallocOutputFp16(output_tensor, static_cast<const lite::InnerContext *>(this->context_));
+  output_ptr_ = MallocOutputFp16(output_tensor, static_cast<const lite::InnerContext *>(this->ms_context_));
   if (input0_ptr_ == nullptr || input1_ptr_ == nullptr || output_ptr_ == nullptr) {
     FreeFp16Buffer();
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->context_, ArithmeticsRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->MutableData()),
                      output_tensor->ElementsNum());
@@ -193,15 +193,15 @@ int ArithmeticFP16CPUKernel::Run() {
 
 void ArithmeticFP16CPUKernel::FreeFp16Buffer() {
   if (!input0_broadcast_ && in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(input0_ptr_);
+    ms_context_->allocator->Free(input0_ptr_);
     input0_ptr_ = nullptr;
   }
   if (!input1_broadcast_ && in_tensors_.at(1)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(input1_ptr_);
+    ms_context_->allocator->Free(input1_ptr_);
     input1_ptr_ = nullptr;
   }
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(output_ptr_);
+    ms_context_->allocator->Free(output_ptr_);
     output_ptr_ = nullptr;
   }
 }

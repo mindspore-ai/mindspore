@@ -17,8 +17,8 @@
 #include "src/delegate/tensorrt/op/shape_tensorrt.h"
 
 namespace mindspore::lite {
-int ShapeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors) {
+int ShapeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;

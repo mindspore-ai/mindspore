@@ -18,25 +18,24 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_MAX_POOLING_NPU_H_
 #include <vector>
 #include <string>
-#include "include/graph/op/all_ops.h"
 #include "src/delegate/npu/op/convolution_base_npu.h"
 namespace mindspore {
 class MaxPoolingNPUOp : public ConvolutionBaseNPUOp {
  public:
-  MaxPoolingNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                  const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  MaxPoolingNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                  const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : ConvolutionBaseNPUOp(primitive, in_tensors, out_tensors, name) {}
 
   ~MaxPoolingNPUOp() override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-           const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+           const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors,
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
   ge::Operator *GetNPUOp() override;

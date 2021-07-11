@@ -57,20 +57,13 @@ class MSTensor::Impl {
     }
   }
 
-  static std::shared_ptr<Impl> CreateTensorImpl(const std::string &name, enum DataType type,
-                                                const std::vector<int64_t> &shape, const void *data, size_t data_len);
+  static std::shared_ptr<Impl> MS_API CreateTensorImpl(const std::string &name, enum DataType type,
+                                                       const std::vector<int64_t> &shape, const void *data,
+                                                       size_t data_len);
 
-  static std::shared_ptr<Impl> StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
+  static std::shared_ptr<Impl> MS_API StringsToTensorImpl(const std::string &name, const std::vector<std::string> &str);
 
-  static std::vector<std::string> TensorImplToStrings(const std::shared_ptr<Impl> &impl) {
-    std::vector<std::string> empty;
-    auto lite_tensor = impl->lite_tensor();
-    if (lite_tensor == nullptr) {
-      MS_LOG(ERROR) << "Invalid tensor impl.";
-      return empty;
-    }
-    return lite::MSTensorToStrings(lite_tensor);
-  }
+  static std::vector<std::string> MS_API TensorImplToStrings(const std::shared_ptr<Impl> &impl);
 
   const std::string &Name() const {
     static std::string empty = "";

@@ -20,8 +20,8 @@
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
-int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors) {
+int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 2 && in_tensors.size() != 3 && in_tensors.size() != 4) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is: " << in_tensors.size();
     return RET_ERROR;
@@ -47,7 +47,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   schema::ActivationType activation_type = scale_op->activation_type();
   nvinfer1::ITensor *scale_in_tensor = tensorrt_in_tensors_[0];
   // unsqueeze input Itensor to 4 dims
-  if (in_tensors_[0]->shape().size() < 4) {
+  if (in_tensors_[0].Shape().size() < 4) {
     scale_in_tensor = AddUnsqueezeOp(network);
     if (scale_in_tensor == nullptr) {
       MS_LOG(ERROR) << "AddUnsqueezeOp failed";
@@ -57,8 +57,8 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   // mode of scale
   size_t axis = scale_op->axis();
   nvinfer1::ScaleMode mode;
-  auto input_data_shape = in_tensors_[0]->shape();
-  auto input_weight_shape = in_tensors_[1]->shape();
+  auto input_data_shape = in_tensors_[0].Shape();
+  auto input_weight_shape = in_tensors_[1].Shape();
   int total = std::accumulate(input_data_shape.begin(), input_data_shape.end(), 1, std::multiplies<int>());
   MS_LOG(INFO) << "input tensor element cnt: " << total;
   if (input_weight_shape.size() == 0 || (input_weight_shape.size() == 1 && input_weight_shape[0] == 1)) {
@@ -78,17 +78,17 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::Weights shift{nvinfer1::DataType::kFLOAT, nullptr, 0};
   nvinfer1::Weights scale{nvinfer1::DataType::kFLOAT, nullptr, 0};
   if (in_tensors_.size() >= 2) {
-    scale.values = in_tensors_[1]->data();
-    scale.count = in_tensors_[1]->ElementsNum();
+    scale.values = in_tensors_[1].MutableData();
+    scale.count = in_tensors_[1].ElementNum();
     nd = input_weight_shape.size() == 1 ? false : true;
   }
   if (in_tensors_.size() >= 3) {
-    shift.values = in_tensors_[2]->data();
-    shift.count = in_tensors_[2]->ElementsNum();
+    shift.values = in_tensors_[2].MutableData();
+    shift.count = in_tensors_[2].ElementNum();
   }
   if (in_tensors_.size() >= 4) {
-    power.values = in_tensors_[3]->data();
-    power.count = in_tensors_[3]->ElementsNum();
+    power.values = in_tensors_[3].MutableData();
+    power.count = in_tensors_[3].ElementNum();
   }
   nvinfer1::IScaleLayer *cal_layer = nullptr;
   if (nd) {
@@ -109,7 +109,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (activation_type != schema::ActivationType::ActivationType_NO_ACTIVATION) {
     MS_LOG(WARNING) << "need activation for: " << op_name_;
   }
-  op_out_tensor->setName(out_tensors_[0]->tensor_name().c_str());
+  op_out_tensor->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(op_out_tensor);
   return RET_OK;
 }
@@ -121,7 +121,7 @@ nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *n
     return nullptr;
   }
   unsqueeze_layer->setName((op_name_ + "_unsqueeze").c_str());
-  std::vector<int> unsqueeze_shape = in_tensors_[0]->shape();
+  auto unsqueeze_shape = in_tensors_[0].Shape();
   for (size_t i = 0; i < 4 - unsqueeze_shape.size(); i++) {
     unsqueeze_shape.push_back(1);
   }

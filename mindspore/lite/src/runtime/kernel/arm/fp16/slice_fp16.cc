@@ -36,7 +36,7 @@ int SliceFp16Launch(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 
 SliceFp16CPUKernel::~SliceFp16CPUKernel() {
   if (input_data_ != nullptr) {
-    context_->allocator->Free(input_data_);
+    ms_context_->allocator->Free(input_data_);
     input_data_ = nullptr;
   }
 }
@@ -45,7 +45,7 @@ int SliceFp16CPUKernel::Init() {
   auto input_tensor = in_tensors_.at(0);
   if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
     input_data_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
+      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
   }
   return SliceCPUKernel::Init();
@@ -63,7 +63,7 @@ int SliceFp16CPUKernel::Run() {
     DoSliceNoParallel(input_data, out_tensors_.at(0)->data_c(), param_, lite::DataTypeSize(kNumberTypeFloat16));
     return RET_OK;
   }
-  auto ret = ParallelLaunch(this->context_, SliceFp16Launch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, SliceFp16Launch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "fp16 slice launch fail!ret: " << ret;
     return RET_ERROR;

@@ -90,7 +90,7 @@ static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 int StackBaseCPUKernel::Run() {
   // malloc temporary memory to store all the inputs
   size_t inputs_num = in_tensors_.size();
-  all_inputs_ = static_cast<char **>(context_->allocator->Malloc(inputs_num * sizeof(char *)));
+  all_inputs_ = static_cast<char **>(ms_context_->allocator->Malloc(inputs_num * sizeof(char *)));
   if (all_inputs_ == nullptr) {
     MS_LOG(ERROR) << "malloc all_inputs failed.";
     return RET_ERROR;
@@ -100,14 +100,14 @@ int StackBaseCPUKernel::Run() {
   }
   // run stack
   num_threads_ = MSMIN(UP_DIV(outer_size_, 64), op_parameter_->thread_num_);
-  auto ret = ParallelLaunch(this->context_, StackRun, this, num_threads_);
+  auto ret = ParallelLaunch(this->ms_context_, StackRun, this, num_threads_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
     return RET_ERROR;
   }
 
   // free temporary variable all_inputs
-  context_->allocator->Free(all_inputs_);
+  ms_context_->allocator->Free(all_inputs_);
   all_inputs_ = nullptr;
   return RET_OK;
 }

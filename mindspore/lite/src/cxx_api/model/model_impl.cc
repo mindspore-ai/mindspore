@@ -41,6 +41,77 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
   return proto_;
 }
 
+lite::CpuBindMode ModelImpl::GetCpuBindMode() {
+  auto affinity_mode = context_->GetThreadAffinityMode();
+  switch (affinity_mode) {
+    case 0:
+      return lite::NO_BIND;
+    case 1:
+      return lite::HIGHER_CPU;
+    case 2:
+      return lite::MID_CPU;
+    default:
+      return lite::NO_BIND;
+  }
+}
+
+Status ModelImpl::ConverterContext(const std::shared_ptr<Context> &context, lite::Context *model_context) {
+  auto device_list = context->MutableDeviceInfo();
+  if (device_list.size() == 0) {
+    MS_LOG(ERROR) << "Invalid device list.";
+    return kLiteInputParamInvalid;
+  }
+  if (device_list.size() > 2) {
+    MS_LOG(ERROR) << "Only CPU/CPU & GPU/CPU & NPU mode is supported.";
+    return kLiteInputParamInvalid;
+  }
+
+  model_context->thread_num_ = context->GetThreadNum();
+  model_context->enable_parallel_ = context->GetEnableParallel();
+  model_context->affinity_core_list_ = context->GetThreadAffinityCoreList();
+  model_context->device_list_.clear();
+  if (device_list[0]->GetDeviceType() != kCPU) {
+    MS_LOG(ERROR) << "CPU context must be enabled and in the first place of device list.";
+    return kLiteInputParamInvalid;
+  }
+
+  auto cpu_context = device_list[0]->Cast<CPUDeviceInfo>();
+  model_context->allocator = cpu_context->GetAllocator();
+  if (model_context->allocator == nullptr) {
+    model_context->allocator = Allocator::Create();
+    if (model_context->allocator == nullptr) {
+      MS_LOG(ERROR) << "Create Allocator failed.";
+      return kLiteNullptr;
+    }
+    MS_LOG(DEBUG) << "Set new allocator.";
+    cpu_context->SetAllocator(model_context->allocator);
+  }
+
+  lite::CpuBindMode mode = GetCpuBindMode();
+  lite::DeviceInfo cpu_info = {0};
+  cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
+  model_context->device_list_.push_back({lite::DT_CPU, cpu_info, cpu_context->GetProvider(),
+                                         cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
+  if (device_list.size() == 2) {
+    lite::DeviceInfo device_info = {0};
+    if (device_list[1]->GetDeviceType() == kMaliGPU) {
+      auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
+      device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
+      model_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
+                                             gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});
+    } else if (device_list[1]->GetDeviceType() == kKirinNPU) {
+      auto npu_context = device_list[1]->Cast<KirinNPUDeviceInfo>();
+      device_info.npu_device_info_ = {npu_context->GetFrequency()};
+      model_context->device_list_.push_back({lite::DT_NPU, device_info});
+    } else {
+      MS_LOG(ERROR) << "Invalid device.";
+      return kLiteInputParamInvalid;
+    }
+  }
+  model_context->delegate = context->GetDelegate();
+  return kSuccess;
+}
+
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
   lite::Context lite_context;

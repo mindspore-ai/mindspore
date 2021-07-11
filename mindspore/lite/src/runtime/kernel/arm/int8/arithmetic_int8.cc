@@ -139,20 +139,20 @@ int ArithmeticInt8CPUKernel::Run() {
   if (param->broadcasting_) {
     auto input_data0 = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
     auto input_data1 = reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData());
-    tile_data0_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(out_tensors_[0]->Size()));
-    tile_data1_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(out_tensors_[0]->Size()));
+    tile_data0_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_[0]->Size()));
+    tile_data1_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_[0]->Size()));
     if (tile_data0_ == nullptr || tile_data1_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";
-      context_->allocator->Free(tile_data0_);
-      context_->allocator->Free(tile_data1_);
+      ms_context_->allocator->Free(tile_data0_);
+      ms_context_->allocator->Free(tile_data1_);
       return RET_ERROR;
     }
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
   }
-  auto ret = ParallelLaunch(this->context_, ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticsInt8Launch, this, op_parameter_->thread_num_);
   if (param->broadcasting_) {
-    context_->allocator->Free(tile_data0_);
-    context_->allocator->Free(tile_data1_);
+    ms_context_->allocator->Free(tile_data0_);
+    ms_context_->allocator->Free(tile_data1_);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic launch function fail! ret: " << ret;

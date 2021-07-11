@@ -22,16 +22,16 @@
 namespace mindspore::lite {
 class ConcateTensorRT : public TensorRTOp {
  public:
-  ConcateTensorRT(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                  const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name)
+  ConcateTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                  const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
   ~ConcateTensorRT() override = default;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_CONCATE_TENSORRT_H_

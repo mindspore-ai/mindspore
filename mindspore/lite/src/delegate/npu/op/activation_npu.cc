@@ -16,8 +16,8 @@
 
 #include "src/delegate/npu/op/activation_npu.h"
 namespace mindspore {
-int ActivationNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors) {
+int ActivationNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors) {
   auto act_prim = primitive->value_as_Activation();
   if (act_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -33,8 +33,8 @@ int ActivationNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
   return RET_OK;
 }
 
-int ActivationNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                          const std::vector<tensor::MSTensor *> &out_tensors) {
+int ActivationNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                          const std::vector<mindspore::MSTensor> &out_tensors) {
   act_ = new (std::nothrow) hiai::op::Activation(name_);
   if (act_ == nullptr) {
     MS_LOG(ERROR) << "New activation npu operator for activation op " << name_ << " failed.";
@@ -72,8 +72,8 @@ int ActivationNPUOp::Init(const schema::Primitive *primitive, const std::vector<
   return RET_OK;
 }
 
-int ActivationNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors,
+int ActivationNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors,
                                   const std::vector<ge::Operator *> &npu_inputs) {
   act_->set_input_x(*npu_inputs[0]);
   return RET_OK;

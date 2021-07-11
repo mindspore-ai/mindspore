@@ -79,7 +79,7 @@ int SoftmaxGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int SoftmaxGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, SoftmaxGradRun, this, 1);
+  int error_code = ParallelLaunch(this->ms_context_, SoftmaxGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SoftmaxGradRun function error error_code[" << error_code << "]";
     return RET_ERROR;

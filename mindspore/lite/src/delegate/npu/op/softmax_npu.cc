@@ -16,8 +16,8 @@
 
 #include "src/delegate/npu/op/softmax_npu.h"
 namespace mindspore {
-int SoftmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                       const std::vector<tensor::MSTensor *> &out_tensors) {
+int SoftmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                       const std::vector<mindspore::MSTensor> &out_tensors) {
   softmax_ = new (std::nothrow) hiai::op::Softmax(name_);
   if (softmax_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -30,15 +30,15 @@ int SoftmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<ten
   }
   auto axis = static_cast<int>(*(softmax_prim->axis()->begin()));
   if (axis == -1) {
-    softmax_->set_attr_axis(in_tensors[0]->shape().size() + axis);
+    softmax_->set_attr_axis(in_tensors[0].Shape().size() + axis);
   } else {
     softmax_->set_attr_axis(axis);
   }
   return RET_OK;
 }
 
-int SoftmaxNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors,
+int SoftmaxNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors,
                                const std::vector<ge::Operator *> &npu_inputs) {
   softmax_->set_input_x(*npu_inputs[0]);
   return RET_OK;

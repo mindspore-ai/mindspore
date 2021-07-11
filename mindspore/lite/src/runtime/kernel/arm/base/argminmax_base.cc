@@ -62,10 +62,10 @@ int ArgMinMaxCPUKernel::Run() {
     output_value = out_tensors_.at(1)->data_c();
   }
 
-  MS_ASSERT(context_->allocator != nullptr);
+  MS_ASSERT(ms_context_->allocator != nullptr);
   if (arg_param_->topk_ > 1 || arg_param_->keep_dims_) {
     arg_param_->arg_elements_ =
-      reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * shape[arg_param_->axis_]));
+      reinterpret_cast<ArgElement *>(ms_context_->allocator->Malloc(sizeof(ArgElement) * shape[arg_param_->axis_]));
     if (arg_param_->arg_elements_ == nullptr) {
       MS_LOG(ERROR) << "malloc memory fail!";
       return RET_ERROR;
@@ -84,7 +84,7 @@ int ArgMinMaxCPUKernel::Run() {
     MS_LOG(ERROR) << "unsupported data type!";
   }
 
-  context_->allocator->Free(arg_param_->arg_elements_);
+  ms_context_->allocator->Free(arg_param_->arg_elements_);
   arg_param_->arg_elements_ = nullptr;
   return RET_OK;
 }

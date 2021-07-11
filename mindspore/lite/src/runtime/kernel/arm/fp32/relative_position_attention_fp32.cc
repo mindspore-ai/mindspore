@@ -387,7 +387,7 @@ int RelativePositionAttentionCPUKernel::PrepareBiases() {
 }
 
 int RelativePositionAttentionCPUKernel::PackRunBuffersInputs() {
-  MS_ASSERT(context_ != nullptr && context_->allocator != nullptr);
+  MS_ASSERT(ms_context_ != nullptr && ms_context_->allocator != nullptr);
   if (input_q_mat_.data_ != nullptr || input_q_mat_.packed_data_ != nullptr || input_k_mat_.data_ != nullptr ||
       input_k_mat_.packed_data_ != nullptr || input_v_mat_.data_ != nullptr || input_v_mat_.packed_data_ != nullptr ||
       input_p_mat_.data_ != nullptr || input_p_mat_.packed_data_ != nullptr) {
@@ -404,22 +404,22 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersInputs() {
     return RET_ERROR;
   }
 
-  auto ret = PackLeftTensor(*input_q_tensor_, &input_q_mat_, param_->row_tile_, context_->allocator);
+  auto ret = PackLeftTensor(*input_q_tensor_, &input_q_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "Pack input Q failed";
     return RET_ERROR;
   }
-  ret = PackLeftTensor(*input_k_tensor_, &input_k_mat_, param_->row_tile_, context_->allocator);
+  ret = PackLeftTensor(*input_k_tensor_, &input_k_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "Pack input K failed";
     return RET_ERROR;
   }
-  ret = PackLeftTensor(*input_v_tensor_, &input_v_mat_, param_->row_tile_, context_->allocator);
+  ret = PackLeftTensor(*input_v_tensor_, &input_v_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "Pack input V failed";
     return RET_ERROR;
   }
-  ret = PackLeftTensor(*input_p_tensor_, &input_p_mat_, param_->row_tile_, context_->allocator);
+  ret = PackLeftTensor(*input_p_tensor_, &input_p_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "Pack input P failed";
     return RET_ERROR;
@@ -428,64 +428,64 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersInputs() {
 }
 
 int RelativePositionAttentionCPUKernel::PackRunBuffersEmbeddings(int batch, int num_heads, int depth) {
-  MS_ASSERT(context_ != nullptr && context_->allocator != nullptr);
+  MS_ASSERT(ms_context_ != nullptr && ms_context_->allocator != nullptr);
   // since &q2wq_mat_ can not be nullptr, so we ignore result of function
   (void)InitMatrix(&q2wq_mat_, batch * param_->q_seq_, num_heads, depth, false);
-  auto ret = MallocLeftTensor(&q2wq_mat_, param_->row_tile_, context_->allocator, false);
+  auto ret = MallocLeftTensor(&q2wq_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc q2wq buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&q2wq_with_pos_mat_, batch * param_->q_seq_, num_heads, depth, false);
-  ret = MallocLeftTensor(&q2wq_with_pos_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&q2wq_with_pos_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc q2wq_with_pos buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&q2wq_with_pu_trans_mat_, batch * num_heads, param_->q_seq_, depth, false);
-  ret = MallocLeftTensor(&q2wq_with_pu_trans_mat_, param_->row_tile_, context_->allocator);
+  ret = MallocLeftTensor(&q2wq_with_pu_trans_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc q2wq_with_pu_trans buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&q2wq_with_pv_trans_mat_, batch * num_heads, param_->q_seq_, depth, false);
-  ret = MallocLeftTensor(&q2wq_with_pv_trans_mat_, param_->row_tile_, context_->allocator);
+  ret = MallocLeftTensor(&q2wq_with_pv_trans_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc q2wq_with_pv_trans buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&k2wk_mat_, batch * param_->k_seq_, num_heads, depth, false);
-  ret = MallocLeftTensor(&k2wk_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&k2wk_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc k2wk buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&k2wk_trans_mat_, batch * num_heads, depth, param_->k_seq_, false);
-  ret = MallocRightTensor(&k2wk_trans_mat_, param_->col_tile_, context_->allocator);
+  ret = MallocRightTensor(&k2wk_trans_mat_, param_->col_tile_, ms_context_->allocator);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc k2wk_trans result buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&p2wp_mat_, batch * param_->p_seq_, num_heads, depth, false);
-  ret = MallocLeftTensor(&p2wp_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&p2wp_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc p2wp buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&p2wp_trans_mat_, batch * num_heads, depth, param_->p_seq_, false);
-  ret = MallocRightTensor(&p2wp_trans_mat_, param_->col_tile_, context_->allocator);
+  ret = MallocRightTensor(&p2wp_trans_mat_, param_->col_tile_, ms_context_->allocator);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc p2wp_trans result buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&v2wv_mat_, batch * param_->v_seq_, num_heads, depth, false);
-  ret = MallocLeftTensor(&v2wv_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&v2wv_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc v2wv buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&v2wv_trans_mat_, batch * num_heads, param_->v_seq_, depth, false);
-  ret = MallocRightTensor(&v2wv_trans_mat_, param_->col_tile_, context_->allocator);
+  ret = MallocRightTensor(&v2wv_trans_mat_, param_->col_tile_, ms_context_->allocator);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc v2wv_trans buffer failed";
     return RET_ERROR;
@@ -494,35 +494,35 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersEmbeddings(int batch, int 
 }
 
 int RelativePositionAttentionCPUKernel::PackRunBuffersLogits(int batch, int num_heads, int depth) {
-  MS_ASSERT(context_ != nullptr && context_->allocator != nullptr);
+  MS_ASSERT(ms_context_ != nullptr && ms_context_->allocator != nullptr);
   // [batch, num_heads, q_seq_len, k_seq_len] // don't need pack
   (void)InitMatrix(&logits_with_u_mat_, batch * num_heads, param_->q_seq_, param_->k_seq_, false);
-  auto ret = MallocLeftTensor(&logits_with_u_mat_, param_->row_tile_, context_->allocator, false);
+  auto ret = MallocLeftTensor(&logits_with_u_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits_with_u buffer failed";
     return RET_ERROR;
   }
   // [batch, num_heads, q_seq_len, p_seq_len] // don't need pack
   (void)InitMatrix(&logits_with_v_mat_, batch * num_heads, param_->q_seq_, param_->p_seq_, false);
-  ret = MallocLeftTensor(&logits_with_v_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&logits_with_v_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits_with_v buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&logits_with_v_pad_mat_, 1, param_->q_seq_, param_->p_seq_ + 1, false);
-  ret = MallocLeftTensor(&logits_with_v_pad_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&logits_with_v_pad_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits_with_v_pad buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&logits_with_v_shifted_mat_, batch * num_heads, param_->q_seq_, param_->p_seq_ / 2, false);
-  ret = MallocLeftTensor(&logits_with_v_shifted_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&logits_with_v_shifted_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits_with_v_shifted buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&logits_mat_, batch * num_heads, param_->q_seq_, param_->k_seq_, false);
-  ret = MallocLeftTensor(&logits_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&logits_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits buffer failed";
     return RET_ERROR;
@@ -531,23 +531,23 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersLogits(int batch, int num_
 }
 
 int RelativePositionAttentionCPUKernel::PackRunBuffersAttention(int batch, int num_heads, int depth) {
-  MS_ASSERT(context_ != nullptr && context_->allocator != nullptr);
+  MS_ASSERT(ms_context_ != nullptr && ms_context_->allocator != nullptr);
   auto output_tensor = this->out_tensors_.at(0);
 
   (void)InitMatrix(&softmax_mat_, batch * num_heads, param_->q_seq_, param_->k_seq_, false);
-  auto ret = MallocLeftTensor(&softmax_mat_, param_->row_tile_, context_->allocator);
+  auto ret = MallocLeftTensor(&softmax_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc softmax buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&logits2v_mat_, batch * num_heads, param_->q_seq_, depth, false);
-  ret = MallocLeftTensor(&logits2v_mat_, param_->row_tile_, context_->allocator, false);
+  ret = MallocLeftTensor(&logits2v_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits2v buffer failed";
     return RET_ERROR;
   }
   (void)InitMatrix(&logits2v_trans_mat_, batch * param_->q_seq_, num_heads, depth, false);
-  ret = MallocLeftTensor(&logits2v_trans_mat_, param_->row_tile_, context_->allocator);
+  ret = MallocLeftTensor(&logits2v_trans_mat_, param_->row_tile_, ms_context_->allocator);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits2v_trans buffer failed";
     return RET_ERROR;
@@ -562,7 +562,7 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersAttention(int batch, int n
 }
 
 int RelativePositionAttentionCPUKernel::PackRunBuffers() {
-  if (context_ == nullptr || context_->allocator == nullptr) {
+  if (ms_context_ == nullptr || ms_context_->allocator == nullptr) {
     MS_LOG(ERROR) << "Allocator is nullptr.";
     return RET_ERROR;
   }
@@ -619,10 +619,10 @@ void RelativePositionAttentionCPUKernel::FreePackedBiases() {
 }
 
 void RelativePositionAttentionCPUKernel::FreePackedRunBuffers() {
-  if (context_ == nullptr || context_->allocator == nullptr) {
+  if (ms_context_ == nullptr || ms_context_->allocator == nullptr) {
     return;
   }
-  auto allocator = context_->allocator;
+  auto allocator = ms_context_->allocator;
   FreeData(&(input_q_mat_.packed_data_), allocator);
   FreeData(&(input_k_mat_.packed_data_), allocator);
   FreeData(&(input_v_mat_.packed_data_), allocator);

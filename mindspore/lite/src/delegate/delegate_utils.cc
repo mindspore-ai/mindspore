@@ -16,7 +16,7 @@
 
 #include "src/delegate/delegate_utils.h"
 namespace mindspore::lite {
-bool IsSubGraphInputTensor(const std::vector<mindspore::tensor::MSTensor *> &inputs, tensor::MSTensor *input) {
+bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input) {
   if (find(inputs.begin(), inputs.end(), input) != inputs.end()) {
     return true;
   }

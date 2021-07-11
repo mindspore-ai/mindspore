@@ -42,9 +42,9 @@ class NPUSubGraph : public kernel::Kernel {
     return lite::RET_ERROR;
   }
 
-  void set_input(tensor::MSTensor *in_tensor, int index) override;
+  void set_input(mindspore::MSTensor in_tensor, int index) override;
 
-  void set_output(tensor::MSTensor *out_tensor, int index) override;
+  void set_output(mindspore::MSTensor out_tensor, int index) override;
 
   int GetGraphInOutOps();
 
@@ -59,7 +59,7 @@ class NPUSubGraph : public kernel::Kernel {
 
   int GetNPUOperators(const std::vector<NPUOp *> &ops);
 
-  bool IsSubGraphInputTensor(tensor::MSTensor *input);
+  bool IsSubGraphInputTensor(mindspore::MSTensor input);
 
   std::string GetOMModelName();
 
@@ -69,7 +69,7 @@ class NPUSubGraph : public kernel::Kernel {
 
   std::vector<ge::Operator> subgraph_output_ops_;
 
-  std::vector<tensor::MSTensor *> out_tensor_sorted_;
+  std::vector<mindspore::MSTensor> out_tensor_sorted_;
 
   std::vector<ge::Operator *> op_buffer_;
 

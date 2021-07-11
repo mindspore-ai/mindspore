@@ -49,12 +49,12 @@ void GruFp16CPUKernel::FreeTmpBuffer() {
 }
 
 void GruFp16CPUKernel::FreeRunBuffer() {
-  context_->allocator->Free(buffer_[0]);
-  context_->allocator->Free(buffer_[1]);
+  ms_context_->allocator->Free(buffer_[0]);
+  ms_context_->allocator->Free(buffer_[1]);
   if (!is_vec_) {
-    context_->allocator->Free(buffer_[2]);
+    ms_context_->allocator->Free(buffer_[2]);
   }
-  context_->allocator->Free(buffer_[3]);
+  ms_context_->allocator->Free(buffer_[3]);
 }
 
 int GruFp16CPUKernel::InitParam() {
@@ -224,14 +224,14 @@ int GruFp16CPUKernel::MallocRunBuffer() {
     buffer_[i] = nullptr;
   }
   buffer_[0] = reinterpret_cast<float16_t *>(
-    context_->allocator->Malloc(gru_param_->input_row_align_ * gru_param_->input_size_ * sizeof(float16_t)));
+    ms_context_->allocator->Malloc(gru_param_->input_row_align_ * gru_param_->input_size_ * sizeof(float16_t)));
   if (buffer_[0] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc input * weight left matirx error.";
     return RET_ERROR;
   }
 
-  buffer_[1] = reinterpret_cast<float16_t *>(context_->allocator->Malloc(3 * gru_param_->seq_len_ * gru_param_->batch_ *
-                                                                         gru_param_->hidden_size_ * sizeof(float16_t)));
+  buffer_[1] = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(
+    3 * gru_param_->seq_len_ * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float16_t)));
   if (buffer_[1] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc input * weight result matirx error.";
     return RET_ERROR;
@@ -239,7 +239,7 @@ int GruFp16CPUKernel::MallocRunBuffer() {
 
   if (!is_vec_) {
     buffer_[2] = reinterpret_cast<float16_t *>(
-      context_->allocator->Malloc(gru_param_->state_row_align_ * gru_param_->hidden_size_ * sizeof(float16_t)));
+      ms_context_->allocator->Malloc(gru_param_->state_row_align_ * gru_param_->hidden_size_ * sizeof(float16_t)));
     if (buffer_[2] == nullptr) {
       MS_LOG(ERROR) << "GruCPUKernel malloc state * weight left matirx error.";
       return RET_ERROR;
@@ -247,7 +247,7 @@ int GruFp16CPUKernel::MallocRunBuffer() {
   }
 
   buffer_[3] = reinterpret_cast<float16_t *>(
-    context_->allocator->Malloc(3 * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float16_t)));
+    ms_context_->allocator->Malloc(3 * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float16_t)));
   if (buffer_[3] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc state gate buffer error.";
     return RET_ERROR;

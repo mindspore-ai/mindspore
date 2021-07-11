@@ -131,7 +131,7 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
-  auto ret = ParallelLaunch(this->context_, ConvDw3x3Fp16Run, this, conv_param_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ConvDw3x3Fp16Run, this, conv_param_->thread_num_);
   ctx_->allocator->Free(buffer_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDw3x3Run error: error_code[" << ret << "]";

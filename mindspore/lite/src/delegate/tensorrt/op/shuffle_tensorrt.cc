@@ -18,8 +18,8 @@
 #include <vector>
 
 namespace mindspore::lite {
-int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors) {
+int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors) {
   if ((type_ == schema::PrimitiveType::PrimitiveType_Squeeze ||
        type_ == schema::PrimitiveType::PrimitiveType_Unsqueeze) &&
       in_tensors.size() != 1) {
@@ -92,7 +92,7 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "output tensor create failed";
     return RET_ERROR;
   }
-  out_tensor->setName(out_tensors_[0]->tensor_name().c_str());
+  out_tensor->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(out_tensor);
   return RET_OK;
 }
@@ -106,7 +106,7 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   }
 
   // axis
-  std::vector<int> squeeze_shape = in_tensors_[0]->shape();
+  auto squeeze_shape = in_tensors_[0].Shape();
   auto begin = std::begin(squeeze_shape);
   auto axis = squeeze_op->axis();
   if (axis == nullptr) {
@@ -139,7 +139,7 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(WARNING) << "AddUnsqueezeOp size of in tensort needs check: " << in_tensors_.size();
   }
   // axis
-  std::vector<int> unsqueeze_shape = in_tensors_[0]->shape();
+  auto unsqueeze_shape = in_tensors_[0].Shape();
   auto begin = std::begin(unsqueeze_shape);
   auto axis = unsqueeze_op->axis();
 
@@ -165,16 +165,15 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     return RET_ERROR;
   }
   // perm
-  tensor::MSTensor *perm_ternsor = in_tensors_[1];
-  if (perm_ternsor->data() == nullptr ||
-      perm_ternsor->ElementsNum() != tensorrt_in_tensors_[0]->getDimensions().nbDims) {
+  mindspore::MSTensor perm_ternsor = in_tensors_[1];
+  if (perm_ternsor.Data() == nullptr || perm_ternsor.ElementNum() != tensorrt_in_tensors_[0]->getDimensions().nbDims) {
     MS_LOG(ERROR) << "AddTransposeOp perm_ternsor data is invalid.";
     return RET_ERROR;
   }
-  int *perm_data = reinterpret_cast<int *>(perm_ternsor->data());
+  int *perm_data = reinterpret_cast<int *>(perm_ternsor.MutableData());
 
   nvinfer1::Permutation perm{};
-  for (int i = 0; i < perm_ternsor->ElementsNum(); i++) {
+  for (int i = 0; i < perm_ternsor.ElementNum(); i++) {
     perm.order[i] = *perm_data;
     perm_data++;
   }
@@ -191,8 +190,8 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(ERROR) << "AddReshapeOp size of in tensort needs check: " << in_tensors_.size();
     return RET_ERROR;
   }
-  tensor::MSTensor *shape_tensor = in_tensors_[1];
-  nvinfer1::Dims reshape_dims = ConvertCudaDims(shape_tensor->data(), shape_tensor->ElementsNum());
+  mindspore::MSTensor shape_tensor = in_tensors_[1];
+  nvinfer1::Dims reshape_dims = ConvertCudaDims(shape_tensor.MutableData(), shape_tensor.ElementNum());
   int ret = InferReshapeDims(tensorrt_in_tensors_[0]->getDimensions(), &reshape_dims);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "invalid dims for reshape " << op_name_;

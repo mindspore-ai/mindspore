@@ -19,8 +19,8 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int PadNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                        const std::vector<tensor::MSTensor *> &out_tensors) {
+int PadNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                        const std::vector<mindspore::MSTensor> &out_tensors) {
   auto pad_prim = primitive->value_as_PadFusion();
   if (pad_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -33,15 +33,15 @@ int PadNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<te
   if (pad_prim->paddings() != nullptr) {
     return RET_OK;
   }
-  if (in_tensors.size() >= 2 && in_tensors[1]->data() != nullptr) {
+  if (in_tensors.size() >= 2 && in_tensors[1].Data() != nullptr) {
     return RET_OK;
   }
   MS_LOG(WARNING) << "NPU pad only support constant pad size.";
   return RET_ERROR;
 }
 
-int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors) {
+int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors) {
   pad_ = new (std::nothrow) hiai::op::PadV2(name_);
   if (pad_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -67,9 +67,9 @@ int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor:
       auto paddings = std::vector<int64_t>(paddings_data->begin(), paddings_data->end());
       paddings_vec_.insert(paddings_vec_.end(), paddings.begin(), paddings.end());
     }
-  } else if (in_tensors.size() >= 2 && in_tensors[1]->data() != nullptr) {
-    for (int i = 0; i < in_tensors[1]->ElementsNum(); i++) {
-      paddings_vec_.push_back(static_cast<int *>(in_tensors[1]->data())[i]);
+  } else if (in_tensors.size() >= 2 && in_tensors[1].Data() != nullptr) {
+    for (int i = 0; i < in_tensors[1].ElementNum(); i++) {
+      paddings_vec_.push_back(static_cast<const int *>(in_tensors[1].Data().get())[i]);
     }
   } else {
     MS_LOG(ERROR) << "NPU pad only support constant pad size.";
@@ -86,8 +86,8 @@ int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor:
   return RET_OK;
 }
 
-int PadNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors,
+int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors,
                            const std::vector<ge::Operator *> &npu_inputs) {
   int size = static_cast<int>(paddings_vec_.size() / 2);
   ge::TensorDesc padding_tensor_desc(ge::Shape({size, 2}), ge::FORMAT_NCHW, ge::DT_INT32);

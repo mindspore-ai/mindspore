@@ -178,7 +178,7 @@ int ConvolutionSWCPUKernel::Run() {
     FreeTmpBuffer();
     return ret;
   }
-  int error_code = ParallelLaunch(this->context_, ConvolutionSWImpl, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, ConvolutionSWImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
     FreeTmpBuffer();

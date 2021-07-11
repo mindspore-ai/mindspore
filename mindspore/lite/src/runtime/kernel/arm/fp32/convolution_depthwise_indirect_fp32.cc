@@ -160,7 +160,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocPackedInput() {
 #endif
   int IC_DIV = UP_DIV(conv_param_->input_channel_, div_flag);
   int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * div_flag * IC_DIV;
-  packed_input_ = reinterpret_cast<float *>(context_->allocator->Malloc(pack_input_size * sizeof(float)));
+  packed_input_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(float)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -203,13 +203,13 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
   MS_ASSERT(output_ptr_ != nullptr);
   ConvDwInitIndirection(indirect_buffer_, packed_input_, zero_ptr_, conv_param_, step_h, step_w);
 
-  auto ret = ParallelLaunch(this->context_, ConvDwIndirectRun, this, conv_param_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ConvDwIndirectRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwIndirectRun error: error_code[" << ret << "]";
     return RET_ERROR;
   }
   if (conv_param_->input_channel_ % div_flag != 0) {
-    context_->allocator->Free(packed_input_);
+    ms_context_->allocator->Free(packed_input_);
   }
   return RET_OK;
 }

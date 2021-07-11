@@ -27,8 +27,6 @@
 #include "include/api/status.h"
 #include "include/ms_tensor.h"
 #include "src/tensor.h"
-#include "src/common/log_adapter.h"
-#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 using mindspore::lite::RET_OK;
@@ -83,5 +81,15 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::s
   impl->set_own_data(true);
   impl->set_from_session(false);
   return impl;
+}
+
+std::vector<std::string> MSTensor::Impl::TensorImplToStrings(const std::shared_ptr<Impl> &impl) {
+  std::vector<std::string> empty;
+  auto lite_tensor = impl->lite_tensor();
+  if (lite_tensor == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor impl.";
+    return empty;
+  }
+  return lite::MSTensorToStrings(lite_tensor);
 }
 }  // namespace mindspore

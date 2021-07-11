@@ -45,10 +45,13 @@ class KernelRegistry {
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
   bool SupportKernel(const kernel::KernelKey &key);
   int GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter,
-                kernel::LiteKernel **kernel, const void *primitive = nullptr);
+                const InnerContext *ctx, const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
+                OpParameter *op_parameter, kernel::LiteKernel **kernel, const void *primitive = nullptr);
 
  protected:
+  int GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                      const mindspore::Context *ctx, const kernel::KernelKey &key, kernel::LiteKernel **kernel,
+                      const void *primitive = nullptr);
   static const int device_type_length_{kKernelArch_MAX - kKernelArch_MIN + 1};
   static const int data_type_length_{kNumberTypeEnd - kNumberTypeBegin + 1};
   static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN + 1};

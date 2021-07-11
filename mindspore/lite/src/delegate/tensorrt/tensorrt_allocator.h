@@ -19,16 +19,23 @@
 #include "src/delegate/tensorrt/tensorrt_allocator.h"
 #include <map>
 #include <string>
+#include "include/api/types.h"
 #include "include/ms_tensor.h"
 
 namespace mindspore::lite {
 class TensorRTAllocator {
  public:
   TensorRTAllocator() = default;
-  void *MallocDeviceMem(mindspore::tensor::MSTensor *host_tensor, size_t size);
+
+  ~TensorRTAllocator() = default;
+
+  void *MallocDeviceMem(mindspore::MSTensor host_tensor, size_t size);
+
   void *GetDevicePtr(const std::string &tensor_name);
-  int SyncMemInHostAndDevice(mindspore::tensor::MSTensor *host_tensor, const std::string &device_tensor_name,
+
+  int SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
                              bool is_host2device, bool sync = true);
+
   int ClearDeviceMem();
 
  private:

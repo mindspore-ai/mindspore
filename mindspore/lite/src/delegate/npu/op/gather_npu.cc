@@ -17,14 +17,14 @@
 #include "src/delegate/npu/op/gather_npu.h"
 
 namespace mindspore {
-int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors) {
-  if (in_tensors[1]->data_type() != kNumberTypeInt32) {
+int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (in_tensors[1].DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << "Gather indices only support Int32";
     return RET_NOT_SUPPORT;
   }
-  if (in_tensors.size() >= 3 && in_tensors[2]->ElementsNum() == 1) {
-    axis_ = static_cast<int *>(in_tensors[2]->data())[0];
+  if (in_tensors.size() >= 3 && in_tensors[2].ElementNum() == 1) {
+    axis_ = static_cast<const int *>(in_tensors[2].Data().get())[0];
   } else {
     MS_LOG(WARNING) << "NPU axis is attribute.";
     return RET_NOT_SUPPORT;
@@ -32,8 +32,8 @@ int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
   return RET_OK;
 }
 
-int GatherNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                      const std::vector<tensor::MSTensor *> &out_tensors) {
+int GatherNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                      const std::vector<mindspore::MSTensor> &out_tensors) {
   gather_ = new (std::nothrow) hiai::op::GatherV2D(name_);
   if (gather_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -43,8 +43,8 @@ int GatherNPUOp::Init(const schema::Primitive *primitive, const std::vector<tens
   return RET_OK;
 }
 
-int GatherNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors,
+int GatherNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
   gather_->set_input_x(*npu_inputs[0]);
   gather_->set_input_indices(*npu_inputs[1]);

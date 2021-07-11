@@ -20,8 +20,8 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int EltwiseNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                       const std::vector<tensor::MSTensor *> &out_tensors) {
+int EltwiseNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                       const std::vector<mindspore::MSTensor> &out_tensors) {
   eltwise_ = new (std::nothrow) hiai::op::Eltwise(name_);
   if (eltwise_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -39,8 +39,8 @@ int EltwiseNPUOp::Init(const schema::Primitive *primitive, const std::vector<ten
   return RET_OK;
 }
 
-int EltwiseNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors,
+int EltwiseNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors,
                                const std::vector<ge::Operator *> &npu_inputs) {
   for (int i = 0; i < npu_inputs.size(); ++i) {
     eltwise_->set_dynamic_input_x(i + 1, *npu_inputs[i]);

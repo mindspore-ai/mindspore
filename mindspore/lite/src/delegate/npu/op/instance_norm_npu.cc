@@ -15,12 +15,11 @@
  */
 
 #include "src/delegate/npu/op/instance_norm_npu.h"
-#include <memory>
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                            const std::vector<tensor::MSTensor *> &out_tensors) {
+int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                            const std::vector<mindspore::MSTensor> &out_tensors) {
   instance_norm_ = new (std::nothrow) hiai::op::InstanceNorm(name_);
   if (instance_norm_ == nullptr) {
     MS_LOG(ERROR) << "New instance norm npu operator for op " << name_ << " failed.";
@@ -35,12 +34,12 @@ int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vecto
   return RET_OK;
 }
 
-int InstanceNormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                    const std::vector<tensor::MSTensor *> &out_tensors,
+int InstanceNormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                    const std::vector<mindspore::MSTensor> &out_tensors,
                                     const std::vector<ge::Operator *> &npu_inputs) {
   instance_norm_->set_input_x(*npu_inputs[0]);
 
-  auto gamma_shape = in_tensors[1]->shape();
+  auto gamma_shape = in_tensors[1].Shape();
   auto gamma_tensor = ConverterToNPUTensor(in_tensors[1]);
   if (gamma_tensor == nullptr) {
     MS_LOG(ERROR) << "Get gamma_tensor failed.";
@@ -56,7 +55,7 @@ int InstanceNormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_te
   gamma_->set_attr_value(gamma_tensor);
   instance_norm_->set_input_gamma(*gamma_);
 
-  auto beta_shape = in_tensors[2]->shape();
+  auto beta_shape = in_tensors[2].Shape();
   auto beta_tensor = ConverterToNPUTensor(in_tensors[2]);
   if (beta_tensor == nullptr) {
     MS_LOG(ERROR) << "Get beta_tensor failed.";

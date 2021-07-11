@@ -94,7 +94,7 @@ int ActivationGradRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_s
 }
 
 int ActivationGradCPUKernelFp16::Run() {
-  int error_code = ParallelLaunch(this->context_, ActivationGradRunFp16, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, ActivationGradRunFp16, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation Grad function error error_code[" << error_code << "]";
     return RET_ERROR;

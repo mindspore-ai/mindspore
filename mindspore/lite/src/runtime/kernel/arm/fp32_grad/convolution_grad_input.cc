@@ -176,7 +176,7 @@ int ConvolutionGradInputCPUKernel::Run() {
   auto *out_dx = out_tensors_.at(0);
   auto dx_addr = reinterpret_cast<float *>(out_dx->MutableData());
   memset(dx_addr, 0, sizeof(float) * batch * in_ch * in_h * in_w);
-  int error_code = ParallelLaunch(this->context_, ConvolutionGradInputRun, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradInputRun, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "bias function error error_code[" << error_code << "]";
     return RET_ERROR;

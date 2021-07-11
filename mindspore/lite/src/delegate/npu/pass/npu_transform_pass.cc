@@ -30,7 +30,7 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
   bool is_input_op = op->in_ops().empty();
   // not always single input (like CropAndResize), but we care about the input with 4d.
   auto it = std::find_if(op->in_ops().begin(), op->in_ops().end(),
-                         [](NPUOp *k) { return k->outputs().size() > 0 && k->outputs()[0]->shape().size() == 4; });
+                         [](NPUOp *k) { return k->outputs().size() > 0 && k->outputs()[0].Shape().size() == 4; });
   if (!is_input_op && it == op->in_ops().end()) {
     MS_LOG(ERROR) << "NPU Transform pass does not find in op with 4d output";
     return RET_ERROR;
@@ -43,16 +43,16 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
 
     // Create pre transform op's out tensor.
     auto name = op->name() + "_pre_trans" + "_Nhwc2Nchw_" + std::to_string(total++);
-    auto nhwc_shape = op->inputs()[0]->shape();
-    std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
+    auto nhwc_shape = op->inputs()[0].Shape();
+    std::vector<int64_t> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
     auto tensor =
-      tensor::MSTensor::CreateTensor(name + "/output0", op->inputs()[0]->data_type(), nchw_shape, nullptr, 0);
+      mindspore::MSTensor::CreateTensor(name + "/output0", op->inputs()[0].DataType(), nchw_shape, nullptr, 0);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "New nchw tensor failed when inserting pre nhwc2nchw op.";
       return RET_ERROR;
     }
-    std::vector<tensor::MSTensor *> pre_trans_outputs = {tensor};
-    all_tensors_->push_back(pre_trans_outputs[0]);
+    std::vector<mindspore::MSTensor> pre_trans_outputs = {*tensor};
+    all_tensors_->push_back(tensor);
 
     // Create pre transform op: Nhwc2Nchw
     auto *trans_op = NPUPassUtils::CreateNhwc2NchwOp({op->inputs()[0]}, pre_trans_outputs, name);
@@ -75,7 +75,7 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
 }
 
 int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops,
-                                      std::vector<tensor::MSTensor *> graph_outputs) {
+                                      std::vector<mindspore::MSTensor> graph_outputs) {
   bool is_output_op = false;
   if (op->out_ops().empty() ||
       find(graph_outputs.begin(), graph_outputs.end(), op->outputs()[0]) != graph_outputs.end()) {
@@ -99,10 +99,10 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
   // Create post transform op's in tensor.
   auto name = op->name() + "_post_trans" + "_Nchw2Nhwc" + std::to_string(total++);
 
-  auto nhwc_shape = op->outputs()[0]->shape();
-  std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
+  auto nhwc_shape = op->outputs()[0].Shape();
+  std::vector<int64_t> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
   auto nc2nh_tensor =
-    tensor::MSTensor::CreateTensor(name + "/input0", op->outputs()[0]->data_type(), nchw_shape, nullptr, 0);
+    mindspore::MSTensor::CreateTensor(name + "/input0", op->outputs()[0].DataType(), nchw_shape, nullptr, 0);
   if (nc2nh_tensor == nullptr) {
     MS_LOG(ERROR) << "New nchw tensor failed when inserting post nchw2nhwc op.";
     return RET_ERROR;
@@ -110,9 +110,9 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
   all_tensors_->push_back(nc2nh_tensor);
 
   if (is_output_op) {
-    std::vector<tensor::MSTensor *> nc2nh_outputs{op->outputs().at(0)};
+    std::vector<mindspore::MSTensor> nc2nh_outputs{op->outputs().at(0)};
     // Create post transform op: Nchw2Nhwc
-    auto *post_trans_op = NPUPassUtils::CreateNchw2NhwcOp({nc2nh_tensor}, nc2nh_outputs, name);
+    auto *post_trans_op = NPUPassUtils::CreateNchw2NhwcOp({*nc2nh_tensor}, nc2nh_outputs, name);
     // Set in_ops, out_ops, inputs, outputs for transform op
     NPUPassUtils::UpdateOp(post_trans_op, {op}, {}, post_trans_op->inputs(), post_trans_op->outputs());
     trans_ops->push_back(post_trans_op);
@@ -122,22 +122,22 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
   for (auto i = 0; i < post_insert_ops.size(); ++i) {
     auto post_insert_op = post_insert_ops.at(i);
     // nc2nh op out tensor: 1st op uses original out_tensor, remaining ops use newly created out tensor.
-    std::vector<tensor::MSTensor *> nc2nh_outputs{nullptr};
+    std::vector<mindspore::MSTensor> nc2nh_outputs{};
 
     auto origin_out_tensor = op->outputs().at(0);
     auto out_tensor_name = op->name() + "_post_trans" + "_Nchw2Nhwc_" + std::to_string(i) + "_out_tensor";
-    auto out_tensor = tensor::MSTensor::CreateTensor(out_tensor_name, origin_out_tensor->data_type(),
-                                                     origin_out_tensor->shape(), nullptr, 0);
+    auto out_tensor = mindspore::MSTensor::CreateTensor(out_tensor_name, origin_out_tensor.DataType(),
+                                                        origin_out_tensor.Shape(), nullptr, 0);
     if (out_tensor == nullptr) {
       MS_LOG(ERROR) << "New nhwc tensor failed when inserting post nchw2nhwc op.";
       return RET_ERROR;
     }
     all_tensors_->push_back(out_tensor);
-    nc2nh_outputs[0] = out_tensor;
+    nc2nh_outputs.push_back(*out_tensor);
 
     // Create post transform op: Nchw2Nhwc
     auto *post_trans_op =
-      NPUPassUtils::CreateNchw2NhwcOp({nc2nh_tensor}, nc2nh_outputs, name + "_" + std::to_string(i));
+      NPUPassUtils::CreateNchw2NhwcOp({*nc2nh_tensor}, nc2nh_outputs, name + "_" + std::to_string(i));
     // Set in_ops, out_ops, inputs, outputs for transform op
     NPUPassUtils::UpdateOp(post_trans_op, {op}, {post_insert_op}, post_trans_op->inputs(), post_trans_op->outputs());
     trans_ops->push_back(post_trans_op);
@@ -147,7 +147,7 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
   // for those non-insert post ops, update their in_tensor
   for (auto non_insert_op : post_non_insert_ops) {
     auto inputs = non_insert_op->inputs();
-    std::replace(inputs.begin(), inputs.end(), op->outputs().at(0), nc2nh_tensor);
+    std::replace(inputs.begin(), inputs.end(), op->outputs().at(0), *nc2nh_tensor);
     non_insert_op->set_inputs(inputs);
   }
   // update origin op's out tensor and out op
@@ -169,7 +169,7 @@ int NPUTransformPass::Run(NPUGraph *subgraph) {
       i++;
       continue;
     }
-    if (op->type() == schema::PrimitiveType_Resize && op->inputs()[0]->shape()[1] > op->outputs()[0]->shape()[1]) {
+    if (op->type() == schema::PrimitiveType_Resize && op->inputs()[0].Shape()[1] > op->outputs()[0].Shape()[1]) {
       i++;
       continue;
     }

@@ -33,7 +33,7 @@ class NPUExecutor {
   ~NPUExecutor();
   int Prepare();
 
-  int Run(const std::vector<tensor::MSTensor *> &in_tensors, const std::vector<tensor::MSTensor *> &out_tensors,
+  int Run(const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
           const std::vector<NPUOp *> &in_ops);
 
  private:

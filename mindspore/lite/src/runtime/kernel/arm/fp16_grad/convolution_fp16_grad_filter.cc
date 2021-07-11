@@ -67,7 +67,7 @@ int ConvolutionGradFilterCPUKernelFp16::ReSize() {
   ws_size_ = do_dw_ ? ws_size_ : ws_size_ / conv_param->group_;
   int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
-  int thread_num = context_->thread_num_;
+  int thread_num = ms_context_->thread_num_;
   mat_alloc_ = MatSizeTotalFp16(k, n, chunk_, 0);
   set_workspace_size((ws_size_ + mat_alloc_ + (k * n)) * thread_num * sizeof(float16_t));
 
@@ -101,7 +101,7 @@ int ConvolutionGradFilterCPUKernelFp16::Execute(int task_id) {
   int m = out_h * out_w;
   int n = k_h * k_w * in_ch / groups;
   int k = out_ch / groups;
-  int thread_num = context_->thread_num_;
+  int thread_num = ms_context_->thread_num_;
   float16_t *workspace_temp = reinterpret_cast<float16_t *>(workspace());
   float16_t *mat_workspace = workspace_temp + ws_size_ * thread_num + task_id * (mat_alloc_ + k * n);
   float16_t *mat_tmp = mat_workspace + mat_alloc_;
@@ -191,7 +191,7 @@ int ConvolutionGradFilterCPUKernelFp16::Run() {
   auto *out_dw = out_tensors_.at(0);
   auto dw_addr = reinterpret_cast<float16_t *>(out_dw->data_c());
   memset(dw_addr, 0, out_dw->Size());
-  int error_code = ParallelLaunch(this->context_, ConvolutionGradFilterFp16Run, this, context_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradFilterFp16Run, this, ms_context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv filter function error error_code[" << error_code << "]";
     return RET_ERROR;

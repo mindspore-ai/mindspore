@@ -101,6 +101,7 @@ class ModelImpl {
   void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
   void SetConfig(const std::shared_ptr<TrainCfg> cfg) { cfg_ = cfg; }
   lite::CpuBindMode GetCpuBindMode();
+  Status ConverterContext(const std::shared_ptr<Context> &context, lite::Context *model_context);
   Status RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after);
 };
 }  // namespace mindspore

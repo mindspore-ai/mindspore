@@ -72,7 +72,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitPackedInputOutput() {
 
     int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM *
                           UP_DIV(conv_param_->input_channel_, C8NUM);
-    packed_input_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(pack_input_size * sizeof(int8_t)));
+    packed_input_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(int8_t)));
     if (packed_input_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -80,7 +80,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitPackedInputOutput() {
 
     int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM *
                            UP_DIV(conv_param_->output_channel_, C8NUM);
-    packed_output_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(pack_output_size * sizeof(int8_t)));
+    packed_output_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(pack_output_size * sizeof(int8_t)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -311,7 +311,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Run() {
     packed_output_ = output_addr;
   }
 
-  ret = ParallelLaunch(this->context_, ConvDwSWInt8Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, ConvDwSWInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwSWInt8Run error: error_code[" << ret << "]";
   }
@@ -326,8 +326,8 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Run() {
 
 void ConvolutionDepthwiseSWInt8CPUKernel::FreePackedInputOutput() {
   if (need_align_) {
-    context_->allocator->Free(packed_input_);
-    context_->allocator->Free(packed_output_);
+    ms_context_->allocator->Free(packed_input_);
+    ms_context_->allocator->Free(packed_output_);
     packed_input_ = nullptr;
     packed_output_ = nullptr;
   }

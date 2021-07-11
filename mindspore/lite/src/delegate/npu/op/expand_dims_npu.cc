@@ -19,8 +19,8 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int ExpandDimsNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                          const std::vector<tensor::MSTensor *> &out_tensors) {
+int ExpandDimsNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                          const std::vector<mindspore::MSTensor> &out_tensors) {
   expand_dims_ = new (std::nothrow) hiai::op::ExpandDims(name_);
   if (expand_dims_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -29,8 +29,8 @@ int ExpandDimsNPUOp::Init(const schema::Primitive *primitive, const std::vector<
   return RET_OK;
 }
 
-int ExpandDimsNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors,
+int ExpandDimsNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors,
                                   const std::vector<ge::Operator *> &npu_inputs) {
   expand_dims_->set_input_x(*npu_inputs[0]);
   expand_dims_->set_input_axis(*npu_inputs[1]);

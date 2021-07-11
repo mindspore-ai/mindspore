@@ -16,8 +16,8 @@
 
 #include "src/delegate/npu/op/squeeze_npu.h"
 namespace mindspore {
-int SqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                       const std::vector<tensor::MSTensor *> &out_tensors) {
+int SqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                       const std::vector<mindspore::MSTensor> &out_tensors) {
   squeeze_ = new (std::nothrow) hiai::op::Squeeze(name_);
   if (squeeze_ == nullptr) {
     MS_LOG(ERROR) << "New squeeze npu operator for op " << name_ << " failed.";
@@ -35,8 +35,8 @@ int SqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<ten
   return RET_OK;
 }
 
-int SqueezeNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors,
+int SqueezeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors,
                                const std::vector<ge::Operator *> &npu_inputs) {
   squeeze_->set_input_x(*npu_inputs[0]);
   return RET_OK;

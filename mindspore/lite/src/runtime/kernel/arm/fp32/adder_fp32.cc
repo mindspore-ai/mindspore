@@ -121,7 +121,7 @@ int AdderCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  int error_code = ParallelLaunch(this->context_, AdderImpl, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, AdderImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "adder error error_code[" << error_code << "]";
     FreeTmpBuffer();

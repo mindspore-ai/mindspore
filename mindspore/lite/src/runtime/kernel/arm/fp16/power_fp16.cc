@@ -86,7 +86,7 @@ int PowerFp16CPUKernel::Run() {
       return ret;
     }
   }
-  auto ret = ParallelLaunch(this->context_, PowerImplFp16, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, PowerImplFp16, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerFp16CPUKernel error: " << ret;
     return RET_ERROR;

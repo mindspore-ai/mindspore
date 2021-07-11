@@ -41,7 +41,7 @@ int OneHotCPUKernel::Init() {
                   << in_tensors_.size() << ", output size should be" << kOutputNum << ", got " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (context_ == nullptr) {
+  if (ms_context_ == nullptr) {
     MS_LOG(ERROR) << "OneHot context nullptr";
     return RET_NULL_PTR;
   }
@@ -180,7 +180,7 @@ int OneHotCPUKernel::GetParams() {
 }
 
 int OneHotCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, RunOneHot, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, RunOneHot, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "OneHot function error error_code[" << error_code << "]";
     return RET_ERROR;

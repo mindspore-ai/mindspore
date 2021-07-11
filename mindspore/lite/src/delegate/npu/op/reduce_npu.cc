@@ -15,11 +15,10 @@
  */
 
 #include "src/delegate/npu/op/reduce_npu.h"
-#include <memory>
 
 namespace mindspore {
-int ReduceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors) {
+int ReduceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors) {
   auto reduce_prim = primitive->value_as_ReduceFusion();
   if (reduce_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -37,8 +36,8 @@ int ReduceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
   return RET_OK;
 }
 
-int ReduceNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                      const std::vector<tensor::MSTensor *> &out_tensors) {
+int ReduceNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                      const std::vector<mindspore::MSTensor> &out_tensors) {
   auto reduce_prim = primitive->value_as_ReduceFusion();
   if (reduce_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -59,8 +58,8 @@ int ReduceNPUOp::Init(const schema::Primitive *primitive, const std::vector<tens
   return RET_OK;
 }
 
-int ReduceNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors,
+int ReduceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
   if (reduce_mode_ == schema::ReduceMode_ReduceMean) {
     auto reduce_mean = reinterpret_cast<hiai::op::ReduceMean *>(reduce_);

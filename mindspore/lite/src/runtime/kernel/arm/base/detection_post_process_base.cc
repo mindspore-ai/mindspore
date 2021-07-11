@@ -101,35 +101,35 @@ int NmsMultiClassesFastCoreRun(void *cdata, int task_id, float lhs_scale, float 
 
 void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
   if (params_->decoded_boxes_ != nullptr) {
-    context_->allocator->Free(params_->decoded_boxes_);
+    ms_context_->allocator->Free(params_->decoded_boxes_);
     params_->decoded_boxes_ = nullptr;
   }
   if (params_->nms_candidate_ != nullptr) {
-    context_->allocator->Free(params_->nms_candidate_);
+    ms_context_->allocator->Free(params_->nms_candidate_);
     params_->nms_candidate_ = nullptr;
   }
   if (params_->indexes_ != nullptr) {
-    context_->allocator->Free(params_->indexes_);
+    ms_context_->allocator->Free(params_->indexes_);
     params_->indexes_ = nullptr;
   }
   if (params_->scores_ != nullptr) {
-    context_->allocator->Free(params_->scores_);
+    ms_context_->allocator->Free(params_->scores_);
     params_->scores_ = nullptr;
   }
   if (params_->all_class_indexes_ != nullptr) {
-    context_->allocator->Free(params_->all_class_indexes_);
+    ms_context_->allocator->Free(params_->all_class_indexes_);
     params_->all_class_indexes_ = nullptr;
   }
   if (params_->all_class_scores_ != nullptr) {
-    context_->allocator->Free(params_->all_class_scores_);
+    ms_context_->allocator->Free(params_->all_class_scores_);
     params_->all_class_scores_ = nullptr;
   }
   if (params_->single_class_indexes_ != nullptr) {
-    context_->allocator->Free(params_->single_class_indexes_);
+    ms_context_->allocator->Free(params_->single_class_indexes_);
     params_->single_class_indexes_ = nullptr;
   }
   if (params_->selected_ != nullptr) {
-    context_->allocator->Free(params_->selected_);
+    ms_context_->allocator->Free(params_->selected_);
     params_->selected_ = nullptr;
   }
 }
@@ -137,25 +137,25 @@ void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
 int DetectionPostProcessBaseCPUKernel::ParamInit() {
   num_boxes_ = in_tensors_.at(0)->shape().at(1);
   num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
-  params_->decoded_boxes_ = context_->allocator->Malloc(num_boxes_ * 4 * sizeof(float));
+  params_->decoded_boxes_ = ms_context_->allocator->Malloc(num_boxes_ * 4 * sizeof(float));
   if (params_->decoded_boxes_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->decoded_boxes_ failed.";
     FreeAllocatedBuffer();
     return RET_ERROR;
   }
-  params_->nms_candidate_ = context_->allocator->Malloc(num_boxes_ * sizeof(uint8_t));
+  params_->nms_candidate_ = ms_context_->allocator->Malloc(num_boxes_ * sizeof(uint8_t));
   if (params_->nms_candidate_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->nms_candidate_ failed.";
     FreeAllocatedBuffer();
     return RET_ERROR;
   }
-  params_->selected_ = context_->allocator->Malloc(num_boxes_ * sizeof(int));
+  params_->selected_ = ms_context_->allocator->Malloc(num_boxes_ * sizeof(int));
   if (params_->selected_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->selected_ failed.";
     FreeAllocatedBuffer();
     return RET_ERROR;
   }
-  params_->single_class_indexes_ = context_->allocator->Malloc(num_boxes_ * sizeof(int));
+  params_->single_class_indexes_ = ms_context_->allocator->Malloc(num_boxes_ * sizeof(int));
   if (params_->single_class_indexes_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->single_class_indexes_ failed.";
     FreeAllocatedBuffer();
@@ -163,38 +163,39 @@ int DetectionPostProcessBaseCPUKernel::ParamInit() {
   }
 
   if (params_->use_regular_nms_) {
-    params_->scores_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
+    params_->scores_ = ms_context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
     if (params_->scores_ == nullptr) {
       MS_LOG(ERROR) << "malloc params->scores_ failed";
       FreeAllocatedBuffer();
       return RET_ERROR;
     }
-    params_->indexes_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(int));
+    params_->indexes_ = ms_context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(int));
     if (params_->indexes_ == nullptr) {
       MS_LOG(ERROR) << "malloc params->indexes_ failed";
       FreeAllocatedBuffer();
       return RET_ERROR;
     }
-    params_->all_class_scores_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
+    params_->all_class_scores_ =
+      ms_context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
     if (params_->all_class_scores_ == nullptr) {
       MS_LOG(ERROR) << "malloc params->all_class_scores_ failed";
       FreeAllocatedBuffer();
       return RET_ERROR;
     }
-    params_->all_class_indexes_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(int));
+    params_->all_class_indexes_ = ms_context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(int));
     if (params_->all_class_indexes_ == nullptr) {
       MS_LOG(ERROR) << "malloc params->all_class_indexes_ failed";
       FreeAllocatedBuffer();
       return RET_ERROR;
     }
   } else {
-    params_->scores_ = context_->allocator->Malloc(num_boxes_ * sizeof(float));
+    params_->scores_ = ms_context_->allocator->Malloc(num_boxes_ * sizeof(float));
     if (params_->scores_ == nullptr) {
       MS_LOG(ERROR) << "malloc params->scores_ failed";
       FreeAllocatedBuffer();
       return RET_ERROR;
     }
-    params_->indexes_ = context_->allocator->Malloc(num_boxes_ * params_->num_classes_ * sizeof(int));
+    params_->indexes_ = ms_context_->allocator->Malloc(num_boxes_ * params_->num_classes_ * sizeof(int));
     if (!params_->indexes_) {
       MS_LOG(ERROR) << "malloc params->indexes_ failed.";
       FreeAllocatedBuffer();
@@ -205,7 +206,7 @@ int DetectionPostProcessBaseCPUKernel::ParamInit() {
 }
 
 int DetectionPostProcessBaseCPUKernel::Run() {
-  MS_ASSERT(context_->allocator != nullptr);
+  MS_ASSERT(ms_context_->allocator != nullptr);
   int status = GetInputData();
   if (status != RET_OK) {
     return status;
@@ -236,7 +237,7 @@ int DetectionPostProcessBaseCPUKernel::Run() {
       return status;
     }
   } else {
-    status = ParallelLaunch(this->context_, NmsMultiClassesFastCoreRun, this, op_parameter_->thread_num_);
+    status = ParallelLaunch(this->ms_context_, NmsMultiClassesFastCoreRun, this, op_parameter_->thread_num_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "NmsMultiClassesFastCoreRun error error_code[" << status << "]";
       FreeAllocatedBuffer();

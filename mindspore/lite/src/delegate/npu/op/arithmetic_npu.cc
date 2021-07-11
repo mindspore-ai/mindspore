@@ -15,23 +15,22 @@
  */
 
 #include "src/delegate/npu/op/arithmetic_npu.h"
-#include "include/graph/op/all_ops.h"
 namespace mindspore {
 constexpr int RELU_MODE = 1;
 constexpr int RELU6_MODE = 14;
-int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors) {
-  if (in_tensors[0]->shape() != in_tensors[1]->shape()) {
+int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (in_tensors[0].Shape() != in_tensors[1].Shape()) {
     MS_LOG(WARNING) << name_ << " for the two inputs, the corresponding dimensions must have the same value."
-                    << " shape 1 is:" << in_tensors[0]->shape() << " shape 2 is:" << in_tensors[1]->shape();
+                    << " shape 1 is:" << in_tensors[0].Shape() << " shape 2 is:" << in_tensors[1].Shape();
     return RET_NOT_SUPPORT;
   }
   auto type = primitive->value_type();
-  if (type == mindspore::schema::PrimitiveType_Less && in_tensors[0]->shape().size() == 1) {
+  if (type == mindspore::schema::PrimitiveType_Less && in_tensors[0].Shape().size() == 1) {
     MS_LOG(WARNING) << name_ << " not support input 1d";
     return RET_NOT_SUPPORT;
   }
-  if (type == mindspore::schema::PrimitiveType_Equal && in_tensors[0]->shape().size() == 2) {
+  if (type == mindspore::schema::PrimitiveType_Equal && in_tensors[0].Shape().size() == 2) {
     MS_LOG(WARNING) << name_ << " not support input 2d";
     return RET_NOT_SUPPORT;
   }
@@ -48,8 +47,8 @@ ge::Operator *CreateOperator(const std::string &name) {
   return op;
 }
 
-int ArithmeticNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                          const std::vector<tensor::MSTensor *> &out_tensors) {
+int ArithmeticNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                          const std::vector<mindspore::MSTensor> &out_tensors) {
   switch (type_) {
     case schema::PrimitiveType_MulFusion:
       op_ = CreateOperator<hiai::op::Mul>(name_);
@@ -143,8 +142,8 @@ void SetInputs(const std::vector<ge::Operator *> &npu_inputs, ge::Operator *op) 
   return;
 }
 
-int ArithmeticNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors,
+int ArithmeticNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors,
                                   const std::vector<ge::Operator *> &npu_inputs) {
   switch (type_) {
     case schema::PrimitiveType_MulFusion:
@@ -203,7 +202,7 @@ int ArithmeticNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tens
 }
 
 int ArithmeticNPUOp::SetNPUInputs(
-  const std::vector<tensor::MSTensor *> &in_tensors, const std::vector<tensor::MSTensor *> &out_tensors,
+  const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
   const std::vector<ge::Operator *> &npu_inputs,
   const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
   auto ret = SetNPUInputs(in_tensors, out_tensors, npu_inputs);

@@ -120,21 +120,21 @@ int SoftmaxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int SoftmaxInt8CPUKernel::Run() {
-  exp_data_ = reinterpret_cast<int *>(context_->allocator->Malloc(softmax_param_->element_size_ * sizeof(int)));
+  exp_data_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(softmax_param_->element_size_ * sizeof(int)));
   int inner_size = 1;
   for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
     inner_size *= softmax_param_->input_shape_[i];
   }
-  sum_data_ = reinterpret_cast<int *>(context_->allocator->Malloc(inner_size * sizeof(int)));
+  sum_data_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(inner_size * sizeof(int)));
   if (exp_data_ == nullptr || sum_data_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
-    context_->allocator->Free(exp_data_);
-    context_->allocator->Free(sum_data_);
+    ms_context_->allocator->Free(exp_data_);
+    ms_context_->allocator->Free(sum_data_);
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->context_, SoftmaxRun, this, thread_count_);
-  context_->allocator->Free(exp_data_);
-  context_->allocator->Free(sum_data_);
+  auto ret = ParallelLaunch(this->ms_context_, SoftmaxRun, this, thread_count_);
+  ms_context_->allocator->Free(exp_data_);
+  ms_context_->allocator->Free(sum_data_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Softmax function error error_code[" << ret << "]";
   }

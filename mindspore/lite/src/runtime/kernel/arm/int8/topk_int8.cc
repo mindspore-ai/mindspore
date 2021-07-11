@@ -52,15 +52,15 @@ int TopKInt8CPUKernel::Run() {
   int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());
   MS_ASSERT(output_index);
 
-  MS_ASSERT(context_->allocator != nullptr);
+  MS_ASSERT(ms_context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
-  parameter->topk_node_list_ = context_->allocator->Malloc(sizeof(TopkNodeInt8) * parameter->last_dim_size_);
+  parameter->topk_node_list_ = ms_context_->allocator->Malloc(sizeof(TopkNodeInt8) * parameter->last_dim_size_);
   if (parameter->topk_node_list_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
   TopkInt8(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(op_parameter_));
-  context_->allocator->Free(parameter->topk_node_list_);
+  ms_context_->allocator->Free(parameter->topk_node_list_);
   return RET_OK;
 }
 

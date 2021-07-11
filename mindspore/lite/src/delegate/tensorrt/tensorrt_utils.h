@@ -23,14 +23,14 @@
 
 namespace mindspore::lite {
 // Convert shape to Cuda Dims.
-nvinfer1::Dims ConvertCudaDims(const std::vector<int> &shape);
+nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape);
 
 // Convert Tensor data to Cuda dims.
 nvinfer1::Dims ConvertCudaDims(void *data, size_t size);
 
 nvinfer1::Dims ConvertCudaDims(int data, size_t size);
 
-nvinfer1::DataType ConvertDataType(TypeId type_id);
+nvinfer1::DataType ConvertDataType(DataType type_id);
 
 nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
 
@@ -38,9 +38,9 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
 
 nvinfer1::ActivationType ConvertActivationType(schema::ActivationType activation_type);
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, tensor::MSTensor *ms_tensor);
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor);
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, tensor::MSTensor *ms_tensor,
+nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor,
                                                size_t expand_shape_size);
 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, void *value);

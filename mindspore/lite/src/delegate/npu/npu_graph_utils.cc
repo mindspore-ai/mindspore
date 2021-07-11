@@ -16,9 +16,9 @@
 
 #include "src/delegate/npu/npu_graph_utils.h"
 namespace mindspore {
-std::vector<mindspore::tensor::MSTensor *> NPUGraphUtils::GetGraphInTensors(std::vector<NPUOp *> ops) {
-  std::vector<mindspore::tensor::MSTensor *> inputs;
-  auto is_op_output = [&](tensor::MSTensor *tensor) -> bool {
+std::vector<mindspore::MSTensor> NPUGraphUtils::GetGraphInTensors(std::vector<NPUOp *> ops) {
+  std::vector<mindspore::MSTensor> inputs;
+  auto is_op_output = [&](mindspore::MSTensor tensor) -> bool {
     for (auto op : ops) {
       auto out_tensors = op->outputs();
       if (find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end()) {
@@ -30,7 +30,7 @@ std::vector<mindspore::tensor::MSTensor *> NPUGraphUtils::GetGraphInTensors(std:
 
   for (auto op : ops) {
     for (auto in_tensor : op->inputs()) {
-      if (in_tensor->data() == nullptr && !is_op_output(in_tensor)) {
+      if (in_tensor.Data() == nullptr && !is_op_output(in_tensor)) {
         inputs.push_back(in_tensor);
       }
     }
@@ -38,9 +38,9 @@ std::vector<mindspore::tensor::MSTensor *> NPUGraphUtils::GetGraphInTensors(std:
   return inputs;
 }
 
-std::vector<mindspore::tensor::MSTensor *> NPUGraphUtils::GetGraphOutTensors(std::vector<NPUOp *> ops) {
-  std::vector<mindspore::tensor::MSTensor *> outputs;
-  auto is_op_input = [&](const tensor::MSTensor *tensor) -> bool {
+std::vector<mindspore::MSTensor> NPUGraphUtils::GetGraphOutTensors(std::vector<NPUOp *> ops) {
+  std::vector<mindspore::MSTensor> outputs;
+  auto is_op_input = [&](const mindspore::MSTensor tensor) -> bool {
     for (auto op : ops) {
       auto in_tensors = op->inputs();
       if (find(in_tensors.begin(), in_tensors.end(), tensor) != in_tensors.end()) {

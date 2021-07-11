@@ -61,18 +61,18 @@ int BiasAddCPUFp16Kernel::Run() {
   auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  MS_ASSERT(context_->allocator != nullptr);
-  auto tile_in = reinterpret_cast<float16_t *>(context_->allocator->Malloc(data_size * sizeof(float16_t)));
-  auto tile_bias = reinterpret_cast<float16_t *>(context_->allocator->Malloc(data_size * sizeof(float16_t)));
+  MS_ASSERT(ms_context_->allocator != nullptr);
+  auto tile_in = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(data_size * sizeof(float16_t)));
+  auto tile_bias = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(data_size * sizeof(float16_t)));
   if (tile_in == nullptr || tile_bias == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
-    context_->allocator->Free(tile_in);
-    context_->allocator->Free(tile_bias);
+    ms_context_->allocator->Free(tile_in);
+    ms_context_->allocator->Free(tile_bias);
     return RET_NULL_PTR;
   }
   BroadcastAddFp16(in, bias_data_, tile_in, tile_bias, out, data_size, bias_param_);
-  context_->allocator->Free(tile_in);
-  context_->allocator->Free(tile_bias);
+  ms_context_->allocator->Free(tile_in);
+  ms_context_->allocator->Free(tile_bias);
   return RET_OK;
 }
 

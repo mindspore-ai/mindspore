@@ -22,16 +22,16 @@
 namespace mindspore::lite {
 class SoftMaxTensorRT : public TensorRTOp {
  public:
-  SoftMaxTensorRT(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                  const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name)
+  SoftMaxTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                  const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
   ~SoftMaxTensorRT() override = default;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
   bool with_log_ = false;
