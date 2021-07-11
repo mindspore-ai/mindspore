@@ -961,8 +961,10 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
             MS_LOG(INFO) << "Cannot find backend parameter for front parameter:"
                          << AnfAlgo::GetNodeDebugString(parameters[i - kCallInputStartPos])
                          << ", used the default format";
+
             CreateDeviceTensorForFrontParameter(inputs[i], device_contexts[0]);
             front_value_nodes_.push_back({inputs[i], device_contexts[0]});
+            continue;
           }
 
           const auto &backend_node = front_to_backend_parameters_[parameters[i - kCallInputStartPos]].first;
