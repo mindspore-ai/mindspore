@@ -18,7 +18,7 @@
 import os
 import ast
 import argparse
-from pprint import pformat
+from pprint import pprint, pformat
 import yaml
 
 _config_path = "./ssd300_config.yaml"
@@ -83,14 +83,18 @@ def parse_yaml(yaml_path):
             if len(cfgs) == 1:
                 cfg_helper = {}
                 cfg = cfgs[0]
+                cfg_choices = {}
             elif len(cfgs) == 2:
                 cfg, cfg_helper = cfgs
+                cfg_choices = {}
+            elif len(cfgs) == 3:
+                cfg, cfg_helper, cfg_choices = cfgs
             else:
-                raise ValueError("At most 2 docs (config and help description for help) are supported in config yaml")
+                raise ValueError("At most 3 docs (config description for help, choices) are supported in config yaml")
             print(cfg_helper)
         except:
             raise ValueError("Failed to parse yaml")
-    return cfg, cfg_helper
+    return cfg, cfg_helper, cfg_choices
 
 
 def merge(args, cfg):
@@ -116,8 +120,9 @@ def get_config():
     parser.add_argument("--config_path", type=str, default=os.path.join(current_dir, \
         "../../ssd300_config.yaml"), help="Config file path")
     path_args, _ = parser.parse_known_args()
-    default, helper = parse_yaml(path_args.config_path)
-    args = parse_cli_to_yaml(parser, default, helper, path_args.config_path)
+    default, helper, choices = parse_yaml(path_args.config_path)
+    pprint(default)
+    args = parse_cli_to_yaml(parser=parser, cfg=default, helper=helper, choices=choices, cfg_path=path_args.config_path)
     final_config = merge(args, default)
     return Config(final_config)
 
