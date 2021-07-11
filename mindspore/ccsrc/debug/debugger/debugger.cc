@@ -328,7 +328,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
       graph_ptr_ = nullptr;
       CheckGraphPtr(graph_ptr);
     }
-  } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
+  } else if (debugger_enabled_ && graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
     // Multiple graph, and not the initial step,
     // stop only when receive the first sub run graph for each step
     // if we have stopped for the last kernel before, no need to stop again

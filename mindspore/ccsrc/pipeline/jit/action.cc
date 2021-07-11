@@ -55,6 +55,33 @@
 namespace mindspore {
 namespace pipeline {
 namespace {
+// Disable mindRT in the control flow scenario.
+void ResetMindRTEnable(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) == false) {
+    return;
+  }
+
+  auto func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph != nullptr && func_graph->manager() != nullptr) {
+    auto manager = func_graph->manager();
+    size_t graph_nums = manager->func_graphs().size();
+    if (graph_nums == 1) {
+      return;
+    }
+
+    MS_LOG(INFO) << "Disable mindRT in the multi graphs scenario.";
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
+    // Update the backend.
+    auto new_backend = compile::CreateBackend();
+    new_backend->SetDebugger();
+    res->results()[kBackend] = new_backend;
+  }
+}
+
 void TaskEmitActionForMindRT(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   // Get the mindRT backend.
@@ -544,6 +571,8 @@ bool TaskEmitAction(const ResourcePtr &res) {
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "TaskEmit args error";
   }
+  // Disable mindRT in the control flow scenario.
+  ResetMindRTEnable(res);
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
