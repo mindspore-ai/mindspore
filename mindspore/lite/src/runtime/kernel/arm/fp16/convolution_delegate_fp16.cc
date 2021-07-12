@@ -39,10 +39,12 @@ void ConvolutionDelegateFP16CPUKernel::FreeCopiedData() {
   if ((origin_weight_ != nullptr) && (need_free_ & WEIGHT_NEED_FREE)) {
     free(origin_weight_);
     origin_weight_ = nullptr;
+    need_free_ = need_free_ & ~WEIGHT_NEED_FREE;
   }
   if ((origin_bias_ != nullptr) && (need_free_ & BIAS_NEED_FREE)) {
     free(origin_bias_);
     origin_bias_ = nullptr;
+    need_free_ = need_free_ & ~BIAS_NEED_FREE;
   }
 }
 

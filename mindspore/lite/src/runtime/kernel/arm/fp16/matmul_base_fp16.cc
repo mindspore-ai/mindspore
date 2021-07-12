@@ -36,6 +36,10 @@ int MatmulBaseFP16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 MatmulBaseFP16CPUKernel::~MatmulBaseFP16CPUKernel() {
+  if (src_b_ != nullptr) {
+    free(src_b_);
+    src_b_ = nullptr;
+  }
   if (bias_ptr_ != nullptr) {
     free(bias_ptr_);
     bias_ptr_ = nullptr;

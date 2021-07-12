@@ -35,6 +35,7 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
   FreeResizeBufA();
   FreeResizeBufB();
   FreeBiasBuf();
+  FreeBuffSrcB();
 }
 
 void MatmulFp32BaseCPUKernel::InitParameter() {
