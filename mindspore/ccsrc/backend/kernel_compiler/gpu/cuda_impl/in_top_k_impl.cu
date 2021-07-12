@@ -26,7 +26,7 @@ __global__ void InTopK(const T *predictions, const int32_t *targets, bool *outpu
   for (; gt_id < batch_size; gt_id += blockDim.x * gridDim.x) {
     int32_t target_index = targets[gt_id];
     T predicted_value = predictions[gt_id * class_id_count + target_index];
-    T top_k_smallest_value = top_k_output[k - 1];
+    T top_k_smallest_value = top_k_output[gt_id * k + k - 1];
 
     output[gt_id] = predicted_value >= top_k_smallest_value;
   }
