@@ -21,11 +21,31 @@ import os
 import argparse
 import numpy as np
 from mindspore import Tensor
-from src.model_utils.config import bert_net_cfg
 from src.assessment_method import Accuracy, F1, MCC, Spearman_Correlation
-from run_ner import eval_result_print
+
+
+def eval_result_print(assessment_method_="accuracy", callback_=None):
+    """print eval result"""
+    if assessment_method_ == "accuracy":
+        print("acc_num {} , total_num {}, accuracy {:.6f}".format(callback_.acc_num, callback_.total_num,
+                                                                  callback_.acc_num / callback_.total_num))
+    elif assessment_method_ == "bf1":
+        print("Precision {:.6f} ".format(callback_.TP / (callback_.TP + callback_.FP)))
+        print("Recall {:.6f} ".format(callback_.TP / (callback_.TP + callback_.FN)))
+        print("F1 {:.6f} ".format(2 * callback_.TP / (2 * callback_.TP + callback_.FP + callback_.FN)))
+    elif assessment_method_ == "mf1":
+        print("F1 {:.6f} ".format(callback_.eval()[0]))
+    elif assessment_method_ == "mcc":
+        print("MCC {:.6f} ".format(callback_.cal()))
+    elif assessment_method_ == "spearman_correlation":
+        print("Spearman Correlation is {:.6f} ".format(callback_.cal()[0]))
+    else:
+        raise ValueError("Assessment method not supported, support: [accuracy, f1, mcc, spearman_correlation]")
+
 
 parser = argparse.ArgumentParser(description="postprocess")
+parser.add_argument("--seq_length", type=int, default=128, help="seq_length, default is 128. You can get this value "
+                                                                "through the relevant'*.yaml' filer")
 parser.add_argument("--batch_size", type=int, default=1, help="Eval batch size, default is 1")
 parser.add_argument("--label_dir", type=str, default="", help="label data dir")
 parser.add_argument("--assessment_method", type=str, default="BF1", choices=["BF1", "clue_benchmark", "MF1"],
@@ -58,21 +78,21 @@ if __name__ == "__main__":
     for f in file_name:
         if use_crf.lower() == "true":
             logits = ()
-            for j in range(bert_net_cfg.seq_length):
+            for j in range(args.seq_length):
                 f_name = f.split('.')[0] + '_' + str(j) + '.bin'
                 data_tmp = np.fromfile(os.path.join(args.result_dir, f_name), np.int32)
                 data_tmp = data_tmp.reshape(args.batch_size, num_class + 2)
                 logits += ((Tensor(data_tmp),),)
-            f_name = f.split('.')[0] + '_' + str(bert_net_cfg.seq_length) + '.bin'
+            f_name = f.split('.')[0] + '_' + str(args.seq_length) + '.bin'
             data_tmp = np.fromfile(os.path.join(args.result_dir, f_name), np.int32).tolist()
             data_tmp = Tensor(data_tmp)
             logits = (logits, data_tmp)
         else:
             f_name = os.path.join(args.result_dir, f.split('.')[0] + '_0.bin')
-            logits = np.fromfile(f_name, np.float32).reshape(bert_net_cfg.seq_length * args.batch_size, num_class)
+            logits = np.fromfile(f_name, np.float32).reshape(args.seq_length * args.batch_size, num_class)
             logits = Tensor(logits)
         label_ids = np.fromfile(os.path.join(args.label_dir, f), np.int32)
-        label_ids = Tensor(label_ids.reshape(args.batch_size, bert_net_cfg.seq_length))
+        label_ids = Tensor(label_ids.reshape(args.batch_size, args.seq_length))
         callback.update(logits, label_ids)
 
     print("==============================================================")
