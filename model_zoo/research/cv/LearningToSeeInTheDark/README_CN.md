@@ -199,7 +199,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ```shell
 # Ascend310 inference
-bash export_MINDIR.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
 ```
 
 - `MINDIR_PATH` mindir文件路径
