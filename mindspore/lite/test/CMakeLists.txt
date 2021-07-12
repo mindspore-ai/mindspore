@@ -331,6 +331,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_SRC}
             ${TEST_DIR}/st/converter_test.cc
             ${TEST_DIR}/st/mindrt_parallel_test.cc
+            ${TEST_DIR}/st/graph_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/common/import_from_meta_graphT.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
@@ -384,6 +385,8 @@ if(ENABLE_FP16 AND SUPPORT_TRAIN)
     list(APPEND TEST_SRC ${TEST_CASE_KERNEL_FP16_SRC_GRAD})
 endif()
 
+file(GLOB_RECURSE API_SRC ${LITE_DI}/src/cxx_api/*.cc)
+set(TEST_SRC ${TEST_SRC} ${API_SRC})
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
 
