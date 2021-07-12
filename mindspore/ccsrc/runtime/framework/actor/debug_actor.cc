@@ -27,6 +27,7 @@
 #include "debug/debugger/debugger_utils.h"
 #endif
 
+using KernelGraph = mindspore::session::KernelGraph;
 namespace mindspore {
 namespace runtime {
 
@@ -52,6 +53,14 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
     }
   } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kGPU) {
 #ifdef ENABLE_DEBUGGER
+    auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(cnode->func_graph());
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    // debugger is not enabled for dataset graphs
+    if (Debugger::GetInstance()->CheckDatasetGraph(kernel_graph)) {
+      // Call back to the from actor to process after debug finished.
+      Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
+      return;
+    }
     auto debugger = Debugger::GetInstance();
     if (debugger) {
       std::string kernel_name = cnode->fullname_with_scope();
