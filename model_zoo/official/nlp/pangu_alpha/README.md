@@ -120,7 +120,7 @@ The vocab size of `vocab.vocab` is 40000, and the `eod id` is 6.
 
 ### Training On Ascend
 
-Currently the scripts provide three default configures : `2.6B` `13B` and `200B`. The following command will start training `2.6B` model on 8 **Ascend cards**.
+Currently the scripts provide three default configures : `2.6B` `13B` and `200B`.
 
 ```bash
 
@@ -465,7 +465,7 @@ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/
 
 # [Requirements](#contents)
 
-- mindspore 1.2.1 or higher version
+- mindspore 1.3.0
 - jieba 0.42.1
 - sentencepiece 0.1.94
 - transformers >= 4.7.0
