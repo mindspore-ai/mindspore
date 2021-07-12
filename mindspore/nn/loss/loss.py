@@ -1069,7 +1069,7 @@ class CosineEmbeddingLoss(LossBase):
 class BCEWithLogitsLoss(LossBase):
     r"""
     Adds sigmoid activation function to input logits, and uses the given logits to compute binary cross entropy
-    between the labels and the output.
+    between the logits and the labels.
 
     Sets input `logits` as :math:`X`, input `labels` as :math:`Y`, output as :math:`L`. Then,
 
