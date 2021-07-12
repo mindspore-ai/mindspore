@@ -48,7 +48,7 @@ parser.add_argument("--sts_properties_path", type=str, default="")
 parser.add_argument("--dp_eps", type=float, default=50.0)
 parser.add_argument("--dp_delta", type=float, default=0.01)  # usually equals 1/start_fl_job_threshold
 parser.add_argument("--dp_norm_clip", type=float, default=1.0)
-parser.add_argument("--encrypt_type", type=str, default="NotEncrypt")
+parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 
 
 args, _ = parser.parse_known_args()

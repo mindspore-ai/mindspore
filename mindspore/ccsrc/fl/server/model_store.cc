@@ -36,6 +36,7 @@ void ModelStore::Initialize(uint32_t max_count) {
 }
 
 bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &new_model) {
+  std::unique_lock<std::mutex> lock(model_mtx_);
   if (iteration_to_model_.count(iteration) != 0) {
     MS_LOG(WARNING) << "Model for iteration " << iteration << " is already stored";
     return false;
@@ -88,6 +89,7 @@ bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
 }
 
 std::map<std::string, AddressPtr> ModelStore::GetModelByIterNum(size_t iteration) {
+  std::unique_lock<std::mutex> lock(model_mtx_);
   std::map<std::string, AddressPtr> model = {};
   if (iteration_to_model_.count(iteration) == 0) {
     MS_LOG(ERROR) << "Model for iteration " << iteration << " is not stored.";
@@ -98,13 +100,15 @@ std::map<std::string, AddressPtr> ModelStore::GetModelByIterNum(size_t iteration
 }
 
 void ModelStore::Reset() {
+  std::unique_lock<std::mutex> lock(model_mtx_);
   initial_model_ = iteration_to_model_.rbegin()->second;
   iteration_to_model_.clear();
   iteration_to_model_[kInitIterationNum] = initial_model_;
   iteration_to_model_[kResetInitIterNum] = initial_model_;
 }
 
-const std::map<size_t, std::shared_ptr<MemoryRegister>> &ModelStore::iteration_to_model() const {
+const std::map<size_t, std::shared_ptr<MemoryRegister>> &ModelStore::iteration_to_model() {
+  std::unique_lock<std::mutex> lock(model_mtx_);
   return iteration_to_model_;
 }
 
@@ -142,6 +146,7 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
 }
 
 size_t ModelStore::ComputeModelSize() {
+  std::unique_lock<std::mutex> lock(model_mtx_);
   if (iteration_to_model_.empty()) {
     MS_LOG(EXCEPTION) << "Calculating model size failed: model for iteration 0 is not stored yet. ";
     return 0;

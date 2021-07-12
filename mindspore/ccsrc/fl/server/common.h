@@ -234,6 +234,32 @@ inline AddressPtr GenerateParameterNodeAddrPtr(const CNodePtr &kernel_node, size
 
 // Definitions for Federated Learning.
 
+constexpr auto kNetworkError = "Cluster networking failed.";
+
+// The result code used for round kernels.
+enum class ResultCode {
+  // If the method is successfully called and round kernel's residual methods should be called, return kSuccess.
+  kSuccess = 0,
+  // If there's error happened in the method and residual methods should not be called but this iteration continues,
+  // return kSuccessAndReturn so that framework won't drop this iteration.
+  kSuccessAndReturn,
+  // If there's error happened and this iteration should be dropped, return kFail.
+  kFail
+};
+
+bool inline ConvertResultCode(ResultCode result_code) {
+  switch (result_code) {
+    case ResultCode::kSuccess:
+      return true;
+    case ResultCode::kSuccessAndReturn:
+      return true;
+    case ResultCode::kFail:
+      return false;
+    default:
+      return true;
+  }
+}
+
 // Definitions for Parameter Server.
 
 }  // namespace server

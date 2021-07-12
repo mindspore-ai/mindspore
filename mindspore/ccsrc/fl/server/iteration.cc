@@ -390,7 +390,7 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
   end_last_iter_req.set_last_iter_num(last_iter_num);
   for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
     if (!communicator_->SendPbRequest(end_last_iter_req, i, ps::core::TcpUserCommand::kEndLastIter)) {
-      MS_LOG(WARNING) << "Sending proceed to next iteration request to server " << i << " failed.";
+      MS_LOG(WARNING) << "Sending ending last iteration request to server " << i << " failed.";
       continue;
     }
   }
@@ -438,10 +438,10 @@ void Iteration::EndLastIter() {
     ModelStore::GetInstance().Reset();
   }
 
-  Server::GetInstance().CancelSafeMode();
-  SetIterationCompleted();
   pinned_iter_num_ = 0;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
+  Server::GetInstance().CancelSafeMode();
+  SetIterationCompleted();
   MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
 }
 }  // namespace server
