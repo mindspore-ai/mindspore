@@ -43,7 +43,7 @@ static std::unordered_map<AnfNodePtr, std::set<int64_t>> parameter_color_map;
 // map<rank, tag>
 static std::unordered_map<int64_t, int64_t> send_tag_map;
 static std::unordered_map<int64_t, int64_t> recv_tag_map;
-const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimCast, prim::kPrimTupleGetItem};
+const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimCast, prim::kPrimTupleGetItem, prim::kPrimMakeTuple};
 
 static bool IsInWhiteList(const CNodePtr &cnode) {
   for (auto &prim : WHITE_LIST) {
@@ -96,6 +96,9 @@ bool PipelineTransformer::NeedGrad(const CNodePtr &cnode) {
       auto load = input->cast<CNodePtr>();
       if (load->input(1)->isa<Parameter>() && ParameterRequireGrad(load->input(1))) {
         return true;
+      }
+      if (IsPrimitiveCNode(input, prim::kPrimCast)) {
+        return NeedGrad(input->cast<CNodePtr>());
       }
     }
   }

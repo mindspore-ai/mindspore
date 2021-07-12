@@ -20,6 +20,7 @@ import os
 import time
 import numpy as np
 import mindspore.nn as nn
+from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -137,8 +138,11 @@ class GlobalNorm(nn.Cell):
         self.hyper_map = C.HyperMap()
         self.is_pipeline = (config.stage_num > 1)
         if self.is_pipeline:
-            group_size = config.mp
-            group_list, group_name = _get_model_parallel_group(config.mp)
+            if context.get_auto_parallel_context("enable_parallel_optimizer"):
+                group_size = get_group_size() // config.stage_num
+            else:
+                group_size = config.mp
+            group_list, group_name = _get_model_parallel_group(group_size)
             create_group(group_name, group_list)
             self.allreduce = P.AllReduce(group=group_name)
             pipeline_group_list, pipeline_group_name = _get_pipeline_group()
@@ -146,18 +150,18 @@ class GlobalNorm(nn.Cell):
             self.allreduce2 = P.AllReduce(group=pipeline_group_name)
         else:
             group_size = get_group_size()
-        if config.word_emb_dp:
-            self.allreduce_filter = tuple("projection.bias" not in x.name and "layernorm" not in x.name
-                                          and "embedding_table" not in x.name for x in params)
-        else:
-            self.allreduce_filter = tuple("projection.bias" not in x.name and "layernorm" not in x.name
-                                          and "position_embedding.embedding_table" not in x.name for x in params)
         self.allreduce_group_size = ()
-        for item in self.allreduce_filter:
-            if item:
+        for x in params:
+            if "projection.bias" not in x.name and "layernorm" not in x.name and "embedding_table" not in x.name:
                 self.allreduce_group_size = self.allreduce_group_size + (1.0,)
-            else:
+            elif "embedding_table" not in x.name:
                 self.allreduce_group_size = self.allreduce_group_size + (group_size * 1.0,)
+            else:
+                if not config.word_emb_dp and "position_embedding.embedding_table" not in x.name \
+                        and "top_query_embedding_table" not in x.name:
+                    self.allreduce_group_size = self.allreduce_group_size + (config.dp * 1.0,)
+                else:
+                    self.allreduce_group_size = self.allreduce_group_size + (group_size * 1.0,)
 
     def construct(self, grads):
         """Calculate global norm construct"""
