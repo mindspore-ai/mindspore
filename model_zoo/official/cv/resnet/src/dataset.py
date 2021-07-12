@@ -355,6 +355,7 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
             device_num = get_group_size()
         else:
             device_num = 1
+    ds.config.set_prefetch_size(64)
     if device_num == 1:
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True)
     else:
