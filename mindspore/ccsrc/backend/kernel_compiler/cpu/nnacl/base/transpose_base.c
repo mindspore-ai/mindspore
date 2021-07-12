@@ -174,115 +174,125 @@
     }                                                                                                         \
   }
 
-#define TRANSPOSE_MULTI_DIMS(TYPE, NAME)                                                                \
-  void Transpose##NAME(const TYPE *in_data, TYPE *out_data, const int *strides, const int *out_strides, \
-                       const int *perm, const int *output_shape, int dims, int *size, int *position) {  \
-    *(size + dims - 1) = 1;                                                                             \
-    for (int i = dims - 1; i > 0; --i) {                                                                \
-      *(size + i - 1) = *(size + i) * output_shape[i];                                                  \
-    }                                                                                                   \
-    for (size_t idx = 0; idx < (*size) * output_shape[0]; ++idx) {                                      \
-      int pos = idx;                                                                                    \
-      int output_idx = 0;                                                                               \
-      int input_idx = 0;                                                                                \
-      for (int i = 0; i < dims; ++i) {                                                                  \
-        *(position + i) = pos / *(size + i);                                                            \
-        int out_stride = i < dims - 1 ? out_strides[i] : 1;                                             \
-        output_idx += (*(position + i) * out_stride);                                                   \
-        input_idx += (*(position + i) * strides[perm[i]]);                                              \
-        pos -= *(position + i) * (*(size + i));                                                         \
-      }                                                                                                 \
-      out_data[output_idx] = in_data[input_idx];                                                        \
-    }                                                                                                   \
+#define TRANSPOSE_MULTI_DIMS(TYPE, NAME)                                                               \
+  int Transpose##NAME(const TYPE *in_data, TYPE *out_data, const int *strides, const int *out_strides, \
+                      const int *perm, const int *output_shape, int dims, int *size, int *position) {  \
+    if (size == NULL || position == NULL) {                                                            \
+      return NNACL_ERR;                                                                                \
+    }                                                                                                  \
+    *(size + dims - 1) = 1;                                                                            \
+    for (int i = dims - 1; i > 0; --i) {                                                               \
+      *(size + i - 1) = *(size + i) * output_shape[i];                                                 \
+    }                                                                                                  \
+    for (size_t idx = 0; idx < (*size) * output_shape[0]; ++idx) {                                     \
+      int pos = idx;                                                                                   \
+      int output_idx = 0;                                                                              \
+      int input_idx = 0;                                                                               \
+      for (int i = 0; i < dims; ++i) {                                                                 \
+        *(position + i) = pos / *(size + i);                                                           \
+        int out_stride = i < dims - 1 ? out_strides[i] : 1;                                            \
+        output_idx += (*(position + i) * out_stride);                                                  \
+        input_idx += (*(position + i) * strides[perm[i]]);                                             \
+        pos -= *(position + i) * (*(size + i));                                                        \
+      }                                                                                                \
+      out_data[output_idx] = in_data[input_idx];                                                       \
+    }                                                                                                  \
+    return NNACL_OK;                                                                                   \
   }
 
-#define TRANSPOSE_DIMS(TYPE, NAME)                                                             \
-  void TransposeDims##NAME(const TYPE *in_data, TYPE *out_data, const int *output_shape,       \
-                           TransposeParameter *transpose_param, int task_id, int thread_num) { \
-    int *perm = transpose_param->perm_;                                                        \
-    int *strides = transpose_param->strides_;                                                  \
-    int *out_strides = transpose_param->out_strides_;                                          \
-    int num_axes = transpose_param->num_axes_;                                                 \
-    size_t data_size = (*out_strides) * output_shape[0];                                       \
-    size_t offset_size = UP_DIV(data_size, thread_num);                                        \
-    size_t task_offset = offset_size * task_id;                                                \
-    int count = data_size - task_offset;                                                       \
-    if (count <= 0) {                                                                          \
-      return;                                                                                  \
-    }                                                                                          \
-    count = MSMIN(offset_size, count);                                                         \
-    for (size_t idx = task_offset; idx < task_offset + count; ++idx) {                         \
-      int pos = idx;                                                                           \
-      int output_idx = 0;                                                                      \
-      int input_idx = 0;                                                                       \
-      for (int i = 0; i < num_axes; ++i) {                                                     \
-        int position = pos / *(out_strides + i);                                               \
-        int out_stride = i < num_axes - 1 ? out_strides[i] : 1;                                \
-        output_idx += (position * out_stride);                                                 \
-        input_idx += (position * strides[perm[i]]);                                            \
-        pos -= position * (*(out_strides + i));                                                \
-      }                                                                                        \
-      out_data[output_idx] = in_data[input_idx];                                               \
-    }                                                                                          \
+#define TRANSPOSE_DIMS(TYPE, NAME)                                                                   \
+  void TransposeDims##NAME(const TYPE *in_data, TYPE *out_data, const int *output_shape,             \
+                           const TransposeParameter *transpose_param, int task_id, int thread_num) { \
+    const int *perm = transpose_param->perm_;                                                        \
+    const int *strides = transpose_param->strides_;                                                  \
+    const int *out_strides = transpose_param->out_strides_;                                          \
+    int num_axes = transpose_param->num_axes_;                                                       \
+    size_t data_size = (*out_strides) * output_shape[0];                                             \
+    size_t offset_size = UP_DIV(data_size, thread_num);                                              \
+    size_t task_offset = offset_size * task_id;                                                      \
+    int count = data_size - task_offset;                                                             \
+    if (count <= 0) {                                                                                \
+      return;                                                                                        \
+    }                                                                                                \
+    count = MSMIN(offset_size, count);                                                               \
+    for (size_t idx = task_offset; idx < task_offset + count; ++idx) {                               \
+      int pos = idx;                                                                                 \
+      int output_idx = 0;                                                                            \
+      int input_idx = 0;                                                                             \
+      for (int i = 0; i < num_axes; ++i) {                                                           \
+        int position = pos / *(out_strides + i);                                                     \
+        int out_stride = i < num_axes - 1 ? out_strides[i] : 1;                                      \
+        output_idx += (position * out_stride);                                                       \
+        input_idx += (position * strides[perm[i]]);                                                  \
+        pos -= position * (*(out_strides + i));                                                      \
+      }                                                                                              \
+      out_data[output_idx] = in_data[input_idx];                                                     \
+    }                                                                                                \
   }
 
-#define DOTRANSPOSE(TYPE, NAME)                                                                               \
-  int DoTranspose##NAME(const TYPE *in_data, TYPE *out_data, const int *output_shape,                         \
-                        TransposeParameter *transpose_param) {                                                \
-    if (in_data == NULL || out_data == NULL) {                                                                \
-      return NNACL_ERR;                                                                                       \
-    }                                                                                                         \
-    const int *perm = transpose_param->perm_;                                                                 \
-    const int *strides = transpose_param->strides_;                                                           \
-    const int *out_strides = transpose_param->out_strides_;                                                   \
-    int data_size = transpose_param->data_num_ * sizeof(TYPE);                                                \
-    int num_axes = transpose_param->num_axes_;                                                                \
-    bool needTranspose = false;                                                                               \
-    for (int i = 1; i < num_axes; ++i) {                                                                      \
-      if (perm[i] - perm[i - 1] != 1) {                                                                       \
-        needTranspose = true;                                                                                 \
-        break;                                                                                                \
-      }                                                                                                       \
-    }                                                                                                         \
-    if (!needTranspose) {                                                                                     \
-      (void)memcpy(out_data, in_data, data_size);                                                             \
-      return NNACL_OK;                                                                                        \
-    }                                                                                                         \
-    for (int i = 0; i < num_axes; ++i) {                                                                      \
-      if (perm[i] < 0) {                                                                                      \
-        return NNACL_PARAM_INVALID;                                                                           \
-      }                                                                                                       \
-    }                                                                                                         \
-    if (num_axes == 2) {                                                                                      \
-      TransposeDim2##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                       \
-    } else if (num_axes == 3) {                                                                               \
-      TransposeDim3##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                       \
-    } else if (num_axes == 4) {                                                                               \
-      TransposeDim4##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                       \
-    } else if (num_axes == 5) {                                                                               \
-      TransposeDim5##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                       \
-    } else if (num_axes == 6) {                                                                               \
-      TransposeDim6##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                       \
-    } else {                                                                                                  \
-      int *size = (int *)(malloc(num_axes * sizeof(int)));                                                    \
-      if (size == NULL) {                                                                                     \
-        return NNACL_ERR;                                                                                     \
-      }                                                                                                       \
-      int *position = (int *)(malloc(num_axes * sizeof(int)));                                                \
-      if (position == NULL) {                                                                                 \
-        return NNACL_ERR;                                                                                     \
-      }                                                                                                       \
-      Transpose##NAME(in_data, out_data, strides, out_strides, perm, output_shape, num_axes, size, position); \
-      if (size != NULL) {                                                                                     \
-        free(size);                                                                                           \
-        size = NULL;                                                                                          \
-      }                                                                                                       \
-      if (position != NULL) {                                                                                 \
-        free(position);                                                                                       \
-        position = NULL;                                                                                      \
-      }                                                                                                       \
-    }                                                                                                         \
-    return NNACL_OK;                                                                                          \
+#define DOTRANSPOSE(TYPE, NAME)                                                                                 \
+  int DoTranspose##NAME(const TYPE *in_data, TYPE *out_data, const int *output_shape,                           \
+                        const TransposeParameter *transpose_param) {                                            \
+    if (in_data == NULL || out_data == NULL) {                                                                  \
+      return NNACL_ERR;                                                                                         \
+    }                                                                                                           \
+    const int *perm = transpose_param->perm_;                                                                   \
+    const int *strides = transpose_param->strides_;                                                             \
+    const int *out_strides = transpose_param->out_strides_;                                                     \
+    int data_size = transpose_param->data_num_ * sizeof(TYPE);                                                  \
+    int num_axes = transpose_param->num_axes_;                                                                  \
+    bool needTranspose = false;                                                                                 \
+    for (int i = 1; i < num_axes; ++i) {                                                                        \
+      if (perm[i] - perm[i - 1] != 1) {                                                                         \
+        needTranspose = true;                                                                                   \
+        break;                                                                                                  \
+      }                                                                                                         \
+    }                                                                                                           \
+    if (!needTranspose) {                                                                                       \
+      (void)memcpy(out_data, in_data, data_size);                                                               \
+      return NNACL_OK;                                                                                          \
+    }                                                                                                           \
+    for (int i = 0; i < num_axes; ++i) {                                                                        \
+      if (perm[i] < 0) {                                                                                        \
+        return NNACL_PARAM_INVALID;                                                                             \
+      }                                                                                                         \
+    }                                                                                                           \
+    if (num_axes == 2) {                                                                                        \
+      TransposeDim2##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                         \
+    } else if (num_axes == 3) {                                                                                 \
+      TransposeDim3##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                         \
+    } else if (num_axes == 4) {                                                                                 \
+      TransposeDim4##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                         \
+    } else if (num_axes == 5) {                                                                                 \
+      TransposeDim5##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                         \
+    } else if (num_axes == 6) {                                                                                 \
+      TransposeDim6##NAME(in_data, out_data, strides, out_strides, perm, output_shape);                         \
+    } else {                                                                                                    \
+      int *size = (int *)(malloc(num_axes * sizeof(int)));                                                      \
+      if (size == NULL) {                                                                                       \
+        return NNACL_ERR;                                                                                       \
+      }                                                                                                         \
+      int *position = (int *)(malloc(num_axes * sizeof(int)));                                                  \
+      if (position == NULL) {                                                                                   \
+        free(size);                                                                                             \
+        size = NULL;                                                                                            \
+        return NNACL_ERR;                                                                                       \
+      }                                                                                                         \
+      int ret =                                                                                                 \
+        Transpose##NAME(in_data, out_data, strides, out_strides, perm, output_shape, num_axes, size, position); \
+      if (size != NULL) {                                                                                       \
+        free(size);                                                                                             \
+        size = NULL;                                                                                            \
+      }                                                                                                         \
+      if (position != NULL) {                                                                                   \
+        free(position);                                                                                         \
+        position = NULL;                                                                                        \
+      }                                                                                                         \
+      if (ret != NNACL_OK) {                                                                                    \
+        return NNACL_ERR;                                                                                       \
+      }                                                                                                         \
+    }                                                                                                           \
+    return NNACL_OK;                                                                                            \
   }
 
 #define TRANSPOSE_TEMPLATE(TYPE, NAME) \
