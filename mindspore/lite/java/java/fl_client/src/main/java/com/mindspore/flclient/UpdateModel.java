@@ -82,20 +82,30 @@ public class UpdateModel {
                 case PW_ENCRYPT:
                     try {
                         int[] fmOffsetsPW = secureProtocol.pwMaskModel(builder, trainDataSize);
+                        if (fmOffsetsPW == null || fmOffsetsPW.length == 0) {
+                            LOGGER.severe("[Encrypt] the return fmOffsetsPW from <secureProtocol.pwMaskModel> is null, please check");
+                            throw new RuntimeException();
+                        }
                         this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsPW);
                         LOGGER.info(Common.addTag("[Encrypt] pairwise mask model ok!"));
                         return this;
                     } catch (Exception e) {
-                        LOGGER.severe("[Encrypt] catch error in maskModel: catch Exception");
+                        LOGGER.severe("[Encrypt] catch error in maskModel: " + e.getMessage());
+                        throw new RuntimeException();
                     }
                 case DP_ENCRYPT:
                     try {
-                        int[] fmOffsetsPW = secureProtocol.dpMaskModel(builder, trainDataSize);
-                        this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsPW);
+                        int[] fmOffsetsDP = secureProtocol.dpMaskModel(builder, trainDataSize);
+                        if (fmOffsetsDP == null || fmOffsetsDP.length == 0) {
+                            LOGGER.severe("[Encrypt] the return fmOffsetsDP from <secureProtocol.dpMaskModel> is null, please check");
+                            throw new RuntimeException();
+                        }
+                        this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsDP);
                         LOGGER.info(Common.addTag("[Encrypt] DP mask model ok!"));
                         return this;
                     } catch (Exception e) {
                         LOGGER.severe(Common.addTag("[Encrypt] catch error in maskModel: " + e.getMessage()));
+                        throw new RuntimeException();
                     }
                 case NOT_ENCRYPT:
                 default:

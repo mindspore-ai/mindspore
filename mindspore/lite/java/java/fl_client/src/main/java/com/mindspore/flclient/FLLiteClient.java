@@ -112,7 +112,12 @@ public class FLLiteClient {
                     prime[i] = (byte) cipherPublicParams.prime(i);
                 }
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <minSecretNum> from server: " + minSecretNum));
+                if (minSecretNum <= 0) {
+                    LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <minSecretNum> from server is not valid:  <=0"));
+                    return -1;
+                }
                 LOGGER.info(Common.addTag("[Encrypt] the prime from server: " + BaseUtil.byte2HexString(prime)));
+                break;
             case DP_ENCRYPT:
                 dpEps = cipherPublicParams.dpEps();
                 dpDelta = cipherPublicParams.dpDelta();
@@ -233,7 +238,7 @@ public class FLLiteClient {
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
         if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info(Common.addTag("[train] train in adbert"));
+            LOGGER.info(Common.addTag("[train] train in albert"));
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             int tag = alTrainBert.trainModel(flParameter.getTrainModelPath(), epochs);
             if (tag == -1) {
