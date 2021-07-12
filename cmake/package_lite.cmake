@@ -310,6 +310,8 @@ elseif(WIN32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${TOP_DIR}/mindspore/core/utils/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${CONVERTER_ROOT_DIR}/include/api
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
         install(FILES ${TOP_DIR}/mindspore/ccsrc/backend/optimizer/common/pass.h
                 DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/model_parser.h
@@ -427,6 +429,8 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${TOP_DIR}/mindspore/core/utils/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${CONVERTER_ROOT_DIR}/include/api
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
         install(FILES ${TOP_DIR}/mindspore/ccsrc/backend/optimizer/common/pass.h
                 DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/model_parser.h
