@@ -25,7 +25,7 @@
 #include <functional>
 #include <atomic>
 #include "include/ms_tensor.h"
-#include "ir/format.h"
+#include "include/api/format.h"
 #include "src/runtime/inner_allocator.h"
 
 #include "src/common/log_adapter.h"

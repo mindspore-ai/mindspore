@@ -23,7 +23,7 @@
 #include <functional>
 #include "include/api/data_type.h"
 #include "include/api/dual_abi_helper.h"
-#include "ir/format.h"
+#include "include/api/format.h"
 
 #ifdef _WIN32
 #define MS_API __declspec(dllexport)

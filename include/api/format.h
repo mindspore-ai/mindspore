@@ -15,9 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_IR_FORMAT_H_
-#define MINDSPORE_CORE_IR_FORMAT_H_
+#ifndef MINDSPORE_INCLUDE_API_FORMAT_H_
+#define MINDSPORE_INCLUDE_API_FORMAT_H_
 
 #include <cstdint>
 
@@ -43,4 +42,4 @@ enum Format : int64_t {
   NCW = 17
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_IR_FORMAT_H_
+#endif  // MINDSPORE_INCLUDE_API_FORMAT_H_
