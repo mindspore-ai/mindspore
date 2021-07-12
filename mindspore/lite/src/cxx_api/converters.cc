@@ -68,8 +68,8 @@ Status A2L_ConvertContext(Context *a_context, lite::Context *l_context) {
                                      cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
   if (device_list.size() == 2) {
     lite::DeviceInfo device_info = {0};
-    if (device_list[1]->GetDeviceType() == kMaliGPU) {
-      auto gpu_context = device_list[1]->Cast<MaliGPUDeviceInfo>();
+    if (device_list[1]->GetDeviceType() == kGPU) {
+      auto gpu_context = device_list[1]->Cast<GPUDeviceInfo>();
       device_info.gpu_device_info_ = {gpu_context->GetEnableFP16()};
       l_context->device_list_.push_back({lite::DT_GPU, device_info, gpu_context->GetProvider(),
                                          gpu_context->GetProviderDevice(), gpu_context->GetAllocator()});

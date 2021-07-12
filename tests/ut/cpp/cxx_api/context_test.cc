@@ -25,37 +25,32 @@ class TestCxxApiContext : public UT::Common {
 
 TEST_F(TestCxxApiContext, test_context_device_info_cast_SUCCESS) {
   std::shared_ptr<DeviceInfoContext> cpu = std::make_shared<CPUDeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> mali_gpu = std::make_shared<MaliGPUDeviceInfo>();
+  std::shared_ptr<DeviceInfoContext> gpu = std::make_shared<GPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> kirin_npu = std::make_shared<KirinNPUDeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> nvidia_gpu = std::make_shared<NvidiaGPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> ascend310 = std::make_shared<Ascend310DeviceInfo>();
   std::shared_ptr<DeviceInfoContext> ascend910 = std::make_shared<Ascend910DeviceInfo>();
 
   ASSERT_TRUE(cpu->Cast<CPUDeviceInfo>() != nullptr);
-  ASSERT_TRUE(mali_gpu->Cast<MaliGPUDeviceInfo>() != nullptr);
+  ASSERT_TRUE(gpu->Cast<GPUDeviceInfo>() != nullptr);
   ASSERT_TRUE(kirin_npu->Cast<KirinNPUDeviceInfo>() != nullptr);
-  ASSERT_TRUE(nvidia_gpu->Cast<NvidiaGPUDeviceInfo>() != nullptr);
   ASSERT_TRUE(ascend310->Cast<Ascend310DeviceInfo>() != nullptr);
   ASSERT_TRUE(ascend910->Cast<Ascend910DeviceInfo>() != nullptr);
 }
 
 TEST_F(TestCxxApiContext, test_context_device_info_cast_FAILED) {
   std::shared_ptr<DeviceInfoContext> cpu = std::make_shared<CPUDeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> mali_gpu = std::make_shared<MaliGPUDeviceInfo>();
+  std::shared_ptr<DeviceInfoContext> gpu = std::make_shared<GPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> kirin_npu = std::make_shared<KirinNPUDeviceInfo>();
-  std::shared_ptr<DeviceInfoContext> nvidia_gpu = std::make_shared<NvidiaGPUDeviceInfo>();
   std::shared_ptr<DeviceInfoContext> ascend310 = std::make_shared<Ascend310DeviceInfo>();
   std::shared_ptr<DeviceInfoContext> ascend910 = std::make_shared<Ascend910DeviceInfo>();
 
-  ASSERT_TRUE(cpu->Cast<MaliGPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(kirin_npu->Cast<MaliGPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(nvidia_gpu->Cast<MaliGPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(ascend310->Cast<MaliGPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(ascend910->Cast<MaliGPUDeviceInfo>() == nullptr);
+  ASSERT_TRUE(cpu->Cast<GPUDeviceInfo>() == nullptr);
+  ASSERT_TRUE(kirin_npu->Cast<GPUDeviceInfo>() == nullptr);
+  ASSERT_TRUE(ascend310->Cast<GPUDeviceInfo>() == nullptr);
+  ASSERT_TRUE(ascend910->Cast<GPUDeviceInfo>() == nullptr);
 
-  ASSERT_TRUE(mali_gpu->Cast<CPUDeviceInfo>() == nullptr);
+  ASSERT_TRUE(gpu->Cast<CPUDeviceInfo>() == nullptr);
   ASSERT_TRUE(kirin_npu->Cast<CPUDeviceInfo>() == nullptr);
-  ASSERT_TRUE(nvidia_gpu->Cast<CPUDeviceInfo>() == nullptr);
   ASSERT_TRUE(ascend310->Cast<CPUDeviceInfo>() == nullptr);
   ASSERT_TRUE(ascend910->Cast<CPUDeviceInfo>() == nullptr);
 }

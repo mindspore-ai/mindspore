@@ -29,7 +29,7 @@
 
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
-constexpr auto kModelOptionMaliGpuEnableFP16 = "mindspore.option.mali_gpu.enable_fp16";
+constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
 constexpr auto kModelOptionKirinNpuFrequency = "mindspore.option.kirin_npu.frequency";
 constexpr auto kModelOptionProvider = "mindspore.option.provider";
 constexpr auto kModelOptionProviderDevice = "mindspore.option.provider.device";
@@ -211,19 +211,19 @@ bool CPUDeviceInfo::GetEnableFP16() const {
   return GetValue<bool>(data_, kModelOptionCpuEnableFP16);
 }
 
-void MaliGPUDeviceInfo::SetEnableFP16(bool is_fp16) {
+void GPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
-  data_->params[kModelOptionMaliGpuEnableFP16] = is_fp16;
+  data_->params[kModelOptionGPUEnableFP16] = is_fp16;
 }
-bool MaliGPUDeviceInfo::GetEnableFP16() const {
+bool GPUDeviceInfo::GetEnableFP16() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return false;
   }
-  return GetValue<bool>(data_, kModelOptionMaliGpuEnableFP16);
+  return GetValue<bool>(data_, kModelOptionGPUEnableFP16);
 }
 
 void KirinNPUDeviceInfo::SetFrequency(int frequency) {
@@ -241,14 +241,14 @@ int KirinNPUDeviceInfo::GetFrequency() const {
   return GetValue<int>(data_, kModelOptionKirinNpuFrequency);
 }
 
-void NvidiaGPUDeviceInfo::SetDeviceID(uint32_t device_id) { MS_LOG(ERROR) << "Unsupported Feature."; }
-uint32_t NvidiaGPUDeviceInfo::GetDeviceID() const {
+void GPUDeviceInfo::SetDeviceID(uint32_t device_id) { MS_LOG(ERROR) << "Unsupported Feature."; }
+uint32_t GPUDeviceInfo::GetDeviceID() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return 0;
 }
 
-void NvidiaGPUDeviceInfo::SetGpuTrtInferMode(bool gpu_trt_infer_mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
-bool NvidiaGPUDeviceInfo::GetGpuTrtInferMode() const {
+void GPUDeviceInfo::SetGpuTrtInferMode(bool gpu_trt_infer_mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
+bool GPUDeviceInfo::GetGpuTrtInferMode() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return false;
 }
