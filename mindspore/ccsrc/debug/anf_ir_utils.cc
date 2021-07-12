@@ -97,7 +97,7 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr 
   return -1;
 }
 
-// try to find index of parameter for SymbolicKeyInstance from all exported graphs
+// Try to find index of parameter for SymbolicKeyInstance from all exported graphs
 // NOTICE: Suppose name of all parameters in SymbolicKeyInstance are different
 int AnfExporter::GetParamIndexFromExported(const AnfNodePtr &param) {
   if (param == nullptr) {
@@ -183,7 +183,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
     prim::MultitypeFuncGraphPtr mt_func_graph = meta_func_graph->cast<prim::MultitypeFuncGraphPtr>();
     oss << GetMultitypeFuncGraphText(mt_func_graph);
   } else if (meta_func_graph
-               ->isa<prim::HyperMapPy>()) {  // this statement must before 'meta_graph->isa<prim::HyperMap>()'
+               ->isa<prim::HyperMapPy>()) {  // This statement must before 'meta_graph->isa<prim::HyperMap>()'
     auto hyper_map = meta_func_graph->cast<prim::HyperMapPyPtr>();
     if (hyper_map->GetFnLeaf() != nullptr) {
       oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
@@ -193,7 +193,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
     if (hyper_map->GetFnLeaf() != nullptr) {
       oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
     }
-  } else if (meta_func_graph->isa<prim::MapPy>()) {  // this statement must before 'meta_graph->isa<prim::Map>()'
+  } else if (meta_func_graph->isa<prim::MapPy>()) {  // This statement must before 'meta_graph->isa<prim::Map>()'
     auto map = meta_func_graph->cast<prim::MapPyPtr>();
     if (map->GetFnLeaf() != nullptr) {
       oss << "{fn_leaf=" << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
@@ -208,7 +208,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
     oss << "{get_all=" << grad_op->get_all_ << ", get_by_list=" << grad_op->get_by_list_
         << ", sens_param=" << grad_op->sens_param_ << "}";
   } else if (Skip(meta_func_graph)) {
-    // do nothing
+    // Do nothing
   } else {
     MS_LOG(EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
   }
@@ -222,9 +222,9 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr &prim) {
     return oss.str();
   }
   oss << prim->type_name() << "::" << prim->name();
-  // output primitive type
+  // Output primitive type
   oss << "{prim_type=" << static_cast<int>(prim->prim_type()) << "}";
-  // output primitive attributes
+  // Output primitive attributes
   oss << prim->GetAttrsText();
 
   if (prim->isa<prim::DoSignaturePrimitive>()) {
@@ -245,7 +245,7 @@ std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr &ns) {
     return oss.str();
   }
 
-  // dump related module information in Namespace
+  // Dump related module information in Namespace
   oss << ns->type_name() << "::" << ns->module();
 
   return oss.str();
@@ -260,7 +260,7 @@ std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr &func_gra
   std::ostringstream oss;
   if (sym_node->isa<Parameter>()) {
     int idx = GetParamIndex(func_graph, sym_node, false);
-    // if can not find SymbolicKeyInstance related parameter from ancestors,
+    // If can not find SymbolicKeyInstance related parameter from ancestors,
     // try to find from all exported graphs
     if (idx < 0) {
       idx = GetParamIndexFromExported(sym_node);
@@ -283,7 +283,7 @@ std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr &func_gra
 
 std::string AnfExporter::GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   std::ostringstream oss;
-  // output ValueList, ValueTuple
+  // Output ValueList, ValueTuple
   ValueSequeuePtr seq = dyn_cast<ValueSequeue>(value);
   MS_EXCEPTION_IF_NULL(seq);
   MS_EXCEPTION_IF_NULL(value);
@@ -375,7 +375,7 @@ std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const Valu
   return oss.str();
 }
 
-// this function is used to output node in CNode's inputs
+// This function is used to output node in CNode's inputs
 std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const std::map<AnfNodePtr, int> &apply_map) {
   std::ostringstream oss;
@@ -420,13 +420,13 @@ void AnfExporter::OutputParameters(std::ofstream &ofs, const std::vector<AnfNode
     }
     (*param_map)[param] = param_index;
     std::string type_info = GetNodeType(param);
-    // output parameter and type
+    // Output parameter and type
     if (type_info == "Undefined") {
       ofs << "%para" << param_index;
     } else {
       ofs << "%para" << param_index << " : " << type_info;
     }
-    // output comment
+    // Output comment
     ofs << "    # " << param->DumpText() << "\n";
     param_index += 1;
   }
@@ -437,7 +437,7 @@ void AnfExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &nod
     return;
   }
 
-  // output type of each input argument
+  // Output type of each input argument
   auto &inputs = node->inputs();
   if (inputs.size() > 1) {
     ofs << "    #(";
@@ -450,7 +450,7 @@ void AnfExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &nod
     }
     ofs << ")";
   }
-  // output other comment, map the graph name to original representation(containing unicode character)
+  // Output other comment, map the graph name to original representation(containing unicode character)
   std::ostringstream comment;
   comment << "    #";
   bool has_comment = false;
@@ -474,8 +474,45 @@ void AnfExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &nod
   ofs << " #scope: " << node->scope()->name();
 }
 
-void AnfExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes,
-                               const FuncGraphPtr &func_graph) {
+void AnfExporter::OutputCNodeText(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+                                  std::map<AnfNodePtr, int> *const apply_map) {
+  auto &inputs = cnode->inputs();
+  std::string op_text = GetAnfNodeText(func_graph, inputs[0], *apply_map);
+  std::string fv_text = (cnode->func_graph() != func_graph) ? ("$(" + func_graph->ToString() + "):") : "";
+  // Non-return node
+  if (cnode != func_graph->get_return()) {
+    int apply_idx = (*idx)++;
+    (*apply_map)[cnode] = apply_idx;
+    std::string type_info = GetNodeType(cnode);
+    if (type_info == "Undefined") {
+      ofs << "    %" << apply_idx << " = " << fv_text << op_text << "(";
+    } else {
+      ofs << "    %" << apply_idx << " : " << fv_text << type_info << " = " << op_text << "(";
+    }
+  } else {
+    ofs << "    " << fv_text << op_text << "(";
+  }
+
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (i != 1) {
+      ofs << ", ";
+    }
+    AnfNodePtr arg = inputs[i];
+    ofs << GetAnfNodeText(func_graph, arg, *apply_map);
+  }
+  ofs << ")";
+}
+
+void AnfExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+                              std::map<AnfNodePtr, int> *const apply_map) {
+  OutputCNodeText(ofs, cnode, func_graph, idx, apply_map);
+  // Output comment
+  OutputStatementComment(ofs, cnode);
+  ofs << "\n";
+}
+
+void AnfExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,
+                               const TaggedNodeMap &tagged_cnodes_map) {
   if (func_graph == nullptr) {
     return;
   }
@@ -488,40 +525,15 @@ void AnfExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr>
       continue;
     }
 
-    auto iter = tagged_cnodes_.find(node);
-    if (iter != tagged_cnodes_.end()) {
-      ofs << "\n#------------------------> " << iter->second << "\n";
+    if (!tagged_cnodes_map.empty()) {
+      auto iter = tagged_cnodes_map.find(node);
+      if (iter != tagged_cnodes_map.end()) {
+        ofs << "\n#------------------------> " << iter->second << "\n";
+      }
     }
 
     auto cnode = node->cast<CNodePtr>();
-    auto &inputs = cnode->inputs();
-    std::string op_text = GetAnfNodeText(func_graph, inputs[0], apply_map);
-    // non-return node
-    if (node != func_graph->get_return()) {
-      int apply_idx = idx++;
-      apply_map[node] = apply_idx;
-      std::string type_info = GetNodeType(node);
-      if (type_info == "Undefined") {
-        ofs << "    %" << apply_idx << " = " << op_text << "(";
-      } else {
-        ofs << "    %" << apply_idx << " : " << type_info << " = " << op_text << "(";
-      }
-    } else {
-      ofs << "    " << op_text << "(";
-    }
-
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if (i != 1) {
-        ofs << ", ";
-      }
-      AnfNodePtr arg = inputs[i];
-      ofs << GetAnfNodeText(func_graph, arg, apply_map);
-    }
-    ofs << ")";
-
-    // output comment
-    OutputStatementComment(ofs, cnode);
-    ofs << "\n";
+    OutputCNode(ofs, cnode, func_graph, &idx, &apply_map);
     if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
       ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
           << label_manage::Label(cnode->debug_info()) << "\n";
@@ -546,7 +558,8 @@ void AnfExporter::OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_g
   }
 }
 
-void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph) {
+void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph,
+                                     const TaggedNodeMap &tagged_cnodes_map) {
   if (func_graph == nullptr) {
     return;
   }
@@ -569,7 +582,7 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
     ofs << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
   }
   ofs << "funcgraph fg_" << func_graph->debug_info()->get_id();
-  // output name of parent of graph if exists
+  // Output name of parent of graph if exists
   if (func_graph->parent() != nullptr) {
     ofs << "[fg_" << func_graph->parent()->debug_info()->get_id() << "]";
   }
@@ -580,7 +593,7 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
   exported[func_graph] = param_map;
   ofs << (!parameters.empty() ? "    " : "") << ") {\n";
 
-  OutputCNodes(ofs, nodes, func_graph);
+  OutputCNodes(ofs, nodes, func_graph, tagged_cnodes_map);
 
   ofs << "}\n";
 
@@ -600,39 +613,15 @@ void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPt
 
   param_index = 1;
 
+  TaggedNodeMap tagged_cnodes_map;
   func_graph_set.add(func_graph);
   while (!func_graph_set.empty()) {
     FuncGraphPtr fg = *func_graph_set.begin();
-    ExportOneFuncGraph(ofs, fg);
+    ExportOneFuncGraph(ofs, fg, tagged_cnodes_map);
     ofs << "\n\n";
     (void)func_graph_set.erase(fg);
   }
   ofs << "# num of total function graphs: " << exported.size();
-
-  ofs.close();
-}
-
-void AnfExporter::ExportFuncGraph(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
-  if (graphs.empty()) {
-    return;
-  }
-
-  std::ofstream ofs(filename);
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
-    return;
-  }
-
-  param_index = 1;
-
-  for (const auto &tagged_graph : graphs) {
-    tagged_cnodes_ = tagged_graph.second;
-    ExportOneFuncGraph(ofs, tagged_graph.first);
-    tagged_cnodes_.clear();
-    ofs << "\n\n";
-  }
-
-  ofs << "# num of total function graphs: " << graphs.size();
 
   ofs.close();
 }
@@ -652,21 +641,7 @@ void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
   ChangeFileMode(real_filepath.value(), S_IWUSR);
   AnfExporter exporter;
   exporter.ExportFuncGraph(real_filepath.value(), func_graph);
-  // set file mode to read only by user
-  ChangeFileMode(real_filepath.value(), S_IRUSR);
-}
-
-void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
-  auto filepath = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
-  auto real_filepath = Common::GetRealPath(filepath);
-  if (!real_filepath.has_value()) {
-    MS_LOG(ERROR) << "The export ir path: " << filepath << " is not illegal.";
-    return;
-  }
-  ChangeFileMode(real_filepath.value(), S_IWUSR);
-  AnfExporter exporter("", false);
-  exporter.ExportFuncGraph(real_filepath.value(), graphs);
-  // set file mode to read only by user
+  // Set file mode to read only by user
   ChangeFileMode(real_filepath.value(), S_IRUSR);
 }
 #else

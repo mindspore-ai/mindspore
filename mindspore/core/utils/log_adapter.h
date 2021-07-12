@@ -180,6 +180,7 @@ class LogWriter {
 
   static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
   static void set_trace_provider(TraceProvider trace_provider) { trace_provider_ = trace_provider; }
+  static TraceProvider trace_provider() { return trace_provider_; }
 
  private:
   void OutputLog(const std::ostringstream &msg) const;

@@ -33,12 +33,13 @@ void HealthPointMgr::Clear() {
 void HealthPointMgr::HandleException() {
   // Just record the first exception information.
   if (!StaticAnalysisException::Instance().HasException()) {
-    std::ostringstream oss;
-    trace::GetEvalStackInfo(oss);
-    if (!oss.str().empty()) {
-      MS_LOG(ERROR) << oss.str();
-    }
     StaticAnalysisException::Instance().SetException();
+    try {
+      // We want to call the LogWrite::^() here.
+      MS_LOG(EXCEPTION) << "Exception happened, check the information as below.";
+    } catch (const std::exception &e) {
+      // Ignored.
+    }
   }
   // Free all the locks. Let all the threads continue to run.
   std::lock_guard<std::recursive_mutex> lock(lock_);
