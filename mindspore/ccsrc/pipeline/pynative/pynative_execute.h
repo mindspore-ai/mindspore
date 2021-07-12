@@ -263,6 +263,8 @@ class GradExecutor {
 
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
+  // The cell run check graph which will be top cell
+  std::string check_graph_cell_id_;
   // Only set in high grad
   FuncGraphPtr curr_g_{nullptr};
   // For clear pre top res

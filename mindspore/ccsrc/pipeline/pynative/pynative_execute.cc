@@ -1820,14 +1820,8 @@ bool GradExecutor::IsNestedGrad() const {
 }
 
 bool GradExecutor::IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id) {
-  // get end pos of obj_id
-  size_t obj_id_end_idx = l_cell_id.find('_');
-  if (obj_id_end_idx == std::string::npos) {
-    obj_id_end_idx = l_cell_id.length();
-  }
   // just compare obj_id, ignore args id
-  int cmp_ret = l_cell_id.compare(0, obj_id_end_idx, r_cell_id, 0, obj_id_end_idx);
-  return cmp_ret == 0;
+  return l_cell_id.compare(0, PTR_LEN, r_cell_id, 0, PTR_LEN) == 0;
 }
 
 bool GradExecutor::IsBpropGraph(const std::string &cell_id) {
@@ -1987,10 +1981,11 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
   if (top_cell_ != nullptr && cell_stack_.empty()) {
-    // Non-first step
-    if (already_run_top_cell_.find(cell_id) != already_run_top_cell_.end()) {
+    // Whether it is top and has been run
+    auto top_it = already_run_top_cell_.find(cell_id);
+    if (top_it != already_run_top_cell_.end()) {
       // Top cell forward run.
-      const auto &pre_top_cell = already_run_top_cell_.at(cell_id);
+      const auto &pre_top_cell = top_it->second;
       if (!pre_top_cell->is_dynamic()) {
         MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic, no need to run NewGraphInner again";
         ResetTopCellInfo(pre_top_cell, args);
@@ -1998,9 +1993,10 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
         set_top_cell(pre_top_cell);
         return;
       }
-    } else if (top_cell()->IsSubCell(cell_id) || GetHighOrderStackSize() >= 1) {
-      // Sub cell (may be a temporary cell) forward run in cache process.
-      MS_LOG(DEBUG) << "No need to run NewGraphInner again";
+    } else if ((top_cell()->IsSubCell(cell_id) && !IsCellObjIdEq(cell_id, check_graph_cell_id_)) ||
+               GetHighOrderStackSize() >= 1) {
+      // Sub cell ( or may be a temporary cell, but must be non top) forward run in cache process.
+      MS_LOG(DEBUG) << "Sub cell no need to run NewGraphInner again";
       return;
     }
   }
@@ -2453,17 +2449,16 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
 py::object GradExecutor::CheckGraph(const py::object &cell, const py::args &args) {
   BaseRef ret = false;
   ++grad_order_;
+  check_graph_cell_id_ = GetCellId(cell, args);
   if (!grad_is_running_) {
     MS_LOG(DEBUG) << "Grad not running yet";
     return BaseRefToPyData(ret);
   }
-  const auto &cell_id = GetCellId(cell, args);
-  const auto &key = cell_id.substr(0, std::min(PTR_LEN, cell_id.size()));
-  MS_LOG(DEBUG) << "Key is " << key;
+  MS_LOG(DEBUG) << "Key is " << check_graph_cell_id_;
   if (top_cell_ != nullptr) {
     for (auto it = top_cell_->sub_cell_list().begin(); it != top_cell_->sub_cell_list().end(); ++it) {
       MS_LOG(DEBUG) << "Cur cell id " << *it;
-      if ((*it).find(key) == std::string::npos) {
+      if (!IsCellObjIdEq(*it, check_graph_cell_id_)) {
         continue;
       }
       MS_LOG(DEBUG) << "Delete cellid from cell graph list, top cell is " << top_cell_;
