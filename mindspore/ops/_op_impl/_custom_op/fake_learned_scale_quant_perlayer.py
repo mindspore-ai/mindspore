@@ -71,10 +71,9 @@ def fake_learned_scale_quant_perlayer_compute(input_data, alpha_data, quant_max_
     return res
 
 
-@util.check_input_type(dict, dict, dict, dict, bool, str)
-def fake_learned_scale_quant_perlayer(input_x, alpha, quant_max, out, neg_trunc,
-                                      kernel_name="fake_learned_scale_quant_perlayer"):
-    """FakeLearnedScaleQuantPerLayer"""
+def fake_learned_scale_quant_perlayer_param(input_x, alpha, quant_max,
+                                            kernel_name="fake_learned_scale_quant_perlayer"):
+    """Get and check FakeLearnedScaleQuantPerLayer parameters"""
     input_shape = input_x.get("shape")
     input_dtype = input_x.get("dtype")
     alpha_shape = alpha.get("ori_shape")
@@ -105,6 +104,16 @@ def fake_learned_scale_quant_perlayer(input_x, alpha, quant_max, out, neg_trunc,
     input_data = tvm.placeholder(input_shape, name="x", dtype=input_dtype)
     alpha_data = tvm.placeholder(alpha_shape, name="alpha_data", dtype=alpha_dtype)
     quant_max_data = tvm.placeholder(quant_max_shape, name="quant_max_data", dtype=quant_max_dtype)
+    return input_data, alpha_data, quant_max_data
+
+
+@util.check_input_type(dict, dict, dict, dict, bool, str)
+def fake_learned_scale_quant_perlayer(input_x, alpha, quant_max, out, neg_trunc,
+                                      kernel_name="fake_learned_scale_quant_perlayer"):
+    """FakeLearnedScaleQuantPerLayer"""
+    input_data, alpha_data, quant_max_data = \
+        fake_learned_scale_quant_perlayer_param(input_x, alpha, quant_max, kernel_name)
+
     res = fake_learned_scale_quant_perlayer_compute(input_data, alpha_data, quant_max_data, neg_trunc, kernel_name)
 
     with tvm.target.cce():

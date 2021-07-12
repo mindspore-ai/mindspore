@@ -110,11 +110,9 @@ def fake_quant_perchannel_grad_compute(dout, x, min_val, max_val, quant_min, qua
     return res
 
 
-@util.check_input_type(dict, dict, dict, dict, dict, bool, bool, int, int, str)
-def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
-                               symmetric, narrow_range, num_bits, channel_axis,
-                               kernel_name="fake_quant_perchannel_grad"):
-    """FakeQuantPerChannelGrad"""
+def fake_quant_perchannel_grad_param(x, min_val, max_val, channel_axis,
+                                     kernel_name="fake_quant_perchannel_grad"):
+    """Get and check FakeQuantPerChannelGrad parameters"""
     x_shape = x.get("shape")
     x_shape_ = x.get("ori_shape")
     x_format = x.get("format")
@@ -144,6 +142,18 @@ def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
     util.check_dtype_rule(min_dtype, check_list)
     util.check_dtype_rule(max_dtype, check_list)
 
+    shape_c = [1] * len(x_shape)
+    shape_c[channel_axis_] = min_val.get("ori_shape")[0]
+    if x_format == "NC1HWC0" and channel_axis_ == 1:
+        shape_c = min_val.get("shape")
+    return x_shape, shape_c, x_dtype
+
+
+@util.check_input_type(dict, dict, dict, dict, dict, bool, bool, int, int, str)
+def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
+                               symmetric, narrow_range, num_bits, channel_axis,
+                               kernel_name="fake_quant_perchannel_grad"):
+    """FakeQuantPerChannelGrad"""
     if symmetric:
         quant_min = 0 - 2 ** (num_bits - 1)
         quant_max = 2 ** (num_bits - 1) - 1
@@ -153,10 +163,8 @@ def fake_quant_perchannel_grad(dout, x, min_val, max_val, dx,
     if narrow_range:
         quant_min = quant_min + 1
 
-    shape_c = [1] * len(x_shape)
-    shape_c[channel_axis_] = min_val.get("ori_shape")[0]
-    if x_format == "NC1HWC0" and channel_axis_ == 1:
-        shape_c = min_val.get("shape")
+    x_shape, shape_c, x_dtype = fake_quant_perchannel_grad_param(x, min_val, max_val,
+                                                                 channel_axis, kernel_name)
     dout_data = tvm.placeholder(x_shape, name="dout", dtype=x_dtype)
     input_data = tvm.placeholder(x_shape, name="x", dtype=x_dtype)
     min_data = tvm.placeholder(shape_c, name="min_val", dtype=x_dtype)

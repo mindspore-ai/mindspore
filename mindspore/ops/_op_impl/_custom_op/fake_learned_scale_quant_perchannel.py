@@ -71,10 +71,9 @@ def fake_learned_scale_quant_perchannel_compute(input_data, alpha_data, quant_ma
     return res
 
 
-@util.check_input_type(dict, dict, dict, dict, bool, int, str)
-def fake_learned_scale_quant_perchannel(input_x, alpha, quant_max, out, neg_trunc, channel_axis,
-                                        kernel_name="fake_learned_scale_quant_perchannel"):
-    """FakeLearnedScaleQuantPerChannel"""
+def fake_learned_scale_quant_perchannel_param(input_x, alpha, quant_max, channel_axis,
+                                              kernel_name="fake_learned_scale_quant_perchannel"):
+    """Get and check FakeLearnedScaleQuantPerChannel parameters"""
     input_shape = input_x.get("shape")
     input_x_shape_ = input_x.get("ori_shape")
     input_x_format = input_x.get("format")
@@ -113,6 +112,16 @@ def fake_learned_scale_quant_perchannel(input_x, alpha, quant_max, out, neg_trun
     input_data = tvm.placeholder(input_shape, name="x", dtype=input_dtype)
     alpha_data = tvm.placeholder(shape_c, name="alpha_data", dtype=alpha_dtype)
     quant_max_data = tvm.placeholder(quant_max_shape, name="quant_max_data", dtype=quant_max_dtype)
+    return input_data, alpha_data, quant_max_data
+
+
+@util.check_input_type(dict, dict, dict, dict, bool, int, str)
+def fake_learned_scale_quant_perchannel(input_x, alpha, quant_max, out, neg_trunc, channel_axis,
+                                        kernel_name="fake_learned_scale_quant_perchannel"):
+    """FakeLearnedScaleQuantPerChannel"""
+    input_data, alpha_data, quant_max_data = \
+        fake_learned_scale_quant_perchannel_param(input_x, alpha, quant_max, channel_axis, kernel_name)
+
     res = fake_learned_scale_quant_perchannel_compute(input_data, alpha_data, quant_max_data, neg_trunc, kernel_name)
 
     with tvm.target.cce():

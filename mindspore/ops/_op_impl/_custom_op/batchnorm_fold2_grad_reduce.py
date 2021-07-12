@@ -21,6 +21,7 @@ from te.platform.cce_build import build_config
 from topi import generic
 from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from impl.bn_training_reduce import bn_training_reduce_schedule_nd
 
 SHAPE_SIZE_LIMIT = 2147483648
 
@@ -81,9 +82,8 @@ def batchnorm_fold2_grad_reduce(dout, x, dout_reduce, dout_x_reduce, kernel_name
     util.check_kernel_name(kernel_name)
     util.check_shape_rule(shape)
     util.check_shape_size(shape, SHAPE_SIZE_LIMIT)
-    check_list = ["float16", "float32"]
     inp_dtype = x.get("dtype").lower()
-    if not inp_dtype in check_list:
+    if not inp_dtype in ["float16", "float32"]:
         raise RuntimeError("Dtype of input only support float16, float32")
     dout_t = tvm.placeholder(shape, name="dout", dtype=inp_dtype)
     x_t = tvm.placeholder(shape, name="x", dtype=inp_dtype)
@@ -100,7 +100,7 @@ def batchnorm_fold2_grad_reduce(dout, x, dout_reduce, dout_x_reduce, kernel_name
 
         te.lang.cce.cce_build_code(sch, config)
         return
-    from impl.bn_training_reduce import bn_training_reduce_schedule_nd
+
     sch, tensor_list = bn_training_reduce_schedule_nd(res_list)
     with build_config:
         tvm.build(sch, tensor_list, "cce", name=kernel_name)

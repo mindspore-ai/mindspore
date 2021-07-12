@@ -86,11 +86,9 @@ def fake_quant_perchannel_compute(x, min_val, max_val, y, quant_min, quant_max, 
     return res
 
 
-@util.check_input_type(dict, dict, dict, dict, bool, bool, int, int, str)
-def fake_quant_perchannel(x, min_val, max_val, y,
-                          symmetric, narrow_range, num_bits, channel_axis,
-                          kernel_name="fake_quant_perchannel"):
-    """FakeQuantPerChannel"""
+def fake_quant_perchannel_param(x, min_val, max_val, channel_axis,
+                                kernel_name="fake_quant_perchannel"):
+    """Get and check fake_quant_perchannel parameters"""
     x_shape = x.get("shape")
     x_shape_ = x.get("ori_shape")
     x_format = x.get("format")
@@ -120,15 +118,25 @@ def fake_quant_perchannel(x, min_val, max_val, y,
     util.check_dtype_rule(min_dtype, check_list)
     util.check_dtype_rule(max_dtype, check_list)
 
+    shape_c = [1] * len(x_shape)
+    shape_c[channel_axis_] = min_val.get("ori_shape")[0]
+    if x_format == "NC1HWC0" and channel_axis_ == 1:
+        shape_c = min_val.get("shape")
+    return x_shape, shape_c, x_dtype
+
+
+@util.check_input_type(dict, dict, dict, dict, bool, bool, int, int, str)
+def fake_quant_perchannel(x, min_val, max_val, y,
+                          symmetric, narrow_range, num_bits, channel_axis,
+                          kernel_name="fake_quant_perchannel"):
+    """FakeQuantPerChannel"""
     quant_min = 0
     quant_max = 2 ** num_bits - 1
     if narrow_range:
         quant_min = quant_min + 1
 
-    shape_c = [1] * len(x_shape)
-    shape_c[channel_axis_] = min_val.get("ori_shape")[0]
-    if x_format == "NC1HWC0" and channel_axis_ == 1:
-        shape_c = min_val.get("shape")
+    x_shape, shape_c, x_dtype = fake_quant_perchannel_param(x, min_val, max_val,
+                                                            channel_axis, kernel_name)
     input_data = tvm.placeholder(x_shape, name="x", dtype=x_dtype)
     min_data = tvm.placeholder(shape_c, name="min_val", dtype=x_dtype)
     max_data = tvm.placeholder(shape_c, name="max_val", dtype=x_dtype)
