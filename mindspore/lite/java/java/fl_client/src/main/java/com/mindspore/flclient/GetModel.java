@@ -96,7 +96,7 @@ public class GetModel {
     private FLClientStatus parseResponseAlbert(ResponseGetModel responseDataBuf) {
         int fmCount = responseDataBuf.featureMapLength();
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-            LOGGER.info(Common.addTag("[getModel] into <parseResponseAdbert>"));
+            LOGGER.info(Common.addTag("[getModel] into <parseResponseAlbert>"));
             ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
             ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
             for (int i = 0; i < fmCount; i++) {

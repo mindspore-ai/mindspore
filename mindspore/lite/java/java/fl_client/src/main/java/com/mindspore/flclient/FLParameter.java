@@ -17,6 +17,8 @@ package com.mindspore.flclient;
 
 import java.util.logging.Logger;
 
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+
 public class FLParameter {
     private static final Logger LOGGER = Logger.getLogger(FLParameter.class.toString());
 
@@ -119,7 +121,7 @@ public class FLParameter {
     }
 
     public String getVocabFile() {
-        if ("null".equals(vocabFile) && "adbert".equals(flName)) {
+        if ("null".equals(vocabFile) && ALBERT.equals(flName)) {
             LOGGER.severe(Common.addTag("[flParameter] the parameter of <vocabFile> is null, please set it before use"));
             throw new RuntimeException();
         }
@@ -137,7 +139,7 @@ public class FLParameter {
     }
 
     public String getIdsFile() {
-        if ("null".equals(idsFile) && "adbert".equals(flName)) {
+        if ("null".equals(idsFile) && ALBERT.equals(flName)) {
             LOGGER.severe(Common.addTag("[flParameter] the parameter of <idsFile> is null, please set it before use"));
             throw new RuntimeException();
         }

@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import static com.mindspore.flclient.LocalFLParameter.ALBERT;
+import static com.mindspore.flclient.LocalFLParameter.LENET;
+
 public class SecureProtocol {
     private static final Logger LOGGER = Logger.getLogger(SecureProtocol.class.toString());
     private FLParameter flParameter = FLParameter.getInstance();
@@ -35,7 +38,7 @@ public class SecureProtocol {
     private int iteration;
     private CipherClient cipher;
     private FLClientStatus status;
-    private float[] featureMask;
+    private float[] featureMask = new float[0];
     private double dpEps;
     private double dpDelta;
     private double dpNormClip;
@@ -126,13 +129,17 @@ public class SecureProtocol {
     }
 
     public int[] pwMaskModel(FlatBufferBuilder builder, int trainDataSize) {
+        if (featureMask == null || featureMask.length == 0) {
+            LOGGER.severe("[Encrypt] feature mask is null, please check");
+            return new int[0];
+        }
         LOGGER.info("[Encrypt] feature mask size: " + featureMask.length);
         // get feature map
         Map<String, float[]> map = new HashMap<String, float[]>();
-        if (flParameter.getFlName().equals("adbert")) {
+        if (flParameter.getFlName().equals(ALBERT)) {
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
-        } else if (flParameter.getFlName().equals("lenet")) {
+        } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
         }
@@ -266,10 +273,10 @@ public class SecureProtocol {
     public int[] dpMaskModel(FlatBufferBuilder builder, int trainDataSize) {
         // get feature map
         Map<String, float[]> map = new HashMap<String, float[]>();
-        if (flParameter.getFlName().equals("adbert")) {
+        if (flParameter.getFlName().equals(ALBERT)) {
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
-        } else if (flParameter.getFlName().equals("lenet")) {
+        } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
         }

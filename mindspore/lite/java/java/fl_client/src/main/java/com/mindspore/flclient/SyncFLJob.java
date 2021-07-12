@@ -365,7 +365,7 @@ public class SyncFLJob {
         SyncFLJob syncFLJob = new SyncFLJob();
         if (task.equals("train")) {
             flParameter.setUseHttps(useHttps);
-            if (useHttps) {
+            if (useSSL) {
                 flParameter.setCertPath(certPath);
             }
             flParameter.setHostName(ip);
@@ -396,7 +396,7 @@ public class SyncFLJob {
             syncFLJob.modelInference();
         } else if (task.equals("getModel")) {
             flParameter.setUseHttps(useHttps);
-            if (useHttps) {
+            if (useSSL) {
                 flParameter.setCertPath(certPath);
             }
             flParameter.setHostName(ip);
