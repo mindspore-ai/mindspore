@@ -72,13 +72,14 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
     if (origin_weight_ != nullptr && need_free_weight_) {
       free(origin_weight_);
       origin_weight_ = nullptr;
+      need_free_weight_ = false;
     }
     if (origin_bias_ != nullptr && need_free_bias_) {
       free(origin_bias_);
       origin_bias_ = nullptr;
+      need_free_bias_ = false;
     }
   }
-
   // Train API
   int Eval() override {
     InnerKernel::Eval();
