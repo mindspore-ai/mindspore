@@ -43,15 +43,15 @@ class HealthPointMgr {
   HealthPointMgr &operator=(const HealthPointMgr &) = delete;
   static HealthPointMgr &GetInstance() { return instance_; }
   void Clear();
-  void SetNextRunable();
+  void SetNextRunnable();
   void HandleException();
 
   void CheckPoint() {
     MS_LOG(DEBUG) << "The Health Point is " << point_;
     if (point_ == 0) {
-      SetNextRunable();
+      SetNextRunnable();
     } else if (point_ < 0) {
-      MS_LOG(WARNING) << "There is something wrong. point = " << point_;
+      MS_LOG(WARNING) << "There is something wrong. point: " << point_;
     }
   }
 
@@ -119,7 +119,7 @@ class MultiThreadCache {
   std::string dump() {
     std::ostringstream buf;
     for (auto &item : cache_) {
-      buf << "{" << item.first->ToString() << ":" << item.second->ToString() << "}" << std::endl;
+      buf << "{" << item.first->ToString() << ": " << item.second->ToString() << "}" << std::endl;
     }
     return buf.str();
   }
@@ -163,7 +163,7 @@ class NormalCache {
   std::string dump() const {
     std::ostringstream buf;
     for (auto &item : cache_) {
-      buf << "{" << item.first->ToString() << ":" << item.second->ToString() << "}" << std::endl;
+      buf << "{" << item.first->ToString() << ": " << item.second->ToString() << "}" << std::endl;
     }
     return buf.str();
   }
@@ -193,19 +193,19 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
       ++count_;
       // The point should be dropped if it can't run. It will be added when it can run.
       bool hasDecrPoint = false;
-      if (!runable_) {
+      if (!runnable_) {
         HealthPointMgr::GetInstance().DecrPoint();
         hasDecrPoint = true;
       }
-      MS_LOG(DEBUG) << this << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
-      condition_var_.wait(lock, [this] { return runable_; });
+      MS_LOG(DEBUG) << this << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
+      condition_var_.wait(lock, [this] { return runnable_; });
       if (hasDecrPoint) {
         HealthPointMgr::GetInstance().IncrPoint();
       }
-      MS_LOG(DEBUG) << this << " continue runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
+      MS_LOG(DEBUG) << this << " continue runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
 
       StaticAnalysisException::Instance().CheckException();
-      runable_ = false;
+      runnable_ = false;
       if (result_ != nullptr) {
         MS_LOG(DEBUG) << this << " Return  result: " << (result_ ? result_.get() : 0);
         return result_;
@@ -213,16 +213,16 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
       // Push to list
       HealthPointMgr::GetInstance().Add2Schedule(shared_from_this());
       // Notify the next asyncAbastract to run.
-      HealthPointMgr::GetInstance().SetNextRunable();
-      MS_LOG(DEBUG) << this << " SetNextRunable "
-                    << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0)
-                    << " point:" << HealthPointMgr::GetInstance().point();
+      HealthPointMgr::GetInstance().SetNextRunnable();
+      MS_LOG(DEBUG) << this << " SetNextRunnable "
+                    << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0)
+                    << " point: " << HealthPointMgr::GetInstance().point();
     }
   }
 
-  void SetRunable() {
-    MS_LOG(DEBUG) << this << " Runable.";
-    runable_ = true;
+  void SetRunnable() {
+    MS_LOG(DEBUG) << this << " Runnable.";
+    runnable_ = true;
     condition_var_.notify_one();
   }
   int count() const { return count_; }
@@ -248,7 +248,7 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
  private:
   std::mutex lock_;
   std::condition_variable condition_var_;
-  bool runable_{false};
+  bool runnable_{false};
   int count_{0};
   AbstractBasePtr result_{nullptr};
 };

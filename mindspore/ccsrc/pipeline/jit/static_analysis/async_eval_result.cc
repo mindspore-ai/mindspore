@@ -26,7 +26,7 @@ namespace abstract {
 HealthPointMgr HealthPointMgr::instance_;
 
 void HealthPointMgr::Clear() {
-  MS_LOG(DEBUG) << " Point = " << point_;
+  MS_LOG(DEBUG) << " Point: " << point_;
   point_ = 1;
 }
 
@@ -43,12 +43,12 @@ void HealthPointMgr::HandleException() {
   // Free all the locks. Let all the threads continue to run.
   std::lock_guard<std::recursive_mutex> lock(lock_);
   for (auto &item : asyncAbstractList_) {
-    item->SetRunable();
+    item->SetRunnable();
   }
   asyncAbstractList_.clear();
 }
 
-void HealthPointMgr::SetNextRunable() {
+void HealthPointMgr::SetNextRunnable() {
   std::lock_guard<std::recursive_mutex> lock(lock_);
   if (asyncAbstractList_.empty()) {
     MS_LOG(DEBUG) << "The Health List is empty. ";
@@ -59,15 +59,15 @@ void HealthPointMgr::SetNextRunable() {
                          [](const auto &item) { return item->HasResult(); });
   if (it == asyncAbstractList_.end()) {
     // Enter endless loop if there is not ready result.
-    MS_LOG(EXCEPTION) << "Enter endless loop. There is not more node that can been evaluated. Please check the code.";
+    MS_LOG(EXCEPTION) << "Enter endless loop. There isn't any branch that can been evaluated. Please check the code.";
   }
   // Push back the not ready async.
   asyncAbstractList_.insert(asyncAbstractList_.end(), asyncAbstractList_.begin(), it);
   asyncAbstractList_.erase(asyncAbstractList_.begin(), it);
 
   MS_LOG(DEBUG) << asyncAbstractList_.front().get() << " The Health Point is " << point_
-                << " Called times : " << asyncAbstractList_.front()->count();
-  asyncAbstractList_.front()->SetRunable();
+                << " Called times: " << asyncAbstractList_.front()->count();
+  asyncAbstractList_.front()->SetRunnable();
   asyncAbstractList_.pop_front();
 }
 
@@ -176,17 +176,18 @@ void AnalysisResultCacheMgr::Todo() {
     AnfNodeConfigPtr conf = todo_.front();
     todo_.pop_front();
     if (GetValue(conf) == nullptr) {
-      MS_LOG(WARNING) << conf->node()->ToString() << " not in globleCache";
+      MS_LOG(WARNING) << conf->node()->ToString() << " not in globle cache.";
       continue;
     }
     if (TryGetSwitchValue(conf) == nullptr) {
-      MS_LOG(WARNING) << conf->node()->ToString() << " not in switchCache";
+      MS_LOG(WARNING) << conf->node()->ToString() << " not in switch cache";
       continue;
     }
     if (!(*GetValue(conf)->abstract() == *TryGetSwitchValue(conf))) {
       MS_LOG(WARNING) << " Switch Value is not eq. "
-                      << " switchCache: " << TryGetSwitchValue(conf)->ToString()
-                      << " globleCache: " << GetValue(conf)->abstract()->ToString() << "\t\tConf: " << conf->ToString();
+                      << " switch cache: " << TryGetSwitchValue(conf)->ToString()
+                      << " globle cache: " << GetValue(conf)->abstract()->ToString()
+                      << "\t\tConf: " << conf->ToString();
     }
   }
 }

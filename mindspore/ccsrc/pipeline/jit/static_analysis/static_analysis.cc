@@ -619,16 +619,12 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
     MS_EXCEPTION_IF_NULL(eval);
     return eval->Run(shared_from_this(), args_conf_list, out_conf);
   }
-#if !(defined _WIN32 || defined _WIN64)
   static bool enable_singleThread = (common::GetEnv("ENV_SINGLE_EVAL") == "1");
   if (enable_singleThread) {
     return ExecuteMultipleEvaluators(evaluators, out_conf, args_conf_list);
   } else {
     return ExecuteMultipleEvaluatorsMultiThread(evaluators, out_conf, args_conf_list);
   }
-#else
-  return ExecuteMultipleEvaluators(evaluators, out_conf, args_conf_list);
-#endif
 }
 
 void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg) {
@@ -901,7 +897,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
       auto result = branchAsyncResults[i]->TryGetResult();
       if (result) {
         MS_LOG(DEBUG) << GetInferThread() << "async get " << evaluators[i]->ToString()
-                      << " result = " << result->ToString();
+                      << " result: " << result->ToString();
         out_specs.push_back(result);
       }
     }
