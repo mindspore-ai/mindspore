@@ -40,6 +40,20 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
   return kSuccess;
 }
 
+Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
+                    const Key &dec_key, const std::string &dec_mode) {
+  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
+  }
+  Status ret = impl_->Build(model_path, model_type, model_context);
+  if (ret != kSuccess) {
+    return ret;
+  }
+  return kSuccess;
+}
+
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context,
                     const std::shared_ptr<TrainCfg> &train_cfg) {
   std::stringstream err_msg;

@@ -28,6 +28,7 @@
 #include "src/cxx_api/tensor_utils.h"
 #include "src/common/log_adapter.h"
 #include "src/train/train_session.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 using mindspore::lite::RET_ERROR;
@@ -52,6 +53,33 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
   auto session = std::shared_ptr<session::LiteSession>(
     session::LiteSession::CreateSession(static_cast<const char *>(model_data), data_size, &lite_context));
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "Allocate session failed.";
+    return kLiteNullptr;
+  }
+
+  session_.swap(session);
+  MS_LOG(DEBUG) << "Build model success.";
+  return kSuccess;
+}
+
+Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
+                        const std::shared_ptr<Context> &ms_context) {
+  lite::Context lite_context;
+  auto status = A2L_ConvertContext(ms_context.get(), &lite_context);
+  if (status != kSuccess) {
+    return status;
+  }
+
+  size_t data_size = 0;
+  char *model_data = lite::ReadFile(model_path.c_str(), &data_size);
+  if (model_data == nullptr) {
+    MS_LOG(ERROR) << "Read model path failed.";
+    return kMDFileNotExist;
+  }
+
+  auto session = std::shared_ptr<session::LiteSession>(
+    session::LiteSession::CreateSession(const_cast<const char *>(model_data), data_size, &lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
