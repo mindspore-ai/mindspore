@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 #include "schema/inner/model_generated.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "utils/utils.h"
@@ -31,29 +32,20 @@ namespace opt {
 /// fuse layer_norm or instance_norm into one operator
 class NormFusion : public PatternProcessPass {
  public:
-  explicit NormFusion(const std::string &name = "norm_fusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph) {
-    input_ = std::make_shared<Var>();
-    mean1_ = std::make_shared<Var>();
-    mean1_axes_ = std::make_shared<Var>();
-    mean2_ = std::make_shared<Var>();
-    mean2_axes_ = std::make_shared<Var>();
-    gamma_ = std::make_shared<Var>();
-    beta_ = std::make_shared<Var>();
-    epsilon_ = std::make_shared<Var>();
-  }
+  explicit NormFusion(const std::string &name = "norm_fusion", bool multigraph = true);
 
   ~NormFusion() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  bool GetNormTypeAndAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
-                          const std::vector<int> &params_shape, schema::PrimitiveType *type, int *begin_norm_axis,
-                          int *begin_params_axis) const;
-  bool CheckPattern(const EquivPtr &equiv, schema::PrimitiveType *type, float *epsilon, int *begin_norm_axis,
-                    int *begin_params_axis) const;
+  bool GetNormTypeAndAxis(const FuncGraphPtr &func_graph, const CNodePtr &input_cnode,
+                          const std::vector<int> &mean_axes, const std::vector<int> &params_shape,
+                          schema::PrimitiveType *type, int *begin_norm_axis, int *begin_params_axis) const;
+  bool CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv, schema::PrimitiveType *type, float *epsilon,
+                    int *begin_norm_axis, int *begin_params_axis) const;
   CNodePtr CreateNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const schema::PrimitiveType type,
                           float epsilon, int begin_norm_axis, int begin_params_axis) const;
+  std::map<string, int> ShapeSizeInfer(const FuncGraphPtr &func_graph) const;
 
  protected:
   VarPtr input_ = nullptr;
@@ -64,6 +56,8 @@ class NormFusion : public PatternProcessPass {
   VarPtr gamma_ = nullptr;
   VarPtr beta_ = nullptr;
   VarPtr epsilon_ = nullptr;
+  std::map<schema::PrimitiveType, std::function<int(std::vector<int>, const schema::PrimitiveT &)>>
+    shape_size_infer_registry_;
 };
 
 /// fuse tf layer_norm or instance_norm into one operator
