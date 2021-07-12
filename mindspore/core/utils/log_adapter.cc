@@ -140,14 +140,18 @@ void LogWriter::operator<(const LogStream &stream) const noexcept {
 void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
-  OutputLog(msg);
-
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
   oss << msg.str();
 
-  if (trace_provider_ != nullptr) {
-    trace_provider_(oss);
+  thread_local bool running = false;
+  if (!running) {
+    running = true;
+    OutputLog(msg);
+    if (trace_provider_ != nullptr) {
+      trace_provider_(oss);
+    }
+    running = false;
   }
 
   if (exception_handler_ != nullptr) {
