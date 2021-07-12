@@ -19,16 +19,19 @@
 
 #include <algorithm>
 #include <vector>
+#include <numeric>
+#include <functional>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/slice_copy_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 template <typename T>
 class TensorCopySlicesGpuKernel : public GpuKernel {
  public:
-  TensorCopySlicesGpuKernel() : input_size_(0), update_size_(0), output_size_(0), offset_(0), copy_size_(0) {}
+  TensorCopySlicesGpuKernel() : input_size_(0), update_size_(0), output_size_(0) {}
   ~TensorCopySlicesGpuKernel() {}
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -37,20 +40,12 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
     T *update_addr = GetDeviceAddress<T>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    if (inputs[1]->size != copy_size_) {
-      MS_LOG(EXCEPTION) << "Invalid update size:" << inputs[1]->size << " copy_size_:" << copy_size_;
-    }
-
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "TensorCopySlices cudaMemcpyAsync outputs failed");
-
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_addr + offset_, update_addr, inputs[1]->size,
-                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "TensorCopySlices cudaMemcpyAsync outputs failed");
-
+    CopySlices(update_shape_, begin_, strides_, output_shape_, update_addr, output_addr,
+               reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -73,42 +68,58 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
       return false;
     }
 
-    auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto update_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
-    CastShapeSizeToLong(input_shapes, &input_shapes_);
-    CastShapeSizeToLong(update_shapes, &update_shapes_);
-    CastShapeSizeToLong(output_shapes, &output_shapes_);
+    if (input_shape_.size() > kMaxDims) {
+      MS_LOG(ERROR) << "StridedSlice support dims no more than " << kMaxDims << ", but the input shape is "
+                    << input_shape_.size();
+      return false;
+    }
+
+    begin_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
+    end_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
+    strides_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+
+    FillEmptyDims(kernel_node);
+    output_shape_ = input_shape_;
+    FillUpdateDim();
+    CheckAtrrAndShapeValid(kernel_node);
 
     GetSize();
     InitSizeLists();
-
-    auto begin = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
-    auto end = GetAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
-    auto strides = GetAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
-
-    CheckSliceValid(begin, end, strides, input_shapes_);
-    auto dim_offset = CalDimOffset(input_shapes_);
-    offset_ = CalOffset(begin, end, strides, dim_offset);
-    copy_size_ = GetCopySize(dim_offset, begin, end) * sizeof(T);
     return true;
   }
 
  protected:
+  void CheckAtrrAndShapeValid(const CNodePtr &kernel_node) {
+    auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    size_t total_update_num = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<size_t>());
+    if (begin_.size() != end_.size() || end_.size() != strides_.size()) {
+      MS_LOG(EXCEPTION) << "Invalid attr begin:" << begin_ << " end:" << end_ << " strides:" << strides_;
+    }
+    auto len = begin_.size();
+    size_t total_input_num = 1;
+    for (size_t i = 0; i < len; ++i) {
+      total_input_num *= ((end_[i] - begin_[i]) / strides_[i]);
+    }
+    if (total_input_num != total_update_num) {
+      MS_LOG(EXCEPTION) << "Invalid update_shape:" << update_shape << ". Maybe you need to broadcast it.";
+    }
+  }
+
   void GetSize() {
     input_size_ = sizeof(T);
-    for (size_t i = 0; i < input_shapes_.size(); i++) {
-      input_size_ *= LongToSize(input_shapes_[i]);
+    for (size_t i = 0; i < input_shape_.size(); i++) {
+      input_size_ *= input_shape_[i];
     }
 
     update_size_ = sizeof(T);
-    for (size_t i = 0; i < update_shapes_.size(); i++) {
-      update_size_ *= LongToSize(update_shapes_[i]);
+    for (size_t i = 0; i < update_shape_.size(); i++) {
+      update_size_ *= update_shape_[i];
     }
     output_size_ = sizeof(T);
-    for (size_t i = 0; i < output_shapes_.size(); i++) {
-      output_size_ *= LongToSize(output_shapes_[i]);
+    for (size_t i = 0; i < output_shape_.size(); i++) {
+      output_size_ *= output_shape_[i];
     }
   }
 
@@ -119,21 +130,61 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
     return;
   }
 
+  void FillEmptyDims(const CNodePtr &kernel_node) {
+    for (size_t i = 0; i < kMaxDims; i++) {
+      if (i < begin_.size()) {
+        int64_t dim = input_shape_[i];
+        begin_[i] = std::min(begin_[i] < 0 ? std::max(begin_[i] + dim, static_cast<int64_t>(0)) : begin_[i], dim - 1);
+      } else {
+        begin_.push_back(0);
+      }
+
+      if (i < end_.size()) {
+        int64_t dim = input_shape_[i];
+        end_[i] = std::max(end_[i] < 0 ? end_[i] + dim : std::min(end_[i], dim), static_cast<int64_t>(-1));
+      } else {
+        end_.push_back(i < input_shape_.size() ? input_shape_[i] : 1);
+      }
+
+      if (i >= strides_.size()) {
+        strides_.push_back(1);
+      }
+
+      if (i >= input_shape_.size()) {
+        input_shape_.push_back(1);
+      }
+    }
+  }
+
+  void FillUpdateDim() {
+    for (size_t i = 0; i < kMaxDims; i++) {
+      if (begin_[i] <= end_[i] && strides_[i] > 0) {
+        update_shape_.push_back((end_[i] - 1 - begin_[i]) / strides_[i] + 1);
+      } else if (begin_[i] > end_[i] && strides_[i] < 0) {
+        update_shape_.push_back((end_[i] - begin_[i] + 1) / strides_[i] + 1);
+      } else {
+        update_shape_.push_back(0);
+      }
+    }
+  }
+
  private:
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  std::vector<int64_t> input_shapes_;
-  std::vector<int64_t> update_shapes_;
-  std::vector<int64_t> output_shapes_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> update_shape_;
+  std::vector<size_t> output_shape_;
+
+  std::vector<int64_t> begin_;
+  std::vector<int64_t> end_;
+  std::vector<int64_t> strides_;
 
   size_t input_size_;
   size_t update_size_;
   size_t output_size_;
-
-  size_t offset_;
-  size_t copy_size_;
+  inline static size_t kMaxDims = 8;
 };
 }  // namespace kernel
 }  // namespace mindspore
