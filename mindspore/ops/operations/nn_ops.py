@@ -1236,14 +1236,9 @@ class BatchNorm(PrimitiveWithInfer):
         >>> variance = Tensor(np.ones([2]), mindspore.float32)
         >>> batch_norm = ops.BatchNorm()
         >>> output = batch_norm(input_x, scale, bias, mean, variance)
-        >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.00000000e+00, 1.00000000e+00],
-         [ 1.00000000e+00, 1.00000000e+00]]), Tensor(shape=[2], dtype=Float32, value=
-         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
-         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
-         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
-         [ 1.00000000e+00, 1.00000000e+00]))
+        >>> print(output[0])
+        [[1. 1.]
+         [1. 1.]]
     """
 
     __mindspore_signature__ = (
@@ -7013,10 +7008,10 @@ class Dropout(PrimitiveWithCheck):
 
     Examples:
         >>> dropout = ops.Dropout(keep_prob=0.5)
-        >>> x = Tensor((20, 16, 50, 50), mindspore.float32)
+        >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
         >>> output, mask = dropout(x)
-        >>> print(output)
-        [0. 32. 0. 0.]
+        >>> print(output.shape)
+        (2, 2)
     """
 
     @prim_attr_register
