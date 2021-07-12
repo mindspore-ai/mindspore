@@ -15,11 +15,12 @@
  */
 
 #include "src/delegate/npu/op/batchnorm_npu.h"
+#include "include/graph/op/all_ops.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int BatchnormNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                         const std::vector<tensor::MSTensor *> &out_tensors) {
+int BatchnormNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                         const std::vector<mindspore::MSTensor> &out_tensors) {
   batchnorm_ = new (std::nothrow) ge::op::BatchNormExt2(name_);
   if (batchnorm_ == nullptr) {
     MS_LOG(ERROR) << "New batchnorm npu operator for batchnorm op " << name_ << " failed.";
@@ -36,8 +37,8 @@ int BatchnormNPUOp::Init(const schema::Primitive *primitive, const std::vector<t
   return RET_OK;
 }
 
-int BatchnormNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                 const std::vector<tensor::MSTensor *> &out_tensors,
+int BatchnormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                 const std::vector<mindspore::MSTensor> &out_tensors,
                                  const std::vector<ge::Operator *> &npu_inputs) {
   batchnorm_->set_input_x(*npu_inputs[0]);
   auto scale = new (std::nothrow) hiai::op::Const(name_ + "_scale");

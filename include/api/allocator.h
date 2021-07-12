@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_INCLUDE_ALLOCATOR_H_
-#define MINDSPORE_LITE_INCLUDE_ALLOCATOR_H_
+#ifndef MINDSPORE_INCLUDE_API_ALLOCATOR_H
+#define MINDSPORE_INCLUDE_API_ALLOCATOR_H
 
 #include <memory>
-#include "include/lite_utils.h"
+#include "include/api/types.h"
 
 namespace mindspore {
 /// \brief Allocator defined a memory pool for malloc memory and free memory dynamically.
@@ -85,4 +85,4 @@ class MS_API Allocator {
   size_t aligned_size_ = 32;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_INCLUDE_ALLOCATOR_H_
+#endif  // MINDSPORE_INCLUDE_API_ALLOCATOR_H

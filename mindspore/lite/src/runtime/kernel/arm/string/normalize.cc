@@ -97,7 +97,7 @@ std::string NormalizeCPUKernel::Normalize(const std::string &str) {
 void NormalizeCPUKernel::FreeBuffer() {
   for (size_t j = 0; j < normalized_strs.size(); ++j) {
     if (normalized_strs[j] != nullptr) {
-      context_->allocator->Free(normalized_strs[j]);
+      ms_context_->allocator->Free(normalized_strs[j]);
       normalized_strs[j] = nullptr;
     }
   }
@@ -118,7 +118,7 @@ int NormalizeCPUKernel::Run() {
     int str_length = result.size();
 
     char *normalized_str = nullptr;
-    normalized_str = reinterpret_cast<char *>(context_->allocator->Malloc(sizeof(char) * str_length));
+    normalized_str = reinterpret_cast<char *>(ms_context_->allocator->Malloc(sizeof(char) * str_length));
     if (normalized_str == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed!";
       FreeBuffer();

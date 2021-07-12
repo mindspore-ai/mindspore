@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_DELEGATE_DELEGATE_H_
-#define MINDSPORE_LITE_DELEGATE_DELEGATE_H_
+#ifndef MINDSPORE_INCLUDE_API_DELEGATE_H
+#define MINDSPORE_INCLUDE_API_DELEGATE_H
 
 #include <map>
 #include <vector>
 #include <memory>
-#include "include/ms_tensor.h"
-#include "include/context.h"
-#include "include/kernel.h"
+#include "schema/model_generated.h"
+#include "include/api/kernel.h"
 
 namespace mindspore {
 typedef enum {
@@ -35,8 +34,8 @@ using KernelIter = std::vector<kernel::Kernel *>::iterator;
 class MS_API DelegateModel {
  public:
   /// \brief Constructor of MindSpore Lite DelegateModel.
-  DelegateModel(std::vector<kernel::Kernel *> *kernels, const std::vector<tensor::MSTensor *> &inputs,
-                const std::vector<tensor::MSTensor *> &outputs,
+  DelegateModel(std::vector<kernel::Kernel *> *kernels, const std::vector<MSTensor> &inputs,
+                const std::vector<MSTensor> &outputs,
                 const std::map<kernel::Kernel *, const schema::Primitive *> &primitives, SchemaVersion version)
       : kernels_(kernels), inputs_(inputs), outputs_(outputs), primitives_(primitives), version_(version) {}
 
@@ -71,12 +70,12 @@ class MS_API DelegateModel {
   /// \brief Get the input tensors of DelegateModel.
   ///
   /// \return The input tensor vector of DelegateModel.
-  const std::vector<mindspore::tensor::MSTensor *> &inputs() { return this->inputs_; }
+  const std::vector<mindspore::MSTensor> &inputs() { return this->inputs_; }
 
   /// \brief Get the output tensors of DelegateModel.
   ///
   /// \return The ioutput tensor vector of DelegateModel.
-  const std::vector<mindspore::tensor::MSTensor *> &outputs() { return this->outputs_; }
+  const std::vector<mindspore::MSTensor> &outputs() { return this->outputs_; }
 
   /// \brief Get the ms model version.
   ///
@@ -85,14 +84,12 @@ class MS_API DelegateModel {
 
  protected:
   std::vector<kernel::Kernel *> *kernels_;
-  const std::vector<mindspore::tensor::MSTensor *> &inputs_;
-  const std::vector<mindspore::tensor::MSTensor *> &outputs_;
+  const std::vector<mindspore::MSTensor> &inputs_;
+  const std::vector<mindspore::MSTensor> &outputs_;
   const std::map<kernel::Kernel *, const schema::Primitive *> &primitives_;
   SchemaVersion version_;
 };
 
-typedef void (*DelegateHook)(std::shared_ptr<Delegate> delegate);
-static void HookNullFuc(std::shared_ptr<Delegate> delegate) {}
 class MS_API Delegate {
  public:
   /// \brief Constructor of MindSpore Lite Delegate.
@@ -112,10 +109,6 @@ class MS_API Delegate {
   ///
   /// \param[in] model Define the delegate model to be built.
   virtual int Build(DelegateModel *model) = 0;
-
-  DelegateHook init_hook_ = HookNullFuc;
-  DelegateHook build_hook_ = HookNullFuc;
-  DelegateHook run_hook_ = HookNullFuc;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_DELEGATE_DELEGATE_H_
+#endif  // MINDSPORE_INCLUDE_API_DELEGATE_H

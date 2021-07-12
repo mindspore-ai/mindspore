@@ -66,7 +66,7 @@ int InstanceNormCPUKernel::Run() {
   gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->data_c());
   dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  auto ret = ParallelLaunch(this->context_, InstanceNormRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, InstanceNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormRun error error_code[" << ret << "]";
     return ret;

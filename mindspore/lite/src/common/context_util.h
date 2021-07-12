@@ -1,6 +1,4 @@
 /**
- * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
- *
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,31 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_IR_FORMAT_H_
-#define MINDSPORE_CORE_IR_FORMAT_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_
+#define MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_
 
-#include <cstdint>
+#include <set>
+#include <string>
+#include "include/context.h"
+#include "include/api/context.h"
 
 namespace mindspore {
-enum Format : int64_t {
-  NCHW = 0,
-  NHWC = 1,
-  NHWC4 = 2,
-  HWKC = 3,
-  HWCK = 4,
-  KCHW = 5,
-  CKHW = 6,
-  KHWC = 7,
-  CHWK = 8,
-  HW = 9,
-  HW4 = 10,
-  NC = 11,
-  NC4 = 12,
-  NC4HW4 = 13,
-  NUM_OF_FORMAT = 14,
-  NCDHW = 15,
-  NWC = 16,
-  NCW = 17
-};
+namespace lite {
+mindspore::Context *MSContextFromContext(const lite::Context *context);
+std::set<std::string> ProvidersFromMSContext(const mindspore::Context *context);
+}  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_IR_FORMAT_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_CONTEXT_UTIL_H_

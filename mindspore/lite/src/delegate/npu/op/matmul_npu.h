@@ -24,20 +24,20 @@
 namespace mindspore {
 class MatMulNPUOp : public NPUOp {
  public:
-  MatMulNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-              const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  MatMulNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+              const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : NPUOp(primitive, in_tensors, out_tensors, name) {}
 
   ~MatMulNPUOp() override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-           const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+           const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors,
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
   ge::Operator *GetNPUOp() override;

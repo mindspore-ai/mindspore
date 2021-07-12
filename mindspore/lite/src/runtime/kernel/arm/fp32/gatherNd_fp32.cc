@@ -127,7 +127,7 @@ int GatherNdCPUKernel::Run() {
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   InitOffset();
-  auto ret = ParallelLaunch(this->context_, GatherNdRun, this, thread_sz_count_);
+  auto ret = ParallelLaunch(this->ms_context_, GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";
     return ret;

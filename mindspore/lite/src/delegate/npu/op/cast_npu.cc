@@ -18,10 +18,10 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                         const std::vector<tensor::MSTensor *> &out_tensors) {
-  if (in_tensors.size() >= 2 && in_tensors[1]->ElementsNum() == 1) {
-    dst_type_ = static_cast<int *>(in_tensors[1]->data())[0];
+int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                         const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (in_tensors.size() >= 2 && in_tensors[1].ElementNum() == 1) {
+    dst_type_ = reinterpret_cast<const int *>(in_tensors[1].Data().get())[0];
   } else {
     MS_LOG(WARNING) << "NPU dst dtype is attribute.";
     return RET_NOT_SUPPORT;
@@ -29,20 +29,20 @@ int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<t
   return RET_OK;
 }
 
-int CastNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                    const std::vector<tensor::MSTensor *> &out_tensors) {
+int CastNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                    const std::vector<mindspore::MSTensor> &out_tensors) {
   cast_ = new (std::nothrow) hiai::op::CastT(name_);
   if (cast_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  cast_->set_attr_dst_dtype(ConverterToNPUDataType(static_cast<TypeId>(dst_type_)));
-  cast_->set_attr_src_dtype(ConverterToNPUDataType(static_cast<TypeId>(in_tensors[0]->data_type())));
+  cast_->set_attr_dst_dtype(ConverterToNPUDataType(static_cast<DataType>(dst_type_)));
+  cast_->set_attr_src_dtype(ConverterToNPUDataType(static_cast<DataType>(in_tensors[0].DataType())));
   return RET_OK;
 }
 
-int CastNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                            const std::vector<tensor::MSTensor *> &out_tensors,
+int CastNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                            const std::vector<mindspore::MSTensor> &out_tensors,
                             const std::vector<ge::Operator *> &npu_inputs) {
   cast_->set_input_x(*npu_inputs[0]);
   return RET_OK;

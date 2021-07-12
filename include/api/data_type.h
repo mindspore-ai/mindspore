@@ -23,6 +23,7 @@ enum class DataType : int {
   kObjectTypeList = 13,
   kObjectTypeTuple = 14,
   kObjectTypeTensorType = 17,
+  kNumberTypeBegin = 29,
   kNumberTypeBool = 30,
   kNumberTypeInt8 = 32,
   kNumberTypeInt16 = 33,

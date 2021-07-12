@@ -19,15 +19,15 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors) {
+int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors) {
   auto fc_prim = primitive->value_as_FullConnection();
   if (fc_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
   act_type_ = fc_prim->activation_type();
-  auto input_shape = in_tensors[0]->shape();
+  auto input_shape = in_tensors[0].Shape();
   reshape_ = new (std::nothrow) hiai::op::Reshape(name_ + "_reshape");
   if (reshape_ == nullptr) {
     MS_LOG(ERROR) << "New reshape operator for fullconnection op " << name_ << " failed.";
@@ -39,7 +39,7 @@ int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vec
     col *= input_shape[i];
   }
   reshape_op_ = new (std::nothrow) hiai::op::Const(name_ + "_reshape_data");
-  vector<int> reshape_data = {input_shape[0], col};
+  vector<int> reshape_data = {static_cast<int>(input_shape[0]), col};
   ge::TensorDesc reshape_tensor_desc(ge::Shape({2}), ge::FORMAT_NCHW, ge::DT_FLOAT);
   ge::TensorPtr reshape_tensor = std::make_shared<hiai::Tensor>(reshape_tensor_desc);
   reshape_tensor->SetData(reinterpret_cast<uint8_t *>(reshape_data.data()), 2 * sizeof(float));
@@ -54,8 +54,8 @@ int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vec
   return RET_OK;
 }
 
-int FullconnectionNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                      const std::vector<tensor::MSTensor *> &out_tensors,
+int FullconnectionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                      const std::vector<mindspore::MSTensor> &out_tensors,
                                       const std::vector<ge::Operator *> &npu_inputs) {
   reshape_->set_input_x(*npu_inputs[0]);
   fc_->set_input_x1(*reshape_);

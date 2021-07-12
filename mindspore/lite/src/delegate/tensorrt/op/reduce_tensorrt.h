@@ -24,16 +24,16 @@
 namespace mindspore::lite {
 class ReduceTensorRT : public TensorRTOp {
  public:
-  ReduceTensorRT(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                 const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name)
+  ReduceTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                 const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
   ~ReduceTensorRT() override = default;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
   std::map<schema::ReduceMode, nvinfer1::ReduceOperation> reduce_ops_ = {

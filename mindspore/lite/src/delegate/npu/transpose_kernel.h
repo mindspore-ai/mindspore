@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "include/graph/op/all_ops.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 
@@ -33,8 +33,8 @@ void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int ch
 
 class TransposeNPUKernel : public kernel::Kernel {
  public:
-  TransposeNPUKernel(const std::vector<tensor::MSTensor *> &in_tensors,
-                     const std::vector<tensor::MSTensor *> &out_tensors, std::vector<int> perm, std::string name)
+  TransposeNPUKernel(const std::vector<mindspore::MSTensor> &in_tensors,
+                     const std::vector<mindspore::MSTensor> &out_tensors, std::vector<int> perm, std::string name)
       : kernel::Kernel(in_tensors, out_tensors, nullptr, nullptr) {
     type_ = schema::PrimitiveType_Transpose;
     name_ = name;

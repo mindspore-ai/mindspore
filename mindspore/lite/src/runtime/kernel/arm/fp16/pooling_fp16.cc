@@ -89,7 +89,7 @@ int PoolingFp16CPUKernel::Run() {
   fp16_input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   fp16_output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
-  int error_code = ParallelLaunch(this->context_, PoolingFp16Impl, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, PoolingFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;

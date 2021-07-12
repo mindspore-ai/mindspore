@@ -33,7 +33,7 @@ class ApplyMomentumCPUKernel : public OptimizerKernel {
   }
   ~ApplyMomentumCPUKernel() override {
     if (grad_sum_ != nullptr) {
-      context_->allocator->Free(grad_sum_);
+      ms_context_->allocator->Free(grad_sum_);
       grad_sum_ = nullptr;
     }
   }

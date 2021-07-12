@@ -19,6 +19,7 @@
 #include <string>
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
+#include "src/cxx_api/tensor/tensor_impl.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
@@ -30,8 +31,6 @@ namespace mindspore {
 namespace lite {
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers) {
-  std::vector<tensor::MSTensor *> in_tensors(inputs.begin(), inputs.end());
-  std::vector<tensor::MSTensor *> out_tensors(outputs.begin(), outputs.end());
   if (primitive == nullptr) {
     return RET_NOT_SUPPORT;
   }
@@ -52,7 +51,13 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   if (kernel_interface == nullptr) {
     return RET_NOT_SUPPORT;
   }
-  auto ret = kernel_interface->Infer(in_tensors, out_tensors, static_cast<const schema::Primitive *>(primitive));
+  std::vector<mindspore::MSTensor> in_tensors;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(in_tensors),
+                 [](lite::Tensor *tensor) { return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor)); });
+  std::vector<mindspore::MSTensor> out_tensors;
+  std::transform(outputs.begin(), outputs.end(), std::back_inserter(out_tensors),
+                 [](lite::Tensor *tensor) { return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor)); });
+  auto ret = kernel_interface->Infer(&in_tensors, &out_tensors, static_cast<const schema::Primitive *>(primitive));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "op_type: " << PrimitiveTypeName(prim_type) << " infer fail!ret: " << ret;
     return ret;

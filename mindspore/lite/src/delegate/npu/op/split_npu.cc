@@ -19,8 +19,8 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                     const std::vector<tensor::MSTensor *> &out_tensors) {
+int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                     const std::vector<mindspore::MSTensor> &out_tensors) {
   split_ = new (std::nothrow) hiai::op::SplitV(name_);
   if (split_ == nullptr) {
     MS_LOG(ERROR) << "New split npu operator for op " << name_ << " failed.";
@@ -53,8 +53,8 @@ int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<tenso
   return RET_OK;
 }
 
-int SplitNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors,
+int SplitNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
   ge::TensorDesc split_dim_tensor_desc(ge::Shape({1}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr split_dim_tensor = std::make_shared<hiai::Tensor>(split_dim_tensor_desc);

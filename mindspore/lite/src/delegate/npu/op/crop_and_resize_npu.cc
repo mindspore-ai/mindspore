@@ -16,8 +16,9 @@
 
 #include "src/delegate/npu/op/crop_and_resize_npu.h"
 namespace mindspore {
-int CropAndResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors) {
+int CropAndResizeNPUOp::IsSupport(const schema::Primitive *primitive,
+                                  const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() < 4) {
     MS_LOG(WARNING) << "NPU CropAndResize got nput inputs size < 4";
     return RET_NOT_SUPPORT;
@@ -37,8 +38,8 @@ int CropAndResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std:
   return RET_OK;
 }
 
-int CropAndResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors) {
+int CropAndResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors) {
   crop_and_resize_ = new (std::nothrow) hiai::op::CropAndResize(name_);
   if (crop_and_resize_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -62,8 +63,8 @@ int CropAndResizeNPUOp::Init(const schema::Primitive *primitive, const std::vect
   return RET_OK;
 }
 
-int CropAndResizeNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                     const std::vector<tensor::MSTensor *> &out_tensors,
+int CropAndResizeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                     const std::vector<mindspore::MSTensor> &out_tensors,
                                      const std::vector<ge::Operator *> &npu_inputs) {
   crop_and_resize_->set_input_x(*npu_inputs[0]);
   crop_and_resize_->set_input_boxes(*npu_inputs[1]);

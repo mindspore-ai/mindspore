@@ -334,7 +334,7 @@ int MatmulBaseInt8CPUKernel::Run() {
     batch_sums_ = weight_bias_sums_ + i * param_->col_align_;
     batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
 
-    auto ret = ParallelLaunch(this->context_, MatmulBaseInt8Run, this, thread_count_);
+    auto ret = ParallelLaunch(this->ms_context_, MatmulBaseInt8Run, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulInt8Run error: [" << ret << "]";
       return ret;

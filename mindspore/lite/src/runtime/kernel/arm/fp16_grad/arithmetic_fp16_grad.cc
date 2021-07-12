@@ -75,7 +75,7 @@ int ArithmeticGradRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_s
 }
 
 int ArithmeticGradCPUKernelFp16::Run() {
-  int error_code = ParallelLaunch(this->context_, ArithmeticGradRunFp16, this, 1);
+  int error_code = ParallelLaunch(this->ms_context_, ArithmeticGradRunFp16, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic Grad function error error_code[" << error_code << "]";
     return RET_ERROR;

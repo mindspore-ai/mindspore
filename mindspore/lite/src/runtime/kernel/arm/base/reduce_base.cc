@@ -153,7 +153,7 @@ void ReduceBaseCPUKernel::CalculateTmpBufferSize() {
         size *= input_shape.at(j);
       }
     }
-    MS_ASSERT(context_->allocator != nullptr);
+    MS_ASSERT(ms_context_->allocator != nullptr);
     buffer_sizes_.emplace_back(size);
     input_shape.at(axis) = 1;
   }

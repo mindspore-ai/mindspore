@@ -16,6 +16,7 @@
 
 #include "src/cxx_api/tensor_utils.h"
 #include "src/common/log_adapter.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,

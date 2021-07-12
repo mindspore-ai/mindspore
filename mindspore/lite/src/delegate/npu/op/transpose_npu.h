@@ -23,24 +23,24 @@
 namespace mindspore {
 class TransposeNPUOp : public NPUOp {
  public:
-  TransposeNPUOp(const std::vector<tensor::MSTensor *> &in_tensors, const std::vector<tensor::MSTensor *> &out_tensors,
-                 std::vector<int> perm, std::string name)
+  TransposeNPUOp(const std::vector<mindspore::MSTensor> &in_tensors,
+                 const std::vector<mindspore::MSTensor> &out_tensors, std::vector<int> perm, std::string name)
       : NPUOp(nullptr, in_tensors, out_tensors, name) {
     perm_ = perm;
     type_ = schema::PrimitiveType_Transpose;
   }
 
-  TransposeNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                 const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  TransposeNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                 const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : NPUOp(primitive, in_tensors, out_tensors, name) {}
 
   ~TransposeNPUOp() override = default;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-           const std::vector<tensor::MSTensor *> &out_tensors) override {
+  int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+           const std::vector<mindspore::MSTensor> &out_tensors) override {
     return RET_OK;
   }
 

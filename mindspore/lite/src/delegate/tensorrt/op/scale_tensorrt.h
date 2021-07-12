@@ -24,16 +24,16 @@ using mindspore::lite::RET_OK;
 namespace mindspore::lite {
 class ScaleTensorRT : public TensorRTOp {
  public:
-  ScaleTensorRT(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name)
+  ScaleTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
   ~ScaleTensorRT() override = default;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
   nvinfer1::ITensor *AddUnsqueezeOp(nvinfer1::INetworkDefinition *network);

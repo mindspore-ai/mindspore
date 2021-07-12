@@ -80,7 +80,7 @@ int ArithmeticSelfGradCPUKernel::DoArithmeticSelfGrad(int task_id) {
 int ArithmeticSelfGradCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticSelfGradCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->context_, ArithmeticSelfGradRun, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfGradRun, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parallel launch fail!ret: " << ret;
     return ret;

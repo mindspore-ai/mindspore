@@ -15,26 +15,25 @@
  */
 
 #include "src/delegate/npu/op/reshape_npu.h"
-#include <memory>
 #include "include/graph/op/all_ops.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
-int ReshapeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                            const std::vector<tensor::MSTensor *> &out_tensors) {
+int ReshapeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                            const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 2) {
     MS_LOG(WARNING) << "Npu op should have w2 input tensors.";
     return RET_NOT_SUPPORT;
   }
   auto shape_tensor = in_tensors.at(1);
-  if (shape_tensor->data() == nullptr) {
+  if (shape_tensor.Data() == nullptr) {
     MS_LOG(WARNING) << "Npu reshape op only supports const shape.";
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
 }
 
-int ReshapeNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                       const std::vector<tensor::MSTensor *> &out_tensors) {
+int ReshapeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                       const std::vector<mindspore::MSTensor> &out_tensors) {
   reshape_ = new (std::nothrow) hiai::op::Reshape(name_);
   if (reshape_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -43,8 +42,8 @@ int ReshapeNPUOp::Init(const schema::Primitive *primitive, const std::vector<ten
   return RET_OK;
 }
 
-int ReshapeNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors,
+int ReshapeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors,
                                const std::vector<ge::Operator *> &npu_inputs) {
   reshape_->set_input_x(*npu_inputs[0]);
   reshape_->set_input_shape(*npu_inputs[1]);

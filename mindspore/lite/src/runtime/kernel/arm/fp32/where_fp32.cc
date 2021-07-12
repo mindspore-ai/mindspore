@@ -73,7 +73,7 @@ int WhereCPUKernel::RunWithSingleInput() {
   int strides[8];
   ComputeStrides(in_tensors_.at(0)->shape().data(), strides, where_param_->rank_);
 
-  auto data = context_->allocator->Malloc(where_param_->condition_num_ * where_param_->rank_ * sizeof(int32_t));
+  auto data = ms_context_->allocator->Malloc(where_param_->condition_num_ * where_param_->rank_ * sizeof(int32_t));
   int *result = reinterpret_cast<int *>(data);
 
   int result_index = 0;
@@ -97,7 +97,7 @@ int WhereCPUKernel::RunWithSingleInput() {
     return RET_ERROR;
   }
   memcpy(out_data, result, true_num * where_param_->rank_ * sizeof(int32_t));
-  context_->allocator->Free(data);
+  ms_context_->allocator->Free(data);
   return RET_OK;
 }
 
@@ -131,7 +131,7 @@ int WhereCPUKernel::RunWithTripleInputs() {
     MS_LOG(ERROR) << "Error, inputs' length are zero !!!";
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->context_, WhereRun, this, where_param_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, WhereRun, this, where_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "WhereDwRun error: error_code[" << ret << "]";
     return RET_ERROR;

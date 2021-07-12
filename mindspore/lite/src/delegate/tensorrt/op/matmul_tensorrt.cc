@@ -19,8 +19,8 @@
 
 namespace mindspore::lite {
 int mindspore::lite::MatMulTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
-                                               const std::vector<tensor::MSTensor *> &in_tensors,
-                                               const std::vector<tensor::MSTensor *> &out_tensors) {
+                                               const std::vector<mindspore::MSTensor> &in_tensors,
+                                               const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 2 && in_tensors.size() != 3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -36,13 +36,13 @@ int mindspore::lite::MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *ne
   auto primitive = this->GetPrimitive()->value_as_MatMul();
   transpose_a_ = primitive->transpose_a() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
   transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
-  auto weight = ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0]->shape().size());
+  auto weight = ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape().size());
 
   auto matmul_layer = network->addMatrixMultiply(*tensorrt_in_tensors_[0], transpose_a_, *weight, transpose_b_);
   matmul_layer->setName(op_name_.c_str());
 
   if (in_tensors_.size() == 3) {
-    auto bias = ConvertTensorWithExpandDims(network, in_tensors_[2], in_tensors_[0]->shape().size());
+    auto bias = ConvertTensorWithExpandDims(network, in_tensors_[2], in_tensors_[0].Shape().size());
     auto bias_layer = network->addElementWise(*matmul_layer->getOutput(0), *bias, nvinfer1::ElementWiseOperation::kSUM);
     auto bias_layer_name = op_name_ + "_bias";
     bias_layer->setName(bias_layer_name.c_str());

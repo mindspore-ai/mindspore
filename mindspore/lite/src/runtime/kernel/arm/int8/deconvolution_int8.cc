@@ -268,7 +268,7 @@ int DeConvInt8CPUKernel::Run() {
     DeConvPackInputSum(input_ptr_, input_sum_, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
                        UP_ROUND(matmul_param_->row_, C4NUM), UP_ROUND(matmul_param_->deep_, C16NUM), support_optimize_);
 
-    error_code = ParallelLaunch(this->context_, DeConvInt8Run, this, thread_count_);
+    error_code = ParallelLaunch(this->ms_context_, DeConvInt8Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv int8 run error! error_code[" << error_code << "]";
     }

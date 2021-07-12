@@ -26,11 +26,12 @@
 #include "src/cxx_api/tensor/tensor_impl.h"
 
 namespace mindspore {
-std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
-                                   bool verify_size);
-Status LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor);
+std::vector<int32_t> MS_API TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
+                                          bool verify_size);
 
-std::vector<MSTensor> LiteTensorsToMSTensors(const std::vector<mindspore::tensor::MSTensor *> &srcTensors);
+Status MS_API LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor);
+
+std::vector<MSTensor> MS_API LiteTensorsToMSTensors(const std::vector<mindspore::tensor::MSTensor *> &srcTensors);
 
 }  // namespace mindspore
 

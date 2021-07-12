@@ -102,7 +102,7 @@ int SpaceToBatchCPUKernel::Run() {
     }
   }
 
-  ParallelLaunch(this->context_, SpaceToBatchFp32Run, this, op_parameter_->thread_num_);
+  ParallelLaunch(this->ms_context_, SpaceToBatchFp32Run, this, op_parameter_->thread_num_);
 
   return RET_OK;
 }

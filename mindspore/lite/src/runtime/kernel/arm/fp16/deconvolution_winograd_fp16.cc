@@ -402,13 +402,13 @@ int DeConvWinogradFp16CPUKernel::Run() {
     nhwc_output_ = output_ptr + batch_index * deconv_param_->output_plane_ * conv_param_->output_channel_;
 
     ::memset(nc4hw4_output_, 0, deconv_param_->output_plane_ * deconv_param_->oc_div4_ * C4NUM * sizeof(float16_t));
-    auto ret = ParallelLaunch(this->context_, DeConvWgFp16Run, this, deconv_param_->thread_num_);
+    auto ret = ParallelLaunch(this->ms_context_, DeConvWgFp16Run, this, deconv_param_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DeConvWgFp16Run failed!";
       return ret;
     }
     // post bias activate and nhwc
-    ret = ParallelLaunch(this->context_, DeConvWgPostFp16Run, this, thread_num_hw_);
+    ret = ParallelLaunch(this->ms_context_, DeConvWgPostFp16Run, this, thread_num_hw_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DeConvWgPostFp16Run failed!";
       return ret;

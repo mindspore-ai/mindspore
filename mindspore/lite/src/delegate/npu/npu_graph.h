@@ -20,15 +20,15 @@
 #include <vector>
 #include <map>
 #include <utility>
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/npu_executor.h"
 
 namespace mindspore {
 class NPUGraph : public kernel::Kernel {
  public:
-  NPUGraph(std::vector<NPUOp *> npu_ops, NPUManager *npu_manager, const std::vector<tensor::MSTensor *> &inputs,
-           const std::vector<tensor::MSTensor *> &outputs)
+  NPUGraph(std::vector<NPUOp *> npu_ops, NPUManager *npu_manager, const std::vector<mindspore::MSTensor> &inputs,
+           const std::vector<mindspore::MSTensor> &outputs)
       : kernel::Kernel(inputs, outputs, nullptr, nullptr), npu_ops_(std::move(npu_ops)), npu_manager_(npu_manager) {}
 
   ~NPUGraph() override;
@@ -44,15 +44,15 @@ class NPUGraph : public kernel::Kernel {
     return lite::RET_ERROR;
   }
 
-  void set_input(tensor::MSTensor *in_tensor, int index) override;
+  void set_input(mindspore::MSTensor in_tensor, int index) override;
 
-  void set_output(tensor::MSTensor *out_tensor, int index) override;
+  void set_output(mindspore::MSTensor out_tensor, int index) override;
 
   int FindPreNextOps();
 
   std::vector<NPUOp *> *GetOps() { return &npu_ops_; }
 
-  std::vector<tensor::MSTensor *> *GetInsertTensors() { return &insert_tensors_; }
+  std::vector<mindspore::MSTensor *> *GetInsertTensors() { return &insert_tensors_; }
 
  protected:
   std::vector<NPUOp *> FindPreOps(NPUOp *cur_op);
@@ -69,7 +69,7 @@ class NPUGraph : public kernel::Kernel {
 
   std::vector<kernel::Kernel *> all_kernels_{};
 
-  std::vector<tensor::MSTensor *> insert_tensors_;
+  std::vector<mindspore::MSTensor *> insert_tensors_;
 
   NPUManager *npu_manager_ = nullptr;
 };

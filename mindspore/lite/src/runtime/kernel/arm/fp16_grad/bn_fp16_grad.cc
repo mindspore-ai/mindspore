@@ -139,9 +139,9 @@ int BNGradFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int BNGradCPUKernelFp16::Run() {
   stage_ = 0;
-  thread_num_ = context_->thread_num_;
+  thread_num_ = ms_context_->thread_num_;
   if (thread_num_ == 1) {
-    int error_code = ParallelLaunch(this->context_, BNGradFp16Run, this, thread_num_);
+    int error_code = ParallelLaunch(this->ms_context_, BNGradFp16Run, this, thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
       return RET_ERROR;
@@ -150,7 +150,7 @@ int BNGradCPUKernelFp16::Run() {
     const std::vector<int> threads = {thread_num_, 1, thread_num_};
     for (size_t stage = 0; stage < threads.size(); stage++) {
       stage_ = static_cast<int>(stage);
-      int error_code = ParallelLaunch(this->context_, BNGradFp16Run, this, threads.at(stage));
+      int error_code = ParallelLaunch(this->ms_context_, BNGradFp16Run, this, threads.at(stage));
       if (error_code != RET_OK) {
         MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
         return RET_ERROR;

@@ -118,7 +118,10 @@ add_subdirectory(registry)
 add_subdirectory(${CORE_DIR} mindspore_core)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
+set(API_SRC ${SRC_DIR}/cxx_api/context.cc)
 set(LITE_SRC
+        ${API_SRC}
+        ${SRC_DIR}/common/context_util.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/string_util.cc
         ${SRC_DIR}/common/prim_util.cc
@@ -180,7 +183,6 @@ target_link_libraries(converter_lite PRIVATE
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid
-        mslite_converter_plugin
         tflite_parser_mid
         tf_parser_mid
         caffe_parser_mid
@@ -194,6 +196,7 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::json
         mindspore::eigen
         -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
+        mslite_converter_plugin
         mindspore::glog
         mindspore::protobuf
         mindspore::flatbuffers

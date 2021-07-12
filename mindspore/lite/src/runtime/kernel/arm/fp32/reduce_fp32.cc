@@ -118,7 +118,7 @@ int ReduceCPUKernel::Run() {
       MS_LOG(ERROR) << "axis_size_ is must not be zero!";
       return RET_ERROR;
     }
-    auto error_code = ParallelLaunch(this->context_, ReduceImpl, this, op_parameter_->thread_num_);
+    auto error_code = ParallelLaunch(this->ms_context_, ReduceImpl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
       FreeTmpBuffer();
@@ -182,11 +182,11 @@ int ReduceCPUKernel::MallocTmpBuffer() {
   for (auto size : buffer_sizes_) {
     void *buffer = nullptr;
     if (data_type_ == kDataTypeFloat) {
-      buffer = context_->allocator->Malloc(size * sizeof(float));
+      buffer = ms_context_->allocator->Malloc(size * sizeof(float));
     } else if (data_type_ == kDataTypeBool) {
-      buffer = context_->allocator->Malloc(size * sizeof(bool));
+      buffer = ms_context_->allocator->Malloc(size * sizeof(bool));
     } else {
-      buffer = context_->allocator->Malloc(size * sizeof(int));
+      buffer = ms_context_->allocator->Malloc(size * sizeof(int));
     }
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed.";
@@ -200,7 +200,7 @@ int ReduceCPUKernel::MallocTmpBuffer() {
 void ReduceCPUKernel::FreeTmpBuffer() {
   for (auto &buffer : data_buffers_) {
     if (buffer != nullptr) {
-      context_->allocator->Free(buffer);
+      ms_context_->allocator->Free(buffer);
       buffer = nullptr;
     }
   }

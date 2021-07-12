@@ -72,7 +72,7 @@ int LocalResponseNormRun(void *cdata, int task_id, float lhs_scale, float rhs_sc
 }
 
 int LocalResponseNormCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, LocalResponseNormRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, LocalResponseNormRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LocalResponseNorm function error error_code[" << error_code << "]";
     return RET_ERROR;

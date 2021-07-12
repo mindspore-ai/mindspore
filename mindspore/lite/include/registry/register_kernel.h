@@ -22,9 +22,10 @@
 #include <vector>
 #include <memory>
 #include "schema/model_generated.h"
-#include "include/context.h"
-#include "include/ms_tensor.h"
-#include "include/kernel.h"
+#include "include/api/context.h"
+#include "include/api/types.h"
+#include "include/api/kernel.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 namespace kernel {
@@ -57,8 +58,8 @@ struct MS_API KernelDesc {
 ///
 /// \return Smart Pointer of kernel.
 using CreateKernel = std::function<std::shared_ptr<kernel::Kernel>(
-  const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
-  const schema::Primitive *primitive, const lite::Context *ctx)>;
+  const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs, const schema::Primitive *primitive,
+  const mindspore::Context *ctx)>;
 
 /// \brief RegisterKernel Defined registration of kernel.
 class MS_API RegisterKernel {

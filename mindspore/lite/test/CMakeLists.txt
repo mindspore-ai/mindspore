@@ -75,6 +75,11 @@ endif()
 add_definitions(-DENABLE_V0)
 
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
+file(GLOB CXX_SRC
+        ${LITE_DIR}/src/cxx_api/*.cc
+        ${LITE_DIR}/src/cxx_api/graph/*.cc
+        ${LITE_DIR}/src/cxx_api/model/*.cc
+        ${LITE_DIR}/src/cxx_api/tensor/*.cc)
 if(MSLITE_ENABLE_CONVERTER)
     set(OPS_SRC ${OPS_SRC})
 endif()
@@ -82,6 +87,7 @@ set(TEST_LITE_SRC
         ${TEST_LITE_SRC}
         ${CCSRC_SRC}
         ${OPS_SRC}
+        ${CXX_SRC}
         ${KERNEL_OP_SRC}
         ${LITE_DIR}/src/runtime/inner_allocator.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
@@ -104,6 +110,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/graph_util.cc
         ${LITE_DIR}/src/common/prim_util.cc
         ${LITE_DIR}/src/common/tensor_util.cc
+        ${LITE_DIR}/src/common/context_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/dynamic_library_loader.cc
@@ -278,7 +285,6 @@ if(SUPPORT_TRAIN)
             ${LITE_DIR}/src/train/train_export.cc
             ${LITE_DIR}/src/train/train_utils.cc
             ${LITE_DIR}/src/train/transfer_session.cc
-            ${LITE_DIR}/src/lite_session.cc
             ${LITE_DIR}/tools/common/storage.cc
             )
 else()
@@ -286,7 +292,6 @@ else()
             ${TEST_LITE_SRC}
             ${LITE_DIR}/src/train/train_populate_parameter.cc
             ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
-            ${LITE_DIR}/src/lite_session.cc
             )
 endif()
 ### test src
@@ -313,8 +318,8 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
         ${TEST_DIR}/ut/src/lite_mindrt_test.cc
-        ${TEST_DIR}/ut/src/registry/registry_test.cc
-        ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
+#        ${TEST_DIR}/ut/src/registry/registry_test.cc
+#        ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
         )
 
 if(MSLITE_ENABLE_CONVERTER)
@@ -331,6 +336,10 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_activation_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/constant_folding_fusion_test.cc
             )
+else()
+    set(TEST_SRC
+            ${TEST_SRC}
+            ${CORE_DIR}/utils/status.cc)
 endif()
 
 if(SUPPORT_TRAIN)

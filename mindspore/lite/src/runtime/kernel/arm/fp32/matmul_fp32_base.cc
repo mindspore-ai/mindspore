@@ -78,7 +78,7 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
   if (op_parameter_->is_train_session_) {
     a_pack_ptr_ = reinterpret_cast<float *>(workspace());
   } else {
-    a_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
+    a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
   }
   if (a_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
@@ -94,7 +94,7 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
   if (op_parameter_->is_train_session_) {
     b_pack_ptr_ = reinterpret_cast<float *>(workspace()) + matrix_a_pack_size_;
   } else {
-    b_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_b_pack_size_ * sizeof(float)));
+    b_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_pack_size_ * sizeof(float)));
   }
   if (b_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc b_pack_ptr_ failed";
@@ -215,7 +215,7 @@ void MatmulFp32BaseCPUKernel::FreeBiasBuf() {
 void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
   if (!op_parameter_->is_train_session_) {
     if (a_pack_ptr_ != nullptr) {
-      context_->allocator->Free(a_pack_ptr_);
+      ms_context_->allocator->Free(a_pack_ptr_);
       a_pack_ptr_ = nullptr;
     }
   } else {
@@ -226,7 +226,7 @@ void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
 void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
   if (!op_parameter_->is_train_session_) {
     if (b_pack_ptr_ != nullptr) {
-      context_->allocator->Free(b_pack_ptr_);
+      ms_context_->allocator->Free(b_pack_ptr_);
       b_pack_ptr_ = nullptr;
     }
   } else {
@@ -379,9 +379,9 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
   if (oc_res_ != 0 && vec_matmul_) {  // vec matmul need to malloc dst
     int out_channel = params_->col_;
     int oc_block_num = UP_DIV(out_channel, col_tile_);
-    MS_ASSERT(context_->allocator != nullptr);
+    MS_ASSERT(ms_context_->allocator != nullptr);
     output_data_ = reinterpret_cast<float *>(
-      context_->allocator->Malloc(params_->batch * params_->row_ * oc_block_num * col_tile_ * sizeof(float)));
+      ms_context_->allocator->Malloc(params_->batch * params_->row_ * oc_block_num * col_tile_ * sizeof(float)));
     if (output_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc tmp output data failed.";
       return RET_NULL_PTR;
@@ -437,7 +437,7 @@ int MatmulFp32BaseCPUKernel::Run() {
       // need not aligned
       batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_;
     }
-    ret = ParallelLaunch(this->context_, MatmulBaseFloatRun, this, thread_count_);
+    ret = ParallelLaunch(this->ms_context_, MatmulBaseFloatRun, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulBaseFloatRun failed";
     }
@@ -447,7 +447,7 @@ int MatmulFp32BaseCPUKernel::Run() {
   if (oc_res_ != 0 && vec_matmul_) {
     auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
     PackNHWCXToNHWCFp32(output_data_, out_data, params_->batch, params_->row_, params_->col_, col_tile_);
-    context_->allocator->Free(output_data_);
+    ms_context_->allocator->Free(output_data_);
     output_data_ = nullptr;
   }
 #endif

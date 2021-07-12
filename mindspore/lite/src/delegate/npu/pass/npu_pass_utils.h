@@ -20,21 +20,22 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include "mindspore/lite/src/delegate/npu/op//transpose_npu.h"
-#include "src/delegate/npu/op//npu_op.h"
+#include "src/delegate/npu/op/npu_op.h"
+#include "src/delegate/npu/op/transpose_npu.h"
+
 namespace mindspore {
 extern std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index;
 class NPUPassUtils {
  public:
-  static NPUOp *CreateNchw2NhwcOp(const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name);
+  static NPUOp *CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name);
 
-  static NPUOp *CreateNhwc2NchwOp(const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name);
+  static NPUOp *CreateNhwc2NchwOp(const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name);
 
   static void UpdateOp(NPUOp *op, const std::vector<NPUOp *> &in_ops, const std::vector<NPUOp *> &out_ops,
-                       const std::vector<tensor::MSTensor *> &in_tensors,
-                       const std::vector<tensor::MSTensor *> &out_tensors);
+                       const std::vector<mindspore::MSTensor> &in_tensors,
+                       const std::vector<mindspore::MSTensor> &out_tensors);
 
   static void UpdateNH2NCTransNodePreOp(NPUOp *pre_op, NPUOp *trans_op, NPUOp *op);
 
@@ -50,23 +51,11 @@ class NPUPassUtils {
   static bool IsNhwc2Nchw(NPUOp *op);
 
   static bool IsNchw2Nhwc(NPUOp *op);
-  static NPUOp *OpInputFromOp(NPUOp *op, tensor::MSTensor *in_tensor);
-  static std::vector<tensor::MSTensor *> GetNonConstInputs(NPUOp *op);
+  static NPUOp *OpInputFromOp(NPUOp *op, mindspore::MSTensor in_tensor);
+  static std::vector<mindspore::MSTensor> GetNonConstInputs(NPUOp *op);
   static bool Scale4dCase(NPUOp *op);
   static void AssistDataNHWC2NCHW(int *data, size_t unit_size);
   static int MaskDataNHWC2NCHW(int mask);
-};
-
-class RuntimePass {
- public:
-  RuntimePass(std::vector<NPUOp *> *ops, std::vector<tensor::MSTensor *> *tensors)
-      : all_ops_(ops), all_tensors_(tensors) {}
-  int InsertPreOp(NPUOp *op, tensor::MSTensor *in_edges, schema::Primitive *primitive);
-  int InsertPostOp(NPUOp *op, NPUOp *out_edges, schema::Primitive *primitive);
-
- private:
-  std::vector<NPUOp *> *all_ops_;
-  std::vector<tensor::MSTensor *> *all_tensors_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_PASS_UTILS_H_

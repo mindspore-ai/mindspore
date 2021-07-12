@@ -131,7 +131,7 @@ int CastFp16CPUKernel::Run() {
   if (data_num_ == 0) {
     return RET_OK;
   }
-  return ParallelLaunch(this->context_, CastFp16Run, this, op_parameter_->thread_num_);
+  return ParallelLaunch(this->ms_context_, CastFp16Run, this, op_parameter_->thread_num_);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, LiteKernelCreator<CastFp16CPUKernel>)

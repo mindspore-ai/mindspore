@@ -224,7 +224,7 @@ int ConvolutionWinogradCPUKernel::Run() {
     }
   }
 
-  ret = ParallelLaunch(this->context_, ConvolutionWinogradImpl, this, thread_count_);
+  ret = ParallelLaunch(this->ms_context_, ConvolutionWinogradImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << ret << "]";
   }

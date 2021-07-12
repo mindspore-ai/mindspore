@@ -108,7 +108,7 @@ int InstanceNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 int InstanceNormFp16CPUKernel::Run() {
   src_data_ = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
   dst_data_ = reinterpret_cast<float16_t *>(out_tensors_[0]->data_c());
-  auto ret = ParallelLaunch(this->context_, InstanceNormFp16Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, InstanceNormFp16Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormFp16Run error error_code[" << ret << "]";
     return ret;

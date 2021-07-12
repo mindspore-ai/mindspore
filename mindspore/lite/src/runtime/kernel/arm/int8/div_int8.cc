@@ -114,12 +114,12 @@ int DivInt8CPUKernel::Run() {
       tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
       tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
-    tile0_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
-    tile1_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    tile0_data_ = static_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    tile1_data_ = static_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_.at(0)->Size()));
     if (tile0_data_ == nullptr || tile1_data_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";
-      context_->allocator->Free(tile0_data_);
-      context_->allocator->Free(tile1_data_);
+      ms_context_->allocator->Free(tile0_data_);
+      ms_context_->allocator->Free(tile1_data_);
       tile0_data_ = nullptr;
       tile1_data_ = nullptr;
       return RET_ERROR;
@@ -128,10 +128,10 @@ int DivInt8CPUKernel::Run() {
                        static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), reinterpret_cast<int8_t *>(tile0_data_),
                        reinterpret_cast<int8_t *>(tile1_data_), &tile_para);
   }
-  auto ret = ParallelLaunch(this->context_, DivInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, DivInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
-    context_->allocator->Free(tile0_data_);
-    context_->allocator->Free(tile1_data_);
+    ms_context_->allocator->Free(tile0_data_);
+    ms_context_->allocator->Free(tile1_data_);
     tile0_data_ = nullptr;
     tile1_data_ = nullptr;
   }

@@ -40,7 +40,7 @@ int PowerImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int PowerCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->context_, PowerImpl, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, PowerImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerCPUKernel error: " << ret;
     return RET_ERROR;

@@ -19,16 +19,11 @@
 
 #include <vector>
 #include <map>
-#include "include/delegate.h"
+#include "include/api/delegate.h"
+#include "include/context.h"
 #include "src/delegate/npu/npu_manager.h"
 #include "src/delegate/npu/pass/npu_pass_manager.h"
-#include "src/delegate/npu/op//npu_op.h"
-#include "include/context.h"
-#include "include/errorcode.h"
-#include "src/common/log_adapter.h"
-
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
+#include "src/delegate/npu/op/npu_op.h"
 
 namespace mindspore {
 class NPUDelegate : public Delegate {

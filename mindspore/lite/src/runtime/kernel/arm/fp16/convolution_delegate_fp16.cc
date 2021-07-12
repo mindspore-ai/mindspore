@@ -99,11 +99,11 @@ static void SetInputOutputShapeInfo(ConvParameter *conv_param, lite::Tensor *inp
 int ConvolutionDelegateFP16CPUKernel::ReSize() {
   // Update shape info of input and output
   kernel::SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(op_parameter_), in_tensors_.front(),
-                                  out_tensors_.front(), static_cast<const lite::InnerContext *>(this->context_));
+                                  out_tensors_.front(), static_cast<const lite::InnerContext *>(this->ms_context_));
   if (fp16_conv_kernel_ == nullptr) {
     fp16_conv_kernel_ =
       CpuConvFp16KernelSelect(in_tensors_, out_tensors_, op_parameter_,
-                              static_cast<const lite::InnerContext *>(context_), origin_weight_, origin_bias_);
+                              static_cast<const lite::InnerContext *>(ms_context_), origin_weight_, origin_bias_);
     if (fp16_conv_kernel_ == nullptr) {
       MS_LOG(ERROR) << "Selecting execute kernel failed for conv_kernel, got a nullptr.";
       return RET_ERROR;

@@ -99,7 +99,7 @@ int ROIPoolingCPUKernel::Run() {
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   roi_ptr_ = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto ret = ParallelLaunch(this->context_, ROIPoolingRun, this, param_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ROIPoolingRun, this, param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling error: error_code[" << ret << "]";
     return ret;

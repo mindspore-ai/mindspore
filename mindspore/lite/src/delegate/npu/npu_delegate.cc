@@ -16,6 +16,7 @@
 
 #include "src/delegate/npu/npu_delegate.h"
 #include <queue>
+#include "include/errorcode.h"
 #include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/op/activation_npu.h"
 #include "src/delegate/npu/op/argmax_npu.h"
@@ -53,6 +54,9 @@
 #include "src/delegate/npu/pass/npu_transform_pass.h"
 #include "src/delegate/npu/pass/npu_insert_transform_pass.h"
 #include "src/delegate/npu/pass/npu_fusion_pass.h"
+
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 
 namespace mindspore {
 NPUDelegate::~NPUDelegate() {
@@ -202,42 +206,42 @@ int NPUDelegate::Build(DelegateModel *model) {
 }
 
 NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primitive) {
-  auto in_tensors = kernel->inputs();
-  auto out_tensors = kernel->outputs();
   auto name = kernel->name();
   NPUOp *npu_op = nullptr;
   auto node_type = primitive->value_type();
   if (node_type == schema::PrimitiveType_Conv2DFusion) {
-    npu_op = GetNPUConvOp(primitive, in_tensors, out_tensors, name);
+    npu_op = GetNPUConvOp(primitive, kernel->inputs(), kernel->outputs(), name);
   } else {
     if (op_func_lists_.find(node_type) != op_func_lists_.end()) {
-      npu_op = op_func_lists_[node_type](primitive, in_tensors, out_tensors, name);
+      npu_op = op_func_lists_[node_type](primitive, kernel->inputs(), kernel->outputs(), name);
     } else {
       MS_LOG(DEBUG) << "Unsupported op type for NPU.";
       return nullptr;
     }
   }
 
-  for (auto tensor : in_tensors) {
-    if (tensor->data_type() == kNumberTypeFloat16 && tensor->data() == nullptr) {
-      tensor->set_data_type(kNumberTypeFloat32);
+  for (int i = 0; i < kernel->inputs().size(); i++) {
+    mindspore::MSTensor tensor = kernel->inputs()[i];
+    if (tensor.DataType() == DataType::kNumberTypeFloat16 && tensor.Data() == nullptr) {
+      tensor.SetDataType(DataType::kNumberTypeFloat32);
     }
   }
-  for (auto tensor : out_tensors) {
-    if (tensor->data_type() == kNumberTypeFloat16) {
-      tensor->set_data_type(kNumberTypeFloat32);
+  for (int i = 0; i < kernel->outputs().size(); i++) {
+    mindspore::MSTensor tensor = kernel->outputs()[i];
+    if (tensor.DataType() == DataType::kNumberTypeFloat16) {
+      tensor.SetDataType(DataType::kNumberTypeFloat32);
     }
   }
   return npu_op;
 }
 
-std::vector<tensor::MSTensor *> GraphInTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
-                                               KernelIter end) {
+std::vector<mindspore::MSTensor> GraphInTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
+                                                KernelIter end) {
   auto in_tensors = NPUGraphUtils::GetGraphInTensors(ops);
-  std::vector<tensor::MSTensor *> all_in_tensors;
+  std::vector<mindspore::MSTensor> all_in_tensors;
   for (auto op : ops) {
     for (auto in_tensor : op->inputs()) {
-      if (in_tensor->data() != nullptr && find(in_tensors.begin(), in_tensors.end(), in_tensor) == in_tensors.end()) {
+      if (in_tensor.Data() != nullptr && find(in_tensors.begin(), in_tensors.end(), in_tensor) == in_tensors.end()) {
         all_in_tensors.push_back(in_tensor);
       }
     }
@@ -257,10 +261,10 @@ std::vector<tensor::MSTensor *> GraphInTensors(const std::vector<NPUOp *> &ops, 
   return in_tensors;
 }
 
-std::vector<tensor::MSTensor *> GraphOutTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
-                                                KernelIter end) {
+std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
+                                                 KernelIter end) {
   auto out_tensors = NPUGraphUtils::GetGraphOutTensors(ops);
-  std::vector<tensor::MSTensor *> all_out_tensors;
+  std::vector<mindspore::MSTensor> all_out_tensors;
   for (auto op : ops) {
     for (auto out_tensor : op->outputs()) {
       if (find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {

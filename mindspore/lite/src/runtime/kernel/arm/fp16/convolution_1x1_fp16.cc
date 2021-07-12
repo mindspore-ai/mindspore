@@ -272,10 +272,10 @@ int Convolution1x1FP16CPUKernel::Run() {
 
     int ret = RET_ERROR;
     if (multi_thread_by_hw_) {
-      ret = ParallelLaunch(this->context_, Convolution1x1Fp16RunHw, this, thread_count_);
+      ret = ParallelLaunch(this->ms_context_, Convolution1x1Fp16RunHw, this, thread_count_);
     } else {
       RowMajor2Col12MajorFp16Opt(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-      ret = ParallelLaunch(this->context_, Convolution1x1Fp16RunOc, this, thread_count_);
+      ret = ParallelLaunch(this->ms_context_, Convolution1x1Fp16RunOc, this, thread_count_);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ParallelLaunch failed.";

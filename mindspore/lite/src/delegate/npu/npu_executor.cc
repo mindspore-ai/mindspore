@@ -47,8 +47,8 @@ int NPUExecutor::Prepare() {
   return RET_OK;
 }
 
-std::vector<int> GetNpuTensorShape(int dim, std::shared_ptr<hiai::AiTensor> npu_tensor) {
-  std::vector<int> npu_shape;
+std::vector<int64_t> GetNpuTensorShape(int dim, std::shared_ptr<hiai::AiTensor> npu_tensor) {
+  std::vector<int64_t> npu_shape;
   if (dim > 0) {
     npu_shape.push_back(npu_tensor->GetTensorDimension().GetNumber());
   }
@@ -75,40 +75,40 @@ std::vector<int> ExpandShapeTo4d(const std::vector<int> &shape) {
   return ret;
 }
 
-bool IsSameShapeTensor(tensor::MSTensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
-  if (tensor->shape().size() > 4) {
+bool IsSameShapeTensor(mindspore::MSTensor tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
+  if (tensor.Shape().size() > 4) {
     MS_LOG(ERROR) << "Npu does not support output tensor dims greater than 4";
     return false;
   }
-  return GetNpuTensorShape(tensor->shape().size(), npu_tensor) == tensor->shape();
+  return GetNpuTensorShape(tensor.Shape().size(), npu_tensor) == tensor.Shape();
 }
 
-int NPUExecutor::Run(const std::vector<tensor::MSTensor *> &in_tensors,
-                     const std::vector<tensor::MSTensor *> &out_tensors, const std::vector<NPUOp *> &in_ops) {
+int NPUExecutor::Run(const std::vector<mindspore::MSTensor> &in_tensors,
+                     const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<NPUOp *> &in_ops) {
   hiai::AiContext context;
-  std::unordered_map<tensor::MSTensor *, int> tensor_uses;
+  std::unordered_map<std::string, int> tensor_uses;
   for (const auto op : in_ops) {
     for (const auto op_input : op->inputs()) {
-      if (tensor_uses.find(op_input) == tensor_uses.end()) {
-        tensor_uses.insert({op_input, 1});
+      if (tensor_uses.find(op_input.Name()) == tensor_uses.end()) {
+        tensor_uses.insert({op_input.Name(), 1});
       } else {
-        tensor_uses[op_input]++;
+        tensor_uses[op_input.Name()]++;
       }
     }
   }
   for (int i = 0; i < npu_input_tensors_.size(); ++i) {
     int index = 0;
     for (; index < in_tensors.size(); index++) {
-      if (tensor_uses[in_tensors[index]] > 0 && IsSameShapeTensor(in_tensors[index], npu_input_tensors_[i])) {
-        void *data = in_tensors[index]->data();
+      if (tensor_uses[in_tensors[index].Name()] > 0 && IsSameShapeTensor(in_tensors[index], npu_input_tensors_[i])) {
+        auto data = in_tensors[index].Data();
         if (data == nullptr) {
-          MS_LOG(ERROR) << "For " << model_name_ << ", the input tensor " << in_tensors[index]->tensor_name()
+          MS_LOG(ERROR) << "For " << model_name_ << ", the input tensor " << in_tensors[index].Name()
                         << " data is nullptr";
           return RET_ERROR;
         }
 
-        memcpy(npu_input_tensors_[i]->GetBuffer(), data, in_tensors[index]->Size());
-        tensor_uses[in_tensors[index]]--;
+        memcpy(npu_input_tensors_[i]->GetBuffer(), data.get(), in_tensors[index].DataSize());
+        tensor_uses[in_tensors[index].Name()]--;
         break;
       }
     }
@@ -135,9 +135,10 @@ int NPUExecutor::Run(const std::vector<tensor::MSTensor *> &in_tensors,
     int index = 0;
     for (; index < out_tensors.size(); index++) {
       if (!outputs_visited[index] && IsSameShapeTensor(out_tensors[index], npu_output_tensors_[i])) {
-        void *data = out_tensors[index]->data();
+        mindspore::MSTensor out_tensor = out_tensors[index];
+        auto data = out_tensor.MutableData();
         if (data == nullptr) {
-          MS_LOG(ERROR) << "For " << model_name_ << ", the output tensor " << in_tensors[index]->tensor_name()
+          MS_LOG(ERROR) << "For " << model_name_ << ", the output tensor " << out_tensors[index].Name()
                         << " data is nullptr";
           return RET_ERROR;
         }

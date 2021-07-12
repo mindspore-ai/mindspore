@@ -41,14 +41,14 @@ int StackFp16CPUKernel::MallocAssignBuffer() {
   buffers_.resize(in_tensors_.size(), nullptr);
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
     buffers_.at(i) = reinterpret_cast<char *>(
-      ConvertInputFp32toFp16(in_tensors_.at(i), static_cast<const lite::InnerContext *>(context_)));
+      ConvertInputFp32toFp16(in_tensors_.at(i), static_cast<const lite::InnerContext *>(ms_context_)));
     if (buffers_.at(i) == nullptr) {
       return RET_ERROR;
     }
   }
 
   out_buffer_ = nullptr;
-  out_buffer_ = MallocOutputFp16(out_tensors_.at(0), static_cast<const lite::InnerContext *>(this->context_));
+  out_buffer_ = MallocOutputFp16(out_tensors_.at(0), static_cast<const lite::InnerContext *>(this->ms_context_));
   if (out_buffer_ == nullptr) {
     return RET_ERROR;
   }
@@ -58,12 +58,12 @@ int StackFp16CPUKernel::MallocAssignBuffer() {
 void StackFp16CPUKernel::FreeBuffer() {
   for (size_t i = 0; i < buffers_.size(); ++i) {
     if (malloc_buffers_.at(i) && buffers_.at(i) != nullptr) {
-      context_->allocator->Free(buffers_.at(i));
+      ms_context_->allocator->Free(buffers_.at(i));
       buffers_.at(i) = nullptr;
     }
   }
   if (malloc_out_ && out_buffer_ != nullptr) {
-    context_->allocator->Free(out_buffer_);
+    ms_context_->allocator->Free(out_buffer_);
     out_buffer_ = nullptr;
   }
 }
@@ -101,7 +101,7 @@ int StackFp16CPUKernel::Run() {
   }
   // run stack
   num_threads_ = MSMIN(UP_DIV(outer_size_, 64), this->op_parameter_->thread_num_);
-  ret = ParallelLaunch(this->context_, StackRun, this, num_threads_);
+  ret = ParallelLaunch(this->ms_context_, StackRun, this, num_threads_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
     return RET_ERROR;

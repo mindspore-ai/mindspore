@@ -19,7 +19,7 @@
 
 #include <set>
 #include <vector>
-#include "src/delegate/npu/op//npu_op.h"
+#include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/pass/npu_base_pass.h"
 
 namespace mindspore {
@@ -32,12 +32,12 @@ class NPUTransformPass : public NPUBasePass {
  private:
   int InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops);
 
-  int InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops, std::vector<tensor::MSTensor *> graph_outputs);
+  int InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops, std::vector<mindspore::MSTensor> graph_outputs);
 
  private:
   int total = 0;
   std::vector<NPUOp *> *all_ops_;
-  std::vector<tensor::MSTensor *> *all_tensors_;
+  std::vector<mindspore::MSTensor *> *all_tensors_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_TRANSFORM_PASS_H_

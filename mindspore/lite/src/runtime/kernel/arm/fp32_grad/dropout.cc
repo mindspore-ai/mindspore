@@ -99,7 +99,7 @@ int RunDropout(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int DropoutCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, RunDropout, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, RunDropout, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Dropout function error error_code[" << error_code << "]";
     return RET_ERROR;

@@ -17,7 +17,6 @@
 #include "src/delegate/npu/op/convolution_base_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 #include "src/delegate/npu/transpose_kernel.h"
-#include "nnacl/fp16/cast_fp16.h"
 
 namespace mindspore {
 ConvolutionBaseNPUOp::~ConvolutionBaseNPUOp() {
@@ -35,27 +34,39 @@ ConvolutionBaseNPUOp::~ConvolutionBaseNPUOp() {
   }
 }
 
-int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<tensor::MSTensor *> &inputs) {
+int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor> &inputs) {
   weight_ = new (std::nothrow) hiai::op::Const(name_ + "_w");
   if (weight_ == nullptr) {
     MS_LOG(ERROR) << "New weight const failed.";
     return RET_ERROR;
   }
-  auto w_shape = inputs[1]->shape();
-  auto origin_data = inputs[1]->data();
-  auto fp32_data = origin_data;
-  if (inputs[1]->data_type() == kNumberTypeFloat16) {
-    fp32_data = reinterpret_cast<float *>(malloc(inputs[1]->ElementsNum() * sizeof(float)));
+  auto w_shape = inputs[1].Shape();
+  auto origin_data = inputs[1].Data().get();
+  float *fp32_data = nullptr;
+  if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
+#ifdef ENABLE_ARM64
+    fp32_data = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
     // fp16->fp32
-    Float16ToFloat32(reinterpret_cast<float16_t *>(origin_data), reinterpret_cast<float *>(fp32_data),
-                     inputs[1]->ElementsNum());
+    Float16ToFloat32(reinterpret_cast<const float16_t *>(origin_data), reinterpret_cast<float *>(fp32_data),
+                     inputs[1].ElementNum());
+#else
+    MS_LOG(ERROR) << "This platform does not support fp16.";
+    return RET_ERROR;
+#endif
   }
-  auto nchw_data = reinterpret_cast<float *>(malloc(inputs[1]->ElementsNum() * sizeof(float)));
+  auto nchw_data = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
   if (nchw_data == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNHWCToNCHWFp32(fp32_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+  if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
+    PackNHWCToNCHWFp32(fp32_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+  } else if (inputs[1].DataType() == DataType::kNumberTypeFloat32) {
+    PackNHWCToNCHWFp32(origin_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type of weight tensor for npu convolution.";
+    return RET_ERROR;
+  }
 
   std::shared_ptr<ge::Tensor> weight_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
   if (weight_tensor == nullptr) {
@@ -63,16 +74,16 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<tensor::MSTensor *> 
     return RET_ERROR;
   }
   ge::TensorDesc tensor_desc(ConverterToNPUShape({w_shape[0], w_shape[3], w_shape[1], w_shape[2]}), ge::FORMAT_NCHW,
-                             ConverterToNPUDataType(inputs[1]->data_type()));
+                             ConverterToNPUDataType(inputs[1].DataType()));
   weight_tensor->SetTensorDesc(tensor_desc);
-  weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_data), inputs[1]->ElementsNum() * sizeof(float));
+  weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_data), inputs[1].ElementNum() * sizeof(float));
 
   weight_->set_attr_value(weight_tensor);
   free(nchw_data);
   return RET_OK;
 }
 
-int ConvolutionBaseNPUOp::InitBiasConst(const std::vector<tensor::MSTensor *> &inputs) {
+int ConvolutionBaseNPUOp::InitBiasConst(const std::vector<mindspore::MSTensor> &inputs) {
   if (inputs.size() >= 3) {
     bias_ = new (std::nothrow) hiai::op::Const(name_ + "_b");
     if (bias_ == nullptr) {

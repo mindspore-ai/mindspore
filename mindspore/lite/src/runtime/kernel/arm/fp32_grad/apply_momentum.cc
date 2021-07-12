@@ -81,7 +81,7 @@ int ApplyMomentumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 }
 
 int ApplyMomentumCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, ApplyMomentumRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->ms_context_, ApplyMomentumRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Apply Momentum function error error_code[" << error_code << "]";
     return RET_ERROR;

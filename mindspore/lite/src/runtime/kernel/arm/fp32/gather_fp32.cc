@@ -91,12 +91,12 @@ int GatherCPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_, GatherRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, GatherRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << ret << "]";
   }
   if (!isIndicesInt32) {
-    context_->allocator->Free(indices_data_);
+    ms_context_->allocator->Free(indices_data_);
     indices_data_ = nullptr;
   }
   return ret;
@@ -108,7 +108,7 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lit
       MS_LOG(ERROR) << "Input indices_num is invalid, indices_num: " << indices_num;
       return RET_ERROR;
     }
-    indices_data_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(sizeof(int32_t) * indices_num));
+    indices_data_ = reinterpret_cast<int32_t *>(ms_context_->allocator->Malloc(sizeof(int32_t) * indices_num));
     if (indices_data_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";
       return RET_ERROR;

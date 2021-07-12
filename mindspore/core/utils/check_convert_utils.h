@@ -27,7 +27,7 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
-#include "ir/format.h"
+#include "include/api/format.h"
 #include "utils/log_adapter.h"
 namespace mindspore {
 typedef std::pair<std::map<std::string, int64_t>, std::map<int64_t, std::string>> AttrConverterPair;

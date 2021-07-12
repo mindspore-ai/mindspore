@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_INSERT_TRANSFORM_PASS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_INSERT_TRANSFORM_PASS_H_
 #include <vector>
-#include "src/delegate/npu/op//npu_op.h"
+#include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/pass/npu_base_pass.h"
 namespace mindspore {
 class NPUInsertTransformPass : public NPUBasePass {
@@ -37,7 +37,7 @@ class NPUInsertTransformPass : public NPUBasePass {
  private:
   int total = 0;
   std::vector<NPUOp *> *all_ops_;
-  std::vector<tensor::MSTensor *> *all_tensors_;
+  std::vector<mindspore::MSTensor *> *all_tensors_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_INSERT_TRANSFORM_PASS_H_

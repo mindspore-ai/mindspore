@@ -222,7 +222,7 @@ int DeConvolutionFp16CPUKernel::Run() {
 
     RowMajor2Col16MajorFp16Opt(batch_input_, pack_input_, input_plane_, conv_param_->input_channel_);
 
-    error_code = ParallelLaunch(this->context_, DeConvFp16Run, this, thread_count_);
+    error_code = ParallelLaunch(this->ms_context_, DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp16 run error! error_code[" << error_code << "]";
     }

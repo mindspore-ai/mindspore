@@ -175,7 +175,7 @@ int QuantDTypeCastCPUKernel::Run() {
     uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c());
   }
 
-  auto ret = ParallelLaunch(this->context_, QuantDTypeCastRun, this, thread_n_num_);
+  auto ret = ParallelLaunch(this->ms_context_, QuantDTypeCastRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&

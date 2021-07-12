@@ -117,7 +117,7 @@ int ScaleFp16CPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_, ScaleFp16Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, ScaleFp16Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     FreeTmpBuffer();
@@ -129,18 +129,18 @@ int ScaleFp16CPUKernel::Run() {
 }
 
 int ScaleFp16CPUKernel::MallocAssignTmpBuffer() {
-  scale_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->context_));
+  scale_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->ms_context_));
   if (scale_ == nullptr) {
     return RET_ERROR;
   }
   if (in_tensors_.size() == 3) {
-    offset_ = ConvertInputFp32toFp16(in_tensors_.at(2), static_cast<const lite::InnerContext *>(this->context_));
+    offset_ = ConvertInputFp32toFp16(in_tensors_.at(2), static_cast<const lite::InnerContext *>(this->ms_context_));
     if (offset_ == nullptr) {
       return RET_ERROR;
     }
   } else {
-    offset_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(in_tensors_.at(1)->ElementsNum() * sizeof(float16_t)));
+    offset_ = reinterpret_cast<float16_t *>(
+      ms_context_->allocator->Malloc(in_tensors_.at(1)->ElementsNum() * sizeof(float16_t)));
     if (offset_ == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed";
       return RET_ERROR;
@@ -152,11 +152,11 @@ int ScaleFp16CPUKernel::MallocAssignTmpBuffer() {
 
 void ScaleFp16CPUKernel::FreeTmpBuffer() {
   if (malloc_scale_ && scale_ != nullptr) {
-    context_->allocator->Free(scale_);
+    ms_context_->allocator->Free(scale_);
     scale_ = nullptr;
   }
   if (malloc_offset_ && offset_ != nullptr) {
-    context_->allocator->Free(offset_);
+    ms_context_->allocator->Free(offset_);
     offset_ = nullptr;
   }
 }
