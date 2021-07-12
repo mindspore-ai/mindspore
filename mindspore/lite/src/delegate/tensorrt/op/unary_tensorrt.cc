@@ -17,8 +17,8 @@
 #include "src/delegate/tensorrt/op/unary_tensorrt.h"
 
 namespace mindspore::lite {
-int UnaryTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors) {
+int UnaryTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
   }
@@ -48,7 +48,7 @@ int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   cal_layer->setName(op_name_.c_str());
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
-  op_out_tensor->setName(out_tensors_[0]->tensor_name().c_str());
+  op_out_tensor->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(op_out_tensor);
   return RET_OK;
 }

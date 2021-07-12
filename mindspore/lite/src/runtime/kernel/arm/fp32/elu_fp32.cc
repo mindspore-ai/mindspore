@@ -58,7 +58,7 @@ int EluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int EluCPUKernel::Run() {
-  auto ret = ParallelLaunch(this->context_, EluRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, EluRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Elu error: error_code[" << ret << "]";
     return RET_ERROR;

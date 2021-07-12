@@ -141,13 +141,15 @@ int TransposeNPUKernel::Execute() {
     MS_LOG(ERROR) << "NPU transpose op only supports nhwc->nchw or nchw->nhwc.";
     return RET_ERROR;
   }
-  auto shape = inputs()[0]->shape();
+  auto shape = inputs()[0].Shape();
   if (shape.size() != 4) {
     MS_LOG(ERROR) << "NPU transpose op only supports input of 4 dims.";
     return RET_ERROR;
   }
-  auto input = inputs()[0]->data();
-  auto output = outputs()[0]->data();
+  mindspore::MSTensor in_tensor = inputs()[0];
+  mindspore::MSTensor out_tensor = outputs()[0];
+  auto input = in_tensor.Data().get();
+  auto output = out_tensor.MutableData();
   if (perm_ == nh2nc_perm) {
     PackNHWCToNCHWFp32(input, output, shape[0], shape[1] * shape[2], shape[3]);
   } else if (perm_ == nc2nh_perm) {

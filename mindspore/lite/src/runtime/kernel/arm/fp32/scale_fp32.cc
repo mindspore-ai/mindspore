@@ -191,7 +191,7 @@ int ScaleCPUKernel::Run() {
   auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->MutableData());
 
-  auto ret = ParallelLaunch(this->context_, ScaleRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ScaleRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

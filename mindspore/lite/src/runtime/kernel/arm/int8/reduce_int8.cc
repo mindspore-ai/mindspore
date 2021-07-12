@@ -321,7 +321,7 @@ int ReduceInt8CPUKernel::MallocTmpBuffer() {
   MS_ASSERT(static_cast<int>(buffer_sizes_.size()) == num_axes_ - 1);
   // malloc num_axes_-1 buffers, since reduce on last axis will generate result to out_tensor, no need for buffer.
   for (auto buffer_size : buffer_sizes_) {
-    int32_t *buffer = reinterpret_cast<int32_t *>(context_->allocator->Malloc(buffer_size * sizeof(int32_t)));
+    int32_t *buffer = reinterpret_cast<int32_t *>(ms_context_->allocator->Malloc(buffer_size * sizeof(int32_t)));
     if (buffer == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed.";
       return RET_ERROR;
@@ -330,7 +330,7 @@ int ReduceInt8CPUKernel::MallocTmpBuffer() {
   }
 
   auto input = in_tensors_.at(0);
-  begin_src_data_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(sizeof(int32_t) * input->ElementsNum()));
+  begin_src_data_ = reinterpret_cast<int32_t *>(ms_context_->allocator->Malloc(sizeof(int32_t) * input->ElementsNum()));
   if (begin_src_data_ == nullptr) {
     return RET_NULL_PTR;
   }
@@ -341,14 +341,14 @@ int ReduceInt8CPUKernel::MallocTmpBuffer() {
 void ReduceInt8CPUKernel::FreeTmpBuffer() {
   for (auto buffer : data_buffers_) {
     if (buffer != nullptr) {
-      context_->allocator->Free(buffer);
+      ms_context_->allocator->Free(buffer);
       buffer = nullptr;
     }
   }
   data_buffers_.clear();
 
   if (begin_src_data_ != nullptr) {
-    context_->allocator->Free(begin_src_data_);
+    ms_context_->allocator->Free(begin_src_data_);
     begin_src_data_ = nullptr;
   }
 }
@@ -457,7 +457,7 @@ int ReduceInt8CPUKernel::Fast4DReduceMeanHWImpl() {
   }
   PackNHWCToNCHWInt8(reinterpret_cast<void *>(input_data), reinterpret_cast<void *>(nchw_in_data_), input->Batch(),
                      input->Height() * input->Width(), input->Channel());
-  auto ret = ParallelLaunch(this->context_, ReduceMeanPatternInt8Impl, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ReduceMeanPatternInt8Impl, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     ctx_->allocator->Free(nchw_in_data_);
     MS_LOG(ERROR) << "Reduce run error, error_code[" << ret << "]";
@@ -501,7 +501,7 @@ int ReduceInt8CPUKernel::Run() {
     outer_size_ = outer_sizes_[i];
     inner_size_ = inner_sizes_[i];
     axis_size_ = axis_sizes_[i];
-    error_code = ParallelLaunch(this->context_, ReduceInt8Impl, this, op_parameter_->thread_num_);
+    error_code = ParallelLaunch(this->ms_context_, ReduceInt8Impl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -516,7 +516,7 @@ int ReduceInt8CPUKernel::Run() {
   axis_size_ = axis_sizes_.back();
   last_dst_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   is_last_axis_ = true;
-  error_code = ParallelLaunch(this->context_, ReduceInt8Impl, this, op_parameter_->thread_num_);
+  error_code = ParallelLaunch(this->ms_context_, ReduceInt8Impl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

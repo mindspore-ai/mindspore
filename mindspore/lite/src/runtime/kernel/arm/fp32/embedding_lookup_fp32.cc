@@ -68,10 +68,10 @@ int EmbeddingLookupRun(void *cdata, int task_id, float lhs_scale, float rhs_scal
 }
 
 int EmbeddingLookupCPUKernel::Run() {
-  MS_ASSERT(context_->allocator != nullptr);
+  MS_ASSERT(ms_context_->allocator != nullptr);
   input_addr_ =
-    reinterpret_cast<float *>(context_->allocator->Malloc(sizeof(float) * param_->layer_size_ * param_->layer_num_));
-  param_->is_regulated_ = reinterpret_cast<bool *>(context_->allocator->Malloc(sizeof(bool) * param_->layer_num_));
+    reinterpret_cast<float *>(ms_context_->allocator->Malloc(sizeof(float) * param_->layer_size_ * param_->layer_num_));
+  param_->is_regulated_ = reinterpret_cast<bool *>(ms_context_->allocator->Malloc(sizeof(bool) * param_->layer_num_));
   if (input_addr_ == nullptr || param_->is_regulated_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     FreeRunBuff();
@@ -86,7 +86,7 @@ int EmbeddingLookupCPUKernel::Run() {
     memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * in_tensors_.at(i)->ElementsNum());
     dest_loc += in_tensors_.at(i)->ElementsNum();
   }
-  auto ret = ParallelLaunch(this->context_, EmbeddingLookupRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, EmbeddingLookupRun, this, op_parameter_->thread_num_);
   FreeRunBuff();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "EmbeddingLookup error: error_code[" << ret << "]";
@@ -95,8 +95,8 @@ int EmbeddingLookupCPUKernel::Run() {
 }
 
 void EmbeddingLookupCPUKernel::FreeRunBuff() {
-  context_->allocator->Free(input_addr_);
-  context_->allocator->Free(param_->is_regulated_);
+  ms_context_->allocator->Free(input_addr_);
+  ms_context_->allocator->Free(param_->is_regulated_);
   input_addr_ = nullptr;
   param_->is_regulated_ = nullptr;
 }

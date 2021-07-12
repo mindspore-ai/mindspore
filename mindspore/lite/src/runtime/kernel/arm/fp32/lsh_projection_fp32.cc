@@ -60,7 +60,7 @@ int LshProjectionCPUKernel::Run() {
   if (ret != RET_OK) {
     return ret;
   }
-  ret = ParallelLaunch(this->context_, LshProjectionRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, LshProjectionRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LshProjection kernel parallel launch failed";
   }
@@ -69,13 +69,14 @@ int LshProjectionCPUKernel::Run() {
 }
 
 int LshProjectionCPUKernel::MallocKeys() {
-  param_->hash_buffs_ = static_cast<char **>(context_->allocator->Malloc(op_parameter_->thread_num_ * sizeof(char *)));
+  param_->hash_buffs_ =
+    static_cast<char **>(ms_context_->allocator->Malloc(op_parameter_->thread_num_ * sizeof(char *)));
   if (param_->hash_buffs_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
   for (int i = 0; i < op_parameter_->thread_num_; i++) {
-    param_->hash_buffs_[i] = static_cast<char *>(context_->allocator->Malloc(param_->hash_buff_size_));
+    param_->hash_buffs_[i] = static_cast<char *>(ms_context_->allocator->Malloc(param_->hash_buff_size_));
     if (param_->hash_buffs_[i] == nullptr) {
       FreeKeys();
       MS_LOG(ERROR) << "Memory allocation failed";
@@ -88,10 +89,10 @@ int LshProjectionCPUKernel::MallocKeys() {
 void LshProjectionCPUKernel::FreeKeys() {
   if (param_->hash_buffs_ != nullptr) {
     for (int i = 0; i < op_parameter_->thread_num_; i++) {
-      context_->allocator->Free(param_->hash_buffs_[i]);
+      ms_context_->allocator->Free(param_->hash_buffs_[i]);
       param_->hash_buffs_[i] = nullptr;
     }
-    context_->allocator->Free(param_->hash_buffs_);
+    ms_context_->allocator->Free(param_->hash_buffs_);
     param_->hash_buffs_ = nullptr;
   }
 }

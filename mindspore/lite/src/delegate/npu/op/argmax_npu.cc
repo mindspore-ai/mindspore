@@ -16,11 +16,10 @@
 
 #include "src/delegate/npu/op/argmax_npu.h"
 #include <memory>
-#include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int ArgmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                      const std::vector<tensor::MSTensor *> &out_tensors) {
+int ArgmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                      const std::vector<mindspore::MSTensor> &out_tensors) {
   argmax_ = new (std::nothrow) hiai::op::ArgMaxExt2(name_);
   if (argmax_ == nullptr) {
     MS_LOG(ERROR) << "New argmax npu operator for " << name_ << " failed.";
@@ -54,8 +53,8 @@ int ArgmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<tens
   return RET_OK;
 }
 
-int ArgmaxNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors,
+int ArgmaxNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
   argmax_->set_input_x(*npu_inputs[0]);
   return RET_OK;

@@ -19,7 +19,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "src/delegate/tensorrt/tensorrt_runtime.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
@@ -28,8 +28,8 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 class TensorRTSubGraph : public kernel::Kernel {
  public:
-  TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<tensor::MSTensor *> &inputs,
-                   const std::vector<tensor::MSTensor *> &outputs)
+  TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
+                   const std::vector<mindspore::MSTensor> &outputs)
       : kernel::Kernel(inputs, outputs, nullptr, nullptr), all_ops_(std::move(ops)) {
     trt_specific_weight_nodes_ = {
       schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
@@ -55,7 +55,7 @@ class TensorRTSubGraph : public kernel::Kernel {
  private:
   int BuildEngine();
 
-  static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, tensor::MSTensor *in_tensor);
+  static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, mindspore::MSTensor in_tensor);
 
   TensorRTRuntime *runtime_{nullptr};
 

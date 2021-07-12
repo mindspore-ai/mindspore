@@ -22,7 +22,7 @@
 #include <vector>
 #include <memory>
 #include "include/model.h"
-#include "include/ms_tensor.h"
+#include "include/api/types.h"
 #include "schema/model_generated.h"
 
 namespace mindspore {
@@ -46,7 +46,7 @@ class MS_API KernelInterface {
   /// \param[in] primitive Define the attributes of op.
   ///
   /// \return  STATUS as an error code of inferring, STATUS is defined in errorcode.h..
-  virtual int Infer(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
+  virtual int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
                     const schema::Primitive *primitive) {
     return 0;
   }
@@ -58,7 +58,7 @@ class MS_API KernelInterface {
   /// \param[in] param Define the contr of performance.
   ///
   /// \return STATUS as an error code of inferring, STATUS is defined in errorcode.h.
-  virtual int GetCapability(const std::vector<tensor::MSTensor *> &tensor_in, const schema::Primitive *primitive,
+  virtual int GetCapability(const std::vector<mindspore::MSTensor> &tensor_in, const schema::Primitive *primitive,
                             CapabilityParam *param) {
     return 0;
   }

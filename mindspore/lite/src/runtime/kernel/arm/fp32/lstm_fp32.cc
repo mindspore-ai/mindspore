@@ -52,20 +52,20 @@ void LstmCPUKernel::FreeTmpBuffer() {
 }
 
 void LstmCPUKernel::FreeRunBuffer() {
-  context_->allocator->Free(buffer_[0]);
-  context_->allocator->Free(buffer_[1]);
+  ms_context_->allocator->Free(buffer_[0]);
+  ms_context_->allocator->Free(buffer_[1]);
   if (!state_is_vec_) {
-    context_->allocator->Free(buffer_[2]);
+    ms_context_->allocator->Free(buffer_[2]);
   }
-  context_->allocator->Free(buffer_[3]);
+  ms_context_->allocator->Free(buffer_[3]);
   if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
-    context_->allocator->Free(buffer_[4]);
+    ms_context_->allocator->Free(buffer_[4]);
   }
   if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
-    context_->allocator->Free(buffer_[5]);
+    ms_context_->allocator->Free(buffer_[5]);
   }
   if (output_need_packed_) {
-    context_->allocator->Free(buffer_[6]);
+    ms_context_->allocator->Free(buffer_[6]);
   }
 }
 
@@ -233,14 +233,14 @@ int LstmCPUKernel::MallocRunBuffer() {
     buffer_[i] = nullptr;
   }
   buffer_[0] = reinterpret_cast<float *>(
-    context_->allocator->Malloc(lstm_param_->input_row_align_ * lstm_param_->input_size_ * sizeof(float)));
+    ms_context_->allocator->Malloc(lstm_param_->input_row_align_ * lstm_param_->input_size_ * sizeof(float)));
   if (buffer_[0] == nullptr) {
     MS_LOG(ERROR) << "LstmCPUKernel malloc input * weight left matirx error.";
     return RET_ERROR;
   }
 
-  buffer_[1] = reinterpret_cast<float *>(context_->allocator->Malloc(4 * lstm_param_->seq_len_ * lstm_param_->batch_ *
-                                                                     lstm_param_->hidden_size_ * sizeof(float)));
+  buffer_[1] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
+    4 * lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float)));
   if (buffer_[1] == nullptr) {
     MS_LOG(ERROR) << "LstmCPUKernel malloc input * weight result matirx error.";
     return RET_ERROR;
@@ -248,7 +248,7 @@ int LstmCPUKernel::MallocRunBuffer() {
 
   if (!state_is_vec_) {
     buffer_[2] = reinterpret_cast<float *>(
-      context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float)));
+      ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float)));
     if (buffer_[2] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state * weight left matirx error.";
       return RET_ERROR;
@@ -256,7 +256,7 @@ int LstmCPUKernel::MallocRunBuffer() {
   }
 
   buffer_[3] = reinterpret_cast<float *>(
-    context_->allocator->Malloc(4 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float)));
+    ms_context_->allocator->Malloc(4 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float)));
   if (buffer_[3] == nullptr) {
     MS_LOG(ERROR) << "LstmCPUKernel malloc state gate buffer error.";
     return RET_ERROR;
@@ -264,7 +264,7 @@ int LstmCPUKernel::MallocRunBuffer() {
 
   if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
     auto buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
-    buffer_[4] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
+    buffer_[4] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(buffer_size));
     if (buffer_[4] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer for cell error.";
       return RET_ERROR;
@@ -272,7 +272,7 @@ int LstmCPUKernel::MallocRunBuffer() {
   }
   if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
     auto buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
-    buffer_[5] = reinterpret_cast<float *>(context_->allocator->Malloc(buffer_size));
+    buffer_[5] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(buffer_size));
     if (buffer_[5] == nullptr) {
       MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer for hidden error.";
       return RET_ERROR;
@@ -284,9 +284,9 @@ int LstmCPUKernel::MallocRunBuffer() {
     if (output_need_packed_) {
       int out_channel = lstm_param_->hidden_size_;
       int oc_block_num = UP_DIV(out_channel, state_col_tile_);
-      MS_ASSERT(context_->allocator != nullptr);
+      MS_ASSERT(ms_context_->allocator != nullptr);
       buffer_[6] = reinterpret_cast<float *>(
-        context_->allocator->Malloc(lstm_param_->batch_ * oc_block_num * state_col_tile_ * sizeof(float)));
+        ms_context_->allocator->Malloc(lstm_param_->batch_ * oc_block_num * state_col_tile_ * sizeof(float)));
       if (buffer_[6] == nullptr) {
         MS_LOG(ERROR) << "LstmCPUKernel malloc tmp output data failed.";
         return RET_ERROR;
@@ -333,7 +333,7 @@ int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, cons
     weight_loop_ = weight_i + lstm_param_->input_size_ * lstm_param_->input_col_align_ * i;
     bias_loop_ = input_bias + lstm_param_->input_col_align_ * i;
     gate_loop_ = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * i;
-    ParallelLaunch(this->context_, LstmInputMulWeightRun, this, input_thread_count_);
+    ParallelLaunch(this->ms_context_, LstmInputMulWeightRun, this, input_thread_count_);
   }
 
   float *input_gate = gate;

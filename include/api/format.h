@@ -1,4 +1,6 @@
 /**
+ * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
+ *
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +16,31 @@
  * limitations under the License.
  */
 
-#include "src/delegate/delegate_utils.h"
-namespace mindspore::lite {
-bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input) {
-  if (find(inputs.begin(), inputs.end(), input) != inputs.end()) {
-    return true;
-  }
-  return false;
-}
-}  // namespace mindspore::lite
+#ifndef MINDSPORE_INCLUDE_API_FORMAT_H
+#define MINDSPORE_INCLUDE_API_FORMAT_H
+
+#include <cstdint>
+
+namespace mindspore {
+enum Format : int64_t {
+  NCHW = 0,
+  NHWC = 1,
+  NHWC4 = 2,
+  HWKC = 3,
+  HWCK = 4,
+  KCHW = 5,
+  CKHW = 6,
+  KHWC = 7,
+  CHWK = 8,
+  HW = 9,
+  HW4 = 10,
+  NC = 11,
+  NC4 = 12,
+  NC4HW4 = 13,
+  NUM_OF_FORMAT = 14,
+  NCDHW = 15,
+  NWC = 16,
+  NCW = 17
+};
+}  // namespace mindspore
+#endif  // MINDSPORE_INCLUDE_API_FORMAT_H

@@ -31,7 +31,7 @@
 #include "src/executor.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 #if GPU_OPENCL
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #elif GPU_VULKAN
@@ -121,6 +121,7 @@ class LiteSession : public session::LiteSession {
 
  protected:
   InnerContext *context_ = nullptr;
+  mindspore::Context *ms_context_ = nullptr;
   std::vector<kernel::LiteKernel *> kernels_;
   std::vector<Tensor *> tensors_;
   // graph input tensors

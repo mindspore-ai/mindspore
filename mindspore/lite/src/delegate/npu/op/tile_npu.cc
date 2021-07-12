@@ -19,20 +19,20 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int TileNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                         const std::vector<tensor::MSTensor *> &out_tensors) {
+int TileNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                         const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 2) {
     return RET_ERROR;
   }
   auto multiple_tensor = in_tensors[1];
-  if (multiple_tensor->ElementsNum() > 4 || multiple_tensor->data() == nullptr) {
+  if (multiple_tensor.ElementNum() > 4 || multiple_tensor.Data() == nullptr) {
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
 }
 
-int TileNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                    const std::vector<tensor::MSTensor *> &out_tensors) {
+int TileNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                    const std::vector<mindspore::MSTensor> &out_tensors) {
   tile_ = new (std::nothrow) hiai::op::Tile(name_);
   if (tile_ == nullptr) {
     MS_LOG(ERROR) << "New tile npu operator for op " << name_ << " failed.";
@@ -41,17 +41,17 @@ int TileNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor
   return RET_OK;
 }
 
-int TileNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                            const std::vector<tensor::MSTensor *> &out_tensors,
+int TileNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                            const std::vector<mindspore::MSTensor> &out_tensors,
                             const std::vector<ge::Operator *> &npu_inputs) {
   tile_->set_input_x(*npu_inputs[0]);
 
   std::vector<int> multiples;
-  auto multiple_data = reinterpret_cast<int *>(in_tensors[1]->data());
-  if (multiple_data == nullptr) {
+  if (in_tensors[1].Data() == nullptr) {
     return RET_ERROR;
   }
-  for (int i = 0; i < in_tensors[1]->ElementsNum(); ++i) {
+  auto multiple_data = reinterpret_cast<const int *>(in_tensors[1].Data().get());
+  for (int i = 0; i < in_tensors[1].ElementNum(); ++i) {
     multiples.push_back(multiple_data[i]);
   }
   ge::TensorDesc multiple_tensor_desc(ge::Shape({static_cast<int64_t>(multiples.size())}), ge::FORMAT_NCHW,

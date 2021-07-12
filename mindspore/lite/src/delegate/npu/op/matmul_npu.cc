@@ -15,21 +15,20 @@
  */
 
 #include "src/delegate/npu/op/matmul_npu.h"
-#include <memory>
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
-int MatMulNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors) {
+int MatMulNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() == 3) {
-    if (in_tensors[2]->shape().size() != 1) {
+    if (in_tensors[2].Shape().size() != 1) {
       return RET_NOT_SUPPORT;
     }
   }
   return RET_OK;
 }
 
-int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                      const std::vector<tensor::MSTensor *> &out_tensors) {
+int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                      const std::vector<mindspore::MSTensor> &out_tensors) {
   matmul_ = new (std::nothrow) hiai::op::MatMul(name_);
   if (matmul_ == nullptr) {
     MS_LOG(ERROR) << "New matmul npu operator for op " << name_ << " failed.";
@@ -48,8 +47,8 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<tens
   return RET_OK;
 }
 
-int MatMulNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors,
+int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
   matmul_->set_input_x1(*npu_inputs[0]);
   matmul_->set_input_x2(*npu_inputs[1]);
@@ -60,7 +59,7 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
       return RET_ERROR;
     }
     add_op_->set_input_x1(*matmul_);
-    auto bias_shape = in_tensors[2]->shape();
+    auto bias_shape = in_tensors[2].Shape();
     auto bias_tensor = ConverterToNPUTensor(in_tensors[2]);
     if (bias_tensor == nullptr) {
       MS_LOG(ERROR) << "Get bias_tensor failed.";
@@ -68,7 +67,7 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
     }
 
     ge::TensorDesc bias_tensor_desc(ConverterToNPUShape({1, bias_shape[0], 1, 1}));
-    if (out_tensors[0]->shape().size() == 2) {
+    if (out_tensors[0].Shape().size() == 2) {
       bias_tensor_desc.SetShape(ConverterToNPUShape({1, bias_shape[0]}));
     }
     bias_tensor->SetTensorDesc(bias_tensor_desc);

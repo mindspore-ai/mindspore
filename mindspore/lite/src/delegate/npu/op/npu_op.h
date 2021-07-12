@@ -21,19 +21,20 @@
 #include <string>
 #include <set>
 #include <unordered_map>
-#include "include/errorcode.h"
-#include "include/ms_tensor.h"
-#include "schema/model_generated.h"
-#include "src/common/log_adapter.h"
 #include "include/graph/graph.h"
+#include "schema/model_generated.h"
+#include "include/errorcode.h"
+#include "include/api/types.h"
+#include "include/api/data_type.h"
+#include "src/common/log_adapter.h"
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NOT_SUPPORT;
 using mindspore::lite::RET_OK;
 namespace mindspore {
 class NPUOp {
  public:
-  NPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-        const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  NPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+        const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : inputs_(std::move(in_tensors)), outputs_(std::move(out_tensors)), name_(name) {
     if (primitive != nullptr) {
       type_ = primitive->value_type();
@@ -42,24 +43,24 @@ class NPUOp {
 
   virtual ~NPUOp() = default;
 
-  virtual int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                        const std::vector<tensor::MSTensor *> &out_tensors) {
+  virtual int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                        const std::vector<mindspore::MSTensor> &out_tensors) {
     return RET_ERROR;
   }
 
-  virtual int Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                   const std::vector<tensor::MSTensor *> &out_tensors) {
+  virtual int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors) {
     return RET_ERROR;
   }
 
-  virtual int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors,
+  virtual int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors,
                            const std::vector<ge::Operator *> &npu_inputs) {
     return RET_ERROR;
   }
 
-  virtual int SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors,
+  virtual int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors,
                            const std::vector<ge::Operator *> &npu_inputs,
                            const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
     if (index2_multi_out_index.empty()) {
@@ -70,18 +71,18 @@ class NPUOp {
 
   virtual ge::Operator *GetNPUOp() { return nullptr; }
 
-  void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) { this->inputs_ = in_tensors; }
+  void set_inputs(const std::vector<mindspore::MSTensor> &in_tensors) { this->inputs_ = in_tensors; }
 
-  void set_input(mindspore::tensor::MSTensor *in_tensor, int index) {
+  void set_input(mindspore::MSTensor in_tensor, int index) {
     MS_ASSERT(index < inputs_.size());
     this->inputs_[index] = in_tensor;
   }
 
-  void set_outputs(const std::vector<mindspore::tensor::MSTensor *> &out_tensors) { this->outputs_ = out_tensors; }
+  void set_outputs(const std::vector<mindspore::MSTensor> &out_tensors) { this->outputs_ = out_tensors; }
 
-  const std::vector<mindspore::tensor::MSTensor *> &inputs() { return this->inputs_; }
+  const std::vector<mindspore::MSTensor> &inputs() { return this->inputs_; }
 
-  const std::vector<mindspore::tensor::MSTensor *> &outputs() { return this->outputs_; }
+  const std::vector<mindspore::MSTensor> &outputs() { return this->outputs_; }
 
   void set_in_ops(const std::vector<NPUOp *> &in_ops) { this->in_ops_ = in_ops; }
 
@@ -98,37 +99,37 @@ class NPUOp {
   void set_name(const std::string &name) { this->name_ = name; }
 
  protected:
-  std::vector<mindspore::tensor::MSTensor *> inputs_;
-  std::vector<mindspore::tensor::MSTensor *> outputs_;
+  std::vector<mindspore::MSTensor> inputs_;
+  std::vector<mindspore::MSTensor> outputs_;
   std::vector<NPUOp *> in_ops_;
   std::vector<NPUOp *> out_ops_;
   schema::PrimitiveType type_ = schema::PrimitiveType_NONE;
   std::string name_;
 };
 
-typedef NPUOp *(*NPUGetOp)(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors, std::string name);
+typedef NPUOp *(*NPUGetOp)(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors, std::string name);
 
 template <class T>
-NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors, std::string name) {
-  auto shape = out_tensors.front()->shape();
+NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors, std::string name) {
+  auto shape = out_tensors.front().Shape();
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
     MS_LOG(ERROR) << "NPU does not support runtime inference shape.";
     return nullptr;
   }
 
-  if (in_tensors[0]->shape().size() > 4) {
+  if (in_tensors[0].Shape().size() > 4) {
     MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
     return nullptr;
   }
 
   std::set<schema::PrimitiveType> int32_lists = {schema::PrimitiveType_Cast, schema::PrimitiveType_StridedSlice};
-  auto support_int32 = in_tensors[0]->data_type() == kNumberTypeInt32 &&
+  auto support_int32 = in_tensors[0].DataType() == DataType::kNumberTypeInt32 &&
                        find(int32_lists.begin(), int32_lists.end(), primitive->value_type()) != int32_lists.end();
-  if (in_tensors[0]->data_type() != kNumberTypeFloat32 && in_tensors[0]->data_type() != kNumberTypeFloat16 &&
-      !support_int32) {
-    MS_LOG(ERROR) << "Npu does not support datatype " << in_tensors[0]->data_type() << " for op type "
+  if (in_tensors[0].DataType() != DataType::kNumberTypeFloat32 &&
+      in_tensors[0].DataType() != DataType::kNumberTypeFloat16 && !support_int32) {
+    MS_LOG(ERROR) << "Npu does not support datatype " << static_cast<int>(in_tensors[0].DataType()) << " for op type "
                   << primitive->value_type();
     return nullptr;
   }

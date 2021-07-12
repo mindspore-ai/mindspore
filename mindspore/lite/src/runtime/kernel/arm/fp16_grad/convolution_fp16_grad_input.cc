@@ -54,7 +54,7 @@ int ConvolutionGradInputCPUKernelFp16::ReSize() {
 
   int n = conv_param->kernel_w_ * conv_param->kernel_h_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
-  int thread_num = context_->thread_num_;
+  int thread_num = ms_context_->thread_num_;
   mat_alloc_ = MatSizeTotalFp16(chunk_, n, k, 0);
   set_workspace_size((ws_size_ + mat_alloc_) * sizeof(float16_t) * thread_num);
 
@@ -97,7 +97,7 @@ int ConvolutionGradInputCPUKernelFp16::Execute(int task_id) {
   int groups = conv_param->group_;
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
-  int thread_num = context_->thread_num_;
+  int thread_num = ms_context_->thread_num_;
   int m = out_h * out_w;
   int n = k_w * k_h * in_ch / groups;
   int k = out_ch / groups;
@@ -173,7 +173,7 @@ int ConvolutionGradInputCPUKernelFp16::Run() {
   auto *out_dx = out_tensors_.at(0);
   auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data_c());
   memset(dx_addr, 0, sizeof(float16_t) * batch * in_ch * in_h * in_w);
-  int error_code = ParallelLaunch(this->context_, ConvolutionGradInputFp16Run, this, context_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradInputFp16Run, this, ms_context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "bias function error error_code[" << error_code << "]";
     return RET_ERROR;

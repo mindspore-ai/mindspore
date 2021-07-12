@@ -140,7 +140,7 @@ int ConvDw3x3Int8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 
 int ConvolutionDepthwise3x3Int8CPUKernel::InitBuffer() {
   int buffer_size = kConvDepthwise3x3BufferSize * conv_param_->thread_num_;
-  buffer_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(buffer_size * sizeof(int8_t)));
+  buffer_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(buffer_size * sizeof(int8_t)));
   if (buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -166,13 +166,13 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Run() {
     ConvDw3x3Int8Pad(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
                      sliding_);
   }
-  ret = ParallelLaunch(this->context_, ConvDw3x3Int8Run, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, ConvDw3x3Int8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
-    context_->allocator->Free(buffer_);
+    ms_context_->allocator->Free(buffer_);
     MS_LOG(ERROR) << "ConvDwInt8Run error: error_code[" << ret << "]";
     return RET_ERROR;
   }
-  context_->allocator->Free(buffer_);
+  ms_context_->allocator->Free(buffer_);
   return RET_OK;
 }
 }  // namespace mindspore::kernel

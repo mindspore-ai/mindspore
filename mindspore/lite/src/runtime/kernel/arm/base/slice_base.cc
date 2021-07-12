@@ -82,7 +82,7 @@ int SliceCPUKernel::Run() {
                       lite::DataTypeSize(in_tensors_.at(0)->data_type()));
     return RET_OK;
   }
-  auto ret = ParallelLaunch(this->context_, SliceLaunch, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, SliceLaunch, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
     return RET_ERROR;

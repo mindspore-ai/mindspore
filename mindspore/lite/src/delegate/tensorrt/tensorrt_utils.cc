@@ -18,7 +18,7 @@
 #include <map>
 
 namespace mindspore::lite {
-nvinfer1::Dims ConvertCudaDims(const std::vector<int> &shape) {
+nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape) {
   nvinfer1::Dims dims{};
   if (!shape.empty()) {
     dims.nbDims = shape.size();
@@ -58,11 +58,11 @@ nvinfer1::IShuffleLayer *SetTranspose(nvinfer1::INetworkDefinition *network, con
   return layer;
 }
 
-nvinfer1::DataType ConvertDataType(TypeId type_id) {
-  std::map<TypeId, nvinfer1::DataType> data_type_map = {{TypeId::kNumberTypeInt8, nvinfer1::DataType::kINT8},
-                                                        {TypeId::kNumberTypeInt32, nvinfer1::DataType::kINT32},
-                                                        {TypeId::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
-                                                        {TypeId::kNumberTypeFloat16, nvinfer1::DataType::kHALF}};
+nvinfer1::DataType ConvertDataType(DataType type_id) {
+  std::map<DataType, nvinfer1::DataType> data_type_map = {{DataType::kNumberTypeInt8, nvinfer1::DataType::kINT8},
+                                                          {DataType::kNumberTypeInt32, nvinfer1::DataType::kINT32},
+                                                          {DataType::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
+                                                          {DataType::kNumberTypeFloat16, nvinfer1::DataType::kHALF}};
   auto iter = data_type_map.find(type_id);
   nvinfer1::DataType data_type;
   if (iter != data_type_map.end()) {
@@ -86,21 +86,21 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
   return SetTranspose(network, input, perm);
 }
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, tensor::MSTensor *ms_tensor) {
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
   }
-  nvinfer1::Dims dims = ConvertCudaDims(ms_tensor->shape());
-  nvinfer1::DataType data_type = ConvertDataType(ms_tensor->data_type());
+  nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
+  nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
 
-  nvinfer1::Weights weights{data_type, ms_tensor->data(), ms_tensor->ElementsNum()};
+  nvinfer1::Weights weights{data_type, ms_tensor.MutableData(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
-  auto name = ms_tensor->tensor_name() + "_constant_layer";
+  auto name = ms_tensor.Name() + "_constant_layer";
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }
@@ -137,32 +137,32 @@ nvinfer1::ActivationType ConvertActivationType(schema::ActivationType activation
   return action_code;
 }
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, tensor::MSTensor *ms_tensor,
+nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor,
                                                size_t expand_shape_size) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
   }
-  std::vector<int> shape(expand_shape_size);
-  size_t shape_size = ms_tensor->shape().size();
+  std::vector<int64_t> shape(expand_shape_size);
+  size_t shape_size = ms_tensor.Shape().size();
   size_t expand_size = expand_shape_size - shape_size;
   for (size_t i = 0; i < expand_shape_size; ++i) {
     if (i < expand_size) {
       shape[i] = 1;
     } else {
-      shape[i] = ms_tensor->shape()[i - expand_size];
+      shape[i] = ms_tensor.Shape()[i - expand_size];
     }
   }
   nvinfer1::Dims dims = ConvertCudaDims(shape);
-  nvinfer1::DataType data_type = ConvertDataType(ms_tensor->data_type());
+  nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
 
-  nvinfer1::Weights weights{data_type, ms_tensor->data(), ms_tensor->ElementsNum()};
+  nvinfer1::Weights weights{data_type, ms_tensor.MutableData(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
-  auto name = ms_tensor->tensor_name() + "_constant_layer";
+  auto name = ms_tensor.Name() + "_constant_layer";
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }

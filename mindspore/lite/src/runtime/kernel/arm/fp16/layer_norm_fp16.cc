@@ -91,14 +91,14 @@ int LayerNormFp16CPUKernel::Run() {
     var_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(2)->data_c());
   } else {
     mean_data_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
+      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
     var_data_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
+      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
   }
-  ret = ParallelLaunch(this->context_, LayerNormFp16Run, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, LayerNormFp16Run, this, op_parameter_->thread_num_);
   if (out_tensors_.size() != 3) {
-    context_->allocator->Free(mean_data_);
-    context_->allocator->Free(var_data_);
+    ms_context_->allocator->Free(mean_data_);
+    ms_context_->allocator->Free(var_data_);
   }
   return ret;
 }

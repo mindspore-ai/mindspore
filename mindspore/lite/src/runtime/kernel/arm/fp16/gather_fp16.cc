@@ -31,7 +31,7 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 GatherFp16CPUKernel::~GatherFp16CPUKernel() {
   if (input_data_) {
-    context_->allocator->Free(input_data_);
+    ms_context_->allocator->Free(input_data_);
     input_data_ = nullptr;
   }
 }
@@ -41,7 +41,7 @@ int GatherFp16CPUKernel::Init() {
   if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
     const_input_ = true;
     input_data_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
+      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
   }
   (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_ = *(reinterpret_cast<int *>(in_tensors_.at(2)->data_c()));
@@ -143,20 +143,20 @@ int GatherFp16CPUKernel::Run() {
     auto input_tensor = in_tensors_.at(0);
     if (input_tensor->data_type() == kNumberTypeFloat32) {
       input_data_ =
-        reinterpret_cast<float16_t *>(context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
+        reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
       Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
     }
   }
-  ret = ParallelLaunch(this->context_, GatherRunFp16, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, GatherRunFp16, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << ret << "]";
   }
   if (!isIndicesInt32) {
-    context_->allocator->Free(indices_data_);
+    ms_context_->allocator->Free(indices_data_);
     indices_data_ = nullptr;
   }
   if (!const_input_ && input_data_) {
-    context_->allocator->Free(input_data_);
+    ms_context_->allocator->Free(input_data_);
     input_data_ = nullptr;
   }
   return ret;
@@ -168,7 +168,7 @@ int GatherFp16CPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num,
       MS_LOG(ERROR) << "Input indices_num is invalid, indices_num: " << indices_num;
       return RET_ERROR;
     }
-    indices_data_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(sizeof(int32_t) * indices_num));
+    indices_data_ = reinterpret_cast<int32_t *>(ms_context_->allocator->Malloc(sizeof(int32_t) * indices_num));
     if (indices_data_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";
       return RET_ERROR;

@@ -24,14 +24,14 @@
 namespace mindspore::lite {
 class MatMulTensorRT : public TensorRTOp {
  public:
-  MatMulTensorRT(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                 const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name)
+  MatMulTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                 const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
   ~MatMulTensorRT() override = default;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 

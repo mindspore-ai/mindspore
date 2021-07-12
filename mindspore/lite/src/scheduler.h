@@ -29,15 +29,17 @@
 #include "include/model.h"
 #include "src/scheduler_cb.h"
 
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 
 namespace mindspore::lite {
 class Scheduler {
  public:
-  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors,
-            const std::vector<Tensor *> &input_tensors, const std::vector<Tensor *> &output_tensors,
-            bool is_train_session, std::shared_ptr<Delegate> delegate = nullptr)
+  Scheduler(const InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model,
+            std::vector<Tensor *> *src_tensors, const std::vector<Tensor *> &input_tensors,
+            const std::vector<Tensor *> &output_tensors, bool is_train_session,
+            std::shared_ptr<Delegate> delegate = nullptr)
       : context_(ctx),
+        ms_context_(ms_ctx),
         src_model_(src_model),
         src_tensors_(src_tensors),
         inputs_(input_tensors),
@@ -117,6 +119,7 @@ class Scheduler {
 
  protected:
   const InnerContext *context_ = nullptr;
+  const mindspore::Context *ms_context_ = nullptr;
   Model *src_model_ = nullptr;
   std::vector<Tensor *> *src_tensors_;
   const std::vector<Tensor *> &inputs_;

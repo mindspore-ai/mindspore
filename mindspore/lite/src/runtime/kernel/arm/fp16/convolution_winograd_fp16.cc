@@ -237,7 +237,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     }
     is_repack_ = false;
   }
-  ret = ParallelLaunch(this->context_, ConvolutionWinogradFp16Impl, this, thread_count_);
+  ret = ParallelLaunch(this->ms_context_, ConvolutionWinogradFp16Impl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << ret << "]";
   }

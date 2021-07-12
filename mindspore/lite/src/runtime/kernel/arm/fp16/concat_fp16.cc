@@ -40,7 +40,7 @@ int ConcatFp16CPUKernel::MallocTmpBuffer() {
   for (const auto &in_tensor : in_tensors_) {
     float16_t *ptr = nullptr;
     if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-      ptr = reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * in_tensor->ElementsNum()));
+      ptr = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(sizeof(float16_t) * in_tensor->ElementsNum()));
       if (ptr == nullptr) {
         MS_LOG(ERROR) << "malloc failed";
         return RET_ERROR;
@@ -52,7 +52,7 @@ int ConcatFp16CPUKernel::MallocTmpBuffer() {
   auto &out_tensor = out_tensors_.at(0);
   if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
     fp16_output_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * out_tensors_[0]->ElementsNum()));
+      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(sizeof(float16_t) * out_tensors_[0]->ElementsNum()));
     if (fp16_output_ == nullptr) {
       MS_LOG(ERROR) << "malloc failed";
       return RET_ERROR;
@@ -67,7 +67,7 @@ void ConcatFp16CPUKernel::FreeTmpBuffer() {
     auto &in_ptr = fp16_inputs_.at(i);
     if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
       if (in_ptr != nullptr) {
-        context_->allocator->Free(in_ptr);
+        ms_context_->allocator->Free(in_ptr);
         in_ptr = nullptr;
       }
     }
@@ -77,7 +77,7 @@ void ConcatFp16CPUKernel::FreeTmpBuffer() {
   auto &out_tensor = out_tensors_.at(0);
   if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
     if (fp16_output_ != nullptr) {
-      context_->allocator->Free(fp16_output_);
+      ms_context_->allocator->Free(fp16_output_);
       fp16_output_ = nullptr;
     }
   }

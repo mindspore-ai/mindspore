@@ -34,13 +34,13 @@ int GluCPUKernel::MallocTmpBuffer() {
   FreeTmpBuffer();
   auto in_tensor = in_tensors_.front();
   for (int i = 0; i < kSplitNum; i++) {
-    split_ptr_[i] = reinterpret_cast<int8_t *>(context_->allocator->Malloc(in_tensor->Size() / kSplitNum));
+    split_ptr_[i] = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(in_tensor->Size() / kSplitNum));
     if (split_ptr_[i] == nullptr) {
       MS_LOG(ERROR) << "GluCPUKernel malloc split ptr failed.";
       return RET_ERROR;
     }
   }
-  sigmoid_ptr_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(in_tensor->Size() / kSplitNum));
+  sigmoid_ptr_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(in_tensor->Size() / kSplitNum));
   if (sigmoid_ptr_ == nullptr) {
     MS_LOG(ERROR) << "GluCPUKernel malloc sigmoid ptr failed.";
     return RET_ERROR;
@@ -51,12 +51,12 @@ int GluCPUKernel::MallocTmpBuffer() {
 void GluCPUKernel::FreeTmpBuffer() {
   for (int i = 0; i < kSplitNum; i++) {
     if (split_ptr_.at(i) != nullptr) {
-      context_->allocator->Free(split_ptr_.at(i));
+      ms_context_->allocator->Free(split_ptr_.at(i));
       split_ptr_.at(i) = nullptr;
     }
   }
   if (sigmoid_ptr_ != nullptr) {
-    context_->allocator->Free(sigmoid_ptr_);
+    ms_context_->allocator->Free(sigmoid_ptr_);
     sigmoid_ptr_ = nullptr;
   }
 }
@@ -162,21 +162,21 @@ int GluCPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_, SplitRun, this, usable_thread_num_);
+  ret = ParallelLaunch(this->ms_context_, SplitRun, this, usable_thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "split error error_code[" << ret << "]";
     FreeTmpBuffer();
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_, SigmoidRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, SigmoidRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "sigmoid error error_code[" << ret << "]";
     FreeTmpBuffer();
     return ret;
   }
 
-  ret = ParallelLaunch(this->context_, MulRun, this, op_parameter_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, MulRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "mul error error_code[" << ret << "]";
     FreeTmpBuffer();

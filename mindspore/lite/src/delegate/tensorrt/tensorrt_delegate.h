@@ -18,16 +18,16 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "include/delegate.h"
+#include "include/api/delegate.h"
 #include "src/delegate/tensorrt/tensorrt_subgraph.h"
-#include "include/kernel.h"
+#include "include/api/kernel.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore::lite {
 typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
-                                     const std::vector<tensor::MSTensor *> &in_tensors,
-                                     const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name);
+                                     const std::vector<mindspore::MSTensor> &in_tensors,
+                                     const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name);
 
 class TensorRTDelegate : public Delegate {
  public:

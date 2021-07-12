@@ -140,25 +140,25 @@ int SubInt8CPUKernel::Run() {
       tile_para.in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
       tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
-    tile0_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    tile0_data_ = static_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_.at(0)->Size()));
     if (tile0_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc memory fail!";
       return RET_ERROR;
     }
-    tile1_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    tile1_data_ = static_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_.at(0)->Size()));
     if (tile1_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc memory fail!";
-      context_->allocator->Free(tile0_data_);
+      ms_context_->allocator->Free(tile0_data_);
       return RET_ERROR;
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->data_c()),
                        static_cast<int8_t *>(in_tensors_.at(1)->data_c()), reinterpret_cast<int8_t *>(tile0_data_),
                        reinterpret_cast<int8_t *>(tile1_data_), &tile_para);
   }
-  auto ret = ParallelLaunch(this->context_, SubInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, SubInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
-    context_->allocator->Free(tile0_data_);
-    context_->allocator->Free(tile1_data_);
+    ms_context_->allocator->Free(tile0_data_);
+    ms_context_->allocator->Free(tile1_data_);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SubInt8Run function error error_code[" << ret << "]";

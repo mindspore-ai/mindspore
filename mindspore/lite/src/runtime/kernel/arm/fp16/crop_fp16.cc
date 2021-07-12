@@ -52,7 +52,7 @@ int CropFp16CPUKernel::Run() {
   input_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   output_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
-  auto ret = ParallelLaunch(this->context_, CropFp16Run, this, crop_para_->thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, CropFp16Run, this, crop_para_->thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed: " << ret;
   }

@@ -20,8 +20,8 @@
 
 namespace mindspore::lite {
 int ConvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
-                                   const std::vector<tensor::MSTensor *> &in_tensors,
-                                   const std::vector<tensor::MSTensor *> &out_tensors) {
+                                   const std::vector<mindspore::MSTensor> &in_tensors,
+                                   const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 2 && in_tensors.size() != 3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -70,16 +70,16 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   // transpose weight
-  tensor::MSTensor *weight_tensor = in_tensors_[1];
+  auto weight_tensor = in_tensors_[1];
   nvinfer1::Weights kernelWeights{};
-  kernelWeights.count = weight_tensor->ElementsNum();
-  if (lite::ConvertDataType(weight_tensor->data_type()) != nvinfer1::DataType::kFLOAT) {
+  kernelWeights.count = weight_tensor.ElementNum();
+  if (lite::ConvertDataType(weight_tensor.DataType()) != nvinfer1::DataType::kFLOAT) {
     MS_LOG(WARNING) << "kernelWeights data type is not float";
   }
   kernelWeights.type = nvinfer1::DataType::kFLOAT;
-  std::vector<int> weight_shape = weight_tensor->shape();
-  float *src_val = reinterpret_cast<float *>(weight_tensor->data());
-  pack_weight_ = reinterpret_cast<float *>(malloc(weight_tensor->ElementsNum() * sizeof(float)));
+  auto weight_shape = weight_tensor.Shape();
+  float *src_val = reinterpret_cast<float *>(weight_tensor.MutableData());
+  pack_weight_ = reinterpret_cast<float *>(malloc(weight_tensor.ElementNum() * sizeof(float)));
   if (pack_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -90,10 +90,10 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   // bias
   nvinfer1::Weights biasWeights{};
   if (in_tensors_.size() >= 3) {
-    tensor::MSTensor *bias_tensor = in_tensors_[2];
-    biasWeights.type = ConvertDataType(bias_tensor->data_type());
-    biasWeights.values = bias_tensor->data();
-    biasWeights.count = bias_tensor->ElementsNum();
+    auto bias_tensor = in_tensors_[2];
+    biasWeights.type = ConvertDataType(bias_tensor.DataType());
+    biasWeights.values = bias_tensor.MutableData();
+    biasWeights.count = bias_tensor.ElementNum();
   } else {
     biasWeights.type = nvinfer1::DataType::kFLOAT;
     biasWeights.count = 0;
@@ -153,14 +153,14 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 void ConvolutionTensorRT::SetAttributes(const schema::Conv2DFusion *conv_op, nvinfer1::IConvolutionLayer *conv_layer) {
   auto stride = conv_op->stride();
   if (stride != nullptr) {
-    auto stride_val = std::vector<int>(stride->begin(), stride->end());
+    auto stride_val = std::vector<int64_t>(stride->begin(), stride->end());
     auto dims = ConvertCudaDims(stride_val);
     conv_layer->setStrideNd(dims);
   }
 
   auto dilation = conv_op->dilation();
   if (dilation != nullptr) {
-    auto dilation_val = std::vector<int>(dilation->begin(), dilation->end());
+    auto dilation_val = std::vector<int64_t>(dilation->begin(), dilation->end());
     auto dims = ConvertCudaDims(dilation_val);
     conv_layer->setDilationNd(dims);
   }

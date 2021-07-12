@@ -18,8 +18,9 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int DeconvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                                  const std::vector<tensor::MSTensor *> &out_tensors) {
+int DeconvolutionNPUOp::IsSupport(const schema::Primitive *primitive,
+                                  const std::vector<mindspore::MSTensor> &in_tensors,
+                                  const std::vector<mindspore::MSTensor> &out_tensors) {
   auto deconv_prim = primitive->value_as_Conv2dTransposeFusion();
   if (deconv_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -59,8 +60,8 @@ int DeconvolutionNPUOp::SetDeconvParam(const schema::Conv2dTransposeFusion *conv
   return RET_OK;
 }
 
-int DeconvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors) {
+int DeconvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors) {
   // set deconv attr param
   deconv_ = new (std::nothrow) hiai::op::ConvTranspose(name_ + "_deconv");
   if (deconv_ == nullptr) {
@@ -89,8 +90,8 @@ int DeconvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vect
   return RET_OK;
 }
 
-int DeconvolutionNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                                     const std::vector<tensor::MSTensor *> &out_tensors,
+int DeconvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                                     const std::vector<mindspore::MSTensor> &out_tensors,
                                      const std::vector<ge::Operator *> &npu_inputs) {
   auto ret = InitWeightConst(in_tensors);
   if (ret != RET_OK) {

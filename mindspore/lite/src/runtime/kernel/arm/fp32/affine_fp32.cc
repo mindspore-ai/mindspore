@@ -270,7 +270,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
   }
 
   kernel::InnerKernel *kernel = new (std::nothrow) kernel::MatmulCPUKernel(
-    params, input_tensors, out_tensors_, static_cast<const lite::InnerContext *>(this->context_));
+    params, input_tensors, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_));
 
   if (kernel != nullptr) {
     auto ret = kernel->Init();
@@ -324,7 +324,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
   }
 
   kernel::InnerKernel *kernel = new (std::nothrow) kernel::MatmulCPUKernel(
-    params, input_tensors, {increment_output_}, static_cast<const lite::InnerContext *>(this->context_));
+    params, input_tensors, {increment_output_}, static_cast<const lite::InnerContext *>(this->ms_context_));
 
   if (kernel != nullptr) {
     auto ret = kernel->Init();

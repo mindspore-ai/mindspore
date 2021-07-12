@@ -311,7 +311,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
   }
   auto input_shape = input->shape();
 
-  if (context_ == nullptr) {
+  if (ms_context_ == nullptr) {
     return RET_NULL_PTR;
   }
 
@@ -363,7 +363,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
 }
 
 int ResizeInt8CPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_, ResizeInt8Impl, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, ResizeInt8Impl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
     return RET_ERROR;

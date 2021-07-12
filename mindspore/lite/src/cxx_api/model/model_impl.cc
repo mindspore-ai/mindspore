@@ -132,6 +132,7 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
     mscall_param.node_type_ = call_param.node_type;
     return before(inputs, outputs, mscall_param);
   };
+
   auto after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                              const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
                              const CallBackParam &call_param) {

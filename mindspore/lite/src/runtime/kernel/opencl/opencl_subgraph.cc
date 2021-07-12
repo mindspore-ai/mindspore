@@ -114,10 +114,10 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
     InnerKernel *in_convert_op_inner = nullptr;
     if (mem_type == MemType::IMG) {
       in_convert_op_inner = OpenCLKernelCreator<ToFormatOpenCLKernel>(
-        {in_tensor}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), this->kernel()->context(), desc);
+        {in_tensor}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), this->Context(), desc);
     } else {
       in_convert_op_inner = OpenCLKernelCreator<ToFormatOpenCLKernel>(
-        {new_tensor}, {in_tensor}, reinterpret_cast<OpParameter *>(parameter), this->kernel()->context(), desc);
+        {new_tensor}, {in_tensor}, reinterpret_cast<OpParameter *>(parameter), this->Context(), desc);
     }
     MS_ASSERT(in_convert_op_inner);
     if (in_convert_op_inner == nullptr ||

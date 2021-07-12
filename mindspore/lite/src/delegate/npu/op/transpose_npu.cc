@@ -16,18 +16,18 @@
 
 #include "src/delegate/npu/op/transpose_npu.h"
 namespace mindspore {
-int TransposeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors) {
+int TransposeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() < 2) {
     MS_LOG(ERROR) << "Npu transpose must get fixed values of transpose axis.";
     return RET_ERROR;
   }
-  auto perm_num = in_tensors.at(1)->ElementsNum();
-  auto perm_data = reinterpret_cast<int *>(in_tensors.at(1)->data());
-  if (perm_data == nullptr) {
+  auto perm_num = in_tensors.at(1).ElementNum();
+  if (in_tensors.at(1).Data() == nullptr) {
     MS_LOG(ERROR) << "Npu transpose must get fixed values of transpose axis.";
     return RET_ERROR;
   }
+  auto perm_data = reinterpret_cast<const int *>(in_tensors.at(1).Data().get());
   for (int i = 0; i < perm_num; i++) {
     perm_.push_back(perm_data[i]);
   }

@@ -91,7 +91,7 @@ int ResizeGradCPUKernelFp16::Run() {
   auto out_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
   size_t elem_number = out_tensors_.at(0)->ElementsNum();
   std::fill(out_addr, out_addr + elem_number, 0.f);
-  int error_code = ParallelLaunch(this->context_, ResizeFp16GradRun, this, 1);
+  int error_code = ParallelLaunch(this->ms_context_, ResizeFp16GradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ResizeGradCPUKernelFp16 function error error_code[" << error_code << "]";
     return RET_ERROR;

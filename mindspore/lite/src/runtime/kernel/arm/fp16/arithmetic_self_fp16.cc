@@ -78,13 +78,13 @@ int ArithmeticSelfFp16CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(0);
 
   if (input_tensor->data_type() == kNumberTypeFloat32) {
-    input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, static_cast<const lite::InnerContext *>(this->context_));
+    input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, static_cast<const lite::InnerContext *>(this->ms_context_));
   } else {
     input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   }
   output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
-  auto ret = ParallelLaunch(this->context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
   }

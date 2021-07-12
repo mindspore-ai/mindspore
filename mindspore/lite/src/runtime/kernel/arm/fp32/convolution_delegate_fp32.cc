@@ -147,40 +147,40 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
         conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % 8 == 0 &&
         (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
       kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
-        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
         origin_weight_, origin_bias_);
     } else {
       kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(
-        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
         origin_weight_, origin_bias_);
     }
 #else
-    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter_, in_tensors_, out_tensors_,
-                                                                static_cast<const lite::InnerContext *>(this->context_),
-                                                                origin_weight_, origin_bias_);
+    kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(
+      op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
+      origin_weight_, origin_bias_);
 #endif
   } else {
     int out_unit;
     if (CheckIfUseWinograd(&out_unit, conv_param)) {
       kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(
-        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_), out_unit,
+        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_), out_unit,
         origin_weight_, origin_bias_);
     } else {
 #ifdef ENABLE_AVX
       if (conv_param->input_channel_ / op_parameter_->thread_num_ > 64 ||
           conv_param->input_h_ < conv_param->thread_num_ || conv_param->kernel_h_ >= 7 || conv_param->kernel_w_ >= 7) {
         kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
-          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
           origin_weight_, origin_bias_);
       } else {
         kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
-          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
           origin_weight_, origin_bias_);
       }
 #else
-      kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter_, in_tensors_, out_tensors_,
-                                                               static_cast<const lite::InnerContext *>(this->context_),
-                                                               origin_weight_, origin_bias_);
+      kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
+        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
+        origin_weight_, origin_bias_);
 #endif
     }
   }

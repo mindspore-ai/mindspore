@@ -15,6 +15,7 @@
  */
 #include "src/kernel_registry.h"
 #include <utility>
+#include <memory>
 #include "include/errorcode.h"
 #include "include/registry/register_kernel.h"
 #include "src/ops/populate/populate_register.h"
@@ -125,9 +126,40 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   return kernel_creator != nullptr;
 }
 
+int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                                    const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
+                                    kernel::LiteKernel **kernel, const void *primitive) {
+  MS_ASSERT(ms_ctx != nullptr);
+  MS_ASSERT(kernel != nullptr);
+  kernel::KernelDesc desc;
+  KernelKeyToKernelDesc(key, &desc);
+  auto creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
+  if (creator == nullptr) {
+    return RET_NOT_SUPPORT;
+  }
+
+  auto base_kernel = creator(LiteTensorsToMSTensors(in_tensors), LiteTensorsToMSTensors(out_tensors),
+                             static_cast<const schema::Primitive *>(primitive), ms_ctx);
+  if (base_kernel != nullptr) {
+    auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
+    if (lite_kernel != nullptr) {
+      kernel::KernelKey tmp_key = key;
+      if (desc.arch == kArchCPU) {
+        tmp_key.arch = kernel::kCPU;
+      } else {
+        tmp_key.arch = kernel::kCustom;
+      }
+      lite_kernel->set_desc(tmp_key);
+      *kernel = lite_kernel;
+      return RET_OK;
+    }
+  }
+  return RET_ERROR;
+}
+
 int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                              const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *parameter,
-                              kernel::LiteKernel **kernel, const void *primitive) {
+                              const InnerContext *ctx, const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
+                              OpParameter *parameter, kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
   if (key.provider == kBuiltin) {
@@ -140,6 +172,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
         auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
         if (lite_kernel != nullptr) {
           lite_kernel->set_desc(key);
+          lite_kernel->set_context(ctx);
           *kernel = lite_kernel;
           return RET_OK;
         }
@@ -147,30 +180,11 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       return RET_ERROR;
     }
   } else {
-    kernel::KernelDesc desc;
-    KernelKeyToKernelDesc(key, &desc);
-    auto creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
-    if (creator == nullptr) {
-      return RET_NOT_SUPPORT;
+    auto ret = GetCustomKernel(in_tensors, out_tensors, ms_ctx, key, kernel, primitive);
+    if (ret == RET_OK) {
+      (*kernel)->set_context(ctx);
     }
-    std::vector<tensor::MSTensor *> tensors_in(in_tensors.begin(), in_tensors.end());
-    std::vector<tensor::MSTensor *> tensors_out(out_tensors.begin(), out_tensors.end());
-    auto base_kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
-    if (base_kernel != nullptr) {
-      auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
-      if (lite_kernel != nullptr) {
-        kernel::KernelKey tmp_key = key;
-        if (desc.arch == kArchCPU) {
-          tmp_key.arch = kernel::kCPU;
-        } else {
-          tmp_key.arch = kernel::kCustom;
-        }
-        lite_kernel->set_desc(tmp_key);
-        *kernel = lite_kernel;
-        return RET_OK;
-      }
-    }
-    return RET_ERROR;
+    return ret;
   }
   return RET_NOT_SUPPORT;
 }

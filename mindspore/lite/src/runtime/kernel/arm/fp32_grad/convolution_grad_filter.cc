@@ -195,7 +195,7 @@ int ConvolutionGradFilterCPUKernel::Run() {
   auto *out_dw = out_tensors_.at(0);
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
   memset(dw_addr, 0, out_dw->Size());
-  int error_code = ParallelLaunch(this->context_, ConvolutionGradFilterRun, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradFilterRun, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv filter function error error_code[" << error_code << "]";
     return RET_ERROR;

@@ -40,6 +40,7 @@ struct Context::Data {
   bool enable_parallel_ = false;
   std::vector<int32_t> affinity_core_list_;
   int affinity_mode_ = 2;
+  std::shared_ptr<Delegate> delegate = nullptr;
 };
 
 struct DeviceInfoContext::Data {
@@ -100,6 +101,7 @@ bool Context::GetEnableParallel() const {
     MS_LOG(ERROR) << "Invalid context.";
     return false;
   }
+
   return data_->enable_parallel_;
 }
 
@@ -135,6 +137,22 @@ std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
     return {};
   }
   return data_->affinity_core_list_;
+}
+
+void Context::SetDelegate(const std::shared_ptr<Delegate> &delegate) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->delegate = delegate;
+}
+
+std::shared_ptr<Delegate> Context::GetDelegate() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return nullptr;
+  }
+  return data_->delegate;
 }
 
 std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {

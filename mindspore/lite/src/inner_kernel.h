@@ -28,8 +28,9 @@
 #include "src/tensor.h"
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
-#include "include/context.h"
-#include "include/kernel.h"
+#include "src/cxx_api/tensor/tensor_impl.h"
+#include "include/api/context.h"
+#include "include/api/kernel.h"
 
 namespace mindspore::kernel {
 class InnerKernel : public Kernel {
@@ -38,9 +39,10 @@ class InnerKernel : public Kernel {
 
   InnerKernel(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
               const lite::Context *ctx)
-      : op_parameter_(parameter), in_tensors_(std::move(in_tensors)), out_tensors_(std::move(out_tensors)) {
-    context_ = ctx;
-  }
+      : op_parameter_(parameter),
+        in_tensors_(std::move(in_tensors)),
+        out_tensors_(std::move(out_tensors)),
+        ms_context_(ctx) {}
 
   virtual ~InnerKernel() {
     if (op_parameter_ != nullptr) {
@@ -133,25 +135,33 @@ class InnerKernel : public Kernel {
                                             : schema::PrimitiveType_NONE;
   }
 
-  void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) override {
+  void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) {
     this->in_tensors_.resize(in_tensors.size());
     (void)std::transform(in_tensors.begin(), in_tensors.end(), in_tensors_.begin(),
                          [](mindspore::tensor::MSTensor *tensor) { return static_cast<lite::Tensor *>(tensor); });
   }
 
-  void set_outputs(const std::vector<mindspore::tensor::MSTensor *> &out_tensors) override {
+  void set_outputs(const std::vector<mindspore::tensor::MSTensor *> &out_tensors) {
     this->out_tensors_.resize(out_tensors.size());
     (void)std::transform(out_tensors.begin(), out_tensors.end(), out_tensors_.begin(),
                          [](mindspore::tensor::MSTensor *tensor) { return static_cast<lite::Tensor *>(tensor); });
   }
 
-  const std::vector<mindspore::tensor::MSTensor *> &inputs() override {
-    inputs_.assign(in_tensors_.begin(), in_tensors_.end());
+  const std::vector<mindspore::MSTensor> &inputs() override {
+    if (inputs_.empty()) {
+      std::transform(in_tensors_.begin(), in_tensors_.end(), std::back_inserter(inputs_), [](lite::Tensor *tensor) {
+        return mindspore::MSTensor(std::make_shared<mindspore::MSTensor::Impl>(tensor));
+      });
+    }
     return inputs_;
   }
 
-  const std::vector<mindspore::tensor::MSTensor *> &outputs() override {
-    outputs_.assign(out_tensors_.begin(), out_tensors_.end());
+  const std::vector<mindspore::MSTensor> &outputs() override {
+    if (outputs_.empty()) {
+      std::transform(out_tensors_.begin(), out_tensors_.end(), std::back_inserter(outputs_), [](lite::Tensor *tensor) {
+        return mindspore::MSTensor(std::make_shared<mindspore::MSTensor::Impl>(tensor));
+      });
+    }
     return outputs_;
   }
 
@@ -205,6 +215,7 @@ class InnerKernel : public Kernel {
       workspace_ = ws;
     }
   }
+  const lite::Context *context() const { return this->ms_context_; }
   bool ws_allocated_ = false;
 
  protected:
@@ -217,6 +228,7 @@ class InnerKernel : public Kernel {
   TypeId registry_data_type_ = kTypeUnknown;
   size_t workspace_size_ = 0;
   void *workspace_ = nullptr;
+  const lite::Context *ms_context_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -24,15 +24,15 @@
 namespace mindspore {
 class ConvolutionBaseNPUOp : public NPUOp {
  public:
-  ConvolutionBaseNPUOp(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                       const std::vector<tensor::MSTensor *> &out_tensors, std::string name)
+  ConvolutionBaseNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                       const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : NPUOp(primitive, in_tensors, out_tensors, name) {}
 
   ~ConvolutionBaseNPUOp() override;
 
  protected:
-  int InitWeightConst(const std::vector<tensor::MSTensor *> &inputs);
-  int InitBiasConst(const std::vector<tensor::MSTensor *> &inputs);
+  int InitWeightConst(const std::vector<mindspore::MSTensor> &inputs);
+  int InitBiasConst(const std::vector<mindspore::MSTensor> &inputs);
   int SetActivation(const ge::Operator *input, schema::ActivationType act_type);
   hiai::op::Activation *act_ = nullptr;
   hiai::op::Const *weight_ = nullptr;

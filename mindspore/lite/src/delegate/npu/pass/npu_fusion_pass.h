@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_FUSION_PASS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_FUSION_PASS_H_
 #include <vector>
-#include "src/delegate/npu/op//npu_op.h"
+#include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/pass/npu_base_pass.h"
 
 namespace mindspore {

@@ -23,16 +23,16 @@
 namespace mindspore::lite {
 class ElementWiseTensorRT : public TensorRTOp {
  public:
-  ElementWiseTensorRT(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                      const std::vector<tensor::MSTensor *> &out_tensors, const std::string &name)
+  ElementWiseTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                      const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
   ~ElementWiseTensorRT() override = default;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                const std::vector<tensor::MSTensor *> &out_tensors) override;
+  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
   nvinfer1::ElementWiseOperation element_wise_op_;

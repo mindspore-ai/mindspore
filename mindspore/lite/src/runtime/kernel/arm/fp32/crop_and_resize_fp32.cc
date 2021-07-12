@@ -46,39 +46,39 @@ int CropAndResizeCPUKernel::MallocTmpBuffer() {
   // Malloc buffer to save coordinate.
   // For mode CROP_AND_RESIZE, different output batches require different cache coordinates.
   int c = in_tensors_.at(0)->Channel();
-  y_bottoms_ = reinterpret_cast<int *>(context_->allocator->Malloc(sizeof(int) * new_height_ * batch_));
+  y_bottoms_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(sizeof(int) * new_height_ * batch_));
   if (y_bottoms_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  y_tops_ = reinterpret_cast<int *>(context_->allocator->Malloc(sizeof(int) * new_height_ * batch_));
+  y_tops_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(sizeof(int) * new_height_ * batch_));
   if (y_tops_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  y_bottom_weights_ = reinterpret_cast<float *>(context_->allocator->Malloc(sizeof(float) * new_height_ * batch_));
+  y_bottom_weights_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(sizeof(float) * new_height_ * batch_));
   if (y_bottom_weights_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
 
-  x_lefts_ = reinterpret_cast<int *>(context_->allocator->Malloc(sizeof(int) * new_width_ * batch_));
+  x_lefts_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(sizeof(int) * new_width_ * batch_));
   if (x_lefts_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  x_rights_ = reinterpret_cast<int *>(context_->allocator->Malloc(sizeof(int) * new_width_ * batch_));
+  x_rights_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(sizeof(int) * new_width_ * batch_));
   if (x_rights_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  x_left_weights_ = reinterpret_cast<float *>(context_->allocator->Malloc(sizeof(float) * new_width_ * batch_));
+  x_left_weights_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(sizeof(float) * new_width_ * batch_));
   if (x_left_weights_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
   line_buffer_ = reinterpret_cast<float *>(
-    context_->allocator->Malloc(sizeof(float) * new_width_ * c * 2 * op_parameter_->thread_num_));
+    ms_context_->allocator->Malloc(sizeof(float) * new_width_ * c * 2 * op_parameter_->thread_num_));
   if (line_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
@@ -87,13 +87,13 @@ int CropAndResizeCPUKernel::MallocTmpBuffer() {
 }
 
 void CropAndResizeCPUKernel::FreeTmpBuffer() {
-  context_->allocator->Free(y_bottoms_);
-  context_->allocator->Free(y_tops_);
-  context_->allocator->Free(y_bottom_weights_);
-  context_->allocator->Free(x_lefts_);
-  context_->allocator->Free(x_rights_);
-  context_->allocator->Free(x_left_weights_);
-  context_->allocator->Free(line_buffer_);
+  ms_context_->allocator->Free(y_bottoms_);
+  ms_context_->allocator->Free(y_tops_);
+  ms_context_->allocator->Free(y_bottom_weights_);
+  ms_context_->allocator->Free(x_lefts_);
+  ms_context_->allocator->Free(x_rights_);
+  ms_context_->allocator->Free(x_left_weights_);
+  ms_context_->allocator->Free(line_buffer_);
 }
 
 int CropAndResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
@@ -158,7 +158,7 @@ int CropAndResizeCPUKernel::Run() {
     return ret;
   }
 
-  int error_code = ParallelLaunch(this->context_, CropAndResizeImpl, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->ms_context_, CropAndResizeImpl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "CropAndResize run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

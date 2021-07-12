@@ -61,20 +61,20 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     auto variance = in_tensors_.at(4);
     auto output = out_tensors_.at(0);
 
-    auto input_fp16 = context_->allocator->Malloc(input->ElementsNum() * sizeof(float16_t));
-    auto scale_fp16 = context_->allocator->Malloc(scale->ElementsNum() * sizeof(float16_t));
-    auto offset_fp16 = context_->allocator->Malloc(offset->ElementsNum() * sizeof(float16_t));
-    auto mean_fp16 = context_->allocator->Malloc(mean->ElementsNum() * sizeof(float16_t));
-    auto variance_fp16 = context_->allocator->Malloc(variance->ElementsNum() * sizeof(float16_t));
-    auto output_fp16 = context_->allocator->Malloc(output->ElementsNum() * sizeof(float16_t));
+    auto input_fp16 = ms_context_->allocator->Malloc(input->ElementsNum() * sizeof(float16_t));
+    auto scale_fp16 = ms_context_->allocator->Malloc(scale->ElementsNum() * sizeof(float16_t));
+    auto offset_fp16 = ms_context_->allocator->Malloc(offset->ElementsNum() * sizeof(float16_t));
+    auto mean_fp16 = ms_context_->allocator->Malloc(mean->ElementsNum() * sizeof(float16_t));
+    auto variance_fp16 = ms_context_->allocator->Malloc(variance->ElementsNum() * sizeof(float16_t));
+    auto output_fp16 = ms_context_->allocator->Malloc(output->ElementsNum() * sizeof(float16_t));
     if (input_fp16 == nullptr || scale_fp16 == nullptr || offset_fp16 == nullptr || mean_fp16 == nullptr ||
         variance_fp16 == nullptr || output_fp16 == nullptr) {
-      context_->allocator->Free(input_fp16);
-      context_->allocator->Free(scale_fp16);
-      context_->allocator->Free(offset_fp16);
-      context_->allocator->Free(mean_fp16);
-      context_->allocator->Free(variance_fp16);
-      context_->allocator->Free(output_fp16);
+      ms_context_->allocator->Free(input_fp16);
+      ms_context_->allocator->Free(scale_fp16);
+      ms_context_->allocator->Free(offset_fp16);
+      ms_context_->allocator->Free(mean_fp16);
+      ms_context_->allocator->Free(variance_fp16);
+      ms_context_->allocator->Free(output_fp16);
       return RET_ERROR;
     }
     Float32ToFloat16(reinterpret_cast<float *>(input->data_c()), reinterpret_cast<float16_t *>(input_fp16),
@@ -99,12 +99,12 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
 
     Float16ToFloat32(reinterpret_cast<float16_t *>(output_fp16), reinterpret_cast<float *>(output),
                      output->ElementsNum());
-    context_->allocator->Free(input_fp16);
-    context_->allocator->Free(scale_fp16);
-    context_->allocator->Free(offset_fp16);
-    context_->allocator->Free(mean_fp16);
-    context_->allocator->Free(variance_fp16);
-    context_->allocator->Free(output_fp16);
+    ms_context_->allocator->Free(input_fp16);
+    ms_context_->allocator->Free(scale_fp16);
+    ms_context_->allocator->Free(offset_fp16);
+    ms_context_->allocator->Free(mean_fp16);
+    ms_context_->allocator->Free(variance_fp16);
+    ms_context_->allocator->Free(output_fp16);
     return RET_OK;
   }
 

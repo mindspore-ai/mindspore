@@ -146,7 +146,7 @@ int GatherNdInt8CPUKernel::Run() {
   if (ret != RET_OK) {
     return ret;
   }
-  ret = ParallelLaunch(this->context_, GatherNdInt8Run, this, thread_sz_count_);
+  ret = ParallelLaunch(this->ms_context_, GatherNdInt8Run, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";
     return ret;

@@ -23,9 +23,9 @@
 namespace mindspore {
 class NPUGraphUtils {
  public:
-  static std::vector<mindspore::tensor::MSTensor *> GetGraphInTensors(std::vector<NPUOp *> ops);
+  static std::vector<mindspore::MSTensor> GetGraphInTensors(std::vector<NPUOp *> ops);
 
-  static std::vector<mindspore::tensor::MSTensor *> GetGraphOutTensors(std::vector<NPUOp *> ops);
+  static std::vector<mindspore::MSTensor> GetGraphOutTensors(std::vector<NPUOp *> ops);
 };
 }  // namespace mindspore
 

@@ -10,6 +10,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -76,7 +77,7 @@ int TensorListSetItemCPUKernel::Run() {
   }
   output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
   MS_ASSERT(output0_ != nullptr);
-  output0_->set_allocator(context_->allocator);
+  output0_->set_allocator(ms_context_->allocator);
   // new loop count
   if (output0_->tensors().empty() && input0_->tensors().empty()) {
     if (IncrementOutputSize(0) != RET_OK) {
@@ -90,13 +91,13 @@ int TensorListSetItemCPUKernel::Run() {
     output0_->set_element_shape(input2_->shape());
   }
   if (output0_->allocator() == nullptr) {
-    output0_->set_allocator(context_->allocator);
+    output0_->set_allocator(ms_context_->allocator);
   }
   for (int i = 0; i < output0_->ElementsNum(); ++i) {
     if (i == index_) {
       auto dst = output0_->GetTensor(i);
       if (dst == nullptr) {
-        dst = lite::Tensor::CopyTensor(*input2_, true, context_->allocator);
+        dst = lite::Tensor::CopyTensor(*input2_, true, ms_context_->allocator);
         auto &tensors = output0_->tensors();
         tensors.emplace_back(dst);
       } else {
@@ -117,7 +118,7 @@ int TensorListSetItemCPUKernel::Run() {
       MS_ASSERT(src != nullptr);
       // merge move data will delete tensors
       if (dst == nullptr) {
-        dst = lite::Tensor::CopyTensor(*src, src->data_c() != nullptr, context_->allocator);
+        dst = lite::Tensor::CopyTensor(*src, src->data_c() != nullptr, ms_context_->allocator);
         auto &tensors = output0_->tensors();
         tensors.emplace_back(dst);
         continue;

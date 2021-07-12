@@ -19,8 +19,8 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                           const std::vector<tensor::MSTensor *> &out_tensors) {
+int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                           const std::vector<mindspore::MSTensor> &out_tensors) {
   auto resize_prim = primitive->value_as_Resize();
   if (resize_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -32,16 +32,15 @@ int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     return RET_NOT_SUPPORT;
   }
 
-  if (in_tensors[0]->shape()[1] > out_tensors[0]->shape()[1] ||
-      in_tensors[0]->shape()[2] > out_tensors[0]->shape()[2]) {
+  if (in_tensors[0].Shape()[1] > out_tensors[0].Shape()[1] || in_tensors[0].Shape()[2] > out_tensors[0].Shape()[2]) {
     MS_LOG(WARNING) << "Npu resize does not support reduction.";
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
 }
 
-int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                      const std::vector<tensor::MSTensor *> &out_tensors) {
+int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                      const std::vector<mindspore::MSTensor> &out_tensors) {
   auto resize_prim = primitive->value_as_Resize();
   if (resize_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -51,13 +50,13 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<tens
     new_height_ = resize_prim->new_height();
     new_width_ = resize_prim->new_width();
   } else if (in_tensors.size() == 2) {
-    auto out_size = in_tensors.at(1)->data();
+    auto out_size = in_tensors.at(1).Data();
     if (out_size == nullptr) {
       MS_LOG(ERROR) << "Out size is not assigned";
       return RET_ERROR;
     }
-    new_height_ = out_tensors.at(0)->shape().at(1);
-    new_width_ = out_tensors.at(0)->shape().at(2);
+    new_height_ = out_tensors.at(0).Shape().at(1);
+    new_width_ = out_tensors.at(0).Shape().at(2);
   } else {
     MS_LOG(ERROR) << "Get resize op new_height and new_width error.";
     return RET_ERROR;
@@ -97,8 +96,8 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<tens
   return RET_OK;
 }
 
-int ResizeNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                              const std::vector<tensor::MSTensor *> &out_tensors,
+int ResizeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                              const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
   if (resize_method_ == schema::ResizeMethod_LINEAR) {
     auto resize_bilinear = reinterpret_cast<hiai::op::ResizeBilinearV2 *>(resize_);

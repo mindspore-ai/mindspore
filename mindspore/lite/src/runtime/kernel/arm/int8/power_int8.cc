@@ -98,7 +98,7 @@ int PowerInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int PowerInt8CPUKernel::Run() {
-  auto ret = ParallelLaunch(this->context_, PowerInt8Run, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, PowerInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerInt8Run error, error_code[" << ret << "]";
   }

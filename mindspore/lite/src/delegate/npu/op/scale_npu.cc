@@ -15,12 +15,11 @@
  */
 
 #include "src/delegate/npu/op/scale_npu.h"
-#include <memory>
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                          const std::vector<tensor::MSTensor *> &out_tensors) {
+int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                          const std::vector<mindspore::MSTensor> &out_tensors) {
   auto scale_prim = primitive->value_as_ScaleFusion();
   if (scale_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -28,7 +27,7 @@ int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<
   }
   axis_ = scale_prim->axis();
   if (axis_ < 0) {
-    axis_ = axis_ + in_tensors[0]->shape().size();
+    axis_ = axis_ + in_tensors[0].Shape().size();
   }
   if (axis_ != 1 && axis_ != 3) {
     MS_LOG(WARNING) << "Npu scale axis attr only support 1 or channel, now is " << axis_;
@@ -37,8 +36,8 @@ int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<
   return RET_OK;
 }
 
-int ScaleNPUOp::Init(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                     const std::vector<tensor::MSTensor *> &out_tensors) {
+int ScaleNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                     const std::vector<mindspore::MSTensor> &out_tensors) {
   op_ = new (std::nothrow) hiai::op::Scale(name_);
   if (op_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
@@ -62,12 +61,12 @@ int ScaleNPUOp::Init(const schema::Primitive *primitive, const std::vector<tenso
   return RET_OK;
 }
 
-int ScaleNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
-                             const std::vector<tensor::MSTensor *> &out_tensors,
+int ScaleNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                             const std::vector<mindspore::MSTensor> &out_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
   op_->set_input_x(*npu_inputs.at(0));
   MS_ASSERT(in_tensors.size() > 1);
-  auto scale_shape = in_tensors[1]->shape();
+  auto scale_shape = in_tensors[1].Shape();
   auto scale_tensor = ConverterToNPUTensor(in_tensors[1]);
   if (scale_tensor == nullptr) {
     MS_LOG(ERROR) << "Get scale_tensor failed.";
@@ -84,7 +83,7 @@ int ScaleNPUOp::SetNPUInputs(const std::vector<tensor::MSTensor *> &in_tensors,
   op_->set_input_scale(*scale_);
 
   if (in_tensors.size() > 2 && in_tensors[2] != nullptr) {
-    auto bias_shape = in_tensors[2]->shape();
+    auto bias_shape = in_tensors[2].Shape();
     auto bias_tensor = ConverterToNPUTensor(in_tensors[2]);
     if (bias_tensor == nullptr) {
       MS_LOG(ERROR) << "Get bias_tensor failed.";

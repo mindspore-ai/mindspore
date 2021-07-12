@@ -73,7 +73,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitPackedInputOutput() {
     int ic_algin = UP_DIV(conv_param_->input_channel_, oc_tile_);
     int pack_input_size =
       conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * oc_tile_ * ic_algin;
-    packed_input_ = reinterpret_cast<float *>(context_->allocator->Malloc(pack_input_size * sizeof(float)));
+    packed_input_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(float)));
     if (packed_input_ == nullptr) {
       MS_LOG(ERROR) << "Malloc packed_input_ buffer is failed.";
       return RET_NULL_PTR;
@@ -84,7 +84,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitPackedInputOutput() {
     int oc_algin = UP_DIV(conv_param_->output_channel_, oc_tile_);
     int pack_output_size =
       conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc_tile_ * oc_algin;
-    packed_output_ = reinterpret_cast<float *>(context_->allocator->Malloc(pack_output_size * sizeof(float)));
+    packed_output_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_output_size * sizeof(float)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc packed_output_ buffer is failed.";
       return RET_NULL_PTR;
@@ -167,7 +167,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
     packed_output_ = output_ptr;
   }
 
-  ret = ParallelLaunch(this->context_, ConvDwSWAvxRun, this, conv_param_->thread_num_);
+  ret = ParallelLaunch(this->ms_context_, ConvDwSWAvxRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwSWAvxRun error: error_code[" << ret << "]";
   }
@@ -182,11 +182,11 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
 
 void ConvolutionDepthwiseSWCPUKernelX86::FreePackedInputOutput() {
   if (input_need_align_) {
-    context_->allocator->Free(packed_input_);
+    ms_context_->allocator->Free(packed_input_);
     packed_input_ = nullptr;
   }
   if (output_need_align_) {
-    context_->allocator->Free(packed_output_);
+    ms_context_->allocator->Free(packed_output_);
     packed_output_ = nullptr;
   }
 }

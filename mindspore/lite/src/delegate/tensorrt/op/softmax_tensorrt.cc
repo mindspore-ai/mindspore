@@ -17,8 +17,8 @@
 #include "src/delegate/tensorrt/op/softmax_tensorrt.h"
 
 namespace mindspore::lite {
-int SoftMaxTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<tensor::MSTensor *> &in_tensors,
-                               const std::vector<tensor::MSTensor *> &out_tensors) {
+int SoftMaxTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors) {
   if (primitive->value_type() == schema::PrimitiveType::PrimitiveType_LogSoftmax) {
     with_log_ = true;
     auto softmax_op = primitive->value_as_LogSoftmax();
@@ -75,7 +75,7 @@ int SoftMaxTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       return RET_ERROR;
     }
   }
-  out_tensor->setName(out_tensors_[0]->tensor_name().c_str());
+  out_tensor->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(out_tensor);
   return RET_OK;
 }
