@@ -33,7 +33,7 @@ int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     return RET_ERROR;
   }
   if (in_tensors[2].ElementNum() == 1) {
-    axis_ = static_cast<int *>(in_tensors[2].MutableData())[0];
+    axis_ = static_cast<const int *>(in_tensors[2].Data().get())[0];
   } else {
     MS_LOG(ERROR) << "TensorRT axis is attribute.";
     return RET_ERROR;
