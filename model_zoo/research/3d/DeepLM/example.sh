@@ -16,6 +16,6 @@
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 #global lm solver
-python3 examples/BundleAdjuster/bundle_adjuster.py --balFile ./data/problem-49-7776-pre.txt --device cuda
+python3 examples/BundleAdjuster/bundle_adjuster.py --balFile ./data/problem-308-195089-pre.txt --device cuda
 
 
