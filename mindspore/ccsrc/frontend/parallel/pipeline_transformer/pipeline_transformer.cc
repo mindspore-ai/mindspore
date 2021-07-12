@@ -97,9 +97,9 @@ bool PipelineTransformer::NeedGrad(const CNodePtr &cnode) {
       if (load->input(1)->isa<Parameter>() && ParameterRequireGrad(load->input(1))) {
         return true;
       }
-      if (IsPrimitiveCNode(input, prim::kPrimCast)) {
-        return NeedGrad(input->cast<CNodePtr>());
-      }
+    }
+    if (IsPrimitiveCNode(input, prim::kPrimCast)) {
+      return NeedGrad(input->cast<CNodePtr>());
     }
   }
   return false;
