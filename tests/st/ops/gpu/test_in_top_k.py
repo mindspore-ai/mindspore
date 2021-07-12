@@ -32,9 +32,9 @@ class InTopKNet(nn.Cell):
 def in_top_k(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-    predictions = Tensor(np.array([[9, 3, 8, 0, 0, 0, 0, 0, 0],
+    predictions = Tensor(np.array([[4, 1, 2, 0, 0, 0, 0, 0, 0],
                                    [7, 9, 9, 0, 0, 0, 0, 0, 0],
-                                   [9, 9, 9, 0, 0, 0, 0, 0, 0]]).astype(nptype))
+                                   [3, 3, 3, 0, 0, 0, 0, 0, 0]]).astype(nptype))
 
     k = 1
     in_top_k_net = InTopKNet(k)
