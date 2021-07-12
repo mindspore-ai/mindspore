@@ -41,6 +41,9 @@
 #include "debug/debugger/debugger.h"
 #endif
 #include "debug/data_dump/dump_json_parser.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore {
 namespace compile {
@@ -805,6 +808,9 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   // Debugger pre-execute graph.
   PrepareForDebuggr(graph_compiler_info);
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
 
