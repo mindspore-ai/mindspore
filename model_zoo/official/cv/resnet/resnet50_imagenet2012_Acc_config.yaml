@@ -51,6 +51,9 @@ enable_cache: False
 cache_session_id: ""
 mode_name: "GRAPH"
 acc_mode: "O1"
+all_reduce_fusion_config:
+    - 85
+    - 160
 
 # Export options
 device_id: 0
