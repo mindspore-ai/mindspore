@@ -35,7 +35,10 @@ if(MSLITE_COMPILE_NNIE AND TARGET_HIMIX200 AND PLATFORM_ARM)
 
     add_executable(benchmark
             ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/run_benchmark.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_base.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/benchmark.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_unified_api.cc
             ${COMMON_SRC})
 
     add_dependencies(benchmark fbs_src)
