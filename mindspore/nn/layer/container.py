@@ -259,7 +259,7 @@ class CellList(_CellListBase, Cell):
         >>> cell_ls = nn.CellList([bn])
         >>> cell_ls.insert(0, conv)
         >>> cell_ls.append(relu)
-        >>> cell_ls
+        >>> print(cell_ls)
         CellList<
           (0): Conv2d<input_channels=100, output_channels=20, kernel_size=(3, 3),stride=(1, 1),  pad_mode=same,
           padding=0, dilation=(1, 1), group=1, has_bias=False, weight_init=normal, bias_init=zeros, format=NCHW>
