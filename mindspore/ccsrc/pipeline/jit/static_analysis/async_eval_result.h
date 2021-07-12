@@ -43,25 +43,25 @@ class HealthPointMgr {
   HealthPointMgr &operator=(const HealthPointMgr &) = delete;
   static HealthPointMgr &GetInstance() { return instance_; }
   void Clear();
-  void SetNextRunable();
+  void SetNextRunnable();
   void HandleException();
 
   void CheckPoint() {
     MS_LOG(DEBUG) << "The Health Point is " << point_;
     if (point_ == 0) {
-      SetNextRunable();
+      SetNextRunnable();
     } else if (point_ < 0) {
-      MS_LOG(WARNING) << "There is something wrong. point = " << point_;
+      MS_LOG(WARNING) << "There is something wrong. point: " << point_;
     }
   }
 
-  void DropPoint() {
+  void DecrPoint() {
     std::lock_guard<std::recursive_mutex> lock(lock_);
     --point_;
     CheckPoint();
   }
 
-  void AddPoint() {
+  void IncrPoint() {
     std::lock_guard<std::recursive_mutex> lock(lock_);
     ++point_;
   }
@@ -83,8 +83,8 @@ class HealthPointMgr {
 
 class HealthPointScopedDrop {
  public:
-  HealthPointScopedDrop() { HealthPointMgr::GetInstance().DropPoint(); }
-  ~HealthPointScopedDrop() { HealthPointMgr::GetInstance().AddPoint(); }
+  HealthPointScopedDrop() { HealthPointMgr::GetInstance().DecrPoint(); }
+  ~HealthPointScopedDrop() { HealthPointMgr::GetInstance().IncrPoint(); }
 };
 
 template <typename KeyType, typename ValueType, typename CacheType>
@@ -119,7 +119,7 @@ class MultiThreadCache {
   std::string dump() {
     std::ostringstream buf;
     for (auto &item : cache_) {
-      buf << "{" << item.first->ToString() << ":" << item.second->ToString() << "}" << std::endl;
+      buf << "{" << item.first->ToString() << ": " << item.second->ToString() << "}" << std::endl;
     }
     return buf.str();
   }
@@ -144,7 +144,7 @@ class NormalCache {
   using iterator = typename CacheType::iterator;
   using const_iterator = typename CacheType::const_iterator;
 
-  ValueType get(const KeyType &key) {
+  ValueType get(const KeyType &key) const {
     auto it = cache_.find(key);
     if (it != cache_.end()) {
       return it->second;
@@ -156,14 +156,14 @@ class NormalCache {
 
   void clear() { cache_.clear(); }
 
-  size_t size() { return cache_.size(); }
+  size_t size() const { return cache_.size(); }
 
-  bool empty() { return size() == 0; }
+  bool empty() const { return size() == 0; }
 
-  std::string dump() {
+  std::string dump() const {
     std::ostringstream buf;
     for (auto &item : cache_) {
-      buf << "{" << item.first->ToString() << ":" << item.second->ToString() << "}" << std::endl;
+      buf << "{" << item.first->ToString() << ": " << item.second->ToString() << "}" << std::endl;
     }
     return buf.str();
   }
@@ -187,44 +187,42 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
   ~AsyncAbstract() = default;
   // Wait
   AbstractBasePtr GetResult() {
-    static HealthPointMgr &healthPointMgr = HealthPointMgr::GetInstance();
-    static StaticAnalysisException &exceptionMgr = StaticAnalysisException::Instance();
-    exceptionMgr.CheckException();
+    StaticAnalysisException::Instance().CheckException();
     std::unique_lock<std::mutex> lock(lock_);
     while (true) {
       ++count_;
       // The point should be dropped if it can't run. It will be added when it can run.
-      bool hasDropPoint = false;
-      if (!runable_) {
-        healthPointMgr.DropPoint();
-        hasDropPoint = true;
+      bool hasDecrPoint = false;
+      if (!runnable_) {
+        HealthPointMgr::GetInstance().DecrPoint();
+        hasDecrPoint = true;
       }
-      MS_LOG(DEBUG) << this << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
-      condition_var_.wait(lock, [this] { return runable_; });
-      if (hasDropPoint) {
-        healthPointMgr.AddPoint();
+      MS_LOG(DEBUG) << this << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
+      condition_var_.wait(lock, [this] { return runnable_; });
+      if (hasDecrPoint) {
+        HealthPointMgr::GetInstance().IncrPoint();
       }
-      MS_LOG(DEBUG) << this << " continue runable: " << runable_ << " result: " << (result_ ? result_.get() : 0);
+      MS_LOG(DEBUG) << this << " continue runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
 
-      exceptionMgr.CheckException();
-      runable_ = false;
+      StaticAnalysisException::Instance().CheckException();
+      runnable_ = false;
       if (result_ != nullptr) {
         MS_LOG(DEBUG) << this << " Return  result: " << (result_ ? result_.get() : 0);
         return result_;
       }
       // Push to list
-      healthPointMgr.Add2Schedule(shared_from_this());
+      HealthPointMgr::GetInstance().Add2Schedule(shared_from_this());
       // Notify the next asyncAbastract to run.
-      healthPointMgr.SetNextRunable();
-      MS_LOG(DEBUG) << this << " SetNextRunable "
-                    << " runable: " << runable_ << " result: " << (result_ ? result_.get() : 0)
-                    << " point:" << healthPointMgr.point();
+      HealthPointMgr::GetInstance().SetNextRunnable();
+      MS_LOG(DEBUG) << this << " SetNextRunnable "
+                    << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0)
+                    << " point: " << HealthPointMgr::GetInstance().point();
     }
   }
 
-  void SetRunable() {
-    MS_LOG(DEBUG) << this << " Runable.";
-    runable_ = true;
+  void SetRunnable() {
+    MS_LOG(DEBUG) << this << " runnable.";
+    runnable_ = true;
     condition_var_.notify_one();
   }
   int count() const { return count_; }
@@ -235,7 +233,7 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
     std::lock_guard<std::mutex> lock(lock_);
     return result_;
   }
-  void JoinResult(const AbstractBasePtr &result) {
+  void SetResult(const AbstractBasePtr &result) {
     MS_EXCEPTION_IF_NULL(result);
     std::lock_guard<std::mutex> lock(lock_);
     result_ = result;
@@ -250,7 +248,7 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
  private:
   std::mutex lock_;
   std::condition_variable condition_var_;
-  bool runable_{false};
+  bool runnable_{false};
   int count_{0};
   AbstractBasePtr result_{nullptr};
 };
@@ -265,7 +263,7 @@ class EvaluatorCacheMgr {
   ~EvaluatorCacheMgr() = default;
 
   void Clear() { eval_result_cache_.clear(); }
-  EvalResultCache &GetCache() { return eval_result_cache_; }
+  const EvalResultCache &GetCache() { return eval_result_cache_; }
   EvalResultPtr GetValue(const AbstractBasePtrList &key) { return eval_result_cache_.get(key); }
   void SetValue(const AbstractBasePtrList &key, const EvalResultPtr &arg) { eval_result_cache_.set(key, arg); }
   size_t GetSize() { return eval_result_cache_.size(); }

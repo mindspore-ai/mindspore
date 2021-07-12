@@ -26,7 +26,7 @@ namespace abstract {
 HealthPointMgr HealthPointMgr::instance_;
 
 void HealthPointMgr::Clear() {
-  MS_LOG(DEBUG) << " Point = " << point_;
+  MS_LOG(DEBUG) << " Point: " << point_;
   point_ = 1;
 }
 
@@ -43,12 +43,12 @@ void HealthPointMgr::HandleException() {
   // Free all the locks. Let all the threads continue to run.
   std::lock_guard<std::recursive_mutex> lock(lock_);
   for (auto &item : asyncAbstractList_) {
-    item->SetRunable();
+    item->SetRunnable();
   }
   asyncAbstractList_.clear();
 }
 
-void HealthPointMgr::SetNextRunable() {
+void HealthPointMgr::SetNextRunnable() {
   std::lock_guard<std::recursive_mutex> lock(lock_);
   if (asyncAbstractList_.empty()) {
     MS_LOG(DEBUG) << "The Health List is empty. ";
@@ -67,7 +67,7 @@ void HealthPointMgr::SetNextRunable() {
 
   MS_LOG(DEBUG) << asyncAbstractList_.front().get() << " The Health Point is " << point_
                 << " Called times : " << asyncAbstractList_.front()->count();
-  asyncAbstractList_.front()->SetRunable();
+  asyncAbstractList_.front()->SetRunnable();
   asyncAbstractList_.pop_front();
 }
 
@@ -144,13 +144,13 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
 void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
   MS_EXCEPTION_IF_NULL(conf);
   if (arg == nullptr) {
-    MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr";
+    MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr.";
   }
   std::lock_guard<std::mutex> lock(lock_);
   AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
   if (async_eval_result == nullptr) {
     async_eval_result = std::make_shared<AsyncAbstract>();
-    async_eval_result->JoinResult(arg);
+    async_eval_result->SetResult(arg);
     switch_cache_.set(conf, async_eval_result);
   } else {
     auto ab1 = async_eval_result->TryGetResult();
@@ -160,12 +160,12 @@ void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const 
       absList.push_back(ab1);
       // Join two branches's result
       auto joined_result = AnalysisEngine::ProcessEvalResults(absList, conf->node());
-      async_eval_result->JoinResult(joined_result->abstract());
+      async_eval_result->SetResult(joined_result->abstract());
       if (!(*joined_result == *ab1)) {
         PushTodo(conf);
       }
     } else {
-      async_eval_result->JoinResult(arg);
+      async_eval_result->SetResult(arg);
     }
   }
 }
@@ -176,11 +176,11 @@ void AnalysisResultCacheMgr::Todo() {
     AnfNodeConfigPtr conf = todo_.front();
     todo_.pop_front();
     if (GetValue(conf) == nullptr) {
-      MS_LOG(WARNING) << conf->node()->ToString() << " not in globleCache";
+      MS_LOG(WARNING) << conf->node()->ToString() << " not in globle cache.";
       continue;
     }
     if (TryGetSwitchValue(conf) == nullptr) {
-      MS_LOG(WARNING) << conf->node()->ToString() << " not in switchCache";
+      MS_LOG(WARNING) << conf->node()->ToString() << " not in switch cache.";
       continue;
     }
     if (!(*GetValue(conf)->abstract() == *TryGetSwitchValue(conf))) {
