@@ -792,15 +792,19 @@ void RowMajor2Row12MajorFp16(const void *src, float16_t *dst, int row, int col, 
 }
 
 void RowMajor2Row8MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src) {
+  int down_c8 = col / C8NUM;
+  int stride = C8NUM * row;
   for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
+    int c = 0;
+    for (; c < down_c8; c++) {
+      MS_FLOAT16X8 src_data = MS_LDQ_F16((const float16_t *)src + r * col + c * C8NUM);
+      MS_STQ_F16(dst + c * stride + r * C8NUM, src_data);
+    }
+    c *= C8NUM;
+    for (; c < col; c++) {
       int c_div8 = c / 8;
       int c_mod8 = c % 8;
-      if (is_fp32_src) {
-        dst[c_div8 * 8 * row + r * 8 + c_mod8] = (float16_t)(((const float *)src)[r * col + c]);
-      } else {
-        dst[c_div8 * 8 * row + r * 8 + c_mod8] = ((const float16_t *)src)[r * col + c];
-      }
+      dst[c_div8 * stride + r * 8 + c_mod8] = ((const float16_t *)src)[r * col + c];
     }
   }
 }
