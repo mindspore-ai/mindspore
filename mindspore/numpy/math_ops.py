@@ -2213,7 +2213,7 @@ def convolve(a, v, mode='full'):
         >>> import mindspore.numpy as np
         >>> output = np.convolve([1., 2., 3., 4., 5.], [2., 3.], mode="valid")
         >>> print(output)
-        [ 3.  6.  9. 12.]
+        [ 7. 12. 17. 22.]
     """
     if not isinstance(a, Tensor):
         a = asarray_const(a)
@@ -2926,6 +2926,7 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         [[-3  6 -3]
         [ 3 -6  3]]
         >>> output = np.cross(x, y, axisc=0)
+        >>> print(output)
         [[-3  3]
         [ 6 -6]
         [-3  3]]
@@ -3785,7 +3786,7 @@ def arctan2(x1, x2, dtype=None):
         if both `x1` and `x2` are scalars.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -4430,6 +4431,7 @@ def sign(x, dtype=None):
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
         Complex inputs are not supported now.
+        On Ascend, integer inputs are not supported.
 
     Args:
         x (Union[int, float, list, tuple, Tensor]): Input values.
@@ -4683,14 +4685,14 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
     Examples:
         >>> from mindspore import numpy as np
         >>> print(np.histogram([1, 2, 1], bins=[0, 1, 2, 3]))
-        (Tensor(shape=[3], dtype=Float32, value= [0, 2, 1]),
+        (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  2.00000000e+00,  1.00000000e+00]),
         Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 3]))
         >>> print(np.histogram(np.arange(4), bins=np.arange(5), density=True))
         (Tensor(shape=[4], dtype=Float32, value=
         [ 2.50000000e-01,  2.50000000e-01,  2.50000000e-01,  2.50000000e-01]),
         Tensor(shape=[5], dtype=Int32, value= [0, 1, 2, 3, 4]))
         >>> print(np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3]))
-        (Tensor(shape=[3], dtype=Float32, value= [1, 4, 1]),
+        (Tensor(shape=[3], dtype=Float32, value= [ 1.00000000e+00,  4.00000000e+00,  1.00000000e+00]),
         Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 3]))
     """
     a = _to_tensor(a)
@@ -4779,14 +4781,13 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
         [12 13 14]]
         >>> print(np.histogramdd(sample, bins=(2, 3, 4)))
         (Tensor(shape=[2, 3, 4], dtype=Float32, value=
-        [[[1, 1, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0]],
-        [[0, 0, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 2]]]),
-        [Tensor(shape=[3], dtype=Float32, value=
-        [ 0.00000000e+00,  6.00000000e+00,  1.20000000e+01]),
+        [[[ 1.00000000e+00,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]],
+        [[ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+        [ 0.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00],
+        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  2.00000000e+00]]]),
+        [Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  6.00000000e+00,  1.20000000e+01]),
         Tensor(shape=[4], dtype=Float32, value=
         [ 1.00000000e+00,  5.00000000e+00,  9.00000000e+00,  1.30000000e+01]),
         Tensor(shape=[5], dtype=Float32, value=
@@ -4900,17 +4901,13 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
         >>> from mindspore import numpy as np
         >>> x = np.arange(5)
         >>> y = np.arange(2, 7)
-        >>> print(np.histogram2d(x, y, bins=(4, 6)))
-        (Tensor(shape=[4, 6], dtype=Float32, value=
-        [[1, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0]
-        [0, 0, 0, 0, 1, 1]]),
-        Tensor(shape=[5], dtype=Float32, value=
-        [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00,  3.00000000e+00,  4.00000000e+00]),
-        Tensor(shape=[7], dtype=Float32, value=
-        [ 2.00000000e+00,  2.66666675e+00,  3.33333349e+00,  4.00000000e+00,  4.66666698e+00,
-        5.33333349e+00,  6.00000000e+00]))
+        >>> print(np.histogram2d(x, y, bins=(2, 3)))
+        (Tensor(shape=[2, 3], dtype=Float32, value=
+        [[ 2.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+        [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]]),
+        Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  2.00000000e+00,  4.00000000e+00]),
+        Tensor(shape=[4], dtype=Float32, value=
+        [ 2.00000000e+00,  3.33333349e+00,  4.66666698e+00,  6.00000000e+00]))
     """
     count, bin_edges = histogramdd((x, y), bins=bins, range=range, weights=weights, density=density)
     return count, bin_edges[0], bin_edges[1]
@@ -5367,7 +5364,7 @@ def cumprod(a, axis=None, dtype=None):
         ValueError: If axis is out of range.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore.numpy as np
