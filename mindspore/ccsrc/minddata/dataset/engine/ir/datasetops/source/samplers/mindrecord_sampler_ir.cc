@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 #ifndef ENABLE_ANDROID
 // This function not only creates a runtime sampler object, but also creates a ShardReader,
 // which will also be needed to build a runtime MindRecordOp
@@ -51,6 +50,5 @@ Status MindRecordSamplerObj::GetShardReader(std::unique_ptr<mindrecord::ShardRea
   return Status::OK();
 }
 #endif
-
 }  // namespace dataset
 }  // namespace mindspore

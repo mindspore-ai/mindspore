@@ -43,8 +43,7 @@ int64_t ShardShuffle::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
 }
 
 MSRStatus ShardShuffle::CategoryShuffle(ShardTaskList &tasks) {
-  uint32_t individual_size;
-  individual_size = tasks.sample_ids_.size() / tasks.categories;
+  uint32_t individual_size = tasks.sample_ids_.size() / tasks.categories;
   std::vector<std::vector<int>> new_permutations(tasks.categories, std::vector<int>(individual_size));
   for (uint32_t i = 0; i < tasks.categories; i++) {
     for (uint32_t j = 0; j < individual_size; j++) new_permutations[i][j] = static_cast<int>(j);

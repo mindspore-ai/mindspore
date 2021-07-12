@@ -129,7 +129,7 @@ Status CacheAdminArgHandler::AssignArg(const std::string &option, std::vector<ui
     *arg_stream >> value_as_uint;
     if (arg_stream->fail()) {
       arg_stream->clear();
-      arg_stream->seekg(pos, arg_stream->beg);
+      (void)arg_stream->seekg(pos, std::ios::beg);
       break;
     } else {
       out_arg->push_back(value_as_uint);

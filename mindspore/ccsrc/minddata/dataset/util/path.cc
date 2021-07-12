@@ -278,8 +278,7 @@ Status Path::CloseFile(int fd) const {
 }
 
 Status Path::TruncateFile(int fd) const {
-  int rc;
-  rc = ftruncate(fd, 0);
+  int rc = ftruncate(fd, 0);
   if (rc == 0) {
     return Status::OK();
   } else {

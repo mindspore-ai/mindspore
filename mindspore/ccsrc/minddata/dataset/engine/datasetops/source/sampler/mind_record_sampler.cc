@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace dataset {
 MindRecordSamplerRT::MindRecordSamplerRT(mindrecord::ShardReader *shard_reader, int64_t samples_per_tensor)
-    : SamplerRT(0, samples_per_tensor), next_id_(0), shard_reader_(shard_reader) {}
+    : SamplerRT(0, samples_per_tensor), shard_reader_(shard_reader), sample_ids_(nullptr), next_id_(0) {}
 
 Status MindRecordSamplerRT::GetNextSample(TensorRow *out) {
   if (next_id_ > num_samples_) {
@@ -50,7 +50,6 @@ Status MindRecordSamplerRT::GetNextSample(TensorRow *out) {
 
 Status MindRecordSamplerRT::InitSampler() {
   sample_ids_ = shard_reader_->GetSampleIds();
-
   if (!sample_ids_) {
     // Note, sample_ids_.empty() is okay and will just give no sample ids.
     RETURN_STATUS_UNEXPECTED(
