@@ -38,7 +38,7 @@ const char tensor_header[] = R"RAW(
 #define MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
 
 #include "include/ms_tensor.h"
-#include "include/ir/format.h"
+#include "include/api/format.h"
 
 namespace mindspore {
 namespace lite {
