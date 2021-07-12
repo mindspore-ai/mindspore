@@ -68,7 +68,7 @@ Status GPUGraphImpl::InitEnv() {
   if (device_infos.size() != 1) {
     return kMCDeviceError;
   }
-  auto gpu_info = device_infos[0]->Cast<NvidiaGPUDeviceInfo>();
+  auto gpu_info = device_infos[0]->Cast<GPUDeviceInfo>();
   if (gpu_info == nullptr) {
     return kMCDeviceError;
   }

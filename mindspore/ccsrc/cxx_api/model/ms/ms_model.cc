@@ -163,7 +163,7 @@ uint32_t MsModel::GetDeviceID() const {
     return ascend910_info->GetDeviceID();
   }
 
-  auto gpu_info = device_infos[0]->Cast<NvidiaGPUDeviceInfo>();
+  auto gpu_info = device_infos[0]->Cast<GPUDeviceInfo>();
   if (gpu_info != nullptr) {
     return gpu_info->GetDeviceID();
   }

@@ -42,13 +42,12 @@ std::shared_ptr<mindspore::CPUDeviceInfo> CPUDeviceInfoFromCPUDeviceContext(cons
   return cpu_info;
 }
 
-std::shared_ptr<mindspore::MaliGPUDeviceInfo> GPUDeviceInfoFromGPUDeviceContext(
-  const lite::DeviceContext &gpu_context) {
+std::shared_ptr<mindspore::GPUDeviceInfo> GPUDeviceInfoFromGPUDeviceContext(const lite::DeviceContext &gpu_context) {
   if (gpu_context.device_type_ != DT_GPU) {
     MS_LOG(ERROR) << "function input parameter is not gpu context.";
     return nullptr;
   }
-  auto gpu_info = std::make_shared<mindspore::MaliGPUDeviceInfo>();
+  auto gpu_info = std::make_shared<mindspore::GPUDeviceInfo>();
   gpu_info->SetEnableFP16(gpu_context.device_info_.gpu_device_info_.enable_float16_);
   PassBasicProperties(gpu_info, gpu_context);
   return gpu_info;

@@ -23,8 +23,7 @@ namespace mindspore {
 namespace {
 std::string GetDeviceTypeString(enum DeviceType type) {
   static const std::map<enum DeviceType, std::string> kDeviceTypeStrs = {
-    {kCPU, "CPU"},           {kMaliGPU, "MaliGPU"},     {kNvidiaGPU, "GPU"},
-    {kKirinNPU, "KirinGPU"}, {kAscend910, "Ascend910"}, {kAscend310, "Ascend310"},
+    {kCPU, "CPU"}, {kGPU, "GPU"}, {kKirinNPU, "KirinGPU"}, {kAscend910, "Ascend910"}, {kAscend310, "Ascend310"},
   };
   auto iter = kDeviceTypeStrs.find(type);
   if (iter != kDeviceTypeStrs.end()) {
