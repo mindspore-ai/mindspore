@@ -622,6 +622,20 @@ void Debugger::CheckDatasetGraph() {
   is_dataset_graph_ = false;
 }
 
+bool Debugger::CheckDatasetGraph(const KernelGraphPtr &graph_ptr) {
+  const auto &nodes = graph_ptr->execution_order();
+  for (const auto &node : nodes) {
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    MS_LOG(INFO) << "node: " << GetKernelNodeName(node);
+    if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
+      MS_LOG(INFO) << "Not enabling debugger for graph " << graph_ptr->graph_id() << ": found dataset graph node "
+                   << node_name;
+      return true;
+    }
+  }
+  return false;
+}
+
 GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   // convert kernel graph to debugger modelproto
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
@@ -1423,8 +1437,14 @@ void Debugger::UpdateStepNumGPU() {
 }
 
 void Debugger::ClearCurrentData() {
-  if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()))
-    debug_services_->EmptyCurrentTensor();
+  if ((device_target_ == kGPUDevice) && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration())) {
+    if (debug_services_) {
+      debug_services_->EmptyCurrentTensor();
+
+    } else {
+      MS_LOG(ERROR) << "debug_services_ is nullptr";
+    }
+  }
 }
 bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
   return debug_services_->TensorExistsInCurrent(tensor_name);
