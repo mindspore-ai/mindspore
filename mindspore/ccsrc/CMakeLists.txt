@@ -291,6 +291,7 @@ endif()
 
 if(MODE_ASCEND_ALL)
     MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
+    find_library(ERROR_MANAGER error_manager ${ASCEND_RUNTIME_PATH})
     find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(TSDCLIENT tsdclient HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
                 ${ASCEND_DRIVER_BACK_PATH})
@@ -308,8 +309,8 @@ if(MODE_ASCEND_ALL)
     target_link_options(ms_profile PRIVATE -Wl,-init,common_log_init)
     target_link_libraries(ms_profile -Wl,--start-group -Wl,--whole-archive ${PROFILING} -Wl,--no-whole-archive
                           mindspore::protobuf -Wl,--end-group)
-    target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} -Wl,--no-as-needed ${OPTILING}
-      ${PLATFORM} ${ACL} ${OPT_FEATURE})
+    target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER} -Wl,--no-as-needed
+      ${OPTILING} ${PLATFORM} ${ACL} ${OPT_FEATURE})
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece

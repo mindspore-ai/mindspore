@@ -150,6 +150,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors);
   void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const;
   void RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const;
+  virtual void ReportWarningMessage() {}
+  virtual void ReportErrorMessage() {}
 #ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {

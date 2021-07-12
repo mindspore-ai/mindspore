@@ -207,7 +207,13 @@ void Executor::WorkerLoop() {
     }
     try {
       task->Run();
+      if (task->session_ != nullptr) {
+        task->session_->ReportWarningMessage();
+      }
     } catch (const std::exception &e) {
+      if (task->session_ != nullptr) {
+        task->session_->ReportErrorMessage();
+      }
       ExecutorManager::Instance().OnEvent(ExecutorEvent::kException);
       MsException::Instance().SetException();
     }
