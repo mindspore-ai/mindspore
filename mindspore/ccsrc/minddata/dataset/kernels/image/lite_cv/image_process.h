@@ -64,7 +64,6 @@ struct BoxesConfig {
   std::vector<float> prior_scaling;
 };
 
-//update run r1.3
 /// \brief resizing image by bilinear algorithm, the data type of currently only supports is uint8,
 ///          the channel of currently supports is 3 and 1.
 /// \param[in] src Input image data.
