@@ -517,11 +517,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
 }
 
 ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info) {
-  // Local maps and vectors clear.
-  graph_output_to_actor_.clear();
-  front_node_to_actor_.clear();
-  copy_actors_.clear();
-
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor begin.";
   if (graph_compiler_info.graphs_.size() == 0) {
     MS_LOG(EXCEPTION) << "The number of graphs is zero.";
@@ -545,6 +540,12 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
     MS_LOG(EXCEPTION) << "The actor set of " << graph_compiler_info.name_ << " is invalid.";
   }
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
+
+  // Local maps and vectors clear.
+  graph_output_to_actor_.clear();
+  front_node_to_actor_.clear();
+  copy_actors_.clear();
+
   return actor_set.get();
 }
 
