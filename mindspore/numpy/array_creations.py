@@ -1116,26 +1116,26 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = np.arange(4).reshape(2,2)
+        >>> a = np.arange(4).reshape(2,2).astype(np.float32)
         >>> print(a)
-        [[0 1]
-        [2 3]]
+        [[0. 1.]
+        [2. 3.]]
         >>> output = np.diagonal(a)
         >>> print(output)
-        [0 3]
+        [0. 3.]
         >>> output = np.diagonal(a, 1)
         >>> print(output)
-        [1]
-        >>> a = np.arange(8).reshape(2, 2, 2)
+        [1.]
+        >>> a = np.arange(8).reshape(2, 2, 2).astype(np.float32)
         >>> print(a)
-        [[[0 1]
-        [2 3]]
-        [[4 5]
-        [6 7]]]
+        [[[0. 1.]
+        [2. 3.]]
+        [[4. 5.]
+        [6. 7.]]]
         >>> output = np.diagonal(a, 0, 0, 1)
         >>> print(output)
-        [[0 6]
-        [1 7]]
+        [[0. 6.]
+        [1. 7.]]
     """
     return a.diagonal(offset=offset, axis1=axis1, axis2=axis2)
 
