@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_distributed_pretrain_ascend.sh DATA_DIR RANK_TABLE_FILE DEVICE_NUM"
-echo "for example: bash run_distributed_pretrain_ascend.sh /path/dataset /path/hccl.json 8"
+echo "bash run_distribute_train_incremental_train.sh DATA_DIR RANK_TABLE_FILE DEVICE_NUM"
+echo "for example: run_distribute_train_incremental_train.sh /path/dataset /path/hccl.json 8"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -26,6 +26,9 @@ DATA_DIR=$1
 export RANK_TABLE_FILE=$2
 RANK_SIZE=$3
 MODE=$4
+export STRATEGY=$5
+export CKPT_PATH=$6
+export CKPT_NAME=$7
 
 
 for((i=0;i<${RANK_SIZE};i++));
@@ -35,5 +38,7 @@ do
     cd ${ROOT_PATH}/device$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
-    python ${ROOT_PATH}/train.py --distribute=true --device_num=$RANK_SIZE --data_url=$DATA_DIR --mode=$MODE >log$i.log 2>&1 &
+    python ${ROOT_PATH}/train.py --distribute=true --device_num=$RANK_SIZE --data_url=$DATA_DIR --run_type=train \
+    --mode=$MODE --incremental_training=1 --strategy_load_ckpt_path=$STRATEGY \
+    --load_ckpt_path=$CKPT_PATH --load_ckpt_name=$CKPT_NAME> log$i.log 2>&1 &
 done
