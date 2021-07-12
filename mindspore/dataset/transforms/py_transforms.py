@@ -21,6 +21,7 @@ from .validators import check_one_hot_op, check_compose_list, check_random_apply
 from . import py_transforms_util as util
 from .c_transforms import TensorOperation
 
+
 def not_random(function):
     """
     Specify the function as "not random", i.e., it produces deterministic result.

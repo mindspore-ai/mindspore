@@ -15,6 +15,7 @@
 # ============================================================================
 
 CURPATH="$(dirname "$0")"
+# shellcheck source=/dev/null
 . ${CURPATH}/cache_util.sh
 
 run_ascend()

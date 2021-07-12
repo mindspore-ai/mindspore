@@ -248,7 +248,6 @@ Status RandomDataOp::WorkerEntry(int32_t worker_id) {
 
       // Send new_row out
       RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row), worker_id));
-
     } else {
       // Now, let's enter the epoch sync
       RETURN_IF_NOT_OK(EpochSync(worker_id, &quitting));
