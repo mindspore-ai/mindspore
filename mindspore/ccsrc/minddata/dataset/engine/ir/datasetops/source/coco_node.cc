@@ -156,7 +156,11 @@ Status CocoNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
     return Status::OK();
   }
   int64_t num_rows = 0, sample_size;
-  RETURN_IF_NOT_OK(CocoOp::CountTotalRows(dataset_dir_, annotation_file_, task_, &num_rows));
+  std::vector<std::shared_ptr<DatasetOp>> ops;
+  RETURN_IF_NOT_OK(Build(&ops));
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build CocoOp.");
+  auto op = std::dynamic_pointer_cast<CocoOp>(ops.front());
+  RETURN_IF_NOT_OK(op->CountTotalRows(&num_rows));
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
   sample_size = sampler_rt->CalculateNumSamples(num_rows);

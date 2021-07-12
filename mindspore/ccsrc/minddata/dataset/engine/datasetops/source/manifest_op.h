@@ -38,92 +38,6 @@ namespace mindspore {
 namespace dataset {
 class ManifestOp : public MappableLeafOp {
  public:
-  class Builder {
-   public:
-    // Constructor for Builder class of ManifestOp
-    Builder();
-
-    // Destructor
-    ~Builder() = default;
-
-    // Setter method
-    // @param int32_t size
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t size) {
-      builder_op_connector_size_ = size;
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::map<std::string, int32_t>& map - a class name to label map
-    // @return
-    Builder &SetClassIndex(const std::map<std::string, int32_t> &map) {
-      builder_labels_to_read_ = map;
-      return *this;
-    }
-
-    // Setter method
-    // @param bool do_decode
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetDecode(bool do_decode) {
-      builder_decode_ = do_decode;
-      return *this;
-    }
-
-    // Setter method
-    // @param int32_t num_workers
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      builder_num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method
-    // @param std::shared_ptr<Sampler> sampler
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      builder_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string & dir
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetManifestFile(const std::string &file) {
-      builder_file_ = file;
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string & dir
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetUsage(const std::string &usage) {
-      builder_usage_ = usage;
-      return *this;
-    }
-
-    // Check validity of input args
-    // @return Status The status code returned
-    Status SanityCheck();
-
-    // The builder "build" method creates the final object.
-    // @param std::shared_ptr<ManifestOp> *op - DatasetOp
-    // @return Status The status code returned
-    Status Build(std::shared_ptr<ManifestOp> *op);
-
-   private:
-    std::shared_ptr<SamplerRT> builder_sampler_;
-    bool builder_decode_;
-
-    std::string builder_file_;
-    int32_t builder_num_workers_;
-    int32_t builder_rows_per_buffer_;
-    int32_t builder_op_connector_size_;
-    std::unique_ptr<DataSchema> builder_schema_;
-    std::string builder_usage_;
-    std::map<std::string, int32_t> builder_labels_to_read_;
-  };
-
   // Constructor
   // @param int32_t num_works - Num of workers reading images in parallel
   // @param std::string - file list of Manifest
@@ -146,20 +60,9 @@ class ManifestOp : public MappableLeafOp {
   void Print(std::ostream &out, bool show_all) const override;
 
   /// \brief Counts the total number of rows in Manifest
-  /// \param[in] file Dataset file path
-  /// \param[in] input_class_indexing Input map of class index
-  /// \param[in] usage Dataset usage
   /// \param[out] count Number of rows counted
-  /// \param[out] numClasses Number of classes counted
   /// \return Status of the function
-  static Status CountTotalRows(const std::string &file, const std::map<std::string, int32_t> &map,
-                               const std::string &usage, int64_t *count, int64_t *numClasses);
-
-#ifdef ENABLE_PYTHON
-  // Get str-to-int mapping from label name to index
-  static Status GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
-                                 std::map<std::string, int32_t> *output_class_indexing);
-#endif
+  Status CountTotalRows(int64_t *count);
 
   // Op name getter
   // @return Name of the current Op

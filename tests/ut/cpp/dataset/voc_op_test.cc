@@ -22,6 +22,7 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
@@ -41,156 +42,74 @@ class MindDataTestVOCOp : public UT::DatasetOpTesting {
 };
 
 TEST_F(MindDataTestVOCOp, TestVOCDetection) {
-  // Start with an empty execution tree
-  auto my_tree = std::make_shared<ExecutionTree>();
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testVOC2012";
-
-  std::string task_type("Detection");
-  std::string task_mode("train");
-  std::shared_ptr<VOCOp> my_voc_op;
-  VOCOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode).Build(&my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = my_tree->AssociateNode(my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-  rc = my_tree->AssignRoot(my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-
-  MS_LOG(DEBUG) << "Launch tree and begin iteration.";
-  rc = my_tree->Prepare();
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = my_tree->Launch();
-  ASSERT_TRUE(rc.IsOk());
-
-  // Start the loop of reading tensors from our pipeline
-  DatasetIterator di(my_tree);
-  TensorRow tensor_list;
-  rc = di.FetchNextTensorRow(&tensor_list);
-  ASSERT_TRUE(rc.IsOk());
-
+  std::shared_ptr<Dataset> ds =
+    VOC(dataset_path, "Detection", "train", {}, false, std::make_shared<SequentialSampler>(0, 0));
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
   int row_count = 0;
-  while (!tensor_list.empty()) {
-    MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
-
-    // Display the tensor by calling the printer on it
-    for (int i = 0; i < tensor_list.size(); i++) {
-      std::ostringstream ss;
-      ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
-      MS_LOG(DEBUG) << "Tensor print: " << ss.str() << ".";
-    }
-
-    rc = di.FetchNextTensorRow(&tensor_list);
-    ASSERT_TRUE(rc.IsOk());
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
     row_count++;
   }
-
   ASSERT_EQ(row_count, 9);
+  iter->Stop();
 }
 
 TEST_F(MindDataTestVOCOp, TestVOCSegmentation) {
-  // Start with an empty execution tree
-  auto my_tree = std::make_shared<ExecutionTree>();
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testVOC2012";
-
-  std::string task_type("Segmentation");
-  std::string task_mode("train");
-  std::shared_ptr<VOCOp> my_voc_op;
-  VOCOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode).Build(&my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = my_tree->AssociateNode(my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-  rc = my_tree->AssignRoot(my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-
-  MS_LOG(DEBUG) << "Launch tree and begin iteration.";
-  rc = my_tree->Prepare();
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = my_tree->Launch();
-  ASSERT_TRUE(rc.IsOk());
-
-  // Start the loop of reading tensors from our pipeline
-  DatasetIterator di(my_tree);
-  TensorRow tensor_list;
-  rc = di.FetchNextTensorRow(&tensor_list);
-  ASSERT_TRUE(rc.IsOk());
-
+  std::shared_ptr<Dataset> ds =
+    VOC(dataset_path, "Segmentation", "train", {}, false, std::make_shared<SequentialSampler>(0, 0));
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
   int row_count = 0;
-  while (!tensor_list.empty()) {
-    MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
-
-    // Display the tensor by calling the printer on it
-    for (int i = 0; i < tensor_list.size(); i++) {
-      std::ostringstream ss;
-      ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
-      MS_LOG(DEBUG) << "Tensor print: " << ss.str() << ".";
-    }
-
-    rc = di.FetchNextTensorRow(&tensor_list);
-    ASSERT_TRUE(rc.IsOk());
+  while (!row.empty()) {
+    auto image = row["image"];
+    auto target = row["target"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor target shape: " << target.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
     row_count++;
   }
-
   ASSERT_EQ(row_count, 10);
+  iter->Stop();
 }
 
 TEST_F(MindDataTestVOCOp, TestVOCClassIndex) {
-  // Start with an empty execution tree
-  auto my_tree = std::make_shared<ExecutionTree>();
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testVOC2012";
-
-  std::string task_type("Detection");
-  std::string task_mode("train");
   std::map<std::string, int32_t> class_index;
   class_index["car"] = 0;
   class_index["cat"] = 1;
   class_index["train"] = 5;
-  std::shared_ptr<VOCOp> my_voc_op;
-  VOCOp::Builder builder;
-  Status rc =
-    builder.SetDir(dataset_path).SetTask(task_type).SetUsage(task_mode).SetClassIndex(class_index).Build(&my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = my_tree->AssociateNode(my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-  rc = my_tree->AssignRoot(my_voc_op);
-  ASSERT_TRUE(rc.IsOk());
-
-  MS_LOG(DEBUG) << "Launch tree and begin iteration.";
-  rc = my_tree->Prepare();
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = my_tree->Launch();
-  ASSERT_TRUE(rc.IsOk());
-
-  // Start the loop of reading tensors from our pipeline
-  DatasetIterator di(my_tree);
-  TensorRow tensor_list;
-  rc = di.FetchNextTensorRow(&tensor_list);
-  ASSERT_TRUE(rc.IsOk());
-
+  std::shared_ptr<Dataset> ds =
+    VOC(dataset_path, "Detection", "train", class_index, false, std::make_shared<SequentialSampler>(0, 0));
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
   int row_count = 0;
-  while (!tensor_list.empty()) {
-    MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
-
-    // Display the tensor by calling the printer on it
-    for (int i = 0; i < tensor_list.size(); i++) {
-      std::ostringstream ss;
-      ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
-      MS_LOG(DEBUG) << "Tensor print: " << ss.str() << ".";
-    }
-
-    rc = di.FetchNextTensorRow(&tensor_list);
-    ASSERT_TRUE(rc.IsOk());
+  while (!row.empty()) {
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
     row_count++;
   }
-
   ASSERT_EQ(row_count, 6);
+  iter->Stop();
 }

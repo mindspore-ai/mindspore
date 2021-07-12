@@ -45,56 +45,6 @@ const char kSegmentationExtension[] = ".png";
 const char kAnnotationExtension[] = ".xml";
 const char kImageSetsExtension[] = ".txt";
 
-VOCOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_op_connector_size_ = cfg->op_connector_size();
-  builder_task_type_ = TaskType::Segmentation;
-}
-
-Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  if (builder_sampler_ == nullptr) {
-    const int64_t num_samples = 0;
-    const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
-  }
-  builder_schema_ = std::make_unique<DataSchema>();
-  if (builder_task_type_ == TaskType::Segmentation) {
-    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnTarget), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-  } else if (builder_task_type_ == TaskType::Detection) {
-    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnBbox), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnLabel), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnDifficult), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-      ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-  }
-  *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_usage_, builder_dir_, builder_labels_to_read_,
-                                 builder_num_workers_, builder_op_connector_size_, builder_decode_,
-                                 std::move(builder_schema_), std::move(builder_sampler_), false);
-  return Status::OK();
-}
-
-Status VOCOp::Builder::SanityCheck() {
-  Path dir(builder_dir_);
-  std::string err_msg;
-  err_msg += dir.IsDirectory() == false
-               ? "Invalid parameter, VOC path is invalid or not set, path: " + builder_dir_ + ".\n"
-               : "";
-  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                           std::to_string(builder_num_workers_) + ".\n"
-                                       : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
-}
-
 VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
              const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
              std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata)
@@ -161,6 +111,7 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
 }
 
 Status VOCOp::ParseImageIds() {
+  if (!image_ids_.empty()) return Status::OK();
   std::string image_sets_file;
   if (task_type_ == TaskType::Segmentation) {
     image_sets_file = folder_path_ + std::string(kImageSetsSegmentation) + usage_ + std::string(kImageSetsExtension);
@@ -357,50 +308,19 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
   return Status::OK();
 }
 
-Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                             const std::map<std::string, int32_t> &input_class_indexing, int64_t *count) {
-  if (task_type == "Detection") {
-    std::shared_ptr<VOCOp> op;
-    RETURN_IF_NOT_OK(
-      Builder().SetDir(dir).SetTask(task_type).SetUsage(task_mode).SetClassIndex(input_class_indexing).Build(&op));
-    RETURN_IF_NOT_OK(op->ParseImageIds());
-    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
-    *count = static_cast<int64_t>(op->image_ids_.size());
-  } else if (task_type == "Segmentation") {
-    std::shared_ptr<VOCOp> op;
-    RETURN_IF_NOT_OK(Builder().SetDir(dir).SetTask(task_type).SetUsage(task_mode).Build(&op));
-    RETURN_IF_NOT_OK(op->ParseImageIds());
-    *count = static_cast<int64_t>(op->image_ids_.size());
+Status VOCOp::CountTotalRows(int64_t *count) {
+  switch (task_type_) {
+    case TaskType::Detection:
+      RETURN_IF_NOT_OK(ParseImageIds());
+      RETURN_IF_NOT_OK(ParseAnnotationIds());
+      break;
+    case TaskType::Segmentation:
+      RETURN_IF_NOT_OK(ParseImageIds());
+      break;
   }
-
+  *count = static_cast<int64_t>(image_ids_.size());
   return Status::OK();
 }
-
-#ifdef ENABLE_PYTHON
-Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                               const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing) {
-  std::map<std::string, int32_t> input_class_indexing;
-  for (auto p : dict) {
-    (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
-                                                                      py::reinterpret_borrow<py::int_>(p.second)));
-  }
-
-  if (!input_class_indexing.empty()) {
-    *output_class_indexing = input_class_indexing;
-  } else {
-    std::shared_ptr<VOCOp> op;
-    RETURN_IF_NOT_OK(
-      Builder().SetDir(dir).SetTask(task_type).SetUsage(task_mode).SetClassIndex(input_class_indexing).Build(&op));
-    RETURN_IF_NOT_OK(op->ParseImageIds());
-    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
-    for (const auto label : op->label_index_) {
-      (*output_class_indexing).insert(std::make_pair(label.first, label.second));
-    }
-  }
-
-  return Status::OK();
-}
-#endif
 
 Status VOCOp::ComputeColMap() {
   // Set the column name map (base class field)
@@ -420,12 +340,9 @@ Status VOCOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<in
       MS_LOG(ERROR) << "Class index only valid in \"Detection\" task.";
       RETURN_STATUS_UNEXPECTED("GetClassIndexing: Get Class Index failed in VOCOp.");
     }
-    std::shared_ptr<VOCOp> op;
-    RETURN_IF_NOT_OK(
-      Builder().SetDir(folder_path_).SetTask("Detection").SetUsage(usage_).SetClassIndex(class_index_).Build(&op));
-    RETURN_IF_NOT_OK(op->ParseImageIds());
-    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
-    for (const auto label : op->label_index_) {
+    RETURN_IF_NOT_OK(ParseImageIds());
+    RETURN_IF_NOT_OK(ParseAnnotationIds());
+    for (const auto &label : label_index_) {
       if (!class_index_.empty()) {
         (*output_class_indexing)
           .emplace_back(std::make_pair(label.first, std::vector<int32_t>(1, class_index_[label.first])));

@@ -48,79 +48,6 @@ const char kJsonCategoriesName[] = "name";
 const float kDefaultPadValue = -1.0;
 const unsigned int kPadValueZero = 0;
 
-CocoOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_op_connector_size_ = cfg->op_connector_size();
-  builder_task_type_ = TaskType::Detection;
-}
-
-Status CocoOp::Builder::Build(std::shared_ptr<CocoOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  if (builder_sampler_ == nullptr) {
-    const int64_t num_samples = 0;
-    const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
-  }
-  builder_schema_ = std::make_unique<DataSchema>();
-  RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-    ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-  switch (builder_task_type_) {
-    case TaskType::Detection:
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoBbox), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoCategoryId), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoIscrowd), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      break;
-    case TaskType::Stuff:
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoSegmentation), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoIscrowd), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      break;
-    case TaskType::Keypoint:
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoKeypoints), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoNumKeypoints), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      break;
-    case TaskType::Panoptic:
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoBbox), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoCategoryId), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoIscrowd), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      RETURN_IF_NOT_OK(builder_schema_->AddColumn(
-        ColDescriptor(std::string(kJsonAnnoArea), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      break;
-    default:
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff, Keypoint or Panoptic.");
-  }
-  *ptr = std::make_shared<CocoOp>(builder_task_type_, builder_dir_, builder_file_, builder_num_workers_,
-                                  builder_op_connector_size_, builder_decode_, std::move(builder_schema_),
-                                  std::move(builder_sampler_), false);
-  return Status::OK();
-}
-
-Status CocoOp::Builder::SanityCheck() {
-  Path dir(builder_dir_);
-  Path file(builder_file_);
-  std::string err_msg;
-  err_msg += dir.IsDirectory() == false
-               ? "Invalid parameter, Coco image folder path is invalid or not set, path: " + builder_dir_ + ".\n"
-               : "";
-  err_msg += file.Exists() == false
-               ? "Invalid parameter, Coco annotation JSON path is invalid or not set, path: " + builder_dir_ + ".\n"
-               : "";
-  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                           std::to_string(builder_num_workers_) + ".\n"
-                                       : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
-}
-
 CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
                int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
                std::shared_ptr<SamplerRT> sampler, bool extra_metadata)
@@ -568,21 +495,9 @@ Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &c
   return Status::OK();
 }
 
-Status CocoOp::CountTotalRows(const std::string &dir, const std::string &file, const std::string &task,
-                              int64_t *count) {
-  std::shared_ptr<CocoOp> op;
-  RETURN_IF_NOT_OK(Builder().SetDir(dir).SetFile(file).SetTask(task).Build(&op));
-  RETURN_IF_NOT_OK(op->ParseAnnotationIds());
-  *count = static_cast<int64_t>(op->image_ids_.size());
-  return Status::OK();
-}
-
-Status CocoOp::GetClassIndexing(const std::string &dir, const std::string &file, const std::string &task,
-                                std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
-  std::shared_ptr<CocoOp> op;
-  RETURN_IF_NOT_OK(Builder().SetDir(dir).SetFile(file).SetTask(task).Build(&op));
-  RETURN_IF_NOT_OK(op->ParseAnnotationIds());
-  *output_class_indexing = op->label_index_;
+Status CocoOp::CountTotalRows(int64_t *count) {
+  RETURN_IF_NOT_OK(ParseAnnotationIds());
+  *count = static_cast<int64_t>(image_ids_.size());
   return Status::OK();
 }
 
@@ -604,19 +519,8 @@ Status CocoOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<i
       MS_LOG(ERROR) << "Class index only valid in \"Detection\" and \"Panoptic\" task.";
       RETURN_STATUS_UNEXPECTED("GetClassIndexing: Get Class Index failed in CocoOp.");
     }
-    std::shared_ptr<CocoOp> op;
-    std::string task_type;
-    switch (task_type_) {
-      case TaskType::Detection:
-        task_type = "Detection";
-        break;
-      case TaskType::Panoptic:
-        task_type = "Panoptic";
-        break;
-    }
-    RETURN_IF_NOT_OK(Builder().SetDir(image_folder_path_).SetFile(annotation_path_).SetTask(task_type).Build(&op));
-    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
-    for (const auto label : op->label_index_) {
+    RETURN_IF_NOT_OK(ParseAnnotationIds());
+    for (const auto &label : label_index_) {
       (*output_class_indexing).emplace_back(std::make_pair(label.first, label.second));
     }
   }
