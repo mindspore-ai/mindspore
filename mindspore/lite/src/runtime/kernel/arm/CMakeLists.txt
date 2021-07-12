@@ -34,7 +34,6 @@ endif()
 
 add_library(cpu_kernel_random_standard_normal OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/base/random_standard_normal.cc)
 add_dependencies(cpu_kernel_random_standard_normal fbs_src)
-target_link_libraries(cpu_kernel_mid cpu_kernel_random_standard_normal)
 
 if((NOT PLATFORM_ARM AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release") OR TARGET_HIMIX200)
     target_compile_options(cpu_kernel_random_standard_normal PRIVATE -Wno-error=maybe-uninitialized)
