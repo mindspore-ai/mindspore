@@ -106,9 +106,9 @@ def set_parameter():
             set_algo_parameters(elementwise_op_strategy_follow=True)
             if config.net_name == "resnet50" or config.net_name == "se-resnet50":
                 if config.acc_mode not in ["O1", "O2"]:
-                    context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
+                    context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
             elif config.net_name == "resnet101":
-                context.set_auto_parallel_context(all_reduce_fusion_config=[80, 210, 313])
+                context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
             init()
         # GPU target
         else:
@@ -117,7 +117,7 @@ def set_parameter():
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             if config.net_name == "resnet50":
-                context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
+                context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
 
 def init_weight(net):
     """init_weight"""
