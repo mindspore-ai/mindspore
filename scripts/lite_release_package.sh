@@ -43,8 +43,11 @@ function ios_release_package()
 
 function linux_release_package()
 {
-    mkdir -p ${output_path}/release/linux/
+    mkdir -p ${output_path}/release/linux/nnie/
     cp ${input_path}/ubuntu_x86/avx/*.tar.gz* ${output_path}/release/linux/
+
+    cp ${input_path}/linux_aarch32/*.tar.gz* ${output_path}/release/linux/
+    cp ${input_path}/ubuntu_x86/nnie/3516D/*.tar.gz* ${output_path}/release/linux/nnie/
 }
 
 function windows_release_package()
