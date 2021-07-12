@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-const std::set<PrimitivePtr> END_NODE_BLACK_LIST = {prim::kPrimDepend, prim::kPrimTupleGetItem,
+const std::set<PrimitivePtr> END_NODE_BLACK_LIST = {prim::kPrimDepend, prim::kPrimTupleGetItem, prim::kPrimAdd,
                                                     prim::kPrimSoftmaxCrossEntropyWithLogits};
 
 static bool IsInEndNodeBlackList(const CNodePtr &cnode) {
