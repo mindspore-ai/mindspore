@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,38 +17,23 @@ network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
 
-config_ascend = ed({
-    "num_classes": 37,
-    "image_height": 224,
-    "image_width": 224,
-    "batch_size": 256,
-    "epoch_size": 200,
-    "warmup_epochs": 4,
-    "lr": 0.4,
+config = ed({
+    "num_classes": 1000,
+    "batch_size": 128,
+    "epoch_size": 500,
+    "warmup_epochs": 20,
+    "lr_init": 0.1,
+    "lr_max": 0.4,
+    'lr_end': 1e-6,
+    'lr_decay_mode': 'cosine',
     "momentum": 0.9,
     "weight_decay": 4e-5,
     "label_smooth": 0.1,
-    "loss_scale": 1024,
+    "loss_scale": 128,
+    "use_label_smooth": True,
+    "label_smooth_factor": 0.1,
     "save_checkpoint": True,
-    "save_checkpoint_epochs": 1,
-    "keep_checkpoint_max": 200,
-    "save_checkpoint_path": "./checkpoint",
-})
-
-config_gpu = ed({
-    "num_classes": 37,
-    "image_height": 224,
-    "image_width": 224,
-    "batch_size": 3,
-    "epoch_size": 370,
-    "warmup_epochs": 4,
-    "lr": 0.4,
-    "momentum": 0.9,
-    "weight_decay": 4e-5,
-    "label_smooth": 0.1,
-    "loss_scale": 1024,
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 1,
-    "keep_checkpoint_max": 500,
-    "save_checkpoint_path": "./checkpoint",
+    "save_checkpoint_epochs": 20,
+    "keep_checkpoint_max": 10,
+    "save_checkpoint_path": "./",
 })
