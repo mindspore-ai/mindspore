@@ -41,7 +41,7 @@ __global__ void InitDwArrayData(size_t dw_array_size, float *dw_array) {
 template <typename T>
 __global__ void ComputeDwData(size_t weight_size, size_t thread_num, const float *dw_array, T *dw) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < weight_size; i += blockDim.x * gridDim.x) {
-    T value = 0.0;
+    float value = 0.0;
     for (size_t j = 0; j < thread_num; j++) {
       value += dw_array[i * thread_num + j];
     }
