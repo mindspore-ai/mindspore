@@ -150,7 +150,7 @@ void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const 
   AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
   if (async_eval_result == nullptr) {
     async_eval_result = std::make_shared<AsyncAbstract>();
-    async_eval_result->JoinResult(arg);
+    async_eval_result->SetResult(arg);
     switch_cache_.set(conf, async_eval_result);
   } else {
     auto ab1 = async_eval_result->TryGetResult();
@@ -160,12 +160,12 @@ void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const 
       absList.push_back(ab1);
       // Join two branches's result
       auto joined_result = AnalysisEngine::ProcessEvalResults(absList, conf->node());
-      async_eval_result->JoinResult(joined_result->abstract());
+      async_eval_result->SetResult(joined_result->abstract());
       if (!(*joined_result == *ab1)) {
         PushTodo(conf);
       }
     } else {
-      async_eval_result->JoinResult(arg);
+      async_eval_result->SetResult(arg);
     }
   }
 }

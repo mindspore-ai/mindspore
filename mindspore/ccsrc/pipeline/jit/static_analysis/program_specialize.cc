@@ -590,7 +590,7 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
     }
     MS_LOG(DEBUG) << "Joined argvals: " << joined_argvals.size() << ", " << ::mindspore::ToString(joined_argvals);
     EvaluatorCacheMgrPtr real = std::make_shared<EvaluatorCacheMgr>();
-    auto joined_eval_result = origin_eval_cache.get(joined_argvals);
+    const auto joined_eval_result = origin_eval_cache.get(joined_argvals);
     if (joined_eval_result != nullptr) {
       MS_LOG(DEBUG) << "Find unique Choices in original eval cache, so use it: " << joined_eval_result->ToString();
 
@@ -741,7 +741,7 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
   DumpEvaluatorCache(evaluator_cache_mgr, argvals);
 
   MS_EXCEPTION_IF_NULL(GetEvalCache(eval));
-  EvalResultCache &choices = GetEvalCache(eval)->GetCache();
+  const EvalResultCache &choices = GetEvalCache(eval)->GetCache();
   if (choices.get(argvals) != nullptr) {
     *result = std::make_pair(argvals, GetEvalCache(eval)->GetValue(argvals)->abstract());
     return kSpecializeSuccess;
