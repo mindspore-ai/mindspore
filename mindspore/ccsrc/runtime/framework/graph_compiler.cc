@@ -28,6 +28,10 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/anf_ir_dump.h"
+#include "debug/rdr/running_data_recorder.h"
+#endif
 #include "debug/data_dump/dump_json_parser.h"
 
 namespace mindspore {
@@ -353,6 +357,15 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   if (debugger && debugger->DebuggerBackendEnabled()) {
     debugger->LoadGraphs(graph);
   }
+#endif
+
+#ifdef ENABLE_DUMP_IR
+  std::string name = "graph_build";
+  DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, name, graph, dump_params, ".ir,.pb");
+  auto &kernels = graph->execution_order();
+  std::string exec_order_name = "graph_exec_order." + std::to_string(graph->graph_id());
+  mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_SESSION, exec_order_name, kernels);
 #endif
 
   session_->DumpGraph(graph);
