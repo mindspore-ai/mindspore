@@ -146,6 +146,7 @@ def _set_ps_context(**kwargs):
     for key, value in kwargs.items():
         if key not in _set_ps_context_func_map:
             raise ValueError("Set PS context keyword %s is not recognized!" % key)
+        _check_value(key, value)
         set_func = _set_ps_context_func_map[key]
         set_func(value)
 
