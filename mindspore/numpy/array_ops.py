@@ -1653,16 +1653,16 @@ def flip(m, axis=None):
         >>> A = np.arange(8.0).reshape((2,2,2))
         >>> output = np.flip(A)
         >>> print(output)
-        [[[7, 6],
-        [5, 4]],
-        [[3, 2],
-        [1, 0]]]
+        [[[7. 6]
+        [5. 4]]
+        [[3. 2]
+        [1. 0]]]
         >>> output = np.flip(A, (0, 2))
         >>> print(output)
-        [[[5, 4],
-        [7, 6]],
-        [[1, 0],
-        [3, 2]]]
+        [[[5. 4]
+        [7. 6]]
+        [[1. 0]
+        [3. 2]]]
     """
     _check_input_tensor(m)
     ndim = F.rank(m)
@@ -1707,10 +1707,10 @@ def flipud(m):
         >>> A = np.arange(8.0).reshape((2,2,2))
         >>> output = np.flipud(A)
         >>> print(output)
-        [[[4., 5.],
-        [6., 7.]],
-        [[0., 1.],
-        [2., 3.]]]
+        [[[4. 5.]
+        [6. 7.]]
+        [[0. 1.]
+        [2. 3.]]]
     """
     return flip(m, 0)
 
@@ -1740,10 +1740,10 @@ def fliplr(m):
         >>> A = np.arange(8.0).reshape((2,2,2))
         >>> output = np.fliplr(A)
         >>> print(output)
-        [[[2., 3.],
-        [0., 1.]],
-        [[6., 7.],
-        [4., 5.]]]
+        [[[2. 3.]
+        [0. 1.]]
+        [[6. 7.]
+        [4. 5.]]]
     """
     return flip(m, 1)
 
