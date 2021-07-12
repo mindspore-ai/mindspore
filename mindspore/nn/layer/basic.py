@@ -760,7 +760,7 @@ class Pad(Cell):
         ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="REFLECT")
         ...     def construct(self, x):
         ...         return self.pad(x)
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindsprore.float32)
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.float32)
         >>> pad = Net()
         >>> output = pad(x)
         >>> print(output)
@@ -775,7 +775,7 @@ class Pad(Cell):
         ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="SYMMETRIC")
         ...     def construct(self, x):
         ...         return self.pad(x)
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindsprore.float32)
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.float32)
         >>> pad = Net()
         >>> output = pad(x)
         >>> print(output)
@@ -1007,9 +1007,9 @@ class Tril(Cell):
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> tril = nn.Tril()
         >>> result = tril(x)
         >>> print(result)
@@ -1018,9 +1018,9 @@ class Tril(Cell):
          [10, 11, 12,  0],
          [14, 15, 16, 17]]))
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> tril = nn.Tril()
         >>> result = tril(x, 1)
         >>> print(result)
@@ -1029,9 +1029,9 @@ class Tril(Cell):
          [10, 11, 12,  13],
          [14, 15, 16, 17]]))
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> tril = nn.Tril()
         >>> result = tril(x, 2)
         >>> print(result)
@@ -1040,9 +1040,9 @@ class Tril(Cell):
          [10, 11, 12,  13],
          [14, 15, 16, 17]]))
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> tril = nn.Tril()
         >>> result = tril(x, -1)
         >>> print(result)
@@ -1094,9 +1094,9 @@ class Triu(Cell):
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> triu = nn.Triu()
         >>> result = triu(x)
         >>> print(result)
@@ -1105,9 +1105,9 @@ class Triu(Cell):
          [ 0,  0, 12, 13],
          [ 0,  0,  0, 17]]))
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> triu = nn.Triu()
         >>> result = triu(x, 1)
         >>> print(result)
@@ -1116,9 +1116,9 @@ class Triu(Cell):
          [ 0,  0,  0, 13],
          [ 0,  0,  0,  0]]))
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> triu = nn.Triu()
         >>> result = triu(x, 2)
         >>> print(result)
@@ -1127,9 +1127,9 @@ class Triu(Cell):
          [ 0,  0,  0,  0],
          [ 0,  0,  0,  0]]))
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        >>>                      [ 5,  6,  7,  8],
-        >>>                      [10, 11, 12, 13],
-        >>>                      [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> triu = nn.Triu()
         >>> result = triu(x, -1)
         >>> print(result)
