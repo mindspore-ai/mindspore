@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_SIGNAL_UTIL_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_SIGNAL_UTIL_H_
+#ifndef MINDSPORE_CCSRC_UTILS_SIGNAL_UTIL_H_
+#define MINDSPORE_CCSRC_UTILS_SIGNAL_UTIL_H_
 
 #include <csignal>
 
 namespace mindspore {
+typedef void (*IntHandlerFunc)(int, siginfo_t *, void *);
 class SignalGuard {
  public:
-  SignalGuard();
+  explicit SignalGuard(IntHandlerFunc func);
   ~SignalGuard();
 
  private:
-  void RegisterHandlers();
-  static void IntHandler(int sig_num, siginfo_t *sig_info, void *context);
-
+  void RegisterHandlers(IntHandlerFunc func);
   void (*old_handler)(int, siginfo_t *, void *) = nullptr;
   struct sigaction int_action;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_SIGNAL_UTIL_H_
+#endif  // MINDSPORE_CCSRC_UTILS_SIGNAL_UTIL_H_

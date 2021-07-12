@@ -19,7 +19,7 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include "runtime/device/ascend/signal_util.h"
+#include "utils/signal_util.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "utils/ms_context.h"
@@ -32,6 +32,7 @@
 #include "runtime/device/ascend/ge_runtime/model_runner.h"
 #include "runtime/device/ascend/tasksink/task_generator.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/session/kernel_build_client.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "runtime/device/ascend/ascend_event.h"
@@ -104,6 +105,13 @@ std::string GetRankId() {
     MS_LOG(ERROR) << "Get hccl rankid failed, please set env RANK_ID";
   }
   return rank_id_str;
+}
+
+void IntHandler(int, siginfo_t *, void *) {
+  mindspore::kernel::AscendKernelBuildClient::Instance().Close();
+  int this_pid = getpid();
+  MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
+  (void)kill(this_pid, SIGTERM);
 }
 }  // namespace
 
@@ -585,7 +593,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
 
 bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_sink) {
   const uint64_t kUSecondInSecond = 1000000;
-  SignalGuard sg;
+  SignalGuard sg(IntHandler);
   MS_EXCEPTION_IF_NULL(graph);
   bool ret = false;
 
