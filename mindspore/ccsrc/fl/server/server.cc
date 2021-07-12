@@ -110,6 +110,11 @@ void Server::InitServerContext() {
   scheduler_port_ = ps::PSContext::instance()->scheduler_port();
   worker_num_ = ps::PSContext::instance()->initial_worker_num();
   server_num_ = ps::PSContext::instance()->initial_server_num();
+  std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
+  if (encrypt_type == ps::kPWEncryptType && server_num_ > 1) {
+    MS_LOG(EXCEPTION) << "Only single server is supported for PW_ENCRYPT now, but got server_num is:." << server_num_;
+    return;
+  }
   return;
 }
 
@@ -183,7 +188,7 @@ void Server::InitIteration() {
     cipher_share_secrets_cnt_ = cipher_initial_client_cnt_ * cipher_config_.share_secrets_ratio;
     cipher_get_clientlist_cnt_ = rounds_config_[1].threshold_count;
     cipher_reconstruct_secrets_up_cnt_ = rounds_config_[1].threshold_count;
-    cipher_reconstruct_secrets_down_cnt_ = cipher_config_.reconstruct_secrets_threshhold;
+    cipher_reconstruct_secrets_down_cnt_ = cipher_config_.reconstruct_secrets_threshold;
     cipher_time_window_ = cipher_config_.cipher_time_window;
 
     MS_LOG(INFO) << "Initializing cipher:";

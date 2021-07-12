@@ -674,9 +674,9 @@ bool StartServerAction(const ResourcePtr &res) {
 
   float share_secrets_ratio = ps::PSContext::instance()->share_secrets_ratio();
   uint64_t cipher_time_window = ps::PSContext::instance()->cipher_time_window();
-  size_t reconstruct_secrets_threshhold = ps::PSContext::instance()->reconstruct_secrets_threshhold();
+  size_t reconstruct_secrets_threshold = ps::PSContext::instance()->reconstruct_secrets_threshold();
 
-  fl::server::CipherConfig cipher_config = {share_secrets_ratio, cipher_time_window, reconstruct_secrets_threshhold};
+  fl::server::CipherConfig cipher_config = {share_secrets_ratio, cipher_time_window, reconstruct_secrets_threshold};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

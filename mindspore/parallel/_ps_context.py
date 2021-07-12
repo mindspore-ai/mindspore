@@ -22,7 +22,8 @@ _ps_context = None
 
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",
                             "start_fl_job_threshold", "start_fl_job_time_window", "update_model_time_window",
-                            "fl_iteration_num", "client_epoch_num", "client_batch_size", "scheduler_manage_port"]
+                            "fl_iteration_num", "client_epoch_num", "client_batch_size", "scheduler_manage_port",
+                            "cipher_time_window"]
 
 _check_non_negative_int_keys = ["worker_num"]
 
@@ -59,7 +60,7 @@ _set_ps_context_func_map = {
     "update_model_time_window": ps_context().set_update_model_time_window,
     "share_secrets_ratio": ps_context().set_share_secrets_ratio,
     "cipher_time_window": ps_context().set_cipher_time_window,
-    "reconstruct_secrets_threshhold": ps_context().set_reconstruct_secrets_threshhold,
+    "reconstruct_secrets_threshold": ps_context().set_reconstruct_secrets_threshold,
     "fl_name": ps_context().set_fl_name,
     "fl_iteration_num": ps_context().set_fl_iteration_num,
     "client_epoch_num": ps_context().set_client_epoch_num,
@@ -92,7 +93,7 @@ _get_ps_context_func_map = {
     "update_model_time_window": ps_context().update_model_time_window,
     "share_secrets_ratio": ps_context().share_secrets_ratio,
     "cipher_time_window": ps_context().set_cipher_time_window,
-    "reconstruct_secrets_threshhold": ps_context().reconstruct_secrets_threshhold,
+    "reconstruct_secrets_threshold": ps_context().reconstruct_secrets_threshold,
     "fl_name": ps_context().fl_name,
     "fl_iteration_num": ps_context().fl_iteration_num,
     "client_epoch_num": ps_context().client_epoch_num,

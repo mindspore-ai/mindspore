@@ -43,7 +43,7 @@ parser.add_argument("--dp_norm_clip", type=float, default=1.0)
 # parameters for encrypt_type='PW_ENCRYPT'
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
-parser.add_argument("--reconstruct_secrets_threshhold", type=int, default=3)
+parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -67,7 +67,7 @@ config_file_path = args.config_file_path
 encrypt_type = args.encrypt_type
 share_secrets_ratio = args.share_secrets_ratio
 cipher_time_window = args.cipher_time_window
-reconstruct_secrets_threshhold = args.reconstruct_secrets_threshhold
+reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
 dp_eps = args.dp_eps
 dp_delta = args.dp_delta
 dp_norm_clip = args.dp_norm_clip
@@ -104,7 +104,7 @@ for i in range(local_server_num):
     cmd_server += " --encrypt_type=" + str(encrypt_type)
     cmd_server += " --share_secrets_ratio=" + str(share_secrets_ratio)
     cmd_server += " --cipher_time_window=" + str(cipher_time_window)
-    cmd_server += " --reconstruct_secrets_threshhold=" + str(reconstruct_secrets_threshhold)
+    cmd_server += " --reconstruct_secrets_threshold=" + str(reconstruct_secrets_threshold)
     cmd_server += " --dp_eps=" + str(dp_eps)
     cmd_server += " --dp_delta=" + str(dp_delta)
     cmd_server += " --dp_norm_clip=" + str(dp_norm_clip)
