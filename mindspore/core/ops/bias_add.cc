@@ -52,7 +52,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-  if (data_format == Format::NCDHW && (input_shape.size() != 5 || !is_ascend)) {
+  if (data_format == Format::NCDHW && input_shape.size() != 5 && is_ascend) {
     MS_EXCEPTION(ValueError) << "NCDHW format only support 5-dims input in Ascend target.";
   }
   auto x_channel = data_format == Format::NHWC ? input_shape[input_shape.size() - 1] : input_shape[1];
