@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/fusion_id_allocator.h"
+#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -48,7 +49,8 @@ void ReduceEltwiseFusionPass::MatchReduceEltwise(const CNodePtr &cnode, const se
     return;
   }
   if (AnfAlgo::GetKernelType(eltwise_input) == KernelType::TBE_KERNEL &&
-      AnfAlgo::GetFusionType(eltwise_input) == kernel::FusionType::COMMREDUCE) {
+      AnfAlgo::GetFusionType(eltwise_input) == kernel::FusionType::COMMREDUCE &&
+      GetNodeOutputTotalUsedNum(kernel_graph, eltwise_input) == 1) {
     (void)record.insert(eltwise_input);
     auto previous_input_cnode = eltwise_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(previous_input_cnode);

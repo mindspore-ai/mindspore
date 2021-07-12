@@ -1006,7 +1006,7 @@ std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_gra
 
 int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
   auto output_used_num = GetNodeOutputUsedNum(kernel_graph, node);
-  return std::accumulate(output_used_num.begin(), output_used_num.end(), 0);
+  return std::accumulate(output_used_num.begin(), output_used_num.end(), int64_t(0));
 }
 }  // namespace opt
 }  // namespace mindspore
