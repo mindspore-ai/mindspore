@@ -38,7 +38,6 @@ namespace dataset {
 class Dataset;
 }  // namespace dataset
 
-
 class MS_API Model {
  public:
   Model();
@@ -71,6 +70,9 @@ class MS_API Model {
   Status Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
   Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
   Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
+               const std::string &dec_mode = kDecModeAesGcm);
+  Status Build(const std::string &model_path, ModelType model_type,
                const std::shared_ptr<Context> &model_context = nullptr, const Key &dec_key = {},
                const std::string &dec_mode = kDecModeAesGcm);
 
