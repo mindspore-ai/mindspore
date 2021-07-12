@@ -203,7 +203,7 @@ class Flatten(Cell):
         >>> print(f"before flatten the x shape is {x.shape}")
         before flatten the x shape is  (2, 2, 2)
         >>> print(f"after flatten the output shape is {output.shape}")
-        after flatten the output shape is (2，4)
+        after flatten the output shape is (2, 4)
     """
 
     def __init__(self):
@@ -636,7 +636,7 @@ class OneHot(Cell):
          [1. 0. 0. 0.]
          [0. 0. 1. 0.]]
         >>> print(output.shape)
-        (4， 4)
+        (4, 4)
     """
 
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
