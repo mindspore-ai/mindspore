@@ -78,7 +78,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
  protected:
   void SetInputShape();
-  int SetInputData();
+  int InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
   void AsyncOutput(OpContext<Tensor> *context);
   int CompileArrowThroughPartialCall();
@@ -97,7 +97,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
-  void CopyInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  void SetInputData(Tensor *dst_tensor, Tensor *src_tensor);
   int CastInputData(Tensor *dst_tensor, Tensor *src_tensor);
   bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
   int CastTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
