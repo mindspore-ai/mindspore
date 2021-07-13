@@ -644,7 +644,6 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
     return eval_result;
   }
 
-  py::gil_scoped_acquire gil;
   auto py_args = PreparePyInputs(prim_py_, args);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
@@ -1201,7 +1200,7 @@ class PartialEvaluator : public Evaluator {
   PartialEvaluator() : Evaluator("PartialEvaluator") {}
   ~PartialEvaluator() override = default;
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf = nullptr) override {
+                    const AnfNodeConfigPtr &out_conf) override {
     if (args_conf_list.size() == 0) {
       MS_LOG(EXCEPTION) << "Args size should be greater than 0";
     }

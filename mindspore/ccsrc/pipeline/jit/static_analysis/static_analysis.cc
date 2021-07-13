@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <set>
 #include "abstract/abstract_value.h"
-#include "abstract/utils.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
 #include "utils/symbolic.h"
@@ -119,7 +118,7 @@ bool AnfNodeConfigEqual::operator()(const AnfNodeConfigPtr lhs, const AnfNodeCon
 
 AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list) {
   StaticAnalysisException::Instance().ClearException();
-  HealthPointMgr::GetInstance().Clear();
+  AnalysisSchedule::GetInstance().Reset();
   AnalysisResult result;
   try {
     ConfigPtrList args_conf_list;
@@ -145,10 +144,10 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
     result.inferred = output_conf->ObtainEvalResult();
     result.context = root_context;
   } catch (const std::exception &e) {
-    MS_LOG(WARNING) << "Eval " << func_graph->ToString() << " threw exception.";
-    HealthPointMgr::GetInstance().HandleException();
+    MS_LOG(INFO) << "Eval " << func_graph->ToString() << " threw exception.";
+    AnalysisSchedule::GetInstance().HandleException();
   }
-  AnalysisResultCacheMgr::GetInstance().Wait();
+  AnalysisSchedule::GetInstance().Wait();
   StaticAnalysisException::Instance().CheckException();
   return result;
 }
@@ -790,7 +789,7 @@ bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
 void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList args_conf_list, AnfNodeConfigPtr out_conf,
                    std::string caller, AsyncAbstractPtr async_result_branch, AsyncAbstractPtr async_result_main,
                    AsyncAbstractPtr async_run_flag) {
-  AnalysisResultCacheMgr::UpdateCaller(caller);
+  AnalysisSchedule::SetThreadID(caller);
   try {
     trace::ClearTraceStack();
 
@@ -814,17 +813,23 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, broadAbstract);
     async_result_branch->SetResult(broadAbstract);
     async_result_main->SetResult(broadAbstract);
-    // Health Point will be drop when thread exits.
-    HealthPointMgr::GetInstance().DecrPoint();
+    // Thread number will be drop when thread exits.
+    AnalysisSchedule::GetInstance().DecreaseThreadCount();
     MS_LOG(DEBUG) << GetInferThread() << "async :" << eval->ToString()
                   << " asyncResult address = " << async_result_branch.get()
                   << " value = " << async_result_branch->TryGetResult()->ToString();
-  } catch (const std::exception &e) {
-    MS_LOG(WARNING) << "Eval node: " << out_conf->node()->ToString() << "  " << eval->ToString() << " threw exception.";
+  } catch (const std::exception &e1) {
+    MS_LOG(INFO) << "Eval node: " << out_conf->node()->ToString() << "  " << eval->ToString() << " threw exception.";
     auto abstractErrPtr = std::make_shared<AbstractError>(std::make_shared<StringImm>("Exception"), out_conf->node());
     AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, abstractErrPtr);
     async_result_main->SetResult(abstractErrPtr);
-    HealthPointMgr::GetInstance().HandleException();
+    AnalysisSchedule::GetInstance().HandleException();
+    try {
+      // Thread number will be drop when thread exits.
+      AnalysisSchedule::GetInstance().DecreaseThreadCount();
+    } catch (const std::exception &e2) {
+      MS_LOG(DEBUG) << "AnalysisSchedule::GetInstance().DecreaseThreadCount() threw exception.";
+    }
   }
 }
 
@@ -846,7 +851,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   }
 
   auto possible_parent_fg = out_conf->node()->func_graph();
-  std::string threadId = AnalysisResultCacheMgr::GetThreadid();
+  std::string threadId = AnalysisSchedule::GetThreadID();
   // Eval result of the main.
   AsyncAbstractPtr asyncResult_main = std::make_shared<AsyncAbstract>();
   // Eval result of the branches
@@ -858,21 +863,20 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     // Control the order to run.
     AsyncAbstractPtr asyncRunOrder = std::make_shared<AsyncAbstract>();
     // Add point to the async thread.
-    HealthPointMgr::GetInstance().IncrPoint();
+    AnalysisSchedule::GetInstance().IncreaseThreadCount();
     MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluator->ToString();
-    auto future = std::async(std::launch::async, ExecEvaluator, evaluator, shared_from_this(), args_conf_list, out_conf,
-                             threadId, branchAsyncResult, asyncResult_main, asyncRunOrder);
-    // Wait for async threads to finish.
-    AnalysisResultCacheMgr::GetInstance().PushToWait(std::move(future));
+    auto thread = std::thread(ExecEvaluator, evaluator, shared_from_this(), args_conf_list, out_conf, threadId,
+                              branchAsyncResult, asyncResult_main, asyncRunOrder);
+    thread.detach();
     // Push to list of running loop
     asyncRunOrder->SetResult(std::make_shared<AbstractScalar>(1));
-    HealthPointMgr::GetInstance().Add2Schedule(asyncRunOrder);  // Activate order
-    branchAsyncResults.emplace_back(std::move(branchAsyncResult));
+    AnalysisSchedule::GetInstance().Add2Schedule(asyncRunOrder);  // Activate order
+    (void)branchAsyncResults.emplace_back(std::move(branchAsyncResult));
   }
 
   MS_LOG(DEBUG) << GetInferThread() << "async : wait for one of async to finish.  " << evaluators[0]->ToString()
                 << " or  " << evaluators[1]->ToString() << "...";
-  HealthPointMgr::GetInstance().Add2Schedule(asyncResult_main);  // Third order
+  AnalysisSchedule::GetInstance().Add2Schedule(asyncResult_main);  // Third order
   auto firstResult = asyncResult_main->GetResult();
   MS_EXCEPTION_IF_NULL(firstResult);
   MS_LOG(DEBUG) << GetInferThread() << "async main thread result of " << out_conf->node()->ToString() << " = "
@@ -883,14 +887,14 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   if (NeedWaitForBranches(firstResult)) {
     for (size_t i = 0; i < len; ++i) {
       MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[i]->ToString();
-      HealthPointMgr::GetInstance().Add2Schedule(branchAsyncResults[i]);
+      AnalysisSchedule::GetInstance().Add2Schedule(branchAsyncResults[i]);
       auto result = branchAsyncResults[i]->GetResult();
       MS_EXCEPTION_IF_NULL(result);
       out_specs.push_back(result);
     }
   } else {
     // Give one more chance to wait for the result of the branches.
-    HealthPointMgr::GetInstance().Add2Schedule(asyncResult_main);
+    AnalysisSchedule::GetInstance().Add2Schedule(asyncResult_main);
     (void)asyncResult_main->GetResult();
     for (size_t i = 0; i < len; ++i) {
       // Not wait to get the result of branch.
@@ -902,6 +906,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
       }
     }
   }
+
   return ProcessEvalResults(out_specs, out_conf->node());
 }
 
