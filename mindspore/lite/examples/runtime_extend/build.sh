@@ -29,7 +29,6 @@ MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com
 
 mkdir -p build
 mkdir -p lib
-mkdir -p include
 mkdir -p model
 if [ ! -e ${BASEPATH}/model/add_extend.ms ]; then
     wget -c -O ${BASEPATH}/model/add_extend.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
@@ -39,11 +38,7 @@ if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
 fi
 tar -xzf ${BASEPATH}/build/${MINDSPORE_FILE}
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/libmindspore-lite.a ${BASEPATH}/lib/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include/*.h ${BASEPATH}/include/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include/ir ${BASEPATH}/include/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include/registry ${BASEPATH}/include/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include/schema ${BASEPATH}/include/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include/third_party ${BASEPATH}/include/
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include ${BASEPATH}/
 cd ${BASEPATH}/build || exit
 cmake ${BASEPATH}
 make
