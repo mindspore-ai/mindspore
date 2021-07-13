@@ -153,14 +153,14 @@ set(LITE_SRC
         )
 
 file(GLOB PROTO_FILE ""
-        ${CMAKE_CURRENT_SOURCE_DIR}/parser/caffe/caffe.proto
-        ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf/proto/*.proto
-        ${CMAKE_CURRENT_SOURCE_DIR}/parser/onnx/onnx.proto)
+        ${TOP_DIR}/third_party/proto/caffe/caffe.proto
+        ${TOP_DIR}/third_party/proto/tensorflow/*.proto
+        ${TOP_DIR}/third_party/proto/onnx/onnx.proto)
 
 ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
 add_library(proto_mid OBJECT ${PROTO_SRCS})
 set(TFLITE_FBS_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/schema.fbs
+        ${TOP_DIR}/third_party/proto/tensorflow/lite/schema.fbs
         )
 ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/ tflite_fbs_src
         ${CMAKE_BINARY_DIR}/schema "inner")
