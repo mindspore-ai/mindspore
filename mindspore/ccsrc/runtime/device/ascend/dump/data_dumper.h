@@ -67,6 +67,7 @@ class DataDumper {
   void GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const;
   static void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
   static void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
+  static std::string StripUniqueId(const std::string node_name);
   static void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
 
   std::function<void *()> model_handle_;

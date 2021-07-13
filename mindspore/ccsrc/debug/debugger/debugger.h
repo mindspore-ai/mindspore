@@ -181,8 +181,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // read env variable for grpc client
   void EnableDebugger();
 
-  void SetOpOverflowBinPath(uint32_t graph_id);
-
   // check if debugger enabled
   bool CheckDebuggerEnabled() const;
 

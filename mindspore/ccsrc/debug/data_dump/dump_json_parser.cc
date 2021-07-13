@@ -22,6 +22,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/data_dump/npy_header.h"
 #include "debug/anf_ir_utils.h"
+#include "utils/comm_manager.h"
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";
@@ -511,18 +512,29 @@ void DumpJsonParser::PrintUnusedKernel() {
   }
 }
 
-std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const {
+std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id) const {
   std::string bin_path;
   bin_path.append(path_);
   bin_path.append("/");
   bin_path.append("rank_");
-  bin_path.append(std::to_string(device_id));
+
+  uint32_t rank_id = 0;
+  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  auto env_rank_id = common::GetEnv("RANK_ID");
+  if (!(env_table_file.empty() || env_rank_id.empty())) {
+    // get actual rank id if it's distribution training case.
+    if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
+      MS_LOG(INFO) << "Failed to get rank id.";
+    }
+  }
+  bin_path.append(std::to_string(rank_id));
+
   bin_path.append("/");
   bin_path.append(net_name_);
   bin_path.append("/");
   bin_path.append(std::to_string(graph_id));
   bin_path.append("/");
-  bin_path.append(iteration_);
+  bin_path.append(std::to_string(cur_dump_iter_));
   bin_path.append("/");
 
   return bin_path;
