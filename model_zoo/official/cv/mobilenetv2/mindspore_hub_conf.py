@@ -16,15 +16,17 @@
 from src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
 
 def create_network(name, *args, **kwargs):
+    """
+        create mobilenetv2 network
+    """
     if name == "mobilenetv2":
         backbone_net = MobileNetV2Backbone()
-        include_top = kwargs["include_top"]
-        if include_top is None:
-            include_top = True
+        include_top = kwargs.get("include_top", True)
+        num_class = kwargs.get("num_classes", "10")
         if include_top:
-            activation = kwargs["activation"]
+            activation = kwargs.get("activation", True)
             head_net = MobileNetV2Head(input_channel=backbone_net.out_channels,
-                                       num_classes=int(kwargs["num_classes"]),
+                                       num_classes=int(num_class),
                                        activation=activation)
             net = mobilenet_v2(backbone_net, head_net)
             return net
