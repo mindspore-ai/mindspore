@@ -74,8 +74,8 @@ InceptionV3的总体网络架构如下：
 - 框架
 - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需查看详情，请参见如下资源：
-- [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-- [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+- [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
+- [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
 

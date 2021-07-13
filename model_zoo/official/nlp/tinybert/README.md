@@ -66,8 +66,8 @@ The backbone structure of TinyBERT is transformer, the transformer contains four
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 # [Quick Start](#contents)
 
@@ -100,7 +100,7 @@ The backbone structure of TinyBERT is transformer, the transformer contains four
     Please follow the instructions in the link below:
     https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
-    For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/doc/programming_guide/en/master/dataset_loading.html#tfrecord) format.
+    For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/docs/programming_guide/en/master/dataset_loading.html#tfrecord) format.
 
     ```text
     For general task, schema file contains ["input_ids", "input_mask", "segment_ids"].

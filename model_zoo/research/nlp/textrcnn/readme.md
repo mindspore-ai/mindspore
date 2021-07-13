@@ -40,7 +40,7 @@ Dataset used: [Sentence polarity dataset v1.0](http://www.cs.cornell.edu/people/
 
 - Hardware: Ascend
 - Framework: [MindSpore](https://www.mindspore.cn/install/en)
-- For more information, please check the resources below：[MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html), [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html).
+- For more information, please check the resources below：[MindSpore tutorials](https://www.mindspore.cn/tutorials/en/master/index.html), [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html).
 
 ## [Quick Start](#contents)
 
