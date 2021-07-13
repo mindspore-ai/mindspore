@@ -3285,6 +3285,13 @@ class Diag(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same dtype as the `input_x`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If rank of `input_x` is less than 1.
+
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])
         >>> diag = ops.Diag()
@@ -3330,10 +3337,18 @@ class DiagPart(PrimitiveWithInfer):
     :math:`output[i_1,..., i_k] = input[i_1,..., i_k, i_1,..., i_k]`.
 
     Inputs:
-        - **input_x** (Tensor) - tensor of rank k where k is even and not zero.
+        - **input_x** (Tensor) - The input tensor of rank 2k, k is not zero.
 
     Outputs:
         Tensor, the extracted diagonal has the same dtype as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If rank of `input_x` is not even or zero.
+        ValueError: If input_shape[i] is not equal to input_shape[i + len(input_shape)/2].
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples
         >>> input_x = Tensor([[1, 0, 0, 0],

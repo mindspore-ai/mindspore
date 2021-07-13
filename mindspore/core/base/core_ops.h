@@ -79,6 +79,8 @@ constexpr auto kFastGeLUGrad = "FastGeLUGrad";
 constexpr auto kStridedSlice = "StridedSlice";
 constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kOnesLike = "OnesLike";
+constexpr auto kDiag = "Diag";
+constexpr auto kDiagPart = "DiagPart";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
 constexpr auto kTranspose = "Transpose";
 
@@ -233,6 +235,8 @@ inline const PrimitivePtr kPrimResizeGrad = std::make_shared<Primitive>("ResizeG
 inline const PrimitivePtr kPrimResizeNearestNeighbor = std::make_shared<Primitive>("ResizeNearestNeighbor");
 inline const PrimitivePtr kPrimSort = std::make_shared<Primitive>("Sort");
 inline const PrimitivePtr kPrimMaskedSelect = std::make_shared<Primitive>("MaskedSelect");
+inline const PrimitivePtr kPrimDiag = std::make_shared<Primitive>(kDiag);
+inline const PrimitivePtr kPrimDiagPart = std::make_shared<Primitive>(kDiagPart);
 
 // NN
 inline const PrimitivePtr kPrimAdam = std::make_shared<Primitive>("Adam");
