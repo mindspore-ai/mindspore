@@ -62,6 +62,9 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::kPrimEqual,
     prim::kPrimAssign,
     prim::kPrimInplaceAssign,
+    prim::kPrimAtan,
+    prim::kPrimAtan2,
+    prim::kPrimExpm1,
 #if ENABLE_D
     prim::kPrimMatMul,
     prim::KPrimTransData,

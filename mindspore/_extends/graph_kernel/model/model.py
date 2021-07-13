@@ -200,6 +200,9 @@ class PrimLib:
         'CReal': Prim(ELEMWISE),
         'CImag': Prim(ELEMWISE),
         'Complex': Prim(ELEMWISE),
+        'Atan': Prim(ELEMWISE),
+        'Atan2': Prim(ELEMWISE),
+        'Expm1': Prim(ELEMWISE),
     }
 
     default_primtive = Prim(UNKNOWN)
