@@ -74,7 +74,7 @@ int CheckOffline1(session::LiteSession *session) {
   /* sub-graph-3 */
   kernel::SubGraphKernel *subgraph3 = reinterpret_cast<kernel::SubGraphKernel *>(kernels[3]);
   std::vector<kernel::LiteKernel *> nodes3 = subgraph3->nodes();
-  if (nodes3.size() != 8) {
+  if (nodes3.size() != 12) {
     return -8;
   }
   if (nodes3[0]->type() != schema::PrimitiveType_Concat) {

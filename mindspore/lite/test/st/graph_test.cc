@@ -76,34 +76,39 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
   ASSERT_EQ(benchmark_ret, lite::RET_OK);
   delete session;
 
+  static int output_count = 0;
   /* output data control by users */
   for (auto out_data : out_datas) {
     string name = out_data.first;
     void *data = out_data.second;
     float *fp32_data = reinterpret_cast<float *>(data);
-    if (name == "Conv2D-7") {
-      ASSERT_LE(fabs(fp32_data[0] - (-0.01506812)), 0.01);
-      ASSERT_LE(fabs(fp32_data[1] - (0.007832255)), 0.01);
-      ASSERT_LE(fabs(fp32_data[2] - (-0.00440396)), 0.01);
-      ASSERT_LE(fabs(fp32_data[3] - (0.000382302)), 0.01);
-      ASSERT_LE(fabs(fp32_data[4] - (0.001282413)), 0.01);
+    if (name == "Stack-8") {
+      output_count++;
+      ASSERT_LE(fabs(fp32_data[0] - (0.115831)), 0.01);
+      ASSERT_LE(fabs(fp32_data[1] - (0.113074)), 0.01);
+      ASSERT_LE(fabs(fp32_data[2] - (0.245932)), 0.01);
+      ASSERT_LE(fabs(fp32_data[3] - (0.346307)), 0.01);
+      ASSERT_LE(fabs(fp32_data[4] - (-0.15687)), 0.01);
     }
-    if (name == "Conv2D-8") {
-      ASSERT_LE(fabs(fp32_data[0] - (0.019412944)), 0.01);
-      ASSERT_LE(fabs(fp32_data[1] - (-0.01643771)), 0.01);
-      ASSERT_LE(fabs(fp32_data[2] - (0.001904978)), 0.01);
-      ASSERT_LE(fabs(fp32_data[3] - (-0.00486740)), 0.01);
-      ASSERT_LE(fabs(fp32_data[4] - (0.009935631)), 0.01);
+    if (name == "Stack-10") {
+      output_count++;
+      ASSERT_LE(fabs(fp32_data[0] - (0.06387864)), 0.01);
+      ASSERT_LE(fabs(fp32_data[1] - (0.22883008)), 0.01);
+      ASSERT_LE(fabs(fp32_data[2] - (0.23308714)), 0.01);
+      ASSERT_LE(fabs(fp32_data[3] - (0.04586578)), 0.01);
+      ASSERT_LE(fabs(fp32_data[4] - (0.06820235)), 0.01);
     }
-    if (name == "Conv2D-9") {
-      ASSERT_LE(fabs(fp32_data[0] - (-0.012825339)), 0.01);
-      ASSERT_LE(fabs(fp32_data[1] - (-0.012769699)), 0.01);
-      ASSERT_LE(fabs(fp32_data[2] - (-0.004285028)), 0.01);
-      ASSERT_LE(fabs(fp32_data[3] - (-0.002383671)), 0.01);
-      ASSERT_LE(fabs(fp32_data[4] - (-0.005860286)), 0.01);
+    if (name == "Stack-13") {
+      output_count++;
+      ASSERT_LE(fabs(fp32_data[0] - (-0.1617176)), 0.01);
+      ASSERT_LE(fabs(fp32_data[1] - (-0.3828573)), 0.01);
+      ASSERT_LE(fabs(fp32_data[2] - (0.08357508)), 0.01);
+      ASSERT_LE(fabs(fp32_data[3] - (0.10217983)), 0.01);
+      ASSERT_LE(fabs(fp32_data[4] - (-0.3480084)), 0.01);
     }
     free(data);
   }
+  ASSERT_EQ(output_count, 3);
 }
 
 TEST_F(GraphTest, UserSetGraphOutput2) {
@@ -157,25 +162,25 @@ TEST_F(GraphTest, UserSetGraphOutput2) {
     void *out_data = out_datas[i];
     float *fp32_data = reinterpret_cast<float *>(out_data);
     if (i == 0) {
-      ASSERT_LE(fabs(fp32_data[0] - (-0.01506812)), 0.01);
-      ASSERT_LE(fabs(fp32_data[1] - (0.007832255)), 0.01);
-      ASSERT_LE(fabs(fp32_data[2] - (-0.00440396)), 0.01);
-      ASSERT_LE(fabs(fp32_data[3] - (0.000382302)), 0.01);
-      ASSERT_LE(fabs(fp32_data[4] - (0.001282413)), 0.01);
+      ASSERT_LE(fabs(fp32_data[0] - (0.115831)), 0.01);
+      ASSERT_LE(fabs(fp32_data[1] - (0.113074)), 0.01);
+      ASSERT_LE(fabs(fp32_data[2] - (0.245932)), 0.01);
+      ASSERT_LE(fabs(fp32_data[3] - (0.346307)), 0.01);
+      ASSERT_LE(fabs(fp32_data[4] - (-0.15687)), 0.01);
     }
     if (i == 1) {
-      ASSERT_LE(fabs(fp32_data[0] - (0.019412944)), 0.01);
-      ASSERT_LE(fabs(fp32_data[1] - (-0.01643771)), 0.01);
-      ASSERT_LE(fabs(fp32_data[2] - (0.001904978)), 0.01);
-      ASSERT_LE(fabs(fp32_data[3] - (-0.00486740)), 0.01);
-      ASSERT_LE(fabs(fp32_data[4] - (0.009935631)), 0.01);
+      ASSERT_LE(fabs(fp32_data[0] - (0.06387864)), 0.01);
+      ASSERT_LE(fabs(fp32_data[1] - (0.22883008)), 0.01);
+      ASSERT_LE(fabs(fp32_data[2] - (0.23308714)), 0.01);
+      ASSERT_LE(fabs(fp32_data[3] - (0.04586578)), 0.01);
+      ASSERT_LE(fabs(fp32_data[4] - (0.06820235)), 0.01);
     }
     if (i == 2) {
-      ASSERT_LE(fabs(fp32_data[0] - (-0.012825339)), 0.01);
-      ASSERT_LE(fabs(fp32_data[1] - (-0.012769699)), 0.01);
-      ASSERT_LE(fabs(fp32_data[2] - (-0.004285028)), 0.01);
-      ASSERT_LE(fabs(fp32_data[3] - (-0.002383671)), 0.01);
-      ASSERT_LE(fabs(fp32_data[4] - (-0.005860286)), 0.01);
+      ASSERT_LE(fabs(fp32_data[0] - (-0.1617176)), 0.01);
+      ASSERT_LE(fabs(fp32_data[1] - (-0.3828573)), 0.01);
+      ASSERT_LE(fabs(fp32_data[2] - (0.08357508)), 0.01);
+      ASSERT_LE(fabs(fp32_data[3] - (0.10217983)), 0.01);
+      ASSERT_LE(fabs(fp32_data[4] - (-0.3480084)), 0.01);
     }
     free(out_data);
   }
