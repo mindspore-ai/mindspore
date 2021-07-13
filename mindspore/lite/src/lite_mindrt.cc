@@ -83,6 +83,16 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
     Tensor *old_tensor = kernel_->in_tensors()[i];
 
     if (OfflineIsolated(kernels, *kernel_, *old_tensor)) {
+      if (old_tensor->data_type() == kNumberTypeFloat16 || old_tensor->data_type() == kNumberTypeFloat32) {
+        old_tensor->set_data_type(kernel_->desc().data_type);
+      }
+      if (old_tensor->data_type() == kObjectTypeTensorType) {
+        auto old_tensorlist = reinterpret_cast<TensorList *>(old_tensor);
+        if (old_tensorlist->tensors_data_type() == kNumberTypeFloat16 ||
+            old_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
+          old_tensorlist->set_tensors_data_type(kernel_->desc().data_type);
+        }
+      }
       continue;
     }
 
@@ -310,7 +320,31 @@ void LiteOpActor::SetInputData(Tensor *dst_tensor, Tensor *src_tensor) {
 }
 
 int LiteOpActor::CastInputData(Tensor *dst, Tensor *src) {
+  int ret = RET_OK;
   dst->ResetRefCount();
+  if (src->data_type() != kObjectTypeTensorType) {
+    ret = CastTensorInputData(dst, src);
+  } else {
+    ret = CastTensorListInputData(reinterpret_cast<TensorList *>(dst), reinterpret_cast<TensorList *>(src));
+  }
+  src->DecRefCount();
+  return ret;
+}
+
+bool LiteOpActor::NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
+  if (dst_tensor->data_type() != kObjectTypeTensorType && src_tensor->data_type() != kObjectTypeTensorType &&
+      dst_tensor->data_type() != src_tensor->data_type()) {
+    return true;
+  }
+  if (dst_tensor->data_type() == kObjectTypeTensorType && src_tensor->data_type() == kObjectTypeTensorType &&
+      reinterpret_cast<TensorList *>(dst_tensor)->tensors_data_type() !=
+        reinterpret_cast<TensorList *>(src_tensor)->tensors_data_type()) {
+    return true;
+  }
+  return false;
+}
+
+int LiteOpActor::CastTensorInputData(Tensor *dst, Tensor *src) {
   dst->MallocData();
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   if (dst->shape() != src->shape()) {
@@ -332,11 +366,35 @@ int LiteOpActor::CastInputData(Tensor *dst, Tensor *src) {
     MS_LOG(ERROR) << "not support dst_data_type: " << dst_data_type << " src_data_type: " << src_data_type;
     return RET_NOT_SUPPORT;
   }
-  src->DecRefCount();
   return RET_OK;
 #endif
-  src->DecRefCount();
   return RET_ERROR;
+}
+
+int LiteOpActor::CastTensorListInputData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
+  MS_ASSERT(src_tensorlist != nullptr);
+  MS_ASSERT(dst_tensorlist != nullptr);
+  dst_tensorlist->set_shape(src_tensorlist->shape());
+  std::vector<std::vector<int>> tensors_shapes{};
+  tensors_shapes.resize(src_tensorlist->tensors().size());
+  for (size_t i = 0; i < tensors_shapes.size(); ++i) {
+    tensors_shapes[i] = src_tensorlist->tensors()[i]->shape();
+  }
+  if (src_tensorlist->tensors_data_type() == kNumberTypeFloat16) {
+    dst_tensorlist->MallocTensorListData(kNumberTypeFloat32, tensors_shapes);
+  }
+  if (src_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
+    dst_tensorlist->MallocTensorListData(kNumberTypeFloat16, tensors_shapes);
+  }
+  dst_tensorlist->ResetRefCount();
+  dst_tensorlist->set_allocator(src_tensorlist->allocator());
+
+  for (size_t i = 0; i < src_tensorlist->tensors().size(); ++i) {
+    auto &src_tensor = src_tensorlist->tensors()[i];
+    auto &dst_tensor = dst_tensorlist->tensors()[i];
+    CastTensorInputData(dst_tensor, src_tensor);
+  }
+  return RET_OK;
 }
 
 void LiteOpActor::SetInputShape() {
@@ -377,8 +435,7 @@ int LiteOpActor::InitInputData() {
       continue;
     }
 
-    if (src_tensor->data_type() != dst_tensor->data_type()) {
-      /* fp16 & fp32 transfer */
+    if (NeedCastData(dst_tensor, src_tensor)) {
       CastInputData(dst_tensor, src_tensor);
       continue;
     }
