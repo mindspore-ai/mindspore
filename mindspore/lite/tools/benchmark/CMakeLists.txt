@@ -43,6 +43,6 @@ if(MSLITE_COMPILE_NNIE AND TARGET_HIMIX200 AND PLATFORM_ARM)
 
     add_dependencies(benchmark fbs_src)
 
-    target_link_libraries(benchmark mindspore-lite mindspore::json pthread nnie_proposal
+    target_link_libraries(benchmark mindspore-lite mindspore::json pthread mslite_proposal
             mslite_nnie dl nnie mpi  VoiceEngine upvqe dnvqe securec)
 endif()
