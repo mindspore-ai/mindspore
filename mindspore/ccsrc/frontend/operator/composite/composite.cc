@@ -935,8 +935,6 @@ int64_t GetArgScalarValue(const abstract::AbstractScalarPtr &scalar, const std::
   return GetValue<int64_t>(scalar->BuildValue());
 }
 
-bool CheckIndexInRange(int64_t index, int64_t min, int64_t max) { return (index >= min && index <= max); }
-
 int64_t GetPositiveIndex(int64_t index, int64_t length) {
   if (index < 0) {
     index += length;
@@ -987,10 +985,12 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSl
 
   *start_index = CheckSliceMember(slice->start(), start_default, start_name);
   *stop_index = CheckSliceMember(slice->stop(), stop_default, stop_name);
-  if (!CheckIndexInRange(*start_index, -tuple_size, tuple_size - 1) ||
-      !CheckIndexInRange(*stop_index, -tuple_size - 1, tuple_size)) {
-    MS_EXCEPTION(ValueError) << "TupleSlice the start index " << *start_index << " or end end index " << *stop_index
-                             << " out of range, tuple size " << tuple_size << ".";
+
+  if (*start_index < -tuple_size) *start_index = 0;
+  if (*stop_index > tuple_size) *stop_index = tuple_size;
+  if (*start_index > tuple_size || *stop_index < -tuple_size) {
+    *start_index = 0;
+    *stop_index = 0;
   }
 
   *start_index = GetPositiveIndex(*start_index, tuple_size);
