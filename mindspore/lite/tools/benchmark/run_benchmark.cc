@@ -22,9 +22,6 @@ namespace lite {
 int RunBenchmark(int argc, const char **argv) {
   BenchmarkFlags flags;
   Option<std::string> err = flags.ParseFlags(argc, argv);
-#ifdef SUPPORT_NNIE
-  SvpSysInit();
-#endif
   if (err.IsSome()) {
     std::cerr << err.Get() << std::endl;
     std::cerr << flags.Usage() << std::endl;
