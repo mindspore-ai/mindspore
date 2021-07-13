@@ -40,10 +40,6 @@ include_directories(
     ../include/
 )
 
-if(target STREQUAL "Simulator_Function")
-    add_compile_options(-DFUNC_SIM)
-endif()
-
 # add host lib path
 link_directories(
     ${LIB_PATH}
@@ -53,8 +49,8 @@ link_directories(
 set(PROJECT_SRC_ROOT ${CMAKE_CURRENT_LIST_DIR}/)
 
 # Set include directory and library directory
-set(ACL_LIB_DIR $ENV{ASCEND_HOME}/acllib)
-set(ATLAS_ACL_LIB_DIR $ENV{ASCEND_HOME}/ascend-toolkit/latest/acllib)
+set(ACL_LIB_DIR $ENV{ASCEND_HOME}/fwkacllib)
+set(ATLAS_ACL_LIB_DIR $ENV{ASCEND_HOME}/ascend-toolkit/latest/fwkacllib)
 # Header path
 include_directories(${ACL_LIB_DIR}/include/)
 include_directories(${ATLAS_ACL_LIB_DIR}/include/)
@@ -63,6 +59,7 @@ include_directories(${PROJECT_SRC_ROOT}/../inc)
 # add host lib path
 link_directories(${ACL_LIB_DIR})
 find_library(acl libascendcl.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+find_library(stdc libstdc++.so.6 /usr/)
 
 add_executable(main
         ./src/utils.cpp
@@ -70,6 +67,6 @@ add_executable(main
         ./src/sample_process.cpp
         ./src/main.cpp)
 
-target_link_libraries(main ${acl} stdc++ gflags)
+target_link_libraries(main ${acl} ${stdc} gflags)
 
 install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
