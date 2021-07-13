@@ -24,7 +24,6 @@ using mindspore::schema::PrimitiveType_ExpFusion;
 namespace mindspore::lite::micro::nnacl {
 int ExpFP32Coder::Prepare(CoderContext *context) {
   exp_parameter_ = reinterpret_cast<ExpParameter *>(parameter_);
-  exp_parameter_->thread_num_ = exp_parameter_->op_parameter_.thread_num_;
   float log_ = (exp_parameter_->base_ == -1) ? 1 : logf(exp_parameter_->base_);
   exp_parameter_->in_scale_ = exp_parameter_->scale_ * log_;
   if (exp_parameter_->shift_ == 0) {
