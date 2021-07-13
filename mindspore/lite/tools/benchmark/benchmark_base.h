@@ -312,9 +312,5 @@ class MS_API BenchmarkBase {
   std::mt19937 random_engine_;
 };
 
-#ifdef SUPPORT_NNIE
-int SvpSysInit();
-int SvpSysExit();
-#endif
 }  // namespace mindspore::lite
 #endif  // MINNIE_BENCHMARK_BENCHMARK_BASE_H_
