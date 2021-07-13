@@ -67,9 +67,10 @@ int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> &&msg) { return actorPo
 
 void ActorBase::Quit() {
   Finalize();
-  actorPolicy->Terminate(this);
   // lock at spawn(), unlock here.
   waiterLock.unlock();
+
+  actorPolicy->Terminate(this);
 }
 
 void ActorBase::Run() {

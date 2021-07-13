@@ -76,13 +76,14 @@ ShardedThread::~ShardedThread() {}
 void ShardedThread::Terminate(const ActorBase *aActor) {
   std::string actorName = aActor->GetAID().Name();
   MS_LOG(DEBUG) << "ACTOR ShardedThread received terminate message,v=" << actorName.c_str();
-  // remove actor from actorMgr
-  ActorMgr::GetActorMgrRef()->RemoveActor(actorName);
 
   mailboxLock.lock();
   terminated = true;
   this->actor = nullptr;
   mailboxLock.unlock();
+
+  // remove actor from actorMgr
+  ActorMgr::GetActorMgrRef()->RemoveActor(actorName);
 }
 
 int ShardedThread::EnqueMessage(std::unique_ptr<MessageBase> &&msg) {
