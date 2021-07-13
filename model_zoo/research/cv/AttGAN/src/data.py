@@ -67,12 +67,12 @@ class CelebA:
     data_path: Image Path
     attr_path: Attr_list Path
     image_size: Image Size
-    mode: Train, Valid or Test
+    mode: Train or Test
     selected_attrs: selected attributes
     transform: Image Processing
     """
 
-    def __init__(self, data_path, attr_path, image_size, mode, selected_attrs, transform):
+    def __init__(self, data_path, attr_path, image_size, mode, selected_attrs, transform, split_point=182000):
         super().__init__()
         self.data_path = data_path
         self.transform = transform
@@ -85,14 +85,11 @@ class CelebA:
         labels = np.loadtxt(attr_path, skiprows=2, usecols=atts, dtype=np.int)
 
         if mode == "train":
-            self.images = images[:182000]
-            self.labels = labels[:182000]
-        if mode == "valid":
-            self.images = images[182000:182637]
-            self.labels = labels[182000:182637]
+            self.images = images[:split_point]
+            self.labels = labels[:split_point]
         if mode == "test":
-            self.images = images[182637:]
-            self.labels = labels[182637:]
+            self.images = images[split_point:]
+            self.labels = labels[split_point:]
 
         self.length = len(self.images)
 
@@ -106,7 +103,7 @@ class CelebA:
         return self.length
 
 
-def get_loader(data_root, attr_path, selected_attrs, crop_size=170, image_size=128, mode="train"):
+def get_loader(data_root, attr_path, selected_attrs, crop_size=170, image_size=128, mode="train", split_point=182000):
     """Build and return dataloader"""
 
     mean = [0.5, 0.5, 0.5]
@@ -118,16 +115,17 @@ def get_loader(data_root, attr_path, selected_attrs, crop_size=170, image_size=1
     transform.append(py_vision.Normalize(mean=mean, std=std))
     transform = py_transforms.Compose(transform)
 
-    dataset = CelebA(data_root, attr_path, image_size, mode, selected_attrs, transform)
+    dataset = CelebA(data_root, attr_path, image_size, mode, selected_attrs, transform, split_point=split_point)
 
     return dataset
 
 
-def data_loader(img_path, attr_path, selected_attrs, mode="train", batch_size=1, device_num=1, rank=0, shuffle=True):
+def data_loader(img_path, attr_path, selected_attrs, mode="train", batch_size=1, device_num=1, rank=0, shuffle=True,
+                split_point=182000):
     """CelebA data loader"""
     num_parallel_workers = 8
 
-    dataset_loader = get_loader(img_path, attr_path, selected_attrs, mode=mode)
+    dataset_loader = get_loader(img_path, attr_path, selected_attrs, mode=mode, split_point=split_point)
     length_dataset = len(dataset_loader)
 
     distributed_sampler = DistributedSampler(length_dataset, device_num, rank, shuffle=shuffle)
