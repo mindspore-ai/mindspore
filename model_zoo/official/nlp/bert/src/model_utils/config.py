@@ -140,6 +140,9 @@ def extra_operations(cfg):
         elif cfg.bert_network == 'large':
             cfg.batch_size = cfg.large_batch_size
             _bert_net_cfg = cfg.large_net_cfg
+        elif cfg.bert_network == 'large_acc':
+            cfg.batch_size = cfg.large_acc_batch_size
+            _bert_net_cfg = cfg.large_acc_net_cfg
         else:
             pass
         cfg.bert_net_cfg = BertConfig(**_bert_net_cfg.__dict__)
