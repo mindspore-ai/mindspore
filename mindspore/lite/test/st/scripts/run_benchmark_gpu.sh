@@ -23,8 +23,6 @@ function Run_Converter() {
 
 # Run on gpu platform:
 function Run_gpu() {
-    # Push files to the phone
-    Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
     # Prepare the config file list
     local gpu_cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_fp16_config" "$models_gpu_weightquant_config")
     # Run converted models:
@@ -60,9 +58,9 @@ function Run_mindrt_parallel() {
 
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
         if [ $? = 0 ]; then
-            run_result='mindrt_parallel_CPU_CPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 
         ########## RUN CPU-GPU parallel
@@ -74,9 +72,9 @@ function Run_mindrt_parallel() {
 
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
         if [ $? = 0 ]; then
-            run_result='mindrt_parallel_CPU_GPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_mindrt_parallel_config}
 }
@@ -112,6 +110,7 @@ done
 
 # mkdir train
 x86_path=${release_path}/ubuntu_x86
+arm64_path=${release_path}/android_aarch64/npu
 file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
@@ -135,8 +134,6 @@ echo ' ' > ${run_converter_result_file}
 echo "start Run converter ..."
 Run_Converter
 Run_converter_status=$?
-sleep 1
-
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
@@ -154,6 +151,8 @@ echo ' ' > ${run_benchmark_result_file}
 
 run_gpu_log_file=${basepath}/run_gpu_log.txt
 echo 'run gpu logs: ' > ${run_gpu_log_file}
+run_parallel_log_file=${basepath}/run_parallel_log.txt
+echo 'run parallel logs: ' > ${run_parallel_log_file}
 
 # Copy the MindSpore models:
 echo "Push files to the arm and run benchmark"
@@ -161,34 +160,58 @@ benchmark_test_path=${basepath}/benchmark_test
 rm -rf ${benchmark_test_path}
 mkdir -p ${benchmark_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
+# Push files to the phone
+Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
 
 backend=${backend:-"all"}
 isFailed=0
-
 if [[ $backend == "all" || $backend == "gpu" ]]; then
     # Run on gpu
-    arm64_path=${release_path}/android_aarch64/npu
-    # mv ${arm64_path}/*train-android-aarch64* ./train
-    file_name=$(ls ${arm64_path}/*android-aarch64.tar.gz)
-    IFS="-" read -r -a file_name_array <<< "$file_name"
-    version=${file_name_array[2]}
-
     echo "start Run gpu ..."
     Run_gpu
     Run_gpu_status=$?
-    sleep 1
+    # Run_gpu_PID=$!
+    # sleep 1
+fi
+# guard mindrt parallel
+if [[ $backend == "all" || $backend == "gpu" || $backend == "mindrt_parallel" ]]; then
+    echo "start Run Mindrt Parallel ... "
+    Run_mindrt_parallel
+    Run_mindrt_parallel_status=$?
+    # Run_mindrt_parallel_PID=$!
+    # sleep 1
+fi
+# guard cropper
+if [[ $backend == "all" || $backend == "gpu" || $backend == "cropper" ]]; then
+    echo "start Run Cropper ... "
+    cd ${basepath} || exit 1
+    bash ${basepath}/scripts/run_cropper.sh -r ${release_path} -d ${device_id}
+    Run_cropper_status=$?
+    # Run_cropper_PID=$!
+    # sleep 1
+fi
+
+if [[ $backend == "all" || $backend == "gpu" ]]; then
+    # wait ${Run_gpu_PID}
+    # Run_gpu_status=$?
     if [[ ${Run_gpu_status} != 0 ]];then
         echo "Run_gpu failed"
         cat ${run_gpu_log_file}
         isFailed=1
     fi
 fi
-
-# guard cropper
-if [[ $backend == "all" || $backend == "gpu" ]]; then
-    cd ${basepath} || exit 1
-    bash ${basepath}/scripts/run_cropper.sh -r ${release_path} -d ${device_id}
-    Run_cropper_status=$?
+if [[ $backend == "all" || $backend == "gpu" || $backend == "mindrt_parallel" ]]; then
+    # wait ${Run_mindrt_parallel_PID}
+    # Run_mindrt_parallel_status=$?
+    if [[ ${Run_mindrt_parallel_status} != 0 ]];then
+        echo "Run_mindrt_parallel failed"
+        cat ${run_parallel_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "gpu" || $backend == "cropper" ]]; then
+    # wait ${Run_cropper_PID}
+    # Run_cropper_status=$?
     if [[ ${Run_cropper_status} != 0 ]];then
         echo "Run cropper failed"
         cat ${run_gpu_log_file}
@@ -196,34 +219,6 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
     fi
 fi
 
-echo "Run_gpu and Run_cropper is ended"
+echo "Run_gpu and Run_cropper and mindrt_parallel is ended"
 Print_Benchmark_Result $run_benchmark_result_file
-
-########## mindrt parallel test ##############
-run_parallel_result_file=${basepath}/run_parallel_result.txt
-echo ' ' > ${run_parallel_result_file}
-
-run_parallel_log_file=${basepath}/run_parallel_log.txt
-echo 'run parallel logs: ' > ${run_parallel_log_file}
-
-if [[ $backend == "all" || $backend == "gpu" ]]; then
-    echo "start Run Mindrt Parallel ... "
-    Run_mindrt_parallel
-    Run_mindrt_parallel_status=$?
-
-    sleep 1
-
-    if [[ ${Run_mindrt_parallel_status} != 0 ]];then
-        echo "Run_mindrt_parallel failed"
-        cat ${run_parallel_log_file}
-    fi
-
-    echo "Run_parallel is ended"
-    Print_Parallel_Result $run_parallel_result_file
-
-    if [[ ${Run_mindrt_parallel_status} != 0 ]];then
-        isFailed=1
-    fi
-fi
-########## mindrt parallel test end ##############
 exit ${isFailed}

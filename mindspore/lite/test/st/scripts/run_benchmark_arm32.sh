@@ -22,7 +22,6 @@ function Run_Converter() {
 
 # Run on arm32 platform:
 function Run_arm32() {
-    Push_Files $arm32_path "aarch32" $version $benchmark_test_path "adb_push_log.txt" $device_id
     local arm32_cfg_file_list=("$models_arm32_config")
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${arm32_cfg_file_list[*]}" . '/data/local/tmp' $run_arm32_log_file $run_benchmark_result_file 'arm32' 'CPU' $device_id
@@ -31,10 +30,9 @@ function Run_arm32() {
 
 # Run on armv8.2-a32-fp16 platform:
 function Run_armv82_a32_fp16() {
-    Push_Files $arm32_path "aarch32" $version $benchmark_test_path "adb_push_log.txt" $device_id
-    local arm32_cfg_file_list=("$models_arm32_fp16_config")
+    local arm32_fp16_cfg_file_list=("$models_arm32_fp16_config")
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${arm32_cfg_file_list[*]}" . '/data/local/tmp' $run_armv82_a32_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id
+    Run_Benchmark "${arm32_fp16_cfg_file_list[*]}" . '/data/local/tmp' $run_armv82_a32_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id
 }
 
 basepath=$(pwd)
@@ -90,8 +88,6 @@ echo ' ' > ${run_converter_result_file}
 echo "start Run converter ..."
 Run_Converter
 Run_converter_status=$?
-sleep 1
-
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
@@ -118,30 +114,43 @@ benchmark_test_path=${basepath}/benchmark_test
 rm -rf ${benchmark_test_path}
 mkdir -p ${benchmark_test_path}
 cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
+# push file to the phone
+Push_Files $arm32_path "aarch32" $version $benchmark_test_path "adb_push_log.txt" $device_id
 
 backend=${backend:-"all"}
 isFailed=0
-if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp16" ]]; then
-    # Run on armv82-a32-fp16
-    echo "start Run armv82-a32-fp16 ..."
-    Run_armv82_a32_fp16
-    Run_armv82_a32_fp16_status=$?
-    sleep 1
-    if [[ ${Run_armv82_a32_fp16_status} != 0 ]];then
-        echo "Run_armv82_a32_fp16 failed"
-        cat ${run_armv82_a32_fp16_log_file}
-        isFailed=1
-    fi
-fi
 if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" ]]; then
     # Run on arm32
     echo "start Run arm32 ..."
     Run_arm32
     Run_arm32_status=$?
-    sleep 1
+#    Run_arm32_PID=$!
+#    sleep 1
+fi
+if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp16" ]]; then
+    # Run on armv82-a32-fp16
+    echo "start Run armv82-a32-fp16 ..."
+    Run_armv82_a32_fp16
+    Run_armv82_a32_fp16_status=$?
+#    Run_armv82_a32_fp16_PID=$!
+#    sleep 1
+fi
+
+if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" ]]; then
+#    wait ${Run_arm32_PID}
+#    Run_arm32_status=$?
     if [[ ${Run_arm32_status} != 0 ]];then
         echo "Run_arm32 failed"
         cat ${run_arm32_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp16" ]]; then
+#    wait ${Run_armv82_a32_fp16_PID}
+#    Run_armv82_a32_fp16_status=$?
+    if [[ ${Run_armv82_a32_fp16_status} != 0 ]];then
+        echo "Run_armv82_a32_fp16 failed"
+        cat ${run_armv82_a32_fp16_log_file}
         isFailed=1
     fi
 fi

@@ -40,7 +40,7 @@ function Run_x86_codegen() {
            support_parallel="true"
            bind_mode="0"
            thread_num="4"
-           suffix="parallel"
+           suffix="_parallel"
         fi
         echo ${model_name} >> "$4"
         ${CODEGEN_PATH}/codegen --codePath=$1 --modelPath=$2/${model_name}.ms --supportParallel=${support_parallel} >> $4
@@ -53,9 +53,9 @@ function Run_x86_codegen() {
         echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin $1/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode}" >> $4
         ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin $1/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode} >> $4
         if [ $? = 0 ]; then
-            run_result='x86_codegen '${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
+            run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
         else
-            run_result='x86_codegen '${suffix}': '${model_name}' failed'; echo ${run_result} >> $5; return 1
+            run_result='x86_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5; return 1
         fi
     done < $3
 
@@ -220,8 +220,6 @@ echo ' ' > ${run_converter_result_file}
 echo "start Run converter ..."
 Run_Converter
 Run_converter_status=$?
-sleep 1
-
 # Check converter result and return value
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
@@ -276,20 +274,21 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" 
     echo "start Run arm64 codegen ..."
     Run_arm_codegen ${build_path} ${ms_models_path} ${models_codegen_config} ${run_arm64_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm64"
     Run_arm64_codegen_status=$?
-    sleep 1
+#    Run_arm64_codegen_PID=$!
+#    sleep 1
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen&train" ]]; then
     # Run on arm32 codegen
     echo "start Run arm32 codegen ..."
     Run_arm_codegen ${build_path} ${ms_models_path} ${models_codegen_config} ${run_arm32_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm32"
     Run_arm32_codegen_status=$?
-    sleep 1
+#    Run_arm32_codegen_PID=$!
+#    sleep 1
 fi
 
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "codegen&train" ]]; then
     wait ${Run_x86_codegen_PID}
     Run_x86_codegen_status=$?
-
     if [[ ${Run_x86_codegen_status} != 0 ]];then
         echo "Run_x86 codegen failed"
         cat ${run_x86_codegen_log_file}
@@ -299,7 +298,6 @@ fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" || $backend == "x86_codegen_parallel" || $backend == "codegen&train" ]]; then
     wait ${Run_x86_codegen_parallel_PID}
     Run_x86_codegen_parallel_status=$?
-
     if [[ ${Run_x86_codegen_parallel_status} != 0 ]];then
         echo "Run_x86 codegen parallel failed"
         cat ${run_x86_codegen_log_file}
@@ -307,6 +305,8 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ||
     fi
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" || $backend == "codegen&train" ]]; then
+#    wait ${Run_arm64_codegen_PID}
+#    Run_arm64_codegen_status=$?
     if [[ ${Run_arm64_codegen_status} != 0 ]];then
         echo "Run_arm64_codegen failed"
         cat ${run_arm64_fp32_codegen_log_file}
@@ -314,6 +314,8 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "arm64_codegen" 
     fi
 fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" || $backend == "codegen&train" ]]; then
+#    wait ${Run_arm32_codegen_PID}
+#    Run_arm32_codegen_status=$?
     if [[ ${Run_arm32_codegen_status} != 0 ]];then
         echo "Run_arm32_codegen failed"
         cat ${run_arm32_fp32_codegen_log_file}

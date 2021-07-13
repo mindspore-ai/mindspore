@@ -3,7 +3,9 @@
 # Convert models:
 function Convert() {
   # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
-  local cfg_file_list=$1
+  local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
+        quant_type bit_num config_file quant_weight_chn train_model in_dtype out_dtype converter_result cfg_file
+  cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
       if [[ $line == \#* || $line == "" ]]; then
@@ -13,6 +15,7 @@ function Convert() {
       model_name=${model_info%%;*}
       extra_info=${model_info##*;}
       model_type=${model_name##*.}
+      cfg_file_name=${cfg_file##*/}
       case $model_type in
         pb)
           model_fmk="TF"
@@ -46,31 +49,32 @@ function Convert() {
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
-      if [[ ${cfg_file} =~ "weightquant" ]]; then
-        quant_type="WeightQuant"
-        output_file=${output_file}"_weightquant"
-      elif [[ ${cfg_file} =~ "bit" ]]; then
+      if [[ ${cfg_file_name} =~ "bit" ]]; then
         postfix=${cfg_file##*_}
         bit_num=${postfix:0:1}
         quant_type="WeightQuant"
         output_file=${output_file}"_${bit_num}bit"
-      elif [[ ${cfg_file} =~ "_train" ]]; then
+      elif [[ ${cfg_file_name} =~ "weightquant" ]]; then
+        quant_type="WeightQuant"
+        output_file=${output_file}"_weightquant"
+      elif [[ ${cfg_file_name} =~ "_train" ]]; then
         train_model="true"
-      elif [[ ${cfg_file} =~ "posttraining" ]]; then
+      elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
         quant_type="PostTraining"
         output_file=${output_file}"_posttraining"
         config_file=${model_file}"_posttraining.config"
-      elif [[ ${cfg_file} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
+      elif [[ ${cfg_file_name} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
         in_dtype="FLOAT"
         out_dtype="FLOAT"
       fi
+      # start running converter
       echo ${model_name} >> "$4"
       echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
         ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --quantType='${quant_type}' --bitNum='${bit_num}\
         ' --quantWeightChannel='${quant_weight_chn}' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
       ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --quantType=${quant_type} --bitNum=${bit_num}\
-        --quantWeightChannel=${quant_weight_chn} --configFile=${config_file} --trainModel=${train_model}
+        --quantWeightChannel=${quant_weight_chn} --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
@@ -81,7 +85,7 @@ function Convert() {
 }
 
 function Push_Files() {
-    # $1:packagePath; $2:platform; $3:version; $4:localPath; $5:logFile; $6:deviceID; 
+    # $1:packagePath; $2:platform; $3:version; $4:localPath; $5:logFile; $6:deviceID;
     cd $1 || exit 1
     tar -zxf mindspore-lite-$3-android-$2.tar.gz || exit 1
 
@@ -114,8 +118,12 @@ function Push_Files() {
 # Run converted models:
 function Run_Benchmark() {
   # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-  local cfg_file_list=$1
+  local cfg_file_list cfg_file_name line_info model_info spec_acc_limit model_name input_num input_shapes spec_threads \
+        extra_info benchmark_mode infix mode model_file input_files output_file data_path threads acc_limit enableFp16 \
+        run_result cfg_file
+  cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
+    cfg_file_name=${cfg_file##*/}
     while read line; do
       line_info=${line}
       if [[ $line_info == \#* || $line_info == "" ]]; then
@@ -133,25 +141,26 @@ function Run_Benchmark() {
       fi
       # adjust benchmark mode
       benchmark_mode="calib"
-      if [[ $6 == "arm64" && $7 == "CPU" && ! ${cfg_file} =~ "fp16" ]]; then
+      if [[ $6 == "arm64" && $7 == "CPU" && ! ${cfg_file_name} =~ "fp16" ]]; then
         benchmark_mode="calib+loop"
       fi
       # adjust file name
       infix=""
       mode="fp32"
-      if [[ ${cfg_file} =~ "fp16" ]]; then
+      if [[ ${cfg_file_name} =~ "fp16" ]]; then
         mode="fp16"
-      elif [[ ${cfg_file} =~ "bit" ]]; then
+      elif [[ ${cfg_file_name} =~ "bit" ]]; then
         infix="_${cfg_file##*_}"
-      elif [[ ${cfg_file} =~ "_train" ]]; then
+        infix=${infix%.*}
+      elif [[ ${cfg_file_name} =~ "_train" ]]; then
         infix="_train"
-      elif [[ ${cfg_file} =~ "_weightquant" ]]; then
+      elif [[ ${cfg_file_name} =~ "_weightquant" ]]; then
         infix="_weightquant"
-      elif [[ ${cfg_file} =~ "_posttraining" ]]; then
+      elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
         model_name=${model_name}"_posttraining"
-      elif [[ ${cfg_file} =~ "_process_only" ]]; then
+      elif [[ ${cfg_file_name} =~ "_process_only" ]]; then
         benchmark_mode="loop"
-      elif [[ ${cfg_file} =~ "_compatibility" && ${spec_acc_limit} == "" ]]; then
+      elif [[ ${cfg_file_name} =~ "_compatibility" && ${spec_acc_limit} == "" ]]; then
         benchmark_mode="loop"
       fi
       model_file=$2"/${model_name}${infix}.ms"
@@ -174,12 +183,12 @@ function Run_Benchmark() {
       fi
       # set accuracy limitation
       acc_limit="0.5"
-      if [[ ${cfg_file} =~ "_train" ]]; then
+      if [[ ${cfg_file_name} =~ "_train" ]]; then
         acc_limit="1.5"
       fi
       if [[ ${spec_acc_limit} != "" ]]; then
         acc_limit="${spec_acc_limit}"
-      elif [[ $7 == "GPU" ]] && [[ ${mode} == "fp16" || ${cfg_file} =~ "_weightquant" ]]; then
+      elif [[ $7 == "GPU" ]] && [[ ${mode} == "fp16" || ${cfg_file_name} =~ "_weightquant" ]]; then
         acc_limit="5"
       fi
       # whether enable fp16
@@ -187,6 +196,7 @@ function Run_Benchmark() {
       if [[ ${mode} == "fp16" ]]; then
         enableFp16="true"
       fi
+      # start running benchmark
       echo "---------------------------------------------------------" >> "$4"
       if [[ ${benchmark_mode} = "calib" || ${benchmark_mode} = "calib+loop" ]]; then
         echo "$6 $7 ${mode} run calib: ${model_name}, accuracy limit:${acc_limit}" >> "$4"
@@ -257,15 +267,6 @@ function Print_Converter_Result() {
 }
 
 function Print_Benchmark_Result() {
-    MS_PRINT_TESTCASE_START_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
-    done < $1
-    MS_PRINT_TESTCASE_END_MSG
-}
-
-function Print_Parallel_Result() {
     MS_PRINT_TESTCASE_START_MSG
     while read line; do
         arr=("${line}")
