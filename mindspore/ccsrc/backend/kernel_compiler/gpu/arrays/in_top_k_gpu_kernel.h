@@ -45,6 +45,22 @@ class InTopKGpuKernel : public GpuKernel {
 
     bool *output_device = GetDeviceAddress<bool>(outputs, 0);
 
+    if (k_ <= 0) {
+      CHECK_CUDA_RET_WITH_EXCEPT(
+        kernel_node_, cudaMemsetAsync(output_device, false, outer_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemsetAsync failed.");
+
+      return true;
+    }
+
+    if (k_ >= static_cast<int64_t>(inner_size_)) {
+      CHECK_CUDA_RET_WITH_EXCEPT(
+        kernel_node_, cudaMemsetAsync(output_device, true, outer_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemsetAsync failed.");
+
+      return true;
+    }
+
     T *top_k_output_device = GetDeviceAddress<T>(workspace, 0);
     int32_t *top_k_indices_device = GetDeviceAddress<int32_t>(workspace, 1);
 
@@ -76,6 +92,7 @@ class InTopKGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 2) {
       MS_LOG(ERROR) << input_count << " inputs were provided, but InTopKGpuKernel expects 2.";
@@ -130,13 +147,17 @@ class InTopKGpuKernel : public GpuKernel {
     input_size_list_.push_back(input_size_ * sizeof(T));
     input_size_list_.push_back(input_shape_[0] * sizeof(int32_t));
     output_size_list_.push_back(input_shape_[0] * sizeof(bool));
-    workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(T));
-    workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(int32_t));
+    if (k_ > 0) {
+      workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(T));
+      workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(int32_t));
+    }
 
     // remove later! urgent fix for bug: topk has incorrect output for float16
     if (std::is_same<T, half>::value) {
       workspace_size_list_.push_back(input_size_ * sizeof(float));
-      workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(float));
+      if (k_ > 0) {
+        workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(float));
+      }
     }
   }
 
