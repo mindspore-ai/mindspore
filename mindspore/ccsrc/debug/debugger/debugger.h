@@ -170,6 +170,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // check if dump using debugger backend is enabled
   bool CheckDebuggerDumpEnabled() const;
 
+  bool CheckDatasetGraph(const KernelGraphPtr &graph_ptr);
+
  private:
   // private constructor for singleton
   Debugger();
