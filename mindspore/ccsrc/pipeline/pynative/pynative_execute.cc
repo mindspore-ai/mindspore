@@ -970,10 +970,12 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
   py::dict output = abstract::ConvertAbstractToPython(op_exec_info->abstract);
   if (!output["value"].is_none()) {
     *ret = output["value"];
+    grad()->RecordGradOpInfo(op_exec_info, *ret);
     return;
   }
   if (prim->is_const_prim()) {
     *ret = py::cast("");
+    grad()->RecordGradOpInfo(op_exec_info, *ret);
     return;
   }
 
