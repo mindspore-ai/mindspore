@@ -623,8 +623,9 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
         i++;
       }
       auto nextCNode = nodes[i]->cast<CNodePtr>();
+      const int INDEX = 2;
       if (nextCNode->IsApply(prim::kPrimUpdateState) &&
-          IsPrimitiveCNode(nextCNode->input(2), std::make_shared<Primitive>("MakeTuple"))) {
+          IsPrimitiveCNode(nextCNode->input(INDEX), std::make_shared<Primitive>("MakeTuple"))) {
         continue;
       }
     }
@@ -735,7 +736,8 @@ void OnnxExporter::ExportPrimTranspose(const FuncGraphPtr &func_graph, const CNo
                                        std::map<AnfNodePtr, size_t> *node_map_ptr,
                                        onnx::GraphProto *const graph_proto) {
   auto input_data = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
-  auto input_perm = node->input(2);
+  const int PERM_INDEX = 2;
+  auto input_perm = node->input(PERM_INDEX);
 
   auto node_idx = AllocateNodeIndex();
   (*node_map_ptr)[node] = node_idx;
@@ -770,7 +772,8 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &func_graph, const 
                                           std::map<AnfNodePtr, size_t> *node_map_ptr,
                                           onnx::GraphProto *const graph_proto) {
   auto input_data = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
-  auto begin = node->input(2);
+  const int BEGIN_INDEX = 2;
+  auto begin = node->input(BEGIN_INDEX);
   auto name = prim::kPrimStridedSlice->name();
   std::string name_begin;
   if (begin->isa<ValueNode>()) {
@@ -791,7 +794,8 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &func_graph, const 
                       << "Need to insert op convert variable from tuple to tensor for " << name;
   }
 
-  auto end = node->input(3);
+  const int END_INDEX = 3;
+  auto end = node->input(END_INDEX);
   std::string name_end;
   if (end->isa<ValueNode>()) {
     auto const_node_idx = AllocateNodeIndex();
@@ -832,7 +836,8 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &func_graph, const 
   attr_proto_axes->set_type(onnx::AttributeProto_AttributeType_TENSOR);
   ConvertTupleToTensor(dyn_cast<ValueNode>(axes)->value(), attr_proto_axes->mutable_t());
 
-  auto strides = node->input(4);
+  const int STRIDES_INDEX = 4;
+  auto strides = node->input(STRIDES_INDEX);
   std::string name_strides;
   if (strides->isa<ValueNode>()) {
     auto const_node_idx = AllocateNodeIndex();
@@ -876,7 +881,8 @@ void OnnxExporter::ExportPrimResizeNearestNeighbor(const FuncGraphPtr &func_grap
 
   auto tuple_ptr = dyn_cast<ValueTuple>(prim->GetAttr("size"));
 
-  for (size_t i = 0; i < x_shape->shape().size() - 2; i++) {
+  const int NUM = 2;
+  for (size_t i = 0; i < x_shape->shape().size() - NUM; i++) {
     resize_size.push_back(x_shape->shape()[i]);
   }
   for (size_t i = 0; i < tuple_ptr->size(); i++) {
