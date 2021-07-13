@@ -107,6 +107,9 @@ class OrderEnforcer {
     const size_t input_size = update_state->inputs().size();
     for (size_t index = attach_index; index < input_size; index++) {
       auto attach = update_state->input(attach_index);
+      if (attach == load_user) {
+        return true;
+      }
       if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
         auto attach_cnode = attach->cast<CNodePtr>();
         auto inputs = attach_cnode->inputs();
@@ -115,8 +118,6 @@ class OrderEnforcer {
         if (has_load_user) {
           return true;
         }
-      } else if (attach == load_user) {
-        return true;
       }
     }
     return false;
@@ -126,7 +127,7 @@ class OrderEnforcer {
   void AddInputEdges(const CNodePtr &update_state, const std::unordered_set<AnfNodePtr> &load_users) {
     auto sorted_load_users = SortLoadUsers(load_users);
     for (auto &load_user : sorted_load_users) {
-      if (!IsDependOn(load_user, update_state) && load_user != update_state) {
+      if (!IsDependOn(load_user, update_state) && !IsPrimitiveCNode(load_user, prim::kPrimUpdateState)) {
         processed_nodes_.insert(load_user);
         if (!IsInUpdateState(load_user, update_state)) {
           manager_->AddEdge(update_state, load_user);
