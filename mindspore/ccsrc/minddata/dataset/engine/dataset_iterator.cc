@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Fetches one row of data from the iterator as a column map.
 Status DatasetIterator::GetNextAsMap(TensorMap *out_map) {
   if (out_map == nullptr) {
