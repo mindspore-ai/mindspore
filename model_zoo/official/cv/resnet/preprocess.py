@@ -14,22 +14,17 @@
 # ============================================================================
 """train resnet."""
 import os
-import argparse
 from src.dataset import create_dataset1 as create_dataset
-
-parser = argparse.ArgumentParser(description='preprocess data')
-parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--output_path', type=str, default=None, help='output path')
-args_opt = parser.parse_args()
+from src.model_utils.config import config
 
 if __name__ == '__main__':
     # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=1,
+    dataset = create_dataset(dataset_path=config.data_path, do_train=False, batch_size=1,
                              target="Ascend")
     step_size = dataset.get_dataset_size()
 
-    img_path = os.path.join(args_opt.output_path, "img_data")
-    label_path = os.path.join(args_opt.output_path, "label")
+    img_path = os.path.join(config.output_path, "img_data")
+    label_path = os.path.join(config.output_path, "label")
     os.makedirs(img_path)
     os.makedirs(label_path)
 

@@ -85,8 +85,10 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
+    BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
+    CONFIG_FILE="${BASE_PATH}/$1"
 
-    python3.7 ../preprocess.py --dataset_path=$data_path --output_path=./preprocess_Result
+    python3.7 ../preprocess.py --data_path=$data_path --output_path=./preprocess_Result --config_path=$CONFIG_FILE &> preprocess.log
 }
 
 function infer()
@@ -118,7 +120,12 @@ function cal_acc()
 }
 
 if [ "x${dataset}" == "xcifar10" ] || [ "x${dataset}" == "xCifar10" ]; then
-    preprocess_data
+    if [ $2 == 'resnet18' ]; then
+        CONFIG_PATH=resnet18_cifar10_config.yaml
+    else
+        CONFIG_PATH=resnet50_cifar10_config.yaml
+    fi
+    preprocess_data ${CONFIG_PATH}
     data_path=./preprocess_Result/img_data
 fi
 
