@@ -21,7 +21,11 @@
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/types.h"
+#ifdef ENABLE_ANDROID
+#include "mindspore/lite/src/cxx_api/tensor/tensor_impl.h"
+#else
 #include "mindspore/core/ir/api_tensor_impl.h"
+#endif
 #include "minddata/dataset/core/tensor.h"
 
 namespace mindspore {
@@ -29,7 +33,7 @@ namespace dataset {
 class DETensor : public mindspore::MSTensor::Impl {
  public:
   DETensor() = default;
-  ~DETensor() override = default;
+  ~DETensor() = default;
   explicit DETensor(std::shared_ptr<dataset::Tensor> tensor_impl);
 #ifndef ENABLE_ANDROID
   explicit DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bool is_device);
