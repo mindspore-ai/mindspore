@@ -57,3 +57,4 @@ from .squared_difference import SquaredDifference
 from .squeeze import Squeeze
 from .tanh_grad import TanhGrad
 from .tile import Tile
+from .equal_count import EqualCount
