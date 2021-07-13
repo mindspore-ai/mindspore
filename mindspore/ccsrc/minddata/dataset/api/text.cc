@@ -152,7 +152,7 @@ Status JiebaTokenizer::AddWordChar(const std::vector<char> &word, int64_t freq) 
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  data_->words_list_.emplace_back(CharToString(word), freq);
+  (void)data_->words_list_.emplace_back(CharToString(word), freq);
   return Status::OK();
 }
 
@@ -192,12 +192,11 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
     }
     std::regex regex("^\\s*([^\\s*]+?)\\s*([0-9]+)?\\s*$");
     std::smatch tokens;
-    std::regex_match(line, tokens, regex);
     if (std::regex_match(line, tokens, regex)) {
       if (tokens.size() == size_two) {
-        user_dict->emplace_back(tokens.str(value_one), 0);
+        (void)user_dict->emplace_back(tokens.str(value_one), 0);
       } else if (tokens.size() == size_three) {
-        user_dict->emplace_back(tokens.str(value_one), strtoll(tokens.str(value_two).c_str(), NULL, 0));
+        (void)user_dict->emplace_back(tokens.str(value_one), strtoll(tokens.str(value_two).c_str(), NULL, 0));
       } else {
         continue;
       }

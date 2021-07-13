@@ -169,7 +169,7 @@ Status JiebaTokenizerOperation::AddWord(const std::string &word, int64_t freq) {
 // LookupOperation
 // DataType data_type - required for C++ API
 LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
-                                 DataType data_type)
+                                 const DataType &data_type)
     : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists), data_type_(data_type) {}
 
 // std::string data_type - required for Pybind
@@ -364,10 +364,10 @@ std::shared_ptr<TensorOp> SlidingWindowOperation::Build() {
 
 // ToNumberOperation
 // DataType data_type - required for C++ API
-ToNumberOperation::ToNumberOperation(DataType data_type) : data_type_(data_type) {}
+ToNumberOperation::ToNumberOperation(const DataType &data_type) : data_type_(data_type) {}
 
 // std::string data_type - required for Pybind
-ToNumberOperation::ToNumberOperation(std::string data_type) {
+ToNumberOperation::ToNumberOperation(const std::string &data_type) {
   // Convert from string to DEType
   DataType temp_data_type(data_type);
   data_type_ = temp_data_type;

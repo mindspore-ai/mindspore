@@ -76,15 +76,17 @@ PYBIND_REGISTER(
       }));
   }));
 
-PYBIND_REGISTER(ConcatenateOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<transforms::ConcatenateOperation, TensorOperation,
-                                   std::shared_ptr<transforms::ConcatenateOperation>>(*m, "ConcatenateOperation")
-                    .def(py::init([](int8_t axis, std::shared_ptr<Tensor> prepend, std::shared_ptr<Tensor> append) {
-                      auto concatenate = std::make_shared<transforms::ConcatenateOperation>(axis, prepend, append);
-                      THROW_IF_ERROR(concatenate->ValidateParams());
-                      return concatenate;
-                    }));
-                }));
+PYBIND_REGISTER(
+  ConcatenateOperation, 1, ([](const py::module *m) {
+    (void)
+      py::class_<transforms::ConcatenateOperation, TensorOperation, std::shared_ptr<transforms::ConcatenateOperation>>(
+        *m, "ConcatenateOperation")
+        .def(py::init([](int8_t axis, const std::shared_ptr<Tensor> &prepend, const std::shared_ptr<Tensor> &append) {
+          auto concatenate = std::make_shared<transforms::ConcatenateOperation>(axis, prepend, append);
+          THROW_IF_ERROR(concatenate->ValidateParams());
+          return concatenate;
+        }));
+  }));
 
 PYBIND_REGISTER(
   DuplicateOperation, 1, ([](const py::module *m) {
@@ -101,7 +103,7 @@ PYBIND_REGISTER(FillOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<transforms::FillOperation, TensorOperation, std::shared_ptr<transforms::FillOperation>>(
                       *m, "FillOperation")
-                      .def(py::init([](std::shared_ptr<Tensor> fill_value) {
+                      .def(py::init([](const std::shared_ptr<Tensor> &fill_value) {
                         auto fill = std::make_shared<transforms::FillOperation>(fill_value);
                         THROW_IF_ERROR(fill->ValidateParams());
                         return fill;
@@ -112,7 +114,7 @@ PYBIND_REGISTER(MaskOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<transforms::MaskOperation, TensorOperation, std::shared_ptr<transforms::MaskOperation>>(
                       *m, "MaskOperation")
-                      .def(py::init([](RelationalOp op, std::shared_ptr<Tensor> constant, DataType dtype) {
+                      .def(py::init([](RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype) {
                         auto mask = std::make_shared<transforms::MaskOperation>(op, constant, dtype);
                         THROW_IF_ERROR(mask->ValidateParams());
                         return mask;
@@ -134,7 +136,7 @@ PYBIND_REGISTER(
   PadEndOperation, 1, ([](const py::module *m) {
     (void)py::class_<transforms::PadEndOperation, TensorOperation, std::shared_ptr<transforms::PadEndOperation>>(
       *m, "PadEndOperation")
-      .def(py::init([](TensorShape pad_shape, std::shared_ptr<Tensor> pad_value) {
+      .def(py::init([](TensorShape pad_shape, const std::shared_ptr<Tensor> &pad_value) {
         auto pad_end = std::make_shared<transforms::PadEndOperation>(pad_shape, pad_value);
         THROW_IF_ERROR(pad_end->ValidateParams());
         return pad_end;
@@ -213,7 +215,7 @@ PYBIND_REGISTER(
   TypeCastOperation, 1, ([](const py::module *m) {
     (void)py::class_<transforms::TypeCastOperation, TensorOperation, std::shared_ptr<transforms::TypeCastOperation>>(
       *m, "TypeCastOperation")
-      .def(py::init([](std::string data_type) {
+      .def(py::init([](const std::string &data_type) {
         auto type_cast = std::make_shared<transforms::TypeCastOperation>(data_type);
         THROW_IF_ERROR(type_cast->ValidateParams());
         return type_cast;

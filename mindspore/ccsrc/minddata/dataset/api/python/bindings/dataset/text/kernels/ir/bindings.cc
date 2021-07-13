@@ -201,7 +201,7 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(ToNumberOperation, 1, ([](const py::module *m) {
                   (void)py::class_<text::ToNumberOperation, TensorOperation, std::shared_ptr<text::ToNumberOperation>>(
                     *m, "ToNumberOperation")
-                    .def(py::init([](std::string data_type) {
+                    .def(py::init([](const std::string &data_type) {
                       auto to_number = std::make_shared<text::ToNumberOperation>(data_type);
                       THROW_IF_ERROR(to_number->ValidateParams());
                       return to_number;

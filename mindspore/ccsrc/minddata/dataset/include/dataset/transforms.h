@@ -160,7 +160,7 @@ class Concatenate final : public TensorTransform {
   /// \param[in] axis Concatenate the tensors along given axis, only support 0 or -1 so far (default=0).
   /// \param[in] prepend MSTensor to be prepended to the concatenated tensors (default={}).
   /// \param[in] append MSTensor to be appended to the concatenated tensors (default={}).
-  explicit Concatenate(int8_t axis = 0, MSTensor prepend = {}, MSTensor append = {});
+  explicit Concatenate(int8_t axis = 0, const MSTensor &prepend = {}, const MSTensor &append = {});
 
   /// \brief Destructor
   ~Concatenate() = default;
@@ -199,7 +199,7 @@ class Fill final : public TensorTransform {
   /// \param[in] fill_value Scalar value to fill the tensor with.
   ///               It can only be MSTensor of the following types from mindspore::DataType:
   ///               String, Bool, Int8/16/32/64, UInt8/16/32/64, Float16/32/64.
-  explicit Fill(MSTensor fill_value);
+  explicit Fill(const MSTensor &fill_value);
 
   /// \brief Destructor
   ~Fill() = default;
@@ -224,7 +224,7 @@ class Mask final : public TensorTransform {
   ///                from mindspore::DataType: String, Int, Float, Bool.
   /// \param[in] de_type Type of the generated mask. It can only be numeric or boolean datatype.
   ///               (default=mindspore::DataType::kNumberTypeBool)
-  explicit Mask(RelationalOp op, MSTensor constant,
+  explicit Mask(RelationalOp op, const MSTensor &constant,
                 mindspore::DataType ms_type = mindspore::DataType(mindspore::DataType::kNumberTypeBool));
 
   /// \brief Destructor
@@ -268,7 +268,7 @@ class PadEnd final : public TensorTransform {
   ///               Dimensions that set to `-1` will not be padded (i.e., original dim will be used).
   ///               Shorter dimensions will truncate the values.
   /// \param[in] pad_value Value used to pad (default={}).
-  explicit PadEnd(const std::vector<dsize_t> &pad_shape, MSTensor pad_value = {});
+  explicit PadEnd(const std::vector<dsize_t> &pad_shape, const MSTensor &pad_value = {});
 
   /// \brief Destructor
   ~PadEnd() = default;
