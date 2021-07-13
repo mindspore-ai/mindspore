@@ -279,6 +279,7 @@ class DatasetHelper:
         """Get shape range(min shape, max shape) of dynamic data."""
         return self.iter.dynamic_min_max_shapes()
 
+
 class _DatasetIter:
     """Base iter for dataset helper"""
 

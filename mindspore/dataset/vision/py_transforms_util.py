@@ -1291,6 +1291,7 @@ def rgb_to_bgrs(np_rgb_imgs, is_hwc):
         return rgb_to_bgr(np_rgb_imgs, is_hwc)
     return np.array([rgb_to_bgr(img, is_hwc) for img in np_rgb_imgs])
 
+
 def rgb_to_hsv(np_rgb_img, is_hwc):
     """
     Convert RGB img to HSV img.

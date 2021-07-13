@@ -516,6 +516,7 @@ def check_save_model(method):
 
     return new_method
 
+
 def check_sentence_piece_tokenizer(method):
 
     """A wrapper that wraps a parameter checker to the original function."""
