@@ -60,24 +60,24 @@ std::vector<lite::Tensor *> GenerateTensorsForTest(const char *test, int test_id
   std::vector<int> small_dim({6});
   int large_size = (4 * 6);
   int small_size = (1 * 6);
-  char *dx1_file = const_cast<char *>("./test_data/operators/arithmetic_fp32_1_x1_4_6.bin");
-  char *dx2_file = const_cast<char *>("./test_data/operators/arithmetic_fp32_1_x2_1_6.bin");
+  char *dx1_file = const_cast<char *>("./operators/arithmetic_fp32_1_x1_4_6.bin");
+  char *dx2_file = const_cast<char *>("./operators/arithmetic_fp32_1_x2_1_6.bin");
 
   if (test_id == 7) {
     large_dim = std::vector<int>({4, 5, 6});
     small_dim = std::vector<int>({6});
     large_size = (4 * 5 * 6);
     small_size = (6);
-    dx1_file = const_cast<char *>("./test_data/operators/arithmetic_fp32_7_x1_4_5_6.bin");
-    dx2_file = const_cast<char *>("./test_data/operators/arithmetic_fp32_7_x2_1_1_6.bin");
+    dx1_file = const_cast<char *>("./operators/arithmetic_fp32_7_x1_4_5_6.bin");
+    dx2_file = const_cast<char *>("./operators/arithmetic_fp32_7_x2_1_1_6.bin");
   }
   if (test_id >= 8) {
     large_dim = std::vector<int>({5, 4, 6});
     small_dim = std::vector<int>({5, 1, 6});
     large_size = (4 * 5 * 6);
     small_size = (5 * 6);
-    dx1_file = const_cast<char *>("./test_data/operators/arithmetic_fp32_8_x1_5_4_6.bin");
-    dx2_file = const_cast<char *>("./test_data/operators/arithmetic_fp32_8_x2_5_1_6.bin");
+    dx1_file = const_cast<char *>("./operators/arithmetic_fp32_8_x1_5_4_6.bin");
+    dx2_file = const_cast<char *>("./operators/arithmetic_fp32_8_x2_5_1_6.bin");
   }
 
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(test, &input_size));
@@ -195,8 +195,7 @@ std::vector<lite::Tensor *> GenerateTensorsForTest(const char *test, int test_id
 }
 
 TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_1_dy_4_6.bin", 1);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_1_dy_4_6.bin", 1);
   ASSERT_NE(all_tensors.size(), 0);
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
   std::vector<lite::Tensor *> outputs = {all_tensors[3], all_tensors[4]};
@@ -224,10 +223,10 @@ TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_1_dx1_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_1_dx1_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_1_dx2_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_1_dx2_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -239,8 +238,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_1_dy_4_6.bin", 1);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_1_dy_4_6.bin", 1);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[2], all_tensors[1]};
@@ -269,10 +267,10 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_1_dx1_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_1_dx1_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[1]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_1_dx2_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_1_dx2_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -286,8 +284,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_8_dy_5_4_6.bin", 8);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_8_dy_5_4_6.bin", 8);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
@@ -316,10 +313,10 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_8_dx2_5_1_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_8_dx2_5_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[1]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_8_dx1_5_4_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_8_dx1_5_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
 
   for (auto tensor : all_tensors) {
@@ -334,8 +331,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_2_dy_4_6.bin", 2);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_2_dy_4_6.bin", 2);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
@@ -364,10 +360,10 @@ TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_2_dx1_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_2_dx1_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_2_dx2_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_2_dx2_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
 
   for (auto tensor : all_tensors) {
@@ -382,8 +378,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_3_dy_4_6.bin", 3);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_3_dy_4_6.bin", 3);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[2], all_tensors[1]};
@@ -412,10 +407,10 @@ TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_3_dx1_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_3_dx1_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[1]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_3_dx2_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_3_dx2_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
 
   for (auto tensor : all_tensors) {
@@ -428,8 +423,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_4_dy_4_6.bin", 4);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_4_dy_4_6.bin", 4);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
@@ -467,10 +461,10 @@ TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_4_dx1_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_4_dx1_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_4_dx2_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_4_dx2_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -483,8 +477,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_4_dy_4_6.bin", 4);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_4_dy_4_6.bin", 4);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[2], all_tensors[1]};
@@ -513,10 +506,10 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_4_dx1_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_4_dx1_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[1]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_4_dx2_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_4_dx2_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -530,8 +523,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_9_dy_5_4_6.bin", 9);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_9_dy_5_4_6.bin", 9);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
@@ -560,10 +552,10 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_9_dx1_5_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_9_dx1_5_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_9_dx2_5_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_9_dx2_5_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -577,8 +569,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_9_dy_5_4_6.bin", 9);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_9_dy_5_4_6.bin", 9);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[2], all_tensors[1]};
@@ -607,10 +598,10 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_9_dx1_5_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_9_dx1_5_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[1]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_9_dx2_5_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_9_dx2_5_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -624,8 +615,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_5_dy_4_6.bin", 5);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_5_dy_4_6.bin", 5);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
@@ -654,10 +644,10 @@ TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_5_dx1_4_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_5_dx1_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), output_path));
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_5_dx2_1_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_5_dx2_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, dx2_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -671,8 +661,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_6_dy_4_6.bin", 6);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_6_dy_4_6.bin", 6);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[2], all_tensors[1]};
@@ -701,10 +690,10 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
   }
   std::cout << std::endl;
 
-  std::string dx2_path = "./test_data/operators/arithmetic_fp32_6_dx2_4_6.bin";
+  std::string dx2_path = "./operators/arithmetic_fp32_6_dx2_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[1]->MutableData()), dx2_path));
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_6_dx1_1_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_6_dx1_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, output_path));
 
   for (auto tensor : all_tensors) {
@@ -719,8 +708,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_10_dy_5_4_6.bin", 10);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_10_dy_5_4_6.bin", 10);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
@@ -749,10 +737,10 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
   }
   std::cout << std::endl;
 
-  std::string dx1_path = "./test_data/operators/arithmetic_fp32_10_dx1_5_4_6.bin";
+  std::string dx1_path = "./operators/arithmetic_fp32_10_dx1_5_4_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), dx1_path));
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_10_dx2_5_1_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_10_dx2_5_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, output_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -766,8 +754,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
 }
 
 TEST_F(TestArithmeticGradFp32, Test3DDivGrad2Fp32) {
-  std::vector<lite::Tensor *> all_tensors =
-    GenerateTensorsForTest("./test_data/operators/arithmetic_fp32_7_dy_4_5_6.bin", 7);
+  std::vector<lite::Tensor *> all_tensors = GenerateTensorsForTest("./operators/arithmetic_fp32_7_dy_4_5_6.bin", 7);
   ASSERT_NE(all_tensors.size(), 0);
 
   std::vector<lite::Tensor *> inputs = {all_tensors[0], all_tensors[1], all_tensors[2]};
@@ -796,10 +783,10 @@ TEST_F(TestArithmeticGradFp32, Test3DDivGrad2Fp32) {
   }
   std::cout << std::endl;
 
-  std::string dx1_path = "./test_data/operators/arithmetic_fp32_7_dx1_4_5_6.bin";
+  std::string dx1_path = "./operators/arithmetic_fp32_7_dx1_4_5_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), dx1_path));
 
-  std::string output_path = "./test_data/operators/arithmetic_fp32_7_dx2_1_1_6.bin";
+  std::string output_path = "./operators/arithmetic_fp32_7_dx2_1_1_6.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, output_path));
   for (auto tensor : all_tensors) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());
@@ -819,10 +806,10 @@ TEST_F(TestArithmeticGradFp32, TestMaximumGradBroadcastFp32) {
   int large_size = (2 * 3);
   int small_size = 3;
   size_t input_size;
-  char *dx1_file = const_cast<char *>("./test_data/operators/x1_maximum.bin");
-  char *dx2_file = const_cast<char *>("./test_data/operators/x2_maximum.bin");
+  char *dx1_file = const_cast<char *>("./operators/x1_maximum.bin");
+  char *dx2_file = const_cast<char *>("./operators/x2_maximum.bin");
 
-  std::string yt_path = "./test_data/operators/yt_maximum.bin";
+  std::string yt_path = "./operators/yt_maximum.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(dy_data, nullptr);
   EXPECT_EQ(input_size, large_size * sizeof(float));
@@ -881,10 +868,10 @@ TEST_F(TestArithmeticGradFp32, TestMaximumGradBroadcastFp32) {
   }
   std::cout << std::endl;
 
-  std::string dx1_path = "./test_data/operators/x1_grad_maximum.bin";
+  std::string dx1_path = "./operators/x1_grad_maximum.bin";
   EXPECT_EQ(0, CompareRelativeOutput(reinterpret_cast<float *>(outputs[0]->MutableData()), dx1_path));
 
-  std::string output_path = "./test_data/operators/x2_grad_maximum.bin";
+  std::string output_path = "./operators/x2_grad_maximum.bin";
   EXPECT_EQ(0, CompareRelativeOutput(output_ptr, output_path));
   for (auto tensor : inputs) {
     delete[] reinterpret_cast<float *>(tensor->MutableData());

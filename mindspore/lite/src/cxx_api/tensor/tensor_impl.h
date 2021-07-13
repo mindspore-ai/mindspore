@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H
-#define MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H
+#ifndef MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H_
+#define MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H_
 
 #include <cstddef>
 #include <numeric>
@@ -38,7 +38,7 @@ class MSTensor::Impl {
  public:
   Impl() {}
 
-  ~Impl() {
+  virtual ~Impl() {
     if (lite_tensor_ == nullptr) {
       return;
     }
@@ -65,7 +65,7 @@ class MSTensor::Impl {
 
   static std::vector<std::string> MS_API TensorImplToStrings(const std::shared_ptr<Impl> &impl);
 
-  const std::string &Name() const {
+  virtual const std::string &Name() const {
     static std::string empty = "";
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
@@ -82,7 +82,7 @@ class MSTensor::Impl {
     lite_tensor_->set_tensor_name(name);
   }
 
-  enum DataType DataType() const {
+  virtual enum DataType DataType() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return DataType::kTypeUnknown;
@@ -106,17 +106,19 @@ class MSTensor::Impl {
     return static_cast<int64_t>(lite_tensor_->ElementsNum());
   }
 
-  const std::vector<int64_t> &Shape() {
+  virtual const std::vector<int64_t> &Shape() const {
     static std::vector<int64_t> empty;
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return empty;
     }
     auto shape = lite_tensor_->shape();
-    shape_.resize(shape.size());
-    std::transform(shape.begin(), shape.end(), shape_.begin(), [](int c) { return static_cast<int64_t>(c); });
-    return shape_;
+    lite_shape.resize(shape.size());
+    std::transform(shape.begin(), shape.end(), lite_shape.begin(), [](int c) { return static_cast<int64_t>(c); });
+    return lite_shape;
   }
+
+  virtual std::shared_ptr<Impl> Clone() const { return nullptr; }
 
   void SetShape(const std::vector<int64_t> &shape) {
     if (lite_tensor_ == nullptr) {
@@ -161,7 +163,7 @@ class MSTensor::Impl {
     lite_tensor_->set_format(format);
   }
 
-  std::shared_ptr<const void> Data() const {
+  virtual std::shared_ptr<const void> Data() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
@@ -175,7 +177,7 @@ class MSTensor::Impl {
     return std::shared_ptr<const void>(lite_tensor_->data(), [](const void *) {});
   }
 
-  void *MutableData() {
+  virtual void *MutableData() {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
@@ -183,7 +185,7 @@ class MSTensor::Impl {
     return lite_tensor_->MutableData();
   }
 
-  size_t DataSize() const {
+  virtual size_t DataSize() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return 0;
@@ -199,7 +201,7 @@ class MSTensor::Impl {
     lite_tensor_->set_data(data);
   }
 
-  bool IsDevice() const { return false; }
+  virtual bool IsDevice() const { return false; }
 
   tensor::MSTensor *lite_tensor() const { return lite_tensor_; }
 
@@ -219,10 +221,10 @@ class MSTensor::Impl {
  private:
   tensor::MSTensor *lite_tensor_ = nullptr;
   std::string tensor_name_ = "";
-  std::vector<int64_t> shape_ = {};
+  mutable std::vector<int64_t> lite_shape;
   bool own_data_ = false;
   bool from_session_ = false;
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H
+#endif  // MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H_

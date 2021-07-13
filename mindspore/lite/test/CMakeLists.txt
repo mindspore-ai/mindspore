@@ -76,10 +76,21 @@ add_definitions(-DENABLE_V0)
 
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 file(GLOB CXX_SRC
-        ${LITE_DIR}/src/cxx_api/*.cc
-        ${LITE_DIR}/src/cxx_api/graph/*.cc
-        ${LITE_DIR}/src/cxx_api/model/*.cc
-        ${LITE_DIR}/src/cxx_api/tensor/*.cc)
+            ${LITE_DIR}/src/cxx_api/*.cc
+            ${LITE_DIR}/src/cxx_api/graph/*.cc
+            ${LITE_DIR}/src/cxx_api/model/*.cc
+            ${LITE_DIR}/src/cxx_api/tensor/*.cc
+            )
+
+    file(GLOB CXX_API_TRAIN_SRCS
+            ${LITE_DIR}/src/cxx_api/train/*.cc
+            ${LITE_DIR}/src/cxx_api/metrics/*.cc
+            ${LITE_DIR}/src/cxx_api/callback/*.cc
+            )
+file(GLOB TRAIN_SRCS
+            ${LITE_DIR}/src/train/*.cc
+            )
+
 if(MSLITE_ENABLE_CONVERTER)
     set(OPS_SRC ${OPS_SRC})
 endif()
@@ -120,6 +131,8 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/errorcode.cc
         ${LITE_DIR}/src/cpu_info.cc
         ${LITE_DIR}/tools/common/flag_parser.cc
+        ${LITE_DIR}/src/train/train_populate_parameter.cc
+        ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
         )
 
 file(GLOB KERNEL_REG_SRC ${LITE_DIR}/src/registry/*.cc)
@@ -279,19 +292,9 @@ endif()
 if(SUPPORT_TRAIN)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
-            ${LITE_DIR}/src/train/train_populate_parameter.cc
-            ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
-            ${LITE_DIR}/src/train/train_session.cc
-            ${LITE_DIR}/src/train/train_export.cc
-            ${LITE_DIR}/src/train/train_utils.cc
-            ${LITE_DIR}/src/train/transfer_session.cc
+            ${CXX_API_TRAIN_SRCS}
+            ${TRAIN_SRCS}
             ${LITE_DIR}/tools/common/storage.cc
-            )
-else()
-    set(TEST_LITE_SRC
-            ${TEST_LITE_SRC}
-            ${LITE_DIR}/src/train/train_populate_parameter.cc
-            ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
             )
 endif()
 ### test src
@@ -305,6 +308,7 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
 
 file(GLOB_RECURSE TEST_CASE_KERNEL_TRAIN_SRC
         ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32_grad/*.cc
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/cxx_api/*.cc
         )
 
 set(TEST_SRC
@@ -346,12 +350,6 @@ if(SUPPORT_TRAIN)
     set(TEST_SRC
             ${TEST_SRC}
             ${TEST_CASE_KERNEL_TRAIN_SRC}
-            ${TEST_DIR}/ut/src/infer_test.cc  # temporary
-            )
-else()
-    set(TEST_SRC
-            ${TEST_SRC}
-            ${TEST_DIR}/ut/src/infer_test.cc
             )
 endif()
 
@@ -391,6 +389,7 @@ add_dependencies(lite-test fbs_src)
 
 if(SUPPORT_TRAIN)
     add_dependencies(lite-test fbs_inner_src)
+    target_link_libraries(lite-test minddata-lite)
 endif()
 
 target_link_libraries(lite-test

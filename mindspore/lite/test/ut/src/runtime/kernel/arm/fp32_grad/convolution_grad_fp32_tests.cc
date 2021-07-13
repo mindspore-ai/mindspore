@@ -81,7 +81,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
 
   InitConvParamGroup1FP32(conv_param);
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_1_28_28_32.bin";
+  std::string dy_path = "./conv/convfp32_dy_1_28_28_32.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({1, 28, 28, 32});
@@ -95,7 +95,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/conv/convfp32_x_1_28_28_3.bin";
+  std::string input_path = "./conv/convfp32_x_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({1, 28, 28, 3});
@@ -137,7 +137,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_dw_32_3_3_3.bin";
+  std::string output_path = "./conv/convfp32_dw_32_3_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -160,14 +160,14 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
 
   InitConvParamGroup1FP32(conv_param);
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_1_28_28_32.bin";
+  std::string dy_path = "./conv/convfp32_dy_1_28_28_32.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({1, 28, 28, 32});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
 
   size_t w_size;
-  std::string w_path = "./test_data/conv/convfp32_w_32_3_3_3.bin";
+  std::string w_path = "./conv/convfp32_w_32_3_3_3.bin";
   auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
   std::vector<int> dim_dw({32, 3, 3, 3});
   lite::Tensor w_tensor(TypeId::kNumberTypeFloat32, dim_dw);
@@ -215,7 +215,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_dx_1_28_28_3.bin";
+  std::string output_path = "./conv/convfp32_dx_1_28_28_3.bin";
   auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;
@@ -237,7 +237,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
 
   InitConvParamGroup3FP32(conv_param);
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_g3_1_28_28_18.bin";
+  std::string dy_path = "./conv/convfp32_dy_g3_1_28_28_18.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({1, 28, 28, 18});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
@@ -250,7 +250,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
                             conv_param->input_channel_ / conv_param->group_;
 
   size_t input_size;
-  std::string input_path = "./test_data/conv/convfp32_x_g3_1_28_28_3.bin";
+  std::string input_path = "./conv/convfp32_x_g3_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({1, 28, 28, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
@@ -288,7 +288,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_dw_g3_18_3_3_3.bin";
+  std::string output_path = "./conv/convfp32_dw_g3_18_3_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
   EXPECT_EQ(res, 0);
 
@@ -310,14 +310,14 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
 
   InitConvParamGroup3FP32(conv_param);
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_g3_1_28_28_18.bin";
+  std::string dy_path = "./conv/convfp32_dy_g3_1_28_28_18.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({1, 28, 28, 18});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
 
   size_t w_size;
-  std::string w_path = "./test_data/conv/convfp32_w_g3_18_3_3_3.bin";
+  std::string w_path = "./conv/convfp32_w_g3_18_3_3_3.bin";
   auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
   std::vector<int> dim_dw({18, 3, 3, 1});
   lite::Tensor w_tensor(TypeId::kNumberTypeFloat32, dim_dw);
@@ -365,7 +365,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_dx_g3_1_28_28_3.bin";
+  std::string output_path = "./conv/convfp32_dx_g3_1_28_28_3.bin";
   auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;
@@ -387,7 +387,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
 
   InitConvParamGroup3Dilation2FP32(conv_param);
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_g3_d2_1_26_26_18.bin";
+  std::string dy_path = "./conv/convfp32_dy_g3_d2_1_26_26_18.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({1, 26, 26, 18});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
@@ -400,7 +400,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
                             conv_param->input_channel_ / conv_param->group_;
 
   size_t input_size;
-  std::string input_path = "./test_data/conv/convfp32_x_g3_d2_1_28_28_3.bin";
+  std::string input_path = "./conv/convfp32_x_g3_d2_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_x({1, 28, 28, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
@@ -441,7 +441,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_dw_g3_d2_18_3_3_3.bin";
+  std::string output_path = "./conv/convfp32_dw_g3_d2_18_3_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] input_data;
@@ -462,14 +462,14 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
 
   InitConvParamGroup3Dilation2FP32(conv_param);
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_g3_d2_1_26_26_18.bin";
+  std::string dy_path = "./conv/convfp32_dy_g3_d2_1_26_26_18.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({1, 26, 26, 18});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
 
   size_t w_size;
-  std::string w_path = "./test_data/conv/convfp32_w_g3_d2_18_3_3_3.bin";
+  std::string w_path = "./conv/convfp32_w_g3_d2_18_3_3_3.bin";
   auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
   std::vector<int> dim_w({18, 3, 3, 1});
   lite::Tensor w_tensor(TypeId::kNumberTypeFloat32, dim_w);
@@ -512,7 +512,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_dx_g3_d2_1_28_28_3.bin";
+  std::string output_path = "./conv/convfp32_dx_g3_d2_1_28_28_3.bin";
   auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;
@@ -533,14 +533,14 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
 
   InitConvParamGroup3Dilation2FP32(conv_param);
   size_t x_size;
-  std::string x_path = "./test_data/conv/convfp32_x_g3_d2_1_28_28_3.bin";
+  std::string x_path = "./conv/convfp32_x_g3_d2_1_28_28_3.bin";
   auto x_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(x_path.c_str(), &x_size));
   std::vector<int> dim_x({1, 28, 28, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
   size_t w_size;
-  std::string w_path = "./test_data/conv/convfp32_w_g3_d2_18_3_3_3.bin";
+  std::string w_path = "./conv/convfp32_w_g3_d2_18_3_3_3.bin";
   auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
   std::vector<int> dim_w({18, 3, 3, 1});
   lite::Tensor w_tensor(TypeId::kNumberTypeFloat32, dim_w);
@@ -589,7 +589,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_y_g3_d2_1_26_26_18.bin";
+  std::string output_path = "./conv/convfp32_y_g3_d2_1_26_26_18.bin";
   auto res = CompareRelativeOutput(y_data, output_path);
   EXPECT_EQ(res, 0);
 
@@ -638,7 +638,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_d2_g2_s2_2_12_15_15.bin";
+  std::string dy_path = "./conv/convfp32_dy_d2_g2_s2_2_12_15_15.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   std::vector<int> dim_dy({2, 15, 15, 12});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
@@ -651,7 +651,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/conv/convfp32_input0_d2_g2_s2_2_4_32_32.bin";
+  std::string input_path = "./conv/convfp32_input0_d2_g2_s2_2_4_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 4});
@@ -693,7 +693,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_dw_d2_g2_s2_12_2_3_3.bin";
+  std::string output_path = "./conv/convfp32_dw_d2_g2_s2_12_2_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -743,7 +743,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/conv/convfp32_dy_d2_g2_s2_2_12_15_15.bin";
+  std::string dy_path = "./conv/convfp32_dy_d2_g2_s2_2_12_15_15.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 15, 15, 12});
@@ -751,7 +751,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   dy_tensor.set_data(dy_data);
 
   size_t w_size;
-  std::string w_path = "./test_data/conv/convfp32_w_d2_g2_s2_12_2_3_3.bin";
+  std::string w_path = "./conv/convfp32_w_d2_g2_s2_12_2_3_3.bin";
   auto w_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(w_path.c_str(), &w_size));
   ASSERT_NE(w_data, nullptr);
   std::vector<int> dim_w({12, 3, 3, 2});
@@ -801,7 +801,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/conv/convfp32_inputdx_d2_g2_s2_2_4_32_32.bin";
+  std::string output_path = "./conv/convfp32_inputdx_d2_g2_s2_2_4_32_32.bin";
   auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;

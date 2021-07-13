@@ -33,15 +33,15 @@ class TestArithmeticSelfGradFp16 : public mindspore::CommonTest {
 TEST_F(TestArithmeticSelfGradFp16, LogGradFp16) {
   size_t output_data_size = 50;
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/log_x_50.bin";
+  std::string input_path = "./activationGrad/log_x_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
 
-  std::string yt_path = "./test_data/activationGrad/log_yt_50.bin";
+  std::string yt_path = "./activationGrad/log_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
 
-  std::string output_path = "./test_data/activationGrad/log_out_50.bin";
+  std::string output_path = "./activationGrad/log_out_50.bin";
   auto ref_data = reinterpret_cast<const float *>(mindspore::lite::ReadFile(output_path.c_str(), &input_size));
   ASSERT_NE(ref_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));

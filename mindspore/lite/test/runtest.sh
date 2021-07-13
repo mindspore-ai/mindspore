@@ -57,20 +57,19 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter="ModelParserRegistryTest.TestRegistry"
 ./lite-test --gtest_filter="PassRegistryTest.TestRegistry"
 
-# test cases specific for train
+if [ -f "$BUILD_DIR/src/libmindspore-lite-train.so" ]; then
+  echo 'run cxx_api ut tests'
+  ./lite-test --gtest_filter="TestCxxApiLiteModel*"
+  ./lite-test --gtest_filter="TestCxxApiLiteSerialization*"
 
-echo 'run train ut tests'
-# ./lite-test --gtest_filter="TestConvolutionGradFp32*"
-# ./lite-test --gtest_filter="TestActGradFp32*"
-# ./lite-test --gtest_filter="TestSoftmaxGradFp32*"
-# ./lite-test --gtest_filter="TestSoftmaxCrossEntropyFp32*"
-# ./lite-test --gtest_filter="TestDeConvolutionGradFp32*"
-# ./lite-test --gtest_filter="TestBiasGradFp32*"
-
-# test cases specific for CXX_API
-
-# ./lite-test --gtest_filter="TestCxxApiLiteModel*"
-# ./lite-test --gtest_filter="TestCxxApiLiteSerialization*"
+  echo 'run train ut tests'
+  ./lite-test --gtest_filter="TestActGradFp32*"
+  ./lite-test --gtest_filter="TestSoftmaxGradFp32*"
+  ./lite-test --gtest_filter="TestSoftmaxCrossEntropyFp32*"
+  ./lite-test --gtest_filter="TestBiasGradFp32*"
+  #./lite-test --gtest_filter="TestConvolutionGradFp32*"
+  #./lite-test --gtest_filter="TestDeConvolutionGradFp32*"
+fi
 
 echo 'run inference ut tests'
 ./lite-test --gtest_filter="ControlFlowTest.TestMergeWhileModel"
