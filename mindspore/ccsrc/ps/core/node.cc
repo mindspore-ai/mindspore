@@ -51,7 +51,7 @@ bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommM
   return Wait(request_id, timeout);
 }
 
-uint64_t Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
+uint64_t Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                                 const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(meta);
@@ -99,7 +99,7 @@ bool Node::CheckMessageTrack(const uint64_t &request_id) {
   return message_tracker_[request_id].first == message_tracker_[request_id].second + 1;
 }
 
-void Node::NotifyMessageArrival(std::shared_ptr<MessageMeta> meta) {
+void Node::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta) {
   std::lock_guard<std::mutex> lock(message_tracker_mutex_);
   uint64_t request_id = meta->request_id();
 

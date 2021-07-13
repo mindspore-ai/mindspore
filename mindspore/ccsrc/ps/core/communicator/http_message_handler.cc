@@ -196,7 +196,7 @@ std::string HttpMessageHandler::GetUriQuery() const {
   return std::string(query);
 }
 
-std::string HttpMessageHandler::GetUriFragment() {
+std::string HttpMessageHandler::GetUriFragment() const {
   MS_EXCEPTION_IF_NULL(event_uri_);
   const char *fragment = evhttp_uri_get_fragment(event_uri_);
   MS_EXCEPTION_IF_NULL(fragment);

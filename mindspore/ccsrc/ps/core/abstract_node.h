@@ -53,9 +53,11 @@ class AbstractNode : public Node {
         scheduler_port_(0) {}
   ~AbstractNode() override { is_finish_ = true; }
 
-  typedef void (AbstractNode::*ResponseHandler)(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  typedef void (AbstractNode::*ServerHandler)(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                              const Protos &protos, const void *data, size_t size);
+  typedef void (AbstractNode::*ResponseHandler)(const std::shared_ptr<MessageMeta> &meta, const void *data,
+                                                size_t size);
+  typedef void (AbstractNode::*ServerHandler)(const std::shared_ptr<TcpConnection> &conn,
+                                              const std::shared_ptr<MessageMeta> &meta, const Protos &protos,
+                                              const void *data, size_t size);
 
   using DataPtr = std::shared_ptr<unsigned char[]>;
   using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
@@ -95,7 +97,7 @@ class AbstractNode : public Node {
   uint64_t CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const enum NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
-  bool CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
+  bool CollectiveWait(const std::pair<uint32_t, uint64_t> &request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
   // Initialize the scaler for server to process before/after scaling operations.
   bool InitFollowerScaler();
@@ -127,31 +129,31 @@ class AbstractNode : public Node {
   bool Heartbeat(const std::shared_ptr<TcpClient> &client);
   void FetchServers(const std::shared_ptr<TcpClient> &client);
 
-  void ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessFetchServersResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessRegisterResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
-  void ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                           const void *data, size_t size);
-  void ProcessFinish(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                     const void *data, size_t size);
+  void ProcessSendMetadata(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                           const Protos &protos, const void *data, size_t size);
+  void ProcessFinish(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                     const Protos &protos, const void *data, size_t size);
 
-  void ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                       const void *data, size_t size);
+  void ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                       const Protos &protos, const void *data, size_t size);
 
-  void ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                      const void *data, size_t size);
+  void ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                      const Protos &protos, const void *data, size_t size);
 
   // The worker/server processes the scale_out_done message from scheduelr
-  void ProcessScaleOutDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                           const void *data, size_t size);
+  void ProcessScaleOutDone(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                           const Protos &protos, const void *data, size_t size);
   // The worker/server processes the scale_in_done message from scheduelr
-  void ProcessScaleInDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                          const void *data, size_t size);
+  void ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                          const Protos &protos, const void *data, size_t size);
 
   // The worker/server processes the SEND_EVENT message from scheduelr
-  void ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                    const void *data, size_t size);
+  void ProcessEvent(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                    const Protos &protos, const void *data, size_t size);
 
   void StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client);
   void UpdateSchedulerTime();
@@ -161,10 +163,12 @@ class AbstractNode : public Node {
   bool InitClientToScheduler();
   const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const uint32_t &rank_id);
 
-  void ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size);
+  void ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                           size_t size);
   void RunMessageCallback(const uint64_t &request_id);
   void set_message_callback(const uint64_t &request_id, const MessageCallback &callback);
-  void RunReceiveCallback(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size);
+  void RunReceiveCallback(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                          size_t size);
   uint64_t NextExpectedRankRequestId(const uint32_t &rank_id);
   uint64_t NextActualRankRequestId(const uint32_t &rank_id);
   void InitCommandHandler();

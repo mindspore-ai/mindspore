@@ -187,6 +187,13 @@ enum class CustomEvent { kIterationRunning = 0, kIterationCompleted };
 #define ERROR_STATUS(result, code, message) \
   MS_LOG(ERROR) << message;                 \
   result = RequestProcessResult(code, message)
+
+#define CHECK_RETURN_TYPE(_condition)                    \
+  do {                                                   \
+    if (!(_condition)) {                                 \
+      MS_LOG(ERROR) << "Parse protobuf message failed."; \
+    }                                                    \
+  } while (false)
 }  // namespace ps
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PS_CONSTANTS_H_

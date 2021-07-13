@@ -48,7 +48,7 @@ const evutil_socket_t &TcpConnection::GetFd() const { return fd_; }
 
 void TcpConnection::set_callback(const Callback &callback) { callback_ = callback; }
 
-bool TcpConnection::SendMessage(std::shared_ptr<CommMessage> message) const {
+bool TcpConnection::SendMessage(const std::shared_ptr<CommMessage> &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   MS_EXCEPTION_IF_NULL(message);
   bufferevent_lock(buffer_event_);
@@ -66,7 +66,7 @@ bool TcpConnection::SendMessage(std::shared_ptr<CommMessage> message) const {
   return res;
 }
 
-bool TcpConnection::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+bool TcpConnection::SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                 size_t size) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   MS_EXCEPTION_IF_NULL(meta);
@@ -325,12 +325,13 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   MS_EXCEPTION_IF_NULL(conn);
   SetTcpNoDelay(fd);
   server->AddConnection(fd, conn);
-  conn->InitConnection([=](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
-    OnServerReceiveMessage on_server_receive = server->GetServerReceive();
-    if (on_server_receive) {
-      on_server_receive(conn, meta, protos, data, size);
-    }
-  });
+  conn->InitConnection(
+    [=](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
+      OnServerReceiveMessage on_server_receive = server->GetServerReceive();
+      if (on_server_receive) {
+        on_server_receive(conn, meta, protos, data, size);
+      }
+    });
   bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback,
                     reinterpret_cast<void *>(conn.get()));
   if (bufferevent_enable(bev, EV_READ | EV_WRITE) == -1) {
@@ -440,13 +441,13 @@ void TcpServer::SetTcpNoDelay(const evutil_socket_t &fd) {
   }
 }
 
-bool TcpServer::SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
+bool TcpServer::SendMessage(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<CommMessage> &message) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(message);
   return conn->SendMessage(message);
 }
 
-bool TcpServer::SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+bool TcpServer::SendMessage(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                             const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -454,7 +455,7 @@ bool TcpServer::SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr
   return conn->SendMessage(meta, protos, data, size);
 }
 
-void TcpServer::SendMessage(std::shared_ptr<CommMessage> message) {
+void TcpServer::SendMessage(const std::shared_ptr<CommMessage> &message) {
   MS_EXCEPTION_IF_NULL(message);
   std::lock_guard<std::mutex> lock(connection_mutex_);
 
@@ -467,7 +468,7 @@ uint16_t TcpServer::BoundPort() const { return server_port_; }
 
 std::string TcpServer::BoundIp() const { return server_address_; }
 
-int TcpServer::ConnectionNum() const { return connections_.size(); }
+int TcpServer::ConnectionNum() const { return SizeToInt(connections_.size()); }
 
 const std::map<evutil_socket_t, std::shared_ptr<TcpConnection>> &TcpServer::Connections() const { return connections_; }
 

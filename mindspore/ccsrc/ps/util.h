@@ -44,10 +44,10 @@ class Util {
  public:
   static bool IsRoleOfPServer();
   static bool IsRoleOfScheduler();
-  static int64_t optimizer_id(std::string name);
+  static int64_t optimizer_id(const std::string &name);
   static std::string optimizer_name(int64_t id);
   static std::string optimizer_node_name(int64_t id);
-  static bool is_optimizer(std::string name);
+  static bool is_optimizer(const std::string &name);
   static int64_t LocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num);
   static std::map<int64_t, int64_t> AllRankLocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num);
   static void ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,

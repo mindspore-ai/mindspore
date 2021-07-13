@@ -27,11 +27,14 @@
 #include "ps/core/communicator/message.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
+#include "utils/convert_utils_base.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-using messageReceive = std::function<void(std::shared_ptr<MessageMeta>, const Protos &, const void *, size_t size)>;
+using messageReceive =
+  std::function<void(const std::shared_ptr<MessageMeta> &, const Protos &, const void *, size_t size)>;
 constexpr int kHeaderLen = 16;
 
 class TcpMessageHandler {
@@ -48,7 +51,7 @@ class TcpMessageHandler {
   bool is_parsed_;
   std::unique_ptr<unsigned char[]> message_buffer_;
   size_t remaining_length_;
-  char header_[16]{0};
+  unsigned char header_[16]{0};
   int header_index_;
   size_t last_copy_len_;
   MessageHeader message_header_;
