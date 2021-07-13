@@ -1040,10 +1040,10 @@ class Split(PrimitiveWithCheck):
         >>> output = split(x)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1 1]
-         [2 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1 1]
-         [2 2]]))
+        [[1, 1],
+         [2, 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
+        [[1, 1],
+         [2, 2]]))
         >>> split = ops.Split(1, 4)
         >>> output = split(x)
         >>> print(output)
