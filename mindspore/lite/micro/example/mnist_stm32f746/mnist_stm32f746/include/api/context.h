@@ -26,8 +26,8 @@
 namespace mindspore {
 enum DeviceType {
   kCPU = 0,
-  kMaliGPU,
-  kNvidiaGPU,
+  kGPU,
+  kGPU,
   kKirinNPU,
   kAscend910,
   kAscend310,
@@ -91,9 +91,9 @@ class MS_API CPUDeviceInfo : public DeviceInfoContext {
   bool GetEnableFP16() const;
 };
 
-class MS_API MaliGPUDeviceInfo : public DeviceInfoContext {
+class MS_API GPUDeviceInfo : public DeviceInfoContext {
  public:
-  enum DeviceType GetDeviceType() const override { return DeviceType::kMaliGPU; };
+  enum DeviceType GetDeviceType() const override { return DeviceType::kGPU; };
 
   void SetEnableFP16(bool is_fp16);
   bool GetEnableFP16() const;
@@ -107,9 +107,9 @@ class MS_API KirinNPUDeviceInfo : public DeviceInfoContext {
   int GetFrequency() const;
 };
 
-class MS_API NvidiaGPUDeviceInfo : public DeviceInfoContext {
+class MS_API GPUDeviceInfo : public DeviceInfoContext {
  public:
-  enum DeviceType GetDeviceType() const override { return DeviceType::kNvidiaGPU; };
+  enum DeviceType GetDeviceType() const override { return DeviceType::kGPU; };
 
   void SetDeviceID(uint32_t device_id);
   uint32_t GetDeviceID() const;

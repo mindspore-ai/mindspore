@@ -157,7 +157,7 @@ void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context
   device_list.push_back(device_info);
 
   if (flags_->device_ == "GPU") {
-    std::shared_ptr<MaliGPUDeviceInfo> gpu_device_info = std::make_shared<MaliGPUDeviceInfo>();
+    std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
     gpu_device_info->SetEnableFP16(flags_->enable_fp16_);
     device_list.push_back(gpu_device_info);
   }
