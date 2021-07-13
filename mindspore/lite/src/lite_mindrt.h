@@ -99,6 +99,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void SetInputData(Tensor *dst_tensor, Tensor *src_tensor);
   int CastInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
+  int CastTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  int CastTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
 
  private:
   kernel::LiteKernel *partial_node_ = nullptr;

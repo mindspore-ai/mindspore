@@ -175,67 +175,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
     return CpuSubGraph::Init();
   }
 
-  int PreProcess();
-  int Execute() override {
-    auto ret = PreProcess();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
-      return ret;
-    }
-    ret = CpuSubGraph::Execute();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << this->name();
-      return ret;
-    }
-
-    ret = PostProcess();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
-      return ret;
-    }
-    return lite::RET_OK;
-  }
-  int Execute(const KernelCallBack &before, const KernelCallBack &after) override {
-    auto ret = PreProcess();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
-      return ret;
-    }
-#ifdef Debug
-    for (const auto *node : nodes_) {
-      if (node->type() == schema::PrimitiveType_PartialFusion) {
-        continue;
-      }
-      for (const auto *in_tensor : node->in_tensors()) {
-        if (in_tensor->data_type() == kNumberTypeFloat32) {
-          MS_LOG(ERROR) << "FP16 kernel can not accept float32 input";
-          return lite::RET_ERROR;
-        }
-      }
-    }
-#endif
-    ret = CpuSubGraph::Execute(before, after);
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << this->name();
-      return ret;
-    }
-
-    ret = PostProcess();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
-      return ret;
-    }
-    return lite::RET_OK;
-  };
-  int PostProcess();
-
  private:
-  void FreeOriginInputData();
-  int Float32TensorToFloat16Tensor(lite::Tensor *tensor);
-  int Float16TensorToFloat32Tensor(lite::Tensor *tensor);
-
- private:
-  std::map<lite::Tensor *, DataStore *> origin_input_data_;
   bool support_fp16_ = false;
 };
 #endif
