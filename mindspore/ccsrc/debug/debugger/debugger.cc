@@ -589,8 +589,8 @@ void Debugger::CheckDatasetGraph() {
 bool Debugger::CheckDatasetGraph(const KernelGraphPtr &graph_ptr) {
   const auto &nodes = graph_ptr->execution_order();
   for (const auto &node : nodes) {
-    auto node_name = AnfAlgo::GetCNodeName(node);
     MS_LOG(INFO) << "node: " << GetKernelNodeName(node);
+    auto node_name = AnfAlgo::GetCNodeName(node);
     if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
       MS_LOG(INFO) << "Not enabling debugger for graph " << graph_ptr->graph_id() << ": found dataset graph node "
                    << node_name;
@@ -1380,7 +1380,6 @@ void Debugger::ClearCurrentData() {
   if ((device_target_ == kGPUDevice) && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration())) {
     if (debug_services_) {
       debug_services_->EmptyCurrentTensor();
-
     } else {
       MS_LOG(ERROR) << "debug_services_ is nullptr";
     }
