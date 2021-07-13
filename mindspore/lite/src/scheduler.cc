@@ -172,9 +172,11 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
     kernels.push_back((*dst_kernels)[i]->kernel());
   }
 
+  ms_inputs_ = LiteTensorsToMSTensors(inputs_);
+  ms_outputs_ = LiteTensorsToMSTensors(outputs_);
   auto schema_version = static_cast<SchemaVersion>(VersionManager::GetInstance()->GetSchemaVersion());
-  DelegateModel *model = new (std::nothrow) DelegateModel(
-    &kernels, LiteTensorsToMSTensors(inputs_), LiteTensorsToMSTensors(outputs_), primitives_, schema_version);
+  DelegateModel *model =
+    new (std::nothrow) DelegateModel(&kernels, ms_inputs_, ms_outputs_, primitives_, schema_version);
   if (model == nullptr) {
     MS_LOG(ERROR) << "New delegate model failed.";
     return RET_NULL_PTR;

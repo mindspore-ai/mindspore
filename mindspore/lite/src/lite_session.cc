@@ -834,19 +834,19 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
       MS_LOG(ERROR) << "input kernel is nullptr!";
       return RET_ERROR;
     }
-    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
-      MS_LOG(ERROR) << "All node in graph should be sub_graph";
-      return RET_ERROR;
-    }
     auto ret = RET_OK;
-    if (kernel->subgraph_type() == kernel::kGpuSubGraph) {
-#if GPU_OPENCL
-      auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
-      ret = sub_graph->ReSize(false);
-#endif
+    if (kernel->desc().delegate != nullptr) {
+      ret = kernel->ReSize();
     } else {
-      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-      ret = sub_graph->ReSize();
+      if (kernel->subgraph_type() == kernel::kGpuSubGraph) {
+#if GPU_OPENCL
+        auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
+        ret = sub_graph->ReSize(false);
+#endif
+      } else {
+        auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+        ret = sub_graph->ReSize();
+      }
     }
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape is interrupted";
