@@ -1,3 +1,357 @@
+# MindSpore 1.3.0
+
+## MindSpore 1.3.0 Release Notes
+
+### Major Features and Improvements
+
+#### NewModels
+
+- [STABLE] Add CV models on Ascend: CPM, CSPDarknet53.
+- [STABLE] Add NLP models on Ascend: NAML, Fasttext, GRU, LSTM.
+- [STABLE] Add CV models on GPU: Faster-RCNN.
+- [BETA] Add CV models on Ascend:
+- [BETA] Add EPP-MVSNet on GPU: a novel deep learning network for 3D reconstruction from multi-view stereo, which has won the first place in Tanks & Temples leaderboard (until April 1, 2021).
+
+#### FrontEnd
+
+- [STABLE] Support interface `run_check` to check whether MindSpore is working properly or not.
+- [STABLE] Support saving custom information in checkpoint file.
+- [STABLE] Normal class add mean parameter.
+- [STABLE] Support export YOLOv3-DarkNet53 and YOLOv4 ONNX model.
+- [STABLE] Support 40+ operator export ONNX model.
+- [STABLE] The Metric module supports `set_indexes` to select the inputs of `update` in the specified order.
+- [STABLE] Switch`_Loss` to an external API `LossBase` as the base class of losses.
+
+#### Auto Parallel
+
+- [STABLE] Add distributed operators: Select/GatherNd/ScatterUpdate/TopK.
+- [STABLE] Support basic pipeline parallelism.
+- [STABLE] Optimize sharding strategy setting of`Gather`.
+- [STABLE] Optimize mix precision and  shared parameter scenarios.
+- [STABLE] Optimize distributed prediction scenarios.
+
+#### Executor
+
+- [STABLE] Support unified runtime in GPU and CPU backend.
+- [STABLE] MindSpore GPU support CUDA11 with cuDNN8.
+- [STABLE] MindSpore GPU inference performance optimization by integrating TensoRT.
+- [STABLE] MindSpore built on one Linux distribution can now be used on multiple Linux distributions with same CPU architecture (e.g. EulerOS, Ubuntu, CentOS).
+- [STABLE] MindSpore now supports Ascend310 and Ascend910 environments with one single wheel package, and provides an alternate binary package for Ascend310 specifically.
+- [STABLE] MindSpore Ascend support group convolution.
+
+#### DataSet
+
+- [STABLE] Support caching over MindRecord dataset.
+- [STABLE] Support new shuffle mode for MindRecord dataset.
+- [STABLE] Support a cropper tool for MindSpore Lite to allow the user to customize MindData binary file according to their script.
+- [STABLE] Support share memory mechanism to optimize the multi-processing efficiency of GeneratorDataset/Map/Batch.
+- [STABLE] Add features for the GNN dataset to support molecular dynamics simulation scenarios.
+
+#### FederatedLearning
+
+- [STABLE] Support Cross-device federated learning framework.
+- [STABLE] Support FL-Server distributed networking including TCP and HTTP communication.
+- [STABLE] Support FL-Server distributed federated aggregation,support autoscaling and fault tolerance.
+- [STABLE] Develop FL-Client framework.
+- [STABLE] Supports local differential privacy algorithms.
+- [STABLE] MPC-based security aggregation algorithm.
+- [STABLE] MindSpore Lite Device-side Inference & Training Interconnection with FL-Client.
+
+#### Running Data Recorder
+
+- [STABLE] Provide records of multi-stage computational graphs, memory allocation information and graph execution order when a "Launch kernel failed" occurs. (CPU)
+
+#### GraphKernel Fusion
+
+- [STABLE] Add options to control the optimization level.
+- [STABLE] Enhance the generalization ability on GPU. GraphKernel is enabled by default in 40+ networks which cover the field of NLP, CV, Recommender, NAS and Audio. The result shows their throughput is significantly improved, and you are Recommended enabling GraphKernel in your network.
+
+### API Change
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+###### `mindspore.dataset.Dataset.device_que` interface removes unused parameter `prefetch_size`([!18973](https://gitee.com/mindspore/mindspore/pulls/18973))
+
+Previously, we have a parameter `prefetch_size` in `device_que` to define the prefetch number of records ahead of the user's request. But indeed this parameter is never used which means it is an ineffective parameter. Therefore, we remove this parameter in 1.3.0 and users can set this configuration by [mindspore.dataset.config.set_prefetch_size](https://www.mindspore.cn/doc/api_python/en/r1.3/mindspore/mindspore.dataset.config.html#mindspore.dataset.config.set_prefetch_size).
+
+<table>
+<tr>
+<td style="text-align:center"> 1.2.1 </td> <td style="text-align:center"> 1.3.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+device_que(prefetch_size=None, send_epoch_end=True, create_data_info_queue=False)
+```
+
+</td>
+<td>
+
+```python
+device_que(send_epoch_end=True, create_data_info_queue=False)
+```
+
+</td>
+</tr>
+</table>
+
+### Bug fixes
+
+#### FrontEnd（朱乃盘）
+
+- Fix exception when use import module in while body such as 'F.xxx'.([!17635](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/17635))
+- Fix the exception of 'exceeding limit call depth' in compile graph process when use while expression with grad operation. ([!18662](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/18662))
+
+#### Executor（姜建飞）
+
+- Fix reallocate memory bug for communication op.([!14492](https://gitee.com/mindspore/mindspore/pulls/14492))
+- Replace memcpy_async op with tensor_move op.([!15204](https://gitee.com/mindspore/mindspore/pulls/15204))
+- Fix the build error when multiple python versions are installed in the environment.([!19165](https://gitee.com/mindspore/mindspore/pulls/19165))
+- The warning when the te/topi/hccl version does not match is optimized, and fix the repeated warning.([!18704](https://gitee.com/mindspore/mindspore/pulls/18704))
+- Fix the error in a cluster with more than 8 pcs in pynative mode.([!16376](https://gitee.com/mindspore/mindspore/pulls/16376))
+- Fix graph ring problem in UB fusion.([!16109](https://gitee.com/mindspore/mindspore/pulls/16109))
+- Fix AllGather op select problem when shape is not divisible by 16.([!18878](https://gitee.com/mindspore/mindspore/pulls/18878))
+
+#### Dataset (刘存伟)
+
+- Fix an out-of-memory error when ImagefolderDataset gets an illegal directory. ([!16196](https://gitee.com/mindspore/mindspore/pulls/16196))
+- Fix bugs of vision transformations in lite mode. ([!14722](https://gitee.com/mindspore/mindspore/pulls/14722),[!14774](https://gitee.com/mindspore/mindspore/pulls/14774),[!15050](https://gitee.com/mindspore/mindspore/pulls/15050))
+- Fix default numbers of parallel workers of MindData for those CPUs with fewer cores. ([!15921](https://gitee.com/mindspore/mindspore/pulls/15921))
+- Fix cache client status reset and final flush at abnormal termination. ([!15038](https://gitee.com/mindspore/mindspore/pulls/15038))
+- Fix MindRecord writing failed probabilistically in multiprocessing. ([!15242](https://gitee.com/mindspore/mindspore/pulls/15242))
+
+## MindSpore Lite
+
+### Major Features and Improvements
+
+#### Converter and runtime
+
+1. Support Caffe model running on Hi3516D.
+2. Support delegate mechanism to run your models(part or whole) on user specified executor.
+3. Support control flow models.
+4. Support cross-compiling for iOS, so that we can inference models on iOS device.
+
+#### x86 backend optimization
+
+1. Optimize kernels for x86 using Advanced Vector Extensions(AVX).
+
+#### ARM backend optimization
+
+1. Optimize fp16 kernels.
+2. Support arm32 fp16 instruction acceleration on ARMv8.2.
+
+#### Cuda backend optimization
+
+1. Support NV GPU backend base on delegate mechanism(use TensorRT as delegate).
+
+#### OpenCL backend
+
+1. Optimize the strategy of workgroup and blocksize to improve performance.
+2. Support OpenCL dynamic infershape.
+3. Support INT32 type ops.
+
+#### Post quantization
+
+1. Support fp32 training model convert to quantization training model.
+
+#### Training on Device
+
+1. Support fp32 training model export to quantization model after training process end.
+2. Unify APIs and output package name of training and inference.
+3. Simplify implementation of Train Session.
+4. Optimize train and infer compile, reduce libmindspore-lite-train.so memory.
+5. Training memory optimization:  memory reduce 10-50% compare with  r1.2.
+6. Training performance optimization:  for 1*1 special input shape Cov2DGradInput and SparseSoftmaxCrossEntropyWithLogits operator optimization, improved 10%-20%.
+7. Support more networks(transformer, albert).
+
+#### Codegen
+
+1. Support depolyment on HarmonyOS for device.
+
+### API Change
+
+#### API Incompatible Change
+
+##### C++ API
+
+###### Unify LiteSession and TrainSession, Merge LiteSession And TrainSession.([!17356](https://gitee.com/mindspore/mindspore/pulls/17356))
+
+Previously, Training on Device use TrainSession while Inference on Device use LiteSession. To simplify implementation, we move TrainSession functions to LiteSession as virtual function. and move APIs previous defined in train_session.h to lite_session.h.
+
+```cpp
+class MS_API LiteSession {
+...
+static LiteSession *CreateTrainSession(const std::string &filename, const lite::Context *context,
+                                         bool train_mode = false, const lite::TrainCfg *cfg = nullptr);
+ static LiteSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
+                                            const lite::Context *context, bool train_mode = false,
+                                            const lite::TrainCfg *cfg = nullptr);
+virtual int Train() { return mindspore::lite::RET_ERROR; }
+virtual int Eval() { return mindspore::lite::RET_OK; }
+virtual int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) {
+    return mindspore::lite::RET_ERROR;
+  }
+virtual std::vector<tensor::MSTensor *> GetPredictions() const {
+    std::vector<tensor::MSTensor *> outputs;
+    return outputs;
+ }
+...
+```
+
+###### Add Export API for Training on device, obsolete SaveToFile API.([!17356](https://gitee.com/mindspore/mindspore/pulls/17356))
+
+Previously, Training on Device use SaveToFile API to save training model to file. Export API was added int this release to support more format, more model type(train or interface part of the model), and save weight quant model of train.
+
+```cpp
+virtual int Export(const std::string &file_name, lite::ModelType model_type = lite::MT_TRAIN,
+                     lite::QuantizationType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFERS) {
+    return mindspore::lite::RET_ERROR;
+ }
+```
+
+###### Add GetFeatureMaps and UpdateFeatureMaps interface for Training on device.([!18344](https://gitee.com/mindspore/mindspore/pulls/18344))
+
+When Training on Device, we may be need update model featuremap and get model featuremap.particularly in MindSpore Federated Scenario.
+
+```cpp
+virtual std::vector<tensor::MSTensor *> GetFeatureMaps() const {
+    std::vector<tensor::MSTensor *> features;
+    return features;
+  }
+  virtual int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features) { return mindspore::lite::RET_ERROR; }
+```
+
+#### New features
+
+##### Java API
+
+###### new static method for creating LiteSession by MSConifg in LiteSession.class
+
+Previously, if we want to create a LiteSession object, we need to call two APIs like:
+
+```js
+MSConfig config;
+// config options ...
+LiteSession liteSession = new LiteSession();
+boolean ret = liteSession.init(config);
+if (!ret) {
+  // handle init LiteSession failed ...
+}
+```
+
+now we can create a LiteSession object with new API just like:
+
+```js
+MSConfig config;
+// config options ...
+LiteSession liteSession = createSession(config);
+if (liteSession == null) {
+  // handle create LiteSession failed ...
+}
+```
+
+###### new static method for creating LiteSession byModelBuffer and MSConfig in LiteSession.class
+
+Previously, if we want to inference a model, we need to call APIs like:
+
+```js
+MSConfig config;
+// config options ...
+LiteSession liteSession = new LiteSession();
+boolean initSessionRet = liteSession.init(config);
+if (!initSessionRet) {
+  // handle init LiteSession failed and return ...
+}
+Model model = new Model();
+boolean loadModelRet = model.loadModel(modelMappedByteBuffer);
+if (!loadModelRet) {
+  // handle load model failed and return ...
+}
+boolean compileModelRet = liteSession.compileGraph(model);
+if (!loadModelRet) {
+  // handle compile model failed and return ...
+}
+model.free();
+// liteSession is ready to inference model, call runGraph in LiteSession.class ...
+```
+
+now we can use new API just like:
+
+```js
+MSConfig config;
+// config options ...
+LiteSession liteSession = createSession(modelMappedByteBuffer, config);
+if (liteSession == null) {
+  // handle init LiteSession failed and return ...
+}
+// liteSession is ready to inference model, call runGraph in LiteSession.class ...
+```
+
+New createSession method is an API that integrates four old APIs: LiteSession.init, Model.loadModel, LiteSession.compileGraph and model.free. It is simple and efficient as it reduce one modelBuffer copy operation.
+
+###### new methods getFeaturesMap and updateFeatures for in LiteSession.class
+
+Recently, we add a new C++ api in LiteSession class, Correspondingly we add a new java API in LiteSession.java.
+
+```java
+public List<MSTensor> getFeaturesMap() {
+         List<Long> ret = this.getFeaturesMap(this.sessionPtr);
+                ArrayList<MSTensor> tensors = new ArrayList<MSTensor>();
+                for (Long msTensorAddr : ret) {
+                    MSTensor msTensor = new MSTensor(msTensorAddr);
+                    tensors.add(msTensor);
+                }
+                return tensors;
+   }
+   public boolean updateFeatures(List<MSTensor> features) {
+            long[] inputsArray = new long[features.size()];
+            for (int i = 0; i < features.size(); i++) {
+                inputsArray[i] = features.get(i).getMSTensorPtr();
+            }
+             return this.updateFeatures(this.sessionPtr, inputsArray);
+   }
+```
+
+###### new methods export to replace saveToFile API in LiteSession.class
+
+Recently, we add a new C++ api in LiteSession class, Correspondingly we add a new java API in LiteSession.java.
+
+```java
+public boolean export(String modelFileName, int modelType, int quantizationType) {
+        return this.export(this.sessionPtr, modelFileName, modelType, quantizationType);
+    }
+```
+
+###### new train related  API moved to LiteSession.class from TrainSession.class
+
+Align with update of C++ api in LiteSession class, add new java API to LiteSession.java Correspondingly.
+
+```java
+public class LiteSession {
+...
+public static LiteSession createTrainSession(String modelName, final MSConfig config, boolean trainMode){...}
+public boolean train() {...}
+public boolean eval() {...}
+...
+```
+
+### Bug fixes
+
+1. Fix the bug that the train session not release memory cause of refcount bug.
+
+#### Deprecations
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+Adel, AGroupofProbiotocs, anthonyaje, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, eric, Eric, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Islam Amin, Jesse, , Jiabin Liu, jianghui58, jiangzhiwen, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, Jonathan, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, laiyongqiang, leonwanghui, Li, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luopengting, luoyang, lvchangquan, lvliang, lz, mahdi, Mahdi, maning202007, Margaret_wangrui, mayang, mengyuanli, Ming_blue, nhussain, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin, wangnan39@huawei.com, wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, wuxuejian, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xulei2020, Xun, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang, zhanghaibo5@huawei.com, zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, Zhenglong Li, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Zirui, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking.
+
+Contributions of any kind are welcome!
+
 # MindSpore 1.2.1
 
 ## MindSpore 1.2.1 Release Notes
