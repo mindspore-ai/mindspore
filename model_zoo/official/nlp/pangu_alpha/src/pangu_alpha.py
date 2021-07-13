@@ -14,6 +14,7 @@
 # ============================================================================
 """PanguAlpha model"""
 import math
+import os
 import numpy as np
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -25,6 +26,7 @@ from mindspore.ops import functional as F
 from mindspore import context
 from mindspore.common.seed import _get_graph_seed
 from mindspore._checkparam import Validator
+
 class Dropout(nn.Cell):
     r"""
         A Dropout Implements with P.DropoutGenMask and  P.DropoutDoMask for parallel training.
@@ -38,17 +40,18 @@ class Dropout(nn.Cell):
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
         self.keep_prob = keep_prob
-        seed0, seed1 = _get_graph_seed(0, "dropout")
-        self.seed0 = seed0
-        self.seed1 = seed1
-        self.dtype = dtype
-        self.get_shape = P.Shape()
-        self.dropout_gen_mask = P.DropoutGenMask(Seed0=self.seed0, Seed1=self.seed1)
-        self.dropout_do_mask = P.DropoutDoMask()
-        self.cast = P.Cast()
         self.is_ascend = context.get_context('device_target') in ["Ascend"]
-        self.dropout = P.Dropout(keep_prob)
-
+        if self.is_ascend:
+            seed0, seed1 = _get_graph_seed(0, "dropout")
+            self.seed0 = seed0
+            self.seed1 = seed1
+            self.dtype = dtype
+            self.get_shape = P.Shape()
+            self.dropout_gen_mask = P.DropoutGenMask(Seed0=self.seed0, Seed1=self.seed1)
+            self.dropout_do_mask = P.DropoutDoMask()
+            self.cast = P.Cast()
+        else:
+            self.dropout = P.Dropout(keep_prob)
     def construct(self, x):
         r"""
            Input: a tensor
@@ -123,11 +126,11 @@ class Mapping(nn.Cell):
         self.output_size = output_size
         self.input_size = input_size
         self.weight = Parameter(initializer(Normal(sigma=0.02 * scale),
-                                            [input_size, output_size]),
+                                            [input_size, output_size], config.param_init_type),
                                 name="mapping_weight")
         self.bias = Parameter(initializer("zeros", [
             output_size,
-        ]),
+        ], config.param_init_type),
                               name="mapping_bias",
                               parallel_optimizer=False)
         self.dtype = config.compute_dtype
@@ -164,11 +167,12 @@ class Mapping_output(nn.Cell):
         self.output_size = output_size
         self.input_size = input_size
         self.weight = Parameter(initializer(Normal(sigma=0.02 * scale),
-                                            [input_size, output_size]),
+                                            [input_size, output_size],
+                                            config.param_init_type),
                                 name="mapping_weight")
         self.bias = Parameter(initializer("zeros", [
             output_size,
-        ]),
+        ], config.param_init_type),
                               name="mapping_bias")
         self.dtype = config.compute_dtype
         self.cast = P.Cast()
@@ -200,7 +204,9 @@ class Output(nn.Cell):
         super(Output, self).__init__()
         input_size = config.embedding_size
         output_size = config.embedding_size * config.expand_ratio
+        # Project to expand_ratio*embedding_size
         self.mapping = Mapping_output(config, input_size, output_size)
+        # Project back to embedding_size
         self.projection = Mapping(config, output_size, input_size, scale)
         self.activation = nn.GELU()
         self.activation.gelu.shard(((config.dp, 1, config.mp),))
@@ -209,8 +215,10 @@ class Output(nn.Cell):
         self.dropout.dropout_do_mask.shard(((config.dp, 1, 1),))
 
     def construct(self, x):
+        # [bs, seq_length, expand_ratio*embedding_size]
         hidden = self.activation(self.mapping(x))
         output = self.projection(hidden)
+        # [bs, seq_length, expand_ratio]
         output = self.dropout(output)
         return output
 
@@ -232,6 +240,7 @@ class AttentionMask(nn.Cell):
             ((config.dp, 1, 1), (config.dp, 1, 1)))  # yzz: use 64, 1, 1?
         self.expand_dim = P.ExpandDims().shard(((1, 1),))
         ones = np.ones(shape=(config.seq_length, config.seq_length))
+        # Default lower triangle mask matrix
         self.lower_triangle_mask = Tensor(np.tril(ones), mstype.float32)
         self.multiply = P.Mul().shard(((config.dp, 1, 1), (1, 1, 1)))
 
@@ -242,12 +251,14 @@ class AttentionMask(nn.Cell):
         input_shape = P.Shape()(input_mask)
         shape_right = (input_shape[0], 1, input_shape[1])
         shape_left = input_shape + (1,)
+        # Mask the padded inputs
         mask_left = self.reshape(input_mask, shape_left)
         mask_right = self.reshape(input_mask, shape_right)
         attention_mask = self.mul(mask_left, mask_right)
         lower_traiangle = self.expand_dim(self.lower_triangle_mask, 0)
+        # [bs, seq_length, seq_length]
         attention_mask = self.multiply(
-            attention_mask, lower_traiangle)  #bs seq_length seq_length
+            attention_mask, lower_traiangle)
         return attention_mask
 
 
@@ -267,16 +278,23 @@ class EmbeddingLookup(nn.Cell):
         super(EmbeddingLookup, self).__init__()
         self.vocab_size = config.vocab_size
         self.embedding_size = config.embedding_size
-        self.embedding_table = Parameter(initializer(
-            Normal(0.02), [self.vocab_size, self.embedding_size]),
-                                         name="embedding_table")
+        if config.load_ckpt_path:
+            # Loading the embedding table from the ckpt path:
+            embedding_path = os.path.join(config.load_ckpt_path, 'word_embedding.npy')
+            if os.path.exists(embedding_path):
+                e_table = np.load(embedding_path)
+                e_table = Tensor(e_table, mstype.float32)
+                self.embedding_table = Parameter(e_table, name="embedding_table")
+            else:
+                raise ValueError(f"{embedding_path} file not exits, please check whether word_embedding file exist.")
+        else:
+            self.embedding_table = Parameter(initializer(
+                Normal(0.02), [self.vocab_size, self.embedding_size]),
+                                             name="embedding_table")
         if config.word_emb_dp:
             self.gather = P.GatherV2().shard(((1, 1), (config.dp, 1)))
         else:
             self.gather = P.GatherV2().shard(((config.mp, 1), (1, 1)))
-            self.gather.add_prim_attr("repeated_calc_num_direction", "left")
-            if config.forward_reduce_scatter:
-                self.gather.add_prim_attr("forward_type", "ReduceScatter")
         self.shape = (-1, config.seq_length, config.embedding_size)
 
     def construct(self, input_ids):
@@ -295,7 +313,9 @@ class Attention(nn.Cell):
     """
     def __init__(self, config, scale=1.0, layer_idx=None):
         super(Attention, self).__init__()
+        # Attention mask matrix
         self.get_attention_mask = AttentionMask(config)
+        # Output layer
         self.projection = Mapping(config, config.embedding_size,
                                   config.embedding_size, scale)
         self.transpose = P.Transpose().shard(((config.dp, 1, config.mp, 1),))
@@ -303,6 +323,7 @@ class Attention(nn.Cell):
             ((config.dp, config.mp, 1, 1),))
         self.reshape = P.Reshape()
         self.n_head = config.num_heads
+        # embedding size per head
         self.size_per_head = config.embedding_size // self.n_head
         self.concat_k = P.Concat(axis=3)
         self.concat_v = P.Concat(axis=2)
@@ -314,11 +335,12 @@ class Attention(nn.Cell):
         self.scale = scale
         self.real_div = P.RealDiv().shard(((config.dp, config.mp, 1, 1), ()))
         self.sub = P.Sub().shard(
-            ((1,), (config.dp, 1, 1, 1))).add_prim_attr("_side_effect", True)
+            ((1,), (config.dp, 1, 1, 1)))
         self.mul = P.Mul().shard(
-            ((config.dp, 1, 1, 1), (1,))).add_prim_attr("_side_effect", True)
+            ((config.dp, 1, 1, 1), (1,)))
         self.add = P.TensorAdd().shard(
             ((config.dp, 1, 1, 1), (config.dp, config.mp, 1, 1)))
+        # Normalize factor for attention, sqrt(dk) as widely used
         if self.scale:
             self.scale_factor = Tensor(math.sqrt(self.size_per_head))
         if layer_idx is not None:
@@ -337,19 +359,38 @@ class Attention(nn.Cell):
         self.softmax.softmax.shard(((config.dp, config.mp, 1),))
         self.expand_dims = P.ExpandDims().shard(((config.dp, 1, 1),))
 
+
+        dense_shape = [config.embedding_size, config.embedding_size]
+        bias_shape = [config.embedding_size]
+        # Query
         self.dense1 = nn.Dense(config.embedding_size,
-                               config.embedding_size).to_float(
-                                   config.compute_dtype)
+                               config.embedding_size,
+                               weight_init=initializer(init='normal', shape=dense_shape,
+                                                       dtype=config.param_init_type),
+                               bias_init=initializer(init='zeros', shape=bias_shape,
+                                                     dtype=config.param_init_type)).to_float(config.compute_dtype)
         self.dense1.matmul.shard(((config.dp, 1), (config.mp, 1)))
         self.dense1.bias_add.shard(((config.dp, config.mp), (config.mp,)))
+        # Key
         self.dense2 = nn.Dense(config.embedding_size,
-                               config.embedding_size).to_float(
-                                   config.compute_dtype)
+                               config.embedding_size,
+                               weight_init=initializer(init='normal',
+                                                       shape=dense_shape,
+                                                       dtype=config.param_init_type),
+                               bias_init=initializer(init='zeros',
+                                                     shape=bias_shape,
+                                                     dtype=config.param_init_type)).to_float(config.compute_dtype)
         self.dense2.matmul.shard(((config.dp, 1), (config.mp, 1)))
         self.dense2.bias_add.shard(((config.dp, config.mp), (config.mp,)))
+        # Value
         self.dense3 = nn.Dense(config.embedding_size,
-                               config.embedding_size).to_float(
-                                   config.compute_dtype)
+                               config.embedding_size,
+                               weight_init=initializer(init='normal',
+                                                       shape=dense_shape,
+                                                       dtype=config.param_init_type),
+                               bias_init=initializer(init='zeros',
+                                                     shape=bias_shape,
+                                                     dtype=config.param_init_type)).to_float(config.compute_dtype)
         self.dense3.matmul.shard(((config.dp, 1), (config.mp, 1)))
         self.dense3.bias_add.shard(((config.dp, config.mp), (config.mp,)))
 
@@ -370,18 +411,22 @@ class Attention(nn.Cell):
 
         original_shape = F.shape(x)
         x = F.reshape(x, (-1, original_shape[-1]))
+        # Self attention: query, key, value are derived from the same inputs
         query = self.dense1(x)
         key = self.dense2(x)
         value = self.dense3(x)
+        # [bs, num_heads, seq_length, size_per_head]
         query = self.transpose(
             F.reshape(
                 query,
                 (-1, original_shape[1], self.n_head, self.size_per_head)),
             (0, 2, 1, 3))
+        # [bs, num_heads, size_per_head, seq_length]
         key = self.transpose(
             F.reshape(
                 key, (-1, original_shape[1], self.n_head, self.size_per_head)),
             (0, 2, 3, 1))
+        # [bs, num_heads, seq_length, size_per_head]
         value = self.transpose(
             F.reshape(
                 value,
@@ -393,8 +438,11 @@ class Attention(nn.Cell):
             key = self.concat_k((past_key, key))
             value = self.concat_v(past_value, value)
         layer_present = P.Pack()([self.transpose(key, (0, 1, 3, 2)), value])
+        # Self-attention considering attention mask
         attention = self._attn(query, key, value, attention_mask)
+        # [bs, seq_length, embedding_size]
         attention_merge = self.merge_heads(attention)
+        # Output
         output = self.projection(attention_merge)
         output = self.dropout(output)
         return output, layer_present
@@ -444,11 +492,14 @@ class Attention(nn.Cell):
         Returns:
             weighted_values: Tensor, the weighted sum scores
         """
+        # Normalize query and key before MatMul, default off
         if not self.scale:
             query = query / F.cast(self.coeff, F.dtype(query))
             key = key / F.cast(self.coeff, F.dtype(key))
 
+        # Attention score [bs, num_heads, seq_length, seq_length]
         score = self.batch_matmul(query, key)
+        # Normalize after query and key MatMul, default on
         if self.scale:
             score = self.real_div(
                 score,
@@ -456,6 +507,7 @@ class Attention(nn.Cell):
 
         ori_dtype = P.DType()(score)
         score = P.Cast()(score, mstype.float32)
+        # Minus 10000 for the position where masked to exclude them from softmax
         multiplu_out = self.sub(
             P.Cast()(F.tuple_to_array((1.0,)), P.DType()(score)),
             P.Cast()(attention_mask, P.DType()(score)))
@@ -464,13 +516,15 @@ class Attention(nn.Cell):
         attention_scores = self.add(adder, score)
 
         shape = F.shape(attention_scores)
+        # attention probs
         attention_probs = self.softmax(
             F.reshape(attention_scores,
-                      (shape[0], -1, shape[-1])))  # yzz modify
+                      (shape[0], -1, shape[-1])))
         attention_probs = P.Cast()(attention_probs, ori_dtype)
         attention_probs = F.reshape(attention_probs, shape)
 
         attention_probs = self.prob_dropout(attention_probs)
+        # Weighted sum output [bs, num_heads, seq_length, size_per_head]
         weighted_values = self.batch_matmul(attention_probs, value)
         return weighted_values
 
@@ -507,24 +561,29 @@ class Block(nn.Cell):
         self.attention = Attention(config, scale, layer_idx)
         self.layernorm2.gamma.parallel_optimizer = False
         self.layernorm2.beta.parallel_optimizer = False
+        # Feed Forward Network, FFN
         self.output = Output(config, scale)
         self.post_layernorm_residual = config.post_layernorm_residual
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
         self.last_add = P.TensorAdd().shard(
-            ((config.dp, 1, 1), (config.dp, 1,
-                                 1))).add_prim_attr("recompute", False)
+            ((config.dp, 1, 1), (config.dp, 1, 1)))
+        # Last activation of this layer will be saved for recompute in backward process
+        self.last_add.recompute(False)
         self.dtype = config.compute_dtype
 
     def construct(self, x, input_mask, layer_past=None):
         r"""
         The forward process of the block.
         """
+        # [bs, seq_length, embedding_size]
         input_x = self.layernorm1(x)
         input_x = F.cast(input_x, self.dtype)
         attention, layer_present = self.attention(input_x, input_mask,
                                                   layer_past)
+        # For post-layernorm the inputs for residual path are output of self-attention and output of layernorm
         if self.post_layernorm_residual:
             x = self.add(input_x, attention)
+        # For pre-layernorm the inputs for residual path are output of self-attention and input of this layer
         else:
             x = self.add(x, attention)
 
@@ -546,6 +605,7 @@ class QueryLayerAttention(Attention):
         original_shape = F.shape(x)
         x = F.reshape(x, (-1, original_shape[-1]))
         query_hidden_state = F.reshape(query_hidden_state, (-1, original_shape[-1]))
+        # For query_layer_attention, query are derived from outputs of previous layer and key, value are derived from an added parameter query_embedding
         query = self.dense1(query_hidden_state)
         key = self.dense2(x)
         value = self.dense3(x)
@@ -601,7 +661,8 @@ class QueryLayer(nn.Cell):
 
     def construct(self, x, query_hidden_state, input_mask, layer_past=None):
         r"""
-        Query Layer.
+        Query Layer shares a similar structure with normal layer block
+        except that it is not a traditional self-attention.
         """
         input_x = self.layernorm1(x)
         input_x = F.cast(input_x, self.dtype)
@@ -640,21 +701,36 @@ class PanguAlpha_Model(nn.Cell):
     def __init__(self, config):
         super(PanguAlpha_Model, self).__init__()
         self.get_attention_mask = AttentionMask(config)
+        # Word embedding
         self.word_embedding = EmbeddingLookup(config).set_comm_fusion(1)
+        if config.load_ckpt_path:
+            # Loading the embedding table from the ckpt path:
+            embedding_path = os.path.join(config.load_ckpt_path, 'position_embedding.npy')
+            if os.path.exists(embedding_path):
+                p_table = np.load(embedding_path)
+                position_table_param = Tensor(p_table, mstype.float32)
+            else:
+                raise ValueError(f"{embedding_path} file not exits, please check whether position_embedding file exit.")
+        else:
+            position_table_param = TruncatedNormal(0.02)
+
+        # Position embedding
         self.position_embedding = nn.Embedding(
             config.seq_length,
             config.embedding_size,
-            embedding_table=TruncatedNormal(0.02)).set_comm_fusion(1)
+            embedding_table=position_table_param).set_comm_fusion(1)
         self.word_embedding.embedding_table.parallel_optimizer = False
         self.position_embedding.embedding_table.parallel_optimizer = False
         self.position_embedding.gather.shard(((1, 1), (config.dp,)))
         self.position_embedding.expand.shard(((config.dp, 1),))
         self.blocks = nn.CellList()
+        # Total fusion groups for HCCL operators. Specifically, the same tyep HCCL operators in same group will be fused.
         fusion_group_num = 4
         fusion_group_size = config.num_layers // fusion_group_num
         fusion_group_size = max(fusion_group_size, 1)
 
         num_layers = config.num_layers
+        # If top_query_attention enabled, replace the last normal self-attention layers with this top_query_attention layer
         if config.use_top_query_attention:
             num_layers -= 1
         self.num_layers = num_layers
@@ -662,15 +738,21 @@ class PanguAlpha_Model(nn.Cell):
 
         for i in range(num_layers):
             per_block = Block(config, i + 1).set_comm_fusion(int(i / fusion_group_size) + 2)
-            per_block.recompute()
-            per_block.attention.dropout.dropout_gen_mask.recompute(False)
-            per_block.attention.prob_dropout.dropout_gen_mask.recompute(False)
-            per_block.output.dropout.dropout_gen_mask.recompute(False)
-            per_block.attention.dropout.dropout_gen_mask.add_prim_attr("_side_effect", True)
-            per_block.attention.prob_dropout.dropout_gen_mask.add_prim_attr("_side_effect", True)
-            per_block.output.dropout.dropout_gen_mask.add_prim_attr("_side_effect", True)
+            # Each layer will be remoputed in the backward process. The output activation of each layer will be saved,
+            # in other words, in backward process each block will be almosttotally recomputed.
+            if config.use_recompute:
+                per_block.recompute()
+                # Dropout will not be recomputed to ensure the consistency between forward and the corresponding backward.
+                per_block.attention.dropout.dropout_gen_mask.recompute(False)
+                per_block.attention.prob_dropout.dropout_gen_mask.recompute(False)
+                per_block.output.dropout.dropout_gen_mask.recompute(False)
+            if config.param_init_type == mstype.float16:
+                # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
+                # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
+                # so we fuse communications of layernorm to a large value(+100)
+                per_block.layernorm1.set_comm_fusion(int(int(i / fusion_group_size) + 100))
+                per_block.layernorm2.set_comm_fusion(int(int(i / fusion_group_size) + 100))
             self.blocks.append(per_block)
-
         if config.self_layernorm:
             self.layernorm = LayerNorm((config.embedding_size,), config.dp).to_float(
                 mstype.float32).set_comm_fusion(
@@ -682,6 +764,11 @@ class PanguAlpha_Model(nn.Cell):
             self.layernorm.layer_norm.shard(((config.dp, 1, 1), (1,), (1,)))
         self.layernorm.gamma.parallel_optimizer = False
         self.layernorm.beta.parallel_optimizer = False
+        if config.param_init_type == mstype.float16:
+            # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
+            # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
+            # so we fuse communications of layernorm to a large value(+100)
+            self.layernorm.set_comm_fusion(int(num_layers / fusion_group_size + 100))
         self.use_past = config.use_past
         self.past = tuple([None] * config.num_layers)
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
@@ -691,25 +778,42 @@ class PanguAlpha_Model(nn.Cell):
         self.dropout.dropout_gen_mask.shard(((config.dp, 1, 1),))
         self.dropout.dropout_do_mask.shard(((config.dp, 1, 1),))
         self.eod_reset = config.eod_reset
+        # If top_query_attention enabled, the input_position representing the position ids will be used as the index
+        # for a query embedding table to obtain top query hidden states, together with the previous outputs of normal
+        # self-attention layers, a new attention layer will be attached to the output of the model
         if config.use_top_query_attention:
-            self.top_query_embedding = nn.Embedding(config.seq_length, config.embedding_size, \
-            embedding_table=TruncatedNormal(0.02)).set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 2)
+            if config.load_ckpt_path:
+                # Loading the embedding table from the ckpt path:
+                embedding_path = os.path.join(config.load_ckpt_path, 'top_query_embedding.npy')
+                if os.path.exists(embedding_path):
+                    top_query_table = np.load(embedding_path)
+                    top_query_table_param = Tensor(top_query_table, mstype.float32)
+                else:
+                    raise ValueError(
+                        f"{embedding_path} file not exits, please check whether top_query_embedding file exist.")
+            else:
+                top_query_table_param = TruncatedNormal(0.02)
+
+            self.top_query_embedding = nn.Embedding(config.seq_length, config.embedding_size,
+                                                    embedding_table=top_query_table_param)
+            # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
+            # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
+            # so we fuse communications of embedding to a large value(+100)
+            self.top_query_embedding.set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 200)
             self.top_query_embedding.embedding_table.parallel_optimizer = False
             self.top_query_embedding.gather.shard(((1, 1), (config.dp,)))
             self.top_query_embedding.expand.shard(((config.dp, 1),))
             self.top_query_layer = QueryLayer(config)
             if config.use_recompute:
                 self.top_query_layer.recompute()
-
                 self.top_query_layer.output.dropout.dropout_gen_mask.recompute(False)
                 self.top_query_layer.attention.dropout.dropout_gen_mask.recompute(False)
                 self.top_query_layer.attention.prob_dropout.dropout_gen_mask.recompute(False)
 
-                self.top_query_layer.output.dropout.dropout_gen_mask.add_prim_attr("_side_effect", True)
-                self.top_query_layer.attention.dropout.dropout_gen_mask.add_prim_attr("_side_effect", True)
-                self.top_query_layer.attention.prob_dropout.dropout_gen_mask.add_prim_attr("_side_effect", True)
-
             self.top_query_layer.set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 2)
+            self.top_query_layer.layernorm1.set_comm_fusion(int(config.num_layers / fusion_group_size + 100))
+            self.top_query_layer.layernorm2.set_comm_fusion(int(config.num_layers / fusion_group_size + 100))
+
         self.use_top_query_attention = config.use_top_query_attention
 
 
@@ -718,19 +822,24 @@ class PanguAlpha_Model(nn.Cell):
         if not self.use_past:
             layer_past = self.past
 
+        # Word embedding
         input_embedding, embedding_table = self.word_embedding(input_ids)
+        # If eod_reset disabled, there will be only one input from the dataset, i.e., input_ids
+        # and the corresponding input_position and attention_mask will be derived from it.
         if not self.eod_reset:
             batch_size, seq_length = F.shape(input_ids)
             input_position = F.tuple_to_array(F.make_range(seq_length))
             input_position = P.Tile()(input_position, (batch_size, 1))
             attention_mask = self.get_attention_mask(input_mask)
         position_embedding = self.position_embedding(input_position)
+        # Input features [bs, seq_length, embedding_size]
         hidden_states = self.add(input_embedding, position_embedding)
         hidden_states = self.dropout(hidden_states)
         hidden_states = P.Cast()(hidden_states, mstype.float16)
         attention_mask = self.expand_dims(attention_mask, 1)
 
         present_layer = ()
+        # Loop through each self-attention layer
         for i in range(self.num_layers):
             hidden_states, present = self.blocks[i](hidden_states,
                                                     attention_mask, layer_past)
@@ -739,12 +848,12 @@ class PanguAlpha_Model(nn.Cell):
         output_state = self.layernorm(hidden_states)
         output_state = F.cast(output_state, self.dtype)
 
+        # Top query attention layer
         if self.use_top_query_attention:
             top_query_hidden_states = self.top_query_embedding(input_position)
             output_state, present = self.top_query_layer(output_state, top_query_hidden_states,
                                                          attention_mask, layer_past)
             present_layer = present_layer + (present,)
-
         return output_state, present_layer, embedding_table
 
 
@@ -772,6 +881,7 @@ class PanguAlpha_Head(nn.Cell):
 
     def construct(self, state, embedding_table):
         state = P.Reshape()(state, (-1, self.embedding_size))
+        # output logits over vocabulary [bs*seq_length, vocab_size]
         logits = self.matmul(state, self.cast(embedding_table, self.dtype))
         return logits
 
@@ -790,7 +900,9 @@ class PanguAlpha(nn.Cell):
     """
     def __init__(self, config):
         super(PanguAlpha, self).__init__()
+        # Network backbone of PanguAlpha
         self.backbone = PanguAlpha_Model(config)
+        # Network head to get logits over vocabulary
         self.head = PanguAlpha_Head(config)
 
     def construct(self, input_ids, input_mask, input_position=None, attention_mask=None, past=None):
@@ -817,6 +929,7 @@ class CrossEntropyLoss(nn.Cell):
         self.mean = P.ReduceMean()
         self.sum = P.ReduceSum().shard(((config.dp, config.mp),))
         self.onehot = P.OneHot().shard(((config.dp, config.mp), (), ()))
+        # on/off value for onehot, for smooth labeling, modify the off_value
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
         self.vocab_size = config.vocab_size
@@ -841,7 +954,9 @@ class CrossEntropyLoss(nn.Cell):
         r"""
         Compute loss using logits, label and input mask
         """
+        # [bs*seq_length, vocab_size]
         logits = F.cast(logits, mstype.float32)
+        # LogSoftmax for logits over last dimension
         _, logit_max = self.max(logits)
         logit_sub = self.sub(logits, logit_max)
         logit_exp = self.exp(logit_sub)
@@ -849,12 +964,17 @@ class CrossEntropyLoss(nn.Cell):
         exp_sum = P.Reshape()(exp_sum, (F.shape(exp_sum)[0], 1))
         softmax_result = self.div(logit_exp, exp_sum)
         log_softmax_result = self.log(self.add(softmax_result, self.eps_const))
+
+        # Flatten label to [bs*seq_length]
         label = P.Reshape()(label, (-1,))
+        # Get onehot label [bs*seq_length, vocab_size]
         one_hot_label = self.onehot(label, self.vocab_size, self.on_value,
                                     self.off_value)
+        # Cross-Entropy loss
         loss = self.mul(log_softmax_result, one_hot_label)
         loss_unsum = self.neg(loss)
         loss_reduce = self.sum(loss_unsum, -1)
+        # input_mask indicates whether there is padded inputs and for padded inputs it will not be counted into loss
         input_mask = P.Reshape()(input_mask, (-1,))
         numerator = self.sum2(self.mul2(loss_reduce, input_mask))
 
@@ -882,6 +1002,7 @@ class PanguAlphaWithLoss(nn.Cell):
         super(PanguAlphaWithLoss, self).__init__(auto_prefix=False)
         self.network = network
         self.loss = loss
+        # id for end_of_sentence, 6 in the vocabulary
         self.eos_token = eos_token
         self.slice = P.StridedSlice().shard(((config.dp, 1),))
         self.not_equal = P.NotEqual().shard(((config.dp, 1), ()))
@@ -895,6 +1016,10 @@ class PanguAlphaWithLoss(nn.Cell):
         r"""
         PanguAlphaWithLoss
         """
+        # input_ids [bs, seq_length+1]
+        # input_position [bs, seq_length] only available when eod_reset enabled
+        # attention_mask [bs, seq_length, seq_length] only available when eod-reset enabled
+        # Get input tokens [bs, seq_length]
         tokens = self.slice(input_ids, (0, 0), (self.batch_size, -1), (1, 1))
 
         if self.eod_reset:
@@ -902,12 +1027,14 @@ class PanguAlphaWithLoss(nn.Cell):
             attention_mask = self.slice_mask(attention_mask, (0, 0, 0),
                                              (self.batch_size, self.len, self.len),
                                              (1, 1, 1))
-
+        # Check whether there is padding in inputs
         input_mask = F.cast(self.not_equal(tokens, self.eos_token),
                             mstype.float32)
         logits = self.network(tokens, input_mask, input_position, attention_mask)
+        # Get label corresponding to input tokens
         labels = self.slice(input_ids, (0, 1), (self.batch_size, self.len + 1),
                             (1, 1))
+        # Loss
         output = self.loss(logits, labels, input_mask)
         return output
 
@@ -920,6 +1047,7 @@ class EvalNet(nn.Cell):
         generate: enable generate mode
     Inputs:
         input_ids: the tokenized inpus
+        current_index: the index of current token
     Returns:
         outputs: Tensor, corresponding output for different tasks
     """
@@ -929,10 +1057,13 @@ class EvalNet(nn.Cell):
         self.argmax = P.Argmax()
         self.generate = generate
         self.topk = P.TopK(sorted=True).shard(((1, 1),))
+        self.gather = P.GatherV2().shard(((1, 1), (1,)))
+        self.log_softmax = P.LogSoftmax().shard(((1, 1),))
 
-    def construct(self, input_ids):
+    def construct(self, input_ids, current_index):
         """evaluation net"""
         input_mask = F.cast(F.not_equal(input_ids, 0), mstype.float32)
         logits = self.backbone(input_ids, input_mask)
-        value, index = self.topk(logits, 5)
-        return value, index
+        logits = self.gather(logits, current_index, 0)
+        log_probs = self.log_softmax(logits)
+        return log_probs

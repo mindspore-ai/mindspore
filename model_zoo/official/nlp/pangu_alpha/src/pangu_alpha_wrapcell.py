@@ -45,6 +45,7 @@ def _clip_grad(clip_type, clip_value, grad):
     if clip_type not in [0, 1]:
         return grad
     dt = F.dtype(grad)
+    # 0 for clip_by_value and 1 for clip_by_norm
     if clip_type == 0:
         new_grad = C.clip_by_value(
             grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
@@ -107,12 +108,14 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
     def construct(self, input_ids, input_position=None, attention_mask=None, layer_past=None, sens=None):
         """Defines the computation performed."""
         weights = self.weights
+        # Forward process
         loss = self.network(input_ids, input_position, attention_mask)
         scaling_sens = self.scale_sense
 
         # alloc status and clear should be right before gradoperation
         status, scaling_sens = self.start_overflow_check(loss, scaling_sens)
         scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
+        # Backward process using loss scale
         grads = self.grad(self.network,
                           weights)(input_ids,
                                    input_position, attention_mask,
@@ -129,8 +132,11 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
             grads = self.hyper_map(
                 F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE),
                 grads)
+        # Check whether overflow
         cond = self.get_overflow_status(status, grads)
         overflow = self.process_loss_scale(cond)
+        # If overflow, surpass weights update
+        # if not, update weights
         if overflow:
             succ = False
         else:

@@ -24,66 +24,58 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR, CosineDecayLR
-
+from mindspore.train.model import Model as MsModel
 from mindspore.parallel._utils import _get_global_rank
 from mindspore.communication.management import get_group_size
+from mindspore.nn import AdamWeightDecay
+from mindspore.common import Parameter, ParameterTuple
+from mindspore.common.initializer import initializer
 
-class PanguAlphaConfig:
+
+class FP32StateAdamWeightDecay(AdamWeightDecay):
+    r"""
+        This class is almost same with the mindspore's AdamWeightDecay implements, the
+        only difference is the optimizer's state will be always initialized with float32,
+        where the original AdamWeightDecay will initialize the optimizer's state with float16,
+        if the parameters are initialized with fp16.
+        This setting will avoid overflow in training PanGu-Alpha model using fp16.
     """
-    PanguAlpha config class which defines the model size
-    """
-    def __init__(self,
-                 data_parallel_num,
-                 model_parallel_num,
-                 batch_size=32,
-                 seq_length=1024,
-                 vocab_size=50257,
-                 embedding_size=768,
-                 num_layers=12,
-                 num_heads=12,
-                 expand_ratio=4,
-                 post_layernorm_residual=False,
-                 dropout_rate=0.1,
-                 compute_dtype=mstype.float16,
-                 use_past=False,
-                 self_layernorm=True,
-                 forward_reduce_scatter=True,
-                 word_emb_dp=True,
-                 stage_num=16,
-                 micro_size=32,
-                 eod_reset=False,
-                 use_top_query_attention=False,
-                 use_recompute=True):
-        self.batch_size = batch_size
-        self.seq_length = seq_length
-        self.vocab_size = vocab_size
-        self.embedding_size = embedding_size
-        self.num_layers = num_layers
-        self.num_heads = num_heads
-        self.expand_ratio = expand_ratio
-        self.post_layernorm_residual = post_layernorm_residual
-        self.dropout_rate = dropout_rate
-        self.compute_dtype = compute_dtype
-        self.use_past = use_past
-        self.dp = data_parallel_num
-        self.mp = model_parallel_num
-        self.self_layernorm = self_layernorm
-        self.forward_reduce_scatter = forward_reduce_scatter
-        self.stage_num = stage_num
-        self.micro_size = micro_size
-        self.word_emb_dp = word_emb_dp
-        self.eod_reset = eod_reset
-        self.use_recompute = use_recompute
-        self.use_top_query_attention = use_top_query_attention
 
-    def __str__(self):
-        info = "[PanguAlpha Config]" + '===' * 10 + '\n'
-        for k, v in self.__dict__.items():
-            var_info = "{}:{}\n".format(k, v)
-            info += var_info
-        info += '=' * 10
-        return info
+    def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
+        super(FP32StateAdamWeightDecay, self).__init__(params, learning_rate=learning_rate,
+                                                       beta1=beta1,
+                                                       beta2=beta2,
+                                                       eps=eps,
+                                                       weight_decay=weight_decay)
 
+        self.moments1 = self.clone_state(self.parameters, prefix='adam_m', init='zeros')
+        self.moments2 = self.clone_state(self.parameters, prefix='adam_v', init='zeros')
+
+    def clone_state(self, parameter_tuple, prefix, init):
+        r"""
+            parameter_tuple: ParameterTuple. The parameters of the network
+            prefix: str. The prefix name of the parameters
+            init: str. The initialization method
+        """
+        new = []
+        for old_param in parameter_tuple:
+            new_state = Parameter(initializer(init, shape=old_param.shape, dtype=mstype.float32))
+            new_state.param_info = old_param.param_info.clone()
+            new_state.is_init = False
+            new_state.set_data(initializer(init, shape=old_param.shape, dtype=mstype.float32))
+            new_state.name = prefix + '.' + new_state.name
+            new.append(new_state)
+        return ParameterTuple(new)
+
+
+class Model(MsModel):
+    def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
+                 eval_indexes=None, amp_level="O0", **kwargs):
+        super(Model, self).__init__(network, loss_fn=loss_fn, optimizer=optimizer, metrics=metrics,
+                                    eval_network=eval_network,
+                                    eval_indexes=eval_indexes, amp_level=amp_level, **kwargs)
+        # In avoid of the pylint
+        self.init = self._init
 
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 
@@ -127,7 +119,9 @@ class GlobalNorm(nn.Cell):
                 self.values.append(Tensor([self.group_size*1.0], mstype.float32))
         self.values = tuple(self.values)
     def construct(self, grads):
+        # Square sum of gradients for current rank
         square_sum_dp = self.hyper_map(get_square_sum, grads, self.values)
+        # Global square sum of gradients
         global_norms = F.sqrt(P.AllReduce()(F.addn(square_sum_dp)))
         return global_norms
 
@@ -204,8 +198,90 @@ class LearningRate(LearningRateSchedule):
             lr = decay_lr
         return lr * self.lr_scale
 
+def add_inference_params(opt):
+    """Add inference params"""
+    opt.add_argument("--frequency_penalty",
+                     type=float,
+                     default=1.5,
+                     help="coefficient for frequency_penalty")
+    opt.add_argument("--presence_penalty",
+                     type=float,
+                     default=0.3,
+                     help="coefficient for presence_penalty")
+    opt.add_argument("--max_generate_length",
+                     type=int,
+                     default=500,
+                     help="the maximum number of generated token")
+    opt.add_argument("--top_k_num",
+                     type=int,
+                     default=3,
+                     help="the number for top_k sampling")
+    opt.add_argument("--top_p",
+                     type=float,
+                     default=1.0,
+                     help="top_p sampling threshold, enabled if less than 1.0")
+    opt.add_argument("--end_token",
+                     type=int,
+                     default=9,
+                     help="the token id for <end of document>")
 
-def get_args():
+def add_training_params(opt):
+    """Add training params"""
+    opt.add_argument("--seq_length",
+                     type=int,
+                     default=1024,
+                     help="sequence length, default is 1024.")
+    opt.add_argument("--vocab_size",
+                     type=int,
+                     default=40000,
+                     help="vocabulary size, default is 40000.")
+    opt.add_argument("--embedding_size",
+                     type=int,
+                     default=16384,
+                     help="embedding table size, default is 16384.")
+    opt.add_argument("--num_layers",
+                     type=int,
+                     default=64,
+                     help="total layers, default is 64.")
+    opt.add_argument("--num_heads",
+                     type=int,
+                     default=128,
+                     help="head size, default is 128.")
+    opt.add_argument("--stage_num",
+                     type=int,
+                     default=4,
+                     help="Pipeline stage num, default is 4.")
+    opt.add_argument("--micro_size",
+                     type=int,
+                     default=1,
+                     help="Pipeline micro_size, default is 1.")
+    opt.add_argument("--eod_reset",
+                     type=int,
+                     default=1,
+                     help="Enable eod mask, default is 1.")
+    opt.add_argument("--warmup_step",
+                     type=int,
+                     default=2000,
+                     help="Warmup step, default is 2000.")
+    opt.add_argument("--optimizer",
+                     type=str,
+                     default="adam",
+                     choices=["adam", "lamb"],
+                     help="select which optimizer to be used, default adam")
+    opt.add_argument("--eod_id",
+                     type=int,
+                     default=6,
+                     help="The id of end of document")
+    opt.add_argument("--epoch_size",
+                     type=int,
+                     default=1,
+                     help="The training epoch")
+    opt.add_argument("--sink_size",
+                     type=int,
+                     default=2,
+                     help="The sink size of the training")
+
+def get_args(inference=False):
     """train function for PanguAlpha"""
     parser = argparse.ArgumentParser(description="PanguAlpha training")
     parser.add_argument('--device_id',
@@ -221,64 +297,51 @@ def get_args():
                         default="true",
                         choices=["true", "false"],
                         help="Run distribute, default is false.")
-    parser.add_argument("--optimizer",
+    parser.add_argument("--load_ckpt_name",
                         type=str,
-                        default="adam",
-                        choices=["adam", "lamb"],
-                        help="select which optimizer to be used, default adam")
-    parser.add_argument("--epoch_size",
-                        type=int,
-                        default=1,
-                        help="Epoch size, default is 10.")
-    parser.add_argument("--warmup_step",
-                        type=int,
-                        default=2000,
-                        help="Warmup step, default is 10000.")
-    parser.add_argument("--start_lr",
-                        type=float,
-                        default="1e-4",
-                        help="Start learning rate, default is 1e-4.")
-    parser.add_argument("--end_lr",
-                        type=float,
-                        default="1e-6",
-                        help="End learning rate, default is 1e-6.")
-    parser.add_argument("--sink_size",
-                        type=int,
-                        default=1,
-                        help="Sink size for every iteration, default is 1")
+                        default='PANGUALPHA3.ckpt',
+                        help="checkpint file name.")
+    parser.add_argument("--load_ckpt_path",
+                        type=str,
+                        default=None,
+                        help="predict file path.")
     parser.add_argument('--data_url',
-                        required=True,
+                        required=False,
                         default=None,
                         help='Location of data.')
-    parser.add_argument('--whl_pkg',
+    parser.add_argument('--train_url',
+                        required=False,
+                        default=None,
+                        help='Location of training outputs.')
+    parser.add_argument("--run_type",
                         type=str,
-                        default='',
-                        help='Location of mindspore whl.')
-    parser.add_argument("--sample_count",
-                        type=int,
-                        default=1000000,
-                        help="sample_count, default is 1000000.")
-    parser.add_argument("--eod_id",
-                        type=int,
-                        default=9,
-                        help="eod_id.")
-    parser.add_argument("--eod_reset",
-                        type=int,
-                        default=1,
-                        help="eod_reset 0/1.")
-    parser.add_argument("--full_batch",
+                        default="predict",
+                        choices=["train", "predict"],
+                        help="The run type")
+    parser.add_argument("--mode",
+                        type=str,
+                        default="2.6B",
+                        choices=["200B", "13B", "2.6B", "self_define"],
+                        help="The train/eval mode")
+    parser.add_argument("--strategy_load_ckpt_path",
+                        type=str,
+                        default="",
+                        help="The training prallel strategy for the model.")
+    parser.add_argument("--tokenizer_path",
+                        type=str,
+                        default="./tokenizer_path",
+                        help="The path where stores vocab and vocab model file")
+    parser.add_argument("--param_init_type",
+                        type=str,
+                        default="fp32",
+                        help="The initialization type for parameters. Default fp32.")
+    parser.add_argument("--incremental_training",
                         type=int,
                         default=0,
-                        help="full_batch 0/1.")
-    parser.add_argument("--per_batch_size",
-                        type=int,
-                        default=1,
-                        help="The batch size of each card.")
-    parser.add_argument("--mp",
-                        type=int,
-                        default=8,
-                        help="The model parallel number.")
-
+                        help="The incremental training. Default 1.")
+    add_training_params(parser)
+    if inference:
+        add_inference_params(parser)
     args_opt = parser.parse_args()
 
     return args_opt
