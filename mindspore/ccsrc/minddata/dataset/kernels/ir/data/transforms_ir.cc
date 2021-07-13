@@ -116,7 +116,7 @@ std::shared_ptr<TensorOp> DuplicateOperation::Build() { return std::make_shared<
 #ifndef ENABLE_ANDROID
 
 // FillOperation
-FillOperation::FillOperation(std::shared_ptr<Tensor> fill_value) : fill_value_(fill_value) {}
+FillOperation::FillOperation(const std::shared_ptr<Tensor> &fill_value) : fill_value_(fill_value) {}
 
 Status FillOperation::ValidateParams() {
   if (fill_value_->shape() != TensorShape::CreateScalar()) {
@@ -246,10 +246,10 @@ std::shared_ptr<TensorOp> SliceOperation::Build() { return std::make_shared<Slic
 
 // TypeCastOperation
 // DataType data_type - required for C++ API
-TypeCastOperation::TypeCastOperation(DataType data_type) : data_type_(data_type) {}
+TypeCastOperation::TypeCastOperation(const DataType &data_type) : data_type_(data_type) {}
 
 // std::string data_type - required for Pybind
-TypeCastOperation::TypeCastOperation(std::string data_type) {
+TypeCastOperation::TypeCastOperation(const std::string &data_type) {
   // Convert from string to DEType
   DataType temp_data_type(data_type);
   data_type_ = temp_data_type;

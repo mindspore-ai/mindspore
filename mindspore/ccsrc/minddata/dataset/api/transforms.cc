@@ -62,13 +62,14 @@ std::shared_ptr<TensorOperation> Compose::Parse() { return std::make_shared<Comp
 #ifndef ENABLE_ANDROID
 // Constructor to Concatenate
 struct Concatenate::Data {
-  explicit Data(int8_t axis, MSTensor prepend, MSTensor append) : axis_(axis), prepend_(prepend), append_(append) {}
+  explicit Data(int8_t axis, const MSTensor &prepend, const MSTensor &append)
+      : axis_(axis), prepend_(prepend), append_(append) {}
   int8_t axis_;
   MSTensor prepend_;
   MSTensor append_;
 };
 
-Concatenate::Concatenate(int8_t axis, MSTensor prepend, MSTensor append)
+Concatenate::Concatenate(int8_t axis, const MSTensor &prepend, const MSTensor &append)
     : data_(std::make_shared<Data>(axis, prepend, append)) {}
 
 std::shared_ptr<TensorOperation> Concatenate::Parse() {
@@ -95,11 +96,11 @@ std::shared_ptr<TensorOperation> Duplicate::Parse() { return std::make_shared<Du
 #ifndef ENABLE_ANDROID
 // Constructor to Fill
 struct Fill::Data {
-  explicit Data(MSTensor fill_value) : fill_value_(fill_value) {}
+  explicit Data(const MSTensor &fill_value) : fill_value_(fill_value) {}
   MSTensor fill_value_;
 };
 
-Fill::Fill(MSTensor fill_value) : data_(std::make_shared<Data>(fill_value)) {}
+Fill::Fill(const MSTensor &fill_value) : data_(std::make_shared<Data>(fill_value)) {}
 
 std::shared_ptr<TensorOperation> Fill::Parse() {
   std::shared_ptr<Tensor> out_fill_value;
@@ -113,14 +114,14 @@ std::shared_ptr<TensorOperation> Fill::Parse() {
 
 // Constructor to Mask
 struct Mask::Data {
-  explicit Data(RelationalOp op, MSTensor constant, mindspore::DataType ms_type)
+  explicit Data(RelationalOp op, const MSTensor &constant, mindspore::DataType ms_type)
       : op_(op), constant_(constant), ms_type_(ms_type) {}
   RelationalOp op_;
   MSTensor constant_;
   mindspore::DataType ms_type_;
 };
 
-Mask::Mask(RelationalOp op, MSTensor constant, mindspore::DataType ms_type)
+Mask::Mask(RelationalOp op, const MSTensor &constant, mindspore::DataType ms_type)
     : data_(std::make_shared<Data>(op, constant, ms_type)) {}
 
 std::shared_ptr<TensorOperation> Mask::Parse() {
@@ -149,13 +150,13 @@ std::shared_ptr<TensorOperation> OneHot::Parse() { return std::make_shared<OneHo
 #ifndef ENABLE_ANDROID
 // Constructor to PadEnd
 struct PadEnd::Data {
-  explicit Data(const std::vector<dsize_t> &pad_shape, MSTensor pad_value)
+  explicit Data(const std::vector<dsize_t> &pad_shape, const MSTensor &pad_value)
       : pad_shape_(pad_shape), pad_value_(pad_value) {}
   std::vector<dsize_t> pad_shape_;
   MSTensor pad_value_;
 };
 
-PadEnd::PadEnd(const std::vector<dsize_t> &pad_shape, MSTensor pad_value)
+PadEnd::PadEnd(const std::vector<dsize_t> &pad_shape, const MSTensor &pad_value)
     : data_(std::make_shared<Data>(pad_shape, pad_value)) {}
 
 std::shared_ptr<TensorOperation> PadEnd::Parse() {
