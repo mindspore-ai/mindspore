@@ -25,6 +25,9 @@ namespace device {
 namespace gpu {
 void GPUDeviceManager::InitDevice() {
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SetDevice(SizeToInt(cur_dev_id_)), "Failed to set current device id");
+  if (dev_alive_) {
+    return;
+  }
   CHECK_OP_RET_WITH_EXCEPT(CreateStream(&default_stream_), "Failed to create CUDA stream.");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreate(&cudnn_handle_), "Failed to create cuDNN handle");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetStream(cudnn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
