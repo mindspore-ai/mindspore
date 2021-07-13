@@ -42,6 +42,24 @@ class DeviceSync {
 
   virtual void *GetMutablePtr() const = 0;
   virtual void ClearDeviceMemory() = 0;
+
+  // The related interface of reference count operation.
+  void set_original_ref_count(size_t original_ref_count) { original_ref_count_ = original_ref_count; }
+  size_t original_ref_count() const { return original_ref_count_; }
+  void set_ref_count(size_t ref_count) { ref_count_ = ref_count; }
+  size_t ref_count() const { return ref_count_; }
+  void IncreaseOriginalRefCount() {
+    if (original_ref_count_ < SIZE_MAX) {
+      original_ref_count_++;
+    }
+  }
+  void DecreaseRefCount() { ref_count_--; }
+  void ResetRefCount() { ref_count_ = original_ref_count_; }
+
+ protected:
+  mutable size_t original_ref_count_{1};
+  // It will be decreased in the running, and reset by original_ref_count_ when it is zero.
+  mutable size_t ref_count_{1};
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;
 }  // namespace mindspore

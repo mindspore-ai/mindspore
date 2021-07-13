@@ -286,7 +286,14 @@ class Tensor : public MetaTensor {
   void set_init_flag(bool flag) { init_flag_ = flag; }
 
   DeviceSyncPtr device_address() const { return device_sync_; }
-  void set_device_address(const DeviceSyncPtr &device_sync) { device_sync_ = device_sync; }
+  void set_device_address(const DeviceSyncPtr &device_sync) {
+    device_sync_ = device_sync;
+    // To support the old and new runtime coexistence.
+    if (device_sync_ != nullptr) {
+      device_sync_->set_original_ref_count(SIZE_MAX);
+      device_sync_->ResetRefCount();
+    }
+  }
   void set_padding_type(const std::string padding_type) { padding_type_ = padding_type; }
   std::string padding_type() const { return padding_type_; }
 
