@@ -60,6 +60,5 @@ MS_REG_GPU_KERNEL_ONE(Meshgrid,
 MS_REG_GPU_KERNEL_ONE(Meshgrid,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
                       MeshgridGpuKernel, int64_t)
-
 }  // namespace kernel
 }  // namespace mindspore
