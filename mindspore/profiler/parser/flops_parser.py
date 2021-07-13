@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Memory Usage Parser."""
+"""Flops parser which parsing flops from aicore file."""
 import os
 import struct
 import json
@@ -25,7 +25,7 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException,
 
 class FlopsParser:
     """
-    The parser for parsing aicore file.
+    The parser for parsing flops from aicore file.
 
     Args:
         input_dir (str): Directory(JOBXXX) where the original profiling data are located.
@@ -50,6 +50,7 @@ class FlopsParser:
         self._device_id = device_id
         self._flops_filename = f'flops_{self._device_id}.txt'
         self._flops_summary_filename = f'flops_summary_{self._device_id}.json'
+        self._flops_scope_filename = f'flops_scope_{self._device_id}.json'
         self._aicore_filename = f'aicore.data.{self._device_id}.slice_0'
         self._optime_filename = f'output_op_compute_time_{self._device_id}.txt'
         self._info_json = f'info.json.{device_id}'
@@ -58,6 +59,9 @@ class FlopsParser:
             'FLOPS': 0,
             'FLOPS_Utilization': 0
         }
+        self._flops_each_scope = {}
+        self._flops_sankey_diagram = {}
+        self._max_scope_num = 0
 
     def execute(self):
         """Get the flops of aicore operators and write to file."""
@@ -87,10 +91,11 @@ class FlopsParser:
             op_flops = [op_name, str(task_fops), str(gflop_per_second), str(flops_utilization)]
             op_flops_list.append(op_flops)
             op_name_set.add(op_name)
+            self._add_flops_to_each_scope(op_name, task_fops)
 
         self._flops_summary['FLOPS'] /= len(op_name_set)
         self._flops_summary['FLOPS_Utilization'] /= len(op_name_set)
-
+        self._format_scope_flops()
         self._write_file(op_flops_list)
 
     def _load_aicore_data(self):
@@ -185,7 +190,7 @@ class FlopsParser:
         return op_name
 
     def _get_op_avg_time_dict(self):
-        """get the op average execution time."""
+        """Get the op average execution time."""
         op_avg_time_dict = {}
         optime_file_path = os.path.join(self._output_dir, self._optime_filename)
 
@@ -206,16 +211,80 @@ class FlopsParser:
 
         return op_avg_time_dict
 
+    def _add_flops_to_each_scope(self, op_name, task_fops):
+        """
+        Add task_fops to each scope of the op_name.
+
+        The top-level scope name is "Default" or "recompute_Default" or "Gradients".
+        To classify the same scope name under different top-level scope, a suffix name is added.
+        For op_name like "Default/network", the "network" will be renamed as "network(Default)".
+        For op_name like "recompute_Default/network", "network" --> "network(recompute_Default)".
+        For op_name like "Gradients/network", "network" --> "network(Gradients)".
+        For op_name like "Gradients/recompute_Default/network"，"network" --> "network(recompute_Gradients)".
+        """
+        # Only extracts the scope name, remove the operator name.
+        scope_list = op_name.split('/')[:-1]
+        self._max_scope_num = max(self._max_scope_num, len(scope_list))
+        top_level_scope = scope_list[0]
+        suffix_name = ""
+        if op_name.startswith("Gradients/recompute_Default"):
+            suffix_name = "(recompute_Gradients)"
+        else:
+            suffix_name = f"({top_level_scope})"
+        scope_list = list(map(lambda x: x+suffix_name, scope_list))
+        scope_list[0] = top_level_scope
+
+        # Add root node (refers to total flops).
+        scope_list.insert(0, "Total")
+        scope_depth = len(scope_list)
+        for idx in range(scope_depth - 1):
+            key_name = scope_list[idx] + " " + scope_list[idx+1]
+            self._flops_each_scope.setdefault(key_name, 0)
+            self._flops_each_scope[key_name] += task_fops
+
+    def _format_scope_flops(self):
+        """
+        Format the flops of each scope to a Sankey Diagram.
+
+        The format of Sankey Diagram is:
+            {"nodes": [
+                        {"name": "Default"},
+                        {"name": "network"}
+                     ],
+             "links": [
+                        {"source": "Total", "target": "Default", "value": 555},
+                        {"source": "Default", "target": "network", "value": 555}
+                     ]
+            }
+        """
+        nodes, links = [], []
+        scope_name_set = set()
+        for scope_link, task_fops in self._flops_each_scope.items():
+            source, target = scope_link.split()
+            scope_name_set.update({source, target})
+            link = {
+                "source": source,
+                "target": target,
+                "value": round(task_fops, 3)
+            }
+            links.append(link)
+
+        for scope_name in scope_name_set:
+            node = {"name": scope_name}
+            nodes.append(node)
+
+        sankey_diagram = {"nodes": nodes, "links": links}
+        self._flops_sankey_diagram = {
+            "data": sankey_diagram,
+            "max_scope_num": self._max_scope_num
+        }
+
     def _write_file(self, op_flops_list):
         """Write the operator's flops related information into file."""
-        output_file_path = os.path.join(
-            self._output_dir,
-            self._flops_filename
-        )
-        output_summary_file_path = os.path.join(
-            self._output_dir,
-            self._flops_summary_filename
-        )
+        join_file_path = lambda x: os.path.join(self._output_dir, x)
+        output_file_path = join_file_path(self._flops_filename)
+        output_summary_file_path = join_file_path(self._flops_summary_filename)
+        output_flops_scope_file_path = join_file_path(self._flops_scope_filename)
 
         try:
             with open(output_file_path, 'w') as f:
@@ -237,4 +306,12 @@ class FlopsParser:
             os.chmod(output_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.error(f'Error occurred when write {output_summary_file_path} file: {err}')
+            raise ProfilerIOException()
+
+        try:
+            with open(output_flops_scope_file_path, 'w') as json_file:
+                json.dump(self._flops_sankey_diagram, json_file)
+            os.chmod(output_flops_scope_file_path, stat.S_IREAD | stat.S_IWRITE)
+        except (IOError, OSError) as err:
+            logger.error(f'Error occurred when write {output_flops_scope_file_path} file: {err}')
             raise ProfilerIOException()

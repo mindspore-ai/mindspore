@@ -234,7 +234,7 @@ void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base
     }
     if (iter_start_op_timestamp->second.size() <= step || fp_op_timestamp->second.size() <= step ||
         iter_end_op_timestamp->second.size() <= step || bp_end_op_timestamp->second.size() <= step) {
-      MS_LOG(ERROR) << "[profiling step trace] the number of fp/bp/iter_end timestamp not enough";
+      MS_LOG(WARNING) << "[profiling step trace] insufficient number of timestamps for fp/bp/iter_end operators.";
       ofs.close();
       return;
     }
@@ -259,7 +259,7 @@ void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base
         }
 
         if (iter_op_timestamp->second.size() <= step) {
-          MS_LOG(ERROR) << "[profiling step trace] the number of communication op timestamp not enough";
+          MS_LOG(WARNING) << "[profiling step trace] insufficient number of timestamps for communication operators.";
           ofs.close();
           return;
         }
