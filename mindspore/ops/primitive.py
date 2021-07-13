@@ -236,7 +236,7 @@ class Primitive(Primitive_):
             >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
             >>> output = addn.check_elim((input_x,))
             >>> print(output)
-            (True, Tensor(shape = [3], dtype = Float32, value = [1.0000000e+00,2.0000000e+00，3.0000000e+00]))
+            (True, Tensor(shape = [3], dtype = Float32, value = [1.0000000e+00,2.0000000e+00,3.0000000e+00]))
     """
         return (False, None)
 

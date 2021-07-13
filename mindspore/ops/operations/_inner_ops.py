@@ -723,10 +723,10 @@ class SequenceMask(PrimitiveWithCheck):
         >>> sequence_mask = ops.SequenceMask()
         >>> output = sequence_mask(x, 3)
         >>> print(output)
-        [[[True, False, False],
-          [True, True, True]],
-         [[True, True, False],
-          [False, False, False]]]
+        [[[True False False]
+          [True True True]]
+         [[True True False]
+          [False False False]]]
     """
 
     @prim_attr_register
