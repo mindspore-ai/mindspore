@@ -2233,7 +2233,7 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
 }
 
 // if reshape's output connect to several primitive, return the first layout found
-std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode) {
+std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode, bool *next_is_reshape) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
@@ -2242,6 +2242,10 @@ std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode) {
   for (auto &node_pair : node_set) {
     CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+      continue;
+    }
+    if (IsPrimitiveCNode(use_apply, prim::kPrimReshape)) {
+      *next_is_reshape = true;
       continue;
     }
     ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
@@ -2254,13 +2258,14 @@ std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode) {
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
       MS_LOG(INFO) << "FindNextLayout success prim " << node_prim->name();
+      *next_is_reshape = false;
       auto layout = GetInputLayoutFromCNode(node_pair);
       return std::make_shared<TensorLayout>(layout);
     }
     MS_LOG(DEBUG) << "FindNextLayout failed prim " << node_prim->name() << "  " << IsParallelCareNode(use_apply)
                   << "   " << use_apply->has_user_data<OperatorInfo>();
 
-    auto layout_ptr = FindNextLayout(use_apply);
+    auto layout_ptr = FindNextLayout(use_apply, next_is_reshape);
     if (layout_ptr) {
       return layout_ptr;
     }
@@ -2475,10 +2480,14 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetInputLayout(*prev_layout_ptr);
     }
-    auto next_layout_ptr = FindNextLayout(cnode);
+    bool is_next_reshape = false;
+    auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape);
     if (next_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetOutputLayout(*next_layout_ptr);
+    } else if (is_next_reshape && prev_layout_ptr != nullptr) {
+      auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
+      reshape_info_ptr->SetOutputLayout(*prev_layout_ptr);
     }
     if (operator_info->Init(nullptr) == FAILED) {
       MS_LOG(EXCEPTION) << "Failure:operator " << prim->ToString() << " init failed";
