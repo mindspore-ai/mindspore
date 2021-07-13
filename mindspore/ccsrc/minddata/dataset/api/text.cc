@@ -30,6 +30,12 @@ namespace dataset {
 // Transform operations for text.
 namespace text {
 
+constexpr size_t size_two = 2;
+constexpr size_t size_three = 3;
+constexpr int64_t value_one = 1;
+constexpr int64_t value_two = 2;
+constexpr size_t kMaxLoggedRows = 10;
+
 // FUNCTIONS TO CREATE TEXT OPERATIONS
 // (In alphabetical order)
 
@@ -188,10 +194,10 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
     std::smatch tokens;
     std::regex_match(line, tokens, regex);
     if (std::regex_match(line, tokens, regex)) {
-      if (tokens.size() == 2) {
-        user_dict->emplace_back(tokens.str(1), 0);
-      } else if (tokens.size() == 3) {
-        user_dict->emplace_back(tokens.str(1), strtoll(tokens.str(2).c_str(), NULL, 0));
+      if (tokens.size() == size_two) {
+        user_dict->emplace_back(tokens.str(value_one), 0);
+      } else if (tokens.size() == size_three) {
+        user_dict->emplace_back(tokens.str(value_one), strtoll(tokens.str(value_two).c_str(), NULL, 0));
       } else {
         continue;
       }
@@ -202,7 +208,7 @@ Status JiebaTokenizer::ParserFile(const std::string &file_path,
   MS_LOG(INFO) << "JiebaTokenizer::AddDict: The size of user input dictionary is: " << user_dict->size();
   MS_LOG(INFO) << "Valid rows in input dictionary (Maximum of first 10 rows are shown.):";
   for (std::size_t i = 0; i != user_dict->size(); ++i) {
-    if (i >= 10) break;
+    if (i >= kMaxLoggedRows) break;
     MS_LOG(INFO) << user_dict->at(i).first << " " << user_dict->at(i).second;
   }
   return Status::OK();
