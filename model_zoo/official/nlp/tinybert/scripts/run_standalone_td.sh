@@ -16,17 +16,21 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash scripts/run_standalone_td.sh"
-echo "for example: bash scripts/run_standalone_td.sh"
+echo "bash scripts/run_standalone_td.sh [config_path]"
+echo "for example: bash scripts/run_standalone_td.sh /home/data1/td_config_sst2.yaml"
 echo "=============================================================================================================="
 
+if [ $# != 1 ]; then
+  echo "bash scripts/run_standalone_td.sh [config_path]"
+  exit 1
+fi
 mkdir -p ms_log
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_task_distill.py \
-    --config_path="../../td_config/td_config_sst2.yaml" \
+    --config_path=$1 \
     --device_target="Ascend" \
     --device_id=0 \
     --do_train="true" \
