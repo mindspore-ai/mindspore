@@ -151,8 +151,6 @@ def train_wide_and_deep():
     """ train_wide_and_deep """
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=cfg.device_target)
-    if cfg.device_target == "GPU":
-        context.set_context(enable_graph_kernel=True)
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
     init()
