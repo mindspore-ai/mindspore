@@ -28,16 +28,16 @@ class CustomAddInfer : public kernel::KernelInterface {
   CustomAddInfer() = default;
   ~CustomAddInfer() = default;
 
-  int Infer(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
+  int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
             const schema::Primitive *primitive) override {
-    outputs[0]->set_format(inputs[0]->format());
-    outputs[0]->set_data_type(inputs[0]->data_type());
+    (*outputs)[0].SetFormat((*inputs)[0].format());
+    (*outputs)[0].SetDataType((*inputs)[0].DataType());
     auto ret = common::CheckInputs(inputs);
     if (ret != lite::RET_OK) {
-      outputs[0]->set_shape({-1});  // shape{-1} shows that shape need to be inferred when running.
+      (*outputs)[0].SetShape({-1});  // shape{-1} shows that shape need to be inferred when running.
       return ret;
     }
-    outputs[0]->set_shape(inputs[0]->shape());
+    (*outputs)[0].SetShape((*inputs)[0].Shape());
     return lite::RET_OK;
   }
 };
