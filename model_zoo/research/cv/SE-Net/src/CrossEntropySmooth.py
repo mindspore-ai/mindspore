@@ -16,12 +16,12 @@
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import LossBase
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 
-class CrossEntropySmooth(_Loss):
+class CrossEntropySmooth(LossBase):
     """CrossEntropy"""
     def __init__(self, sparse=True, reduction='mean', smooth_factor=0., num_classes=1000):
         super(CrossEntropySmooth, self).__init__()

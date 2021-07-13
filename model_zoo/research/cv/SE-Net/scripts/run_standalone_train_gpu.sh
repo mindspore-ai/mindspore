@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,28 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-network config setting, will be used in train.py and eval.py
-"""
-from easydict import EasyDict as ed
-# config for se-resnet50, imagenet2012
-config2 = ed({
-    "class_num": 1001,
-    "batch_size": 256,
-    "loss_scale": 1024,
-    "momentum": 0.9,
-    "weight_decay": 1e-4,
-    "epoch_size": 90,
-    "pretrain_epoch_size": 0,
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 5,
-    "keep_checkpoint_max": 90,
-    "save_checkpoint_path": "./",
-    "warmup_epochs": 0,
-    "lr_decay_mode": "linear",
-    "use_label_smooth": True,
-    "label_smooth_factor": 0.1,
-    "lr_init": 0,
-    "lr_max": 0.8,
-    "lr_end": 0.0
-})
+
+if [ $# != 3 ]
+then 
+    echo "Usage: sh run_standalone_train.sh [NET] [DATASET_NAME] [DATASET_PATH]"
+exit 1
+fi
+
+ulimit -u unlimited
+export DEVICE_NUM=1
+export DEVICE_ID=0
+export RANK_ID=0
+export RANK_SIZE=1
+export NET=$1
+export DATASET=$2
+export DATASET_PATH=$3
+
+
+if [ -d "train" ];
+then
+    rm -rf ./train
+fi
+
+mkdir ./train
+cp ../*.py ./train
+cp *.sh ./train
+cp -r ../src ./train
+cd ./train || exit
+echo "start training for GPU device $DEVICE_ID"
+env > env.log
+python train.py --device_target="GPU" --net=$NET --dataset=$DATASET --dataset_path=$DATASET_PATH > log 2>&1 &
+cd ..

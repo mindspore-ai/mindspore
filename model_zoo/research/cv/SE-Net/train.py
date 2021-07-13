@@ -24,7 +24,7 @@ from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.common import set_seed
 from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
@@ -67,12 +67,19 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             set_algo_parameters(elementwise_op_strategy_follow=True)
-            if args_opt.net == "se-resnet50":
-                context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
-            else:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[180, 313])
             init()
-
+        elif target == "GPU":
+            init('nccl')
+            context.reset_auto_parallel_context()
+            rank = get_rank()
+            device_num = get_group_size()
+            context.set_auto_parallel_context(device_num=device_num,
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+        if args_opt.net == "se-resnet50":
+            context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
+        else:
+            context.set_auto_parallel_context(all_reduce_fusion_config=[180, 313])
 
     # create dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
@@ -120,7 +127,7 @@ if __name__ == '__main__':
                     {'order_params': net.trainable_params()}]
     opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
     # define loss, model
-    if target == "Ascend":
+    if target in ["Ascend", "GPU"]:
         if args_opt.dataset == "imagenet2012":
             if not config.use_label_smooth:
                 config.label_smooth_factor = 0.0
@@ -137,6 +144,8 @@ if __name__ == '__main__':
     if config.save_checkpoint:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
+        if target == "GPU" and args_opt.run_distribute:
+            ckpt_save_dir = os.path.join(config.save_checkpoint_path, "ckpt_" + str(rank) + "/")
         ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
         cb += [ckpt_cb]
 
