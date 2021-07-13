@@ -139,7 +139,8 @@ class MinddataProfilingAnalyzer:
             raise ValueError(msg)
         self._device_target = device_target
 
-    def _validate_directory(self, dir_name, dir_type):
+    @staticmethod
+    def _validate_directory(dir_name, dir_type):
         """
         Validate the input directory.
 
@@ -149,7 +150,7 @@ class MinddataProfilingAnalyzer:
         """
         try:
             validated_dir = validate_and_normalize_path(dir_name)
-        except ValidationError as path_error:
+        except RuntimeError as path_error:
             logger.warning('<%s> <%s> is invalid.', dir_type, validated_dir)
             raise ProfilerPathErrorException(dir_type + 'is invalid.') from path_error
 
@@ -267,7 +268,7 @@ class MinddataProfilingAnalyzer:
         """
         try:
             output_dir = validate_and_normalize_path(output_path)
-        except ValidationError as path_error:
+        except RuntimeError as path_error:
             logger.warning('Output path <%s> is invalid.', output_path)
             raise ProfilerPathErrorException('Output path is invalid.') from path_error
 
@@ -278,7 +279,8 @@ class MinddataProfilingAnalyzer:
         summary_templatename = 'minddata_pipeline_summary_{}.json'
         return os.path.join(output_dir, summary_templatename.format(self._device_id))
 
-    def _parse_pipeline_metrics_info(self, metrics):
+    @staticmethod
+    def _parse_pipeline_metrics_info(metrics):
         """
         Parse and process the pipeline profiling metrics information for a given op.
 
@@ -403,7 +405,8 @@ class MinddataProfilingAnalyzer:
 
         return return_dict
 
-    def _parse_cpu_util_info(self, cpu_util_info, num_pipeline_ops):
+    @staticmethod
+    def _parse_cpu_util_info(cpu_util_info, num_pipeline_ops):
         """
         Parse and process the CPU profiling information.
 
@@ -473,7 +476,7 @@ class MinddataProfilingAnalyzer:
                 avg_batch_time: Average per batch time for pipeline in milliseconds
         """
         # Information on the format of the device tracing profiling information.
-        # Format: "type extra-info batch-num value timestamp"
+        # Format is: type extra-info batch-num value timestamp
         # 0) type: 0: time,  1: connector size
         # 1) extra-info: if type is 0 - 0: pipeline time, 1: push tdt time, 2: batch time
         #                if type is 1 - connector capacity
@@ -509,7 +512,8 @@ class MinddataProfilingAnalyzer:
         return_dict['per_batch_time'] = [round(avg_batch_time, 3)]
         return return_dict
 
-    def _analyze_for_bottleneck_op(self, summary_dict):
+    @staticmethod
+    def _analyze_for_bottleneck_op(summary_dict):
         """
         Analyze the MindData summary information and identify any potential bottleneck operator
         in the MindData pipeline.
@@ -574,6 +578,9 @@ class MinddataProfilingAnalyzer:
 
         # Close file for writing
         data_file.close()
+
+        # Update file permissions
+        os.chmod(output_csv_path_filename, stat.S_IREAD | stat.S_IWRITE)
 
     def _analyze_and_save(self, pipeline_info, cpu_util_info, device_trace_info):
         """
