@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
+import gym
+from src.agent import Agent
+from src.config import config_dqn as cfg
+
+def dqn_net(*args, **kwargs):
+    agent = Agent(*args, **kwargs)
+    return agent.policy_net
+
 
 def create_network(name, *args, **kwargs):
     """
-        create mobilenetv2 network
+    create dqn network
     """
-    if name == "mobilenetv2":
-        backbone_net = MobileNetV2Backbone()
-        include_top = kwargs.get("include_top", True)
-        num_class = kwargs.get("num_classes", "10")
-        if include_top:
-            activation = kwargs.get("activation", True)
-            head_net = MobileNetV2Head(input_channel=backbone_net.out_channels,
-                                       num_classes=int(num_class),
-                                       activation=activation)
-            net = mobilenet_v2(backbone_net, head_net)
-            return net
-        return backbone_net
+    if name == "dqn":
+        env = gym.make('CartPole-v1')
+        cfg.state_space_dim = env.observation_space.shape[0]
+        cfg.action_space_dim = env.action_space.n
+        return dqn_net(**cfg)
     raise NotImplementedError(f"{name} is not implemented in the repo")
