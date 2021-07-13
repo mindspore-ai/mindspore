@@ -123,7 +123,7 @@ void DataDumper::LoadDumpInfo() {
                    std::inserter(stream_task_to_opname, stream_task_to_opname.end()),
                    [](const std::pair<std::string, std::shared_ptr<RuntimeInfo>> &p)
                      -> std::pair<std::pair<uint32_t, uint32_t>, std::string> {
-                     return {{std::get<1>(*p.second), std::get<0>(*p.second)}, p.first};
+                     return {{std::get<1>(*p.second), std::get<0>(*p.second)}, StripUniqueId(p.first)};
                    });
     debugger->SetStreamTaskToOpnameMap(stream_task_to_opname);
   }
@@ -463,6 +463,18 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     task->mutable_input()->Add(std::move(input));
     offset += sizeof(void *);
   }
+}
+
+std::string DataDumper::StripUniqueId(const std::string node_name) {
+  size_t last_underscore = node_name.find_last_of('_');
+  std::string stripped_node_name;
+  if (last_underscore == string::npos) {
+    MS_LOG(ERROR) << "Could not strip unique ID from " << node_name;
+    stripped_node_name = node_name;
+  } else {
+    stripped_node_name = node_name.substr(0, last_underscore);
+  }
+  return stripped_node_name;
 }
 }  // namespace ascend
 }  // namespace device

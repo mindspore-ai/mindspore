@@ -60,7 +60,7 @@ class DumpJsonParser {
   bool GetIterDumpFlag() const;
   bool InputNeedDump() const;
   bool OutputNeedDump() const;
-  std::string GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const;
+  std::string GetOpOverflowBinPath(uint32_t graph_id) const;
   void UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph);
 
   void ClearGraph() { graphs_.clear(); }
