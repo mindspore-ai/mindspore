@@ -107,19 +107,19 @@ do
     env > env.log
     if [ $# == 3 ]
     then    
-        taskset -c $cmdopt python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 \
+        taskset -c $cmdopt python train.py --run_distribute=True --device_num=$RANK_SIZE --data_path=$PATH2 \
         --config_path=$CONFIG_FILE --output_path './output' &> log &
     fi
     
     if [ $# == 4 ]
     then
-        taskset -c $cmdopt python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 --pre_trained=$PATH3 \
+        taskset -c $cmdopt python train.py --run_distribute=True --device_num=$RANK_SIZE --data_path=$PATH2 --pre_trained=$PATH3 \
         --config_path=$CONFIG_FILE --output_path './output' &> log &
     fi
 
     if [ $# == 5 ]
     then
-      taskset -c $cmdopt python train.py --run_distribute=True --device_num=$DEVICE_NUM --data_path=$PATH2 \
+      taskset -c $cmdopt python train.py --run_distribute=True --device_num=$RANK_SIZE --data_path=$PATH2 \
       --run_eval=$RUN_EVAL --eval_data_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID \
       --config_path=$CONFIG_FILE --output_path './output' &> log &
       if [ "x${RUN_EVAL}" == "xTrue" ]
