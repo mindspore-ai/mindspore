@@ -14,12 +14,17 @@
 # ============================================================================
 """hub config"""
 from src.cnn_ctc import CNNCTC_Model
+from src.config import Config_CNNCTC
 
-def cnnctc(*args, **kwargs):
+def cnnctc_net(*args, **kwargs):
     return CNNCTC_Model(*args, **kwargs)
 
 
 def create_network(name, *args, **kwargs):
+    """
+        create cnnctc network
+    """
     if name == "cnnctc":
-        return CNNCTC_Model(*args, **kwargs)
+        config = Config_CNNCTC
+        return cnnctc_net(config.NUM_CLASS, config.HIDDEN_SIZE, config.FINAL_FEATURE_WIDTH, *args, **kwargs)
     raise NotImplementedError(f"{name} is not implemented in the repo")
