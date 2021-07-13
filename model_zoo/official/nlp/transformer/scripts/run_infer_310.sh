@@ -14,10 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 2 || $# -gt 3 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+if [[ $# -lt 2 || $# -gt 4 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NEED_PREPROCESS] [DEVICE_ID] [CONFIG_PATH]
     NEED_PREPROCESS means weather need preprocess or not, it's value is 'y' or 'n'.
-    DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
+    DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero
+    CONFIG_PATH is optional, default value is '../default_config_large.yaml'"
 exit 1
 fi
 
@@ -38,9 +39,22 @@ else
 fi
 
 device_id=0
-if [ $# == 3 ]; then
+if [ $# -ge 3 ]; then
     device_id=$3
 fi
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_PATH="${BASE_PATH}/../default_config_large.yaml"
+if [ $# -eq 4 ]
+then
+    CONFIG_PATH=$(get_real_path $4)
+    if [ ! -f $CONFIG_PATH ]
+    then
+        echo "error: CONFIG_PATH=$CONFIG_PATH is not a file"
+    exit 1
+    fi
+fi
+echo $CONFIG_PATH
 
 echo "mindir name: "$model
 echo "need preprocess: "$need_preprocess
@@ -66,7 +80,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --config_path="./default_config_large.yaml" --result_path=./preprocess_Result/
+    python3.7 ../preprocess.py --config_path=$CONFIG_PATH --result_path=./preprocess_Result/
 }
 
 function compile_app()
@@ -93,7 +107,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --config_path="./default_config_large.yaml" --result_dir=./result_Files &> acc.log
+    python3.7 ../postprocess.py --config_path=$CONFIG_PATH --result_dir=./result_Files &> acc.log
 }
 
 if [ $need_preprocess == "y" ]; then
