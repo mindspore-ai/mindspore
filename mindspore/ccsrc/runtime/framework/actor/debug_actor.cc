@@ -55,7 +55,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 #ifdef ENABLE_DEBUGGER
     auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(cnode->func_graph());
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    // debugger is not enabled for dataset graphs
+    // Debugger is not enabled for dataset graphs.
     if (Debugger::GetInstance()->CheckDatasetGraph(kernel_graph)) {
       // Call back to the from actor to process after debug finished.
       Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);

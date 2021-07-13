@@ -828,8 +828,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> device_and_graph_to_nodes;
   for (auto w_table_item : watchpoint_table) {
     auto wp = std::get<1>(w_table_item);
+    unsigned int index = 0;
     for (auto check_node : wp.check_node_list) {
-      unsigned int index = 0;
       std::vector<uint32_t> devices = std::get<1>(wp.check_node_device_list[index]);
       std::vector<uint32_t> graphs = std::get<1>(wp.check_node_graph_list[index]);
       for (auto device : devices) {
@@ -920,7 +920,6 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
                              &tensor_list);
     }
   }
-
   return tensor_list;
 }
 
