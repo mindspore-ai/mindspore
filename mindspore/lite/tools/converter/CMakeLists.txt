@@ -183,6 +183,7 @@ target_link_libraries(converter_lite PRIVATE
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid
+        cpu_kernel_random_standard_normal
         tflite_parser_mid
         tf_parser_mid
         caffe_parser_mid
