@@ -82,20 +82,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
   virtual void SetNodeIndex(const AnfNodePtr &node, size_t out_index) { node_index_ = {node, out_index}; }
-
-  // The related interface of reference count operation.
-  void set_original_ref_count(size_t original_ref_count) { original_ref_count_ = original_ref_count; }
-  size_t original_ref_count() const { return original_ref_count_; }
-  void set_ref_count(size_t ref_count) { ref_count_ = ref_count; }
-  size_t ref_count() const { return ref_count_; }
-  void IncreaseOriginalRefCount() {
-    if (original_ref_count_ < SIZE_MAX) {
-      original_ref_count_++;
-    }
-  }
-  void DecreaseRefCount() { ref_count_--; }
-  void ResetRefCount() { ref_count_ = original_ref_count_; }
-
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
                              TypeId host_type, bool trans_flag) const {
     return true;
@@ -117,9 +103,6 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
   mutable void *ptr_{nullptr};
   size_t size_{0};
-  mutable size_t original_ref_count_{1};
-  // It will be decreased in the running, and reset by original_ref_count_ when it is zero.
-  mutable size_t ref_count_{1};
   string format_{"DefaultFormat"};
   TypeId type_id_{kNumberTypeFloat16};
   mutable bool from_mem_pool_{false};

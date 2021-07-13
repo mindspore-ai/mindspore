@@ -303,10 +303,12 @@ size_t CountValueNum(const ValueTuplePtr &value_tuple) {
   size_t cnt = 0;
   const auto &value_list = value_tuple->value();
   for (const auto &value : value_list) {
-    if (!value->isa<ValueTuple>()) {
-      cnt++;
-    } else {
+    if (value->isa<None>()) {
+      continue;
+    } else if (value->isa<ValueTuple>()) {
       cnt += CountValueNum(value->cast<ValueTuplePtr>());
+    } else {
+      cnt++;
     }
   }
   return cnt;
