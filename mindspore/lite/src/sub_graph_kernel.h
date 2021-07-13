@@ -175,6 +175,36 @@ class CpuFp16SubGraph : public CpuSubGraph {
     return CpuSubGraph::Init();
   }
 
+  int Prepare() override {
+    auto ret = CpuSubGraph::Prepare();
+    if (ret != RET_OK) {
+      return ret;
+    }
+    for (auto &node : this->nodes_) {
+      if (node->type() == schema::PrimitiveType_Cast) {
+        auto inputs = node->in_tensors();
+        MS_ASSERT(inputs.size() >= 2);
+        auto dst_tensor = inputs[1];
+        MS_ASSERT(dst_tensor != nullptr);
+        MS_ASSERT(dst_tensor->data_type() == kNumberTypeInt32);
+        MS_ASSERT(dst_tensor->data() != nullptr);
+        MS_ASSERT(dst_tensor->ElementsNum() == 1);
+        auto *dst_data = reinterpret_cast<int32_t *>(dst_tensor->data());
+        if (dst_data[0] == kNumberTypeFloat32) {
+          dst_data[0] = kNumberTypeFloat16;
+        }
+        auto outputs = node->out_tensors();
+        MS_ASSERT(outputs.size() == 1);
+        auto output = outputs.front();
+        MS_ASSERT(output != nullptr);
+        if (output->data_type() == kNumberTypeFloat32) {
+          output->set_data_type(kNumberTypeFloat16);
+        }
+      }
+    }
+    return RET_OK;
+  }
+
  private:
   bool support_fp16_ = false;
 };

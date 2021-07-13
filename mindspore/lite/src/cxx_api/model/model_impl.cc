@@ -71,15 +71,7 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
     return status;
   }
 
-  size_t data_size = 0;
-  char *model_data = lite::ReadFile(model_path.c_str(), &data_size);
-  if (model_data == nullptr) {
-    MS_LOG(ERROR) << "Read model path failed.";
-    return kMDFileNotExist;
-  }
-
-  auto session = std::shared_ptr<session::LiteSession>(
-    session::LiteSession::CreateSession(const_cast<const char *>(model_data), data_size, &lite_context));
+  auto session = std::shared_ptr<session::LiteSession>(lite::LiteSession::CreateSession(model_path, &lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;

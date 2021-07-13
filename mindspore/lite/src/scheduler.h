@@ -67,8 +67,6 @@ class Scheduler {
                     kernel::LiteKernel **kernel);
   int FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
-  int FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                    OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
   int FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel);
 
@@ -91,13 +89,6 @@ class Scheduler {
   int ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel, std::vector<kernel::LiteKernel *> *dst_kernel,
                          std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
   // create subgraph_kernel from a vector of kernel
-  kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
-                                               const std::vector<lite::Tensor *> *in_tensors,
-                                               const std::vector<lite::Tensor *> *out_tensors,
-                                               kernel::SubGraphType type);
-  bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const kernel::LiteKernel &kernel);
-  std::vector<kernel::LiteKernel *> FindAllSubGraphKernels(
-    std::vector<kernel::LiteKernel *> head_kernels, std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
   std::vector<kernel::LiteKernel *> ScheduleMainSubGraphToKernels();
   kernel::LiteKernel *SchedulePartialToSubGraphKernel(const int &subgraph_index);
   kernel::SubGraphType PartialSubGraphType(const std::vector<kernel::LiteKernel *> &kernels);
@@ -107,7 +98,6 @@ class Scheduler {
   // other methods
   static TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
   static void SetKernelTensorDataType(kernel::LiteKernel *kernel);
-  static kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel);
   int CopyPartialShapeToSubGraph(const lite::Model::Node *partial_node);
   int RestoreSubGraphInput(const lite::Model::Node *partial_node);
   bool SubGraphHasScheduled(const int &index);
