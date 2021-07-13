@@ -23,14 +23,15 @@
 typedef unsigned char Byte;
 namespace mindspore {
 constexpr size_t MAX_BLOCK_SIZE = 512 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
+constexpr size_t RESERVED_BYTE_PER_BLOCK = 50;        // Reserved byte per block to save addition info
 constexpr unsigned int MAGIC_NUM = 0x7F3A5ED8;        // Magic number
 
-std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, Byte *plain_data, const size_t plain_len, const Byte *key,
-                                const size_t key_len, const std::string &enc_mode);
+std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, size_t plain_len, const Byte *key,
+                                size_t key_len, const std::string &enc_mode);
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_data_path, const Byte *key,
-                                const size_t key_len, const std::string &dec_mode);
-std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, const size_t data_size, const Byte *key,
-                                const size_t key_len, const std::string &dec_mode);
+                                size_t key_len, const std::string &dec_mode);
+std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, size_t data_size, const Byte *key,
+                                size_t key_len, const std::string &dec_mode);
 bool IsCipherFile(const std::string &file_path);
 bool IsCipherFile(const Byte *model_data);
 }  // namespace mindspore

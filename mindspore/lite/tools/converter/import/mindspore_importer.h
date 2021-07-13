@@ -33,7 +33,7 @@ class MindsporeImporter {
   STATUS WeightFormatTransform(const FuncGraphPtr &graph);
   STATUS HardCodeMindir(const CNodePtr &conv_node, const FuncGraphPtr &graph);
   QuantType quant_type_ = schema::QuantType_QUANT_NONE;
-  size_t Hex2ByteArray(std::string hex_str, unsigned char *byte_array, size_t max_len);
+  size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len);
 };
 
 }  // namespace mindspore::lite
