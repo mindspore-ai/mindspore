@@ -42,11 +42,11 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   }
 }
 
-void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void AbstractNode::ProcessRegisterResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   RegisterRespMessage register_resp_message;
-  register_resp_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(register_resp_message.ParseFromArray(data, SizeToInt(size)));
   if (register_resp_message.node_id() != node_info_.node_id_) {
     MS_LOG(EXCEPTION) << "The node id received:" << register_resp_message.node_id()
                       << " is not match the current node id:" << node_info_.node_id_;
@@ -59,7 +59,7 @@ void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const 
   MS_LOG(INFO) << "The node id is:" << node_info_.node_id_ << " registered scheduler success!";
 }
 
-bool AbstractNode::Broadcast(const enum NodeRole &node_role, const DataPtr &message, size_t size, int command,
+bool AbstractNode::Broadcast(const NodeRole &node_role, const DataPtr &message, size_t size, int command,
                              const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(message);
   if (node_role != NodeRole::SERVER) {
@@ -165,7 +165,7 @@ void AbstractNode::RegisterCustomEventCallback(const uint32_t &event, const Even
   custom_event_to_callback_.try_emplace(event, event_cb);
 }
 
-bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
+bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
                         int command, const uint32_t &timeout) {
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     MS_LOG(DEBUG) << "The node is timeout, can not send message.";
@@ -223,7 +223,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
   return Wait(request_id, timeout);
 }
 
-bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len,
+bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len,
                         int command, VectorPtr *output, const uint32_t &timeout) {
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     MS_LOG(DEBUG) << "The node is timeout, can not send message.";
@@ -309,7 +309,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
   return Wait(request_id, timeout);
 }
 
-uint64_t AbstractNode::CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const void *data,
+uint64_t AbstractNode::CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data,
                                            size_t size) {
   MS_EXCEPTION_IF_NULL(data);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
@@ -326,8 +326,8 @@ uint64_t AbstractNode::CollectiveSendAsync(const enum NodeRole &node_role, const
   return SendMessageAsync(client, message_meta, Protos::RAW, data, size);
 }
 
-std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum NodeRole &node_role,
-                                                                   const uint32_t &rank_id, VectorPtr *output) {
+std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
+                                                                   VectorPtr *output) {
   MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
@@ -359,7 +359,7 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
   return std::make_pair(rank_id, rank_request_id);
 }
 
-bool AbstractNode::CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout) {
+bool AbstractNode::CollectiveWait(const std::pair<uint32_t, uint64_t> &request_id, const uint32_t &timeout) {
   std::unique_lock<std::mutex> lock(receive_callbacks_mutex_);
   bool res =
     receive_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] { return receive_messages_done_[request_id]; });
@@ -473,11 +473,11 @@ bool AbstractNode::CheckSchedulerTimeout() const {
   return false;
 }
 
-void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   HeartbeatRespMessage heartbeat_resp_message;
-  heartbeat_resp_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(heartbeat_resp_message.ParseFromArray(data, SizeToInt(size)));
 
   current_cluster_state_ = heartbeat_resp_message.cluster_state();
   MS_LOG(DEBUG) << "The current cluster state from heartbeat:"
@@ -529,11 +529,11 @@ void AbstractNode::FetchServers(const std::shared_ptr<TcpClient> &client) {
   }
 }
 
-void AbstractNode::ProcessFetchServersResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void AbstractNode::ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   FetchServersRespMessage fetch_servers_resp_message;
-  fetch_servers_resp_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(fetch_servers_resp_message.ParseFromArray(data, SizeToInt(size)));
 
   nodes_address_.clear();
   for (const auto &it : fetch_servers_resp_message.servers_meta()) {
@@ -542,8 +542,9 @@ void AbstractNode::ProcessFetchServersResp(std::shared_ptr<MessageMeta> meta, co
   }
 }
 
-void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                       const Protos &protos, const void *data, size_t size) {
+void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &conn,
+                                       const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                                       size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -589,7 +590,7 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   connected_nodes_.clear();
 }
 
-void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+void AbstractNode::ProcessFinish(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                  const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -599,8 +600,9 @@ void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::share
   wait_finish_cond_.notify_all();
 }
 
-void AbstractNode::ProcessScaleOutDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                       const Protos &protos, const void *data, size_t size) {
+void AbstractNode::ProcessScaleOutDone(const std::shared_ptr<TcpConnection> &conn,
+                                       const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                                       size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -609,8 +611,9 @@ void AbstractNode::ProcessScaleOutDone(std::shared_ptr<TcpConnection> conn, std:
   current_cluster_state_ = ClusterState::CLUSTER_READY;
 }
 
-void AbstractNode::ProcessScaleInDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                      const Protos &protos, const void *data, size_t size) {
+void AbstractNode::ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn,
+                                      const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                                      size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -619,7 +622,7 @@ void AbstractNode::ProcessScaleInDone(std::shared_ptr<TcpConnection> conn, std::
   current_cluster_state_ = ClusterState::CLUSTER_READY;
 }
 
-void AbstractNode::ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+void AbstractNode::ProcessEvent(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                 const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -631,7 +634,7 @@ void AbstractNode::ProcessEvent(std::shared_ptr<TcpConnection> conn, std::shared
   OnCustomEventCallback(event);
 }
 
-void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+void AbstractNode::ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                    const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -649,7 +652,7 @@ void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::sha
   is_ready_ = false;
 }
 
-void AbstractNode::ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+void AbstractNode::ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -704,7 +707,7 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
 bool AbstractNode::InitClientToScheduler() {
   client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_);
   client_to_scheduler_->SetMessageCallback(
-    [&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
+    [&](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data, size_t size) {
       try {
         if (handlers_.count(meta->cmd()) == 0) {
           MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
@@ -750,7 +753,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
     std::string ip = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].first;
     uint16_t port = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].second;
     auto client = std::make_shared<TcpClient>(ip, port);
-    client->SetMessageCallback([&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+    client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                    size_t size) {
       switch (meta->cmd()) {
         case NodeCommand::SEND_DATA:
@@ -771,7 +774,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
   }
 }
 
-void AbstractNode::ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+void AbstractNode::ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
                                        size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -827,7 +830,7 @@ void AbstractNode::set_message_callback(const uint64_t &request_id, const Messag
   message_callbacks_[request_id] = callback;
 }
 
-void AbstractNode::RunReceiveCallback(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+void AbstractNode::RunReceiveCallback(const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
                                       size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);

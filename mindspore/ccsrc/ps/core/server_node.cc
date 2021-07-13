@@ -42,8 +42,8 @@ bool ServerNode::Start(const uint32_t &timeout) {
 
 void ServerNode::set_handler(const RequestHandler &handler) { request_handler_ = handler; }
 
-void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const void *data,
-                          size_t size) {
+void ServerNode::Response(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                          const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -59,7 +59,7 @@ void ServerNode::CreateTcpServer() {
   std::string server_ip;
   CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
   server_ = std::make_shared<TcpServer>(server_ip, 0);
-  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+  server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &protos, const void *data, size_t size) {
     if (server_handler_.count(meta->cmd()) == 0) {
       MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
@@ -107,7 +107,7 @@ void ServerNode::Initialize() {
   MS_LOG(INFO) << "[Server start]: 3. Server node crete tcp client to scheduler successful!";
 }
 
-void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+void ServerNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                  const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -128,8 +128,8 @@ void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::share
   request_handler_(conn, meta, res, size);
 }
 
-void ServerNode::ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                           const void *data, size_t size) {
+void ServerNode::ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn,
+                                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   server_->SendMessage(conn, meta, Protos::RAW, data, size);

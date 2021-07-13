@@ -75,7 +75,8 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
       if (remaining_length_ == 0) {
         if (message_callback_) {
           std::shared_ptr<MessageMeta> pb_message = std::make_shared<MessageMeta>();
-          pb_message->ParseFromArray(message_buffer_.get(), message_header_.message_meta_length_);
+          CHECK_RETURN_TYPE(
+            pb_message->ParseFromArray(message_buffer_.get(), UintToInt(message_header_.message_meta_length_)));
           message_callback_(pb_message, message_header_.message_proto_,
                             message_buffer_.get() + message_header_.message_meta_length_,
                             message_header_.message_length_ - message_header_.message_meta_length_);

@@ -34,7 +34,7 @@ void HttpClient::Init() {
 }
 
 ResponseCode HttpClient::Post(const std::string &url, const void *body, size_t len,
-                              std::shared_ptr<std::vector<char>> output,
+                              const std::shared_ptr<std::vector<char>> &output,
                               const std::map<std::string, std::string> &headers) {
   MS_EXCEPTION_IF_NULL(body);
   MS_EXCEPTION_IF_NULL(output);
@@ -65,7 +65,7 @@ ResponseCode HttpClient::Post(const std::string &url, const void *body, size_t l
   return CreateRequest(handler, connection, request, HttpMethod::HM_POST);
 }
 
-ResponseCode HttpClient::Get(const std::string &url, std::shared_ptr<std::vector<char>> output,
+ResponseCode HttpClient::Get(const std::string &url, const std::shared_ptr<std::vector<char>> &output,
                              const std::map<std::string, std::string> &headers) {
   MS_EXCEPTION_IF_NULL(output);
   auto handler = std::make_shared<HttpMessageHandler>();
@@ -128,7 +128,7 @@ void HttpClient::ReadChunkDataCallback(struct evhttp_request *request, void *arg
   MS_EXCEPTION_IF_NULL(evbuf);
   int n = 0;
   while ((n = evbuffer_remove(evbuf, &buf, sizeof(buf))) > 0) {
-    handler->ReceiveMessage(buf, n);
+    handler->ReceiveMessage(buf, IntToSize(n));
   }
 }
 
@@ -151,7 +151,7 @@ void HttpClient::ConnectionCloseCallback(struct evhttp_connection *connection, v
 }
 
 void HttpClient::AddHeaders(const std::map<std::string, std::string> &headers, const struct evhttp_request *request,
-                            std::shared_ptr<HttpMessageHandler> handler) {
+                            const std::shared_ptr<HttpMessageHandler> &handler) {
   MS_EXCEPTION_IF_NULL(request);
   if (evhttp_add_header(evhttp_request_get_output_headers(const_cast<evhttp_request *>(request)), "Host",
                         handler->GetHostByUri()) != 0) {
@@ -165,7 +165,7 @@ void HttpClient::AddHeaders(const std::map<std::string, std::string> &headers, c
   }
 }
 
-void HttpClient::InitRequest(std::shared_ptr<HttpMessageHandler> handler, const std::string &url,
+void HttpClient::InitRequest(const std::shared_ptr<HttpMessageHandler> &handler, const std::string &url,
                              const struct evhttp_request *request) {
   MS_EXCEPTION_IF_NULL(request);
   MS_EXCEPTION_IF_NULL(handler);
@@ -179,7 +179,7 @@ void HttpClient::InitRequest(std::shared_ptr<HttpMessageHandler> handler, const 
                 << ", The port is:" << handler->GetUriPort() << ", The request_url is:" << handler->GetRequestPath();
 }
 
-ResponseCode HttpClient::CreateRequest(std::shared_ptr<HttpMessageHandler> handler,
+ResponseCode HttpClient::CreateRequest(const std::shared_ptr<HttpMessageHandler> &handler,
                                        struct evhttp_connection *connection, struct evhttp_request *request,
                                        HttpMethod method) {
   MS_EXCEPTION_IF_NULL(handler);
