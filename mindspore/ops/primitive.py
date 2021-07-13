@@ -100,12 +100,12 @@ class Primitive(Primitive_):
             name (str): Attribute Name.
             value (Any): Attribute value.
 
-        Example:
-            >>>import mindspore.ops as P
-            >>>a = P.Add()
-            >>>a = a.add_prim_attr("attr",1)
-            >>>out = a.attrs["attr"]
-            >>>print(out)
+        Examples:
+            >>> import mindspore.ops as P
+            >>> a = P.Add()
+            >>> a = a.add_prim_attr("attr",1)
+            >>> out = a.attrs["attr"]
+            >>> print(out)
             1
         """
         self.__dict__[name] = value
@@ -119,12 +119,12 @@ class Primitive(Primitive_):
 
         Args:
             name (str): Attribute Name.
-        Example:
-            >>>import mindspore.ops as P
-            >>>a = P.Add()
-            >>>a = a.add_prim_attr("attr",1)
-            >>>a = a.del_prim_attr("attr")
-            >>>a.attrs
+        Examples:
+            >>> import mindspore.ops as P
+            >>> a = P.Add()
+            >>> a = a.add_prim_attr("attr",1)
+            >>> a = a.del_prim_attr("attr")
+            >>> a.attrs
             {'input_names': ['x', 'y'], 'output_names' : ['output']}
         """
         if name in self.__dict__ and name in self.attrs:
@@ -142,7 +142,7 @@ class Primitive(Primitive_):
             In other parallel modes, please set it to be 0.
         Args:
             stage (int): The stage id for the current operation.
-        Example:
+        Examples:
             >>> from mindspore.ops import operations as P
             >>> add = P.Add()
             >>> print(add.set_stage(0))
@@ -161,7 +161,7 @@ class Primitive(Primitive_):
 
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.
-        Example:
+        Examples:
             >>> from mindspore.ops import operations as P
             >>> add = P.Add()
             >>> print(add.shard(((1, 1), (1, 1))))
@@ -189,11 +189,11 @@ class Primitive(Primitive_):
 
         Args:
             instance_name (str): Instance name of primitive operator set by user.
-        Example:
-            >>>import mindspore.ops as P
-            >>>a = P.Add()
-            >>>a.set_prim_instance_name("add")
-            >>>a.instance_name
+        Examples:
+            >>> import mindspore.ops as P
+            >>> a = P.Add()
+            >>> a.set_prim_instance_name("add")
+            >>> a.instance_name
             'add'
         """
         self.set_instance_name(instance_name)
@@ -269,13 +269,13 @@ class Primitive(Primitive_):
         Args:
             inputs (list[str]): list of inputs names.
             outputs (list[str]): list of outputs names.
-        Example:
-            >>>import mindspore.ops as P
-            >>>a = P.Add()
-            >>>a.init_prim_io_names(["x","y"],["sum"])
-            >>>a.input_names
+        Examples:
+            >>> import mindspore.ops as P
+            >>> a = P.Add()
+            >>> a.init_prim_io_names(["x","y"],["sum"])
+            >>> a.input_names
             ['x','y']
-            >>>a.output_names
+            >>> a.output_names
             ['sum']
         """
         # for checking para names with kernel implementation
@@ -301,11 +301,11 @@ class Primitive(Primitive_):
 
         Args:
             mode (bool): Specifies whether the primitive is recomputed. Default: True.
-        Example:
-            >>>import mindspore.ops as P
-            >>>a = P.Add()
-            >>>a = a.recompute()
-            >>>a.recompute
+        Examples:
+            >>> import mindspore.ops as P
+            >>> a = P.Add()
+            >>> a = a.recompute()
+            >>> a.recompute
             True
         """
         if context.get_context("mode") == context.PYNATIVE_MODE:

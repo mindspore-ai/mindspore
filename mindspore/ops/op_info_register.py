@@ -568,7 +568,7 @@ class TBERegOp(RegOp):
 
 
 class DataType:
-    """
+    r"""
     Ascend ops various combinations of dtype and format.
 
     The current list below may be incomplete.
@@ -577,6 +577,7 @@ class DataType:
 
     current support:
     .. code-block::
+
     None_None = ("", "")
     None_Default = ("", "DefaultFormat")
     BOOL_None = ("bool", "")
