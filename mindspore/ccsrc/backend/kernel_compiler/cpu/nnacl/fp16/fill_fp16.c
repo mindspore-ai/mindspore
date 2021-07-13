@@ -16,7 +16,7 @@
 
 #include "nnacl/fp16/fill_fp16.h"
 
-int FillFp16(float16_t *output, int size, float16_t data) {
+inline int FillFp16(float16_t *output, int size, float16_t data) {
   for (int i = 0; i < size; ++i) {
     output[i] = data;
   }
