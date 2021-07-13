@@ -40,6 +40,7 @@ class SliceCPUKernel : public CPUKernel {
   void InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                       const std::vector<int64_t> &size);
 
+  size_t origin_dim_size_{0};
   int data_size_{4};
   SliceParameter slice_param_;
 };

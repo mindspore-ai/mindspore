@@ -80,7 +80,7 @@ void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &input
   auto task = [&](size_t start, size_t end) {
     AdamFp32(var, m, v, new_lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
   };
-  CPUKernelUtils::ParallelFor(task, lens);
+  CPUKernelUtils::ParallelForAutoSearch(task, lens, &parallel_search_info_);
 }
 
 void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {

@@ -74,6 +74,21 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
+void ReduceCPUKernel<T>::SimpleReduce(size_t start, size_t end, size_t stride, const T *input_addr, T *output_addr) {
+  auto pos = start * stride;
+  for (size_t i = start; i < end; ++i) {
+    output_addr[i] = 0;
+    for (size_t j = 0; j < stride; ++j) {
+      reduce_func_(input_addr, pos, &output_addr[i]);
+      pos++;
+    }
+    if (reduce_type_ == kReduceMean) {
+      output_addr[i] /= stride;
+    }
+  }
+}
+
+template <typename T>
 bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   size_t input_size = inputs[0]->size / sizeof(T);
@@ -108,12 +123,19 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
       axes[k] = it;
       ++k;
     }
+
+    size_t output_size = outputs[0]->size / sizeof(T);
+    // special accelerate for axis = 1 and input has 2 dims
+    if (axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == 2) {
+      auto task = [&](size_t start, size_t end) { SimpleReduce(start, end, stride, input_addr, output_addr); };
+      CPUKernelUtils::ParallelForAutoSearch(task, output_size, &parallel_search_info_);
+      return true;
+    }
     // Calculate transpose shape
     std::vector<size_t> transpose_shape(input_shape_.size());
     for (int i = 0; i < dimension; ++i) {
       transpose_shape[i] = input_shape_[axes[i]];
     }
-    size_t output_size = outputs[0]->size / sizeof(T);
     TransposeIterator base_iter(std::move(transpose_shape), std::move(axes), input_shape_);
     auto task = [this, &base_iter, input_addr, output_addr, stride](size_t start, size_t end) {
       auto iter = base_iter;

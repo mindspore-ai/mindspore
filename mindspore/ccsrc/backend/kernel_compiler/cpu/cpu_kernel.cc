@@ -16,7 +16,9 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <cmath>
 #include "common/thread_pool.h"
+#include "utils/profile.h"
 
 namespace mindspore {
 namespace kernel {
@@ -85,9 +87,8 @@ void CPUKernelUtils::GetElementNumEveryDim(const std::vector<size_t> &shape, std
   std::reverse(element_num->begin(), element_num->end());
 }
 
-void CPUKernelUtils::ParallelFor(const CTask &task, size_t count) {
+void CPUKernelUtils::ParallelFor(const CTask &task, size_t count, float block_size) {
   auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  const float block_size = 128.0;
   size_t thread_num = count < block_size * max_thread_num ? std::ceil(count / block_size) : max_thread_num;
   std::vector<common::Task> tasks;
   size_t start = 0;
@@ -102,6 +103,39 @@ void CPUKernelUtils::ParallelFor(const CTask &task, size_t count) {
     start += once_compute_size;
   }
   common::ThreadPool::GetInstance().SyncRun(tasks);
+}
+
+// Search for best block_size to get best thread num : 1 2 4 8 16 23(32)
+// Each block_size runs 5 times to get an average cpu kernel cost time.
+// If the speed of block_size[i] is slower than block_size[i-2], than we
+// assume that  block_size[i-2] is the best block_size.
+void CPUKernelUtils::ParallelForAutoSearch(const CTask &task, size_t count, ParallelSearchInfo *parallel_search_info) {
+  const size_t MAX_POW = 6;
+  const size_t AVG_COUNT = 5;
+  size_t current_pow = parallel_search_info->search_count / AVG_COUNT;
+  if (current_pow < MAX_POW) {
+    if (parallel_search_info->search_count % AVG_COUNT == 0) {
+      parallel_search_info->tmp_sum_cost_time = 0;
+    }
+    float block_size = static_cast<float>(count) / std::pow(2.0f, current_pow);
+    double start_time = GetTime();
+    ParallelFor(task, count, block_size);
+    double cost_time = GetTime() - start_time;
+    parallel_search_info->tmp_sum_cost_time += cost_time;
+    parallel_search_info->search_count++;
+    if (parallel_search_info->search_count % AVG_COUNT == 0) {
+      double avg_time = parallel_search_info->tmp_sum_cost_time / AVG_COUNT;
+      if (parallel_search_info->min_cost_time > avg_time) {
+        parallel_search_info->min_cost_time = avg_time;
+        parallel_search_info->best_block_size = block_size;
+        parallel_search_info->best_pow = current_pow;
+      } else if (current_pow - parallel_search_info->best_pow >= 2) {
+        parallel_search_info->search_count = AVG_COUNT * MAX_POW;
+      }
+    }
+  } else {
+    ParallelFor(task, count, parallel_search_info->best_block_size);
+  }
 }
 
 std::vector<size_t> CPUKernelUtils::FlatShapeByAxis(const std::vector<size_t> &shape, int axis) {

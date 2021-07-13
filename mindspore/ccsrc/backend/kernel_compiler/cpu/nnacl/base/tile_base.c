@@ -49,12 +49,19 @@ void Tile(void *input_data, void *output_data, const TileParameter *parameter) {
 void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, const TileParameter *parameter) {
   uint8_t *out_data = output_data;
   uint8_t *in_data = input_data;
+  size_t dst_one_row_size = parameter->fast_stride_ * parameter->fast_multiple_ * parameter->data_size_;
   for (size_t i = begin; i < end; ++i) {
     uint8_t *src = in_data + i * parameter->fast_stride_ * parameter->data_size_;
     uint8_t *dst = out_data + i * parameter->fast_stride_ * parameter->fast_multiple_ * parameter->data_size_;
-    for (size_t m = 0; m < parameter->fast_multiple_; ++m) {
-      (void)memcpy(dst, src, parameter->fast_stride_ * parameter->data_size_);
-      dst += parameter->fast_stride_ * parameter->data_size_;
+    size_t offset = parameter->fast_stride_ * parameter->data_size_;
+    (void)memcpy(dst, src, offset);
+    // copy size double each time
+    while (2 * offset <= dst_one_row_size) {
+      (void)memcpy(dst + offset, dst, offset);
+      offset *= 2;
+    }
+    if (2 * offset > dst_one_row_size) {
+      (void)memcpy(dst + offset, dst, dst_one_row_size - offset);
     }
   }
 }

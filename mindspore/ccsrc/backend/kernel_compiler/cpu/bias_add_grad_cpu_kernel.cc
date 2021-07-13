@@ -15,7 +15,7 @@
  */
 
 #include "backend/kernel_compiler/cpu/bias_add_grad_cpu_kernel.h"
-
+#include "nnacl/fp32/reduce_fp32.h"
 namespace mindspore {
 namespace kernel {
 void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -52,14 +52,10 @@ bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const s
       }
     }
   } else if (input_shape_.size() == 2) {
-    for (size_t c = 0; c < input_shape_[1]; ++c) {
-      output_addr[c] = 0;
-      size_t n_offset = 0;
-      for (size_t n = 0; n < input_shape_[0]; ++n) {
-        output_addr[c] += input_addr[c + n_offset];
-        n_offset += input_shape_[1];
-      }
-    }
+    auto task = [&](size_t start, size_t end) {
+      ReduceSumDim2Axis0(end - start, input_shape_[1], input_shape_[0], input_addr + start, output_addr + start);
+    };
+    CPUKernelUtils::ParallelForAutoSearch(task, input_shape_[1], &parallel_search_info_);
   }
   return true;
 }

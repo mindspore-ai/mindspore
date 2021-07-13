@@ -47,24 +47,32 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     input_flat_shape_list.emplace_back(flat_shape);
   }
 
+  size_t output_dim_1 = 0;
+  for (size_t j = 0; j < input_num; ++j) {
+    output_dim_1 += input_flat_shape_list[j][1];
+  }
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   // each input's row of shape after flat are same
   auto before_axis = input_flat_shape_list[0][0];
-  for (size_t i = 0; i < before_axis; ++i) {
-    for (size_t j = 0; j < input_num; ++j) {
-      if (input_flat_shape_list[j][1] == 0) {
-        continue;
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      auto output_ptr = output_addr + i * output_dim_1;
+      for (size_t j = 0; j < input_num; ++j) {
+        if (input_flat_shape_list[j][1] == 0) {
+          continue;
+        }
+        auto input_j_addr = reinterpret_cast<T *>(inputs[j]->addr);
+        auto copy_num = input_flat_shape_list[j][1];
+        auto offset = copy_num * i;
+        auto ret = memcpy_s(output_ptr, copy_num * sizeof(T), input_j_addr + offset, copy_num * sizeof(T));
+        if (ret != EOK) {
+          MS_LOG(EXCEPTION) << "Memcpy failed.";
+        }
+        output_ptr += copy_num;
       }
-      auto input_j_addr = reinterpret_cast<T *>(inputs[j]->addr);
-      auto copy_num = input_flat_shape_list[j][1];
-      auto offset = copy_num * i;
-      auto ret = memcpy_s(output_addr, copy_num * sizeof(T), input_j_addr + offset, copy_num * sizeof(T));
-      if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "Memcpy failed.";
-      }
-      output_addr += copy_num;
     }
-  }
+  };
+  CPUKernelUtils::ParallelForAutoSearch(task, before_axis, &parallel_search_info_);
   return true;
 }
 
