@@ -662,6 +662,75 @@ void RowMajor2Col16MajorFp16Opt(const float16_t *src_ptr, float16_t *dst_ptr, si
   return;
 }
 
+#ifdef ENABLE_ARM64
+void RowMajor2ColNMajorFp16(const float16_t *src_ptr, float16_t *dst_ptr, int row, int col) {
+  // Col16Major ==> Col8Major ==> Col4Major
+  const float16_t *src_r = src_ptr;
+  float16_t *dst_r = dst_ptr;
+  int ri = 0;
+  size_t col8 = col / C8NUM * C8NUM;
+  // find 16 block unit
+  for (; ri <= row - C16NUM; ri += C16NUM) {
+    size_t ci = 0;
+    for (; ci < col8; ci += C8NUM) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C16NUM;
+      Row2Col16Block16(src_c, dst_c, col);
+    }
+    for (; ci < col; ci++) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C16NUM;
+      for (size_t i = 0; i < C16NUM; i++) {
+        dst_c[i] = src_c[i * col];
+      }
+    }
+    src_r += C16NUM * col;
+    dst_r += C16NUM * col;
+  }
+  for (; ri <= row - C8NUM; ri += C8NUM) {
+    size_t ci = 0;
+    for (; ci < col8; ci += C8NUM) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C8NUM;
+      Transpose8x8ARM64Fp16(src_c, dst_c, col * sizeof(float16_t), C8NUM * sizeof(float16_t));
+    }
+    for (; ci < col; ci++) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C8NUM;
+      for (size_t i = 0; i < C8NUM; i++) {
+        dst_c[i] = src_c[i * col];
+      }
+    }
+    src_r += C8NUM * col;
+    dst_r += C8NUM * col;
+  }
+  for (; ri <= row - C4NUM; ri += C4NUM) {
+    size_t ci = 0;
+    for (; ci < col8; ci += C8NUM) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C4NUM;
+      Transpose4x8ARM64Fp16(src_c, dst_c, col * sizeof(float16_t), C4NUM * sizeof(float16_t));
+    }
+    for (; ci < col; ci++) {
+      const float16_t *src_c = src_r + ci;
+      float16_t *dst_c = dst_r + ci * C4NUM;
+      for (size_t i = 0; i < C4NUM; i++) {
+        dst_c[i] = src_c[i * col];
+      }
+    }
+    src_r += C4NUM * col;
+    dst_r += C4NUM * col;
+  }
+  for (; ri < row; ri++) {
+    for (size_t i = 0; i < col; ++i) {
+      dst_r[i * C4NUM] = src_r[i];
+    }
+    src_r += col;
+    dst_r += 1;
+  }
+}
+#endif
+
 void RowMajor2Col12MajorFp16Opt(const float16_t *src_ptr, float16_t *dst_ptr, size_t row, size_t col) {
   size_t row_up_12 = UP_ROUND(row, C12NUM);
   size_t row12 = row / C12NUM * C12NUM;
@@ -760,6 +829,32 @@ void RowMajor2Row16MajorFp16(const void *src, float16_t *dst, int row, int col, 
   }
 }
 
+#ifdef ENABLE_ARM64
+void RowMajor2RowNMajorFp16(const float16_t *src, float16_t *dst, int row, int col) {
+  // Row16 ==> Row8 ==> Row4
+  for (int r = 0; r < row; r++) {
+    int c = 0;
+    for (; c <= col - C16NUM; c += C16NUM) {
+      MS_FLOAT16X8 src_data = MS_LDQ_F16(src + r * col + c);
+      MS_FLOAT16X8 src_data1 = MS_LDQ_F16(src + r * col + c + C8NUM);
+      MS_STQ_F16(dst + c / C16NUM * C16NUM * row + r * C16NUM, src_data);
+      MS_STQ_F16(dst + c / C16NUM * C16NUM * row + r * C16NUM + C8NUM, src_data1);
+    }
+    for (; c <= col - C8NUM; c += C8NUM) {
+      MS_FLOAT16X8 src_data = MS_LDQ_F16(src + r * col + c);
+      MS_STQ_F16(dst + c / C8NUM * C8NUM * row + r * C8NUM, src_data);
+    }
+    for (; c <= col - C4NUM; c += C4NUM) {
+      MS_FLOAT16X4 src_data = MS_LD_F16(src + r * col + c);
+      MS_ST_F16(dst + c / C4NUM * C4NUM * row + r * C4NUM, src_data);
+    }
+    for (; c < col; ++c) {
+      dst[c / C4NUM * C4NUM * row + r * C4NUM + c % C4NUM] = src[r * col + c];
+    }
+  }
+}
+#endif
+
 void RowMajor2Row16MajorFp16Opt(const float16_t *src, float16_t *dst, int row, int col) {
   int col_align = UP_ROUND(col, C16NUM);
   for (int r = 0; r < row; r++) {
@@ -834,3 +929,32 @@ void RowMajor2Col8MajorFp16(const void *src, float16_t *dst, int row, int col, b
     }
   }
 }
+
+#if defined(ENABLE_DEBUG) && defined(ENABLE_ARM64)
+// arm64 matmul
+void MatmulBaseFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
+                    size_t depth, size_t row, size_t col, size_t stride, size_t write_nhwc) {
+  int r16 = row / C16NUM * C16NUM;
+  int r8 = row / C8NUM * C8NUM;
+  for (int r = 0; r < row; ++r) {
+    int row_tile = 0;
+    if (r < r16) {
+      row_tile = C16NUM;
+    } else if (r < r8) {
+      row_tile = C8NUM;
+    } else {
+      row_tile = C4NUM;
+    }
+    int index = r / row_tile * row_tile * depth + r % row_tile;
+    for (int t = 0; t < col; ++t) {
+      int c_div = t / C8NUM;
+      int c_mod = t % C8NUM;
+      float16_t res = bias[t];
+      for (int d = 0; d < depth; ++d) {
+        res += a[index + d * row_tile] * b[c_div * depth * C8NUM + d * C8NUM + c_mod];
+      }
+      c[r * col + t] = res;
+    }
+  }
+}
+#endif
