@@ -72,7 +72,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
     pooling_param->output_batch_ * pooling_param->output_channel_ * pooling_param->output_h_ * pooling_param->output_w_;
 
   size_t input_size;
-  std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_1_28_28_3.bin";
+  std::string input_path = "./pooling/avgpoolgradfp32_1_dy_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
 
@@ -101,7 +101,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;
-  std::string output_path = "./test_data/pooling/avgpoolgradfp32_1_dx_1_28_28_3.bin";
+  std::string output_path = "./pooling/avgpoolgradfp32_1_dx_1_28_28_3.bin";
   auto res = CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
 
@@ -127,14 +127,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
     pooling_param->output_batch_ * pooling_param->output_channel_ * pooling_param->output_h_ * pooling_param->output_w_;
 
   size_t input_size;
-  std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_1_28_28_3.bin";
+  std::string input_path = "./pooling/avgpoolgradfp32_1_dy_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_dy({1, 28, 28, 3});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(input_data);
 
-  std::string input1_path = "./test_data/pooling/avgpoolgradfp32_1_x_1_28_28_3.bin";
+  std::string input1_path = "./pooling/avgpoolgradfp32_1_x_1_28_28_3.bin";
   auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1_path.c_str(), &input_size));
   ASSERT_NE(input1_data, nullptr);
   std::vector<int> dim_x({1, 28, 28, 3});
@@ -170,7 +170,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;
-  std::string output_path = "./test_data/pooling/avgpoolgradfp32_1_dx_1_28_28_3.bin";
+  std::string output_path = "./pooling/avgpoolgradfp32_1_dx_1_28_28_3.bin";
   auto res = CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
 
@@ -200,14 +200,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   printf("Calculating runtime cost...\n");
   // uint64_t time_avg = 0;
   size_t input_size;
-  std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_3_28_28_3.bin";
+  std::string input_path = "./pooling/avgpoolgradfp32_1_dy_3_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_dy({3, 28, 28, 3});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(input_data);
 
-  std::string input1_path = "./test_data/pooling/avgpoolgradfp32_1_x_3_28_28_3.bin";
+  std::string input1_path = "./pooling/avgpoolgradfp32_1_x_3_28_28_3.bin";
   auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1_path.c_str(), &input_size));
   ASSERT_NE(input1_data, nullptr);
   std::vector<int> dim_x({3, 28, 28, 3});
@@ -242,7 +242,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;
-  std::string output_path = "./test_data/pooling/avgpoolgradfp32_1_dx_3_28_28_3.bin";
+  std::string output_path = "./pooling/avgpoolgradfp32_1_dx_3_28_28_3.bin";
   size_t output_data_size = dx_tensor.ElementsNum();
   auto res = CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
@@ -274,15 +274,15 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
 
   size_t input_size;
 
-  auto x_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
+  auto x_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/avgpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
   ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({pool->output_batch_, pool->input_h_, pool->input_w_, pool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
-  auto yt_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
+  auto yt_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/avgpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
   ASSERT_NE(yt_data, nullptr);
   std::vector<int> dim_y({pool->output_batch_, pool->output_h_, pool->output_w_, pool->output_channel_});
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
@@ -308,14 +308,12 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  std::string output_path = "./test_data/pooling/avgpoolgradfp32_s2_dx_3_28_28_3.bin";
+  std::string output_path = "./pooling/avgpoolgradfp32_s2_dx_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] x_data;
   delete[] yt_data;
-  // delete[] out_data;
-  // delete conv_param;
   x_tensor.set_data(nullptr);
   yt_tensor.set_data(nullptr);
   delete kernel;
@@ -340,15 +338,15 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
 
   size_t input_size;
 
-  auto x_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
+  auto x_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/avgpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
   ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({pool->output_batch_, pool->input_h_, pool->input_w_, pool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
-  auto yt_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
+  auto yt_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/avgpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
   ASSERT_NE(yt_data, nullptr);
   std::vector<int> dim_y({pool->output_batch_, pool->output_h_, pool->output_w_, pool->output_channel_});
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
@@ -376,15 +374,13 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  std::string output_path = "./test_data/pooling/avgpoolgradfp32_s3_dx_3_28_28_3.bin";
+  std::string output_path = "./pooling/avgpoolgradfp32_s3_dx_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
 
   EXPECT_EQ(res, 0);
 
   delete[] x_data;
   delete[] yt_data;
-  // delete[] out_data;
-  // delete conv_param;
   x_tensor.set_data(nullptr);
   yt_tensor.set_data(nullptr);
   delete kernel;
@@ -406,15 +402,15 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
     pooling_param->output_batch_ * pooling_param->output_channel_ * pooling_param->output_h_ * pooling_param->output_w_;
 
   size_t input_size;
-  std::string i_path = "./test_data/pooling/maxpoolgradfp32_1_x_1_28_28_3.bin";
+  std::string i_path = "./pooling/maxpoolgradfp32_1_x_1_28_28_3.bin";
   auto in_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(i_path.c_str(), &input_size));
   ASSERT_NE(in_data, nullptr);
 
-  std::string dy_path = "./test_data/pooling/maxpoolgradfp32_1_dy_1_28_28_3.bin";
+  std::string dy_path = "./pooling/maxpoolgradfp32_1_dy_1_28_28_3.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &input_size));
   ASSERT_NE(dy_data, nullptr);
 
-  std::string dx_path = "./test_data/pooling/maxpoolgradfp32_1_dx_1_28_28_3.bin";
+  std::string dx_path = "./pooling/maxpoolgradfp32_1_dx_1_28_28_3.bin";
   auto dx_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dx_path.c_str(), &input_size));
   ASSERT_NE(dx_data, nullptr);
   int in_batch_size =
@@ -443,7 +439,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;
-  std::string output_path = "./test_data/pooling/maxpoolgradfp32_1_xgrad_1_28_28_3.bin";
+  std::string output_path = "./pooling/maxpoolgradfp32_1_xgrad_1_28_28_3.bin";
   auto res = CompareOutput(output_data, output_data_size, output_path);
   EXPECT_EQ(res, 0);
 
@@ -469,22 +465,22 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
 
   size_t input_size;
 
-  auto x_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_x_3_28_28_3.bin", &input_size));
+  auto x_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_1_x_3_28_28_3.bin", &input_size));
   ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({3, 28, 28, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
-  auto y_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_dx_3_28_28_3.bin", &input_size));
+  auto y_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_1_dx_3_28_28_3.bin", &input_size));
   ASSERT_NE(y_data, nullptr);
   std::vector<int> dim_y({3, 28, 28, 3});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.set_data(y_data);
 
-  auto yt_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_dy_3_28_28_3.bin", &input_size));
+  auto yt_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_1_dy_3_28_28_3.bin", &input_size));
   ASSERT_NE(yt_data, nullptr);
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
@@ -511,7 +507,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  std::string output_path = "./test_data/pooling/maxpoolgradfp32_1_xgrad_3_28_28_3.bin";
+  std::string output_path = "./pooling/maxpoolgradfp32_1_xgrad_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -519,8 +515,6 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   delete[] x_data;
   delete[] y_data;
   delete[] yt_data;
-  // delete[] out_data;
-  // delete conv_param;
   x_tensor.set_data(nullptr);
   y_tensor.set_data(nullptr);
   yt_tensor.set_data(nullptr);
@@ -547,22 +541,22 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
 
   size_t input_size;
 
-  auto x_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
+  auto x_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
   ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({maxpool->output_batch_, maxpool->input_h_, maxpool->input_w_, maxpool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
-  auto y_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_dx_3_28_28_3.bin", &input_size));
+  auto y_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_s2_dx_3_28_28_3.bin", &input_size));
   ASSERT_NE(y_data, nullptr);
   std::vector<int> dim_y({maxpool->output_batch_, maxpool->output_h_, maxpool->output_w_, maxpool->output_channel_});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.set_data(y_data);
 
-  auto yt_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
+  auto yt_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
   ASSERT_NE(yt_data, nullptr);
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
@@ -590,7 +584,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  std::string output_path = "./test_data/pooling/maxpoolgradfp32_s2_xgrad_3_28_28_3.bin";
+  std::string output_path = "./pooling/maxpoolgradfp32_s2_xgrad_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -598,8 +592,6 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   delete[] x_data;
   delete[] y_data;
   delete[] yt_data;
-  // delete[] out_data;
-  // delete conv_param;
   x_tensor.set_data(nullptr);
   y_tensor.set_data(nullptr);
   yt_tensor.set_data(nullptr);
@@ -626,22 +618,22 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
 
   size_t input_size;
 
-  auto x_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
+  auto x_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
   ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({maxpool->output_batch_, maxpool->input_h_, maxpool->input_w_, maxpool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
-  auto y_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_dx_3_28_28_3.bin", &input_size));
+  auto y_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_s3_dx_3_28_28_3.bin", &input_size));
   ASSERT_NE(y_data, nullptr);
   std::vector<int> dim_y({maxpool->output_batch_, maxpool->output_h_, maxpool->output_w_, maxpool->output_channel_});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.set_data(y_data);
 
-  auto yt_data = reinterpret_cast<float *>(
-    mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
+  auto yt_data =
+    reinterpret_cast<float *>(mindspore::lite::ReadFile("./pooling/maxpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
   ASSERT_NE(yt_data, nullptr);
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
@@ -669,7 +661,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
-  std::string output_path = "./test_data/pooling/maxpoolgradfp32_s3_xgrad_3_28_28_3.bin";
+  std::string output_path = "./pooling/maxpoolgradfp32_s3_xgrad_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -677,8 +669,6 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   delete[] x_data;
   delete[] y_data;
   delete[] yt_data;
-  // delete[] out_data;
-  // delete conv_param;
   x_tensor.set_data(nullptr);
   y_tensor.set_data(nullptr);
   yt_tensor.set_data(nullptr);

@@ -25,25 +25,25 @@ class TestCxxApiLiteSerialization : public mindspore::CommonTest {
 
 TEST_F(TestCxxApiLiteSerialization, test_load_no_encrpty_mindir_SUCCESS) {
   Graph graph;
-  ASSERT_TRUE(Serialization::Load("./test_data/nets/retinaface1.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
+  ASSERT_TRUE(Serialization::Load("./nets/retinaface1.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
 }
 
 TEST_F(TestCxxApiLiteSerialization, test_load_file_not_exist_FAILED) {
   Graph graph;
-  auto status = Serialization::Load("./test_data/nets/file_not_exist.mindir", ModelType::kMindIR, &graph);
+  auto status = Serialization::Load("./nets/file_not_exist.mindir", ModelType::kMindIR, &graph);
   ASSERT_TRUE(status != kSuccess);
 }
 
 TEST_F(TestCxxApiLiteSerialization, test_load_file_not_exist_x2_FAILED) {
   std::vector<Graph> graphs;
-  auto status = Serialization::Load(std::vector<std::string>(2, "./data/mindir/file_not_exist.mindir"),
-                                    ModelType::kMindIR, &graphs);
+  auto status =
+    Serialization::Load(std::vector<std::string>(2, "./nets/file_not_exist.mindir"), ModelType::kMindIR, &graphs);
   ASSERT_TRUE(status != kSuccess);
 }
 
 TEST_F(TestCxxApiLiteSerialization, test_export_uninitialized_FAILED) {
   Model model;
-  ASSERT_TRUE(Serialization::ExportModel(model, ModelType::kFlatBuffer, "./test_data/nets/export.ms") != kSuccess);
+  ASSERT_TRUE(Serialization::ExportModel(model, ModelType::kFlatBuffer, "./nets/export.ms") != kSuccess);
 }
 
 }  // namespace mindspore

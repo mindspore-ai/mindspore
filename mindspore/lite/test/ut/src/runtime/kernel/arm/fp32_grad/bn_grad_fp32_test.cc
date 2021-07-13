@@ -55,15 +55,15 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   const int height = 4;
   const int width = 5;
 
-  auto dy_tensor = CreateInTensor("./test_data/bngrad/dy_2_4_5_3.bin", {batch, height, width, channels});
+  auto dy_tensor = CreateInTensor("./bngrad/dy_2_4_5_3.bin", {batch, height, width, channels});
   ASSERT_NE(dy_tensor, nullptr);
-  auto x_tensor = CreateInTensor("./test_data/bngrad/input_x_2_4_5_3.bin", {batch, height, width, channels});
+  auto x_tensor = CreateInTensor("./bngrad/input_x_2_4_5_3.bin", {batch, height, width, channels});
   ASSERT_NE(x_tensor, nullptr);
-  auto scale_tensor = CreateInTensor("./test_data/bngrad/scale_3.bin", {1, 1, 1, channels});
+  auto scale_tensor = CreateInTensor("./bngrad/scale_3.bin", {1, 1, 1, channels});
   ASSERT_NE(scale_tensor, nullptr);
-  auto mean_tensor = CreateInTensor("./test_data/bngrad/save_mean_3.bin", {1, 1, 1, channels});
+  auto mean_tensor = CreateInTensor("./bngrad/save_mean_3.bin", {1, 1, 1, channels});
   ASSERT_NE(mean_tensor, nullptr);
-  auto var_tensor = CreateInTensor("././test_data/bngrad/save_var_3.bin", {1, 1, 1, channels});
+  auto var_tensor = CreateInTensor("././bngrad/save_var_3.bin", {1, 1, 1, channels});
   ASSERT_NE(var_tensor, nullptr);
 
   // prepare output tensors
@@ -95,19 +95,19 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   auto dx = reinterpret_cast<float *>(outputs[0]->MutableData());
   for (int i = 0; i < 7; i++) std::cout << dx[i] << " ";
   std::cout << "\n";
-  auto res = CompareRelativeOutput(dx, "./test_data/bngrad/output_dx_2_4_5_3.bin");
+  auto res = CompareRelativeOutput(dx, "./bngrad/output_dx_2_4_5_3.bin");
   EXPECT_EQ(res, 0);
   std::cout << "\n=======dscale=======\n";
   auto dscale = reinterpret_cast<float *>(outputs[1]->MutableData());
   for (int i = 0; i < channels; i++) std::cout << dscale[i] << " ";
   std::cout << "\n";
-  res = CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
+  res = CompareRelativeOutput(dscale, "./bngrad/output_dscale_3.bin");
   EXPECT_EQ(res, 0);
   std::cout << "==========dbias==========\n";
   auto dbias = reinterpret_cast<float *>(outputs[2]->MutableData());
   for (int i = 0; i < 3; i++) std::cout << dbias[i] << " ";
   std::cout << "\n";
-  res = CompareRelativeOutput(dbias, "./test_data/bngrad/output_dbias_3.bin");
+  res = CompareRelativeOutput(dbias, "./bngrad/output_dbias_3.bin");
   for (auto v : inputs) {
     delete[] reinterpret_cast<float *>(v->MutableData());
     v->set_data(nullptr);
@@ -128,7 +128,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   const int height = 4;
   const int width = 5;
   bn_param->channel_ = channels;
-  auto x_tensor = CreateInTensor("./test_data/bngrad/input_x_2_4_5_3.bin", {batch, height, width, channels});
+  auto x_tensor = CreateInTensor("./bngrad/input_x_2_4_5_3.bin", {batch, height, width, channels});
 
   lite::Tensor scale_tensor(TypeId::kNumberTypeFloat32, {1, 1, 1, channels});
   ASSERT_EQ(scale_tensor.MallocData(), 0);
@@ -204,9 +204,9 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   for (int i = 0; i < channels; i++) std::cout << curr_var[i] << " ";
   std::cout << "\n";
   delete[] reinterpret_cast<float *>(x_tensor->MutableData());
-  auto res = CompareRelativeOutput(curr_mean, "./test_data/bngrad/running_mean_3.bin");
+  auto res = CompareRelativeOutput(curr_mean, "./bngrad/running_mean_3.bin");
   EXPECT_EQ(res, 0);
-  res = CompareRelativeOutput(curr_var, "./test_data/bngrad/running_var_3.bin");
+  res = CompareRelativeOutput(curr_var, "./bngrad/running_var_3.bin");
   EXPECT_EQ(res, 0);
 
   x_tensor->set_data(nullptr);

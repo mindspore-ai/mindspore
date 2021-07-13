@@ -34,7 +34,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   ASSERT_NE(bias_param, nullptr);
 
   size_t input_size;
-  std::string input_path = "./test_data/operators/biasgradfp32_1_dy_10_28_28_7.bin";
+  std::string input_path = "./operators/biasgradfp32_1_dy_10_28_28_7.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
 
@@ -69,7 +69,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;
-  std::string output_path = "./test_data/operators/biasgradfp32_1_db_7.bin";
+  std::string output_path = "./operators/biasgradfp32_1_db_7.bin";
   auto res = CompareRelativeOutput(output_data, output_path);
   EXPECT_EQ(res, 0);
 
@@ -88,7 +88,7 @@ TEST_F(TestBiasGradFp32, BiasGrad2DFp32) {
   ASSERT_NE(bias_param, nullptr);
 
   size_t input_size;
-  std::string input_path = "./test_data/operators/fc_yt.f32";
+  std::string input_path = "./operators/fc_yt.f32";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   std::vector<int> dim_dy({2, 20});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
@@ -121,7 +121,7 @@ TEST_F(TestBiasGradFp32, BiasGrad2DFp32) {
     std::cout << output_data[i] << " ,";
   }
   std::cout << std::endl;
-  std::string output_path = "./test_data/operators/fc_b_grad.f32";
+  std::string output_path = "./operators/fc_b_grad.f32";
   auto res = CompareRelativeOutput(output_data, output_path);
   EXPECT_EQ(res, 0);
 

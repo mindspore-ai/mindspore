@@ -102,12 +102,12 @@ TEST_F(NetworkTest, efficient_net) {
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
-  std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
+  std::string net = "./nets/effnetb0_fwd_nofuse.ms";
   auto session = session::TrainSession::CreateTrainSession(net, context, false);
   ASSERT_NE(session, nullptr);
 
-  std::string in = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
-  std::string out = "./test_data/nets/effNet_output_y_1_1000.bin";
+  std::string in = "./nets/effNet_input_x_1_3_224_224.bin";
+  std::string out = "./nets/effNet_output_y_1_1000.bin";
   auto res = runNet(session, in, out, "650");
   delete session;
   delete context;
@@ -118,7 +118,7 @@ TEST_F(NetworkTest, mobileface_net) {
   char *buf = nullptr;
   size_t net_size = 0;
 
-  std::string net = "./test_data/nets/mobilefacenet0924.ms";
+  std::string net = "./nets/mobilefacenet0924.ms";
   ReadFile(net.c_str(), &net_size, &buf);
   auto model = lite::Model::Import(buf, net_size);
   delete[] buf;
@@ -133,8 +133,8 @@ TEST_F(NetworkTest, mobileface_net) {
   ASSERT_EQ(lite::RET_OK, ret);
   // session->Eval();
 
-  std::string in = "./test_data/nets/facenet_input.f32";
-  std::string out = "./test_data/nets/facenet_output.f32";
+  std::string in = "./nets/facenet_input.f32";
+  std::string out = "./nets/facenet_output.f32";
   auto res = runNet(session, in, out, "354", true);
 
   ASSERT_EQ(res, 0);
@@ -144,7 +144,7 @@ TEST_F(NetworkTest, mobileface_net) {
 }
 
 TEST_F(NetworkTest, noname) {
-  std::string net = "./test_data/nets/lenet_train.ms";
+  std::string net = "./nets/lenet_train.ms";
   lite::Context context;
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
@@ -163,7 +163,7 @@ TEST_F(NetworkTest, noname) {
 }
 
 TEST_F(NetworkTest, setname) {
-  std::string net = "./test_data/nets/lenet_train.ms";
+  std::string net = "./nets/lenet_train.ms";
   lite::Context context;
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;

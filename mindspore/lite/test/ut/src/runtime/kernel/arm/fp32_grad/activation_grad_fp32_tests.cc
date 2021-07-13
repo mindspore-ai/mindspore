@@ -40,12 +40,12 @@ TEST_F(TestActGradFp32, ReluGradFp32) {
   size_t output_data_size = 50;
 
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/relu_y_50.bin";
+  std::string input_path = "./activationGrad/relu_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
 
-  std::string yt_path = "./test_data/activationGrad/relu_yt_50.bin";
+  std::string yt_path = "./activationGrad/relu_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
@@ -74,7 +74,7 @@ TEST_F(TestActGradFp32, ReluGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/activationGrad/relu_out_50.bin";
+  std::string output_path = "./activationGrad/relu_out_50.bin";
 
   int res = CompareRelativeOutput(output_data, output_path);
 
@@ -94,11 +94,11 @@ TEST_F(TestActGradFp32, Relu6GradFp32) {
   size_t output_data_size = 50;
 
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/relu6_y_50.bin";
+  std::string input_path = "./activationGrad/relu6_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
 
-  std::string yt_path = "./test_data/activationGrad/relu6_yt_50.bin";
+  std::string yt_path = "./activationGrad/relu6_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
 
@@ -126,7 +126,7 @@ TEST_F(TestActGradFp32, Relu6GradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/activationGrad/relu6_out_50.bin";
+  std::string output_path = "./activationGrad/relu6_out_50.bin";
   int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -145,11 +145,11 @@ TEST_F(TestActGradFp32, LReluGradFp32) {
   size_t output_data_size = 50;
 
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/lrelu_y_50.bin";
+  std::string input_path = "./activationGrad/lrelu_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
 
-  std::string yt_path = "./test_data/activationGrad/lrelu_yt_50.bin";
+  std::string yt_path = "./activationGrad/lrelu_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
 
@@ -177,7 +177,7 @@ TEST_F(TestActGradFp32, LReluGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/activationGrad/lrelu_out_50.bin";
+  std::string output_path = "./activationGrad/lrelu_out_50.bin";
   int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -196,11 +196,11 @@ TEST_F(TestActGradFp32, SigmoidGradFp32) {
   size_t output_data_size = 50;
 
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/sigmoid_y_50.bin";
+  std::string input_path = "./activationGrad/sigmoid_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
 
-  std::string yt_path = "./test_data/activationGrad/sigmoid_yt_50.bin";
+  std::string yt_path = "./activationGrad/sigmoid_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
 
@@ -228,7 +228,7 @@ TEST_F(TestActGradFp32, SigmoidGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/activationGrad/sigmoid_out_50.bin";
+  std::string output_path = "./activationGrad/sigmoid_out_50.bin";
   int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -248,11 +248,11 @@ TEST_F(TestActGradFp32, tanhGradFp32) {
   size_t output_data_size = 50;
 
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/tanh_y_50.bin";
+  std::string input_path = "./activationGrad/tanh_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
 
-  std::string yt_path = "./test_data/activationGrad/tanh_yt_50.bin";
+  std::string yt_path = "./activationGrad/tanh_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
 
@@ -280,7 +280,7 @@ TEST_F(TestActGradFp32, tanhGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/activationGrad/tanh_out_50.bin";
+  std::string output_path = "./activationGrad/tanh_out_50.bin";
   int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -298,12 +298,12 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   const size_t output_data_size = 10;
 
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/hswish_x_50.bin";
+  std::string input_path = "./activationGrad/hswish_x_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
 
-  std::string yt_path = "./test_data/activationGrad/hswish_yt_50.bin";
+  std::string yt_path = "./activationGrad/hswish_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
@@ -333,7 +333,7 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/activationGrad/hswish_out_50.bin";
+  std::string output_path = "./activationGrad/hswish_out_50.bin";
   int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -351,12 +351,12 @@ TEST_F(TestActGradFp32, hsigmoidGradFp32) {
   const size_t output_data_size = 10;
 
   size_t input_size;
-  std::string input_path = "./test_data/activationGrad/hsig_x_50.bin";
+  std::string input_path = "./activationGrad/hsig_x_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
 
-  std::string yt_path = "./test_data/activationGrad/hsig_yt_50.bin";
+  std::string yt_path = "./activationGrad/hsig_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
   ASSERT_NE(yt_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
@@ -386,7 +386,7 @@ TEST_F(TestActGradFp32, hsigmoidGradFp32) {
   }
   std::cout << std::endl;
 
-  std::string output_path = "./test_data/activationGrad/hsig_out_50.bin";
+  std::string output_path = "./activationGrad/hsig_out_50.bin";
   int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
