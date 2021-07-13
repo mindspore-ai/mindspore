@@ -26,7 +26,7 @@ CachePool::CachePool(std::shared_ptr<NumaMemoryPool> mp, const std::string &root
   // Initialize soft memory cap to the current available memory on the machine.
   soft_mem_limit_ = CacheServerHW::GetAvailableMemory();
   temp_mem_usage_ = 0;
-  min_avail_mem_ = CacheServerHW::GetTotalSystemMemory() * (1.0 - mp_->GetMemoryCapRatio());
+  min_avail_mem_ = static_cast<uint64_t>(CacheServerHW::GetTotalSystemMemory() * (1.0 - mp_->GetMemoryCapRatio()));
 }
 
 Status CachePool::DoServiceStart() {
