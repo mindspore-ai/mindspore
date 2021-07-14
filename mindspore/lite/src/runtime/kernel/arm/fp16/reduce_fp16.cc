@@ -49,6 +49,9 @@ int ReduceFp16CPUKernel::Init() {
     case static_cast<int>(ReduceMode_ReduceMax):
       reducer_ = ReduceMaxFp16;
       break;
+    case static_cast<int>(ReduceMode_ReduceSum):
+      reducer_ = ReduceSumFp16;
+      break;
     default:
       MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
       return RET_ERROR;
@@ -142,11 +145,9 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
 kernel::InnerKernel *CpuReduceFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_ReduceFusion);
-
   auto reduce_param = reinterpret_cast<ReduceParameter *>(opParameter);
-  if (reduce_param->mode_ != ReduceMode_ReduceMean && reduce_param->mode_ != ReduceMode_ReduceMax) {
+  if (reduce_param->mode_ != ReduceMode_ReduceMean && reduce_param->mode_ != ReduceMode_ReduceMax &&
+      reduce_param->mode_ != ReduceMode_ReduceSum) {
     MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << reduce_param->mode_;
     return nullptr;
   }

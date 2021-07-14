@@ -61,3 +61,43 @@ int ReduceMaxFp16(int outer_size, int inner_size, int axis_size, const float16_t
   }
   return NNACL_OK;
 }
+
+int ReduceSumFp16(int outer_size, int inner_size, int axis_size, const float16_t *src_data, float16_t *dst_data,
+                  int tid, int thread_num) {
+  int stride = UP_DIV(outer_size, thread_num);
+  int start = stride * tid;
+  int end = MSMIN(outer_size, start + stride);
+  int num = end - start;
+#ifdef ENABLE_NEON
+  int block_c8 = inner_size - inner_size % C8NUM;
+#endif
+
+  int src_stride = axis_size * inner_size;
+  src_data += start * src_stride;
+  dst_data += start * inner_size;
+
+  for (int i = 0; i < num; i++, src_data += src_stride, dst_data += inner_size) {
+    int j = 0;
+#ifdef ENABLE_NEON
+    for (; j < block_c8; j += C8NUM) {
+      const float16_t *inner_src = src_data + j;
+      float16_t *inner_dst = dst_data + j;
+      float16x8_t tmp = {0, 0, 0, 0, 0, 0, 0, 0};
+      for (int k = 0; k < axis_size; k++) {
+        tmp = vaddq_f16(tmp, vld1q_f16(inner_src + k * inner_size));
+      }
+      vst1q_f16(inner_dst, tmp);
+    }
+#endif
+    for (; j < inner_size; j++) {
+      const float16_t *inner_src = src_data + j;
+      float16_t *inner_dst = dst_data + j;
+      float tmp = 0.0f;
+      for (int k = 0; k < axis_size; k++) {
+        tmp += inner_src[k * inner_size];
+      }
+      *inner_dst = tmp;
+    }
+  }
+  return NNACL_OK;
+}
