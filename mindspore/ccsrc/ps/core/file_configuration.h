@@ -47,10 +47,12 @@ namespace core {
 //}
 class FileConfiguration : public Configuration {
  public:
-  explicit FileConfiguration(const std::string &path) : file_path_(path) {}
+  explicit FileConfiguration(const std::string &path) : file_path_(path), is_initialized_(false) {}
   ~FileConfiguration() = default;
 
   bool Initialize() override;
+
+  bool IsInitialized() const override;
 
   std::string Get(const std::string &key, const std::string &defaultvalue) const override;
 
@@ -63,6 +65,8 @@ class FileConfiguration : public Configuration {
   std::string file_path_;
 
   nlohmann::json js;
+
+  std::atomic<bool> is_initialized_;
 };
 }  // namespace core
 }  // namespace ps

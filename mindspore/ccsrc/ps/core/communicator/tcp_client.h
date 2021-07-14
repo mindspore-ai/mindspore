@@ -38,6 +38,7 @@
 #include "ps/constants.h"
 #include "ps/ps_context.h"
 #include "ps/core/communicator/tcp_message_handler.h"
+#include "ps/core/file_configuration.h"
 
 namespace mindspore {
 namespace ps {
@@ -52,7 +53,7 @@ class TcpClient {
     std::function<void(const std::shared_ptr<MessageMeta> &, const Protos &, const void *, size_t size)>;
   using OnTimer = std::function<void()>;
 
-  explicit TcpClient(const std::string &address, std::uint16_t port);
+  explicit TcpClient(const std::string &address, std::uint16_t port, Configuration *config);
   virtual ~TcpClient();
 
   std::string GetServerAddress() const;
@@ -80,6 +81,7 @@ class TcpClient {
   virtual void OnReadHandler(const void *buf, size_t num);
   static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
   void NotifyConnected();
+  bool EstablishSSL();
 
  private:
   OnMessage message_callback_;
@@ -104,6 +106,8 @@ class TcpClient {
   std::uint16_t server_port_;
   std::atomic<bool> is_stop_;
   std::atomic<bool> is_connected_;
+  // The Configuration file
+  Configuration *config_;
 };
 }  // namespace core
 }  // namespace ps

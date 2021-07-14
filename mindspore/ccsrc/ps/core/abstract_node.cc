@@ -705,7 +705,11 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
 }
 
 bool AbstractNode::InitClientToScheduler() {
-  client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_);
+  if (config_ == nullptr) {
+    MS_LOG(WARNING) << "The config is empty.";
+    return false;
+  }
+  client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_, config_.get());
   client_to_scheduler_->SetMessageCallback(
     [&](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data, size_t size) {
       try {
@@ -750,9 +754,12 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
     if (nodes_address_.find(std::make_pair(NodeRole::SERVER, rank_id)) == nodes_address_.end()) {
       MS_LOG(EXCEPTION) << "Worker receive nodes info from scheduler failed!";
     }
+    if (config_ == nullptr) {
+      MS_LOG(EXCEPTION) << "The config is empty.";
+    }
     std::string ip = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].first;
     uint16_t port = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].second;
-    auto client = std::make_shared<TcpClient>(ip, port);
+    auto client = std::make_shared<TcpClient>(ip, port, config_.get());
     client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                    size_t size) {
       switch (meta->cmd()) {

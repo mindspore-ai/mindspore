@@ -76,6 +76,10 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
 }
 
 void SchedulerNode::Initialize() {
+  config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
+  if (!config_->Initialize()) {
+    MS_LOG(INFO) << "The config file is empty.";
+  }
   InitCommandHandler();
   CreateTcpServer();
   is_already_stopped_ = false;
@@ -101,7 +105,7 @@ void SchedulerNode::CreateTcpServer() {
 
   std::string scheduler_host = PSContext::instance()->cluster_config().scheduler_host;
   uint32_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
-  server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port);
+  server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port, config_.get());
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &, const void *data, size_t size) {
     if (handlers_.count(meta->cmd()) == 0) {
@@ -413,9 +417,12 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
   if (connected_nodes_.count(node_info.node_id_)) {
     return connected_nodes_[node_info.node_id_];
   } else {
+    if (config_ == nullptr) {
+      MS_LOG(EXCEPTION) << "The config is empty.";
+    }
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
-    auto client = std::make_shared<TcpClient>(ip, port);
+    auto client = std::make_shared<TcpClient>(ip, port, config_.get());
     client->SetMessageCallback([&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
                                    size_t size) { NotifyMessageArrival(meta); });
     client->Init();

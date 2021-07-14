@@ -29,6 +29,7 @@ bool FileConfiguration::Initialize() {
     std::ifstream json_file(file_path_);
     json_file >> js;
     json_file.close();
+    is_initialized_ = true;
   } catch (nlohmann::json::exception &e) {
     std::string illegal_exception = e.what();
     MS_LOG(ERROR) << "Parse json file:" << file_path_ << " failed, the exception:" << illegal_exception;
@@ -36,6 +37,8 @@ bool FileConfiguration::Initialize() {
   }
   return true;
 }
+
+bool FileConfiguration::IsInitialized() const { return is_initialized_.load(); }
 
 std::string FileConfiguration::Get(const std::string &key, const std::string &defaultvalue) const {
   if (!js.contains(key)) {

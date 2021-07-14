@@ -175,6 +175,21 @@ std::string CommUtil::ClusterStateToString(const ClusterState &state) {
   MS_LOG(INFO) << "The cluster state:" << state;
   return kClusterState.at(state);
 }
+
+std::string CommUtil::ParseConfig(const Configuration &config, const std::string &key) {
+  if (!config.IsInitialized()) {
+    MS_LOG(INFO) << "The config is not initialized.";
+    return "";
+  }
+
+  if (!const_cast<Configuration &>(config).Exists(key)) {
+    MS_LOG(INFO) << "The key:" << key << " is not exist.";
+    return "";
+  }
+
+  std::string path = config.Get(key, "");
+  return path;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

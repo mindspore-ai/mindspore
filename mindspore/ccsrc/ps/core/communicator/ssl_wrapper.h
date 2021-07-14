@@ -22,6 +22,8 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <assert.h>
+#include <openssl/pkcs12.h>
+#include <openssl/bio.h>
 
 #include <iostream>
 #include <string>
