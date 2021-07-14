@@ -69,8 +69,8 @@ namespace dataset {
 errno_t memcpy_ss(uchar *dest, size_t destMax, const uchar *src, size_t count) {
   uint32_t step = 0;
   while (count >= SECUREC_MEM_MAX_LEN) {
-    int ret_code = memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, SECUREC_MEM_MAX_LEN, src + step * SECUREC_MEM_MAX_LEN,
-                            SECUREC_MEM_MAX_LEN);
+    int ret_code = memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, destMax - step * SECUREC_MEM_MAX_LEN,
+                            src + step * SECUREC_MEM_MAX_LEN, SECUREC_MEM_MAX_LEN);
     if (ret_code != 0) {
       return ret_code;
     }
@@ -78,7 +78,8 @@ errno_t memcpy_ss(uchar *dest, size_t destMax, const uchar *src, size_t count) {
     step++;
   }
   if (count > 0) {
-    return memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, count, src + step * SECUREC_MEM_MAX_LEN, count);
+    return memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, destMax - step * SECUREC_MEM_MAX_LEN,
+                    src + step * SECUREC_MEM_MAX_LEN, count);
   }
   return 0;
 }
