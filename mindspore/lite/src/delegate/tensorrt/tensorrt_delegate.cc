@@ -49,6 +49,20 @@ int TensorRTDelegate::Init() {
   if (!IsHardwareSupport()) {
     return RET_NOT_SUPPORT;
   }
+  std::vector<std::shared_ptr<DeviceInfoContext>> device_list = context_->MutableDeviceInfo();
+  auto iter = std::find_if(device_list.begin(), device_list.end(), [](std::shared_ptr<DeviceInfoContext> device) {
+    return device->GetDeviceType() == DeviceType::kGPU;
+  });
+  if (iter == device_list.end()) {
+    MS_LOG(ERROR) << "no gpu device info found for TensorRT.";
+    return RET_ERROR;
+  }
+  auto gpu_info = (*iter)->Cast<GPUDeviceInfo>();
+  if (gpu_info == nullptr) {
+    MS_LOG(ERROR) << "no gpu device info found for TensorRT.";
+    return RET_ERROR;
+  }
+  device_info_ = gpu_info;
   op_func_lists_.clear();
   op_func_lists_ = {
     {schema::PrimitiveType_Activation, GetTensorRTOp<ActivationTensorRT>},
@@ -132,7 +146,7 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
                                                         KernelIter from, KernelIter end) {
   auto in_tensors = GraphInTensors<TensorRTOp>(ops, model, from, end);
   auto out_tensors = GraphOutTensors<TensorRTOp>(ops, model, from, end);
-  auto *tensorrt_graph = new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors);
+  auto *tensorrt_graph = new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_);
   if (tensorrt_graph == nullptr) {
     MS_LOG(ERROR) << "new tensorrt_graph failed.";
     return nullptr;

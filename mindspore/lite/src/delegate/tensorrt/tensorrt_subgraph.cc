@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/tensorrt/tensorrt_subgraph.h"
+#include <cuda_runtime_api.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -30,9 +31,9 @@ TensorRTSubGraph::~TensorRTSubGraph() {
     config_->destroy();
     config_ = nullptr;
   }
-  if (context_ != nullptr) {
-    context_->destroy();
-    context_ = nullptr;
+  if (trt_context_ != nullptr) {
+    trt_context_->destroy();
+    trt_context_ = nullptr;
   }
   if (engine_ != nullptr) {
     engine_->destroy();
@@ -74,9 +75,6 @@ int TensorRTSubGraph::BuildEngine() {
     MS_LOG(ERROR) << "create builder config failed.";
     return RET_ERROR;
   }
-  // config setup
-  // setMaxWorkspaceSize to x MB
-  this->config_->setMaxWorkspaceSize(16 * (1 << 20));
   // print all network ops
   MS_LOG(INFO) << "build engine for tensorrt network: " << this->network_->getName();
   for (int i = 0; i < this->network_->getNbLayers(); i++) {
@@ -84,6 +82,9 @@ int TensorRTSubGraph::BuildEngine() {
   }
   MS_LOG(DEBUG) << "end of tensorrt network: " << this->network_->getName();
 
+  if (SetDeviceConfig() != RET_OK) {
+    MS_LOG(WARNING) << "set tensorrt config failed.";
+  }
   engine_ = runtime_->GetBuilder()->buildEngineWithConfig(*this->network_, *this->config_);
   if (engine_ == nullptr) {
     MS_LOG(ERROR) << "Create engine failed in TensorRT network";
@@ -92,6 +93,43 @@ int TensorRTSubGraph::BuildEngine() {
   return RET_OK;
 }
 
+int TensorRTSubGraph::SetDeviceConfig() {
+  // set fp16
+  if (device_info_->GetEnableFP16() && SupportFP16()) {
+    config_->setFlag(nvinfer1::BuilderFlag::kFP16);
+  }
+
+  // config setMaxWorkspaceSize to x MB
+  config_->setMaxWorkspaceSize(256 * (1 << 20));
+  return RET_OK;
+}
+
+bool TensorRTSubGraph::SupportFP16() {
+  int deviceCnt = 0;
+
+  cudaError ret = cudaGetDeviceCount(&deviceCnt);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaGetDeviceCount failed.";
+    return false;
+  }
+  std::vector<std::string> supportFP16_versions{"5.3", "6.0", "6.2", "7.0", "7.2", "7.5", "8.0", "8.6"};
+  cudaDeviceProp prop;
+  std::string version;
+  for (int dev = 0; dev < deviceCnt; dev++) {
+    ret = cudaGetDeviceProperties(&prop, dev);
+    if (ret != cudaSuccess) {
+      MS_LOG(ERROR) << "cuDeviceGetAttribute failed.";
+      return false;
+    }
+    version = std::to_string(prop.major) + "." + std::to_string(prop.minor);
+    if (std::find(supportFP16_versions.begin(), supportFP16_versions.end(), version) != supportFP16_versions.end()) {
+      MS_LOG(INFO) << "cuda device version is: " << version << ", support FP16, set enable FP16 tag successful";
+      return true;
+    }
+  }
+  MS_LOG(WARNING) << "cuda device version is: " << version << ", don't support FP16, set enable FP16 tag failed";
+  return false;
+}
 int TensorRTSubGraph::BuildTensorRTGraph() {
   MS_ASSERT(!all_ops_.empty());
   // Connect NetWork.
@@ -163,8 +201,8 @@ int TensorRTSubGraph::Prepare() {
     MS_LOG(ERROR) << "engine_ is null in this builder_";
     return RET_ERROR;
   }
-  this->context_ = this->engine_->createExecutionContext();
-  if (this->context_ == nullptr) {
+  this->trt_context_ = this->engine_->createExecutionContext();
+  if (this->trt_context_ == nullptr) {
     MS_LOG(ERROR) << "TensorRTSubGraph create context failed.";
     return RET_ERROR;
   }
@@ -196,7 +234,7 @@ int TensorRTSubGraph::Execute() {
   for (size_t i = 0; i < inputs_.size(); i++) {
     runtime_->GetAllocator()->SyncMemInHostAndDevice(inputs_[i], trt_in_tensor_name_[i], true);
   }
-  auto ret = this->context_->executeV2(tensor_bindings_);
+  auto ret = this->trt_context_->executeV2(tensor_bindings_);
   if (!ret) {
     MS_LOG(ERROR) << "TensorRT execute failed.";
     return RET_ERROR;
