@@ -1360,7 +1360,7 @@ void BackwardCommunication(const FuncGraphPtr &root, const OperatorInfoPtr &dist
     InsertMirrorOps(root, mirror_ops, node);
   }
   // insert virtual div op
-  if (!virtual_div_op.empty() && is_loss_cnode) {
+  if (!virtual_div_op.empty() && is_loss_cnode && IsLastStage()) {
     MS_LOG(INFO) << "insert virtual div op for " << distribute_operator->name();
     InsertVirtualDivOp(virtual_div_op, node);
   }
