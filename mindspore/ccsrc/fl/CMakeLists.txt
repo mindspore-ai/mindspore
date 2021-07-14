@@ -44,8 +44,6 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_reconstruct.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_shares.cc")
     list(REMOVE_ITEM _FL_SRC_FILES "armour/cipher/cipher_unmask.cc")
-else()
-    add_compile_definitions(ENABLE_ARMOUR)
 endif()
 
 list(LENGTH _FL_SRC_FILES fl_file_num)

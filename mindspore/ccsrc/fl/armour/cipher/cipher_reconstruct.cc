@@ -262,7 +262,7 @@ bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::st
 
 bool CipherReconStruct::GetNoiseMasksSum(std::vector<float> *result,
                                          const std::map<std::string, std::vector<float>> &client_keys) {
-  float sum[cipher_init_->featuremap_] = {0.0};
+  std::vector<float> sum(cipher_init_->featuremap_, 0.0);
   for (auto iter = client_keys.begin(); iter != client_keys.end(); iter++) {
     if (iter->second.size() != cipher_init_->featuremap_) {
       return false;
