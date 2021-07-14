@@ -85,6 +85,7 @@ def parse(arg=None):
     parser.add_argument('--beta1', dest='beta1', type=float, default=0.5)
     parser.add_argument('--beta2', dest='beta2', type=float, default=0.999)
     parser.add_argument('--n_d', dest='n_d', type=int, default=5, help='# of d updates per g update')
+    parser.add_argument('--split_point', dest='split_point', type=int, default=182000, help='# of dataset split point')
 
     parser.add_argument('--thres_int', dest='thres_int', type=float, default=0.5)
     parser.add_argument('--test_int', dest='test_int', type=float, default=1.0)
@@ -142,19 +143,11 @@ if __name__ == '__main__':
                                               mode="train",
                                               batch_size=args.batch_size,
                                               device_num=device_num,
-                                              shuffle=True)
+                                              shuffle=True,
+                                              split_point=args.split_point)
     train_loader = train_dataset.create_dict_iterator()
 
-    valid_dataset, valid_length = data_loader(img_path=args.data_path,
-                                              attr_path=args.attr_path,
-                                              selected_attrs=args.attrs,
-                                              mode="valid",
-                                              batch_size=args.batch_size,
-                                              device_num=device_num,
-                                              shuffle=False)
-    valid_loader = valid_dataset.create_dict_iterator()
-
-    print('Training images:', train_length, '/', 'Validating images:', valid_length)
+    print('Training images:', train_length)
 
     # Define network
     genc = Genc(args.enc_dim, args.enc_layers, args.enc_norm, args.enc_acti, mode='train')

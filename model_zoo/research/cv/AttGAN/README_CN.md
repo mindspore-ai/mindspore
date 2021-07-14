@@ -102,9 +102,6 @@ CelebFaces Attributes Dataset (CelebA) 是一个大规模的人脸属性数据�
 .
 └─ cv
   └─ AttGAN
-    ├─ data
-      ├─ custom                            # 自定义图像目录
-      ├─ list_attr_custom.txt              # 属性控制文件
     ├── scripts
       ├──run_distribute_train.sh           # 分布式训练的shell脚本
       ├──run_single_train.sh               # 单卡训练的shell脚本
@@ -123,9 +120,7 @@ CelebFaces Attributes Dataset (CelebA) 是一个大规模的人脸属性数据�
     └─ README_CN.md                        # AttGAN的文件描述
 ```
 
-上述脚本目录中，custom用于存放用户想要修改属性的图片文件，list_attr_custom.txt用于设置想要修改的属性，该脚本可以修改13种属性，分别为：Bald Bangs Black_Hair Blond_Hair Brown_Hair Bushy_Eyebrows Eyeglasses Male Mouth_Slightly_Open Mustache No_Beard Pale_Skin Young。
-
-list_attr_custom.txt文件中第一行参数为要评估的图片数量，第二行为13种属性，接下来的行表示对相应图片想要进行修改的属性，如果要修改为1，不要修改为-1，如(xxx.jpg -1 -1 -1  1 -1  1 -1  1  1 -1  1 -1 -1)。
+该脚本可以修改13种属性，分别为：Bald Bangs Black_Hair Blond_Hair Brown_Hair Bushy_Eyebrows Eyeglasses Male Mouth_Slightly_Open Mustache No_Beard Pale_Skin Young。
 
 ## 训练过程
 
@@ -139,7 +134,7 @@ list_attr_custom.txt文件中第一行参数为要评估的图片数量，第二
   python train.py --img_size 128 --experiment_name 128_shortcut1_inject1_none --data_path /path/data/img_align_celeba --attr_path /path/data/list_attr_celeba.txt
   ```
 
-  训练结束后，当前目录下会生成output目录，在该目录下会根据你设置的experiment_name参数生成相应的子目录，训练时的参数保存在该子目录下的setting.txt文件中，checkpoint文件保存在`output/experiment_name/rank0`下。
+  训练结束后，当前目录下会生成output目录，在该目录下会根据你设置的experiment_name参数生成相应的子目录，训练时的参数保存在该子目录下的setting.txt文件中，checkpoint文件保存在`output/experiment_name/rank0`下。如果需要生成setting.txt文件，只需要执行一次train.py文件即可，此时脚本会根据设定的参数生成对应的setting.txt文件。该文件会被用于推理脚本。
 
 ### 分布式训练
 
@@ -156,7 +151,7 @@ list_attr_custom.txt文件中第一行参数为要评估的图片数量，第二
 ### 评估
 
 - 在Ascend环境运行时评估自定义数据集
-  该网络可以用于修改面部属性，用户将希望修改的图片放在自定义的图片目录下，并根据自己期望修改的属性来编辑list_attr_custom.txt文件(文件的具体参数见[脚本及样例代码](#脚本及样例代码))。完成后，需要将自定义图片目录和属性编辑文件作为参数传入测试脚本，分别对应custom_data以及custom_attr。
+  该网络可以用于修改面部属性，用户将希望修改的图片放在自定义的图片目录下，并根据自己期望修改的属性来修改属性编辑文件(文件的具体参数参照CelebA数据集及属性编辑文件)。完成后，需要将自定义图片目录和属性编辑文件作为参数传入测试脚本，分别对应custom_data以及custom_attr。
 
   评估时选择已经生成好的检查点文件，作为参数传入测试脚本，对应参数为`enc_ckpt_name`和`dec_ckpt_name`(分别保存了编码器和解码器的参数)
 
