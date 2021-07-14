@@ -221,12 +221,13 @@ ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B fp32
 
 ### Run Prediction Using One Device
 
-The following script will run prediction on 1 Ascend cards. The difference is the net is initialized with float16 type.
+The following script will run prediction on 1 Ascend cards or 1 Nvidia GPU. The difference is the net is initialized with float16 type.
 
 ```bash
 $FILE_PATH=/home/your_path/ckpts
+$DEVICE_TARGET=Ascend # or GPU
 bash scripts/run_standalone_predict.sh ${FILE_PATH}/strategy_load_ckpt/strategy.ckpt \
-${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B
+${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B $DEVICE_TARGET
 ```
 
 ### Run Serving
