@@ -443,6 +443,26 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_enable_parallel_optimizer()
 
+    def set_sharding_propagation(self, sharding_propagation):
+        """
+        Set the value of sharding strategy propagation in AUTO_PARALLEL mode. If True, the strategy-configured operators
+        will propagate the strategies to other operators with minimum redistribution cost; otherwise, the algorithm
+        will search the desired strategies.
+        Default: False.
+
+        Args:
+            sharding_propagation (bool): Enable/disable strategy propagation.
+        """
+        self.check_context_handle()
+        if not isinstance(sharding_propagation, bool):
+            raise TypeError("'sharding_propagation' is an invalid type.")
+        self._context_handle.set_sharding_propagation(sharding_propagation)
+
+    def get_sharding_propagation(self):
+        """Get the value of sharding strategy propagation."""
+        self.check_context_handle()
+        return self._context_handle.get_sharding_propagation()
+
     def set_communi_parallel_mode(self, communi_parallel_mode):
         """
         Set communication parallel mode.
@@ -563,7 +583,8 @@ _set_auto_parallel_context_func_map = {
     "all_reduce_fusion_config": auto_parallel_context().set_all_reduce_fusion_split_indices,
     "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().set_optimizer_weight_shard_size,
-    "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save}
+    "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save,
+    "sharding_propagation": auto_parallel_context().set_sharding_propagation}
 
 
 _get_auto_parallel_context_func_map = {
@@ -584,7 +605,8 @@ _get_auto_parallel_context_func_map = {
     "all_reduce_fusion_config": auto_parallel_context().get_all_reduce_fusion_split_indices,
     "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().get_optimizer_weight_shard_size,
-    "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save}
+    "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save,
+    "sharding_propagation": auto_parallel_context().get_sharding_propagation}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
@@ -593,7 +615,8 @@ _get_auto_parallel_context_func_map = {
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int,
-                 optimizer_weight_shard_aggregated_save=bool)
+                 optimizer_weight_shard_aggregated_save=bool,
+                 sharding_propagation=bool)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -655,6 +678,10 @@ def _set_auto_parallel_context(**kwargs):
                                     Default: -1, which means fully use parallel optimizer in data parallel dimension.
         optimizer_weight_shard_aggregated_save (bool): Whether to integrated save weight shard when enable parallel
                                                        optimizer. Default: False.
+        sharding_propagation (bool): Set the value of sharding strategy propagation in AUTO_PARALLEL mode. If True,
+                                    the strategy-configured operators will propagate the strategies to other
+                                    operators with minimum redistribution cost; otherwise, the algorithm will
+                                    search the desired strategies. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

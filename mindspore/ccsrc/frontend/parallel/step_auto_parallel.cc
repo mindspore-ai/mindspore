@@ -232,6 +232,8 @@ bool IsOperatorsInTwoSeparateLoops(const CNodePtr &a_cnode, const CNodePtr &b_cn
   return true;
 }
 
+// 'configured_stra_ops_' includes all operators that are configured sharding strategies.
+std::map<OperatorInfoPtr, StrategyPtr> configured_stra_ops_;
 void InitCostGraph() {
   if (entire_costgraph == nullptr) {
     entire_costgraph = std::make_shared<CostGraph>();
@@ -239,6 +241,7 @@ void InitCostGraph() {
   MS_EXCEPTION_IF_NULL(CostModelContext::GetInstance());
   CostModelContext::GetInstance()->PrintCostModel();
   entire_costgraph->Init();
+  configured_stra_ops_.clear();
 }
 
 void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const PrimitivePtr &prim,
@@ -266,6 +269,7 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
       auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
       // 'used_devices == 1' means that ALL-1 strategy, which is valid in auto-parallel
       if (used_devices == 1) {
+        configured_stra_ops_.insert({operator_info, strategyPtr});
         return;
       }
       // 'used_devices == -1' means that 'used_devices_' is not set
@@ -275,6 +279,7 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
                           << ", total devices: " << total_device_num;
       }
     }
+    configured_stra_ops_.insert({operator_info, strategyPtr});
   }
 }
 
@@ -343,6 +348,15 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     if (operator_info->GenerateStrategies(0) != SUCCESS) {
       MS_LOG(ERROR) << "Strategy search for Operator " << operator_info->name() << " failed.";
       return nullptr;
+    }
+    if (ParallelContext::GetInstance()->sharding_propagation() &&
+        (operator_info->name().find(VIRTUAL_DATA_SET_INFO) != std::string::npos)) {
+      const auto &swc_vec = operator_info->GetStrategyCost();
+      if (swc_vec.empty()) {
+        MS_LOG(EXCEPTION) << "No available strategy for: " << operator_info->name();
+      }
+      MS_EXCEPTION_IF_NULL(swc_vec[0]->strategy_ptr);
+      configured_stra_ops_.insert({operator_info, swc_vec[0]->strategy_ptr});
     }
     // If 'approximation' is enabled, the 'strategy_cost' of each operator is approximated
     auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
@@ -608,9 +622,25 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   node_op_info->AddPrevEdge(edge_ptr);
   prev_op_info->AddSuccEdge(edge_ptr);
   entire_costgraph->AddEdge(prev_op_info, node_op_info, edge_ptr);
+  if (ParallelContext::GetInstance()->sharding_propagation() && (prev_prim->name() == CAST) &&
+      (configured_stra_ops_.find(node_op_info) != configured_stra_ops_.end())) {
+    const auto next_op_stra = configured_stra_ops_[node_op_info];
+    const auto cast_stra = edge_ptr->GetPrevOpStrategyByNextOpStrategyWithZeroComm(next_op_stra);
+    if (cast_stra == nullptr) {
+      MS_LOG(EXCEPTION) << "No available strategy for: " << prev_op_info->name();
+    }
+    prev_op_info->ClearStrategyCost();
+    if (prev_op_info->SetCostUnderStrategy(cast_stra) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Failure: operator " << prev_op_info->name() << " SetCostUnderStrategy failed";
+    }
+    if (edge_ptr->InitEdgeCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Edge cost re-initialization failed.";
+    }
+    MS_LOG(INFO) << "Set strategy for: " << prev_op_info->name() << " under the strategy of: " << node_op_info->name();
+    configured_stra_ops_.insert({prev_op_info, cast_stra});
+  }
   MS_LOG(INFO) << "Successfully adding the edge between " << prev_op_info->name() << " and " << node_op_info->name();
   (*edge_count)++;
-  return;
 }
 
 void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
@@ -884,11 +914,11 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   //      subsequent operator;
   // Step 3.1: Calculate memory usage:
   //      note the memory usage calculation is different in training phase and inference phase.
-  // Step 4: Run the Dynamic Programming algorithm:
-  //      in this process, cost is calculated based on not only the operators, but also the edges. Here, the edge
-  //      cost is caused by the redistribution of a operator's output tensor layout to the next operator's input
-  //      tensor layout. Note that there may be several connected components in the costgraph, and the DP algorithm
-  //      runs on each of them.
+  // Step 4: Run the strategy searching algorithm:
+  //      If 'sharding_propagation' is configured to be true, then the configured-sharding-strategies will propagate
+  //      to the non-configured operators, with the goal of minimizing redistribution cost.
+  //      Otherwise, DP algorithm is used to search strategy of the costgraph. Note that there may be several connected
+  //      components in the costgraph, and the DP algorithm runs on each of them.
   //
   // OUTPUT: the determined strategy for each operator.
 
@@ -929,8 +959,11 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
     MS_LOG(EXCEPTION) << "Calculating memory cost failed.";
   }
 
-  // Step 4: run DP algorithm on the costgraph.
-  if (GetStrategy(entire_costgraph) != SUCCESS) {
+  // Step 4: run the strategy searching algorithm
+  if (ParallelContext::GetInstance()->sharding_propagation()) {
+    entire_costgraph->StrategyPropagate(configured_stra_ops_);
+    configured_stra_ops_.clear();
+  } else if (GetStrategy(entire_costgraph) != SUCCESS) {
     MS_LOG(ERROR) << "Strategy search for cost-graph fails";
     return FAILED;
   }

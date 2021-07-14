@@ -1699,6 +1699,23 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr &stra
   }
 }
 
+void OperatorInfo::SetSelectedStrategy(const StrategyPtr &s_strategy, size_t curr_depth) {
+  MS_EXCEPTION_IF_NULL(s_strategy);
+  if ((selected_strategy_depth_ != -1) && (SizeToLong(curr_depth) > selected_strategy_depth_)) {
+    MS_LOG(INFO) << name_ << " has already been set strategy.";
+    return;
+  }
+  MS_LOG(INFO) << "Set strategy for: " << name_;
+  PrintStrategy(s_strategy);
+  selected_strategy_ = s_strategy;
+  selected_strategy_depth_ = SizeToLong(curr_depth);
+}
+
+CNodePtr OperatorInfo::cnode() {
+  MS_EXCEPTION_IF_NULL(cnode_);
+  return cnode_;
+}
+
 double OperatorInfo::GetForwardMemoryCostFromCNode() {
   return operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
 }

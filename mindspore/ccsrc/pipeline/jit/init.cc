@@ -186,6 +186,9 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set whether to integrated save weight shard when enable parallel optimizer.")
     .def("get_optimizer_weight_shard_aggregated_save", &ParallelContext::optimizer_weight_shard_aggregated_save,
          "Get whether to integrated save weight shard when enable parallel optimizer.")
+    .def("set_sharding_propagation", &ParallelContext::set_sharding_propagation,
+         "Set sharding strategy propagation value.")
+    .def("get_sharding_propagation", &ParallelContext::sharding_propagation, "Get sharding strategy propagation value.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")

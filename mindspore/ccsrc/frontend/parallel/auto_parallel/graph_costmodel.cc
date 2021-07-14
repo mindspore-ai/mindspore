@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <queue>
 
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
@@ -85,6 +86,102 @@ bool CostGraph::IsEdgeInCostGraph(const std::string &test_edge_name, size_t outp
     }
   }
   return false;
+}
+
+void CostGraph::StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr> &ops_stras) {
+  if (ops_stras.empty()) {
+    MS_LOG(EXCEPTION) << "There is no operator that is configured sharding strategy.";
+  }
+  std::map<OperatorInfoPtr, bool> visited;
+  for (auto &op : ops_) {
+    visited[op] = false;
+  }
+  for (auto &op_stra : ops_stras) {
+    BFS(op_stra.first, op_stra.second, ops_stras, &visited);
+  }
+}
+
+void CheckShardingConsisitency(std::map<OperatorInfoPtr, StrategyPtr> configured_ops, OperatorInfoPtr curr_op,
+                               OperatorInfoPtr another_op, CostPtr cost, EdgePtr edge) {
+  if ((configured_ops.find(another_op) == configured_ops.end()) &&
+      (cost == nullptr || cost->communication_cost_ != 0.0)) {
+    PrintStrategy(another_op->selected_strategy());
+    PrintStrategy(curr_op->selected_strategy());
+    MS_LOG(EXCEPTION) << "There are redistribution cost occurs at edge: " << edge->edge_name()
+                      << ", consider configuring sharding strategies for two operators."
+                      << " The full name of these two operators are: " << curr_op->cnode()->fullname_with_scope()
+                      << " and " << another_op->cnode()->fullname_with_scope();
+  }
+}
+
+void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
+                    std::map<OperatorInfoPtr, StrategyPtr> configured_ops, std::map<OperatorInfoPtr, bool> *visited) {
+  std::queue<std::pair<std::pair<OperatorInfoPtr, StrategyPtr>, size_t>> next_level;
+  next_level.push({{op, op_stra}, 0});
+  while (!next_level.empty()) {
+    auto curr_op = next_level.front().first.first;
+    auto configured_stra = next_level.front().first.second;
+    auto curr_depth = next_level.front().second;
+    visited->at(curr_op) = true;
+    MS_LOG(INFO) << "curr_depth: " << curr_depth;
+    curr_op->SetSelectedStrategy(configured_stra, curr_depth);
+    for (auto &edge : curr_op->succ_edges()) {
+      const auto &next_op = edge->next_operator();
+      if (visited->at(next_op)) {
+        const auto cost = edge->GetCostByStrategyPair({curr_op->selected_strategy(), next_op->selected_strategy()});
+        CheckShardingConsisitency(configured_ops, curr_op, next_op, cost, edge);
+        continue;
+      }
+      if ((curr_depth > 0) && (configured_ops.find(next_op) != configured_ops.end())) {
+        const auto &next_op_conf_stra = configured_ops[next_op];
+        const auto &next_op_stra = edge->GetNextOpStrategyByPrevOpStrategyWithZeroComm(curr_op->selected_strategy());
+        if ((next_op_conf_stra == nullptr) || (!next_op_conf_stra->IsEqual(next_op_stra))) {
+          MS_LOG(EXCEPTION) << "Sharding strategies should be configured on the boundary operators. "
+                            << "Currently reaching " << curr_op->name() << " and " << next_op->name() << "."
+                            << " The full name of these two operators are: " << curr_op->cnode()->fullname_with_scope()
+                            << " and " << next_op->cnode()->fullname_with_scope();
+        }
+      }
+      if (configured_ops.find(next_op) != configured_ops.end()) {
+        continue;
+      }
+      const auto &next_op_stra = edge->GetNextOpStrategyByPrevOpStrategyWithZeroComm(curr_op->selected_strategy());
+      if (next_op_stra == nullptr) {
+        PrintStrategy(curr_op->selected_strategy());
+        MS_LOG(EXCEPTION) << next_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
+      }
+      next_level.push({{next_op, next_op_stra}, curr_depth + 1});
+    }
+    for (auto &edge : curr_op->prev_edges()) {
+      const auto &prev_op = edge->prev_operator();
+      if (visited->at(prev_op)) {
+        const auto cost = edge->GetCostByStrategyPair({prev_op->selected_strategy(), curr_op->selected_strategy()});
+        CheckShardingConsisitency(configured_ops, curr_op, prev_op, cost, edge);
+        continue;
+      }
+      if ((curr_depth > 0) && (configured_ops.find(prev_op) != configured_ops.end())) {
+        const auto &prev_op_conf_stra = configured_ops[prev_op];
+        const auto &prev_op_stra = edge->GetPrevOpStrategyByNextOpStrategyWithZeroComm(curr_op->selected_strategy());
+        if ((prev_op_conf_stra == nullptr) || (!prev_op_conf_stra->IsEqual(prev_op_stra))) {
+          MS_LOG(ERROR) << "curr_depth: " << curr_depth;
+          MS_LOG(EXCEPTION) << "Sharding strategies should be configured on the boundary operators. "
+                            << "Currently reaching " << prev_op->name() << " and " << curr_op->name() << "."
+                            << " The full name of these two operators are: " << prev_op->cnode()->fullname_with_scope()
+                            << " and " << curr_op->cnode()->fullname_with_scope();
+        }
+      }
+      if (configured_ops.find(prev_op) != configured_ops.end()) {
+        continue;
+      }
+      const auto &prev_op_stra = edge->GetPrevOpStrategyByNextOpStrategyWithZeroComm(curr_op->selected_strategy());
+      if (prev_op_stra == nullptr) {
+        PrintStrategy(curr_op->selected_strategy());
+        MS_LOG(EXCEPTION) << prev_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
+      }
+      next_level.push({{prev_op, prev_op_stra}, curr_depth + 1});
+    }
+    next_level.pop();
+  }
 }
 
 std::vector<std::shared_ptr<CostGraph>> CostGraph::ConstructConnectedComponents(

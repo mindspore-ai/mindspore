@@ -330,6 +330,66 @@ Status Edge::CalculateMemoryCostForInference() {
   return SUCCESS;
 }
 
+CostPtr Edge::GetCostByStrategyPair(const CostPtrKey &stra_pair) {
+  if (cost_map_.find(stra_pair) == cost_map_.end()) {
+    return nullptr;
+  }
+  auto cost_vec = cost_map_[stra_pair];
+  if (cost_vec.empty()) {
+    PrintStrategy(stra_pair.first);
+    PrintStrategy(stra_pair.second);
+    MS_LOG(EXCEPTION) << "No available cost under current strategy pair of the edge: " << edge_name_;
+  }
+  if (cost_vec.size() > 1) {
+    PrintStrategy(stra_pair.first);
+    PrintStrategy(stra_pair.second);
+    MS_LOG(INFO) << "Multiple costs available under the stratey pair of the edge: " << edge_name_;
+  }
+  return cost_vec[0];
+}
+
+StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithZeroComm(const StrategyPtr &prev_op_stra) {
+  std::vector<std::pair<StrategyPtr, double>> next_op_stras;
+  for (auto &key_value : cost_map_) {
+    const auto &candidate_prev_op_stra = key_value.first.first;
+    if (prev_op_stra->IsEqual(candidate_prev_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
+      next_op_stras.push_back({key_value.first.second, key_value.second[0]->computation_cost_});
+    }
+  }
+  if (next_op_stras.empty()) {
+    MS_LOG(ERROR) << "There are no available strategy for zero communication cost for edge: " << edge_name_;
+    return nullptr;
+  } else if (next_op_stras.size() > 1) {
+    MS_LOG(INFO) << "There are multiple strategies for edge: " << edge_name_
+                 << ", choose the one with"
+                    " minimum computation costs.";
+  }
+  std::sort(next_op_stras.begin(), next_op_stras.end(),
+            [](std::pair<StrategyPtr, double> a, std::pair<StrategyPtr, double> b) { return a.second <= b.second; });
+  return next_op_stras[0].first;
+}
+
+StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithZeroComm(const StrategyPtr &next_op_stra) {
+  std::vector<std::pair<StrategyPtr, double>> prev_op_stras;
+  for (auto &key_value : cost_map_) {
+    const auto &candidate_next_op_stra = key_value.first.second;
+    if (next_op_stra->IsEqual(candidate_next_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
+      prev_op_stras.push_back({key_value.first.first, key_value.second[0]->computation_cost_});
+    }
+  }
+  if (prev_op_stras.empty()) {
+    MS_LOG(ERROR) << "There are no available strategy for zero communication cost for edge: " << edge_name_;
+    return nullptr;
+  } else if (prev_op_stras.size() > 1) {
+    MS_LOG(INFO) << "There are multiple strategies for edge: " << edge_name_
+                 << ", choose the one with minimum "
+                    "computation costs.";
+  }
+  std::sort(prev_op_stras.begin(), prev_op_stras.end(),
+            [](std::pair<StrategyPtr, double> a, std::pair<StrategyPtr, double> b) { return a.second <= b.second; });
+  return prev_op_stras[0].first;
+}
+
 void Edge::SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &cost_map) {
   cost_map_ = cost_map;
   pre_op_output_.clear();

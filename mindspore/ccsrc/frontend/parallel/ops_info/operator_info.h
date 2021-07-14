@@ -67,6 +67,7 @@ class OperatorInfo {
     refkey_parameter_name_ = "";
     stage_device_list_ = g_device_manager->GetDeviceListInThisStage();
     stage_device_size_ = SizeToLong(stage_device_list_.size());
+    cnode_ = nullptr;
   }
 
   virtual ~OperatorInfo() = default;
@@ -140,6 +141,7 @@ class OperatorInfo {
     selected_strategy_ = s_strategy;
     selected_cost_ = cost;
   }
+  void SetSelectedStrategy(const StrategyPtr &s_strategy, size_t);
   StrategyPtr selected_strategy() const { return selected_strategy_; }
   CostPtr selected_cost() const { return selected_cost_; }
   // Approximate the list of available strategies
@@ -155,6 +157,7 @@ class OperatorInfo {
   const std::vector<ValuePtr> &input_value() const { return input_value_; }
   void set_outputs_dtype(const TypePtr &dtype) { outputs_dtype_ = dtype; }
   void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
+  CNodePtr cnode();
   bool is_alive() const { return is_alive_; }
   void SetNotAlive() { is_alive_ = false; }
   StrategyPtr strategy() const { return strategy_; }
@@ -274,6 +277,7 @@ class OperatorInfo {
   std::vector<std::shared_ptr<Edge>> prev_edges_;
   std::vector<std::shared_ptr<Edge>> succ_edges_;
   StrategyPtr selected_strategy_;
+  int64_t selected_strategy_depth_ = -1;
   // Used in DP algorithm
   bool is_alive_;
   CostPtr selected_cost_;

@@ -52,6 +52,9 @@ class CostGraph {
   }
   void RemoveOperator(const OperatorInfoPtr &op);
   bool IsOperatorInCostGraph(const OperatorInfoPtr &op);
+  void StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr> &);
+  void BFS(const OperatorInfoPtr &, const StrategyPtr &, std::map<OperatorInfoPtr, StrategyPtr>,
+           std::map<OperatorInfoPtr, bool> *);
   // the edge is in the form: u --> v
   void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge);
   std::vector<std::shared_ptr<Edge>> GetOriginalPrevEdges(OperatorInfoPtr v_node) { return in_edges_[v_node]; }
