@@ -6,11 +6,13 @@
 
 #### NewModels
 
-- [STABLE] Add CV models on Ascend: CPM, CSPDarknet53.
-- [STABLE] Add NLP models on Ascend: NAML, Fasttext, GRU, LSTM.
-- [STABLE] Add CV models on GPU: Faster-RCNN.
-- [BETA] Add CV models on Ascend:
-- [BETA] Add EPP-MVSNet on GPU: a novel deep learning network for 3D reconstruction from multi-view stereo, which has won the first place in Tanks & Temples leaderboard (until April 1, 2021).
+- [STABLE] Add CV models on Ascend: CPM, FCN8s, SSD-ResNet50-FPN, EAST, AdvancedEast.
+- [STABLE] Add NLP models on Ascend: DGU, TextCNN, SentimentNet(LSTM).
+- [STABLE] Add CV models on GPU: Faster-RCNN, FCN8s, CycleGAN, AdvancedEast.
+- [BETA] Add CV models on Ascend: CycleGAN, PoseNet, SimCLR.
+- [BETA] Add NLP models on Ascend: DGU, EmoTect, Senta, KT-Net.
+- [BETA] Add NLP models on GPU: DGU, EmoTect.
+- [BETA] Add EPP-MVSNet: a novel deep learning network for 3D reconstruction from multi-view stereo, which has won the first place. in Tanks & Temples leaderboard (until April 1, 2021)(GPU).
 
 #### FrontEnd
 
@@ -100,12 +102,12 @@ device_que(send_epoch_end=True, create_data_info_queue=False)
 
 ### Bug fixes
 
-#### FrontEnd（朱乃盘）
+#### FrontEnd
 
 - Fix exception when use import module in while body such as 'F.xxx'.([!17635](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/17635))
 - Fix the exception of 'exceeding limit call depth' in compile graph process when use while expression with grad operation. ([!18662](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/18662))
 
-#### Executor（姜建飞）
+#### Executor
 
 - Fix reallocate memory bug for communication op.([!14492](https://gitee.com/mindspore/mindspore/pulls/14492))
 - Replace memcpy_async op with tensor_move op.([!15204](https://gitee.com/mindspore/mindspore/pulls/15204))
@@ -115,7 +117,7 @@ device_que(send_epoch_end=True, create_data_info_queue=False)
 - Fix graph ring problem in UB fusion.([!16109](https://gitee.com/mindspore/mindspore/pulls/16109))
 - Fix AllGather op select problem when shape is not divisible by 16.([!18878](https://gitee.com/mindspore/mindspore/pulls/18878))
 
-#### Dataset (刘存伟)
+#### Dataset
 
 - Fix an out-of-memory error when ImagefolderDataset gets an illegal directory. ([!16196](https://gitee.com/mindspore/mindspore/pulls/16196))
 - Fix bugs of vision transformations in lite mode. ([!14722](https://gitee.com/mindspore/mindspore/pulls/14722),[!14774](https://gitee.com/mindspore/mindspore/pulls/14774),[!15050](https://gitee.com/mindspore/mindspore/pulls/15050))
