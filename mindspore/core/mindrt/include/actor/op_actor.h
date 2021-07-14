@@ -64,6 +64,9 @@ struct OpContext {
   const void *kernel_call_back_after_;
 
   void SetFailed(int32_t code) {
+    if (code == MindrtStatus::KINIT) {
+      code = MindrtStatus::KERROR;
+    }
     for (auto promise : *results_) {
       promise.SetFailed(code);
     }
