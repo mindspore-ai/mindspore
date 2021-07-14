@@ -73,7 +73,7 @@ int64_t AudioSpectrogram::get_window_size() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void AudioSpectrogram::set_stride(const int64_t stride) { this->AddAttr(kStride, MakeValue(stride)); }
+void AudioSpectrogram::set_stride(const int64_t stride) { (void)this->AddAttr(kStride, MakeValue(stride)); }
 int64_t AudioSpectrogram::get_stride() const {
   auto value_ptr = GetAttr(kStride);
   return GetValue<int64_t>(value_ptr);
@@ -100,7 +100,7 @@ int64_t GetFftLength(int64_t length) {
   return SizeToLong(1 << (unsigned int)shift);
 }
 
-void AudioSpectrogram::set_mag_square(const bool mag_square) { this->AddAttr(kMagSquare, MakeValue(mag_square)); }
+void AudioSpectrogram::set_mag_square(const bool mag_square) { (void)this->AddAttr(kMagSquare, MakeValue(mag_square)); }
 bool AudioSpectrogram::get_mag_square() const {
   auto value_ptr = GetAttr(kMagSquare);
   return GetValue<bool>(value_ptr);

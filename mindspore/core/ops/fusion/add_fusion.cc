@@ -26,9 +26,8 @@
 namespace mindspore {
 namespace ops {
 void AddFusion::set_activation_type(const ActivationType activation_type) {
-  int64_t swi;
-  swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  int64_t swi = activation_type;
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 ActivationType AddFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);

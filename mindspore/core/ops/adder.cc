@@ -33,14 +33,14 @@ void Adder::Init(const int64_t in_channel, const int64_t out_channel, const std:
   set_format(format);
 }
 
-void Adder::set_in_channel(const int64_t in_channel) { this->AddAttr(kInChannel, MakeValue(in_channel)); }
+void Adder::set_in_channel(const int64_t in_channel) { (void)this->AddAttr(kInChannel, MakeValue(in_channel)); }
 
 int64_t Adder::get_in_channel() const {
   auto value_ptr = GetAttr(kInChannel);
   return GetValue<int64_t>(value_ptr);
 }
 
-void Adder::set_out_channel(const int64_t out_channel) { this->AddAttr(kOutChannel, MakeValue(out_channel)); }
+void Adder::set_out_channel(const int64_t out_channel) { (void)this->AddAttr(kOutChannel, MakeValue(out_channel)); }
 
 int64_t Adder::get_out_channel() const {
   auto value_ptr = GetAttr(kOutChannel);
@@ -66,28 +66,28 @@ PadMode Adder::get_pad_mode() const {
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
-void Adder::set_stride(const std::vector<int64_t> &stride) { this->AddAttr(kStride, MakeValue(stride)); }
+void Adder::set_stride(const std::vector<int64_t> &stride) { (void)this->AddAttr(kStride, MakeValue(stride)); }
 
 std::vector<int64_t> Adder::get_stride() const {
   auto value_ptr = GetAttr(kStride);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Adder::set_pad_list(const std::vector<int64_t> &pad_list) { this->AddAttr(kPadList, MakeValue(pad_list)); }
+void Adder::set_pad_list(const std::vector<int64_t> &pad_list) { (void)this->AddAttr(kPadList, MakeValue(pad_list)); }
 
 std::vector<int64_t> Adder::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Adder::set_dilation(const std::vector<int64_t> &dilation) { this->AddAttr(kDilation, MakeValue(dilation)); }
+void Adder::set_dilation(const std::vector<int64_t> &dilation) { (void)this->AddAttr(kDilation, MakeValue(dilation)); }
 
 std::vector<int64_t> Adder::get_dilation() const {
   auto value_ptr = GetAttr(kDilation);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Adder::set_group(const int64_t group) { this->AddAttr(kGroup, MakeValue(group)); }
+void Adder::set_group(const int64_t group) { (void)this->AddAttr(kGroup, MakeValue(group)); }
 
 int64_t Adder::get_group() const {
   auto value_ptr = GetAttr(kGroup);

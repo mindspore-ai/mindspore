@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 void SliceFusion::Init(const std::vector<int64_t> &axes) { this->set_axes(axes); }
 
-void SliceFusion::set_axes(const std::vector<int64_t> &axes) { this->AddAttr(kAxes, MakeValue(axes)); }
+void SliceFusion::set_axes(const std::vector<int64_t> &axes) { (void)this->AddAttr(kAxes, MakeValue(axes)); }
 
 std::vector<int64_t> SliceFusion::get_axes() const {
   auto value_ptr = GetAttr(kAxes);
@@ -52,7 +52,7 @@ AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const Prim
   CheckAndConvertUtils::Check("len of size", (int64_t)size.size(), kEqual, "len x's dim", SizeToLong(x_shape_len));
 
   for (size_t i = 0; i < x_shape_len; i++) {
-    CheckAndConvertUtils::CheckInteger("input size[" + std::to_string(i) + "]", size[i], kGreaterThan, 0, "");
+    (void)CheckAndConvertUtils::CheckInteger("input size[" + std::to_string(i) + "]", size[i], kGreaterThan, 0, "");
     if (x_shape[i] < (begin[i] + size[i])) {
       auto y = begin[i] + size[i];
       MS_EXCEPTION(ValueError) << "For " + op_name + "slice shape can't bigger than origin shape " +

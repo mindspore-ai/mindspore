@@ -69,8 +69,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   ShapeVector x_max_shape = x_shape_map[kMaxShape];
   ShapeVector y_min_shape = y_shape_map[kMinShape];
   ShapeVector y_max_shape = y_shape_map[kMaxShape];
-  (void)CheckAndConvertUtils::CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
-  (void)CheckAndConvertUtils::CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
+  CheckAndConvertUtils::CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
+  CheckAndConvertUtils::CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn =

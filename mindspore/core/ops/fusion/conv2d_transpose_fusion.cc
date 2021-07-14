@@ -40,32 +40,33 @@ void Conv2dTransposeFusion::Init(int64_t in_channel, int64_t out_channel, const 
 }
 
 void Conv2dTransposeFusion::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, 2, name());
+  (void)CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, 2, name());
   for (int64_t item : kernel_size) {
-    CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
+    (void)CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
   }
-  AddAttr(kKernelSize, MakeValue(kernel_size));
+  (void)AddAttr(kKernelSize, MakeValue(kernel_size));
 }
 
 void Conv2dTransposeFusion::set_dilation(const std::vector<int64_t> &dilation) {
-  CheckAndConvertUtils::CheckInteger(kDilation, SizeToLong(dilation.size()), kEqual, 2, name());
+  (void)CheckAndConvertUtils::CheckInteger(kDilation, SizeToLong(dilation.size()), kEqual, 2, name());
   for (int64_t item : dilation) {
-    CheckAndConvertUtils::CheckInteger(kDilation, item, kGreaterEqual, 1, name());
+    (void)CheckAndConvertUtils::CheckInteger(kDilation, item, kGreaterEqual, 1, name());
   }
-  AddAttr(kDilation, MakeValue(dilation));
+  (void)AddAttr(kDilation, MakeValue(dilation));
 }
 
 void Conv2dTransposeFusion::set_output_paddings(const std::vector<int64_t> &output_paddings) {
-  CheckAndConvertUtils::CheckInteger(kOutputPaddings, output_paddings.size(), kGreaterEqual, 1, name());
+  (void)CheckAndConvertUtils::CheckInteger(kOutputPaddings, SizeToLong(output_paddings.size()), kGreaterEqual, 1,
+                                           name());
   for (int64_t item : output_paddings) {
-    CheckAndConvertUtils::CheckInteger(kOutputPaddings, item, kGreaterEqual, 0, name());
+    (void)CheckAndConvertUtils::CheckInteger(kOutputPaddings, item, kGreaterEqual, 0, name());
   }
-  AddAttr(kOutputPaddings, MakeValue(output_paddings));
+  (void)AddAttr(kOutputPaddings, MakeValue(output_paddings));
 }
 
 void Conv2dTransposeFusion::set_activation_type(ActivationType activation_type) {
   int64_t swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 
 std::vector<int64_t> Conv2dTransposeFusion::get_output_paddings() const {

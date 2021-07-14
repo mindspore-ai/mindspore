@@ -29,13 +29,12 @@ void PadFusion::Init(const PaddingMode &padding_mode, const float constant_value
 }
 
 void PadFusion::set_padding_mode(const PaddingMode &padding_mode) {
-  int64_t swi;
-  swi = padding_mode;
-  this->AddAttr(kPaddingMode, MakeValue(swi));
+  int64_t swi = padding_mode;
+  (void)this->AddAttr(kPaddingMode, MakeValue(swi));
 }
 
 void PadFusion::set_constant_value(const float constant_value) {
-  this->AddAttr(kConstantValue, MakeValue(constant_value));
+  (void)this->AddAttr(kConstantValue, MakeValue(constant_value));
 }
 
 PaddingMode PadFusion::get_padding_mode() const {

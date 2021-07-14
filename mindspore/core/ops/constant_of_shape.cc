@@ -24,7 +24,8 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kEqual, 1, "ConstantOfShape");
+  (void)CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kEqual, 1,
+                                           "ConstantOfShape");
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(input_shape);
 }
@@ -41,14 +42,14 @@ void ConstantOfShape::Init(int64_t data_type, const std::vector<float> &value) {
   this->set_value(value);
 }
 
-void ConstantOfShape::set_data_type(int64_t data_type) { this->AddAttr(kDataType, MakeValue(data_type)); }
+void ConstantOfShape::set_data_type(int64_t data_type) { (void)this->AddAttr(kDataType, MakeValue(data_type)); }
 
 int64_t ConstantOfShape::get_data_type() const {
   auto value_ptr = this->GetAttr(kDataType);
   return GetValue<int64_t>(value_ptr);
 }
 
-void ConstantOfShape::set_value(const std::vector<float> &value) { this->AddAttr(kValue, MakeValue(value)); }
+void ConstantOfShape::set_value(const std::vector<float> &value) { (void)this->AddAttr(kValue, MakeValue(value)); }
 
 std::vector<float> ConstantOfShape::get_value() const {
   auto value_ptr = this->GetAttr(kValue);

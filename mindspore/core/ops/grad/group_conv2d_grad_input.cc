@@ -102,7 +102,7 @@ std::vector<int64_t> GroupConv2DGradInput::get_dilation() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void GroupConv2DGradInput::set_group(const int64_t &group) { this->AddAttr(kGroup, MakeValue(group)); }
+void GroupConv2DGradInput::set_group(const int64_t &group) { (void)this->AddAttr(kGroup, MakeValue(group)); }
 
 int64_t GroupConv2DGradInput::get_group() const {
   auto value_ptr = GetAttr(kGroup);
@@ -137,7 +137,7 @@ ActivationType GroupConv2DGradInput::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-void GroupConv2DGradInput::set_has_bias(const bool has_bias) { this->AddAttr(kHasBias, MakeValue(has_bias)); }
+void GroupConv2DGradInput::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, MakeValue(has_bias)); }
 
 bool GroupConv2DGradInput::get_has_bias() const {
   auto value_ptr = GetAttr(kHasBias);
@@ -147,7 +147,8 @@ AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", input_args.size(), kGreaterEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
+                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
 
   // Infer shape

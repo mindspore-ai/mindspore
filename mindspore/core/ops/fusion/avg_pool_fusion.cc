@@ -31,12 +31,11 @@ void AvgPoolFusion::Init(const std::vector<int64_t> &kernel_size, const std::vec
   this->set_activation_type(activation_type);
 }
 
-void AvgPoolFusion::set_global(const bool global) { AddAttr(kGlobal, MakeValue(global)); }
+void AvgPoolFusion::set_global(const bool global) { (void)AddAttr(kGlobal, MakeValue(global)); }
 
 void AvgPoolFusion::set_activation_type(ActivationType activation_type) {
-  int64_t swi;
-  swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  int64_t swi = activation_type;
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 
 bool AvgPoolFusion::get_global() const {
@@ -58,7 +57,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   if (format == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
-  CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, 4, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, 4, op_name);
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
   auto batch = in_shape[0];

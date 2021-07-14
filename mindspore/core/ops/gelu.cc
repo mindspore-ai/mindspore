@@ -30,7 +30,7 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("gelu infer", input_args.size(), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("gelu infer", SizeToLong(input_args.size()), kEqual, 1, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
@@ -44,7 +44,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("gelu infer", input_args.size(), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("gelu infer", SizeToLong(input_args.size()), kEqual, 1, op_name);
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   MS_EXCEPTION_IF_NULL(input_args[0]);

@@ -34,14 +34,14 @@ AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto op_name = primitive->name();
   auto input0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("input0_shape", SizeToLong(input0.size()), kEqual, 2, op_name);
-  CheckAndConvertUtils::CheckInteger("input0_shape_dimen_1", input0[1], kLessEqual, 32, op_name);
-  CheckAndConvertUtils::CheckInteger("input1_shape", SizeToLong(input1.size()), kGreaterEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input0_shape", SizeToLong(input0.size()), kEqual, 2, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input0_shape_dimen_1", input0[1], kLessEqual, 32, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input1_shape", SizeToLong(input1.size()), kGreaterEqual, 1, op_name);
 
   if (input_args.size() == 3) {
     auto input2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-    CheckAndConvertUtils::CheckInteger("input2_shape", SizeToLong(input2.size()), kEqual, 1, op_name);
-    CheckAndConvertUtils::CheckInteger("input2_shape_dimen_0", input2[0], kEqual, input1[0], op_name);
+    (void)CheckAndConvertUtils::CheckInteger("input2_shape", SizeToLong(input2.size()), kEqual, 1, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("input2_shape_dimen_0", input2[0], kEqual, input1[0], op_name);
   }
 
   std::vector<int64_t> out_shape;
