@@ -66,11 +66,13 @@ class ImageTensorOperation(TensorOperation):
     def __call__(self, *input_tensor_list):
         for tensor in input_tensor_list:
             if not isinstance(tensor, (np.ndarray, Image.Image)):
-                raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(tensor)))
+                raise TypeError(
+                    "Input should be NumPy or PIL image, got {}.".format(type(tensor)))
         return super().__call__(*input_tensor_list)
 
     def parse(self):
-        raise NotImplementedError("ImageTensorOperation has to implement parse() method.")
+        raise NotImplementedError(
+            "ImageTensorOperation has to implement parse() method.")
 
 
 DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
@@ -93,6 +95,7 @@ DE_C_SLICE_MODE = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
 
 def parse_padding(padding):
     """ Parses and prepares the padding tuple"""
+
     if isinstance(padding, numbers.Number):
         padding = [padding] * 4
     if len(padding) == 2:
@@ -310,7 +313,8 @@ class Decode(ImageTensorOperation):
             img (NumPy), Decoded image.
         """
         if not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
-            raise TypeError("Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
+            raise TypeError(
+                "Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
         return super().__call__(img)
 
     def parse(self):
@@ -713,7 +717,8 @@ class RandomColorAdjust(ImageTensorOperation):
         brightness = self.expand_values(brightness)
         contrast = self.expand_values(contrast)
         saturation = self.expand_values(saturation)
-        hue = self.expand_values(hue, center=0, bound=(-0.5, 0.5), non_negative=False)
+        hue = self.expand_values(
+            hue, center=0, bound=(-0.5, 0.5), non_negative=False)
 
         self.brightness = brightness
         self.contrast = contrast
@@ -853,7 +858,8 @@ class RandomCropDecodeResize(ImageTensorOperation):
 
     def __call__(self, img):
         if not isinstance(img, np.ndarray):
-            raise TypeError("Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
+            raise TypeError(
+                "Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
         if img.ndim != 1 or img.dtype.type is not np.uint8:
             raise TypeError("Input should be an encoded image with uint8 type in 1-D NumPy format, " +
                             "got format:{}, dtype:{}.".format(type(img), img.dtype.type))
