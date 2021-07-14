@@ -2,25 +2,41 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-b virtual_batch]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-b virtual_batch] [-m mindir]\n"
 }
 
 checkopts()
 {
   TARGET="arm64"
   DOCKER=""
+  MINDIR_FILE=""
   MNIST_DATA_PATH=""
   QUANTIZE=""
-  ENABLEFP16=false
+  FP16_FLAG=""
   VIRTUAL_BATCH=-1
-  while getopts 'D:d:r:t:qob:' opt
+  while getopts 'D:b:d:m:oqr:t:' opt
   do
     case "${opt}" in
+      b)
+        VIRTUAL_BATCH=$OPTARG
+        ;;    
       D)
         MNIST_DATA_PATH=$OPTARG
         ;;
       d)
         DOCKER=$OPTARG
+        ;;
+      m)
+        MINDIR_FILE=$OPTARG
+        ;;
+      o)
+        FP16_FLAG="-o"
+        ;; 
+      q)
+        QUANTIZE="QUANTIZE"
+        ;;
+      r)
+        TARBALL=$OPTARG
         ;;
       t)
         if [ "$OPTARG" == "arm64" ] || [ "$OPTARG" == "x86" ]; then
@@ -31,18 +47,6 @@ checkopts()
           exit 1
         fi
         ;;
-      r)
-        TARBALL=$OPTARG
-        ;;
-      q)
-        QUANTIZE="QUANTIZE"
-        ;;
-      o)
-        ENABLEFP16=true
-        ;; 
-      b)
-        VIRTUAL_BATCH=$OPTARG
-        ;;    
       *)
         echo "Unknown option ${opt}!"
         display_usage
@@ -81,10 +85,15 @@ else
   BATCH=1
 fi
 
+EXPORT=""
+if [ "$MINDIR_FILE" != "" ]; then
+  cp -f $MINDIR_FILE model/lenet_tod.mindir
+  EXPORT="DONT_EXPORT"
+fi
 
 cd model/ || exit 1
 rm -f *.ms
-QUANTIZE=${QUANTIZE} ./prepare_model.sh $BATCH $DOCKER || exit 1
+EXPORT=${EXPORT} QUANTIZE=${QUANTIZE} ./prepare_model.sh $BATCH $DOCKER || exit 1
 cd ../
 
 # Copy the .ms model to the package folder
@@ -109,6 +118,8 @@ fi
 
 rm -rf msl
 mv mindspore-* msl/
+rm -rf msl/tools/
+rm ${PACKAGE}/lib/*.a
 
 # Copy the dataset to the package
 cp -r $MNIST_DATA_PATH ${PACKAGE}/dataset || exit 1
@@ -127,21 +138,11 @@ if [ "${TARGET}" == "arm64" ]; then
   adb push ${PACKAGE} /data/local/tmp/
 
   echo "========Training on Device====="
-  if "$ENABLEFP16"; then
-    echo "Training fp16.."
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh -o -b ${VIRTUAL_BATCH}"
-  else
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh -b ${VIRTUAL_BATCH}"
-  fi   
+  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
 
   echo
   echo "===Evaluating trained Model====="
-  if "$ENABLEFP16"; then
-    echo "Evaluating fp16 Model.."
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh -o"
-  else
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh"
-  fi
+  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG}"
   echo
 else
   cd ${PACKAGE} || exit 1

@@ -1,13 +1,15 @@
 #!/bin/bash
 
-echo "============Exporting=========="
-  rm -f lenet_tod.mindir
-if [ -n "$2" ]; then
-  DOCKER_IMG=$2
-  docker run -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER --privileged=true ${DOCKER_IMG} /bin/bash -c "PYTHONPATH=../../../../../model_zoo/official/cv/lenet/src python lenet_export.py '$1'; chmod 444 lenet_tod.mindir; rm -rf __pycache__"
-else
-  echo "MindSpore docker was not provided, attempting to run locally"
-  PYTHONPATH=../../../../../model_zoo/official/cv/lenet/src python lenet_export.py $1
+if [[ -z ${EXPORT} ]]; then
+  echo "============Exporting=========="
+    rm -f lenet_tod.mindir
+  if [ -n "$2" ]; then
+    DOCKER_IMG=$2
+    docker run -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER --privileged=true ${DOCKER_IMG} /bin/bash -c "PYTHONPATH=../../../../../model_zoo/official/cv/lenet/src python lenet_export.py '$1'; chmod 444 lenet_tod.mindir; rm -rf __pycache__"
+  else
+    echo "MindSpore docker was not provided, attempting to run locally"
+    PYTHONPATH=../../../../../model_zoo/official/cv/lenet/src python lenet_export.py $1
+  fi
 fi
 
 
@@ -33,5 +35,5 @@ if [[ ! -z ${QUANTIZE} ]]; then
   echo "Quantizing weights"
   QUANT_OPTIONS="--quantType=WeightQuant --bitNum=8 --quantWeightSize=100 --quantWeightChannel=15"
 fi
-LD_LIBRARY_PATH=./ $CONVERTER --fmk=MINDIR --trainModel=true --modelFile=lenet_tod.mindir --outputFile=lenet_tod $QUANT_OPTIONS
+LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH} $CONVERTER --fmk=MINDIR --trainModel=true --modelFile=lenet_tod.mindir --outputFile=lenet_tod $QUANT_OPTIONS
 

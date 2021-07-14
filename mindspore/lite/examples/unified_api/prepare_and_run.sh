@@ -114,6 +114,8 @@ fi
 
 rm -rf msl
 mv mindspore-* msl/
+rm -rf msl/tools/
+rm ${PACKAGE}/lib/*.a
 
 # Copy the dataset to the package
 cp -r $MNIST_DATA_PATH ${PACKAGE}/dataset || exit 1

@@ -18,14 +18,15 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-m mindir]\n"
 }
 
 checkopts()
 {
   DOCKER=""
+  MINDIR_FILE=""
   MNIST_DATA_PATH=""
-  while getopts 'D:d:r:' opt
+  while getopts 'D:d:m:r:' opt
   do
     case "${opt}" in
       D)
@@ -33,6 +34,9 @@ checkopts()
         ;;
       d)
         DOCKER=$OPTARG
+        ;;
+      m)
+        MINDIR_FILE=$OPTARG
         ;;
       r)
         TARBALL="-r $OPTARG"
@@ -56,12 +60,18 @@ fi
 
 BASEPATH=$(cd "$(dirname $0)" || exit; pwd)
 
+EXPORT=""
+if [ "$MINDIR_FILE" != "" ]; then
+  cp -f $MINDIR_FILE model/lenet_tod.mindir
+  EXPORT="DONT_EXPORT"
+fi
+
 cd model/ || exit 1
 MSLITE_LINUX=$(ls -d ${BASEPATH}/build/mindspore-lite-*-linux-x64)
 CONVERTER=${MSLITE_LINUX}/tools/converter/converter/converter_lite
 rm -f *.ms
 LD_LIBRARY_PATH=${MSLITE_LINUX}/tools/converter/lib/:${MSLITE_LINUX}/tools/converter/third_party/glog/lib
-LD_LIBRARY_PATH=${LD_LIBRARY_PATH} CONVERTER=${CONVERTER} ./prepare_model.sh $DOCKER || exit 1
+EXPORT=${EXPORT} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} CONVERTER=${CONVERTER} ./prepare_model.sh $DOCKER || exit 1
 cd ../
 
 cd target || exit 1
