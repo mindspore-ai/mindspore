@@ -16,7 +16,7 @@ checkpoint_file_path: ""
 
 # ==============================================================================
 # Training options
-optimizer: "Thor"
+optimizer: "Momentum"
 infer_label: ""
 class_num: 1001
 batch_size: 32
