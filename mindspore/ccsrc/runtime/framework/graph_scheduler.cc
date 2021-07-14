@@ -2033,6 +2033,9 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
       // Create the copy actor.
       std::string name = "copy_from:" + kernel_actor->GetAID().Name() +
                          "_device_tensor_store:" + device_tensor_store_key.second->fullname_with_scope();
+      if (FetchActor(name) != nullptr) {
+        continue;
+      }
       auto copy_actor = std::make_shared<CopyActor>(name, memory_manager_aid_);
       MS_EXCEPTION_IF_NULL(copy_actor);
       copy_actors_.emplace_back(copy_actor);
@@ -3051,7 +3054,10 @@ void GraphScheduler::DumpOutputActor(const OutputActor *actor, std::ofstream &of
 
   ofs << "\t\tdevice_contexts:" << actor->device_contexts_.size() << "\n ";
   for (const auto &device_context : actor->device_contexts_) {
-    MS_EXCEPTION_IF_NULL(device_context);
+    if (device_context == nullptr) {
+      ofs << "\t\t\tdevice_context:" << device_context << "\n";
+      continue;
+    }
     ofs << "\t\t\tdevice_context:" << device_context->device_context_key().ToString() << "\n";
   }
 }

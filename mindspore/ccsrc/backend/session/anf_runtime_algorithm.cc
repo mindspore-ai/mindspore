@@ -323,7 +323,9 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
   if (node->isa<ValueNode>()) {
     auto value = node->cast<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueTuple>()) {
+    if (value->isa<None>()) {
+      return ret;
+    } else if (value->isa<ValueTuple>()) {
       auto value_tuple = value->cast<ValueTuplePtr>();
       auto value_tuple_size = CountValueNum(value_tuple);
       for (size_t i = 0; i < value_tuple_size; ++i) {
