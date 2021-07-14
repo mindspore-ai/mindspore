@@ -321,7 +321,6 @@ void LiteOpActor::SetInputData(Tensor *dst_tensor, Tensor *src_tensor) {
 
 int LiteOpActor::CastInputData(Tensor *dst, Tensor *src) {
   int ret = RET_OK;
-  dst->ResetRefCount();
   if (src->data_type() != kObjectTypeTensorType) {
     ret = CastTensorInputData(dst, src);
   } else {
@@ -346,6 +345,7 @@ bool LiteOpActor::NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
 
 int LiteOpActor::CastTensorInputData(Tensor *dst, Tensor *src) {
   dst->MallocData();
+  dst->ResetRefCount();
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   if (dst->shape() != src->shape()) {
     MS_LOG(ERROR) << "dst tensor: " << dst->tensor_name() << " shape: " << dst->shape() << " vs "
@@ -386,8 +386,8 @@ int LiteOpActor::CastTensorListInputData(TensorList *dst_tensorlist, TensorList 
   if (src_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
     dst_tensorlist->MallocTensorListData(kNumberTypeFloat16, tensors_shapes);
   }
-  dst_tensorlist->ResetRefCount();
   dst_tensorlist->set_allocator(src_tensorlist->allocator());
+  dst_tensorlist->ResetRefCount();
 
   for (size_t i = 0; i < src_tensorlist->tensors().size(); ++i) {
     auto &src_tensor = src_tensorlist->tensors()[i];
