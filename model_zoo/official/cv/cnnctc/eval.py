@@ -28,17 +28,21 @@ from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False,
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False,
                     save_graphs_path=".", enable_auto_mixed_precision=False)
 
 
 def test_dataset_creator():
-    ds = GeneratorDataset(IIIT_Generator_batch, ['img', 'label_indices', 'text', 'sequence_length', 'label_str'])
+    ds = GeneratorDataset(IIIT_Generator_batch, ['img', 'label_indices', 'text',
+                                                 'sequence_length', 'label_str'])
     return ds
 
 
 @moxing_wrapper(pre_process=None)
 def test():
+    target = config.device_target
+    context.set_context(device_target=target)
+
     ds = test_dataset_creator()
 
     net = CNNCTC_Model(config.NUM_CLASS, config.HIDDEN_SIZE, config.FINAL_FEATURE_WIDTH)
