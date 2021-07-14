@@ -47,6 +47,8 @@ class LiteSession : public session::LiteSession {
 
   ~LiteSession() override;
 
+  static session::LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
+
   virtual int Init(const Context *context);
 
   void BindThread(bool if_bind) override;
