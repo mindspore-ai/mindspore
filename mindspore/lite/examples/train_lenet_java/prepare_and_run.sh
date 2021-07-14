@@ -29,7 +29,7 @@ checkopts()
   do
     case "${opt}" in
       D)
-        MNIST_DATA_PATH=$OPTARG
+        MNIST_DATA_PATH=$(realpath $OPTARG)
         ;;
       d)
         DOCKER=$OPTARG
@@ -46,8 +46,8 @@ checkopts()
 }
 
 checkopts "$@"
-if [ "$MNIST_DATA_PATH" == "" ]; then
-  echo "MNIST Dataset directory path was not provided"
+if [ "$MNIST_DATA_PATH" == "" ] || [ ! -d "$MNIST_DATA_PATH" ]; then
+  echo "MNIST Dataset directory path was not provided or wrong path " $MNIST_DATA_PATH
   display_usage
   exit 1
 fi
