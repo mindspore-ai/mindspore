@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 PluginLoader *PluginLoader::GetInstance() noexcept {
   static PluginLoader pl;
   return &pl;
@@ -68,8 +67,6 @@ Status PluginLoader::LoadPlugin(const std::string &filename, plugin::PluginManag
   RETURN_UNEXPECTED_IF_NULL(*singleton_plugin);
 
   std::string v1 = (*singleton_plugin)->GetPluginVersion(), v2(plugin::kSharedIncludeVersion);
-
-  // Version check, if version are not the same, log the error and return fail
   if (v1 != v2) {
     std::string err_msg = "[Plugin Version Error] expected:" + v2 + ", received:" + v1 + " please recompile.";
     if (SharedLibUtil::Close(handle) != 0) err_msg += ("\ndlclose() error, err_msg:" + SharedLibUtil::ErrMsg() + ".");
@@ -105,6 +102,5 @@ Status PluginLoader::UnloadPlugin(const std::string &filename) {
   plugins_.erase(filename);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

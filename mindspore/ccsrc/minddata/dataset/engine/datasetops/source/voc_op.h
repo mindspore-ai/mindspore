@@ -144,7 +144,6 @@ class VOCOp : public MappableLeafOp {
     std::string builder_usage_;
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
-    int32_t builder_rows_per_buffer_;
     std::shared_ptr<SamplerRT> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
     std::map<std::string, int32_t> builder_labels_to_read_;
