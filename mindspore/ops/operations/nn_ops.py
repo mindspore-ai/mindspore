@@ -7780,7 +7780,7 @@ class LRN(PrimitiveWithInfer):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 2, 2, 2), mindspore.float32)

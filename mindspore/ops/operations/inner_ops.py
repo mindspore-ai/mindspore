@@ -89,9 +89,10 @@ class Randperm(PrimitiveWithInfer):
         TypeError: If `n` has negative elements.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
+        >>> # The result of every execution is different because this operator will generate n random samples.
         >>> randperm = ops.Randperm(max_length=30, pad=-1)
         >>> n = Tensor([20], dtype=mindspore.int32)
         >>> output = randperm(n)
