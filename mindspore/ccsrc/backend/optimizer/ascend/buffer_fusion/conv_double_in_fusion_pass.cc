@@ -47,7 +47,7 @@ void ConvDoubleInFusionPass::MatchConvDoubleInEltwise(const CNodePtr &cnode, con
     return;
   }
   if (AnfAlgo::GetKernelType(double_in_eltwise_input) == KernelType::TBE_KERNEL &&
-      AnfAlgo::GetFusionType(double_in_eltwise_input) == kernel::FusionType::CONVLUTION) {
+      AnfAlgo::GetFusionType(double_in_eltwise_input) == kernel::FusionType::CONV) {
     (void)record.insert(double_in_eltwise_input);
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);

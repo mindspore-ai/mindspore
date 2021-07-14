@@ -17,7 +17,7 @@
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 conv2d_op_info = TBERegOp("Conv2D") \
-    .fusion_type("CONVLUTION") \
+    .fusion_type("CONVOLUTION") \
     .async_flag(False) \
     .binfile_name("conv2d.so") \
     .compute_cost(10) \

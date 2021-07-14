@@ -17,7 +17,7 @@
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 max_pool_with_argmax_op_info = TBERegOp("MaxPoolWithArgmax") \
-    .fusion_type("CONVLUTION") \
+    .fusion_type("CONVOLUTION") \
     .async_flag(False) \
     .binfile_name("max_pool_with_argmax.so") \
     .compute_cost(10) \

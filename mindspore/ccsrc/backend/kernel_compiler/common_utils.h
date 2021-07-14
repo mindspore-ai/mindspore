@@ -107,6 +107,8 @@ Processor GetProcessorFromContext();
 std::string GetStrProcessorFromContext();
 float Scaling(size_t in_size, size_t out_size, bool align_corners);
 float ScaleGrid(const int x, const float scale);
+FusionType GetFusionTypeByName(const std::string &name);
+std::string GetFusionNameByType(const kernel::FusionType &type);
 struct CachedInterpolation {
   size_t lower;
   size_t upper;

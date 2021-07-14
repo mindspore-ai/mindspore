@@ -17,7 +17,7 @@
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 conv3d_transpose_op_info = TBERegOp("Conv3DTranspose") \
-    .fusion_type("CONVLUTION") \
+    .fusion_type("CONVOLUTION") \
     .async_flag(False) \
     .binfile_name("conv3d_transpose_d.so") \
     .compute_cost(10) \
