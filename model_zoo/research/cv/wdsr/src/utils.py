@@ -30,7 +30,7 @@ class Trainer():
         self.criterion = nn.L1Loss()
         self.loss_history = []
         self.begin_time = time.time()
-        self.optimizer = nn.Adam(self.model.trainable_params(), learning_rate=args.lr, loss_scale=1024.0)
+        self.optimizer = nn.Adam(self.model.trainable_params(), learning_rate=args.lr, loss_scale=args.loss_scale)
         self.loss_net = nn.WithLossCell(self.model, self.criterion)
         self.net = nn.TrainOneStepCell(self.loss_net, self.optimizer)
     def train(self, epoch):
