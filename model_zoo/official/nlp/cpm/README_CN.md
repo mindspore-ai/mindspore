@@ -309,7 +309,7 @@ Parameters for dataset and network (Training/Evaluation):
 
 ### Finetune训练过程
 
-- 在`src/config.py`中设置，包括模型并行、batchsize、学习率和网络超参数。点击[这里](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)查看更多数据集信息。
+- 在`src/config.py`中设置，包括模型并行、batchsize、学习率和网络超参数。点击[这里](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/dataset_sample.html)查看更多数据集信息。
 
 - 运行`run_distribute_train_ascend_single_machine.sh`，进行CPM模型的单机8卡分布式训练。
 

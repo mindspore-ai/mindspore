@@ -517,7 +517,7 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ## 训练过程
 
-- 在`config.py`中设置配置项，包括loss_scale、学习率和网络超参。单击[此处](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)获取更多数据集相关信息.
+- 在`config.py`中设置配置项，包括loss_scale、学习率和网络超参。单击[此处](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/dataset_sample.html)获取更多数据集相关信息.
 
 ### 训练
 

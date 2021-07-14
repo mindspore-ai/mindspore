@@ -60,7 +60,7 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
 
 ## 混合精度
 
-采用[混合精度](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
+采用[混合精度](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
 以FP16算子为例，如果输入数据类型为FP32，MindSpore后台会自动降低精度来处理数据。用户可打开INFO日志，搜索“reduce precision”查看精度降低的算子。
 
 # 环境要求
@@ -68,10 +68,10 @@ HarDNet指的是Harmonic DenseNet: A low memory traffic network，其突出的�
 - 硬件（Ascend/GPU）
     - 使用Ascend或GPU处理器来搭建硬件环境。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 # 快速入门
 
@@ -419,7 +419,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
 
 ### 推理
 
-如果您需要使用此训练模型在Ascend 910上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/en/master/multi_platform_inference.html)。下面是操作步骤示例：
+如果您需要使用此训练模型在Ascend 910上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/multi_platform_inference.html)。下面是操作步骤示例：
 
 - Ascend处理器环境运行
 
@@ -456,7 +456,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
   print("==============Acc: {} ==============".format(acc))
   ```
 
-如果您需要使用此训练模型在GPU上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/en/master/multi_platform_inference.html)。下面是操作步骤示例：
+如果您需要使用此训练模型在GPU上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/multi_platform_inference.html)。下面是操作步骤示例：
 
 - GPU处理器环境运行
 

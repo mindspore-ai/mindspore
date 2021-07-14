@@ -55,10 +55,10 @@ WGAN网络包含两部分，生成器网络和判别器网络。判别器网络�
 - 硬件（Ascend）
     - 使用Ascend来搭建硬件环境。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 # 快速入门
 

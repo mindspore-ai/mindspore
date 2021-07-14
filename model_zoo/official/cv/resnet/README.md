@@ -80,7 +80,7 @@ Dataset used: [ImageNet2012](http://www.image-net.org/)
 
 ## Mixed Precision
 
-The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data types, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
+The [mixed precision](https://www.mindspore.cn/docs/programming_guide/en/master/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data types, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
@@ -373,7 +373,7 @@ bash run_eval_gpu_resnet_benchmark.sh [DATASET_PATH] [CKPT_PATH] [BATCH_SIZE](op
 
 For distributed training, a hostfile configuration needs to be created in advance.
 
-Please follow the instructions in the link [GPU-Multi-Host](https://www.mindspore.cn/tutorial/training/zh-CN/r1.0/advanced_use/distributed_training_gpu.html).
+Please follow the instructions in the link [GPU-Multi-Host](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training_gpu.html).
 
 #### Running parameter server mode training
 

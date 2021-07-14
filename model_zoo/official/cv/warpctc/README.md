@@ -244,7 +244,7 @@ save_checkpoint_path: "./checkpoint"        # path to save checkpoint
 
 ### [Training Process](#contents)
 
-- Set options in `default_config.yaml`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `default_config.yaml`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/dataset_sample.html) for more information about dataset.
 
 #### [Training](#contents)
 
