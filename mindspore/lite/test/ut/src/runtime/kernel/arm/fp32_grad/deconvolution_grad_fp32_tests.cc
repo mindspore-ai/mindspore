@@ -63,7 +63,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/deconv/deconvfp32_dy_2_9_63_63.bin";
+  std::string dy_path = "./deconv/deconvfp32_dy_2_9_63_63.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 63, 63, 9});
@@ -74,7 +74,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/deconv/deconvfp32_input0_2_3_32_32.bin";
+  std::string input_path = "./deconv/deconvfp32_input0_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
@@ -120,7 +120,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/deconv/deconvfp32_dw_9_3_3_3.bin";
+  std::string output_path = "./deconv/deconvfp32_dw_9_3_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -171,7 +171,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_2_9_65_65.bin";
+  std::string dy_path = "./deconv/deconvfp32_dy_d2_2_9_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 9});
@@ -182,7 +182,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_2_3_32_32.bin";
+  std::string input_path = "./deconv/deconvfp32_input0_d2_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
@@ -223,7 +223,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_9_3_3_3.bin";
+  std::string output_path = "./deconv/deconvfp32_dw_d2_9_3_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -273,7 +273,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g3_2_9_65_65.bin";
+  std::string dy_path = "./deconv/deconvfp32_dy_d2_g3_2_9_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 9});
@@ -287,7 +287,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g3_2_3_32_32.bin";
+  std::string input_path = "./deconv/deconvfp32_input0_d2_g3_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
@@ -330,7 +330,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g3_3_3_3_3.bin";
+  std::string output_path = "./deconv/deconvfp32_dw_d2_g3_3_3_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -380,7 +380,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g3_s1_2_9_34_34.bin";
+  std::string dy_path = "./deconv/deconvfp32_dy_d2_g3_s1_2_9_34_34.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 34, 34, 9});
@@ -391,7 +391,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g3_s1_2_3_32_32.bin";
+  std::string input_path = "./deconv/deconvfp32_input0_d2_g3_s1_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
@@ -437,7 +437,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g3_s1_3_3_3_3.bin";
+  std::string output_path = "./deconv/deconvfp32_dw_d2_g3_s1_3_3_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -487,7 +487,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g2_s2_2_12_65_65.bin";
+  std::string dy_path = "./deconv/deconvfp32_dy_d2_g2_s2_2_12_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 12});
@@ -498,7 +498,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g2_s2_2_4_32_32.bin";
+  std::string input_path = "./deconv/deconvfp32_input0_d2_g2_s2_2_4_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 4});
@@ -544,7 +544,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g2_s2_6_4_3_3.bin";
+  std::string output_path = "./deconv/deconvfp32_dw_d2_g2_s2_6_4_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
@@ -594,7 +594,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   conv_param->thread_num_ = 1;
 
   size_t dy_size;
-  std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g12_s2_2_12_65_65.bin";
+  std::string dy_path = "./deconv/deconvfp32_dy_d2_g12_s2_2_12_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
   ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 12});
@@ -608,7 +608,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
-  std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g12_s2_2_12_32_32.bin";
+  std::string input_path = "./deconv/deconvfp32_input0_d2_g12_s2_2_12_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
   ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 12});
@@ -651,7 +651,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   time_avg = cost / loop_count;
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
-  std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g12_s2_12_1_3_3.bin";
+  std::string output_path = "./deconv/deconvfp32_dw_d2_g12_s2_12_1_3_3.bin";
   auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
