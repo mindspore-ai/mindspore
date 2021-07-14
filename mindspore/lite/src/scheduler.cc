@@ -1225,35 +1225,10 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
   if (src_kernel.empty()) {
     return RET_OK;
   }
-  // topological sort
-  std::vector<kernel::LiteKernel *> sorted_kernels;
-  for (auto iter = src_kernel.begin(); iter != src_kernel.end();) {
-    if ((*iter)->in_kernels().empty()) {
-      sorted_kernels.emplace_back(*iter);
-      (*is_kernel_finish)[*iter] = true;
-      iter = src_kernel.erase(iter);
-    } else {
-      (*is_kernel_finish)[*iter] = false;
-      iter++;
-    }
-  }
-  while (!src_kernel.empty()) {
-    for (auto iter = src_kernel.begin(); iter != src_kernel.end();) {
-      auto kernel = *iter;
-      auto inputs = kernel->in_kernels();
-      if (std::all_of(inputs.begin(), inputs.end(),
-                      [&](const kernel::LiteKernel *kernel) { return (*is_kernel_finish)[kernel]; })) {
-        sorted_kernels.emplace_back(kernel);
-        (*is_kernel_finish)[*iter] = true;
-        iter = src_kernel.erase(iter);
-      } else {
-        iter++;
-      }
-    }
-  }
+
   // construct subgraph
-  for (size_t index = 0; index < sorted_kernels.size(); index++) {
-    auto cur_kernel = sorted_kernels[index];
+  for (size_t index = 0; index < src_kernel.size(); index++) {
+    auto cur_kernel = src_kernel[index];
     MS_ASSERT(cur_kernel != nullptr);
     // Not support APU now
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, *context_) != kernel::kApuSubGraph);
@@ -1262,7 +1237,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
       dst_kernel->emplace_back(cur_kernel);
       continue;
     }
-    auto subgraph = FindAllSubGraphKernels(sorted_kernels, *context_, &index);
+    auto subgraph = FindAllSubGraphKernels(src_kernel, *context_, &index);
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "Create SubGraphKernel failed";
       return RET_ERROR;
