@@ -250,7 +250,7 @@ PYBIND_REGISTER(TFRecordNode, 2, ([](const py::module *m) {
                       THROW_IF_ERROR(tfrecord->ValidateParams());
                       return tfrecord;
                     }))
-                    .def(py::init([](const py::list dataset_files, std::string schema, py::list columns_list,
+                    .def(py::init([](const py::list dataset_files, std::string schema, const py::list columns_list,
                                      int64_t num_samples, int32_t shuffle, int32_t num_shards, int32_t shard_id,
                                      bool shard_equal_rows) {
                       std::shared_ptr<TFRecordNode> tfrecord = std::make_shared<TFRecordNode>(
