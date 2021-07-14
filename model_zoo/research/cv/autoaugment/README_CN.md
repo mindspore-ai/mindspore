@@ -72,8 +72,8 @@ cifar-10-batches-bin
 
 ## 环境要求
 
-- 硬件
-    - 准备Ascend处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo体验资源申请表.docx)至ascend@huawei.com，审核通过即可获得资源。
+- 硬件（Ascend）
+    - 准备Ascend处理器搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/)
 - 如需查看详情，请参见如下资源：
