@@ -72,7 +72,6 @@ class AnfExporter {
   virtual ~AnfExporter() {}
 
   void ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
-  void ExportFuncGraph(const std::string &filename, const std::vector<TaggedGraph> &graphs);
 
  protected:
   virtual std::string GetNodeType(const AnfNodePtr &nd);
@@ -96,21 +95,25 @@ class AnfExporter {
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
   void OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph);
 
+  void OutputCNodeText(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+                       std::map<AnfNodePtr, int> *const apply_map);
+  virtual void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+                           std::map<AnfNodePtr, int> *const apply_map);
+  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map);
+
   OrderedMap<FuncGraphPtr, OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>> exported;
 
  private:
-  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
-  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
+  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,
+                    const TaggedNodeMap &tagged_cnodes_map);
 
   int param_index;
   OrderedSet<FuncGraphPtr> func_graph_set{};
   bool export_used_ = true;       // whether export function graphs used in current exporting function graph
   bool check_integrity_ = false;  // whether check integrity or not, when dumping ir for loading, must set it to true
-  TaggedNodeMap tagged_cnodes_;
 };
 
 void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph);
-void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs);
 
 std::string GetKernelNodeName(const AnfNodePtr &anf_node);
 }  // namespace mindspore
