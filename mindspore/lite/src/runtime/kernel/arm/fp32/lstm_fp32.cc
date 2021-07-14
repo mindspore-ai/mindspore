@@ -39,12 +39,19 @@ void LstmCPUKernel::FreeTmpBuffer() {
     free(input_bias_);
     input_bias_ = nullptr;
   }
+#ifdef ENABLE_AVX
+  if (weight_h_ptr_ != nullptr) {
+    free(weight_h_ptr_);
+    weight_h_ptr_ = nullptr;
+  }
+#else
   if (!state_is_vec_) {
     if (weight_h_ptr_ != nullptr) {
       free(weight_h_ptr_);
       weight_h_ptr_ = nullptr;
     }
   }
+#endif
   if (state_bias_ != nullptr) {
     free(state_bias_);
     state_bias_ = nullptr;
@@ -119,6 +126,10 @@ int LstmCPUKernel::InitStateWeightBias() {
 #ifdef ENABLE_AVX
     weight_h_ptr_ = reinterpret_cast<float *>(
       malloc(weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->hidden_size_ * sizeof(float)));
+    if (weight_h_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "LstmCPUKernel malloc weight_h_ptr_ error.";
+      return RET_ERROR;
+    }
     for (int i = 0; i < weight_batch_; i++) {
       const float *src_batch = weight_h_data + i * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
       float *dst_batch = weight_h_ptr_ + i * lstm_param_->state_col_align_ * lstm_param_->hidden_size_;
