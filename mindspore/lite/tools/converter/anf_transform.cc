@@ -260,7 +260,6 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
   to_process.insert(to_process.end(), nodes.begin(), nodes.end());
   while (!to_process.empty()) {
     auto &cur_cnode = to_process.front();
-    to_process.pop_front();
     for (auto &input : cur_cnode->inputs()) {
       if (!IsValueNode<FuncGraph>(input)) {
         continue;
@@ -273,6 +272,7 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
       auto new_nodes = new_fg->GetOrderedCnodes();
       to_process.insert(to_process.end(), new_nodes.begin(), new_nodes.end());
     }
+    to_process.pop_front();
   }
 }
 
