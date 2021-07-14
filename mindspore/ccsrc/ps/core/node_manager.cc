@@ -201,17 +201,19 @@ void NodeManager::AddScaleOutDoneNode(const std::string &node_id) { scale_out_do
 
 void NodeManager::AddScaleInDoneNode(const std::string &node_id) { scale_in_done_nodes_id_.insert(node_id); }
 
-bool NodeManager::IsAllNodesRegistered() {
+bool NodeManager::IsAllNodesRegistered() const {
   int32_t num = std::count_if(registered_nodes_info_.begin(), registered_nodes_info_.end(),
                               [](auto item) { return item.second.is_alive == true; });
   return num == total_node_num_;
 }
 
-bool NodeManager::IsAllNodesFinished() { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesFinished() const { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
 
-bool NodeManager::IsAllNodesScaleOutDone() { return SizeToInt(scale_out_done_nodes_id_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesScaleOutDone() const {
+  return SizeToInt(scale_out_done_nodes_id_.size()) == total_node_num_;
+}
 
-bool NodeManager::IsAllNodesScaleInDone() { return SizeToInt(scale_in_done_nodes_id_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesScaleInDone() const { return SizeToInt(scale_in_done_nodes_id_.size()) == total_node_num_; }
 
 std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() { return nodes_info_; }
 

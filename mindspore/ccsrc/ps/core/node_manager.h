@@ -75,17 +75,17 @@ class NodeManager {
 
   // When workers and servers registered to scheduler, the scheduler will collect the number of registered
   // nodes and Determine whether the registered number of worker and server is equal to total_node_num_.
-  bool IsAllNodesRegistered();
+  bool IsAllNodesRegistered() const;
   // When workers and servers send a finish message to the scheduler, the scheduler will collect the number of
   // finish nodes and Determine whether the finished nodes are equal to total_node_num_.
-  bool IsAllNodesFinished();
+  bool IsAllNodesFinished() const;
 
   // When workers and servers send a scale_out_done message to the scheduler, the scheduler will collect the number of
   // nodes and Determine whether the nodes are equal to total_node_num_.
-  bool IsAllNodesScaleOutDone();
+  bool IsAllNodesScaleOutDone() const;
   // When workers and servers send a scale_in_done message to the scheduler, the scheduler will collect the number of
   // nodes and Determine whether the nodes are equal to total_node_num_.
-  bool IsAllNodesScaleInDone();
+  bool IsAllNodesScaleInDone() const;
 
   std::unordered_map<std::string, NodeInfo> &nodes_info();
   std::unordered_map<std::string, NodeInfo> &registered_nodes_info();

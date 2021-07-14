@@ -45,7 +45,7 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port)
       is_stop_(true),
       is_connected_(false) {
   message_handler_.SetCallback(
-    [this](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
+    [this](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
       if (message_callback_) {
         message_callback_(meta, protos, data, size);
       }
@@ -308,7 +308,8 @@ bool TcpClient::SendMessage(const CommMessage &message) const {
   return res;
 }
 
-bool TcpClient::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
+bool TcpClient::SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                            size_t size) {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -357,7 +358,7 @@ void TcpClient::StartTimer(const uint32_t &time) {
 
 void TcpClient::set_timer_callback(const OnTimer &timer) { on_timer_callback_ = timer; }
 
-const event_base &TcpClient::eventbase() { return *event_base_; }
+const event_base &TcpClient::eventbase() const { return *event_base_; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -84,7 +84,7 @@ class HttpMessageHandler {
   int GetUriPort() const;
 
   // Useless to get from a request url, fragment is only for browser to locate sth.
-  std::string GetUriFragment();
+  std::string GetUriFragment() const;
 
   void AddRespHeadParam(const std::string &key, const std::string &val);
   void AddRespHeaders(const HttpHeaders &headers);
