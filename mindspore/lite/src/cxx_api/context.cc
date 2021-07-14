@@ -39,7 +39,7 @@ struct Context::Data {
   int32_t thread_num = 2;
   bool enable_parallel_ = false;
   std::vector<int32_t> affinity_core_list_;
-  int affinity_mode_ = 2;
+  int affinity_mode_ = 0;
   std::shared_ptr<Delegate> delegate = nullptr;
 };
 
@@ -111,9 +111,9 @@ void Context::SetThreadAffinity(int mode) {
     return;
   }
   data_->affinity_mode_ = mode;
-
   return;
 }
+
 int Context::GetThreadAffinityMode() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";

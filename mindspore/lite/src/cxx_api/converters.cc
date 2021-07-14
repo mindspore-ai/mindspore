@@ -60,6 +60,11 @@ Status A2L_ConvertContext(Context *a_context, lite::Context *l_context) {
     cpu_context->SetAllocator(l_context->allocator);
   }
 
+  if (!IsAffinityModeValid(a_context->GetThreadAffinityMode())) {
+    MS_LOG(ERROR)
+      << "Invalid affinity mode, only supports 0: no affinities, 1: big cores first, 2: little cores first.";
+    return kLiteInputParamInvalid;
+  }
   lite::CpuBindMode mode = A2L_ConvertAffinityMode(a_context->GetThreadAffinityMode());
 
   lite::DeviceInfo cpu_info = {0};
