@@ -323,7 +323,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 | 参数(M)             | 10.7                                                        | 10.7                   |
 | 微调检查点 | 82.91M (.ckpt文件)                                         | 82.91M (.ckpt文件)                |
 | 推理模型        | 41.66M (.mindir文件)                     | 41.66M (.mindir文件)                 |
-| 脚本                    | [posenet脚本](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/research/cv/posenet) | [posenet脚本](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/master/cv/posenet) |
+| 脚本                    | [posenet脚本](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/official/cv/posenet) | [posenet脚本](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/official/cv/posenet) |
 
 ### 推理性能
 
