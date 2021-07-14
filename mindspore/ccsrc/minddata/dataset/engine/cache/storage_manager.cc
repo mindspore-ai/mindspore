@@ -59,6 +59,7 @@ Status StorageManager::DoServiceStart() {
   writable_containers_pool_.reserve(pool_size_);
   if (root_.IsDirectory()) {
     // create multiple containers and store their index in a pool
+    CHECK_FAIL_RETURN_UNEXPECTED(pool_size_ > 0, "Expect positive pool_size_, but got:" + std::to_string(pool_size_));
     for (int i = 0; i < pool_size_; i++) {
       RETURN_IF_NOT_OK(AddOneContainer());
     }
@@ -172,10 +173,10 @@ Status StorageManager::DoServiceStop() noexcept {
   return rc1;
 }
 
-StorageManager::StorageManager(const Path &root) : root_(root), pool_size_(1), file_id_(0), index_() {}
+StorageManager::StorageManager(const Path &root) : root_(root), file_id_(0), index_(), pool_size_(1) {}
 
 StorageManager::StorageManager(const Path &root, int pool_size)
-    : root_(root), pool_size_(pool_size), file_id_(0), index_() {}
+    : root_(root), file_id_(0), index_(), pool_size_(pool_size) {}
 
 StorageManager::~StorageManager() { (void)StorageManager::DoServiceStop(); }
 

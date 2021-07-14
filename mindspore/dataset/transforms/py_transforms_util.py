@@ -148,7 +148,7 @@ class FuncWrapper:
         try:
             if hasattr(self.transform, "random") and not self.transform.random:
                 self.random = False
-        except Exception:
+        except KeyError:
             self.random = True
 
     def __call__(self, *args):

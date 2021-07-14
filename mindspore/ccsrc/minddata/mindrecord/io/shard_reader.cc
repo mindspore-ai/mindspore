@@ -1320,8 +1320,7 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
   uint32_t blob_end = 0;
   json var_fields;
   // Pick up task from task list
-  ShardTask task;
-  task = tasks_.GetTaskByID(task_id);
+  ShardTask task = tasks_.GetTaskByID(task_id);
 
   // check task type
   auto task_type = std::get<0>(task);

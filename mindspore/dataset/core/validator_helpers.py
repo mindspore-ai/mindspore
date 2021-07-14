@@ -229,6 +229,13 @@ def check_uint32(value, arg_name=""):
 
 
 def check_pos_uint32(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of positive uint32.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), arg_name)
     check_value(value, [POS_INT_MIN, UINT32_MAX])
 
