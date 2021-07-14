@@ -17,7 +17,8 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "bash run_distribute_train_incremental_train.sh DATA_DIR RANK_TABLE_FILE DEVICE_NUM"
-echo "for example: run_distribute_train_incremental_train.sh /path/dataset /path/hccl.json 8"
+echo "for example: scripts/run_distribute_incremental_train.sh DATASET RANK_TABLE RANK_SIZE PARAM_INIT_TYPE \\"
+echo "MODE PER_BATCH STRATEGY_CKPT  CKPT_PATH CKPT_NAME"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -27,9 +28,10 @@ export RANK_TABLE_FILE=$2
 RANK_SIZE=$3
 PARAM_INIT_TYPE=$4
 MODE=$5
-export STRATEGY=$6
-export CKPT_PATH=$7
-export CKPT_NAME=$8
+PER_BATCH=$6
+export STRATEGY=$7
+export CKPT_PATH=$8
+export CKPT_NAME=$9
 
 
 for((i=0;i<${RANK_SIZE};i++));
@@ -41,5 +43,5 @@ do
     export DEVICE_ID=$i
     python ${ROOT_PATH}/train.py --distribute=true --device_num=$RANK_SIZE --data_url=$DATA_DIR --run_type=train \
     --param_init_type=$PARAM_INIT_TYPE --mode=$MODE --incremental_training=1 --strategy_load_ckpt_path=$STRATEGY \
-    --load_ckpt_path=$CKPT_PATH --load_ckpt_name=$CKPT_NAME> log$i.log 2>&1 &
+    --load_ckpt_path=$CKPT_PATH --load_ckpt_name=$CKPT_NAME --per_batch_size=$PER_BATCH > log$i.log 2>&1 &
 done
