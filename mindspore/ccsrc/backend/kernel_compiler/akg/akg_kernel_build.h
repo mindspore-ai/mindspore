@@ -49,6 +49,7 @@ class AkgKernelBuilder {
   bool HandleRepeatNodes();
   bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
   std::vector<JsonNodePair> repeat_nodes_;
+  std::string CollectBuildAttrs();
 };
 }  // namespace kernel
 }  // namespace mindspore

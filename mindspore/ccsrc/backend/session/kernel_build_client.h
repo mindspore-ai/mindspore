@@ -54,6 +54,7 @@ class KernelBuildClient {
   constexpr inline static auto kFinish = "FINISH";
   constexpr inline static auto kAkgStart = "AKG/START";
   constexpr inline static auto kAkgData = "AKG/DATA";
+  constexpr inline static auto kAkgAttr = "AKG/ATTR";
   constexpr inline static auto kAkgWait = "AKG/WAIT";
   // Receive the response from server
   constexpr inline static auto kAck = "ACK";
@@ -129,6 +130,7 @@ class KernelBuildClient {
 
   // Run AKG building.
   bool AkgStart(int process_num, int wait_time);
+  bool AkgSendAttr(const std::string &attr);
   bool AkgSendData(const std::vector<std::string> &jsons);
   bool AkgWait();
 

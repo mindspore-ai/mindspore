@@ -27,7 +27,6 @@
 namespace mindspore {
 namespace kernel {
 constexpr int32_t ARGS_SIZE = 1;
-constexpr auto kCompileWithJsonFunc = "compilewithjson";
 
 KernelPackPtr AkgGpuKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
   return SearchCache(kernel_name, kProcessorCuda);

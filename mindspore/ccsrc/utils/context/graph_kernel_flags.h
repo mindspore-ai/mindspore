@@ -91,14 +91,16 @@ class GraphKernelFlags {
   unsigned int opt_level;  // defaults 0 or 2
 
   /**
-   * auto_tune, unsupported now.
+   * Online tuning level, value from 0 to 3.
+   * 0: Disable online tuning
+   * 1-3: The higher level, the larger tuning space, and the more time it takes.
    */
-  unsigned int auto_tune{0};
+  unsigned int online_tuning{0};
 
   /**
-   * cluster_limit, unsupported now.
+   * AKG's operator repository file path.
    */
-  unsigned int cluster_limit{0};
+  std::string repository_path;
 
   /**
    * Additional expanding operators (case sensitive).

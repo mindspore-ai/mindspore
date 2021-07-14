@@ -56,7 +56,7 @@ class AscendMessager(Messager):
         super().__init__(fdin, fdout)
         get_logger().info("[TRACE] Ascend Messager init...")
         self.tbe_builder = TbeBuilder()
-        self.akg_builder = AkgBuilder()
+        self.akg_builder = AkgBuilder("ASCEND")
 
     def tbe_handle(self, arg):
         """
@@ -107,7 +107,7 @@ class AscendMessager(Messager):
         if arg.startswith('TBE'):
             self.tbe_handle(arg)
         elif arg.startswith('AKG'):
-            self.akg_builder.handle(self, arg, "ASCEND")
+            self.akg_builder.handle(self, arg)
         elif arg == 'FORMAT':
             self.send_ack()
             json = self.get_message()

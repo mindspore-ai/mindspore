@@ -27,7 +27,7 @@ class GpuMessager(Messager):
     def __init__(self, fdin, fdout):
         super().__init__(fdin, fdout)
         get_logger().info("[TRACE] GPU Messager init...")
-        self.akg_builder = AkgBuilder()
+        self.akg_builder = AkgBuilder("GPU")
 
     def handle(self):
         """
@@ -36,7 +36,7 @@ class GpuMessager(Messager):
         """
         arg = self.get_message()
         if "AKG" in arg:
-            self.akg_builder.handle(self, arg, "GPU")
+            self.akg_builder.handle(self, arg)
         else:
             self.send_ack(False)
             self.exit()
@@ -44,6 +44,7 @@ class GpuMessager(Messager):
     def exit(self):
         get_logger().info("[TRACE] GPU Messager Exit...")
         exit()
+
 
 if __name__ == '__main__':
     warnings.simplefilter("ignore")
