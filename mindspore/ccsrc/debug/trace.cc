@@ -70,7 +70,7 @@ std::string GetGraphParamString(const FuncGraphPtr &graph, abstract::AbstractBas
   oss << "graph:" << graph->ToString() << " with args[";
   auto params = graph->parameters();
   if (params.size() < args_spec_list.size()) {
-    MS_EXCEPTION(ValueError) << "The size of parameters less than args_spec_list's size.";
+    MS_EXCEPTION(TypeError) << "The size of parameters less than args_spec_list's size.";
   }
   for (size_t i = 0; i < args_spec_list.size(); i++) {
     auto parameter = params[i];
@@ -105,6 +105,9 @@ void DumpInferStack(std::ostringstream &oss) {
       continue;
     }
     auto args_spec_list = context->args_spec_list();
+    if (graph->parameters().size() < args_spec_list.size()) {
+      continue;
+    }
     oss << "    #" << index++ << " " << GetGraphParamString(graph, args_spec_list) << "\n";
   }
 }
