@@ -68,21 +68,60 @@ int main(int argc, char **argv) {
   auto inputs = model.GetInputs();
   MS_ASSERT(inputs.size() >= 1);
 
-  auto *input_data = reinterpret_cast<float *>(inputs.at(0).MutableData());
+  int index = 0;
+  std::cout << "There are " << inputs.size() << " input tensors with sizes: " << std::endl;
+  for (auto tensor : inputs) {
+    std::cout << "tensor " << index++ << ": shape is [";
+    for (auto dim : tensor.Shape()) {
+      std::cout << dim << " ";
+    }
+    std::cout << "]" << std::endl;
+  }
+
+  mindspore::MSTensor *input_tensor = inputs.at(0).Clone();
+  auto *input_data = reinterpret_cast<float *>(input_tensor->MutableData());
   std::ifstream in;
   in.open("dataset/batch_of32.dat", std::ios::in | std::ios::binary);
-  in.read(reinterpret_cast<char *>(&input_data), inputs.at(0).ElementNum() * sizeof(float));
+  if (in.fail()) {
+    std::cout << "error loading dataset/batch_of32.dat file reading" << std::endl;
+    MS_ASSERT(!in.fail());
+  }
+  in.read(reinterpret_cast<char *>(input_data), inputs.at(0).ElementNum() * sizeof(float));
   in.close();
 
   std::vector<mindspore::MSTensor> outputs;
-  status = model.Predict(inputs, &outputs);
+  status = model.Predict({*input_tensor}, &outputs);
   if (status != mindspore::kSuccess) {
     std::cout << "Error " << status << " during running predict of model " << infer_model_fn;
     MS_ASSERT(status != mindspore::kSuccess);
   }
-  std::cout << "Got Vector of size: " << outputs.size() << std::endl;
+
+  index = 0;
+  std::cout << "There are " << outputs.size() << " output tensors with sizes: " << std::endl;
   for (auto tensor : outputs) {
-    std::cout << "[ " << tensor.Shape().at(0) << ", " << tensor.Shape().at(1) << "]\n";
+    std::cout << "tensor " << index++ << ": shape is [";
+    for (auto dim : tensor.Shape()) {
+      std::cout << dim << " ";
+    }
+    std::cout << "]" << std::endl;
+  }
+
+  if (outputs.size() > 0) {
+    std::cout << "The predicted classes are:" << std::endl;
+    auto predictions = reinterpret_cast<float *>(outputs.at(0).MutableData());
+    int i = 0;
+    for (int b = 0; b < outputs.at(0).Shape().at(0); b++) {
+      int max_c = 0;
+      float max_p = predictions[i];
+      for (int c = 0; c < outputs.at(0).Shape().at(1); c++, i++) {
+        if (predictions[i] > max_p) {
+          max_c = c;
+          max_p = predictions[i];
+        }
+      }
+      std::cout << max_c << ", ";
+    }
+    std::cout << std::endl;
   }
   return 0;
 }
