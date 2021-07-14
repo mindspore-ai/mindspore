@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 void OneHot::Init(const int64_t axis) { this->set_axis(axis); }
-void OneHot::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void OneHot::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t OneHot::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 namespace {
@@ -31,7 +31,7 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  CheckAndConvertUtils::CheckInteger("one_hot infer", input_args.size(), kEqual, 4, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("one_hot infer", SizeToLong(input_args.size()), kEqual, 4, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
@@ -40,7 +40,7 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
   MS_EXCEPTION_IF_NULL(input_args[1]);
   auto depth_val = GetValue<int64_t>(input_args[1]->BuildValue());
-  CheckAndConvertUtils::CheckInteger("depth", depth_val, kGreaterEqual, 0, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("depth", depth_val, kGreaterEqual, 0, op_name);
   if (min_shape.size() == 0 || max_shape.size() == 0) {
     if (axis >= 0) {
       in_shape.insert(in_shape.begin() + axis, depth_val);

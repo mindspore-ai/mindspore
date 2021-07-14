@@ -38,7 +38,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   }
   std::vector<int64_t> out_shape;
   for (int64_t i = 0; i < int64_t(paddings_attr.size() / 2); i++) {
-    out_shape.emplace_back(x_shape[LongToSize(i)] + paddings_attr[LongToSize(i)][0] + paddings_attr[LongToSize(i)][1]);
+    (void)out_shape.emplace_back(x_shape[LongToSize(i)] + paddings_attr[LongToSize(i)][0] +
+                                 paddings_attr[LongToSize(i)][1]);
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }

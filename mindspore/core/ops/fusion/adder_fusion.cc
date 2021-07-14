@@ -37,7 +37,7 @@ void AdderFusion::Init(const int64_t in_channel, const int64_t out_channel, cons
 
 void AdderFusion::set_activation_type(const ActivationType activation_type) {
   int64_t swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 
 ActivationType AdderFusion::get_activation_type() const {

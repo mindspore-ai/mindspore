@@ -33,46 +33,46 @@ void StridedSliceGrad::Init(int64_t begin_mask, int64_t end_mask, int64_t ellips
 }
 
 void StridedSliceGrad::set_begin_mask(int64_t begin_mask) {
-  CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kBeginMask, MakeValue(begin_mask));
+  (void)CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
+  (void)this->AddAttr(kBeginMask, MakeValue(begin_mask));
 }
 int64_t StridedSliceGrad::get_begin_mask() const {
   auto value_ptr = GetAttr(kBeginMask);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_end_mask(int64_t end_mask) {
-  CheckAndConvertUtils::CheckInteger(kEndMask, end_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kEndMask, MakeValue(end_mask));
+  (void)CheckAndConvertUtils::CheckInteger(kEndMask, end_mask, kGreaterEqual, 0, this->name());
+  (void)this->AddAttr(kEndMask, MakeValue(end_mask));
 }
 int64_t StridedSliceGrad::get_end_mask() const {
   auto value_ptr = GetAttr(kEndMask);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_ellipsis_mask(int64_t ellipsis_mask) {
-  CheckAndConvertUtils::CheckInteger(kEllipsisMask, ellipsis_mask, kGreaterEqual, 0, this->name());
+  (void)CheckAndConvertUtils::CheckInteger(kEllipsisMask, ellipsis_mask, kGreaterEqual, 0, this->name());
   std::bitset<sizeof(int64_t) * 8> bs(ellipsis_mask);
   std::ostringstream buffer;
   if (bs.count() > 1) {
     buffer << "For" << this->name() << ", only support one ellipsis in the index, but got " << this->get_end_mask();
     MS_EXCEPTION(ValueError) << buffer.str();
   }
-  this->AddAttr(kEllipsisMask, MakeValue(ellipsis_mask));
+  (void)this->AddAttr(kEllipsisMask, MakeValue(ellipsis_mask));
 }
 int64_t StridedSliceGrad::get_ellipsis_mask() const {
   auto value_ptr = GetAttr(kEllipsisMask);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_new_axis_mask(int64_t new_axis_mask) {
-  CheckAndConvertUtils::CheckInteger(kNewAxisMask, new_axis_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kNewAxisMask, MakeValue(new_axis_mask));
+  (void)CheckAndConvertUtils::CheckInteger(kNewAxisMask, new_axis_mask, kGreaterEqual, 0, this->name());
+  (void)this->AddAttr(kNewAxisMask, MakeValue(new_axis_mask));
 }
 int64_t StridedSliceGrad::get_new_axis_mask() const {
   auto value_ptr = GetAttr(kNewAxisMask);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_shrink_axis_mask(int64_t shrink_axis_mask) {
-  CheckAndConvertUtils::CheckInteger(kShrinkAxisMask, shrink_axis_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kShrinkAxisMask, MakeValue(shrink_axis_mask));
+  (void)CheckAndConvertUtils::CheckInteger(kShrinkAxisMask, shrink_axis_mask, kGreaterEqual, 0, this->name());
+  (void)this->AddAttr(kShrinkAxisMask, MakeValue(shrink_axis_mask));
 }
 int64_t StridedSliceGrad::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);

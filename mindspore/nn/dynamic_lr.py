@@ -372,7 +372,7 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
     for i in range(total_step):
         current_epoch = math.floor(i / step_per_epoch)
         warmup_epoch, tmp_epoch = function(warmup_epoch, current_epoch)
-        lr.append(learning_rate * tmp_epoch/ warmup_epoch)
+        lr.append(learning_rate * tmp_epoch / warmup_epoch)
     return lr
 
 

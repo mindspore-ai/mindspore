@@ -60,14 +60,14 @@ int64_t PriorBox::get_image_size_h() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void PriorBox::set_step_w(const float step_w) { this->AddAttr(kStepW, MakeValue(step_w)); }
+void PriorBox::set_step_w(const float step_w) { (void)this->AddAttr(kStepW, MakeValue(step_w)); }
 
 float PriorBox::get_step_w() const {
   auto value_ptr = GetAttr(kStepW);
   return GetValue<float>(value_ptr);
 }
 
-void PriorBox::set_step_h(const float step_h) { this->AddAttr(kStepH, MakeValue(step_h)); }
+void PriorBox::set_step_h(const float step_h) { (void)this->AddAttr(kStepH, MakeValue(step_h)); }
 
 float PriorBox::get_step_h() const {
   auto value_ptr = GetAttr(kStepH);
@@ -115,14 +115,14 @@ AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const Primiti
   MS_EXCEPTION_IF_NULL(input_args[0]);
   std::vector<float> different_aspect_ratios{1.0f};
   auto aspect_ratios = GetValue<std::vector<float>>(primitive->GetAttr(kAspectRatios));
-  for (int64_t i = 0; i < (int64_t)aspect_ratios.size(); i++) {
+  for (size_t i = 0; i < aspect_ratios.size(); i++) {
     float ratio = aspect_ratios[i];
     bool exist = std::any_of(different_aspect_ratios.begin(), different_aspect_ratios.end(),
                              [&](float v) { return abs(ratio - v) < 1e-6; });
     if (!exist) {
-      different_aspect_ratios.emplace_back(ratio);
+      (void)different_aspect_ratios.emplace_back(ratio);
       if (GetValue<bool>(primitive->GetAttr(kFlip))) {
-        different_aspect_ratios.emplace_back(1.0f / ratio);
+        (void)different_aspect_ratios.emplace_back(1.0f / ratio);
       }
     }
   }

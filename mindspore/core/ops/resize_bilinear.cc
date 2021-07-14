@@ -46,7 +46,7 @@ AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const P
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("resize_bilinear_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
 
   // Infer shape
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];

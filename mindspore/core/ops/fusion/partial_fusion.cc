@@ -21,7 +21,7 @@ namespace mindspore {
 namespace ops {
 void PartialFusion::Init(const int64_t sub_graph_index) { this->set_sub_graph_index(sub_graph_index); }
 void PartialFusion::set_sub_graph_index(const int64_t sub_graph_index) {
-  this->AddAttr(kSubGraphIndex, MakeValue(sub_graph_index));
+  (void)this->AddAttr(kSubGraphIndex, MakeValue(sub_graph_index));
 }
 int64_t PartialFusion::get_sub_graph_index() const {
   auto value_ptr = GetAttr(kSubGraphIndex);

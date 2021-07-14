@@ -27,7 +27,7 @@ void LayerNormFusion::Init(const int64_t begin_norm_axis, const int64_t begin_pa
 }
 
 void LayerNormFusion::set_elementwise_affine(const bool elementwise_affine) {
-  AddAttr(kElementwiseAffine, MakeValue(elementwise_affine));
+  (void)AddAttr(kElementwiseAffine, MakeValue(elementwise_affine));
 }
 
 bool LayerNormFusion::get_elementwise_affine() const {

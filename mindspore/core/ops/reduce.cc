@@ -35,7 +35,7 @@ void reduce_one_axis(const int64_t one_axis, const int64_t dim, std::set<int64_t
 
 std::vector<int64_t> infer_shape_reduce(std::vector<int64_t> input_x_shape, const ValuePtr axis_value,
                                         const bool keep_dims) {
-  int64_t dim = input_x_shape.size();
+  int64_t dim = SizeToLong(input_x_shape.size());
   std::set<int64_t> axis_reduce;
   if (axis_value == nullptr) {
     std::vector<int64_t> vec;
@@ -48,19 +48,19 @@ std::vector<int64_t> infer_shape_reduce(std::vector<int64_t> input_x_shape, cons
   if (axis_value_elem.size() == 1) {
     reduce_one_axis(axis_value_elem[0], dim, axis_reduce);
   } else {
-    int64_t size = axis_value_elem.size();
-    for (int64_t i = 0; i < size; i++) {
-      reduce_one_axis(axis_value_elem[LongToSize(i)], dim, axis_reduce);
+    size_t size = axis_value_elem.size();
+    for (size_t i = 0; i < size; i++) {
+      reduce_one_axis(axis_value_elem[i], dim, axis_reduce);
     }
   }
   std::vector<int64_t> out_shape;
   for (int64_t i = 0; i < dim; i++) {
     if (axis_reduce.find(i) != axis_reduce.end()) {
       if (keep_dims) {
-        out_shape.emplace_back(1);
+        (void)out_shape.emplace_back(1);
       }
     } else {
-      out_shape.emplace_back(input_x_shape[LongToSize(i)]);
+      (void)out_shape.emplace_back(input_x_shape[LongToSize(i)]);
     }
   }
   return out_shape;

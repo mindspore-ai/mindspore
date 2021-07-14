@@ -27,11 +27,11 @@ void FusedBatchNorm::Init(const int64_t mode, const float epsilon, const float m
   this->set_momentum(momentum);
 }
 
-void FusedBatchNorm::set_mode(const int64_t mode) { this->AddAttr(kMode, MakeValue(mode)); }
+void FusedBatchNorm::set_mode(const int64_t mode) { (void)this->AddAttr(kMode, MakeValue(mode)); }
 
-void FusedBatchNorm::set_epsilon(const float epsilon) { this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void FusedBatchNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
 
-void FusedBatchNorm::set_momentum(const float momentum) { this->AddAttr(kMomentum, MakeValue(momentum)); }
+void FusedBatchNorm::set_momentum(const float momentum) { (void)this->AddAttr(kMomentum, MakeValue(momentum)); }
 
 int64_t FusedBatchNorm::get_mode() const {
   auto value_ptr = this->GetAttr(kMode);

@@ -31,7 +31,7 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("lstm_prim_infer", SizeToLong(input_args.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lstm_prim_infer", SizeToLong(input_args.size()), kEqual, 4, prim_name);
   auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
@@ -47,9 +47,10 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   int64_t num_directions = GetValue<int64_t>(primitive->GetAttr(kNumDirections));
   int64_t hidden_size = GetValue<int64_t>(primitive->GetAttr(kHidden_size));
   int64_t input_size = input_x_size;
-  CheckAndConvertUtils::CheckInteger("h_shape[0]", h_input_shape[0], kEqual, num_layers * num_directions, prim_name);
-  CheckAndConvertUtils::CheckInteger("h_shape[1]", h_input_shape[1], kEqual, x_input_shape[1], prim_name);
-  CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[2], kEqual, hidden_size, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_input_shape[0], kEqual, num_layers * num_directions,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_input_shape[1], kEqual, x_input_shape[1], prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[2], kEqual, hidden_size, prim_name);
 
   std::vector<int64_t> y_shape = {x_input_shape[0], x_input_shape[1], hidden_size * num_directions};
 
@@ -74,7 +75,7 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   current_offset += ws_diff_states_size;
   current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
   std::vector<int64_t> x_shape = {x_input_shape};
-  // std::vector<int64_t> h_shape = {h_input_shape};
+
   std::vector<int64_t> c_shape = {c_input_shape};
   std::vector<int64_t> reverse_shape = {current_offset, 1};
   std::vector<int64_t> state_shape = {1, 1};

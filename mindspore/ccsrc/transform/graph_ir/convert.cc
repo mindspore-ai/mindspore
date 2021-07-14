@@ -1591,13 +1591,13 @@ AnfNodePtr DfGraphConvertor::GetRealOpNode(AnfNodePtr node) {
     // make_tuple apply inputs:make_tuple, [tuple_items,]
     if (IsPrimitiveCNode(node_inputs[1], prim::kPrimMakeTuple)) {
       auto tuple_inputs = node->cast<CNodePtr>()->inputs();
-      if (tuple_inputs.size() < IntToSize(index + 1)) {
+      if (tuple_inputs.size() < LongToSize(index + 1L)) {
         MS_LOG(ERROR) << "make tuple input items node not correct! size:" << tuple_inputs.size()
                       << ", item index:" << index;
         error_ = FAILED;
         return node;
       }
-      return GetRealOpNode(tuple_inputs[IntToSize(index + 1)]);
+      return GetRealOpNode(tuple_inputs[LongToSize(index + 1L)]);
     }
     return GetRealOpNode(node_inputs[1]);
   }

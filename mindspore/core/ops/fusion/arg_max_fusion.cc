@@ -25,11 +25,11 @@ void ArgMaxFusion::Init(const bool keep_dims, const bool out_max_value, const in
   set_top_k(top_k);
 }
 
-void ArgMaxFusion::set_keep_dims(const bool keep_dims) { this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
+void ArgMaxFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
 void ArgMaxFusion::set_out_max_value(const bool out_max_value) {
-  this->AddAttr(kOutMaxValue, MakeValue(out_max_value));
+  (void)this->AddAttr(kOutMaxValue, MakeValue(out_max_value));
 }
-void ArgMaxFusion::set_top_k(const int64_t top_k) { this->AddAttr(kTopK, MakeValue(top_k)); }
+void ArgMaxFusion::set_top_k(const int64_t top_k) { (void)this->AddAttr(kTopK, MakeValue(top_k)); }
 
 bool ArgMaxFusion::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); }
 bool ArgMaxFusion::get_out_max_value() const { return GetValue<bool>(GetAttr(kOutMaxValue)); }

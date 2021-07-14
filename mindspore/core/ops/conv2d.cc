@@ -106,8 +106,8 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   auto w_shape = w_shape_map[kShape];
-  CheckAndConvertUtils::CheckInteger("x shape size", x_shape.size(), kEqual, 4, primitive->name());
-  CheckAndConvertUtils::CheckInteger("w shape size", w_shape.size(), kEqual, 4, primitive->name());
+  CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, 4, primitive->name());
+  CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, 4, primitive->name());
   auto x_min_shape = x_shape_map[kMinShape];
   auto x_max_shape = x_shape_map[kMaxShape];
   auto w_min_shape = w_shape_map[kMinShape];
@@ -313,11 +313,12 @@ Format Conv2D::get_format() const {
 
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("Conv2d infer", input_args.size(), kGreaterEqual, 2, primitive->name());
+  CheckAndConvertUtils::CheckInteger("Conv2d infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
+                                     primitive->name());
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("w", input_args[1]->BuildType());
+  types.emplace("x", input_args[0]->BuildType());
+  types.emplace("w", input_args[1]->BuildType());
   CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return abstract::MakeAbstract(Conv2dInferShape(primitive, input_args), Conv2dInferType(primitive, input_args));
 }

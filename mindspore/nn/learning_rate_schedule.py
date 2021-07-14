@@ -462,7 +462,7 @@ class WarmUpLR(LearningRateSchedule):
         self.cast = P.Cast()
 
     def construct(self, global_step):
-        warmup_percent = self.cast(self.min(global_step, self.warmup_steps), mstype.float32)/ self.warmup_steps
+        warmup_percent = self.cast(self.min(global_step, self.warmup_steps), mstype.float32) / self.warmup_steps
         return self.learning_rate * warmup_percent
 
 

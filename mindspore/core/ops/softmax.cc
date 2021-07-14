@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-void Softmax::set_axis(const std::vector<int64_t> &axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void Softmax::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 std::vector<int64_t> Softmax::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
@@ -36,7 +36,7 @@ std::vector<int64_t> Softmax::get_axis() const {
 void Softmax::Init(const int64_t axis) {
   auto op_name = this->name();
   std::vector<int64_t> axis_vec = {axis};
-  CheckAndConvertUtils::CheckInteger("axis_len", axis_vec.size(), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("axis_len", SizeToLong(axis_vec.size()), kEqual, 1, op_name);
   auto rank = SizeToLong(axis_vec.size());
   for (auto &item : axis_vec) {
     CheckAndConvertUtils::CheckInRange<int64_t>("axis", item, kIncludeLeft, {-rank, rank}, op_name);

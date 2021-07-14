@@ -63,8 +63,8 @@ abstract::ShapePtr MatMulInferShape(const PrimitivePtr &primitive, const std::ve
   ShapeVector x_max_shape = x_shape_map[kMaxShape];
   ShapeVector y_min_shape = y_shape_map[kMinShape];
   ShapeVector y_max_shape = y_shape_map[kMaxShape];
-  (void)CheckAndConvertUtils::CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
-  (void)CheckAndConvertUtils::CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
+  CheckAndConvertUtils::CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
+  CheckAndConvertUtils::CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn =
@@ -98,8 +98,8 @@ TypePtr MatMulInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   MS_EXCEPTION_IF_NULL(prim);
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("w", input_args[1]->BuildType());
+  types.emplace("x", input_args[0]->BuildType());
+  types.emplace("w", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
@@ -125,7 +125,8 @@ bool MatMul::get_transpose_b() const {
 
 AbstractBasePtr MatMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("MatMul infer", input_args.size(), kGreaterEqual, 2, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("MatMul infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
+                                           primitive->name());
   return abstract::MakeAbstract(MatMulInferShape(primitive, input_args), MatMulInferType(primitive, input_args));
 }
 // Add

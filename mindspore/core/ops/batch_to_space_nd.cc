@@ -33,11 +33,11 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
-  int64_t offset = 2;
+  size_t offset = 2;
   auto block_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockShape));
   auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
-  int64_t size = block_shape.size();
-  for (int64_t i = 0; i < size; i++) {
+  size_t size = block_shape.size();
+  for (size_t i = 0; i < size; i++) {
     block_shape_prod = block_shape_prod * block_shape[i];
     auto x_block_prod = out_shape[i + offset] * block_shape[i];
     auto crops_sum = crops[i][0] + crops[i][1];
@@ -62,14 +62,14 @@ TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
 }  // namespace
 
 void BatchToSpaceND::set_crops(std::vector<std::vector<int64_t>> crops) {
-  CheckAndConvertUtils::CheckInteger(kCrops, SizeToLong(crops.size()), kEqual, 2, this->name());
-  int64_t h = crops.size();
-  int64_t w = crops[0].size();
-  std::vector<int64_t> temp_w = {2, 2};
+  (void)CheckAndConvertUtils::CheckInteger(kCrops, SizeToLong(crops.size()), kEqual, 2, this->name());
+  size_t h = crops.size();
+  size_t w = crops[0].size();
+  std::vector<size_t> temp_w = {2, 2};
   CheckAndConvertUtils::Check(kCrops, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
-  for (int64_t i = 0; i < h; i++) {
-    for (int64_t j = 0; j < w; j++) {
-      CheckAndConvertUtils::CheckInteger(kCrops, crops[i][j], kGreaterEqual, 0, this->name());
+  for (size_t i = 0; i < h; i++) {
+    for (size_t j = 0; j < w; j++) {
+      (void)CheckAndConvertUtils::CheckInteger(kCrops, crops[i][j], kGreaterEqual, 0, this->name());
     }
   }
   this->AddAttr(kCrops, MakeValue(crops));
@@ -81,8 +81,8 @@ std::vector<std::vector<int64_t>> BatchToSpaceND::get_crops() const {
 }
 void BatchToSpaceND::set_block_shape(std::vector<int64_t> block_shape) {
   CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, 2, this->name());
-  for (int64_t i = 0; i < (int64_t)block_shape.size(); i++) {
-    CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1, this->name());
+  for (size_t i = 0; i < block_shape.size(); i++) {
+    (void)CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1, this->name());
   }
   this->AddAttr(kBlockShape, MakeValue(block_shape));
 }

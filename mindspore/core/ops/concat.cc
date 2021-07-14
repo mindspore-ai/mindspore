@@ -27,7 +27,7 @@ int64_t Concat::get_axis() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void Concat::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void Concat::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
@@ -40,7 +40,8 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto input_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(input_tuple);
   auto elements = input_tuple->elements();
-  (void)CheckAndConvertUtils::CheckInteger("concat element num", elements.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
+                                           prim_name);
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
   auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];

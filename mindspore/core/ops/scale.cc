@@ -20,7 +20,7 @@ namespace mindspore {
 namespace ops {
 void Scale::Init(const int64_t axis) { set_axis(axis); }
 
-void Scale::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void Scale::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 int64_t Scale::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 REGISTER_PRIMITIVE_C(kNameScale, Scale);
