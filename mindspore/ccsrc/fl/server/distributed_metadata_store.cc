@@ -82,7 +82,7 @@ void DistributedMetadataStore::ResetMetadata(const std::string &name) {
   return;
 }
 
-bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBMetadata &meta) {
+bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBMetadata &meta, std::string *reason) {
   if (router_ == nullptr) {
     MS_LOG(ERROR) << "The consistent hash ring is not initialized yet.";
     return false;
@@ -103,6 +103,9 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
     if (!communicator_->SendPbRequest(metadata_with_name, stored_rank, ps::core::TcpUserCommand::kUpdateMetadata,
                                       &update_meta_rsp_msg)) {
       MS_LOG(ERROR) << "Sending updating metadata message to server " << stored_rank << " failed.";
+      if (reason != nullptr) {
+        *reason = "Send to rank " + std::to_string(stored_rank) + " failed. " + kNetworkError;
+      }
       return false;
     }
 

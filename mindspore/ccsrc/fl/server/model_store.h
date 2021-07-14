@@ -56,7 +56,7 @@ class ModelStore {
   void Reset();
 
   // Returns all models stored in ModelStore.
-  const std::map<size_t, std::shared_ptr<MemoryRegister>> &iteration_to_model() const;
+  const std::map<size_t, std::shared_ptr<MemoryRegister>> &iteration_to_model();
 
   // Returns the model size, which could be calculated at the initializing phase.
   size_t model_size() const;
@@ -80,7 +80,8 @@ class ModelStore {
   // Initial model which is the model of iteration 0.
   std::shared_ptr<MemoryRegister> initial_model_;
 
-  // The number of all models stpred is max_model_count_.
+  // The number of all models stored is max_model_count_.
+  std::mutex model_mtx_;
   std::map<size_t, std::shared_ptr<MemoryRegister>> iteration_to_model_;
 };
 }  // namespace server

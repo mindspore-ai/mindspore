@@ -66,7 +66,7 @@ void DistributedCountService::RegisterCounter(const std::string &name, size_t gl
   return;
 }
 
-bool DistributedCountService::Count(const std::string &name, const std::string &id) {
+bool DistributedCountService::Count(const std::string &name, const std::string &id, std::string *reason) {
   MS_LOG(INFO) << "Rank " << local_rank_ << " reports count for " << name << " of " << id;
   if (local_rank_ == counting_server_rank_) {
     if (global_threshold_count_.count(name) == 0) {
@@ -83,7 +83,7 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
 
     MS_LOG(INFO) << "Leader server increase count for " << name << " of " << id;
     global_current_count_[name].insert(id);
-    if (!TriggerCounterEvent(name)) {
+    if (!TriggerCounterEvent(name, reason)) {
       MS_LOG(ERROR) << "Leader server trigger count event failed.";
       return false;
     }
@@ -97,6 +97,9 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
     if (!communicator_->SendPbRequest(report_count_req, counting_server_rank_, ps::core::TcpUserCommand::kCount,
                                       &report_cnt_rsp_msg)) {
       MS_LOG(ERROR) << "Sending reporting count message to leader server failed for " << name;
+      if (reason != nullptr) {
+        *reason = kNetworkError;
+      }
       return false;
     }
 
@@ -104,6 +107,9 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
     count_rsp.ParseFromArray(report_cnt_rsp_msg->data(), SizeToInt(report_cnt_rsp_msg->size()));
     if (!count_rsp.result()) {
       MS_LOG(ERROR) << "Reporting count failed:" << count_rsp.reason();
+      if (reason != nullptr && count_rsp.reason().find(kNetworkError) != std::string::npos) {
+        *reason = kNetworkError;
+      }
       return false;
     }
   }
@@ -202,13 +208,13 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core:
   // Insert the id for the counter, which means the count for the name is increased.
   MS_LOG(INFO) << "Leader server increase count for " << name << " of " << id;
   global_current_count_[name].insert(id);
-  if (!TriggerCounterEvent(name)) {
-    std::string reason = "Trigger count event for " + name + " of " + id + " failed.";
+  std::string reason = "success";
+  if (!TriggerCounterEvent(name, &reason)) {
     count_rsp.set_result(false);
     count_rsp.set_reason(reason);
   } else {
     count_rsp.set_result(true);
-    count_rsp.set_reason("success");
+    count_rsp.set_reason(reason);
   }
   communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(), message);
   return;
@@ -266,24 +272,24 @@ void DistributedCountService::HandleCounterEvent(const std::shared_ptr<ps::core:
   return;
 }
 
-bool DistributedCountService::TriggerCounterEvent(const std::string &name) {
+bool DistributedCountService::TriggerCounterEvent(const std::string &name, std::string *reason) {
   MS_LOG(INFO) << "Current count for " << name << " is " << global_current_count_[name].size()
                << ", threshold count is " << global_threshold_count_[name];
   // The threshold count may be 1 so the first and last count event should be both activated.
   if (global_current_count_[name].size() == 1) {
-    if (!TriggerFirstCountEvent(name)) {
+    if (!TriggerFirstCountEvent(name, reason)) {
       return false;
     }
   }
   if (global_current_count_[name].size() == global_threshold_count_[name]) {
-    if (!TriggerLastCountEvent(name)) {
+    if (!TriggerLastCountEvent(name, reason)) {
       return false;
     }
   }
   return true;
 }
 
-bool DistributedCountService::TriggerFirstCountEvent(const std::string &name) {
+bool DistributedCountService::TriggerFirstCountEvent(const std::string &name, std::string *reason) {
   MS_LOG(DEBUG) << "Activating first count event for " << name;
   CounterEvent first_count_event;
   first_count_event.set_type(CounterEventType::FIRST_CNT);
@@ -293,6 +299,9 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name) {
   for (uint32_t i = 1; i < server_num_; i++) {
     if (!communicator_->SendPbRequest(first_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating first count event to server " << i << " failed.";
+      if (reason != nullptr) {
+        *reason = "Send to rank " + std::to_string(i) + " failed. " + kNetworkError;
+      }
       return false;
     }
   }
@@ -301,7 +310,7 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name) {
   return true;
 }
 
-bool DistributedCountService::TriggerLastCountEvent(const std::string &name) {
+bool DistributedCountService::TriggerLastCountEvent(const std::string &name, std::string *reason) {
   MS_LOG(INFO) << "Activating last count event for " << name;
   CounterEvent last_count_event;
   last_count_event.set_type(CounterEventType::LAST_CNT);
@@ -311,6 +320,9 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name) {
   for (uint32_t i = 1; i < server_num_; i++) {
     if (!communicator_->SendPbRequest(last_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating last count event to server " << i << " failed.";
+      if (reason != nullptr) {
+        *reason = "Send to rank " + std::to_string(i) + " failed. " + kNetworkError;
+      }
       return false;
     }
   }
