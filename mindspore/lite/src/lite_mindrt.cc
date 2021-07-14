@@ -441,7 +441,7 @@ int LiteOpActor::InitInputData() {
     }
 
     /* same data-type  */
-    if (src_tensor->allocator() == nullptr) {
+    if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
       // delegate graph kernel output tensor
       SetInputData(dst_tensor, src_tensor);
     } else {
