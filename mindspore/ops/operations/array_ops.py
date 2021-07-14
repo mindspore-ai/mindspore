@@ -2737,7 +2737,7 @@ class ReverseV2(PrimitiveWithInfer):
         TypeError: If element of `axis` is not an int.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
@@ -5241,7 +5241,7 @@ class Meshgrid(PrimitiveWithInfer):
         ValueError: If `indexing` is neither 'xy' nor 'ij'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))

@@ -207,7 +207,7 @@ class EmbeddingLookup(Cell):
         ValueError: If `slice_mode` is 'field_slice' and `manual_shapes` is None.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
