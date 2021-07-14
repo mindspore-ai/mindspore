@@ -13,46 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_NNACL_FP16_EXP_H_
-#define MINDSPORE_NNACL_FP16_EXP_H_
+#ifndef MINDSPORE_NNACL_FP16_EXP_FP16_H_
+#define MINDSPORE_NNACL_FP16_EXP_FP16_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/exp_parameter.h"
+#include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void ExpFp16(const float16_t *src, float16_t *dst, int num);
-
-#if defined(ENABLE_NEON)
-static inline float32x4_t exp_fp32(float32x4_t input) {
-  static float32x4_t param[] = {{0.693147f, 0.693147f, 0.693147f, 0.693147f},
-                                {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
-                                {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
-                                {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
-                                {0.5f, 0.5f, 0.5f, 0.5f},
-                                {1.0f, 1.0f, 1.0f, 1.0f}};
-  int32x4_t integer = vcvtq_s32_f32(input / param[0]);
-  float32x4_t decimal = input - vcvtq_f32_s32(integer) * param[0];
-  int32x4_t int_exp = vshlq_s32((integer + vmovq_n_s32(127)), vmovq_n_s32(23));
-  float32x4_t decimal_exp =
-    param[5] +
-    decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  decimal_exp = decimal_exp * vld1q_f32((float *)(&int_exp));
-  return decimal_exp;
-}
-
-static inline void simd_exp_fp16(float16x8_t input, float16_t *dst) {
-  static float16x8_t maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
-  static float16x8_t minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
-
-  input = vmaxq_f16(minv, vminq_f16(input, maxv));
-  float32x4_t input_low = vcvt_f32_f16(vget_low_f16(input));
-  float32x4_t input_high = vcvt_f32_f16(vget_high_f16(input));
-  vst1q_f16(dst, vcombine_f16(vcvt_f16_f32(exp_fp32(input_low)), vcvt_f16_f32(exp_fp32(input_high))));
-}
-#endif
+int ExpFusionFp16(const float16_t *src, float16_t *dst, const ExpParameter *param, int task_id);
 
 static inline void single_exp_fp16(float16_t src, float16_t *dst) {
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};
@@ -64,8 +37,9 @@ static inline void single_exp_fp16(float16_t src, float16_t *dst) {
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
   *dst = (float16_t)(*((float *)&int_exp) * decimal_exp);
 }
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_EXP_H_
+#endif  // MINDSPORE_NNACL_FP16_EXP_FP16_H_

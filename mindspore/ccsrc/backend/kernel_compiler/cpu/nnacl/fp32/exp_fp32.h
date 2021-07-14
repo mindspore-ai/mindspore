@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,48 +18,40 @@
 #define MINDSPORE_NNACL_FP32_EXP_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/exp_parameter.h"
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #endif
 
-typedef struct ExpParameter {
-  // Primitive parameter
-  OpParameter op_parameter_;
-  float base_;
-  float scale_;
-  float shift_;
-  // other parameter
-  int thread_num_;
-  float in_scale_;
-  float out_scale_;
-  int element_num_;
-} ExpParameter;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Exp(const float *input_data, float *output_data, const ExpParameter *parameter, int task_id);
+
 void ExpFp32(const float *src, float *dst, int num);
+int ExpFusionFp32(const float *src, float *dst, const ExpParameter *param, int task_id);
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
-  static MS_FLOAT32X4 maxv = {88.0f, 88.0f, 88.0f, 88.0f};
-  static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
+static inline MS_FLOAT32X4 VexpFp32(MS_FLOAT32X4 input) {
   static MS_FLOAT32X4 param[] = {{0.693147f, 0.693147f, 0.693147f, 0.693147f},
                                  {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
                                  {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
                                  {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
                                  {0.5f, 0.5f, 0.5f, 0.5f},
                                  {1.0f, 1.0f, 1.0f, 1.0f}};
-
-  input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
   MS_INT32X4 integer = MS_CVTQPS_EPI32(MS_DIVQ_F32(input, param[0]));
   MS_FLOAT32X4 decimal = MS_SUBQ_F32(input, MS_MULQ_F32(MS_CVTQEPI32_PS(integer), param[0]));
   MS_INT32X4 int_exp = MS_SLLIQ_EPI32(MS_ADDQ_EPI32(integer, MS_MOVQ_EPI32(127)), 23);
   MS_FLOAT32X4 tmp = MS_MULQ_F32(decimal, (MS_ADDQ_F32(param[2], MS_MULQ_F32(decimal, param[1]))));
   tmp = MS_MULQ_F32(decimal, MS_ADDQ_F32(param[4], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[3], tmp))));
   MS_FLOAT32X4 decimal_exp = MS_ADDQ_F32(param[5], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[5], tmp)));
-  MS_STQ_F32(dst, MS_MULQ_F32(decimal_exp, MS_CAST_F32_S32(int_exp)));
+  return MS_MULQ_F32(decimal_exp, MS_CAST_F32_S32(int_exp));
+}
+
+static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
+  static MS_FLOAT32X4 maxv = {88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
+  input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
+  MS_STQ_F32(dst, VexpFp32(input));
 }
 #endif
 
