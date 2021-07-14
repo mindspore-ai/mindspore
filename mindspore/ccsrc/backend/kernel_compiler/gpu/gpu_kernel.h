@@ -27,6 +27,7 @@
 #include <memory>
 #include <numeric>
 #include <functional>
+#include <algorithm>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
@@ -40,6 +41,10 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kDim2DShapeSize = 4;
+constexpr size_t kDim3DShapeSize = 5;
+constexpr size_t kPoolingNbDims = kDim3DShapeSize;
+
 static std::map<int, int> kNCHWToNHWCAxisMap = {
   {0, 0},
   {1, 3},
@@ -52,6 +57,14 @@ static std::map<int, int> kNHWCToNCHWAxisMap = {
   {2, 3},
   {3, 1},
 };
+
+static auto Anyone = [](auto &&k, auto &&... args) { return ((args == k) || ...); };
+
+inline int CeilDivide(int m, int n) { return (m + n - 1) / n; }
+
+inline int GetPad(int input, int kernel, int stride) {
+  return std::max<int>(0, (CeilDivide(input, stride) - 1) * stride + kernel - input);
+}
 
 class GpuDynamicKernel : public device::DynamicKernel {
  public:
@@ -155,7 +168,7 @@ class GpuKernel : public KernelMod {
     if (shape.size() != len) {
       MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
     }
-    if (format == "NCHW" || format == "DefaultFormat" || format == "NCDHW") {
+    if (Anyone(format, "NCHW", "DefaultFormat", "NCDHW")) {
       for (size_t i = 0; i < len; ++i) {
         dimA[i] = SizeToInt(shape[i]);
       }
@@ -172,7 +185,7 @@ class GpuKernel : public KernelMod {
     if (shape.size() != len) {
       MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with strideA " << len << "-D.";
     }
-    if (format == "NCHW" || format == "DefaultFormat" || format == "NCDHW") {
+    if (Anyone(format, "NCHW", "DefaultFormat", "NCDHW")) {
       for (size_t i = 0; i < len; ++i) {
         strideA[i] = SizeToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<size_t>()));
       }
@@ -187,7 +200,7 @@ class GpuKernel : public KernelMod {
   }
 
   void SetNCHW(const std::vector<size_t> &shape, int *n, int *c, int *h, int *w, const std::string &format) {
-    if (format == "NCHW" || format == "DefaultFormat") {
+    if (Anyone(format, "NCHW", "DefaultFormat")) {
       *n = SizeToInt(shape[0]);
       *c = SizeToInt(shape[1]);
       *h = SizeToInt(shape[2]);
@@ -203,7 +216,7 @@ class GpuKernel : public KernelMod {
   }
 
   void SetNCDHW(const std::vector<size_t> &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format) {
-    if (format == "NCDHW" || format == "DefaultFormat") {
+    if (Anyone(format, "NCDHW", "DefaultFormat")) {
       *n = SizeToInt(shape[0]);
       *c = SizeToInt(shape[1]);
       *d = SizeToInt(shape[2]);
