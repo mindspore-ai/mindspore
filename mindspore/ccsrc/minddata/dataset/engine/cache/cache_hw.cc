@@ -38,8 +38,8 @@ CacheServerHW::CacheServerHW() {
   if (numa_enabled()) {
     MS_LOG(INFO) << "Numa support enabled";
     for (auto i = 0; i <= numa_max_node(); ++i) {
-      int64_t free_avail;
-      int64_t mem_avail = numa_node_size(i, &free_avail);
+      long long free_avail = 0;  // NOLINT
+      int64_t mem_avail = numa_node_size64(i, &free_avail);
       MS_LOG(INFO) << "Total physical/free RAM in bytes at node " << i << " : " << mem_avail << "/" << free_avail;
     }
   }
