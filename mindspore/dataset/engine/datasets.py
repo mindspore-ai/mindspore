@@ -2980,7 +2980,6 @@ class _ToDevice:
         """
         Manually terminate Device Queue instead of relying on out of scope destruction.
         """
-        logger.info("Terminating Device Queue. This will also terminate C++ pipeline.")
         if hasattr(self, '_runtime_context') and self._runtime_context:
             if hasattr(self, '_to_device') and self._to_device:
                 self._runtime_context.Terminate()
