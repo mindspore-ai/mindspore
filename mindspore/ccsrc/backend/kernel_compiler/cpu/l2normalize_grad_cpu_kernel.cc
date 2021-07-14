@@ -52,14 +52,10 @@ bool L2NormalizeGradCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
   auto output_size = outputs[0]->size / sizeof(T);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      std::vector<size_t> high_dim_index;
-      OneDimIndexToHighDimIndex(i, &high_dim_index);
-      std::vector<T> input_x_vector;
-      GetVector(&input_x_vector, high_dim_index, input_x);
-      std::vector<T> dout_vector;
-      GetVector(&dout_vector, high_dim_index, dout);
-      std::vector<T> y_vector;
-      GetVector(&y_vector, high_dim_index, y);
+      std::vector<size_t> high_dim_index = OneDimIndexToHighDimIndex(i);
+      std::vector<T> input_x_vector = GetVector(high_dim_index, input_x);
+      std::vector<T> dout_vector = GetVector(high_dim_index, dout);
+      std::vector<T> y_vector = GetVector(high_dim_index, y);
       GetOutput(input_x_vector, y_vector, dout_vector, high_dim_index, &output[i]);
     }
   };
@@ -95,11 +91,16 @@ void L2NormalizeGradCPUKernel<T>::CheckIONumber(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void L2NormalizeGradCPUKernel<T>::OneDimIndexToHighDimIndex(size_t one_dim_index, std::vector<size_t> *high_dim_index) {
+std::vector<size_t> L2NormalizeGradCPUKernel<T>::OneDimIndexToHighDimIndex(size_t one_dim_index) {
+  std::vector<size_t> high_dim_index;
+  high_dim_index.reserve(dim_elem_num_list_.size());
   for (const auto &item : dim_elem_num_list_) {
-    high_dim_index->push_back(one_dim_index / item);
+    high_dim_index.push_back(one_dim_index / item);
     one_dim_index %= item;
   }
+  // referred to Copy elision https://en.cppreference.com/w/cpp/language/copy_elision
+  // returning a vector won't cause extra vector constructed or moved
+  return high_dim_index;
 }
 
 template <typename T>
@@ -113,16 +114,20 @@ void L2NormalizeGradCPUKernel<T>::HighDimIndexToOneDimIndex(size_t *one_dim_inde
 }
 
 template <typename T>
-void L2NormalizeGradCPUKernel<T>::GetVector(std::vector<T> *x_vector, const std::vector<size_t> &high_dim_index,
-                                            const T *x) {
+std::vector<T> L2NormalizeGradCPUKernel<T>::GetVector(const std::vector<size_t> &high_dim_index, const T *x) {
   auto x_shape = input_shape_list_[0];
+  std::vector<T> x_vector;
+  x_vector.reserve(x_shape[axis_]);
   for (size_t i = 0; i < x_shape[axis_]; i++) {
     size_t oneDimIndex = 0;
     std::vector<size_t> tmp_high_dim_index = high_dim_index;
     tmp_high_dim_index[axis_] = i;
     HighDimIndexToOneDimIndex(&oneDimIndex, tmp_high_dim_index);
-    x_vector->push_back(x[oneDimIndex]);
+    x_vector.emplace_back(x[oneDimIndex]);
   }
+  // referred to Copy elision https://en.cppreference.com/w/cpp/language/copy_elision
+  // returning a vector won't cause extra vector constructed or moved
+  return x_vector;
 }
 
 template <typename T>

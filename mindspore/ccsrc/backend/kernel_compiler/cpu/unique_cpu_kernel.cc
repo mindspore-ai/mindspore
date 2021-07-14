@@ -57,10 +57,10 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     }
     std::vector<size_t> out_shape;
     out_shape.emplace_back(output_size_);
-    std::vector<TypeId> dtypes;
     size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+    std::vector<TypeId> dtypes(output_num);
     for (size_t i = 0; i < output_num; i++) {
-      dtypes.push_back(AnfAlgo::GetOutputDeviceDataType(node_, i));
+      dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
     }
     AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, AnfAlgo::GetOutputInferShape(node_, 1)}, node_.get());
   }
