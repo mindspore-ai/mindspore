@@ -84,8 +84,8 @@ other datasets need to use the same format as WiderFace.
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor.
+- Hardware（Ascend/GPU）
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -105,7 +105,7 @@ step1: prepare pretrained model: train a mobilenet_v2 model by mindspore or use 
 #        The key/cell/module name must as follow, otherwise you need to modify "name_map" function:
 #            --mindspore: as the same as mobilenet_v2_key.ckpt
 #            --pytorch: same as official pytorch model(e.g., official mobilenet_v2-b0353104.pth)
-python convert_weight_centerface.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
+python convert_weight_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
 ```
 
 step2: prepare dataset  
@@ -116,7 +116,7 @@ step2: prepare dataset
 
 &emsp;3)download training annotations from [annotations](https://pan.baidu.com/s/1j_2wggZ3bvCuOAfZvjWqTg).  password: **f9hh**
 
-step3: prepare user rank_table
+step3 (ASCEND ONLY): prepare user rank_table
 
 ```python
 # user can use your own rank table file
@@ -137,13 +137,25 @@ ls ./dataset/centerface/annotations/train.json # annot_path
 ls ./dataset/centerface/images/train/images # img_dir
 ```
 
-```python
-# enter script dir, train CenterFace
-sh train_distribute.sh
-# after training
-mkdir ./model
-cp device0/outputs/*/*.ckpt ./model # cp model to [MODEL_PATH]
-```
+- Train on Ascend
+
+    ```python
+    # enter script dir, train CenterFace
+    sh train_distribute.sh
+    # after training
+    mkdir ./model
+    cp device0/output/*/*.ckpt ./model # cp model to [MODEL_PATH]
+    ```
+
+- Train on GPU
+
+    ```python
+    # enter script dir, train CenterFace
+    sh train_distribute_gpu.sh
+    # after training
+    mkdir ./model
+    cp train_distribute_gpu/output/*/*.ckpt ./model # cp model to [MODEL_PATH]
+    ```
 
 step5: test
 
@@ -163,10 +175,19 @@ ls ./dataset/images/val/images/ # data path
 ls ./dataset/centerface/ground_truth/val.mat # annot_path
 ```
 
-```python
-# test CenterFace
-sh test_distribute.sh
-```
+- Test on Ascend
+
+    ```python
+    # test CenterFace
+    sh test_distribute.sh
+    ```
+
+- Test on GPU
+
+    ```bash
+    # test CenterFace
+    bash test_distribute GPU
+    ```
 
 step6: eval
 
@@ -304,7 +325,9 @@ sh eval_all.sh [ground_truth_path]
         │   ├──test_distribute.sh        // testing a range of models
         │   ├──test_and_eval.sh          // test then evaluate a single model
         │   ├──train_standalone.sh       // train in ascend with single npu
+        │   ├──train_standalone_gpu.sh   // train on GPU with single npu
         │   ├──train_distribute.sh       // train in ascend with multi npu
+        │   ├──train_distribute_gpu.sh   // train on GPU with multi npu
         ├── src
         │   ├──__init__.py
         │   ├──centerface.py             // centerface networks, training entry
@@ -320,7 +343,7 @@ sh eval_all.sh [ground_truth_path]
         |      ├──config.py              // Processing configuration parameters
         |      ├──device_adapter.py      // Get cloud ID
         |      ├──local_adapter.py       // Get local ID
-        |     └ ──moxing_adapter.py      // Parameter processing
+        |      ├──moxing_adapter.py      // Parameter processing
         └── dependency                   // third party codes: MIT License
             ├──extd                      // training dependency: data augmentation
             │   ├──utils
@@ -371,6 +394,7 @@ sh eval_all.sh [ground_truth_path]
     --data_dir: data dir
     --annot_path: annotations path
     --img_dir: img dir in data_dir
+    --device_target: device where the code will be implemented. Options are "Ascend" or "GPU". (default: Ascend)
     ```
 
 2. centerface unique configs: in config.py; not recommend user to change
@@ -395,6 +419,7 @@ sh eval_all.sh [ground_truth_path]
     # detail can be found in "test.py"
     # if ckpt is specified not need below 4 parameter
     --device_num: training device number
+    --device_target: device where the code will be implemented. Options are "Ascend" or "GPU". (default: Ascend)
     --steps_per_epoch: steps for each epoch
     --start: start loop number, used to calculate first epoch number
     --end: end loop number, used to calculate last epoch number
@@ -414,82 +439,152 @@ Major parameters eval.py as follows:
 
 ### Training
 
-'task_set' is important for multi-npu train to get higher speed
---task_set: 0, not task_set; 1 task_set;
---task_set_core: task_set core number, most time = cpu number/nproc_per_node
+- Running on Ascend
 
-step1: user need train a mobilenet_v2 model by mindspore or use the script below:
+    'task_set' is important for multi-npu train to get higher speed
+    --task_set: 0, not task_set; 1 task_set;
+    --task_set_core: task_set core number, most time = cpu number/nproc_per_node
 
-```python
-python torch_to_ms_centerface.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
-```
+    step1: user need train a mobilenet_v2 model by mindspore or use the script below:
 
-step2: prepare user rank_table
+    ```python
+    python torch_to_ms_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
+    ```
 
-```python
-# user can use your own rank table file
-# or use the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) to generate rank table file
-# e.g., python hccl_tools.py --device_num "[0,8)"
-python hccl_tools.py --device_num "[0,8)"
-```
+    step2: prepare user rank_table
 
-step3: train
+    ```python
+    # user can use your own rank table file
+    # or use the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) to generate rank table file
+    # e.g., python hccl_tools.py --device_num "[0,8)"
+    python hccl_tools.py --device_num "[0,8)"
+    ```
 
-- Single device
+    step3: train
 
-```python
-# enter script dir, train CenterFace
-cd scripts
-# you need to change the parameter in train_standalone.sh
-# or use symbolic link as quick start
-# or use the command as follow:
-#   USE_DEVICE_ID: your device
-#   PRETRAINED_BACKBONE: your pretrained model path
-#   DATASET: dataset path
-#   ANNOTATIONS: annotation path
-#   images: img_dir in dataset path
-sh train_standalone.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
-# after training
-cp device0/outputs/*/*.ckpt [MODEL_PATH]
-```
+    - Single device
 
-- multi-device (recommended)
+    ```python
+    # enter script dir, train CenterFace
+    cd scripts
+    # you need to change the parameter in train_standalone.sh
+    # or use symbolic link as quick start
+    # or use the command as follow:
+    #   USE_DEVICE_ID: your device
+    #   PRETRAINED_BACKBONE: your pretrained model path
+    #   DATASET: dataset path
+    #   ANNOTATIONS: annotation path
+    #   images: img_dir in dataset path
+    sh train_standalone.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    # after training
+    cp device0/output/*/*.ckpt [MODEL_PATH]
+    ```
 
-```python
-# enter script dir, train CenterFace
-cd scripts;
-# you need to change the parameter in train_distribute.sh
-# or use symbolic link as quick start
-# or use the command as follow, most are the same as train_standalone.sh, the different is RANK_TABLE
-#   RANK_TABLE: for multi-device only, from generate_rank_table.py or user writing
-sh train_distribute.sh [RANK_TABLE] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
-# after training
-cp device0/outputs/*/*.ckpt [MODEL_PATH]
-```
+    - Multi-device (recommended)
 
-After training with 8 device, the loss value will be achieved as follows:
+    ```python
+    # enter script dir, train CenterFace
+    cd scripts;
+    # you need to change the parameter in train_distribute.sh
+    # or use symbolic link as quick start
+    # or use the command as follow, most are the same as train_standalone.sh, the different is RANK_TABLE
+    #   RANK_TABLE: for multi-device only, from generate_rank_table.py or user writing
+    sh train_distribute.sh [RANK_TABLE] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    # after training
+    cp device0/output/*/*.ckpt [MODEL_PATH]
+    ```
 
-```python
-# grep "loss is " device0/xxx.log
-# epoch: 1 step: 1, loss is greater than 500 and less than 5000
-2020-09-24 19:00:53,550:INFO:epoch:1, iter:0, average_loss:loss:1148.415649, loss:1148.4156494140625, overflow:False, loss_scale:1024.0
-[WARNING] DEBUG(51499,python):2020-09-24-19:00:53.590.008 [mindspore/ccsrc/debug/dump_proto.cc:218] SetValueToProto] Unsupported type UInt
-2020-09-24 19:00:53,784:INFO:epoch:1, iter:1, average_loss:loss:798.286713, loss:448.15777587890625, overflow:False, loss_scale:1024.0
-...
-2020-09-24 19:01:58,095:INFO:epoch:2, iter:197, average_loss:loss:1.942609, loss:1.5492267608642578, overflow:False, loss_scale:1024.0
-2020-09-24 19:01:58,501:INFO:epoch[2], loss:1.942609, 477.97 imgs/sec, lr:0.004000000189989805
-2020-09-24 19:01:58,502:INFO:==========end epoch===============
-2020-09-24 19:02:00,780:INFO:epoch:3, iter:0, average_loss:loss:2.107658, loss:2.1076583862304688, overflow:False, loss_scale:1024.0
-...
-# epoch: 140 average loss is greater than 0.3 and less than 1.5:
-2020-09-24 20:19:16,255:INFO:epoch:140, iter:196, average_loss:loss:0.906300, loss:1.1071504354476929, overflow:False, loss_scale:1024.0
-2020-09-24 20:19:16,347:INFO:epoch:140, iter:197, average_loss:loss:0.904684, loss:0.586264967918396, overflow:False, loss_scale:1024.0
-2020-09-24 20:19:16,747:INFO:epoch[140], loss:0.904684, 480.10 imgs/sec, lr:3.9999998989515007e-05
-2020-09-24 20:19:16,748:INFO:==========end epoch===============
-2020-09-24 20:19:16,748:INFO:==========end training===============
-```
+    After training with 8 device, the loss value will be achieved as follows:
 
-The model checkpoint will be saved in the scripts/device0/output/xxx/xxx.ckpt
+    ```python
+    # grep "loss:" device0/xxx.log
+    #
+    # epoch: 1 step: 1, loss is greater than 500 and less than 5000
+    2020-09-24 19:00:53,550:INFO:epoch:1, iter:0, average_loss:loss:1148.415649, loss:1148.4156494140625, overflow:False, loss_scale:1024.0
+    [WARNING] DEBUG(51499,python):2020-09-24-19:00:53.590.008 [mindspore/ccsrc/debug/dump_proto.cc:218] SetValueToProto] Unsupported type UInt
+    2020-09-24 19:00:53,784:INFO:epoch:1, iter:1, average_loss:loss:798.286713, loss:448.15777587890625, overflow:False, loss_scale:1024.0
+    ...
+    2020-09-24 19:01:58,095:INFO:epoch:2, iter:197, average_loss:loss:1.942609, loss:1.5492267608642578, overflow:False, loss_scale:1024.0
+    2020-09-24 19:01:58,501:INFO:epoch[2], loss:1.942609, 477.97 imgs/sec, lr:0.004000000189989805
+    2020-09-24 19:01:58,502:INFO:==========end epoch===============
+    2020-09-24 19:02:00,780:INFO:epoch:3, iter:0, average_loss:loss:2.107658, loss:2.1076583862304688, overflow:False, loss_scale:1024.0
+    ...
+    # epoch: 140 average loss is greater than 0.3 and less than 1.5:
+    2020-09-24 20:19:16,255:INFO:epoch:140, iter:196, average_loss:loss:0.906300, loss:1.1071504354476929, overflow:False, loss_scale:1024.0
+    2020-09-24 20:19:16,347:INFO:epoch:140, iter:197, average_loss:loss:0.904684, loss:0.586264967918396, overflow:False, loss_scale:1024.0
+    2020-09-24 20:19:16,747:INFO:epoch[140], loss:0.904684, 480.10 imgs/sec, lr:3.9999998989515007e-05
+    2020-09-24 20:19:16,748:INFO:==========end epoch===============
+    2020-09-24 20:19:16,748:INFO:==========end training===============
+    ```
+
+    The model checkpoint will be saved in scripts/device0/output/xxx/xxx.ckpt
+
+- Running on GPU
+
+    'task_set' is important for multi-npu train to get higher speed
+    --task_set: 0, not task_set; 1 task_set;
+    --task_set_core: task_set core number, most time = cpu number/nproc_per_node
+
+    step1: user need train a mobilenet_v2 model by mindspore or use the script below:
+
+    ```python
+    python torch_to_ms_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
+    ```
+
+    step2: train
+
+    - Single device
+
+    ```python
+    # enter script dir, train CenterFace
+    cd scripts
+    # you need to change the parameter in train_standalone_gpu.sh
+    # or use symbolic link as quick start
+    # or use the command as follow:
+    #   USE_DEVICE_ID: your device
+    #   PRETRAINED_BACKBONE: your pretrained model path
+    #   DATASET: dataset path
+    #   ANNOTATIONS: annotation path
+    #   images: img_dir in dataset path
+    sh train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    # after training
+    cp train_standalone_gpu/output/*/*.ckpt [MODEL_PATH]
+    ```
+
+    - Multi-device (recommended)
+
+    ```python
+    # enter script dir, train CenterFace
+    cd scripts;
+    # you need to change the parameter in train_distribute_gpu.sh
+    # or use symbolic link as quick start
+    # or use the command as follow, most are the same as train_standalone_gpu.sh, the different is DEVICE_NUM
+    #   DEVICE_NUM: for multi-device only, number of devices
+    sh train_distribute_gpu.sh [DEVICE_NUM] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    # after training
+    cp train_distribute_gpu/output/*/*.ckpt [MODEL_PATH]
+    ```
+
+    After training with 8 device, the loss value will be achieved as follows:
+
+    ```python
+    # grep "loss:" train_distribute_gpu/xxx.log
+    #
+    # epoch: 1 step: 1, loss is greater than 500 and less than 5000
+    2021-07-06 16:00:45,375:INFO:epoch:1, iter:0, avg_loss:loss:1271.834595, loss:1271.8345947265625, overflow:False, loss_scale:1024.0
+    [WARNING] ME(50115:139631687231296,_GeneratorWorkerMp-42):2021-07-06-16:00:45.499.845 [mindspore/dataset/engine/queue.py:99] Using shared memory queue, but rowsize is larger than allocated memory max_rowsize 6291456 current rowwize 9550848
+    2021-07-06 16:00:45,600:INFO:epoch:1, iter:1, avg_loss:loss:1017.134613, loss:762.4346313476562, overflow:False, loss_scale:1024.0
+    ...
+    2021-07-06 16:01:42,710:INFO:epoch:2, iter:197, avg_loss:loss:1.906899, loss:1.6912976503372192, overflow:False, loss_scale:1024.0
+    2021-07-06 16:01:42,869:INFO:epoch[2], loss:1.906899, 442.33 imgs/sec, lr:0.004000000189989805
+    2021-07-06 16:01:42,985:INFO:epoch:3, iter:0, avg_loss:loss:1.804715, loss:1.804714560508728, overflow:False, loss_scale:1024.0
+    ...
+    # epoch: 140 average loss is greater than 0.3 and less than 1.5:
+    2021-07-06 17:02:39,750:INFO:epoch:140, iter:196, avg_loss:loss:0.870886, loss:0.7947260141372681, overflow:False, loss_scale:1024.0
+    2021-07-06 17:02:39,869:INFO:epoch:140, iter:197, avg_loss:loss:0.872917, loss:1.2730457782745361, overflow:False, loss_scale:1024.0
+    2021-07-06 17:02:40,005:INFO:epoch[140], loss:0.872917, 529.03 imgs/sec, lr:3.9999998989515007e-05
+    2021-07-06 17:02:41,273:INFO:==========end training===============
+    ```
 
 ## [Testing Process](#contents)
 
@@ -511,27 +606,29 @@ mkdir [SAVE_PATH]
     # you need to change the parameter in test.sh
     # or use symbolic link as quick start
     # or use the command as follow:
+    #   DEVICE_TARGET: device where the code will be implemented. Either Ascend or GPU (default: Ascend)
     #   MODEL_PATH: ckpt path saved during training
     #   DATASET: img dir
     #   GROUND_TRUTH_MAT: ground_truth file, mat type
     #   SAVE_PATH: save_path for evaluate
     #   DEVICE_ID: use device id
     #   CKPT: test model name
-    sh test.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
+    sh test.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
     ```
 
 2. test many out ckpt for user to choose the best one
 
-```python
-# you need to change the parameter in test.sh
-# or use symbolic link as quick start
-# or use the command as follow, most are the same as test.sh, the different are:
-#   DEVICE_NUM: training device number
-#   STEPS_PER_EPOCH: steps for each epoch
-#   START: start loop number, used to calculate first epoch number
-#   END: end loop number, used to calculate last epoch number
-sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START] [END]
-```
+    ```python
+    # you need to change the parameter in test.sh
+    # or use symbolic link as quick start
+    # or use the command as follow, most are the same as test.sh, the different are:
+    #   DEVICE_TARGET: device where the code will be implemented. Either Ascend or GPU (default: Ascend)
+    #   DEVICE_NUM: training device number
+    #   STEPS_PER_EPOCH: steps for each epoch
+    #   START: start loop number, used to calculate first epoch number
+    #   END: end loop number, used to calculate last epoch number
+    sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START] [END]
+    ```
 
 After testing, you can find many txt file save the box information and scores,
 open it you can see:
@@ -572,57 +669,107 @@ cd ../../../scripts;
 
 3. test+eval
 
-```python
-# you need to change the parameter in test_and_eval.sh
-# or use symbolic link as quick start, default eval the ckpt saved in ./scripts/output/centerface/999
-# or use the command as follow, most are the same as test.sh, the different are:
-#   GROUND_TRUTH_PATH: ground truth path
-sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [CKPT] [GROUND_TRUTH_PATH]
-```
+    ```python
+    # you need to change the parameter in test_and_eval.sh
+    # or use symbolic link as quick start, default eval the ckpt saved in ./scripts/output/centerface/999
+    # or use the command as follow, most are the same as test.sh, the different are:
+    #   GROUND_TRUTH_PATH: ground truth path
+    sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [CKPT] [GROUND_TRUTH_PATH]
+    ```
 
-you can see the MAP below by eval.sh
+- Running on Ascend
 
-```log
-(ci3.7) [root@bms-aiserver scripts]# ./eval.sh ./ground_truth_path
-start eval
-==================== Results = ==================== ./scripts/output/centerface/999
-Easy   Val AP: 0.923914407045363
-Medium Val AP: 0.9166100571371586
-Hard   Val AP: 0.7810750535799462
-=================================================
-end eval
-```
+    you can see the MAP below by eval.sh
 
-you can see the MAP below by eval_all.sh
+    ```log
+    (ci3.7) [root@bms-aiserver scripts]# ./eval.sh
+    start eval
+    ==================== Results = ==================== ./scripts/output/centerface/999
+    Easy   Val AP: 0.923914407045363
+    Medium Val AP: 0.9166100571371586
+    Hard   Val AP: 0.7810750535799462
+    =================================================
+    end eval
+    ```
 
-```log
-(ci3.7) [root@bms-aiserver scripts]# ./eval_all.sh ./ground_truth_path
-==================== Results = ==================== ./scripts/output/centerface/89
-Easy   Val AP: 0.8884892849068273
-Medium Val AP: 0.8928813452811216
-Hard   Val AP: 0.7721131614294564
-=================================================
-==================== Results = ==================== ./scripts/output/centerface/90
-Easy   Val AP: 0.8836073914165545
-Medium Val AP: 0.8875938506473486
-Hard   Val AP: 0.775956751740446
-...
-==================== Results = ==================== ./scripts/output/centerface/125
-Easy   Val AP: 0.923914407045363
-Medium Val AP: 0.9166100571371586
-Hard   Val AP: 0.7810750535799462
-=================================================
-==================== Results = ==================== ./scripts/output/centerface/126
-Easy   Val AP: 0.9218741197149122
-Medium Val AP: 0.9151860193570651
-Hard   Val AP: 0.7825645670331809
-...
-==================== Results = ==================== ./scripts/output/centerface/140
-Easy   Val AP: 0.9250715236965638
-Medium Val AP: 0.9170429723233877
-Hard   Val AP: 0.7822182013830674
-=================================================
-```
+    you can see the MAP below by eval_all.sh
+
+    ```log
+    (ci3.7) [root@bms-aiserver scripts]# ./eval_all.sh
+    ==================== Results = ==================== ./scripts/output/centerface/89
+    Easy   Val AP: 0.8884892849068273
+    Medium Val AP: 0.8928813452811216
+    Hard   Val AP: 0.7721131614294564
+    =================================================
+    ==================== Results = ==================== ./scripts/output/centerface/90
+    Easy   Val AP: 0.8836073914165545
+    Medium Val AP: 0.8875938506473486
+    Hard   Val AP: 0.775956751740446
+    ...
+    ==================== Results = ==================== ./scripts/output/centerface/125
+    Easy   Val AP: 0.923914407045363
+    Medium Val AP: 0.9166100571371586
+    Hard   Val AP: 0.7810750535799462
+    =================================================
+    ==================== Results = ==================== ./scripts/output/centerface/126
+    Easy   Val AP: 0.9218741197149122
+    Medium Val AP: 0.9151860193570651
+    Hard   Val AP: 0.7825645670331809
+    ...
+    ==================== Results = ==================== ./scripts/output/centerface/140
+    Easy   Val AP: 0.9250715236965638
+    Medium Val AP: 0.9170429723233877
+    Hard   Val AP: 0.7822182013830674
+    =================================================
+    ```
+
+- Running on GPU
+
+    you can see the MAP below from eval.sh
+
+    ```log
+    (markus) rescue@distrubuteddata13: ./scripts$ bash eval.sh
+    start eval
+    ==================== Results = ==================== ./scripts/output/centerface/140
+    Easy   Val AP: 0.9240708943779239
+    Medium Val AP: 0.9193106635436091
+    Hard   Val AP: 0.7777030480280428
+    =================================================
+    end eval
+    ```
+
+    you can see the MAP below from eval_all.sh
+
+    ```log
+    (markus) rescue@distrubuteddata13: ./scripts$ bash eval_all.sh
+    ==================== Results = ==================== ./scripts/output/centerface/89
+    Easy   Val AP: 0.9138417914429035
+    Medium Val AP: 0.9052437122819539
+    Hard   Val AP: 0.7705692348147004
+    =================================================
+    ==================== Results = ==================== ./scripts/output/centerface/90
+    Easy   Val AP: 0.8820974959531916
+    Medium Val AP: 0.8902186098138436
+    Hard   Val AP: 0.7655257898032033
+    =================================================
+    ...
+    ==================== Results = ==================== /home/rescue/markus/markus_repo/mindspore/model_zoo/official/cv/centerface/scripts/output/centerface/125
+    Easy   Val AP: 0.9240525949727452
+    Medium Val AP: 0.9180645371016661
+    Hard   Val AP: 0.782047346778918
+    =================================================
+    ==================== Results = ==================== /home/rescue/markus/markus_repo/mindspore/model_zoo/official/cv/centerface/scripts/output/centerface/126
+    Easy   Val AP: 0.9199560196120761
+    Medium Val AP: 0.9157462777329638
+    Hard   Val AP: 0.7814679399942209
+    =================================================
+    ...
+    ==================== Results = ==================== /home/rescue/markus/markus_repo/mindspore/model_zoo/official/cv/centerface/scripts/output/centerface/140
+    Easy   Val AP: 0.9240708943779239
+    Medium Val AP: 0.9193106635436091
+    Hard   Val AP: 0.7777030480280428
+    =================================================
+    ```
 
 ## [Inference process](#contents)
 
@@ -678,36 +825,36 @@ Hard   Val AP: 0.776737419299741
 
 CenterFace on 13K images(The annotation and data format must be the same as widerFace)
 
-| Parameters                 | CenterFace                                                  |
-| -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
-| uploaded Date              | 10/29/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                 |
-| Dataset                    | 13K images                                                  |
-| Training Parameters        | epoch=140, steps=198 * epoch, batch_size = 8, lr=0.004      |
-| Optimizer                  | Adam                                                        |
-| Loss Function              | Focal Loss, L1 Loss, Smooth L1 Loss                         |
-| outputs                    | heatmaps                                                    |
-| Loss                       | 0.3-1.5, average loss for last epoch is in 0.8-1.0          |
-| Speed                      | 1p 65 img/s, 8p 475 img/s                                   |
-| Total time                 | train(8p) 1.1h, test 50min, eval 5-10min                    |
-| Checkpoint for Fine tuning | 22M (.ckpt file)                                            |
-| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/centerface> |
+| Parameters                 | Ascend                                                      | GPU                                      |
+| -------------------------- | ----------------------------------------------------------- | -----------------------------------------|
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             | Tesla V100 PCIe 32GB; CPU 2.70GHz; 52cores; Memory 1510G; OS Ubuntu 18.04.5 |
+| uploaded Date              | 10/29/2020 (month/day/year)                                 | 7/9/2021 (month/day/year) |
+| MindSpore Version          | 1.0.0                                                 | 1.3.0 |
+| Dataset                    | 13K images                                                  | 13K images |
+| Training Parameters        | epoch=140, steps=198 * epoch, batch_size = 8, lr=0.004      | epoch=140, steps=198 * epoch, batch_size = 8, lr=0.004 |
+| Optimizer                  | Adam                                                        | Adam |
+| Loss Function              | Focal Loss, L1 Loss, Smooth L1 Loss                         | Focal Loss, L1 Loss, Smooth L1 Loss  |
+| outputs                    | heatmaps                                                    | heatmaps |
+| Loss                       | 0.3-1.5, average loss for last epoch is in 0.8-1.0          | iter loss for last epoch 0.3-3.3, average loss for last epoch is in 0.75-1.05 |
+| Speed                      | 1p 65 img/s, 8p 475 img/s                                   | 1gpu 80 img/s, 8gpu 480 img/s |
+| Total time                 | train(8p) 1.1h, test 50min, eval 5-10min                    | train(8gpu) 1.0h, test 35 min, eval 5-10min |
+| Checkpoint for Fine tuning | 22M (.ckpt file)                                            | 23M (.ckpt file) |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/centerface> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/centerface> |
 
 ### Inference Performance
 
 CenterFace on 3.2K images(The annotation and data format must be the same as widerFace)
 
-| Parameters                 | CenterFace                                                  |
-| -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
-| uploaded Date              | 10/29/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                               |
-| Dataset                    | 3.2K images                                                 |
-| batch_size                 | 1                                                           |
-| outputs                    | box position and sorces, and probability                    |
-| Accuracy                   | Easy 92.2%  Medium 91.5% Hard 78.2% (+-0.5%)                |
-| Model for inference        | 22M (.ckpt file)                                            |
+| Parameters                 | Ascend                                                      | GPU                                        |
+| -------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             | Tesla V100 PCIe 32GB; CPU 2.70GHz; 52cores; Memory 1510G; OS Ubuntu 18.04.5 |
+| uploaded Date              | 10/29/2020 (month/day/year)                                 | 7/9/2021 (month/day/year) |
+| MindSpore Version          | 1.0.0                                               | 1.3.0
+| Dataset                    | 3.2K images                                                 | 3.2K images |
+| batch_size                 | 1                                                           | 1 |
+| outputs                    | box position and scores, and probability                    | box position and scores, and probability |
+| Accuracy                   | Easy 92.2%  Medium 91.5% Hard 78.2% (+-0.5%)                | Easy 92.4%  Medium 91.9%  Hard 77.8% (+-0.5%) |
+| Model for inference        | 22M (.ckpt file)                                            | 23M (.ckpt file) |
 
 ### 310Inference Performance
 

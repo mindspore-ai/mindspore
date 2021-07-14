@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,8 +34,11 @@ from dependency.centernet.src.lib.detectors.base_detector import CenterFaceDetec
 from dependency.evaluate.eval import evaluation
 
 dev_id = get_device_id()
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=False,
-                    device_target="Ascend", save_graphs=False, device_id=dev_id)
+context.set_context(mode=context.GRAPH_MODE,
+                    device_target=config.device_target, save_graphs=False, device_id=dev_id)
+
+if config.device_target == "Ascend":
+    context.set_context(enable_auto_mixed_precision=False)
 
 def modelarts_process():
     config.data_dir = config.data_path
