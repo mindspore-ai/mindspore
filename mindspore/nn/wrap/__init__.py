@@ -23,6 +23,7 @@ from .loss_scale import TrainOneStepWithLossScaleCell, DynamicLossScaleUpdateCel
 from .grad_reducer import DistributedGradReducer
 from ..layer.timedistributed import TimeDistributed
 
+
 __all__ = [
     "TimeDistributed",
     "ForwardValueAndGrad",

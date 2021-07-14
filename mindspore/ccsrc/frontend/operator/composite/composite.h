@@ -111,9 +111,11 @@ class Tail : public MetaFuncGraph {
   FuncGraphPtr GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) const;
 
   friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
+  void set_enable_tuple_grad(bool enable_tuple_grad) { enable_tuple_grad_ = enable_tuple_grad; }
 
  private:
   TailType tail_type_;
+  bool enable_tuple_grad_;
 };
 using TailPtr = std::shared_ptr<Tail>;
 
@@ -145,7 +147,7 @@ class GradOperation : public MetaFuncGraph {
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
   FuncGraphPtr GetGrad(const AnfNodePtr &k, const AnfNodePtr &weights,
-                       const std::vector<AnfNodePtr> &forward_graph_params,
+                       const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
                        const std::vector<AnfNodePtr> &weight_args = {});
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
@@ -156,7 +158,7 @@ class GradOperation : public MetaFuncGraph {
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                       const AnfNodePtr &weights);
+                       const AnfNodePtr &weights, bool enable_tuple_grad);
 };
 using GradOperationPtr = std::shared_ptr<GradOperation>;
 
