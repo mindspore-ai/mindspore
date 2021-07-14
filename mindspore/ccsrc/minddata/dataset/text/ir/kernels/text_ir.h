@@ -142,7 +142,7 @@ class JiebaTokenizerOperation : public TensorOperation {
 class LookupOperation : public TensorOperation {
  public:
   explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
-                           DataType data_type);  // Used for C++ API
+                           const DataType &data_type);  // Used for C++ API
   explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
                            const std::string &data_type);  // Used for Pybind
 
@@ -275,8 +275,8 @@ class SlidingWindowOperation : public TensorOperation {
 
 class ToNumberOperation : public TensorOperation {
  public:
-  explicit ToNumberOperation(DataType data_type);     // Used for C++ API
-  explicit ToNumberOperation(std::string data_type);  // Used for Pybind
+  explicit ToNumberOperation(const DataType &data_type);     // Used for C++ API
+  explicit ToNumberOperation(const std::string &data_type);  // Used for Pybind
 
   ~ToNumberOperation() = default;
 

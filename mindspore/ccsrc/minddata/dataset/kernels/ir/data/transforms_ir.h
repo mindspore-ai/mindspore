@@ -97,7 +97,7 @@ class DuplicateOperation : public TensorOperation {
 
 class FillOperation : public TensorOperation {
  public:
-  explicit FillOperation(std::shared_ptr<Tensor> fill_value);
+  explicit FillOperation(const std::shared_ptr<Tensor> &fill_value);
 
   ~FillOperation() = default;
 
@@ -235,8 +235,8 @@ class SliceOperation : public TensorOperation {
 
 class TypeCastOperation : public TensorOperation {
  public:
-  explicit TypeCastOperation(DataType data_type);     // Used for C++ API
-  explicit TypeCastOperation(std::string data_type);  // Used for Pybind
+  explicit TypeCastOperation(const DataType &data_type);     // Used for C++ API
+  explicit TypeCastOperation(const std::string &data_type);  // Used for Pybind
 
   ~TypeCastOperation() = default;
 
