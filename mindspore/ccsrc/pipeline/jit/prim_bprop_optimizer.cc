@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace pipeline {
-
 void PrimBpropOptGraphLevel2Info::TryFreeArgsValue(const ValuePtrList &op_args, const ValuePtr &out) {
   // args_value_using_info_ contains out
   if (args_value_using_info_.size() != op_args.size() + 1) {
@@ -77,7 +76,6 @@ void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(const NodeUsersMap &node
                                                         ParamUsingInfo *arg_info) const {
   MS_EXCEPTION_IF_NULL(arg_info);
   auto iter = node_users.find(param);
-
   if (iter == node_users.end()) {
     arg_info->using_flg_ = false;
     return;

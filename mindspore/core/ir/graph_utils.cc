@@ -101,7 +101,6 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
 // search the cnodes inside this graph only
 std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &starts) {
   std::vector<CNodePtr> todo;
-  todo.reserve(1024);
   todo.insert(todo.end(), starts.begin(), starts.end());
   auto seen = NewSeenGeneration();
   size_t top_idx = 0;
@@ -151,7 +150,6 @@ CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const Matc
 
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root) {
   std::vector<FuncGraphPtr> todo;
-  todo.reserve(128);
   todo.push_back(root);
   auto seen = NewSeenGeneration();
   size_t top_idx = 0;
@@ -241,7 +239,6 @@ std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
 
 std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
-  vecs.reserve(128);
   if (node == nullptr) {
     return vecs;
   }

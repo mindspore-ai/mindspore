@@ -20,7 +20,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 AnfNodePtr BoolScalarEliminate::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
