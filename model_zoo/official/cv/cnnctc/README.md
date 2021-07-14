@@ -106,9 +106,9 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
 
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 # [Quick Start](#contents)
 
@@ -502,7 +502,7 @@ accuracy:  0.8533
 
 ### Inference
 
-If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html). Following the steps below, this is a simple example:
+If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/docs/programming_guide/en/master/multi_platform_inference.html). Following the steps below, this is a simple example:
 
 - Running on Ascend
 

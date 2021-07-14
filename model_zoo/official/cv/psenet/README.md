@@ -54,8 +54,8 @@ A testing set containing about 2000 readable words
 - Framework
     - [MindSpore](http://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 - install Mindspore
 - install [pyblind11](https://github.com/pybind/pybind11)
 - install [Opencv3.4](https://docs.opencv.org/3.4.9/)
@@ -340,7 +340,7 @@ The `res` folder is generated in the upper-level directory. For details about th
 
 ### Inference
 
-If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html). Following the steps below, this is a simple example:
+If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/docs/programming_guide/en/master/multi_platform_inference.html). Following the steps below, this is a simple example:
 
 ```python
 # Load unseen dataset for inference

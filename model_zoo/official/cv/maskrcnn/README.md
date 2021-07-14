@@ -59,8 +59,8 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 - Docker base image
     - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
 - For more information, please check the resources below:
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 - third-party libraries
 

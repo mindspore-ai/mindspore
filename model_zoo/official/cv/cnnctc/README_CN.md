@@ -109,9 +109,9 @@ python src/preprocess_dataset.py
     - [MindSpore](https://www.mindspore.cn/install)
 
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
 
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 # 快速入门
 
@@ -434,7 +434,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
 
 ### 推理
 
-如果您需要在GPU、Ascend 910、Ascend 310等多个硬件平台上使用训练好的模型进行推理，请参考此[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。以下为简单示例：
+如果您需要在GPU、Ascend 910、Ascend 310等多个硬件平台上使用训练好的模型进行推理，请参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/multi_platform_inference.html)。以下为简单示例：
 
 - Ascend处理器环境运行
 

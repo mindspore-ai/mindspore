@@ -71,8 +71,8 @@ To run the python scripts in the repository, you need to prepare the environment
     - opencv-python 4.3.0.36
     - pycocotools 2.0
 - For more information, please check the resources below：
-    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 # [Quick Start](#contents)
 

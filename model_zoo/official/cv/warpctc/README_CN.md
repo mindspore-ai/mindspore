@@ -52,8 +52,8 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 - 框架
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 ## 快速入门
 
