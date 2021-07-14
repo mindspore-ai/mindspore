@@ -326,6 +326,10 @@ def add_training_params(opt):
                      default="adam",
                      choices=["adam", "lamb"],
                      help="select which optimizer to be used, default adam")
+    opt.add_argument("--opt_offload",
+                     type=int,
+                     default=0,
+                     help="Enable optimizer status offload to host CPU, default is 0")
     opt.add_argument("--eod_id",
                      type=int,
                      default=6,

@@ -152,12 +152,12 @@ int AdamDeltaFp32(float *delta, float *m, float *v, float lr, float beta1, float
   return NNACL_OK;
 }
 
-int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float *decay,
+int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
                         const float *gradient, size_t start, size_t end) {
   size_t c1 = start;
 #ifdef ENABLE_AVX512
-  float beta1_minus = 1 - beta1;
-  float beta2_minus = 1 - beta2;
+  const float beta1_minus = 1 - beta1;
+  const float beta2_minus = 1 - beta2;
   struct AVX_Data beta1_r, beta2_r, beta1_minus_r, beta2_minus_r, lr_neg_r, epsilon_r, decay_r;
   beta1_r.data = _mm512_set1_ps(beta1);
   beta2_r.data = _mm512_set1_ps(beta2);
@@ -165,7 +165,7 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
   beta2_minus_r.data = _mm512_set1_ps(beta2_minus);
   lr_neg_r.data = _mm512_set1_ps(-lr);
   epsilon_r.data = _mm512_set1_ps(epsilon);
-  decay_r.data = _mm512_set1_ps(*decay);
+  decay_r.data = _mm512_set1_ps(decay);
   size_t c16 = ((end - start) / C16NUM) * C16NUM + start;
   size_t c64 = ((end - start) / C64NUM) * C64NUM + start;
 
@@ -175,11 +175,11 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
   float *v_ptr = v + start;
 
   for (; c1 < c64; c1 += C64NUM) {
-    struct AVX_Data g_r[4], var_r[4], m_r[4], v_r[4];
-    LoadStep4(g_r, gradient_ptr);
-    LoadStep4(var_r, var_ptr);
-    LoadStep4(m_r, m_ptr);
-    LoadStep4(v_r, v_ptr);
+    struct AVX_Data g_r[kUnrollSize], var_r[kUnrollSize], m_r[kUnrollSize], v_r[kUnrollSize];
+    LoadStep4(g_r, gradient_ptr, kUnrollSize);
+    LoadStep4(var_r, var_ptr, kUnrollSize);
+    LoadStep4(m_r, m_ptr, kUnrollSize);
+    LoadStep4(v_r, v_ptr, kUnrollSize);
 
     m_r[0].data = _mm512_mul_ps(m_r[0].data, beta1_r.data);
     m_r[1].data = _mm512_mul_ps(m_r[1].data, beta1_r.data);
@@ -221,9 +221,9 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
     var_r[2].data = _mm512_fmadd_ps(g_r[2].data, lr_neg_r.data, var_r[2].data);
     var_r[3].data = _mm512_fmadd_ps(g_r[3].data, lr_neg_r.data, var_r[3].data);
 
-    StoreStep4(var_ptr, var_r);
-    StoreStep4(m_ptr, m_r);
-    StoreStep4(v_ptr, v_r);
+    StoreStep4(var_ptr, var_r, kUnrollSize);
+    StoreStep4(m_ptr, m_r, kUnrollSize);
+    StoreStep4(v_ptr, v_r, kUnrollSize);
 
     gradient_ptr += C64NUM;
     var_ptr += C64NUM;
@@ -260,12 +260,12 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
   return c1;
 }
 
-int FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float *decay,
+int FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
                   const int16_t *gradient16, size_t start, size_t end) {
   size_t c1 = start;
 #ifdef ENABLE_AVX512
-  float beta1_minus = 1 - beta1;
-  float beta2_minus = 1 - beta2;
+  const float beta1_minus = 1 - beta1;
+  const float beta2_minus = 1 - beta2;
   struct AVX_Data beta1_r, beta2_r, beta1_minus_r, beta2_minus_r, lr_neg_r, epsilon_r, decay_r;
   beta1_r.data = _mm512_set1_ps(beta1);
   beta2_r.data = _mm512_set1_ps(beta2);
@@ -273,7 +273,7 @@ int FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float b
   beta2_minus_r.data = _mm512_set1_ps(beta2_minus);
   lr_neg_r.data = _mm512_set1_ps(-lr);
   epsilon_r.data = _mm512_set1_ps(epsilon);
-  decay_r.data = _mm512_set1_ps(*decay);
+  decay_r.data = _mm512_set1_ps(decay);
   size_t c16 = ((end - start) / C16NUM) * C16NUM + start;
   size_t c64 = ((end - start) / C64NUM) * C64NUM + start;
 
@@ -283,15 +283,15 @@ int FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float b
   float *v_ptr = v + start;
 
   for (; c1 < c64; c1 += C64NUM) {
-    struct AVX_Data g_r[4], var_r[4], m_r[4], v_r[4];
+    struct AVX_Data g_r[kUnrollSize], var_r[kUnrollSize], m_r[kUnrollSize], v_r[kUnrollSize];
     g_r[0].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
     g_r[1].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr + C16NUM)));
     g_r[2].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr + C16NUM * 2)));
     g_r[3].data = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr + C16NUM * 3)));
 
-    LoadStep4(var_r, var_ptr);
-    LoadStep4(m_r, m_ptr);
-    LoadStep4(v_r, v_ptr);
+    LoadStep4(var_r, var_ptr, kUnrollSize);
+    LoadStep4(m_r, m_ptr, kUnrollSize);
+    LoadStep4(v_r, v_ptr, kUnrollSize);
 
     m_r[0].data = _mm512_mul_ps(m_r[0].data, beta1_r.data);
     m_r[1].data = _mm512_mul_ps(m_r[1].data, beta1_r.data);
@@ -333,9 +333,9 @@ int FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float b
     var_r[2].data = _mm512_fmadd_ps(g_r[2].data, lr_neg_r.data, var_r[2].data);
     var_r[3].data = _mm512_fmadd_ps(g_r[3].data, lr_neg_r.data, var_r[3].data);
 
-    StoreStep4(var_ptr, var_r);
-    StoreStep4(m_ptr, m_r);
-    StoreStep4(v_ptr, v_r);
+    StoreStep4(var_ptr, var_r, kUnrollSize);
+    StoreStep4(m_ptr, m_r, kUnrollSize);
+    StoreStep4(v_ptr, v_r, kUnrollSize);
 
     gradient16_ptr += C64NUM;
     var_ptr += C64NUM;
