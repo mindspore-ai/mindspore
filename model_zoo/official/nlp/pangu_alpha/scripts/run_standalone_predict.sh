@@ -24,7 +24,7 @@ export CKPT_PATH=$3
 export CKPT_NAME=$4
 export MODE=$5
 export PARAM_INIT_TYPE=fp16
-export DEVICE_TARGET=Ascend # or GPU
+export DEVICE_TARGET=$6 # Ascend or GPU
 
 for((i=0;i<$RANK_SIZE;i++));
 do
