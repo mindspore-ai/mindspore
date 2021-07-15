@@ -32,7 +32,7 @@
 #include "utils/utils.h"
 #include "frontend/parallel/context.h"
 #include "debug/env_config_parser.h"
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
@@ -333,7 +333,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
     }
     add_need_alloc_nodes(input_node);
   }
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   bool ps_cache_check = false;
 #endif
   for (auto &item : need_alloc_nodes) {
@@ -346,7 +346,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
         continue;
       }
       DeviceAddressPtr device_address = nullptr;
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
       const std::string &param_name = item->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         MS_LOG(INFO) << "Parameter(" << param_name << ")"
@@ -1109,7 +1109,7 @@ DeviceAddressPtr KernelRuntime::AssignSingleOpLaunchMemory(size_t size, const st
   return device_address;
 }
 
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph *graph,
                                              AnfNodePtr *const first_cache_input_index,
                                              size_t *const first_cache_size) {

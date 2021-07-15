@@ -350,7 +350,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
       size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
     }
     if (AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
       const std::string &param_name = input_node->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         continue;

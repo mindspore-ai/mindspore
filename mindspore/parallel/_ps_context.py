@@ -31,6 +31,7 @@ _check_positive_float_keys = ["update_model_ratio", "client_learning_rate"]
 
 _check_port_keys = ["scheduler_port", "fl_server_port", "scheduler_manage_port"]
 
+
 def ps_context():
     """
     Get the global _ps_context, if it is not created, create a new one.
@@ -225,6 +226,7 @@ def _set_cache_enable(cache_enable):
 
 def _set_rank_id(rank_id):
     ps_context().set_rank_id(rank_id)
+
 
 def _check_value(key, value):
     """

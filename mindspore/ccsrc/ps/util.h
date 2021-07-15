@@ -56,7 +56,8 @@ class Util {
   static bool FuseServerCommOps(const pipeline::ResourcePtr &res);
 
  private:
-  static void DoFusion(FuncGraphPtr func_graph, const std::string &cnode_name, const std::string &fused_cnode_name);
+  static void DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_name,
+                       const std::string &fused_cnode_name);
   static kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
 
   static std::unordered_map<std::string, int64_t> optimizer_to_ids;

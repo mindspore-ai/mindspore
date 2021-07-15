@@ -34,8 +34,8 @@ Round::Round(const std::string &name, bool check_timeout, size_t time_window, bo
       threshold_count_(threshold_count),
       server_num_as_threshold_(server_num_as_threshold) {}
 
-void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
-                       FinishIterCb finish_iteration_cb) {
+void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &communicator, const TimeOutCb &timeout_cb,
+                       const FinishIterCb &finish_iteration_cb) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
 
@@ -50,7 +50,7 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
   };
 
   // Callback for finalizing the server. This can only be called once.
-  finalize_cb_ = [&](void) -> void { communicator_->Stop(); };
+  finalize_cb_ = [&](void) -> void { (void)communicator_->Stop(); };
 
   if (check_timeout_) {
     iter_timer_ = std::make_shared<IterationTimer>();
@@ -116,7 +116,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   if (Server::GetInstance().IsSafeMode()) {
     MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
     std::string reason = "The cluster is in safemode.";
-    communicator_->SendResponse(reason.c_str(), reason.size(), message);
+    (void)communicator_->SendResponse(reason.c_str(), reason.size(), message);
     return;
   }
 
@@ -128,10 +128,10 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   if (output->size == 0) {
     std::string reason = "The output of the round " + name_ + " is empty.";
     MS_LOG(WARNING) << reason;
-    communicator_->SendResponse(reason.c_str(), reason.size(), message);
+    (void)communicator_->SendResponse(reason.c_str(), reason.size(), message);
     return;
   }
-  communicator_->SendResponse(output->addr, output->size, message);
+  (void)communicator_->SendResponse(output->addr, output->size, message);
   kernel_->Release(output);
 
   // Must send response back no matter what value Launch method returns.
@@ -142,7 +142,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   return;
 }
 
-void Round::Reset() { kernel_->Reset(); }
+void Round::Reset() { (void)kernel_->Reset(); }
 
 const std::string &Round::name() const { return name_; }
 

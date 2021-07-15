@@ -102,7 +102,7 @@ void Server::CancelSafeMode() {
   safemode_ = false;
 }
 
-bool Server::IsSafeMode() { return safemode_.load(); }
+bool Server::IsSafeMode() const { return safemode_.load(); }
 
 void Server::InitServerContext() {
   ps::PSContext::instance()->GenerateResetterRound();
@@ -121,7 +121,7 @@ void Server::InitServerContext() {
 void Server::InitCluster() {
   server_node_ = std::make_shared<ps::core::ServerNode>();
   MS_EXCEPTION_IF_NULL(server_node_);
-  task_executor_ = std::make_shared<ps::core::TaskExecutor>(32);
+  task_executor_ = std::make_shared<ps::core::TaskExecutor>(kExecutorThreadPoolSize);
   MS_EXCEPTION_IF_NULL(task_executor_);
   if (!InitCommunicatorWithServer()) {
     MS_LOG(EXCEPTION) << "Initializing cross-server communicator failed.";
@@ -235,9 +235,9 @@ void Server::InitCipher() {
 #ifdef ENABLE_ARMOUR
   cipher_init_ = &armour::CipherInit::GetInstance();
 
-  int cipher_t = cipher_reconstruct_secrets_down_cnt_;
+  int cipher_t = SizeToInt(cipher_reconstruct_secrets_down_cnt_);
   unsigned char cipher_p[SECRET_MAX_LEN] = {0};
-  int cipher_g = 1;
+  const int cipher_g = 1;
   unsigned char cipher_prime[PRIME_MAX_LEN] = {0};
   float dp_eps = ps::PSContext::instance()->dp_eps();
   float dp_delta = ps::PSContext::instance()->dp_delta();
@@ -304,8 +304,8 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpC
     MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
     safemode_ = true;
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Stop(); });
-    communicator_with_server_->Stop();
+                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)communicator_with_server_->Stop();
   });
 
   communicator->RegisterEventCallback(ps::core::ClusterEvent::NODE_TIMEOUT, [&]() {
@@ -314,8 +314,8 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpC
          "network building phase.";
     safemode_ = true;
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Stop(); });
-    communicator_with_server_->Stop();
+                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)communicator_with_server_->Stop();
   });
 }
 
@@ -363,7 +363,10 @@ void Server::StartCommunicator() {
   }
 
   MS_LOG(INFO) << "Start communicator with server.";
-  communicator_with_server_->Start();
+  if (!communicator_with_server_->Start()) {
+    MS_LOG(EXCEPTION) << "Starting communicator with server failed.";
+    return;
+  }
   DistributedMetadataStore::GetInstance().Initialize(server_node_);
   CollectiveOpsImpl::GetInstance().Initialize(server_node_);
   DistributedCountService::GetInstance().Initialize(server_node_, kLeaderServerRank);
@@ -371,7 +374,11 @@ void Server::StartCommunicator() {
 
   MS_LOG(INFO) << "Start communicator with worker.";
   std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Start(); });
+                [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                  if (!communicator->Start()) {
+                    MS_LOG(EXCEPTION) << "Starting communicator with worker failed.";
+                  }
+                });
 }
 
 void Server::ProcessBeforeScalingOut() {
@@ -405,7 +412,7 @@ void Server::ProcessAfterScalingOut() {
   if (!Executor::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "Executor reinitializing failed.";
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(kServerSleepTimeForNetworking));
   safemode_ = false;
 }
 
@@ -418,7 +425,7 @@ void Server::ProcessAfterScalingIn() {
   if (server_node_->rank_id() == UINT32_MAX) {
     MS_LOG(WARNING) << "This server the one to be scaled in. Server exiting.";
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Stop(); });
+                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
     communicator_with_server_->Stop();
     return;
   }
@@ -439,7 +446,7 @@ void Server::ProcessAfterScalingIn() {
   if (!Executor::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "Executor reinitializing failed.";
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(kServerSleepTimeForNetworking));
   safemode_ = false;
 }
 }  // namespace server

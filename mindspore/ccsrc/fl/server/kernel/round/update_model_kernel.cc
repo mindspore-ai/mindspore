@@ -90,7 +90,7 @@ bool UpdateModelKernel::Reset() {
   return true;
 }
 
-void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
+void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
   if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kUpdateModel) {
     while (!executor_->IsAllWeightAggregationDone()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -120,7 +120,7 @@ ResultCode UpdateModelKernel::ReachThresholdForUpdateModel(const std::shared_ptr
 ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
                                           const std::shared_ptr<FBBuilder> &fbb) {
   RETURN_IF_NULL(update_model_req, ResultCode::kSuccessAndReturn);
-  size_t iteration = static_cast<size_t>(update_model_req->iteration());
+  size_t iteration = IntToSize(update_model_req->iteration());
   if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
     std::string reason = "UpdateModel iteration number is invalid:" + std::to_string(iteration) +
                          ", current iteration:" + std::to_string(LocalMetaStore::GetInstance().curr_iter_num()) +
