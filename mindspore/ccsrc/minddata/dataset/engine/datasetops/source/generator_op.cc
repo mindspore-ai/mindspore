@@ -28,7 +28,7 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
     : PipelineOp(connector_size, std::move(sampler)),
       generator_function_(generator_function),
       column_names_(column_names),
-      column_types_(column_types),
+      column_types_(std::move(column_types)),
       prefetch_size_(prefetch_size),
       generator_counter_(0) {}
 

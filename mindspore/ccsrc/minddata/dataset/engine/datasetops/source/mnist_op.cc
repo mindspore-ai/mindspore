@@ -32,11 +32,11 @@ const int32_t kMnistLabelFileMagicNumber = 2049;
 const int32_t kMnistImageRows = 28;
 const int32_t kMnistImageCols = 28;
 
-MnistOp::MnistOp(const std::string &usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
+MnistOp::MnistOp(std::string usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
                  std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
-      usage_(usage),
-      folder_path_(folder_path),
+      usage_(std::move(usage)),
+      folder_path_(std::move(folder_path)),
       image_path_({}),
       label_path_({}),
       data_schema_(std::move(data_schema)) {

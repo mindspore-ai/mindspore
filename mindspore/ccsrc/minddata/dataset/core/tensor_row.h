@@ -54,7 +54,7 @@ class TensorRow {
 
   TensorRow() noexcept;
 
-  TensorRow(size_type n, value_type t) noexcept;
+  TensorRow(size_type n, const value_type &t) noexcept;
 
   // Copy Constructors
   explicit TensorRow(const vector_type &v);

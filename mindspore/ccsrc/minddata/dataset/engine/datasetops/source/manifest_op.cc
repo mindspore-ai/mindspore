@@ -38,7 +38,7 @@ ManifestOp::ManifestOp(int32_t num_works, std::string file, int32_t queue_size, 
       io_block_pushed_(0),
       sampler_ind_(0),
       data_schema_(std::move(data_schema)),
-      file_(file),
+      file_(std::move(file)),
       class_index_(class_index),
       decode_(decode),
       usage_(usage) {

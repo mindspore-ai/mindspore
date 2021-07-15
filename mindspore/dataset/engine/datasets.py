@@ -3982,6 +3982,7 @@ class GeneratorDataset(MappableDataset):
             self.source_len = len(self.source)
 
         self.max_rowsize = max_rowsize
+        self.sample_fn = None
 
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
