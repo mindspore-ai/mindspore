@@ -36,55 +36,74 @@ namespace abstract {
 
 class AsyncAbstract;
 using AsyncAbstractPtr = std::shared_ptr<AsyncAbstract>;
-class HealthPointMgr {
+class AnalysisSchedule {
  public:
-  ~HealthPointMgr() = default;
-  HealthPointMgr(const HealthPointMgr &) = delete;
-  HealthPointMgr &operator=(const HealthPointMgr &) = delete;
-  static HealthPointMgr &GetInstance() { return instance_; }
-  void Clear();
-  void SetNextRunnable();
-  void HandleException();
+  ~AnalysisSchedule() = default;
+  AnalysisSchedule(const AnalysisSchedule &) = delete;
+  AnalysisSchedule &operator=(const AnalysisSchedule &) = delete;
+  static AnalysisSchedule &GetInstance() { return instance_; }
+  static void SetThreadID(const std::string &caller);
+  static std::string &GetThreadID();
 
-  void CheckPoint() {
-    MS_LOG(DEBUG) << "The Health Point is " << point_;
-    if (point_ == 0) {
-      SetNextRunnable();
-    } else if (point_ < 0) {
-      MS_LOG(WARNING) << "There is something wrong. point: " << point_;
+  void HandleException();
+  void Wait();
+
+  void Reset() {
+    activeThreadCount_ = 1;
+    threadNum_ = 0;
+  }
+
+  void SetNextRunnable() {
+    std::lock_guard<std::mutex> lock(lock_);
+    SetNextRunnableImpl();
+  }
+
+  void Check() {
+    MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
+    if (activeThreadCount_ == 0) {
+      SetNextRunnableImpl();
+    } else if (activeThreadCount_ < 0) {
+      MS_LOG(WARNING) << "There is something wrong. active thread count: " << activeThreadCount_;
     }
   }
 
-  void DecrPoint() {
-    std::lock_guard<std::recursive_mutex> lock(lock_);
-    --point_;
-    CheckPoint();
+  void EnterWaiting() {
+    std::lock_guard<std::mutex> lock(lock_);
+    --activeThreadCount_;
+    Check();
   }
 
-  void IncrPoint() {
-    std::lock_guard<std::recursive_mutex> lock(lock_);
-    ++point_;
+  void LeaveWaiting() {
+    std::lock_guard<std::mutex> lock(lock_);
+    ++activeThreadCount_;
   }
-
-  int point() const { return point_; }
 
   void Add2Schedule(const AsyncAbstractPtr &asyncAbastract) {
-    std::lock_guard<std::recursive_mutex> lock(lock_);
+    std::lock_guard<std::mutex> lock(lock_);
     asyncAbstractList_.push_back(asyncAbastract);
+  }
+  void IncreaseThreadCount() {
+    std::lock_guard<std::mutex> lock(lock_);
+    ++threadNum_;
+    ++activeThreadCount_;
+  }
+  void DecreaseThreadCount() {
+    std::lock_guard<std::mutex> lock(lock_);
+    --threadNum_;
+    --activeThreadCount_;
+    condition_var_.notify_one();
+    Check();
   }
 
  private:
-  HealthPointMgr() = default;
-  static HealthPointMgr instance_;
-  int point_{1};
-  std::recursive_mutex lock_;
+  void SetNextRunnableImpl();
+  AnalysisSchedule() = default;
+  static AnalysisSchedule instance_;
+  int activeThreadCount_{1};
+  int threadNum_{0};
+  std::mutex lock_;
+  std::condition_variable condition_var_;
   std::list<AsyncAbstractPtr> asyncAbstractList_;
-};
-
-class HealthPointScopedDrop {
- public:
-  HealthPointScopedDrop() { HealthPointMgr::GetInstance().DecrPoint(); }
-  ~HealthPointScopedDrop() { HealthPointMgr::GetInstance().IncrPoint(); }
 };
 
 template <typename KeyType, typename ValueType, typename CacheType>
@@ -191,16 +210,16 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
     std::unique_lock<std::mutex> lock(lock_);
     while (true) {
       ++count_;
-      // The point should be dropped if it can't run. It will be added when it can run.
-      bool hasDecrPoint = false;
+      // The active thread count should be dropped if it can't run. It will be added when it can run.
+      bool hasEnterWaiting = false;
       if (!runnable_) {
-        HealthPointMgr::GetInstance().DecrPoint();
-        hasDecrPoint = true;
+        AnalysisSchedule::GetInstance().EnterWaiting();
+        hasEnterWaiting = true;
       }
       MS_LOG(DEBUG) << this << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
       condition_var_.wait(lock, [this] { return runnable_; });
-      if (hasDecrPoint) {
-        HealthPointMgr::GetInstance().IncrPoint();
+      if (hasEnterWaiting) {
+        AnalysisSchedule::GetInstance().LeaveWaiting();
       }
       MS_LOG(DEBUG) << this << " continue runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
 
@@ -211,12 +230,11 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
         return result_;
       }
       // Push to list
-      HealthPointMgr::GetInstance().Add2Schedule(shared_from_this());
+      AnalysisSchedule::GetInstance().Add2Schedule(shared_from_this());
       // Notify the next asyncAbastract to run.
-      HealthPointMgr::GetInstance().SetNextRunnable();
+      AnalysisSchedule::GetInstance().SetNextRunnable();
       MS_LOG(DEBUG) << this << " SetNextRunnable "
-                    << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0)
-                    << " point: " << HealthPointMgr::GetInstance().point();
+                    << " runnable: " << runnable_ << " result: " << (result_ ? result_.get() : 0);
     }
   }
 
@@ -282,13 +300,8 @@ class AnalysisResultCacheMgr {
   void Clear();
   inline void SetValue(const AnfNodeConfigPtr &conf, const EvalResultPtr &arg) { cache_.set(conf, arg); }
   inline EvalResultPtr GetValue(const AnfNodeConfigPtr &conf) { return cache_.get(conf); }
-  // Wait for async Eval(conf) to finish.
-  void Wait();
-  void PushToWait(std::future<void> &&future);
   void PushTodo(const AnfNodeConfigPtr &conf);
   void Todo();
-  static void UpdateCaller(const std::string &caller);
-  static std::string &GetThreadid();
   void InitSwitchValue(const AnfNodeConfigPtr &conf);
   AbstractBasePtr GetSwitchValue(const AnfNodeConfigPtr &conf);
   AbstractBasePtr TryGetSwitchValue(const AnfNodeConfigPtr &conf);
@@ -307,7 +320,6 @@ class AnalysisResultCacheMgr {
   AnalysisResultCacheMgr() = default;
   static AnalysisResultCacheMgr instance_;
   std::mutex lock_;
-  std::list<std::future<void>> waiting_;
   std::mutex todo_lock_;
   std::list<AnfNodeConfigPtr> todo_;
   AnalysisConfigResultCache cache_;
@@ -316,7 +328,7 @@ class AnalysisResultCacheMgr {
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list);
 
-inline std::string GetInferThread() { return std::string(" INFER:") + AnalysisResultCacheMgr::GetThreadid() + ":"; }
+inline std::string GetInferThread() { return std::string(" INFER:") + AnalysisSchedule::GetThreadID() + ":"; }
 
 }  // namespace abstract
 }  // namespace mindspore

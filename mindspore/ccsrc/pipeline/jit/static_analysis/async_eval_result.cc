@@ -23,34 +23,36 @@
 
 namespace mindspore {
 namespace abstract {
-HealthPointMgr HealthPointMgr::instance_;
+AnalysisSchedule AnalysisSchedule::instance_;
 
-void HealthPointMgr::Clear() {
-  MS_LOG(DEBUG) << " Point: " << point_;
-  point_ = 1;
-}
-
-void HealthPointMgr::HandleException() {
+void AnalysisSchedule::HandleException() {
   // Just record the first exception information.
   if (!StaticAnalysisException::Instance().HasException()) {
     StaticAnalysisException::Instance().SetException();
-    try {
-      // We want to call the LogWrite::^() here.
-      MS_LOG(EXCEPTION) << "Exception happened, check the information as below.";
-    } catch (const std::exception &e) {
-      // Ignored.
-    }
+    MS_LOG(DEBUG) << "Catch the eval exception.";
   }
   // Free all the locks. Let all the threads continue to run.
-  std::lock_guard<std::recursive_mutex> lock(lock_);
+  std::lock_guard<std::mutex> lock(lock_);
   for (auto &item : asyncAbstractList_) {
     item->SetRunnable();
   }
   asyncAbstractList_.clear();
 }
+void AnalysisSchedule::Wait() {
+  py::gil_scoped_release infer_gil_release;
+  EnterWaiting();
+  {
+    std::unique_lock<std::mutex> lock(lock_);
+    condition_var_.wait(lock, [this] { return threadNum_ <= 0; });
+  }
+  LeaveWaiting();
+  if (IS_OUTPUT_ON(DEBUG)) {
+    AnalysisResultCacheMgr::GetInstance().Todo();
+  }
+  MS_LOG(INFO) << "Infer finished.";
+}
 
-void HealthPointMgr::SetNextRunnable() {
-  std::lock_guard<std::recursive_mutex> lock(lock_);
+void AnalysisSchedule::SetNextRunnableImpl() {
   if (asyncAbstractList_.empty()) {
     MS_LOG(DEBUG) << "The Health List is empty. ";
     return;
@@ -63,14 +65,23 @@ void HealthPointMgr::SetNextRunnable() {
     MS_LOG(EXCEPTION) << "Enter endless loop. There isn't any branch that can been evaluated. Please check the code.";
   }
   // Push back the not ready async.
-  asyncAbstractList_.insert(asyncAbstractList_.end(), asyncAbstractList_.begin(), it);
-  asyncAbstractList_.erase(asyncAbstractList_.begin(), it);
+  (void)asyncAbstractList_.insert(asyncAbstractList_.end(), asyncAbstractList_.begin(), it);
+  (void)asyncAbstractList_.erase(asyncAbstractList_.begin(), it);
 
-  MS_LOG(DEBUG) << asyncAbstractList_.front().get() << " The Health Point is " << point_
+  MS_LOG(DEBUG) << asyncAbstractList_.front().get() << " The active thread count is " << activeThreadCount_
                 << " Called times: " << asyncAbstractList_.front()->count();
   asyncAbstractList_.front()->SetRunnable();
   asyncAbstractList_.pop_front();
 }
+// The thread id format is XXXX.YYYY.ZZZZ
+thread_local std::string localThreadID;
+void AnalysisSchedule::SetThreadID(const std::string &caller) {
+  std::ostringstream buffer;
+  buffer << caller << "." << std::this_thread::get_id();
+  localThreadID = buffer.str();
+}
+
+std::string &AnalysisSchedule::GetThreadID() { return localThreadID; }
 
 AnalysisResultCacheMgr AnalysisResultCacheMgr::instance_;
 
@@ -79,22 +90,6 @@ void AnalysisResultCacheMgr::Clear() {
   cache_.clear();
   switch_cache_.clear();
   todo_.clear();
-  waiting_.clear();
-}
-
-// The thread id format is XXXX.YYYY.ZZZZ
-thread_local static std::string local_threadid;
-void AnalysisResultCacheMgr::UpdateCaller(const std::string &caller) {
-  std::ostringstream buffer;
-  buffer << caller << "." << std::this_thread::get_id();
-  local_threadid = buffer.str();
-}
-
-std::string &AnalysisResultCacheMgr::GetThreadid() { return local_threadid; }
-
-void AnalysisResultCacheMgr::PushToWait(std::future<void> &&future) {
-  std::lock_guard<std::mutex> lock(lock_);
-  waiting_.emplace_back(std::move(future));
 }
 
 void AnalysisResultCacheMgr::PushTodo(const AnfNodeConfigPtr &conf) {
@@ -128,7 +123,7 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
   // Conf has been visited and set value.
   if (async_eval_result != nullptr) {
     // Add to schedule
-    HealthPointMgr::GetInstance().Add2Schedule(async_eval_result);
+    AnalysisSchedule::GetInstance().Add2Schedule(async_eval_result);
     // Maybe blocked for waiting. AsyncAbstract maybe null, if time out.
     auto result = async_eval_result->GetResult();
     if (result == nullptr) {
@@ -177,43 +172,20 @@ void AnalysisResultCacheMgr::Todo() {
     AnfNodeConfigPtr conf = todo_.front();
     todo_.pop_front();
     if (GetValue(conf) == nullptr) {
-      MS_LOG(WARNING) << conf->node()->ToString() << " not in globle cache.";
+      MS_LOG(INFO) << conf->node()->ToString() << " not in globle cache.";
       continue;
     }
     if (TryGetSwitchValue(conf) == nullptr) {
-      MS_LOG(WARNING) << conf->node()->ToString() << " not in switch cache";
+      MS_LOG(INFO) << conf->node()->ToString() << " not in switch cache";
       continue;
     }
     if (!(*GetValue(conf)->abstract() == *TryGetSwitchValue(conf))) {
       MS_LOG(WARNING) << " Switch Value is not eq. "
                       << " switch cache: " << TryGetSwitchValue(conf)->ToString()
                       << " globle cache: " << GetValue(conf)->abstract()->ToString()
-                      << "\t\tConf: " << conf->ToString();
+                      << "\tconf: " << conf->node()->ToString();
     }
   }
-}
-
-void AnalysisResultCacheMgr::Wait() {
-  py::gil_scoped_release infer_gil_release;
-  // Check all the async to finish.
-  HealthPointScopedDrop hpCheck;
-  while (true) {
-    lock_.lock();
-    if (waiting_.empty()) {
-      lock_.unlock();
-      break;
-    }
-    auto future = std::move(waiting_.front());
-    waiting_.pop_front();
-    lock_.unlock();
-
-    // Must be unlock
-    future.wait();
-  }
-  if (IS_OUTPUT_ON(DEBUG)) {
-    Todo();
-  }
-  MS_LOG(INFO) << "Infer finished.";
 }
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list) {
