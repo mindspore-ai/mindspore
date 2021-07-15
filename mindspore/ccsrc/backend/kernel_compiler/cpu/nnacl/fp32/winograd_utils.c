@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "nnacl/fp32/winograd_utils.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/base/minimal_filtering_generator.h"
 #include "nnacl/errorcode.h"
 
@@ -486,7 +486,7 @@ void OutputTransform4x2Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -551,7 +551,7 @@ void OutputTransform4x2ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -621,7 +621,7 @@ void OutputTransform4x2Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -690,7 +690,7 @@ void OutputTransform4x3Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -762,7 +762,7 @@ void OutputTransform4x3ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -840,7 +840,7 @@ void OutputTransform4x3Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -917,7 +917,7 @@ void OutputTransform6x2Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -992,7 +992,7 @@ void OutputTransform6x2ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1072,7 +1072,7 @@ void OutputTransform6x2Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1146,7 +1146,7 @@ void OutputTransform6x3Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1223,7 +1223,7 @@ void OutputTransform6x3ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1306,7 +1306,7 @@ void OutputTransform6x3Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1385,7 +1385,7 @@ void OutputTransform6x4Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 4;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1468,7 +1468,7 @@ void OutputTransform6x4ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 4;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1558,7 +1558,7 @@ void OutputTransform6x4Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 4;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1641,7 +1641,7 @@ void OutputTransform6x5Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 5;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1729,7 +1729,7 @@ void OutputTransform6x5ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 5;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1825,7 +1825,7 @@ void OutputTransform6x5Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 5;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1911,7 +1911,7 @@ void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -1994,7 +1994,7 @@ void OutputTransform8x2ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2082,7 +2082,7 @@ void OutputTransform8x2Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 2;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2168,7 +2168,7 @@ void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2259,7 +2259,7 @@ void OutputTransform8x3ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2356,7 +2356,7 @@ void OutputTransform8x3Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 3;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2450,7 +2450,7 @@ void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 4;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2550,7 +2550,7 @@ void OutputTransform8x4ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 4;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2657,7 +2657,7 @@ void OutputTransform8x4Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 4;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2761,7 +2761,7 @@ void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 5;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2869,7 +2869,7 @@ void OutputTransform8x5ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 5;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -2988,7 +2988,7 @@ void OutputTransform8x5Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 5;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -3108,7 +3108,7 @@ void OutputTransform8x6Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 6;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -3236,7 +3236,7 @@ void OutputTransform8x6ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 6;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -3373,7 +3373,7 @@ void OutputTransform8x6Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 6;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -3501,7 +3501,7 @@ void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float 
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 7;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -3638,7 +3638,7 @@ void OutputTransform8x7ReluUnit(const float *src_data, float *dst_data, const fl
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 7;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }
@@ -3785,7 +3785,7 @@ void OutputTransform8x7Relu6Unit(const float *src_data, float *dst_data, const f
         int dst_k_offset = j * dst_step * out_c;
         int m_k_offset = j * 7;
         for (int k = 0; k < r_w; k++) {
-          dst_data[i + dst_k_offset + k * out_c] = m[k + m_k_offset][i];
+          dst_data[i + dst_k_offset + k * out_c] = MS_F32X4_GETI(m[k + m_k_offset], i);
         }
       }
     }

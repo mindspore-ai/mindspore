@@ -20,6 +20,7 @@
 #include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/power_parameter.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #if defined(ENABLE_ARM) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
 typedef MS_FLOAT32X4 (*PowerSimdFun)(MS_FLOAT32X4 x, const void *exponent);
@@ -38,7 +39,7 @@ static inline float StdPowerScalar(float x, const void *exponent) { return powf(
 static inline MS_FLOAT32X4 StdPowerSimd(MS_FLOAT32X4 x, const void *exponent) {
   MS_FLOAT32X4 result;
   for (int i = 0; i < 4; ++i) {
-    result[i] = powf(x[i], *(float *)exponent);
+    MS_F32X4_GETI(result, i) = powf(MS_F32X4_GETI(x, i), *(float *)exponent);
   }
   return result;
 }
