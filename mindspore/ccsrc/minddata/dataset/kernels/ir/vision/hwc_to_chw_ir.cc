@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // HwcToChwOperation
 HwcToChwOperation::~HwcToChwOperation() = default;
 
@@ -39,7 +36,6 @@ Status HwcToChwOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> HwcToChwOperation::Build() { return std::make_shared<HwcToChwOp>(); }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

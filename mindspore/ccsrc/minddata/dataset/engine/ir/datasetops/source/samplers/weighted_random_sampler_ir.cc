@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor
 WeightedRandomSamplerObj::WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples, bool replacement)
     : weights_(std::move(weights)), num_samples_(num_samples), replacement_(replacement) {}
@@ -78,6 +77,5 @@ std::shared_ptr<SamplerObj> WeightedRandomSamplerObj::SamplerCopy() {
   }
   return sampler;
 }
-
 }  // namespace dataset
 }  // namespace mindspore

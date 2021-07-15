@@ -23,9 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 RgbToGrayOperation::RgbToGrayOperation() = default;
 
 // RGB2GRAYOperation
@@ -36,7 +34,6 @@ std::string RgbToGrayOperation::Name() const { return kRgbToGrayOperation; }
 Status RgbToGrayOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> RgbToGrayOperation::Build() { return std::make_shared<RgbToGrayOp>(); }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RandomPosterizeOperation
 RandomPosterizeOperation::RandomPosterizeOperation(const std::vector<uint8_t> &bit_range)
     : TensorOperation(true), bit_range_(bit_range) {}
@@ -39,25 +36,34 @@ RandomPosterizeOperation::~RandomPosterizeOperation() = default;
 std::string RandomPosterizeOperation::Name() const { return kRandomPosterizeOperation; }
 
 Status RandomPosterizeOperation::ValidateParams() {
-  if (bit_range_.size() != 2) {
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t size_two = 2;
+  constexpr uint8_t kMinimumBitValue = 1;
+  constexpr uint8_t kMaximumBitValue = 8;
+
+  if (bit_range_.size() != size_two) {
     std::string err_msg =
       "RandomPosterize: bit_range needs to be of size 2 but is of size: " + std::to_string(bit_range_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (bit_range_[0] < 1 || bit_range_[0] > 8) {
-    std::string err_msg = "RandomPosterize: min_bit value is out of range [1-8]: " + std::to_string(bit_range_[0]);
+  if (bit_range_[dimension_zero] < kMinimumBitValue || bit_range_[dimension_zero] > kMaximumBitValue) {
+    std::string err_msg =
+      "RandomPosterize: min_bit value is out of range [1-8]: " + std::to_string(bit_range_[dimension_zero]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (bit_range_[1] < 1 || bit_range_[1] > 8) {
-    std::string err_msg = "RandomPosterize: max_bit value is out of range [1-8]: " + std::to_string(bit_range_[1]);
+  if (bit_range_[dimension_one] < kMinimumBitValue || bit_range_[dimension_one] > kMaximumBitValue) {
+    std::string err_msg =
+      "RandomPosterize: max_bit value is out of range [1-8]: " + std::to_string(bit_range_[dimension_one]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (bit_range_[1] < bit_range_[0]) {
-    std::string err_msg = "RandomPosterize: max_bit value is less than min_bit: max =" + std::to_string(bit_range_[1]) +
-                          ", min = " + std::to_string(bit_range_[0]);
+  if (bit_range_[dimension_one] < bit_range_[dimension_zero]) {
+    std::string err_msg =
+      "RandomPosterize: max_bit value is less than min_bit: max =" + std::to_string(bit_range_[dimension_one]) +
+      ", min = " + std::to_string(bit_range_[dimension_zero]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -73,9 +79,7 @@ Status RandomPosterizeOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["bits"] = bit_range_;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

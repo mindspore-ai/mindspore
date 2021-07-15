@@ -68,7 +68,7 @@ echo "CWD: $ORIGINAL_PATH"
 echo "File PATH: $FILE_PATH"
 
 
-cd $FILE_PATH
+cd $FILE_PATH || exit
 
 MD_LIB_FILENAME="libminddata-lite.a"
 
@@ -76,7 +76,7 @@ MD_LIB_FILENAME="libminddata-lite.a"
 MD_LIB_PATH=`find $MINDSPORE_PATH -name "${MD_LIB_FILENAME}" | head -n 1`
 if [ -z "${MD_LIB_PATH}" ]; then
   echo -e "\e[31mMindData lite static library could not be found.\e[0m"
-  cd $ORIGINAL_PATH
+  cd $ORIGINAL_PATH || exit
   exit 1
 fi
 
@@ -84,7 +84,7 @@ fi
 # extract all objects of static lib to tmp/
 mkdir -p tmp
 cp $MD_LIB_PATH tmp
-cd tmp
+cd tmp || exit
 # extract objects with identical names by prepending (one or more) '_' to their names
 # (this scruipt supports more than 2 duplicate filenames)
 DUPLICATES=`ar t "${MD_LIB_FILENAME}" | sort | uniq -d`
@@ -115,7 +115,7 @@ cd ..
 python build_lib.py ${USER_CODES}
 retVal=$?
 if [ $retVal -ne 0 ]; then
-  cd $ORIGINAL_PATH
+  cd $ORIGINAL_PATH || exit
   exit 1
 fi
 
@@ -144,13 +144,13 @@ echo "Architecture: $TARGET_ARCHITECTURE"
 if [ "$TARGET_ARCHITECTURE" == "ARM64" ]; then
   if [ -z "${ANDROID_NDK}" ]; then
     echo -e "\e[31mPlease set ANDROID_NDK environment variable.\e[0m"
-    cd $ORIGINAL_PATH
+    cd $ORIGINAL_PATH || exit
     exit 1
   fi
 elif [ "$TARGET_ARCHITECTURE" == "ARM32" ]; then
   if [ -z "${ANDROID_NDK}" ]; then
     echo -e "\e[31mPlease set ANDROID_NDK environment variable.\e[0m"
-    cd $ORIGINAL_PATH
+    cd $ORIGINAL_PATH || exit
     exit 1
   fi
   # add LIBCLANG_RT_LIB for ARM32
@@ -184,4 +184,4 @@ fi
 
 rm -rf tmp/
 
-cd $ORIGINAL_PATH
+cd $ORIGINAL_PATH || exit

@@ -25,9 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
 // NormalizePadOperation
 NormalizePadOperation::NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std,
@@ -49,7 +47,11 @@ Status NormalizePadOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> NormalizePadOperation::Build() {
-  return std::make_shared<NormalizePadOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2], dtype_);
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t dimension_two = 2;
+  return std::make_shared<NormalizePadOp>(mean_[dimension_zero], mean_[dimension_one], mean_[dimension_two],
+                                          std_[dimension_zero], std_[dimension_one], std_[dimension_two], dtype_);
 }
 
 Status NormalizePadOperation::to_json(nlohmann::json *out_json) {
@@ -61,7 +63,6 @@ Status NormalizePadOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor
 PKSamplerObj::PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples)
     : num_val_(num_val), shuffle_(shuffle), num_samples_(num_samples) {}
@@ -92,6 +91,5 @@ std::shared_ptr<SamplerObj> PKSamplerObj::SamplerCopy() {
   }
   return sampler;
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -23,9 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 // ResizePreserveAROperation
 ResizePreserveAROperation::ResizePreserveAROperation(int32_t height, int32_t width, int32_t img_orientation)
     : height_(height), width_(width), img_orientation_(img_orientation) {}
@@ -48,7 +46,6 @@ Status ResizePreserveAROperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -25,9 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
 // ResizeWithBBoxOperation
 ResizeWithBBoxOperation::ResizeWithBBoxOperation(std::vector<int32_t> size, InterpolationMode interpolation)
@@ -43,12 +41,16 @@ Status ResizeWithBBoxOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> ResizeWithBBoxOperation::Build() {
-  int32_t height = size_[0];
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t size_two = 2;
+
+  int32_t height = size_[dimension_zero];
   int32_t width = 0;
 
   // User specified the width value.
-  if (size_.size() == 2) {
-    width = size_[1];
+  if (size_.size() == size_two) {
+    width = size_[dimension_one];
   }
 
   return std::make_shared<ResizeWithBBoxOp>(height, width, interpolation_);
@@ -61,9 +63,7 @@ Status ResizeWithBBoxOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

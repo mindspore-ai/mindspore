@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor
 SequentialSamplerObj::SequentialSamplerObj(int64_t start_index, int64_t num_samples)
     : start_index_(start_index), num_samples_(num_samples) {}
@@ -86,6 +85,5 @@ std::shared_ptr<SamplerObj> SequentialSamplerObj::SamplerCopy() {
   }
   return sampler;
 }
-
 }  // namespace dataset
 }  // namespace mindspore

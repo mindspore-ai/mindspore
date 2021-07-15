@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // EqualizeOperation
 EqualizeOperation::~EqualizeOperation() = default;
 
@@ -38,9 +35,7 @@ std::string EqualizeOperation::Name() const { return kEqualizeOperation; }
 Status EqualizeOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> EqualizeOperation::Build() { return std::make_shared<EqualizeOp>(); }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
