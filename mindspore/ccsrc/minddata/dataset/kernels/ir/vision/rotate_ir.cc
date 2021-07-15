@@ -20,9 +20,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 // RotateOperation
 RotateOperation::RotateOperation() { rotate_op_ = std::make_shared<RotateOp>(0); }
 

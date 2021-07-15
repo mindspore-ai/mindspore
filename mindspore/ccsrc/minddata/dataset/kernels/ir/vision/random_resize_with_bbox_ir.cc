@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RandomResizeWithBBoxOperation
 RandomResizeWithBBoxOperation::RandomResizeWithBBoxOperation(std::vector<int32_t> size)
     : TensorOperation(true), size_(size) {}
@@ -44,14 +41,18 @@ Status RandomResizeWithBBoxOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> RandomResizeWithBBoxOperation::Build() {
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t size_two = 2;
+
   // If size is a single value, the smaller edge of the image will be
   // resized to this value with the same image aspect ratio.
-  int32_t height = size_[0];
+  int32_t height = size_[dimension_zero];
   int32_t width = 0;
 
   // User specified the width value.
-  if (size_.size() == 2) {
-    width = size_[1];
+  if (size_.size() == size_two) {
+    width = size_[dimension_one];
   }
 
   std::shared_ptr<RandomResizeWithBBoxOp> tensor_op = std::make_shared<RandomResizeWithBBoxOp>(height, width);
@@ -62,9 +63,7 @@ Status RandomResizeWithBBoxOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["size"] = size_;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

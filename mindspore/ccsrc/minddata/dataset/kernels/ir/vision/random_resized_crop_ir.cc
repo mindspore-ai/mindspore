@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
 #ifndef ENABLE_ANDROID
 RandomResizedCropOperation::RandomResizedCropOperation(const RandomResizedCropOperation &) = default;
@@ -63,14 +62,19 @@ Status RandomResizedCropOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> RandomResizedCropOperation::Build() {
-  int32_t height = size_[0];
-  int32_t width = size_[0];
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t size_two = 2;
+
+  int32_t height = size_[dimension_zero];
+  int32_t width = size_[dimension_zero];
   // User specified the width value.
-  if (size_.size() == 2) {
-    width = size_[1];
+  if (size_.size() == size_two) {
+    width = size_[dimension_one];
   }
   std::shared_ptr<RandomCropAndResizeOp> tensor_op = std::make_shared<RandomCropAndResizeOp>(
-    height, width, scale_[0], scale_[1], ratio_[0], ratio_[1], interpolation_, max_attempts_);
+    height, width, scale_[dimension_zero], scale_[dimension_one], ratio_[dimension_zero], ratio_[dimension_one],
+    interpolation_, max_attempts_);
   return tensor_op;
 }
 
@@ -84,9 +88,7 @@ Status RandomResizedCropOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

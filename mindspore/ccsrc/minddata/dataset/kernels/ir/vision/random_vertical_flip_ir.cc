@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RandomVerticalFlipOperation
 RandomVerticalFlipOperation::RandomVerticalFlipOperation(float prob) : TensorOperation(true), probability_(prob) {}
 
@@ -52,9 +49,7 @@ Status RandomVerticalFlipOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["prob"] = probability_;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

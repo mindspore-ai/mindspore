@@ -269,7 +269,9 @@ uint64_t CacheServerHW::GetAvailableMemory() {
     if (title == "MemAvailable") {
       std::string::size_type pos1 = line.find_last_of(" ");
       std::string::size_type pos2 = line.find_last_of(" ", pos1 - 1);
-      mem_available_in_kb = std::stol(line.substr(pos2, pos1 - pos2));
+      if (pos1 != std::string::npos && pos2 != std::string::npos && line.size() > pos1) {
+        mem_available_in_kb = std::stol(line.substr(pos2, pos1 - pos2));
+      }
       break;
     }
   }

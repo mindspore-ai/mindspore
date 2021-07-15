@@ -111,7 +111,7 @@ def main():
     associations_dict = load_associations()
 
     # get all objects filename
-    all_object_files = [x[x.rfind('/') + 1:] for x in glob.glob('{}*.o'.format(OBJECTS_DIR))]
+    all_object_files = [os.path.basename(x) for x in glob.glob('{}*.o'.format(OBJECTS_DIR))]
     print("All Obj files: {}".format(len(all_object_files)))
 
     # find ops in user code

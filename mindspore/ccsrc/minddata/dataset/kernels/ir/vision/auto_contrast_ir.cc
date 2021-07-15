@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // AutoContrastOperation
 AutoContrastOperation::AutoContrastOperation(float cutoff, std::vector<uint32_t> ignore)
     : cutoff_(cutoff), ignore_(ignore) {}
@@ -45,8 +42,9 @@ Status AutoContrastOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
+  constexpr uint32_t kMaxIgnoreSize = 255;
   for (uint32_t single_ignore : ignore_) {
-    if (single_ignore > 255) {
+    if (single_ignore > kMaxIgnoreSize) {
       std::string err_msg =
         "AutoContrast: invalid size, ignore has to be between 0 and 255, got: " + std::to_string(single_ignore);
       MS_LOG(ERROR) << err_msg;
@@ -69,7 +67,6 @@ Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

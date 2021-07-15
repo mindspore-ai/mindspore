@@ -26,9 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
 // RandomColorOperation.
 RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) { random_op_ = true; }
@@ -64,9 +62,7 @@ Status RandomColorOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["degrees"] = std::vector<float>{t_lb_, t_ub_};
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

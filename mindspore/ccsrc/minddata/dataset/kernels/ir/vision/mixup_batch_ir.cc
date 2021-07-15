@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // MixUpOperation
 MixUpBatchOperation::MixUpBatchOperation(float alpha) : alpha_(alpha) {}
 
@@ -48,9 +45,7 @@ Status MixUpBatchOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["alpha"] = alpha_;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
