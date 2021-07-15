@@ -116,25 +116,28 @@ nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network,
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::ActivationType ConvertActivationType(schema::ActivationType activation_type) {
-  std::map<schema::ActivationType, nvinfer1::ActivationType> action_map = {
-    {schema::ActivationType_RELU, nvinfer1::ActivationType::kRELU},
-    {schema::ActivationType_SIGMOID, nvinfer1::ActivationType::kSIGMOID},
-    {schema::ActivationType_TANH, nvinfer1::ActivationType::kTANH},
-    {schema::ActivationType_LEAKY_RELU, nvinfer1::ActivationType::kLEAKY_RELU},
-    {schema::ActivationType_ELU, nvinfer1::ActivationType::kELU},
-    {schema::ActivationType_SELU, nvinfer1::ActivationType::kSELU},
-    {schema::ActivationType_SOFTSIGN, nvinfer1::ActivationType::kSOFTSIGN},
-    {schema::ActivationType_SOFTPLUS, nvinfer1::ActivationType::kSOFTPLUS},
-    {schema::ActivationType_THRESHOLDRELU, nvinfer1::ActivationType::kTHRESHOLDED_RELU}};
+ActivationParams ConvertActivationType(schema::ActivationType activation_type) {
+  std::map<schema::ActivationType, ActivationParams> action_map = {
+    {schema::ActivationType_RELU, ActivationParams{nvinfer1::ActivationType::kRELU, false, 0, false, 0}},
+    {schema::ActivationType_SIGMOID, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
+    {schema::ActivationType_TANH, ActivationParams{nvinfer1::ActivationType::kTANH, false, 0, false, 0}},
+    {schema::ActivationType_LEAKY_RELU, ActivationParams{nvinfer1::ActivationType::kLEAKY_RELU, true, 0, false, 0}},
+    {schema::ActivationType_ELU, ActivationParams{nvinfer1::ActivationType::kELU, true, 0, false, 0}},
+    {schema::ActivationType_SELU, ActivationParams{nvinfer1::ActivationType::kSELU, true, 0, true, 0}},
+    {schema::ActivationType_SOFTSIGN, ActivationParams{nvinfer1::ActivationType::kSOFTSIGN, false, 0, false, 0}},
+    {schema::ActivationType_SOFTPLUS, ActivationParams{nvinfer1::ActivationType::kSOFTPLUS, true, 0, true, 0}},
+    {schema::ActivationType_THRESHOLDRELU,
+     ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, true, 0, false, 0}},
+    {schema::ActivationType_RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
+    {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}}};
   auto iter = action_map.find(activation_type);
-  nvinfer1::ActivationType action_code = nvinfer1::ActivationType::kRELU;
+  ActivationParams action_param = ActivationParams{nvinfer1::ActivationType::kRELU, false, 0, false, 0};
   if (iter != action_map.end()) {
-    action_code = iter->second;
+    action_param = iter->second;
   } else {
     MS_LOG(WARNING) << "Unsupported op action type for TensorRT: " << activation_type;
   }
-  return action_code;
+  return action_param;
 }
 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor,
@@ -166,4 +169,34 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }
+nvinfer1::Weights TransposeWeight(mindspore::MSTensor ms_tensor, float **pack_weight) {
+  // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
+  nvinfer1::Weights weights{};
+  weights.count = ms_tensor.ElementNum();
+  if (lite::ConvertDataType(ms_tensor.DataType()) != nvinfer1::DataType::kFLOAT) {
+    MS_LOG(WARNING) << "weights data type is not float";
+  }
+  weights.type = nvinfer1::DataType::kFLOAT;
+  auto weight_shape = ms_tensor.Shape();
+  float *src_val = reinterpret_cast<float *>(ms_tensor.MutableData());
+  float *pack_weight_tmp = reinterpret_cast<float *>(malloc(ms_tensor.ElementNum() * sizeof(float)));
+  if (pack_weight_tmp == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return weights;
+  }
+  PackNHWCToNCHWFp32(src_val, pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2], weight_shape[3], 0,
+                     0);
+  weights.values = pack_weight_tmp;
+  *pack_weight = pack_weight_tmp;
+  return weights;
+}
+
+nvinfer1::Weights ConvertWeight(mindspore::MSTensor ms_tensor) {
+  nvinfer1::Weights weights{};
+  weights.type = ConvertDataType(ms_tensor.DataType());
+  weights.values = ms_tensor.MutableData();
+  weights.count = ms_tensor.ElementNum();
+  return weights;
+}
+
 }  // namespace mindspore::lite

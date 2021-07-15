@@ -74,6 +74,16 @@ int TensorRTSubGraph::BuildEngine() {
     MS_LOG(ERROR) << "create builder config failed.";
     return RET_ERROR;
   }
+  // config setup
+  // setMaxWorkspaceSize to x MB
+  this->config_->setMaxWorkspaceSize(16 * (1 << 20));
+  // print all network ops
+  MS_LOG(INFO) << "build engine for tensorrt network: " << this->network_->getName();
+  for (int i = 0; i < this->network_->getNbLayers(); i++) {
+    MS_LOG(DEBUG) << "tensorrt op: " << this->network_->getLayer(i)->getName();
+  }
+  MS_LOG(DEBUG) << "end of tensorrt network: " << this->network_->getName();
+
   engine_ = runtime_->GetBuilder()->buildEngineWithConfig(*this->network_, *this->config_);
   if (engine_ == nullptr) {
     MS_LOG(ERROR) << "Create engine failed in TensorRT network";
