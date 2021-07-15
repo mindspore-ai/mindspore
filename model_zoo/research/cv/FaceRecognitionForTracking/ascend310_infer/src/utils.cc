@@ -56,11 +56,23 @@ int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outpu
         fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
         std::string outFileName = homePath + "/" + fileName;
         FILE * outputFile = fopen(outFileName.c_str(), "wb");
-        fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
+        if (outputFile == nullptr) {
+          std::cout << "open result file" << outFileName << "failed" << std::endl;
+          return -1;
+        }
+        size_t size = fwrite(netOutput.get(), sizeof(char), outputSize, outputFile);
+        if (size != outputSize) {
+          fclose(outputFile);
+          outputFile = nullptr;
+          std::cout << "writer result file" << outFileName << "failed write size[" << size <<
+              "] is smaller than output size[" << outputSize << "], maybe the disk is full" << std::endl;
+          return -1;
+        }
+
         fclose(outputFile);
         outputFile = nullptr;
-    }
-    return 0;
+  }
+  return 0;
 }
 
 mindspore::MSTensor ReadFileToTensor(const std::string &file) {

@@ -165,14 +165,11 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < size; ++i) {
         struct timeval start = {0};
         struct timeval end = {0};
-        double startTimeMs;
-        double endTimeMs;
+        double startTimeMs, endTimeMs;
         std::vector<MSTensor> inputs;
         std::vector<MSTensor> outputs;
-        std::cout << "Start predict input files:" << all_files[i] << std::endl;
         auto imgDecode = MSTensor();
-        auto image = ReadFileToTensor(all_files[i]);
-        ret = composeDecode(image, &imgDecode);
+        ret = composeDecode(ReadFileToTensor(all_files[i]), &imgDecode);
         if (ret != kSuccess) {
             std::cout << "ERROR: Decode failed." << std::endl;
             return 1;
@@ -211,16 +208,20 @@ int main(int argc, char **argv) {
         startTimeMs = (1.0 * start.tv_sec * 1000000 + start.tv_usec) / 1000;
         endTimeMs = (1.0 * end.tv_sec * 1000000 + end.tv_usec) / 1000;
         costTime_map.insert(std::pair<double, double>(startTimeMs, endTimeMs));
-        WriteResult(all_files[i], outputs);
+        int ret_ = WriteResult(all_files[i], outputs);
+        if (ret_ != kSuccess) {
+            std::cout << "write result failed." << std::endl;
+            return 1;
+        }
     }
     double average = 0.0;
     int inferCount = 0;
 
     for (auto iter = costTime_map.begin(); iter != costTime_map.end(); iter++) {
-    double diff = 0.0;
-    diff = iter->second - iter->first;
-    average += diff;
-    inferCount++;
+        double diff = 0.0;
+        diff = iter->second - iter->first;
+        average += diff;
+        inferCount++;
     }
     average = average / inferCount;
     std::stringstream timeCost;
