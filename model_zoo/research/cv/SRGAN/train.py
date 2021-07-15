@@ -113,7 +113,7 @@ if __name__ == '__main__':
         os.makedirs("./ckpt")
     print('start training:')
 
-    print('tart training PSNR:')
+    print('start training PSNR:')
     # warm up generator
     for epoch in range(args.start_psnr_epoch, args.psnr_epochs):
         print("training {:d} epoch:".format(epoch+1))
@@ -124,7 +124,6 @@ if __name__ == '__main__':
             mse_loss = train_psnr(hr, lr)
         steps = train_ds.get_dataset_size()
         time_elapsed = (time.time()-mysince)
-        print('the epoch needs time:{:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
         step_time = time_elapsed / steps
         print('per step needs time:{:.0f}ms'.format(step_time * 1000))
         print("mse_loss:")
@@ -192,7 +191,7 @@ if __name__ == '__main__':
     discriminator_optimizer = nn.Adam(discriminator.trainable_params(), 1e-4)
     train_discriminator = TrainOneStepD(discriminator_loss, discriminator_optimizer)
     train_generator = TrainOnestepG(generator_loss, generator_optimizer)
-
+    print("========================================")
     print('start training GAN :')
     # trainGAN
     for epoch in range(args.start_gan_epoch, args.gan_epochs):
@@ -205,7 +204,6 @@ if __name__ == '__main__':
             G_loss = train_generator(hr, lr)
         time_elapsed1 = (time.time()-mysince1)
         steps = train_ds.get_dataset_size()
-        print('the epoch needs time:{:.0f}m {:.0f}s'.format(time_elapsed1 // 60, time_elapsed1 % 60))
         step_time1 = time_elapsed1 / steps
         print('per step needs time:{:.0f}ms'.format(step_time1 * 1000))
         print("D_loss:")

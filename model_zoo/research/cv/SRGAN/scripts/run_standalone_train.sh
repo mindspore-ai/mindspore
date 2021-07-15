@@ -35,7 +35,7 @@ cp -r ../src ./train_standalone
 cp -r ../*.py ./train_standalone
 cd ./train_standalone || exit
 
-echo "start traning"
+echo "start training"
 env > env.log
 if [ $# == 6 ]
 then
