@@ -22,6 +22,7 @@
 #include "include/api/dual_abi_helper.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/common/log_adapter.h"
+#include "include/version.h"
 
 namespace mindspore {
 namespace {
@@ -345,4 +346,7 @@ bool Buffer::SetData(const void *data, size_t data_len) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return false;
 }
+
+std::vector<char> CharVersion() { return StringToChar(lite::Version()); }
+
 }  // namespace mindspore

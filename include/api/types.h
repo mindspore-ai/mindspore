@@ -193,5 +193,8 @@ struct MSCallBackParam {
 using MSKernelCallBack = std::function<bool(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
                                             const MSCallBackParam &opInfo)>;
 
+std::vector<char> CharVersion();
+inline std::string Version() { return CharToString(CharVersion()); }
+
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_TYPES_H

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINNIE_BENCHMARK_BENCHMARK_H_
-#define MINNIE_BENCHMARK_BENCHMARK_H_
+#ifndef MINDSPORE_BENCHMARK_BENCHMARK_UNIFIED_API_H_
+#define MINDSPORE_BENCHMARK_BENCHMARK_UNIFIED_API_H_
 
 #include <getopt.h>
 #include <signal.h>
@@ -36,19 +36,26 @@
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
-#include "include/lite_session.h"
+#include "include/api/types.h"
+#include "include/api/model.h"
 
 namespace mindspore::lite {
 
-class MS_API Benchmark : public BenchmarkBase {
+class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
  public:
-  explicit Benchmark(BenchmarkFlags *flags) : BenchmarkBase(flags) {}
+  explicit BenchmarkUnifiedApi(BenchmarkFlags *flags) : BenchmarkBase(flags) {}
 
-  virtual ~Benchmark();
+  virtual ~BenchmarkUnifiedApi();
 
   int RunBenchmark() override;
 
  protected:
+  int CompareDataGetTotalBiasAndSize(const std::string &name, mindspore::MSTensor *tensor, float *total_bias,
+                                     int *total_size);
+  void InitContext(const std::shared_ptr<mindspore::Context> &context);
+  mindspore::MSTensor GetMSTensorByNodeShape(const std::vector<size_t> &node_shape);
+  mindspore::MSTensor GetMSTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
+
   // call GenerateRandomData to fill inputTensors
   int GenerateInputData() override;
 
@@ -57,16 +64,9 @@ class MS_API Benchmark : public BenchmarkBase {
   int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
                      const std::vector<size_t> &dims) override;
 
-  void InitContext(const std::shared_ptr<Context> &context);
+  void InitMSContext(const std::shared_ptr<Context> &context);
 
   int CompareOutput() override;
-
-  tensor::MSTensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
-
-  tensor::MSTensor *GetTensorByNodeShape(const std::vector<size_t> &node_shape);
-
-  int CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
-                                     int *total_size);
 
   int InitTimeProfilingCallbackParameter() override;
 
@@ -78,17 +78,25 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int PrintInputData();
 
+  template <typename T>
+  std::vector<int64_t> ConverterToInt64Vector(const std::vector<T> &srcDims) {
+    std::vector<int64_t> dims;
+    for (auto shape : srcDims) {
+      dims.push_back(static_cast<int64_t>(shape));
+    }
+    return dims;
+  }
+
   int MarkPerformance();
 
   int MarkAccuracy();
 
  private:
-  session::LiteSession *session_{nullptr};
-  std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ms_outputs_;
+  mindspore::Model ms_model_;
+  std::vector<mindspore::MSTensor> ms_inputs_for_api_;
 
-  KernelCallBack before_call_back_ = nullptr;
-  KernelCallBack after_call_back_ = nullptr;
+  MSKernelCallBack ms_before_call_back_ = nullptr;
+  MSKernelCallBack ms_after_call_back_ = nullptr;
 };
 
 }  // namespace mindspore::lite

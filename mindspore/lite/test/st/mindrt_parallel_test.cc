@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #include "include/errorcode.h"
 #include "tools/converter/converter.h"
-#include "tools/benchmark/benchmark.h"
+#include "tools/benchmark/run_benchmark.h"
 #include "src/mindrt_executor.h"
 #include "src/lite_session.h"
 #include "src/lite_kernel.h"

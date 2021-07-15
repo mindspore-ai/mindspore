@@ -396,4 +396,6 @@ bool Buffer::SetData(const void *data, size_t data_len) {
   MS_EXCEPTION_IF_NULL(impl_);
   return impl_->SetData(data, data_len);
 }
+
+std::vector<char> CharVersion() { return {}; }
 }  // namespace mindspore
