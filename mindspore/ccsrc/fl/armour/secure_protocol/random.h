@@ -23,6 +23,7 @@
 #include <openssl/rand.h>
 #endif
 #include "fl/armour/secure_protocol/encrypt.h"
+
 namespace mindspore {
 namespace armour {
 
@@ -35,10 +36,6 @@ class Random {
   // use openssl RAND_priv_bytes
   static int GetRandomBytes(unsigned char *secret, int num_bytes);
 
-  // std::uniform_real_distribution<double> rand(0,1)
-  void RandUniform(float *array, int size);
-  // std::normal_distribution<double> randn(0,1);
-  void RandNorminal(float *array, int size);
   static int RandomAESCTR(std::vector<float> *noise, int noise_len, const unsigned char *seed, int seed_len);
 
  private:
