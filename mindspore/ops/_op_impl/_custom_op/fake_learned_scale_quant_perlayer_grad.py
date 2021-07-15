@@ -177,6 +177,7 @@ def fake_learned_scale_quant_perlayer_grad_d_param(input_x, alpha, quant_max,
     quant_max_data = tvm.placeholder(quant_max_shape, name="quant_max_data", dtype=quant_max_dtype)
     return dout_data, input_data, alpha_data, quant_max_data
 
+
 @util.check_input_type(dict, dict, dict, dict, dict, dict, bool, str)
 def fake_learned_scale_quant_perlayer_grad_d(dout, input_x, alpha, quant_max, dx, dalpha, neg_trunc,
                                              kernel_name="fake_learned_scale_quant_perlayer_grad_d"):
