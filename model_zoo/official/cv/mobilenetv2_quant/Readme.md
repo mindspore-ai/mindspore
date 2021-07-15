@@ -46,7 +46,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ## [Mixed Precision](#contents)
 
-The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
+The [mixed precision](https://www.mindspore.cn/docs/programming_guide/en/r1.3/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 ## [Learned Step Size Quantization](#contents)
@@ -63,8 +63,8 @@ Users are free to choose whether to use the LEARNED_SCALE optimize option for qu
 - Framework
   - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below:
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/r1.3/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/r1.3/index.html)
 
 # [Script description](#contents)
 

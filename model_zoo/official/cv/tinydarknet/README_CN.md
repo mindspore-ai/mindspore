@@ -64,7 +64,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 <!-- 不同的机器有同一个模型的多个副本，每个机器分配到不同的数据，然后将所有机器的计算结果按照某种方式合并 -->
 
-<!-- 在深度学习中，当数据集和参数量的规模越来越大，训练所需的时间和硬件资源会随之增加，最后会变成制约训练的瓶颈。[分布式并行训练](<https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/distributed_training_tutorials.html>)，可以降低对内存、计算性能等硬件的需求，是进行训练的重要优化手段。本模型使用了mindspore提供的自动并行模式AUTO_PARALLEL：该方法是融合了数据并行、模型并行及混合并行的1种分布式并行模式，可以自动建立代价模型，找到训练时间较短的并行策略，为用户选择1种并行模式。 -->
+<!-- 在深度学习中，当数据集和参数量的规模越来越大，训练所需的时间和硬件资源会随之增加，最后会变成制约训练的瓶颈。[分布式并行训练](<https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/distributed_training.html>)，可以降低对内存、计算性能等硬件的需求，是进行训练的重要优化手段。本模型使用了mindspore提供的自动并行模式AUTO_PARALLEL：该方法是融合了数据并行、模型并行及混合并行的1种分布式并行模式，可以自动建立代价模型，找到训练时间较短的并行策略，为用户选择1种并行模式。 -->
 
 # [环境要求](#目录)
 
@@ -73,8 +73,8 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 更多的信息请访问以下链接：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/r1.3/index.html)
 
 # [快速入门](#目录)
 

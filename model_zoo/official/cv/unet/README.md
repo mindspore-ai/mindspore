@@ -113,8 +113,8 @@ python preprocess_dataset.py -d /data/save_data_path
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/r1.3/index.html)
 
 ## [Quick Start](#contents)
 
@@ -471,7 +471,7 @@ The above python command will run in the background. You can view the results th
 ### Inference
 
 If you need to use the trained model to perform inference on multiple hardware platforms, such as Ascend 910 or Ascend 310, you
-can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html). Following
+can refer to this [Link](https://www.mindspore.cn/docs/programming_guide/en/r1.3/multi_platform_inference.html). Following
 the steps below, this is a simple example:
 
 #### Running on Ascend 310

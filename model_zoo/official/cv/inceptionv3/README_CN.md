@@ -63,7 +63,7 @@ InceptionV3的总体网络架构如下：
 
 ## 混合精度（Ascend）
 
-采用[混合精度](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
+采用[混合精度](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
 
 以FP16算子为例，如果输入数据类型为FP32，MindSpore后台会自动降低精度来处理数据。用户可打开INFO日志，搜索“reduce precision”查看精度降低的算子。
 
@@ -74,8 +74,8 @@ InceptionV3的总体网络架构如下：
 - 框架
 - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需查看详情，请参见如下资源：
-- [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-- [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+- [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
+- [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
 
@@ -281,7 +281,7 @@ train.py和config.py中主要参数如下：
     sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
     ```
 
-> 注：RANK_TABLE_FILE可参考[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/distributed_training_ascend.html)。device_ip可以通过[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)获取
+> 注：RANK_TABLE_FILE可参考[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/distributed_training_ascend.html)。device_ip可以通过[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)获取
 > 这是关于device_num和处理器总数的处理器核绑定操作。如不需要，请删除scripts/run_distribute_train.sh中的taskset操作。
 
 ### 启动

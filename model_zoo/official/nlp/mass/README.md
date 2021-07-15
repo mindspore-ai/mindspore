@@ -520,8 +520,8 @@ More detail about LR scheduler could be found in `src/utils/lr_scheduler.py`.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/r1.3/index.html)
 
 ## Requirements
 
@@ -532,7 +532,7 @@ subword-nmt
 rouge
 ```
 
-<https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html>
+<https://www.mindspore.cn/docs/programming_guide/en/r1.3/multi_platform_inference.html>
 
 # Get started
 
@@ -594,7 +594,7 @@ Get the log and output files under the path `./train_mass_*/`, and the model fil
 
 ## Inference
 
-If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html).
+If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/docs/programming_guide/en/r1.3/multi_platform_inference.html).
 For inference, config the options in `default_config.yaml` firstly:
 
 - Assign the `default_config.yaml` under `data_path` node to the dataset path.

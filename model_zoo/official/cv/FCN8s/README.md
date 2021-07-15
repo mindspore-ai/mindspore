@@ -49,8 +49,8 @@ Dataset used:
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需获取更多信息，请查看如下链接：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 
 # [快速开始](#contents)
 
@@ -434,7 +434,7 @@ python export.py
 
 ### 教程
 
-如果你需要在不同硬件平台（如GPU，Ascend 910 或者 Ascend 310）使用训练好的模型，你可以参考这个 [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html)。以下是一个简单例子的步骤介绍：
+如果你需要在不同硬件平台（如GPU，Ascend 910 或者 Ascend 310）使用训练好的模型，你可以参考这个 [Link](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html)。以下是一个简单例子的步骤介绍：
 
 - Running on Ascend
 
