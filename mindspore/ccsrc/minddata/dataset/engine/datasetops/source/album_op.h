@@ -182,7 +182,7 @@ class AlbumOp : public MappableLeafOp {
   std::vector<std::string> image_rows_;
   TensorPtr sample_ids_;
 
-  int32_t curr_row_;
+  uint32_t curr_row_;
 };
 }  // namespace dataset
 }  // namespace mindspore

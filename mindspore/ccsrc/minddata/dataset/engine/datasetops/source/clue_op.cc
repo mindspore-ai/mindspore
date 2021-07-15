@@ -17,10 +17,10 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <iomanip>
-#include <utility>
 
 #include "debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
@@ -37,7 +37,7 @@ ClueOp::ClueOp(int32_t num_workers, int64_t num_samples, int32_t worker_connecto
     : NonMappableLeafOp(num_workers, worker_connector_size, num_samples, op_connector_size, shuffle_files, num_devices,
                         device_id),
       clue_files_list_(std::move(clue_files_list)),
-      cols_to_keyword_(cols_to_keyword) {}
+      cols_to_keyword_(std::move(cols_to_keyword)) {}
 
 Status ClueOp::Init() {
   RETURN_IF_NOT_OK(filename_index_->insert(clue_files_list_));

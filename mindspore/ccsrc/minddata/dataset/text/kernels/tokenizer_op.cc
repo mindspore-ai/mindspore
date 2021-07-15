@@ -32,7 +32,7 @@ Status TokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   }
   std::string_view str;
   RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));
-  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
+  std::shared_ptr<Tensor> token_tensor;
   std::vector<uint32_t> offsets_start, offsets_limit;
   std::vector<std::string> splits;
   RETURN_IF_NOT_OK(Tokenize(str, &splits, &offsets_start, &offsets_limit));

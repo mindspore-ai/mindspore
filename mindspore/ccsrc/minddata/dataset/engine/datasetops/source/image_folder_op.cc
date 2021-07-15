@@ -29,7 +29,7 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t que
                              const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
                              std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_wkrs, queue_size, std::move(sampler)),
-      folder_path_(file_dir),
+      folder_path_(std::move(file_dir)),
       recursive_(recursive),
       decode_(do_decode),
       extensions_(exts),

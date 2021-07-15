@@ -23,7 +23,7 @@ namespace dataset {
 
 TensorRow::TensorRow() noexcept : id_(kDefaultRowId), path_({}), tensor_row_flag_(kFlagNone) {}
 
-TensorRow::TensorRow(size_type n, TensorRow::value_type t) noexcept
+TensorRow::TensorRow(size_type n, const TensorRow::value_type &t) noexcept
     : id_(kDefaultRowId), path_({}), row_(n, t), tensor_row_flag_(kFlagNone) {}
 
 TensorRow::TensorRow(const TensorRow::vector_type &v)

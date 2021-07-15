@@ -36,7 +36,7 @@ Status NativeRuntimeContext::TerminateImpl() {
 }
 
 NativeRuntimeContext::~NativeRuntimeContext() {
-  Status rc = Terminate();
+  Status rc = NativeRuntimeContext::Terminate();
   if (rc.IsError()) MS_LOG(ERROR) << "Error while terminating the consumer. Message:" << rc;
 }
 

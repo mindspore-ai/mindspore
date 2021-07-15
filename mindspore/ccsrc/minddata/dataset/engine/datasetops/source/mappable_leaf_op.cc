@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_wkrs, queue_size, std::move(sampler)) {}
 
@@ -117,6 +116,5 @@ Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
   }
   RETURN_STATUS_UNEXPECTED("[Internal ERROR] Unexpected nullptr received in worker.");
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -713,7 +713,6 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
   // caller provided 1 mean/std value and there are more than one channel --> duplicate mean/std value
   if (mean.size() == 1 && (*output)->shape()[CHANNEL_INDEX] != 1) {
-    std::vector<float> mean_t, std_t;
     for (int64_t i = 0; i < (*output)->shape()[CHANNEL_INDEX] - 1; i++) {
       mean.push_back(mean[0]);
       std.push_back(std[0]);

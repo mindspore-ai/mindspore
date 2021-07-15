@@ -512,7 +512,7 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
   RETURN_IF_NOT_OK(value_tensor->GetItemAt(&value, {}));
   auto in_itr = input->begin<T>();
   auto out_itr = output->begin<bool>();
-  for (; in_itr != input->end<T>(); in_itr++, ++out_itr) {
+  for (; in_itr != input->end<T>(); ++in_itr, ++out_itr) {
     switch (op) {
       case RelationalOp::kEqual:
         *out_itr = (*in_itr == value);

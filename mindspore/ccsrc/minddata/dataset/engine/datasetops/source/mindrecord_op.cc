@@ -47,7 +47,7 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
                            const ShuffleMode shuffle_mode, std::unique_ptr<ShardReader> shard_reader,
                            std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::move(sampler)),
-      dataset_file_(dataset_file),
+      dataset_file_(std::move(dataset_file)),
       load_dataset_(load_dataset),
       columns_to_load_(columns_to_load),
       operators_(operators),
@@ -197,7 +197,7 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
   RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
 
-Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, int64_t row_id, int32_t worker_id) {
+Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, uint64_t row_id, int32_t worker_id) {
   *fetched_row = {};
   auto rc = shard_reader_->GetNextById(row_id, worker_id);
   auto task_type = rc.first;

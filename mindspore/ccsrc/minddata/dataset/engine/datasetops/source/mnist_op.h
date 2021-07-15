@@ -117,7 +117,7 @@ class MnistOp : public MappableLeafOp {
   // @param int32_t queue_size - connector queue size
   // @param std::unique_ptr<DataSchema> data_schema - the schema of the mnist dataset
   // @param td::unique_ptr<Sampler> sampler - sampler tells MnistOp what to read
-  MnistOp(const std::string &usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
+  MnistOp(std::string usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
           std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor.

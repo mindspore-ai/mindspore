@@ -33,13 +33,13 @@ namespace dataset {
 // Constructor for TransferNode
 TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, std::string queue_name, std::string device_type,
                            int32_t device_id, bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
-    : prefetch_size_(GlobalContext::config_manager()->prefetch_size()),
-      queue_name_(std::move(queue_name)),
+    : queue_name_(std::move(queue_name)),
+      device_id_(device_id),
       device_type_(std::move(device_type)),
+      prefetch_size_(GlobalContext::config_manager()->prefetch_size()),
       send_epoch_end_(send_epoch_end),
       total_batch_(total_batch),
-      create_data_info_queue_(create_data_info_queue),
-      device_id_(device_id) {
+      create_data_info_queue_(create_data_info_queue) {
   this->AddChild(child);
 }
 
