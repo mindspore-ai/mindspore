@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/common_func.h"
 #include "nnacl/fp32/common_func_fp32.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, int num_pixels,
@@ -622,8 +622,8 @@ void ConvDw3x3Line(float *dst, float **lines, const float *weight, const float *
         MS_STQ_F32(cur_dst + ori_channel, res1);
       } else {
         for (int i = 0; i < channel; i++) {
-          cur_dst[i] = res0[i];
-          cur_dst[ori_channel + i] = res1[i];
+          cur_dst[i] = MS_F32X4_GETI(res0, i);
+          cur_dst[ori_channel + i] = MS_F32X4_GETI(res1, i);
         }
       }
       cur_dst += 2 * ori_channel;
@@ -653,7 +653,7 @@ void ConvDw3x3Line(float *dst, float **lines, const float *weight, const float *
         MS_STQ_F32(cur_dst, res0);
       } else {
         for (int i = 0; i < channel; i++) {
-          cur_dst[i] = res0[i];
+          cur_dst[i] = MS_F32X4_GETI(res0, i);
         }
       }
     }
