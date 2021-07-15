@@ -348,7 +348,19 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
                   << current_primal_fg_param_size - bprop_fg_param_size;
     for (auto i = bprop_fg_param_size; i < current_primal_fg_param_size; ++i) {
       const auto &primal_node = current_primal_fg->parameters()[i];
-      auto extra_node = bprop_fg->NewCNode({NewValueNode(prim::GetPythonOps("zeros_like")), primal_node});
+      AnfNodePtr extra_node;
+      // Simplify zeros_like(primal_node) to U or IO, so extra_node in bprop_fg will not refer to primal_node
+      // as a free variable of primal_graph.
+      // Notes: if the implementation of zeros_like changes, here too.
+      if (HasAbstractUMonad(primal_node)) {
+        extra_node = NewValueNode(kUMonad);
+      } else if (HasAbstractIOMonad(primal_node)) {
+        extra_node = NewValueNode(kIOMonad);
+      } else {
+        MS_LOG(EXCEPTION) << "Function: " << current_primal_fg->ToString()
+                          << ", has extra parameter which is not UMoand or IOMonad, but: "
+                          << primal_node->DebugString();
+      }
       extra_args.push_back(extra_node);
       MS_LOG(DEBUG) << "Insert to bprop_fg for node: " << primal_node->DebugString();
     }
@@ -444,8 +456,13 @@ void KPrim::TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const Func
 
       TraceGuard trace_guard(std::make_shared<TraceGradFprop>(p->debug_info()));
       auto transf_p = outer->add_parameter();
-
-      (void)mng->Replace(p, transf_p);
+      // See also Notes on extra_node of BuildOutput.
+      // Notes: No need to replace p with transf_p as the only use of p is here.
+      // If extra_node in bprop_fg use p as free variable, a replacement of p is required here.
+      // This replacement will make the usage of p in current_primal_fg got replaced with transf_p
+      // of outer. outer will be released after it is being cloned to fprop_fg, so the func_graph_
+      // in transf_p will be nullptr.
+      // So the RULE is DONT tamper the current_primal_fg;
       transf_args->push_back(transf_p);
     }
   }
