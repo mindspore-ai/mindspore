@@ -586,20 +586,6 @@ void Debugger::CheckDatasetGraph() {
   is_dataset_graph_ = false;
 }
 
-bool Debugger::CheckDatasetGraph(const KernelGraphPtr &graph_ptr) {
-  const auto &nodes = graph_ptr->execution_order();
-  for (const auto &node : nodes) {
-    MS_LOG(INFO) << "node: " << GetKernelNodeName(node);
-    auto node_name = AnfAlgo::GetCNodeName(node);
-    if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
-      MS_LOG(INFO) << "Not enabling debugger for graph " << graph_ptr->graph_id() << ": found dataset graph node "
-                   << node_name;
-      return true;
-    }
-  }
-  return false;
-}
-
 GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   // convert kernel graph to debugger modelproto
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
