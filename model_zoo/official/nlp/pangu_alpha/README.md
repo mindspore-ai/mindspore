@@ -1,19 +1,32 @@
-# It is still under development
-
 # Contents
 
 - [Contents](#contents)
-- [PanGu-Alpha Description](#pangu-description)
+- [PanGu-Alpha Description](#pangu-alpha-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
+    - [Install Requirements](#install-requirements)
+    - [Dataset Generation](#dataset-generation)
+    - [Training](#training)
+        - [Training On Ascend](#training-on-ascend)
+        - [Training On GPU](#training-on-gpu)
+        - [Incremental Training](#incremental-training-1)
+    - [Prediction](#prediction)
+        - [Download Checkpoint](#download-checkpoint)
+        - [Prediction in Distributed mode](#prediction-in-distributed-mode)
+        - [Prediction in Standalone mode](#prediction-in-standalone-mode)
+    - [Serving](#serving)
+        - [Preparation](#preparation)
+        - [Serving 13B or 2.6B in Standalone mode](#serving-13b-or-26b-in-standalone-mode-ascend910nvidia-gpu)
+        - [Serving 13B or 2.6B in Distributed mode](#serving-13b-or-26b-in-distributed-mode-ascend910-8-cards)
+        - [Serving in Distributed mode [multi machines]](#serving-in-distributed-mode-ascend910-8-cards--n-machine)
 - [Script Description](#script-description)
-- [Script and Sample Code](#script-and-sample-code)
 - [ModelZoo Homepage](#modelzoo-homepage)
 - [Requirements](#requirements)
+- [FAQ](#faq)
 
-# [PanGu-Alpha Description](#pangu-description)
+# [PanGu-Alpha Description](#contents)
 
 We release the code to explore the new front-edge of training large model with billions or even trillions of parameters.
 By MindSpore's parallel feature, we adopt the efficient model parallel and data parallel technology such as operator level parallelism,
@@ -40,7 +53,7 @@ The architecture of PanGu-α is based on Transformer, which has been extensively
 pretrained language models such as BERT and GPT. Different from them, we develop an additional query layeron top of
 Transformer layers to predict the next token. The diagram of the model is shown in Figure 1.
 
-# [Dataset](#dataset)
+# [Dataset](#contents)
 
 - Open Source Dataset.
 
@@ -60,24 +73,21 @@ The above dataset is preprocessed with 1024 tokens for each example. The default
 
 ## Install Requirements
 
-Currently the released MindSpore can also launch the script but with some modifications. The following table gives a description of the tested environment, scripts and MindSpore version.
+The following table gives a description of the tested environment, scripts and MindSpore version.
 
-| MindSpore Version | Script Commit Id | GPU(V100; OS Euler2.8) | Ascend (Ascend 910; OS Euler2.8) |
-| ----------------- | ---------------- | ---------------------- | -------------------------------- |
-| 1.2.1             | 7418f5fd         | Not Supported          | Supported                        |
-| master            | -                | Supported              | Supported                        |
+| Parallel Mode      | MindSpore Version | GPU(V100)              | Ascend (Ascend 910)              |
+| -----------------  | ----------------- | ---------------------- | -------------------------------- |
+| data parallel      | 1.3.0             | Supported              | Supported                        |
+| model parallel     | 1.3.0             | Supported              | Supported                        |
+| optimizer parallel | 1.3.0             | Supported              | Supported                        |
+| recompute          | 1.3.0             | Supported              | Supported                        |
+| pipeline parallel  | 1.3.0             | Not Supported          | Supported                        |
 
 To obtain the pangu_alpha's script, you need `git` to clone the mindspore's code as followings:
 
 ```bash
-git clone https://gitee.com/mindspore/mindspore.git
+git clone https://gitee.com/mindspore/mindspore.git -b r1.3
 cd mindspore/model_zoo/official/nlp/pangu_alpha
-```
-
- **If your MindSpore's version is `r1.2.1`, the corresponding model script version in model zoo is 7418f5fd, so you need do the following commands: **
-
-```bash
-git checkout 7418f5fd
 ```
 
 For requirements, please refer to [Requirements](#requirements) to install the dependency.
@@ -116,7 +126,7 @@ python -m src.preprocess --input_glob  data/*.txt --tokenizer jieba --vocab_file
 
 The vocab size of `vocab.vocab` is 40000, and the `eod id` is 6.
 
-## Training
+## [Training](#contents)
 
 ### Training On Ascend
 
@@ -150,7 +160,7 @@ For distributed training, an hccl configuration file with JSON format needs to b
 Please follow the instructions in the link below:
 https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 
-### Training on GPU
+### Training On GPU
 
 The script will launch the GPU training through `mpirun`, the user can run the following command on any machine to start training.
 
@@ -177,7 +187,7 @@ export FILE_PATH=/home/your_path/ckpts
 bash scripts/run_distribute_train_incremental_train.sh DATASET RANK_TABLE 8 fp32 2.6B ${FILE_PATH}/strategy_load_ckpt/strategy.ckpt  ${FILE_PATH}/checkpoint_file filitered
 ```
 
-## Prediction
+## [Prediction](#contents)
 
 ### Download Checkpoint
 
@@ -209,7 +219,7 @@ performance, we provide the second state reuse (incremental inference) method.
 
 The state reuse method is the default mode, and you can disable it by changing the argument 'use_past' to False.
 
-### Run Prediction on Distributed mode
+### Prediction in Distributed mode
 
 The following script will run prediction on 8 Ascend cards.
 
@@ -219,7 +229,7 @@ bash scripts/run_distribute_predict.sh 8 /home/config/rank_table_8p.json ${FILE_
 ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B fp32
 ```
 
-### Run Prediction Using One Device
+### Prediction in Standalone mode
 
 The following script will run prediction on 1 Ascend cards or 1 Nvidia GPU. The difference is the net is initialized with float16 type.
 
@@ -230,9 +240,9 @@ bash scripts/run_standalone_predict.sh ${FILE_PATH}/strategy_load_ckpt/strategy.
 ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B $DEVICE_TARGET
 ```
 
-### Run Serving
+## [Serving](#contents)
 
-#### Preparation
+### Preparation
 
 - Pip install MindSpore and MindSpore Serving 1.3 or later.
 - Pip install flask, flask-apscheduler, jieba, sentencepiece and other whl package if needed.
@@ -250,7 +260,7 @@ ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B $DEVICE_TAR
   Decompress all the `13B_part*` or `2.6B_part*` tar files and a large number of `*ckpt` files will generate. Move
   all `*embedding` to the same directory of `*.ckpt` files.
 
-#### Run 13B or 2.6B in standalone mode[Ascend910/Nvidia GPU]
+### Serving 13B or 2.6B in Standalone mode [Ascend910/Nvidia GPU]
 
 - Use scripts/run_standalone_export.sh to export MindIR models, and move all device_0/* to
   'serving_increment/pangu_standalone/pangu/1/'.
@@ -307,7 +317,7 @@ ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B $DEVICE_TAR
 - If anything all right, access address {ip}:5000 in one browser. It will take some time to return the reply.
 - Run `bash stop_pangu.sh` to stop the existing execution.
 
-#### Run 13B or 2.6B in distributed mode[Ascend910 8 cards]
+### Serving 13B or 2.6B in Distributed mode [Ascend910 8 cards]
 
 - Generate [rank table file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
@@ -390,7 +400,7 @@ ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B $DEVICE_TAR
 - If anything all right, access address {ip}:5000 in one browser. It will take some time to return the reply.
 - Run `bash stop_pangu.sh` to stop the existing execution.
 
-#### Run in distributed mode[Ascend910 8 cards * N machine]
+### Serving in Distributed mode [Ascend910 8 cards * N machine]
 
 - Generate [rank table file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 - In every machine, prepare for checkpoint files and embedding files. We can also use 13B as a test example.
@@ -437,7 +447,7 @@ successfully.
 
 # [Script Description](#contents)
 
-## [Script and Sample Code](#contents)
+## Script and Sample Code
 
 ```bash
 .
@@ -473,11 +483,11 @@ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/
 
 For Serving and flask server, extra requirements:
 
-- MindSpore Serving 1.2
+- MindSpore Serving 1.3.0
 - flask-apscheduler 1.12.2
 - flask 1.1.2
 
-# FQA
+# [FAQ](#contents)
 
 Q: `Unexpected error. MindRecordOp init failed, illegal column list`.
 
