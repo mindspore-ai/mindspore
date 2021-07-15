@@ -70,26 +70,18 @@ void MatmulBaseFP16CPUKernel::InitParameter() {
 }
 
 int MatmulBaseFP16CPUKernel::InitBias() {
-  if (in_tensors_.size() == 3) {
-    auto bias_tensor = in_tensors_[2];
-    int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), C8NUM);
+  if (params_->col_ != 0 && bias_ptr_ == nullptr) {
+    int max_bias_data = UP_ROUND(params_->col_, C8NUM);
+    bias_ptr_ = reinterpret_cast<float16_t *>(malloc(max_bias_data * sizeof(float16_t)));
     if (bias_ptr_ == nullptr) {
-      bias_ptr_ = reinterpret_cast<float16_t *>(malloc(max_bias_data * sizeof(float16_t)));
-      if (bias_ptr_ == nullptr) {
-        MS_LOG(ERROR) << "malloc bias_ptr_ failed";
-        return RET_ERROR;
-      }
-    }
-    memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
-    if (bias_tensor->data_type() == kNumberTypeFloat32) {
-      MS_LOG(ERROR) << "Matmul fp16 only support fp16 weight";
+      MS_LOG(ERROR) << "malloc bias_ptr_ failed";
       return RET_ERROR;
-    } else if (bias_tensor->data_type() == kNumberTypeFloat16) {
-      MS_ASSERT(bias_tensor->data_c() != nullptr);
+    }
+    if (in_tensors_.size() == 3) {
+      auto bias_tensor = in_tensors_[2];
       memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float16_t));
     } else {
-      MS_LOG(ERROR) << "Unsupported bias data type : " << bias_tensor->data_type();
-      return RET_ERROR;
+      memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
     }
   }
   return RET_OK;
@@ -181,13 +173,13 @@ void MatmulBaseFP16CPUKernel::InitMatrixA(void *src_ptr) {
     float16_t *dst = a_pack_ptr_ + i * params_->deep_ * params_->row_align_;
     if (params_->a_transpose_) {
 #ifdef ENABLE_ARM64
-      RowMajor2Row16MajorFp16(src, dst, params_->deep_, params_->row_, src_data_type == kNumberTypeFloat32);
+      RowMajor2RowNMajorFp16((const float16_t *)src, dst, params_->deep_, params_->row_);
 #else
       RowMajor2Row12MajorFp16(src, dst, params_->deep_, params_->row_, src_data_type == kNumberTypeFloat32);
 #endif
     } else {
 #ifdef ENABLE_ARM64
-      RowMajor2Col16MajorFp16(src, dst, params_->row_, params_->deep_, src_data_type == kNumberTypeFloat32);
+      RowMajor2ColNMajorFp16((const float16_t *)src, dst, params_->row_, params_->deep_);
 #else
       RowMajor2Col12MajorFp16(src, dst, params_->row_, params_->deep_, src_data_type == kNumberTypeFloat32);
 #endif
@@ -281,7 +273,7 @@ int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {
     return RET_OK;
   }
 
-  auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + thread_stride_ * task_id;
+  auto bias = bias_ptr_ + thread_stride_ * task_id;
   auto b = batch_b_ptr_ + task_id * thread_stride_ * params_->deep_;
   auto c = batch_c_ptr_ + task_id * thread_stride_;
 
@@ -292,8 +284,13 @@ int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {
     MatVecMulFp16(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
 #endif
   } else {
+#ifdef ENABLE_ARM64
+    MatmulBaseFp16Neon(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, params_->row_, cur_oc,
+                       params_->col_, OutType_Nhwc);
+#else
     MatMulFp16(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, params_->row_, cur_oc, params_->col_,
                OutType_Nhwc);
+#endif
   }
   return RET_OK;
 }
