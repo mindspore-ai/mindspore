@@ -138,6 +138,17 @@ void ConvolutionDelegateCPUKernel::SetInputOutputShapeInfo() {
   conv_param->op_parameter_.thread_num_ = op_parameter_->thread_num_;
 }
 
+bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_param) {
+  if (conv_param->input_channel_ / op_parameter_->thread_num_ <= 64 &&
+      conv_param->input_h_ >= conv_param->thread_num_ &&
+      (conv_param->kernel_h_ < 7 || conv_param->input_h_ / conv_param->kernel_h_ >= 4) &&
+      (conv_param->kernel_w_ < 7 || conv_param->input_w_ / conv_param->kernel_w_ >= 4)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
   kernel::InnerKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
@@ -167,13 +178,12 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
         origin_weight_, origin_bias_);
     } else {
 #ifdef ENABLE_AVX
-      if (conv_param->input_channel_ / op_parameter_->thread_num_ > 64 ||
-          conv_param->input_h_ < conv_param->thread_num_ || conv_param->kernel_h_ >= 7 || conv_param->kernel_w_ >= 7) {
-        kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
+      if (CheckAvxUseSWConv(conv_param)) {
+        kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
           origin_weight_, origin_bias_);
       } else {
-        kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
+        kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
           origin_weight_, origin_bias_);
       }
