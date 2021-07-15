@@ -142,3 +142,6 @@ if(ENABLE_ACL AND NOT ENABLE_D)
     set(MODE_ASCEND_ACL ON)
 endif()
 
+if(ENABLE_CPU AND NOT WIN32)
+    add_compile_definitions(ENABLE_ARMOUR)
+endif()
