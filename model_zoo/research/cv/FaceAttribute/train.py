@@ -16,7 +16,6 @@
 import os
 import time
 import datetime
-
 import mindspore
 import mindspore.nn as nn
 from mindspore import context
@@ -29,13 +28,11 @@ from mindspore.train.callback import ModelCheckpoint, RunContext, CheckpointConf
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-
 from src.FaceAttribute.resnet18 import get_resnet18
 from src.FaceAttribute.loss_factory import get_loss
 from src.dataset_train import data_generator
 from src.lrsche_factory import warmup_step
 from src.logging import get_logger, AverageMeter
-
 from model_utils.config import config
 from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id, get_device_num
@@ -50,8 +47,10 @@ class InternalCallbackParam(dict):
     def __setattr__(self, _key, _value):
         self[_key] = _value
 
+
 class BuildTrainNetwork(nn.Cell):
     '''Build train network.'''
+
     def __init__(self, my_network, my_criterion):
         super(BuildTrainNetwork, self).__init__()
         self.network = my_network
@@ -66,6 +65,7 @@ class BuildTrainNetwork(nn.Cell):
 
 def modelarts_pre_process():
     '''modelarts pre process function.'''
+
     def unzip(zip_file, save_dir):
         import zipfile
         s_time = time.time()
@@ -121,7 +121,8 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     '''run train.'''
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=get_device_id())
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
+                        device_id=get_device_id())
     mindspore.set_seed(1)
 
     # init distributed
@@ -240,6 +241,7 @@ def run_train():
         i += 1
 
     config.logger.info('--------- trains out ---------')
+
 
 if __name__ == "__main__":
     run_train()
