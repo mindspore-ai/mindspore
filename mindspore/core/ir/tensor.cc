@@ -473,6 +473,7 @@ Tensor::Tensor(const Tensor &tensor)
       event_(tensor.event_),
       sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
+      need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
@@ -487,6 +488,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       event_(tensor.event_),
       sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
+      need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
@@ -548,6 +550,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     MetaTensor::operator=(tensor);
     device_sync_ = tensor.device_sync_;
+    need_release_device_mem_ = tensor.need_release_device_mem_;
     data_ = tensor.data_;
     id_ = tensor.id_;
     event_ = tensor.event_;

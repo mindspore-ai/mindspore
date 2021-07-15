@@ -117,7 +117,10 @@ void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_ind
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
   }
-  outputs_[output_position] = CreateOutputTensor(output_node, output_index, output_position);
+
+  auto tensor = CreateOutputTensor(output_node, output_index, output_position);
+  tensor->set_need_release_device_mem(true);
+  outputs_[output_position] = tensor;
   current_outputs_num_++;
 
   // Save the output nodes to clear the device tensor in the running end.
