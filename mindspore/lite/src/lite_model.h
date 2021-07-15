@@ -47,6 +47,10 @@ class LiteModel : public Model {
 
   ~LiteModel() override { Destroy(); }
 
+  bool keep_model_buf() const { return this->keep_model_buf_; }
+
+  void set_keep_model_buf(bool keep) { this->keep_model_buf_ = keep; }
+
  private:
 #ifdef ENABLE_V0
   int ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor);
@@ -260,6 +264,7 @@ class LiteModel : public Model {
 
  protected:
   std::vector<char *> attr_tensor_bufs_;
+  bool keep_model_buf_ = false;
 };
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);

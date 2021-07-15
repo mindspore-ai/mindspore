@@ -53,6 +53,24 @@ inline void Int64ToFp16(const int64_t *input, float16_t *output, int number) {
     output[i] = (float16_t)input[i];
   }
 }
+
+inline void Int32ToFp16(const int32_t *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+
+inline void BoolToFp16(const bool *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+
+inline void Uint8ToFp16(const uint8_t *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
 #endif
 
 inline void Fp16ToFloat32(const uint16_t *input, float *output, int number) {
