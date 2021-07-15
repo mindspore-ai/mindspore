@@ -15,9 +15,11 @@
 """kernel build server for ascend"""
 import sys
 import warnings
-from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
-from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import create_tbe_parallel_process, op_select_format
+
+from mindspore._extends.parallel_compile.tbe_compiler.tbe_job_manager import TbeJobManager
 from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import check_supported
+from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import create_tbe_parallel_process, op_select_format
+from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
 
 
 class TbeBuilder:
@@ -25,6 +27,7 @@ class TbeBuilder:
 
     def __init__(self):
         self.tbe_builder = create_tbe_parallel_process()
+        self.tbe_job_manager = TbeJobManager()
 
     def init_auto_tune_env(self, mode):
         return self.tbe_builder.init_auto_tune_env(mode)
@@ -43,6 +46,10 @@ class TbeBuilder:
 
     def exit(self):
         self.tbe_builder.exit()
+        self.tbe_job_manager.reset()
+
+    def job_process(self, json):
+        return self.tbe_job_manager.job_handler(json)
 
 
 class AscendMessager(Messager):
@@ -74,6 +81,11 @@ class AscendMessager(Messager):
             self.send_ack()
             json = self.get_message()
             res = self.tbe_builder.start(json)
+            self.send_res(res)
+        elif arg == 'TBE/JOB':
+            self.send_ack()
+            json = self.get_message()
+            res = self.tbe_builder.job_process(json)
             self.send_res(res)
         elif arg == 'TBE/WAIT':
             self.send_ack()
