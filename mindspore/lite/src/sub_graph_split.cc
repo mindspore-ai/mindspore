@@ -248,11 +248,21 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
     new_partial_node->node_type_ = mindspore::lite::NodeType_ValueNode;
     new_partial_node->primitive_ = CreatePartialPrimitive(new_sub_index);
 
+    uint32_t insert_index = UINT32_MAX;
     while (!subgraph.nodes_.empty()) {
       uint32_t node_index = subgraph.nodes_.front();
       Model::Node *cur_node = model_->all_nodes_[node_index];
       new_sub_graph->node_indices_.push_back(node_index);
-      VectorErase(&main_graphs->node_indices_, node_index);
+      uint32_t index = 0;
+      for (auto iter = main_graphs->node_indices_.begin(); iter != main_graphs->node_indices_.end(); index++, iter++) {
+        if (*iter == node_index) {
+          (void)main_graphs->node_indices_.erase(iter);
+          if (insert_index > index) {
+            insert_index = index;
+          }
+          break;
+        }
+      }
       VectorErase(&subgraph.nodes_, node_index);
       cur_node->device_type_ = device_type;
       op_parameters_->at(cur_node->output_indices_.at(0))->thread_num_ = thread_num;
@@ -291,7 +301,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
       new_partial_node->output_indices_.insert(new_partial_node->output_indices_.end(), outputs.begin(), outputs.end());
     }
 
-    main_graphs->node_indices_.push_back(partial_index);
+    main_graphs->node_indices_.insert(main_graphs->node_indices_.begin() + insert_index, partial_index);
     model_->all_nodes_.push_back(std::move(new_partial_node));
     model_->sub_graphs_.push_back(std::move(new_sub_graph));
   }
