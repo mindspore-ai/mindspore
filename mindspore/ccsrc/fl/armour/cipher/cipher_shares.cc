@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace armour {
 bool CipherShares::ShareSecrets(const int cur_iterator, const schema::RequestShareSecrets *share_secrets_req,
-                                std::shared_ptr<fl::server::FBBuilder> share_secrets_resp_builder,
+                                const std::shared_ptr<fl::server::FBBuilder> &share_secrets_resp_builder,
                                 const string next_req_time) {
   MS_LOG(INFO) << "CipherShares::ShareSecrets START";
   if (share_secrets_req == nullptr) {
@@ -95,7 +95,7 @@ bool CipherShares::ShareSecrets(const int cur_iterator, const schema::RequestSha
 }
 
 bool CipherShares::GetSecrets(const schema::GetShareSecrets *get_secrets_req,
-                              std::shared_ptr<fl::server::FBBuilder> get_secrets_resp_builder,
+                              const std::shared_ptr<fl::server::FBBuilder> &get_secrets_resp_builder,
                               const std::string &next_req_time) {
   MS_LOG(INFO) << "CipherShares::GetSecrets START";
   clock_t start_time = clock();
@@ -180,7 +180,7 @@ bool CipherShares::GetSecrets(const schema::GetShareSecrets *get_secrets_req,
 }
 
 void CipherShares::BuildGetSecretsRsp(
-  std::shared_ptr<fl::server::FBBuilder> get_secrets_resp_builder, schema::ResponseCode retcode, int iteration,
+  const std::shared_ptr<fl::server::FBBuilder> &get_secrets_resp_builder, schema::ResponseCode retcode, int iteration,
   std::string next_req_time, std::vector<flatbuffers::Offset<mindspore::schema::ClientShare>> *encrypted_shares) {
   int rsp_retcode = retcode;
   int rsp_iteration = iteration;
@@ -199,7 +199,7 @@ void CipherShares::BuildGetSecretsRsp(
   return;
 }
 
-void CipherShares::BuildShareSecretsRsp(std::shared_ptr<fl::server::FBBuilder> share_secrets_resp_builder,
+void CipherShares::BuildShareSecretsRsp(const std::shared_ptr<fl::server::FBBuilder> &share_secrets_resp_builder,
                                         const schema::ResponseCode retcode, const string &reason,
                                         const string &next_req_time, const int iteration) {
   auto rsp_reason = share_secrets_resp_builder->CreateString(reason);

@@ -61,7 +61,7 @@ class ServerNode : public AbstractNode {
 
   std::shared_ptr<CommunicatorBase> GetOrCreateHttpComm(const std::string &ip, uint16_t port,
                                                         const std::shared_ptr<TaskExecutor> &task_executor);
-  std::shared_ptr<CommunicatorBase> GetOrCreateTcpComm(const std::string &scheduler_ip, std::int16_t scheduler_port,
+  std::shared_ptr<CommunicatorBase> GetOrCreateTcpComm(const std::string &scheduler_ip, uint16_t scheduler_port,
                                                        uint32_t worker_num, uint32_t server_num,
                                                        const std::shared_ptr<TaskExecutor> &task_executor);
 

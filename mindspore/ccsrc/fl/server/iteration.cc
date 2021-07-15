@@ -74,10 +74,10 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
                 });
 
   // The time window for one iteration, which will be used in some round kernels.
-  size_t iteration_time_window =
-    std::accumulate(rounds_.begin(), rounds_.end(), 0, [](size_t total, const std::shared_ptr<Round> &round) {
-      return round->check_timeout() ? total + round->time_window() : total;
-    });
+  size_t iteration_time_window = std::accumulate(rounds_.begin(), rounds_.end(), IntToSize(0),
+                                                 [](size_t total, const std::shared_ptr<Round> &round) {
+                                                   return round->check_timeout() ? total + round->time_window() : total;
+                                                 });
   LocalMetaStore::GetInstance().put_value(kCtxTotalTimeoutDuration, iteration_time_window);
   MS_LOG(INFO) << "Time window for one iteration is " << iteration_time_window;
   return;
@@ -162,7 +162,7 @@ bool Iteration::ReInitForScaling(uint32_t server_num, uint32_t server_rank) {
   return true;
 }
 
-const std::vector<std::shared_ptr<Round>> &Iteration::rounds() { return rounds_; }
+const std::vector<std::shared_ptr<Round>> &Iteration::rounds() const { return rounds_; }
 
 bool Iteration::is_last_iteration_valid() const { return is_last_iteration_valid_; }
 
@@ -182,7 +182,7 @@ bool Iteration::SyncIteration(uint32_t rank) {
   }
 
   SyncIterationResponse sync_iter_rsp;
-  sync_iter_rsp.ParseFromArray(sync_iter_rsp_msg->data(), sync_iter_rsp_msg->size());
+  (void)sync_iter_rsp.ParseFromArray(sync_iter_rsp_msg->data(), SizeToInt(sync_iter_rsp_msg->size()));
   iteration_num_ = sync_iter_rsp.iteration();
   MS_LOG(INFO) << "After synchronizing, server " << rank << " current iteration number is "
                << sync_iter_rsp.iteration();
@@ -196,14 +196,14 @@ void Iteration::HandleSyncIterationRequest(const std::shared_ptr<ps::core::Messa
   }
 
   SyncIterationRequest sync_iter_req;
-  sync_iter_req.ParseFromArray(message->data(), message->len());
+  (void)sync_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   uint32_t rank = sync_iter_req.rank();
   MS_LOG(INFO) << "Synchronizing iteration request from rank " << rank;
 
   SyncIterationResponse sync_iter_rsp;
   sync_iter_rsp.set_iteration(iteration_num_);
   std::string sync_iter_rsp_msg = sync_iter_rsp.SerializeAsString();
-  communicator_->SendResponse(sync_iter_rsp_msg.data(), sync_iter_rsp_msg.size(), message);
+  (void)communicator_->SendResponse(sync_iter_rsp_msg.data(), sync_iter_rsp_msg.size(), message);
 }
 
 bool Iteration::IsMoveToNextIterRequestReentrant(uint64_t iteration_num) {
@@ -238,11 +238,11 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
 
   NotifyLeaderMoveToNextIterResponse notify_leader_to_next_iter_rsp;
   notify_leader_to_next_iter_rsp.set_result("success");
-  communicator_->SendResponse(notify_leader_to_next_iter_rsp.SerializeAsString().data(),
-                              notify_leader_to_next_iter_rsp.SerializeAsString().size(), message);
+  (void)communicator_->SendResponse(notify_leader_to_next_iter_rsp.SerializeAsString().data(),
+                                    notify_leader_to_next_iter_rsp.SerializeAsString().size(), message);
 
   NotifyLeaderMoveToNextIterRequest notify_leader_to_next_iter_req;
-  notify_leader_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
+  (void)notify_leader_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &rank = notify_leader_to_next_iter_req.rank();
   const auto &is_last_iter_valid = notify_leader_to_next_iter_req.is_last_iter_valid();
   const auto &iter_num = notify_leader_to_next_iter_req.iter_num();
@@ -296,7 +296,7 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
     }
     MS_LOG(INFO) << "Offline server " << rank << " preparing for next iteration success.";
   });
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(kServerSleepTimeForNetworking));
   return true;
 }
 
@@ -306,15 +306,15 @@ void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::
   }
 
   PrepareForNextIterRequest prepare_next_iter_req;
-  prepare_next_iter_req.ParseFromArray(message->data(), message->len());
+  (void)prepare_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &reason = prepare_next_iter_req.reason();
   MS_LOG(INFO) << "Prepare next iteration for this rank " << server_node_->rank_id() << ", reason: " << reason;
   PrepareForNextIter();
 
   PrepareForNextIterResponse prepare_next_iter_rsp;
   prepare_next_iter_rsp.set_result("success");
-  communicator_->SendResponse(prepare_next_iter_rsp.SerializeAsString().data(),
-                              prepare_next_iter_rsp.SerializeAsString().size(), message);
+  (void)communicator_->SendResponse(prepare_next_iter_rsp.SerializeAsString().data(),
+                                    prepare_next_iter_rsp.SerializeAsString().size(), message);
 }
 
 void Iteration::PrepareForNextIter() {
@@ -347,11 +347,11 @@ void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<ps::core::Mess
 
   MoveToNextIterResponse proceed_to_next_iter_rsp;
   proceed_to_next_iter_rsp.set_result("success");
-  communicator_->SendResponse(proceed_to_next_iter_rsp.SerializeAsString().data(),
-                              proceed_to_next_iter_rsp.SerializeAsString().size(), message);
+  (void)communicator_->SendResponse(proceed_to_next_iter_rsp.SerializeAsString().data(),
+                                    proceed_to_next_iter_rsp.SerializeAsString().size(), message);
 
   MoveToNextIterRequest proceed_to_next_iter_req;
-  proceed_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
+  (void)proceed_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &is_last_iter_valid = proceed_to_next_iter_req.is_last_iter_valid();
   const auto &last_iter_num = proceed_to_next_iter_req.last_iter_num();
   const auto &reason = proceed_to_next_iter_req.reason();
@@ -370,12 +370,12 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
   if (is_iteration_valid) {
     // Store the model which is successfully aggregated for this iteration.
     const auto &model = Executor::GetInstance().GetModel();
-    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    (void)ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
     MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
   } else {
     // Store last iteration's model because this iteration is considered as invalid.
     const auto &model = ModelStore::GetInstance().GetModelByIterNum(iteration_num_ - 1);
-    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    (void)ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
     MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid. Reason: " << reason;
   }
 
@@ -405,7 +405,7 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
   }
 
   EndLastIterRequest end_last_iter_req;
-  end_last_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
+  (void)end_last_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &last_iter_num = end_last_iter_req.last_iter_num();
   // If the iteration number is not matched, return error.
   if (last_iter_num != iteration_num_) {
@@ -413,8 +413,8 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
                          std::to_string(iteration_num_) + ", iteration to be ended is " + std::to_string(last_iter_num);
     EndLastIterResponse end_last_iter_rsp;
     end_last_iter_rsp.set_result(reason);
-    communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
-                                end_last_iter_rsp.SerializeAsString().size(), message);
+    (void)communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
+                                      end_last_iter_rsp.SerializeAsString().size(), message);
     return;
   }
 
@@ -422,8 +422,8 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
 
   EndLastIterResponse end_last_iter_rsp;
   end_last_iter_rsp.set_result("success");
-  communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
-                              end_last_iter_rsp.SerializeAsString().size(), message);
+  (void)communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
+                                    end_last_iter_rsp.SerializeAsString().size(), message);
 }
 
 void Iteration::EndLastIter() {

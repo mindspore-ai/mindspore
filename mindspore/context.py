@@ -817,6 +817,7 @@ def reset_ps_context():
     """
     _reset_ps_context()
 
+
 def set_fl_context(**kwargs):
     """
     Set federated learning training mode context.

@@ -79,7 +79,7 @@ class Iteration {
   // The server number after scaling is required in some rounds.
   bool ReInitForScaling(uint32_t server_num, uint32_t server_rank);
 
-  const std::vector<std::shared_ptr<Round>> &rounds();
+  const std::vector<std::shared_ptr<Round>> &rounds() const;
 
   bool is_last_iteration_valid() const;
 

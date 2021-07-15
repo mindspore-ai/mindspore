@@ -33,6 +33,8 @@
 namespace mindspore {
 namespace fl {
 namespace server {
+constexpr int kThreadSleepTime = 5;
+
 // Executor is the entrance for server to handle aggregation, optimizing, model querying, etc. It handles
 // logics relevant to kernel launching.
 class Executor {
