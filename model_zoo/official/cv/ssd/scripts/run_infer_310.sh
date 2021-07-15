@@ -30,7 +30,6 @@ get_real_path(){
 }
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
-DVPP=${3^^}
 cfg_path=$4
 
 device_id=0
@@ -40,7 +39,7 @@ fi
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
-echo "image process mode: "$DVPP
+echo "config path: " $cfg_path
 echo "device id: "$device_id
 
 export ASCEND_HOME=/usr/local/Ascend/
@@ -74,14 +73,11 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    if [ "$DVPP" == "DVPP" ];then
-      ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_path --device_id=$device_id --cpu_dvpp=$DVPP --aipp_path=../ascend310_infer/aipp.cfg --image_height=640 --image_width=640 &> infer.log
-    elif [ "$DVPP" == "CPU"  ]; then
-      ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_path --cpu_dvpp=$DVPP --device_id=$device_id --image_height=300 --image_width=300 &> infer.log
-    else
-      echo "image process mode must be in [DVPP|CPU]"
-      exit 1
-    fi
+    image_shape=`cat ${cfg_path} | grep img_shape`
+    height=${image_shape:12:3}
+    width=${image_shape:17:3}
+
+    ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_path --cpu_dvpp=CPU --device_id=$device_id --image_height=$height --image_width=$width &> infer.log
 }
 
 function cal_acc()
