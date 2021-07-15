@@ -298,15 +298,41 @@ class Primitive(Primitive_):
 
             - If the computation involves something like randomization or global variable, the equivalence
               is not guaranteed currently.
+            - Not supported in pynative mode
 
         Args:
             mode (bool): Specifies whether the primitive is recomputed. Default: True.
         Examples:
-            >>> import mindspore.ops as P
-            >>> a = P.Add()
-            >>> a = a.recompute()
-            >>> a.recompute
-            True
+            >>> import mindspore as ms
+            >>> from mindspore.common.tensor import Tensor
+            >>> import mindspore.ops as ops
+            >>> import mindspore.ops import operator as P
+            >>> import mindspore.nn as nn
+            >>> import numpy as np
+            >>> class NetRecompute(nn.Cell):
+            ...     def __init__(self):
+            ...         super(NetRecompute,self).__init__()
+            ...         self.relu = P.ReLU().recompute()
+            ...         self.sqrt = P.Sqrt()
+            ...     def construct(self, x):
+            ...         out = self.relu(x)
+            ...         return self.sqrt(out)
+            ...
+            >>> class GradNet(nn.Cell):
+            ...     def __init__(self, network):
+            ...         super(GradNet,self).__init__()
+            ...         self.network = network
+            ...         self.grad = ops.GradOperation()
+            ...     def construct(self, x):
+            ...         g_out = self.grad(self.network)(x)
+            ...         return g_out
+            ...
+            >>> x = Tensor(np.array([-1,1]).astype(np.float32))
+            >>> net = NetRecompute()
+            >>> grad = GradNet(net)
+            >>> a = grad(x)
+            >>> print(a)
+            [0. 0.5]
         """
         if context.get_context("mode") == context.PYNATIVE_MODE:
             raise TypeError("Recompute is not supported in pynative mode currently.")
