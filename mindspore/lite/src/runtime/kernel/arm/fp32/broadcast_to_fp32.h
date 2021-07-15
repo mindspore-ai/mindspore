@@ -35,6 +35,7 @@ class BroadcastToCPUKernel : public InnerKernel {
 
  private:
   BroadcastShapeInfo *shape_info_ = nullptr;
+  TypeId data_type_ = kNumberTypeFloat32;
 };
 }  // namespace mindspore::kernel
 

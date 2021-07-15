@@ -38,7 +38,7 @@ OpParameter *PopulateBroadcastToParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   auto dst_shape = value->shape();
   if (dst_shape == nullptr) {
-    MS_LOG(WARNING) << "unable to get dst_shape from attribute.";
+    MS_LOG(INFO) << "broadcast_to has not shape const tensor.";
   } else {
     param->shape_size_ = dst_shape->size();
     for (size_t i = 0; i < param->shape_size_; ++i) {
