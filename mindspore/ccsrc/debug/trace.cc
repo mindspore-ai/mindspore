@@ -141,21 +141,39 @@ class AnalyzeFailExporter : public AnfExporter {
   AnfNodeConfigPtr GetFordwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
+  std::unordered_map<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
+    const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack);
 
   AnalysisContextPtr current_context_ = nullptr;
   AnalysisEnginePtr engine_ = nullptr;
 };
 
-std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs(
+std::unordered_map<FuncGraphPtr, TaggedNodeMap> AnalyzeFailExporter::CreateTaggedNodeMap(
   const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack) {
+  std::unordered_set<abstract::AnfNodeConfigPtr> forwarded_configs;  // Check if config. is forwarded.
   std::unordered_map<FuncGraphPtr, TaggedNodeMap> tagged_func_graphs;
-  for (size_t i = 0; i < node_config_stack.size(); ++i) {
-    auto node_config = node_config_stack[i];
+  size_t index = 0;
+  for (auto &node_config : node_config_stack) {
     MS_EXCEPTION_IF_NULL(node_config);
+
+    // Record new config in set.
+    auto new_config = GetFordwardConfig(node_config);
+    if (new_config != node_config) {
+      MS_LOG(DEBUG) << "The node_config is forwarded, old config: " << node_config->ToString()
+                    << ", new_config: " << new_config->ToString();
+      forwarded_configs.emplace(new_config);
+    }
+
+    // Ignore the new config.
+    if (forwarded_configs.find(node_config) != forwarded_configs.end()) {
+      continue;
+    }
+
     auto fg = node_config->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     auto node = node_config->node();
-    tagged_func_graphs[fg][node] = i;
+    tagged_func_graphs[fg][node] = index;
+    index++;
   }
   return tagged_func_graphs;
 }
@@ -333,11 +351,19 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename,
     return false;
   }
 
-  auto tagged_func_graphs = CalcTaggedFuncGraphs(node_config_stack);
+  if (engine_ == nullptr) {
+    engine_ = node_config_stack.front()->engine();
+  }
+
+  auto tagged_func_graphs = CreateTaggedNodeMap(node_config_stack);
   std::unordered_set<FuncGraphPtr> printed_func_graphs;  // Check if func graph has been printed.
   // Output graph on the analysis stack
   for (const auto &node_config : node_config_stack) {
     auto fg = node_config->func_graph();
+    MS_LOG(INFO) << "Node: " << node_config->node()->DebugString()
+                 << ", FV: " << (node_config->func_graph() != node_config->context()->func_graph())
+                 << ", calling func graph: " << node_config->func_graph()->ToString()
+                 << ", context func graph: " << node_config->context()->func_graph()->ToString();
     if (fg == nullptr) {
       MS_LOG(ERROR) << "FuncGraph is null, context: " << node_config->ToString();
       continue;
@@ -347,17 +373,20 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename,
     }
     printed_func_graphs.emplace(fg);
 
-    if (engine_ == nullptr) {
-      engine_ = node_config->engine();
-    }
-
     current_context_ = node_config->context();  // Set current context.
     ExportOneFuncGraph(ofs, fg, tagged_func_graphs[fg]);
     ofs << "\n\n";
   }
 
   ofs << "#===============================================================================\n";
-  ofs << "# num of function graphs in stack: " << node_config_stack.size() << "\n";
+  ofs << "# num of function graphs in stack: ";
+  auto ignored_num = (node_config_stack.size() - printed_func_graphs.size());
+  if (ignored_num == 0) {
+    ofs << node_config_stack.size() << "\n";
+  } else {
+    ofs << printed_func_graphs.size() << "/" << node_config_stack.size() << " (Ignored " << ignored_num
+        << " internal frames).\n";
+  }
   ofs.close();
   return true;
 }
