@@ -83,6 +83,64 @@ int CastCPUKernel::CastToFp32(lite::Tensor *input, lite::Tensor *output, int off
   return RET_OK;
 }
 
+int CastCPUKernel::CastToFp16(lite::Tensor *input, lite::Tensor *output, int offset, int data_num) {
+  auto input_data_type = input->data_type();
+  auto output_data = output->data_c();
+  switch (input_data_type) {
+    case kNumberTypeFloat32:
+      Float32ToFp16(reinterpret_cast<float *>(input->data_c()) + offset,
+                    reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
+      break;
+#ifdef ENABLE_FP16
+    case kNumberTypeInt64:
+      Int64ToFp16(reinterpret_cast<int64_t *>(input->data_c()) + offset,
+                  reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+    case kNumberTypeInt32:
+      Int32ToFp16(reinterpret_cast<int32_t *>(input->data_c()) + offset,
+                  reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+      break;
+    case kNumberTypeBool:
+      BoolToFp16(reinterpret_cast<bool *>(input->data_c()) + offset,
+                 reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+      break;
+    case kNumberTypeUInt8:
+      Uint8ToFp16(reinterpret_cast<uint8_t *>(input->data_c()) + offset,
+                  reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+      break;
+#endif
+    default:
+      MS_LOG(ERROR) << "Unsupported input data type " << input_data_type;
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int CastCPUKernel::CastToOthers(lite::Tensor *input, lite::Tensor *output, int offset, int data_num) {
+  auto input_data_type = input->data_type();
+  auto output_data_type = output->data_type();
+  auto output_data = output->data_c();
+  if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt64) {
+    Float32ToInt64(reinterpret_cast<float *>(input->data_c()) + offset,
+                   reinterpret_cast<int64_t *>(output_data) + offset, data_num);
+  } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt32) {
+    Float32ToInt32(reinterpret_cast<float *>(input->data_c()) + offset,
+                   reinterpret_cast<int32_t *>(output_data) + offset, data_num);
+  } else if (input_data_type == kNumberTypeInt32 && output_data_type == kNumberTypeInt64) {
+    Int32ToInt64(reinterpret_cast<int32_t *>(input->data_c()) + offset,
+                 reinterpret_cast<int64_t *>(output_data) + offset, data_num);
+  } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt16) {
+    Float32ToInt16(reinterpret_cast<float *>(input->data_c()) + offset,
+                   reinterpret_cast<int16_t *>(output_data) + offset, data_num);
+  } else if (input_data_type == kNumberTypeBool && output_data_type == kNumberTypeInt32) {
+    BoolToInt32(reinterpret_cast<bool *>(input->data_c()) + offset, reinterpret_cast<int32_t *>(output_data) + offset,
+                data_num);
+  } else {
+    MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int CastCPUKernel::DoCast(int thread_id) {
   auto input = in_tensors_.at(0);
   int data_num = MSMIN(stride_, data_num_ - thread_id * stride_);
@@ -102,38 +160,13 @@ int CastCPUKernel::DoCast(int thread_id) {
            reinterpret_cast<char *>(input->data_c()) + offset * datalen, data_num * datalen);
     return RET_OK;
   }
-  if (output_data_type != kNumberTypeFloat32) {
-    if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt64) {
-      Float32ToInt64(reinterpret_cast<float *>(input->data_c()) + offset,
-                     reinterpret_cast<int64_t *>(output_data) + offset, data_num);
-    } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt32) {
-      Float32ToInt32(reinterpret_cast<float *>(input->data_c()) + offset,
-                     reinterpret_cast<int32_t *>(output_data) + offset, data_num);
-    } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeFloat16) {
-      Float32ToFp16(reinterpret_cast<float *>(input->data_c()) + offset,
-                    reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
-    } else if (input_data_type == kNumberTypeInt32 && output_data_type == kNumberTypeInt64) {
-      Int32ToInt64(reinterpret_cast<int32_t *>(input->data_c()) + offset,
-                   reinterpret_cast<int64_t *>(output_data) + offset, data_num);
-    } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt16) {
-      Float32ToInt16(reinterpret_cast<float *>(input->data_c()) + offset,
-                     reinterpret_cast<int16_t *>(output_data) + offset, data_num);
-    } else if (input_data_type == kNumberTypeBool && output_data_type == kNumberTypeInt32) {
-      BoolToInt32(reinterpret_cast<bool *>(input->data_c()) + offset, reinterpret_cast<int32_t *>(output_data) + offset,
-                  data_num);
-#ifdef ENABLE_FP16
-    } else if (input_data_type == kNumberTypeInt64 && output_data_type == kNumberTypeFloat16) {
-      Int64ToFp16(reinterpret_cast<int64_t *>(input->data_c()) + offset,
-                  reinterpret_cast<float16_t *>(output_data) + offset, data_num);
-#endif
-    } else {
-      MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
-      return RET_ERROR;
-    }
-  } else {
+  if (output_data_type == kNumberTypeFloat32) {
     return CastToFp32(input, output, offset, data_num);
+  } else if (output_data_type == kNumberTypeFloat16) {
+    return CastToFp16(input, output, offset, data_num);
+  } else {
+    return CastToOthers(input, output, offset, data_num);
   }
-  return RET_OK;
 }
 
 int CastCPUKernel::Run() {

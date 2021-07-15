@@ -27,6 +27,7 @@
 #include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
 #include "src/common/tensor_util.h"
+#include "src/common/file_utils.h"
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
@@ -982,6 +983,33 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
     return nullptr;
   }
   model->buf = nullptr;
+  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
+  return session;
+}
+
+session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
+  size_t model_size;
+  auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "Read model file failed";
+    return nullptr;
+  }
+  auto *session = session::LiteSession::CreateSession(context);
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "Create session failed";
+    return nullptr;
+  }
+  auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model failed";
+    return nullptr;
+  }
+  (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
+  auto ret = session->CompileGraph(model);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Compile model failed";
+    return nullptr;
+  }
   (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
   return session;
 }

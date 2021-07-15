@@ -70,6 +70,13 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kMCFailed;
 }
+
+Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
+                    const Key &dec_key, const std::string &dec_mode) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kMCFailed;
+}
+
 Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";

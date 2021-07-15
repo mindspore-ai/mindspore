@@ -46,10 +46,7 @@ int BroadcastToCPUKernel::ReSize() {
   shape_info_->output_shape_size_ = static_cast<int>(output_shape.size());
 
   data_type_ = in_tensors_.at(0)->data_type();
-  if (data_type_ != out_tensors_.at(0)->data_type()) {
-    MS_LOG(ERROR) << "BroadcastTo infer has error";
-    return RET_ERROR;
-  }
+  MS_ASSERT(data_type_ == out_tensors_.at(0)->data_type());
   return RET_OK;
 }
 
@@ -80,14 +77,14 @@ int BroadcastToCPUKernel::Run() {
   }
   switch (data_type_) {
     case kNumberTypeFloat32: {
-      const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-      auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+      const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+      auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
       return BroadcastTo(float, input_data, shape_info_, output_data);
     }
     case kNumberTypeInt32:
     case kNumberTypeInt: {
-      const auto input_data = reinterpret_cast<int *>(in_tensors_.at(0)->MutableData());
-      auto output_data = reinterpret_cast<int *>(out_tensors_.at(0)->MutableData());
+      const auto input_data = reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
+      auto output_data = reinterpret_cast<int *>(out_tensors_.at(0)->data_c());
       return BroadcastTo(int, input_data, shape_info_, output_data);
     }
     default:

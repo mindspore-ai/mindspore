@@ -139,6 +139,7 @@ function Run_Benchmark() {
       if [[ ${model_name##*.} == "caffemodel" ]]; then
         model_name=${model_name%.*}
       fi
+      echo "Benchmarking ${model_name} $6 $7 ......"
       # adjust benchmark mode
       benchmark_mode="calib"
       if [[ $6 == "arm64" && $7 == "CPU" && ! ${cfg_file_name} =~ "fp16" ]]; then
