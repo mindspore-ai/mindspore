@@ -42,6 +42,10 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
                     const Key &dec_key, const std::string &dec_mode) {
+  if (model_path.empty()) {
+    MS_LOG(ERROR) << "Invalid Model path.";
+    return kLiteInputParamInvalid;
+  }
   impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
