@@ -431,7 +431,7 @@ Model *Model::Import(const char *filename) {
   if (buf == nullptr) {
     return nullptr;
   }
-  return ImportFromBuffer(buf, size, false);
+  return ImportFromBuffer(buf, size, true);
 }
 
 int Model::Export(Model *model, char *buffer, size_t *len) {
