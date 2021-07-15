@@ -91,7 +91,7 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
 }
 
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(OptLevel_2, "highlevelopt1");
+  auto pm = std::make_shared<GraphKernelPassManager>(2, "highlevelopt1");
   // Reorder Cast and Type-insensitive node
   pm->AddPass(std::make_shared<ReorderOps>(), OptLevel_2);
 
