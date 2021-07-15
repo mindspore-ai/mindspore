@@ -103,6 +103,14 @@ parser.add_argument('--need_dropout', type=ast.literal_eval, default=False, \
                     help='whether need dropout, default is True.')
 parser.add_argument('--max_dataset_size', type=int, default=None, \
                     help='max images pre epoch, default is None.')
+
+# export parameters
+parser.add_argument("--export_batch_size", type=int, default=1, \
+                    help="batch size")
+parser.add_argument("--export_file_name", type=str, default="CycleGAN", \
+                    help="output file name.")
+parser.add_argument("--export_file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], \
+                    default="AIR", help="file format")
 args = parser.parse_args()
 
 
