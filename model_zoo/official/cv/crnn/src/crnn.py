@@ -19,6 +19,8 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.common import Parameter
 from mindspore.common.initializer import TruncatedNormal
 
 def _bn(channel):
@@ -91,7 +93,7 @@ class BidirectionalLSTM(nn.Cell):
         return out
 
 
-class CRNN(nn.Cell):
+class CRNNV2(nn.Cell):
     """
      Define a CRNN network which contains Bidirectional LSTM layers and vgg layer.
 
@@ -102,7 +104,7 @@ class CRNN(nn.Cell):
         hidden_size(int): the hidden size in LSTM layers, default is 512
      """
     def __init__(self, config):
-        super(CRNN, self).__init__()
+        super(CRNNV2, self).__init__()
         self.batch_size = config.batch_size
         self.input_size = config.input_size
         self.hidden_size = config.hidden_size
@@ -125,9 +127,107 @@ class CRNN(nn.Cell):
         return x
 
 
+class CRNNV1(nn.Cell):
+    """
+     Define a CRNN network which contains Bidirectional LSTM layers and vgg layer.
+
+     Args:
+        input_size(int): Size of time sequence. Usually, the input_size is equal to three times of image height for
+        text images.
+        batch_size(int): batch size of input data, default is 64
+        hidden_size(int): the hidden size in LSTM layers, default is 512
+     """
+    def __init__(self, config):
+        super(CRNNV1, self).__init__()
+        self.batch_size = config.batch_size
+        self.input_size = config.input_size
+        self.hidden_size = config.hidden_size
+        self.num_classes = config.class_num
+        self.reshape = P.Reshape()
+        self.cast = P.Cast()
+        k = (1 / self.hidden_size) ** 0.5
+        self.rnn1 = P.DynamicRNN(forget_bias=0.0)
+        self.rnn1_bw = P.DynamicRNN(forget_bias=0.0)
+        self.rnn2 = P.DynamicRNN(forget_bias=0.0)
+        self.rnn2_bw = P.DynamicRNN(forget_bias=0.0)
+
+        w1 = np.random.uniform(-k, k, (self.input_size + self.hidden_size, 4 * self.hidden_size))
+        self.w1 = Parameter(w1.astype(np.float32), name="w1")
+        w2 = np.random.uniform(-k, k, (2 * self.hidden_size + self.hidden_size, 4 * self.hidden_size))
+        self.w2 = Parameter(w2.astype(np.float32), name="w2")
+        w1_bw = np.random.uniform(-k, k, (self.input_size + self.hidden_size, 4 * self.hidden_size))
+        self.w1_bw = Parameter(w1_bw.astype(np.float32), name="w1_bw")
+        w2_bw = np.random.uniform(-k, k, (2 * self.hidden_size + self.hidden_size, 4 * self.hidden_size))
+        self.w2_bw = Parameter(w2_bw.astype(np.float32), name="w2_bw")
+
+        self.b1 = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b1")
+        self.b2 = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b2")
+        self.b1_bw = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b1_bw")
+        self.b2_bw = Parameter(np.random.uniform(-k, k, (4 * self.hidden_size)).astype(np.float32), name="b2_bw")
+
+        self.h1 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+        self.h2 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+        self.h1_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+        self.h2_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+
+        self.c1 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+        self.c2 = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+        self.c1_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+        self.c2_bw = Tensor(np.zeros(shape=(1, self.batch_size, self.hidden_size)).astype(np.float32))
+
+        self.fc_weight = np.random.random((self.num_classes, self.hidden_size)).astype(np.float32)
+        self.fc_bias = np.random.random((self.num_classes)).astype(np.float32)
+
+        self.fc = nn.Dense(in_channels=self.hidden_size, out_channels=self.num_classes,
+                           weight_init=Tensor(self.fc_weight), bias_init=Tensor(self.fc_bias))
+        self.fc.to_float(mstype.float32)
+        self.expand_dims = P.ExpandDims()
+        self.concat = P.Concat()
+        self.transpose = P.Transpose()
+        self.squeeze = P.Squeeze(axis=0)
+        self.vgg = VGG()
+        self.reverse_seq1 = P.ReverseSequence(batch_dim=1, seq_dim=0)
+        self.reverse_seq2 = P.ReverseSequence(batch_dim=1, seq_dim=0)
+        self.reverse_seq3 = P.ReverseSequence(batch_dim=1, seq_dim=0)
+        self.reverse_seq4 = P.ReverseSequence(batch_dim=1, seq_dim=0)
+        self.seq_length = Tensor(np.ones((self.batch_size), np.int32) * config.num_step, mstype.int32)
+        self.concat1 = P.Concat(axis=2)
+        self.dropout = nn.Dropout(0.5)
+        self.rnn_dropout = nn.Dropout(0.9)
+        self.use_dropout = config.use_dropout
+
+    def construct(self, x):
+        x = self.vgg(x)
+
+        x = self.reshape(x, (self.batch_size, self.input_size, -1))
+        x = self.transpose(x, (2, 0, 1))
+        bw_x = self.reverse_seq1(x, self.seq_length)
+        y1, _, _, _, _, _, _, _ = self.rnn1(x, self.w1, self.b1, None, self.h1, self.c1)
+        y1_bw, _, _, _, _, _, _, _ = self.rnn1_bw(bw_x, self.w1_bw, self.b1_bw, None, self.h1_bw, self.c1_bw)
+        y1_bw = self.reverse_seq2(y1_bw, self.seq_length)
+        y1_out = self.concat1((y1, y1_bw))
+        if self.use_dropout:
+            y1_out = self.rnn_dropout(y1_out)
+
+        y2, _, _, _, _, _, _, _ = self.rnn2(y1_out, self.w2, self.b2, None, self.h2, self.c2)
+
+        output = ()
+        for i in range(F.shape(y2)[0]):
+            y2_after_fc = self.fc(self.squeeze(y2[i:i+1:1]))
+            y2_after_fc = self.expand_dims(y2_after_fc, 0)
+            output += (y2_after_fc,)
+        output = self.concat(output)
+        return output
+
+
 def crnn(config, full_precision=False):
     """Create a CRNN network with mixed_precision or full_precision"""
-    net = CRNN(config)
+    model_version_map = {
+        "V2": CRNNV2,
+        "V1": CRNNV1
+    }
+    net = model_version_map[config.model_version](config)
+
     if not full_precision:
         net = net.to_float(mstype.float16)
     return net
