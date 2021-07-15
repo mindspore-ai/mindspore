@@ -37,15 +37,15 @@ dct_map = {'16': '16--Award_Ceremony', '26': '26--Soldier_Drilling', '29': '29--
            '54': '54--Rescue', '57': '57--Angler', '31': '31--Waiter_Waitress', '27': '27--Spa', '21': '21--Festival'}
 
 
-def cal_acc(result_path, label_file, meta_file, save_path):
+def cal_acc(result_path, label_path, meta_path, save_path):
     detector = CenterFaceDetector(config, None)
     if not os.path.exists(save_path):
         for im_dir in dct_map.values():
             out_path = os.path.join(save_path, im_dir)
             if not os.path.exists(out_path):
                 os.makedirs(out_path)
-    name_list = np.load(os.path.join(meta_file, "name_list.npy"), allow_pickle=True)
-    meta_list = np.load(os.path.join(meta_file, "meta_list.npy"), allow_pickle=True)
+    name_list = np.load(os.path.join(meta_path, "name_list.npy"), allow_pickle=True)
+    meta_list = np.load(os.path.join(meta_path, "meta_list.npy"), allow_pickle=True)
 
     for num, im_name in enumerate(name_list):
         meta = meta_list[num]
@@ -75,8 +75,8 @@ def cal_acc(result_path, label_file, meta_file, save_path):
                     x1, y1, x2, y2, s = b[0], b[1], b[2], b[3], b[4]
                     f.write('{:.1f} {:.1f} {:.1f} {:.1f} {:.3f}\n'.format(x1, y1, (x2 - x1 + 1), (y2 - y1 + 1), s))
         print(f"no.[{num}], image_nameL {im_name}")
-    evaluation(save_path, label_file)
+    evaluation(save_path, label_path)
 
 
 if __name__ == '__main__':
-    cal_acc(config.result_path, config.label_file, config.meta_file, config.save_path)
+    cal_acc(config.result_path, config.label_path, config.meta_path, config.save_path)

@@ -134,8 +134,8 @@ preprocess_path: ''
 
 # postprocess / centerface calcul AP
 result_path: ''
-label_file: ''
-meta_file: ''
+label_path: ''
+meta_path: ''
 save_path: ''
 
 # ==============================================================================
