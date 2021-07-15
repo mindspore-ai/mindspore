@@ -84,6 +84,8 @@ class AllReduce(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
+        >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
         >>> from mindspore.ops.operations.comm_ops import ReduceOp
@@ -94,7 +96,7 @@ class AllReduce(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.allreduce_sum = ops.AllReduce(ReduceOp.SUM, group="nccl_world_group")
+        ...         self.allreduce_sum = ops.AllReduce(ReduceOp.SUM)
         ...
         ...     def construct(self, x):
         ...         return self.allreduce_sum(x)
@@ -103,8 +105,8 @@ class AllReduce(PrimitiveWithInfer):
         >>> net = Net()
         >>> output = net(input_)
         >>> print(output)
-        [[4. 5. 6. 0. 0. 0. 0. 0.]
-         [0. 0. 0. 0. 0. 0. 0. 0.]]
+        [[2. 2. 2. 2. 2. 2. 2. 2.]
+         [2. 2. 2. 2. 2. 2. 2. 2.]]
     """
 
     @prim_attr_register
