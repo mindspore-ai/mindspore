@@ -101,8 +101,8 @@ std::vector<std::string> GetAllFiles(std::string_view dirName) {
 
 int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
   std::string homePath = "./result_Files";
-  int INVALID_POINTER = -1;
-  int ERROR = -2;
+  const int INVALID_POINTER = -1;
+  const int ERROR = -2;
   for (size_t i = 0; i < outputs.size(); ++i) {
     size_t outputSize;
     std::shared_ptr<const void> netOutput;
