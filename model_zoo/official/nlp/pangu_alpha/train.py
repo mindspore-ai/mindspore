@@ -30,6 +30,7 @@ import mindspore.common.dtype as mstype
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell
+from src.adam import AdamWeightDecayOp
 from src.dataset import create_dataset
 from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
 from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, PanguAlphaTrainPipelineWithLossScaleCell
@@ -76,13 +77,31 @@ project_root = os.path.abspath(
 print('project_root:', project_root)
 
 
+def set_weight_decay(params):
+    """
+    Set weight decay coefficient, zero for bias and layernorm, 1e-1 for rest
+    """
+    decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
+    decay_params = list(filter(decay_filter, params))
+    other_params = list(filter(lambda x: not decay_filter(x), params))
+    group_params = [{
+        'params': decay_params,
+        'weight_decay': 1e-1
+    }, {
+        'params': other_params,
+        'weight_decay': 0.0
+    }, {
+        'order_params': params
+    }]
+    return group_params
+
+
 def run_train(args_opt):
     r"""
     The main training process.
     """
     # Set execution mode
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target=args_opt.device_target)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     context.set_context(variable_memory_max_size="30GB")
     # Set parallel context
     if args_opt.distribute == "true":
@@ -149,22 +168,12 @@ def run_train(args_opt):
                       warmup_steps=args_opt.warmup_step,
                       decay_steps=200000)
 
-    # Set weight decay coefficient, zero for bias and layernorm, 1e-1 for rest
-    decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
     params = pangu_alpha.trainable_params()
-    decay_params = list(filter(decay_filter, params))
-    other_params = list(filter(lambda x: not decay_filter(x), params))
-    group_params = [{
-        'params': decay_params,
-        'weight_decay': 1e-1
-    }, {
-        'params': other_params,
-        'weight_decay': 0.0
-    }, {
-        'order_params': params
-    }]
+    group_params = set_weight_decay(params)
     if args_opt.optimizer == "lamb":
         optimizer = nn.Lamb(group_params, learning_rate=lr)
+    elif args_opt.opt_offload:
+        optimizer = AdamWeightDecayOp(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
     else:
         optimizer = FP32StateAdamWeightDecay(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
     # Initial scaling sens
@@ -200,6 +209,7 @@ def run_train(args_opt):
         load_distributed_checkpoint(model.train_network, ckpt_file_list, strategy)
     print("Dataset size: {}, actual_epoch_num: {}".format(ds.get_dataset_size(), actual_epoch_num), flush=True)
     model.train(actual_epoch_num, ds, callbacks=callback, sink_size=callback_size, dataset_sink_mode=True)
+
 
 def run_train_pipeline(args_opt):
     r"""
@@ -263,20 +273,11 @@ def run_train_pipeline(args_opt):
     lr = LearningRate(learning_rate=args_opt.start_lr, end_learning_rate=args_opt.end_lr,
                       warmup_steps=args_opt.warmup_step, decay_steps=args_opt.decay_steps)
     params = pangu_alpha.infer_param_pipeline_stage()
-    decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
-    decay_params = list(filter(decay_filter, params))
-    other_params = list(filter(lambda x: not decay_filter(x), params))
-    group_params = [{
-        'params': decay_params,
-        'weight_decay': 1e-1
-    }, {
-        'params': other_params,
-        'weight_decay': 0.0
-    }, {
-        'order_params': params
-    }]
+    group_params = set_weight_decay(params)
     if args_opt.optimizer == "lamb":
         optimizer = nn.Lamb(group_params, learning_rate=lr)
+    elif args_opt.opt_offload:
+        optimizer = AdamWeightDecayOp(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
     else:
         optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, beta1=0.9, beta2=0.95, eps=1e-8)
 
@@ -296,6 +297,7 @@ def run_train_pipeline(args_opt):
     model = Model(pangu_alpha_with_grads)
     model.train(actual_epoch_num, ds, callbacks=callback,
                 sink_size=callback_size, dataset_sink_mode=True)
+
 
 if __name__ == "__main__":
     opt = get_args()

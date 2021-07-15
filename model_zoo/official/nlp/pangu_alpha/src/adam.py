@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""AdamWeightDecay, a customized Adam for pangu1. Input: gradient."""
+"""AdamWeightDecay, a customized Adam for pangu alpha. Input: gradient."""
 import numpy as np
 
 from mindspore.common import dtype as mstype
@@ -35,15 +35,14 @@ def _update_run_kernel(opt, beta1, beta2, eps, lr, weight_decay, param, m, v, gr
     """
     Update parameters by AdamWeightDecay op.
     """
+    success = True
     if optim_filter:
-        op_cast = P.Cast()
-        gradient_fp32 = op_cast(gradient, mstype.float32)
         if decay_flags:
-            next_param = opt(param, m, v, lr, beta1, beta2, eps, F.cast(weight_decay, mstype.float32), gradient_fp32)
+            next_param = opt(param, m, v, lr, beta1, beta2, eps, weight_decay, gradient)
         else:
-            next_param = opt(param, m, v, lr, beta1, beta2, eps, F.cast(0.0, mstype.float32), gradient_fp32)
-        return next_param
-    return gradient
+            next_param = opt(param, m, v, lr, beta1, beta2, eps, 0.0, gradient)
+        return F.depend(success, next_param)
+    return success
 
 
 def _check_param_value(beta1, beta2, eps, prim_name):
@@ -145,18 +144,17 @@ class AdamWeightDecayOp(Optimizer):
         lr = self.get_lr()
         if self.is_group:
             if self.is_group_lr:
-                optim_result = self.map_(F.partial(_adam_opt, self.opt, self.beta1, self.beta2, self.eps),
-                                         lr, self.weight_decay, self.parameters, self.moments1, self.moments2,
-                                         gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.map_reverse(F.partial(_adam_opt, self.opt, self.beta1, self.beta2, self.eps),
+                                                lr, self.weight_decay, self.parameters, self.moments1, self.moments2,
+                                                gradients, self.decay_flags, self.optim_filter)
             else:
-                optim_result = self.map_(F.partial(_adam_opt, self.opt, self.beta1, self.beta2, self.eps, lr),
-                                         self.weight_decay, self.parameters, self.moments1, self.moments2,
-                                         gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.map_reverse(F.partial(_adam_opt, self.opt, self.beta1, self.beta2, self.eps, lr),
+                                                self.weight_decay, self.parameters, self.moments1, self.moments2,
+                                                gradients, self.decay_flags, self.optim_filter)
         else:
-            optim_result = self.map_(F.partial(_adam_opt, self.opt, self.beta1, self.beta2, self.eps, lr,
-                                               self.weight_decay),
-                                     self.parameters, self.moments1, self.moments2, gradients, self.decay_flags,
-                                     self.optim_filter)
+            optim_result = self.map_reverse(F.partial(_adam_opt, self.opt, self.beta1, self.beta2, self.eps, lr,
+                                                      self.weight_decay), self.parameters, self.moments1, self.moments2,
+                                            gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
             self.broadcast_params(optim_result)
         return optim_result
