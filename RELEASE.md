@@ -68,6 +68,10 @@
 - [STABLE] Add options to control the optimization level.
 - [STABLE] Enhance the generalization ability on GPU. GraphKernel is enabled by default in 40+ networks which cover the field of NLP, CV, Recommender, NAS and Audio. The result shows their throughput is significantly improved, and you are Recommended enabling GraphKernel in your network.
 
+#### Debug
+
+- [STABLE] Unified dump function.
+
 ### API Change
 
 #### Backwards Incompatible Change
@@ -99,6 +103,15 @@ device_que(send_epoch_end=True, create_data_info_queue=False)
 </td>
 </tr>
 </table>
+
+##### Dump Config
+
+Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/r1.3/advanced_use/dump_in_graph_mode.html#dump)
+
+| 1.2.1                                                  | 1.3.0                                                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `iteration` is an int.                                | `iteration` is a string.                                                                  |
+| `op_debug_mode` is in `async_dump_settings` field. | `op_debug_mode` is in `common_dump_settings` field. `async_dump_settings` is removed. |
 
 ### Bug fixes
 
