@@ -710,6 +710,7 @@ void LiteSession::BindThread(bool if_bind) {
 }
 
 LiteSession::~LiteSession() {
+  delegate_.reset();
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";

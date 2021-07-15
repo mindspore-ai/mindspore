@@ -30,6 +30,7 @@ InnerContext::InnerContext(const Context *context) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
   this->enable_parallel_ = context->enable_parallel_;
+  this->affinity_core_list_ = context->affinity_core_list_;
   SetContextDevice(context);
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   CpuInfo cpu_info;
