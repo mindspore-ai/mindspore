@@ -25,7 +25,7 @@ get_version
 MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
 MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-linux-x64"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
-MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
+MINDSPORE_LITE_DOWNLOAD_URL="https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}-lite/MindSpore/lite/release/linux/${MINDSPORE_FILE}"
 
 mkdir -p build
 mkdir -p lib
@@ -37,8 +37,8 @@ if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
   wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/lib/libmindspore-lite.a ${BASEPATH}/lib
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/include ${BASEPATH}/
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/libmindspore-lite.so ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include ${BASEPATH}/
 cd ${BASEPATH}/build || exit
 cmake ${BASEPATH}
 make
