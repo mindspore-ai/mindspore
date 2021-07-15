@@ -40,7 +40,7 @@ with our parallel setting. We summarized the training tricks as followings:
 2. Pipeline Model Parallelism
 3. Optimizer Model Parallelism
 
-The above features can be found [here](https://www.mindspore.cn/doc/programming_guide/en/r1.2/auto_parallel.html).
+The above features can be found [here](https://www.mindspore.cn/docs/programming_guide/en/master/auto_parallel.html).
 More amazing features are still under developing.
 
 The technical report and checkpoint file can be found [here](https://git.openi.org.cn/PCL-Platform.Intelligence/PanGu-AIpha).
@@ -143,7 +143,7 @@ bash scripts/run_distribute_training.sh DATASET RANK_TABLE RANK_SIZE TYPE MODE
 The above command involves some `args` described below:
 
 - DATASET: The path to the mindrecord files's parent directory . For example: `/home/work/mindrecord/`.
-- RANK_TABLE: The details of the rank table can be found [here](https://www.mindspore.cn/tutorial/training/zh-CN/r1.2/advanced_use/distributed_training_ascend.html). It's a json file describes the `device id`, `service ip` and `rank`.
+- RANK_TABLE: The details of the rank table can be found [here](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training_ascend.html). It's a json file describes the `device id`, `service ip` and `rank`.
 - RANK_SIZE: The device number. This can be your total device numbers. For example, 8, 16, 32 ...
 - TYPE: The param init type. The parameters will be initialized with float32. Or you can replace it with `fp16`. This will save a little memory used on the device.
 - MODE: The configure mode. This mode will set the `hidden size` and `layers` to make the parameter number near 2.6 billions. The other mode can be `13B` (`hidden size` 5120 and `layers` 40, which needs at least 16 cards to train.) and `200B`.
@@ -169,7 +169,7 @@ bash scripts/run_distributed_train_gpu.sh RANK_SIZE HOSTFILE DATASET MOD
 ```
 
 - RANK_SIZE: The device number. This can be your total device numbers. For example, 8, 16, 32 ...
-- HOSTFILE:  It's a text file describes the host ip and its devices. Please see our [tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/r1.2/advanced_use/distributed_training_gpu.html) or [OpenMPI](https://www.open-mpi.org/) for more details.
+- HOSTFILE:  It's a text file describes the host ip and its devices. Please see our [tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training_gpu.html) or [OpenMPI](https://www.open-mpi.org/) for more details.
 - DATASET: The path to the mindrecord files's parent directory . For example: `/home/work/mindrecord/`.
 - MODE: Can be `2.6B`, `13B` and `200B`.
 

@@ -204,7 +204,7 @@ max_text_length": 23,                     # max number of digits in each
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/dataset_sample.html) for more information about dataset.
 
 ### [Training](#contents)
 

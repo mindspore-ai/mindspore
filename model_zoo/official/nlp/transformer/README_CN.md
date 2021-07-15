@@ -316,7 +316,7 @@ Parameters for learning rate:
 
 ### 训练过程
 
-- 在`default_config.yaml`中设置选项，包括loss_scale、学习率和网络超参数。点击[这里](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)查看更多数据集信息。
+- 在`default_config.yaml`中设置选项，包括loss_scale、学习率和网络超参数。点击[这里](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/dataset_sample.html)查看更多数据集信息。
 
 - 运行`run_standalone_train.sh`，进行Transformer模型的非分布式训练。
 

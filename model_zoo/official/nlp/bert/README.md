@@ -193,7 +193,7 @@ For distributed training among multiple machines, training command should be exe
 Please follow the instructions in the link below to create an hccl.json file in need:
 [https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
-For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/dataset_loading.html#tfrecord) format.
+For dataset, if you want to set the format and parameters, a schema configuration file with JSON format needs to be created, please refer to [tfrecord](https://www.mindspore.cn/docs/programming_guide/en/master/dataset_loading.html#tfrecord) format.
 
 ```text
 For pretraining, schema file contains ["input_ids", "input_mask", "segment_ids", "next_sentence_labels", "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"].

@@ -84,7 +84,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 
 ### Mixed Precision
 
-The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
+The [mixed precision](https://www.mindspore.cn/docs/programming_guide/en/master/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
@@ -445,7 +445,7 @@ train_parallel1/log:epcoh: 2 step: 97, loss is 1.7133579
 ...
 ```
 
-> About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_tutorials.html).
+> About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training.html).
 > **Attention** This will bind the processor cores according to the `device_num` and total processor numbers. If you don't expect to run pretraining with binding processor cores, remove the operations about `taskset` in `scripts/run_distribute_train.sh`
 
 ##### Run vgg16 on GPU
