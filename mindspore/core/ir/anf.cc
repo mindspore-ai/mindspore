@@ -411,9 +411,11 @@ std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
     const size_t update_state_valid_input_index = 2;
     const size_t make_tuple_valid_input_index = 1;
     if (IsPrimitiveCNode(node, prim::kPrimUpdateState) && inputs.size() > update_state_valid_input_index) {
-      std::copy(inputs.begin() + update_state_valid_input_index, inputs.end(), std::back_inserter(real_inputs));
+      (void)std::copy(inputs.begin() + SizeToLong(update_state_valid_input_index), inputs.end(),
+                      std::back_inserter(real_inputs));
     } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) && inputs.size() > make_tuple_valid_input_index) {
-      std::copy(inputs.begin() + make_tuple_valid_input_index, inputs.end(), std::back_inserter(real_inputs));
+      (void)std::copy(inputs.begin() + SizeToLong(make_tuple_valid_input_index), inputs.end(),
+                      std::back_inserter(real_inputs));
     }
     std::string first_input_target = kTargetUnDefined;
     bool has_diff_target =

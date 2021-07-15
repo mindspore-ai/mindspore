@@ -307,7 +307,7 @@ class CheckAndConvertUtils {
                                                 const std::string &arg_name);
   static void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
   static int64_t GetAndCheckFormat(const ValuePtr &value);
-  static int64_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);
+  static size_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);
 
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);
