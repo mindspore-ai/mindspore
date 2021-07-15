@@ -160,8 +160,8 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list);
 
-py::bytes PyEncrypt(char *plain_data, const size_t plain_len, char *key, const size_t key_len, std::string enc_mode);
-py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const size_t key_len, std::string dec_mode);
+py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode);
+py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_len, const std::string &dec_mode);
 bool PyIsCipherFile(const std::string &file_path);
 }  // namespace pipeline
 }  // namespace mindspore

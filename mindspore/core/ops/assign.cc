@@ -30,8 +30,8 @@ AbstractBasePtr InferImplAssign(const abstract::AnalysisEnginePtr &, const Primi
                                 const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("Assign infer", (CheckAndConvertUtils::GetRemoveMonadAbsNum(args_spec_list)),
-                                           kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger(
+    "Assign infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(args_spec_list)), kEqual, 2, prim_name);
   auto check_types = common_valid_types;
   check_types.emplace(kBool);
   auto variable_type = args_spec_list[0]->BuildType();
