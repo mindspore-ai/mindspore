@@ -25,7 +25,6 @@ from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, Mult
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_exec, _wrap_func
 from .. import functional as F
-from ...common.tensor import Tensor
 from .. import signature as sig
 
 __all__ = [EnvInstance_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
@@ -339,9 +338,6 @@ class GradOperation(GradOperation_):
             else:
                 new_kwargs = kwargs.copy()
                 new_kwargs.pop('sens')
-        for arg in args:
-            if not isinstance(arg, Tensor):
-                raise TypeError("grad inputs should be tensor in pynative mode")
         if isinstance(fn, FunctionType):
             if not _pynative_exec.check_run(fn, *args, **new_kwargs):
                 _pynative_exec.set_grad_flag(True)
