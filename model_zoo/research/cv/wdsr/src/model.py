@@ -36,7 +36,6 @@ class Block(nn.Cell):
     """residual block"""
     def __init__(self):
         super(Block, self).__init__()
-        # wn = lambda x: mindspore.nn.GroupNorm(x)
         act = nn.ReLU()
         self.res_scale = 1
         body = []

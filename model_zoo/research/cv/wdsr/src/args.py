@@ -52,8 +52,6 @@ parser.add_argument('--epochs', type=int, default=300,
                     help='number of epochs to train')
 parser.add_argument('--batch_size', type=int, default=16,
                     help='input batch size for training')
-#parser.add_argument('--self_ensemble', action='store_true',
-#                    help='use self-ensemble method for test')
 parser.add_argument('--test_only', action='store_true',
                     help='set this option to test the model')
 # Optimization specifications
@@ -61,6 +59,8 @@ parser.add_argument('--lr', type=float, default=1e-4,
                     help='learning rate')
 parser.add_argument('--init_loss_scale', type=float, default=65536.,
                     help='scaling factor')
+parser.add_argument('--loss_scale', type=float, default=1024.0,
+                    help='loss_scale')
 parser.add_argument('--decay', type=str, default='200',
                     help='learning rate decay type')
 parser.add_argument('--betas', type=tuple, default=(0.9, 0.999),

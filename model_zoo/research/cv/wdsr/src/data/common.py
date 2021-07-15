@@ -20,11 +20,8 @@ def get_patch(*args, patch_size=96, scale=2, input_large=False):
     ih, iw = args[0].shape[:2]
     tp = patch_size
     ip = tp // scale
-    # print("tp=%g,scale=%g,"%(tp,scale),end='',flush=True)
-    # print("ih=%g,iw=%g,ip=%g"%(ih,iw,ip),flush=True)
     ix = random.randrange(0, iw - ip + 1)
     iy = random.randrange(0, ih - ip + 1)
-    # ix = iy = 0
     if not input_large:
         tx, ty = scale * ix, scale * iy
     else:

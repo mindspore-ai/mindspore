@@ -106,13 +106,11 @@ class SRData:
             with open(f, 'wb') as _f:
                 pickle.dump(imageio.imread(img), _f)
 
-    # pylint: disable=unused-variable
     def __getitem__(self, idx):
-        lr, hr, filename = self._load_file(idx)
+        lr, hr, _ = self._load_file(idx)
         pair = self.get_patch(lr, hr)
         pair = common.set_channel(*pair, n_channels=self.args.n_colors)
         pair_t = common.np2Tensor(*pair, rgb_range=self.args.rgb_range)
-        #return pair_t[0], pair_t[1], [self.idx_scale], [filename]
         return pair_t[0], pair_t[1]
 
     def __len__(self):
@@ -163,7 +161,6 @@ class SRData:
     def _load_file(self, idx):
         """srdata"""
         idx = self._get_index(idx)
-        # print(idx,flush=True)
         f_hr = self.images_hr[idx]
         f_lr = self.images_lr[self.idx_scale][idx]
         filename, _ = os.path.splitext(os.path.basename(f_hr))
