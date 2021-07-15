@@ -83,7 +83,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --ann_avl_file=$annotation_file --img_id_file_path=$data_path --result_files=./result_Files &> acc.log &
+    python3.7 ../postprocess.py --ann_val_file=$annotation_file --img_id_file_path=$data_path --result_files=./result_Files &> acc.log &
 }
 
 compile_app

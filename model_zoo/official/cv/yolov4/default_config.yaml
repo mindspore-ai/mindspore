@@ -128,6 +128,8 @@ checkpoint_filter_list: ['feature_map.backblock0.conv6.weight', 'feature_map.bac
                          'feature_map.backblock1.conv6.weight', 'feature_map.backblock1.conv6.bias',
                          'feature_map.backblock2.conv6.weight', 'feature_map.backblock2.conv6.bias',
                          'feature_map.backblock3.conv6.weight', 'feature_map.backblock3.conv6.bias']
+img_id_file_path: ""
+result_files: './result_Files'
 
 ---
 
@@ -190,3 +192,5 @@ ckpt_file: "Checkpoint file path for export"
 file_name: "output file name for export"
 file_format: "file format for export"
 keep_detect: "keep the detect module or not, default: True"
+img_id_file_path: 'path of image dataset'
+result_files: 'path to 310 infer result floder'
