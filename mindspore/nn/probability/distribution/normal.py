@@ -52,14 +52,12 @@ class Normal(Distribution):
         >>> # A Normal distribution can be initialized without arguments.
         >>> # In this case, `mean` and `sd` must be passed in through arguments.
         >>> n2 = msd.Normal(dtype=mindspore.float32)
-
         >>> # Here are some tensors used below for testing
         >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
         >>> mean_a = Tensor([2.0], dtype=mindspore.float32)
         >>> sd_a = Tensor([2.0, 2.0, 2.0], dtype=mindspore.float32)
         >>> mean_b = Tensor([1.0], dtype=mindspore.float32)
         >>> sd_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
-
         >>> # Private interfaces of probability functions corresponding to public interfaces, including
         >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`,
         >>> # have the same arguments as follows.
