@@ -1690,11 +1690,11 @@ def vander(x, N=None, increasing=False):
     Examples:
         >>> import mindspore.numpy as np
         >>> print(np.vander([1., 2., 3., 4., 5.]))
-        [[  1   1   1   1   1]
-         [ 16   8   4   2   1]
-         [ 81  27   9   3   1]
-         [256  64  16   4   1]
-         [625 125  25   5   1]]
+        [[  1.   1.   1.   1.   1.]
+         [ 16.   8.   4.   2.   1.]
+         [ 81.  27.   9.   3.   1.]
+         [256.  64.  16.   4.   1.]
+         [625. 125.  25.   5.   1.]]
     """
     if isinstance(x, (list, tuple)):
         x = asarray_const(x)

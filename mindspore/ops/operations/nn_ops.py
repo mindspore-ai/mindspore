@@ -174,8 +174,8 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
     Examples:
         >>> # case 1: output_size=(None, 2)
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        >>>                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        >>>                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
         >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((None, 2))
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
@@ -6748,8 +6748,8 @@ class ApplyFtrl(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
         >>> output = net(input_x)
         >>> print(net.var.asnumpy())
-        [[ 0.0390525,  0.11492836]
-         [ 0.00066425, 0.15075898]]
+        [[ 0.0390525  0.11492836]
+         [ 0.00066425 0.15075898]]
     """
 
     @prim_attr_register

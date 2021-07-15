@@ -1036,7 +1036,7 @@ class Split(PrimitiveWithCheck):
         >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
         >>> print(x)
         [[1 1 1 1]
-         [2 2 2 2]])
+         [2 2 2 2]]
         >>> output = split(x)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Int32, value=
