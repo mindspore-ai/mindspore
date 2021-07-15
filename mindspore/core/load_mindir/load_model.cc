@@ -174,8 +174,7 @@ std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(std::vector<std::string> fil
                                                     const std::string &dec_mode, bool inc_load) {
   std::vector<std::shared_ptr<FuncGraph>> funcgraph_vec;
   MS_LOG(DEBUG) << "Load multiple MindIR files.";
-  for (size_t i = 0; i < file_names.size(); ++i) {
-    std::string file_name = file_names[i];
+  for (const auto &file_name : file_names) {
     MS_LOG(DEBUG) << "Load " << file_name;
     funcgraph_vec.push_back(LoadMindIR(file_name, is_lite, dec_key, key_len, dec_mode, inc_load));
   }
@@ -188,10 +187,9 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
     return nullptr;
   }
-  const char *file_path = reinterpret_cast<const char *>(file_name.c_str());
+  const char *file_path = file_name.c_str();
   char abs_path_buff[PATH_MAX];
   char abs_path[PATH_MAX];
-
   vector<string> files;
 
 #ifdef _WIN32
@@ -208,7 +206,11 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   }
   // Load parameter into graph
   if (endsWith(abs_path_buff, "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
-    int path_len = strlen(abs_path_buff) - strlen("graph.mindir");
+    if (strlen(abs_path_buff) < strlen("graph.mindir")) {
+      MS_LOG(ERROR) << "The abs_path_buff length is less than 'graph.mindir'.";
+      return nullptr;
+    }
+    int path_len = SizeToInt(strlen(abs_path_buff) - strlen("graph.mindir"));
     int ret = memcpy_s(abs_path, sizeof(abs_path), abs_path_buff, path_len);
     if (ret != 0) {
       MS_LOG(ERROR) << "Load MindIR occur memcpy_s error.";
