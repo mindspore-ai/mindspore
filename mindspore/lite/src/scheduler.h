@@ -124,6 +124,8 @@ class Scheduler {
   std::vector<Tensor *> *src_tensors_;
   const std::vector<Tensor *> &inputs_;
   const std::vector<Tensor *> &outputs_;
+  std::vector<mindspore::MSTensor> ms_inputs_;
+  std::vector<mindspore::MSTensor> ms_outputs_;
   std::vector<size_t> graph_output_node_indexes_;
   std::map<int, OpParameter *> op_parameters_;
   bool is_train_session_ = false;

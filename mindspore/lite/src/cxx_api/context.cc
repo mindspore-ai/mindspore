@@ -39,7 +39,7 @@ struct Context::Data {
   int32_t thread_num = 2;
   bool enable_parallel_ = false;
   std::vector<int32_t> affinity_core_list_;
-  int affinity_mode_ = 2;
+  int affinity_mode_ = 0;
   std::shared_ptr<Delegate> delegate = nullptr;
 };
 
@@ -80,6 +80,7 @@ void Context::SetThreadNum(int32_t thread_num) {
   }
   data_->thread_num = thread_num;
 }
+
 int32_t Context::GetThreadNum() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -111,9 +112,9 @@ void Context::SetThreadAffinity(int mode) {
     return;
   }
   data_->affinity_mode_ = mode;
-
   return;
 }
+
 int Context::GetThreadAffinityMode() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -131,6 +132,7 @@ void Context::SetThreadAffinity(const std::vector<int> &core_list) {
 
   return;
 }
+
 std::vector<int32_t> Context::GetThreadAffinityCoreList() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -221,6 +223,7 @@ void CPUDeviceInfo::SetEnableFP16(bool is_fp16) {
   }
   data_->params[kModelOptionCpuEnableFP16] = is_fp16;
 }
+
 bool CPUDeviceInfo::GetEnableFP16() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -251,6 +254,7 @@ void KirinNPUDeviceInfo::SetFrequency(int frequency) {
   }
   data_->params[kModelOptionKirinNpuFrequency] = frequency;
 }
+
 int KirinNPUDeviceInfo::GetFrequency() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
