@@ -18,6 +18,7 @@ package com.mindspore.lite.train_lenet;
 
 import com.mindspore.lite.MSTensor;
 import com.mindspore.lite.LiteSession;
+import com.mindspore.lite.TrainSession;
 import com.mindspore.lite.config.MSConfig;
 
 import java.nio.ByteBuffer;
@@ -48,7 +49,7 @@ public class NetRunner {
         msConfig.init(0, 2, 0, false);
         session = new LiteSession();
         System.out.println("Model path is " + modelPath);
-        session = session.createTrainSession(modelPath, msConfig, false);
+        session = TrainSession.createTrainSession(modelPath, msConfig, false);
         session.setupVirtualBatch(virtualBatch, 0.01f, 1.00f);
 
         List<MSTensor> inputs = session.getInputs();

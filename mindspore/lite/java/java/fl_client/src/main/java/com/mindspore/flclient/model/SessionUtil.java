@@ -18,6 +18,7 @@ package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
 import com.mindspore.lite.LiteSession;
+import com.mindspore.lite.TrainSession;
 import com.mindspore.lite.MSTensor;
 import com.mindspore.lite.config.MSConfig;
 import mindspore.schema.FeatureMap;
@@ -84,7 +85,7 @@ public class SessionUtil {
         // arg 2: cpuBindMode:NO_BIND ->  0
         // arg 3: enable_fp16 -> false
         msConfig.init(0, 1, 0, false);
-        LiteSession trainSession = LiteSession.createTrainSession(modelPath, msConfig,false);
+        LiteSession trainSession = TrainSession.createTrainSession(modelPath, msConfig,false);
         if (trainSession == null) {
             logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
             return null;

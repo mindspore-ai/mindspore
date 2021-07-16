@@ -20,7 +20,7 @@
 #include "include/train/train_cfg.h"
 #include "include/errorcode.h"
 
-extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createTrainSession(JNIEnv *env, jobject thiz,
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_TrainSession_createTrainSession(JNIEnv *env, jobject thiz,
                                                                                           jstring file_name,
                                                                                           jlong ms_context_ptr,
                                                                                           jboolean train_mode,

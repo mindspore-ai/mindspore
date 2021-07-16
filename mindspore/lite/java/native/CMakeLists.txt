@@ -92,12 +92,6 @@ set(JNI_SRC
 
 set(LITE_SO_NAME mindspore-lite)
 
-if(SUPPORT_TRAIN)
-  set(JNI_SRC
-          ${JNI_SRC}
-          ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
-  )
-endif()
 add_library(mindspore-lite-jni SHARED ${JNI_SRC})
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
@@ -108,13 +102,15 @@ else()
 endif()
 
 if(SUPPORT_TRAIN)
-  set(LITE_TRAIN_SO_NAME mindspore-lite-train minddata-lite)
-  if(PLATFORM_ARM64 OR PLATFORM_ARM32)
-    find_library(log-lib log)
-    target_link_libraries(mindspore-lite-jni ${LITE_TRAIN_SO_NAME} ${log-lib})
-  else()
-    target_link_libraries(mindspore-lite-jni ${LITE_TRAIN_SO_NAME})
-  endif()
+    set(LITE_TRAIN_SO_NAME mindspore-lite-train minddata-lite)
+    set(JNI_TRAIN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp)
+    add_library(mindspore-lite-train-jni SHARED ${JNI_TRAIN_SRC})
+    if(PLATFORM_ARM64 OR PLATFORM_ARM32)
+        find_library(log-lib log)
+        target_link_libraries(mindspore-lite-train-jni ${LITE_TRAIN_SO_NAME} ${log-lib})
+    else()
+        target_link_libraries(mindspore-lite-train-jni ${LITE_TRAIN_SO_NAME})
+    endif()
 endif()
 
 set(NDK_STRIP
