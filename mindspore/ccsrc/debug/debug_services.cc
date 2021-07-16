@@ -988,7 +988,8 @@ bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNode
       auto input_kernel = kernel->input(j + 1);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
       auto found = w_name.find_last_of('/');
-      if (found != std::string::npos && w_name.substr(found + 1) == input_kernel_name) return true;
+      if (found != std::string::npos && w_name.size() > found && w_name.substr(found + 1) == input_kernel_name)
+        return true;
     }
     return false;
   } else {
