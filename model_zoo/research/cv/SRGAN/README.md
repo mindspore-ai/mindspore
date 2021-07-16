@@ -41,7 +41,7 @@ Validation and eval evaluationdataset used: [Set5](<http://people.rennes.inria.f
 
 The process of training SRGAN needs a pretrained VGG19 based on Imagenet.
 
-[Training scripts](<https://gitee.com/mindspore/mindspore/tree/r1.2/model_zoo/official/cv/vgg16>)|
+[Training scripts](<https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/vgg16>)|
 [VGG19 pretrained model](<https://download.mindspore.cn/model_zoo/>)
 
 # [Environment Requirements](#contents)
@@ -51,8 +51,8 @@ The process of training SRGAN needs a pretrained VGG19 based on Imagenet.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script Description](#contents)
 
@@ -97,13 +97,16 @@ SRGAN
 # distributed training
 Usage: sh run_distribute_train.sh [DEVICE_NUM] [DISTRIBUTE] [RANK_TABLE_FILE] [LRPATH] [GTPATH] [VGGCKPT] [VLRPATH] [VGTPATH]
 
+eg: sh run_distribute_train.sh 8 1 ./hccl_8p.json ./DIV2K_train_LR_bicubic/X4 ./DIV2K_train_HR ./vgg.ckpt ./Set5/LR ./Set5/HR
 # standalone training
 Usage: sh run_standalone_train.sh [DEVICE_ID] [LRPATH] [GTPATH] [VGGCKPT] [VLRPATH] [VGTPATH]
+
+eg: sh run_distribute_train.sh 0 ./DIV2K_train_LR_bicubic/X4 ./DIV2K_train_HR ./vgg.ckpt ./Set5/LR ./Set5/HR
 ```
 
 ### [Training Result](#content)
 
-Training result will be stored in scripts/srgan0/ckpt. You can find checkpoint file.
+Training result will be stored in scripts/train_parallel0/ckpt. You can find checkpoint file.
 
 ### [Evaluation Script Parameters](#content)
 
@@ -111,7 +114,9 @@ Training result will be stored in scripts/srgan0/ckpt. You can find checkpoint f
 
 ```bash
 # evaling
-sh run_eval.sh [CKPT] [EVALLRPATH] [EVALGTPATH]
+sh run_eval.sh [CKPT] [EVALLRPATH] [EVALGTPATH] [DEVICE_ID]
+
+eg: sh run_eval.sh ./ckpt/best.ckpt ./Set14/LR ./Set14/HR 0
 ```
 
 ### [Evaluation result](#content)

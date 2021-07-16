@@ -14,12 +14,10 @@
 # ============================================================================
 
 """file for evaling"""
-import os
 import argparse
 import numpy as np
 from skimage.color import rgb2ycbcr
 from skimage.metrics import peak_signal_noise_ratio
-from PIL import Image
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 from mindspore import context
@@ -34,7 +32,7 @@ parser.add_argument("--test_LR_path", type=str, default='/data/Set14/LR')
 parser.add_argument("--test_GT_path", type=str, default='/data/Set14/HR')
 parser.add_argument("--res_num", type=int, default=16)
 parser.add_argument("--scale", type=int, default=4)
-parser.add_argument("--generator_path", type=str, default='./scripts/srgan0/ckpt/G_model_1000.ckpt')
+parser.add_argument("--generator_path", type=str, default='./ckpt/best.ckpt')
 parser.add_argument("--mode", type=str, default='train')
 parser.add_argument("--device_id", type=int, default=0, help="device id, default: 0.")
 i = 0
@@ -47,9 +45,6 @@ if __name__ == '__main__':
     params = load_checkpoint(args.generator_path)
     load_param_into_net(generator, params)
     op = ops.ReduceSum(keep_dims=False)
-    if not os.path.exists("./result/Set14"):
-        os.makedirs("./result/Set14")
-    weizhi = './result/Set14/psnr.txt'
     psnr_list = []
 
     print("=======starting test=====")
@@ -78,16 +73,4 @@ if __name__ == '__main__':
 
         psnr = peak_signal_noise_ratio(y_output / 255.0, y_gt / 255.0, data_range=1.0)
         psnr_list.append(psnr)
-        psnr = str(psnr)
-        with open(weizhi, "w") as f:
-            f.write('psnr : %s \n' % psnr)
-
-        result = Image.fromarray((output * 255.0).astype(np.uint8))
-        result.save('./result/Set14/res_%04d.png'%i)
-        i = i+1
-        mean = np.mean(psnr_list)
-        mean = str(mean)
-    print("avg PSNR:")
-    print(mean)
-    with open(weizhi, "w") as f:
-        f.write('avg psnr : %s \n' % mean)
+    print("avg PSNR:", np.mean(psnr_list))
