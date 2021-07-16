@@ -91,7 +91,7 @@ void PowerSingle(const float *input, const float *exponent, float *output, int l
     MS_FLOAT32X4 tmp_4 = MS_ADDQ_F32(MS_MULQ_F32(scale_4, MS_LDQ_F32(input + i)), shift_4);
     for (int j = 0; j < 4; ++j) {
       PowerScalarFun_ = CheckInteger(exponent[i + j]) ? OptimizedPowerScalar : StdPowerScalar;
-      output[i + j] = PowerScalarFun_(tmp_4[j], exponent + i + j);
+      output[i + j] = PowerScalarFun_(MS_F32X4_GETI(tmp_4, j), exponent + i + j);
     }
   }
 #endif

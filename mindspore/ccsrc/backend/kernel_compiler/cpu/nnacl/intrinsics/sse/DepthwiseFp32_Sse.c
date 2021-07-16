@@ -15,7 +15,7 @@
  */
 
 #ifdef ENABLE_SSE
-#include <x86intrin.h>
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/intrinsics/sse/sse_common.h"
 

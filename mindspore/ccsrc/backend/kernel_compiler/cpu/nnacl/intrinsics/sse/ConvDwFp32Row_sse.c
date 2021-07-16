@@ -15,7 +15,7 @@
  */
 
 #if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
-#include <x86intrin.h>
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/fp32/common_func_fp32.h"
 
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,

@@ -22,10 +22,14 @@ void var2Invar(float *save_var, int size, float eps) {
     save_var[i] = 1.0f / sqrt(save_var[i] + eps);
   }
 }
-
+#ifdef SUPPORT_MSVC
+void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
+                 int ch, float *dxhat_sum, float *dxhathat_sum, float *dbias, float *dscale, float *dx) {
+#else
 void backwardAll(const float *restrict in, const float *restrict yt, const float *restrict mean,
                  const float *restrict invar, const float *restrict scale, int size, int ch, float *restrict dxhat_sum,
                  float *restrict dxhathat_sum, float *restrict dbias, float *restrict dscale, float *restrict dx) {
+#endif
   float N = (float)size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
@@ -50,9 +54,15 @@ void backwardAll(const float *restrict in, const float *restrict yt, const float
     }
   }
 }
+
+#ifdef SUPPORT_MSVC
+void backwardP1(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
+                int ch, float *dxhat_sum, float *dxhathat_sum, float *dbias, float *dscale) {
+#else
 void backwardP1(const float *restrict in, const float *restrict yt, const float *restrict mean,
                 const float *restrict invar, const float *restrict scale, int size, int ch, float *restrict dxhat_sum,
                 float *restrict dxhathat_sum, float *restrict dbias, float *restrict dscale) {
+#endif
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
       int ix = i * ch + c;
@@ -68,9 +78,14 @@ void backwardP1(const float *restrict in, const float *restrict yt, const float 
   }
 }
 
+#ifdef SUPPORT_MSVC
+void backwardP2(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
+                int total_size, int ch, const float *dxhat_sum, const float *dxhathat_sum, float *dx) {
+#else
 void backwardP2(const float *restrict in, const float *restrict yt, const float *restrict mean,
                 const float *restrict invar, const float *restrict scale, int size, int total_size, int ch,
                 const float *dxhat_sum, const float *dxhathat_sum, float *restrict dx) {
+#endif
   const float N = (float)total_size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
