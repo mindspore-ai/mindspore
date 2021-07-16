@@ -3684,7 +3684,7 @@ class SamplerFn:
 
 
 def _subprocess_handle(eof, signum, frame):
-    eof.set()
+    threading.Thread(target=eof.set()).start()
 
 
 def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiprocessing):
