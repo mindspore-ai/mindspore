@@ -727,6 +727,9 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
     return actors;
   }
   for (auto &kernel : kernels) {
+    /* make subgraph name (actor name) unique */
+    kernel->set_name(kernel->name() + to_string(actor_count++));
+
     if ((kernel::LiteKernelUtil::IsSwitchCall(kernel))) {
       auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel);
       if (switch_actor == nullptr) {
