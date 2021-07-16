@@ -58,6 +58,7 @@ set(API_TRAIN_SRC
 
 if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
+    include_directories(${DDK_INCLUDE_PATH})
 endif()
 
 set(LITE_SRC

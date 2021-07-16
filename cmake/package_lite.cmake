@@ -185,6 +185,10 @@ if(PLATFORM_ARM64)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${DDK_LIB_PATH}/libhiai_ir_build.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(EXISTS "${DDK_LIB_PATH}/libhiai_hcl_model_runtime.so")
+            install(FILES ${DDK_LIB_PATH}/libhiai_hcl_model_runtime.so
+                    DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
@@ -239,6 +243,10 @@ elseif(PLATFORM_ARM32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${DDK_LIB_PATH}/libhiai_ir_build.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(EXISTS "${DDK_LIB_PATH}/libhiai_hcl_model_runtime.so")
+            install(FILES ${DDK_LIB_PATH}/libhiai_hcl_model_runtime.so
+                    DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}

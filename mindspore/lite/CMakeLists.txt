@@ -155,6 +155,7 @@ set(BUILD_MINDDATA "lite_cv" CACHE STRING "off, lite, lite_cv, wrapper or full")
 
 if(SUPPORT_NPU)
     set(DDK_PATH "$ENV{HWHIAI_DDK}/ddk/ai_ddk_lib")
+    set(DDK_INCLUDE_PATH "$ENV{HWHIAI_DDK}/ddk/ai_ddk_lib/include")
     if(PLATFORM_ARM64)
         set(DDK_LIB_PATH ${DDK_PATH}/lib64)
     elseif(PLATFORM_ARM32)
