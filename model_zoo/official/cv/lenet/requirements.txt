@@ -1,1 +1,4 @@
 easydict
+pyyaml
+numpy
+opencv-python

@@ -1,0 +1,5 @@
+numpy
+easydict
+opencv-python
+pycocotools
+pillow

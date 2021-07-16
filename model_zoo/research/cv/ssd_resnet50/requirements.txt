@@ -2,3 +2,4 @@ pycocotools
 opencv-python
 xml-python
 Pillow
+numpy
