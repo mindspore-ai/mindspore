@@ -7,7 +7,7 @@ data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
 checkpoint_path: './checkpoint/'
-device_target: Ascend
+device_target: GPU
 enable_profiling: False
 
 # ==============================================================================
@@ -32,7 +32,7 @@ save_checkpoint_epochs: 1
 keep_checkpoint_max: 200
 save_checkpoint_path: "./"
 platform: 'GPU'
-run_distribute: False
+run_distribute: True
 activation: "Softmax"
 
 # Image classification trian. train_parse_args():return train_args
@@ -59,8 +59,8 @@ run_distribute_export: False
 
 # postprocess.py / mobilenetv2 acc calculation
 batch_size_postprocess: 1
-result_path: '' # "result files path."
-label_path: '' # "label path."
+result_path: ''
+label_path: ''
 
 ---
 # Config description for each option
@@ -71,21 +71,22 @@ data_path: 'Dataset path for local'
 output_path: 'Training output path for local'
 ann_file: 'Ann file, default is val.json.'
 
-device_target: 'Target device type' 
+pretrain_ckpt: 'Pretrained checkpoint path for fine tune or incremental learning'
+platform: 'Target device type'
+freeze_layer: 'freeze the weights of network from start to which layers'
+filter_head: 'Filter head weight parameters when load checkpoint, default is False.'
+enable_cache: 'Caching the dataset in memory to speedup dataset processing, default is False.'
+cache_session_id: 'The session id for cache service.'
+file_name: "output file name."
+result_path: "result files path."
+label_path: "label path."
 enable_profiling: 'Whether enable profiling while training, default: False'
-only_create_dataset: 'If set it true, only create Mindrecord, default is false.'
 run_distribute: 'Run distribute, default is false.'
-do_train: 'Do train or not, default is true.'
-do_eval: 'Do eval or not, default is false.'
-dataset: 'Dataset, default is coco.'
-pre_trained: 'Pretrain file path.'
 device_id: 'Device id, default is 0.'
-device_num: 'Use device nums, default is 1.'
 rank_id: 'Rank id, default is 0.'
-file_format: 'file format' 
-img_path: "image file path."
-result_path: "result file path."
+file_format: 'file format'
 
 ---
-device_target: ['Ascend', 'GPU', 'CPU']
+platform: ['Ascend', 'GPU', 'CPU']
 file_format: ["AIR", "ONNX", "MINDIR"]
+freeze_layer: ["", "none", "backbone"]
