@@ -16,9 +16,7 @@
 #include "minddata/dataset/engine/cache/storage_manager.h"
 
 #include <iomanip>
-#include <sstream>
-#include <stdexcept>
-#include <utility>
+
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"

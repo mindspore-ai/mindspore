@@ -20,7 +20,6 @@
 #include <memory>
 #include <stack>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"

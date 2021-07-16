@@ -15,14 +15,8 @@
 */
 
 #include "minddata/dataset/engine/cache/perf/cache_pipeline_run.h"
-#include <sys/types.h>
-#include <algorithm>
-#include <chrono>
-#include <cstring>
-#include <iomanip>
-#include <sstream>
-#include "minddata/dataset/core/tensor.h"
 
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/services.h"

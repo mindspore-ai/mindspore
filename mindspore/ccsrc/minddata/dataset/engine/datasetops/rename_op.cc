@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/rename_op.h"
-#include <iomanip>
+
 #include <vector>
-#include <utility>
 #include <unordered_map>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/global_context.h"
-
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/log_adapter.h"
 
