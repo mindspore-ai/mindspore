@@ -423,6 +423,10 @@ class ReLU(Primitive):
 
     It returns :math:`\max(x,\  0)` element-wise.
 
+    Note:
+        In general, this operator is more commonly used. The difference from `ReLuV2` is that the operator will
+        output one more Mask.
+
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with number data type.
@@ -605,6 +609,10 @@ class ReLUV2(Primitive):
     Computes ReLU (Rectified Linear Unit) of input tensors element-wise.
 
     It returns :math:`\max(x,\  0)` element-wise.
+
+    Note:
+        The difference from `ReLu` is that the operator will output one more Mask,
+        and the kernel of the operator is different from `ReLu`.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor must be a 4-D tensor.
@@ -3027,6 +3035,12 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     :math:`\rho` represents `decay`. :math:`\beta` is the momentum term, represents `momentum`.
     :math:`\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
     :math:`\eta` represents `learning_rate`. :math:`\nabla Q_{i}(w)` represents `grad`.
+
+    Note:
+        The difference between `ApplyCenteredRMSProp` and `ApplyRMSProp` is that the fromer
+        uses the centered RMSProp algorithm, and the centered RRMSProp algorithm uses an estimate of the centered second
+        moment(i.e., the variance) for normalization, as opposed to regular RMSProp, which uses the (uncentered)
+        second moment. This often helps with training, but is slightly more exapnsive interms of computation and memory.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
@@ -5625,6 +5639,9 @@ class ApplyAdagradV2(PrimitiveWithInfer):
     relatively highest priority data type.
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
+    Note:
+        The difference is that `ApplyAdagradV2` has one more small constant value than `ApplyAdagrad`.
+
     Args:
         epsilon (float): A small value added for numerical stability.
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
@@ -6800,7 +6817,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
         - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
         - **linear** (Parameter) - the linear coefficient to be updated, must be the same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same type and shape as `var`, for the gradient.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in the first dimension. If there are
           duplicates in `indices`, the behavior is undefined. The type must be int32 or int64.
@@ -6913,7 +6930,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
         - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
         - **linear** (Parameter) - the linear coefficient to be updated, must be same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same type and shape as `var`, for the gradient.
         - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
           The shape of `indices` must be the same as `grad` in the first dimension. The type must be int32.
 
@@ -7261,7 +7278,7 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
         merge_repeated (bool): If true, merge repeated classes in output. Default: True.
 
     Inputs:
-        - **inputs** (Tensor) - The input Tensor must be a `3-D` tensor whose shape is
+        - **inputs** (Tensor) - The input Tensor must be a 3-D tensor whose shape is
           (`max_time`, `batch_size`, `num_classes`). `num_classes` must be `num_labels + 1` classes,
           `num_labels` indicates the number of actual labels. Blank labels are reserved.
           Default blank label is `num_classes - 1`. Data type must be float32 or float64.
@@ -7784,6 +7801,10 @@ class LRN(PrimitiveWithInfer):
 
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
         \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
+
+    where the :math:`a_{c}` indicates the represents the specific value of the pixel corresponding to c in feature map;
+    where the :math:`n/2` indicate the `depth_radius`; where the :math:`k` indicate the `bias`;
+    where the :math:`\alpha` indicate the`alpha`; where the :math:`\beta` indicate the `beta`.
 
     Args:
         depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: 5.
