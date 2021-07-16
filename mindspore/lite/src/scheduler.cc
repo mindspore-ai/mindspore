@@ -1045,6 +1045,10 @@ std::vector<kernel::LiteKernel *> Scheduler::ScheduleSubGraphToSubGraphKernels(c
     return ScheduleMainSubGraphToKernels();
   }
   auto subgraph_kernel = SchedulePartialToSubGraphKernel(subgraph_index);
+  if (subgraph_kernel == nullptr) {
+    MS_LOG(ERROR) << "SchedulePartialToSubGraphKernel failed, subgraph_index: " << subgraph_index;
+    return {};
+  }
   subgraph_kernel->set_name("subgraph_" + std::to_string(subgraph_index));
   subgraph_index_subgraph_kernel_map_[subgraph_index] = subgraph_kernel;
   return {subgraph_kernel};
