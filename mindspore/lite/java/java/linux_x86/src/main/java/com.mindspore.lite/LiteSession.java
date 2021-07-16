@@ -63,18 +63,12 @@ public class LiteSession {
         }
     }
 
-    public static LiteSession createTrainSession(String modelName, final MSConfig config, boolean trainMode) {
-        LiteSession liteSession = new LiteSession();
-        liteSession.sessionPtr = liteSession.createTrainSession(modelName, config.getMSConfigPtr(), trainMode, 0);
-        if (liteSession.sessionPtr == 0) {
-            return null;
-        } else {
-            return liteSession;
-        }
-    }
-
     public long getSessionPtr() {
         return sessionPtr;
+    }
+
+    public void setSessionPtr(long sessionPtr) {
+        this.sessionPtr = sessionPtr;
     }
 
     public void bindThread(boolean ifBind) {
@@ -203,8 +197,6 @@ public class LiteSession {
     private native long createSession(long msConfigPtr);
 
     private native long createSessionWithModel(MappedByteBuffer buffer, long msConfigPtr);
-
-    private native long createTrainSession(String fileName, long msContextPtr, boolean trainMode, long msTrainCfgPtr);
 
     private native boolean compileGraph(long sessionPtr, long modelPtr);
 

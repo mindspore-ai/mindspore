@@ -73,6 +73,11 @@ build_lite_x86_64_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
     cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+    if [[ "X$is_train" = "Xon" ]]; then
+        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
+        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
+        cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+    fi
 
     cd ${LITE_JAVA_PATH}/java
     rm -rf gradle .gradle gradlew gradlew.bat
@@ -256,6 +261,10 @@ build_lite_arm64_and_jni() {
     fi
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+    if [[ "X$is_train" = "Xon" ]]; then
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+    fi
 }
 
 build_lite_arm32_and_jni() {
@@ -296,6 +305,10 @@ build_lite_arm32_and_jni() {
     fi
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+    if [[ "X$is_train" = "Xon" ]]; then
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+    fi
 }
 
 build_aar() {
