@@ -1,0 +1,4 @@
+nltk
+jieba
+numpy
+rouge

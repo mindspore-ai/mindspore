@@ -1,0 +1,4 @@
+numpy
+easydict
+librosa
+soundfile
