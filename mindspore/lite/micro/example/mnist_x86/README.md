@@ -47,7 +47,7 @@ name: Softmax-7, DataType: 43, Size: 40, Shape: [1 10], Data:
 
 ## 详细步骤
 
-在编译此工程之前需要预先获取Ubuntu-x64 CPU平台的[Release包](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)，解压后得到`mindspore-lite-{version}-linux-x64`，将其拷贝到当前目录下。
+在编译此工程之前需要预先获取Ubuntu-x64 CPU平台的[Release包](https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html)，解压后得到`mindspore-lite-{version}-linux-x64`，将其拷贝到当前目录下。
 
 > `{version}`为版本号字符串，如`1.2.0`。
 
@@ -79,7 +79,7 @@ name: Softmax-7, DataType: 43, Size: 40, Shape: [1 10], Data:
 ```
 
 codegen在当前目录下将生成mnist目录，其中包含了可编译构建的mnist分类模型的代码。
-> 关于codegen的更多使用命令说明，可参见[codegen使用说明](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/micro.html#id4)。
+> 关于codegen的更多使用命令说明，可参见[codegen使用说明](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html#id4)。
 
 ### 部署应用
 
@@ -265,4 +265,4 @@ codegen在当前目录下将生成mnist目录，其中包含了可编译构建�
 
 ### [Android平台编译部署](https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/micro/example/mobilenetv2/README.md#)
 
-### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/micro.html)
+### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html)
