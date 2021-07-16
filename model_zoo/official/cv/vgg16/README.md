@@ -1,30 +1,38 @@
 # Contents
 
-- [VGG Description](#vgg-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Features](#features)
-    - [Mixed Precision](#mixed-precision)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-    - [Parameter configuration](#parameter-configuration)
-    - [Training Process](#training-process)
-        - [Training](#training)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
+- [Contents](#contents)
+    - [VGG Description](#vgg-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+        - [Dataset used: CIFAR-10](#dataset-used-cifar-10)
+        - [Dataset used: ImageNet2012](#dataset-used-imagenet2012)
+            - [Dataset organize way](#dataset-organize-way)
+    - [Features](#features)
+        - [Mixed Precision](#mixed-precision)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+            - [Training](#training)
+            - [Evaluation](#evaluation)
+        - [Parameter configuration](#parameter-configuration)
+        - [Training Process](#training-process)
+            - [Training](#training-1)
+                - [Run vgg16 on Ascend](#run-vgg16-on-ascend)
+                - [Run vgg16 on GPU](#run-vgg16-on-gpu)
+        - [Evaluation Process](#evaluation-process)
+            - [Evaluation](#evaluation-1)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
-- [Description of Random Situation](#description-of-random-situation)
-- [ModelZoo Homepage](#modelzoo-homepage)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Training Performance](#training-performance)
+            - [Evaluation Performance](#evaluation-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [VGG Description](#contents)
 
@@ -532,8 +540,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | -------------------------- | ---------------------------------------------- |------------------------------------|
 | Model Version              | VGG16                                          | VGG16                                           |
 | Resource                   |  Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |NV SMX2 V100-32G                                 |
-| uploaded Date              | 10/28/2020                                     | 10/28/2020                                       |
-| MindSpore Version          | 1.0.0                                          | 1.0.0                                             |
+| uploaded Date              | 07/05/2021                                     | 07/05/2021                                       |
+| MindSpore Version          | 1.3.0                                          | 1.3.0                                             |
 | Dataset                    | CIFAR-10                                        |ImageNet2012                                     |
 | Training Parameters        | epoch=70, steps=781, batch_size = 64, lr=0.1   |epoch=150, steps=40036, batch_size = 32, lr=0.1  |
 | Optimizer                  | Momentum                                        |Momentum                                         |
@@ -551,8 +559,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | ------------------- | --------------------------- |---------------------
 | Model Version       | VGG16                       |    VGG16                       |
 | Resource            | Ascend 910; OS Euler2.8                    |   GPU                          |
-| Uploaded Date       | 10/28/2020                  | 10/28/2020                     |
-| MindSpore Version   | 1.0.0                       | 1.0.0                          |
+| Uploaded Date       | 07/05/2021                  | 07/05/2021                     |
+| MindSpore Version   | 1.3.0                       | 1.3.0                          |
 | Dataset             | CIFAR-10, 10,000 images     |ImageNet2012, 5000 images       |
 | batch_size          |   64                        |    32                          |
 | outputs             | probability                 |    probability                            |

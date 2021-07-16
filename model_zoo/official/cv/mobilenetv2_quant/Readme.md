@@ -1,20 +1,30 @@
 # Contents
 
+- [Contents](#contents)
 - [MobileNetV2 Description](#mobilenetv2-description)
-- [Model Architecture](#model-architecture)
+- [Model architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
     - [Mixed Precision](#mixed-precision)
+    - [Learned Step Size Quantization](#learned-step-size-quantization)
 - [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-- [Model Description](#model-description)
+    - [Training process](#training-process)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Result](#result)
+    - [Evaluation process](#evaluation-process)
+        - [Usage](#usage-1)
+        - [Launch](#launch-1)
+        - [Result](#result-1)
+    - [Model Export](#model-export)
+    - [Ascend 310 inference](#ascend-310-inference)
+- [Model description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
+            - [Evaluation Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -269,8 +279,8 @@ You can view the results through the file "acc.log". The accuracy of the test da
 | Optimize Option            | QAT                                               | LEARNED_SCALE                                     |
 | Quantization Strategy      | W:8bit, A:8bit                                    | W:4bit (The first and last layers are 8bit), A:8bit|
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8     | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8     |
-| uploaded Date              | 06/06/2020                                        | 04/30/2021                                        |
-| MindSpore Version          | 0.3.0                                             | 1.3.0                                             |
+| uploaded Date              | 07/05/2021                                        | 04/30/2021                                        |
+| MindSpore Version          | 1.3.0                                             | 1.3.0                                             |
 | Dataset                    | ImageNet                                          | ImageNet                                          |
 | Training Parameters        | src/config.py                                     | src/config.py                                     |
 | Optimizer                  | Momentum                                          | Momentum                                          |
@@ -291,8 +301,8 @@ You can view the results through the file "acc.log". The accuracy of the test da
 | Optimize Option            | QAT                           | LEARNED_SCALE                 |
 | Quantization Strategy      | W:8bit, A:8bit                | W:4bit (The first and last layers are 8bit), A:8bit|
 | Resource                   | Ascend 910; OS Euler2.8       | Ascend 910; OS Euler2.8       |
-| uploaded Date              | 06/06/2020                    | 04/30/2021                    |
-| MindSpore Version          | 0.3.0                         | 1.3.0                         |
+| uploaded Date              | 07/05/2021                    | 04/30/2021                    |
+| MindSpore Version          | 1.3.0                         | 1.3.0                         |
 | Dataset                    | ImageNet, 1.2W                | ImageNet, 1.2W                |
 | batch_size                 | 130(8P)                       |                               |
 | outputs                    | probability                   | probability                   |

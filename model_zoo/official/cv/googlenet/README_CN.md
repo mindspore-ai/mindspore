@@ -33,7 +33,7 @@
             - [CIFAR-10上的GoogleNet](#cifar-10上的googlenet-1)
             - [120万张图像上的GoogleNet](#120万张图像上的googlenet-1)
     - [使用流程](#使用流程)
-        - [推理](#推理)
+        - [推理](#推理-1)
         - [继续训练预训练模型](#继续训练预训练模型)
         - [迁移学习](#迁移学习)
 - [随机情况说明](#随机情况说明)
@@ -481,8 +481,8 @@ python export.py --config_path [CONFIG_PATH]
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | 模型版本              | Inception V1                                                | Inception V1           |
 | 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8             | NV SMX2 V100-32G       |
-| 上传日期              | 2020-08-31                                 | 2020-08-20 |
-| MindSpore版本          | 0.7.0-alpha                                                 | 0.6.0-alpha            |
+| 上传日期              | 2021-07-05                                 | 2021-07-05 |
+| MindSpore版本          | 1.3.0                                                       | 1.3.0                  |
 | 数据集                    | CIFAR-10                                                    | CIFAR-10               |
 | 训练参数        | epoch=125, steps=390, batch_size = 128, lr=0.1              | epoch=125, steps=390, batch_size=128, lr=0.1    |
 | 优化器                  | Momentum                                                    | Momentum               |
@@ -502,8 +502,8 @@ python export.py --config_path [CONFIG_PATH]
 | -------------------------- | ----------------------------------------------------------- |
 | 模型版本              | Inception V1                                                |
 | 资源                   | Ascend 910；CPU 2.60GHz，56核；内存 314G；系统 Euler2.8               |
-| 上传日期              | 2020-09-20                                 |
-| MindSpore版本          | 0.7.0-alpha                                                 |
+| 上传日期              | 2021-07-05                                 |
+| MindSpore版本          | 1.3.0                                                       |
 | 数据集                    | 120万张图像                                                |
 | 训练参数        | epoch=300, steps=5000, batch_size=256, lr=0.1               |
 | 优化器                  | Momentum                                                    |
@@ -524,8 +524,8 @@ python export.py --config_path [CONFIG_PATH]
 | ------------------- | --------------------------- | --------------------------- |
 | 模型版本       | Inception V1                | Inception V1                |
 | 资源            |  Ascend 910；系统 Euler2.8                  | GPU                         |
-| 上传日期       | 2020-08-31 | 2020-08-20 |
-| MindSpore 版本   | 0.7.0-alpha                 | 0.6.0-alpha                 |
+| 上传日期       | 2021-07-05 | 2021-07-05 |
+| MindSpore 版本   | 1.3.0                       | 1.3.0                       |
 | 数据集             | CIFAR-10, 1万张图像     | CIFAR-10, 1万张图像     |
 | batch_size          | 128                         | 128                         |
 | 输出             | 概率                 | 概率                 |
@@ -538,8 +538,8 @@ python export.py --config_path [CONFIG_PATH]
 | ------------------- | --------------------------- |
 | 模型版本       | Inception V1                |
 | 资源            |  Ascend 910；系统 Euler2.8                 |
-| 上传日期       | 2020-09-20 |
-| MindSpore版本   | 0.7.0-alpha                 |
+| 上传日期       | 2021-07-05 |
+| MindSpore版本   | 1.3.0                       |
 | 数据集             | 12万张图像                |
 | batch_size          | 256                         |
 | 输出             | 概率                 |

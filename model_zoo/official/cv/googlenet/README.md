@@ -2,6 +2,7 @@
 
 [查看中文](./README_CN.md)
 
+- [Contents](#contents)
 - [GoogleNet Description](#googlenet-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
@@ -14,19 +15,23 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
         - [Training](#training)
-        - [Distributed Training](#distributed-training)  
+        - [Distributed Training](#distributed-training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-    - [Export Process](#Export-process)
-        - [Export](#Export)
-    - [Inference Process](#Inference-process)
-        - [Inference](#Inference)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
-    - [How to use](#how-to-use)
+    - [Export Process](#export-process)
+        - [Export](#export)
+    - [Inference Process](#inference-process)
         - [Inference](#inference)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+        - [Evaluation Performance](#evaluation-performance)
+            - [GoogleNet on CIFAR-10](#googlenet-on-cifar-10)
+            - [GoogleNet on 1200k images](#googlenet-on-1200k-images)
+        - [Inference Performance](#inference-performance)
+            - [GoogleNet on CIFAR-10](#googlenet-on-cifar-10-1)
+            - [GoogleNet on 1200k images](#googlenet-on-1200k-images-1)
+    - [How to use](#how-to-use)
+        - [Inference](#inference-1)
         - [Continue Training on the Pretrained Model](#continue-training-on-the-pretrained-model)
         - [Transfer Learning](#transfer-learning)
 - [Description of Random Situation](#description-of-random-situation)
@@ -507,8 +512,8 @@ Current batch_ Size can only be set to 1.
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | Inception V1                                                | Inception V1           |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             | NV SMX2 V100-32G       |
-| uploaded Date              | 10/28/2020 (month/day/year)                                 | 10/28/2020 (month/day/year) |
-| MindSpore Version          | 1.0.0                                                       | 1.0.0                  |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 | 07/05/2021 (month/day/year) |
+| MindSpore Version          | 1.3.0                                                       | 1.3.0                  |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10               |
 | Training Parameters        | epoch=125, steps=390, batch_size = 128, lr=0.1              | epoch=125, steps=390, batch_size=128, lr=0.1    |
 | Optimizer                  | Momentum                                                    | Momentum               |
@@ -528,8 +533,8 @@ Current batch_ Size can only be set to 1.
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | Inception V1                                                |
 | Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8               |
-| uploaded Date              | 10/28/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | 1200k images                                                |
 | Training Parameters        | epoch=300, steps=5000, batch_size=256, lr=0.1               |
 | Optimizer                  | Momentum                                                    |
@@ -550,8 +555,8 @@ Current batch_ Size can only be set to 1.
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | Inception V1                | Inception V1                |
 | Resource            | Ascend 910; OS Euler2.8                  | GPU                         |
-| Uploaded Date       | 10/28/2020 (month/day/year) | 10/28/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       | 1.0.0                       |
+| Uploaded Date       | 07/05/2021 (month/day/year) | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       | 1.3.0                       |
 | Dataset             | CIFAR-10, 10,000 images     | CIFAR-10, 10,000 images     |
 | batch_size          | 128                         | 128                         |
 | outputs             | probability                 | probability                 |
@@ -564,8 +569,8 @@ Current batch_ Size can only be set to 1.
 | ------------------- | --------------------------- |
 | Model Version       | Inception V1                |
 | Resource            | Ascend 910; OS Euler2.8                  |
-| Uploaded Date       | 10/28/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | 1200k images                |
 | batch_size          | 256                         |
 | outputs             | probability                 |

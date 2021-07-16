@@ -1,24 +1,25 @@
 # Contents
 
-- [Wide&Deep Description](#widedeep-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-        - [Training Script Parameters](#training-script-parameters)
-    - [Training Process](#training-process)
-        - [SingleDevice](#singledevice)
-        - [Distribute Training](#distribute-training)
-    - [Evaluation Process](#evaluation-process)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
-- [Description of Random Situation](#description-of-random-situation)
-- [ModelZoo Homepage](#modelzoo-homepage)
+- [Contents](#contents)
+    - [Wide&Deep Description](#widedeep-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+            - [Training Script Parameters](#training-script-parameters)
+        - [Training Process](#training-process)
+            - [SingleDevice](#singledevice)
+            - [Distribute Training](#distribute-training)
+        - [Evaluation Process](#evaluation-process)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Training Performance](#training-performance)
+            - [Evaluation Performance](#evaluation-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [Wide&Deep Description](#contents)
 
@@ -168,8 +169,8 @@ python eval.py
 | Parameters               | Single <br />Ascend             | Data-Parallel-8P                |
 | ------------------------ | ------------------------------- | ------------------------------- |
 | Resource                 | Ascend 910; OS Euler2.8                        | Ascend 910                      |
-| Uploaded Date            | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     |
-| MindSpore Version        | 1.0                             | 1.0                             |
+| Uploaded Date            | 07/05/2021 (month/day/year)     | 07/05/2021 (month/day/year)     |
+| MindSpore Version        | 1.3.0                           | 1.3.0                           |
 | Dataset                  | [1]                             | [1]                             |
 | Training Parameters      | Epoch=3,<br />batch_size=131072 | Epoch=8,<br />batch_size=131072 |
 | Optimizer                | FTRL,Adam                       | FTRL,Adam                       |
@@ -188,8 +189,8 @@ All executable scripts can be found in [here](https://gitee.com/mindspore/mindsp
 | Parameters        | Wide&Deep                   |
 | ----------------- | --------------------------- |
 | Resource          | Ascend 910; OS Euler2.8                    |
-| Uploaded Date     | 10/27/2020 (month/day/year) |
-| MindSpore Version | 1.0                  |
+| Uploaded Date     | 07/05/2021 (month/day/year) |
+| MindSpore Version | 1.3.0                       |
 | Dataset           | [1]                         |
 | Batch Size        | 131072                      |
 | Outputs           | AUC，MAP                    |

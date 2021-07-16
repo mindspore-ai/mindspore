@@ -1,22 +1,28 @@
 # Contents
 
-- [GCN Description](#gcn-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
+- [Contents](#contents)
+    - [GCN Description](#gcn-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
-    - [Training, Evaluation, Test Process](#training-evaluation-test-process)
+        - [Training, Evaluation, Test Process](#training-evaluation-test-process)
+            - [Usage](#usage-1)
+            - [Launch](#launch-1)
+            - [Result](#result)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
-        - [result](#result)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-- [Description of Random Situation](#description-of-random-situation)
-- [ModelZoo Homepage](#modelzoo-homepage)
+        - [result](#result-1)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [GCN Description](#contents)
 
@@ -253,8 +259,8 @@ Test set results: accuracy= 0.81300
 | Parameters                 | GCN                                                            |
 | -------------------------- | -------------------------------------------------------------- |
 | Resource                   | Ascend 910; OS Euler2.8                                                    |
-| uploaded Date              | 06/09/2020 (month/day/year)                                    |
-| MindSpore Version          | 1.0.0                                                   |
+| uploaded Date              | 07/05/2021 (month/day/year)                                    |
+| MindSpore Version          | 1.3.0                                                   |
 | Dataset                    | Cora/Citeseer                                                  |
 | Training Parameters        | epoch=200                                                      |
 | Optimizer                  | Adam                                                           |

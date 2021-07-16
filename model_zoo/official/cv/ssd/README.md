@@ -14,6 +14,7 @@
         - [Training Process](#training-process)
             - [Training on Ascend](#training-on-ascend)
             - [Training on GPU](#training-on-gpu)
+            - [Evaluation while training](#evaluation-while-training)
             - [Transfer Training](#transfer-training)
         - [Evaluation Process](#evaluation-process)
             - [Evaluation on Ascend](#evaluation-on-ascend)
@@ -545,8 +546,8 @@ mAP: 0.33880018942412393
 | ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Model Version       | SSD V1                                                                        | SSD V1                                                                        | SSD-Mobilenet-V1-Fpn                                                          |
 | Resource            | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                               | NV SMX2 V100-16G                                                              | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
-| uploaded Date       | 09/15/2020 (month/day/year)                                                   | 09/24/2020 (month/day/year)                                                   | 01/13/2021 (month/day/year)                                                   |
-| MindSpore Version   | 1.0.0                                                                         | 1.0.0                                                                         | 1.1.0                                                                         |
+| uploaded Date       | 07/05/2021 (month/day/year)                                                   | 09/24/2020 (month/day/year)                                                   | 01/13/2021 (month/day/year)                                                   |
+| MindSpore Version   | 1.3.0                                                                         | 1.0.0                                                                         | 1.1.0                                                                         |
 | Dataset             | COCO2017                                                                      | COCO2017                                                                      | COCO2017                                                                      |
 | Training Parameters | epoch = 500,  batch_size = 32                                                 | epoch = 800,  batch_size = 32                                                 | epoch = 60,  batch_size = 32                                                  |
 | Optimizer           | Momentum                                                                      | Momentum                                                                      | Momentum                                                                      |
@@ -562,8 +563,8 @@ mAP: 0.33880018942412393
 | ------------------- | --------------------------- | --------------------------- | --------------------------- |
 | Model Version       | SSD V1                      | SSD V1                      | SSD-Mobilenet-V1-Fpn        |
 | Resource            | Ascend 910; OS Euler2.8                  | GPU                         |Ascend 910; OS Euler2.8                  |
-| Uploaded Date       | 09/15/2020 (month/day/year) | 09/24/2020 (month/day/year) | 09/24/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       | 1.0.0                       | 1.1.0                       |
+| Uploaded Date       | 07/05/2020 (month/day/year) | 09/24/2020 (month/day/year) | 09/24/2020 (month/day/year) |
+| MindSpore Version   | 1.3.0                       | 1.0.0                       | 1.1.0                       |
 | Dataset             | COCO2017                    | COCO2017                    | COCO2017                    |
 | batch_size          | 1                           | 1                           | 1                           |
 | outputs             | mAP                         | mAP                         | mAP                         |

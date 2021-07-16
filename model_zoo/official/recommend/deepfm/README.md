@@ -1,5 +1,6 @@
 # Contents
 
+- [Contents](#contents)
 - [DeepFM Description](#deepfm-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
@@ -10,7 +11,7 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
         - [Training](#training)
-        - [Distributed Training](#distributed-training)  
+        - [Distributed Training](#distributed-training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
     - [Inference Process](#inference-process)
@@ -19,8 +20,8 @@
         - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
-        - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Training Performance](#training-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -417,15 +418,15 @@ auc : 0.8057789065281104
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | DeepFM                                                      | To do                  |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                | To do                  |
-| uploaded Date              | 09/15/2020 (month/day/year)                                 | To do                  |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 | To do                  |
 | MindSpore Version          | 1.0.0                                                 | To do                  |
 | Dataset                    | [1]                                                         | To do                  |
-| Training Parameters        | epoch=15, batch_size=1000, lr=1e-5                          | To do                  |
+| Training Parameters        | epoch=15, batch_size=16000, lr=1e-5                         | To do                  |
 | Optimizer                  | Adam                                                        | To do                  |
 | Loss Function              | Sigmoid Cross Entropy With Logits                           | To do                  |
 | outputs                    | Accuracy                                                    | To do                  |
 | Loss                       | 0.45                                                        | To do                  |
-| Speed                      | 1pc: 8.16 ms/step;                                          | To do                  |
+| Speed                      | 1pc: 21 ms/step;                                          | To do                  |
 | Total time                 | 1pc: 90 mins;                                               | To do                  |
 | Parameters (M)             | 16.5                                                        | To do                  |
 | Checkpoint for Fine tuning | 190M (.ckpt file)                                           | To do                  |
@@ -437,8 +438,8 @@ auc : 0.8057789065281104
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | DeepFM                      | To do                       |
 | Resource            | Ascend 910; OS Euler2.8                    | To do                       |
-| Uploaded Date       | 05/27/2020 (month/day/year) | To do                       |
-| MindSpore Version   | 0.3.0-alpha                 | To do                       |
+| Uploaded Date       | 07/05/2021 (month/day/year) | To do                       |
+| MindSpore Version   | 1.3.0                       | To do                       |
 | Dataset             | [1]                         | To do                       |
 | batch_size          | 1000                        | To do                       |
 | outputs             | accuracy                    | To do                       |
