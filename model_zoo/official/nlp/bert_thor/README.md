@@ -1,20 +1,23 @@
 # Bert-THOR Example
 
-- [Description](#Description)
-- [Model Architecture](#Model-Architecture)
-- [Dataset](#Dataset)
-- [Features](#Features)
-- [Environment Requirements](#Environment-Requirements)
-- [Quick Start](#Quick-Start)
-- [Script Description](#Script-Description)
-    - [Script and Sample Code](#Script-Code-Structure)
-    - [Script Parameters](#Script-Parameters)
-    - [Training Process](#Training-Process)
-    - [Evaluation Process](#Evaluation-Process)
-- [Model Description](#Model-Description)
-    - [Evaluation Performance](#Evaluation-Performance)
-- [Description of Random Situation](#Description-of-Random-Situation)
-- [ModelZoo Homepage](#ModelZoo-Homepage)
+- [Bert-THOR Example](#bert-thor-example)
+    - [Description](#description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Features](#features)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script Code Structure](#script-code-structure)
+        - [Script Parameters](#script-parameters)
+        - [Training Process](#training-process)
+            - [Ascend 910](#ascend-910)
+        - [Evaluation Process](#evaluation-process)
+            - [Ascend910](#ascend910)
+    - [Model Description](#model-description)
+        - [Evaluation Performance](#evaluation-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## Description
 
@@ -205,16 +208,16 @@ step:  3000 Accuracy:  [0.71377236]
 | -------------------------- | -------------------------------------- |
 | Model Version              | BERT-LARGE                                              |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8 |
-| uploaded Date              | 08/20/2020 (month/day/year)                         |
-| MindSpore Version          | 0.6.0-alpha                                                       |
+| uploaded Date              | 07/05/2021 (month/day/year)                         |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | MLPerf v0.7 dataset                                                   |
-| Training Parameters        | total steps=3000, batch_size = 12             |
+| Training Parameters        | total steps=3000, batch_size = 12*8             |
 | Optimizer                  | THOR                                                         |
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       |1.5654222                                                   |
-| Speed                      | 275ms/step（8pcs）                     |
-| Total time                 | 14 mins                          |
+| Speed                      | 218ms/step（8pcs）                     |
+| Total time                 | 11 mins                          |
 | Parameters (M)             | 330                                                       |
 | Checkpoint for Fine tuning | 4.5G(.ckpt file)                                         |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert_thor |

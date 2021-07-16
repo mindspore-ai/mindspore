@@ -1,19 +1,24 @@
 # Contents
 
+- [Contents](#contents)
 - [MobileNetV3 Description](#mobilenetv3-description)
-- [Model Architecture](#model-architecture)
+- [Model architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
+    - [Training process](#training-process)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Result](#result)
+    - [Eval process](#eval-process)
+        - [Usage](#usage-1)
+        - [Launch](#launch-1)
+        - [Result](#result-1)
     - [Export MindIR](#export-mindir)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+- [Model description](#model-description)
+    - [Performance](#performance)
+        - [Training Performance](#training-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -152,8 +157,8 @@ python export.py --device_target [PLATFORM] --checkpoint_path [CKPT_PATH]
 | -------------------------- | ------------------------- |
 | Model Version              | large                     |
 | Resource                   | NV SMX2 V100-32G          |
-| uploaded Date              | 05/06/2020                |
-| MindSpore Version          | 0.3.0                     |
+| uploaded Date              | 07/05/2021                |
+| MindSpore Version          | 1.3.0                     |
 | Dataset                    | ImageNet                  |
 | Training Parameters        | src/config.py             |
 | Optimizer                  | Momentum                  |

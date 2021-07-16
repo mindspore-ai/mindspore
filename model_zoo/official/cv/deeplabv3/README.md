@@ -1,6 +1,8 @@
 # Contents
 
-- [DeepLabV3 Description](#DeepLabV3-description)
+- [Contents](#contents)
+- [DeepLabV3 Description](#deeplabv3-description)
+    - [Description](#description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
@@ -11,12 +13,26 @@
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
+        - [Usage](#usage)
+            - [Running on Ascend](#running-on-ascend)
+            - [Running on CPU](#running-on-cpu)
+        - [Result](#result)
+            - [Running on Ascend](#running-on-ascend-1)
+            - [Running on CPU](#running-on-cpu-1)
+            - [Transfer Training](#transfer-training)
     - [Evaluation Process](#evaluation-process)
+        - [Usage](#usage-1)
+            - [Running on Ascend](#running-on-ascend-2)
+        - [Result](#result-1)
+            - [Training accuracy](#training-accuracy)
     - [Export MindIR](#export-mindir)
     - [Inference Process](#inference-process)
+        - [Usage](#usage-2)
+        - [result](#result-2)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
+    - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -803,8 +819,8 @@ Inference result is saved in current path, you can find result in acc.log file.
 | -------------------------- | -------------------------------------- |
 | Model Version              | DeepLabV3
 | Resource                   | Ascend 910; OS Euler2.8 |
-| Uploaded Date              | 09/04/2020 (month/day/year)          |
-| MindSpore Version          | 0.7.0-alpha                       |
+| Uploaded Date              | 07/05/2021 (month/day/year)          |
+| MindSpore Version          | 1.3.0                       |
 | Dataset                    | PASCAL VOC2012 + SBD              |
 | Training Parameters        | epoch = 300, batch_size = 32 (s16_r1) <br> epoch = 800, batch_size = 16 (s8_r1)   <br>    epoch = 300, batch_size = 16 (s8_r2) |
 | Optimizer                  | Momentum                                 |
@@ -824,8 +840,8 @@ Inference result is saved in current path, you can find result in acc.log file.
 | ------------------- | --------------------------- |
 | Model Version       | DeepLabV3 V1                |
 | Resource            | Ascend 910; OS Euler2.8                   |
-| Uploaded Date       | 09/04/2020 (month/day/year) |
-| MindSpore Version   | 0.7.0-alpha                 |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                 |
 | Dataset             | VOC datasets    |
 | batch_size          | 32 (s16); 16 (s8)                         |
 | outputs             | probability                 |

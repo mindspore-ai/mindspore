@@ -1,21 +1,25 @@
 # Contents
 
-- [LeNet Description](#lenet-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
+- [Contents](#contents)
+    - [LeNet Description](#lenet-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
         - [Training](#training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Evaluation Performance](#evaluation-performance)
-- [ModelZoo Homepage](#modelzoo-homepage)
+    - [Model Export](#model-export)
+    - [Ascend 310 inference](#ascend-310-inference)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Evaluation Performance](#evaluation-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [LeNet Description](#contents)
 
@@ -193,9 +197,9 @@ You can view the results through the file "acc.log". The accuracy of the test da
 
 | Parameters                 | LeNet                                                       |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                  |
-| uploaded Date              | 06/09/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.5.0-beta                                                  |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | MNIST                                                       |
 | Training Parameters        | epoch=10, steps=937, batch_size = 64, lr=0.01               |
 | Optimizer                  | Momentum                                                    |

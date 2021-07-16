@@ -556,8 +556,8 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [SCHEMA_DIR] [DATASET_TYPE] [
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | 模型版本              | TinyBERT                                                   | TinyBERT                           |
 | 资源                   | Ascend 910；cpu 2.60GHz，192核；内存 755G；系统 Euler2.8               | NV SMX2 V100-32G, cpu:2.10GHz 64核,  内存:251G         |
-| 上传日期              | 2020-08-20                                           | 2020-08-24      |
-| MindSpore版本          | 0.6.0                                                      | 0.7.0                     |
+| 上传日期              | 2021-07-05                                           | 2021-07-05      |
+| MindSpore版本          | 1.3.0                                                      | 1.3.0                     |
 | 数据集                    | en-wiki-128                                                | en-wiki-128               |
 | 训练参数        | src/gd_config.yaml                                           | src/gd_config.yaml          |
 | 优化器| AdamWeightDecay | AdamWeightDecay |
@@ -575,8 +575,8 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [SCHEMA_DIR] [DATASET_TYPE] [
 | -------------------------- | ----------------------------- | ------------------------- |
 | 模型版本              |                               |                           |
 | 资源                   | Ascend 910；系统 Euler2.8                    | NV SMX2 V100-32G          |
-| 上传日期              | 2020-08-20                    | 2020-08-24                |
-| MindSpore版本         | 0.6.0                         | 0.7.0                     |
+| 上传日期              | 2021-07-05                    | 2021-07-05                |
+| MindSpore版本         | 1.3.0                         | 1.3.0                     |
 | 数据集                    | SST-2,                        | SST-2                     |
 | batch_size                 | 32                            | 32                        |
 | 准确率                   | 0.902777                      | 0.9086                    |

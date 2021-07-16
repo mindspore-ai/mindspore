@@ -1,17 +1,26 @@
 # Contents
 
+- [Contents](#contents)
 - [ResNet50 Description](#resnet50-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
     - [Mixed Precision](#mixed-precision)
 - [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-- [Model Description](#model-description)
+    - [Training process](#training-process)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Result](#result)
+    - [Evaluation process](#evaluation-process)
+        - [Usage](#usage-1)
+        - [Launch](#launch-1)
+        - [Result](#result-1)
+    - [Model Export](#model-export)
+    - [Ascend 310 inference](#ascend-310-inference)
+- [Model description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
@@ -213,8 +222,8 @@ You can view the results through the file "acc.log". The accuracy of the test da
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | ResNet50 V1.5                                               |
 | Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8               |
-| uploaded Date              | 06/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.3.0-alpha                                                 |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | ImageNet                                                    |
 | Training Parameters        | epoch=30(with pretrained) or 120, steps per epoch=5004, batch_size=32    |
 | Optimizer                  | Momentum                                                    |
@@ -233,8 +242,8 @@ You can view the results through the file "acc.log". The accuracy of the test da
 | ------------------- | --------------------------- |
 | Model Version       | ResNet50 V1.5               |
 | Resource            | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8    |
-| Uploaded Date       | 06/06/2020 (month/day/year) |
-| MindSpore Version   | 0.3.0-alpha                 |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | ImageNet                    |
 | batch_size          | 32                          |
 | outputs             | probability                 |

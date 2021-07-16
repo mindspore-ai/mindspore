@@ -1,32 +1,33 @@
 # Contents
 
-- [WarpCTC Description](#warpctc-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-        - [Training Script Parameters](#training-script-parameters)
-        - [Parameters Configuration](#parameters-configuration)
+- [Contents](#contents)
+    - [WarpCTC Description](#warpctc-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+            - [Training Script Parameters](#training-script-parameters)
+            - [Parameters Configuration](#parameters-configuration)
     - [Dataset Preparation](#dataset-preparation)
-    - [Training Process](#training-process)
-        - [Training](#training)
-        - [Distributed Training](#distributed-training)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
+        - [Training Process](#training-process)
+            - [Training](#training)
+                - [Distributed Training](#distributed-training)
+        - [Evaluation Process](#evaluation-process)
+            - [Evaluation](#evaluation)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#inference-performance)
-- [Description of Random Situation](#description-of-random-situation)
-- [ModelZoo Homepage](#modelzoo-homepage)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Training Performance](#training-performance)
+            - [Evaluation Performance](#evaluation-performance)
+            - [Inference Performance](#inference-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [WarpCTC Description](#contents)
 
@@ -348,8 +349,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | -------------------------- | --------------------------------------------- |---------------------------------- |
 | Model Version              | v1.0                                          | v1.0 |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8   | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G /
-| uploaded Date              | 07/01/2020 (month/day/year)                   | 08/01/2020 (month/day/year) |
-| MindSpore Version          | 0.5.0-alpha                                   | 0.6.0-alpha |
+| uploaded Date              | 07/05/2021 (month/day/year)                   | 07/05/2021 (month/day/year) |
+| MindSpore Version          | 1.3.0                                         | 1.3.0 |
 | Dataset                    | Captcha                                       | Captcha |
 | Training Parameters        | epoch=30, steps per epoch=98, batch_size = 64 | epoch=30, steps per epoch=98, batch_size = 64  |
 | Optimizer                  | SGD                                           | SGD |
@@ -368,8 +369,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | ------------------- | --------------------------- |
 | Model Version       | V1.0                        |
 | Resource            | Ascend 910; OS Euler2.8                |
-| Uploaded Date       | 08/01/2020 (month/day/year) |
-| MindSpore Version   | 0.6.0-alpha                 |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | Captcha                     |
 | batch_size          | 64                          |
 | outputs             | ACC                         |

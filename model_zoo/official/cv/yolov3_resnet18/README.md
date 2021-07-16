@@ -1,5 +1,6 @@
 # Contents
 
+- [Contents](#contents)
 - [YOLOv3_ResNet18 Description](#yolov3_resnet18-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
@@ -9,15 +10,17 @@
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
-        - [Training](#training)
+        - [Training on Ascend](#training-on-ascend)
     - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
+        - [Evaluation on Ascend](#evaluation-on-ascend)
     - [Export MindIR](#export-mindir)
     - [Inference Process](#inference-process)
+        - [Usage](#usage)
+        - [result](#result)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
+    - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -365,8 +368,8 @@ Inference result is saved in current path, you can find result in acc.log file.
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | YOLOv3_Resnet18 V1                                          |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |
-| uploaded Date              | 09/15/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | COCO2017                                                    |
 | Training Parameters        | epoch = 160, batch_size = 32, lr = 0.005                    |
 | Optimizer                  | Adam                                                        |
@@ -383,8 +386,8 @@ Inference result is saved in current path, you can find result in acc.log file.
 | ------------------- | ----------------------------------------------- |
 | Model Version       | YOLOv3_Resnet18 V1                              |
 | Resource            | Ascend 910; OS Euler2.8                         |
-| Uploaded Date       | 09/15/2020 (month/day/year)                     |
-| MindSpore Version   | 1.0.0                                           |
+| Uploaded Date       | 07/05/2021 (month/day/year)                     |
+| MindSpore Version   | 1.3.0                                           |
 | Dataset             | COCO2017                                        |
 | batch_size          | 1                                               |
 | outputs             | presion and recall                              |

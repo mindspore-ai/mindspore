@@ -3,7 +3,10 @@
 
 <!-- TOC -->
 
-- [Glore_resnet200描述](#Glore_resnet200描述)
+- [目录](#目录)
+- [Glore_resnet200描述](#glore_resnet200描述)
+    - [概述](#概述)
+    - [论文](#论文)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [特性](#特性)
@@ -14,19 +17,23 @@
     - [脚本及样例代码](#脚本及样例代码)
     - [脚本参数](#脚本参数)
     - [训练过程](#训练过程)
+        - [用法](#用法)
+            - [Ascend处理器环境运行](#ascend处理器环境运行)
+            - [GPU处理器环境运行](#gpu处理器环境运行)
     - [训练结果](#训练结果)
     - [推理过程](#推理过程)
+        - [用法](#用法-1)
+            - [Ascend处理器环境运行](#ascend处理器环境运行-1)
+            - [GPU处理器环境运行](#gpu处理器环境运行-1)
     - [推理结果](#推理结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
-            - [Imagenet2012上的Glore_resnet200](#Imagenet2012上的Glore_resnet200)
+            - [ImageNet2012上的Glore_resnet200](#imagenet2012上的glore_resnet200)
         - [推理性能](#推理性能)
-            - [Imagenet2012上的Glore_resnet200](#Imagenet2012上的Glore_resnet200)
-    - [使用流程](#使用流程)
-        - [推理](#推理)
+            - [ImageNet2012上的Glore_resnet200](#imagenet2012上的glore_resnet200-1)
 - [随机情况说明](#随机情况说明)
-- [ModelZoo主页](#ModelZoo主页)
+- [ModelZoo主页](#modelzoo主页)
 
 <!-- /TOC -->
 
@@ -285,7 +292,7 @@ result:{'top_1 acc':0.802303685897436}
 | 模型版本              | Glore_resnet200                             |Glore_resnet200                     |
 | 资源                   | Ascend 910；CPU：2.60GHz，192核；内存：2048G |GPU-V100(SXM2)                     |
 | 上传日期              | 2021-03-34                                   |2021-05-25                         |
-| MindSpore版本          | 1.1.1-c76                                   |1.2.0-rc1                          |
+| MindSpore版本          | 1.1.1                                   |1.2.0                          |
 | 数据集                    | ImageNet2012                             | ImageNet2012                      |
 | 训练参数        | epoch=150, steps per epoch=1251, batch_size = 128  |epoch=150, steps per epoch=2502, batch_size = 64 |
 | 优化器                  | NAG                                        | NAG                                           |
@@ -307,7 +314,7 @@ result:{'top_1 acc':0.802303685897436}
 | 模型版本       | Glore_resnet200              |  Glore_resnet200           |
 | 资源            | Ascend 910                |   GPU                       |
 | 上传日期       | 2021-3-24                  |2021-05-25                    |
-| MindSpore版本   | 1.1.1-c76                 |1.2.0-rc1                    |
+| MindSpore版本   | 1.1.1                 |1.2.0                    |
 | 数据集             | 12万张图像              |12万张图像                   |
 | batch_size          | 128                   |64                          |
 | 输出             | 概率                     |概率                         |

@@ -1,26 +1,26 @@
 # Contents
 
 - [Contents](#contents)
-    - [SSD Description](#ssd-description)
-    - [Model Architecture](#model-architecture)
-    - [Dataset](#dataset)
-    - [Environment Requirements](#environment-requirements)
-    - [Quick Start](#quick-start)
-    - [Script Description](#script-description)
-        - [Script and Sample Code](#script-and-sample-code)
-        - [Script Parameters](#script-parameters)
-        - [Training Process](#training-process)
-            - [Training on Ascend](#training-on-ascend)
-        - [Evaluation Process](#evaluation-process)
-            - [Evaluation on Ascend](#evaluation-on-ascend)
+- [SSD Description](#ssd-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training Process](#training-process)
+        - [Training on Ascend](#training-on-ascend)
+    - [Evaluation Process](#evaluation-process)
+        - [Evaluation on Ascend](#evaluation-on-ascend)
     - [Inference Process](#inference-process)
-            - [Export MindIR](#export-mindir)
-            - [Infer on Ascend310](#infer-on-ascend310)
-            - [result](#result)
-    - [Model Description](#model-description)
-        - [Performance](#performance)
-            - [Evaluation Performance](#evaluation-performance)
-            - [Inference Performance](#inference-performance)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
+- [Model Description](#model-description)
+    - [Performance](#performance)
+        - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
             - [310Inference Performance](#310inference-performance)
 
 # [SSD Description](#contents)
@@ -312,7 +312,7 @@ mAP: 0.24270569394180577
 | -------------------------- | -------------------------------------------------------------|
 | Model Version              | SSD ghostnet                                                 |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |
-| MindSpore Version          | 0.7.0                                                        |
+| MindSpore Version          | 1.3.0                                                        |
 | Dataset                    | COCO2017                                                     |
 | Training Parameters        | epoch = 500,  batch_size = 32                                |
 | Optimizer                  | Momentum                                                     |
@@ -325,8 +325,8 @@ mAP: 0.24270569394180577
 | ------------------- | ----------------------------|
 | Model Version       | SSD ghostnet                |
 | Resource            | Ascend 910; OS Euler2.8     |
-| Uploaded Date       | 09/08/2020 (month/day/year) |
-| MindSpore Version   | 0.7.0                       |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | COCO2017                    |
 | batch_size          | 1                           |
 | outputs             | mAP                         |
@@ -339,8 +339,8 @@ mAP: 0.24270569394180577
 | ------------------- | --------------------------- |
 | Model Version       | SSD ghostnet                |
 | Resource            | Ascend 310; OS Euler2.8     |
-| Uploaded Date       | 06/01/2021 (month/day/year) |
-| MindSpore Version   | 1.2.0                       |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | COCO2017                    |
 | batch_size          | 1                           |
 | outputs             | mAP                         |

@@ -1,26 +1,31 @@
 # Contents
 
-- [FCN-4 Description](#fcn-4-description)
-- [Model Architecture](#model-architecture)
-- [Features](#features)
-    - [Mixed Precision](#mixed-precision)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-    - [Training Process](#training-process)
-        - [Training](#training)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
+- [Contents](#contents)
+    - [FCN-4 Description](#fcn-4-description)
+    - [Model Architecture](#model-architecture)
+    - [Features](#features)
+        - [Mixed Precision](#mixed-precision)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+        - [1. Download and preprocess the dataset](#1-download-and-preprocess-the-dataset)
+        - [2. setup parameters (src/model_utils/default_config.yaml)](#2-setup-parameters-srcmodel_utilsdefault_configyaml)
+        - [3. Train](#3-train)
+        - [4. Test](#4-test)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+        - [Training Process](#training-process)
+            - [Training](#training)
+        - [Evaluation Process](#evaluation-process)
+            - [Evaluation](#evaluation)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Evaluation Performance](#evaluation-performance)
-- [ModelZoo Homepage](#modelzoo-homepage)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Evaluation Performance](#evaluation-performance)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [FCN-4 Description](#contents)
 
@@ -309,8 +314,8 @@ AUC: 0.90995
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | FCN-4                                                       |
 | Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8            |
-| uploaded Date              | 09/11/2020 (month/day/year)                                 |
-| MindSpore Version          | r0.7.0                                                |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                |
 | Training Parameters        | epoch=10, steps=534, batch_size = 32, lr=0.005              |
 | Optimizer                  | Adam                                                        |
 | Loss Function              | Binary cross entropy                                        |
