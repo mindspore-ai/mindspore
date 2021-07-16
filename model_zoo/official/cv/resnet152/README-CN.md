@@ -39,8 +39,8 @@ ResNet152的总体网络架构如下：[链接](https://arxiv.org/pdf/1512.03385
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 
 # 快速入门
 

@@ -59,8 +59,8 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 - Docker base image
     - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
 - For more information, please check the resources below:
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/r1.3/index.html)
 
 - third-party libraries
 
@@ -522,7 +522,7 @@ Usage: bash run_standalone_train.sh [PRETRAINED_MODEL]
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/docs/programming_guide/en/r1.3/dataset_sample.html) for more information about dataset.
 
 ### [Training](#content)
 

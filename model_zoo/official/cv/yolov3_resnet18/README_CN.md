@@ -77,8 +77,8 @@ YOLOv3整体网络架构如下：
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 
 # 快速入门
 
@@ -266,7 +266,7 @@ YOLOv3整体网络架构如下：
 
 ### Ascend上训练
 
-训练模型运行`train.py`，使用数据集`image_dir`、`anno_path`和`mindrecord_dir`。如果`mindrecord_dir`为空，则通过`image_dir`和`anno_path`（图像绝对路径由`image_dir`和`anno_path`中的相对路径连接）生成[MindRecord](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/convert_dataset.html)文件。**注意，如果`mindrecord_dir`不为空，将使用`mindrecord_dir`而不是`image_dir`和`anno_path`。**
+训练模型运行`train.py`，使用数据集`image_dir`、`anno_path`和`mindrecord_dir`。如果`mindrecord_dir`为空，则通过`image_dir`和`anno_path`（图像绝对路径由`image_dir`和`anno_path`中的相对路径连接）生成[MindRecord](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/convert_dataset.html)文件。**注意，如果`mindrecord_dir`不为空，将使用`mindrecord_dir`而不是`image_dir`和`anno_path`。**
 
 - 单机模式
 
@@ -307,7 +307,7 @@ YOLOv3整体网络架构如下：
 
 ### Ascend评估
 
-运行`eval.py`，数据集为`image_dir`、`anno_path`(评估TXT)、`mindrecord_dir`和`ckpt_path`。`ckpt_path`是[检查点](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/save_model.html)文件的路径。
+运行`eval.py`，数据集为`image_dir`、`anno_path`(评估TXT)、`mindrecord_dir`和`ckpt_path`。`ckpt_path`是[检查点](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/save_model.html)文件的路径。
 
   ```shell script
   sh run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt

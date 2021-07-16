@@ -10,7 +10,7 @@
 
  1. 使用脚本的3步操作：  
    - 用户在训练脚本里设置context.set_context(mode=context.GRAPH_MODE, save_graphs=True)，进行图文件的保存。  
-   - 用户开启dump数据功能，参考<https://www.mindspore.cn/tutorial/training/zh-CN/r1.1/advanced_use/custom_debugging_info.html#dump>  
+   - 用户开启dump数据功能，参考<https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/custom_debugging_info.html>  
    - 获取dump数据文件的op_num，然后通过辅助脚本进行解析。如数据文件：`Default--network-TrainOneStepCell--network-WithLossCell--_backbone-
    ResNet--layer2-SequentialCell--0-ResidualBlock--conv2-Conv2d--Cast-op954_input_0_shape_128_128_3_3_kNumberTypeFloat32_DefaultFormat.bin`.  
    可观察到Cast-op954，说明该算子的op_num为op954, 如下图所示。

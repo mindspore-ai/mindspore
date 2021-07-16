@@ -56,8 +56,8 @@
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 - 安装Mindspore
 - 安装[pyblind11](https://github.com/pybind/pybind11)
 - 安装[Opencv3.4](https://docs.opencv.org/3.4.9/)
@@ -339,7 +339,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
 
 ### 推理
 
-如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。操作示例如下：
+如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html)。操作示例如下：
 
 ```python
 # 加载未知数据集进行推理

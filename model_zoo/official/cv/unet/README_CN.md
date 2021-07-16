@@ -117,8 +117,8 @@ python preprocess_dataset.py -d /data/save_data_path
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 
 ## 快速入门
 
@@ -469,7 +469,7 @@ python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkp
 
 #### 推理
 
-如果您需要使用训练好的模型在Ascend 910、Ascend 310等多个硬件平台上进行推理上进行推理，可参考此[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。下面是一个简单的操作步骤示例：
+如果您需要使用训练好的模型在Ascend 910、Ascend 310等多个硬件平台上进行推理上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html)。下面是一个简单的操作步骤示例：
 
 ##### Ascend 310环境运行
 

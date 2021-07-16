@@ -61,8 +61,8 @@ MaskRCNN是一个两级目标检测网络，作为FasterRCNN的扩展模型，�
 - 获取基础镜像
     - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 
 - 第三方库
 
@@ -517,7 +517,7 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ## 训练过程
 
-- 在`config.py`中设置配置项，包括loss_scale、学习率和网络超参。单击[此处](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)获取更多数据集相关信息.
+- 在`config.py`中设置配置项，包括loss_scale、学习率和网络超参。单击[此处](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/dataset_sample.html)获取更多数据集相关信息.
 
 ### 训练
 

@@ -52,8 +52,8 @@ The directory structure is as follows:
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/r1.3/index.html)
 
 # [Script Description](#contents)
 
@@ -126,7 +126,7 @@ Usage: bash run_standalone_train.sh [DATA_URL] [TRAIN_URL]
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including learning rate, output filename and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `config.py`, including learning rate, output filename and network hyperparameters. Click [here](https://www.mindspore.cn/docs/programming_guide/en/r1.3/dataset_sample.html) for more information about dataset.
 
 ### [Training](#content)
 

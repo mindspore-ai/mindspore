@@ -99,7 +99,7 @@ app
 
 ### Configuring MindSpore Lite Dependencies
 
-When MindSpore Java APIs are called, related library files are required. You can use MindSpore Lite [source code compilation](https://www.mindspore.cn/tutorial/lite/en/master/use/build.html) to generate the MindSpore Lite version. In this case, you need to use the compile command of generate with image preprocessing module.
+When MindSpore Java APIs are called, related library files are required. You can use MindSpore Lite [source code compilation](https://www.mindspore.cn/lite/docs/en/r1.3/use/build.html) to generate the MindSpore Lite version. In this case, you need to use the compile command of generate with image preprocessing module.
 
 In this example, the build process automatically downloads the `mindspore-lite-1.0.1-runtime-arm64-cpu` by the `app/download.gradle` file and saves in the `app/src/main/cpp` directory.
 

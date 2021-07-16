@@ -90,8 +90,8 @@ We use about 91K face images as training dataset and 11K as evaluating dataset i
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below:
-    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorials/en/r1.3/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/r1.3/index.html)
 
 # [Script Description](#contents)
 
