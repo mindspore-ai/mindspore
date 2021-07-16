@@ -114,7 +114,6 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
 
     std::shared_ptr<std::vector<unsigned char>> recv_str;
     auto recv_req_id = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, recv_from_rank, &recv_str);
-
     if (!server_node_->CollectiveWait(recv_req_id)) {
       MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
       return false;

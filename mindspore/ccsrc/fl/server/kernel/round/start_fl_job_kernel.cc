@@ -118,7 +118,7 @@ bool StartFLJobKernel::Reset() {
 }
 
 void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
-  iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
+  iter_next_req_timestamp_ = LongToSize(CURRENT_TIME_MILLI.count()) + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
   // The first startFLJob request means a new iteration starts running.
   Iteration::GetInstance().SetIterationRunning();
@@ -220,9 +220,9 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   schema::FLPlanBuilder fl_plan_builder(*(fbb.get()));
   fl_plan_builder.add_fl_name(fbs_fl_name);
   fl_plan_builder.add_server_mode(fbs_server_mode);
-  fl_plan_builder.add_iterations(ps::PSContext::instance()->fl_iteration_num());
-  fl_plan_builder.add_epochs(ps::PSContext::instance()->client_epoch_num());
-  fl_plan_builder.add_mini_batch(ps::PSContext::instance()->client_batch_size());
+  fl_plan_builder.add_iterations(SizeToInt(ps::PSContext::instance()->fl_iteration_num()));
+  fl_plan_builder.add_epochs(SizeToInt(ps::PSContext::instance()->client_epoch_num()));
+  fl_plan_builder.add_mini_batch(SizeToInt(ps::PSContext::instance()->client_batch_size()));
   fl_plan_builder.add_lr(ps::PSContext::instance()->client_learning_rate());
 #ifdef ENABLE_ARMOUR
   fl_plan_builder.add_cipher(cipher_public_params);

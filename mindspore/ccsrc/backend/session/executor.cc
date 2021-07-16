@@ -22,7 +22,7 @@
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
 #include "pybind_api/ir/tensor_py.h"
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 

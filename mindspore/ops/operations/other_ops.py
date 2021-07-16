@@ -726,6 +726,7 @@ class Pull(PrimitiveWithInfer):
     def infer_dtype(self, key_dtype, weight_dtype):
         return mstype.float32
 
+
 class PullWeight(PrimitiveWithInfer):
     """
     Pull weight by its names from server.
@@ -751,6 +752,7 @@ class PullWeight(PrimitiveWithInfer):
     def infer_dtype(self, weight, name, index):
         return mstype.float32
 
+
 class PushWeight(PrimitiveWithInfer):
     """
     Upload weight by its names to server.
@@ -775,6 +777,7 @@ class PushWeight(PrimitiveWithInfer):
 
     def infer_dtype(self, weight, ps_key, index):
         return mstype.float32
+
 
 class identity(Primitive):
     """

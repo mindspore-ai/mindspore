@@ -42,9 +42,10 @@ class PullWeightKernel : public RoundKernel {
   bool Reset() override;
 
  private:
-  void PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::RequestPullWeight *pull_weight_req);
-  void BuildPullWeightRsp(std::shared_ptr<FBBuilder> fbb, const schema::ResponseCode retcode, const std::string &reason,
-                          size_t iteration, const std::map<std::string, AddressPtr> &feature_maps);
+  void PullWeight(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestPullWeight *pull_weight_req);
+  void BuildPullWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
+                          const std::string &reason, size_t iteration,
+                          const std::map<std::string, AddressPtr> &feature_maps);
 
   Executor *executor_;
 

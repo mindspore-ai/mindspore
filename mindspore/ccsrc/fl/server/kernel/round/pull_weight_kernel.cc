@@ -63,10 +63,11 @@ bool PullWeightKernel::Reset() {
   return true;
 }
 
-void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::RequestPullWeight *pull_weight_req) {
+void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
+                                  const schema::RequestPullWeight *pull_weight_req) {
   std::map<std::string, AddressPtr> feature_maps = {};
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t pull_weight_iter = static_cast<size_t>(pull_weight_req->iteration());
+  size_t pull_weight_iter = IntToSize(pull_weight_req->iteration());
   // The iteration from worker should be the same as server's, otherwise return SucNotReady so that worker could retry.
   if (pull_weight_iter != current_iter) {
     std::string reason = "PullWeight iteration " + std::to_string(pull_weight_iter) +
@@ -110,7 +111,7 @@ void PullWeightKernel::PullWeight(std::shared_ptr<FBBuilder> fbb, const schema::
   return;
 }
 
-void PullWeightKernel::BuildPullWeightRsp(std::shared_ptr<FBBuilder> fbb, const schema::ResponseCode retcode,
+void PullWeightKernel::BuildPullWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                           const std::string &reason, size_t iteration,
                                           const std::map<std::string, AddressPtr> &feature_maps) {
   auto fbs_reason = fbb->CreateString(reason);
@@ -127,7 +128,7 @@ void PullWeightKernel::BuildPullWeightRsp(std::shared_ptr<FBBuilder> fbb, const 
   schema::ResponsePullWeightBuilder rsp_pull_weight_builder(*(fbb.get()));
   rsp_pull_weight_builder.add_retcode(retcode);
   rsp_pull_weight_builder.add_reason(fbs_reason);
-  rsp_pull_weight_builder.add_iteration(iteration);
+  rsp_pull_weight_builder.add_iteration(SizeToInt(iteration));
   rsp_pull_weight_builder.add_feature_map(fbs_feature_maps_vector);
   auto rsp_pull_weight = rsp_pull_weight_builder.Finish();
   fbb->Finish(rsp_pull_weight);

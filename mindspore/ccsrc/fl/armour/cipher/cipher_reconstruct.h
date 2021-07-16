@@ -44,11 +44,11 @@ class CipherReconStruct {
   // reconstruct secret mask
   bool ReconstructSecrets(const int cur_iterator, const std::string &next_req_time,
                           const schema::SendReconstructSecret *reconstruct_secret_req,
-                          std::shared_ptr<fl::server::FBBuilder> reconstruct_secret_resp_builder,
+                          const std::shared_ptr<fl::server::FBBuilder> &reconstruct_secret_resp_builder,
                           const std::vector<std::string> &client_list);
 
   // build response code of reconstruct secret.
-  void BuildReconstructSecretsRsp(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
+  void BuildReconstructSecretsRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
                                   const std::string &reason, const int iteration, const std::string &next_req_time);
 
   // clear the shared memory.

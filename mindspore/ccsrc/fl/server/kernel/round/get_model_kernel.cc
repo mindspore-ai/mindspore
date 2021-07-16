@@ -70,10 +70,9 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
   auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
   std::map<std::string, AddressPtr> feature_maps;
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t get_model_iter = static_cast<size_t>(get_model_req->iteration());
+  size_t get_model_iter = IntToSize(get_model_req->iteration());
   const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
   size_t latest_iter_num = iter_to_model.rbegin()->first;
-
   // If this iteration is not finished yet, return ResponseCode_SucNotReady so that clients could get model later.
   if ((current_iter == get_model_iter && latest_iter_num != current_iter) || current_iter == get_model_iter - 1) {
     std::string reason = "The model is not ready yet for iteration " + std::to_string(get_model_iter) +

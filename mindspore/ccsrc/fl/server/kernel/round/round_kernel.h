@@ -38,6 +38,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
+constexpr uint64_t kReleaseDuration = 100;
 // RoundKernel contains the main logic of server handling messages from workers. One iteration has multiple round
 // kernels to represent the process. They receive and parse messages from the server communication module. After
 // handling these messages, round kernels allocate response data and send it back.

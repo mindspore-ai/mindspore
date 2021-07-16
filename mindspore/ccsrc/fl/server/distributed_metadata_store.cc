@@ -141,7 +141,7 @@ PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
       MS_LOG(ERROR) << "Sending getting metadata message to server " << stored_rank << " failed.";
       return get_metadata_rsp;
     }
-    get_metadata_rsp.ParseFromArray(get_meta_rsp_msg->data(), SizeToInt(get_meta_rsp_msg->size()));
+    (void)get_metadata_rsp.ParseFromArray(get_meta_rsp_msg->data(), SizeToInt(get_meta_rsp_msg->size()));
     return get_metadata_rsp;
   }
 }
@@ -165,7 +165,7 @@ bool DistributedMetadataStore::ReInitForScaling() {
 }
 
 void DistributedMetadataStore::InitHashRing() {
-  router_ = std::make_shared<ConsistentHashRing>(32);
+  router_ = std::make_shared<ConsistentHashRing>(kDefaultVirtualNodeNum);
   MS_EXCEPTION_IF_NULL(router_);
   for (uint32_t i = 0; i < server_num_; i++) {
     bool ret = router_->Insert(i);
@@ -184,7 +184,7 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
   }
 
   PBMetadataWithName meta_with_name;
-  meta_with_name.ParseFromArray(message->data(), SizeToInt(message->len()));
+  (void)meta_with_name.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = meta_with_name.name();
   MS_LOG(INFO) << "Update metadata for " << name;
 
@@ -195,7 +195,7 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
   } else {
     update_meta_rsp_msg = "Success";
   }
-  communicator_->SendResponse(update_meta_rsp_msg.data(), update_meta_rsp_msg.size(), message);
+  (void)communicator_->SendResponse(update_meta_rsp_msg.data(), update_meta_rsp_msg.size(), message);
   return;
 }
 
@@ -206,14 +206,14 @@ void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps
   }
 
   GetMetadataRequest get_metadata_req;
-  get_metadata_req.ParseFromArray(message->data(), message->len());
+  (void)get_metadata_req.ParseFromArray(message->data(), message->len());
   const std::string &name = get_metadata_req.name();
   MS_LOG(INFO) << "Getting metadata for " << name;
 
   std::unique_lock<std::mutex> lock(mutex_[name]);
   PBMetadata stored_meta = metadata_[name];
   std::string getting_meta_rsp_msg = stored_meta.SerializeAsString();
-  communicator_->SendResponse(getting_meta_rsp_msg.data(), getting_meta_rsp_msg.size(), message);
+  (void)communicator_->SendResponse(getting_meta_rsp_msg.data(), getting_meta_rsp_msg.size(), message);
   return;
 }
 

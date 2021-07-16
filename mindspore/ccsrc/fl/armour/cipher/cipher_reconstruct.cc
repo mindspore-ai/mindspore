@@ -157,10 +157,10 @@ bool CipherReconStruct::ReconstructSecretsGenNoise(const std::vector<string> &cl
 }
 
 // reconstruct secrets
-bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::string &next_req_time,
-                                           const schema::SendReconstructSecret *reconstruct_secret_req,
-                                           std::shared_ptr<fl::server::FBBuilder> reconstruct_secret_resp_builder,
-                                           const std::vector<std::string> &client_list) {
+bool CipherReconStruct::ReconstructSecrets(
+  const int cur_iterator, const std::string &next_req_time, const schema::SendReconstructSecret *reconstruct_secret_req,
+  const std::shared_ptr<fl::server::FBBuilder> &reconstruct_secret_resp_builder,
+  const std::vector<std::string> &client_list) {
   MS_LOG(INFO) << "CipherReconStruct::ReconstructSecrets START";
   clock_t start_time = clock();
   if (reconstruct_secret_req == nullptr || reconstruct_secret_resp_builder == nullptr) {
@@ -285,7 +285,7 @@ void CipherReconStruct::ClearReconstructSecrets() {
   MS_LOG(INFO) << "CipherReconStruct::ClearReconstructSecrets Success";
 }
 
-void CipherReconStruct::BuildReconstructSecretsRsp(std::shared_ptr<fl::server::FBBuilder> fbb,
+void CipherReconStruct::BuildReconstructSecretsRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb,
                                                    const schema::ResponseCode retcode, const std::string &reason,
                                                    const int iteration, const std::string &next_req_time) {
   auto fbs_reason = fbb->CreateString(reason);

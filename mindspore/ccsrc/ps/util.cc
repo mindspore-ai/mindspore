@@ -136,7 +136,8 @@ bool Util::FuseServerCommOps(const pipeline::ResourcePtr &res) {
   return true;
 }
 
-void Util::DoFusion(FuncGraphPtr func_graph, const std::string &cnode_name, const std::string &fused_cnode_name) {
+void Util::DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_name,
+                    const std::string &fused_cnode_name) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
 

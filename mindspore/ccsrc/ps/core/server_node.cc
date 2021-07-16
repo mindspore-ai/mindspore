@@ -148,7 +148,7 @@ std::shared_ptr<CommunicatorBase> ServerNode::GetOrCreateHttpComm(const std::str
 }
 
 std::shared_ptr<CommunicatorBase> ServerNode::GetOrCreateTcpComm(const std::string &scheduler_ip,
-                                                                 std::int16_t scheduler_port, uint32_t worker_num,
+                                                                 uint16_t scheduler_port, uint32_t worker_num,
                                                                  uint32_t server_num,
                                                                  const std::shared_ptr<TaskExecutor> &task_executor) {
   std::lock_guard<std::mutex> lock(communicator_mutex_);

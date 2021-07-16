@@ -67,12 +67,12 @@ void PushWeightKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageH
   return;
 }
 
-ResultCode PushWeightKernel::PushWeight(std::shared_ptr<FBBuilder> fbb,
+ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
                                         const schema::RequestPushWeight *push_weight_req) {
   if (fbb == nullptr || push_weight_req == nullptr) {
     return ResultCode::kSuccessAndReturn;
   }
-  size_t iteration = static_cast<size_t>(push_weight_req->iteration());
+  size_t iteration = IntToSize(push_weight_req->iteration());
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
   if (iteration != current_iter) {
     std::string reason = "PushWeight iteration number is invalid:" + std::to_string(iteration) +
@@ -123,13 +123,13 @@ std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::R
   return upload_feature_map;
 }
 
-void PushWeightKernel::BuildPushWeightRsp(std::shared_ptr<FBBuilder> fbb, const schema::ResponseCode retcode,
+void PushWeightKernel::BuildPushWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                           const std::string &reason, size_t iteration) {
   auto fbs_reason = fbb->CreateString(reason);
   schema::ResponsePushWeightBuilder rsp_push_weight_builder(*(fbb.get()));
   rsp_push_weight_builder.add_retcode(retcode);
   rsp_push_weight_builder.add_reason(fbs_reason);
-  rsp_push_weight_builder.add_iteration(iteration);
+  rsp_push_weight_builder.add_iteration(SizeToInt(iteration));
   auto rsp_push_weight = rsp_push_weight_builder.Finish();
   fbb->Finish(rsp_push_weight);
   return;

@@ -26,7 +26,7 @@ bool CipherUnmask::UnMask(const std::map<std::string, AddressPtr> &data) {
   clock_t start_time = clock();
   std::vector<float> noise;
 
-  cipher_init_->cipher_meta_storage_.GetClientNoisesFromServer(fl::server::kCtxClientNoises, &noise);
+  (void)cipher_init_->cipher_meta_storage_.GetClientNoisesFromServer(fl::server::kCtxClientNoises, &noise);
   if (noise.size() != cipher_init_->featuremap_) {
     MS_LOG(ERROR) << " CipherMgr UnMask ERROR";
     return false;

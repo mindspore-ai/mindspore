@@ -34,7 +34,7 @@ RoundKernel::RoundKernel() : name_(""), current_count_(0), required_count_(0), e
       // Detect whether there's any data needs to be released every 100 milliseconds.
       if (heap_data_to_release_.empty()) {
         release_lock.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kReleaseDuration));
         continue;
       }
 
@@ -61,9 +61,9 @@ RoundKernel::~RoundKernel() {
   }
 }
 
-void RoundKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) { return; }
+void RoundKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) { return; }
 
-void RoundKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) { return; }
+void RoundKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) { return; }
 
 void RoundKernel::StopTimer() const {
   if (stop_timer_cb_) {
