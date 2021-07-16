@@ -217,4 +217,4 @@ if(USE_GLOG)
 endif()
 
 target_link_libraries(mindspore mindspore_core)
-target_link_libraries(ut_tests PRIVATE mindspore mindspore_shared_lib securec graph)
+target_link_libraries(ut_tests PRIVATE mindspore mindspore_shared_lib securec graph error_manager)

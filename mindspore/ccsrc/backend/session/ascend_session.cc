@@ -66,6 +66,7 @@
 #else
 #include "debug/debugger/proto_exporter_stub.h"
 #endif
+#include "common/util/error_manager/error_manager.h"
 #include "toolchain/adx_datadump_server.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
@@ -1522,6 +1523,20 @@ std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, 
   MS_EXCEPTION_IF_NULL(bucket);
   bucket->Init({compute_stream}, {communication_stream});
   return bucket;
+}
+
+void AscendSession::ReportWarningMessage() {
+  const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
+  if (!warning_message.empty()) {
+    MS_LOG(WARNING) << "Ascend warning message:\n" << warning_message;
+  }
+}
+
+void AscendSession::ReportErrorMessage() {
+  const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+  if (!error_message.empty()) {
+    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+  }
 }
 }  // namespace session
 }  // namespace mindspore

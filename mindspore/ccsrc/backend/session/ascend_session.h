@@ -66,6 +66,8 @@ class AscendSession : public SessionBasic {
                        const std::vector<tensor::TensorPtr> &graph_inputs,
                        const std::map<KernelWithIndex, size_t> &cnode_refcount) override;
   std::string GetCommWorldGroup() override { return kHcclWorldGroup; }
+  void ReportWarningMessage() override;
+  void ReportErrorMessage() override;
 
  private:
   // compile child graph when session have multiple child graphs

@@ -40,6 +40,7 @@
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
+#include "common/util/error_manager/error_manager.h"
 #include "debug/anf_ir_dump.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
@@ -275,8 +276,16 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 }
 
 void AscendKernelRuntime::PreInit() {
+  const auto error_manager_ret = ErrorManager::GetInstance().Init();
+  if (error_manager_ret != 0) {
+    MS_LOG(WARNING) << "Init ErrorManager failed.";
+  }
   auto ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
   if (!ret) {
+    const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+    if (!error_message.empty()) {
+      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    }
     MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
   }
 }
@@ -286,27 +295,39 @@ bool AscendKernelRuntime::Init() {
     SetCurrentContext();
     return true;
   }
-  OpTilingCalculater::GetInstance().Init();
-  // Start up profiling before rtSetDevice
-
-  bool ret = InitDevice();
-  if (!ret) {
-    return ret;
+  const auto error_manager_ret = ErrorManager::GetInstance().Init();
+  if (error_manager_ret != 0) {
+    MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
+  try {
+    OpTilingCalculater::GetInstance().Init();
+    // Start up profiling before rtSetDevice
 
-  SetDebugger();
-  mem_manager_ = std::make_shared<AscendMemoryManager>();
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->MallocDeviceMemory();
+    bool ret = InitDevice();
+    if (!ret) {
+      return ret;
+    }
 
-  // Set callback func when exception error
-  auto rt_ret = rtRegTaskFailCallbackByModule(kModuleName, TaskFailCallback);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
+    SetDebugger();
+    mem_manager_ = std::make_shared<AscendMemoryManager>();
+    MS_EXCEPTION_IF_NULL(mem_manager_);
+    mem_manager_->MallocDeviceMemory();
+
+    // Set callback func when exception error
+    auto rt_ret = rtRegTaskFailCallbackByModule(kModuleName, TaskFailCallback);
+    if (rt_ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
+    }
+  } catch (const std::exception &e) {
+    const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+    if (!error_message.empty()) {
+      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    }
+    throw;
   }
 
   initialized_ = true;
-  return ret;
+  return true;
 }
 
 bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
