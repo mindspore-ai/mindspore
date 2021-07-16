@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor
 SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
     : SubsetSamplerObj(std::move(indices), num_samples) {}
@@ -72,6 +71,5 @@ std::shared_ptr<SamplerObj> SubsetRandomSamplerObj::SamplerCopy() {
   }
   return sampler;
 }
-
 }  // namespace dataset
 }  // namespace mindspore

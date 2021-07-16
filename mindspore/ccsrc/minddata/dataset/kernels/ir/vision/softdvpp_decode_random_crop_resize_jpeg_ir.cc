@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // SoftDvppDecodeRandomCropResizeJpegOperation
 SoftDvppDecodeRandomCropResizeJpegOperation::SoftDvppDecodeRandomCropResizeJpegOperation(std::vector<int32_t> size,
                                                                                          std::vector<float> scale,
@@ -46,8 +43,10 @@ std::string SoftDvppDecodeRandomCropResizeJpegOperation::Name() const {
 Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
   // size
   RETURN_IF_NOT_OK(ValidateVectorSize("SoftDvppDecodeRandomCropResizeJpeg", size_));
+  constexpr int32_t value_one = 1;
+  constexpr int32_t value_two = 2;
   for (int32_t i = 0; i < size_.size(); i++) {
-    if (size_[i] % 2 == 1) {
+    if (size_[i] % value_two == value_one) {
       std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: size[" + std::to_string(i) +
                             "] must be even values, got: " + std::to_string(size_[i]);
       MS_LOG(ERROR) << err_msg;
@@ -69,15 +68,20 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> SoftDvppDecodeRandomCropResizeJpegOperation::Build() {
-  int32_t height = size_[0];
-  int32_t width = size_[0];
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t size_two = 2;
+
+  int32_t height = size_[dimension_zero];
+  int32_t width = size_[dimension_zero];
   // User specified the width value.
-  if (size_.size() == 2) {
-    width = size_[1];
+  if (size_.size() == size_two) {
+    width = size_[dimension_one];
   }
 
-  auto tensor_op = std::make_shared<SoftDvppDecodeRandomCropResizeJpegOp>(height, width, scale_[0], scale_[1],
-                                                                          ratio_[0], ratio_[1], max_attempts_);
+  auto tensor_op = std::make_shared<SoftDvppDecodeRandomCropResizeJpegOp>(height, width, scale_[dimension_zero],
+                                                                          scale_[dimension_one], ratio_[dimension_zero],
+                                                                          ratio_[dimension_one], max_attempts_);
   return tensor_op;
 }
 
@@ -90,9 +94,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::to_json(nlohmann::json *out_
   *out_json = args;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

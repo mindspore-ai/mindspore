@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 CutOutOperation::CutOutOperation(int32_t length, int32_t num_patches) : length_(length), num_patches_(num_patches) {}
 
 CutOutOperation::~CutOutOperation() = default;
@@ -55,7 +52,6 @@ Status CutOutOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

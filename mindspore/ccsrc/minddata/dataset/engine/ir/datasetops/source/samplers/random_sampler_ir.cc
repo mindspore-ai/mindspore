@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor
 RandomSamplerObj::RandomSamplerObj(bool replacement, int64_t num_samples, bool reshuffle_each_epoch)
     : replacement_(replacement), num_samples_(num_samples), reshuffle_each_epoch_(reshuffle_each_epoch) {}
@@ -83,6 +82,5 @@ std::shared_ptr<SamplerObj> RandomSamplerObj::SamplerCopy() {
   }
   return sampler;
 }
-
 }  // namespace dataset
 }  // namespace mindspore

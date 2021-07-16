@@ -27,9 +27,7 @@ namespace mindspore {
 namespace dataset {
 
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RgbaToBgrOperation.
 RgbaToBgrOperation::RgbaToBgrOperation() {}
 
@@ -44,7 +42,6 @@ std::shared_ptr<TensorOp> RgbaToBgrOperation::Build() {
   return tensor_op;
 }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

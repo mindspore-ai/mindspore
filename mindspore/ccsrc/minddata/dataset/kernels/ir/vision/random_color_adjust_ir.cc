@@ -25,11 +25,13 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
 
-#ifndef ENABLE_ANDROID
+constexpr size_t dimension_zero = 0;
+constexpr size_t dimension_one = 1;
+constexpr size_t size_two = 2;
 
+#ifndef ENABLE_ANDROID
 // RandomColorAdjustOperation.
 RandomColorAdjustOperation::RandomColorAdjustOperation(std::vector<float> brightness, std::vector<float> contrast,
                                                        std::vector<float> saturation, std::vector<float> hue)
@@ -56,25 +58,25 @@ Status RandomColorAdjustOperation::ValidateParams() {
 std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
   float brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub;
 
-  brightness_lb = brightness_[0];
-  brightness_ub = brightness_[0];
+  brightness_lb = brightness_[dimension_zero];
+  brightness_ub = brightness_[dimension_zero];
 
-  if (brightness_.size() == 2) brightness_ub = brightness_[1];
+  if (brightness_.size() == size_two) brightness_ub = brightness_[dimension_one];
 
-  contrast_lb = contrast_[0];
-  contrast_ub = contrast_[0];
+  contrast_lb = contrast_[dimension_zero];
+  contrast_ub = contrast_[dimension_zero];
 
-  if (contrast_.size() == 2) contrast_ub = contrast_[1];
+  if (contrast_.size() == size_two) contrast_ub = contrast_[dimension_one];
 
-  saturation_lb = saturation_[0];
-  saturation_ub = saturation_[0];
+  saturation_lb = saturation_[dimension_zero];
+  saturation_ub = saturation_[dimension_zero];
 
-  if (saturation_.size() == 2) saturation_ub = saturation_[1];
+  if (saturation_.size() == size_two) saturation_ub = saturation_[dimension_one];
 
-  hue_lb = hue_[0];
-  hue_ub = hue_[0];
+  hue_lb = hue_[dimension_zero];
+  hue_ub = hue_[dimension_zero];
 
-  if (hue_.size() == 2) hue_ub = hue_[1];
+  if (hue_.size() == size_two) hue_ub = hue_[dimension_one];
 
   std::shared_ptr<RandomColorAdjustOp> tensor_op = std::make_shared<RandomColorAdjustOp>(
     brightness_lb, brightness_ub, contrast_lb, contrast_ub, saturation_lb, saturation_ub, hue_lb, hue_ub);
@@ -91,7 +93,6 @@ Status RandomColorAdjustOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

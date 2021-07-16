@@ -25,9 +25,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
 #ifndef ENABLE_ANDROID
+constexpr size_t dimension_zero = 0;
+constexpr size_t dimension_one = 1;
+constexpr size_t dimension_two = 2;
+constexpr size_t size_one = 1;
+constexpr size_t size_two = 2;
+constexpr size_t size_three = 3;
 
 // Function to create RandomRotationOperation.
 RandomRotationOperation::RandomRotationOperation(std::vector<float> degrees, InterpolationMode resample, bool expand,
@@ -45,26 +50,27 @@ std::string RandomRotationOperation::Name() const { return kRandomRotationOperat
 
 Status RandomRotationOperation::ValidateParams() {
   // degrees
-  if (degrees_.size() != 2 && degrees_.size() != 1) {
+  if (degrees_.size() != size_two && degrees_.size() != size_one) {
     std::string err_msg =
       "RandomRotation: degrees must be a vector of one or two values, got: " + std::to_string(degrees_.size());
     MS_LOG(ERROR) << "RandomRotation: degrees must be a vector of one or two values, got: " << degrees_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if ((degrees_.size() == 2) && (degrees_[1] < degrees_[0])) {
+  if ((degrees_.size() == size_two) && (degrees_[dimension_one] < degrees_[dimension_zero])) {
     std::string err_msg = "RandomRotation: degrees must be in the format of (min, max), got: (" +
-                          std::to_string(degrees_[0]) + ", " + std::to_string(degrees_[1]) + ")";
+                          std::to_string(degrees_[dimension_zero]) + ", " + std::to_string(degrees_[dimension_one]) +
+                          ")";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  } else if ((degrees_.size() == 1) && (degrees_[0] < 0)) {
+  } else if ((degrees_.size() == size_one) && (degrees_[dimension_zero] < 0)) {
     std::string err_msg =
       "RandomRotation: if degrees only has one value, it must be greater than or equal to 0, got: " +
-      std::to_string(degrees_[0]);
+      std::to_string(degrees_[dimension_zero]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // center
-  if (center_.size() != 0 && center_.size() != 2) {
+  if (center_.size() != 0 && center_.size() != size_two) {
     std::string err_msg =
       "RandomRotation: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
     MS_LOG(ERROR) << err_msg;
@@ -77,23 +83,23 @@ Status RandomRotationOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
   float start_degree, end_degree;
-  if (degrees_.size() == 1) {
-    start_degree = -degrees_[0];
-    end_degree = degrees_[0];
-  } else if (degrees_.size() == 2) {
-    start_degree = degrees_[0];
-    end_degree = degrees_[1];
+  if (degrees_.size() == size_one) {
+    start_degree = -degrees_[dimension_zero];
+    end_degree = degrees_[dimension_zero];
+  } else if (degrees_.size() == size_two) {
+    start_degree = degrees_[dimension_zero];
+    end_degree = degrees_[dimension_one];
   }
 
   uint8_t fill_r, fill_g, fill_b;
-  fill_r = fill_value_[0];
-  fill_g = fill_value_[0];
-  fill_b = fill_value_[0];
+  fill_r = fill_value_[dimension_zero];
+  fill_g = fill_value_[dimension_zero];
+  fill_b = fill_value_[dimension_zero];
 
-  if (fill_value_.size() == 3) {
-    fill_r = fill_value_[0];
-    fill_g = fill_value_[1];
-    fill_b = fill_value_[2];
+  if (fill_value_.size() == size_three) {
+    fill_r = fill_value_[dimension_zero];
+    fill_g = fill_value_[dimension_one];
+    fill_b = fill_value_[dimension_two];
   }
 
   std::shared_ptr<RandomRotationOp> tensor_op = std::make_shared<RandomRotationOp>(
@@ -111,9 +117,7 @@ Status RandomRotationOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

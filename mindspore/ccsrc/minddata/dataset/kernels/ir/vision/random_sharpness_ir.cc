@@ -25,10 +25,11 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
+constexpr size_t dimension_zero = 0;
+constexpr size_t dimension_one = 1;
+constexpr size_t size_two = 2;
 
 // Function to create RandomSharpness.
 RandomSharpnessOperation::RandomSharpnessOperation(std::vector<float> degrees)
@@ -39,13 +40,13 @@ RandomSharpnessOperation::~RandomSharpnessOperation() = default;
 std::string RandomSharpnessOperation::Name() const { return kRandomSharpnessOperation; }
 
 Status RandomSharpnessOperation::ValidateParams() {
-  if (degrees_.size() != 2 || degrees_[0] < 0 || degrees_[1] < 0) {
+  if (degrees_.size() != size_two || degrees_[dimension_zero] < 0 || degrees_[dimension_one] < 0) {
     std::string err_msg = "RandomSharpness: degrees must be a vector of two values and greater than or equal to 0.";
     MS_LOG(ERROR) << "RandomSharpness: degrees must be a vector of two values and greater than or equal to 0, got: "
                   << degrees_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (degrees_[1] < degrees_[0]) {
+  if (degrees_[dimension_one] < degrees_[dimension_zero]) {
     std::string err_msg = "RandomSharpness: degrees must be in the format of (min, max).";
     MS_LOG(ERROR) << "RandomSharpness: degrees must be in the format of (min, max), got: " << degrees_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -54,7 +55,8 @@ Status RandomSharpnessOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> RandomSharpnessOperation::Build() {
-  std::shared_ptr<RandomSharpnessOp> tensor_op = std::make_shared<RandomSharpnessOp>(degrees_[0], degrees_[1]);
+  std::shared_ptr<RandomSharpnessOp> tensor_op =
+    std::make_shared<RandomSharpnessOp>(degrees_[dimension_zero], degrees_[dimension_one]);
   return tensor_op;
 }
 
@@ -62,9 +64,7 @@ Status RandomSharpnessOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["degrees"] = degrees_;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

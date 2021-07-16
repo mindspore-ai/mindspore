@@ -23,9 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 AffineOperation::AffineOperation(float_t degrees, const std::vector<float> &translation, float scale,
                                  const std::vector<float> &shear, InterpolationMode interpolation,
                                  const std::vector<uint8_t> &fill_value)
@@ -42,7 +40,8 @@ std::string AffineOperation::Name() const { return kAffineOperation; }
 
 Status AffineOperation::ValidateParams() {
   // Translate
-  if (translation_.size() != 2) {
+  constexpr size_t kExpectedTranslationSize = 2;
+  if (translation_.size() != kExpectedTranslationSize) {
     std::string err_msg =
       "Affine: translate expecting size 2, got: translation.size() = " + std::to_string(translation_.size());
     MS_LOG(ERROR) << err_msg;
@@ -52,7 +51,8 @@ Status AffineOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("Affine", "translate", translation_[1], {-1, 1}, false, false));
 
   // Shear
-  if (shear_.size() != 2) {
+  constexpr size_t kExpectedShearSize = 2;
+  if (shear_.size() != kExpectedShearSize) {
     std::string err_msg = "Affine: shear_ranges expecting size 2, got: shear.size() = " + std::to_string(shear_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -80,7 +80,6 @@ Status AffineOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

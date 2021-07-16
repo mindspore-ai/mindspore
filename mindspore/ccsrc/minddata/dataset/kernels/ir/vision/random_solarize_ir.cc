@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RandomSolarizeOperation.
 RandomSolarizeOperation::RandomSolarizeOperation(std::vector<uint8_t> threshold)
     : TensorOperation(true), threshold_(threshold) {}
@@ -39,21 +36,26 @@ RandomSolarizeOperation::~RandomSolarizeOperation() = default;
 std::string RandomSolarizeOperation::Name() const { return kRandomSolarizeOperation; }
 
 Status RandomSolarizeOperation::ValidateParams() {
-  if (threshold_.size() != 2) {
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t size_two = 2;
+  constexpr uint8_t kThresholdMax = 255;
+
+  if (threshold_.size() != size_two) {
     std::string err_msg =
       "RandomSolarize: threshold must be a vector of two values, got: " + std::to_string(threshold_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (int32_t i = 0; i < threshold_.size(); ++i) {
-    if (threshold_[i] < 0 || threshold_[i] > 255) {
+    if (threshold_[i] < 0 || threshold_[i] > kThresholdMax) {
       std::string err_msg =
         "RandomSolarize: threshold has to be between 0 and 255, got:" + std::to_string(threshold_[i]);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
-  if (threshold_[0] > threshold_[1]) {
+  if (threshold_[dimension_zero] > threshold_[dimension_one]) {
     std::string err_msg = "RandomSolarize: threshold must be passed in a (min, max) format";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -70,9 +72,7 @@ Status RandomSolarizeOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["threshold"] = threshold_;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

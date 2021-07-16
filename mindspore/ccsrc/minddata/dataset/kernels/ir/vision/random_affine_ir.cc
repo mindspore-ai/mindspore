@@ -23,8 +23,15 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
+
+constexpr size_t dimension_zero = 0;
+constexpr size_t dimension_one = 1;
+constexpr size_t dimension_two = 2;
+constexpr size_t dimension_three = 3;
+constexpr size_t size_two = 2;
+constexpr size_t size_three = 3;
+constexpr size_t size_four = 4;
 
 // RandomAffineOperation
 RandomAffineOperation::RandomAffineOperation(const std::vector<float_t> &degrees,
@@ -47,62 +54,69 @@ std::string RandomAffineOperation::Name() const { return kRandomAffineOperation;
 
 Status RandomAffineOperation::ValidateParams() {
   // Degrees
-  if (degrees_.size() != 2) {
+  if (degrees_.size() != size_two) {
     std::string err_msg =
       "RandomAffine: degrees expecting size 2, got: degrees.size() = " + std::to_string(degrees_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (degrees_[0] > degrees_[1]) {
-    std::string err_msg =
-      "RandomAffine: minimum of degrees range is greater than maximum: min = " + std::to_string(degrees_[0]) +
-      ", max = " + std::to_string(degrees_[1]);
+  if (degrees_[dimension_zero] > degrees_[dimension_one]) {
+    std::string err_msg = "RandomAffine: minimum of degrees range is greater than maximum: min = " +
+                          std::to_string(degrees_[dimension_zero]) +
+                          ", max = " + std::to_string(degrees_[dimension_one]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // Translate
-  if (translate_range_.size() != 2 && translate_range_.size() != 4) {
+  if (translate_range_.size() != size_two && translate_range_.size() != size_four) {
     std::string err_msg = "RandomAffine: translate_range expecting size 2 or 4, got: translate_range.size() = " +
                           std::to_string(translate_range_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (translate_range_[0] > translate_range_[1]) {
+  if (translate_range_[dimension_zero] > translate_range_[dimension_one]) {
     std::string err_msg = "RandomAffine: minimum of translate range on x is greater than maximum: min = " +
-                          std::to_string(translate_range_[0]) + ", max = " + std::to_string(translate_range_[1]);
+                          std::to_string(translate_range_[dimension_zero]) +
+                          ", max = " + std::to_string(translate_range_[dimension_one]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  RETURN_IF_NOT_OK(ValidateScalar("RandomAffine", "translate", translate_range_[0], {-1, 1}, false, false));
-  RETURN_IF_NOT_OK(ValidateScalar("RandomAffine", "translate", translate_range_[1], {-1, 1}, false, false));
-  if (translate_range_.size() == 4) {
-    if (translate_range_[2] > translate_range_[3]) {
+  RETURN_IF_NOT_OK(
+    ValidateScalar("RandomAffine", "translate", translate_range_[dimension_zero], {-1, 1}, false, false));
+  RETURN_IF_NOT_OK(ValidateScalar("RandomAffine", "translate", translate_range_[dimension_one], {-1, 1}, false, false));
+  if (translate_range_.size() == size_four) {
+    if (translate_range_[dimension_two] > translate_range_[dimension_three]) {
       std::string err_msg = "RandomAffine: minimum of translate range on y is greater than maximum: min = " +
-                            std::to_string(translate_range_[2]) + ", max = " + std::to_string(translate_range_[3]);
+                            std::to_string(translate_range_[dimension_two]) +
+                            ", max = " + std::to_string(translate_range_[dimension_three]);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
-    RETURN_IF_NOT_OK(ValidateScalar("RandomAffine", "translate", translate_range_[2], {-1, 1}, false, false));
-    RETURN_IF_NOT_OK(ValidateScalar("RandomAffine", "translate", translate_range_[3], {-1, 1}, false, false));
+    RETURN_IF_NOT_OK(
+      ValidateScalar("RandomAffine", "translate", translate_range_[dimension_two], {-1, 1}, false, false));
+    RETURN_IF_NOT_OK(
+      ValidateScalar("RandomAffine", "translate", translate_range_[dimension_three], {-1, 1}, false, false));
   }
   // Scale
   RETURN_IF_NOT_OK(ValidateVectorScale("RandomAffine", scale_range_));
   // Shear
-  if (shear_ranges_.size() != 2 && shear_ranges_.size() != 4) {
+  if (shear_ranges_.size() != size_two && shear_ranges_.size() != size_four) {
     std::string err_msg = "RandomAffine: shear_ranges expecting size 2 or 4, got: shear_ranges.size() = " +
                           std::to_string(shear_ranges_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (shear_ranges_[0] > shear_ranges_[1]) {
+  if (shear_ranges_[dimension_zero] > shear_ranges_[dimension_one]) {
     std::string err_msg = "RandomAffine: minimum of horizontal shear range is greater than maximum: min = " +
-                          std::to_string(shear_ranges_[0]) + ", max = " + std::to_string(shear_ranges_[1]);
+                          std::to_string(shear_ranges_[dimension_zero]) +
+                          ", max = " + std::to_string(shear_ranges_[dimension_one]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (shear_ranges_.size() == 4 && shear_ranges_[2] > shear_ranges_[3]) {
+  if (shear_ranges_.size() == size_four && shear_ranges_[dimension_two] > shear_ranges_[dimension_three]) {
     std::string err_msg = "RandomAffine: minimum of vertical shear range is greater than maximum: min = " +
-                          std::to_string(shear_ranges_[2]) + ", max = " + std::to_string(scale_range_[3]);
+                          std::to_string(shear_ranges_[dimension_two]) +
+                          ", max = " + std::to_string(scale_range_[dimension_three]);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -112,16 +126,17 @@ Status RandomAffineOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
-  if (shear_ranges_.size() == 2) {
-    shear_ranges_.resize(4);
+  if (shear_ranges_.size() == size_two) {
+    shear_ranges_.resize(size_four);
   }
-  if (translate_range_.size() == 2) {
-    translate_range_.resize(4);
+  if (translate_range_.size() == size_two) {
+    translate_range_.resize(size_four);
   }
-  std::vector<uint8_t> fill_value = {fill_value_[0], fill_value_[0], fill_value_[0]};
-  if (fill_value_.size() == 3) {
-    fill_value[1] = fill_value_[1];
-    fill_value[2] = fill_value_[2];
+  std::vector<uint8_t> fill_value = {fill_value_[dimension_zero], fill_value_[dimension_zero],
+                                     fill_value_[dimension_zero]};
+  if (fill_value_.size() == size_three) {
+    fill_value[dimension_one] = fill_value_[dimension_one];
+    fill_value[dimension_two] = fill_value_[dimension_two];
   }
 
   auto tensor_op = std::make_shared<RandomAffineOp>(degrees_, translate_range_, scale_range_, shear_ranges_,
@@ -140,7 +155,6 @@ Status RandomAffineOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

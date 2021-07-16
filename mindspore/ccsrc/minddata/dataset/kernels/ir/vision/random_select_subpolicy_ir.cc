@@ -25,10 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
 #ifndef ENABLE_ANDROID
-
 // RandomSelectSubpolicyOperation.
 RandomSelectSubpolicyOperation::RandomSelectSubpolicyOperation(
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy)
@@ -102,9 +100,7 @@ Status RandomSelectSubpolicyOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["policy"] = policy_tensor_ops;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
