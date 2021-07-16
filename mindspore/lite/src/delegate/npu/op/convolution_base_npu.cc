@@ -41,28 +41,28 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
     return RET_ERROR;
   }
   auto w_shape = inputs[1].Shape();
-  auto origin_data = inputs[1].Data().get();
-  float *fp32_data = nullptr;
+  auto origin_weight = inputs[1].Data().get();
+  float *fp32_weight = nullptr;
   if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
 #ifdef ENABLE_ARM64
-    fp32_data = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
+    fp32_weight = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
     // fp16->fp32
-    Float16ToFloat32(reinterpret_cast<const float16_t *>(origin_data), reinterpret_cast<float *>(fp32_data),
+    Float16ToFloat32(reinterpret_cast<const float16_t *>(origin_weight), reinterpret_cast<float *>(fp32_weight),
                      inputs[1].ElementNum());
 #else
     MS_LOG(ERROR) << "This platform does not support fp16.";
     return RET_ERROR;
 #endif
   }
-  auto nchw_data = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
-  if (nchw_data == nullptr) {
+  auto nchw_weight = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
+  if (nchw_weight == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
   if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
-    PackNHWCToNCHWFp32(fp32_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+    PackNHWCToNCHWFp32(fp32_weight, nchw_weight, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
   } else if (inputs[1].DataType() == DataType::kNumberTypeFloat32) {
-    PackNHWCToNCHWFp32(origin_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+    PackNHWCToNCHWFp32(origin_weight, nchw_weight, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of weight tensor for npu convolution.";
     return RET_ERROR;
@@ -76,10 +76,15 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
   ge::TensorDesc tensor_desc(ConverterToNPUShape({w_shape[0], w_shape[3], w_shape[1], w_shape[2]}), ge::FORMAT_NCHW,
                              ConverterToNPUDataType(inputs[1].DataType()));
   weight_tensor->SetTensorDesc(tensor_desc);
-  weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_data), inputs[1].ElementNum() * sizeof(float));
+  weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_weight), inputs[1].ElementNum() * sizeof(float));
 
   weight_->set_attr_value(weight_tensor);
-  free(nchw_data);
+  if (fp32_weight != nullptr) {
+    free(fp32_weight);
+    fp32_weight = nullptr;
+  }
+  free(nchw_weight);
+  nchw_weight = nullptr;
   return RET_OK;
 }
 

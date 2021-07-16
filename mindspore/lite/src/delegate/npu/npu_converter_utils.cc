@@ -139,6 +139,7 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src) {
                        src.ElementNum());
       ge_tensor->SetData(reinterpret_cast<const uint8_t *>(fp32_data), src.ElementNum() * sizeof(float));
       free(fp32_data);
+      fp32_data = nullptr;
 #else
       MS_LOG(ERROR) << "This platform does not support fp16.";
       return nullptr;
