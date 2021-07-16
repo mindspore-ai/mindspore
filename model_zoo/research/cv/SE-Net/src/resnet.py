@@ -116,7 +116,7 @@ class Se_ResidualBlock(nn.Cell):
 
         if self.down_sample:
             self.down_sample_layer = nn.SequentialCell([_conv1x1(in_channel, out_channel, stride), _bn(out_channel)])#use_se=self.use_se
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.se = SELayer(out_channel, reduction)
 
     def construct(self, x):

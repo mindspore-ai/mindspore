@@ -58,8 +58,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor.
+- Hardware（Ascend/GPU）
+    - Prepare hardware environment with Ascend or GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -88,6 +88,22 @@ export DEVICE_ID=0
 python eval.py --net=se-resnet50 --dataset=imagenet2012 --checkpoint_path=[CHECKPOINT_PATH] --dataset_path=[DATASET_PATH]
 ```
 
+- Running on GPU
+
+```bash
+# distributed training
+Usage:
+sh run_distribute_train_gpu.sh se-resnet50 imagenet2012 [DATASET_PATH]
+
+# standalone training
+Usage:
+sh run_standalone_train_gpu.sh se-resnet50 imagenet2012 [DATASET_PATH]
+
+# run evaluation example
+Usage:
+sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
+```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -99,8 +115,11 @@ python eval.py --net=se-resnet50 --dataset=imagenet2012 --checkpoint_path=[CHECK
   ├── ascend310_infer                      # application for 310 inference
   ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
+    ├── run_distribute_train_gpu.sh        # launch gpu distributed training(8 pcs)
     ├── run_eval.sh                        # launch ascend evaluation
+    ├── run_eval_gpu.sh                    # launch gpu evaluation
     ├── run_standalone_train.sh            # launch ascend standalone training(1 pcs)
+    ├── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
     └─ run_infer_310.sh                    # shell script for 310inference on ascend
   ├── src
     ├── config.py                          # parameter configuration
@@ -159,6 +178,18 @@ export DEVICE_ID=0
 bash run_standalone_train.sh  se-resnet50  imagenet2012   /data/imagenet/train/
 ```
 
+#### Running on GPU
+
+```bash
+# distributed training
+Usage:
+sh run_distribute_train_gpu.sh se-resnet50 imagenet2012 [DATASET_PATH]
+
+# standalone training
+Usage:
+sh run_standalone_train_gpu.sh se-resnet50 imagenet2012 [DATASET_PATH]
+```
+
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
 Please follow the instructions in the link [hccn_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -193,6 +224,12 @@ epoch time: 206295.838 ms, per step time: 330.073 ms
 ```bash
 export DEVICE_ID=0
 bash run_eval.sh /imagenet/val/  /path/to/resnet-90_625.ckpt
+```
+
+#### Running on GPU
+
+```bash
+sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ### Result
@@ -243,38 +280,38 @@ result: {'top_5_accuracy': 93.86%, 'top_1_accuracy': 77.80%}
 
 #### SE-ResNet50 on ImageNet2012
 
-| Parameters                 | Ascend 910
-| -------------------------- | ------------------------------------------------------------------------ |
-| Model Version              | SE-ResNet50                                               |
-| Resource                   | CentOs 8.2, Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |
-| uploaded Date              | 03/19/2021 (month/day/year)                         |
-| MindSpore Version          | 0.7.0-alpha                                                 |
-| Dataset                    | ImageNet2012                                                |
-| Training Parameters        | epoch=90, steps per epoch=5004, batch_size = 256             |
-| Optimizer                  | Momentum                                              |
-| Loss Function              | Softmax Cross Entropy                                       |
-| outputs                    | probability                                                 |
-| Loss                       | 1.5931969                                                   |
-| Speed                      | # ms/step（8pcs）                     |
-| Total time                 | # mins                                                  |
-| Parameters (M)             | 285M                                                     |
-| Checkpoint for Fine tuning | # M (.ckpt file)                                         |
-| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/SE-Net> |
+| Parameters                 | Ascend                                                     | GPU
+| -------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| Model Version              | SE-ResNet50                                                | SE-ResNet50                                                |
+| Resource                   | CentOs 8.2, Ascend 910，CPU 2.60GHz 192cores，Memory 755G  | V100-PCIE 32G                                              |
+| uploaded Date              | 03/19/2021 (month/day/year)                                | 07/14/2021 (month/day/year)                                |
+| MindSpore Version          | 0.7.0-alpha                                                | 1.3.0                                                      |
+| Dataset                    | ImageNet2012                                               | ImageNet2012                                               |
+| Training Parameters        | epoch=90, steps per epoch=5004, batch_size = 256           | epoch=90, steps per epoch=5004, batch_size = 256           |
+| Optimizer                  | Momentum                                                   | Momentum                                                   |
+| Loss Function              | Softmax Cross Entropy                                      | Softmax Cross Entropy                                      |
+| outputs                    | probability                                                | probability                                                |
+| Loss                       | 1.5931969                                                  | 1.6664593                                                  |
+| Speed                      | # ms/step（8pcs）                                          | 8pcs: 1016.9 ms/step                                       |
+| Total time                 | # mins                                                     | 8pcs: 15.9 hours                                           |
+| Parameters (M)             | 285M                                                       | 285M                                                       |
+| Checkpoint for Fine tuning | # M (.ckpt file)                                           | # M (.ckpt file)                                           |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/SE-Net> |<https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/SE-Net>                                 |
 
 ### Inference Performance
 
 #### SE-ResNet50 on ImageNet2012
 
-| Parameters          | Ascend                      |
-| ------------------- | --------------------------- |
-| Model Version       | SE-ResNet50                 |
-| Resource            | Ascend 910                  |
-| Uploaded Date       | 03/19/2021 (month/day/year) |
-| MindSpore Version   | 0.7.0-alpha                 |
-| Dataset             | ImageNet2012                |
-| batch_size          | 256                          |
-| Accuracy            | 77.74%                      |
-| Model for inference | # (.air file)            |
+| Parameters          | Ascend                      | GPU                         |
+| ------------------- | --------------------------- | --------------------------- |
+| Model Version       | SE-ResNet50                 | SE-ResNet50                 |
+| Resource            | Ascend 910                  | V100-PCIE 32G               |
+| Uploaded Date       | 03/19/2021 (month/day/year) | 07/14/2021 (month/day/year) |
+| MindSpore Version   | 0.7.0-alpha                 | 1.3.0                       |
+| Dataset             | ImageNet2012                | ImageNet2012                |
+| batch_size          | 256                         | 256                         |
+| Accuracy            | 77.74%                      | 77.66%                      |
+| Model for inference | # (.air file)               | ------                      |
 
 ### 310Inference Performance
 

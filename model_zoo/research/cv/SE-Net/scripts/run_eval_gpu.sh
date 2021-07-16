@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,28 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-network config setting, will be used in train.py and eval.py
-"""
-from easydict import EasyDict as ed
-# config for se-resnet50, imagenet2012
-config2 = ed({
-    "class_num": 1001,
-    "batch_size": 256,
-    "loss_scale": 1024,
-    "momentum": 0.9,
-    "weight_decay": 1e-4,
-    "epoch_size": 90,
-    "pretrain_epoch_size": 0,
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 5,
-    "keep_checkpoint_max": 90,
-    "save_checkpoint_path": "./",
-    "warmup_epochs": 0,
-    "lr_decay_mode": "linear",
-    "use_label_smooth": True,
-    "label_smooth_factor": 0.1,
-    "lr_init": 0,
-    "lr_max": 0.8,
-    "lr_end": 0.0
-})
+
+if [ $# != 2 ]
+then 
+    echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+exit 1
+fi
+
+ulimit -u unlimited
+export DEVICE_NUM=1
+export DEVICE_ID=0
+export RANK_SIZE=$DEVICE_NUM
+export RANK_ID=0
+export DATA_PATH=$1
+export CKPT_PATH=$2
+
+if [ -d "eval" ];
+then
+    rm -rf ./eval
+fi
+mkdir ./eval
+cp ../*.py ./eval
+cp *.sh ./eval
+cp -r ../src ./eval
+cd ./eval || exit
+env > env.log
+echo "start evaluation for device $DEVICE_ID"
+
+python eval.py  --device_target="GPU" --dataset_path=$DATA_PATH --checkpoint_path=$CKPT_PATH  > log 2>&1 &
+
+cd ..
