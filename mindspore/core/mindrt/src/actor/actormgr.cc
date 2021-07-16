@@ -86,10 +86,10 @@ void ActorMgr::TerminateAll() {
 
   // send terminal msg to all actors.
   for (auto actorIt = actorsWaiting.begin(); actorIt != actorsWaiting.end(); ++actorIt) {
+    (*actorIt)->SetRunningStatus(true);
     std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
     MINDRT_OOM_EXIT(msg);
     (void)(*actorIt)->EnqueMessage(std::move(msg));
-    (*actorIt)->SetRunningStatus(true);
   }
 
   // wait actor's thread to finish.
