@@ -1,0 +1,4 @@
+easydict
+pyyaml
+scikit-image
+numpy

@@ -1,0 +1,4 @@
+numpy
+easydict
+wheel
+lxml
