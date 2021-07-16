@@ -62,19 +62,19 @@ void Worker::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs,
   int64_t optim_id = key_to_optimId_[key];
   MS_LOG(INFO) << "The key is:" << key << " the optim_id:" << optim_id;
   bool is_sparse = false;
-  if (optim_id == 1 || optim_id == 2 || optim_id == 3) {
+  if (optim_id == 1 || optim_id == kSparseLazyAdamIndex || optim_id == kSparseFtrlIndex) {
     is_sparse = true;
   }
   int64_t grad_index = -1;
   int64_t indice_index = -1;
 
   // Sparse adam gradient
-  if (optim_id == 1 || optim_id == 2) {
-    grad_index = 6;
-    indice_index = 7;
+  if (optim_id == 1 || optim_id == kSparseLazyAdamIndex) {
+    grad_index = kSparseGradIndex;
+    indice_index = kSparseIndiceIndex;
 
     // Sparse ftrl gradient
-  } else if (optim_id == 3) {
+  } else if (optim_id == kSparseFtrlIndex) {
     grad_index = 0;
     indice_index = 1;
   }
@@ -87,9 +87,9 @@ void Worker::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs,
     void *src_data = reinterpret_cast<void *>(addrs[i]);
     MS_EXCEPTION_IF_NULL(dst_data);
     MS_EXCEPTION_IF_NULL(src_data);
-    int size = sizes[i] * sizeof(float);
-    size_t dest_size = IntToSize(size);
-    size_t src_size = IntToSize(size);
+    size_t size = sizes[i] * sizeof(float);
+    size_t dest_size = size;
+    size_t src_size = size;
     auto ret = memcpy_s(dst_data, dest_size, src_data, src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
@@ -114,8 +114,8 @@ void Worker::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs,
     MS_LOG(DEBUG) << "The keys:" << keys << " the total_buffer:" << total_buffer << " the sizes_int:" << sizes_int
                   << " the grad_index:" << grad_index << " the indice_index:" << indice_index
                   << " the first_dim_size:" << first_dim_size << " the outer_dim_size" << outer_dim_size;
-    PushSparseData(std::vector<Key>(keys), total_buffer, std::vector<int>(sizes_int), grad_index, indice_index,
-                   first_dim_size, outer_dim_size);
+    PushSparseData(std::vector<Key>(keys), total_buffer, std::vector<int>(sizes_int), LongToSize(grad_index),
+                   LongToSize(indice_index), LongToSize(first_dim_size), LongToSize(outer_dim_size));
   }
 }
 
@@ -191,7 +191,7 @@ void Worker::AddEmbeddingTable(const Key &key, const size_t &row_count) {
   uint64_t begin = 0;
   uint64_t end = 0;
   for (int64_t i = 0; i < server_num_; i++) {
-    int64_t local_row_cnt = Util::LocalShard(row_count, i, server_num_);
+    size_t local_row_cnt = LongToSize(Util::LocalShard(row_count, i, server_num_));
     MS_LOG(DEBUG) << "The row_count:" << row_count << " the local_row_cnt:" << local_row_cnt;
     if (i == 0) {
       end = local_row_cnt - 1;
@@ -322,16 +322,16 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
       values->push_back(message.values(j));
     }
     for (auto k = 0; k < message.keys_size(); k++) {
-      const Key &key = message.keys(k);
-      keys->push_back(key);
+      const Key &message_key = message.keys(k);
+      keys->push_back(message_key);
     }
   }
 
   for (size_t i = 0; i < keys->size(); i++) {
-    const Key &key = keys->at(i);
+    const Key &map_key = keys->at(i);
     float *addr = values->data() + value_offset;
     value_offset += single_id_len;
-    id_addr_map[key] = std::make_shared<std::pair<float *, int64_t>>(std::make_pair(addr, single_id_len));
+    id_addr_map[map_key] = std::make_shared<std::pair<float *, int64_t>>(std::make_pair(addr, single_id_len));
   }
 
   float *result_addr = lookup_result->data();
@@ -346,18 +346,18 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
       offset += single_id_len;
       continue;
     }
-    const Key &key = static_cast<Key>(lookup_ids[i]);
-    auto &pair = id_addr_map[key];
-    int64_t size = single_id_len * sizeof(float);
+    const Key &id_key = static_cast<Key>(lookup_ids[i]);
+    auto &pair = id_addr_map[id_key];
+    size_t size = LongToSize(single_id_len * sizeof(float));
     dst_size = size;
     src_size = size;
     dst_data = result_addr + offset;
     src_data = pair->first;
     MS_EXCEPTION_IF_NULL(dst_data);
     MS_EXCEPTION_IF_NULL(src_data);
-    auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+    if (mem_ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
       return;
     }
     offset += single_id_len;
@@ -532,13 +532,13 @@ bool Worker::IsReadyForPull(const Key &key) {
   }
 }
 
-void Worker::PrepareSparseGradient(const size_t begin, const size_t end, const std::unordered_set<int> &distinct_ids,
+void Worker::PrepareSparseGradient(const size_t, const size_t, const std::unordered_set<int> &distinct_ids,
                                    const std::vector<std::pair<int, float *>> &indice_to_grads, const int *all_indice,
                                    const size_t segment_size, float *gradient, int *indices) {
   MS_EXCEPTION_IF_NULL(all_indice);
   MS_EXCEPTION_IF_NULL(gradient);
   MS_EXCEPTION_IF_NULL(indices);
-  int64_t offset = 0;
+  size_t offset = 0;
   int64_t index = 0;
   size_t segment_data_size = segment_size * sizeof(float);
   size_t dst_size;
@@ -580,16 +580,16 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   void *src_data = nullptr;
   for (size_t i = 0; i < lengths.size(); i++) {
     if (i != grad_index && i != indice_index) {
-      int data_size = lengths[i] * sizeof(float);
+      size_t data_size = lengths[i] * sizeof(float);
       dst_size = data_size;
       src_size = data_size;
       dst_data = reduced_data->data() + offset;
       src_data = const_cast<float *>(original_data) + offset;
       MS_EXCEPTION_IF_NULL(dst_data);
       MS_EXCEPTION_IF_NULL(src_data);
-      auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-      if (ret != 0) {
-        MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+      auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+      if (mem_ret != 0) {
+        MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
         return;
       }
     }
@@ -601,13 +601,12 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   for (size_t i = 0; i < grad_index; i++) {
     grad_offset += lengths[i];
   }
-  int64_t data_size = lengths[grad_index] * sizeof(float);
+  size_t data_size = lengths[grad_index] * sizeof(float);
   dst_size = data_size;
   src_size = data_size;
   dst_data = reduced_data->data() + grad_offset;
   src_data = const_cast<float *>(grads);
   MS_EXCEPTION_IF_NULL(dst_data);
-  MS_EXCEPTION_IF_NULL(src_data);
   auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
@@ -726,24 +725,25 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
   // Init variables
   float *data = const_cast<float *>(send.values().data());
 
-  if (attrs.count(0) == 0 || attrs.count(1) == 0 || attrs.count(2) == 0 || attrs.count(3) == 0) {
+  if (attrs.count(kGradIndex) == 0 || attrs.count(kIndiceIndex) == 0 || attrs.count(kFirstDimSize) == 0 ||
+      attrs.count(kOutDimSize) == 0) {
     MS_LOG(EXCEPTION) << "Invalid attrs keys";
   }
-  auto iter = attrs.find(0);
+  auto iter = attrs.find(kGradIndex);
   size_t grad_index = static_cast<size_t>(iter->second);
-  iter = attrs.find(1);
+  iter = attrs.find(kIndiceIndex);
   size_t indice_index = static_cast<size_t>(iter->second);
-  iter = attrs.find(2);
+  iter = attrs.find(kFirstDimSize);
   size_t first_dim_size = static_cast<size_t>(iter->second);
-  iter = attrs.find(3);
+  iter = attrs.find(kOutDimSize);
   size_t outer_dim_size = static_cast<size_t>(iter->second);
 
-  int grad_size = send.len()[grad_index];
-  int indice_size = send.len()[indice_index];
-  int segment_size = grad_size / indice_size;
+  size_t grad_size = send.len()[grad_index];
+  size_t indice_size = send.len()[indice_index];
+  size_t segment_size = grad_size / indice_size;
 
-  int64_t grad_offset = 0;
-  int64_t indice_offset = 0;
+  size_t grad_offset = 0;
+  size_t indice_offset = 0;
   for (size_t i = 0; i < grad_index; i++) {
     grad_offset += send.len()[i];
   }
@@ -757,7 +757,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
 
   // Build the mappings of indice to gradient
   std::vector<std::pair<int, float *>> indice_to_grads;
-  for (int i = 0; i < indice_size; i++) {
+  for (size_t i = 0; i < indice_size; i++) {
     int indice = indice_data[i];
     float *grad = grad_data + i * segment_size;
     indice_to_grads.push_back(std::make_pair(indice, grad));
@@ -779,7 +779,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
     // Prepare the sparse gradient and indice
     std::vector<int> indice_ids;
     std::unordered_set<int> distinct_ids;
-    for (int j = 0; j < indice_size; j++) {
+    for (size_t j = 0; j < indice_size; j++) {
       size_t indice = static_cast<size_t>(indice_data[j]);
       if (indice >= begin && indice <= end) {
         indice_ids.push_back(indice);
@@ -788,7 +788,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
     }
     size_t indices_size = indice_ids.size();
     if (indices_size > 0) {
-      int partition_segment_size = indices_size * segment_size;
+      size_t partition_segment_size = indices_size * segment_size;
       std::vector<float> src_grad_data(partition_segment_size);
       std::vector<int> src_indice_data(indices_size);
       PrepareSparseGradient(begin, end, distinct_ids, indice_to_grads, indice_data, segment_size, src_grad_data.data(),
@@ -802,8 +802,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
                                  first_dim_size, outer_dim_size, &unique_sparse_grad);
 
       // Update the length of reduce sparse gradient and indice
-      std::vector<int> reduced_lens;
-      reduced_lens = {kvs.len().begin(), kvs.len().end()};
+      std::vector<int> reduced_lens = {kvs.len().begin(), kvs.len().end()};
       reduced_lens[grad_index] = unique_sparse_grad.indices_size_ * segment_size;
       reduced_lens[indice_index] = unique_sparse_grad.indices_size_;
 
@@ -822,7 +821,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
       std::vector<float> no_vals;
       std::vector<float> no_lens;
       no_keys.push_back(key);
-      no_vals.push_back(-100);
+      no_vals.push_back(kGradValue);
       *kvs.mutable_values() = {no_vals.begin(), no_vals.end()};
       *kvs.mutable_len() = {no_lens.begin(), no_lens.end()};
     }
@@ -833,14 +832,14 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
 void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *partition,
                                    const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
-  partition->resize(server_num_);
+  partition->resize(LongToSize(server_num_));
   auto keys = send.keys();
   auto values = send.values();
   auto lens = send.len();
   MS_LOG(INFO) << "the key size is:" << send.keys_size() << " the values size is:" << send.values_size()
                << " the lens:" << send.len_size();
 
-  int64_t len;
+  size_t len;
   Key param_key;
   for (int i = 0; i < send.keys_size(); i++) {
     param_key = keys[i];
@@ -868,12 +867,12 @@ void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *p
 void Worker::WorkerInitEmbeddingPartitioner(const KVMessage &send, std::vector<std::pair<bool, KVMessage>> *partition,
                                             const std::map<int64_t, int64_t> &attrs) {
   MS_EXCEPTION_IF_NULL(partition);
-  partition->resize(server_num_);
+  partition->resize(LongToSize(server_num_));
   auto keys = send.keys();
   auto values = send.values();
   auto lens = send.len();
 
-  size_t col_cnt = lens[0] / embedding_row_cnt_[keys[0]];
+  int32_t col_cnt = lens[0] / embedding_row_cnt_[keys[0]];
   const std::vector<EmbeddingTableShardMetadata> &ranges = *(embedding_table_ranges_[keys[0]]);
   for (size_t i = 0; i < ranges.size(); i++) {
     size_t offset_begin = ranges[i].begin() * col_cnt;
@@ -887,7 +886,7 @@ void Worker::WorkerInitEmbeddingPartitioner(const KVMessage &send, std::vector<s
   }
 }
 void Worker::UpdateEmbeddingPartitioner(const KVMessage &send, PartitionKVMessages *partition,
-                                        const std::map<int64_t, int64_t> &attrs) {
+                                        const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
   const float *embedding_vals = send.values().data();
   const uint64_t *lookup_ids = send.len().data();
@@ -926,8 +925,8 @@ void Worker::UpdateEmbeddingPartitioner(const KVMessage &send, PartitionKVMessag
 void Worker::BroadcastPartitioner(const KVMessage &send, PartitionKVMessages *partition,
                                   const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
-  partition->resize(server_num_);
-  for (int64_t i = 0; i < server_num_; i++) {
+  partition->resize(LongToSize(server_num_));
+  for (size_t i = 0; i < LongToSize(server_num_); i++) {
     partition->at(i).first = true;
     partition->at(i).second = send;
   }
