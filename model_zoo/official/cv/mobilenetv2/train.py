@@ -44,7 +44,6 @@ set_seed(1)
 config.device_id = get_device_id()
 config.rank_id = get_rank_id()
 config.rank_size = get_device_num()
-config.run_distribute = config.rank_size > 1.
 
 
 def modelarts_pre_process():
