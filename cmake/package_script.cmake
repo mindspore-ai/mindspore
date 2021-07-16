@@ -19,8 +19,8 @@ endif()
 set(GIT ${GIT_EXECUTABLE})
 
 # set path
-set(MS_ROOT_DIR ${CPACK_PACKAGE_DIRECTORY}/../../)
-set(MS_PACK_ROOT_DIR ${MS_ROOT_DIR}/build/package)
+set(MS_ROOT_DIR ${CPACK_CMAKE_SOURCE_DIR})
+set(MS_PACK_ROOT_DIR ${CPACK_PACK_ROOT_DIR})
 
 # set package file name
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")

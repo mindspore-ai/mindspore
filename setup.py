@@ -27,9 +27,10 @@ backend_policy = os.getenv('BACKEND_POLICY')
 device_target = os.getenv('BACKEND_TARGET')
 commit_id = os.getenv('COMMIT_ID').replace("\n", "")
 package_name = os.getenv('MS_PACKAGE_NAME').replace("\n", "")
+build_path = os.getenv('BUILD_PATH')
 
 pwd = os.path.dirname(os.path.realpath(__file__))
-pkg_dir = os.path.join(pwd, 'build/package')
+pkg_dir = os.path.join(build_path, 'package')
 
 
 def _read_file(filename):

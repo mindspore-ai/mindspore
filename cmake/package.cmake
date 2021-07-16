@@ -8,8 +8,10 @@ set(CPACK_GENERATOR "External")
 set(CPACK_CMAKE_GENERATOR "Ninja")
 set(CPACK_EXTERNAL_PACKAGE_SCRIPT ${CMAKE_SOURCE_DIR}/cmake/package_script.cmake)
 set(CPACK_EXTERNAL_ENABLE_STAGING true)
-set(CPACK_TEMPORARY_PACKAGE_FILE_NAME ${CMAKE_SOURCE_DIR}/build/package/mindspore)
-set(CPACK_TEMPORARY_INSTALL_DIRECTORY ${CMAKE_SOURCE_DIR}/build/package/mindspore)
+set(CPACK_TEMPORARY_PACKAGE_FILE_NAME ${BUILD_PATH}/package/mindspore)
+set(CPACK_TEMPORARY_INSTALL_DIRECTORY ${BUILD_PATH}/package/mindspore)
+set(CPACK_PACK_ROOT_DIR ${BUILD_PATH}/package/)
+set(CPACK_CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 if(ENABLE_GE)
     set(CPACK_MS_BACKEND "ge")
     set(CPACK_MS_TARGET "ascend or cpu")
@@ -210,7 +212,7 @@ if(NOT ENABLE_GE)
         install(
             FILES
                 ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
-                ${CMAKE_SOURCE_DIR}/build/graphengine/c_sec/lib/libc_sec.so
+                ${BUILD_PATH}/graphengine/c_sec/lib/libc_sec.so
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
@@ -274,7 +276,7 @@ install(
 )
 
 if((ENABLE_D OR ENABLE_GPU) AND ENABLE_AKG)
-    set (AKG_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg)
+    set (AKG_PATH ${BUILD_PATH}/mindspore/akg)
     file(REMOVE_RECURSE ${AKG_PATH}/_akg)
     file(MAKE_DIRECTORY ${AKG_PATH}/_akg)
     file(TOUCH ${AKG_PATH}/_akg/__init__.py)
