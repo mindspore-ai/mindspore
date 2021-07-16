@@ -77,7 +77,9 @@ class NMSBox {
     }
     area_ = (y2_ - y1_) * (x2_ - x1_);
   }
-  inline bool operator<(const NMSBox &box) const { return score_ < box.score_; }
+  inline bool operator<(const NMSBox &box) const {
+    return score_ < box.score_ || (score_ == box.score_ && index_ > box.index_);
+  }
 
  public:
   float score_;
