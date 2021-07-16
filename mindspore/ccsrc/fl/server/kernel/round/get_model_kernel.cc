@@ -54,6 +54,10 @@ bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
   }
 
   const schema::RequestGetModel *get_model_req = flatbuffers::GetRoot<schema::RequestGetModel>(req_data);
+  if (get_model_req == nullptr) {
+    MS_LOG(ERROR) << "RequestGetModel is nullptr.";
+    return false;
+  }
   GetModel(get_model_req, fbb);
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   return true;

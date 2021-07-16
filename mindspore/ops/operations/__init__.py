@@ -91,7 +91,8 @@ from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, PopulationCount, UpdateState, Load,
-                        CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight)
+                        CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
+                        StartFLJob, UpdateModel, GetModel)
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
                         CusMatMulCubeDenseRight,

@@ -65,7 +65,7 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
   plant_inputs.push_back(AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode_ptr);
+  size_t input_num = cnode_ptr->inputs().size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);

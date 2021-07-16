@@ -25,6 +25,10 @@ namespace mindspore {
 namespace fl {
 namespace worker {
 void FLWorker::Run() {
+  if (running_) {
+    return;
+  }
+  running_ = true;
   worker_num_ = ps::PSContext::instance()->worker_num();
   server_num_ = ps::PSContext::instance()->server_num();
   scheduler_ip_ = ps::PSContext::instance()->scheduler_ip();
@@ -64,6 +68,8 @@ void FLWorker::Run() {
 
   InitializeFollowerScaler();
   worker_node_->Start();
+  rank_id_ = worker_node_->rank_id();
+
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
   return;
 }
@@ -133,6 +139,8 @@ uint32_t FLWorker::server_num() const { return server_num_; }
 
 uint32_t FLWorker::worker_num() const { return worker_num_; }
 
+uint32_t FLWorker::rank_id() const { return rank_id_; }
+
 uint64_t FLWorker::worker_step_num_per_iteration() const { return worker_step_num_per_iteration_; }
 
 void FLWorker::SetIterationRunning() {
@@ -144,6 +152,18 @@ void FLWorker::SetIterationCompleted() {
   MS_LOG(INFO) << "Worker iteration completes.";
   worker_iteration_state_ = IterationState::kCompleted;
 }
+
+void FLWorker::set_fl_iteration_num(uint64_t iteration_num) { iteration_num_ = iteration_num; }
+
+uint64_t FLWorker::fl_iteration_num() const { return iteration_num_.load(); }
+
+void FLWorker::set_data_size(int data_size) { data_size_ = data_size; }
+
+int FLWorker::data_size() const { return data_size_; }
+
+std::string FLWorker::fl_name() const { return ps::kServerModeFL; }
+
+std::string FLWorker::fl_id() const { return std::to_string(rank_id_); }
 
 void FLWorker::InitializeFollowerScaler() {
   if (!worker_node_->InitFollowerScaler()) {

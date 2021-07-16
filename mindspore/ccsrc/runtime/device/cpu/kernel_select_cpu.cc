@@ -267,8 +267,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     }
   }
 
-  if (selected_kernel_attr.GetInputSize() > 0 &&
-      (matched.first || input_types.size() == input_not_cnode_indexes.size())) {
+  if (matched.first || input_types.size() == input_not_cnode_indexes.size()) {
     MS_LOG(INFO) << "Input format and dtype is matched";
     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &selected_output_formats, &selected_output_types);
     UpdatePrevNotCNodeFormatDtype(selected_kernel_attr, input_not_cnode_indexes, kernel_node);
