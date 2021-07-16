@@ -22,6 +22,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kReduceSmallVectorSize = 200000;
+
 template <typename T>
 void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -80,13 +82,17 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
-    // Get one ret
-    *output_addr = input_addr[0];
-    for (size_t i = 1; i < input_size; ++i) {
-      reduce_func_(input_addr, i, output_addr);
-    }
-    if (reduce_type_ == kReduceMean) {
-      *output_addr /= input_size;
+    if (input_size < kReduceSmallVectorSize) {
+      // Get one ret
+      *output_addr = input_addr[0];
+      for (size_t i = 1; i < input_size; ++i) {
+        reduce_func_(input_addr, i, output_addr);
+      }
+      if (reduce_type_ == kReduceMean) {
+        *output_addr /= input_size;
+      }
+    } else {
+      AccelerateLongVector(input_addr, output_addr, input_size);
     }
   } else {
     // Calculate transpose axes and stride
@@ -133,6 +139,35 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     CPUKernelUtils::ParallelFor(task, output_size);
   }
   return true;
+}
+
+template <typename T>
+void ReduceCPUKernel<T>::AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size) {
+  // init output_addr
+  *output_addr = input_addr[0];
+  std::mutex task_mutex;
+  auto task = [this, input_addr, output_addr, &task_mutex](size_t start, size_t end) {
+    if (start == 0) {
+      ++start;
+    }
+    if (start == end) {
+      return;
+    }
+    auto block_output = input_addr[start];
+    size_t i = start + 1;
+    while (i < end) {
+      reduce_func_(input_addr, i, &block_output);
+      ++i;
+    }
+    {
+      std::lock_guard<std::mutex> task_lock(task_mutex);
+      reduce_func_(&block_output, 0, output_addr);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, input_size);
+  if (reduce_type_ == kReduceMean) {
+    *output_addr /= input_size;
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore

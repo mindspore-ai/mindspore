@@ -34,6 +34,8 @@ class ReduceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
+
   enum ReduceType { kReduceAll, kReduceAny, kReduceMax, kReduceMin, kReduceSum, kReduceMean };
   std::vector<size_t> input_shape_;
   std::vector<int64_t> axis_;
