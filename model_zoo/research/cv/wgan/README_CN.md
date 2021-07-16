@@ -3,7 +3,7 @@
 <!-- TOC -->
 
 - [目录](#目录)
-- [WGAN描述](#WGAN描述)
+- [WGAN描述](#wgan描述)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [环境要求](#环境要求)
@@ -22,9 +22,10 @@
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
-            - [第一种情况（选用标准卷积DCGAN的生成器结构）](#第一种情况（选用标准卷积DCGAN的生成器结构）)
-            - [第二种情况（选用没有BatchNorm的卷积DCGAN的生成器结构）](#第二种情况（选用没有BatchNorm的卷积DCGAN的生成器结构）)
+            - [第一种情况（选用标准卷积DCGAN的生成器结构）](#第一种情况选用标准卷积dcgan的生成器结构)
+            - [第二种情况（选用没有BatchNorm的卷积DCGAN的生成器结构）](#第二种情况选用没有batchnorm的卷积dcgan的生成器结构)
         - [推理性能](#推理性能)
+            - [推理](#推理-1)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
@@ -238,7 +239,7 @@ bash run_infer_310.sh [MINDIR_PATH] [CONFIG_PATH] [NEED_PREPROCESS] [NIMAGES] [D
 | -------------------------- | ----------------------------------------------------------- |
 | 资源                   | Ascend 910 ；CPU 2.60GHz，192核；内存：755G             |
 | 上传日期              | 2021-05-14                                 |
-| MindSpore版本          | 1.2.0-alpha                                                 |
+| MindSpore版本          | 1.2.0                                                 |
 | 数据集                    | LSUN-Bedrooms                                                    |
 | 训练参数        | max_epoch=25, batch_size=64, lr_init=0.00005              |
 | 优化器                  | RMSProp                                                    |
@@ -261,7 +262,7 @@ bash run_infer_310.sh [MINDIR_PATH] [CONFIG_PATH] [NEED_PREPROCESS] [NIMAGES] [D
 | -------------------------- | ----------------------------------------------------------- |
 | 资源                   | Ascend 910 ；CPU 2.60GHz，192核；内存：755G             |
 | 上传日期              | 2021-05-14                                 |
-| MindSpore版本          | 1.2.0-alpha                                                 |
+| MindSpore版本          | 1.2.0                                                 |
 | 数据集                    | LSUN-Bedrooms                                                    |
 | 训练参数        | max_epoch=25, batch_size=64, lr_init=0.00005              |
 | 优化器                  | RMSProp                                                    |
@@ -286,7 +287,7 @@ bash run_infer_310.sh [MINDIR_PATH] [CONFIG_PATH] [NEED_PREPROCESS] [NIMAGES] [D
 | ------------------- | --------------------------- |
 | 资源            | Ascend 910                  |
 | 上传日期       | 2021-05-14 |
-| MindSpore 版本   | 1.2.0-alpha                 |
+| MindSpore 版本   | 1.2.0                 |
 | 数据集             | LSUN-Bedrooms     |
 | batch_size          | 1                         |
 | 输出             | 生成的图片                 |

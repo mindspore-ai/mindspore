@@ -1,26 +1,28 @@
 # Contents
 
-- [LeNet Description](#lenet-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
+- [Contents](#contents)
+    - [LeNet Description](#lenet-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
-        - [Training](#training)  
+        - [Training](#training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-     - [Inference Process](#inference-process)
+    - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#inference-performance)
-- [ModelZoo Homepage](#modelzoo-homepage)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Evaluation Performance](#evaluation-performance)
+            - [Inference Performance](#inference-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [LeNet Description](#contents)
 
@@ -303,8 +305,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | Parameters                 | LeNet                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |
-| uploaded Date              | 09/16/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                      |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                      |
 | Dataset                    | MNIST                                                    |
 | Training Parameters        | epoch=10, steps=1875, batch_size = 32, lr=0.01              |
 | Optimizer                  | Momentum                                                         |

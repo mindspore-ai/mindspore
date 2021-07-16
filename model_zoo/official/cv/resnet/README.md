@@ -1,6 +1,9 @@
 # Contents
 
+- [Contents](#contents)
 - [ResNet Description](#resnet-description)
+    - [Description](#description)
+    - [Paper](#paper)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
@@ -11,15 +14,39 @@
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
+        - [Usage](#usage)
+            - [Running on Ascend](#running-on-ascend)
+            - [Running on GPU](#running-on-gpu)
+            - [Running parameter server mode training](#running-parameter-server-mode-training)
+            - [Evaluation while training](#evaluation-while-training)
+        - [Result](#result)
     - [Evaluation Process](#evaluation-process)
-- [Inference Process](#inference-process)
-    - [Export MindIR](#export-mindir)
-    - [Infer on Ascend310](#infer-on-ascend310)
-    - [result](#result)
+        - [Usage](#usage-1)
+            - [Running on Ascend](#running-on-ascend-1)
+            - [Running on GPU](#running-on-gpu-1)
+        - [Result](#result-1)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result-2)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
+            - [ResNet18 on CIFAR-10](#resnet18-on-cifar-10)
+            - [ResNet18 on ImageNet2012](#resnet18-on-imagenet2012)
+            - [ResNet50 on CIFAR-10](#resnet50-on-cifar-10)
+            - [ResNet50 on ImageNet2012](#resnet50-on-imagenet2012)
+            - [ResNet34 on ImageNet2012](#resnet34-on-imagenet2012)
+            - [ResNet101 on ImageNet2012](#resnet101-on-imagenet2012)
+            - [SE-ResNet50 on ImageNet2012](#se-resnet50-on-imagenet2012)
         - [Inference Performance](#inference-performance)
+            - [ResNet18 on CIFAR-10](#resnet18-on-cifar-10-1)
+            - [ResNet18 on ImageNet2012](#resnet18-on-imagenet2012-1)
+            - [ResNet34 on ImageNet2012](#resnet34-on-imagenet2012-1)
+            - [ResNet50 on CIFAR-10](#resnet50-on-cifar-10-1)
+            - [ResNet50 on ImageNet2012](#resnet50-on-imagenet2012-1)
+            - [ResNet101 on ImageNet2012](#resnet101-on-imagenet2012-1)
+            - [SE-ResNet50 on ImageNet2012](#se-resnet50-on-imagenet2012-1)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -690,7 +717,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Model Version              | ResNet18                                                |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
 | uploaded Date              | 02/25/2021 (month/day/year)                          |
-| MindSpore Version          | 1.1.1-alpha                                                       |
+| MindSpore Version          | 1.1.1                                                       |
 | Dataset                    | CIFAR-10                                                    |
 | Training Parameters        | epoch=90, steps per epoch=195, batch_size = 32             |
 | Optimizer                  | Momentum                                                         |
@@ -710,7 +737,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Model Version              | ResNet18                                                |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
 | uploaded Date              | 02/25/2021 (month/day/year)  ；                        |
-| MindSpore Version          | 1.1.1-alpha                                                       |
+| MindSpore Version          | 1.1.1                                                       |
 | Dataset                    | ImageNet2012                                                    |
 | Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |
 | Optimizer                  | Momentum                                                         |
@@ -729,8 +756,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 04/01/2020 (month/day/year)                          | 08/01/2020 (month/day/year)
-| MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
+| uploaded Date              | 07/05/2021 (month/day/year)                          | 07/05/2021 (month/day/year)
+| MindSpore Version          | 1.3.0                                                       |1.3.0         |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10
 | Training Parameters        | epoch=90, steps per epoch=195, batch_size = 32             |epoch=90, steps per epoch=195, batch_size = 32  |
 | Optimizer                  | Momentum                                                         |Momentum|
@@ -749,8 +776,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |  GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 04/01/2020 (month/day/year)  ；                        | 08/01/2020 (month/day/year)
-| MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
+| uploaded Date              | 07/05/2021 (month/day/year)  ；                        | 07/05/2021 (month/day/year)
+| MindSpore Version          | 1.3.0                                                       |1.3.0         |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
 | Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |epoch=90, steps per epoch=626, batch_size = 256  |
 | Optimizer                  | Momentum                                                         |Momentum|
@@ -769,8 +796,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
-| uploaded Date              | 04/01/2020 (month/day/year)  ；                        |
-| MindSpore Version          | 0.1.0-alpha                                                       |
+| uploaded Date              | 07/05/2020 (month/day/year)  ；                        |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | ImageNet2012                                                    |
 | Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |
 | Optimizer                  | Momentum                                                         |
@@ -789,8 +816,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet101                                                |ResNet101|
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |  GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 04/01/2020 (month/day/year)                          | 08/01/2020 (month/day/year)
-| MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
+| uploaded Date              | 07/05/2021 (month/day/year)                          | 07/05/2021 (month/day/year)
+| MindSpore Version          | 1.3.0                                                       |1.3.0         |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
 | Training Parameters        | epoch=120, steps per epoch=5004, batch_size = 32             |epoch=120, steps per epoch=5004, batch_size = 32  |
 | Optimizer                  | Momentum                                                         |Momentum|
@@ -809,8 +836,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | ------------------------------------------------------------------------ |
 | Model Version              | SE-ResNet50                                               |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  |
-| uploaded Date              | 08/16/2020 (month/day/year)                         |
-| MindSpore Version          | 0.7.0-alpha                                                 |
+| uploaded Date              | 07/05/2021 (month/day/year)                         |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | ImageNet2012                                                |
 | Training Parameters        | epoch=24, steps per epoch=5004, batch_size = 32             |
 | Optimizer                  | Momentum                                                    |
@@ -832,7 +859,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Model Version       | ResNet18               |
 | Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 02/25/2021 (month/day/year) |
-| MindSpore Version   | 1.1.1-alpha                 |
+| MindSpore Version   | 1.1.1                       |
 | Dataset             | CIFAR-10                    |
 | batch_size          | 32                          |
 | outputs             | probability                 |
@@ -846,7 +873,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Model Version       | ResNet18               |
 | Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 02/25/2021 (month/day/year) |
-| MindSpore Version   | 1.1.1-alpha                |
+| MindSpore Version   | 1.1.1                      |
 | Dataset             | ImageNet2012                |
 | batch_size          | 256                         |
 | outputs             | probability                 |
@@ -860,7 +887,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Model Version       | ResNet18               |
 | Resource            | Ascend 910; OS Euler2.8                   |
 | Uploaded Date       | 02/25/2021 (month/day/year) |
-| MindSpore Version   | 1.1.1-alpha                |
+| MindSpore Version   | 1.1.1                      |
 | Dataset             | ImageNet2012                |
 | batch_size          | 256                         |
 | outputs             | probability                 |
@@ -873,8 +900,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
 | Resource            | Ascend 910; OS Euler2.8                   | GPU                         |
-| Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
-| MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
+| Uploaded Date       | 07/05/2021 (month/day/year) | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       | 1.3.0                       |
 | Dataset             | CIFAR-10                    | CIFAR-10                    |
 | batch_size          | 32                          | 32                          |
 | outputs             | probability                 | probability                 |
@@ -887,8 +914,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
 | Resource            | Ascend 910; OS Euler2.8                | GPU                         |
-| Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
-| MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
+| Uploaded Date       | 07/05/2021 (month/day/year) | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       | 1.3.0                       |
 | Dataset             | ImageNet2012                | ImageNet2012                |
 | batch_size          | 256                         | 256                          |
 | outputs             | probability                 | probability                 |
@@ -900,9 +927,9 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet101                   | ResNet101                    |
-| Resource            | Ascend 910; OS Euler2.8                | GPU                         |
-| Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
-| MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
+| Resource            | Ascend 910; OS Euler2.8     | GPU                         |
+| Uploaded Date       | 07/05/2021 (month/day/year) | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       | 1.3.0                       |
 | Dataset             | ImageNet2012                | ImageNet2012                |
 | batch_size          | 32                          | 32                          |
 | outputs             | probability                 | probability                 |
@@ -915,8 +942,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | ------------------- | --------------------------- |
 | Model Version       | SE-ResNet50                 |
 | Resource            | Ascend 910; OS Euler2.8             |
-| Uploaded Date       | 08/16/2020 (month/day/year) |
-| MindSpore Version   | 0.7.0-alpha                 |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | ImageNet2012                |
 | batch_size          | 32                          |
 | outputs             | probability                 |

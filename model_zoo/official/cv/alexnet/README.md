@@ -1,25 +1,27 @@
 # Contents
 
-- [AlexNet Description](#alexnet-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-    - [Training Process](#training-process)
-        - [Training](#training)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
+- [Contents](#contents)
+    - [AlexNet Description](#alexnet-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+        - [Training Process](#training-process)
+            - [Training](#training)
+        - [Evaluation Process](#evaluation-process)
+            - [Evaluation](#evaluation)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [Result](#result)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Evaluation Performance](#evaluation-performance)
-- [ModelZoo Homepage](#modelzoo-homepage)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Evaluation Performance](#evaluation-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [AlexNet Description](#contents)
 
@@ -406,8 +408,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | Parameters                 | Ascend                                                      | GPU                                              |
 | -------------------------- | ------------------------------------------------------------| -------------------------------------------------|
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             | NV SMX2 V100-32G                                 |
-| uploaded Date              | 06/09/2020 (month/day/year)                                 | 17/09/2020 (month/day/year)                      |
-| MindSpore Version          | 1.0.0                                                  | 0.7.0-beta                                       |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 | 17/09/2020 (month/day/year)                      |
+| MindSpore Version          | 1.2.1                                                       | 1.2.1                                              |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10                                         |
 | Training Parameters        | epoch=30, steps=1562, batch_size = 32, lr=0.002             | epoch=30, steps=1562, batch_size = 32, lr=0.002  |
 | Optimizer                  | Momentum                                                    | Momentum                                         |

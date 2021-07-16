@@ -17,7 +17,7 @@
         - [用法](#用法-1)
         - [启动](#启动-1)
         - [结果](#结果-1)
-    - [导出MINDIR](#导出MINDIR)
+    - [导出MINDIR](#导出mindir)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
@@ -161,8 +161,8 @@ python export.py --device_target [PLATFORM] --checkpoint_path [CKPT_PATH]
 | -------------------------- | ------------------------- |
 | 模型版本              | 大版本                     |
 | 资源                   | NV SMX2 V100-32G          |
-| 上传日期              | 2020-05-06                |
-| MindSpore版本          | 0.3.0                     |
+| 上传日期              | 2021-07-05                |
+| MindSpore版本          | 1.3.0                     |
 | 数据集                    | ImageNet                  |
 | 训练参数        | src/config.py             |
 | 优化器                  | Momentum                  |

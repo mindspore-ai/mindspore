@@ -19,8 +19,8 @@
     - [评估过程](#评估过程)
     - [导出mindir模型](#导出mindir模型)
     - [推理过程](#推理过程)
-        - [用法](#用法-2)
-        - [结果](#结果-2)
+        - [用法](#用法)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
@@ -433,8 +433,8 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_TAR
 | 参数                       | LSTM (Ascend)              | LSTM (GPU)                                                     | LSTM (CPU)                 |
 | -------------------------- | -------------------------- | -------------------------------------------------------------- | -------------------------- |
 | 资源                       | Ascend 910                 | Tesla V100-SMX2-16GB                                           | Ubuntu X86-i7-8565U-16GB   |
-| 上传日期                   | 2020-12-21                 | 2020-08-06                                                     | 2020-08-06                 |
-| MindSpore版本              | 1.1.0                      | 0.6.0-beta                                                     | 0.6.0-beta                 |
+| 上传日期                   | 2020-12-21                 | 2021-07-05                                                     | 2021-07-05                 |
+| MindSpore版本              | 1.1.0                      | 1.3.0                                                         | 1.3.0                      |
 | 数据集                     | aclimdb_v1                 | aclimdb_v1                                                     | aclimdb_v1                 |
 | 训练参数                   | epoch=20, batch_size=64    | epoch=20, batch_size=64                                        | epoch=20, batch_size=64    |
 | 优化器                     | Momentum                   | Momentum                                                       | Momentum                   |
@@ -450,8 +450,8 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_TAR
 | 参数                | LSTM (Ascend)                | LSTM (GPU)                  | LSTM (CPU)                   |
 | ------------------- | ---------------------------- | --------------------------- | ---------------------------- |
 | 资源                | Ascend 910；系统 Euler2.8                    | Tesla V100-SMX2-16GB        | Ubuntu X86-i7-8565U-16GB     |
-| 上传日期            | 2020-12-21                   | 2020-08-06                  | 2020-08-06                   |
-| MindSpore版本       | 1.1.0                        | 0.6.0-beta                  | 0.6.0-beta                   |
+| 上传日期            | 2020-12-21                   | 2021-07-05                  | 2021-07-05                   |
+| MindSpore版本       | 1.1.0                        | 1.3.0                       | 1.3.0                        |
 | 数据集              | aclimdb_v1                   | aclimdb_v1                  | aclimdb_v1                   |
 | batch_size          | 64                           | 64                          | 64                           |
 | 准确率              | 85%                          | 84%                         | 83%                          |

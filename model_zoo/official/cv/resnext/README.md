@@ -1,23 +1,30 @@
 # Contents
 
+- [Contents](#contents)
 - [ResNeXt Description](#resnext-description)
-- [Model Architecture](#model-architecture)
+- [Model architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
-- [Mixed Precision](#mixed-precision)
+    - [Mixed Precision](#mixed-precision)
 - [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
+        - [Usage](#usage)
+            - [Launch](#launch)
     - [Evaluation Process](#evaluation-process)
+        - [Usage](#usage-1)
+            - [Launch](#launch-1)
+            - [Result](#result)
     - [Model Export](#model-export)
     - [Inference Process](#inference-process)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Usage](#usage-2)
+        - [result](#result-1)
+- [Model description](#model-description)
+    - [Performance](#performance)
+        - [Training Performance](#training-performance)
+            - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -311,8 +318,8 @@ Total data:50000, top1 accuracy:0.79858, top5 accuracy:0.94716
 | Parameters                 | ResNeXt50                                                |                           |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8              | NV SMX2 V100-32G          |
-| uploaded Date              | 06/30/2020                                                 | 07/23/2020                |
-| MindSpore Version          | 0.5.0                                                      | 0.6.0                     |
+| uploaded Date              | 07/05/2021                                                 | 07/05/2021                |
+| MindSpore Version          | 1.3.0                                                      | 1.3.0                     |
 | Dataset                    | ImageNet                                                   | ImageNet                  |
 | Training Parameters        | default_config.yaml                                        | default_config.yaml             |
 | Optimizer                  | Momentum                                                   | Momentum                  |
@@ -339,8 +346,8 @@ Total data:50000, top1 accuracy:0.79858, top5 accuracy:0.94716
 | Parameters                 | ResNeXt50                     |                           |                      |
 | -------------------------- | ----------------------------- | ------------------------- | -------------------- |
 | Resource                   | Ascend 910; OS Euler2.8                    | NV SMX2 V100-32G          | Ascend 310           |
-| uploaded Date              | 06/30/2020                    | 07/23/2020                | 07/23/2020           |
-| MindSpore Version          | 0.5.0                         | 0.6.0                     | 0.6.0                |
+| uploaded Date              | 07/05/2021                    | 07/05/2021                | 07/05/2021           |
+| MindSpore Version          | 1.3.0                         | 1.3.0                     | 1.3.0                |
 | Dataset                    | ImageNet, 1.2W                | ImageNet, 1.2W            | ImageNet, 1.2W       |
 | batch_size                 | 1                             | 1                         | 1                    |
 | outputs                    | probability                   | probability               | probability          |

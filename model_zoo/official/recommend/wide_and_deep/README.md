@@ -9,15 +9,16 @@
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
-    - [Training Script Parameters](#training-script-parameters)
-    - [Preprocess Script Parameters](#preprocess-script-parameters)
+        - [Training Script Parameters](#training-script-parameters)
+        - [Preprocess Script Parameters](#preprocess-script-parameters)
     - [Dataset Preparation](#dataset-preparation)
-    - [Process the Real World Data](#process-the-real-world-data)
-    - [Generate and Process the Synthetic Data](#generate-and-process-the-synthetic-data)
+        - [Process the Real World Data](#process-the-real-world-data)
+        - [Generate and Process the Synthetic Data](#generate-and-process-the-synthetic-data)
     - [Training Process](#training-process)
-    - [SingleDevice](#singledevice)
-    - [Distribute Training](#distribute-training)
-    - [Parameter Server](#parameter-server)
+        - [SingleDevice](#singledevice)
+        - [SingleDevice For Cache Mode](#singledevice-for-cache-mode)
+        - [Distribute Training](#distribute-training)
+        - [Parameter Server](#parameter-server)
     - [Evaluation Process](#evaluation-process)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
@@ -25,8 +26,9 @@
         - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
-    - [Training Performance](#training-performance)
-    - [Evaluation Performance](#evaluation-performance)
+        - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
+        - [Ultimate performance experience](#ultimate-performance-experience)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -444,8 +446,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | Parameters               | Single <br />Ascend             | Single<br />GPU                 | Data-Parallel-8P                | Host-Device-mode-8P             |
 | ------------------------ | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
 | Resource                 | Ascend 910; OS Euler2.8                      | Tesla V100-PCIE 32G             | Ascend 910; OS Euler2.8                     | Ascend 910; OS Euler2.8                      |
-| Uploaded Date            | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     |
-| MindSpore Version        | 1.0                             | 1.0                             | 1.0                             | 1.0                             |
+| Uploaded Date            | 07/05/2021 (month/day/year)     | 07/05/2021 (month/day/year)     | 07/05/2021 (month/day/year)     | 07/05/2021 (month/day/year)     |
+| MindSpore Version        | 1.3.0                           | 1.3.0                           | 1.3.0                           | 1.3.0                           |
 | Dataset                  | [1]                             | [1]                             | [1]                             | [1]                             |
 | Training Parameters      | Epoch=15,<br />batch_size=16000 | Epoch=15,<br />batch_size=16000 | Epoch=15,<br />batch_size=16000 | Epoch=15,<br />batch_size=16000 |
 | Optimizer                | FTRL,Adam                       | FTRL,Adam                       | FTRL,Adam                       | FTRL,Adam                       |
@@ -465,8 +467,8 @@ Note: The result of GPU is tested under the master version. The parameter server
 | Parameters        | Wide&Deep                   |
 | ----------------- | --------------------------- |
 | Resource          | Ascend 910; OS Euler2.8                 |
-| Uploaded Date     | 10/27/2020 (month/day/year) |
-| MindSpore Version | 1.0                 |
+| Uploaded Date     | 07/05/2021 (month/day/year) |
+| MindSpore Version | 1.3.0                       |
 | Dataset           | [1]                         |
 | Batch Size        | 16000                       |
 | Outputs           | AUC                         |

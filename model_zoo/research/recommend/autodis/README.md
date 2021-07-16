@@ -1,6 +1,7 @@
 # Contents
 
-- [AutoDis Description](#AutoDis-description)
+- [Contents](#contents)
+- [AutoDis Description](#autodis-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
@@ -17,9 +18,9 @@
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+    - [Performance](#performance)
+        - [Training Performance](#training-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -312,7 +313,7 @@ Inference result is saved in current path, you can find result in acc.log file.
 | Model Version       | AutoDis                      |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 12/12/2020 (month/day/year) |
-| MindSpore Version   | 0.3.0-alpha                 |
+| MindSpore Version   | 1.1.0                       |
 | Dataset             | [1]                         |
 | batch_size          | 1000                        |
 | outputs             | accuracy                    |

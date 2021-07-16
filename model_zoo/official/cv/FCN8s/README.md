@@ -1,6 +1,7 @@
 # Contents
 
-- [FCN 介绍](#FCN-介绍)
+- [Contents](#contents)
+- [FCN 介绍](#fcn-介绍)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [环境要求](#环境要求)
@@ -8,6 +9,8 @@
 - [脚本介绍](#脚本介绍)
     - [脚本以及简单代码](#脚本以及简单代码)
     - [脚本参数](#脚本参数)
+    - [生成数据步骤](#生成数据步骤)
+        - [训练数据](#训练数据)
     - [训练步骤](#训练步骤)
         - [训练](#训练)
     - [评估步骤](#评估步骤)
@@ -17,12 +20,21 @@
     - [推理过程](#推理过程)
         - [推理](#推理)
 - [模型介绍](#模型介绍)
-    - [性能](#性能)  
+    - [性能](#性能)
         - [评估性能](#评估性能)
+            - [FCN8s on PASCAL VOC 2012](#fcn8s-on-pascal-voc-2012)
+        - [Inference Performance](#inference-performance)
+            - [FCN8s on PASCAL VOC](#fcn8s-on-pascal-voc)
     - [如何使用](#如何使用)
         - [教程](#教程)
+- [Set context](#set-context)
+- [Load dataset](#load-dataset)
+- [Define model](#define-model)
+- [optimizer](#optimizer)
+- [loss scale](#loss-scale)
+- [callback for saving ckpts](#callback-for-saving-ckpts)
 - [随机事件介绍](#随机事件介绍)
-- [ModelZoo 主页](#ModelZoo-主页)
+- [ModelZoo 主页](#modelzoo-主页)
 
 # [FCN 介绍](#contents)
 
@@ -405,7 +417,7 @@ python export.py
 | Model Version              | FCN-8s                                                      | FCN-8s                                           |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 | NV SMX2 V100-32G                                 |
 | uploaded Date              | 12/30/2020 (month/day/year)                                 | 06/11/2021 (month/day/year)                      |
-| MindSpore Version          | 1.1.0-alpha                                                 | 1.2.0                                            |
+| MindSpore Version          | 1.1.0                                                       | 1.2.0                                            |
 | Dataset                    | PASCAL VOC 2012 and SBD                                     | PASCAL VOC 2012 and SBD                          |
 | Training Parameters        | epoch=500, steps=330, batch_size = 32, lr=0.015             | epoch=500, steps=330, batch_size = 8, lr=0.005   |
 | Optimizer                  | Momentum                                                    | Momentum                                         |
@@ -424,7 +436,7 @@ python export.py
 | Model Version       | FCN-8s                      | FCN-8s
 | Resource            | Ascend 910; OS Euler2.8     | NV SMX2 V100-32G
 | Uploaded Date       | 10/29/2020 (month/day/year) | 06/11/2021 (month/day/year)
-| MindSpore Version   | 1.1.0-alpha                 | 1.2.0
+| MindSpore Version   | 1.1.0                       | 1.2.0
 | Dataset             | PASCAL VOC 2012             | PASCAL VOC 2012
 | batch_size          | 16                          | 16
 | outputs             | probability                 | probability

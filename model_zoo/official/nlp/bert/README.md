@@ -29,8 +29,10 @@
             - [evaluation on cluener dataset when running on Ascend](#evaluation-on-cluener-dataset-when-running-on-ascend)
             - [evaluation on msra dataset when running on Ascend](#evaluation-on-msra-dataset-when-running-on-ascend)
             - [evaluation on squad v1.1 dataset when running on Ascend](#evaluation-on-squad-v11-dataset-when-running-on-ascend)
-    - [Export MindIR](#export-mindir)
-    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Inference Process](#inference-process)
+            - [Usage](#usage)
+            - [result](#result)
     - [Model Description](#model-description)
     - [Performance](#performance)
         - [Pretraining Performance](#pretraining-performance)
@@ -720,18 +722,18 @@ F1 0.931243
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | BERT_base                                                  | BERT_base                 |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8             | NV SMX2 V100-16G, cpu: Intel(R) Xeon(R) Platinum 8160 CPU @2.10GHz, memory: 256G         |
-| uploaded Date              | 08/22/2020                                                 | 05/06/2020                |
-| MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
+| uploaded Date              | 07/05/2021                                                 | 07/05/2021                |
+| MindSpore Version          | 1.3.0                                                      | 1.3.0                     |
 | Dataset                    | cn-wiki-128(4000w)                                         | cn-wiki-128(4000w)        |
-| Training Parameters        | src/config.py                                              | src/config.py             |
+| Training Parameters        | pretrain_config.yaml                                       | pretrain_config.yaml      |
 | Optimizer                  | Lamb                                                       | AdamWeightDecay           |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
 | outputs                    | probability                                                | probability               |
 | Epoch                      | 40                                                         | 40                        |
 | Batch_size                 | 256*8                                                      | 32*8                      |
 | Loss                       | 1.7                                                        | 1.7                       |
-| Speed                      | 340ms/step                                                 | 290ms/step                |
-| Total time                 | 73h                                                        | 610H                      |
+| Speed                      | 284ms/step                                                 | 180ms/step                |
+| Total time                 | 63H                                                        | 610H                      |
 | Params (M)                 | 110M                                                       | 110M                      |
 | Checkpoint for Fine tuning | 1.2G(.ckpt file)                                           | 1.2G(.ckpt file)          |
 | Scripts                    | [BERT_base](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  | [BERT_base](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)     |
@@ -740,8 +742,8 @@ F1 0.931243
 | -------------------------- | ---------------------------------------------------------- |
 | Model Version              | BERT_NEZHA                                                 |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8              |
-| uploaded Date              | 08/20/2020                                                 |
-| MindSpore Version          | 1.0.0                                                      |
+| uploaded Date              | 07/05/2021                                                 |
+| MindSpore Version          | 1.3.0                                                      |
 | Dataset                    | cn-wiki-128(4000w)                                         |
 | Training Parameters        | src/config.py                                              |
 | Optimizer                  | Lamb                                                       |
@@ -750,8 +752,8 @@ F1 0.931243
 | Epoch                      | 40                                                         |
 | Batch_size                 | 96*8                                                       |
 | Loss                       | 1.7                                                        |
-| Speed                      | 360ms/step                                                 |
-| Total time                 | 200h                                                       |
+| Speed                      | 320ms/step                                                 |
+| Total time                 | 180h                                                       |
 | Params (M)                 | 340M                                                       |
 | Checkpoint for Fine tuning | 3.2G(.ckpt file)                                           |
 | Scripts                    | [BERT_NEZHA](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  |
@@ -762,8 +764,8 @@ F1 0.931243
 | -------------------------- | ----------------------------- |
 | Model Version              |                               |
 | Resource                   | Ascend 910; OS Euler2.8                     |
-| uploaded Date              | 08/22/2020                    |
-| MindSpore Version          | 1.0.0                         |
+| uploaded Date              | 07/05/2021                    |
+| MindSpore Version          | 1.3.0                         |
 | Dataset                    | cola, 1.2W                    |
 | batch_size                 | 32(1P)                        |
 | Accuracy                   | 0.588986                      |

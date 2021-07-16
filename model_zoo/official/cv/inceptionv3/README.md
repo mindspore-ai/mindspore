@@ -1,18 +1,31 @@
 # Contents
 
-- [InceptionV3 Description](#InceptionV3-description)
-- [Model Architecture](#model-architecture)
+- [Contents](#contents)
+- [InceptionV3 Description](#inceptionv3-description)
+- [Model architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
-    - [Mixed Precision](#mixed-precision)
+    - [Mixed Precision(Ascend)](#mixed-precisionascend)
 - [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training process](#training-process)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Result](#result)
+            - [Ascend](#ascend)
+            - [CPU](#cpu)
+    - [Eval process](#eval-process)
+        - [Usage](#usage-1)
+        - [Launch](#launch-1)
+        - [Result](#result-1)
+    - [Model Export](#model-export)
+    - [Inference Process](#inference-process)
+        - [Usage](#usage-2)
+        - [result](#result-2)
+- [Model description](#model-description)
+    - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
@@ -403,8 +416,8 @@ accuracy:78.742
 | -------------------------- | ---------------------------------------------- |
 | Model Version              | InceptionV3                                    |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8   |
-| uploaded Date              | 08/21/2020                                     |
-| MindSpore Version          | 0.6.0-beta                                     |
+| uploaded Date              | 07/05/2021                                     |
+| MindSpore Version          | 1.3.0                                          |
 | Dataset                    | 1200k images                                   |
 | Batch_size                 | 128                                            |
 | Training Parameters        | src/model_utils/default_config.yaml            |
@@ -412,11 +425,11 @@ accuracy:78.742
 | Loss Function              | SoftmaxCrossEntropy                            |
 | Outputs                    | probability                                    |
 | Loss                       | 1.98                                           |
-| Total time (8p)            | 11h                                            |
+| Total time (8p)            | 10h                                            |
 | Params (M)                 | 103M                                           |
 | Checkpoint for Fine tuning | 313M                                           |
 | Model for inference        | 92M (.onnx file)                               |
-| Speed                      | 1pc:1050 img/s;8pc:8000 img/s                  |
+| Speed                      | 1pc:1200 img/s;8pc:9500 img/s                  |
 | Scripts                    | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
 
 ### Inference Performance
@@ -425,8 +438,8 @@ accuracy:78.742
 | ------------------- | --------------------------- |
 | Model Version       | InceptionV3                 |
 | Resource            | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8                   |
-| Uploaded Date       | 08/22/2020                  |
-| MindSpore Version   | 0.6.0-beta                  |
+| Uploaded Date       | 07/05/2021                  |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | 50k images                  |
 | Batch_size          | 128                         |
 | Outputs             | probability                 |
