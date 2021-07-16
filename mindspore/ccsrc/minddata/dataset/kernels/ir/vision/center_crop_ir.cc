@@ -23,9 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 CenterCropOperation::CenterCropOperation(std::vector<int32_t> size) : size_(size) {}
 
 CenterCropOperation::~CenterCropOperation() = default;
@@ -42,7 +40,8 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
   int32_t crop_width = size_[0];
 
   // User has specified crop_width.
-  if (size_.size() == 2) {
+  constexpr size_t size_two = 2;
+  if (size_.size() == size_two) {
     crop_width = size_[1];
   }
 
@@ -54,7 +53,6 @@ Status CenterCropOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["size"] = size_;
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

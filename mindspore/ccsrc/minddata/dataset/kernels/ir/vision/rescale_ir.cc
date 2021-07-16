@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RescaleOperation
 RescaleOperation::RescaleOperation(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
 
@@ -58,9 +55,7 @@ Status RescaleOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

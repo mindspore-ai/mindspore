@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 BoundingBoxAugmentOperation::BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio)
     : transform_(transform), ratio_(ratio) {}
 
@@ -57,7 +54,6 @@ Status BoundingBoxAugmentOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor
 PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler) : sp_(std::move(sampler)) {}
 
@@ -80,6 +79,5 @@ Status PreBuiltSamplerObj::to_json(nlohmann::json *const out_json) {
   RETURN_IF_NOT_OK(sp_->to_json(out_json));
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

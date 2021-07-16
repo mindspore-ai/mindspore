@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor
 DistributedSamplerObj::DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples,
                                              uint32_t seed, int64_t offset, bool even_dist)
@@ -116,6 +115,5 @@ std::shared_ptr<SamplerObj> DistributedSamplerObj::SamplerCopy() {
 }
 
 int64_t DistributedSamplerObj::ShardId() { return shard_id_; }
-
 }  // namespace dataset
 }  // namespace mindspore

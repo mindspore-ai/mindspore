@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // InvertOperation
 InvertOperation::~InvertOperation() = default;
 
@@ -38,9 +35,7 @@ std::string InvertOperation::Name() const { return kInvertOperation; }
 Status InvertOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> InvertOperation::Build() { return std::make_shared<InvertOp>(); }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

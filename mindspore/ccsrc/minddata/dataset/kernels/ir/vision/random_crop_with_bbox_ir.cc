@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RandomCropWithBBoxOperation
 RandomCropWithBBoxOperation::RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding,
                                                          bool pad_if_needed, std::vector<uint8_t> fill_value,
@@ -56,44 +53,52 @@ Status RandomCropWithBBoxOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
-  int32_t crop_height = size_[0];
-  int32_t crop_width = size_[0];
+  constexpr size_t dimension_zero = 0;
+  constexpr size_t dimension_one = 1;
+  constexpr size_t dimension_two = 2;
+  constexpr size_t dimension_three = 3;
+  constexpr size_t size_one = 1;
+  constexpr size_t size_two = 2;
+  constexpr size_t size_three = 3;
+
+  int32_t crop_height = size_[dimension_zero];
+  int32_t crop_width = size_[dimension_zero];
 
   // User has specified the crop_width value.
-  if (size_.size() == 2) {
-    crop_width = size_[1];
+  if (size_.size() == size_two) {
+    crop_width = size_[dimension_one];
   }
 
   int32_t pad_top, pad_bottom, pad_left, pad_right;
   switch (padding_.size()) {
-    case 1:
-      pad_left = padding_[0];
-      pad_top = padding_[0];
-      pad_right = padding_[0];
-      pad_bottom = padding_[0];
+    case size_one:
+      pad_left = padding_[dimension_zero];
+      pad_top = padding_[dimension_zero];
+      pad_right = padding_[dimension_zero];
+      pad_bottom = padding_[dimension_zero];
       break;
-    case 2:
-      pad_left = padding_[0];
-      pad_top = padding_[0];
-      pad_right = padding_[1];
-      pad_bottom = padding_[1];
+    case size_two:
+      pad_left = padding_[dimension_zero];
+      pad_top = padding_[dimension_zero];
+      pad_right = padding_[dimension_one];
+      pad_bottom = padding_[dimension_one];
       break;
     default:
-      pad_left = padding_[0];
-      pad_top = padding_[1];
-      pad_right = padding_[2];
-      pad_bottom = padding_[3];
+      pad_left = padding_[dimension_zero];
+      pad_top = padding_[dimension_one];
+      pad_right = padding_[dimension_two];
+      pad_bottom = padding_[dimension_three];
   }
 
   uint8_t fill_r, fill_g, fill_b;
-  fill_r = fill_value_[0];
-  fill_g = fill_value_[0];
-  fill_b = fill_value_[0];
+  fill_r = fill_value_[dimension_zero];
+  fill_g = fill_value_[dimension_zero];
+  fill_b = fill_value_[dimension_zero];
 
-  if (fill_value_.size() == 3) {
-    fill_r = fill_value_[0];
-    fill_g = fill_value_[1];
-    fill_b = fill_value_[2];
+  if (fill_value_.size() == size_three) {
+    fill_r = fill_value_[dimension_zero];
+    fill_g = fill_value_[dimension_one];
+    fill_b = fill_value_[dimension_two];
   }
 
   auto tensor_op =
@@ -112,9 +117,7 @@ Status RandomCropWithBBoxOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -25,11 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
-
 // RandomHorizontalFlipWithBBoxOperation
 RandomHorizontalFlipWithBBoxOperation::RandomHorizontalFlipWithBBoxOperation(float probability)
     : TensorOperation(true), probability_(probability) {}
@@ -53,9 +50,7 @@ Status RandomHorizontalFlipWithBBoxOperation::to_json(nlohmann::json *out_json) 
   (*out_json)["prob"] = probability_;
   return Status::OK();
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

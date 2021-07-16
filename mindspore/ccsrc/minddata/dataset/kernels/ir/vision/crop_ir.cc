@@ -23,9 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)
     : coordinates_(coordinates), size_(size) {}
 
@@ -38,7 +36,8 @@ Status CropOperation::ValidateParams() {
   // we don't check the coordinates here because we don't have access to image dimensions
   RETURN_IF_NOT_OK(ValidateVectorSize("Crop", size_));
 
-  if (coordinates_.size() != 2) {
+  constexpr size_t size_two = 2;
+  if (coordinates_.size() != size_two) {
     std::string err_msg = "Crop: coordinates must be a vector of two values";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -56,14 +55,14 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
   height = size_[0];
   width = size_[0];
   // User has specified crop_width.
-  if (size_.size() == 2) {
+  constexpr size_t size_two = 2;
+  if (size_.size() == size_two) {
     width = size_[1];
   }
 
   std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(y, x, height, width);
   return tensor_op;
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

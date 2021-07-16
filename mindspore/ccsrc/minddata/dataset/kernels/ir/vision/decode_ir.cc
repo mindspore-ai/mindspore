@@ -23,9 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 // DecodeOperation
 DecodeOperation::DecodeOperation(bool rgb) : rgb_(rgb) {}
 
@@ -41,7 +39,6 @@ Status DecodeOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["rgb"] = rgb_;
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

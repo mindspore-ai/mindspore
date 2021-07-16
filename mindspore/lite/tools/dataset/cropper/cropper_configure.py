@@ -20,6 +20,7 @@ import json
 import os
 import queue
 import re
+import shlex
 import subprocess
 
 from mindspore import log as logger
@@ -186,7 +187,9 @@ def get_dependencies_of_file(headers_flag, filename):
     :return: a list of file names [file0.cc, file1.h, file2.h, file3.h] and error string
     """
     command = 'gcc -MM -MG {0} {1} {2}'.format(filename, DEFINE_STR, headers_flag)
-    stdout, stderr = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    command_split = shlex.split(command)
+    stdout, stderr = subprocess.Popen(command_split, shell=False, stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE).communicate()
     deps = re.split(r'[\s\\]+', stdout.decode('utf-8').strip(), flags=re.MULTILINE)[1:]
 
     return deps, stderr.decode('utf-8')
@@ -272,7 +275,7 @@ def get_all_dependencies_of_file(headers_flag, filename):
             if needs_processing(dep_cc, processed_cc, queue_cc_set):
                 queue_cc.put(dep_cc)
                 queue_cc_set.add(dep_cc)
-    logger.debug('file: {} | deps: {}'.format(filename[filename.rfind('/') + 1:], len(processed_cc)))
+    logger.debug('file: {} | deps: {}'.format(os.path.basename(filename), len(processed_cc)))
 
     return list(processed_cc), "".join(errors)
 

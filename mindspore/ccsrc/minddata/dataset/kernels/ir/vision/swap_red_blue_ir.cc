@@ -25,10 +25,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
 #ifndef ENABLE_ANDROID
-
 // SwapRedBlueOperation.
 SwapRedBlueOperation::SwapRedBlueOperation() {}
 
@@ -42,9 +40,7 @@ std::shared_ptr<TensorOp> SwapRedBlueOperation::Build() {
   std::shared_ptr<SwapRedBlueOp> tensor_op = std::make_shared<SwapRedBlueOp>();
   return tensor_op;
 }
-
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
