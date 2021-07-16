@@ -1,0 +1,5 @@
+six
+numpy
+soundfile
+tqdm
+pyyaml

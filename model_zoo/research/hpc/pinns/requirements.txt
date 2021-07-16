@@ -1,1 +1,3 @@
 pyDOE>=0.3.8
+numpy
+scipy

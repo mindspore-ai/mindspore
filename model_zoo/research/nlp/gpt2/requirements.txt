@@ -1,0 +1,9 @@
+tensorflow
+numpy
+easydict
+rouge
+scipy
+datasets
+regex
+
+

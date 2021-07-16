@@ -1,0 +1,4 @@
+numpy
+trnsformers
+sentencepiece
+jieba

@@ -1,3 +1,6 @@
 python-Levenshtein
 Pillow
 xml-python
+levenshtein-distance
+pyyaml
+numpy

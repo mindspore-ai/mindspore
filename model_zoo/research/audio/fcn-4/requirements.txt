@@ -1,0 +1,5 @@
+pandas
+numpy
+librosa
+pyyaml
+
