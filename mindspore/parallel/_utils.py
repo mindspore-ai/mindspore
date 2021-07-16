@@ -222,9 +222,6 @@ def _parallel_predict_check():
     if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
         if not context.get_auto_parallel_context("full_batch"):
             raise RuntimeError('Model prediction only supports full batch dataset. Please set "full_batch" with True.')
-        if context.get_auto_parallel_context("enable_parallel_optimizer"):
-            raise RuntimeError('Model prediction does not support parallel optimizer. Please set'
-                               '"enable_parallel_optimizer" with False.')
 
 
 def _check_similar_layout(tensor_layout1, tensor_layout2):
