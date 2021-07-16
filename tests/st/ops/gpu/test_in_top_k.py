@@ -35,6 +35,19 @@ def in_top_k(nptype):
     predictions = Tensor(np.array([[4, 1, 2, 0, 0, 0, 0, 0, 0],
                                    [7, 9, 9, 0, 0, 0, 0, 0, 0],
                                    [3, 3, 3, 0, 0, 0, 0, 0, 0]]).astype(nptype))
+    k = 165
+    in_top_k_net = InTopKNet(k)
+    targets = Tensor(np.array([0, 1, 0]).astype(np.int32))
+    output = in_top_k_net(predictions, targets)
+    expected_output = np.array([True, True, True])
+    np.testing.assert_array_equal(output.asnumpy(), expected_output)
+
+    k = -2
+    in_top_k_net = InTopKNet(k)
+    targets = Tensor(np.array([0, 1, 0]).astype(np.int32))
+    output = in_top_k_net(predictions, targets)
+    expected_output = np.array([False, False, False])
+    np.testing.assert_array_equal(output.asnumpy(), expected_output)
 
     k = 1
     in_top_k_net = InTopKNet(k)
@@ -104,9 +117,6 @@ def test_in_top_k_float32():
 @pytest.mark.env_onecard
 def test_in_top_k_invalid_input():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    # k must be > 0
-    with pytest.raises(ValueError):
-        in_top_k_net = InTopKNet(0)
 
     # predictions must be 2d
     with pytest.raises(ValueError):
