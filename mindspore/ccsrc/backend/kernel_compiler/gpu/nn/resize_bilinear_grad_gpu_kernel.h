@@ -37,13 +37,13 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     float *dy = GetDeviceAddress<float>(inputs, 0);
+    float *interim = GetDeviceAddress<float>(workspace, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
     float h_scale = Scaling(dx_h_, dy_h_, align_corners_);
     float w_scale = Scaling(dx_w_, dy_w_, align_corners_);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemsetAsync(dx, 0, dx_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemsetAsync dx failed");
-    CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, dx,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemset(interim, 0, workspace_size_), "cudaMemset dx_interim failed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemset(dx, 0, dx_size_), "cudaMemset dx failed");
+    CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, dx, interim,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -85,6 +85,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
     for (auto x : dx_shape) {
       dx_size_ *= x;
     }
+    workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(float);
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
     InitSizeLists();
     return true;
@@ -109,6 +110,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(dy_size_);
+    workspace_size_list_.push_back(workspace_size_);
     output_size_list_.push_back(dx_size_);
   }
 
