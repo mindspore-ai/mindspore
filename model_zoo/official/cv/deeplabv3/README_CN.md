@@ -17,10 +17,14 @@
     - [训练过程](#训练过程)
         - [用法](#用法)
             - [Ascend处理器环境运行](#ascend处理器环境运行)
+            - [CPU环境运行](#cpu环境运行)
+            - [迁移训练](#迁移训练)
         - [结果](#结果)
+            - [Ascend处理器环境运行](#ascend处理器环境运行-1)
+            - [CPU环境运行](#cpu环境运行-1)
     - [评估过程](#评估过程)
         - [用法](#用法-1)
-            - [Ascend处理器环境运行](#ascend处理器环境运行-1)
+            - [Ascend处理器环境运行](#ascend处理器环境运行-2)
         - [结果](#结果-1)
             - [训练准确率](#训练准确率)
     - [导出mindir模型](#导出mindir模型)
@@ -29,7 +33,8 @@
         - [结果](#结果-2)
 - [模型描述](#模型描述)
     - [性能](#性能)
-        - [评估性能](#评估性能)
+        - [训练性能](#训练性能)
+    - [推理性能](#推理性能)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
@@ -815,8 +820,8 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_
 | -------------------------- | -------------------------------------- |
 | 模型版本 | DeepLabV3
 | 资源 | Ascend 910；系统 Euler2.8 |
-| 上传日期 | 2020-09-04 |
-| MindSpore版本 | 0.7.0-alpha |
+| 上传日期 | 2021-07-05 |
+| MindSpore版本 | 1.3.0 |
 | 数据集 | PASCAL VOC2012 + SBD |
 | 训练参数 | epoch = 300, batch_size = 32 (s16_r1)  epoch = 800, batch_size = 16 (s8_r1)  epoch = 300, batch_size = 16 (s8_r2) |
 | 优化器 | Momentum |
@@ -833,8 +838,8 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_
 | ------------------- | --------------------------- |
 | 模型版本             | DeepLabV3 V1                |
 | 资源                 | Ascend 910；系统 Euler2.8                  |
-| 上传日期       | 2020-09-04 |
-| MindSpore 版本   | 0.7.0-alpha                 |
+| 上传日期       | 2020-07-05 |
+| MindSpore 版本   | 1.3.0                 |
 | 数据集             | VOC 数据集    |
 | batch_size          | 32 (s16); 16 (s8)                         |
 | 输出             | 概率                 |

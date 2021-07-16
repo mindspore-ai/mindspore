@@ -1,6 +1,7 @@
 # Contents
 
-- [Openpose Description](#googlenet-description)
+- [Contents](#contents)
+- [Openpose Description](#openpose-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
@@ -12,11 +13,10 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
         - [Training](#training)
-        - [Distributed Training](#distributed-training)  
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
+    - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
 
 # [Openpose Description](#contents)
@@ -294,7 +294,7 @@ Data storage method is the same as training
 | Model Version              | openpose
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8
 | uploaded Date              | 12/14/2020 (month/day/year)
-| MindSpore Version          | 1.0.1-alpha
+| MindSpore Version          | 1.0.1
 | Training Parameters        | epoch=60(1pcs)/80(8pcs), steps=30k(1pcs)/5k(8pcs), batch_size=10, init_lr=0.0001
 | Optimizer                  | Adam(1pcs)/Momentum(8pcs)
 | Loss Function              | MSE

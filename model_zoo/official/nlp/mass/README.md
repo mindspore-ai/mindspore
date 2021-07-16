@@ -2,6 +2,7 @@
 
 <!-- TOC -->
 
+- [Contexts](#contexts)
 - [MASS: Masked Sequence to Sequence Pre-training for Language Generation Description](#mass-masked-sequence-to-sequence-pre-training-for-language-generation-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
@@ -694,8 +695,8 @@ The comparisons between MASS and other baseline methods in terms of PPL on Corne
 |:---------------------------|:--------------------------------------------------------------------------|
 | Model Version              | v1                                                                        |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8                            |
-| uploaded Date              | 05/24/2020                                                                |
-| MindSpore Version          | 1.0.0                                                                     |
+| uploaded Date              | 06/21/2021                                                                |
+| MindSpore Version          | 1.2.1                                                                     |
 | Dataset                    | News Crawl 2007-2017 English monolingual corpus, Gigaword corpus, Cornell Movie Dialog corpus |
 | Training Parameters        | Epoch=50, steps=XXX, batch_size=192, lr=1e-4                              |
 | Optimizer                  | Adam                                                                      |
@@ -713,8 +714,8 @@ The comparisons between MASS and other baseline methods in terms of PPL on Corne
 |:---------------------------|:-----------------------------------------------------------|
 | Model Version              | V1                                                         |
 | Resource                   | Ascend 910; OS Euler2.8                                                 |
-| uploaded Date              | 05/24/2020                                                 |
-| MindSpore Version          | 1.0.0                                                      |
+| uploaded Date              | 06/21/2021                                                 |
+| MindSpore Version          | 1.2.1                                                      |
 | Dataset                    | Gigaword corpus, Cornell Movie Dialog corpus               |
 | batch_size                 | ---                                                        |
 | outputs                    | Sentence and probability                                   |

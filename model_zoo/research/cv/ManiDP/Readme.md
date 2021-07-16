@@ -1,19 +1,22 @@
 # Contents
 
+- [Contents](#contents)
 - [Manifold Dynamic Pruning Description](#manifold-dynamic-pruning-description)
 - [Dataset](#dataset)
 - [Features](#features)
-    - [Mixed Precision](#mixed-precision(Ascend))
+    - [Mixed Precision(Ascend)](#mixed-precisionascend)
 - [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-        - [Training Process](#training-process)
-        - [Evaluation Process](#evaluation-process)
-            - [Evaluation](#evaluation)
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
+    - [Training process](#training-process)
+    - [Eval process](#eval-process)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Result](#result)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+    - [Performance](#performance)
+        - [Evaluation Performance](#evaluation-performance)
+            - [ResNet20 on CIFAR-10](#resnet20-on-cifar-10)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -105,7 +108,7 @@ result: {'acc': 0.9204727564102564}
 | -------------------------- | -------------------------------------- |
 | Model Version              | ResNet20                      |
 | uploaded Date              | 03/27/2021 (month/day/year)  ；                      |
-| MindSpore Version          | 0.6.0-alpha                                                       |
+| MindSpore Version          | 1.2.1                                                       |
 | Dataset                    | CIFAR-10                                             |
 | Parameters (M)             | 0.27                                           |
 | FLOPs (M) | 18.74 |

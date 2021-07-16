@@ -1,21 +1,26 @@
 # ResNet-50-THOR Example
 
-- [Description](#Description)
-- [Model Architecture](#Model-Architecture)
-- [Dataset](#Dataset)
-- [Features](#Features)
-- [Environment Requirements](#Environment-Requirements)
-- [Quick Start](#Quick-Start)
-- [Script Description](#Script-Description)
-    - [Script and Sample Code](#Script-Code-Structure)
-    - [Script Parameters](#Script-Parameters)
-    - [Training Process](#Training-Process)
-    - [Evaluation Process](#Evaluation-Process)
-- [Model Description](#Model-Description)
-    - [Evaluation Performance](#Evaluation-Performance)
-    - [Inference Performance](#Inference-Performance)
-- [Description of Random Situation](#Description-of-Random-Situation)
-- [ModelZoo Homepage](#ModelZoo-Homepage)
+- [ResNet-50-THOR Example](#resnet-50-thor-example)
+    - [Description](#description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Features](#features)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script Code Structure](#script-code-structure)
+        - [Script Parameters](#script-parameters)
+        - [Training Process](#training-process)
+            - [Ascend 910](#ascend-910)
+            - [GPU](#gpu)
+        - [Evaluation Process](#evaluation-process)
+            - [Ascend 910](#ascend-910-1)
+            - [GPU](#gpu-1)
+    - [Model Description](#model-description)
+        - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo HomePage](#modelzoo-homepage)
 
 ## Description
 
@@ -259,8 +264,8 @@ Inference result will be stored in the example path, whose folder name is "eval"
 | -------------------------- | --------------------------------------        |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                 |ResNet50-v1.5|
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8  | GPU(Tesla V100 SXM2)，CPU 2.1GHz 24cores，Memory 128G
-| uploaded Date              | 06/01/2020 (month/day/year)                   |   09/23/2020(month/day/year)
-| MindSpore Version          | 0.3.0-alpha                                   | 1.0.0 |
+| uploaded Date              | 07/05/2021 (month/day/year)                   |   07/05/2021(month/day/year)
+| MindSpore Version          | 1.3.0                                   | 1.3.0 |
 | Dataset                    | ImageNet2012                                   | ImageNet2012|
 | Training Parameters        | epoch=45, steps per epoch=5004, batch_size = 32             |epoch=40, steps per epoch=5004, batch_size = 32  |
 | Optimizer                  | THOR                                                         |THOR|
@@ -279,8 +284,8 @@ Inference result will be stored in the example path, whose folder name is "eval"
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
 | Resource            | Ascend 910; OS Euler2.8                  | GPU                         |
-| Uploaded Date       | 06/01/2020 (month/day/year) | 09/23/2020(month/day/year)  |
-| MindSpore Version   | 0.3.0-alpha                 | 1.0.0                       |
+| Uploaded Date       | 07/05/2021 (month/day/year) | 07/05/2021(month/day/year)  |
+| MindSpore Version   | 1.3.0                       | 1.3.0                       |
 | Dataset             | ImageNet2012                | ImageNet2012                |
 | batch_size          | 32                          | 32                          |
 | outputs             | probability                 | probability                 |

@@ -14,8 +14,8 @@
         - [训练过程](#训练过程)
             - [Ascend 910](#ascend-910)
         - [评估过程](#评估过程)
-            - [Ascend 910](#ascend-910-1)
-- [模型描述](#模型描述)
+            - [Ascend910](#ascend910)
+    - [模型描述](#模型描述)
         - [评估性能](#评估性能)
     - [随机情况说明](#随机情况说明)
     - [ModelZoo首页](#modelzoo首页)
@@ -212,16 +212,16 @@ step:  3000 Accuracy:  [0.71377236]
 | -------------------------- | -------------------------------------- |
 | 模型版本              | BERT-LARGE       |
 | 资源 |  Ascend 910；CPU 2.60GHz，192核；内存 755GB；系统 Euler2.8 |
-| 上传日期 | 2020-08-20 |
-| MindSpore版本          | 0.6.0-beta                                                     |
+| 上传日期 | 2021-07-05 |
+| MindSpore版本          | 1.3.0                                                     |
 | 数据集 | MLPerf v0.7 |
-| 训练参数 |总步数=3000，batch_size=12 |
+| 训练参数 |总步数=3000，batch_size=12*8 |
 | 优化器 | THOR |
 | 损失函数              | Softmax Cross Entropy                                          |
 | 输出 | 概率 |
 | 损失 | 1.5654222 |
-| 速度 | 275毫秒/步|
-| 总时长 | 14分钟 |
+| 速度 | 218毫秒/步|
+| 总时长 | 11分钟 |
 | 参数（M） | 330 |
 | 微调检查点 | 4.5G （.ckpt文件） |
 | 脚本                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert_thor |

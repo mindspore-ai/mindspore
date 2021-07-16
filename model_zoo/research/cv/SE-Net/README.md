@@ -1,6 +1,9 @@
 # Contents
 
+- [Contents](#contents)
 - [SE-Net Description](#se-net-description)
+    - [Description](#description)
+    - [Paper](#paper)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
@@ -11,16 +14,25 @@
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
+        - [Usage](#usage)
+            - [Running on Ascend](#running-on-ascend)
+        - [Result](#result)
     - [Evaluation Process](#evaluation-process)
+        - [Usage](#usage-1)
+            - [Running on Ascend](#running-on-ascend-1)
+        - [Result](#result-1)
     - [Inference Process](#inference-process)
-            - [Export MindIR](#export-mindir)
-            - [Infer on Ascend310](#infer-on-ascend310)
-            - [result](#result)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result-2)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
+            - [SE-ResNet50 on ImageNet2012](#se-resnet50-on-imagenet2012)
         - [Inference Performance](#inference-performance)
+            - [SE-ResNet50 on ImageNet2012](#se-resnet50-on-imagenet2012-1)
         - [310Inference Performance](#310inference-performance)
+            - [SE-ResNet50 on ImageNet2012](#se-resnet50-on-imagenet2012-2)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -247,8 +259,8 @@ result: {'top_5_accuracy': 93.86%, 'top_1_accuracy': 77.80%}
 | -------------------------- | ------------------------------------------------------------------------ |
 | Model Version              | SE-ResNet50                                               |
 | Resource                   | CentOs 8.2, Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |
-| uploaded Date              | 03/19/2021 (month/day/year)                         |
-| MindSpore Version          | 0.7.0-alpha                                                 |
+| uploaded Date              | 07/05/2021 (month/day/year)                         |
+| MindSpore Version          | 1.3.0                                                       |
 | Dataset                    | ImageNet2012                                                |
 | Training Parameters        | epoch=90, steps per epoch=5004, batch_size = 256             |
 | Optimizer                  | Momentum                                              |
@@ -269,8 +281,8 @@ result: {'top_5_accuracy': 93.86%, 'top_1_accuracy': 77.80%}
 | ------------------- | --------------------------- |
 | Model Version       | SE-ResNet50                 |
 | Resource            | Ascend 910                  |
-| Uploaded Date       | 03/19/2021 (month/day/year) |
-| MindSpore Version   | 0.7.0-alpha                 |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | ImageNet2012                |
 | batch_size          | 256                          |
 | Accuracy            | 77.74%                      |

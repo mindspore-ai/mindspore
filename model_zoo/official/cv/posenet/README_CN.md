@@ -19,15 +19,12 @@
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
-            - [KingsCollege上的PoseNet](#KingsCollege上的PoseNet)
-            - [StMarysChurch上的PoseNet](#StMarysChurch上的PoseNet)
+            - [KingsCollege上的PoseNet](#kingscollege上的posenet)
+            - [StMarysChurch上的PoseNet](#stmaryschurch上的posenet)
         - [推理性能](#推理性能)
-            - [KingsCollege上的PoseNet](#KingsCollege上的PoseNet)
-            - [StMarysChurch上的PoseNet](#StMarysChurch上的PoseNet)
-    - [使用流程](#使用流程)
-        - [推理](#推理)
-        - [继续训练预训练模型](#继续训练预训练模型)
-        - [迁移学习](#迁移学习)
+            - [KingsCollege上的PoseNet](#kingscollege上的posenet-1)
+            - [StMarysChurch上的PoseNet](#stmaryschurch上的posenet-1)
+    - [迁移学习](#迁移学习)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
@@ -291,7 +288,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | 资源                   | Ascend 910 ；CPU 2.60GHz，192核；内存：755G             | NV SMX2 V100-32G       |
 | 上传日期              | 2021-03-26                                 | 2021-05-20 |
-| MindSpore版本          | 1.1.1-alpha                                                 | 1.2.1-alpha            |
+| MindSpore版本          | 1.1.1                                                 | 1.2.1            |
 | 数据集                    | KingsCollege                                                    | KingsCollege               |
 | 训练参数        | max_steps=30000, batch_size=75, lr_init=0.001              | max_steps=30000, batch_size=75, lr_init=0.001      |
 | 优化器                  | Adagrad                                                    | Adagrad      |
@@ -311,7 +308,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | 资源                   | Ascend 910 ；CPU 2.60GHz，192核；内存：755G             | NV SMX2 V100-32G       |
 | 上传日期              | 2021-03-26                                 | 2021-05-20 |
-| MindSpore版本          | 1.1.1-alpha                                                 | 1.2.1-alpha            |
+| MindSpore版本          | 1.1.1                                                 | 1.2.1            |
 | 数据集                    | StMarysChurch                                                    | StMarysChurch               |
 | 训练参数        | max_steps=30000, batch_size=75, lr_init=0.001              | max_steps=30000, batch_size=75, lr_init=0.001      |
 | 优化器                  | Adagrad                                                    | Adagrad      |
@@ -333,7 +330,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 | ------------------- | --------------------------- | --------------------------- |
 | 资源            | Ascend 910                  | GPU                         |
 | 上传日期       | 2021-03-26 | 2021-05-20 |
-| MindSpore 版本   | 1.1.1-alpha                 | 1.2.1-alpha            |
+| MindSpore 版本   | 1.1.1                 | 1.2.1            |
 | 数据集             | KingsCollege     | KingsCollege               |
 | batch_size          | 1                         | 1                         |
 | 输出             | 距离、角度                 |距离、角度                 |
@@ -346,7 +343,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 | ------------------- | --------------------------- | --------------------------- |
 | 资源            | Ascend 910                  | GPU                         |
 | 上传日期       | 2021-03-26 | 2021-05-20 |
-| MindSpore 版本   | 1.1.1-alpha                 | 1.2.1-alpha            |
+| MindSpore 版本   | 1.1.1                 | 1.2.1            |
 | 数据集             | StMarysChurch     | StMarysChurch     |
 | batch_size          | 1                         | 1                         |
 | 输出             | 距离、角度                 | 距离、角度                 |

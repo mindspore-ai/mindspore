@@ -1,23 +1,30 @@
 # Contents
 
+- [Contents](#contents)
 - [MobileNetV2 Description](#mobilenetv2-description)
-- [Model Architecture](#model-architecture)
+- [Model architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Features](#features)
-    - [Mixed Precision](#mixed-precision(ascend))
+    - [Mixed Precision(Ascend)](#mixed-precisionascend)
 - [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-        - [Training Process](#training-process)
-        - [Evaluation Process](#eval-process)
-        - [Inference Process](#inference-process)
-            - [Export MindIR](#export-mindir)
-            - [Infer on Ascend310](#infer-on-ascend310)
-            - [result](#result)
-- [Model Description](#model-description)
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
+    - [Training process](#training-process)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Result](#result)
+    - [Evaluation process](#evaluation-process)
+        - [Usage](#usage-1)
+        - [Launch](#launch-1)
+        - [Result](#result-1)
+    - [Training with dataset on NFS](#training-with-dataset-on-nfs)
+    - [Inference process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result-2)
+- [Model description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
@@ -398,8 +405,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | V1                                                         | V1                        |
 | Resource                   | Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8              | NV SMX2 V100-32G          |
-| uploaded Date              | 05/06/2020                                                 | 05/06/2020                |
-| MindSpore Version          | 0.3.0                                                      | 0.3.0                     |
+| uploaded Date              | 07/05/2021                                                 | 07/05/2021                |
+| MindSpore Version          | 1.3.0                                                      | 1.3.0                     |
 | Dataset                    | ImageNet                                                   | ImageNet                  |
 | Training Parameters        | src/config.py                                              | src/config.py             |
 | Optimizer                  | Momentum                                                   | Momentum                  |

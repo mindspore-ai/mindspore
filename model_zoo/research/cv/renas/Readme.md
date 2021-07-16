@@ -1,19 +1,22 @@
 # Contents
 
+- [Contents](#contents)
 - [ReNAS Description](#renas-description)
 - [Dataset](#dataset)
 - [Features](#features)
-    - [Mixed Precision](#mixed-precision)
+    - [Mixed Precision(Ascend)](#mixed-precisionascend)
 - [Environment Requirements](#environment-requirements)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-        - [Training Process](#training-process)
-        - [Evaluation Process](#evaluation-process)
-            - [Evaluation](#evaluation)
+- [Script description](#script-description)
+    - [Script and sample code](#script-and-sample-code)
+    - [Training process](#training-process)
+    - [Eval process](#eval-process)
+        - [Usage](#usage)
+        - [Launch](#launch)
+        - [Result](#result)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+    - [Performance](#performance)
+        - [Evaluation Performance](#evaluation-performance)
+            - [NASBench101-Net on CIFAR-10](#nasbench101-net-on-cifar-10)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -104,7 +107,7 @@ result: {'acc': 0.9411057692307693} ckpt= ./resnet50-imgnet-0.65x-80.24.ckpt
 | -------------------------- | -------------------------------------- |
 | Model Version              | NASBench101-Net               |
 | uploaded Date              | 03/27/2021 (month/day/year)  ；                      |
-| MindSpore Version          | 0.6.0-alpha                                                       |
+| MindSpore Version          | 1.2.0                                                       |
 | Dataset                    | CIFAR-10                                             |
 | Parameters (M)             | 4.44                                           |
 | FLOPs (G) | 1.9 |

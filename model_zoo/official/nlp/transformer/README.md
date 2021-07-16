@@ -2,14 +2,18 @@
 
 [查看中文](./README_CN.md)
 
-- [Transformer Description](#transformer-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
+- [Contents](#contents)
+    - [Transformer Description](#transformer-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+            - [Training Script Parameters](#training-script-parameters)
+            - [Running Options](#running-options)
+            - [Network Parameters](#network-parameters)
     - [Dataset Preparation](#dataset-preparation)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
@@ -17,12 +21,12 @@
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
-- [Model Description](#model-description)
-    - [Performance](#performance)
-        - [Training Performance](#training-performance)
-        - [Evaluation Performance](#evaluation-performance)
-- [Description of Random Situation](#description-of-random-situation)
-- [ModelZoo Homepage](#modelzoo-homepage)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Training Performance](#training-performance)
+            - [Evaluation Performance](#evaluation-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [Transformer Description](#contents)
 
@@ -385,8 +389,8 @@ Inference result is saved in current path, 'output_file' will generate in path s
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
 | Resource                   | Ascend 910; OS Euler2.8                                                 |
-| uploaded Date              | 09/15/2020 (month/day/year)                                    |
-| MindSpore Version          | 1.0.0                                                          |
+| uploaded Date              | 07/05/2021 (month/day/year)                                    |
+| MindSpore Version          | 1.3.0                                                          |
 | Dataset                    | WMT Englis-German                                              |
 | Training Parameters        | epoch=52, batch_size=96                                        |
 | Optimizer                  | Adam                                                           |
@@ -403,8 +407,8 @@ Inference result is saved in current path, 'output_file' will generate in path s
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Resource            | Ascend 910; OS Euler2.8                |
-| Uploaded Date       | 09/15/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       |
 | Dataset             | WMT newstest2014            |
 | batch_size          | 1                           |
 | outputs             | BLEU score                  |

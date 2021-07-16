@@ -1,6 +1,7 @@
 [查看中文](./README_CN.md)
 # Contents
 
+- [Contents](#contents)
 - [LSTM Description](#lstm-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
@@ -9,11 +10,16 @@
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
+        - [Training Script Parameters](#training-script-parameters)
+        - [Running Options](#running-options)
+        - [Network Parameters](#network-parameters)
     - [Dataset Preparation](#dataset-preparation)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
     - [Export MindIR](#export-mindir)
     - [Inference Process](#inference-process)
+        - [Usage](#usage)
+            - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
@@ -427,8 +433,8 @@ Inference result is saved in current path, you can find result in acc.log file.
 | Parameters                 | LSTM (Ascend)                 | LSTM (GPU)                                                     | LSTM (CPU)                 |
 | -------------------------- | -------------------------- | -------------------------------------------------------------- | -------------------------- |
 | Resource                   | Ascend 910; OS Euler2.8                  | Tesla V100-SMX2-16GB                                           | Ubuntu X86-i7-8565U-16GB   |
-| uploaded Date              | 12/21/2020 (month/day/year)| 10/28/2020 (month/day/year)                                    | 10/28/2020 (month/day/year)|
-| MindSpore Version          | 1.1.0                      | 1.0.0                                                          | 1.0.0                      |
+| uploaded Date              | 12/21/2020 (month/day/year)| 07/05/2021 (month/day/year)                                    | 07/05/2021 (month/day/year)|
+| MindSpore Version          | 1.1.0                      | 1.3.0                                                          | 1.3.0                      |
 | Dataset                    | aclimdb_v1                 | aclimdb_v1                                                     | aclimdb_v1                 |
 | Training Parameters        | epoch=20, batch_size=64    | epoch=20, batch_size=64                                        | epoch=20, batch_size=64    |
 | Optimizer                  | Momentum                   | Momentum                                                       | Momentum                   |
@@ -444,8 +450,8 @@ Inference result is saved in current path, you can find result in acc.log file.
 | Parameters          | LSTM (Ascend)                | LSTM (GPU)                  | LSTM (CPU)                   |
 | ------------------- | ---------------------------- | --------------------------- | ---------------------------- |
 | Resource            | Ascend 910; OS Euler2.8                    | Tesla V100-SMX2-16GB        | Ubuntu X86-i7-8565U-16GB     |
-| uploaded Date       | 12/21/2020 (month/day/year)  | 10/28/2020 (month/day/year) | 10/28/2020 (month/day/year)  |
-| MindSpore Version   | 1.1.0                        | 1.0.0                       | 1.0.0                        |
+| uploaded Date       | 12/21/2020 (month/day/year)  | 07/05/2021 (month/day/year) | 07/05/2021 (month/day/year)  |
+| MindSpore Version   | 1.1.0                        | 1.3.0                       | 1.3.0                        |
 | Dataset             | aclimdb_v1                   | aclimdb_v1                  | aclimdb_v1                   |
 | batch_size          | 64                           | 64                          | 64                           |
 | Accuracy            | 85%                          | 84%                         | 83%                          |

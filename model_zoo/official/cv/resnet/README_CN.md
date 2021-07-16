@@ -2,7 +2,10 @@
 
 <!-- TOC -->
 
-- [ResNet描述](#ResNet描述)
+- [目录](#目录)
+- [ResNet描述](#resnet描述)
+    - [概述](#概述)
+    - [论文](#论文)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [特性](#特性)
@@ -13,16 +16,33 @@
     - [脚本及样例代码](#脚本及样例代码)
     - [脚本参数](#脚本参数)
     - [训练过程](#训练过程)
+        - [用法](#用法)
+            - [Ascend处理器环境运行](#ascend处理器环境运行)
+            - [GPU处理器环境运行](#gpu处理器环境运行)
+            - [运行参数服务器模式训练](#运行参数服务器模式训练)
+            - [训练时推理](#训练时推理)
+        - [结果](#结果)
     - [评估过程](#评估过程)
+        - [用法](#用法-1)
+            - [Ascend处理器环境运行](#ascend处理器环境运行-1)
+            - [GPU处理器环境运行](#gpu处理器环境运行-1)
+        - [结果](#结果-1)
     - [推理过程](#推理过程)
         - [导出MindIR](#导出mindir)
         - [在Ascend310执行推理](#在ascend310执行推理)
-        - [结果](#结果)
+        - [结果](#结果-2)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
+            - [CIFAR-10上的ResNet18](#cifar-10上的resnet18)
+            - [ImageNet2012上的ResNet18](#imagenet2012上的resnet18)
+            - [CIFAR-10上的ResNet50](#cifar-10上的resnet50)
+            - [ImageNet2012上的ResNet50](#imagenet2012上的resnet50)
+            - [ImageNet2012上的ResNet34](#imagenet2012上的resnet34)
+            - [ImageNet2012上的ResNet101](#imagenet2012上的resnet101)
+            - [ImageNet2012上的SE-ResNet50](#imagenet2012上的se-resnet50)
 - [随机情况说明](#随机情况说明)
-- [ModelZoo主页](#ModelZoo主页)
+- [ModelZoo主页](#modelzoo主页)
 
 <!-- /TOC -->
 
@@ -658,7 +678,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | 模型版本              | ResNet18                                                |
 | 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8  |
 | 上传日期              | 2021-02-25                          |
-| MindSpore版本          | 1.1.1-alpha                                                       |
+| MindSpore版本          | 1.1.1                                                       |
 | 数据集                    | CIFAR-10                                                    |
 | 训练参数        | epoch=90, steps per epoch=195, batch_size = 32             |
 | 优化器                  | Momentum                                                         |
@@ -678,7 +698,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | 模型版本              | ResNet18                                               |
 | 资源                   |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |
 | 上传日期              | 2020-04-01  ;                        |
-| MindSpore版本          | 1.1.1-alpha                                                       |
+| MindSpore版本          | 1.1.1                                                       |
 | 数据集                    | ImageNet2012                                                    |
 | 训练参数        | epoch=90, steps per epoch=626, batch_size = 256             |
 | 优化器                  | Momentum                                                         |
@@ -697,8 +717,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | 模型版本              | ResNet50-v1.5                                                |ResNet50-v1.5|
 | 资源                   |Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8  | GPU(Tesla V100 SXM2)；CPU：2.1GHz，24核；内存：128G
-| 上传日期              | 2020-04-01                          | 2020-08-01
-| MindSpore版本          | 0.1.0-alpha                                                       |0.6.0-alpha   |
+| 上传日期              | 2021-07-05                          | 2021-07-05
+| MindSpore版本          | 1.3.0                                                       |1.3.0   |
 | 数据集                    | CIFAR-10                                                    | CIFAR-10
 | 训练参数        | epoch=90, steps per epoch=195, batch_size = 32             |epoch=90, steps per epoch=195, batch_size = 32  |
 | 优化器                  | Momentum                                                         |Momentum|
@@ -717,8 +737,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | 模型版本              | ResNet50-v1.5                                                |ResNet50-v1.5|
 | 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |  GPU(Tesla V100 SXM2)；CPU：2.1GHz，24核；内存：128G
-| 上传日期              | 2020-04-01  ;                        | 2020-08-01
-| MindSpore版本          | 0.1.0-alpha                                                       |0.6.0-alpha   |
+| 上传日期              | 2021-07-05  ;                        | 2021-07-05
+| MindSpore版本          | 1.3.0                                                       |1.3.0      |
 | 数据集                    | ImageNet2012                                                    | ImageNet2012|
 | 训练参数        | epoch=90, steps per epoch=626, batch_size = 256             |epoch=90, steps per epoch=5004, batch_size = 32  |
 | 优化器                  | Momentum                                                         |Momentum|
@@ -738,7 +758,7 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | 模型版本              | ResNet34                                               |
 | 资源                   |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8 |
 | 上传日期              | 2021-05-08  ;                        |
-| MindSpore版本          | 1.1.1-alpha                                                       |
+| MindSpore版本          | 1.1.1                                                       |
 | 数据集                    | ImageNet2012                                                    |
 | 训练参数        | epoch=90, steps per epoch=625, batch_size = 256             |
 | 优化器                  | Momentum                                                         |
@@ -757,8 +777,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | 模型版本              | ResNet101                                                |ResNet101|
 | 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8  |  GPU(Tesla V100 SXM2)；CPU：2.1GHz，24核；内存：128G
-| 上传日期              | 2020-04-01  ;                        | 2020-08-01
-| MindSpore版本          | 0.1.0-alpha                                                       |0.6.0-alpha   |
+| 上传日期              | 2021-07-05  ;                        | 2021-07-05
+| MindSpore版本          | 1.3.0                                                       |1.3.0         |
 | 数据集                    | ImageNet2012                                                    | ImageNet2012|
 | 训练参数        | epoch=120, steps per epoch=5004, batch_size = 32             |epoch=120, steps per epoch=5004, batch_size = 32  |
 | 优化器                  | Momentum                                                         |Momentum|
@@ -777,8 +797,8 @@ Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 | -------------------------- | ------------------------------------------------------------------------ |
 | 模型版本              | SE-ResNet50                                               |
 | 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8  |
-| 上传日期              | 2020-08-16  ；                        |
-| MindSpore版本          | 0.7.0-alpha                                                 |
+| 上传日期              | 2021-07-05  ；                        |
+| MindSpore版本          | 1.3.0                                                 |
 | 数据集                    | ImageNet2012                                                |
 | 训练参数        | epoch=24, steps per epoch=5004, batch_size = 32             |
 | 优化器                  | Momentum                                                    |

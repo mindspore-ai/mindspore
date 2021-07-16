@@ -12,8 +12,8 @@
         - [General Distill](#general-distill)
         - [Task Distill](#task-distill)
     - [Options and Parameters](#options-and-parameters)
-        - [Options:](#options)
-        - [Parameters:](#parameters)
+        - [Options](#options)
+        - [Parameters](#parameters)
     - [Training Process](#training-process)
         - [Training](#training)
             - [running on Ascend](#running-on-ascend)
@@ -557,8 +557,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | TinyBERT                                                   | TinyBERT                           |
 | Resource                   |Ascend 910; cpu 2.60GHz, 192cores; memory 755G; OS Euler2.8           | NV SMX2 V100-32G, cpu:2.10GHz 64cores,  memory:251G         |
-| uploaded Date              | 08/20/2020                                                 | 08/24/2020                |
-| MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
+| uploaded Date              | 07/05/2021                                                 | 07/05/2021                |
+| MindSpore Version          | 1.3.0                                                      | 1.3.0                     |
 | Dataset                    | en-wiki-128                                                | en-wiki-128               |
 | Training Parameters        | src/gd_config.yaml                                           | src/gd_config.yaml          |
 | Optimizer                  | AdamWeightDecay                                            | AdamWeightDecay           |
@@ -577,8 +577,8 @@ Inference result is saved in current path, you can find result like this in acc.
 | -------------------------- | ----------------------------- | ------------------------- |
 | Model Version              |                               |                           |
 | Resource                   | Ascend 910; OS Euler2.8                      | NV SMX2 V100-32G          |
-| uploaded Date              | 08/20/2020                    | 08/24/2020                |
-| MindSpore Version          | 1.0.0                         | 1.0.0                     |
+| uploaded Date              | 07/05/2021                    | 07/05/2021                |
+| MindSpore Version          | 1.3.0                         | 1.3.0                     |
 | Dataset                    | SST-2,                        | SST-2                     |
 | batch_size                 | 32                            | 32                        |
 | Accuracy                   | 0.902777                      | 0.9086                    |
