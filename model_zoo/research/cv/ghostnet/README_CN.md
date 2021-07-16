@@ -67,7 +67,7 @@ GhostNet的总体网络架构如下：[链接](https://arxiv.org/pdf/1911.11907.
 # 环境要求
 
 - 硬件
-    - 准备Ascend处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 准备Ascend处理器搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需查看详情，请参见如下资源：
@@ -234,7 +234,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 | 模型版本  | GhostNet |
 | 资源  |  Ascend 910；CPU：2.60GHz，192核；内存：755G |
 | 上传日期  |2021-06-22 ;  |
-| MindSpore版本  | 1.0.1 |
+| MindSpore版本  | 1.2.0 |
 | 数据集  |  ImageNet2012 |
 | 训练参数  | epoch=500, steps per epoch=1251, batch_size = 128  |
 | 优化器  | Momentum  |
