@@ -728,7 +728,7 @@ cd ../../../scripts;
     you can see the MAP below from eval.sh
 
     ```log
-    (markus) rescue@distrubuteddata13: ./scripts$ bash eval.sh
+    rescue@distrubuteddata13: ./scripts$ bash eval.sh
     start eval
     ==================== Results = ==================== ./scripts/output/centerface/140
     Easy   Val AP: 0.9240708943779239
@@ -741,7 +741,7 @@ cd ../../../scripts;
     you can see the MAP below from eval_all.sh
 
     ```log
-    (markus) rescue@distrubuteddata13: ./scripts$ bash eval_all.sh
+    rescue@distrubuteddata13: ./scripts$ bash eval_all.sh
     ==================== Results = ==================== ./scripts/output/centerface/89
     Easy   Val AP: 0.9138417914429035
     Medium Val AP: 0.9052437122819539
@@ -753,18 +753,18 @@ cd ../../../scripts;
     Hard   Val AP: 0.7655257898032033
     =================================================
     ...
-    ==================== Results = ==================== /home/rescue/markus/markus_repo/mindspore/model_zoo/official/cv/centerface/scripts/output/centerface/125
+    ==================== Results = ==================== ./scripts/output/centerface/125
     Easy   Val AP: 0.9240525949727452
     Medium Val AP: 0.9180645371016661
     Hard   Val AP: 0.782047346778918
     =================================================
-    ==================== Results = ==================== /home/rescue/markus/markus_repo/mindspore/model_zoo/official/cv/centerface/scripts/output/centerface/126
+    ==================== Results = ==================== ./scripts/output/centerface/126
     Easy   Val AP: 0.9199560196120761
     Medium Val AP: 0.9157462777329638
     Hard   Val AP: 0.7814679399942209
     =================================================
     ...
-    ==================== Results = ==================== /home/rescue/markus/markus_repo/mindspore/model_zoo/official/cv/centerface/scripts/output/centerface/140
+    ==================== Results = ==================== ./scripts/output/centerface/140
     Easy   Val AP: 0.9240708943779239
     Medium Val AP: 0.9193106635436091
     Hard   Val AP: 0.7777030480280428
