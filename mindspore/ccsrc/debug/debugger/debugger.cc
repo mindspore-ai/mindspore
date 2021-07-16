@@ -69,6 +69,7 @@ Debugger::Debugger()
       device_target_(""),
       num_step_(0),
       debugger_enabled_(false),
+      suspended_at_last_kernel_(false),
       run_level_(""),
       node_name_(""),
       cur_name_(""),
