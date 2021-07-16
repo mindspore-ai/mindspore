@@ -53,7 +53,7 @@ class TcpClient {
     std::function<void(const std::shared_ptr<MessageMeta> &, const Protos &, const void *, size_t size)>;
   using OnTimer = std::function<void()>;
 
-  explicit TcpClient(const std::string &address, std::uint16_t port, Configuration *config);
+  explicit TcpClient(const std::string &address, std::uint16_t port, Configuration *const config);
   virtual ~TcpClient();
 
   std::string GetServerAddress() const;
@@ -107,7 +107,7 @@ class TcpClient {
   std::atomic<bool> is_stop_;
   std::atomic<bool> is_connected_;
   // The Configuration file
-  Configuration *config_;
+  Configuration *const config_;
 };
 }  // namespace core
 }  // namespace ps

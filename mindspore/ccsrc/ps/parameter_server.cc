@@ -42,8 +42,8 @@ void ParameterServer::Run(const FuncGraphPtr &func_graph) {
 }
 
 bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
-  pserver_num_ = std::strtol(mindspore::common::GetEnv(kEnvPServerNum).c_str(), nullptr, 10);
-  worker_num_ = std::strtol(mindspore::common::GetEnv(kEnvWorkerNum).c_str(), nullptr, 10);
+  pserver_num_ = std::strtol(mindspore::common::GetEnv(kEnvPServerNum).c_str(), nullptr, kBase);
+  worker_num_ = std::strtol(mindspore::common::GetEnv(kEnvWorkerNum).c_str(), nullptr, kBase);
   func_graph_ = func_graph;
   handler_.reset(new ServerHandler(this));
   handler_->Init();
@@ -176,10 +176,11 @@ void ParameterServer::InitEmbeddingTable(
     MS_EXCEPTION_IF_NULL(embedding);
     float *embedding_data = embedding->data();
     std::default_random_engine engine;
-    std::normal_distribution<float> random(0, 0.01);
+    std::normal_distribution<float> random(0, kStdDev);
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       if (param_init_info.param_type_ == kWeight) {
-        InitRandomNormal(0, 0.01, input_shapes, param_init_info.global_seed_, param_init_info.op_seed_, embedding_data);
+        InitRandomNormal(0, kStdDev, input_shapes, param_init_info.global_seed_, param_init_info.op_seed_,
+                         embedding_data);
       } else if (param_init_info.param_type_ == kAccumulation) {
         for (size_t i = 0; i < total_dims; i++) {
           embedding_data[i] = param_init_info.init_val_;
@@ -259,7 +260,7 @@ void ParameterServer::UpdateWeights() {
 void ParameterServer::AccumGrad(const Keys &keys, const Values &values, const Lengths &lengths) {
   std::unique_lock<std::mutex> lock(mutex_);
   const Key &key = keys[0];
-  bool no_sparse_grad = values.size() == 1 && values[0] == -100;
+  bool no_sparse_grad = values.size() == 1 && values[0] == kGradValue;
   if (!no_sparse_grad) {
     std::shared_ptr<OptimizerInfo> optim_info = optim_infos_[key];
 
@@ -338,7 +339,7 @@ void ParameterServer::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, KV
   embedding_table->addr = table_ptr->data();
   embedding_table->size = table_ptr->size() * sizeof(float);
 
-  std::unique_ptr<int[]> tmp_ids(new int[lookup_ids.size()]);
+  std::unique_ptr<int[]> tmp_ids = std::make_unique<int[]>(lookup_ids.size());
   MS_EXCEPTION_IF_NULL(tmp_ids);
   for (size_t i = 0; i < lookup_ids.size(); i++) {
     tmp_ids[i] = static_cast<int>(lookup_ids[i]);

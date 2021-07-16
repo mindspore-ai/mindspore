@@ -171,9 +171,9 @@ void NodeManager::UpdateCluster() {
 
   if (!timeout_nodes_info_.empty()) {
     UpdateClusterState(ClusterState::NODE_TIMEOUT);
-    for (auto it = timeout_nodes_info_.begin(); it != timeout_nodes_info_.end(); ++it) {
-      heartbeats_.erase(it->first);
-      finish_nodes_id_.insert(it->first);
+    for (auto iter = timeout_nodes_info_.begin(); iter != timeout_nodes_info_.end(); ++iter) {
+      heartbeats_.erase(iter->first);
+      finish_nodes_id_.insert(iter->first);
     }
   }
 

@@ -75,6 +75,22 @@ constexpr int64_t kPullCmd = 51;
 constexpr size_t kInvalidKey = UINT64_MAX;
 constexpr int64_t kInvalidID = -1;
 
+constexpr int64_t kGradIndex = 0;
+constexpr int64_t kIndiceIndex = 1;
+constexpr int64_t kFirstDimSize = 2;
+constexpr int64_t kOutDimSize = 3;
+
+constexpr int64_t kBase = 10;
+constexpr float kStdDev = 0.01;
+
+constexpr int64_t kSparseLazyAdamIndex = 2;
+constexpr int64_t kSparseFtrlIndex = 3;
+constexpr int64_t kSparseGradIndex = 6;
+constexpr int64_t kSparseIndiceIndex = 7;
+
+constexpr int64_t kHeartbeatTimes = 2;
+constexpr int64_t kGradValue = -100;
+
 constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (uint32_t(1) << 20));
 constexpr char kServerNum[] = "server_num";
 constexpr char kWorkerNum[] = "worker_num";

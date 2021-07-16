@@ -48,11 +48,11 @@ void PSContext::SetPSEnable(bool enabled) {
       MS_LOG(INFO) << "MS_ROLE is " << ms_role;
     }
 
-    worker_num_ = std::strtol(common::GetEnv(kEnvWorkerNum).c_str(), nullptr, 10);
-    server_num_ = std::strtol(common::GetEnv(kEnvPServerNum).c_str(), nullptr, 10);
+    worker_num_ = std::strtol(common::GetEnv(kEnvWorkerNum).c_str(), nullptr, kBase);
+    server_num_ = std::strtol(common::GetEnv(kEnvPServerNum).c_str(), nullptr, kBase);
     scheduler_host_ = common::GetEnv(kEnvSchedulerHost);
-    scheduler_port_ = std::strtol(common::GetEnv(kEnvSchedulerPort).c_str(), nullptr, 10);
-    scheduler_manage_port_ = std::strtol(common::GetEnv(kEnvSchedulerManagePort).c_str(), nullptr, 10);
+    scheduler_port_ = std::strtol(common::GetEnv(kEnvSchedulerPort).c_str(), nullptr, kBase);
+    scheduler_manage_port_ = std::strtol(common::GetEnv(kEnvSchedulerManagePort).c_str(), nullptr, kBase);
     cluster_config_ = std::make_unique<core::ClusterConfig>(worker_num_, server_num_, scheduler_host_, scheduler_port_);
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";

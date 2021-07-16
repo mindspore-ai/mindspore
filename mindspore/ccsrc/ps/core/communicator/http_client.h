@@ -42,6 +42,7 @@
 #include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/comm_util.h"
 #include "utils/convert_utils_base.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {

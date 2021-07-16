@@ -62,7 +62,7 @@ class AbstractNode : public Node {
   using DataPtr = std::shared_ptr<unsigned char[]>;
   using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 
-  bool Broadcast(const enum NodeRole &node_role, const DataPtr &message, size_t size, int command,
+  bool Broadcast(const NodeRole &node_role, const DataPtr &message, size_t size, int command,
                  const uint32_t &timeout = kCommTimeoutInSeconds);
 
   // When the business layer finish scale out, it should call this function
@@ -84,18 +84,18 @@ class AbstractNode : public Node {
   // Set the callback corresponding to the custom event.
   void RegisterCustomEventCallback(const uint32_t &event, const EventCallback &event_cb);
 
-  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
+  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
             const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
             const std::vector<size_t> &lens, int command, const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int command,
+  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int command,
             VectorPtr *output, const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
             const std::vector<size_t> &data_lens, int command, std::vector<VectorPtr> *output,
             const uint32_t &timeout = kCommTimeoutInSeconds);
 
-  uint64_t CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
-  std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const enum NodeRole &node_role, const uint32_t &rank_id,
+  uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
+  std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
   bool CollectiveWait(const std::pair<uint32_t, uint64_t> &request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
