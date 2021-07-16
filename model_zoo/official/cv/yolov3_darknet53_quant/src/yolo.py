@@ -146,12 +146,12 @@ class YOLOv3(nn.Cell):
         con1, big_object_output = self.backblock0(feature_map3)
 
         con1 = self.conv1(con1)
-        ups1 = P.ResizeNearestNeighbor((img_hight / 16, img_width / 16))(con1)
+        ups1 = P.ResizeNearestNeighbor((img_hight // 16, img_width // 16))(con1)
         con1 = self.concat((ups1, feature_map2))
         con2, medium_object_output = self.backblock1(con1)
 
         con2 = self.conv2(con2)
-        ups2 = P.ResizeNearestNeighbor((img_hight / 8, img_width / 8))(con2)
+        ups2 = P.ResizeNearestNeighbor((img_hight // 8, img_width // 8))(con2)
         con3 = self.concat((ups2, feature_map1))
         _, small_object_output = self.backblock2(con3)
 
