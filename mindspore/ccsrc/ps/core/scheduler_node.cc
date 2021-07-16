@@ -46,14 +46,15 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   return true;
 }
 
-void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                     std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
+                                     const std::shared_ptr<TcpConnection> &conn,
+                                     const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   HeartbeatMessage heartbeat_message;
-  heartbeat_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(heartbeat_message.ParseFromArray(data, SizeToInt(size)));
 
   node_manager_.UpdateHeartbeat(heartbeat_message.node_id());
 
@@ -101,7 +102,7 @@ void SchedulerNode::CreateTcpServer() {
   std::string scheduler_host = PSContext::instance()->cluster_config().scheduler_host;
   uint32_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
   server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port);
-  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+  server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &, const void *data, size_t size) {
     if (handlers_.count(meta->cmd()) == 0) {
       MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
@@ -112,23 +113,22 @@ void SchedulerNode::CreateTcpServer() {
 
   server_->Init();
 
-  scheduler_thread_ = std::make_unique<std::thread>([&]() {
+  scheduler_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The scheduler node start a tcp server!";
-    server_->Start();
+    this->server_->Start();
   });
 }
 
-void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                    std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
+                                    const std::shared_ptr<TcpConnection> &conn,
+                                    const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   MS_LOG(INFO) << "The scheduler process a register message!";
   RegisterMessage register_message;
-  if (!register_message.ParseFromArray(data, SizeToInt(size))) {
-    MS_LOG(WARNING) << "Parse data failed.";
-  }
+  CHECK_RETURN_TYPE(register_message.ParseFromArray(data, SizeToInt(size)));
 
   // assign worker node and server node rank id
   uint32_t rank_id = node_manager_.NextRankId(register_message, meta);
@@ -167,8 +167,8 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
   }
 }
 
-void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                  std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessFinish(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                                  const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -202,8 +202,9 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
   }
 }
 
-void SchedulerNode::ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                         std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessFetchMetadata(const std::shared_ptr<TcpServer> &server,
+                                         const std::shared_ptr<TcpConnection> &conn,
+                                         const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -217,8 +218,9 @@ void SchedulerNode::ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std:
                       fetch_servers_message.ByteSizeLong());
 }
 
-void SchedulerNode::ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessScaleOutDone(const std::shared_ptr<TcpServer> &server,
+                                        const std::shared_ptr<TcpConnection> &conn,
+                                        const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -242,8 +244,9 @@ void SchedulerNode::ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::
   }
 }
 
-void SchedulerNode::ProcessScaleInDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                       std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessScaleInDone(const std::shared_ptr<TcpServer> &server,
+                                       const std::shared_ptr<TcpConnection> &conn,
+                                       const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -267,8 +270,9 @@ void SchedulerNode::ProcessScaleInDone(std::shared_ptr<TcpServer> server, std::s
   }
 }
 
-void SchedulerNode::ProcessSendEvent(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                     std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
+                                     const std::shared_ptr<TcpConnection> &conn,
+                                     const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);

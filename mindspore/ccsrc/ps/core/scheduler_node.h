@@ -58,8 +58,10 @@ class SchedulerNode : public Node {
         scheduler_recovery_(nullptr) {}
   ~SchedulerNode() override;
 
-  typedef void (SchedulerNode::*ResponseHandler)(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                                 std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  typedef void (SchedulerNode::*ResponseHandler)(const std::shared_ptr<TcpServer> &server,
+                                                 const std::shared_ptr<TcpConnection> &conn,
+                                                 const std::shared_ptr<MessageMeta> &meta, const void *data,
+                                                 size_t size);
 
   bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) override;
   bool Stop() override;
@@ -73,24 +75,24 @@ class SchedulerNode : public Node {
   void StartUpdateClusterStateTimer();
   const std::shared_ptr<TcpClient> &GetOrCreateClient(const NodeInfo &node_info);
 
-  void ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessRegister(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                       std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                     std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                            std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessHeartbeat(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                        const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessRegister(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                       const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessFinish(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                     const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessFetchMetadata(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
   // Process scale_out_done messages from workers/servers
-  void ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                           std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessScaleOutDone(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
   // Process scale_in_done messages from workers/servers
-  void ProcessScaleInDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                          std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessScaleInDone(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                          const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
   // Process scale_in_done messages from workers/servers
-  void ProcessSendEvent(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessSendEvent(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                        const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
   // After scheduler collects all registered message, it actively sends finish to the node connected by the client.
   void SendMetadata(const std::shared_ptr<TcpClient> &client, uint32_t rank_id);

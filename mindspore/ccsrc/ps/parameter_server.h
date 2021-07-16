@@ -32,6 +32,8 @@
 #include <list>
 #include <map>
 #include <functional>
+#include <algorithm>
+
 #include "ir/func_graph.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -92,23 +94,23 @@ class ParameterServer {
     explicit ServerHandler(ParameterServer *ps) : ps_(ps) {}
     ~ServerHandler() = default;
     void Init();
-    void operator()(std::shared_ptr<core::TcpConnection> conn, std::shared_ptr<core::MessageMeta> meta, DataPtr data,
-                    size_t size);
-    void HandlePushReq(DataPtr data, size_t size, VectorPtr res);
-    void HandlePullReq(DataPtr data, size_t size, VectorPtr res);
-    void HandleInitWeights(DataPtr data, size_t size, VectorPtr res);
-    void HandleInitWeightToOptimId(DataPtr data, size_t size, VectorPtr res);
-    void HandleInitInputsShape(DataPtr data, size_t size, VectorPtr res);
-    void HandleInitEmbeddings(DataPtr data, size_t size, VectorPtr res);
-    void HandleCheckReadyForPush(DataPtr data, size_t size, VectorPtr res);
-    void HandleCheckReadyForPull(DataPtr data, size_t size, VectorPtr res);
-    void HandleEmbeddingLookup(DataPtr data, size_t size, VectorPtr res);
-    void HandleUpdateEmbeddings(DataPtr data, size_t size, VectorPtr res);
-    void HandleFinalize(DataPtr data, size_t size, VectorPtr res);
+    void operator()(const std::shared_ptr<core::TcpConnection> &conn, const std::shared_ptr<core::MessageMeta> &meta,
+                    const DataPtr &data, size_t size);
+    void HandlePushReq(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandlePullReq(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleInitWeights(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleInitWeightToOptimId(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleInitInputsShape(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleInitEmbeddings(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleCheckReadyForPush(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleCheckReadyForPull(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleEmbeddingLookup(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleUpdateEmbeddings(const DataPtr &data, size_t size, const VectorPtr &res);
+    void HandleFinalize(const DataPtr &data, size_t size, const VectorPtr &res);
 
    private:
     ParameterServer *ps_;
-    typedef void (ServerHandler::*RequestHandler)(DataPtr data, size_t size, VectorPtr res);
+    typedef void (ServerHandler::*RequestHandler)(const DataPtr &data, size_t size, const VectorPtr &res);
     std::unordered_map<int, RequestHandler> handlers_;
     std::unordered_map<int, std::string> commands_;
     std::unordered_map<Key, bool> init_weights_;
@@ -132,12 +134,12 @@ class ParameterServer {
   WeightPtr weight(const Key &key);
   void DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, KVMessage *res);
   void UpdateEmbeddings(const Key &key, const LookupIds &lookup_ids, const Values &vals);
-  bool ReadyForUpdateWeights();
-  bool ReadyForPush(const Key &key);
-  bool ReadyForPull(const Key &key);
-  void ResetGradAccumCount();
+  inline bool ReadyForUpdateWeights() const;
+  inline bool ReadyForPush(const Key &key);
+  inline bool ReadyForPull(const Key &key);
+  inline void ResetGradAccumCount();
   const CNodePtr GetCNode(const std::string &name) const;
-  std::mutex &mutex();
+  inline std::mutex &mutex();
   void GetEmbeddingTableParamPtr();
   void SyncEmbeddingTables();
 

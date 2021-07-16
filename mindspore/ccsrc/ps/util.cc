@@ -49,7 +49,7 @@ bool Util::IsRoleOfPServer() { return PSContext::instance()->is_server(); }
 
 bool Util::IsRoleOfScheduler() { return PSContext::instance()->is_scheduler(); }
 
-int64_t Util::optimizer_id(std::string name) {
+int64_t Util::optimizer_id(const std::string &name) {
   if (optimizer_to_ids.count(name) > 0) {
     return optimizer_to_ids[name];
   }
@@ -70,7 +70,7 @@ std::string Util::optimizer_node_name(int64_t id) {
   return "";
 }
 
-bool Util::is_optimizer(std::string name) { return optimizer_to_ids.count(name) > 0; }
+bool Util::is_optimizer(const std::string &name) { return optimizer_to_ids.count(name) > 0; }
 
 int64_t Util::LocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num) {
   std::map<int64_t, int64_t> shard_dims = AllRankLocalShard(first_dim, rank_id, server_num);
