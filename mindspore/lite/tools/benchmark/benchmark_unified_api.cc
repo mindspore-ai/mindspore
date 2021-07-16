@@ -33,12 +33,6 @@
 #include <asm/unistd.h>
 #include <unistd.h>
 #endif
-#ifdef SUPPORT_NNIE
-#include "include/hi_common.h"
-#include "include/hi_comm_vb.h"
-#include "include/mpi_sys.h"
-#include "include/mpi_vb.h"
-#endif
 
 namespace mindspore {
 namespace lite {

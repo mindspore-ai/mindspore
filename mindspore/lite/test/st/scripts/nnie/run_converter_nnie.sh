@@ -57,7 +57,7 @@ function Run_Hi3516() {
   chmod +x ./tools/benchmark/benchmark
   # copy related files to benchmark_test
   cp -a ./providers/Hi3516D/libmslite_nnie.so ${benchmark_test_path}/libmslite_nnie.so || exit 1
-  cp -a ./providers/Hi3516D/libnnie_proposal.so ${benchmark_test_path}/libnnie_proposal.so || exit 1
+  cp -a ./providers/Hi3516D/libmslite_proposal.so ${benchmark_test_path}/libmslite_proposal.so || exit 1
   cp -a ./tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
   cp -a ./runtime/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
 

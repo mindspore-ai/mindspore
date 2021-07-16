@@ -279,21 +279,11 @@ elseif(PLATFORM_ARM32)
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     __install_micro_wrapper()
-    if(MSLITE_ENABLE_NNIE AND TARGET_HIMIX200)
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/libmslite_nnie.so
-                DESTINATION ${RUNTIME_PKG_NAME}/providers/Hi3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/libnnie_proposal.so
-                DESTINATION ${RUNTIME_PKG_NAME}/providers/Hi3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/benchmark
-                DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-    else()
-        if(MSLITE_ENABLE_TOOLS)
-            install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR}
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-            if(SUPPORT_TRAIN)
-                install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR}
-                        COMPONENT ${RUNTIME_COMPONENT_NAME})
-            endif()
+    if(MSLITE_ENABLE_TOOLS)
+        install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
+                    ${RUNTIME_COMPONENT_NAME})
         endif()
     endif()
 elseif(WIN32)
@@ -477,10 +467,6 @@ else()
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(MSLITE_ENABLE_NNIE)
-            install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
-        endif()
         __install_micro_wrapper()
         __install_micro_codegen()
     endif()
@@ -497,22 +483,6 @@ else()
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_npu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-    endif()
-    if(NOT SUPPORT_TRAIN AND MSLITE_ENABLE_NNIE)
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/converter.cfg
-                DESTINATION ${CONVERTER_ROOT_DIR}/converter COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/libmslite_nnie_converter.so
-                DESTINATION ${CONVERTER_ROOT_DIR}/providers/Hi3516D/ COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/libmslite_nnie_data_process.so
-                DESTINATION ${CONVERTER_ROOT_DIR}/providers/Hi3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/libnnie_mapper.so
-                DESTINATION ${CONVERTER_ROOT_DIR}/providers/Hi3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/opencv-4.2.0/lib/
-                DESTINATION ${CONVERTER_ROOT_DIR}/providers/Hi3516D/third_party/opencv-4.2.0
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.so*")
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/Hi3516D/protobuf-3.9.0/lib/
-                DESTINATION ${CONVERTER_ROOT_DIR}/providers/Hi3516D/third_party/protobuf-3.9.0
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.so*")
     endif()
 endif()
 
