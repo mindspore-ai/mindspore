@@ -342,6 +342,11 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
       tensor.Wait();
     }
     tensor.data_sync();
+
+    // Release device address of graph output tensor.
+    if (tensor.need_release_device_mem()) {
+      const_cast<Tensor &>(tensor).set_device_address(nullptr);
+    }
   }
   return AsNumpy(tensor);
 }

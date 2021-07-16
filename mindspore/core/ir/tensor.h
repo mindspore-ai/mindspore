@@ -294,6 +294,10 @@ class Tensor : public MetaTensor {
       device_sync_->ResetRefCount();
     }
   }
+
+  bool need_release_device_mem() const { return need_release_device_mem_; }
+  void set_need_release_device_mem(bool release_device_mem) { need_release_device_mem_ = release_device_mem; }
+
   void set_padding_type(const std::string padding_type) { padding_type_ = padding_type; }
   std::string padding_type() const { return padding_type_; }
 
@@ -375,6 +379,8 @@ class Tensor : public MetaTensor {
   bool graph_output_{false};
   bool updated_by_device_{false};
   DeviceSyncPtr device_sync_{nullptr};
+  // Release device address of graph output tensor or not.
+  bool need_release_device_mem_{false};
   bool cache_enable_{false};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
