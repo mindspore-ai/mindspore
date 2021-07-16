@@ -305,7 +305,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      inputs.insert(inputs.begin() + 2, call_node);
+      inputs.insert(inputs.begin() + kPrimAndTypeLen, call_node);
     } else {
       inputs.emplace_back(call_node);
     }

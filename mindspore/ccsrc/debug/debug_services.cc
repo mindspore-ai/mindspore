@@ -474,8 +474,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
         MS_LOG(EXCEPTION) << "Can't find package mindspore.offline_debug.convert_async";
       }
 
-      DIR *d_handle;
-      d_handle = opendir(dump_key.c_str());
+      DIR *d_handle = opendir(dump_key.c_str());
       if (d_handle != nullptr) {
         struct dirent *dir = nullptr;
         while ((dir = readdir(d_handle)) != NULL) {
@@ -758,7 +757,6 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
               continue;
             }
             std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
-
             if (found != 0) {
               continue;
             }
@@ -907,7 +905,6 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
                 continue;
               }
               std::size_t found = stripped_file_name.rfind(dump_name, 0);
-
               if (found == 0) {
                 size_t slot = std::stoul(stripped_file_name.substr(dump_name.length() + 1));
                 std::vector<int64_t> shape;

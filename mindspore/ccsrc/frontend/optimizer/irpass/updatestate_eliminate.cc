@@ -70,8 +70,9 @@ bool OnlyUsedByTwoNode(const AnfNodePtr &be_used_node, const AnfNodePtr &first_n
   if (iter == node_users.end()) {
     return false;
   }
+  constexpr size_t partial_users_cnt = 2;
   auto &partial_users = iter->second;
-  if (partial_users.size() != 2) {
+  if (partial_users.size() != partial_users_cnt) {
     return false;
   }
   const auto &first_user = partial_users.front().first;

@@ -132,10 +132,11 @@ uint64_t GetTimeStamp() {
 }
 
 std::string GetOpNameWithoutScope(const std::string &fullname_with_scope) {
-  std::size_t found = fullname_with_scope.rfind("--");
+  const std::string separator("--");
+  std::size_t found = fullname_with_scope.rfind(separator);
   std::string op_name;
   if (found != std::string::npos) {
-    op_name = fullname_with_scope.substr(found + 2);
+    op_name = fullname_with_scope.substr(found + separator.length());
   }
   return op_name;
 }
