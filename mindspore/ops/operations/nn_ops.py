@@ -4157,7 +4157,7 @@ class MirrorPad(PrimitiveWithInfer):
 
 
 class ComputeAccidentalHits(PrimitiveWithCheck):
-    """
+    r"""
     Compute accidental hits of sampled classes which match target classes.
 
     When a target class matches the sample class, we call it "accidental hit".
@@ -4170,16 +4170,18 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
 
     Inputs:
         - **true_classes** (Tensor) - The target classes. With data type of int32 or int64
-          and shape [batch_size, num_true].
+          and shape :math:`(batch\_size, num\_true)`.
         - **sampled_candidates** (Tensor) - The Candidate sampling results of operators, types of training samples,
-          with data type of int32 or int64 and shape [num_sampled].
+          with data type of int32 or int64 and shape :math:`(num\_sampled, )`.
 
     Outputs:
         Tuple of 3 Tensors.
 
-        - **indices** (Tensor) - A Tensor with shape (num_accidental_hits,), with the same type as `true_classes`.
-        - **ids** (Tensor) - A Tensor with shape (num_accidental_hits,), with the same type as `true_classes`.
-        - **weights** (Tensor) - A Tensor with shape (num_accidental_hits,), with the type float32.
+        - **indices** (Tensor) - A Tensor with shape :math:`(num\_accidental\_hits, )`,
+          with the same type as `true_classes`.
+        - **ids** (Tensor) - A Tensor with shape :math:`(num\_accidental\_hits, )`,
+          with the same type as `true_classes`.
+        - **weights** (Tensor) - A Tensor with shape :math:`(num\_accidental\_hits, )`, with the type float32.
 
     Raises:
         TypeError: If dtype of `num_true` is not int.
@@ -4190,9 +4192,6 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
         >>> true_classes = np.array([[1, 2], [0, 4], [3, 3]])
         >>> sampled_candidates = np.array([0, 1, 2, 3, 4])
         >>> sampler = ops.ComputeAccidentalHits(2)
@@ -4232,7 +4231,7 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
 
 
 class ROIAlign(PrimitiveWithInfer):
-    """
+    r"""
     Computes the Region of Interest (RoI) Align operator.
 
     The operator computes the value of each sampling point by bilinear interpolation from the nearby grid points on the
@@ -4249,16 +4248,16 @@ class ROIAlign(PrimitiveWithInfer):
         roi_end_mode (int): Number must be 0 or 1. Default: 1.
 
     Inputs:
-        - **features** (Tensor) - The input features, whose shape must be `(N, C, H, W)`.
-        - **rois** (Tensor) - The shape is `(rois_n, 5)`. With data type of float16 or float32.
+        - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`.
+        - **rois** (Tensor) - The shape is :math:`(rois\_n, 5)`. With data type of float16 or float32.
           `rois_n` represents the number of RoI. The size of the second dimension must be `5` and the `5` colunms
-          are `(image_index, top_left_x, top_left_y, bottom_right_x, bottom_right_y)`. `image_index` represents the
-          index of image. `top_left_x` and `top_left_y` represent the `x, y` coordinates of the top left corner
-          of corresponding RoI, respectively. `bottom_right_x` and `bottom_right_y` represent the `x, y`
-          coordinates of the bottom right corner of corresponding RoI, respectively.
+          are :math:`(image\_index, top\_left\_x, top\_left\_y, bottom\_right\_x, bottom\_right\_y)`.
+          `image_index` represents the index of image. `top_left_x` and `top_left_y` represent the `x, y`
+          coordinates of the top left corner of corresponding RoI, respectively. `bottom_right_x` and `bottom_right_y`
+          represent the `x, y` coordinates of the bottom right corner of corresponding RoI, respectively.
 
     Outputs:
-        Tensor, the shape is `(rois_n, C, pooled_height, pooled_width)`.
+        Tensor, the shape is :math:`(rois\_n, C, pooled\_height, pooled\_width)`.
 
     Raises:
         TypeError: If `pooled_height`, `pooled_width`, `sample_num` or `roi_end_mode` is not an int.
@@ -4269,10 +4268,10 @@ class ROIAlign(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_tensor = Tensor(np.array([[[[1., 2.], [3., 4.]]]]), mindspore.float32)
+        >>> features = Tensor(np.array([[[[1., 2.], [3., 4.]]]]), mindspore.float32)
         >>> rois = Tensor(np.array([[0, 0.2, 0.3, 0.2, 0.3]]), mindspore.float32)
         >>> roi_align = ops.ROIAlign(2, 2, 0.5, 2)
-        >>> output = roi_align(input_tensor, rois)
+        >>> output = roi_align(features, rois)
         >>> print(output)
         [[[[1.775 2.025]
            [2.275 2.525]]]]
@@ -4310,6 +4309,8 @@ class Adam(PrimitiveWithInfer):
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
+    For more details, please refer to :class:`nn.Adam`.
+
     The updating formulas are as follows,
 
     .. math::
@@ -4336,14 +4337,16 @@ class Adam(PrimitiveWithInfer):
             If false, update the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be updated. the data type can be float16 or float32.
+        - **var** (Tensor) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
+          any number of additional dimensions. The data type can be float16 or float32.
         - **m** (Tensor) - The 1st moment vector in the updating formula,
-          the data type value should be the same as `var`.
+          the shape and data type value should be the same as `var`.
         - **v** (Tensor) - the 2nd moment vector in the updating formula,
-          the data type value should be the same as `var`. Mean square gradients with the same type as `var`.
+          the shape and data type value should be the same as `var`. Mean square gradients with the same type as `var`.
         - **beta1_power** (float) - :math:`beta_1^t(\beta_1^{t})` in the updating formula,
           the data type value should be the same as `var`.
-        - **beta2_power** (float) - :math:`beta_2^t(\beta_2^{t})` in the updating formula.
+        - **beta2_power** (float) - :math:`beta_2^t(\beta_2^{t})` in the updating formula,
+          the data type value should be the same as `var`.
         - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`,
           the data type value should be the same as `var`.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
@@ -4351,7 +4354,7 @@ class Adam(PrimitiveWithInfer):
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
           the data type value should be the same as `var`. The paper suggested value is :math:`0.999`
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
-        - **gradient** (Tensor) - Gradient, has the same type as `var`.
+        - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -4369,10 +4372,6 @@ class Adam(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -4439,7 +4438,7 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
     `gradient`, :math:`l` represents scaling factor `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
     :math:`t` represents updating step while :math:`beta_1^t(\beta_1^{t})` and :math:`beta_2^t(\beta_2^{t})`
     represent `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`,
-    :math:`w` represents the parameter to be updated, :math:`\epsilon`represents `epsilon`.
+    :math:`w` represents the parameter to be updated, :math:`\epsilon` represents `epsilon`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -4450,20 +4449,22 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
             If false, update the gradients without using NAG. Default: False.
 
     Inputs:
-        - **m** (Tensor) - The 1st moment vector in the updating formula. The data type must be float32.
+        - **m** (Tensor) - The 1st moment vector in the updating formula. The shape is :math:`(N, *)`
+          where :math:`*` means, any number of additional dimensions. The data type must be float32.
         - **v** (Tensor) - the 2nd moment vector in the updating formula. The shape must be the same as `m`.
           The data type must be float32.
         - **beta1_power** (Tensor) - :math:`beta_1^t(\beta_1^{t})` in the updating formula.
-          The data type must be float32.
+          The shape is :math:`(1, )` and the data type must be float32.
         - **beta2_power** (Tensor) - :math:`beta_2^t(\beta_1^{t})` in the updating formula.
-          The data type must be float32.
-        - **lr** (Tensor) - :math:`l` in the updating formula. The data type must be float32.
+          The shape is :math:`(1, )` and the data type must be float32.
+        - **lr** (Tensor) - :math:`l` in the updating formula.
+          The shape is :math:`(1, )` and the data type must be float32.
         - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations.
-          The data type must be float32.
+          The shape is :math:`(1, )` and the data type must be float32.
         - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations.
-          The data type must be float32.
-        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. The data type must be
-          float32.
+          The shape is :math:`(1, )` and the data type must be float32.
+        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability.
+          The shape is :math:`(1, )` and the data type must be float32.
         - **gradient** (Tensor) - Gradient, the shape must be the same as `m`, the data type must be float32.
 
     Outputs:
@@ -4479,11 +4480,6 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -4568,26 +4564,33 @@ class FusedSparseAdam(PrimitiveWithInfer):
             If false, update the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Parameters to be updated with float32 data type.
-        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var` with
-          float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula.
+        - **var** (Parameter) - Parameters to be updated with float32 data type. The shape is :math:`(N, *)`
+          where :math:`*` means, any number of additional dimensions.
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same shape and data type as `var`.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula, has the same shape and data type as `var`.
           Mean square gradients, has the same type as `var` with float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula with float32 data type.
+          The shape is :math:`(1, )`.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula with float32 data type.
+          The shape is :math:`(1, )`.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
+          The shape is :math:`(1, )`.
         - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations with float32 data type.
+          The shape is :math:`(1, )`.
         - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations with float32 data type.
+          The shape is :math:`(1, )`.
         - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability with float32 data type.
-        - **gradient** (Tensor) - Gradient value with float32 data type.
-        - **indices** (Tensor) - Gradient indices with int32 data type.
+          The shape is :math:`(1, )`.
+        - **gradient** (Tensor) - Gradient, has the same data type as `var` and
+          gradient.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **indices** (Tensor) - Gradient indices with int32 data type and indices.shape[0] = gradient.shape[0].
 
     Outputs:
         Tuple of 3 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape (1,).
-        - **m** (Tensor) - A Tensor with shape (1,).
-        - **v** (Tensor) - A Tensor with shape (1,).
+        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **m** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **v** (Tensor) - A Tensor with shape :math:`(1, )`.
 
     Raises:
         TypeError: If neither `use_locking` nor `use_neserov` is a bool.
@@ -4598,9 +4601,6 @@ class FusedSparseAdam(PrimitiveWithInfer):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -4620,12 +4620,12 @@ class FusedSparseAdam(PrimitiveWithInfer):
         >>> beta1 = Tensor(0.9, mindspore.float32)
         >>> beta2 = Tensor(0.999, mindspore.float32)
         >>> epsilon = Tensor(1e-8, mindspore.float32)
-        >>> gradient = Tensor(np.random.rand(2, 1, 2), mindspore.float32)
+        >>> gradient = Tensor(np.array([[[0.1, 0.1]], [[0.1, 0.1]]]), mindspore.float32)
         >>> indices = Tensor([0, 1], mindspore.int32)
         >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
         >>> print(net.var.asnumpy())
-        [[[0.9996963  0.9996977 ]]
-         [[0.99970144 0.9996992 ]]
+        [[[0.9997121  0.9997121 ]]
+         [[0.9997121  0.9997121 ]]
          [[0.99971527 0.99971527]]]
     """
     __mindspore_signature__ = (
@@ -4714,26 +4714,33 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
             If false, update the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Parameter) - Parameters to be updated with float32 data type.
-        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var` with
-          float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula.
+        - **var** (Parameter) - Parameters to be updated with float32 data type. The shape is :math:`(N, *)`
+          where :math:`*` means, any number of additional dimensions.
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same shape and data type as `var`.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula, has the same shape and data type as `var`.
           Mean square gradients, has the same type as `var` with float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula with float32 data type.
+          The shape is :math:`(1, )`.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula with float32 data type.
+          The shape is :math:`(1, )`.
         - **lr** (Tensor) - :math:`l` in the updating formula with float32 data type.
+          The shape is :math:`(1, )`.
         - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations with float32 data type.
+          The shape is :math:`(1, )`.
         - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations with float32 data type.
+          The shape is :math:`(1, )`.
         - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability with float32 data type.
-        - **gradient** (Tensor) - Gradient value with float32 data type.
-        - **indices** (Tensor) - Gradient indices with int32 data type.
+          The shape is :math:`(1, )`.
+        - **gradient** (Tensor) - Gradient value with float32 data type and
+          gradient.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **indices** (Tensor) - Gradient indices with int32 data type and indices.shape[0] = gradient.shape[0].
 
     Outputs:
         Tuple of 3 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape (1,).
-        - **m** (Tensor) - A Tensor with shape (1,).
-        - **v** (Tensor) - A Tensor with shape (1,).
+        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **m** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **v** (Tensor) - A Tensor with shape :math:`(1, )`.
 
     Raises:
         TypeError: If neither `use_locking` nor `use_nestrov` is a bool.
@@ -4745,9 +4752,6 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -4767,13 +4771,13 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         >>> beta1 = Tensor(0.9, mindspore.float32)
         >>> beta2 = Tensor(0.999, mindspore.float32)
         >>> epsilon = Tensor(1e-8, mindspore.float32)
-        >>> gradient = Tensor(np.random.rand(2, 1, 2), mindspore.float32)
+        >>> gradient = Tensor(np.array([[[0.1, 0.1]], [[0.1, 0.1]]]), mindspore.float32)
         >>> indices = Tensor([0, 1], mindspore.int32)
         >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
         >>> print(net.var.asnumpy())
-        [[[0.9996866 0.9997078]]
-         [[0.9997037 0.9996869]]
-         [[1.        1.       ]]]
+        [[[0.9997121  0.9997121 ]]
+         [[0.9997121  0.9997121 ]]
+         [[1.         1.        ]]]
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -4842,19 +4846,21 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         use_locking (bool): Use locks for updating operation if true . Default: False.
 
     Inputs:
-        - **var** (Parameter) - The variable to be updated. The data type must be float32.
+        - **var** (Parameter) - The variable to be updated. The data type must be float32. The shape is :math:`(N, *)`
+          where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
         - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`. The shape
-          of `indices` must be the same as `grad` in first dimension. The type must be int32.
+        - **grad** (Tensor) - A tensor of the same type as `var` and
+          grad.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
+          The type must be int32 and indices.shape[0] = grad.shape[0].
 
     Outputs:
         Tuple of 3 Tensor, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape (1,).
-        - **accum** (Tensor) - A Tensor with shape (1,).
-        - **linear** (Tensor) - A Tensor with shape (1,).
+        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **accum** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **linear** (Tensor) - A Tensor with shape :math:`(1, )`.
 
     Raises:
         TypeError: If `lr`, `l1`, `l2` or `lr_power` is not a float.
@@ -4868,32 +4874,26 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
-        >>> from mindspore import Parameter
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
         >>> class SparseApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
         ...         super(SparseApplyFtrlNet, self).__init__()
         ...         self.sparse_apply_ftrl = ops.FusedSparseFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
-        ...         self.var = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="var")
-        ...         self.accum = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="accum")
-        ...         self.linear = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="linear")
+        ...         self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="accum")
+        ...         self.linear = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="linear")
         ...
         ...     def construct(self, grad, indices):
         ...         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
         ...         return out
         ...
         >>> net = SparseApplyFtrlNet()
-        >>> grad = Tensor(np.random.rand(2, 1, 2).astype(np.float32))
+        >>> grad = Tensor(np.array([[[0.1, 0.1]], [[0.1, 0.1]]]).astype(np.float32))
         >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
         >>> output = net(grad, indices)
-        >>> print(output)
-        (Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]),
-         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]),
-         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]))
+        >>> print(net.var.asnumpy())
+        [[[-0.00598256 -0.00598256]]
+         [[-0.00598256 -0.00598256]]
+         [[ 1.          1.        ]]]
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -4943,11 +4943,11 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     algorithm.
 
     .. math::
-            accum += grad * grad
-    .. math::
-            \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}}
-    .. math::
+        \begin{array}{ll} \\
+            accum += grad * grad \\
+            \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}} \\
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+        \end{array}
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -4960,19 +4960,21 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float32.
-        - **accum** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
-        - **lr** (Tensor) - The learning rate value. The data type must be float32.
-        - **l1** (Tensor) - l1 regularization strength. The data type must be float32.
-        - **l2** (Tensor) - l2 regularization strength. The data type must be float32.
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient. The data type must be float32.
-        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`. The data type
-          must be int32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **accum** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
+        - **lr** (Tensor) - The learning rate value. The data type must be float32. The shape is :math:`(1, )`.
+        - **l1** (Tensor) - l1 regularization strength. The data type must be float32. The shape is :math:`(1, )`.
+        - **l2** (Tensor) - l2 regularization strength. The data type must be float32. The shape is :math:`(1, )`.
+        - **grad** (Tensor) - A tensor of the same data type as `var` and
+          grad.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
+          The type must be int32 and indices.shape[0] = grad.shape[0].
 
     Outputs:
         Tuple of 2 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape (1,).
-        - **accum** (Tensor) - A Tensor with shape (1,).
+        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **accum** (Tensor) - A Tensor with shape :math:`(1, )`.
 
     Raises:
         TypeError: If `use_locking` is not a bool.
@@ -4980,18 +4982,15 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         TypeError: If dtype of `indices` is not int32.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.sparse_apply_proximal_adagrad = ops.FusedSparseProximalAdagrad()
-        ...         self.var = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="var")
-        ...         self.accum = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="accum")
+        ...         self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="accum")
         ...         self.lr = Tensor(0.01, mindspore.float32)
         ...         self.l1 = Tensor(0.0, mindspore.float32)
         ...         self.l2 = Tensor(0.0, mindspore.float32)
@@ -5001,12 +5000,13 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         ...         return out
         ...
         >>> net = Net()
-        >>> grad = Tensor(np.random.rand(2, 1, 2).astype(np.float32))
+        >>> grad = Tensor(np.array([[[0.1, 0.1]], [[0.1, 0.1]]]).astype(np.float32))
         >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
         >>> output = net(grad, indices)
-        >>> print(output)
-        (Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]),
-         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]))
+        >>> print(net.var.asnumpy())
+        [[[0.99900496 0.99900496]]
+         [[0.99900496 0.99900496]]
+         [[1.         1.        ]]]
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -5046,7 +5046,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
 
 class KLDivLoss(PrimitiveWithInfer):
     r"""
-    Computes the Kullback-Leibler divergence between the target and the output.
+    Computes the Kullback-Leibler divergence between the logits and the labels.
 
     The updating formulas of KLDivLoss algorithm are as follows,
 
@@ -5063,8 +5063,8 @@ class KLDivLoss(PrimitiveWithInfer):
         \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    where :math:`x` represents `input`.
-    :math:`y` represents `label`.
+    where :math:`x` represents `logits`.
+    :math:`y` represents `labels`.
     :math:`\ell(x, y)` represents `output`.
 
     Args:
@@ -5072,39 +5072,34 @@ class KLDivLoss(PrimitiveWithInfer):
             Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
-        - **input_x** (Tensor) - The input Tensor. The data type must be float32.
-        - **input_y** (Tensor) - The label Tensor which has the same shape as `input_x`. The data type must be float32.
+        - **logits** (Tensor) - The input Tensor. The data type must be float32.
+        - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
         Otherwise it is a scalar.
 
     Raises:
         TypeError: If `reduction` is not a str.
-        TypeError: If neither `input_x` nor `input_y` is a Tensor.
-        TypeError: If dtype of `input_x` or `input_y` is not float32.
+        TypeError: If neither `logits` nor `labels` is a Tensor.
+        TypeError: If dtype of `logits` or `labels` is not float32.
 
     Supported Platforms:
         ``GPU``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.kldiv_loss = ops.KLDivLoss()
-        ...     def construct(self, x, y):
-        ...         result = self.kldiv_loss(x, y)
+        ...     def construct(self, logits, labels):
+        ...         result = self.kldiv_loss(logits, labels)
         ...         return result
         ...
         >>> net = Net()
-        >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
-        >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
-        >>> output = net(input_x, input_y)
+        >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> output = net(logits, labels)
         >>> print(output)
         -0.23333333
     """
@@ -5131,9 +5126,9 @@ class KLDivLoss(PrimitiveWithInfer):
 
 class BinaryCrossEntropy(PrimitiveWithInfer):
     r"""
-    Computes the binary cross entropy between the target and the output.
+    Computes the binary cross entropy between the logits and the labels.
 
-    Sets input as :math:`x`, input label as :math:`y`, output as :math:`\ell(x, y)`.
+    Sets logits as :math:`x`, labels as :math:`y`, output as :math:`\ell(x, y)`.
     Let,
 
     .. math::
@@ -5155,44 +5150,39 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
             Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
-        - **input_x** (Tensor) - The input Tensor. The data type must be float16 or float32,
-          ths shape should be in the range of [0,8].
-        - **input_y** (Tensor) - The label Tensor which has same shape and data type as `input_x`.
+        - **logits** (Tensor) - The input Tensor. The data type must be float16 or float32,
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **labels** (Tensor) - The label Tensor which has same shape and data type as `logits`.
         - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
-          And it must have same shape and data type as `input_x`. Default: None.
+          And it must have same shape and data type as `logits`. Default: None.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
         Otherwise, the output is a scalar.
 
     Raises:
-        TypeError: If dtype of `input_x`, `input_y` or `weight` (if given) is neither float16 not float32.
+        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 not float32.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-        ValueError: If shape of `input_y` is not the same as `input_x` or `weight` (if given).
-        TypeError: If `input_x`, `input_y` or `weight` is not a Tensor.
+        ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
+        TypeError: If `logits`, `labels` or `weight` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.binary_cross_entropy = ops.BinaryCrossEntropy()
-        ...     def construct(self, x, y, weight):
-        ...         result = self.binary_cross_entropy(x, y, weight)
+        ...     def construct(self, logits, labels, weight):
+        ...         result = self.binary_cross_entropy(logits, labels, weight)
         ...         return result
         ...
         >>> net = Net()
-        >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
-        >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> output = net(input_x, input_y, weight)
+        >>> output = net(logits, labels, weight)
         >>> print(output)
         0.38240486
     """
@@ -5250,6 +5240,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **m** (Parameter) - The 1st moment vector in the updating formula, has the same shape and type as `var`.
           With float32 or float16 data type.
         - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
@@ -5284,9 +5275,6 @@ class ApplyAdaMax(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5381,13 +5369,14 @@ class ApplyAdadelta(PrimitiveWithInfer):
     Updates relevant entries according to the adadelta scheme.
 
     .. math::
-            accum = \rho * accum + (1 - \rho) * grad^2
-    .. math::
-            \text{update} = \sqrt{\text{accum_update} + \epsilon} * \frac{grad}{\sqrt{accum + \epsilon}}
-    .. math::
-            \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * update^2
-    .. math::
+        \begin{array}{ll} \\
+            accum = \rho * accum + (1 - \rho) * grad^2 \\
+            \text{update} = \sqrt{\text{accum_update} + \epsilon} * \frac{grad}{\sqrt{accum + \epsilon}} \\
+            \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * update^2 \\
             var -= lr * update
+        \end{array}
+
+    where :math:`\rho` represents `rho`, :math:`\epsilon` represents `epsilon`.
 
     Inputs of `var`, `accum`, `accum_update` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
@@ -5397,15 +5386,14 @@ class ApplyAdadelta(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Weights to be updated. With float32 or float16 data type.
-        - **accum** (Parameter) - Accumulation to be updated, has the same shape and type as `var`.
-          With float32 or float16 data type.
-        - **accum_update** (Parameter) - Accum_update to be updated, has the same shape and type as `var`.
-          With float32 or float16 data type.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **accum** (Parameter) - Accumulation to be updated, has the same shape and data type as `var`.
+        - **accum_update** (Parameter) - Accum_update to be updated, has the same shape and data type as `var`.
         - **lr** (Union[Number, Tensor]) - Learning rate, must be scalar. With float32 or float16 data type.
         - **rho** (Union[Number, Tensor]) - Decay rate, must be scalar. With float32 or float16 data type.
         - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, must be scalar.
           With float32 or float16 data type.
-        - **grad** (Tensor) - Gradients, has the same shape and type as `var`. With float32 or float16 data type.
+        - **grad** (Tensor) - Gradients, has the same shape and data type as `var`.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -5423,9 +5411,6 @@ class ApplyAdadelta(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5507,9 +5492,10 @@ class ApplyAdagrad(PrimitiveWithInfer):
     Updates relevant entries according to the adagrad scheme.
 
     .. math::
-            accum += grad * grad
-    .. math::
+        \begin{array}{ll} \\
+            accum += grad * grad \\
             var -= lr * grad * \frac{1}{\sqrt{accum}}
+        \end{array}
 
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
@@ -5522,11 +5508,10 @@ class ApplyAdagrad(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
-        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype must be the same as `var`.
-          With float32 or float16 data type.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be scalar. With float32 or float16 data type.
-        - **grad** (Tensor) - A tensor for gradient. The shape and dtype must be the same as `var`.
-          With float32 or float16 data type.
+        - **grad** (Tensor) - A tensor for gradient. The shape and data type must be the same as `var`.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -5542,9 +5527,6 @@ class ApplyAdagrad(PrimitiveWithInfer):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5604,9 +5586,12 @@ class ApplyAdagradV2(PrimitiveWithInfer):
     Updates relevant entries according to the adagradv2 scheme.
 
     .. math::
-            accum += grad * grad
-    .. math::
+        \begin{array}{ll} \\
+            accum += grad * grad \\
             var -= lr * grad * \frac{1}{\sqrt{accum} + \epsilon}
+        \end{array}
+
+    where :math:`\epsilon` represents `epsilon`.
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
@@ -5623,12 +5608,11 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float16 or float32 data type.
-        - **accum** (Parameter) - Accumulation to be updated. The shape and dtype must be the same as `var`.
-          With float16 or float32 data type.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a float number or
           a scalar tensor with float16 or float32 data type.
-        - **grad** (Tensor) - A tensor for gradient. The shape and dtype must be the same as `var`.
-          With float16 or float32 data type.
+        - **grad** (Tensor) - A tensor for gradient. The shape and data type must be the same as `var`.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -5644,9 +5628,6 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5706,9 +5687,10 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Updates relevant entries according to the adagrad scheme.
 
     .. math::
-            accum += grad * grad
-    .. math::
+        \begin{array}{ll} \\
+            accum += grad * grad \\
             var -= lr * grad * (1 / sqrt(accum))
+        \end{array}
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
@@ -5719,16 +5701,17 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Args:
         lr (float): Learning rate.
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
-        use_locking (bool): If true, the `var` and `accumulation` tensors will be protected from being updated.
+        use_locking (bool): If true, the `var` and `accum` tensors will be protected from being updated.
             Default: False.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
-        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except the first dimension.
-          Gradients has the same data type as `var`.
+        - **grad** (Tensor) - Gradients has the same data type as `var` and
+          grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
-          The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
+          The type must be int32 and indices.shape[0] = grad.shape[0].
 
     Outputs:
         Tuple of 2 tensors, the updated parameters.
@@ -5747,9 +5730,6 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5807,9 +5787,12 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
     Updates relevant entries according to the adagrad scheme, one more epsilon attribute than SparseApplyAdagrad.
 
     .. math::
-            accum += grad * grad
-    .. math::
+        \begin{array}{ll} \\
+            accum += grad * grad \\
             var -= lr * grad * \frac{1}{\sqrt{accum} + \epsilon}
+        \end{array}
+
+    where :math:`\epsilon` represents `epsilon`.
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
@@ -5826,11 +5809,12 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
-        - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape except the first dimension.
-          Gradients has the same data type as `var`.
+        - **grad** (Tensor) - Gradients has the same data type as `var` and
+          grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
-          The shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
+          The type must be int32 and indices.shape[0] = grad.shape[0].
 
     Outputs:
         Tuple of 2 tensors, the updated parameters.
@@ -5848,9 +5832,6 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5909,11 +5890,11 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
     Updates relevant entries according to the proximal adagrad algorithm.
 
     .. math::
-            accum += grad * grad
-    .. math::
-            \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}}
-    .. math::
+        \begin{array}{ll} \\
+            accum += grad * grad \\
+            \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}} \\
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+        \end{array}
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
@@ -5927,6 +5908,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - Accumulation to be updated. Must has the same shape and dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be scalar. The data type must be
           float16 or float32.
@@ -5952,11 +5934,6 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6033,11 +6010,11 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     an additional index tensor is input.
 
     .. math::
-            accum += grad * grad
-    .. math::
-            \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}}
-    .. math::
+        \begin{array}{ll} \\
+            accum += grad * grad \\
+            \text{prox_v} = var - lr * grad * \frac{1}{\sqrt{accum}} \\
             var = \frac{sign(\text{prox_v})}{1 + lr * l2} * \max(\left| \text{prox_v} \right| - lr * l1, 0)
+        \end{array}
 
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
@@ -6051,17 +6028,19 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **accum** (Parameter) - Variable tensor to be updated, has the same shape and dtype as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a float number or
           a scalar tensor with float16 or float32 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type..
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same type as `var` and
+          grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined. Must be one of the
-          following types: int32, int64.
+          following types: int32, int64 and indices.shape[0] = grad.shape[0].
 
     Outputs:
         Tuple of 2 tensors, the updated parameters.
@@ -6078,10 +6057,6 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6153,7 +6128,8 @@ class ApplyAddSign(PrimitiveWithInfer):
         \end{array}
 
     :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
-    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
+    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
+    :math:`\alpha` represents `alpha`, :math:`\beta` represents `beta`.
 
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
@@ -6163,14 +6139,15 @@ class ApplyAddSign(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
-        - **m** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **m** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar.
           With float32 or float16 data type.
         - **alpha** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
         - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, must be a scalar.
           With float32 or float16 data type.
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same shape and data type as `var`, for the gradient.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -6187,11 +6164,6 @@ class ApplyAddSign(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6280,7 +6252,8 @@ class ApplyPowerSign(PrimitiveWithInfer):
         \end{array}
 
     :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
-    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
+    is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
+    :math:`\beta` represents `beta`.
 
     All of inputs comply with the implicit type conversion rules to make the data types consistent.
     If `lr`, `logbase`, `sign_decay` or `beta` is a number, the number is automatically converted to Tensor,
@@ -6292,14 +6265,15 @@ class ApplyPowerSign(PrimitiveWithInfer):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
           If data type of `var` is float16, all inputs must have the same data type as `var`.
-        - **m** (Parameter) - Variable tensor to be updated, has the same dtype as `var`.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **m** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar.
           With float32 or float16 data type.
         - **logbase** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
         - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float32 or float16 data type.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, must be a scalar.
           With float32 or float16 data type.
-        - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same shape and data type as `var`, for the gradient.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -6316,11 +6290,6 @@ class ApplyPowerSign(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6405,6 +6374,8 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     .. math::
         var = var - \alpha * \delta
 
+    where :math:`\alpha` represents `alpha`, :math:`\delta` represents `delta`.
+
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
     relatively highest priority data type.
@@ -6412,8 +6383,9 @@ class ApplyGradientDescent(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **alpha** (Union[Number, Tensor]) - Scaling factor, must be a scalar. With float32 or float16 data type.
-        - **delta** (Tensor) - A tensor for the change, has the same type as `var`.
+        - **delta** (Tensor) - A tensor for the change, has the same shape and data type as `var`.
 
     Outputs:
         Tensor, represents the updated `var`.
@@ -6427,25 +6399,22 @@ class ApplyGradientDescent(PrimitiveWithInfer):
         ``Ascend``  ``GPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.apply_gradient_descent = ops.ApplyGradientDescent()
-        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
         ...         self.alpha = 0.001
         ...     def construct(self, delta):
         ...         out = self.apply_gradient_descent(self.var, self.alpha, delta)
         ...         return out
         ...
         >>> net = Net()
-        >>> delta = Tensor(np.random.rand(2, 2).astype(np.float32))
+        >>> delta = Tensor(np.array([[0.1, 0.1], [0.1, 0.1]]).astype(np.float32))
         >>> output = net(delta)
-        >>> print(output.shape)
-        (2, 2)
+        >>> print(output)
+        [[0.9999 0.9999]
+         [0.9999 0.9999]]
     """
 
     __mindspore_signature__ = (
@@ -6480,9 +6449,12 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
     Updates relevant entries according to the FOBOS(Forward Backward Splitting) algorithm.
 
     .. math::
-        \text{prox_v} = var - \alpha * \delta
-    .. math::
-        var = \frac{sign(\text{prox_v})}{1 + \alpha * l2} * \max(\left| \text{prox_v} \right| - alpha * l1, 0)
+        \begin{array}{ll} \\
+            \text{prox_v} = var - \alpha * \delta \\
+            var = \frac{sign(\text{prox_v})}{1 + \alpha * l2} * \max(\left| \text{prox_v} \right| - \alpha * l1, 0)
+        \end{array}
+
+    where :math:`\alpha` represents `alpha`, :math:`\delta` represents `delta`.
 
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -6491,12 +6463,13 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **alpha** (Union[Number, Tensor]) - Scaling factor, must be a scalar. With float32 or float16 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be scalar.
           With float32 or float16 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be scalar.
           With float32 or float16 data type.
-        - **delta** (Tensor) - A tensor for the change, has the same type as `var`.
+        - **delta** (Tensor) - A tensor for the change, has the same shape and data type as `var`.
 
     Outputs:
         Tensor, represents the updated `var`.
@@ -6510,28 +6483,24 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.apply_proximal_gradient_descent = ops.ApplyProximalGradientDescent()
-        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
         ...         self.alpha = 0.001
-        ...         self.l1 = 0.0
-        ...         self.l2 = 0.0
+        ...         self.l1 = 0.1
+        ...         self.l2 = 0.1
         ...     def construct(self, delta):
         ...         out = self.apply_proximal_gradient_descent(self.var, self.alpha, self.l1, self.l2, delta)
         ...         return out
         ...
         >>> net = Net()
-        >>> delta = Tensor(np.random.rand(2, 2).astype(np.float32))
+        >>> delta = Tensor(np.array([[0.1, 0.1], [0.1, 0.1]]).astype(np.float32))
         >>> output = net(delta)
-        >>> print(output.shape)
-        (2, 2)
+        >>> print(output)
+        [[0.99969995 0.99969995]
+         [0.99969995 0.99969995]]
     """
 
     __mindspore_signature__ = (
@@ -6577,6 +6546,8 @@ class LARSUpdate(PrimitiveWithInfer):
     """
     Conducts LARS (layer-wise adaptive rate scaling) update on the sum of squares of gradient.
 
+    For more details, please refer to :class:`nn.LARS`.
+
     Args:
         epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
         hyperpara (float): Trust coefficient for calculating the local learning rate. Default: 0.001.
@@ -6584,6 +6555,7 @@ class LARSUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **weight** (Tensor) - A tensor, representing the weight.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **gradient** (Tensor) - The gradient of weight, which has the same shape and dtype with weight.
         - **norm_weight** (Tensor) - A scalar tensor, representing the sum of squares of weight.
         - **norm_gradient** (Tensor) - A scalar tensor, representing the sum of squares of gradient.
@@ -6604,10 +6576,6 @@ class LARSUpdate(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6669,13 +6637,16 @@ class ApplyFtrl(PrimitiveWithInfer):
     """
     Updates relevant entries according to the FTRL scheme.
 
+    For more details, please refer to :class:`nn.FTRL`.
+
     Args:
         use_locking (bool): Use locks for updating operation if true . Default: False.
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
-        - **accum** (Parameter) - The accumulation to be updated, must be same type and shape as `var`.
-        - **linear** (Parameter) - the linear coefficient to be updated, must be same type and shape as `var`.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **accum** (Parameter) - The accumulation to be updated, must be same shape and data type as `var`.
+        - **linear** (Parameter) - The linear coefficient to be updated, must be same shape and data type as `var`.
         - **grad** (Tensor) - Gradient. The data type must be float16 or float32.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: 0.001.
           It must be a float number or a scalar tensor with float16 or float32 data type.
@@ -6688,7 +6659,7 @@ class ApplyFtrl(PrimitiveWithInfer):
           Default: -0.5. It must be a float number or a scalar tensor with float16 or float32 data type.
 
     Outputs:
-        - **var** (Tensor) - represents the updated `var`. As the input parameters has been updated in-place, this
+        - **var** (Tensor) - Represents the updated `var`. As the input parameters has been updated in-place, this
           value is always zero when the platforms is GPU.
 
     Raises:
@@ -6701,12 +6672,6 @@ class ApplyFtrl(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
         >>> class ApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
         ...         super(ApplyFtrlNet, self).__init__()
@@ -6766,6 +6731,8 @@ class SparseApplyFtrl(PrimitiveWithCheck):
     """
     Updates relevant entries according to the FTRL-proximal scheme.
 
+    For more details, please refer to :class:`nn.FTRL`.
+
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
     relatively highest priority data type.
@@ -6781,12 +6748,13 @@ class SparseApplyFtrl(PrimitiveWithCheck):
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
-        - **linear** (Parameter) - the linear coefficient to be updated, must be the same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type and shape as `var`, for the gradient.
+        - **linear** (Parameter) - The linear coefficient to be updated, must be the same data type and shape as `var`.
+        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
-          The shape of `indices` must be the same as `grad` in the first dimension. If there are
-          duplicates in `indices`, the behavior is undefined. The type must be int32 or int64.
+          If there are duplicates in `indices`, the behavior is undefined.
+          The type must be int32 or int64 and indices.shape[0] = grad.shape[0].
 
     Outputs:
         - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
@@ -6799,17 +6767,10 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         TypeError: If dtype of `var`, `accum`, `linear` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is neither int32 nor int64.
 
-
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
-        >>> from mindspore import Parameter
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
         >>> class SparseApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
         ...         super(SparseApplyFtrlNet, self).__init__()
@@ -6894,11 +6855,12 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
         - **linear** (Parameter) - the linear coefficient to be updated, must be same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type and shape as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
-          The shape of `indices` must be the same as `grad` in the first dimension. The type must be int32.
+          The type must be int32 and indices.shape[0] = grad.shape[0].
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -6917,12 +6879,6 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
-        >>> from mindspore import Parameter
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
         >>> class SparseApplyFtrlV2Net(nn.Cell):
         ...     def __init__(self):
         ...         super(SparseApplyFtrlV2Net, self).__init__()
@@ -6989,7 +6945,8 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 
 class Dropout(PrimitiveWithCheck):
     """
-    During training, randomly zeroes some of the elements of the input tensor with probability.
+    During training, randomly zeroes some of the elements of the input tensor
+    with probability 1-`keep_prob` from a Bernoulli distribution.
 
     Args:
         keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
@@ -7002,8 +6959,8 @@ class Dropout(PrimitiveWithCheck):
           additional dimensions, with float16 or float32 data type.
 
     Outputs:
-        - **output** (Tensor) - with the same shape as the `x`.
-        - **mask** (Tensor) - with the same shape as the `x`.
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - With the same shape as `x`.
 
     Raises:
         TypeError: If `keep_prob` is not a float.
@@ -7047,11 +7004,12 @@ class Dropout2D(PrimitiveWithInfer):
             means dropping out 20% of channels. Default: 0.5.
 
     Inputs:
-        - **input_x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`. The data type should be int8, int16,
-          int32, int64, float16 or float32
+        - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`. The data type should be int8, int16,
+          int32, int64, float16 or float32.
+
     Outputs:
-        - **output** (Tensor) - with the same shape and data type as the `input_x` tensor.
-        - **mask** (Tensor[bool]) - with the same shape as the `input_x` tensor.
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - With the same shape as `x` and the data type is bool.
 
     Raises:
         TypeError: If the data type of `keep_prob` is not float.
@@ -7063,18 +7021,10 @@ class Dropout2D(PrimitiveWithInfer):
 
     Examples:
         >>> dropout = ops.Dropout2D(keep_prob=0.5)
-        >>> input_x = Tensor(np.random.randn(2, 1, 2, 3), mindspore.float32)
-        >>> output, mask = dropout(input_x)
-        >>> print(output)
-        [[[[0. 0. 0.]
-           [0. 0. 0.]]]
-         [[[0.88 -2.98 -0.01]
-           [2.16 -0.34 1.57]]]]
-        >>> print(mask)
-        [[[[False False False]
-           [False False False]]]
-         [[[True True True]
-           [True True True]]]]
+        >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
+        >>> output, mask = dropout(x)
+        >>> print(output.shape)
+        (2, 1, 2, 3)
     """
 
     @prim_attr_register
@@ -7104,12 +7054,12 @@ class Dropout3D(PrimitiveWithInfer):
             means dropping out 20% of channels. Default: 0.5.
 
     Inputs:
-        - **input_x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`. The data type should be int8, int16,
-          int32, int64, float16 or float32
+        - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`. The data type should be int8, int16,
+          int32, int64, float16 or float32.
 
     Outputs:
-        - **output** (Tensor) - with the same shape and data type as the `input_x` tensor.
-        - **mask** (Tensor[bool]) - with the same shape as the `input_x` tensor.
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - With the same shape as `x` and the data type is bool.
 
     Raises:
         TypeError: If the data type of `keep_prob` is not float.
@@ -7121,18 +7071,10 @@ class Dropout3D(PrimitiveWithInfer):
 
     Examples:
         >>> dropout = ops.Dropout3D(keep_prob=0.5)
-        >>> input_x = Tensor(np.random.randn(2, 1, 2, 1, 2), mindspore.float32)
-        >>> output, mask = dropout(input_x)
-        >>> print(output)
-        [[[[[0. 0.]]
-           [[0. 0.]]]]
-         [[[[-2.98 -0.01]]
-           [[-0.34 1.57]]]]]
-        >>> print(mask)
-        [[[[[False False]]
-           [[False False]]]]
-         [[[[True True]]
-           [[True True]]]]]
+        >>> x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
+        >>> output, mask = dropout(x)
+        >>> print(output.shape)
+        (2, 1, 2, 1, 2)
     """
 
     @prim_attr_register
@@ -7153,7 +7095,7 @@ class Dropout3D(PrimitiveWithInfer):
 
 
 class CTCLoss(Primitive):
-    """
+    r"""
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 
     The CTC algorithm is proposed in `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
@@ -7169,28 +7111,28 @@ class CTCLoss(Primitive):
                                                   Default: False.
 
     Inputs:
-        - **inputs** (Tensor) - The input Tensor must be a `3-D` tensor whose shape is
-          (`max_time`, `batch_size`, `num_classes`). `num_classes` must be `num_labels + 1` classes, `num_labels`
+        - **x** (Tensor) - The input Tensor must be a `3-D` tensor whose shape is
+          :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must be `num_labels + 1` classes, `num_labels`
           indicates the number of actual labels. Blank labels are reserved. Default blank label is `num_classes - 1`.
           Data type must be float16, float32 or float64.
-        - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means
+        - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] = [b, t]` means
           `labels_values[i]` stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
         - **labels_values** (Tensor) - A `1-D` input tensor. The values are associated with the given batch and time.
           The type must be int32. `labels_values[i]` must in the range of `[0, num_classes)`.
-        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of (`batch_size`).
+        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
           The type must be int32. Each value in the tensor must not be greater than `max_time`.
 
     Outputs:
-        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is (`batch_size`). The tensor has
-          the same type with `inputs`.
-        - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
+        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch\_size, )`.
+          The tensor has the same data type as `x`.
+        - **gradient** (Tensor) - The gradient of `loss`, has the same shape and data type as `x`.
 
     Raises:
         TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs`
                    is not a bool.
-        TypeError: If `inputs`, `labels_indices`, `labels_values` or `sequence_length` is not a Tensor.
+        TypeError: If `x`, `labels_indices`, `labels_values` or `sequence_length` is not a Tensor.
         ValueError: If rank of `labels_indices` is not equal 2.
-        TypeError: If dtype of `inputs` is not one of the following: float16, float32 or float64.
+        TypeError: If dtype of `x` is not one of the following: float16, float32 or float64.
         TypeError: If dtype of `labels_indices` is not int64.
         TypeError: If dtype of `labels_values` or `sequence_length` is not int32.
 
@@ -7198,27 +7140,23 @@ class CTCLoss(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
-        >>> inputs = Tensor(np.array([[[0.3, 0.6, 0.6],
-        ...                            [0.4, 0.3, 0.9]],
+        >>> x = Tensor(np.array([[[0.3, 0.6, 0.6],
+        ...                       [0.4, 0.3, 0.9]],
         ...
-        ...                           [[0.9, 0.4, 0.2],
-        ...                            [0.9, 0.9, 0.1]]]).astype(np.float32))
+        ...                      [[0.9, 0.4, 0.2],
+        ...                       [0.9, 0.9, 0.1]]]).astype(np.float32))
         >>> labels_indices = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int64)
         >>> labels_values = Tensor(np.array([2, 2]), mindspore.int32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_loss = ops.CTCLoss()
-        >>> loss, gradient = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
+        >>> loss, gradient = ctc_loss(x, labels_indices, labels_values, sequence_length)
         >>> print(loss)
         [ 0.79628  0.5995158 ]
         >>> print(gradient)
         [[[ 0.27029088  0.36485454  -0.6351454  ]
           [ 0.28140804  0.25462854  -0.5360366 ]]
-         [[ 0.47548494  0.2883962  0.04510255 ]
-          [ 0.4082751   0.4082751  0.02843709 ]]]
+         [[ 0.47548494  0.2883962    0.04510255 ]
+          [ 0.4082751   0.4082751    0.02843709 ]]]
     """
 
     @prim_attr_register
@@ -7237,7 +7175,7 @@ class CTCLoss(Primitive):
 
 
 class CTCGreedyDecoder(PrimitiveWithCheck):
-    """
+    r"""
     Performs greedy decoding on the logits given in inputs.
 
     Args:
@@ -7245,20 +7183,20 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
 
     Inputs:
         - **inputs** (Tensor) - The input Tensor must be a 3-D tensor whose shape is
-          (`max_time`, `batch_size`, `num_classes`). `num_classes` must be `num_labels + 1` classes,
+          :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must be `num_labels + 1` classes,
           `num_labels` indicates the number of actual labels. Blank labels are reserved.
           Default blank label is `num_classes - 1`. Data type must be float32 or float64.
-        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of (`batch_size`).
+        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
           The type must be int32. Each value in the tensor must be equal to or less than `max_time`.
 
     Outputs:
-        - **decoded_indices** (Tensor) - A tensor with shape of (`total_decoded_outputs`, 2).
+        - **decoded_indices** (Tensor) - A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.
           Data type is int64.
-        - **decoded_values** (Tensor) - A tensor with shape of (`total_decoded_outputs`),
+        - **decoded_values** (Tensor) - A tensor with shape of :math:`(total\_decoded\_outputs, )`,
           it stores the decoded classes. Data type is int64.
-        - **decoded_shape** (Tensor) - A tensor with shape of (`batch_size`, `max_decoded_legth`).
+        - **decoded_shape** (Tensor) - A tensor with shape of :math:`(batch\_size, max\_decoded\_legth)`.
           Data type is int64.
-        - **log_probability** (Tensor) - A tensor with shape of (`batch_size`, 1),
+        - **log_probability** (Tensor) - A tensor with shape of :math:`(batch\_size, 1)`,
           containing sequence log-probability, has the same type as `inputs`.
 
     Raises:
@@ -7377,7 +7315,10 @@ class DynamicRNN(PrimitiveWithInfer):
             h_{t+1} = o_{t+1} * \tanh(c_{t+1}) \\
         \end{array}
 
-    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
+    where :math:`h_{t+1}` is the hidden state at time `t+1`, :math:`x_{t+1}` is the input
+    at time `t+1`, :math:`h_{t}` is the hidden state of the layer
+    at time `t` or the initial hidden state at time `0`,
+    :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
     are learnable weights between the output and the input in the formula. For instance,
     :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
 
@@ -7402,35 +7343,35 @@ class DynamicRNN(PrimitiveWithInfer):
         is_training (bool): A bool identifying is training in the op. Default: True.
 
     Inputs:
-        - **x** (Tensor) - Current words. Tensor of shape (`num_step`, `batch_size`, `input_size`).
+        - **x** (Tensor) - Current words. Tensor of shape :math:`(num\_step, batch\_size, input\_size)`.
           The data type must be float16.
-        - **w** (Tensor) - Weight. Tensor of shape (`input_size + hidden_size`, `4 x hidden_size`).
+        - **w** (Tensor) - Weight. Tensor of shape :math:`(input\_size + hidden\_size, 4 x hidden\_size)`.
           The data type must be float16.
-        - **b** (Tensor) - Bias. Tensor of shape (`4 x hidden_size`).
+        - **b** (Tensor) - Bias. Tensor of shape :math`(4 x hidden\_size)`.
           The data type must be float16 or float32.
-        - **seq_length** (Tensor) - The length of each batch. Tensor of shape (`batch_size`).
+        - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(batch\_size, )`.
           Only `None` is currently supported.
-        - **init_h** (Tensor) - Hidden state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
+        - **init_h** (Tensor) - Hidden state of initial time. Tensor of shape :math:`(1, batch\_size, hidden\_size)`.
           The data type must be float16.
-        - **init_c** (Tensor) - Cell state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
+        - **init_c** (Tensor) - Cell state of initial time. Tensor of shape :math:`(1, batch\_size, hidden\_size)`.
           The data type must be float16.
 
     Outputs:
-        - **y** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **y** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `b`.
-        - **output_h** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **output_h** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           With data type of float16.
-        - **output_c** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **output_c** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `b`.
-        - **i** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **i** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `b`.
-        - **j** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **j** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `b`.
-        - **f** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **f** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `b`.
-        - **o** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **o** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `b`.
-        - **tanhct** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
+        - **tanhct** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `b`.
 
     Raises:
@@ -7578,9 +7519,11 @@ class DynamicGRUV2(PrimitiveWithInfer):
           Only `None` is currently supported.
 
     Outputs:
-        - **y** (Tensor) - A Tensor of shape :math:
-          if num_proj > 0 `(num_step, batch_size, min(hidden_size, num_proj)`,
-          if num_proj == 0 `(num_step, batch_size, hidden_size)`.
+        - **y** (Tensor) - A Tensor of shape:
+
+          - y_shape = :math:`(num\_step, batch\_size, min(hidden\_size, num\_proj))`: `If num_proj > 0`,
+          - y_shape = :math:`(num\_step, batch\_size, hidden\_size)`: `If num_proj = 0`.
+
           Has the same data type with input `bias_type`.
         - **output_h** (Tensor) - A Tensor of shape :math:`(\text{num_step}, \text{batch_size}, \text{hidden_size})`.
           Has the same data type with input `bias_type`.
@@ -7597,7 +7540,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
 
         - If `bias_input` and `bias_hidden` both are `None`, `bias_type` is date type of `init_h`.
         - If `bias_input` is not `None`, `bias_type` is the date type of `bias_input`.
-        - If `bias_input` is `None` and `bias_hidden` is not `None, `bias_type` is the date type of `bias_hidden`.
+        - If `bias_input` is `None` and `bias_hidden` is not `None`, `bias_type` is the date type of `bias_hidden`.
 
     Raises:
         TypeError: If `direction`, `activation` or `gate_order` is not a str.
@@ -7784,7 +7727,7 @@ class LRN(PrimitiveWithInfer):
         - **x** (Tensor) - A 4D Tensor with float16 or float32 data type.
 
     Outputs:
-        Tensor, with the same shape and data type as the input tensor.
+        Tensor, with the same shape and data type as `x`.
 
     Raises:
         TypeError: If `depth_radius` is not an int.
@@ -7796,11 +7739,15 @@ class LRN(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> x = Tensor(np.random.rand(1, 2, 2, 2), mindspore.float32)
+        >>> x = Tensor(np.array([[[[0.1], [0.2]],
+        ...                       [[0.3], [0.4]]]]), mindspore.float32)
         >>> lrn = ops.LRN()
         >>> output = lrn(x)
-        >>> print(output.shape)
-        (1, 2, 2, 2)
+        >>> print(output)
+        [[[[0.09534626]
+           [0.1825742 ]]
+          [[0.2860388 ]
+           [0.3651484 ]]]]
     """
 
     @prim_attr_register
@@ -7871,11 +7818,11 @@ class AvgPool3D(Primitive):
         data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
           Currently support float16 and float32 data type.
 
     Outputs:
-        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input`.
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `x`.
 
     Raises:
         TypeError: If `kernel_size`, `strides` or `pad` is neither an int not a tuple.
@@ -7894,9 +7841,9 @@ class AvgPool3D(Primitive):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
+        >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
         >>> avg_pool3d = ops.AvgPool3D(kernel_size=2, strides=1, pad_mode="valid")
-        >>> output = avg_pool3d(input)
+        >>> output = avg_pool3d(x)
         >>> print(output)
         [[[[[ 5.  6.]]]
           [[[17. 18.]]]]]
@@ -8004,7 +7951,7 @@ class Conv3D(PrimitiveWithInfer):
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
           Currently input data type only support float16 and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(k_d, K_h, K_w)`, then the shape is
           :math:`(C_{out}, C_{in}//groups, k_d, K_h, K_w)`.
@@ -8028,13 +7975,10 @@ class Conv3D(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
+        >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
         >>> conv3d = ops.Conv3D(out_channel=32, kernel_size=(4, 3, 3))
-        >>> output = conv3d(input_tensor, weight)
+        >>> output = conv3d(x, weight)
         >>> print(output.shape)
         (16, 32, 7, 30, 30)
     """
@@ -8433,25 +8377,23 @@ class Conv3DTranspose(PrimitiveWithInfer):
     If the 'pad_mode' is set to be "pad", the depth, height and width of output are defined as:
 
     .. math::
-        D_{out} = (D_{in} - 1) \times \text{stride_d} - 2 \times \text{padding_d} + \text{dilation_d} \times
-        (\text{kernel_size_d} - 1) + \text{output_padding_d} + 1
+        D_{out} = (D_{in} - 1) \times \text{stride}[0] - 2 \times \text{pad}[0] + \text{dilation}[0]
+        \times (\text{kernel\_size}[0] - 1) + \text{output\_padding}[0] + 1
 
-        H_{out} = (H_{in} - 1) \times \text{stride_h} - 2 \times \text{padding_h} + \text{dilation_h} \times
-        (\text{kernel_size_h} - 1) + \text{output_padding_h} + 1
+        H_{out} = (H_{in} - 1) \times \text{stride}[1] - 2 \times \text{pad}[1] + \text{dilation}[1]
+        \times (\text{kernel\_size}[1] - 1) + \text{output\_padding}[1] + 1
 
-        W_{out} = (W_{in} - 1) \times \text{stride_w} - 2 \times \text{padding_w} + \text{dilation_w} \times
-        (\text{kernel_size_w} - 1) + \text{output_padding_w} + 1
-
-    Where :math:`kernel_size_d` is kernel size of depth, :math:`kernel_size_h` is kernel size of height
-    and :math:`kernel_size_w` is kernel size of width. The same below:
-    :math:`dialtion` is Spacing between kernel elements,
-    :math:`stride` is The step length of each step,
-    :math:`padding` is zero-padding added to both sides of the input.
+        W_{out} = (W_{in} - 1) \times \text{stride}[2] - 2 \times \text{pad}[2] + \text{dilation}[2]
+        \times (\text{kernel\_size}[2] - 1) + \text{output\_padding}[2] + 1
 
     Args:
         in_channel (int): The channel of the input x.
         out_channel (int): The channel of the weight x.
-        kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers.
+            Specifies the depth, height and width of the 3D convolution window.
+            Single int means the value is for the depth, height and the width of the kernel.
+            A tuple of 3 ints means the first value is for the depth, second value is for height and the
+            other is for the width of the kernel.
         mode (int): Modes for different convolutions. Default is 1. It is currently not used.
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid", "pad". Default: "valid".
@@ -8473,14 +8415,16 @@ class Conv3DTranspose(PrimitiveWithInfer):
              head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
              the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4]
              and pad[5] correspondingly.
-        stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
+        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively. Default: 1.
         dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
         group (int): Splits input into groups. Default: 1. Only 1 is currently supported.
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: 0.
         data_format (str): The optional value for data format. Currently only 'NCDHW' is supported.
 
     Inputs:
-        - **dout** (Tensor) - the gradients with respect to the output of the convolution.
+        - **dout** (Tensor) - The gradients with respect to the output of the convolution.
           The shape conforms to the default.
           data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`. Currently dout data type only supports float16
           and float32.
@@ -8491,11 +8435,11 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the gradients with respect to the input of convolution 3D.
-        Tensor of shape math:`(N, C_{out}//group, D_{out}, H_{out}, W_{out})`,
+        Tensor of shape :math:`(N, C_{out}//group, D_{out}, H_{out}, W_{out})`,
         where :math:`group` is the Args parameter.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Raises:
         TypeError: If `in_channel`, `out_channel` or `group` is not an int.
@@ -8510,13 +8454,10 @@ class Conv3DTranspose(PrimitiveWithInfer):
         ValueError: If bias is not none. The rank of dout and weight is not 5.
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
+        >>> dout = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
         >>> conv3d_transpose = ops.Conv3DTranspose(in_channel=16, out_channel=3, kernel_size=(4, 6, 2))
-        >>> output = conv3d_transpose(input_x, weight)
+        >>> output = conv3d_transpose(dout, weight)
         >>> print(output.shape)
         (32, 3, 13, 37, 33)
     """
