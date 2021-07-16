@@ -15,10 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
 
-#include <algorithm>
-#include <limits>
-#include <memory>
-
 #include "minddata/mindrecord/include/shard_reader.h"
 
 namespace mindspore {

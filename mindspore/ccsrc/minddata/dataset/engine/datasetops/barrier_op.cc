@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/barrier_op.h"
-#include <iomanip>
-#include <utility>
-#include "minddata/dataset/include/dataset/constants.h"
 
+#include <utility>
+
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/global_context.h"
 
 namespace mindspore {
 namespace dataset {

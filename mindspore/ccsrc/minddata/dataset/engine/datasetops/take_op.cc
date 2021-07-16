@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iomanip>
-#include <utility>
+#include "minddata/dataset/engine/datasetops/take_op.h"
 
 #include <algorithm>
+
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
-
-#include "minddata/dataset/engine/dataset_iterator.h"
-#include "minddata/dataset/engine/datasetops/take_op.h"
 #include "minddata/dataset/engine/db_connector.h"
 
 namespace mindspore {
