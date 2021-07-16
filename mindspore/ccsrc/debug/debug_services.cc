@@ -437,8 +437,16 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
     std::string dump_key = d.first;
     for (auto const &file_name : d.second) {
       bool already_converted = false;
+      // Remove scope from the file_name for matching files converted by mindinsight tool.
+      std::size_t found_first_dot = file_name.find(".");
+      std::size_t found_last_underscore = file_name.find_last_of("_");
+      std::string file_name_without_scope = file_name;
+      if (found_last_underscore != std::string::npos && found_last_underscore > found_first_dot) {
+        file_name_without_scope =
+          file_name_without_scope.erase(found_first_dot + 1, found_last_underscore - found_first_dot);
+      }
       for (std::string &file_found : *result_list) {
-        if (file_found.find(file_name) != std::string::npos) {
+        if (file_found.find(file_name_without_scope) != std::string::npos) {
           already_converted = true;
         }
       }
@@ -528,13 +536,13 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
   for (unsigned int i = 0; i < backend_name.size(); i++) {
     // form prefix of the tensor file to read from graph pb node name
     std::string dump_style_kernel_name = backend_name[i];
-    ReplaceSrcFileName(&dump_style_kernel_name);
 
     // remove slot from name
     std::size_t found_colon = dump_style_kernel_name.find_last_of(":");
     dump_style_kernel_name = dump_style_kernel_name.substr(0, found_colon);
 
     std::string prefix_dump_file_name = dump_style_kernel_name;
+    GetNodeNameWithoutScope(&prefix_dump_file_name);
 
     std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
@@ -548,11 +556,11 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
         if (dir->d_type == DT_REG) {
           std::string file_name = dir->d_name;
           std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
-          if (file_name_w_o_perfix.rfind(prefix_dump_file_name, 0) == 0 &&
+          if (file_name_w_o_perfix.rfind(prefix_dump_file_name) != std::string::npos &&
               file_name.rfind(file_format) == std::string::npos) {
             // if file matches prefix and is in device format add to candidate files to convert.
             dir_to_files_map[specific_dump_dir].push_back(file_name);
-          } else if (file_name_w_o_perfix.rfind(prefix_dump_file_name, 0) == 0 &&
+          } else if (file_name_w_o_perfix.rfind(prefix_dump_file_name) != std::string::npos &&
                      file_name.rfind(file_format) != std::string::npos) {
             // otherwise, if file matches prefix and already has been converted to host format
             // add to result of converted files.
@@ -586,10 +594,11 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
         if (dir->d_type == DT_REG) {
           std::string file_name = dir->d_name;
           std::string file_name_w_o_perfix = file_name.substr(file_name.find('.') + 1);
-          if (file_name_w_o_perfix.rfind(dump_name, 0) == 0 && file_name.rfind(file_format) == std::string::npos) {
+          if (file_name_w_o_perfix.rfind(dump_name) != std::string::npos &&
+              file_name.rfind(file_format) == std::string::npos) {
             // if file matches prefix and is in device format add to candidate files to convert.
             dir_to_files_map[specific_dump_dir].push_back(file_name);
-          } else if (file_name_w_o_perfix.rfind(dump_name, 0) == 0 &&
+          } else if (file_name_w_o_perfix.rfind(dump_name) != std::string::npos &&
                      file_name.rfind(file_format) != std::string::npos) {
             // otherwise, if file matches prefix and already has been converted to host format
             // add to result of converted files.
@@ -777,22 +786,27 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       closedir(d);
     } else {
       bool found = false;
+      std::vector<std::string> matched_paths;
       // if async mode
       for (const std::string &file_path : async_file_pool) {
         if (file_path.find(specific_dump_dir) != std::string::npos &&
             file_path.find(prefix_dump_to_check) != std::string::npos &&
             file_path.find(slot_string_to_check) != std::string::npos) {
+          matched_paths.push_back(file_path);
           found = true;
-          shape.clear();
-          ReadTensorFromNpy(file_path, &type_name, &data_size, &shape, &buffer);
-          AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i],
-                          data_size, type_name, shape, buffer, result_list);
         }
       }
-      // If no npy file is found, add empty tensor data.
-      if (!found) {
+      if (found) {
+        shape.clear();
+        std::string result_path = GetNewestFilePath(matched_paths);
+        ReadTensorFromNpy(result_path, &type_name, &data_size, &shape, &buffer);
+        AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i], data_size,
+                        type_name, shape, buffer, result_list);
+      } else {
+        // If no npy file is found, add empty tensor data.
         AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i], 0,
                         type_name, shape, buffer, result_list);
+        MS_LOG(INFO) << "Target tensor has not been found.";
       }
     }
   }
@@ -859,13 +873,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     for (auto node : wp_nodes) {
       std::string orig_name = std::get<0>(node);
       std::string dump_style_name = orig_name;
-      if (is_sync_mode) {
-        // In sync mode, remove the scope from the fully qualified name to compare.
-        GetNodeNameWithoutScope(&dump_style_name);
-      } else {
-        // In async mode, keep the scope but replace delimiter with '_' in node name to compare.
-        ReplaceSrcFileName(&dump_style_name);
-      }
+      // Remove the scope from the fully qualified name to compare for both sync and async case.
+      GetNodeNameWithoutScope(&dump_style_name);
 
       bool node_is_out = std::get<1>(node);
       if (node_is_out) {
