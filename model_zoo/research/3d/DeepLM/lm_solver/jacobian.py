@@ -16,7 +16,6 @@
 import numpy as np
 
 import mindspore as ms
-from mindspore import Parameter
 from mindspore.ops import functional as F
 import mindspore.ops.operations as P
 from mindspore import Tensor
@@ -34,8 +33,6 @@ def jacobi_column_square(indices, jacobians, jacobian_scale):
         index = indices[i]
         jacobi = jacobians[i]
         jacobi_square = F.reduce_sum(F.mul(jacobi, jacobi), axis=0)
-        # TODO: Remove Parameter init.
-        jacobian_scale[i] = Parameter(jacobian_scale[i])
         indexadd_0(jacobian_scale[i], squeeze_1(index), squeeze_1(jacobi_square))
     return jacobian_scale
 
@@ -80,8 +77,6 @@ def jacobi_block_jt(jacobians, lmDiagonal, indices, res):
         jacobian = jacobians[varid]
         j_plain = F.reshape(jacobian, (jacobian.shape[0], jacobian.shape[1], -1))
         jt_js = batchmatmul(F.transpose(j_plain, (1, 2, 0)), F.transpose(j_plain, (1, 0, 2)))
-        # TODO: Remove Parameter init.
-        res[varid] = Parameter(res[varid])
         indexadd_0(res[varid], squeeze_1(indices[varid]), jt_js)
 
     for _, varid in enumerate(range(len(res))):
@@ -108,8 +103,6 @@ def jacobi_left_multiply(jacobians, residuals, variables, indices, res):
         r = P.BroadcastTo(j.shape)(r)
 
         jr = F.reduce_sum(F.mul(j, r), 1)
-        # TODO: Remove Parameter init.
-        res[varid] = Parameter(res[varid])
         indexadd_0(res[varid], squeeze_1(indices[varid]), jr)
     # t1 = time()
     return res
