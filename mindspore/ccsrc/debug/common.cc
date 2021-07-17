@@ -30,13 +30,10 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
   if (input_path.length() >= PATH_MAX) {
     MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
   }
-#if defined(SYSTEM_ENV_POSIX)
-  size_t path_split_pos = input_path.find_last_of('/');
-#elif defined(SYSTEM_ENV_WINDOWS)
-  size_t path_split_pos = input_path.find_last_of('\\');
-#else
-  MS_LOG(EXCEPTION) << "Unsupported platform.";
-#endif
+  auto path_split_pos = input_path.find_last_of('/');
+  if (path_split_pos == std::string::npos) {
+    path_split_pos = input_path.find_last_of('\\');
+  }
   // get real path
   char real_path[PATH_MAX] = {0};
   // input_path is dir + file_name
