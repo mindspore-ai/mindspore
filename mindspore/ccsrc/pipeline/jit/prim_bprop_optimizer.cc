@@ -355,6 +355,5 @@ abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr
   new_abs_list.emplace_back(out_abs);
   return new_abs_list;
 }
-
 }  // namespace pipeline
 }  // namespace mindspore
