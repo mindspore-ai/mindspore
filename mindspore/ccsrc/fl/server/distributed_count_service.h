@@ -63,8 +63,9 @@ class DistributedCountService {
   // first/last count event callbacks.
   void RegisterCounter(const std::string &name, size_t global_threshold_count, const CounterHandlers &counter_handlers);
 
-  // Report a count to the counting server. Parameter 'id' is in case of repeated counting.
-  bool Count(const std::string &name, const std::string &id);
+  // Report a count to the counting server. Parameter 'id' is in case of repeated counting. Parameter 'reason' is the
+  // reason why counting failed.
+  bool Count(const std::string &name, const std::string &id, std::string *reason = nullptr);
 
   // Query whether the count reaches the threshold count for the name. If the count is the same as the threshold count,
   // this method returns true.
@@ -98,9 +99,9 @@ class DistributedCountService {
   void HandleCounterEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Call the callbacks when the first/last count event is triggered.
-  bool TriggerCounterEvent(const std::string &name);
-  bool TriggerFirstCountEvent(const std::string &name);
-  bool TriggerLastCountEvent(const std::string &name);
+  bool TriggerCounterEvent(const std::string &name, std::string *reason = nullptr);
+  bool TriggerFirstCountEvent(const std::string &name, std::string *reason = nullptr);
+  bool TriggerLastCountEvent(const std::string &name, std::string *reason = nullptr);
 
   // Members for the communication between counting server and other servers.
   std::shared_ptr<ps::core::ServerNode> server_node_;
