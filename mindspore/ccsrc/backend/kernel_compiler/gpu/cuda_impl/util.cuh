@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,15 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UTIL_H_
 
 #include <cuda_fp16.h>
+
+#include <algorithm>
+
 #include "runtime/device/gpu/cuda_common.h"
 
 #define kThreadsPerBlock (256)
 #define kBlocksPerGrid(n) ((n + kThreadsPerBlock - 1) / kThreadsPerBlock)
+
+// atomic add
 
 __device__ static inline double MsAtomicAdd(double *address, const double val) {
   unsigned long long int *address_as_ull = (unsigned long long int *)address;  // NOLINT
@@ -186,6 +191,358 @@ __device__ static inline char MsAtomicAdd(char *address, char val) {
     old = atomicCAS(aligned, assumed, replacement);
   } while (old != assumed);
   return __byte_perm(old, 0, address_offset);
+}
+
+// atomic sub
+
+template <typename T>
+__device__ static inline T MsAtomicSub(T *address, const T val) {
+  return MsAtomicAdd(address, -val);
+}
+
+template <>
+__device__ inline unsigned char MsAtomicSub(unsigned char* address, unsigned char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, difference, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        difference = (unsigned char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440) - val;
+        new_value = __byte_perm(old, difference, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+// atomic max
+
+__device__ static inline float MsAtomicMax(int *address, const int val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, max(val, (int)assumed)); // NOLINT
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline char MsAtomicMax(char* address, char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, max_value, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        max_value = max(val, (char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440)); // NOLINT
+        new_value = __byte_perm(old, max_value, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline unsigned char MsAtomicMax(unsigned char* address, unsigned char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, max_value, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        max_value = max(val, (unsigned char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440));
+        new_value = __byte_perm(old, max_value, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline float MsAtomicMax(float *address, const float val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, __float_as_uint(max(val, __uint_as_float(assumed))));
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline half MsAtomicMax(half *address, half val) {
+  unsigned int *aligned =
+    reinterpret_cast<unsigned int *>(reinterpret_cast<size_t>(address) - (reinterpret_cast<size_t>(address) & 2));
+  unsigned int old = *aligned;
+  unsigned int assumed;
+  unsigned short old_as_us;  // NOLINT
+  do {
+    assumed = old;
+    old_as_us =
+      static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff);  // NOLINT
+    half max_value = __float2half_rn(max(__half2float(__ushort_as_half(old_as_us)), static_cast<float>(val)));
+    unsigned short max_as_us = __half_as_ushort(max_value);  // NOLINT
+    unsigned int max_as_ui =
+      reinterpret_cast<size_t>(address) & 2 ? (max_as_us << 16) | (old & 0xffff) : (old & 0xffff0000) | max_as_us;
+    old = atomicCAS(aligned, assumed, max_as_ui);
+  } while (assumed != old);
+  __half_raw raw = {old_as_us};
+  return half(raw);
+}
+
+// atomic min
+
+__device__ static inline float MsAtomicMin(int *address, const int val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, min(val, (int)assumed)); // NOLINT
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline char MsAtomicMin(char* address, char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, min_value, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        min_value = min(val, (char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440)); // NOLINT
+        new_value = __byte_perm(old, min_value, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline unsigned char MsAtomicMin(unsigned char* address, unsigned char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, min_value, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        min_value = min(val, (unsigned char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440));
+        new_value = __byte_perm(old, min_value, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline float MsAtomicMin(float *address, const float val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, __float_as_uint(min(val, __uint_as_float(assumed))));
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline half MsAtomicMin(half *address, half val) {
+  unsigned int *aligned =
+    reinterpret_cast<unsigned int *>(reinterpret_cast<size_t>(address) - (reinterpret_cast<size_t>(address) & 2));
+  unsigned int old = *aligned;
+  unsigned int assumed;
+  unsigned short old_as_us;  // NOLINT
+  do {
+    assumed = old;
+    old_as_us =
+      static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff);  // NOLINT
+    half min_value = __float2half_rn(min(__half2float(__ushort_as_half(old_as_us)), static_cast<float>(val)));
+    unsigned short min_as_us = __half_as_ushort(min_value);  // NOLINT
+    unsigned int min_as_ui =
+      reinterpret_cast<size_t>(address) & 2 ? (min_as_us << 16) | (old & 0xffff) : (old & 0xffff0000) | min_as_us;
+    old = atomicCAS(aligned, assumed, min_as_ui);
+  } while (assumed != old);
+  __half_raw raw = {old_as_us};
+  return half(raw);
+}
+
+// atomic mul
+
+__device__ static inline float MsAtomicMul(int *address, const int val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, val * (int)assumed); // NOLINT
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline char MsAtomicMul(char* address, char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, product, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        product = val * (char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440); // NOLINT
+        new_value = __byte_perm(old, product, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline unsigned char MsAtomicMul(unsigned char* address, unsigned char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, product, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        product = val * (unsigned char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440);
+        new_value = __byte_perm(old, product, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline float MsAtomicMul(float *address, const float val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, __float_as_uint(val * uint_as_float(assumed)));
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline half MsAtomicMul(half *address, half val) {
+  unsigned int *aligned =
+    reinterpret_cast<unsigned int *>(reinterpret_cast<size_t>(address) - (reinterpret_cast<size_t>(address) & 2));
+  unsigned int old = *aligned;
+  unsigned int assumed;
+  unsigned short old_as_us;  // NOLINT
+  do {
+    assumed = old;
+    old_as_us =
+      static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff);  // NOLINT
+    // we cast val to float here, otherwise we get a compile error saying there is
+    // more than one * operator that matches these operands.
+    half product = __float2half_rn(__half2float(__ushort_as_half(old_as_us)) * (float)val); // NOLINT
+    unsigned short product_as_us = __half_as_ushort(product);  // NOLINT
+    unsigned int product_as_ui = reinterpret_cast<size_t>(address) & 2 ? // NOLINT
+        (product_as_us << 16) | (old & 0xffff) :
+        (old & 0xffff0000) | product_as_us;
+    old = atomicCAS(aligned, assumed, product_as_ui);
+  } while (assumed != old);
+  __half_raw raw = {old_as_us};
+  return half(raw);
+}
+
+// atomic div
+
+__device__ static inline float MsAtomicDiv(int *address, const int val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, ((int)assumed) / val); // NOLINT
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline char MsAtomicDiv(char* address, char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, quotient, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        quotient = ((char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440)) / val; // NOLINT
+        new_value = __byte_perm(old, quotient, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline unsigned char MsAtomicDiv(unsigned char* address, unsigned char val) {
+    unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
+    unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
+    unsigned int selector = selectors[(size_t)address & 3];
+    unsigned int old, assumed, quotient, new_value;
+    old = *base_address;
+
+    do {
+        assumed = old;
+        quotient = ((unsigned char)__byte_perm(old, 0, ((size_t)address & 3) | 0x4440)) / val;
+        new_value = __byte_perm(old, quotient, selector);
+        if (new_value == old)
+            break;
+        old = atomicCAS(base_address, assumed, new_value);
+    } while (assumed != old);
+    return old;
+}
+
+__device__ static inline float MsAtomicDiv(float *address, const float val) {
+  unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
+  unsigned int old = *address_as_ui;                       // NOLINT
+  unsigned int assumed;                                    // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ui, assumed, __float_as_uint(uint_as_float(assumed) / val));
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
+__device__ static inline half MsAtomicDiv(half *address, half val) {
+  unsigned int *aligned =
+    reinterpret_cast<unsigned int *>(reinterpret_cast<size_t>(address) - (reinterpret_cast<size_t>(address) & 2));
+  unsigned int old = *aligned;
+  unsigned int assumed;
+  unsigned short old_as_us;  // NOLINT
+  do {
+    assumed = old;
+    old_as_us =
+      static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff);  // NOLINT
+    // we cast val to float here, otherwise we get a compile error saying there is
+    // more than one * operator that matches these operands.
+    half product = __float2half_rn(__half2float(__ushort_as_half(old_as_us)) / (float)val); // NOLINT
+    unsigned short product_as_us = __half_as_ushort(product);  // NOLINT
+    unsigned int product_as_ui = reinterpret_cast<size_t>(address) & 2 ? // NOLINT
+        (product_as_us << 16) | (old & 0xffff) :
+        (old & 0xffff0000) | product_as_us;
+    old = atomicCAS(aligned, assumed, product_as_ui);
+  } while (assumed != old);
+  __half_raw raw = {old_as_us};
+  return half(raw);
 }
 
 __device__ __forceinline__ unsigned BallotSync(int predicate, unsigned mask = 0xffffffff) {
