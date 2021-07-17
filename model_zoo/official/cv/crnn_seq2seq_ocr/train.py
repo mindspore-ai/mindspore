@@ -172,7 +172,7 @@ def train():
         callback.append(ckpt_cb)
 
     model = Model(network)
-    model.train(config.num_epochs, dataset, callbacks=callback, dataset_sink_mode=False)
+    model.train(config.num_epochs, dataset, callbacks=callback)
 
     config.logger.info('==========Training Done===============')
 

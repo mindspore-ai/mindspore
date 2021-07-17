@@ -41,7 +41,7 @@ class AugmentationOps():
     def __call__(self, img):
         img_h = self.img_tile_shape[0]
         img_w = self.img_tile_shape[1]
-        img_new = np.zeros([128, 512, 3])
+        img_new = np.zeros([128, 512, 3], dtype=np.float32)
 
         for i in range(4):
             img_tile = img[:, (i*150):((i+1)*150), :]
