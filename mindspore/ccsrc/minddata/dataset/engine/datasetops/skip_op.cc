@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iomanip>
+#include "minddata/dataset/engine/datasetops/skip_op.h"
+
 #include <iostream>
-#include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
-
-#include "minddata/dataset/engine/dataset_iterator.h"
-#include "minddata/dataset/engine/datasetops/skip_op.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/log_adapter.h"
 

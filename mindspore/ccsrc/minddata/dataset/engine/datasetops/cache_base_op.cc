@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/cache_base_op.h"
-#include <iomanip>
-#include <iostream>
-#include <utility>
+
 #include "minddata/dataset/engine/execution_tree.h"
 
 namespace mindspore {
