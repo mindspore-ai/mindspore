@@ -42,6 +42,9 @@ class Configuration {
   // Initialize database connection or load config file.
   virtual bool Initialize() = 0;
 
+  // Determine whether the initialization has been completed.
+  virtual bool IsInitialized() const = 0;
+
   // Get configuration data from database or config file.
   virtual std::string Get(const std::string &key, const std::string &defaultvalue) const = 0;
 

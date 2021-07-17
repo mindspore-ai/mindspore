@@ -37,13 +37,14 @@ event_base *TcpClient::event_base_ = nullptr;
 std::mutex TcpClient::event_base_mutex_;
 bool TcpClient::is_started_ = false;
 
-TcpClient::TcpClient(const std::string &address, std::uint16_t port)
+TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configuration *config)
     : event_timeout_(nullptr),
       buffer_event_(nullptr),
       server_address_(std::move(address)),
       server_port_(port),
       is_stop_(true),
-      is_connected_(false) {
+      is_connected_(false),
+      config_(config) {
   message_handler_.SetCallback(
     [this](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
       if (message_callback_) {
@@ -109,35 +110,9 @@ void TcpClient::Init() {
   if (!PSContext::instance()->enable_ssl()) {
     buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   } else {
-    MS_LOG(INFO) << "Enable ssl support.";
-
-    SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx(false));
-
-    X509 *cert = SSLWrapper::GetInstance().ReadCertFromFile(kCertificateChain);
-    if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
-      MS_LOG(EXCEPTION) << "Verify cert time failed.";
+    if (!EstablishSSL()) {
+      MS_LOG(EXCEPTION) << "Establish SSL failed.";
     }
-
-    if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(false), kCertificateChain)) {
-      MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
-    }
-
-    if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(false), kPrivateKey, SSL_FILETYPE_PEM)) {
-      MS_LOG(EXCEPTION) << "SSL use private key file failed!";
-    }
-
-    if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx(false))) {
-      MS_LOG(EXCEPTION) << "SSL check private key file failed!";
-    }
-
-    if (!SSL_CTX_load_verify_locations(SSLWrapper::GetInstance().GetSSLCtx(false), kCAcrt, nullptr)) {
-      MS_LOG(EXCEPTION) << "SSL load ca location failed!";
-    }
-
-    SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(false), SSL_OP_NO_SSLv2);
-
-    buffer_event_ = bufferevent_openssl_socket_new(event_base_, -1, ssl, BUFFEREVENT_SSL_CONNECTING,
-                                                   BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   }
 
   MS_EXCEPTION_IF_NULL(buffer_event_);
@@ -227,6 +202,79 @@ void TcpClient::NotifyConnected() {
   MS_LOG(INFO) << "Client connected to the server!";
   is_connected_ = true;
   connection_cond_.notify_all();
+}
+
+bool TcpClient::EstablishSSL() {
+  MS_LOG(INFO) << "Enable ssl support.";
+
+  if (config_ == nullptr) {
+    MS_LOG(EXCEPTION) << "The config is empty.";
+  }
+
+  SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx(false));
+
+  // 1.Parse the client's certificate and the ciphertext of key.
+  std::string client_cert = kCertificateChain;
+  std::string path = CommUtil::ParseConfig(*config_, kClientCertPath);
+  if (!CommUtil::IsFileExists(path)) {
+    MS_LOG(WARNING) << "The key:" << kClientCertPath << "'s value is not exist.";
+    return false;
+  }
+  client_cert = path;
+
+  MS_LOG(INFO) << "The client cert path:" << client_cert;
+
+  // 2. Parse the client password.
+  std::string client_password = CommUtil::ParseConfig(*config_, kClientPassword);
+  if (!client_password.empty()) {
+    MS_LOG(WARNING) << "The key:" << kClientPassword << "'s value is empty.";
+    return false;
+  }
+
+  MS_LOG(INFO) << "The client password:" << client_password;
+
+  EVP_PKEY *pkey = nullptr;
+  X509 *cert = nullptr;
+  STACK_OF(X509) *ca_stack = nullptr;
+  BIO *bio = BIO_new_file(client_cert.c_str(), "rb");
+  PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
+  BIO_free_all(bio);
+  PKCS12_parse(p12, client_password.c_str(), &pkey, &cert, &ca_stack);
+  PKCS12_free(p12);
+
+  if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
+    MS_LOG(EXCEPTION) << "Verify cert time failed.";
+  }
+
+  if (!SSL_CTX_use_certificate(SSLWrapper::GetInstance().GetSSLCtx(false), cert)) {
+    MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
+  }
+
+  if (!SSL_CTX_use_PrivateKey(SSLWrapper::GetInstance().GetSSLCtx(false), pkey)) {
+    MS_LOG(EXCEPTION) << "SSL use private key file failed!";
+  }
+
+  std::string client_ca = kCAcrt;
+  std::string ca_path = CommUtil::ParseConfig(*config_, kCaCertPath);
+  if (!CommUtil::IsFileExists(ca_path)) {
+    MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
+  }
+  client_ca = ca_path;
+  MS_LOG(INFO) << "The ca cert path:" << client_ca;
+
+  if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx(false))) {
+    MS_LOG(EXCEPTION) << "SSL check private key file failed!";
+  }
+
+  if (!SSL_CTX_load_verify_locations(SSLWrapper::GetInstance().GetSSLCtx(false), client_ca.c_str(), nullptr)) {
+    MS_LOG(EXCEPTION) << "SSL load ca location failed!";
+  }
+
+  SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(false), SSL_OP_NO_SSLv2);
+
+  buffer_event_ = bufferevent_openssl_socket_new(event_base_, -1, ssl, BUFFEREVENT_SSL_CONNECTING,
+                                                 BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+  return true;
 }
 
 void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr) {

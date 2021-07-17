@@ -102,13 +102,14 @@ bool TcpConnection::SendMessage(const std::shared_ptr<MessageMeta> &meta, const 
   return res;
 }
 
-TcpServer::TcpServer(const std::string &address, std::uint16_t port)
+TcpServer::TcpServer(const std::string &address, std::uint16_t port, Configuration *config)
     : base_(nullptr),
       signal_event_(nullptr),
       listener_(nullptr),
       server_address_(std::move(address)),
       server_port_(port),
-      is_stop_(true) {}
+      is_stop_(true),
+      config_(config) {}
 
 TcpServer::~TcpServer() {
   if (signal_event_ != nullptr) {
@@ -288,18 +289,48 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
     bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   } else {
     MS_LOG(INFO) << "Enable ssl support.";
+    if (server->config_ == nullptr) {
+      MS_LOG(EXCEPTION) << "The config is empty.";
+    }
+
     SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx());
 
-    X509 *cert = SSLWrapper::GetInstance().ReadCertFromFile(kCertificateChain);
+    // 1.Parse the server's certificate and the ciphertext of key.
+    std::string server_cert = kCertificateChain;
+    std::string path = CommUtil::ParseConfig(*(server->config_), kServerCertPath);
+    if (!CommUtil::IsFileExists(path)) {
+      MS_LOG(EXCEPTION) << "The key:" << kServerCertPath << "'s value is not exist.";
+    }
+    server_cert = path;
+
+    MS_LOG(INFO) << "The server cert path:" << server_cert;
+
+    // 2. Parse the server password.
+    std::string server_password = CommUtil::ParseConfig(*(server->config_), kServerPassword);
+    if (!server_password.empty()) {
+      MS_LOG(EXCEPTION) << "The key:" << kServerPassword << "'s value is empty.";
+    }
+
+    MS_LOG(INFO) << "The server password:" << server_password;
+
+    EVP_PKEY *pkey = nullptr;
+    X509 *cert = nullptr;
+    STACK_OF(X509) *ca_stack = nullptr;
+    BIO *bio = BIO_new_file(server_cert.c_str(), "rb");
+    PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
+    BIO_free_all(bio);
+    PKCS12_parse(p12, server_password.c_str(), &pkey, &cert, &ca_stack);
+    PKCS12_free(p12);
+
     if (!SSLWrapper::GetInstance().VerifyCertTime(cert)) {
       MS_LOG(EXCEPTION) << "Verify cert time failed.";
     }
 
-    if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(), kCertificateChain)) {
+    if (!SSL_CTX_use_certificate(SSLWrapper::GetInstance().GetSSLCtx(), cert)) {
       MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
     }
 
-    if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(), kPrivateKey, SSL_FILETYPE_PEM)) {
+    if (!SSL_CTX_use_PrivateKey(SSLWrapper::GetInstance().GetSSLCtx(), pkey)) {
       MS_LOG(EXCEPTION) << "SSL use private key file failed!";
     }
 

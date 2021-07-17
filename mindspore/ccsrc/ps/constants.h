@@ -108,6 +108,13 @@ constexpr char kRecoveryServerNum[] = "server_num";
 constexpr char kRecoverySchedulerIp[] = "scheduler_ip";
 constexpr char kRecoverySchedulerPort[] = "scheduler_port";
 
+constexpr char kServerCertPath[] = "server_cert_path";
+constexpr char kServerPassword[] = "server_password";
+constexpr char kCrlPath[] = "crl_path";
+constexpr char kClientCertPath[] = "client_cert_path";
+constexpr char kClientPassword[] = "client_password";
+constexpr char kCaCertPath[] = "ca_cert_path";
+
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = uint64_t;

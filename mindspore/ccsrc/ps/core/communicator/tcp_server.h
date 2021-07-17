@@ -42,6 +42,7 @@
 #include "ps/core/comm_util.h"
 #include "ps/constants.h"
 #include "ps/ps_context.h"
+#include "ps/core/file_configuration.h"
 
 namespace mindspore {
 namespace ps {
@@ -85,7 +86,7 @@ class TcpServer {
   using OnTimerOnce = std::function<void(const TcpServer &)>;
   using OnTimer = std::function<void()>;
 
-  TcpServer(const std::string &address, std::uint16_t port);
+  TcpServer(const std::string &address, std::uint16_t port, Configuration *config);
   TcpServer(const TcpServer &server);
   virtual ~TcpServer();
 
@@ -140,6 +141,8 @@ class TcpServer {
   OnServerReceiveMessage message_callback_;
   OnTimerOnce on_timer_once_callback_;
   OnTimer on_timer_callback_;
+  // The Configuration file
+  Configuration *config_;
 };
 }  // namespace core
 }  // namespace ps

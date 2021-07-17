@@ -2,5 +2,12 @@
     "recovery": {
         "storge_type": 1,
         "storage_file_path": "recovery.json"
-    }
+    },
+    "server_cert_path": "server.crt",
+    "server_password": "server_password",
+    "crl_path": "server.crl",
+    "client_cert_path": "client.crt",
+    "client_password": "client_password",
+    "ca_cert_path": "ca.crt",
+    "Key_encrypt_decrypt_algorithm": ""
 }
