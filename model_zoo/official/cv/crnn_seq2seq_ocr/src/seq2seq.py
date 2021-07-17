@@ -22,6 +22,7 @@ import mindspore.common.dtype as mstype
 
 from src.cnn import CNN
 from src.gru import GRU
+from src.lstm import LSTM
 from src.weight_init import lstm_default_state
 
 
@@ -36,7 +37,7 @@ class BidirectionalLSTM(nn.Cell):
     """
     def __init__(self, batch_size, input_size, hidden_size, output_size):
         super(BidirectionalLSTM, self).__init__()
-        self.rnn = nn.LSTM(input_size=input_size, hidden_size=hidden_size, bidirectional=True)
+        self.rnn = LSTM(input_size=input_size, hidden_size=hidden_size, bidirectional=True).to_float(mstype.float16)
         self.h, self.c = lstm_default_state(batch_size, hidden_size, bidirectional=True)
         self.embedding = nn.Dense(hidden_size * 2, output_size).to_float(mstype.float16)
         self.shape = P.Shape()
