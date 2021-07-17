@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
+#include "minddata/dataset/engine/dataset_iterator.h"
 
 namespace mindspore {
 namespace dataset {

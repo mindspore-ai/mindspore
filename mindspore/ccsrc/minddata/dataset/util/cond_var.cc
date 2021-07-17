@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/util/cond_var.h"
-#include <exception>
+
 #include "minddata/dataset/util/services.h"
 #include "minddata/dataset/util/task_manager.h"
 
