@@ -150,6 +150,7 @@ class LiteSwitchOpActor : public LiteOpActor {
 int MindrtInit();
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
 
+static std::atomic_int64_t actor_count = 0;
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
                                                         const lite::InnerContext *ctx);
 }  // namespace mindspore::lite
