@@ -203,7 +203,7 @@ TEST_F(TestRegistryCustomOp, TestCustomAdd) {
   // build a model
   auto model = std::make_shared<mindspore::Model>();
   auto ret = model->Build(content, size, kFlatBuffer, context);
-  ASSERT_EQ(kSuccess, ret);
+  ASSERT_EQ(kSuccess, ret.StatusCode());
   auto inputs = model->GetInputs();
   ASSERT_EQ(inputs.size(), 2);
   auto inTensor = inputs.front();
@@ -218,7 +218,7 @@ TEST_F(TestRegistryCustomOp, TestCustomAdd) {
   in1_data[0] = 20.0f;
   std::vector<mindspore::MSTensor> outputs;
   ret = model->Predict(inputs, &outputs);
-  ASSERT_EQ(kSuccess, ret);
+  ASSERT_EQ(kSuccess, ret.StatusCode());
   ASSERT_EQ(outputs.size(), 1);
   impl = outputs.front().impl();
   ASSERT_NE(nullptr, impl);
