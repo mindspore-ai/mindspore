@@ -2,7 +2,7 @@
 
 <!-- TOC -->
 
-- <span id="content">[Retinanet 描述](#-Retinanet-描述)</span>
+- [Retinanet 描述](#retinanet描述)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [环境要求](#环境要求)
@@ -14,9 +14,16 @@
         - [运行](#运行)
         - [结果](#结果)
     - [评估过程](#评估过程)
-        - [用法](#usage)
-        - [运行](#running)
-        - [结果](#outcome)
+        - [用法](#用-法)
+        - [运行](#运-行)
+        - [结果](#结-果)
+    - [模型导出](#模型导出)
+        - [用途](#用途)
+        - [运行方式](#运行方式)
+    - [推理过程](#推理过程)
+        - [用途](#用-途)
+        - [运行命令](#运行命令)
+        - [运行结果](#运行结果)
     - [模型说明](#模型说明)
         - [性能](#性能)
             - [训练性能](#训练性能)
@@ -26,7 +33,7 @@
 
 <!-- /TOC -->
 
-## [Retinanet 描述](#content)
+## [Retinanet描述](#content)
 
 RetinaNet算法源自2018年Facebook AI Research的论文 Focal Loss for Dense Object Detection。该论文最大的贡献在于提出了Focal Loss用于解决类别不均衡问题，从而创造了RetinaNet（One Stage目标检测算法）这个精度超越经典Two Stage的Faster-RCNN的目标检测网络。
 
@@ -226,7 +233,7 @@ epoch time: 444237.851 ms, per step time: 484.976 ms
 
 ### [评估过程](#content)
 
-#### <span id="usage">用法</span>
+#### 用 法
 
 您可以使用python或shell脚本进行训练。shell脚本的用法如下:
 
@@ -234,7 +241,7 @@ epoch time: 444237.851 ms, per step time: 484.976 ms
 sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 ```
 
-#### <span id="running">运行</span>
+#### 运 行
 
 ```eval运行
 # 验证示例
@@ -248,7 +255,7 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 
 > checkpoint 可以在训练过程中产生.
 
-#### <span id="outcome">结果</span>
+#### 结 果
 
 计算结果将存储在示例路径中，您可以在 `eval.log` 查看.
 
@@ -269,6 +276,82 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 ========================================
 
 mAP: 0.3571988469737286
+```
+
+### [模型导出](#content)
+
+#### 用途
+
+导出模型前要修改config.py文件中的checkpoint_path配置项，值为checkpoint的路径。
+
+```shell
+python export.py --file_name [RUN_PLATFORM] --file_format[EXPORT_FORMAT] --checkpoint_path [CHECKPOINT PATH]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+
+#### 运行方式
+
+```运行
+python export.py
+```
+
+- 在modelarts上导出MindIR
+
+```Modelarts
+在ModelArts上导出MindIR示例
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True"
+#          设置 "file_name=retinanet"
+#          设置 "file_format=MINDIR"
+#          设置 "checkpoint_path=/cache/data/checkpoint/checkpoint file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/retinanet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "export.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../MindRecord_COCO"(选择MindRecord_COCO文件夹路径) ,
+# MindIR的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+```
+
+### [推理过程](#content)
+
+#### 用 途
+
+在推理之前需要在昇腾910环境上完成模型的导出。推理时要将iscrowd为true的图片排除掉。在ascend310_infer目录下保存了去排除后的图片id。
+还需要修改config.py文件中的coco_root、val_data_type、instances_set配置项，值分别取coco数据集的目录，推理所用数据集的目录名称，推理完成后计算精度用的annotation文件，instances_set是用val_data_type拼接起来的，要保证文件正确并且存在。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+```
+
+#### 运行命令
+
+```运行
+bash run_infer_310.sh  [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
+```
+
+#### 运行结果
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+
+```mAP
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.356
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.499
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.396
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.145
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.380
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.506
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.308
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.446
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.457
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.179
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.483
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.647
+mAP: 0.35625723922139957
 ```
 
 ## [模型说明](#content)

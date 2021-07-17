@@ -1,4 +1,0 @@
-numpy
-pycocotools
-easydict
-opencv-python
