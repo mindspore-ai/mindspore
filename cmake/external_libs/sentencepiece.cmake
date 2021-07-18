@@ -15,7 +15,7 @@ if(WIN32)
         VER 0.1.92
         LIBS sentencepiece sentencepiece_train
         URL ${REQ_URL}
-        CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=ON
+        CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=ON -DSPM_ENABLE_SHARED=OFF
         MD5 ${MD5}
         )
 else()
