@@ -113,6 +113,7 @@ void CipherMetaStorage::RegisterPrime(const char *list_name, const std::string &
   fl::PBMetadata prime_pb;
   prime_pb.mutable_prime()->MergeFrom(prime_id_pb);
   fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(list_name, prime_pb);
+  sleep(1);
 }
 
 bool CipherMetaStorage::UpdateClientKeyToServer(const char *list_name, const std::string &fl_id,

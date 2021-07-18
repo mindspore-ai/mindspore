@@ -29,18 +29,11 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
                       size_t cipher_reconstruct_secrets_up_cnt) {
   MS_LOG(INFO) << "CipherInit::Init START";
   int return_num = 0;
-  cipher_meta_storage_.RegisterClass();
-  const std::string new_prime(reinterpret_cast<const char *>(param.prime), PRIME_MAX_LEN);
-  cipher_meta_storage_.RegisterPrime(fl::server::kCtxCipherPrimer, new_prime);
-  if (!cipher_meta_storage_.GetPrimeFromServer(fl::server::kCtxCipherPrimer, publicparam_.prime)) {
-    MS_LOG(ERROR) << "Cipher Param Update is invalid.";
-    return false;
-  }
-
   return_num = memcpy_s(publicparam_.p, SECRET_MAX_LEN, param.p, SECRET_MAX_LEN);
   if (return_num != 0) {
     return false;
   }
+
   publicparam_.g = param.g;
   publicparam_.t = param.t;
   secrets_minnums_ = param.t;
@@ -55,18 +48,31 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
   publicparam_.dp_norm_clip = param.dp_norm_clip;
   publicparam_.encrypt_type = param.encrypt_type;
 
-  MS_LOG(INFO) << " CipherInit client_num_need_ : " << client_num_need_;
-  MS_LOG(INFO) << " CipherInit share_clients_num_need_ : " << share_clients_num_need_;
-  MS_LOG(INFO) << " CipherInit reconstruct_clients_num_need_ : " << reconstruct_clients_num_need_;
-  MS_LOG(INFO) << " CipherInit get_model_num_need_ : " << get_model_num_need_;
-  MS_LOG(INFO) << " CipherInit featuremap_ : " << featuremap_;
-
-  if (Check_Parames() == false) {
-    MS_LOG(ERROR) << "Cipher parameters are illegal.";
-    return false;
+  if (param.encrypt_type == mindspore::ps::kDPEncryptType) {
+    MS_LOG(INFO) << "DP parameters init, dp_eps: " << param.dp_eps;
+    MS_LOG(INFO) << "DP parameters init, dp_delta: " << param.dp_delta;
+    MS_LOG(INFO) << "DP parameters init, dp_norm_clip: " << param.dp_norm_clip;
   }
 
-  MS_LOG(INFO) << " CipherInit::Init Success";
+  if (param.encrypt_type == mindspore::ps::kPWEncryptType) {
+    cipher_meta_storage_.RegisterClass();
+    const std::string new_prime(reinterpret_cast<const char *>(param.prime), PRIME_MAX_LEN);
+    cipher_meta_storage_.RegisterPrime(fl::server::kCtxCipherPrimer, new_prime);
+    if (!cipher_meta_storage_.GetPrimeFromServer(fl::server::kCtxCipherPrimer, publicparam_.prime)) {
+      MS_LOG(ERROR) << "Cipher Param Update is invalid.";
+      return false;
+    }
+    MS_LOG(INFO) << " CipherInit client_num_need_ : " << client_num_need_;
+    MS_LOG(INFO) << " CipherInit share_clients_num_need_ : " << share_clients_num_need_;
+    MS_LOG(INFO) << " CipherInit reconstruct_clients_num_need_ : " << reconstruct_clients_num_need_;
+    MS_LOG(INFO) << " CipherInit get_model_num_need_ : " << get_model_num_need_;
+    MS_LOG(INFO) << " CipherInit featuremap_ : " << featuremap_;
+    if (!Check_Parames()) {
+      MS_LOG(ERROR) << "Cipher parameters are illegal.";
+      return false;
+    }
+    MS_LOG(INFO) << " CipherInit::Init Success";
+  }
   return true;
 }
 
