@@ -45,10 +45,6 @@ void MatMul12x8Fp16(const float16_t *a, const float16_t *b, float16_t *dst, cons
                     int deep, int row, int col, int stride, int write_mode);
 
 #ifdef ENABLE_ARM64
-void RowMajor2ColNMajorFp16(const float16_t *src, float16_t *dst_ptr, int row, int col);
-
-void RowMajor2RowNMajorFp16(const float16_t *src, float16_t *dst, int row, int col);
-
 void MatMul12x16Fp16Opt(const float16_t *a, const float16_t *b, float16_t *dst, const float16_t *bias, ActType act_type,
                         int deep, int row, int col, size_t stride, size_t out_type);
 void MatmulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
@@ -56,14 +52,6 @@ void MatmulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, cons
 
 void MatmulFp16Neon64Opt(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
                          size_t depth, size_t row, size_t col, size_t stride, size_t write_nhwc);
-
-void MatmulBaseFp16Neon(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
-                        size_t depth, size_t row, size_t col, size_t stride, size_t write_nhwc);
-
-#ifdef ENABLE_DEBUG
-void MatmulBaseFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
-                    size_t depth, size_t row, size_t col, size_t stride, size_t write_nhwc);
-#endif
 
 void MatVecMulFp16Neon64(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type,
                          int depth, int col);
