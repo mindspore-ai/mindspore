@@ -140,6 +140,7 @@
 #include "backend/optimizer/ascend/mindir/fake_learned_scale_quant_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/slice_grad_unify_mindir.h"
+#include "backend/optimizer/ascend/mindir/update_input_names_strided_slice_grad.h"
 #include "backend/optimizer/ascend/mindir/avg_pool_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/all_to_all_unify_mindir.h"
@@ -549,6 +550,7 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &graph) {
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::StridedSliceGradUpdateInputNames>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());

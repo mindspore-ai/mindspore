@@ -890,17 +890,25 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<si
 }
 
 void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *input_size_list, size_t *size_i) {
-  for (size_t j = 0; j < input_json[kJShape].size(); ++j) {
-    if (input_json[kJShape][j] == -1) {
-      auto input_max_shape = input_json[kJRange];
-      if (j >= input_max_shape.size()) {
-        MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
-      }
-      MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j][1];
-      (*size_i) *= LongToSize(input_max_shape[j][1]);
-      continue;
+  if (input_json[kJShape].size() == 1 && input_json[kJShape][0] == -2) {
+    auto input_max_shape = input_json[kJShape];
+    for (auto &max_shape : input_max_shape) {
+      (*size_i) *= LongToSize(max_shape[1]);
     }
-    (*size_i) *= static_cast<size_t>(input_json[kJShape][j]);
+    MS_LOG(INFO) << "Dims is dynamic, change -2 Shape to Max Shape.";
+  } else {
+    for (size_t j = 0; j < input_json[kJShape].size(); ++j) {
+      if (input_json[kJShape][j] == -1) {
+        auto input_max_shape = input_json[kJRange];
+        if (j >= input_max_shape.size()) {
+          MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
+        }
+        MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j][1];
+        (*size_i) *= LongToSize(input_max_shape[j][1]);
+        continue;
+      }
+      (*size_i) *= static_cast<size_t>(input_json[kJShape][j]);
+    }
   }
   std::string dtype = input_json[kJDtype];
   size_t nbyte = tbe::GetDtypeNbyte(dtype);
@@ -931,17 +939,25 @@ void GetInputSizeList2(const nlohmann::json &input_json, std::vector<size_t> *in
 
 void GetRealOutputSize(const nlohmann::json &output_json, size_t i, std::vector<size_t> *output_size_list,
                        size_t *size_i) {
-  for (size_t j = 0; j < output_json[kJShape].size(); ++j) {
-    if (output_json[kJShape][j] == -1) {
-      auto output_max_shape = output_json[kJRange];
-      if (j >= output_max_shape.size()) {
-        MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
-      }
-      MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j][1];
-      (*size_i) *= LongToSize(output_max_shape[j][1]);
-      continue;
+  if (output_json[kJShape].size() == 1 && output_json[kJShape][0] == -2) {
+    auto output_max_shape = output_json[kJShape];
+    for (auto &max_shape : output_max_shape) {
+      (*size_i) *= LongToSize(max_shape[1]);
     }
-    (*size_i) *= static_cast<size_t>(output_json[kJShape][j]);
+    MS_LOG(INFO) << "Dims is dynamic, change -2 Shape to Max Shape.";
+  } else {
+    for (size_t j = 0; j < output_json[kJShape].size(); ++j) {
+      if (output_json[kJShape][j] == -1) {
+        auto output_max_shape = output_json[kJRange];
+        if (j >= output_max_shape.size()) {
+          MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
+        }
+        MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j][1];
+        (*size_i) *= LongToSize(output_max_shape[j][1]);
+        continue;
+      }
+      (*size_i) *= static_cast<size_t>(output_json[kJShape][j]);
+    }
   }
   std::string dtype = output_json[kJDtype];
   size_t nbyte = tbe::GetDtypeNbyte(dtype);

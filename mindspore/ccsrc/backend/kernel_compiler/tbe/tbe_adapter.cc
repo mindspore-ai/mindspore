@@ -98,6 +98,14 @@ bool TbeAdapter::DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node,
     inputs_json->push_back(inputs_list[kIndex0]);
     return true;
   }
+  if (op_name == kStridedSliceGradOpName) {
+    inputs_json->push_back(inputs_list[kIndex1]);
+    inputs_json->push_back(inputs_list[kIndex2]);
+    inputs_json->push_back(inputs_list[kIndex3]);
+    inputs_json->push_back(inputs_list[kIndex4]);
+    inputs_json->push_back(inputs_list[kIndex0]);
+    return true;
+  }
   return false;
 }
 
