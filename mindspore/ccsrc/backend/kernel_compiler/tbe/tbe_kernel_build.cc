@@ -445,7 +445,7 @@ bool TbeKernelJsonCreator::GenTbeInputsJson(const std::shared_ptr<AnfNode> &anf_
     inputs_list.emplace_back(input_list);
   }
 
-  TbeAdapter::InputOrderPass(op_name, inputs_list, inputs_json);
+  TbeAdapter::InputOrderPass(anf_node, inputs_list, inputs_json);
   return true;
 }
 
@@ -822,12 +822,12 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
       }
       for (size_t j = 0; j < input_json[i][m][kJShape].size(); ++j) {
         if (input_json[i][m][kJShape][j] == -1) {
-          auto input_max_shape = AnfAlgo::GetInputMaxShape(anf_node, i);
+          auto input_max_shape = input_json[i][m][kJRange];
           if (j >= input_max_shape.size()) {
             MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
           }
-          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j];
-          size_i *= LongToSize(input_max_shape[j]);
+          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j][1];
+          size_i *= LongToSize(input_max_shape[j][1]);
           continue;
         }
         size_i *= static_cast<size_t>(input_json[i][m][kJShape][j]);
@@ -852,12 +852,12 @@ void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *o
       }
       for (size_t j = 0; j < output_json[i][m][kJShape].size(); ++j) {
         if (output_json[i][m][kJShape][j] == -1) {
-          auto output_max_shape = AnfAlgo::GetOutputMaxShape(anf_node, i);
+          auto output_max_shape = output_json[i][m][kJRange];
           if (j >= output_max_shape.size()) {
             MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
           }
-          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j];
-          size_i *= LongToSize(output_max_shape[j]);
+          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j][1];
+          size_i *= LongToSize(output_max_shape[j][1]);
           continue;
         }
         size_i *= static_cast<size_t>(output_json[i][m][kJShape][j]);
@@ -887,12 +887,12 @@ void GetRealInputSize(const nlohmann::json &input_json, const AnfNodePtr &anf_no
                       std::vector<size_t> *input_size_list, size_t *size_i) {
   for (size_t j = 0; j < input_json[kJShape].size(); ++j) {
     if (input_json[kJShape][j] == -1) {
-      auto input_max_shape = AnfAlgo::GetInputMaxShape(anf_node, i);
+      auto input_max_shape = input_json[kJRange];
       if (j >= input_max_shape.size()) {
         MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
       }
-      MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j];
-      (*size_i) *= input_max_shape[j];
+      MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j][1];
+      (*size_i) *= LongToSize(input_max_shape[j][1]);
       continue;
     }
     (*size_i) *= static_cast<size_t>(input_json[kJShape][j]);
@@ -930,12 +930,12 @@ void GetRealOutputSize(const nlohmann::json &output_json, const AnfNodePtr &anf_
                        std::vector<size_t> *output_size_list, size_t *size_i) {
   for (size_t j = 0; j < output_json[kJShape].size(); ++j) {
     if (output_json[kJShape][j] == -1) {
-      auto output_max_shape = AnfAlgo::GetOutputMaxShape(anf_node, i);
+      auto output_max_shape = output_json[kJRange];
       if (j >= output_max_shape.size()) {
         MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
       }
-      MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j];
-      (*size_i) *= output_max_shape[j];
+      MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j][1];
+      (*size_i) *= LongToSize(output_max_shape[j][1]);
       continue;
     }
     (*size_i) *= static_cast<size_t>(output_json[kJShape][j]);
@@ -1413,8 +1413,7 @@ bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
       input_desc_list_tmp.emplace_back(optional_input_desc);
     }
   }
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
-  TbeAdapter::FusionInputOrderPass(op_name, input_desc_list_tmp, input_desc_list);
+  TbeAdapter::FusionInputOrderPass(cnode, input_desc_list_tmp, input_desc_list);
   return true;
 }
 

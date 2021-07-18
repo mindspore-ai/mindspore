@@ -78,7 +78,8 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ge
   auto input_size = AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_size; i++) {
     // ms info
-    auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(node, i);
+    auto real_index = AnfAlgo::GetRealInputIndex(node, i);
+    auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(node, real_index);
     auto input_node = input_node_with_idx.first;
     auto input_index = input_node_with_idx.second;
     auto ms_ori_shape = AnfAlgo::GetOutputInferShape(input_node, input_index);
@@ -95,7 +96,8 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ge
                    [](size_t s) { return static_cast<int64_t>(s); });
     std::transform(ms_ori_shape.begin(), ms_ori_shape.end(), std::back_inserter(ge_ori_shape),
                    [](size_t s) { return static_cast<int64_t>(s); });
-    auto input_name = GetInputName(node, i);
+
+    auto input_name = GetInputName(node, real_index);
     ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
     ge_tensor_desc.SetDataType(ge_dtype);
@@ -171,7 +173,7 @@ ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const 
   ge_tensor_desc.SetOriginShape(ge::GeShape(ge_ori_shape));
   ge_tensor_desc.SetName(name);
   ge::GeTensorPtr ge_tensor = std::make_shared<ge::GeTensor>(
-    ge_tensor_desc, static_cast<uint8_t *>(tensor_data->data_c()), IntToSize(tensor_data->DataSize()));
+    ge_tensor_desc, static_cast<uint8_t *>(tensor_data->data_c()), IntToSize(tensor_data->Size()));
   (void)op_desc->AddOutputDesc(name, ge_tensor_desc);
   ge::NodePtr constant_op = (*ge_graph)->AddNode(op_desc);
   ge::OpDescUtils::SetWeights(constant_op, {ge_tensor});
@@ -208,7 +210,8 @@ std::vector<std::tuple<std::size_t, ge::NodePtr>> OpTilingCalculateAdapter::Conv
     auto depend_name = input_names_attr[index];
     auto const_tensor = iter->second;
     ge::NodePtr ge_constant_op = NewConstantOp(node, depend_name, const_tensor, ge_graph, index);
-    constant_ops.emplace_back(std::tuple<std::size_t, ge::NodePtr>(index, ge_constant_op));
+    auto original_index = AnfAlgo::GetOriginalInputIndex(node, index);
+    constant_ops.emplace_back(std::tuple<std::size_t, ge::NodePtr>(original_index, ge_constant_op));
     op_infer_depends.emplace_back(depend_name);
   }
   (void)(*op_desc)->SetOpInferDepends(op_infer_depends);

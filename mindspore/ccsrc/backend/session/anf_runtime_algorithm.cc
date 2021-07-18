@@ -134,6 +134,32 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index,
 
   return inputs->push_back(std::make_pair(node, output_index));
 }
+
+// ops map that dynamic input order is differ from the fixed shape ops
+static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {
+  {prim::kPrimConv2DBackpropInput->name(), {{{0, 2}, {1, 1}, {2, 0}}, {{0, 2}, {1, 1}, {2, 0}}}},
+  {prim::kPrimConv2DBackpropFilter->name(), {{{0, 1}, {1, 2}, {2, 0}}, {{1, 0}, {2, 1}, {0, 2}}}}};
+
+// pair: ms input order to tbe input order, and tbe input order to ms input order
+static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_node_list = {
+  {prim::kPrimConv2DBackpropInput->name(), {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
+  {kFusionOpConv2DBackpropInputReluGradV2Name, {{{0, 1}, {1, 0}, {2, 2}}, {{0, 1}, {1, 0}, {2, 2}}}},
+  {kFusionOpConv2DBackpropInputAddNReluGradV2Name,
+   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}}},
+  {prim::kPrimConv2DBackpropFilter->name(), {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
+  {prim::kPrimLogSoftmaxGrad->name(), {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
+  {prim::kPrimLayerNormGrad->name(),
+   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
+  {prim::kPrimLayerNormBetaGammaBackprop->name(), {{{0, 1}, {1, 0}, {2, 2}, {3, 3}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}}},
+  {prim::kPrimLayerNormXBackprop->name(),
+   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
+  {prim::kPrimLayerNormXBackpropV2->name(),
+   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
+  {prim::kPrimMinimumGrad->name(), {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
+  {prim::kPrimMaximumGrad->name(), {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
+  {prim::kPrimApplyCenteredRMSProp->name(),
+   {{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 5}, {5, 6}, {6, 7}, {7, 8}, {8, 4}},
+    {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {5, 4}, {6, 5}, {7, 6}, {8, 7}, {4, 8}}}}};
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
@@ -1535,27 +1561,47 @@ bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input
 
 size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_node, const size_t cur_index) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  static std::map<std::string, std::map<size_t, size_t>> spec_node_list = {
-    {prim::kPrimConv2DBackpropInput->name(), {{0, 1}, {1, 0}}},
-    {kFusionOpConv2DBackpropInputReluGradV2Name, {{0, 1}, {1, 0}, {2, 2}}},
-    {kFusionOpConv2DBackpropInputAddNReluGradV2Name, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
-    {prim::kPrimConv2DBackpropFilter->name(), {{0, 1}, {1, 0}}},
-    {prim::kPrimLogSoftmaxGrad->name(), {{0, 1}, {1, 0}}},
-    {prim::kPrimLayerNormGrad->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
-    {prim::kPrimLayerNormBetaGammaBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
-    {prim::kPrimLayerNormXBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
-    {prim::kPrimLayerNormXBackpropV2->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
-    {prim::kPrimMinimumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},
-    {prim::kPrimMaximumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},
-    {prim::kPrimApplyCenteredRMSProp->name(),
-     {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 5}, {5, 6}, {6, 7}, {7, 8}, {8, 4}}}};
   size_t ret = cur_index;
   auto node_name = AnfAlgo::GetCNodeName(anf_node);
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
+    if (AnfAlgo::IsNodeDynamicShape(anf_node) || AnfAlgo::IsDynamicShape(anf_node)) {
+      auto find_dynamic = spec_dynamic_node_list.find(node_name);
+      if (find_dynamic != spec_dynamic_node_list.end()) {
+        auto dyn_index_converter = find_dynamic->second;
+        ret = dyn_index_converter.first[cur_index];
+        MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
+        return ret;
+      }
+    }
     auto find = spec_node_list.find(node_name);
     if (find != spec_node_list.end()) {
-      ret = find->second[cur_index];
-      MS_LOG(DEBUG) << "Real input index change to" << ret << ", node name:" << node_name;
+      auto index_converter = find->second;
+      ret = index_converter.first[cur_index];
+      MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
+    }
+  }
+  return ret;
+}
+
+size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &anf_node, const size_t cur_index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  size_t ret = cur_index;
+  auto node_name = AnfAlgo::GetCNodeName(anf_node);
+  if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
+    if (AnfAlgo::IsNodeDynamicShape(anf_node) || AnfAlgo::IsDynamicShape(anf_node)) {
+      auto find_dynamic = spec_dynamic_node_list.find(node_name);
+      if (find_dynamic != spec_dynamic_node_list.end()) {
+        auto dyn_index_converter = find_dynamic->second;
+        ret = dyn_index_converter.second[cur_index];
+        MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
+        return ret;
+      }
+    }
+    auto find = spec_node_list.find(node_name);
+    if (find != spec_node_list.end()) {
+      auto index_converter = find->second;
+      ret = index_converter.second[cur_index];
+      MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
     }
   }
   return ret;

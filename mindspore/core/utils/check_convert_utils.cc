@@ -526,6 +526,33 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
   return CheckSubClass(type_name, element, check_list, prim_name);
 }
 
+ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
+                                                      const std::string &prim_name) {
+  ShapeVector tensor_value;
+  if (!value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(ValueError) << "The " << prim_name << "'s " << type_name << " must be a tensor.";
+  }
+  auto input_tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  size_t data_size = LongToSize(input_tensor->DataSize());
+  auto tensor_type = input_tensor->Dtype();
+  if (tensor_type->type_id() == kNumberTypeInt32) {
+    auto data_c = reinterpret_cast<int *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(data_c);
+    for (size_t i = 0; i < data_size; i++) {
+      tensor_value.push_back(static_cast<int64_t>(*data_c));
+      ++data_c;
+    }
+  } else if (tensor_type->type_id() == kNumberTypeInt64) {
+    auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value = {tensor_data, tensor_data + data_size};
+  } else {
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s " << type_name << " must be a int32 or int64.";
+  }
+  return tensor_value;
+}
+
 TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const TypePtr &type_,
                                             const std::set<TypePtr> &template_types, const std::string &prim_name) {
   bool ok = std::any_of(template_types.begin(), template_types.end(),

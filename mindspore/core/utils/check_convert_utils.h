@@ -281,6 +281,8 @@ class CheckAndConvertUtils {
 
   static TypePtr CheckTensorTypeSame(const std::map<std::string, TypePtr> &types, const std::set<TypePtr> &check_list,
                                      const std::string &prim_name);
+  static ShapeVector CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
+                                         const std::string &prim_name);
   static TypePtr CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
                                       const std::set<TypePtr> &check_list, const std::string &prim_name);
   static TypePtr CheckSubClass(const std::string &type_name, const TypePtr &type,

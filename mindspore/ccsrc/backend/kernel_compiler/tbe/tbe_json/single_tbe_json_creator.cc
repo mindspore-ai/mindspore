@@ -142,7 +142,7 @@ bool SingleTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohmann::j
     return false;
   }
 
-  TbeAdapter::InputOrderPass<nlohmann::json>(op_name, inputs_list, &inputs_json);
+  TbeAdapter::InputOrderPass<nlohmann::json>(anf_node, inputs_list, &inputs_json);
   (*compute_json)[kJInputDesc] = inputs_json;
   MS_LOG(DEBUG) << "End.";
   return true;

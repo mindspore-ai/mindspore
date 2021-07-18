@@ -13,35 +13,31 @@
 # limitations under the License.
 # ============================================================================
 
-"""Conv2D op"""
+"""Conv2DBackpropFilter op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-conv2d_op_info = TBERegOp("Conv2D") \
+conv2d_backprop_filter_op_info = TBERegOp("Conv2DBackpropFilter") \
     .fusion_type("CONVOLUTION") \
     .async_flag(False) \
-    .binfile_name("conv2d.so") \
+    .binfile_name("conv2d_backprop_filter.so") \
     .compute_cost(10) \
-    .kernel_name("conv2d") \
+    .kernel_name("conv2d_backprop_filter") \
     .partial_flag(True) \
     .dynamic_shape(True) \
     .attr("stride", "required", "listInt", "all") \
     .attr("pad_list", "required", "listInt", "all") \
     .attr("dilation", "required", "listInt", "all") \
-    .attr("groups", "optional", "int", "all") \
-    .attr("format", "optional", "str", "all") \
-    .attr("offset_x", "optional", "int", "all", "0") \
-    .input(0, "x", False, "required", "all") \
-    .input(1, "filter", False, "required", "all") \
-    .input(2, "bias", False, "optional", "all") \
-    .input(3, "offset_w", False, "optional", "all") \
-    .output(0, "y", True, "required", "all") \
-    .is_dynamic_format(True) \
-    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None, DataType.I8_None, DataType.F16_None) \
+    .attr("groups", "optional", "int", "all", "1") \
+    .attr("format", "optional", "str", "all", "NHWC") \
+    .input(0, "out_backprop", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
+    .input(2, "filter_sizes", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.I32_Default, DataType.F32_FracZ) \
     .get_op_info()
 
-# .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_Default, DataType.I8_Default, DataType.F16_Default) ?
 
-@op_info_register(conv2d_op_info)
-def _conv2d_ds_tbe():
-    """Conv2D TBE register"""
+@op_info_register(conv2d_backprop_filter_op_info)
+def _conv2d_backprop_filter_ds_tbe():
+    """Conv2DBackpropFilter TBE register"""
     return

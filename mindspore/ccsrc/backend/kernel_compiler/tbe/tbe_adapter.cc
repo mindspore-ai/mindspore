@@ -76,9 +76,38 @@ std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {
   // {"MinimumGrad", TbeAdapter::MinimumGradAttrJsonPass},
   {"Cast", TbeAdapter::CastAttrJsonPass}};
 
-void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vector<nlohmann::json>> const &inputs_list,
+bool TbeAdapter::DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node,
+                                      std::vector<std::vector<nlohmann::json>> const &inputs_list,
+                                      nlohmann::json *inputs_json) {
+  if (!AnfAlgo::IsNodeDynamicShape(anf_node) && !AnfAlgo::IsDynamicShape(anf_node)) {
+    return false;
+  }
+  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  if (op_name == kConv2DBackpropInputOpName) {
+    // process dynamic Conv2DBackpropInput, tbe kernel input is x, input_size and dout
+    inputs_json->push_back(inputs_list[kIndex2]);
+    inputs_json->push_back(inputs_list[kIndex1]);
+    inputs_json->push_back(inputs_list[kIndex0]);
+    return true;
+  }
+  if (op_name == kConv2DBackpropFilterOpName) {
+    // process dynamic Conv2DBackpropFilter, tbe kernel input is filter_size, x and dout
+    inputs_json->push_back(inputs_list[kIndex1]);
+    inputs_json->push_back(inputs_list[kIndex2]);
+    inputs_json->push_back(inputs_list[kIndex0]);
+    return true;
+  }
+  return false;
+}
+
+void TbeAdapter::InputOrderPass(const std::shared_ptr<AnfNode> &anf_node,
+                                std::vector<std::vector<nlohmann::json>> const &inputs_list,
                                 nlohmann::json *inputs_json) {
   MS_EXCEPTION_IF_NULL(inputs_json);
+  if (DynamicInputAdjusted(anf_node, inputs_list, inputs_json)) {
+    return;
+  }
+  auto op_name = AnfAlgo::GetCNodeName(anf_node);
   if (input_order_adjusted_ops_.find(op_name) == input_order_adjusted_ops_.end()) {
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
@@ -111,9 +140,14 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
   }
 }
 
-void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vector<nlohmann::json> &inputs_list,
+void TbeAdapter::FusionInputOrderPass(const std::shared_ptr<AnfNode> &anf_node,
+                                      const std::vector<nlohmann::json> &inputs_list,
                                       std::vector<nlohmann::json> *inputs_json) {
   MS_EXCEPTION_IF_NULL(inputs_json);
+  if (DynamicInputAdjusted(anf_node, inputs_list, inputs_json)) {
+    return;
+  }
+  auto op_name = AnfAlgo::GetCNodeName(anf_node);
   if (input_order_adjusted_ops_.find(op_name) == input_order_adjusted_ops_.end()) {
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
@@ -371,7 +405,7 @@ bool TbeAdapter::GetSpecDataInput(const FusionScopeInfo &fusion_scope_info,
         layer.emplace_back((*find_iter));
       }
     }
-    InputOrderPass<AnfNodePtr>(op_name, layer, &reorder_layer);
+    InputOrderPass<AnfNodePtr>(compute_node, layer, &reorder_layer);
     if (IsSpecialFusionComputeNode(compute_nodes)) {
       if (!GetSpecInputLayers(op_name, reorder_layer, spec_data_input)) {
         return false;

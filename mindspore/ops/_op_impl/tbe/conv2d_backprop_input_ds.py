@@ -13,15 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-"""Conv2D op"""
+"""Conv2DBackpropInput op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-conv2d_op_info = TBERegOp("Conv2D") \
+conv2d_backprop_input_op_info = TBERegOp("Conv2DBackpropInput") \
     .fusion_type("CONVOLUTION") \
     .async_flag(False) \
-    .binfile_name("conv2d.so") \
+    .binfile_name("conv2d_backprop_input.so") \
     .compute_cost(10) \
-    .kernel_name("conv2d") \
+    .kernel_name("conv2d_backprop_input") \
     .partial_flag(True) \
     .dynamic_shape(True) \
     .attr("stride", "required", "listInt", "all") \
@@ -29,19 +29,16 @@ conv2d_op_info = TBERegOp("Conv2D") \
     .attr("dilation", "required", "listInt", "all") \
     .attr("groups", "optional", "int", "all") \
     .attr("format", "optional", "str", "all") \
-    .attr("offset_x", "optional", "int", "all", "0") \
-    .input(0, "x", False, "required", "all") \
+    .input(0, "out_backprop", False, "required", "all") \
     .input(1, "filter", False, "required", "all") \
-    .input(2, "bias", False, "optional", "all") \
-    .input(3, "offset_w", False, "optional", "all") \
+    .input(2, "input_size", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
-    .is_dynamic_format(True) \
-    .dtype_format(DataType.F16_None, DataType.F16_None, DataType.F16_None, DataType.I8_None, DataType.F16_None) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.I32_Default, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.I32_Default, DataType.F32_5HD) \
     .get_op_info()
 
-# .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_Default, DataType.I8_Default, DataType.F16_Default) ?
 
-@op_info_register(conv2d_op_info)
-def _conv2d_ds_tbe():
-    """Conv2D TBE register"""
+@op_info_register(conv2d_backprop_input_op_info)
+def _conv2d_backprop_input_ds_tbe():
+    """Conv2DBackpropInput TBE register"""
     return
