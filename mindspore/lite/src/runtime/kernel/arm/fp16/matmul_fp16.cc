@@ -55,7 +55,7 @@ void MatmulFP16CPUKernel::InitBShape() {
 
 int MatmulFP16CPUKernel::Init() {
 #ifdef ENABLE_ARM64
-  row_tile_ = C4NUM;
+  row_tile_ = C16NUM;
 #else
   row_tile_ = C12NUM;
 #endif
