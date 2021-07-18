@@ -202,6 +202,14 @@ class MS_API NetTrain {
   int CompareOutput(const session::LiteSession &lite_session);
   int SaveModels(const std::unique_ptr<session::LiteSession> &session);
   int CheckExecutionOfSavedModels();
+  void TensorNan(float *data, int size) {
+    for (int i = 0; i < size; i++) {
+      if (std::isnan(data[i])) {
+        std::cout << "nan value of index=" << i << std::endl;
+        break;
+      }
+    }
+  }
   NetTrainFlags *flags_;
 
   // callback parameters
