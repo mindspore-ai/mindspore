@@ -300,7 +300,7 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name, st
     if (!communicator_->SendPbRequest(first_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating first count event to server " << i << " failed.";
       if (reason != nullptr) {
-        *reason = "Send to rank " + std::to_string(i) + " failed. " + kNetworkError;
+        *reason = kNetworkError;
       }
       return false;
     }
@@ -321,7 +321,7 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name, std
     if (!communicator_->SendPbRequest(last_count_event, i, ps::core::TcpUserCommand::kCounterEvent)) {
       MS_LOG(ERROR) << "Activating last count event to server " << i << " failed.";
       if (reason != nullptr) {
-        *reason = "Send to rank " + std::to_string(i) + " failed. " + kNetworkError;
+        *reason = kNetworkError;
       }
       return false;
     }

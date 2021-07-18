@@ -173,7 +173,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
-    return update_reason == kNetworkError ? ResultCode::kSuccessAndReturn : ResultCode::kFail;
+    return update_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
 
   BuildUpdateModelRsp(fbb, schema::ResponseCode_SUCCEED, "success not ready",
@@ -209,7 +209,7 @@ ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilde
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
-    return count_reason == kNetworkError ? ResultCode::kSuccessAndReturn : ResultCode::kFail;
+    return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
   return ResultCode::kSuccess;
 }

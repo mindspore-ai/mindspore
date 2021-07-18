@@ -94,7 +94,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
                        std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
                        {});
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
-    return update_reason == kNetworkError ? true : false;
+    return update_reason == kNetworkError ? false : true;
   }
 
   StartFLJob(fbb, device_meta);
@@ -176,7 +176,7 @@ ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder>
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
-    return count_reason == kNetworkError ? ResultCode::kSuccessAndReturn : ResultCode::kFail;
+    return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
   return ResultCode::kSuccess;
 }
