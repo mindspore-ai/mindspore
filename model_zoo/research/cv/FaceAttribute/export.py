@@ -33,7 +33,7 @@ def modelarts_pre_process():
 def run_export():
     '''run export.'''
     devid = 0
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False, device_id=devid)
 
     network = get_resnet18(config)
     ckpt_path = config.ckpt_file

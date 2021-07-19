@@ -33,6 +33,7 @@ from model_utils.device_adapter import get_device_id, get_device_num
 def softmax(x, axis=0):
     return np.exp(x) / np.sum(np.exp(x), axis=axis)
 
+
 def load_pretrain(checkpoint, network):
     '''load pretrain model.'''
     if os.path.isfile(checkpoint):
@@ -51,8 +52,10 @@ def load_pretrain(checkpoint, network):
         print('-----------------------load model failed-----------------------')
     return network
 
+
 def modelarts_pre_process():
     '''modelarts pre process function.'''
+
     def unzip(zip_file, save_dir):
         import zipfile
         s_time = time.time()
@@ -106,7 +109,8 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_eval():
     '''run eval.'''
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=get_device_id())
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
+                        device_id=get_device_id())
 
     network = get_resnet18(config)
     ckpt_path = config.model_path
