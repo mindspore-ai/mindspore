@@ -44,7 +44,7 @@ int SparseToDenseOpenCLKernel::InitOutputToDefault() {
   }
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
-  cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
+  cl::Image2D *out_image = allocator_->GetImage(src_data);
   if (ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region) !=
       CL_SUCCESS) {
     MS_LOG(ERROR) << "enqueueFillImage failed.";
@@ -267,13 +267,12 @@ int SparseToDenseOpenCLKernel::Run() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) !=
-      CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
   if (!weight_scalar_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_vector_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_vector_, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

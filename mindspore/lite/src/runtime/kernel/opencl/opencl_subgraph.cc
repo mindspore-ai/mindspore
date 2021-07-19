@@ -316,16 +316,23 @@ int OpenCLSubGraph::Prepare() {
       MS_LOG(ERROR) << "node in Subgraph is nullptr";
       return mindspore::lite::RET_NULL_PTR;
     }
-    auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(node->kernel());
-    std::set<int> pre_init_weight_list = {schema::PrimitiveType_MatMul, schema::PrimitiveType_BiasAdd};
-    if (pre_init_weight_list.find(opencl_kernel->type()) != pre_init_weight_list.end()) {
-      auto ret = opencl_kernel->InitWeights();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "init weights " << node->name() << " failed";
-        return ret;
+    for (const auto tensor : node->out_tensors()) {
+      CHECK_NULL_RETURN(tensor);
+      MS_CHECK_TRUE_RET(tensor->data_c() == nullptr, RET_ERROR);
+      tensor->set_allocator(allocator_);
+    }
+    if (desc_.provider == kBuiltin) {
+      auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(node->kernel());
+      std::set<int> pre_init_weight_list = {schema::PrimitiveType_MatMul, schema::PrimitiveType_BiasAdd};
+      if (pre_init_weight_list.find(opencl_kernel->type()) != pre_init_weight_list.end()) {
+        auto ret = opencl_kernel->InitWeights();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "init weights " << node->name() << " failed";
+          return ret;
+        }
       }
     }
-    if (opencl_kernel->InferShapeDone()) {
+    if (node->InferShapeDone()) {
       auto ret = node->Prepare();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "prepare node " << node->name() << " failed";
@@ -382,10 +389,9 @@ int OpenCLSubGraph::ReSize(bool interrupt) {
     }
   }
   for (auto kernel : nodes_) {
-    auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel->kernel());
-    auto ret = opencl_kernel->ReSize();
+    auto ret = kernel->ReSize();
     if (ret != RET_OK) {
-      MS_LOG(WARNING) << "ReSize " << opencl_kernel->name() << "failed!";
+      MS_LOG(WARNING) << "ReSize " << kernel->name() << "failed!";
       if (interrupt) {
         return ret;
       } else {

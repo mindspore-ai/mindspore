@@ -42,6 +42,7 @@ endif()
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE TEST_GPU_UT_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/*.cc
+            ${TEST_DIR}/ut/src/registry/registry_gpu_custom_op_test.cc
             )
     list(APPEND TEST_UT_SRC ${TEST_GPU_UT_SRC})
 endif()

@@ -94,8 +94,8 @@ void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::B
   return host_ptr;
 }
 
-void *OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, void *data, size_t flags, bool is_map,
-                                     cl::Buffer **buffer, cl::Image2D **image) {
+int OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, void *data, size_t flags, bool is_map,
+                                   cl::Buffer **buffer, cl::Image2D **image, void **host_ptr) {
   cl_int ret = CL_SUCCESS;
   MS_ASSERT(buffer);
   MS_ASSERT(image);
@@ -114,7 +114,7 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, voi
     delete *buffer;
     *buffer = nullptr;
     MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << mindspore::kernel::CLErrorCode(ret) << ")";
-    return nullptr;
+    return RET_ERROR;
   }
   if (ret != CL_SUCCESS) {
     delete *buffer;
@@ -122,28 +122,28 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, voi
     *buffer = nullptr;
     *image = nullptr;
     MS_LOG(ERROR) << "Create OpenCL Image2D  (ERROR CODE: " << mindspore::kernel::CLErrorCode(ret) << ")";
-    return nullptr;
+    return RET_ERROR;
   }
   MS_LOG(DEBUG) << "Malloc a new Image2D, width=" << img_size.width << ", height=" << img_size.height;
-  void *host_ptr = nullptr;
+
   if (is_map) {
     std::vector<size_t> region{img_size.width, img_size.height, 1};
-    host_ptr = ocl_runtime_->MapBuffer(**image, true, CL_MAP_READ | CL_MAP_WRITE, region);
-    if (host_ptr == nullptr) {
+    *host_ptr = ocl_runtime_->MapBuffer(**image, true, CL_MAP_READ | CL_MAP_WRITE, region);
+    if (*host_ptr == nullptr) {
       delete *buffer;
       delete *image;
       *buffer = nullptr;
       *image = nullptr;
-      MS_LOG(ERROR) << "Map image failed, can not found image :" << *image << ", host_ptr=" << host_ptr;
-      return nullptr;
+      MS_LOG(ERROR) << "Map image failed, can not found image :" << *image << ", host_ptr=" << *host_ptr;
+      return RET_ERROR;
     }
     cl::Memory *mem = *image;
-    ret = ocl_runtime_->UnmapBuffer(*mem, host_ptr);
+    ret = ocl_runtime_->UnmapBuffer(*mem, *host_ptr);
     if (ret != CL_SUCCESS) {
       MS_LOG(WARNING) << "UnmapBuffer failed.";
     }
   }
-  return host_ptr;
+  return RET_OK;
 }
 
 int OpenCLAllocator::GetImgDtypeSize(const ImageSize &img_size) {
@@ -163,6 +163,34 @@ int OpenCLAllocator::GetImgDtypeSize(const ImageSize &img_size) {
   uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
   size_t size = UP_ROUND(img_size.width, image_alignment) * img_size.height * C4NUM * dtype_size;
   return size;
+}
+
+void *OpenCLAllocator::Malloc(size_t weight, size_t height, DataType type) {
+  ImageSize img_size = {weight, height};
+  switch (type) {
+    case DataType::kNumberTypeFloat32:
+      img_size.dtype = CL_FLOAT;
+      break;
+    case DataType::kNumberTypeFloat16:
+      img_size.dtype = CL_HALF_FLOAT;
+      break;
+    case DataType::kNumberTypeInt8:
+      img_size.dtype = CL_SIGNED_INT8;
+      break;
+    case DataType::kNumberTypeUInt8:
+      img_size.dtype = CL_UNSIGNED_INT8;
+      break;
+    case DataType::kNumberTypeInt32:
+      img_size.dtype = CL_SIGNED_INT32;
+      break;
+    case DataType::kNumberTypeUInt32:
+      img_size.dtype = CL_UNSIGNED_INT32;
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupported type " << static_cast<TypeId>(type);
+      return nullptr;
+  }
+  return _Malloc(MemType::IMG, nullptr, 0, img_size);
 }
 
 void *OpenCLAllocator::_Malloc(MemType mem_type, void *data, size_t size, const ImageSize &img_size) {
@@ -208,9 +236,8 @@ void *OpenCLAllocator::_Malloc(MemType mem_type, void *data, size_t size, const 
         UNLOCK_AND_RETURN_NULL(host_ptr == nullptr, nullptr);
       }
       if (mem_type == MemType::IMG) {
-        void *host_ptr_im = CreateImage2D(size, img_size, data, flags, data != nullptr, &buffer, &image);
-        UNLOCK_AND_RETURN_NULL(data != nullptr && host_ptr_im == nullptr, nullptr);
-        host_ptr = (data != nullptr) ? host_ptr_im : host_ptr;
+        auto ret = CreateImage2D(size, img_size, data, flags, data != nullptr, &buffer, &image, &host_ptr);
+        UNLOCK_AND_RETURN_NULL(ret != RET_OK, nullptr);
       }
     }
   }
@@ -345,17 +372,25 @@ size_t OpenCLAllocator::total_size() {
   return totalSize;
 }
 
-void *OpenCLAllocator::GetImage(void *buffer) {
+cl::Image2D *OpenCLAllocator::GetImage(void *buffer) {
   auto it = allocated_list_.find(buffer);
   if (it != allocated_list_.end()) {
-    return it->second->image_ptr_;
+    if (it->second->mem_type_ != MemType::IMG) {
+      return nullptr;
+    }
+    return reinterpret_cast<cl::Image2D *>(it->second->image_ptr_);
   }
   return nullptr;
 }
 
-void *OpenCLAllocator::GetBuffer(void *buffer) {
+void *OpenCLAllocator::GetOpenclMemPtr(void *buffer, MemType *type, bool force_buffer) {
   auto it = allocated_list_.find(buffer);
   if (it != allocated_list_.end()) {
+    if ((it->second->mem_type_ == MemType::IMG) && !force_buffer) {
+      *type = MemType::IMG;
+      return it->second->image_ptr_;
+    }
+    *type = MemType::BUF;
     return it->second->device_ptr_;
   }
   return nullptr;

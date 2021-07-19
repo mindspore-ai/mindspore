@@ -81,7 +81,7 @@ class OpenCLSubGraph : public SubGraphKernel {
   std::vector<LiteKernel *> in_convert_ops_;
   std::vector<LiteKernel *> out_convert_ops_;
   std::set<LiteKernel *> nodes_set_;
-  lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
+  lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
   bool all_kernels_infer_done_ = false;
 };

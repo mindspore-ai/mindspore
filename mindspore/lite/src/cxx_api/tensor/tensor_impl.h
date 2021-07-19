@@ -181,6 +181,13 @@ class MSTensor::Impl {
     }
     return lite_tensor_->MutableData();
   }
+  virtual bool IsConst() const {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return false;
+    }
+    return lite_tensor_->IsConst();
+  }
 
   virtual size_t DataSize() const {
     if (lite_tensor_ == nullptr) {

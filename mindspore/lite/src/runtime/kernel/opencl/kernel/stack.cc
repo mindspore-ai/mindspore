@@ -34,7 +34,7 @@ int StackOpenCLKernel::RunAxis0() {
   auto dst_data = out_tensors_[0]->data_c();
   MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
-  cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
+  cl::Image2D *out_image = allocator_->GetImage(dst_data);
   for (int i = 0; i < in_tensors_.size(); i++) {
     auto src_data = in_tensors_[i]->data_c();
     MS_ASSERT(src_data);
@@ -44,7 +44,7 @@ int StackOpenCLKernel::RunAxis0() {
     }
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
-    cl::Image2D *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
+    cl::Image2D *input_image = allocator_->GetImage(src_data);
     if (ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin,
                                                                  region) != CL_SUCCESS) {
       MS_LOG(WARNING) << "enqueueCopyImage failed.";
@@ -209,14 +209,12 @@ int StackOpenCLKernel::Run() {
   int arg_cn = 0;
   if (buffer_button_) {
     for (int i = 0; i < in_tensors_.size(); ++i) {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c(), lite::opencl::MemType::BUF) !=
-          CL_SUCCESS) {
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c(), true) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
       }
     }
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) !=
-        CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

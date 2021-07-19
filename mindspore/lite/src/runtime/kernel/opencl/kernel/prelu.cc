@@ -184,7 +184,7 @@ int PReluOpenCLKernel::Run() {
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

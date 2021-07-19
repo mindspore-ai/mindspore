@@ -50,6 +50,7 @@ class RegistryKernelImpl {
 
  protected:
   std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>> kernel_creators_;
+
   // keys:provider, arch, type
   std::map<std::string, std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>>>
     custom_kernel_creators_;

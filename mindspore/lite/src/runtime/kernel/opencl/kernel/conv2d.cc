@@ -435,11 +435,12 @@ int Conv2DOpenCLKernel::SetConstArgs() {
   cl_int2 dilation = {param_->dilation_h_, param_->dilation_w_};
 
   int arg_cn = 2;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_filter_, filter_type_) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_filter_, (filter_type_ == lite::opencl::MemType::BUF)) !=
+      CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_bias_, MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_bias_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

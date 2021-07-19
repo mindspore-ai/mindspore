@@ -266,19 +266,19 @@ int BatchNormOpenCLKernel::Run() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // input tensor
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, scale_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, scale_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // scale
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, offset_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, offset_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // offset
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, mean_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, mean_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // mean
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, variance_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, variance_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // variance

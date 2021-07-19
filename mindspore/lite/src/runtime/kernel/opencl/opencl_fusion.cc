@@ -59,7 +59,7 @@ inline bool PredIs(const LiteKernel *node, PrimitiveType type, std::vector<LiteK
   if (node->in_kernels().size() == 1) {
     LiteKernel *pred = node->in_kernels().front();
     MS_ASSERT(pred);
-    if (AIsInB(pred, nodes) && pred->type() == type && pred->out_kernels().size() == 1) {
+    if (AIsInB(pred, nodes) && pred->type() == type && pred->out_kernels().size() == 1 && pred->IsBuiltin()) {
       MS_ASSERT(pred->out_kernels().front() == node);
       return true;
     }
@@ -578,7 +578,7 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, LiteKernel *ol
 
 // Eltwise + Eltwise
 int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
-  if (!node->InferShapeDone()) {
+  if (!node->InferShapeDone() || !node->IsBuiltin()) {
     return RET_ERROR;
   }
   MS_ASSERT(node);
@@ -597,6 +597,9 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set
     MS_ASSERT(pred);
     if (!pred->InferShapeDone()) {
       continue;
+    }
+    if (!pred->IsBuiltin()) {
+      return RET_ERROR;
     }
     if (AIsInB(pred, nodes) && IsEltwiseAndOperatorSupported(pred) && pred->out_kernels().size() == 1) {
       auto *tensor = pred->out_tensors().front();
@@ -627,7 +630,7 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set
 }
 
 void DoSpecificFusion(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
-  if (!node->InferShapeDone()) {
+  if (!node->InferShapeDone() || !node->IsBuiltin()) {
     return;
   }
   switch (node->type()) {

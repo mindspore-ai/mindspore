@@ -92,7 +92,7 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_va
 struct GpuTensorInfo {
   GpuTensorInfo() = default;
   explicit GpuTensorInfo(const lite::Tensor *tensor) {
-    auto ocl_runtime_wrap_ = lite::opencl::OpenCLRuntimeWrapper();
+    auto ocl_runtime_wrap_ = lite::opencl::OpenCLRuntimeInnerWrapper();
     if (tensor == nullptr) {
       return;
     }
@@ -131,7 +131,7 @@ struct GpuTensorInfo {
   }
 
   size_t RowPitch() const {
-    auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+    auto runtime_wrapper = lite::opencl::OpenCLRuntimeInnerWrapper();
     int alignment = runtime_wrapper.GetInstance()->GetImagePitchAlignment();
     MS_ASSERT(alignment);
     size_t row_pitch = UP_ROUND(width, alignment) * FLT4_size;
@@ -238,7 +238,7 @@ class OpenCLKernel : public InnerKernel {
   bool dequant_flag_{false};
 
  private:
-  lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
+  lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap_;
   static inline std::map<std::string, BaseTuningParameter> tuned_param_cache_;
 };
 template <class T>

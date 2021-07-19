@@ -33,7 +33,7 @@ int SplitOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto src_data = in_tensors_[0]->data_c();
   CHECK_NULL_RETURN(src_data);
-  cl::Image2D *in_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
+  cl::Image2D *in_image = allocator_->GetImage(src_data);
   if (in_image == nullptr) {
     MS_LOG(ERROR) << "RunAxis0 in_image can not be nullptr";
     return RET_ERROR;
@@ -49,7 +49,7 @@ int SplitOpenCLKernel::RunAxis0() {
     }
     auto dst_area = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
-    cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
+    cl::Image2D *out_image = allocator_->GetImage(dst_data);
     if (out_image == nullptr) {
       MS_LOG(ERROR) << "RunAxis0 out_image can not be nullptr";
       return RET_ERROR;
@@ -252,8 +252,7 @@ int SplitOpenCLKernel::Run() {
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c(), lite::opencl::MemType::BUF) !=
-        CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c(), true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
@@ -264,7 +263,7 @@ int SplitOpenCLKernel::Run() {
       return RET_ERROR;
     }
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, split_sizes_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, split_sizes_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

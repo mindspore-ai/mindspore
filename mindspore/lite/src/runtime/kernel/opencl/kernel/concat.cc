@@ -36,7 +36,7 @@ int ConcatOpenCLKernel::RunAxis0() {
   auto dst_data = out_tensors_[0]->data_c();
   MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
-  auto *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
+  auto *out_image = allocator_->GetImage(dst_data);
   for (int i = 0; i < in_tensors_.size(); i++) {
     auto src_data = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data_c() : weight_ptrs_.at(i);
     if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
@@ -45,7 +45,7 @@ int ConcatOpenCLKernel::RunAxis0() {
     }
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
-    auto *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
+    auto *input_image = allocator_->GetImage(src_data);
     if (ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin,
                                                                  region) != CL_SUCCESS) {
       MS_LOG(WARNING) << "enqueueCopyImage failed.";
@@ -290,8 +290,7 @@ int ConcatOpenCLKernel::Run() {
     }
   }
   if (axis_ == 3 && !Align_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) !=
-        CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

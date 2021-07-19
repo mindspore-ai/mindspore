@@ -47,6 +47,7 @@ namespace mindspore::lite {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 namespace {
 const char *const kArchCPU = "CPU";
+const char *const kArchGPU = "GPU";
 void KernelKeyToKernelDesc(const KernelKey &key, KernelDesc *desc) {
   MS_ASSERT(desc != nullptr);
   desc->data_type = static_cast<DataType>(key.data_type);
@@ -159,6 +160,8 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
       kernel::KernelKey tmp_key = key;
       if (desc.arch == kArchCPU) {
         tmp_key.arch = kernel::kCPU;
+      } else if (desc.arch == kArchGPU) {
+        tmp_key.arch = kernel::kGPU;
       } else {
         tmp_key.arch = kernel::kCustom;
       }

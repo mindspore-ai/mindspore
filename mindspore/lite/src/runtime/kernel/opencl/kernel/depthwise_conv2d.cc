@@ -231,11 +231,12 @@ int DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   cl_int4 dst_size = {(cl_int)out_info.W, (cl_int)out_info.H, (cl_int)CO4, (cl_int)out_info.N};
 
   int arg_cnt = 2;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, filter_type_) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, (filter_type_ == lite::opencl::MemType::BUF)) !=
+      CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_data_, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

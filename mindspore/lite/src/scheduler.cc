@@ -1163,6 +1163,9 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, con
 
   auto desc = kernel->desc();
   if (desc.provider != kernel::kBuiltin) {
+    if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
+      return kernel::kGpuSubGraph;
+    }
     return kernel::kCustomSubGraph;
   }
   if (desc.arch == kernel::KERNEL_ARCH::kGPU) {

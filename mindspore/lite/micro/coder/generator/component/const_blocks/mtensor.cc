@@ -78,6 +78,7 @@ class MTensor : public mindspore::tensor::MSTensor {
   void set_data(void *data) override { data_ = data; }
   Vector<LiteQuantParam> quant_params() const override { return this->quant_params_; }
   void set_quant_params(const Vector<LiteQuantParam> quant_params) override { this->quant_params_ = quant_params; }
+  bool IsConst() const override {return this->data_ != nullptr;}
 
  private:
   String tensor_name_;

@@ -260,7 +260,7 @@ void FullConnectionOpenCLKernel::SetGlobalLocal() {
 
 int FullConnectionOpenCLKernel::SetConstArgs() {
   if (!weight_var_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, 2, padWeight_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, 2, padWeight_, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
