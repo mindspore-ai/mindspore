@@ -22,11 +22,12 @@
 
 namespace mindspore::lite {
 void *TensorRTAllocator::MallocDeviceMem(mindspore::MSTensor host_tensor, size_t size) {
-  if (host_tensor == nullptr) {
+  if (host_tensor == NULL) {
     return nullptr;
   }
   if (cuda_tensor_map_.find(host_tensor.Name()) != cuda_tensor_map_.end()) {
-    return nullptr;
+    MS_LOG(INFO) << "tensor :" << host_tensor.Name() << " has already in cuda Allocator pool.";
+    return cuda_tensor_map_[host_tensor.Name()].data;
   }
 
   auto cuda_type = ConvertDataType(host_tensor.DataType());
@@ -40,7 +41,8 @@ void *TensorRTAllocator::MallocDeviceMem(mindspore::MSTensor host_tensor, size_t
     MS_LOG(ERROR) << "Cuda Malloc failed for size:" << size;
     return nullptr;
   }
-  cuda_tensor_map_[host_tensor.Name()] = device_ptr;
+  cuda_tensor_map_[host_tensor.Name()].data = device_ptr;
+  cuda_tensor_map_[host_tensor.Name()].isValidMem = false;
   return device_ptr;
 }
 
@@ -51,17 +53,24 @@ void *TensorRTAllocator::GetDevicePtr(const std::string &tensor_name) {
   if (cuda_tensor_map_.find(tensor_name) == cuda_tensor_map_.end()) {
     return nullptr;
   }
-  return this->cuda_tensor_map_.find(tensor_name)->second;
+  return this->cuda_tensor_map_.find(tensor_name)->second.data;
 }
 
 int TensorRTAllocator::SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
                                               bool is_host2device, bool sync) {
-  if (host_tensor == nullptr || host_tensor.Data() == nullptr ||
+  if (host_tensor == NULL || host_tensor.Data() == nullptr ||
       cuda_tensor_map_.find(device_tensor_name) == cuda_tensor_map_.end()) {
     MS_LOG(ERROR) << " host or device ptr is null.";
     return RET_ERROR;
   }
-  auto device_ptr = cuda_tensor_map_.find(device_tensor_name)->second;
+  CudaTensorParam &current_cuda_tensor = cuda_tensor_map_.find(device_tensor_name)->second;
+  // is memcpy from device to host, the host mem is valid, change tag for mem pool.
+  current_cuda_tensor.isValidMem = is_host2device ? current_cuda_tensor.isValidMem : true;
+  if (is_host2device && current_cuda_tensor.isValidMem) {
+    MS_LOG(INFO) << "no need memcpy for: " << device_tensor_name;
+    return RET_OK;
+  }
+  auto device_ptr = current_cuda_tensor.data;
 
   void *src_ptr = is_host2device ? host_tensor.MutableData() : device_ptr;
   void *dst_ptr = is_host2device ? device_ptr : host_tensor.MutableData();
@@ -71,15 +80,18 @@ int TensorRTAllocator::SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, c
     MS_LOG(ERROR) << "copy mem failed.";
     return RET_ERROR;
   }
+  current_cuda_tensor.isValidMem = true;
   return RET_OK;
 }
 
 int TensorRTAllocator::ClearDeviceMem() {
-  for (const auto &iter : cuda_tensor_map_) {
-    auto cuda_ret = cudaFree(iter.second);
+  for (auto &iter : cuda_tensor_map_) {
+    auto cuda_ret = cudaFree(iter.second.data);
     if (cuda_ret != cudaSuccess && cuda_ret != cudaErrorCudartUnloading) {
       MS_LOG(WARNING) << "free cuda failed for " << cudaGetErrorName(cuda_ret);
     }
+    iter.second.data = nullptr;
+    iter.second.isValidMem = false;
   }
   return RET_OK;
 }
