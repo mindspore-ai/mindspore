@@ -809,27 +809,27 @@ static std::vector<ActionItem> CommonPipeline() {
   std::vector<ActionItem> actions;
 
   // Parse the python ast to ANF graph
-  actions.emplace_back(std::make_pair("parse", ParseAction));
+  (void)actions.emplace_back(std::make_pair("parse", ParseAction));
 
   // Resolve the python func
-  actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
+  (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
 
   auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
   if (!multi_graphs) {
-    actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
+    (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
 
-  actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
+  (void)actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
-  actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
+  (void)actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
   // Auto-monad for side-effects handling.
-  actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
+  (void)actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
   // Do data structure simplifications and inline
-  actions.emplace_back(std::make_pair("inline", OptInlineAction));
+  (void)actions.emplace_back(std::make_pair("inline", OptInlineAction));
   // Add pre-ad, post-inline python pass stub
-  actions.emplace_back(std::make_pair("py_pre_ad", PreAdActionPyStub));
+  (void)actions.emplace_back(std::make_pair("py_pre_ad", PreAdActionPyStub));
   // Do PipelineSplit
-  actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
+  (void)actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
 
   return actions;
 }
@@ -837,13 +837,13 @@ static std::vector<ActionItem> CommonPipeline() {
 std::vector<ActionItem> GePipeline() {
   auto actions = CommonPipeline();
   // optimize
-  actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
+  (void)actions.emplace_back(std::make_pair("optimize", GeOptimizeAction));
   // Add opt-stage python pass stub
-  actions.emplace_back(std::make_pair("py_opt", OptActionGePyStub));
-  actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
-  actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
-  actions.emplace_back(std::make_pair("remove_monad_from_random_op", RemoveRandomOpMonadAction));
-  actions.emplace_back(std::make_pair("validate", ValidateAction));
+  (void)actions.emplace_back(std::make_pair("py_opt", OptActionGePyStub));
+  (void)actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
+  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
+  (void)actions.emplace_back(std::make_pair("remove_monad_from_random_op", RemoveRandomOpMonadAction));
+  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   return actions;
 }
 
@@ -851,31 +851,31 @@ std::vector<ActionItem> VmPipeline() {
   auto actions = CommonPipeline();
 
   // optimize
-  actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
 
   // Add opt-stage python pass stub
-  actions.emplace_back(std::make_pair("py_opt", OptActionVmPyStub));
+  (void)actions.emplace_back(std::make_pair("py_opt", OptActionVmPyStub));
 
-  actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
+  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
 
-  actions.emplace_back(std::make_pair("remove_monad_from_random_op", RemoveRandomOpMonadAction));
+  (void)actions.emplace_back(std::make_pair("remove_monad_from_random_op", RemoveRandomOpMonadAction));
 
-  actions.emplace_back(std::make_pair("validate", ValidateAction));
+  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_worker()) {
     std::string server_mode = ps::PSContext::instance()->server_mode();
     if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
-      actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
+      (void)actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
     } else {
-      actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
+      (void)actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
     }
   }
 #endif
   // compile the ANF graph
-  actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
 
   // to execute the graph
-  actions.emplace_back(std::make_pair("execute", ExecuteAction));
+  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
 
   return actions;
 }
@@ -883,34 +883,34 @@ std::vector<ActionItem> VmPipeline() {
 std::vector<ActionItem> BackendPipeline() {
   std::vector<ActionItem> actions;
   // compile the ANF graph
-  actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
   // to execute the graph
-  actions.emplace_back(std::make_pair("execute", ExecuteAction));
+  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
   return actions;
 }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 std::vector<ActionItem> ServerPipeline() {
   auto actions = CommonPipeline();
-  actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
-  actions.emplace_back(std::make_pair("validate", ValidateAction));
-  actions.emplace_back(std::make_pair("server", StartServerAction));
+  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+  (void)actions.emplace_back(std::make_pair("server", StartServerAction));
   return actions;
 }
 
 std::vector<ActionItem> PServerPipeline() {
   auto actions = CommonPipeline();
-  actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
-  actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
-  actions.emplace_back(std::make_pair("remove_monad_from_random_op", RemoveRandomOpMonadAction));
-  actions.emplace_back(std::make_pair("validate", ValidateAction));
-  actions.emplace_back(std::make_pair("pserver", StartPSServerAction));
+  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
+  (void)actions.emplace_back(std::make_pair("remove_monad_from_random_op", RemoveRandomOpMonadAction));
+  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+  (void)actions.emplace_back(std::make_pair("pserver", StartPSServerAction));
   return actions;
 }
 
 std::vector<ActionItem> PSchedulerPipeline() {
   std::vector<ActionItem> actions;
-  actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
+  (void)actions.emplace_back(std::make_pair("scheduler", StartPSSchedulerAction));
   return actions;
 }
 #endif

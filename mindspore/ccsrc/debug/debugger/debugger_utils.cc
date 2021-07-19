@@ -33,7 +33,6 @@ using KernelGraph = mindspore::session::KernelGraph;
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 namespace mindspore {
-
 static const size_t PARAMETER_OUTPUT_INDEX = 0;
 
 std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &output_size) {
@@ -158,5 +157,4 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_
   bool last_kernel = !AnfAlgo::IsInplaceNode(cnode, "skip");
   debugger->PostExecuteNode(cnode, last_kernel);
 }
-
 }  // namespace mindspore

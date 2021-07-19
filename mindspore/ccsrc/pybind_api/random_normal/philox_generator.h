@@ -47,8 +47,8 @@ class PhiloxGenerator {
 
   void JumpStep(uint64_t step);
 
-  std::array<uint32_t, gResultNum> Compute(const std::array<uint32_t, gResultNum> &counter_,
-                                           const std::array<uint32_t, 2> &key_var_);
+  std::array<uint32_t, gResultNum> Compute(const std::array<uint32_t, gResultNum> &counter,
+                                           const std::array<uint32_t, 2> &key_var) const;
 
   std::array<uint32_t, gResultNum> operator()();
 

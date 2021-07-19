@@ -25,7 +25,7 @@
 #include "mindspore/core/ir/cell.h"
 
 namespace mindspore::parse {
-static std::unordered_set<std::string> cell_input_args_;
+static std::unordered_set<std::string> cell_input_args_ = {};
 static const std::set<std::string> ignore_judge_dynamic_cell = {
   "Cell mindspore.nn.layer.basic.Dense", "Cell mindspore.nn.probability.distribution.normal.Normal",
   "Cell src.transformer.create_attn_mask.CreateAttentionMaskFromInputMask", "Cell mindspore.nn.layer.math.MatMul"};
@@ -59,7 +59,7 @@ void DynamicParser::ParseInputArgs(const std::shared_ptr<parse::ParseAst> &ast, 
   for (size_t i = 1; i < args.size(); i++) {
     std::string arg_name = py::cast<std::string>(args[i].attr("arg"));
     MS_LOG(DEBUG) << "Input arg name: " << arg_name;
-    cell_input_args_.emplace(arg_name);
+    (void)cell_input_args_.emplace(arg_name);
   }
 }
 
