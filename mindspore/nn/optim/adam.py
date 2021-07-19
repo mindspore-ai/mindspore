@@ -368,7 +368,8 @@ class Adam(Optimizer):
     def target(self, value):
         """
         If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-        optimizer operation."""
+        optimizer operation.
+        """
         self._set_base_target(value)
 
 

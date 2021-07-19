@@ -23,6 +23,8 @@ try:
     from tqdm import trange
 except (ImportError, AttributeError):
     trange = range
+finally:
+    pass
 
 
 class OcclusionSensitivity(Metric):
@@ -108,8 +110,10 @@ class OcclusionSensitivity(Metric):
         return b_box_min, b_box_max
 
     def _append_to_sensitivity_im(self, model, batch_images, batch_ids, sensitivity_im):
-        """For a given number of images, the probability of predicting a given label is obtained. Attach to previous
-        assessment."""
+        """
+        For a given number of images, the probability of predicting a given label is obtained. Attach to previous
+        assessment.
+        """
         batch_images = np.vstack(batch_images)
         batch_ids = np.expand_dims(batch_ids, 1)
         model_numpy = model(Tensor(batch_images)).asnumpy()
