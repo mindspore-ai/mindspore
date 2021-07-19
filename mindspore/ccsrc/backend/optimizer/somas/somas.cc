@@ -67,6 +67,7 @@ constexpr auto kLifelongValue = "lifelong_value";
 constexpr auto kLifeStart = "life_start";
 constexpr auto kLifeEnd = "life_end";
 constexpr auto kOffset = "offset";
+constexpr auto kCachedResultThreshold = 2000;
 
 std::map<TensorType, std::string> tensor_type_name_map = {{kCommon, "Common"},
                                                           {kOutputOnly, "OutputOnly"},
@@ -93,23 +94,10 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
     return true;
   }
 
-  ret = CalcSomasModelHash(graph);
+  ret = LoadSomasCache(graph);
   if (ret) {
-    std::string filename =
-      save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
-    ret = LoadSomasResult(graph, filename);
-    if (ret) {
-      MS_LOG(INFO) << "Load Somas Cache file " << filename << " Successfully.";
-      GenGraphStatisticInfo();
-      return ret;
-    } else {
-      for (auto &tensor : tensors_list_) {
-        MS_EXCEPTION_IF_NULL(tensor);
-        tensor->offset_ = 0;
-      }
-    }
-  } else {
-    MS_LOG(ERROR) << "Calculate somas's model hash id failed.";
+    GenGraphStatisticInfo();
+    return ret;
   }
 
   // Computing Conflict pairs
@@ -126,6 +114,28 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
   return ret;
 }
 
+bool Somas::LoadSomasCache(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (tensors_list_.size() < kCachedResultThreshold) {
+    MS_LOG(DEBUG) << "Tensors size (" << tensors_list_.size() << ") less than " << kCachedResultThreshold
+                  << ", no need to load cached";
+    return false;
+  }
+
+  bool ret = CalcSomasModelHash(graph);
+  if (ret) {
+    std::string filename =
+      save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
+    ret = LoadSomasResult(graph, filename);
+    if (ret) {
+      MS_LOG(INFO) << "Load Somas Cache file " << filename << " Successfully.";
+    }
+  } else {
+    MS_LOG(ERROR) << "Calculate somas's model hash id failed.";
+  }
+  return ret;
+}
+
 bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto model_str = SomasInfo(true);
@@ -133,12 +143,16 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model hash id is " << hash_id_;
   std::string filename =
     save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
-  (void)Common::SaveStringToFile(filename, model_str);
-  return true;
+  return Common::SaveStringToFile(filename, model_str);
 }
 
 bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (tensors_list_.size() < kCachedResultThreshold) {
+    MS_LOG(DEBUG) << "Tensors size (" << tensors_list_.size() << ") less than " << kCachedResultThreshold
+                  << ", no need to save result";
+    return false;
+  }
   nlohmann::json somas_json;
   somas_json[kGraphId] = graph->graph_id();
   somas_json[kHashId] = hash_id_;
