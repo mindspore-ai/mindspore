@@ -26,13 +26,14 @@
 #include "ir/dtype/type_id.h"
 #include "ir/dtype/type.h"
 
+namespace mindspore {
+namespace opt {
+namespace {
 constexpr auto softmax_output_shape_size = 2;
 constexpr auto kAttrDepth = "depth";
 constexpr auto kAttrMultiples = "multiples";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
-namespace mindspore {
-namespace opt {
-namespace {
+
 ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
