@@ -931,7 +931,7 @@ STATUS AddIterNumsUpdateEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodeP
   auto &trip_cout_paramter = anf_nodes_map.at(trip_cout_name);
   if (trip_cout_paramter == nullptr) {
     MS_LOG(ERROR) << "trip_cout_paramter found failed";
-    return ERROR;
+    return RET_ERROR;
   }
   auto const_one_parameter = CreateConstParamter(anf_graph, 1);
   const_one_parameter->set_name(loop_node_name + "_index_update_parameter");

@@ -45,9 +45,8 @@ int RandomStandardNormalCPUKernel::Run() {
   auto out_data = out_tensors_[0]->data_c();
   MS_ASSERT(out_data != nullptr);
   auto output = reinterpret_cast<float *>(out_data);
-  for (int i = 0; i < all_data_nums; ++i) {
-    output[i] = nums(engine);
-  }
+
+  std::generate_n(output, all_data_nums, [&]() { return nums(engine); });
   return RET_OK;
 }
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_RandomStandardNormal, LiteKernelCreator<RandomStandardNormalCPUKernel>)

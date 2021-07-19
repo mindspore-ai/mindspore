@@ -17,7 +17,7 @@
 #include "nnacl/fp32/pack_fp32.h"
 
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel) {
-  return PackNCHWToNHWCFp32(src, dst, 1, plane, channel, 0, 0);
+  PackNCHWToNHWCFp32(src, dst, 1, plane, channel, 0, 0);
 }
 
 void PackHWCToWHC(const float *src, float *dst, int height, int width, int channel) {
@@ -415,7 +415,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
 }
 
 void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel, int task_id, int thread_count) {
-  return PackNHWCToNCHWFp32(src, dst, batch, channel, plane, task_id, thread_count);
+  PackNHWCToNCHWFp32(src, dst, batch, channel, plane, task_id, thread_count);
 }
 
 #ifdef ENABLE_ARM64

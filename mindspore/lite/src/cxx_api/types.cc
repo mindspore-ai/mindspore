@@ -125,6 +125,12 @@ MSTensor *MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType
   return ms_tensor;
 }
 
+MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType type,
+                                    const std::vector<int64_t> &shape, const void *data, size_t data_len) noexcept {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
+}
+
 MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &inputs) {
   auto impl = Impl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs));
   if (impl == nullptr) {

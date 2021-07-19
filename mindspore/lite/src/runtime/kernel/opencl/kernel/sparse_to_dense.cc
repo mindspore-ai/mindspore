@@ -104,7 +104,7 @@ int SparseToDenseOpenCLKernel::CheckSpecs() {
     if ((in_tensors_[0]->shape()[1] > DIMENSION_4D)) {
       MS_LOG(ERROR) << "in_tensors_indices shape[1] must be 1 2 or 3  && input_dim_=2 ,but your shapes is: "
                     << in_tensors_[0]->shape()[1] << "your input_dim_ is: " << input_dim_;
-      return ERROR;
+      return RET_ERROR;
     }
   }
   auto param = reinterpret_cast<SparseToDenseParameter *>(op_parameter_);

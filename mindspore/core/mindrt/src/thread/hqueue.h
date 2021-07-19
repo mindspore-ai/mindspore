@@ -55,7 +55,7 @@ class HQueue {
       node->value = nullptr;
       node->free = true;
       node->next = {-1, 0};
-      nodes.template emplace_back(node);
+      nodes.emplace_back(node);
     }
 
     // init first node as dummy head

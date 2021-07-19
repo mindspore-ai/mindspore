@@ -22,8 +22,6 @@
 #include "src/common/utils.h"
 #include "src/train/train_utils.h"
 
-using mindspore::WARNING;
-
 namespace mindspore {
 namespace lite {
 ClassificationTrainAccuracyMonitor::ClassificationTrainAccuracyMonitor(int print_every_n, int accuracy_metrics,

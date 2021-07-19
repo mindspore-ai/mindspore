@@ -7,7 +7,6 @@ file(GLOB KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/string/*.cc
     )
 list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
-list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/base/random_standard_normal.cc)
 
 if(SUPPORT_TRAIN)
     file(GLOB TRAIN_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16_grad/*.cc)
@@ -30,11 +29,4 @@ if(PLATFORM_ARM)
     file(GLOB OPT_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
     add_library(cpu_opt_kernel_mid OBJECT ${OPT_KERNEL_SRC})
     add_dependencies(cpu_kernel_mid fbs_src)
-endif()
-
-add_library(cpu_kernel_random_standard_normal OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/base/random_standard_normal.cc)
-add_dependencies(cpu_kernel_random_standard_normal fbs_src)
-
-if((NOT PLATFORM_ARM AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release") OR TARGET_HIMIX200)
-    target_compile_options(cpu_kernel_random_standard_normal PRIVATE -Wno-error=maybe-uninitialized)
 endif()

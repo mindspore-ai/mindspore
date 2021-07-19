@@ -19,6 +19,9 @@
 #include <asm/hwcap.h>
 #endif
 #include "src/common/utils.h"
+#ifdef SUPPORT_MSVC
+#include <windows.h>
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -43,6 +46,14 @@ std::vector<std::string> StringSplit(std::string str, const std::string &pattern
 }
 
 uint64_t GetTimeUs() {
+#ifdef SUPPORT_MSVC
+  FILETIME ft;
+  LARGE_INTEGER li;
+  GetSystemTimeAsFileTime(&ft);
+  li.LowPart = ft.dwLowDateTime;
+  li.HighPart = ft.dwHighDateTime;
+  return li.QuadPart * 100;
+#else
   struct timespec ts = {0, 0};
   if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
     return 0;
@@ -50,6 +61,7 @@ uint64_t GetTimeUs() {
   // USECS_IN_SEC *NSECS_IN_USEC;
   auto ret_val = static_cast<uint64_t>((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
   return ret_val;
+#endif
 }
 
 std::string RemoveSubStr(const std::string &from, const std::string &sub_str, RemoveSubStrMode mode) {

@@ -17,8 +17,8 @@
 #include "nnacl/infer/argmin_max_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int ArgMinMaxInferShape(const TensorC *const *inputs, const size_t inputs_size, TensorC **outputs,
-                        const size_t outputs_size, OpParameter *parameter) {
+int ArgMinMaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                        OpParameter *parameter) {
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;

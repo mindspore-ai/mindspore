@@ -182,7 +182,7 @@ STATUS CaffeModelParser::HardCodeCaffe(const CNodePtr &conv_node, const tensor::
       MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
                     << EnumNameFormat(weight_dst_format) << " failed, node : " << conv_node->fullname_with_scope()
                     << "quant type:" << quant_type_;
-      return ERROR;
+      return RET_ERROR;
     }
     auto type_id = static_cast<TypeId>(weight_value->data_type());
     auto shape = weight_value->shape();

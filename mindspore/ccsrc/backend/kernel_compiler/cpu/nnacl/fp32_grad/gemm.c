@@ -22,7 +22,7 @@
 #include "nnacl/fp32/matmul_fp32.h"
 
 #ifdef SUPPORT_MSVC
-void AddMatrix(const float *__restrict v1, float *__restrict v2, float beta, int row, int col, int stride) {
+void AddMatrix(const float *v1, float *v2, float beta, int row, int col, int stride) {
 #else
 void AddMatrix(const float *restrict v1, float *restrict v2, float beta, int row, int col, int stride) {
 #endif
