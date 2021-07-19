@@ -79,13 +79,13 @@ void ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, i
           size_t top_y_index = MSMAX((size_t)(floorf(in_y)), (size_t)(0));
           size_t bottom_y_index = MSMIN((size_t)(ceilf(in_y)), param->out_height_ - 1);
           float y_lerp = in_y - floorf(in_y);
-          float inverse_y_lerp = 1.0 - y_lerp;
+          const float inverse_y_lerp = 1.0 - y_lerp;
 
           float in_x = (float)w * param->width_scale_;
           size_t left_x_index = MSMAX((size_t)(floorf(in_x)), (size_t)(0));
           size_t right_x_index = MSMIN((size_t)(ceilf(in_x)), param->out_width_ - 1);
           float x_lerp = in_x - floorf(in_x);
-          float inverse_x_lerp = 1.0 - x_lerp;
+          const float inverse_x_lerp = 1.0 - x_lerp;
 
           size_t in_offset = h * (param->in_width_ * channel) + (w * channel) + c;
           size_t out_offset_top_y_left_x = top_y_index * (param->out_width_ * channel) + (left_x_index * channel) + c;

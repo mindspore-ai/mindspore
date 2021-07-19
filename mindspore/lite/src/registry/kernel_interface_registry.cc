@@ -134,12 +134,11 @@ int KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, Kerne
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
     kernel_creators_[provider] =
-      reinterpret_cast<KernelInterfaceCreator *>(malloc(kMaxKernelNum * sizeof(KernelInterfaceCreator)));
+      reinterpret_cast<KernelInterfaceCreator *>(calloc(kMaxKernelNum, sizeof(KernelInterfaceCreator)));
     if (kernel_creators_[provider] == nullptr) {
       MS_LOG(ERROR) << "malloc kernel dev delegate creator fail!";
       return RET_ERROR;
     }
-    memset(reinterpret_cast<void *>(kernel_creators_[provider]), 0, kMaxKernelNum * sizeof(KernelInterfaceCreator));
   }
 
   kernel_creators_[provider][op_type] = creator;

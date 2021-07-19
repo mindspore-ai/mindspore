@@ -172,7 +172,7 @@ int ConvolutionGradInputCPUKernelFp16::Run() {
   int in_w = conv_param->input_w_;
   auto *out_dx = out_tensors_.at(0);
   auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data_c());
-  memset(dx_addr, 0, sizeof(float16_t) * batch * in_ch * in_h * in_w);
+  std::memset(dx_addr, 0, sizeof(float16_t) * batch * in_ch * in_h * in_w);
   int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradInputFp16Run, this, ms_context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "bias function error error_code[" << error_code << "]";
