@@ -371,7 +371,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename,
     if (printed_func_graphs.find(fg) != printed_func_graphs.end()) {
       continue;
     }
-    printed_func_graphs.emplace(fg);
+    (void)printed_func_graphs.emplace(fg);
 
     current_context_ = node_config->context();  // Set current context.
     ExportOneFuncGraph(ofs, fg, tagged_func_graphs[fg]);
