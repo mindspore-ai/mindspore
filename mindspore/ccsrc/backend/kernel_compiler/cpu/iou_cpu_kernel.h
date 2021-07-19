@@ -23,6 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t INPUT_NUMS = 2;
+constexpr size_t OUTPUT_NUMS = 1;
+constexpr size_t BOX_COORDINATE_LEN = 4;
+
 template <typename T>
 class IOUCPUKernel : public CPUKernel {
  public:
@@ -34,10 +38,13 @@ class IOUCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  int mode_{0};
   size_t anchor_boxes_size_{0};
   size_t gt_boxes_size_{0};
   size_t iou_size_{0};
+  enum input_list_ { ANCHOR_BOXES, GT_BOXES };
+  enum output_list_ { IOU_VALUE };
+  enum iou_mod_ { IOU_MODE, IOF_MODE };
+  int mode_{IOU_MODE};
 };
 
 MS_REG_CPU_KERNEL_T(

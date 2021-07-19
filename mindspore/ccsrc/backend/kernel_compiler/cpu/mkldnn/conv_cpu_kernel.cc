@@ -46,7 +46,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << "Conv channels should be divided by group!";
     }
-    weight_shape.insert(weight_shape.begin(), group);
+    (void)weight_shape.insert(weight_shape.begin(), group);
     weight_shape[1] = weight_shape[1] / group;
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);

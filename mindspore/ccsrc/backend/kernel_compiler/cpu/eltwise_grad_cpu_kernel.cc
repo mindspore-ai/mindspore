@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cmath>
 #include <map>
 #include "backend/kernel_compiler/cpu/eltwise_grad_cpu_kernel.h"
 #include "common/thread_pool.h"

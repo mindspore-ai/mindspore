@@ -16,7 +16,6 @@
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
 #include <vector>
 #include <string>
-#include <algorithm>
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 

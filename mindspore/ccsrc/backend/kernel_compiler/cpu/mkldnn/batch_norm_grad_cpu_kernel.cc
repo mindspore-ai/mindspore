@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/mkldnn/batch_norm_grad_cpu_kernel.h"
-#include <string>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -25,29 +24,29 @@ void BatchNormGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
-  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  size_t tensor_size = shape[1] * 2 * type_size;
+  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, Y_BACKPROP);
+  size_t tensor_size = shape[C] * SCALE_SHIFT_NUM * type_size;
   input_size_list_.pop_back();
   // [2, c] to store scale and bias
-  workspace_size_list_.emplace_back(tensor_size);
+  (void)workspace_size_list_.emplace_back(tensor_size);
   // [2, c] to store diff_scale and diff_bias
-  workspace_size_list_.emplace_back(tensor_size);
+  (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
 void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (x_shape.size() == 2) {
+  if (x_shape.size() == NC) {
     x_shape.insert(x_shape.end(), 2, 1);
-  } else if (x_shape.size() != 4) {
-    MS_LOG(EXCEPTION) << "Fused batchnorm only support nchw input!";
+  } else if (x_shape.size() != NCHW) {
+    MS_LOG(EXCEPTION) << "Fused batchnorm support nc or nchw input!";
   }
-  batch_size = x_shape[0];
-  channel = x_shape[1];
-  hw_size = x_shape[2] * x_shape[3];
-  nhw_size = x_shape[0] * hw_size;
+  batch_size = x_shape[N];
+  channel = x_shape[C];
+  hw_size = x_shape[H] * x_shape[W];
+  nhw_size = batch_size * hw_size;
   dnnl::memory::desc x_desc = GetDefaultMemDesc(x_shape);
-  dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc({2, channel});
+  dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc({SCALE_SHIFT_NUM, channel});
   auto epsilon = AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
   auto prop_kind = dnnl::prop_kind::forward_training;
   auto normalization_flags = dnnl::normalization_flags::use_scale_shift;
@@ -77,36 +76,37 @@ void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool BatchNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &workspace,
                                     const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 5 || outputs.empty()) {
+  constexpr size_t INPUT_NUM = 5;
+  if (inputs.size() < INPUT_NUM || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Error input output size!";
   }
-  auto wksp_in = reinterpret_cast<float *>(workspace[0]->addr);
-  auto scale_ret = memcpy_s(wksp_in, workspace[0]->size, inputs[2]->addr, inputs[2]->size);
+  auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->addr);
+  auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size, inputs[SCALE]->addr, inputs[SCALE]->size);
   if (scale_ret != 0) {
     MS_LOG(EXCEPTION) << "Scale memcpy error!";
   }
-  auto max_size = workspace[0]->size - inputs[2]->size;
-  auto bias_ret = memset_s(wksp_in + (inputs[2]->size / sizeof(float)), max_size, 0, max_size);
+  auto max_size = workspace[SCALE_BIAS]->size - inputs[SCALE]->size;
+  auto bias_ret = memset_s(wksp_in + (inputs[SCALE]->size / sizeof(float)), max_size, 0, max_size);
   if (bias_ret != 0) {
     MS_LOG(EXCEPTION) << "Bias memset 0 error.";
   }
 
-  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_MEAN, inputs[3]->addr);
-  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[4]->addr);
-  SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[1]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[Y_BACKPROP]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs[X]->addr);
+  SetArgumentHandle(DNNL_ARG_MEAN, inputs[SAVE_MEAN]->addr);
+  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[SAVE_VARIANCE]->addr);
+  SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[SCALE_BIAS]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[DX]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[DIFF_SCALE_BIAS]->addr);
   ExecutePrimitive();
 
-  auto wksp_out = reinterpret_cast<float *>(workspace[1]->addr);
-  auto diff_scale_ret = memcpy_s(outputs[1]->addr, outputs[1]->size, wksp_out, inputs[2]->size);
+  auto wksp_out = reinterpret_cast<float *>(workspace[DIFF_SCALE_BIAS]->addr);
+  auto diff_scale_ret = memcpy_s(outputs[DSCALE]->addr, outputs[DSCALE]->size, wksp_out, inputs[SCALE]->size);
   if (diff_scale_ret != 0) {
     MS_LOG(EXCEPTION) << "Diff_scale memcpy to output[1] error.";
   }
-  auto diff_bias_ret =
-    memcpy_s(outputs[2]->addr, outputs[2]->size, wksp_out + (outputs[1]->size / sizeof(float)), outputs[2]->size);
+  auto diff_bias_ret = memcpy_s(outputs[DBIAS]->addr, outputs[DBIAS]->size,
+                                wksp_out + (outputs[DSCALE]->size / sizeof(float)), outputs[DBIAS]->size);
   if (diff_bias_ret != 0) {
     MS_LOG(EXCEPTION) << "Diff_bias memcpy to  to output[2] error.";
   }

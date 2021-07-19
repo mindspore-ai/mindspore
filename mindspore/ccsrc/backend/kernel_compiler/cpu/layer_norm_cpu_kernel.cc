@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <cmath>
 #include "backend/kernel_compiler/cpu/layer_norm_cpu_kernel.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -29,10 +27,10 @@ void LayerNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto begin_norm_axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_norm_axis");
   auto begin_params_axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_params_axis");
   if (begin_norm_axis < 0) {
-    begin_norm_axis += x_shape.size();
+    begin_norm_axis += SizeToLong(x_shape.size());
   }
   if (begin_params_axis < 0) {
-    begin_params_axis += x_shape.size();
+    begin_params_axis += SizeToLong(x_shape.size());
   }
   for (size_t i = 0; i < LongToSize(begin_norm_axis); i++) {
     block_num_ *= x_shape[i];
@@ -81,7 +79,7 @@ void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
   std::vector<common::Task> tasks;
   tasks.reserve(thread_num);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &x, &gamma, &beta, &y, &mean, &var, thread_num](size_t start, size_t end) {
     for (size_t c = 0; c < ceil(static_cast<double>(block_num_) / thread_num); ++c) {
       if (c * thread_num + start >= block_num_) {
         continue;
