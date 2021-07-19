@@ -4262,7 +4262,7 @@ class ROIAlign(PrimitiveWithInfer):
         TypeError: If `features` or `rois` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.array([[[[1., 2.], [3., 4.]]]]), mindspore.float32)

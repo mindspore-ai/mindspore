@@ -168,7 +168,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         TypeError: If `anchor_box` or `groundtruth_box` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> anchor_box = Tensor([[2, 2, 2, 3], [2, 2, 2, 3]], mindspore.float32)
@@ -230,7 +230,7 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         TypeError: If `anchor_box` or `deltas` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> anchor_box = Tensor([[4, 1, 2, 1], [2, 2, 2, 3]], mindspore.float32)
@@ -293,7 +293,7 @@ class CheckValid(PrimitiveWithInfer):
         TypeError: If dtype of `bboxes` or `img_metas` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

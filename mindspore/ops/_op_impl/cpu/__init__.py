@@ -24,6 +24,7 @@ from .split import _split_cpu
 from .adam import _adam_cpu
 from .arg_max import _arg_max_cpu
 from .arg_min_with_value import _arg_min_with_value_cpu
+from .arg_max_with_value import _arg_max_with_value_cpu
 from .bias_add import _bias_add_cpu
 from .bias_add_grad import _bias_add_grad_cpu
 from .dropout import _dropout_cpu

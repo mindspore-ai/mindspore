@@ -1785,7 +1785,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         TypeError: If `axis` is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
@@ -3484,7 +3484,7 @@ class ScatterNd(PrimitiveWithInfer):
         ValueError: If any element of `shape` is less than 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> op = ops.ScatterNd()
