@@ -32,7 +32,7 @@ class CustomAddInfer : public kernel::KernelInterface {
             const schema::Primitive *primitive) override {
     (*outputs)[0].SetFormat((*inputs)[0].format());
     (*outputs)[0].SetDataType((*inputs)[0].DataType());
-    auto ret = common::CheckInputs(inputs);
+    auto ret = common::CheckInputs(*inputs);
     if (ret != lite::RET_OK) {
       (*outputs)[0].SetShape({-1});  // shape{-1} shows that shape need to be inferred when running.
       return ret;

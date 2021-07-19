@@ -20,7 +20,7 @@ add_executable(runtime_extend_tutorial ${RUNTIME_REGISTRY_SRC})
 
 target_link_libraries(
         runtime_extend_tutorial
-        -Wl,--whole-archive mindspore-lite -Wl,--no-whole-archive
+        mindspore-lite
         pthread
         dl
 )

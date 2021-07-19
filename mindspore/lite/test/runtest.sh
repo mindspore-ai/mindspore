@@ -57,7 +57,7 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter="ModelParserRegistryTest.TestRegistry"
 ./lite-test --gtest_filter="PassRegistryTest.TestRegistry"
 ./lite-test --gtest_filter="TestRegistry.TestAdd"
-./lite-test --gtest_filter="TestRegistry.TestCustomAdd"
+./lite-test --gtest_filter="TestRegistryCustomOp.TestCustomAdd"
 
 # test cases specific for train
 

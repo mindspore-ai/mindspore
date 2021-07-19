@@ -36,8 +36,8 @@ fi
 if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
   wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
-tar -xzf ${BASEPATH}/build/${MINDSPORE_FILE}
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/libmindspore-lite.a ${BASEPATH}/lib/
+tar -xzf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/libmindspore-lite.so ${BASEPATH}/lib/
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include ${BASEPATH}/
 cd ${BASEPATH}/build || exit
 cmake ${BASEPATH}
