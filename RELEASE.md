@@ -12,33 +12,34 @@
 - [BETA] Add CV models on Ascend: CycleGAN, PoseNet, SimCLR.
 - [BETA] Add NLP models on Ascend: DGU, EmoTect, Senta, KT-Net.
 - [BETA] Add NLP models on GPU: DGU, EmoTect.
-- [BETA] Add EPP-MVSNet: a novel deep learning network for 3D reconstruction from multi-view stereo, which has won the first place. in Tanks & Temples leaderboard (until April 1, 2021)(GPU).
+- [BETA] Add EPP-MVSNet: a novel deep learning network for 3D reconstruction from multi-view stereo, which has won the first place in Tanks & Temples leaderboard(until April 1, 2021)(GPU).
 
 #### FrontEnd
 
+- [STABLE] The default running mode of MindSpore is changed to Graph mode.
 - [STABLE] Support interface `run_check` to check whether MindSpore is working properly or not.
-- [STABLE] Support saving custom information in checkpoint file.
-- [STABLE] Normal class add mean parameter.
+- [STABLE] Support saving custom information in the checkpoint file.
+- [STABLE] Normal class adds mean parameter.
 - [STABLE] Support export YOLOv3-DarkNet53 and YOLOv4 ONNX model.
 - [STABLE] Support 40+ operator export ONNX model.
 - [STABLE] The Metric module supports `set_indexes` to select the inputs of `update` in the specified order.
-- [STABLE] Switch`_Loss` to an external API `LossBase` as the base class of losses.
+- [STABLE] Switch `_Loss` to an external API `LossBase` as the base class of losses.
 
 #### Auto Parallel
 
 - [STABLE] Add distributed operators: Select/GatherNd/ScatterUpdate/TopK.
 - [STABLE] Support basic pipeline parallelism.
-- [STABLE] Optimize sharding strategy setting of`Gather`.
-- [STABLE] Optimize mix precision and  shared parameter scenarios.
+- [STABLE] Optimize sharding strategy setting of `Gather`.
+- [STABLE] Optimize mix precision and shared parameter scenarios.
 - [STABLE] Optimize distributed prediction scenarios.
 
 #### Executor
 
 - [STABLE] Support unified runtime in GPU and CPU backend.
 - [STABLE] MindSpore GPU support CUDA11 with cuDNN8.
-- [STABLE] MindSpore GPU inference performance optimization by integrating TensoRT.
-- [STABLE] MindSpore built on one Linux distribution can now be used on multiple Linux distributions with same CPU architecture (e.g. EulerOS, Ubuntu, CentOS).
-- [STABLE] MindSpore now supports Ascend310 and Ascend910 environments with one single wheel package, and provides an alternate binary package for Ascend310 specifically.
+- [STABLE] MindSpore GPU inference performance optimization by integrating TensorRT.
+- [STABLE] MindSpore built on one Linux distribution can now be used on multiple Linux distributions with the same CPU architecture (e.g. EulerOS, Ubuntu, CentOS).
+- [STABLE] MindSpore now supports Ascend310 and Ascend910 environments with one single wheel package and provides an alternate binary package for Ascend310 specifically.
 - [STABLE] MindSpore Ascend support group convolution.
 
 #### DataSet
@@ -53,7 +54,7 @@
 
 - [STABLE] Support Cross-device federated learning framework.
 - [STABLE] Support FL-Server distributed networking including TCP and HTTP communication.
-- [STABLE] Support FL-Server distributed federated aggregation,support autoscaling and fault tolerance.
+- [STABLE] Support FL-Server distributed federated aggregation，support autoscaling and fault tolerance.
 - [STABLE] Develop FL-Client framework.
 - [STABLE] Supports local differential privacy algorithms.
 - [STABLE] MPC-based security aggregation algorithm.
@@ -80,7 +81,7 @@
 
 ###### `mindspore.dataset.Dataset.device_que` interface removes unused parameter `prefetch_size`([!18973](https://gitee.com/mindspore/mindspore/pulls/18973))
 
-Previously, we have a parameter `prefetch_size` in `device_que` to define the prefetch number of records ahead of the user's request. But indeed this parameter is never used which means it is an ineffective parameter. Therefore, we remove this parameter in 1.3.0 and users can set this configuration by [mindspore.dataset.config.set_prefetch_size](https://www.mindspore.cn/doc/api_python/en/r1.3/mindspore/mindspore.dataset.config.html#mindspore.dataset.config.set_prefetch_size).
+Previously, we have a parameter `prefetch_size` in `device_que` to define the prefetch number of records ahead of the user's request. But indeed this parameter is never used which means it is an ineffective parameter. Therefore, we remove this parameter in 1.3.0 and users can set this configuration by [mindspore.dataset.config.set_prefetch_size](https://www.mindspore.cn/docs/api/zh-CN/r1.3/api_python/mindspore.dataset.config.html#mindspore.dataset.config.set_prefetch_size).
 
 <table>
 <tr>
@@ -104,13 +105,42 @@ device_que(send_epoch_end=True, create_data_info_queue=False)
 </tr>
 </table>
 
+###### `mindspore.nn.optim.thor` interface changes to lowercase `thor` and adds two parameters `enable_clip_grad` and `frequency`([!17212](https://gitee.com/mindspore/mindspore/pulls/17212))
+
+The parameter `enable_clip_grad` is used for gradient clipping and another parameter `frequency` is used to control the update interval of second order information matrix.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.2.1 </td> <td style="text-align:center"> 1.3.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+THOR(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32,
+     use_nesterov=False, decay_filter=lambda x: x.name not in [], split_indices=None)
+```
+
+</td>
+<td>
+
+```python
+thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32,
+     use_nesterov=False, decay_filter=lambda x: x.name not in [], split_indices=None, enable_clip_grad=False,
+     frequency=100)
+```
+
+</td>
+</tr>
+</table>
+
 ##### Dump Config
 
-Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/r1.3/advanced_use/dump_in_graph_mode.html#dump)
+Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/r1.3/advanced_use/dump_in_graph_mode.html#dump).
 
 | 1.2.1                                                  | 1.3.0                                                                                       |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| `iteration` is an int.                                | `iteration` is a string.                                                                  |
+| `iteration` is an int.                               | `iteration` is a string.                                                                  |
 | `op_debug_mode` is in `async_dump_settings` field. | `op_debug_mode` is in `common_dump_settings` field. `async_dump_settings` is removed. |
 
 ### Bug fixes
@@ -118,24 +148,23 @@ Previously, we could only dump tensor data for one or all steps. To make the dum
 #### FrontEnd
 
 - Fix exception when use import module in while body such as 'F.xxx'.([!17635](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/17635))
-- Fix the exception of 'exceeding limit call depth' in compile graph process when use while expression with grad operation. ([!18662](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/18662))
+- Fix the exception of 'exceeding limit call depth' in compile graph process when using while expression with grad operation. ([!18662](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/18662))
 
 #### Executor
 
 - Fix reallocate memory bug for communication op.([!14492](https://gitee.com/mindspore/mindspore/pulls/14492))
 - Replace memcpy_async op with tensor_move op.([!15204](https://gitee.com/mindspore/mindspore/pulls/15204))
-- Fix the build error when multiple python versions are installed in the environment.([!19165](https://gitee.com/mindspore/mindspore/pulls/19165))
-- The warning when the te/topi/hccl version does not match is optimized, and fix the repeated warning.([!18704](https://gitee.com/mindspore/mindspore/pulls/18704))
-- Fix the error in a cluster with more than 8 pcs in pynative mode.([!16376](https://gitee.com/mindspore/mindspore/pulls/16376))
+- Fix the build error when multiple python versions are installed in the environment. ([!19165](https://gitee.com/mindspore/mindspore/pulls/19165))
+- The warning when the te/topi/hccl version does not match is optimized, and fix the repeated warning. ([!18704](https://gitee.com/mindspore/mindspore/pulls/18704))
+- Fix the error in a cluster with more than 8 pcs in pynative mode. ([!16376](https://gitee.com/mindspore/mindspore/pulls/16376))
 - Fix graph ring problem in UB fusion.([!16109](https://gitee.com/mindspore/mindspore/pulls/16109))
-- Fix AllGather op select problem when shape is not divisible by 16.([!18878](https://gitee.com/mindspore/mindspore/pulls/18878))
+- Fix AllGather op select problem when the shape is not divisible by 16. ([!18878](https://gitee.com/mindspore/mindspore/pulls/18878))
 
 #### Dataset
 
 - Fix an out-of-memory error when ImagefolderDataset gets an illegal directory. ([!16196](https://gitee.com/mindspore/mindspore/pulls/16196))
 - Fix bugs of vision transformations in lite mode. ([!14722](https://gitee.com/mindspore/mindspore/pulls/14722),[!14774](https://gitee.com/mindspore/mindspore/pulls/14774),[!15050](https://gitee.com/mindspore/mindspore/pulls/15050))
 - Fix default numbers of parallel workers of MindData for those CPUs with fewer cores. ([!15921](https://gitee.com/mindspore/mindspore/pulls/15921))
-- Fix cache client status reset and final flush at abnormal termination. ([!15038](https://gitee.com/mindspore/mindspore/pulls/15038))
 - Fix MindRecord writing failed probabilistically in multiprocessing. ([!15242](https://gitee.com/mindspore/mindspore/pulls/15242))
 
 ## MindSpore Lite
@@ -147,7 +176,7 @@ Previously, we could only dump tensor data for one or all steps. To make the dum
 1. Support Caffe model running on Hi3516D.
 2. Support delegate mechanism to run your models(part or whole) on user specified executor.
 3. Support control flow models.
-4. Support cross-compiling for iOS, so that we can inference models on iOS device.
+4. Support cross-compiling for iOS, so that we can inference models on iOS devices.
 
 #### x86 backend optimization
 
@@ -170,7 +199,7 @@ Previously, we could only dump tensor data for one or all steps. To make the dum
 
 #### Post quantization
 
-1. Support fp32 training model convert to quantization training model.
+1. Support fp32 training model converts to quantization training model.
 
 #### Training on Device
 
@@ -184,7 +213,7 @@ Previously, we could only dump tensor data for one or all steps. To make the dum
 
 #### Codegen
 
-1. Support depolyment on HarmonyOS for device.
+1. Support deployment on HarmonyOS for device.
 
 ### API Change
 
@@ -218,7 +247,7 @@ virtual std::vector<tensor::MSTensor *> GetPredictions() const {
 
 ###### Add Export API for Training on device, obsolete SaveToFile API.([!17356](https://gitee.com/mindspore/mindspore/pulls/17356))
 
-Previously, Training on Device use SaveToFile API to save training model to file. Export API was added int this release to support more format, more model type(train or interface part of the model), and save weight quant model of train.
+Previously, Training on Device uses SaveToFile API to save the training model to file. Export API was added in this release to support more format, more model type(train or interface part of the model), and save weight quant model of train.
 
 ```cpp
 virtual int Export(const std::string &file_name, lite::ModelType model_type = lite::MT_TRAIN,
@@ -229,7 +258,7 @@ virtual int Export(const std::string &file_name, lite::ModelType model_type = li
 
 ###### Add GetFeatureMaps and UpdateFeatureMaps interface for Training on device.([!18344](https://gitee.com/mindspore/mindspore/pulls/18344))
 
-When Training on Device, we may be need update model featuremap and get model featuremap.particularly in MindSpore Federated Scenario.
+When Training on the device, we may need to update the model featuremap and get model featuremap.particularly in MindSpore Federated Scenario.
 
 ```cpp
 virtual std::vector<tensor::MSTensor *> GetFeatureMaps() const {
@@ -245,7 +274,7 @@ virtual std::vector<tensor::MSTensor *> GetFeatureMaps() const {
 
 ###### new static method for creating LiteSession by MSConifg in LiteSession.class
 
-Previously, if we want to create a LiteSession object, we need to call two APIs like:
+Previously, if we want to create a LiteSession object, we need to call two APIs:
 
 ```js
 MSConfig config;
@@ -305,7 +334,7 @@ if (liteSession == null) {
 // liteSession is ready to inference model, call runGraph in LiteSession.class ...
 ```
 
-New createSession method is an API that integrates four old APIs: LiteSession.init, Model.loadModel, LiteSession.compileGraph and model.free. It is simple and efficient as it reduce one modelBuffer copy operation.
+New createSession method is an API that integrates four old APIs: LiteSession.init, Model.loadModel, LiteSession.compileGraph and model.free. It is simple and efficient as it reduces one modelBuffer copy operation.
 
 ###### new methods getFeaturesMap and updateFeatures for in LiteSession.class
 
@@ -355,7 +384,7 @@ public boolean eval() {...}
 
 ### Bug fixes
 
-1. Fix the bug that the train session not release memory cause of refcount bug.
+1. Fix the bug that the train session does not release memory cause of refcount bug.
 
 #### Deprecations
 
