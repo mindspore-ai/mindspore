@@ -423,6 +423,8 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
   auto realpath = Common::GetRealPath(file_name);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
+    sqlite3_free(errmsg);
+    sqlite3_close(db);
     return FAILED;
   }
 
@@ -431,6 +433,8 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
     fs->open(realpath.value(), std::ios::in | std::ios::binary);
     if (!fs->good()) {
       MS_LOG(ERROR) << "Invalid file, failed to open file: " << file_name;
+      sqlite3_free(errmsg);
+      sqlite3_close(db);
       return FAILED;
     }
   }
