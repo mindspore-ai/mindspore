@@ -84,13 +84,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto format_attr = GetAttr<std::string>(kernel_node, "format");
-    if (format_attr == kOpFormat_NHWC) {
-      data_format_ = kOpFormat_NHWC;
-    } else if (format_attr == kOpFormat_NDHWC) {
-      data_format_ = kOpFormat_NDHWC;
+    if (Anyone(format_attr, kOpFormat_NHWC, kOpFormat_NDHWC)) {
+      data_format_ = format_attr;
     }
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
@@ -100,16 +97,16 @@ class PoolingGpuFwdKernel : public GpuKernel {
     }
     CheckTensorSize({input_shape, output_shape});
     auto dim = input_shape.size();
-    if (dim == 4) {
+    if (dim == kDim2DShapeSize) {
       SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
-    } else if (dim == 5) {
+    } else if (dim == kDim3DShapeSize) {
       SetNCDHW(input_shape, &n_, &c_, &old_depth_, &old_height_, &old_width_, data_format_);
     }
-    const int kMaxDims = 5;
-    int dimA[kMaxDims];
-    int strideAin[kMaxDims];
-    int dimAout[kMaxDims];
-    int strideAout[kMaxDims];
+
+    int dimA[kPoolingNbDims];
+    int strideAin[kPoolingNbDims];
+    int dimAout[kPoolingNbDims];
+    int strideAout[kPoolingNbDims];
     SetDimA(input_shape, dimA, dim, data_format_);
     SetStrideA(input_shape, strideAin, dim, data_format_);
     SetDimA(output_shape, dimAout, dim, data_format_);
@@ -121,9 +118,9 @@ class PoolingGpuFwdKernel : public GpuKernel {
       kernel_node_, cudnnSetTensorNdDescriptor(output_descriptor_, cudnn_data_type_, dim, dimAout, strideAout),
       "cudnnSetTensorNdDescriptor failed");
     SetPoolingMode(kernel_node);
-    if (dim == 4) {
+    if (dim == kDim2DShapeSize) {
       SetPad(kernel_node);
-    } else if (dim == 5) {
+    } else if (dim == kDim3DShapeSize) {
       SetPad3D(kernel_node);
     }
     InitSizeLists();
@@ -199,19 +196,11 @@ class PoolingGpuFwdKernel : public GpuKernel {
     int windowDimA[2] = {window_height, window_width};
     int paddingA[2] = {0, 0};
     int strideA[2] = {stride_[2], stride_[3]};
+    int stride_h = stride_[2];
+    int stride_w = stride_[3];
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
-      pad_height_ =
-        std::max<int>(0, (((old_height_ / stride_[2]) * stride_[2] == old_height_ ? (old_height_ / stride_[2])
-                                                                                  : (old_height_ / stride_[2]) + 1) -
-                          1) *
-                             stride_[2] +
-                           window_height - old_height_);
-      pad_width_ =
-        std::max<int>(0, (((old_width_ / stride_[3]) * stride_[3] == old_width_ ? (old_width_ / stride_[3])
-                                                                                : (old_width_ / stride_[3]) + 1) -
-                          1) *
-                             stride_[3] +
-                           window_width - old_width_);
+      pad_height_ = GetPad(old_height_, window_height, stride_h);
+      pad_width_ = GetPad(old_width_, window_width, stride_w);
       pad_top_ = pad_height_ / 2;
       pad_left_ = pad_width_ / 2;
       paddingA[0] = pad_top_;
@@ -243,13 +232,13 @@ class PoolingGpuFwdKernel : public GpuKernel {
     int windowDimA[3] = {window_depth, window_height, window_width};
     int paddingA[3] = {0, 0, 0};
     int strideA[3] = {stride_[2], stride_[3], stride_[4]};
+    int stride_d = stride_[2];
+    int stride_h = stride_[3];
+    int stride_w = stride_[4];
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
-      pad_depth_ =
-        std::max<int>(0, (((old_depth_ + stride_[2] - 1) / stride_[2]) - 1) * stride_[2] + window_depth - old_depth_);
-      pad_height_ = std::max<int>(
-        0, (((old_height_ + stride_[3] - 1) / stride_[3]) - 1) * stride_[3] + window_height - old_height_);
-      pad_width_ =
-        std::max<int>(0, (((old_width_ + stride_[4] - 1) / stride_[4]) - 1) * stride_[4] + window_width - old_width_);
+      pad_depth_ = GetPad(old_depth_, window_depth, stride_d);
+      pad_height_ = GetPad(old_height_, window_height, stride_h);
+      pad_width_ = GetPad(old_width_, window_width, stride_w);
       pad_front_ = pad_depth_ / 2;
       pad_top_ = pad_height_ / 2;
       pad_left_ = pad_width_ / 2;
