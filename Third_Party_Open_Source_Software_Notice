@@ -3968,37 +3968,33 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org>
 
-Software: google/protobuf 3.8.0
-Copyright notice: 
-Copyright 2008, Google Inc.
-Copyright 2008 Google Inc. All Rights Reserved.
-Copyright [2007] Neal Norwitz
-Portions Copyright [2007] Google Inc.
-Copyright 2008 Google Inc.  All rights reserved.
+Software: google/protobuf 3.13.0
+Copyright 2008 Google Inc. All rights reserved.
+Copyright 2008 Google Inc. All rights reserved.
+Copyright 2007-2010 Baptiste Lepilleur Distributed under MIT license, or public domain if desired and recognized in your jurisdiction.
 Copyright 2007 Google Inc. All Rights Reserved.
-Copyright 2007, Google Inc.
-Copyright 2013, Google Inc.
-Copyright 2009, Google Inc.
-Copyright 2006, Google Inc.
-Copyright 2009 Google Inc.  All rights reserved.
-Copyright 2005, Google Inc.
+Copyright 2012 Google Inc. All rights reserved.
+Copyright 2014 Google Inc. All rights reserved.
+Copyright 2019 Google Inc. All rights reserved.
+Copyright 2008 Google Inc. All Rights Reserved.
+copyright = u"2008, Google LLC"
+Copyright 2017 Google Inc. All rights reserved.
 Copyright 2008 Google Inc.
-Copyright 2015, Google Inc.
-Copyright (C) 1996-2015 Free Software Foundation, Inc.
-Copyright (c) 2007-2010 Baptiste Lepilleur
-Copyright 2007 Neal Norwitz
-Copyright 2007 Google Inc.
-Copyright 2008 Google Inc.  All Rights Reserved.
-Copyright 2014 Google Inc.  All rights reserved.
-Copyright 2015 Google Inc.  All rights reserved.
+Copyright 2015 Google Inc. All rights reserved.
+Copyright 2019 Google Inc. All rights reserved.
 Copyright (c) 2006, Google Inc.
-Copyright 2012 Google Inc.  All rights reserved.
-Copyright 2005 Google Inc.
-Copyright 2010 Google Inc.  All Rights Reserved.
-Copyright 2010, Google Inc.
-Copyright 2005 Google Inc. All Rights Reserved.
+Copyright (c) 2007-2010 Baptiste Lepilleur
+Copyright 2017 Google Inc. All rights reserved.
+Copyright 2015 Google Inc. All rights reserved.
+Copyright 2018 Google Inc. All rights reserved.
 Copyright 2009 Google Inc. All rights reserved.
-Copyright 2009 Google Inc. All Rights Reserved.
+Copyright 2007-2011 Baptiste Lepilleur Distributed under MIT license, or public domain if desired and recognized in your jurisdiction.
+Copyright 2011 Baptiste Lepilleur Distributed under MIT license, or public domain if desired and recognized in your jurisdiction.
+<Copyright>Copyright 2015, Google Inc.</Copyright>
+Copyright 2019 Google LLC. All rights reserved.
+Copyright 2016 Google Inc. All rights reserved.
+Copyright 2005 Google Inc.
+Copyright 2016 Google Inc. All rights reserved.
 
 
 License: BSD 3-Clause License
