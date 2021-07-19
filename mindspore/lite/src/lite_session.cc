@@ -653,6 +653,12 @@ int LiteSession::Init(const Context *context) {
   if (context->delegate != nullptr) {
     delegate_ = context->delegate;
   }
+  ms_context_ = MSContextFromContext(context);
+  if (ms_context_ == nullptr) {
+    MS_LOG(ERROR) << "transfer context to ms context failed.";
+    is_running_.store(false);
+    return RET_NULL_PTR;
+  }
 #if SUPPORT_NPU
   if (delegate_ == nullptr && context_->IsNpuEnabled()) {
     delegate_ = std::shared_ptr<NPUDelegate>(new (std::nothrow) NPUDelegate(context_->GetNpuInfo()));
@@ -664,7 +670,7 @@ int LiteSession::Init(const Context *context) {
 #endif
 #if GPU_TENSORRT
   if (delegate_ == nullptr && context_->IsGpuEnabled()) {
-    delegate_ = std::shared_ptr<TensorRTDelegate>(new (std::nothrow) TensorRTDelegate());
+    delegate_ = std::shared_ptr<TensorRTDelegate>(new (std::nothrow) TensorRTDelegate(ms_context_));
     if (delegate_ == nullptr) {
       MS_LOG(ERROR) << "New tensorrt delegate_ failed";
       return RET_ERROR;
@@ -693,12 +699,6 @@ int LiteSession::Init(const Context *context) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
     is_running_.store(false);
     return ret;
-  }
-  ms_context_ = MSContextFromContext(context);
-  if (ms_context_ == nullptr) {
-    MS_LOG(ERROR) << "transfer context to ms context failed.";
-    is_running_.store(false);
-    return RET_NULL_PTR;
   }
   is_running_.store(false);
   return RET_OK;

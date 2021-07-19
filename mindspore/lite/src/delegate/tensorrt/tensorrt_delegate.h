@@ -18,11 +18,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include "include/api/delegate.h"
 #include "src/delegate/tensorrt/tensorrt_subgraph.h"
 #include "include/api/kernel.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "include/api/context.h"
 
 namespace mindspore::lite {
 typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
@@ -31,7 +33,7 @@ typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
 
 class TensorRTDelegate : public Delegate {
  public:
-  TensorRTDelegate() = default;
+  explicit TensorRTDelegate(mindspore::Context *context) : context_(context) {}
 
   ~TensorRTDelegate() override = default;
 
@@ -46,6 +48,10 @@ class TensorRTDelegate : public Delegate {
                                         KernelIter end);
 
   std::map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
+
+  mindspore::Context *context_;
+
+  std::shared_ptr<GPUDeviceInfo> device_info_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
