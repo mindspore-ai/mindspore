@@ -112,7 +112,7 @@ int HttpClient::ReadHeaderDoneCallback(struct evhttp_request *request, void *arg
     MS_LOG(DEBUG) << "The key:" << header->key << ",The value:" << header->value;
     std::string len = "Content-Length";
     if (!strcmp(header->key, len.c_str())) {
-      handler->set_content_len(strtouq(header->value, nullptr, 10));
+      handler->set_content_len(strtouq(header->value, nullptr, kBase));
       handler->InitBodySize();
     }
   }
@@ -132,7 +132,7 @@ void HttpClient::ReadChunkDataCallback(struct evhttp_request *request, void *arg
   }
 }
 
-void HttpClient::RequestErrorCallback(enum evhttp_request_error error, void *arg) {
+void HttpClient::RequestErrorCallback(evhttp_request_error error, void *arg) {
   MS_EXCEPTION_IF_NULL(arg);
   auto handler = static_cast<HttpMessageHandler *>(arg);
   MS_LOG(ERROR) << "The request failed, the error is:" << error;

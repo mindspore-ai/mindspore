@@ -338,8 +338,8 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const NodeRol
   uint64_t rank_request_id = NextExpectedRankRequestId(rank_id);
   receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = false;
   if (received_data_.count(std::make_pair(rank_id, rank_request_id)) > 0) {
-    auto res = received_data_[std::make_pair(rank_id, rank_request_id)];
-    *output = res;
+    auto res_output = received_data_[std::make_pair(rank_id, rank_request_id)];
+    *output = res_output;
     received_data_.erase(std::make_pair(rank_id, rank_request_id));
     receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
     MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
