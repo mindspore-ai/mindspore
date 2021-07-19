@@ -67,7 +67,7 @@ def train():
     for i in range(0, args.epochs):
         cur_lr = args.lr / (2 ** ((i + 1) // 200))
         lr.extend([cur_lr] * step_size)
-    opt = nn.Adam(net_m.trainable_params(), learning_rate=lr, loss_scale=1024.0)
+    opt = nn.Adam(net_m.trainable_params(), learning_rate=lr, loss_scale=args.loss_scale)
     loss = nn.L1Loss()
     loss_scale_manager = DynamicLossScaleManager(init_loss_scale=args.init_loss_scale, \
              scale_factor=2, scale_window=1000)

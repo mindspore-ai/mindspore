@@ -22,7 +22,6 @@ parser = argparse.ArgumentParser(description='RCAN')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed')
 
-
 # Data specifications
 parser.add_argument('--dir_data', type=str, default='/cache/data/',
                     help='dataset directory')
@@ -78,6 +77,8 @@ parser.add_argument('--test_only', action='store_true',
 # Optimization specifications
 parser.add_argument('--lr', type=float, default=1e-5,
                     help='learning rate')
+parser.add_argument('--loss_scale', type=float, default=1024.0,
+                    help='scaling factor for optim')
 parser.add_argument('--init_loss_scale', type=float, default=65536.,
                     help='scaling factor')
 parser.add_argument('--decay', type=str, default='200',
