@@ -40,4 +40,4 @@ python ${PROJECT_DIR}/../eval.py \
     --device_target=$device_target \
     --device_id=0 \
     --model_dir=$model_dir \
-    --data_dir=$data_dir > log.txt 2>&1 &
+    --data_dir=$data_dir > eval_log.txt 2>&1 &
