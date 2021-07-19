@@ -4189,8 +4189,8 @@ class ScatterSub(_ScatterOp):
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterSub()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_sub = ops.ScatterSub()
+        >>> output = scatter_sub(input_x, indices, updates)
         >>> print(output)
         [[ -1.  -1.  -1.]
          [-19. -19. -19.]]
@@ -4206,8 +4206,8 @@ class ScatterSub(_ScatterOp):
         >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterSub()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_sub = ops.ScatterSub()
+        >>> output = scatter_sub(input_x, indices, updates)
         >>> print(output)
         [[ -3.  -3.  -3.]
          [-17. -17. -17.]]
@@ -4223,8 +4223,8 @@ class ScatterSub(_ScatterOp):
         >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterSub()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_sub = ops.ScatterSub()
+        >>> output = scatter_sub(input_x, indices, updates)
         >>> print(output)
         [[ -8.  -8.  -8.]
          [-12. -12. -12.]]
@@ -4291,8 +4291,8 @@ class ScatterMul(_ScatterOp):
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterMul()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_mul = ops.ScatterMul()
+        >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[  1.   1.   1.]
          [378. 378. 378.]]
@@ -4308,8 +4308,8 @@ class ScatterMul(_ScatterOp):
         >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterMul()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_mul = ops.ScatterMul()
+        >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[  3.   3.   3.]
          [126. 126. 126.]]
@@ -4325,8 +4325,8 @@ class ScatterMul(_ScatterOp):
         >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterMul()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_mul = ops.ScatterMul()
+        >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[ 7.  7.  7.]
          [54. 54. 54.]]
@@ -4394,8 +4394,8 @@ class ScatterDiv(_ScatterOp):
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterDiv()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_div = ops.ScatterDiv()
+        >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[105. 105. 105.]
          [  3.   3.   3.]]
@@ -4412,8 +4412,8 @@ class ScatterDiv(_ScatterOp):
         >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterDiv()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_div = ops.ScatterDiv()
+        >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[35. 35. 35.]
          [ 9.  9.  9.]]
@@ -4430,8 +4430,8 @@ class ScatterDiv(_ScatterOp):
         >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_add = ops.ScatterDiv()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> scatter_div = ops.ScatterDiv()
+        >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[21. 21. 21.]
          [15. 15. 15.]]
@@ -4468,7 +4468,7 @@ class ScatterNdAdd(_ScatterNdOp):
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
           The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -4493,8 +4493,8 @@ class ScatterNdAdd(_ScatterNdOp):
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-        >>> scatter_nd_sub = ops.ScatterNdAdd()
-        >>> output = scatter_nd_sub(input_x, indices, updates)
+        >>> scatter_nd_add = ops.ScatterNdAdd()
+        >>> output = scatter_nd_add(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]
           [2 2 2 2]

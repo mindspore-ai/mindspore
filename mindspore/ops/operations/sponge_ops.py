@@ -28,6 +28,10 @@ class BondForce(PrimitiveWithInfer):
     Calculate the force exerted by the simple harmonic bond on the corresponding atoms.
     Assume the number of harmonic bonds is m and the number of atoms is n.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
 
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
@@ -41,16 +45,23 @@ class BondForce(PrimitiveWithInfer):
         bond_numbers(int32): the number of harmonic bonds m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the first atom index of each bond.
-        - **atom_b** (Tensor, int32) - [m,], the second atom index of each bond.
-        - **bond_k** (Tensor, float32) - [m,], the force constant of each bond.
-        - **bond_r0** (Tensor, float32) - [m,], the equlibrium length of each bond.
+          The data type is float32  and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The first atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The second atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **bond_k** (Tensor) - The force constant of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **bond_r0** (Tensor) - The equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (float32 Tensor) - [n, 3], the force felt by each atom.
+        - **frc_f** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -102,6 +113,10 @@ class BondEnergy(PrimitiveWithInfer):
     Calculate the harmonic potential energy between each bonded atom pair.
     Assume our system has n atoms and m harmonic bonds.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
 
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
@@ -115,16 +130,23 @@ class BondEnergy(PrimitiveWithInfer):
         bond_numbers(int32): the number of harmonic bonds m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the first atom index of each bond.
-        - **atom_b** (Tensor, int32) - [m,], the second atom index of each bond.
-        - **bond_k** (Tensor, float32) - [m,], the force constant of each bond.
-        - **bond_r0** (Tensor, float32) - [m,], the equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The first atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The second atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **bond_k** (Tensor) - The force constant of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **bond_r0** (Tensor) - The equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **bond_ene** (Tensor, float32) - [m,], the harmonic potential energy for each bond.
+        - **bond_ene** (Tensor) - The harmonic potential energy for each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -179,18 +201,28 @@ class BondAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator BondEnergy().
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms n.
         bond_numbers(int32): the number of harmonic bonds m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the first atom index of each bond.
-        - **atom_b** (Tensor, int32) - [m,], the second atom index of each bond.
-        - **bond_k** (Tensor, float32) - [m,], the force constant of each bond.
-        - **bond_r0** (Tensor, float32) - [m,], the equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The second atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **bond_k** (Tensor) - The force constant of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **bond_r0** (Tensor) - The equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
         - **atom_ene** (Tensor, float32) - [n,], the accumulated potential energy for each atom.
@@ -246,18 +278,28 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator BondForce() and BondEnergy().
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms n.
         bond_numbers(int32): the number of harmonic bonds m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the first atom index of each bond.
-        - **atom_b** (Tensor, int32) - [m,], the second atom index of each bond.
-        - **bond_k** (Tensor, float32) - [m,], the force constant of each bond.
-        - **bond_r0** (Tensor, float32) - [m,], the equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The second atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **bond_k** (Tensor) - The force constant of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **bond_r0** (Tensor) - The equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
         - **frc_f** (Tensor, float32) - [n, 3], same as operator BondForce().
@@ -317,6 +359,11 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
     bond for each atom together.
 
     The calculation formula of the force part is the same as operator BondForce().
+
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     The Virial part is as follows:
 
     .. math::
@@ -332,17 +379,25 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         bond_numbers(int32): the number of harmonic bonds m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the first atom index of each bond.
-        - **atom_b** (Tensor, int32) - [m,], the second atom index of each bond.
-        - **bond_k** (Tensor, float32) - [m,], the force constant of each bond.
-        - **bond_r0** (Tensor, float32) - [m,], the equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The second atom index of each bond.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **bond_k** (Tensor) - The force constant of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **bond_r0** (Tensor) - The equlibrium length of each bond.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], same as operator BondForce().
-        - **atom_v** (Tensor, float32) - [n,], the accumulated virial coefficient for each atom.
+        - **frc_f** (Tensor) - Same as operator BondForce().
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_v** (Tensor) - The accumulated virial coefficient for each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -398,28 +453,44 @@ class DihedralForce(PrimitiveWithInfer):
     on the corresponding atoms. Assume the number of dihedral terms is m and
     the number of atoms is n.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (int32) - the number of dihedral terms m.
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinates
-          value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+        - **dihedral_numbers** (Scalar) - The number of dihedral terms m.
+          The data type is int32.
+        - **uint_crd_f** (Tensor) - The unsigned int coordinates
+          value of each atom. The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each dihedral.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd atom index of each dihedral.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each dihedral.
-        - **atom_d** (Tensor, int32) - [m,], the 4th atom index of each dihedral.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tensor) - The 3rd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_d** (Tensor) - The 4th atom index of each dihedral.
           4 atoms are connected in the form a-b-c-d.
-        - **ipn** (Tensor, int32) - [m,], the period of dihedral angle of each dihedral.
-        - **pk** (Tensor, float32) - [m,], the force constant of each dihedral.
-        - **gamc** (Tensor, float32) - [m,], k*cos(phi_0) of each dihedral.
-        - **gams** (Tensor, float32) - [m,], k*sin(phi_0) of each dihedral.
-        - **pn** (Tensor, float32) - [m,], the floating point form of ipn.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **ipn** (Tensor) - The period of dihedral angle of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **pk** (Tensor) - The force constant of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **gamc** (Tensor) - k*cos(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **gams** (Tensor) - k*sin(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **pn** (Tensor) - The floating point form of ipn.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **frc_f** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -486,29 +557,45 @@ class DihedralEnergy(PrimitiveWithInfer):
     Calculate the potential energy caused by dihedral terms for each 4-atom pair.
     Assume our system has n atoms and m dihedral terms.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (int32) - the number of dihedral terms m.
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinates
+        - **dihedral_numbers** (Scalar) - the number of dihedral terms m.
+          The data type is int32.
+        - **uint_crd_f** (Tensor) - The unsigned int coordinates
           value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each dihedral.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd atom index of each dihedral.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each dihedral.
-        - **atom_d** (Tensor, int32) - [m,], the 4th atom index of each dihedral.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tensor) - The 3rd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_d** (Tensor) - The 4th atom index of each dihedral.
           4 atoms are connected in the form a-b-c-d.
-        - **ipn** (Tensor, int32) - [m,], the period of dihedral angle of each dihedral.
-        - **pk** (Tensor, float32) - [m,], the force constant of each dihedral.
-        - **gamc** (Tensor, float32) - [m,], k*cos(phi_0) of each dihedral.
-        - **gams** (Tensor, float32) - [m,], k*sin(phi_0) of each dihedral.
-        - **pn** (Tensor, float32) - [m,], the floating point form of ipn.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **ipn** (Tensor) - The period of dihedral angle of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **pk** (Tensor) - The force constant of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **gamc** (Tensor) - k*cos(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **gams** (Tensor) - k*sin(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **pn** (Tensor) - The floating point form of ipn.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [m,], the potential energy for each
-          dihedral term.
+        - **ene** (Tensor) - The potential energy for each
+          dihedral term. The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -575,31 +662,45 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
     Add the potential energy caused by dihedral terms to the total potential
     energy of each atom.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     The calculation formula is the same as operator DihedralEnergy().
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (int32) - the number of dihedral terms m.
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinates
-          value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+        - **dihedral_numbers** (Scalar) - the number of dihedral terms m.
+          The data type is int32.
+        - **uint_crd_f** (Tensor) - The unsigned int coordinates
+          value of each atom. The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each dihedral.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd atom index of each dihedral.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each dihedral.
-        - **atom_d** (Tensor, int32) - [m,], the 4th atom index of each dihedral.
-          4 atoms are connected in the form a-b-c-d.
-        - **ipn** (Tensor, int32) - [m,], the period of dihedral angle of each dihedral.
-        - **pk** (Tensor, float32) - [m,], the force constant of each dihedral.
-        - **gamc** (Tensor, float32) - [m,], k*cos(phi_0) of each dihedral.
-        - **gams** (Tensor, float32) - [m,], k*sin(phi_0) of each dihedral.
-        - **pn** (Tensor, float32) - [m,], the floating point form of ipn.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tenso) - The 3rd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_d** (Tensor) - The 4th atom index of each dihedral.
+          4 atoms are connected in the form a-b-c-d. The data type is int32 and the shape is :math:`(m,)`.
+        - **ipn** (Tensor) - The period of dihedral angle of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **pk** (Tensor) - The force constant of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **gamc** (Tensor) - k*cos(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **gams** (Tensor) - k*sin(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **pn** (Tensor) - The floating point form of ipn.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [n,], the accumulated potential
-          energy for each atom.
+        - **ene** (Tensor) - The accumulated potential
+          energy for each atom. The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -668,29 +769,45 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator DihedralForce() and DihedralEnergy().
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
 
     Inputs:
-        - **dihedral_numbers** (int32) - the number of dihedral terms m.
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinates
-          value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+        - **dihedral_numbers** (Scalar) - the number of dihedral terms m.
+          The data type is int32.
+        - **uint_crd_f** (Tensor) - The unsigned int coordinates
+          value of each atom. The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each dihedral.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd atom index of each dihedral.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each dihedral.
-        - **atom_d** (Tensor, int32) - [m,], the 4th atom index of each dihedral.
-          4 atoms are connected in the form a-b-c-d.
-        - **ipn** (Tensor, int32) - [m,], the period of dihedral angle of each dihedral.
-        - **pk** (Tensor, float32) - [m,], the force constant of each dihedral.
-        - **gamc** (Tensor, float32) - [m,], k*cos(phi_0) of each dihedral.
-        - **gams** (Tensor, float32) - [m,], k*sin(phi_0) of each dihedral.
-        - **pn** (Tensor, float32) - [m,], the floating point form of ipn.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tenso) - The 3rd atom index of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_d** (Tensor) - The 4th atom index of each dihedral.
+          4 atoms are connected in the form a-b-c-d. The data type is int32 and the shape is :math:`(m,)`.
+        - **ipn** (Tensor) - The period of dihedral angle of each dihedral.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **pk** (Tensor) - The force constant of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **gamc** (Tensor) - k*cos(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **gams** (Tensor) - k*sin(phi_0) of each dihedral.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **pn** (Tensor) - The floating point form of ipn.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], same as operator DihedralForce().
-        - **ene** (Tensor, float32) - [n,], same as operator DihedralAtomEnergy().
+        - **frc_f** (Tensor) - Same as operator DihedralForce().
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **ene** (Tensor) - Same as operator DihedralAtomEnergy().
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -759,6 +876,10 @@ class AngleForce(PrimitiveWithInfer):
     corresponding atoms. Assume the number of angles is m and the
     number of atoms is n.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
     .. math::
@@ -778,17 +899,25 @@ class AngleForce(PrimitiveWithInfer):
         angle_numbers(int32): the number of angles m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each angle.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd and the central atom index of each angle.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each angle.
-        - **angle_k** (Tensor, float32) - [m,], the force constant for each angle.
-        - **angle_theta0** (Tensor, float32) - [m,], the equilibrium position value for each angle.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd and the central atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tensor) - The 3rd atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **angle_k** (Tensor) - The force constant for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **angle_theta0** (Tensor) - The equilibrium position value for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **frc_f** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -842,6 +971,10 @@ class AngleEnergy(PrimitiveWithInfer):
     Calculate the energy caused by 3-atoms angle term. Assume the number of angles is m and the
     number of atoms is n.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
     .. math::
@@ -855,17 +988,25 @@ class AngleEnergy(PrimitiveWithInfer):
         angle_numbers(int32): the number of angles m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each angle.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd and the central atom index of each angle.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each angle.
-        - **angle_k** (Tensor, float32) - [m,], the force constant for each angle.
-        - **angle_theta0** (Tensor, float32) - [m,], the equilibrium position value for each angle.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd and the central atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tensor) - The 3rd atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **angle_k** (Tensor) - The force constant for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **angle_theta0** (Tensor) - The equilibrium position value for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [m,], the potential energy for each angle term.
+        - **ene** (Tensor) - The potential energy for each angle term.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -922,21 +1063,33 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator AngleEnergy().
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         angle_numbers(int32): the number of angles m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each angle.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd and the central atom index of each angle.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each angle.
-        - **angle_k** (Tensor, float32) - [m,], the force constant for each angle.
-        - **angle_theta0** (Tensor, float32) - [m,], the equilibrium position value for each angle.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd and the central atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tensor) - The 3rd atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **angle_k** (Tensor) - The force constant for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **angle_theta0** (Tensor) - The equilibrium position value for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [n,], the accumulated potential energy for each atom.
+        - **ene** (Tensor) - The accumulated potential energy for each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -993,22 +1146,35 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator AngleForce() and AngleEnergy().
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         angle_numbers(int32): the number of angles m.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler_f** (Tensor, float32) - [3,], the 3-D scale factor between
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler_f** (Tensor) - The 3-D scale factor between
           the real space float coordinates and the unsigned int coordinates.
-        - **atom_a** (Tensor, int32) - [m,], the 1st atom index of each angle.
-        - **atom_b** (Tensor, int32) - [m,], the 2nd and the central atom index of each angle.
-        - **atom_c** (Tensor, int32) - [m,], the 3rd atom index of each angle.
-        - **angle_k** (Tensor, float32) - [m,], the force constant for each angle.
-        - **angle_theta0** (Tensor, float32) - [m,], the equilibrium position value for each angle.
+          The data type is float and the shape is :math:`(3,)`.
+        - **atom_a** (Tensor) - The 1st atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_b** (Tensor) - The 2nd and the central atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_c** (Tensor) - The 3rd atom index of each angle.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **angle_k** (Tensor) - The force constant for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **angle_theta0** (Tensor) - The equilibrium position value for each angle.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], same as operator AngleForce().
-        - **ene** (Tensor, float) - [n,], same as operator AngleAtomEnergy().
+        - **frc_f** (Tensor) - same as operator AngleForce().
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **ene** (Tensor) - same as operator AngleAtomEnergy().
+          The data type is float and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1068,6 +1234,10 @@ class Dihedral14LJForce(PrimitiveWithInfer):
     there will be q = P*(P+1)/2 types of possible Lennard-Jones interactions
     for all kinds of atom pairs.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
     .. math::
@@ -1078,21 +1248,29 @@ class Dihedral14LJForce(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **lj_scale_factor** (Tensor, float32) - [m,], the scale factor for the
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJ_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength_f** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
-        - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
-          q is the number of atom pair.
-        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones shceme of each atom pair type.
-          q is the number of atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **frc_f** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -1159,6 +1337,10 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
     Calculate the Lennard-Jones part of 1,4 dihedral energy correction for
     each necessary dihedral terms on the corresponding atoms.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
         dr = (x_a-x_b, y_a-y_b, z_a-z-b)
     .. math::
@@ -1169,22 +1351,30 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **lj_scale_factor** (Tensor, float32) - [m,], the scale factor for the
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJ_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength_f** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
-        - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
-          q is the number of atom pair.
-        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones shceme of each atom pair type.
-          q is the number of atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [m,], the Lennard-Jones potential
+        - **ene** (Tensor) - The Lennard-Jones potential
           energy correction for each necessary dihedral 1,4 term.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1251,6 +1441,10 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
     Calculate the Lennard-Jones part and the Coulomb part of force correction
     for each necessary dihedral 1,4 terms.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     The calculation formula of the Lennard-Jones part is the same as operator
     Dihedral14LJForce(), and the Coulomb part is as follows:
 
@@ -1264,20 +1458,28 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **lj_scale_factor** (Tensor, float32) - [m,], the scale factor for the
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJ_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength_f** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
-        - **cf_scale_factor** (Tensor, float) - [m,], the scale factor for the
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-        - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
-          q is the number of atom pair.
-        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones shceme of each atom pair type.
-          q is the number of atom pair.
+          The data type is float and the shape is :math:`(m,)`.
+        - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
         - **frc_f** (Tensor, float) - [n, 3], the force felt by each atom.
@@ -1356,29 +1558,43 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
     :class:`Dihedral14LJForceWithDirectCF`, and the energy correction part is the same
     as operator :class:`Dihedral14LJEnergy` and :class:`Dihedral14CFEnergy`.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJ_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength_f** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
         - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **lj_scale_factor** (Tensor, float32) - [m,], the scale factor for the
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
-        - **cf_scale_factor** (Tensor, float) - [m,], the scale factor for the
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-        - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
-          q is the number of atom pair.
-        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones shceme of each atom pair type.
-          q is the number of atom pair.
+          The data type is float and the shape is :math:`(m,)`.
+        - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], the force felt by each atom.
-        - **atom_energy** (Tensor, float32) - [n,], the accumulated potential energy for each atom.
+        - **frc_f** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_energy** (Tensor) - The accumulated potential energy for each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1451,19 +1667,32 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator Dihedral14LJEnergy().
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **lj_scale_factor** (Tensor, float32) - [m,], the scale factor for the
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJ_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength_f** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **cf_scale_factor** (Tensor, float) - [m,], the scale factor for the
+          Coulomb part of force correction for each dihedral 1,4 terms.
         - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair.
         - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones shceme of each atom pair type.
@@ -1538,6 +1767,10 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
     Calculate the Coulumb part of 1,4 dihedral energy correction for
     each necessary dihedral terms on the corresponding atoms.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
 
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
@@ -1550,17 +1783,25 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **cf_scale_factor** (Tensor, float) - [m,], the scale factor for the
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJ_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength_f** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
+          The data type is float and the shape is :math:`(m,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [m,], the accumulated potential energy of each atom.
+        - **ene** (Tensor) - The accumulated potential energy of each atom.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1624,22 +1865,34 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     The calculation formula is the same as operator :class:`Dihedral14CFEnergy`.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength_f** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **cf_scale_factor** (Tensor, float) - [m,], the scale factor for the
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJ_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength_f** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
+          The data type is float and the shape is :math:`(m,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [n,], the accumulated potential energy of each atom.
+        - **ene** (Tensor) - The accumulated potential energy of each atom.
+          The data type is float32 and the shape is :math:`(n,]`
 
 
     Supported Platforms:
@@ -1708,6 +1961,10 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
     scheme for efficient configurational sampling for classical/quantum canonical
     ensembles via molecular dynamics. DOI: 10.1063/1.4991621.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         float4_numbers(int32): total length to store random numbers.
         atom_numbers(int32): the number of atoms n.
@@ -1720,15 +1977,20 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
         is_max_velocity(int32): whether the max velocity control is open or not.
 
     Inputs:
-        - **mass_inverse** (Tensor, float32) - [n,], the inverse value of mass of each atom.
-        - **sqrt_mass** (Tensor, float32) - [n,], the inverse square root value
-          of effect mass in Liu's dynamics of each atom.
+        - **mass_inverse** (Tensor) - The inverse value of mass of each atom.
+          The data type is float32 and the shape is :math:`(n,]`
+        - **sqrt_mass** (Tensor) - The inverse square root value
+          of effect mass in Liu's dynamics of each atom. The data type is float32 and the shape is :math:`(n,]`
 
     Outputs:
-        - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **frc** (Tensor, float32) - [n, 3], the force felt by each atom.
-        - **acc** (Tensor, float32) - [n, 3], the acceleration of each atom.
+        - **vel** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
+        - **acc** (Tensor) - The acceleration of each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
 
     Supported Platforms:
         ``GPU``
@@ -1786,6 +2048,10 @@ class PMEReciprocalForce(PrimitiveWithInfer):
     can be found in this paper: A Smooth Particle Mesh Ewald Method. DOI:
     10.1063/1.470117.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms, n.
         beta(float32): the PME beta parameter, determined by the
@@ -1798,11 +2064,14 @@ class PMEReciprocalForce(PrimitiveWithInfer):
         box_length_2(float32): the value of boxlength idx 2
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinates value of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
+        - **uint_crd** (Tensor) - [n, 3], the unsigned int coordinates value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3]`
+        - **charge** (Tensor) - [n,], the charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,]`
 
     Outputs:
-        - **force** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **force** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
 
     Supported Platforms:
         ``GPU``
@@ -1862,6 +2131,10 @@ class PMEExcludedForce(PrimitiveWithInfer):
     PME(Particle Meshed Ewald) method. Assume the number of atoms is
     n, and the length of excluded list is E.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms, n.
         excluded_numbers(int32): the length of excluded list, E.
@@ -1869,19 +2142,22 @@ class PMEExcludedForce(PrimitiveWithInfer):
           non-bond cutoff value and simulation precision tolerance.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinates value of each atom.
-        - **scaler** (Tensor, float32) - [3,], the scale factor between real space
-          coordinates and its unsigned int value.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
-        - **excluded_list_start** (Tensor, int32) - [n,], the start excluded index
-          in excluded list for each atom.
-        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
-          list of each atom. E is the number of excluded atoms.
-        - **excluded_atom_numbers** (Tensor, int32) - [n,], the number of atom excluded
-          in excluded list for each atom.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3]`
+        - **scaler** (Tensor) - The scale factor between real space
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,]`
+        - **excluded_list_start** (Tensor) - The start excluded index
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+        - **excluded_list** (Tensor) - The contiguous join of excluded
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+        - **excluded_atom_numbers** (Tensor) - The number of atom excluded
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
 
     Outputs:
-        - **force** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **force** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3]`
 
     Supported Platforms:
         ``GPU``
@@ -1939,6 +2215,10 @@ class PMEEnergy(PrimitiveWithInfer):
     """
     Calculate the Coulumb energy of the system using PME method.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
 
         E = sum_{ij} q_iq_j/r_{ij}
@@ -1957,24 +2237,30 @@ class PMEEnergy(PrimitiveWithInfer):
 
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinates value of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
-        - **nl_numbers** - (Tensor, int32) - [n,], the each atom.
-        - **nl_serial** - (Tensor, int32) - [n, 800], the neighbor list of each atom, the max number is 800.
-        - **scaler** (Tensor, float32) - [3,], the scale factor between real space
-          coordinates and its unsigned int value.
-        - **excluded_list_start** (Tensor, int32) - [n,], the start excluded index
-          in excluded list for each atom.
-        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded
-          list of each atom. E is the number of excluded atoms.
-        - **excluded_atom_numbers** (Tensor, int32) - [n,], the number of atom excluded
-          in excluded list for each atom.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3]`
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,]`
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n, 3]`
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800]`
+        - **scaler** (Tensor) - The scale factor between real space
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+        - **excluded_list_start** (Tensor) - The start excluded index
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+        - **excluded_list** (Tensor) - The contiguous join of excluded
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+        - **excluded_atom_numbers** (Tensor) - The number of atom excluded
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
 
     Outputs:
-        - **reciprocal_ene** (float32) - the reciprocal term of PME energy.
-        - **self_ene** (float32) - the self term of PME energy.
-        - **direct_ene** (float32) - the direct term of PME energy.
-        - **correction_ene** (float32) - the correction term of PME energy.
+        - **reciprocal_ene** (Scalar) - the reciprocal term of PME energy.
+          The data type is float32.
+        - **self_ene** (Scalar) - the self term of PME energy.
+          The data type is float32.
+        - **direct_ene** (Scalar) - the direct term of PME energy. The data type is float32.
+        - **correction_ene** (Scalar) - the correction term of PME energy. The data type is float32.
 
     Supported Platforms:
         ``GPU``
@@ -2063,6 +2349,9 @@ class LJEnergy(PrimitiveWithInfer):
     q = P*(P+1)/2 types of possible Lennard-Jones interactions for all kinds
     of atom pairs.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
 
     .. math::
 
@@ -2076,21 +2365,28 @@ class LJEnergy(PrimitiveWithInfer):
         cutoff_square(float32): the square value of cutoff.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJtype** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
-        - **scaler** (Tensor, float32) - [3,], the scale factor between real
-          space coordinate and its unsigned int value.
-        - **nl_numbers** - (Tensor, int32) - [n,], the each atom.
-        - **nl_serial** - (Tensor, int32) - [n, 800], the neighbor list of each atom, the max number is 800.
-        - **d_LJ_A** (Tensor, float32) - [q,], the Lennard-Jones A coefficient of each kind of atom pair.
-          q is the number of atom pair.
-        - **d_LJ_B** (Tensor, float32) - [q,], the Lennard-Jones B coefficient of each kind of atom pair.
-          q is the number of atom pair.
+        - **uint_crd** (Tensor, uint32) - The unsigned int coordinate value of each atom.
+            The data type is uint32 and the shape is :math:`(n, 3]`
+        - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
+           The data type is int32 and the shape is :math:`(n,]`
+        - **charge** (Tensor) - The charge carried by each atom.
+           The data type is float32 and the shape is :math:`(n,]`
+        - **scaler** (Tensor) - The scale factor between real
+          space coordinate and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n,]`
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800)`.
+        - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **d_LJ_energy_atom** (Tensor, float32) - [n,], the Lennard-Jones potential energy of each atom.
-        - **d_LJ_energy_sum** (float32), the sum of Lennard-Jones potential energy of each atom.
+        - **d_LJ_energy_atom** (Tensor) - The Lennard-Jones potential energy of each atom.
+           The data type is float32 and the shape is :math:`(n,)`.
+        - **d_LJ_energy_sum** (Scalar), the sum of Lennard-Jones potential energy of each atom.
+          The data type is float32.
 
     Supported Platforms:
         ``GPU``
@@ -2151,6 +2447,10 @@ class LJForce(PrimitiveWithInfer):
     Calculate the Van der Waals interaction force described by Lennard-Jones
     potential energy for each atom.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     .. math::
 
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
@@ -2177,7 +2477,8 @@ class LJForce(PrimitiveWithInfer):
           q is the number of atom pair.
 
     outputs:
-        - **frc** (Tensor, float32) - [n, 3], the force felt by each atom.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -2240,26 +2541,37 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
     The calculation formula of Lennard-Jones part is the same as operator
     LJForce(), and the PME direct part is within PME method.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms, n.
         cutoff_square(float32): the square value of cutoff.
         pme_beta(float32): PME beta parameter, same as operator PMEReciprocalForce().
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJtype** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
-        - **scaler** (Tensor, float32) - [3,], the scale factor between real
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **scaler** (Tensor) - The scale factor between real
           space coordinate and its unsigned int value.
-        - **nl_numbers** - (Tensor, int32) - [n,], the each atom.
-        - **nl_serial** - (Tensor, int32) - [n, 800], the neighbor list of each atom, the max number is 800.
-        - **d_LJ_A** (Tensor, float32) - [q,], the Lennard-Jones A coefficient of each kind of atom pair.
-          q is the number of atom pair.
-        - **d_LJ_B** (Tensor, float32) - [q,], the Lennard-Jones B coefficient of each kind of atom pair.
-          q is the number of atom pair.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800)`.
+        - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **frc** (Tensor, float32), [n, 3], the force felt by each atom.
+        - **frc** (Tensor), The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -2407,6 +2719,10 @@ class NeighborListUpdate(PrimitiveWithInfer):
     grid is m, the maximum number of atoms in single atom's neighbor list
     is L, and the number of total atom in excluded list is E.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         grid_numbers(int32): the total number of grids divided.
         not_first_time(int32): whether to construct the neighbor
@@ -2427,31 +2743,49 @@ class NeighborListUpdate(PrimitiveWithInfer):
         max_neighbor_numbers(int32): The maximum number of neighbors. Default: 800.
 
     Inputs:
-        - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number of atoms in each grid bucket.
-        - **bucket** (Tensor, int32) - (Tensor,int32) - [G, m], the atom indices in each grid bucket.
-        - **crd** (Tensor, float32) - [n,], the coordinates of each atom.
-        - **box_length** (Tensor, float32) - [3,], the length of 3 dimensions of the simulation box.
-        - **grid_n** (Tensor, int32) - [3,], the number of grids divided of 3 dimensions of the simulation box.
-        - **grid_length_inverse** (float32) - the inverse value of grid length.
-        - **atom_in_grid_serial** (Tensor, int32) - [n,], the grid index for each atom.
-        - **old_crd** (Tensor, float32) - [n, 3], the coordinates before update of each atom.
-        - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the scale factor
+        - **atom_numbers_in_grid_bucket** (Tensor) - The number of atoms in each grid bucket.
+          The data type is int32 and the shape is :math:`(G,)`.
+        - **bucket** (Tensor) - The atom indices in each grid bucket.
+          The data type is int32 and the shape is :math:`(G, m)`.
+        - **crd** (Tensor) - The coordinates of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **box_length** (Tensor) - The length of 3 dimensions of the simulation box.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **grid_n** (Tensor) - The number of grids divided of 3 dimensions of the simulation box.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **grid_length_inverse** (Scalar) - the inverse value of grid length.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **atom_in_grid_serial** (Tensor) - The grid index for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **old_crd** (Tensor) - The coordinates before update of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd_to_uint_crd_cof** (Tensor) - The scale factor
           between the unsigned int value and the real space coordinates.
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinates value fo each atom.
-        - **gpointer** (Tensor, int32) - [G, 125], the 125 nearest neighbor grids (including self) of each grid.
-          G is the number of nearest neighbor grids.
-        - **nl_atom_numbers** (Tensor, int32) - [n,], the number of atoms in neighbor list of each atom.
-        - **nl_atom_serial** (Tensor, int32) - [n, L], the indices of atoms in neighbor list of each atom.
-        - **uint_dr_to_dr_cof** (Tensor, float32) - [3,], the scale factor between
-          the real space coordinates and the unsigned int value.
-        - **excluded_list_start** (Tensor, int32) - [n,], the start excluded index in excluded list for each atom.
-        - **excluded_numbers** (Tensor, int32) - [n,], the number of atom excluded in excluded list for each atom.
-        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded list of each atom.
-        - **need_refresh_flag** (Tensor, int32) - [n,], whether the neighbor list of each atom need update or not.
-        - **refresh_count** (Tensor, int32) - [1,], count how many iteration steps have passed since last update.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value fo each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **gpointer** (Tensor) - The 125 nearest neighbor grids (including self) of each grid.
+          G is the number of nearest neighbor grids. The data type is int32 and the shape is :math:`(G, 125)`.
+        - **nl_atom_numbers** (Tensor) - The number of atoms in neighbor list of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **nl_atom_serial** (Tensor) - The indices of atoms in neighbor list of each atom.
+          The data type is int32 and the shape is :math:`(n, L)`.
+        - **uint_dr_to_dr_cof** (Tensor) - The scale factor between
+          the real space coordinates and the unsigned int value. The data type is float32 and the shape is :math:`(3,)`.
+        - **excluded_list_start** (Tensor) - The start excluded index in excluded list for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **excluded_numbers** (Tensor) - The number of atom excluded in excluded list for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **excluded_list** (Tensor) - The contiguous join of excluded list of each atom.
+          The data type is int32 and the shape is :math:`(E,)`.
+        - **need_refresh_flag** (Tensor) - Whether the neighbor list of each atom need update or not.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **refresh_count** (Tensor) - Count how many iteration steps have passed since last update.
+          The data type is int32 and the shape is :math:`(n,)`.
 
     Outputs:
-        - **res** (float32)
+        - **res** (Scalar)
+          The data type is float32.
 
     Supported Platforms:
         ``GPU``
@@ -2600,31 +2934,44 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
     scheme for efficient configurational sampling for classical/quantum canonical
     ensembles via molecular dynamics. DOI: 10.1063/1.4991621.
 
-    Inputs:
-        - **float4_numbers** (int32) - total length to store random numbers.
-        - **atom_numbers** (int32) - the number of atoms n.
-        - **dt** (float32) - time step for finite difference.
-        - **half_dt** (float32) - half of time step for finite difference.
-        - **exp_gamma** (float32) - parameter in Liu's dynamic, equals
-          exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
-          dynamics.
-        - **max_velocity** (float32) - the upper limit of velocity, when the
-          veclocity overflows, scale it to the upper limit.
-        - **is_max_velocity** (int32) - whether the max velocity control is
-          open or not.
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
 
-        - **mass_inverse** (Tensor, float32) - [n,], the inverse value of
-          mass of each atom.
-        - **sqrt_mass** (Tensor, float32) - [n,], the inverse square root value
+    Inputs:
+        - **float4_numbers** (Scalar) - total length to store random numbers.
+          The data type is int32.
+        - **atom_numbers** (Scalar) - the number of atoms n.
+          The data type is int32.
+        - **dt** (Scalar) - time step for finite difference. The data type is float32.
+        - **half_dt** (Scalar) - half of time step for finite difference.
+          The data type is float32.
+        - **exp_gamma** (Scalar) - parameter in Liu's dynamic, equals
+          exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
+          dynamics. The data type is float32.
+        - **max_velocity** (Scalar) - the upper limit of velocity, when the
+          veclocity overflows, scale it to the upper limit. The data type is float32.
+        - **is_max_velocity** (Scalar) - whether the max velocity control is
+          open or not. The data type is int32.
+
+        - **mass_inverse** (Tensor) - The inverse value of
+          mass of each atom. The data type is float32 and the shape is :math:`(n,)`.
+        - **sqrt_mass** (Tensor) - The inverse square root value
           of effect mass in Liu's dynamics of each atom.
-        - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **frc** (Tensor, float32) - [n, 3], the force felt by each atom.
-        - **acc** (Tensor, float32) - [n, 3], the acceleration of each atom.
-        - **random force** (Tensor, float32) - [n, 3], the random forces.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **vel** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **acc** (Tensor) - The acceleration of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **random force** (Tensor) - The random forces.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **res** (float32)
+        - **res** (Scalar) - The data type is float32.
 
     Supported Platforms:
         ``GPU``
@@ -2703,6 +3050,10 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
     scheme for efficient configurational sampling for classical/quantum canonical
     ensembles via molecular dynamics. DOI: 10.1063/1.4991621.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms n.
         dt(float32): time step for finite difference.
@@ -2712,20 +3063,26 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
         dynamics.
 
     Inputs:
-        - **inverse_mass** (Tensor, float32) - [n,], the inverse value of
-          mass of each atom.
-        - **sqrt_mass_inverse** (Tensor, float32) - [n,], the inverse square root value
+        - **inverse_mass** (Tensor) - The inverse value of
+          mass of each atom. The data type is float32 and the shape is :math:`(n)`.
+        - **sqrt_mass_inverse** (Tensor) - The inverse square root value
           of effect mass in Liu's dynamics of each atom.
-        - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **frc** (Tensor, float32) - [n, 3], the force felt by each atom.
-        - **acc** (Tensor, float32) - [n, 3], the acceleration of each atom.
-        - **rand_state** (Tensor, float32) - [math.ceil(atom_numbers * 3.0 / 4.0) * 16, ], random state to generate
-          random force.
-        - **rand_frc** (Tensor, float32) - [n, 3], the random forces.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **vel** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **acc** (Tensor) - The acceleration of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **rand_state** (Tensor) - Random state to generate
+          random force. The data type is float32 and the shape is :math:`(math.ceil(atom_numbers * 3.0 / 4.0) * 16, )`.
+        - **rand_frc** (Tensor) - The random forces.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **output** (float32)
+        - **output** (Scalar) - The data type is float32.
 
     Supported Platforms:
         ``GPU``
@@ -2770,15 +3127,22 @@ class CrdToUintCrd(PrimitiveWithInfer):
     """
     Convert FP32 coordinate to Uint32 coordinate.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms n.
 
     Inputs:
-        - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the .
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
+        - **crd_to_uint_crd_cof** (Tensor) - The scale factor
+          between the unsigned int value and the real space coordinates.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **output** (uint32)
+        - **output** (Scalar) - The data type is uint32.
 
     Supported Platforms:
         ``GPU``
@@ -2809,12 +3173,16 @@ class MDIterationSetupRandState(PrimitiveWithInfer):
     """
     Convert FP32 coordinate to Uint32 coordinate.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         atom_numbers(int32): the number of atoms n.
         seed(int32): random seed.
 
     Outputs:
-        - **output** (uint32) random state.
+        - **output** (Scalar) random state. The data type is uint32
 
     Supported Platforms:
         ``GPU``
@@ -2844,24 +3212,32 @@ class TransferCrd(PrimitiveWithInfer):
     """
     Transfer the coordinates to angular and radial.
 
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+
     Args:
         start_serial(int32): the index start position.
         end_serial(int32): the index end position.
         number(int32): the length of angular and radial.
 
     Inputs:
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-          n is the number of atoms..
-        - **old_crd** (Tensor, float32) - [n, 3], the last coordinate of each atom.
-          n is the number of atoms.
-        - **box** (Tensor, float32) - [3,], the length of 3 dimensions of the simulation box.
+        - **crd** (Tensor) - The coordinate of each atom.
+          n is the number of atoms. The data type is float32 and the shape is :math:`(n, 3)`.
+        - **old_crd** (Tensor) - The last coordinate of each atom.
+          n is the number of atoms. The data type is float32 and the shape is :math:`(n, 3)`.
+        - **box** (Tensor) - The length of 3 dimensions of the simulation box.
+          The data type is float32 and the shape is :math:`(3,)`.
 
     Outputs:
-        - **radial** (Tensor, float32) - [number,], the array of radial transferred from coordinates.
-        - **angular** (Tensor, float32) - [number,], the array of angular transferred from coordinates.
-        - **nowarp_crd** (Tensor, float32) - [n, 3], the modified coordinate of each atom for
-          computing radial and angular.
-        - **box_map_times** (Tensor, int32) - [n, 3], the box map times for radial and  angular.
+        - **radial** (Tensor) - The array of radial transferred from coordinates.
+          The data type is float32 and the shape is :math:`(number,)`.
+        - **angular** (Tensor) - The array of angular transferred from coordinates.
+          The data type is float32 and the shape is :math:`(number,)`.
+        - **nowarp_crd** (Tensor) - The modified coordinate of each atom for
+          computing radial and angular. The data type is float32 and the shape is :math:`(n, 3)`.
+        - **box_map_times** (Tensor) - The box map times for radial and  angular.
+          The data type is int32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
