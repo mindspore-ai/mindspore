@@ -303,7 +303,7 @@ void GeneralReduction(bool small, size_t outer_size, size_t bound, size_t inner_
   if (std::is_same<T, half>::value) {
     fp16_flag = true;
   }
-  T init_K = small ? std::numeric_limits<T>::lowest() : std::numeric_limits<T>::lowest();
+  T init_K = small ? std::numeric_limits<T>::max() : std::numeric_limits<T>::lowest();
 
   if (bound <= kMaxThreadLoop) {
     ThreadReduction<T, S><<<GET_BLOCKS(block_num_limit), kBlockSize, 0, stream>>>(
