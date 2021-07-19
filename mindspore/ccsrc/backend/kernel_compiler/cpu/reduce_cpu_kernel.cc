@@ -79,6 +79,10 @@ template <typename T>
 bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   size_t input_size = inputs[0]->size / sizeof(T);
+  if (input_size == 0) {
+    MS_LOG(EXCEPTION) << "Input data size is 0.";
+  }
+
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
