@@ -47,60 +47,109 @@ function Run_Converter() {
     mkdir -p ${ms_models_path}
     fail=0
     # Convert mindspore train models:
-    local cfg_file_list=$1
-    for cfg_file in ${cfg_file_list[*]}; do
-        while read line; do
-            LFS=" " read -r -a line_array <<< ${line}
-            WEIGHT_QUANT=""
-            if [[ ${cfg_file##*/} =~ "transfer" ]]; then
-                model_prefix=${line_array[0]}'_head'
-                model_name=${line_array[0]}'_head'
-            else
-                model_prefix=${line_array[0]}'_train'
-                model_name=${line_array[0]}'_train'
+    while read line; do
+        LFS=" " read -r -a line_array <<< ${line}
+        parse_line convert
+        local model_prefix=${line_array[0]}_train
+        if [[ "$?" == "1" ]]; then continue; fi
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        if [[ "${enable_transfer}" == "1" ]]; then
+            model_prefix="${line_array[0]}_head"
+            model_name=${line_array[0]}'_head'
+        fi
+        if [[ ${check_convert} == "1" ]]; then
+            ms_file=$ms_models_path'/'$model_name'.ms'
+            if [ -f "$ms_file" ]; then
+                echo $model_name'.ms already exist, continue without convert'
+                continue
             fi
-            if [[ $model_name == \#* ]]; then
-              continue
-            fi
-            if [[ "${line_array[1]}" == "fp16" ]]; then
-                ms_file=$ms_models_path'/'$model_name'.ms'
-                if [ -f "$ms_file" ]; then
-                    echo $model_name'.ms already exist, continue without convert'
-                    continue
-                fi
-            fi
-            if [[ "${line_array[1]}" == "weight_quant" ]]; then
-                WEIGHT_QUANT="--quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0"
-                model_name=${line_array[0]}'_train_quant'
-            fi
-
+        fi
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+        ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
+        if [ $? = 0 ]; then
+            converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+            fail=1
+        fi
+        # If Transfer sesstion convert backbone model
+        if [[ "${enable_transfer}" == "1" ]]; then
+            model_prefix=${line_array[0]}'_bb'
+            model_name=${line_array[0]}'_bb'
             echo ${model_name} >> "${run_converter_log_file}"
-            echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
-            ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
+            echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}'.mindir --outputFile='${ms_models_path}'/'${model_name} ${WEIGHT_QUANT} >> "${run_converter_log_file}"
+            ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} ${WEIGHT_QUANT}
             if [ $? = 0 ]; then
                 converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
             else
                 converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
                 fail=1
             fi
-            # If Transfer sesstion convert backbone model
-            if [[ ${cfg_file##*/} =~ "transfer" ]]; then
-                model_prefix=${line_array[0]}'_bb'
-                model_name=${line_array[0]}'_bb'
-                echo ${model_name} >> "${run_converter_log_file}"
-                echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name} ${WEIGHT_QUANT} >> "${run_converter_log_file}"
-                ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} ${WEIGHT_QUANT}
-                if [ $? = 0 ]; then
-                    converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-                else
-                    converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-                    fail=1
-                fi
-            fi
-        done < ${cfg_file}
-    done
+        fi
+    done < ${models_ms_train_config}
     return ${fail}
 }
+
+function parse_line() {
+    i=1
+    loss_name=
+    enable_fp16="false"
+    virtual_batch="false"
+    accuracy_limit=0.5
+    ret=0
+    WEIGHT_QUANT=""
+    enable_transfer=0
+    suffix_print=""
+    check_convert=0
+    model_name=${line_array[0]}_train
+    while [[ $i < ${#line_array[@]} ]] ; do
+        case ${line_array[i]} in
+           "weight_quant")
+            model_name="${line_array[0]}_train_quant"
+            WEIGHT_QUANT="--quantType=WeightQuant --bitNum=8 --quantWeightSize=0 --quantWeightChannel=0"
+            ;;
+          "vb")
+            virtual_batch="true"
+            suffix_print="_virtual_batch"
+            check_convert=1
+            ;;
+          "loss_name")
+            i=$(($i+1))
+            loss_name=${line_array[i]}
+            ;;
+          "noarm32")
+            if [[ $1 == "arm32" ]]; then
+               run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
+               ret=1
+            fi
+            ;;
+          "transfer")
+             enable_transfer=1
+             ;;
+          "fp16")
+             if [[ "$1" == "arm64" ]]; then
+                enable_fp16="true"
+                suffix_print="_fp16"
+             elif [[ "$1" != "convert" ]]; then
+               ret=1
+             fi
+             check_convert=1
+            ;;
+          *)
+            check=`echo "${line_array[i]}" | grep -E '^\-?[0-9]*\.?[0-9]+$'`
+            if [ "${check}" != "" ] ; then
+                accuracy_limit=${line_array[i]}
+            fi
+            ;;
+        esac
+        i=$(($i+1))
+    done
+    return $ret
+}
+
 
 # Run on x86 platform:
 function Run_x86() {
@@ -109,98 +158,86 @@ function Run_x86() {
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib:./runtime/third_party/libjpeg-turbo/lib
     # Run mindspore converted train models:
     local fail=0
-    local cfg_file_list=$1
-    for cfg_file in ${cfg_file_list[*]}; do
-        while read line; do
-            local line_array
-            LFS=" " read -r -a line_array <<< ${line}
-            local model_prefix=${line_array[0]}
-            local model_name=${line_array[0]}'_train'
-            local accuracy_limit=0.5
-            local virtual_batch="false"
-            local suffix_print=""
-            local log_suffix="_train"
-            if [[ $model_name == \#* ]]; then
-              continue
-            fi
-            if [[ "${line_array[1]}" == "weight_quant" ]]; then
-                model_name=${line_array[0]}'_train_quant'
-                accuracy_limit=${line_array[2]}
-            elif [[ "${line_array[1]}" == "vb" ]]; then
-                virtual_batch="true"
-                suffix_print="_virtual_batch"
-                accuracy_limit=${line_array[2]}
-            elif [[ "${line_array[1]}" != "" ]]; then
-                continue
-            fi
-            local model_file="${ms_models_path}/${model_name}.ms"
-            local bb_model_file=""
-            local export_file="${ms_models_path}/${model_name}_tod"
-            local inference_file="${ms_models_path}/${model_name}_infer"
-            if [[ ${cfg_file##*/} =~ "transfer" ]]; then
-                model_name=${line_array[0]}
-                model_file="${ms_models_path}/${model_name}_head.ms"
-                bb_model_file="${ms_models_path}/${model_name}_bb.ms"
-                suffix_print="_transfer"
-                log_suffix="_transfer"
-                export_file="${ms_models_path}/${model_name}_tod_head"
-                inference_file="${ms_models_path}/${model_name}_infer"
-            fi
-            if [ ! -z "$inference_file" ]; then
-                rm -f ${inference_file}"*"
-            fi
-            if [ ! -z "$export_file" ]; then
-                rm -f ${export_file}"*"
-            fi
-            # start running benchmark
-            local run_result
-            echo ${model_name} >> "${run_x86_log_file}"
-            echo "${run_valgrind} ./tools/benchmark_train/benchmark_train \
-                --modelFile=${model_file} \
-                --bbModelFile=${bb_model_file} \
-                --inDataFile=${train_io_path}/${model_prefix}_input \
-                --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
-                --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
-                --exportFile=${export_file} --virtualBatch=${virtual_batch}" >> "${run_x86_log_file}"
-            ${run_valgrind} ./tools/benchmark_train/benchmark_train \
-                --modelFile=${model_file} \
-                --bbModelFile=${bb_model_file} \
-                --inDataFile=${train_io_path}/${model_prefix}_input \
-                --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
-                --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
-                --exportFile=${export_file} --virtualBatch=${virtual_batch} >> "${run_x86_log_file}"
-            if [ $? = 0 ]; then
-                run_result='x86_'${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
-            else
-                run_result='x86_'${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
-                fail=1
-            fi
-        done < ${cfg_file}
-    done
+    while read line; do
+        
+        LFS=" " read -r -a line_array <<< ${line}
+        local model_prefix=${line_array[0]}
+        local log_suffix="_train"
+        parse_line x86
+        if [[ "$?" == "1" ]]; then continue; fi
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        local model_file="${ms_models_path}/${model_name}.ms"
+        local bb_model_file=""
+        local export_file="${ms_models_path}/${model_name}_tod"
+        local inference_file="${ms_models_path}/${model_name}_infer"
+        if [[ "${enable_transfer}" == "1" ]]; then
+            model_file="${ms_models_path}/${model_prefix}_head.ms"
+            bb_model_file="${ms_models_path}/${model_prefix}_bb.ms"
+            suffix_print="_transfer"
+            log_suffix="_transfer"
+            export_file="${ms_models_path}/${model_prefix}_tod_head"
+            inference_file="${ms_models_path}/${model_prefix}_infer"
+        fi
+        if [ ! -z "$inference_file" ]; then
+            rm -f ${inference_file}"*"
+        fi
+        if [ ! -z "$export_file" ]; then
+            rm -f ${export_file}"*"
+        fi
+        # start running benchmark
+        local run_result
+        echo ${model_name} >> ${run_x86_log_file}
+        echo "${run_valgrind} ./tools/benchmark_train/benchmark_train \
+            --modelFile=${model_file} \
+            --bbModelFile=${bb_model_file} \
+            --inDataFile=${train_io_path}/${model_prefix}_input \
+            --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
+            --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
+            --exportFile=${export_file} \
+            --virtualBatch=${virtual_batch} \
+            --lossName=${loss_name} " >> ${run_x86_log_file}
+        ${run_valgrind} ./tools/benchmark_train/benchmark_train \
+            --modelFile=${model_file} \
+            --bbModelFile=${bb_model_file} \
+            --inDataFile=${train_io_path}/${model_prefix}_input \
+            --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
+            --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
+            --exportFile=${export_file} \
+            --virtualBatch=${virtual_batch} \
+            --lossName=${loss_name} >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_'${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+        else
+            run_result='x86_'${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            fail=1
+        fi
+    done < ${models_ms_train_config}
     return ${fail}
 }
 
-# Run on arm platform: 
+# Run on arm platform:
 # Gets two parameters
 function Run_arm() {
     # $1:platform(arm64/arm32); $2:cfgFileList
     tmp_dir=/data/local/tmp/benchmark_train_test
     local arm_path process_unit version_arm run_arm_log_file adb_cmd_run_file adb_push_log_file adb_cmd_file adb_cmd
-    if [ "$1" == arm64 ]; then
+    if [ "$1" == "arm64" ]; then
         arm_path=${arm64_path}
         process_unit="aarch64"
         version_arm=${version_arm64}
-        run_arm_log_file=${run_arm64_log_file} 
-        adb_cmd_run_file=${adb_cmd_arm64_run_file} 
-        adb_push_log_file=${adb_push_arm64_log_file} 
+        run_arm_log_file=${run_arm64_log_file}
+        adb_cmd_run_file=${adb_cmd_arm64_run_file}
+        adb_push_log_file=${adb_push_arm64_log_file}
         adb_cmd_file=${adb_cmd_arm64_file}
-    elif [ "$1" == arm32 ]; then
+    elif [ "$1" == "arm32" ]; then
         arm_path=${arm32_path}
         process_unit="aarch32"
         version_arm=${version_arm32}
-        run_arm_log_file=${run_arm32_log_file} 
-        adb_cmd_run_file=${adb_cmd_arm32_run_file} 
-        adb_push_log_file=${adb_push_arm32_log_file} 
+        run_arm_log_file=${run_arm32_log_file}
+        adb_cmd_run_file=${adb_cmd_arm32_run_file}
+        adb_push_log_file=${adb_push_arm32_log_file}
         adb_cmd_file=${adb_cmd_arm32_file}
     else
         echo 'type ' $1 'is not supported'
@@ -237,108 +274,79 @@ function Run_arm() {
 
     adb -s ${device_id} shell < ${adb_cmd_file}
     local fail=0
-    local cfg_file_list=$2
     # Run mindir converted train models:
-    for cfg_file in ${cfg_file_list[*]}; do
-        while read line; do
-            local line_array
-            LFS=" " read -r -a line_array <<< ${line}
-            local model_prefix=${line_array[0]}
-            local model_name=${line_array[0]}'_train'
-            local accuracy_limit=0.5
-            local enable_fp16="false"
-            local virtual_batch="false"
-            local suffix_print=""
-            local run_result=""
-            local log_suffix="_train"
-            if [[ $model_name == \#* ]]; then
-                continue
-            fi
-
-            if [[ "${line_array[1]}" == "noarm32" ]] && [[ "$1" == arm32 ]]; then
-                run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
-                continue
-            fi
-
-            if [[ "${line_array[1]}" == "weight_quant" ]]; then
-                model_name=${line_array[0]}'_train_quant'
-                accuracy_limit=${line_array[2]}
-            elif [[ "${line_array[1]}" == "fp16" ]]; then
-                if [[ "$1" == arm64 ]]; then
-                enable_fp16="true"
-                suffix_print="_fp16"
-                accuracy_limit=${line_array[2]}
-                else
-                    continue
-                fi
-            elif [[ "${line_array[1]}" == "vb" ]]; then
-                virtual_batch="true"
-                suffix_print="_virtual_batch"
-                accuracy_limit=${line_array[2]}
-            fi
-
-            local export_file="${tmp_dir}/${model_name}_tod"
-            local inference_file="${tmp_dir}/${model_name}_infer"
-            local model_file="${model_name}.ms"
-            local bb_model_file=""
-            if [[ ${cfg_file##*/} =~ "transfer" ]]; then
-                model_name=${line_array[0]}
-                model_file="${model_name}_head.ms"
-                bb_model_file="${model_name}_bb.ms"
-                suffix_print="_transfer"
-                export_file="${tmp_dir}/${model_name}_tod_head"
-                inference_file="${tmp_dir}/${model_name}_infer"
-                log_suffix="_transfer"
-            fi
-            # run benchmark_train test without clib data
-            echo ${model_name} >> "${run_arm_log_file}"
-            adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
-            echo 'cd /data/local/tmp/benchmark_train_test' > ${adb_cmd_run_file}
-            echo 'chmod 777 benchmark_train' >> ${adb_cmd_run_file}
-            if [ "$1" == arm64 ]; then
-                echo 'cp  /data/local/tmp/libc++_shared.so ./' >> ${adb_cmd_run_file}
-            elif [ "$1" == arm32 ]; then
-                echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
-            fi
-            adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
-            echo "$export_file"
-            if [ ! -z "$export_file" ]; then
-                echo "rm -f ${export_file}*" >> ${run_arm_log_file}
-                echo "rm -f ${export_file}*" >> ${adb_cmd_run_file}
-            fi
-            if [ ! -z "$inference_file" ]; then
-
-                echo "rm -f ${inference_file}*" >> ${run_arm_log_file}
-                echo "rm -f ${inference_file}*" >> ${adb_cmd_run_file}
-            fi
-            adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
-            adb_cmd=$(cat <<-ENDM
-            export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
-            --epochs=${epoch_num} \
-            --modelFile=${model_file} \
-            --bbModelFile=${bb_model_file} \
-            --inDataFile=${tmp_dir}/${model_prefix}_input \
-            --expectedDataFile=${tmp_dir}/${model_prefix}_output \
-            --numThreads=${threads} \
-            --accuracyThreshold=${accuracy_limit} \
-            --enableFp16=${enable_fp16} \
-            --inferenceFile=${inference_file} \
-            --exportFile=${export_file} \
-            --virtualBatch=${virtual_batch}
+    while read line; do
+        local line_array
+        LFS=" " read -r -a line_array <<< ${line}
+        local model_prefix=${line_array[0]}
+        local run_result=""
+        local log_suffix="_train"
+        parse_line $1
+        if [[ "$?" == "1" ]]; then continue; fi
+        if [[ $model_name == \#* ]]; then
+            continue
+        fi
+        local export_file="${tmp_dir}/${model_name}_tod"
+        local inference_file="${tmp_dir}/${model_name}_infer"
+        local model_file="${model_name}.ms"
+        local bb_model_file=""
+        if [[ "${enable_transfer}" == "1" ]]; then
+            model_file="${model_prefix}_head.ms"
+            bb_model_file="${model_prefix}_bb.ms"
+            suffix_print="_transfer"
+            export_file="${tmp_dir}/${model_prefix}_tod_head"
+            inference_file="${tmp_dir}/${model_prefix}_infer"
+            log_suffix="_transfer"
+        fi
+        # run benchmark_train test without clib data
+        echo ${model_name} >> "${run_arm_log_file}"
+        adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
+        echo 'cd /data/local/tmp/benchmark_train_test' > ${adb_cmd_run_file}
+        echo 'chmod 777 benchmark_train' >> ${adb_cmd_run_file}
+        if [ "$1" == arm64 ]; then
+            echo 'cp  /data/local/tmp/libc++_shared.so ./' >> ${adb_cmd_run_file}
+        elif [ "$1" == arm32 ]; then
+            echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
+        fi
+        adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
+        echo "$export_file"
+        if [ ! -z "$export_file" ]; then
+            echo "rm -f ${export_file}*" >> ${run_arm_log_file}
+            echo "rm -f ${export_file}*" >> ${adb_cmd_run_file}
+        fi
+        if [ ! -z "$inference_file" ]; then
+         echo "rm -f ${inference_file}*" >> ${run_arm_log_file}
+            echo "rm -f ${inference_file}*" >> ${adb_cmd_run_file}
+        fi
+        adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
+        adb_cmd=$(cat <<-ENDM
+        export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
+        --epochs=${epoch_num} \
+        --modelFile=${model_file} \
+        --bbModelFile=${bb_model_file} \
+        --inDataFile=${tmp_dir}/${model_prefix}_input \
+        --expectedDataFile=${tmp_dir}/${model_prefix}_output \
+        --numThreads=${threads} \
+        --accuracyThreshold=${accuracy_limit} \
+        --enableFp16=${enable_fp16} \
+        --inferenceFile=${inference_file} \
+        --exportFile=${export_file} \
+        --virtualBatch=${virtual_batch} \
+        --lossName=${loss_name}
 ENDM
-            )
-            echo "${adb_cmd}" >> ${run_arm_log_file}
-            echo "${adb_cmd}" >> ${adb_cmd_run_file}
-            adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
-            # TODO: change to arm_type
-            if [ $? = 0 ]; then
-                run_result=$1${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
-            else
-                run_result=$1${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
-                fail=1
-            fi
-        done < ${cfg_file}
-    done
+)
+        echo "${adb_cmd}" >> ${run_arm_log_file}
+        echo "${adb_cmd}" >> ${adb_cmd_run_file}
+        adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
+        # TODO: change to arm_type
+        if [ $? = 0 ]; then
+            run_result=$1${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
+        else
+            run_result=$1${log_suffix}': '${model_name}''${suffix_print}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            fail=1
+        fi
+    done < ${models_ms_train_config}
+    
     return ${fail}
 }
 
@@ -410,14 +418,13 @@ echo "base path is: ${basepath}"
 
 # Set models config filepath
 models_ms_train_config=${basepath}/../config/models_ms_train.cfg
-models_ms_transfer_config=${basepath}/../config/models_ms_transfer.cfg
 
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
 threads=2
 train_io_path=""
-while getopts "r:m:d:i:e:vt:q:D:M" opt; do
+while getopts "r:c:m:d:i:e:vt:q:D:M" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
@@ -431,6 +438,10 @@ while getopts "r:m:d:i:e:vt:q:D:M" opt; do
             # "common" or "transfer" or "all"
             train_mode=${OPTARG}
             echo "training_mode is ${OPTARG}"
+            ;;
+        c)
+           models_ms_train_config=${OPTARG}
+           echo  "models_ms_train_config ${models_ms_train_config}"
             ;;
         i)
             train_io_path=${OPTARG}
@@ -511,7 +522,7 @@ if [[ $enable_export == 1 ]]; then
     # Run export
     Run_Export
     Print_Result ${export_result_file}
-fi 
+fi
 
 # Write converter result to temp file
 run_converter_log_file=${logs_path}/run_converter_log.txt
@@ -555,7 +566,6 @@ echo ' ' > ${run_benchmark_train_result_file}
 # Create log files
 run_x86_log_file=${logs_path}/run_x86_log.txt
 echo 'run x86 logs: ' > ${run_x86_log_file}
-
 run_arm64_log_file=${logs_path}/run_arm64_log.txt
 echo 'run arm64 logs: ' > ${run_arm64_log_file}
 adb_push_arm64_log_file=${logs_path}/adb_push_arm64_log.txt
@@ -582,7 +592,7 @@ isFailed=0
 if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen&train" ]]; then
     # Run on x86
     echo "Start Run x86 ..."
-    Run_x86 "${train_cfg_file_list[*]}" &
+    Run_x86 &
     Run_x86_status=$?
     Run_x86_PID=$!
     sleep 1
@@ -598,7 +608,7 @@ fi
 if [[ $backend == "all" || $backend == "train" || $backend == "arm64_train" || $backend == "codegen&train" ]]; then
     # Run on arm64
     echo "Start Run arm64 ..."
-    Run_arm arm64 "${train_cfg_file_list[*]}"
+    Run_arm arm64
     Run_arm64_status=$?
 #   Run_arm64_PID=$!
 #   sleep 1
@@ -606,7 +616,7 @@ fi
 if [[ $backend == "all" || $backend == "train" || $backend == "arm32_train" || $backend == "codegen&train" ]]; then
     # Run on arm32
     echo "Start Run arm32 ..."
-    Run_arm arm32 "${train_cfg_file_list[*]}"
+    Run_arm arm32
     Run_arm32_status=$?
 #   Run_arm32_PID=$!
 #   sleep 1

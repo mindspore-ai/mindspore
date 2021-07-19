@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo "Usage: prepare.sh [-d mindspore_docker] [-c model_config_file] [-i]"
+  echo "Usage: prepare.sh [-d mindspore_docker] [-c model_config_file] [-i] [-T]"
   echo "Options:"
   echo "    -d docker where mindspore is installed. If no docker is provided script will use local python"
   echo "    -c network configuration file. default is models_train.cfg"
@@ -15,7 +15,7 @@ checkopts()
 {
   DOCKER=""
   TRAIN_IO=""
-  CONFIG_FILE=""
+  CONFIG_FILE="models_train.cfg"
   #models_train.cfg" move me to prepare_all.sh
   while getopts 'c:d:iT' opt
   do

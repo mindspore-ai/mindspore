@@ -522,6 +522,7 @@ void NetTrain::CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_ty
   std::cout << node_type << " " << in_out << id << " shape=" << tensor->shape() << " sum=";
   switch (type) {
     case kNumberTypeFloat32:
+      TensorNan(reinterpret_cast<float *>(data), tensor_size);
       std::cout << TensorSum<float>(data, tensor_size) << std::endl;
       break;
     case kNumberTypeInt32:
@@ -557,7 +558,7 @@ int NetTrain::InitCallbackParameter() {
     }
     op_call_times_total_++;
     op_begin_ = GetTimeUs();
-    if (callParam.node_type == "Adam") {
+    if ((callParam.node_type == "Adam") || (callParam.node_type == "Assign")) {
       for (auto tensor : before_outputs) {
         std::fill(reinterpret_cast<int8_t *>(tensor->MutableData()),
                   reinterpret_cast<int8_t *>(tensor->MutableData()) + tensor->Size(), 0);
