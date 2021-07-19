@@ -801,7 +801,7 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
     if (it_second != shape.end()) {
       MS_LOG(EXCEPTION) << "At most one component of input shape can be -1";
     }
-    auto index = std::distance(shape.begin(), it_first);
+    auto index = LongToSize(std::distance(shape.begin(), it_first));
     int64_t infer_value = x_num;
     int64_t infer_min_value = x_min_num;
     int64_t infer_max_value = x_max_num;
@@ -1164,7 +1164,9 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
                                        const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", args_spec_list.size(), kEqual, 2, prim_name);
+  constexpr int64_t args_size = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(args_spec_list.size()), kEqual, args_size,
+                                           prim_name);
   for (const auto &item : args_spec_list) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -1188,16 +1190,16 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
     MS_LOG(EXCEPTION) << "The number of input[0] must be the same as input[0]!";
   }
 
-  int indices_total_size = 0;
+  int64_t indices_total_size = 0;
   std::map<std::string, TypePtr> types;
-  types.emplace("data0", data0->BuildType());
+  (void)types.emplace("data0", data0->BuildType());
   for (size_t i = 1; i < data.size(); ++i) {
     auto indicesi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices[i]->BuildShape())[kShape];
     auto datai_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data[i]->BuildShape())[kShape];
     if (indicesi_shape.size() > datai_shape.size()) {
       MS_LOG(EXCEPTION) << "The rank of indices[i] must be <= rank of data[i]!";
     }
-    indices_total_size += indicesi_shape.size();
+    indices_total_size += SizeToLong(indicesi_shape.size());
   }
   std::set<TypePtr> valid_types = ops::common_valid_types;
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
@@ -1206,7 +1208,7 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
   for (size_t i = indices0_shape.size(); i < data0_shape.size(); ++i) {
     out_shape.push_back(data0_shape[i]);
   }
-  const size_t EXPAND_MAX = 10;
+  const int64_t EXPAND_MAX = 10;
   ShapeVector min_shape = out_shape;
   ShapeVector max_shape = out_shape;
   min_shape[0] = 1;
