@@ -157,6 +157,7 @@ class Somas {
   bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
   bool CalcSomasModelHash(const session::KernelGraph *graph);
   void UpdateInputTensor(SomasNodePtr node, SomasNodePtr pre_somas_node, SomasTensorPtr input_somas_tensor) const;
+  bool LoadSomasCache(const session::KernelGraph *graph);
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
