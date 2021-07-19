@@ -23,7 +23,7 @@ void DropoutGrad::Init(const float keep_prob) { this->set_keep_prob(keep_prob); 
 
 void DropoutGrad::set_keep_prob(const float keep_prob) {
   CheckAndConvertUtils::CheckInRange<float>(kKeepProb, keep_prob, kIncludeRight, {0.0, 1.0}, this->name());
-  this->AddAttr(kKeepProb, MakeValue(keep_prob));
+  (void)this->AddAttr(kKeepProb, MakeValue(keep_prob));
 }
 
 float DropoutGrad::get_keep_prob() const {
@@ -44,8 +44,8 @@ TypePtr DropoutGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   auto op_name = prim->name();
   auto mask_dtype = input_args[1]->BuildType();
   auto dy_dtype = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_dtype, {kTensorType}, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_dtype, {kFloat16, kFloat32}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_dtype, {kTensorType}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_dtype, {kFloat16, kFloat32}, op_name);
   auto tensor_type = dy_dtype->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto data_type = tensor_type->element();

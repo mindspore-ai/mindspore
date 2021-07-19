@@ -43,15 +43,16 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   std::vector<int64_t> new_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_new_axis_mask());
   std::vector<int64_t> shrink_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_shrink_axis_mask());
 
-  int64_t num = 0;
+  size_t num = 0;
   for (size_t n = j + 1; n < slice_len; n++) {
     if (new_axis_pos[n] == 1) {
       num++;
     }
   }
 
-  int64_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
-  infer_shape->insert(infer_shape->end(), x_shape.begin() + i, x_shape.begin() + i + ellipsis_occupied_dims);
+  size_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
+  (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + i,
+                            x_shape.begin() + SizeToLong(i + ellipsis_occupied_dims));
   j += 1;
   i += ellipsis_occupied_dims;
 
@@ -200,7 +201,7 @@ TypePtr StridedSliceInferType(const std::vector<AbstractBasePtr> &input_args) {
 }  // namespace
 
 void StridedSlice::set_begin_mask(const int64_t begin_mask) {
-  CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
+  (void)CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
   this->AddAttr(kBeginMask, MakeValue(begin_mask));
 }
 int64_t StridedSlice::get_begin_mask() const {
@@ -208,7 +209,7 @@ int64_t StridedSlice::get_begin_mask() const {
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSlice::set_end_mask(const int64_t end_mask) {
-  CheckAndConvertUtils::CheckInteger(kEndMask, end_mask, kGreaterEqual, 0, this->name());
+  (void)CheckAndConvertUtils::CheckInteger(kEndMask, end_mask, kGreaterEqual, 0, this->name());
   this->AddAttr(kEndMask, MakeValue(end_mask));
 }
 int64_t StridedSlice::get_end_mask() const {
@@ -216,7 +217,7 @@ int64_t StridedSlice::get_end_mask() const {
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSlice::set_ellipsis_mask(const int64_t ellipsis_mask) {
-  CheckAndConvertUtils::CheckInteger(kEllipsisMask, ellipsis_mask, kGreaterEqual, 0, this->name());
+  (void)CheckAndConvertUtils::CheckInteger(kEllipsisMask, ellipsis_mask, kGreaterEqual, 0, this->name());
   std::bitset<sizeof(int64_t) * 8> bs(ellipsis_mask);
   std::ostringstream buffer;
   if (bs.count() > 1) {
@@ -230,7 +231,7 @@ int64_t StridedSlice::get_ellipsis_mask() const {
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSlice::set_new_axis_mask(const int64_t new_axis_mask) {
-  CheckAndConvertUtils::CheckInteger(kNewAxisMask, new_axis_mask, kGreaterEqual, 0, this->name());
+  (void)CheckAndConvertUtils::CheckInteger(kNewAxisMask, new_axis_mask, kGreaterEqual, 0, this->name());
   this->AddAttr(kNewAxisMask, MakeValue(new_axis_mask));
 }
 int64_t StridedSlice::get_new_axis_mask() const {
@@ -238,7 +239,7 @@ int64_t StridedSlice::get_new_axis_mask() const {
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSlice::set_shrink_axis_mask(const int64_t shrink_axis_mask) {
-  CheckAndConvertUtils::CheckInteger(kShrinkAxisMask, shrink_axis_mask, kGreaterEqual, 0, this->name());
+  (void)CheckAndConvertUtils::CheckInteger(kShrinkAxisMask, shrink_axis_mask, kGreaterEqual, 0, this->name());
   this->AddAttr(kShrinkAxisMask, MakeValue(shrink_axis_mask));
 }
 int64_t StridedSlice::get_shrink_axis_mask() const {
@@ -296,13 +297,13 @@ int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos,
     if (start_pos < -x_dim || end_pos >= x_dim) {
       slicing_length = 0;
     } else {
-      if (0 < start_pos && start_pos < x_dim) {
+      if (start_pos > 0 && start_pos < x_dim) {
         start_pos += -x_dim;
       }
       if (start_pos >= x_dim) {
         start_pos = -1;
       }
-      if (0 <= end_pos && end_pos < x_dim) {
+      if (end_pos >= 0 && end_pos < x_dim) {
         end_pos += -x_dim;
       }
       if (end_pos < -x_dim - 1) {

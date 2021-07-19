@@ -54,7 +54,7 @@ void Conv2DTranspose::set_out_channel(int64_t out_channel) {
 void Conv2DTranspose::set_kernel_size(const std::vector<int64_t> &kernel_size) {
   CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, 2, name());
   for (int64_t item : kernel_size) {
-    CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
+    (void)CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
   }
   AddAttr(kKernelSize, MakeValue(kernel_size));
 }
@@ -62,7 +62,7 @@ void Conv2DTranspose::set_kernel_size(const std::vector<int64_t> &kernel_size) {
 void Conv2DTranspose::set_stride(const std::vector<int64_t> &stride) {
   CheckAndConvertUtils::CheckInteger(kStride, SizeToLong(stride.size()), kEqual, 2, name());
   for (int64_t item : stride) {
-    CheckAndConvertUtils::CheckInteger(kStride, item, kGreaterEqual, 1, name());
+    (void)CheckAndConvertUtils::CheckInteger(kStride, item, kGreaterEqual, 1, name());
   }
   AddAttr(kStride, MakeValue(stride));
 }

@@ -35,7 +35,8 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   } else {
     flag = true;
   }
-  if (flag == true) {
+
+  if (flag) {
     for (size_t i = 0; i < input_x.size(); i++) {
       if (input_x[i] == -1) {
         if (i < outer_dim_offset) {

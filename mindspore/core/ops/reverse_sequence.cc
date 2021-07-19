@@ -27,8 +27,8 @@ void ReverseSequence::Init(const int64_t seq_dim, const int64_t batch_dim) {
   this->set_seq_dim(seq_dim);
   this->set_batch_dim(batch_dim);
 }
-void ReverseSequence::set_seq_dim(const int64_t seq_dim) { this->AddAttr(kSeqDim, MakeValue(seq_dim)); }
-void ReverseSequence::set_batch_dim(const int64_t batch_dim) { this->AddAttr(kBatchDim, MakeValue(batch_dim)); }
+void ReverseSequence::set_seq_dim(const int64_t seq_dim) { (void)this->AddAttr(kSeqDim, MakeValue(seq_dim)); }
+void ReverseSequence::set_batch_dim(const int64_t batch_dim) { (void)this->AddAttr(kBatchDim, MakeValue(batch_dim)); }
 
 int64_t ReverseSequence::get_seq_dim() const { return GetValue<int64_t>(GetAttr(kSeqDim)); }
 int64_t ReverseSequence::get_batch_dim() const {

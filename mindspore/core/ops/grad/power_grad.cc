@@ -26,19 +26,19 @@
 
 namespace mindspore {
 namespace ops {
-void PowerGrad::set_power(const float power) { this->AddAttr(kPower, MakeValue(power)); }
+void PowerGrad::set_power(const float power) { (void)this->AddAttr(kPower, MakeValue(power)); }
 float PowerGrad::get_power() const {
   auto value_ptr = GetAttr(kPower);
   return GetValue<float>(value_ptr);
 }
 
-void PowerGrad::set_scale(const float scale) { this->AddAttr(kScale, MakeValue(scale)); }
+void PowerGrad::set_scale(const float scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
 float PowerGrad::get_scale() const {
   auto value_ptr = GetAttr(kScale);
   return GetValue<float>(value_ptr);
 }
 
-void PowerGrad::set_shift(const float shift) { this->AddAttr(kShift, MakeValue(shift)); }
+void PowerGrad::set_shift(const float shift) { (void)this->AddAttr(kShift, MakeValue(shift)); }
 float PowerGrad::get_shift() const {
   auto value_ptr = GetAttr(kShift);
   return GetValue<float>(value_ptr);

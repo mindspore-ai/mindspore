@@ -27,8 +27,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = primitive->name();
   auto first_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto second_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("first input rank", SizeToLong(first_input_shape.size()), kEqual, 3, prim_name);
-  CheckAndConvertUtils::CheckInteger("second input rank", SizeToLong(second_input_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input 0 rank", SizeToLong(first_input_shape.size()), kEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input 1 rank", SizeToLong(second_input_shape.size()), kEqual, 1, prim_name);
   std::vector<int64_t> out_shape = {first_input_shape[0], first_input_shape[1],
                                     GetValue<int64_t>(primitive->GetAttr(kDctCoeffNum))};
   return std::make_shared<abstract::Shape>(out_shape);

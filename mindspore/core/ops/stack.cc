@@ -34,7 +34,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";
     }
-    for (int64_t j = 0; j < SizeToLong(input_shape.size()); ++j) {
+    for (size_t j = 0; j < input_shape.size(); ++j) {
       if (input_shape_tmp.at(j) != input_shape.at(j)) {
         MS_LOG(ERROR) << "All input shape should be the same!";
       }
@@ -44,7 +44,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
   infer_shape.insert(infer_shape.begin() + GetValue<int64_t>(primitive->GetAttr(kAxis)), input_args.size());
 
   auto infer_type0 = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  for (int64_t i = 1; i < SizeToLong(input_args.size()); i++) {
+  for (size_t i = 1; i < input_args.size(); i++) {
     if (input_args[i]->BuildType()->cast<TensorTypePtr>()->element() == infer_type0) {
       MS_LOG(ERROR) << "All input should have the same data type!input[" << i
                     << "] data type = " << input_args[i]->BuildType()->cast<TensorTypePtr>()->element();

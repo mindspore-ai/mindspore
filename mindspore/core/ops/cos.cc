@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ops/cos.h"
 
 #include <set>
 #include <map>
 #include <string>
-#include "ops/cos.h"
 
 namespace mindspore {
 namespace ops {
@@ -44,7 +44,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameCos, Cos);
 }  // namespace ops

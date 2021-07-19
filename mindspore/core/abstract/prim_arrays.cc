@@ -1164,7 +1164,7 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
                                        const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", args_spec_list.size(), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", args_spec_list.size(), kEqual, 2, prim_name);
   for (const auto &item : args_spec_list) {
     MS_EXCEPTION_IF_NULL(item);
   }

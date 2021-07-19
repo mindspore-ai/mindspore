@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+#include "ops/logical_not.h"
+
 #include <set>
 
-#include "ops/logical_not.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {

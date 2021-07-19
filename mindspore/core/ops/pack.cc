@@ -21,12 +21,11 @@ namespace ops {
 namespace {
 std::vector<int64_t> _get_pack_shape(std::vector<BaseShapePtr> x_shapes, std::vector<TypePtr> x_types, int64_t axis,
                                      const std::string &name) {
-  CheckAndConvertUtils::CheckInteger("len of input_x", (int64_t)x_shapes.size(), kGreaterEqual, 1, name);
-  CheckAndConvertUtils::CheckSubClass("input_x[0]", x_types[0], {TypeIdToType(kObjectTypeTensorType)}, name);
+  (void)CheckAndConvertUtils::CheckInteger("len of input_x", (int64_t)x_shapes.size(), kGreaterEqual, 1, name);
+  (void)CheckAndConvertUtils::CheckSubClass("input_x[0]", x_types[0], {TypeIdToType(kObjectTypeTensorType)}, name);
   auto output_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shapes[0])[kShape];
   int64_t rank_base = SizeToLong(output_shape.size());
   int64_t N = SizeToLong(x_shapes.size());
-  //  CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeBoth, {-rank_base-1, rank_base}, name);
   if (axis < 0) {
     axis = axis + rank_base + 1;
   }

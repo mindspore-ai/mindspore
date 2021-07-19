@@ -30,16 +30,16 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
   std::vector<int64_t> output_shape(input_shape.size());
   auto block_shape_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
   auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
   for (size_t i = 0; i < 2; i++) {
-    auto padded = LongToSize(output_shape[i + 2] + paddings[i][0] + paddings[i][1]);
-    CheckAndConvertUtils::CheckInteger("padded shape", padded % block_shape_vector.size(), kEqual, 0, prim_name);
+    auto padded = output_shape[i + 2] + paddings[i][0] + paddings[i][1];
+    (void)CheckAndConvertUtils::CheckInteger("padded shape", padded % block_shape_vector.size(), kEqual, 0, prim_name);
     output_shape[i + 2] = padded / block_shape_vector.size();
   }
-  output_shape[0] *= block_shape_vector.size() * block_shape_vector.size();
+  output_shape[0] *= SizeToLong(block_shape_vector.size() * block_shape_vector.size());
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
@@ -60,7 +60,7 @@ void SpaceToBatch::set_paddings(const std::vector<std::vector<int64_t>> &padding
   CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
   for (size_t i = 0; i < LongToSize(h); i++) {
     for (size_t j = 0; j < LongToSize(w); j++) {
-      CheckAndConvertUtils::CheckInteger(kPadding, paddings[i][j], kGreaterEqual, 0, this->name());
+      (void)CheckAndConvertUtils::CheckInteger(kPadding, paddings[i][j], kGreaterEqual, 0, this->name());
     }
   }
 }
@@ -84,7 +84,7 @@ void SpaceToBatch::Init(const std::vector<int64_t> block_size, const std::vector
 AbstractBasePtr SpaceToBatchInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameSpaceToBatch, SpaceToBatch);
 }  // namespace ops

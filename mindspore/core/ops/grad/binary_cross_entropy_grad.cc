@@ -30,9 +30,9 @@ abstract::ShapePtr BinaryCrossEntroyGradInferShape(const PrimitivePtr &primitive
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("x shape", x_shape, kEqual, "y shape", y_shape, prim_name);
+  (void)CheckAndConvertUtils::Check("x shape", x_shape, kEqual, "y shape", y_shape, prim_name);
   if (weight_shape.size() < 1) {
-    CheckAndConvertUtils::Check("y shape", y_shape, kEqual, "weight shape", weight_shape, prim_name);
+    (void)CheckAndConvertUtils::Check("y shape", y_shape, kEqual, "weight shape", weight_shape, prim_name);
   }
   return std::make_shared<abstract::Shape>(x_shape);
 }
@@ -58,7 +58,7 @@ void BinaryCrossEntropyGrad::Init(const Reduction &reduction) { set_reduction(re
 
 void BinaryCrossEntropyGrad::set_reduction(const Reduction &reduction) {
   int64_t swi = reduction;
-  this->AddAttr(kReduction, MakeValue(swi));
+  (void)this->AddAttr(kReduction, MakeValue(swi));
 }
 Reduction BinaryCrossEntropyGrad::get_reduction() const {
   auto value_ptr = GetAttr(kReduction);

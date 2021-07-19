@@ -33,7 +33,7 @@ void ActivationGrad::Init(const ActivationType &type, const float alpha) {
 
 void ActivationGrad::set_activation_type(const ActivationType &type) {
   int64_t swi = type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 
 ActivationType ActivationGrad::get_activation_type() const {
@@ -41,7 +41,7 @@ ActivationType ActivationGrad::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-void ActivationGrad::set_alpha(const float alpha) { this->AddAttr(kAlpha, MakeValue(alpha)); }
+void ActivationGrad::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, MakeValue(alpha)); }
 
 float ActivationGrad::get_alpha() const {
   auto value_ptr = GetAttr(kAlpha);

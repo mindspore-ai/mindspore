@@ -47,8 +47,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
                              << " must be equal.";
   }
   for (auto i : p_value) {
-    CheckAndConvertUtils::CheckInteger("perm element", i, kGreaterEqual, 0, op_name);
-    CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, p_value.size(), op_name);
+    (void)CheckAndConvertUtils::CheckInteger("perm element", i, kGreaterEqual, 0, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, p_value.size(), op_name);
   }
   std::vector<int64_t> tmp(p_value);
   for (auto it = tmp.begin(); it != tmp.end();) {
@@ -84,7 +84,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("Transpose infer", input_args.size(), kGreaterEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("Transpose infer", SizeToLong(input_args.size()), kGreaterEqual, 1,
+                                           primitive->name());
   auto type = InferType(primitive, input_args);
   auto shape = InferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

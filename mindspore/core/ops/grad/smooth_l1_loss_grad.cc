@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 void SmoothL1LossGrad::Init(const float beta) { this->set_beta(beta); }
 
-void SmoothL1LossGrad::set_beta(const float beta) { this->AddAttr(kBeta, MakeValue(beta)); }
+void SmoothL1LossGrad::set_beta(const float beta) { (void)this->AddAttr(kBeta, MakeValue(beta)); }
 
 float SmoothL1LossGrad::get_beta() const {
   auto value_ptr = this->GetAttr(kBeta);
@@ -37,7 +37,8 @@ AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("smooth_l1_loss_grad_infer", input_args.size(), kEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("smooth_l1_loss_grad_infer", SizeToLong(input_args.size()), kEqual, 3,
+                                           prim_name);
 
   // Infer shape
   auto prediction = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];

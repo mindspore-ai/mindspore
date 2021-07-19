@@ -26,19 +26,18 @@
 
 namespace mindspore {
 namespace ops {
-void ReduceFusion::set_keep_dims(const bool keep_dims) { this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
+void ReduceFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
 
 void ReduceFusion::set_mode(const ReduceMode mode) {
-  int64_t swi;
-  swi = mode;
-  this->AddAttr(kMode, MakeValue(swi));
+  int64_t swi = mode;
+  (void)this->AddAttr(kMode, MakeValue(swi));
 }
 
 void ReduceFusion::set_reduce_to_end(const bool reduce_to_end) {
-  this->AddAttr(kReduceToEnd, MakeValue(reduce_to_end));
+  (void)this->AddAttr(kReduceToEnd, MakeValue(reduce_to_end));
 }
 
-void ReduceFusion::set_coeff(const float coeff) { this->AddAttr(kCoeff, MakeValue(coeff)); }
+void ReduceFusion::set_coeff(const float coeff) { (void)this->AddAttr(kCoeff, MakeValue(coeff)); }
 
 bool ReduceFusion::get_keep_dims() const {
   auto value_ptr = GetAttr(kKeepDims);

@@ -37,16 +37,17 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kGreaterThan, 0, prim_name);
   auto shp = x_shape;
   auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kGreaterThan, 0,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kGreaterThan, 0,
+                                           prim_name);
   CheckAndConvertUtils::Check("input_x", int64_t(x_shape.size()), kGreaterEqual, "segment_ids_shape",
                               int64_t(segment_ids_shape.size()), prim_name);
 
   if ((x_shape.end() != find(x_shape.begin(), x_shape.end(), -1)) &&
       (segment_ids_shape.end() != find(segment_ids_shape.begin(), segment_ids_shape.end(), -1))) {
-    int64_t size = segment_ids_shape.size();
-    for (int64_t i = 0; i < size; ++i) {
-      CheckAndConvertUtils::Check("segment_ids_shp", segment_ids_shape[i], kEqual, "x_shape", x_shape[i], prim_name);
+    size_t size = segment_ids_shape.size();
+    for (size_t i = 0; i < size; ++i) {
+      CheckAndConvertUtils::Check("segment_ids_shp", SizeToLong(segment_ids_shape[i]), kEqual, "x_shape",
+                                  SizeToLong(x_shape[i]), prim_name);
     }
   }
 
@@ -56,7 +57,7 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   int64_t size_segment_ids_shp = segment_ids_shape.size();
   int64_t size_x_shpe = x_shape.size();
   for (int64_t i = size_segment_ids_shp; i < size_x_shpe; ++i) {
-    shp.emplace_back(x_shape[i]);
+    (void)shp.emplace_back(x_shape[i]);
   }
 
   return std::make_shared<abstract::AbstractTensor>(x_type, shp);

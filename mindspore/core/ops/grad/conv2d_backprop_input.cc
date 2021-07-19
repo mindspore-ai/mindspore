@@ -37,7 +37,7 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   // default pad mode is valid
   auto attr_pad_list_prt = primitive->GetAttr(kPadList);
   int64_t pad_mode;
-  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+  (void)CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
   ShapeVector pad_list = {0, 0, 0, 0};
   if (!attr_pad_list_prt->isa<None>()) {
     pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
@@ -60,7 +60,7 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   } else if (pad_mode == PAD) {
     pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
   }
-  primitive->AddAttr(kPadList, MakeValue(pad_list));
+  (void)primitive->AddAttr(kPadList, MakeValue(pad_list));
 }
 
 abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
@@ -93,7 +93,7 @@ AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, co
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check
-  CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, 3, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -119,55 +119,55 @@ void Conv2DBackpropInput::Init(int64_t out_channel, const std::vector<int64_t> &
 }
 
 void Conv2DBackpropInput::set_out_channel(int64_t out_channel) {
-  AddAttr(kOutChannel,
-          MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
+  (void)AddAttr(kOutChannel,
+                MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
 }
 
 void Conv2DBackpropInput::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  AddAttr(kKernelSize, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, name())));
+  (void)AddAttr(kKernelSize, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, name())));
 }
 
 void Conv2DBackpropInput::set_stride(const std::vector<int64_t> &stride) {
-  AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
+  (void)AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
 }
 
 void Conv2DBackpropInput::set_dilation(const std::vector<int64_t> &dilation) {
-  AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
+  (void)AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
 }
 
 void Conv2DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
   std::vector<int64_t> pad = get_pad();
   if (pad_mode == PAD) {
     for (auto item : pad) {
-      CheckAndConvertUtils::Check(kPadItem, item, kGreaterEqual, "zeros_list", 0, name());
+      (void)CheckAndConvertUtils::Check(kPadItem, item, kGreaterEqual, "zeros_list", 0, name());
     }
   } else {
-    CheckAndConvertUtils::Check(kPad, pad, kEqual, "zeros_list", {0, 0, 0, 0}, name());
+    (void)CheckAndConvertUtils::Check(kPad, pad, kEqual, "zeros_list", {0, 0, 0, 0}, name());
   }
   int64_t swi = pad_mode;
-  AddAttr(kPadMode, MakeValue(swi));
+  (void)AddAttr(kPadMode, MakeValue(swi));
 }
 
 void Conv2DBackpropInput::set_pad(const std::vector<int64_t> &pad) {
-  CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, 4, name());
-  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
+  (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, 4, name());
+  (void)AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
 void Conv2DBackpropInput::set_mode(int64_t mode) {
-  AddAttr(kMode, MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
+  (void)AddAttr(kMode, MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
 }
 
 void Conv2DBackpropInput::set_group(int64_t group) {
-  AddAttr(kGroup, MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
+  (void)AddAttr(kGroup, MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
 }
 
 void Conv2DBackpropInput::set_format(const Format &format) {
   int64_t f = format;
-  AddAttr(kFormat, MakeValue(f));
+  (void)AddAttr(kFormat, MakeValue(f));
 }
 
 void Conv2DBackpropInput::set_pad_list(const std::vector<int64_t> &pad_list) {
-  this->AddAttr(kPadList, MakeValue(pad_list));
+  (void)this->AddAttr(kPadList, MakeValue(pad_list));
 }
 
 int64_t Conv2DBackpropInput::get_out_channel() const {

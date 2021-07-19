@@ -27,10 +27,7 @@ void BatchNormGrad::Init(const bool is_training, const float epsilon) {
   this->set_epsilon(epsilon);
 }
 
-void BatchNormGrad::set_epsilon(const float epsilon) {
-  //  CheckAndConvertUtils::CheckInRange(kEpsilon, epsilon, kIncludeRight, {0, 1}, this->name());
-  this->AddAttr(kEpsilon, MakeValue(epsilon));
-}
+void BatchNormGrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
 
 float BatchNormGrad::get_epsilon() const {
   auto value_ptr = this->GetAttr(kEpsilon);

@@ -38,7 +38,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     for (auto &item : axis) {
       CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);
       auto idx = item >= 0 ? item : len + item;
-      if (in_shape[idx] != 1) {
+      if (in_shape[LongToSize(idx)] != 1L) {
         MS_EXCEPTION(ValueError) << "Cannot select an axis to squeeze out which has size not equal to one.";
       }
     }
@@ -46,7 +46,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
       auto it = std::find(axis.begin(), axis.end(), i);
       auto it2 = std::find(axis.begin(), axis.end(), i - len);
       if (!(it != axis.end() || it2 != axis.end())) {
-        infer_shape.push_back(in_shape[i]);
+        infer_shape.push_back(in_shape[LongToSize(i)]);
       }
     }
   }

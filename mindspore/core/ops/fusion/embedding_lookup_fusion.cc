@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-void EmbeddingLookupFusion::set_max_norm(const float max_norm) { this->AddAttr(kMaxNorm, MakeValue(max_norm)); }
+void EmbeddingLookupFusion::set_max_norm(const float max_norm) { (void)this->AddAttr(kMaxNorm, MakeValue(max_norm)); }
 float EmbeddingLookupFusion::get_max_norm() const {
   auto value_ptr = GetAttr(kMaxNorm);
   return GetValue<float>(value_ptr);

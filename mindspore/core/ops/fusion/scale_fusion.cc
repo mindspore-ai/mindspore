@@ -26,9 +26,8 @@ void ScaleFusion::Init(const int64_t axis, const ActivationType &activation_type
 }
 
 void ScaleFusion::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  int64_t swi = activation_type;
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 
 ActivationType ScaleFusion::get_activation_type() const {

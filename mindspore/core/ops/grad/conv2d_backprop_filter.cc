@@ -66,7 +66,7 @@ void Conv2DBackpropFilter::Init(const int64_t out_channel, const std::vector<int
 }
 
 void Conv2DBackpropFilter::set_out_channel(const int64_t out_channel) {
-  this->AddAttr(kOutChannel, MakeValue(out_channel));
+  (void)this->AddAttr(kOutChannel, MakeValue(out_channel));
 }
 
 int64_t Conv2DBackpropFilter::get_out_channel() const {
@@ -75,7 +75,7 @@ int64_t Conv2DBackpropFilter::get_out_channel() const {
 }
 
 void Conv2DBackpropFilter::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  this->AddAttr(kKernelSize, MakeValue(kernel_size));
+  (void)this->AddAttr(kKernelSize, MakeValue(kernel_size));
 }
 
 std::vector<int64_t> Conv2DBackpropFilter::get_kernel_size() const {
@@ -85,7 +85,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_kernel_size() const {
 
 void Conv2DBackpropFilter::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, MakeValue(swi));
 }
 
 PadMode Conv2DBackpropFilter::get_pad_mode() const {
@@ -94,7 +94,7 @@ PadMode Conv2DBackpropFilter::get_pad_mode() const {
 }
 
 void Conv2DBackpropFilter::set_pad_list(const std::vector<int64_t> &pad_list) {
-  this->AddAttr(kPadList, MakeValue(pad_list));
+  (void)this->AddAttr(kPadList, MakeValue(pad_list));
 }
 
 std::vector<int64_t> Conv2DBackpropFilter::get_pad_list() const {
@@ -102,7 +102,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_pad_list() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Conv2DBackpropFilter::set_mode(const int64_t mode) { this->AddAttr(kMode, MakeValue(mode)); }
+void Conv2DBackpropFilter::set_mode(const int64_t mode) { (void)this->AddAttr(kMode, MakeValue(mode)); }
 
 int64_t Conv2DBackpropFilter::get_mode() const {
   auto value_ptr = GetAttr(kMode);
@@ -125,7 +125,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_dilation() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Conv2DBackpropFilter::set_group(const int64_t group) { this->AddAttr(kGroup, MakeValue(group)); }
+void Conv2DBackpropFilter::set_group(const int64_t group) { (void)this->AddAttr(kGroup, MakeValue(group)); }
 
 int64_t Conv2DBackpropFilter::get_group() const {
   auto value_ptr = GetAttr(kGroup);
@@ -147,7 +147,7 @@ AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, c
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   // check
-  CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, 3, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
