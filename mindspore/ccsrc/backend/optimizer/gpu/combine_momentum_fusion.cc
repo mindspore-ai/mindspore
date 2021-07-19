@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 #include "backend/optimizer/gpu/combine_momentum_fusion.h"
-
-#include <memory>
-#include <vector>
-#include <string>
-
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"

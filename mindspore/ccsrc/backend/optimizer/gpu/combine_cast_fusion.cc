@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 #include "backend/optimizer/gpu/combine_cast_fusion.h"
-
-#include <vector>
-#include <string>
-
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
