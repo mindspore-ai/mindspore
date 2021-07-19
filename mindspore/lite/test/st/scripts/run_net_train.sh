@@ -363,12 +363,18 @@ function Run_CodeExamples() {
     export PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/converter/:$PATH
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/lib/:${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/third_party/glog/lib
 
-    if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; then
+    if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_train" || $backend == "x86-java" ]]; then
       cd ${basepath}/../../examples/train_lenet_java || exit 1
       chmod 777 ./prepare_and_run.sh
       ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -m ${models_path}/code_example.mindir >> ${run_code_examples_log_file}
-      accurate=$(tail -10 ${run_code_examples_log_file} | awk -F= 'NF==2 && /accuracy/ { sum += $2} END { print (sum > 0.95) }')
-      cd - 
+      accurate=$(tail -10 ${run_code_examples_log_file} | awk -F= 'NF==2 && /accuracy/ { sum += $2} END { print (sum > 0.80) }')
+      if [ $accurate -eq 1 ]; then
+        echo "Lenet Java Trained  and reached accuracy" >> ${run_code_examples_log_file}
+      else
+        echo "train lenet java demo failure" >> ${run_code_examples_log_file}
+        fail=1
+      fi
+      cd -
     fi
 
     if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $backend == "codegen&train" || $backend == "arm64_train" ]]; then
@@ -597,7 +603,6 @@ if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $ba
     # Run on x86
     echo "Start Run x86 ..."
     Run_x86 &
-    Run_x86_status=$?
     Run_x86_PID=$!
     sleep 1
 fi
@@ -605,7 +610,6 @@ if [[ $backend == "all" || $backend == "train" || $backend == "x86_train" || $ba
     # Run Code Examples 
     echo "Start Code Examples ..."
     Run_CodeExamples &
-    Run_CodeExamples_status=$?
     Run_CodeExamples_PID=$!
     sleep 1
 fi

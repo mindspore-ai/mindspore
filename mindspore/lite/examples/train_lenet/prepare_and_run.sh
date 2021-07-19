@@ -59,6 +59,7 @@ checkopts()
   done
 }
 
+START=$(date +%s.%N)
 checkopts "$@"
 if [ "$MNIST_DATA_PATH" == "" ]; then
   echo "MNIST Dataset directory path was not provided"
@@ -159,4 +160,7 @@ else
   
   cd ..
 fi
+END=$(date +%s.%N)
+TIME=$(echo "$END-$START" | bc)
+echo "total run train lenet C++ time: $TIME s"
 

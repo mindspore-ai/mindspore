@@ -49,6 +49,7 @@ checkopts()
   done
 }
 
+START=$(date +%s.%N)
 checkopts "$@"
 if [ "$MNIST_DATA_PATH" == "" ] || [ ! -d "$MNIST_DATA_PATH" ]; then
   echo "MNIST Dataset directory path was not provided or wrong path " $MNIST_DATA_PATH
@@ -76,6 +77,8 @@ cd ../
 
 cd target || exit 1
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:../lib/ 
-java -Djava.library.path=../lib/ -classpath .:./train_lenet_java.jar:../lib/mindspore-lite-java.jar  com.mindspore.lite.train_lenet.Main ../model/lenet_tod.ms $MNIST_DATA_PATH
+java -Djava.library.path=../lib/ -classpath .:./train_lenet_java.jar:../lib/mindspore-lite-java.jar  com.mindspore.lite.train_lenet.Main ../model/lenet_tod.ms $MNIST_DATA_PATH 1
 cd -
-
+END=$(date +%s.%N)
+TIME=$(echo "$END-$START" | bc)
+echo "total run train lenet java time: $TIME s"
