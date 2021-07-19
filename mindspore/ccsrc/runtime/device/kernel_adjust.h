@@ -134,8 +134,7 @@ class KernelAdjust {
                          std::vector<CNodePtr> *exec_order, uint32_t eos_done_event_id, uint32_t fpbp_stream_id);
   void InsertGetNextLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order,
-                                     const std::vector<uint32_t> &getnext_active_streams,
-                                     uint32_t getnext_switch_stream_id);
+                                     const std::vector<uint32_t> &getnext_active_streams);
   void InsertCurrentLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                   std::vector<CNodePtr> *exec_order,
                                   const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
