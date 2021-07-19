@@ -221,7 +221,7 @@ class GradExecutor {
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
   // Manage resource when run grad process.
   bool IsBpropGraph(const std::string &cell_id);
-  bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id);
+  bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id) const;
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
   void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
@@ -253,8 +253,7 @@ class GradExecutor {
                                 const std::vector<int64_t> &index) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
   }
-  void CreateMakeTupleNodeForMultiOut(const std::string &cell_id, const FuncGraphPtr &curr_g, const py::object &out,
-                                      const std::string &out_id);
+  void CreateMakeTupleNodeForMultiOut(const FuncGraphPtr &curr_g, const py::object &out, const std::string &out_id);
 
  private:
   bool grad_flag_{false};
