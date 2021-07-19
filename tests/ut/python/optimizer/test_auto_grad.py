@@ -72,6 +72,43 @@ def test_user_defined_bprop():
     grad_net(x)
 
 
+class TwoInputBPropOperator(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.op = P.Mul()
+        self.add = P.Add()
+
+    def construct(self, x, y):
+        return self.op(x, y)
+
+    def bprop(self, x, y, out, dout):
+        return self.add(5, x), self.add(y, 9)
+
+
+class BPropOperatatorNet(nn.Cell):
+    def __init__(self, mul_size):
+        super().__init__()
+        mul_np = np.full(mul_size, 0.1, dtype=np.float32)
+        floordiv_np = np.full(mul_size, 0.1, dtype=np.float32)
+        self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+        self.floordiv_weight = Parameter(Tensor(floordiv_np), name="floordiv_weight")
+        self.mul = TwoInputBPropOperator()
+        self.floor_div = P.FloorDiv()
+        self.bn = nn.BatchNorm1d(num_features=96)
+
+    def construct(self, inputs):
+        x = self.mul(inputs, self.mul_weight)
+        x = self.floor_div(x, self.floordiv_weight)
+        x = self.bn(x)
+        return x
+
+def test_user_defined_bprop_with_u():
+    net = BPropOperatatorNet(mul_size=(128, 96))
+    grad_net = TestUserDefinedBpropGradNet(net)
+    x = Tensor(np.random.randn(128, 96).astype(np.float32))
+    grad_net(x)
+
+
 class SinNet(nn.Cell):
     def __init__(self):
         super(SinNet, self).__init__()
