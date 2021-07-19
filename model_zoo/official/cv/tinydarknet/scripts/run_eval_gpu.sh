@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-if [ $# != 1 ] && [ $# != 2 ]
+if [ $# != 1 ] && [ $# != 2 ]  && [ $# != 3 ]
 then
-  echo "Usage bash scripts/run_train_cpu.sh [TRAIN_DATA_DIR] [cifar10|imagenet]"
+  echo "Usage bash scripts/run_train_gpu.sh [VAL_DATA_DIR] [cifar10|imagenet] [checkpoint_path]"
 exit 1
 fi
 
@@ -31,27 +30,35 @@ get_real_path(){
 PATH1=$(get_real_path $1)
 if [ ! -d $PATH1 ]
 then
-  echo "error: TRAIN_DATA_DIR=$PATH1 is not a directory"
+  echo "error: VAL_DATA_DIR=$PATH1 is not a directory"
+exit 1
+fi
+
+PATH2=$(get_real_path $3)
+if [ ! -f $PATH2 ]
+then
+    echo "error: CHECKPOINT_PATH=$PATH2 is not a file"
 exit 1
 fi
 
 BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
 if [ $2 == 'imagenet' ]; then
-  CONFIG_FILE="${BASE_PATH}/imagenet_config.yaml"
+  CONFIG_FILE="${BASE_PATH}/config/imagenet_config_gpu.yaml"
 elif [ $2 == 'cifar10' ]; then
-  CONFIG_FILE="${BASE_PATH}/cifar10_config.yaml"
+  CONFIG_FILE="${BASE_PATH}/config/cifar10_config_gpu.yaml"
 else
   echo "error: the selected dataset is neither cifar10 nor imagenet"
 exit 1
 fi
 
-rm -rf ./train_cpu
-mkdir ./train_cpu
-cp ./train.py ./train_cpu
-cp -r ./src ./train_cpu
-cp -r ./config ./train_cpu
-echo "start training for device CPU"
-cd ./train_cpu || exit
-env > env.log
-python train.py --device_target=CPU --train_data_dir=$PATH1 --dataset_name=$2 --config_path=$CONFIG_FILE> ./train.log 2>&1 &
+rm -rf ./eval
+mkdir ./eval
+cp -r ./src ./eval
+cp ./eval.py ./eval
+cp -r ./config ./eval
+env >env.log
+echo "start evaluation for device GPU"
+cd ./eval || exit
+python ./eval.py --device_target=GPU --val_data_dir=$PATH1 --dataset_name=$2 --config_path=$CONFIG_FILE \
+--checkpoint_path=$PATH2 > ./eval.log 2>&1 &
 cd ..

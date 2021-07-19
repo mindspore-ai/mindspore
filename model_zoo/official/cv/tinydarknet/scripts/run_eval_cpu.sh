@@ -43,9 +43,9 @@ fi
 
 BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
 if [ $2 == 'imagenet' ]; then
-  CONFIG_FILE="${BASE_PATH}/imagenet_config.yaml"
+  CONFIG_FILE="${BASE_PATH}/config/imagenet_config.yaml"
 elif [ $2 == 'cifar10' ]; then
-  CONFIG_FILE="${BASE_PATH}/cifar10_config.yaml"
+  CONFIG_FILE="${BASE_PATH}/config/cifar10_config.yaml"
 else
   echo "error: the selected dataset is neither cifar10 nor imagenet"
 exit 1
@@ -55,7 +55,7 @@ rm -rf ./eval
 mkdir ./eval
 cp -r ./src ./eval
 cp ./eval.py ./eval
-cp ./*.yaml ./eval
+cp -r ./config ./eval
 env >env.log
 echo "start evaluation for device CPU"
 cd ./eval || exit
