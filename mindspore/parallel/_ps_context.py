@@ -23,7 +23,7 @@ _ps_context = None
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",
                             "start_fl_job_threshold", "start_fl_job_time_window", "update_model_time_window",
                             "fl_iteration_num", "client_epoch_num", "client_batch_size", "scheduler_manage_port",
-                            "cipher_time_window"]
+                            "cipher_time_window", "reconstruct_secrets_threshold"]
 
 _check_non_negative_int_keys = ["worker_num"]
 

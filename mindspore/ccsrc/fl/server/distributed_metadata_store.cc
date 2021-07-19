@@ -289,8 +289,8 @@ bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const P
   } else if (meta.has_one_client_noises()) {
     auto &client_noises = *metadata_[name].mutable_client_noises();
     if (client_noises.has_one_client_noises()) {
-      MS_LOG(ERROR) << "Leader server updating value for " << name
-                    << " failed: The Protobuffer of this value already exists.";
+      MS_LOG(WARNING) << "Leader server updating value for " << name
+                      << " failed: The Protobuffer of this value already exists.";
       client_noises.Clear();
     }
     client_noises.mutable_one_client_noises()->MergeFrom(meta.one_client_noises());

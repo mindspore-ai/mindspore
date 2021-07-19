@@ -44,7 +44,7 @@ bool CipherKeys::GetKeys(const int cur_iterator, const std::string &next_req_tim
   }
   if (cur_clients_num < cipher_init_->client_num_need_) {
     MS_LOG(INFO) << "The server is not ready yet: cur_clients_num < client_num_need";
-    MS_LOG(INFO) << "cur_clients_num : " << cur_clients_num << ", cur_clients_num : " << cipher_init_->client_num_need_;
+    MS_LOG(INFO) << "cur_clients_num : " << cur_clients_num << ", client_num_need : " << cipher_init_->client_num_need_;
     BuildGetKeys(get_exchange_keys_resp_builder, schema::ResponseCode_SucNotReady, cur_iterator, next_req_time, false);
     return false;
   }
