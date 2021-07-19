@@ -45,7 +45,6 @@
 using mindspore::tensor::TensorPy;
 
 namespace mindspore {
-
 std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
   std::string kernel_name = anf_node->fullname_with_scope();
   if (kernel_name.empty()) {

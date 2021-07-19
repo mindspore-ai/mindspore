@@ -1222,6 +1222,5 @@ AbstractBasePtr InferImplTensorCopySlices(const AnalysisEnginePtr &, const Primi
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   return std::make_shared<AbstractTensor>(input->element(), input->shape());
 }
-
 }  // namespace abstract
 }  // namespace mindspore
