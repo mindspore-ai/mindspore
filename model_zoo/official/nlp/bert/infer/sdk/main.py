@@ -113,10 +113,7 @@ def read_label_file(label_file):
     Returns:
         label list
     """
-    label_list = []
-    with open(label_file) as f:
-        for label in f:
-            label_list.append(label.strip())
+    label_list = [line.strip() for line in open(label_file).readlines()]
     return label_list
 
 
@@ -255,7 +252,7 @@ def run():
         return
 
     stream_name = b'im_bertbase'
-    end_time = 0
+    infer_total_time = 0
     # input_ids file list, every file content a tensor[1,128]
     file_list = glob.glob(os.path.join(os.path.realpath(args.data_dir), "00_data", "*.bin"))
     for input_ids in file_list:
@@ -267,7 +264,7 @@ def run():
         key_vec.push_back(b'mxpi_tensorinfer0')
         start_time = time.time()
         infer_result = stream_manager_api.GetProtobuf(stream_name, 0, key_vec)
-        end_time += time.time() - start_time
+        infer_total_time += time.time() - start_time
         if infer_result.size() == 0:
             print("inferResult is null")
             return
@@ -284,8 +281,8 @@ def run():
         print("Recall {:.6f} ".format(recall))
         print("F1 {:.6f} ".format(2 * precision * recall / (precision + recall)))
         print("==============================================================")
-    print("Infer images sum: {}, cost total time: {:.6f} sec.".format(len(file_list), end_time))
-    print("The throughput: {:.6f} bin/sec.".format(len(file_list) / end_time))
+    print("Infer images sum: {}, cost total time: {:.6f} sec.".format(len(file_list), infer_total_time))
+    print("The throughput: {:.6f} bin/sec.".format(len(file_list) / infer_total_time))
     # destroy streams
     stream_manager_api.DestroyAllStreams()
 

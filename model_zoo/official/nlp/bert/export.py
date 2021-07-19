@@ -85,7 +85,8 @@ def run_export():
         input_data = [input_ids, input_mask, token_type_id]
     export(net, *input_data, file_name=args.export_file_name, file_format=args.file_format)
     if args.enable_modelarts:
-        shutil.move("{}.{}".format(args.export_file_name, args.file_format.lower()), args.output_path)
+        air_file = f"{args.export_file_name}.{args.file_format.lower()}"
+        shutil.move(air_file, args.output_path)
 
 
 if __name__ == "__main__":
