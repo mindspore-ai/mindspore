@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_BENCHMARK_BENCHMARK_UNIFIED_API_H_
 #define MINDSPORE_BENCHMARK_BENCHMARK_UNIFIED_API_H_
 
-#include <getopt.h>
 #include <signal.h>
 #include <random>
 #include <unordered_map>

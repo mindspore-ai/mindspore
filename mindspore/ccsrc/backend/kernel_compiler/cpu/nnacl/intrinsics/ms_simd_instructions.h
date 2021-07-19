@@ -20,10 +20,17 @@
 
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
+#define MS_F32X4_GETI(src, i) src[i]
 #endif
 
 #if defined(ENABLE_SSE) || defined(ENABLE_AVX)
+#ifdef SUPPORT_MSVC
+#include <immintrin.h>
+#define MS_F32X4_GETI(src, i) src.m128_f32[i]
+#else
 #include <x86intrin.h>
+#define MS_F32X4_GETI(src, i) src[i]
+#endif
 #endif
 
 #ifdef ENABLE_ARM
@@ -137,26 +144,7 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #endif
 
-#define LOAD256X8_F32(src, input_ptr, num)                 \
-  MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num); \
-  MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num); \
-  MS_FLOAT32X8 src##3 = MS_LD256_F32(input_ptr + 2 * num); \
-  MS_FLOAT32X8 src##4 = MS_LD256_F32(input_ptr + 3 * num); \
-  MS_FLOAT32X8 src##5 = MS_LD256_F32(input_ptr + 4 * num); \
-  MS_FLOAT32X8 src##6 = MS_LD256_F32(input_ptr + 5 * num); \
-  MS_FLOAT32X8 src##7 = MS_LD256_F32(input_ptr + 6 * num); \
-  MS_FLOAT32X8 src##8 = MS_LD256_F32(input_ptr + 7 * num);
-
-#define STORE256X8_F32(output_ptr, num, dst)  \
-  MS_ST256_F32(output_ptr + 0 * num, dst##1); \
-  MS_ST256_F32(output_ptr + 1 * num, dst##2); \
-  MS_ST256_F32(output_ptr + 2 * num, dst##3); \
-  MS_ST256_F32(output_ptr + 3 * num, dst##4); \
-  MS_ST256_F32(output_ptr + 4 * num, dst##5); \
-  MS_ST256_F32(output_ptr + 5 * num, dst##6); \
-  MS_ST256_F32(output_ptr + 6 * num, dst##7); \
-  MS_ST256_F32(output_ptr + 7 * num, dst##8);
-
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 #define LOAD128X8_F32(src, input_ptr, num)               \
   MS_FLOAT32X4 src##1 = MS_LDQ_F32(input_ptr + 0 * num); \
   MS_FLOAT32X4 src##2 = MS_LDQ_F32(input_ptr + 1 * num); \
@@ -195,7 +183,37 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
   return MS_MINQ_F32(MS_MAXQ_F32(MS_DIVQ_F32(a, b), neg), pos);
 }
 
+static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
+  MS_FLOAT32X4 dst;
+  dst[0] = erff(src[0]);
+  dst[1] = erff(src[1]);
+  dst[2] = erff(src[2]);
+  dst[3] = erff(src[3]);
+  return dst;
+}
+#endif
+
 #ifdef ENABLE_AVX
+#define LOAD256X8_F32(src, input_ptr, num)                 \
+  MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num); \
+  MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X8 src##3 = MS_LD256_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X8 src##4 = MS_LD256_F32(input_ptr + 3 * num); \
+  MS_FLOAT32X8 src##5 = MS_LD256_F32(input_ptr + 4 * num); \
+  MS_FLOAT32X8 src##6 = MS_LD256_F32(input_ptr + 5 * num); \
+  MS_FLOAT32X8 src##7 = MS_LD256_F32(input_ptr + 6 * num); \
+  MS_FLOAT32X8 src##8 = MS_LD256_F32(input_ptr + 7 * num);
+
+#define STORE256X8_F32(output_ptr, num, dst)  \
+  MS_ST256_F32(output_ptr + 0 * num, dst##1); \
+  MS_ST256_F32(output_ptr + 1 * num, dst##2); \
+  MS_ST256_F32(output_ptr + 2 * num, dst##3); \
+  MS_ST256_F32(output_ptr + 3 * num, dst##4); \
+  MS_ST256_F32(output_ptr + 4 * num, dst##5); \
+  MS_ST256_F32(output_ptr + 5 * num, dst##6); \
+  MS_ST256_F32(output_ptr + 6 * num, dst##7); \
+  MS_ST256_F32(output_ptr + 7 * num, dst##8);
+
 static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
   static const float data[] = {378.0f, 17325.0f, 135135.0f, 28.0f, 3150.0f, 62370.0f};
   static const MS_FLOAT32X8 neg = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
@@ -206,14 +224,5 @@ static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
   return MS_MIN256_F32(MS_MAX256_F32(a / b, neg), pos);
 }
 #endif
-
-static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
-  MS_FLOAT32X4 dst;
-  dst[0] = erff(src[0]);
-  dst[1] = erff(src[1]);
-  dst[2] = erff(src[2]);
-  dst[3] = erff(src[3]);
-  return dst;
-}
 
 #endif  // MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

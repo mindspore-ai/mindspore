@@ -235,21 +235,15 @@ endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
-    target_link_libraries(mindspore-lite cpu_kernel_mid cpu_kernel_random_standard_normal
-                          opencl_kernel_mid nnacl_mid cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid cpu_kernel_random_standard_normal
-                          opencl_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
 elseif(MSLITE_GPU_BACKEND STREQUAL cuda)
     add_subdirectory(runtime/kernel/cuda)
-    target_link_libraries(mindspore-lite cpu_kernel_mid cpu_kernel_random_standard_normal
-                          cuda_kernel_mid nnacl_mid cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid cpu_kernel_random_standard_normal
-                          cuda_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
 else()
-    target_link_libraries(mindspore-lite cpu_kernel_mid cpu_kernel_random_standard_normal
-                          nnacl_mid cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid cpu_kernel_random_standard_normal
-                          nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
 endif()
 if(SUPPORT_NPU)
     add_subdirectory(delegate/npu)

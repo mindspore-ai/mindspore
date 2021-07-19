@@ -28,6 +28,7 @@
 #include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #define google mindspore_private
 #include "glog/logging.h"
 #undef google

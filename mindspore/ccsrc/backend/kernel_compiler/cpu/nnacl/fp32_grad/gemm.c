@@ -21,7 +21,7 @@
 #endif
 #include "nnacl/fp32/matmul_fp32.h"
 
-void AddMatrix(const float *restrict v1, float *restrict v2, float beta, int row, int col, int stride) {
+void AddMatrix(const float *v1, float *v2, float beta, int row, int col, int stride) {
   const float *src_ptr = v1;
   float *dst_ptr = v2;
   for (int r = 0; r < row; r++) {

@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-int MatmulInferShape(const TensorC *const *const inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter);
 
 #ifdef __cplusplus

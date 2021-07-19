@@ -258,27 +258,27 @@ int BenchmarkUnifiedApi::CompareDataGetTotalBiasAndSize(const std::string &name,
   switch (static_cast<int>(tensor->DataType())) {
     case TypeId::kNumberTypeFloat:
     case TypeId::kNumberTypeFloat32: {
-      bias = CompareData<float>(name, tensor->Shape(), mutableData);
+      bias = CompareData<float, int64_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt8: {
-      bias = CompareData<int8_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<int8_t, int64_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeUInt8: {
-      bias = CompareData<uint8_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<uint8_t, int64_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt32: {
-      bias = CompareData<int32_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<int32_t, int64_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt16: {
-      bias = CompareData<int16_t>(name, tensor->Shape(), mutableData);
+      bias = CompareData<int16_t, int64_t>(name, tensor->Shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeBool: {
-      bias = CompareData<bool>(name, tensor->Shape(), mutableData);
+      bias = CompareData<bool, int64_t>(name, tensor->Shape(), mutableData);
       break;
     }
     default:
