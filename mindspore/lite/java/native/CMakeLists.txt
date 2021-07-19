@@ -88,6 +88,7 @@ set(JNI_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_config.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_tensor.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_session.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/jni_utils.cpp
   )
 
 set(LITE_SO_NAME mindspore-lite)
