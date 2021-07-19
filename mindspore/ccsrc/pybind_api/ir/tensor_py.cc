@@ -420,19 +420,19 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                   return TensorPy::MakeTensor(input, type_ptr);
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](py::float_ input, const TypePtr &type_ptr) {
+                           .def(py::init([](const py::float_ input, const TypePtr &type_ptr) {
                                   return TensorPy::MakeTensor(py::array(input), type_ptr);
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](py::int_ input, const TypePtr &type_ptr) {
+                           .def(py::init([](const py::int_ input, const TypePtr &type_ptr) {
                                   return TensorPy::MakeTensor(py::array(input), type_ptr);
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](py::list input, const TypePtr &type_ptr) {
+                           .def(py::init([](const py::list &input, const TypePtr &type_ptr) {
                                   return TensorPy::MakeTensor(py::array(input), type_ptr);
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](py::tuple input, const TypePtr &type_ptr) {
+                           .def(py::init([](const py::tuple &input, const TypePtr &type_ptr) {
                                   return TensorPy::MakeTensor(py::array(input), type_ptr);
                                 }),
                                 py::arg("input"), py::arg("dtype") = nullptr)
