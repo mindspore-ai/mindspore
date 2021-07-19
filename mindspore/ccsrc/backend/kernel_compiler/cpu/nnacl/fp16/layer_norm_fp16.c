@@ -27,15 +27,13 @@ int LayerNormMeanAndSquareFp16(const float16_t *src, int num, float16_t *mean, f
   float square_sum = 0.0f;
   for (; index <= num - C8NUM; index += C8NUM) {
     float16x8_t srcv = vld1q_f16(src + index);
-    float16x8_t squarev = vmulq_f16(srcv, srcv);
+    for (int i = 0; i < C8NUM; ++i) {
+      square_sum += srcv[i] * srcv[i];
+    }
 
     float16x4_t sum2 = vadd_f16(vget_low_f16(srcv), vget_high_f16(srcv));
     float32x4_t sum_f32 = vcvt_f32_f16(sum2);
     sum += MS_ADDVQ_F32(sum_f32);
-
-    float16x4_t square2 = vadd_f16(vget_low_f16(squarev), vget_high_f16(squarev));
-    float32x4_t square_f32 = vcvt_f32_f16(square2);
-    square_sum += MS_ADDVQ_F32(square_f32);
   }
   for (; index < num; index++) {
     sum += src[index];
