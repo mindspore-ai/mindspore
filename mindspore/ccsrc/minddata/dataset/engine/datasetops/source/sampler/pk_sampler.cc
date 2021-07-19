@@ -43,6 +43,9 @@ Status PKSamplerRT::InitSampler() {
   // capture the total number of possible sample ids.
   // Compute that here for this case to find the total number of samples that are available to return.
   // (in this case, samples per class * total classes).
+  if (samples_per_class_ > std::numeric_limits<int64_t>::max() / static_cast<int64_t>(labels_.size())) {
+    RETURN_STATUS_UNEXPECTED("Overflow in counting  num_rows");
+  }
   num_rows_ = samples_per_class_ * static_cast<int64_t>(labels_.size());
 
   // The user may have chosen to sample less than the total amount.
