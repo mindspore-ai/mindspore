@@ -28,6 +28,7 @@ from mindspore.common import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
 
 class Rel(Enum):
+
     """Numerical relationship between variables, logical relationship enumeration definition of range."""
     # scalar compare
     EQ = 1  # ==
