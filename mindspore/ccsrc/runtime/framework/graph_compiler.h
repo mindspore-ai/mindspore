@@ -50,7 +50,7 @@ class GraphCompiler {
 
   // Construct single op kernel graph and compile the kernel graph in PyNative mode.
   GraphId CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                       const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *input_tensors,
+                       const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *const input_tensors,
                        bool *single_op_cache_hit, const DeviceContext *device_context);
 
   // Get graph by graph id, if not exist return nullptr, used in Graph mode.
@@ -64,24 +64,24 @@ class GraphCompiler {
 
   // Cache index for all parameter and output nodes of kernel graph, used to get parameter of single op and
   // recover output of original complete back propagation kernel graph.
-  void GetParamAndOutputIndex(const KernelGraphPtr &graph, const std::vector<TensorPtr> &inputs, VectorRef *outputs,
-                              std::map<AnfNodePtr, size_t> *parameter_index,
+  void GetParamAndOutputIndex(const KernelGraphPtr &graph, const std::vector<TensorPtr> &inputs,
+                              VectorRef *const outputs, std::map<AnfNodePtr, size_t> *parameter_index,
                               std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
 
   // Get input tensors for single op compile and run, input tensors may convert from value node and parameter in graph
   // and prev kernel node's output.
   void GetSingleOpInputTensors(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                const std::map<AnfNodePtr, size_t> &parameter_index,
-                               const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
+                               const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *const input_tensor_info);
   // Get one input tensor for single control op, such as bprop_cut.
   TensorPtr GetSingleOpInputTensorByIndex(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                           const std::map<AnfNodePtr, size_t> &parameter_index,
                                           const std::vector<TensorPtr> &graph_inputs,
-                                          InputTensorInfo *input_tensor_info, size_t input_index);
+                                          InputTensorInfo *const input_tensor_info, size_t input_index);
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
   void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
-                                      OpRunInfo *run_info, GraphInfo *graph_info);
+                                      OpRunInfo *const run_info, GraphInfo *const graph_info);
 
   // Calculate ref count of PyNative back propagation operators.
   void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const;
@@ -95,7 +95,7 @@ class GraphCompiler {
   void RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                           const std::map<KernelWithIndex, size_t> &ref_count,
                           std::map<KernelWithIndex, TensorPtr> *op_output_map,
-                          GraphOutputInfo *graph_output_info) const;
+                          GraphOutputInfo *const graph_output_info) const;
 
   // Collect output tensors of back propagation graph for allreduce operators to average gradient,
   // used in PyNative distributed training mode.
