@@ -36,6 +36,7 @@ from mindspore.nn.learning_rate_schedule import LearningRateSchedule
 
 __all__ = ['Optimizer', 'opt_init_args_register']
 
+
 def opt_init_args_register(fn):
     """Register optimizer init args."""
     def deco(self, *args, **kwargs):
@@ -247,20 +248,23 @@ class Optimizer(Cell):
     def target(self):
         """
         The method is used to determine whether the parameter is updated on host or device. The input type is str
-        and can only be 'CPU', 'Ascend' or 'GPU'."""
+        and can only be 'CPU', 'Ascend' or 'GPU'.
+        """
         return self._target
 
     @target.setter
     def target(self, value):
         """
         If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-        optimizer operation."""
+        optimizer operation.
+        """
         raise NotImplementedError
 
     def _set_base_target(self, value):
         """
         If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-        optimizer operation."""
+        optimizer operation.
+        """
         if not isinstance(value, str):
             raise TypeError("The value must be str type, but got value type is {}".format(type(value)))
 
