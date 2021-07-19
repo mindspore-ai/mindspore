@@ -1285,6 +1285,10 @@ void FinalizeBackend() {
 
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
+  session::ExecutorManager::Instance().Clear();
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  runtime::GraphScheduler::GetInstance().Clear();
+  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
@@ -1316,13 +1320,6 @@ void ClearResAtexit() {
 #else
   ConfigManager::GetInstance().ResetIterNum();
 #endif
-  session::ExecutorManager::Instance().Clear();
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-
-  // Clear the resource of mindRT.
-  runtime::GraphScheduler::GetInstance().Clear();
-  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
-
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
