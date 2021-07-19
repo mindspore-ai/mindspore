@@ -86,7 +86,7 @@ class TcpServer {
   using OnTimerOnce = std::function<void(const TcpServer &)>;
   using OnTimer = std::function<void()>;
 
-  TcpServer(const std::string &address, std::uint16_t port, Configuration *config);
+  TcpServer(const std::string &address, std::uint16_t port, Configuration *const config);
   TcpServer(const TcpServer &server);
   virtual ~TcpServer();
 
@@ -142,7 +142,7 @@ class TcpServer {
   OnTimerOnce on_timer_once_callback_;
   OnTimer on_timer_callback_;
   // The Configuration file
-  Configuration *config_;
+  Configuration *const config_;
 };
 }  // namespace core
 }  // namespace ps

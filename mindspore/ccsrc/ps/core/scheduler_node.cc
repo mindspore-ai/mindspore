@@ -405,7 +405,7 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
 
       if (node_manager_.GetClusterState() == ClusterState::CLUSTER_EXIT) {
         std::this_thread::sleep_for(
-          std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval * 2));
+          std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval * kHeartbeatTimes));
         is_finish_ = true;
         wait_finish_cond_.notify_all();
       }
@@ -743,7 +743,9 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
 
 void SchedulerNode::StopRestfulServer() {
   MS_LOG(INFO) << "Scheduler stop https server.";
-  http_server_->Stop();
+  if (!http_server_->Stop()) {
+    MS_LOG(WARNING) << "Stop http server failed.";
+  }
   if (restful_thread_ != nullptr && restful_thread_->joinable()) {
     restful_thread_->join();
   }
