@@ -3895,7 +3895,7 @@ int SelectOutputUnit(const ConvParameter *conv_param) {
 
 bool CheckIfUseWinograd(int *output_unit, const ConvParameter *conv_param) {
   if (conv_param->kernel_w_ == conv_param->kernel_h_ && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
-      conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1) {
+      conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ != 1) {
     *output_unit = SelectOutputUnit(conv_param);
     if (*output_unit > 1) {
       return true;

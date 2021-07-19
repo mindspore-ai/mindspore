@@ -50,7 +50,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc packed_weight_ is failed!";
     return RET_NULL_PTR;
   }
-  PackNHWCTo1HWCNXFp32(weight_tensor->Height(), weight_tensor->Width(), weight_tensor->Batch(), oc_algin,
+  PackNHWCToNXHWCXFp32(weight_tensor->Height(), weight_tensor->Width(), weight_tensor->Batch(), oc_algin,
                        weight_tensor->Channel(), packed_weight_, origin_weight_);
   if (in_tensors_.size() == kInputSize2) {
     auto bias_size = oc_algin * oc_tile_;
@@ -194,7 +194,7 @@ void ConvolutionDepthwiseSWCPUKernelX86::FreePackedInputOutput() {
 void ConvolutionDepthwiseSWCPUKernelX86::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
-  PackNHWCTo1HWCNXFp32(weight_tensor->Height(), weight_tensor->Width(), weight_tensor->Batch(), oc_algin,
+  PackNHWCToNXHWCXFp32(weight_tensor->Height(), weight_tensor->Width(), weight_tensor->Batch(), oc_algin,
                        weight_tensor->Channel(), packed_weight_, origin_weight_);
 }
 

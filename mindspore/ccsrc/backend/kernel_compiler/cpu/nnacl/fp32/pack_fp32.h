@@ -30,8 +30,6 @@ void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int 
 void PackNCHWToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToNHWCXFp32(const void *src, void *dst, int batch, int plane, int channel, int oc_tile);
-void PackNHWCTo1HWCNXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
-                          float *tmp_weight, const float *src);
 void PackNHWCToNHWC8Fp32(const void *src, void *dst, int batch, int plane, int channel);
 // Note: If not multithreaded, please set task_id = 0 and thread_count = 0;
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel, int task_id, int thread_count);
@@ -61,6 +59,12 @@ void Transpose8X8Fp32Arm64(const float *src_ptr, float *dst_ptr, int src_stride,
 void Transpose8X8Fp32Arm32(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
 #endif
 #ifdef ENABLE_AVX
+void PackNHWCToNXHWCXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
+                          float *tmp_weight, const float *src);
+#ifdef ENABLE_DEBUG
+void SWPackNHWCToNXHWCXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
+                            float *tmp_weight, const float *src);
+#endif
 void Transpose8X8Fp32Avx(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
 #endif
 #if defined(ENABLE_SSE) && !defined(ENABLE_AVX)

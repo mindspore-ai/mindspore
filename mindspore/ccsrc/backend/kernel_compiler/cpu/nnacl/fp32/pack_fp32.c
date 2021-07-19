@@ -166,9 +166,83 @@ void PackNHWCToNHWCXFp32(const void *src, void *dst, int batch, int plane, int c
   }
 }
 
-void PackNHWCTo1HWCNXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
+#ifdef ENABLE_AVX
+// PackNHWCToNXHWCXFp32 is SWPackNHWCToNXHWCXFp32 asm optimize
+void PackNHWCToNXHWCXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
                           float *tmp_weight, const float *src) {
-  // pack weight NHWC to 1HWCxN32 1HWCxN24 1HWCxN16 1HWCxN8
+  // pack weight NHWC to N32HWC32 N24HWC24 N16HWC16 N8HWC8
+  // output_channel: batch
+  int ic8 = DOWN_ROUND(input_channel, C8NUM);
+  int oc_block8 = DOWN_DIV(output_channel, C8NUM);
+  int oc_block = 0;
+  int oc = 0;
+  int oc_remainder_step = 0;
+  if (oc_block8 != oc_block_num) {
+    oc_block8 = oc_block8 / C4NUM * C4NUM;
+    oc_remainder_step = (oc_block_num - oc_block8) * C8NUM;
+  }
+  int plane = kernel_w * kernel_h;
+  if (plane == 1) {  // conv 1x1 weight pack
+    for (; oc < oc_block8; oc += (oc_block / C8NUM)) {
+      oc_block = MSMIN(C4NUM, oc_block8 - oc) * C8NUM;  // max_tile = 32 ==> 24 ==> 16 ==> 8
+      for (int oc_tmp = 0; oc_tmp < oc_block; oc_tmp += C8NUM) {
+        int ic = 0;
+        for (; ic < ic8; ic += C8NUM) {
+          Transpose8X8Fp32Avx(src + ic, tmp_weight + ic * oc_block + oc_tmp, input_channel, oc_block);
+        }
+        for (; ic < input_channel; ++ic) {
+          for (int j = 0; j < C8NUM; ++j) {
+            tmp_weight[ic * oc_block + oc_tmp + j] = src[ic + input_channel * j];
+          }
+        }
+        src += C8NUM * input_channel;
+      }
+      tmp_weight += oc_block * input_channel;
+    }
+    oc = output_channel - oc_block8 * C8NUM;
+    for (int oc_remainder = 0; oc_remainder < oc; ++oc_remainder) {
+      for (int ic = 0; ic < input_channel; ++ic) {
+        tmp_weight[oc_remainder + oc_remainder_step * ic] = src[ic + oc_remainder * input_channel];
+      }
+    }
+  } else {
+    for (; oc < oc_block8; oc += (oc_block / C8NUM)) {
+      oc_block = MSMIN(C4NUM, oc_block8 - oc) * C8NUM;  // max_tile = 32 ==> 24 ==> 16 ==> 8
+      for (int oc_tmp = 0; oc_tmp < oc_block; oc_tmp += C8NUM) {
+        for (int hw = 0; hw < plane; ++hw) {
+          int ic = 0;
+          for (; ic < ic8; ic += C8NUM) {
+            Transpose8X8Fp32Avx(src + hw * input_channel + ic,
+                                tmp_weight + hw * oc_block * input_channel + ic * oc_block + oc_tmp,
+                                input_channel * plane, oc_block);
+          }
+          for (; ic < input_channel; ++ic) {
+            for (int j = 0; j < C8NUM; ++j) {
+              tmp_weight[ic * oc_block + oc_tmp + j + hw * oc_block * input_channel] =
+                src[ic + input_channel * j * plane + hw * input_channel];
+            }
+          }
+        }
+        src += C8NUM * plane * input_channel;
+      }
+      tmp_weight += oc_block * input_channel * plane;
+    }
+    oc = output_channel - oc_block8 * C8NUM;
+    for (int oc_remainder = 0; oc_remainder < oc; ++oc_remainder) {
+      for (int hw = 0; hw < plane; ++hw) {
+        for (int ic = 0; ic < input_channel; ++ic) {
+          tmp_weight[oc_remainder + oc_remainder_step * ic + hw * input_channel * oc_remainder_step] =
+            src[ic + (oc_remainder * plane + hw) * input_channel];
+        }
+      }
+    }
+  }
+}
+
+#ifdef ENABLE_DEBUG
+void SWPackNHWCToNXHWCXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
+                            float *tmp_weight, const float *src) {
+  // pack weight NHWC to N32HWC32 N24HWC24 N16HWC16 N8HWC8
   int oc_block = 0;
   for (int i = 0; i < oc_block_num; i += oc_block) {
     oc_block = MSMIN(C4NUM, oc_block_num - i);  // max_tile = 4
@@ -189,6 +263,9 @@ void PackNHWCTo1HWCNXFp32(int kernel_h, int kernel_w, int output_channel, int oc
     }
   }
 }
+#endif
+#endif
+
 void PackNHWCToNHWC8Fp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c8 = UP_DIV(channel, C8NUM);
   int c8_channel = c8 * C8NUM;
