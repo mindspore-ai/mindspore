@@ -127,7 +127,7 @@ if(MSLITE_ENABLE_NPU)
     if(DEFINED ENV{HWHIAI_DDK})
         message("HWHIAI_DDK=$ENV{HWHIAI_DDK}")
     else()
-        message(FATAL_ERROR "please set HWHIAI_DDK, example: export HWHIAI_DDK=/root/usr/hwhiai-ddk-100.500.010.010/")
+        message(FATAL_ERROR "please set HWHIAI_DDK, example: export HWHIAI_DDK=/root/usr/hwhiai-ddk-100.510.010.010/")
     endif()
 endif()
 
