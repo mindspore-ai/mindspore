@@ -178,6 +178,9 @@ class PSContext {
   void set_encrypt_type(const std::string &encrypt_type);
   const std::string &encrypt_type() const;
 
+  void set_node_id(const std::string &node_id);
+  const std::string &node_id() const;
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -215,7 +218,8 @@ class PSContext {
         dp_eps_(50),
         dp_delta_(0.01),
         dp_norm_clip_(1.0),
-        encrypt_type_(kNotEncryptType) {}
+        encrypt_type_(kNotEncryptType),
+        node_id_("") {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -304,6 +308,9 @@ class PSContext {
 
   // Secure mechanism for federated learning. Used in federated learning for now.
   std::string encrypt_type_;
+
+  // Unique id of the node
+  std::string node_id_;
 };
 }  // namespace ps
 }  // namespace mindspore

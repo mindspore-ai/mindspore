@@ -37,6 +37,7 @@ constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";
 constexpr char kEnvSchedulerHost[] = "MS_SCHED_HOST";
 constexpr char kEnvSchedulerPort[] = "MS_SCHED_PORT";
 constexpr char kEnvSchedulerManagePort[] = "MS_SCHED_MANAGE_PORT";
+constexpr char kEnvNodeId[] = "MS_NODE_ID";
 
 constexpr char kCommTypeOfIBVerbs[] = "ibverbs";
 constexpr char kRoleOfPServer[] = "server";
@@ -95,6 +96,7 @@ constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (uint32_t(1) <<
 constexpr char kServerNum[] = "server_num";
 constexpr char kWorkerNum[] = "worker_num";
 constexpr char kNodesIds[] = "node_ids";
+constexpr char kNodeId[] = "node_id";
 
 constexpr int64_t kSubmitTaskIntervalInMs = 1;
 constexpr int64_t kMaxTaskNum = 10240;

@@ -27,13 +27,13 @@ bool ServerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "[Server start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
 
-  StartHeartbeatTimer(client_to_scheduler_);
-  MS_LOG(INFO) << "[Server start]: 5. Server start heartbeat timer!";
-
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start server node timeout!";
     return false;
   }
+
+  StartHeartbeatTimer(client_to_scheduler_);
+  MS_LOG(INFO) << "[Server start]: 5. Server start heartbeat timer!";
 
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Server start]: 6. Successfully start server node!";

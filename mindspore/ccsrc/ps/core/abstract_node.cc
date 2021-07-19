@@ -567,11 +567,13 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
                << ", cluster state is:" << CommUtil::ClusterStateToString(current_cluster_state_)
                << ", the rank id:" << node_info_.rank_id_;
 
+  client_mutex_.lock();
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {
     nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
     MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port() << ", the rank id:" << it.rank_id();
   }
+  client_mutex_.unlock();
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   is_ready_ = true;
   wait_start_cond_.notify_all();
@@ -916,7 +918,15 @@ void AbstractNode::InitServerHandler() {
 }
 
 void AbstractNode::InitNodeInfo(const NodeRole &role) {
-  node_info_.node_id_ = CommUtil::GenerateUUID();
+  if (PSContext::instance()->node_id().empty() && config_->Exists(kNodeId)) {
+    node_info_.node_id_ = config_->Get(kNodeId, "");
+  } else {
+    node_info_.node_id_ = PSContext::instance()->node_id();
+  }
+
+  if (node_info_.node_id_.empty()) {
+    node_info_.node_id_ = CommUtil::GenerateUUID();
+  }
   node_info_.node_role_ = role;
   node_info_.ip_ = server_->BoundIp();
   node_info_.port_ = server_->BoundPort();

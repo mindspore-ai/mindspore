@@ -33,7 +33,12 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
 
   const std::string &node_id = register_message.node_id();
   if (registered_nodes_info_.find(node_id) != registered_nodes_info_.end()) {
+    const std::string &new_ip = register_message.ip();
+    uint32_t new_port = register_message.port();
     rank_id = registered_nodes_info_[node_id].rank_id_;
+    registered_nodes_info_[node_id].is_alive = true;
+    registered_nodes_info_[node_id].ip_ = new_ip;
+    registered_nodes_info_[node_id].port_ = new_port;
     MS_LOG(INFO) << "The node id: " << node_id << " is already assigned!";
     return rank_id;
   }

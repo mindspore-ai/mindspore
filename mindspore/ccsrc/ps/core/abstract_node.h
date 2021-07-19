@@ -192,7 +192,6 @@ class AbstractNode : public Node {
 
   // the key is: <node_role,rank_id>, the value is: <ip, port>
   std::map<std::pair<NodeRole, uint32_t>, std::pair<std::string, uint16_t>> nodes_address_;
-  std::mutex client_mutex_;
   // the map's key is: rank_id
   std::unordered_map<uint32_t, std::shared_ptr<TcpClient>> connected_nodes_;
 

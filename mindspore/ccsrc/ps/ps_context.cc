@@ -54,6 +54,7 @@ void PSContext::SetPSEnable(bool enabled) {
     scheduler_port_ = std::strtol(common::GetEnv(kEnvSchedulerPort).c_str(), nullptr, kBase);
     scheduler_manage_port_ = std::strtol(common::GetEnv(kEnvSchedulerManagePort).c_str(), nullptr, kBase);
     cluster_config_ = std::make_unique<core::ClusterConfig>(worker_num_, server_num_, scheduler_host_, scheduler_port_);
+    node_id_ = common::GetEnv(kEnvNodeId);
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";
     is_worker_ = false;
@@ -411,5 +412,9 @@ uint16_t PSContext::scheduler_manage_port() const { return scheduler_manage_port
 void PSContext::set_config_file_path(const std::string &path) { config_file_path_ = path; }
 
 std::string PSContext::config_file_path() const { return config_file_path_; }
+
+void PSContext::set_node_id(const std::string &node_id) { node_id_ = node_id; }
+
+const std::string &PSContext::node_id() const { return node_id_; }
 }  // namespace ps
 }  // namespace mindspore

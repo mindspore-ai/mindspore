@@ -32,6 +32,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+TcpConnection::~TcpConnection() { bufferevent_free(buffer_event_); }
 void TcpConnection::InitConnection(const messageReceive &callback) { tcp_message_handler_.SetCallback(callback); }
 
 void TcpConnection::OnReadHandler(const void *buffer, size_t num) { tcp_message_handler_.ReceiveMessage(buffer, num); }
@@ -432,12 +433,10 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
     }
     // Free connection structures
     srv->RemoveConnection(conn->GetFd());
-    bufferevent_free(bev);
   } else if (events & BEV_EVENT_ERROR) {
     MS_LOG(WARNING) << "Event buffer remain data: " << remain;
     // Free connection structures
     srv->RemoveConnection(conn->GetFd());
-    bufferevent_free(bev);
 
     // Notify about disconnection
     if (srv->client_disconnection_) {
