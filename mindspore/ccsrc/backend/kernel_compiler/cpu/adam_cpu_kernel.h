@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t SCALAR_INDEX = 0;
+constexpr size_t INPUT_NUMS = 10;
+constexpr size_t OUTPUT_NUMS = 3;
+
 class AdamCPUKernel : public CPUKernel {
  public:
   AdamCPUKernel() = default;
@@ -38,6 +42,7 @@ class AdamCPUKernel : public CPUKernel {
  private:
   bool use_nesterov_{false};
   TypeId dtype_{kTypeUnknown};
+  enum input_list_ { VAR, M, V, BETA1_POWER, BETA2_POWER, LR, BETA1, BETA2, EPSILON, GRAD };
 };
 
 MS_REG_CPU_KERNEL(Adam, KernelAttr(), AdamCPUKernel);

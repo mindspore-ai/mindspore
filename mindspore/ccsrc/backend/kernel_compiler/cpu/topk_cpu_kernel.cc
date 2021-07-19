@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <map>
 #include "backend/kernel_compiler/cpu/topk_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
