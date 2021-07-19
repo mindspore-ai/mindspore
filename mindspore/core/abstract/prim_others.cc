@@ -544,7 +544,7 @@ AbstractBasePtr InferImplGpuConvertToDynamicShape(const AnalysisEnginePtr &, con
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
 
   ShapeVector input_shape = input->shape()->shape();
-  int32_t input_rank = input_shape.size();
+  int32_t input_rank = SizeToInt(input_shape.size());
   ShapeVector inferred_shape(input_rank, Shape::SHP_ANY);
   ShapeVector min_shape(input_rank, 1);
   ShapeVector max_shape = input_shape;

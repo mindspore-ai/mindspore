@@ -480,7 +480,6 @@ struct TraceNodeProviderRegister {
       auto stack = GetCNodeDebugStack();
       if (!stack.empty()) {
         auto conf = stack.back();
-        MS_EXCEPTION_IF_NULL(conf);
         *node = conf->node();
       }
     });

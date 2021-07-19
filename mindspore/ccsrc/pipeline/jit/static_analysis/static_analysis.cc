@@ -709,6 +709,7 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &spec, const AbstractBa
                                    const AnfNodePtr &node, const std::string &error_info) {
   std::ostringstream buffer;
   buffer << "The return values of different branches do not match. " << error_info
+         << ". For more details, please refer to the FAQ at https://www.mindspore.cn."
          << " The abstract type of the return value of the current branch is " << spec->ToString()
          << ", and that of the previous branch is " << last_spec->ToString() << ". Please check the node "
          << node->DebugString();
