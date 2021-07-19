@@ -16,7 +16,7 @@
 import sys
 
 
-def run_compiler(op_json):
+def run_compiler(op_json, attrs=None):
     """
     Run AKG compiler to compile op with subprocess, if this process of
     compilation failed, an exception will be raised
@@ -31,10 +31,13 @@ def run_compiler(op_json):
     sys.path.insert(0, get_akg_path())
     p = __import__("akg", globals(), locals(), ['ms'], 0)
     func = getattr(p.ms, "compilewithjson")
-    res = func(op_json)
+    res = func(op_json, attrs)
     if not res:
         raise ValueError("Compile error")
 
 
 if __name__ == "__main__":
-    run_compiler(sys.argv[1])
+    if len(sys.argv) > 2:
+        run_compiler(sys.argv[1], sys.argv[2])
+    else:
+        run_compiler(sys.argv[1])

@@ -23,8 +23,10 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "nlohmann/json.hpp"
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
@@ -108,6 +110,11 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
     MS_LOG(ERROR) << "Akg start failed.";
     return false;
   }
+  auto attrs = CollectBuildAttrs();
+  if (!attrs.empty() && !client->AkgSendAttr(attrs)) {
+    MS_LOG(ERROR) << "Akg send attr failed.";
+    return false;
+  }
   if (!client->AkgSendData(jsons)) {
     MS_LOG(ERROR) << "Akg send data failed.";
     return false;
@@ -134,7 +141,9 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
   std::vector<JsonNodePair> json_and_node;
   for (const auto &anf_node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
-    AkgKernelJsonGenerator akg_kernel_json_generator;
+    DumpOption option;
+    option.get_compute_capability = true;
+    AkgKernelJsonGenerator akg_kernel_json_generator(option);
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::IsGraphKernel(cnode)) {
@@ -146,14 +155,13 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
         func_graph->set_manager(mng);
       }
       std::vector<AnfNodePtr> node_list, input_list, output_list;
-      MS_LOG(INFO) << "Akg start compile composite op[" << anf_node->fullname_with_scope() << "]";
       GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
       if (!akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
-        MS_EXCEPTION(UnknownError) << "Akg build failed composite op[" << anf_node->fullname_with_scope() << "].";
+        MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
       }
     } else {
       if (!akg_kernel_json_generator.CollectJson(anf_node)) {
-        MS_EXCEPTION(UnknownError) << "Akg build failed basic op[" << anf_node->fullname_with_scope() << "].";
+        MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
       }
     }
     json_and_node.push_back({akg_kernel_json_generator, anf_node});
@@ -167,6 +175,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
+  MS_LOG(INFO) << "Akg start parallel build. kernel count: " << json_and_node.size();
   bool res = AkgOpParallelBuild(json_and_node);
   if (!res) {
     MS_LOG(ERROR) << "Akg build kernel failed.";
@@ -178,6 +187,18 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "Akg kernel build time: " << cost << " us.";
   return true;
+}
+
+std::string AkgKernelBuilder::CollectBuildAttrs() {
+  auto &flags = context::GraphKernelFlags::GetInstance();
+  nlohmann::json attrs;
+  if (flags.online_tuning > 0) {
+    attrs["online_tuning"] = flags.online_tuning;
+  }
+  if (!flags.repository_path.empty()) {
+    attrs["repository_path"] = flags.repository_path;
+  }
+  return attrs.empty() ? "" : attrs.dump();
 }
 }  // namespace kernel
 }  // namespace mindspore

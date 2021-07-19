@@ -17,8 +17,10 @@
 
 CUresult cuModuleLoadData(CUmodule *module, const void *image) { return CUDA_SUCCESS; }
 
-CUresult cuModuleLoadDataEx(CUmodule *module, const void *image, unsigned int numOptions,
-                            CUjit_option *options, void **optionValues) { return CUDA_SUCCESS; }
+CUresult cuModuleLoadDataEx(CUmodule *module, const void *image, unsigned int numOptions, CUjit_option *options,
+                            void **optionValues) {
+  return CUDA_SUCCESS;
+}
 
 CUresult cuModuleGetFunction(CUfunction *hfunc, CUmodule hmod, const char *name) { return CUDA_SUCCESS; }
 
@@ -31,3 +33,8 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDi
 CUresult cuModuleUnload(CUmodule hmod) { return CUDA_SUCCESS; }
 
 CUresult cuGetErrorName(CUresult error, const char **pStr) { return CUDA_SUCCESS; }
+
+CUresult cuDeviceGetAttribute(int *pi, CUdevice_attribute attrib, int dev) {
+  *pi = 0;
+  return CUDA_SUCCESS;
+}

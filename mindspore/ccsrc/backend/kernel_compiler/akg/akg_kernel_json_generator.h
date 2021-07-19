@@ -58,6 +58,7 @@ constexpr auto kJsonKeyRecomputeOps = "recompute_ops";
 constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
 constexpr auto kJsonKeyStitchOp = "stitch_op";
 constexpr auto kJsonKeyStitchAtomicOp = "stitch_atomic_op";
+constexpr auto kJsonKeyComputeCapability = "compute_capability";
 
 constexpr auto kAttrInputNames = "input_names";
 
@@ -66,6 +67,23 @@ struct DumpOption {
   bool is_before_select_kernel = false;
   bool save_ptr_address = false;
   bool extract_opinfo_from_anfnode = false;
+  bool get_compute_capability = false;
+};
+
+class ComputeCapability {
+ public:
+  static const std::string &Get() {
+    static std::unique_ptr<ComputeCapability> instance = nullptr;
+    if (instance == nullptr) {
+      instance = std::make_unique<ComputeCapability>();
+      instance->GetComputeCapability();
+    }
+    return instance->compute_capability_;
+  }
+
+ private:
+  void GetComputeCapability();
+  std::string compute_capability_;
 };
 
 class AkgKernelJsonGenerator {

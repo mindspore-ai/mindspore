@@ -22,6 +22,9 @@
 #include <set>
 #include <sstream>
 #include <tuple>
+#if ENABLE_GPU
+#include <cuda.h>
+#endif
 #include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
@@ -549,6 +552,9 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyProcess] = GetStrProcessorFromContext();  // GetProcessorStr(anf_node);
   (*kernel_json)[kJsonKeyComposite] = false;
+  if (dump_option_.get_compute_capability) {
+    (*kernel_json)[kJsonKeyComputeCapability] = ComputeCapability::Get();
+  }
 
   if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
     MS_LOG(ERROR) << "Cal mem size failed.";
@@ -638,6 +644,9 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyProcess] = GetStrProcessorFromContext();
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
+  if (dump_option_.get_compute_capability) {
+    (*kernel_json)[kJsonKeyComputeCapability] = ComputeCapability::Get();
+  }
 
   GenStitchJson(anf_nodes, &node_json_map, kernel_json);
 
@@ -836,6 +845,24 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
                                               const std::vector<AnfNodePtr> &output_list) {
   kernel_json_ = nlohmann::json();
   return CollectFusedJson(anf_nodes, input_list, output_list, &kernel_json_);
+}
+
+void ComputeCapability::GetComputeCapability() {
+#if ENABLE_GPU
+  int a, b;
+  auto ret = cuDeviceGetAttribute(&a, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
+  if (ret != CUDA_SUCCESS) {
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, ret=" << ret;
+    return;
+  }
+  ret = cuDeviceGetAttribute(&b, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
+  if (ret != CUDA_SUCCESS) {
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, ret=" << ret;
+    return;
+  }
+  this->compute_capability_ = std::to_string(a) + "." + std::to_string(b);
+#endif
+  return;
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -50,6 +50,20 @@ bool KernelBuildClient::AkgStart(int process_num, int wait_time) {
   return true;
 }
 
+bool KernelBuildClient::AkgSendAttr(const std::string &attr) {
+  auto res = SendRequest(kAkgAttr);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/ATTR failed, res: " << res;
+    return false;
+  }
+  res = SendRequest(attr);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/ATTR.. responds failed, res: " << res << ", when sending [" << attr << "]";
+    return false;
+  }
+  return true;
+}
+
 bool KernelBuildClient::AkgSendData(const std::vector<std::string> &jsons) {
   auto res = SendRequest(kAkgData);
   if (res != kAck) {

@@ -185,8 +185,10 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
 
   // Integer flags
-  reg.AddFlag("auto_tune", &auto_tune);
-  reg.AddFlag("cluster_limit", &cluster_limit);
+  reg.AddFlag("online_tuning", &online_tuning);
+
+  // String flags
+  reg.AddFlag("repository_path", &repository_path);
 
   // String list flags
   reg.AddFlag("enable_expand_ops", &enable_expand_ops);
@@ -208,8 +210,9 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_parallel_fusion"] = enable_parallel_fusion;
 
   json["opt_level"] = opt_level;
-  json["auto_tune"] = auto_tune;
-  json["cluster_limit"] = cluster_limit;
+  json["online_tuning"] = online_tuning;
+
+  json["repository_path"] = repository_path;
 
   json["enable_expand_ops"] = enable_expand_ops;
   json["enable_expand_ops_only"] = enable_expand_ops_only;

@@ -21,6 +21,7 @@ from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 
+
 def copy_json(pid_path, ppid_path):
     """
     copy json from pid_path to ppid_path
@@ -32,7 +33,7 @@ def copy_json(pid_path, ppid_path):
         shutil.move(os.path.join(pid_path, json_file), ppid_path)
 
 
-def _compile_akg_task_gpu(*json_strs):
+def _compile_akg_task_gpu(json_strs, attrs):
     """
     compile func called in single process
 
@@ -45,9 +46,9 @@ def _compile_akg_task_gpu(*json_strs):
     func = getattr(p.ms, "compilewithjson")
 
     for json_str in json_strs:
-        res = func(json_str)
+        res = func(json_str, attrs)
         if not res:
-            raise ValueError("Compile error, args: {}!".format(json_str))
+            raise ValueError("Compile error, args: {}! build attrs: {}".format(json_str, attrs))
 
     pid_path = os.path.realpath("./cuda_meta_" + str(os.getpid()))
     if os.path.exists(pid_path):
@@ -55,23 +56,25 @@ def _compile_akg_task_gpu(*json_strs):
         shutil.rmtree(pid_path)
 
 
-def _compile_akg_task_ascend(*json_strs):
+def _compile_akg_task_ascend(json_strs, attrs):
     """
     compile func called in single process
 
     Parameters:
         json_strs: list. List contains multiple kernel infos, suitable for json compile api.
     """
+    if attrs is None:
+        attrs = "{}"
     akg_compiler = os.path.join(os.path.split(
         os.path.realpath(__file__))[0], "compiler.py")
     for json_str in json_strs:
         try:
-            subprocess.run([sys.executable, akg_compiler, json_str], text=True, check=True)
+            subprocess.run([sys.executable, akg_compiler, json_str, attrs], text=True, check=True)
         except BaseException as e:
-            logger.error(e, "Failed, args: {}!".format(json_str))
+            logger.error(e, "Failed, args: {}! build attrs: {}".format(json_str, attrs))
 
 
-def create_akg_parallel_process(process_num, wait_time, platform=""):
+def create_akg_parallel_process(process_num, wait_time, platform):
     """
     create AkgParallelCompiler object
 
@@ -84,7 +87,7 @@ def create_akg_parallel_process(process_num, wait_time, platform=""):
 class AkgProcess:
     """akg kernel parallel process"""
 
-    def __init__(self, process_num, wait_time, platform=""):
+    def __init__(self, process_num, wait_time, platform):
         """
         Args:
             process_num: int. processes number
@@ -103,7 +106,7 @@ class AkgProcess:
         self.platform = platform
         self.argc = 0
 
-    def compile(self):
+    def compile(self, attrs=None):
         """
         compile kernel by multi processes
         Return:
@@ -111,13 +114,14 @@ class AkgProcess:
         """
         if self.argc == 0:
             raise ValueError("json must be not null")
+        args = [(arg, attrs) for arg in self.args]
         if self.platform == "GPU":
             with Pool(processes=self.process_num) as pool:
-                res = pool.starmap_async(_compile_akg_task_gpu, self.args)
+                res = pool.starmap_async(_compile_akg_task_gpu, args)
                 res.get(timeout=self.wait_time)
         elif self.platform == "ASCEND":
             with Pool(processes=self.process_num) as pool:
-                res = pool.starmap_async(_compile_akg_task_ascend, self.args)
+                res = pool.starmap_async(_compile_akg_task_ascend, args)
                 res.get(timeout=self.wait_time)
         else:
             raise ValueError("The value of 'platform' must be 'GPU' or 'ASCEND'.")

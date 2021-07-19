@@ -128,27 +128,24 @@ class Messager:
 class AkgBuilder():
     """Akg building wrapper"""
 
-    def __init__(self):
-        pass
+    def __init__(self, platform):
+        self.platform = platform
+        self.attrs = None
 
-    def create(self, process_num, waitime, platform=""):
+    def create(self, process_num, waitime):
         """ Create akg processor"""
-
-        self.akg_processor = create_akg_parallel_process(process_num, waitime, platform)
+        self.akg_processor = create_akg_parallel_process(process_num, waitime, self.platform)
 
     def accept_json(self, json):
         """ Accept json"""
-
         return self.akg_processor.accept_json(json)
 
     def compile(self):
         """Compile"""
+        return self.akg_processor.compile(self.attrs)
 
-        return self.akg_processor.compile()
-
-    def handle(self, messager, arg, platform=""):
+    def handle(self, messager, arg):
         """Handle message about akg"""
-
         if arg == 'AKG/PID':
             messager.send_res(os.getpid())
         elif arg == 'AKG/START':
@@ -156,7 +153,11 @@ class AkgBuilder():
             process_num_str = messager.get_message()
             messager.send_ack()
             wait_time_str = messager.get_message()
-            self.create(int(process_num_str), int(wait_time_str), platform)
+            messager.send_ack()
+            self.create(int(process_num_str), int(wait_time_str))
+        elif arg == 'AKG/ATTR':
+            messager.send_ack()
+            self.attrs = messager.get_message()
             messager.send_ack()
         elif arg == 'AKG/DATA':
             messager.send_ack()
@@ -176,7 +177,7 @@ class AkgBuilder():
             messager.send_ack()
             json = messager.get_message()
             try:
-                akg_compile_single(json)
+                akg_compile_single(json, self.attrs)
             except ValueError:
                 messager.send_ack(False)
                 messager.exit()
