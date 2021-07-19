@@ -104,7 +104,7 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
                                       &update_meta_rsp_msg)) {
       MS_LOG(ERROR) << "Sending updating metadata message to server " << stored_rank << " failed.";
       if (reason != nullptr) {
-        *reason = "Send to rank " + std::to_string(stored_rank) + " failed. " + kNetworkError;
+        *reason = kNetworkError;
       }
       return false;
     }
