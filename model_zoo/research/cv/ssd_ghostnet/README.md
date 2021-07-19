@@ -11,8 +11,10 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
         - [Training on Ascend](#training-on-ascend)
+        - [Training on GPU](#training-on-gpu)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation on Ascend](#evaluation-on-ascend)
+        - [Evaluation on GPU](#evaluation-on-gpu)
     - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
@@ -151,6 +153,8 @@ If you want to run in modelarts, please check the official documentation of [mod
     ├── scripts
       ├─ run_distribute_train_ghostnet.sh  ## shell script for distributed on ascend
       └─ run_infer_310.sh                  ## shell script for 310inference on ascend
+      └─ run_distribute_train_gpu.sh       ## shell script for distributed train on gpu
+      └─ run_standalone_train_gpu.sh      ## shell script for standalone train on gpu
     ├── src
       ├─ box_util.py              ## bbox utils
       ├─ coco_eval.py             ## coco metrics utils
@@ -226,12 +230,30 @@ We need five or seven parameters for this scripts.
 
 Training result will be stored in the current path, whose folder name begins with "LOG".  Under this, you can find checkpoint file together with result like the followings in LOG4/log.txt.
 
+### Training on GPU
+
+For details about the parameters, see [Training on Ascend](#training-on-ascend)
+
+- Distribute mode
+
+```bash
+    bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+```
+
+Training result will be stored in the current path, whose folder name begins with "LOG".  Under this, you can find checkpoint file together with result like the followings in LOG/log.txt.
+
 ## [Evaluation Process](#contents)
 
 ### Evaluation on Ascend
 
 ```bash
 python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.ckpt
+```
+
+### Evaluation on GPU
+
+```bash
+python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.ckpt --device_target="GPU"
 ```
 
 ## [Inference Process](#contents)
@@ -308,30 +330,30 @@ mAP: 0.24270569394180577
 
 ### Evaluation Performance
 
-| Parameters                 | Ascend                                                       |
-| -------------------------- | -------------------------------------------------------------|
-| Model Version              | SSD ghostnet                                                 |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |
-| MindSpore Version          | 1.3.0                                                        |
-| Dataset                    | COCO2017                                                     |
-| Training Parameters        | epoch = 500,  batch_size = 32                                |
-| Optimizer                  | Momentum                                                     |
-| Loss Function              | Sigmoid Cross Entropy,SmoothL1Loss                           |
-| Total time                 | 8pcs: 12hours                                                |
+| Parameters                 | Ascend                                                       | GPU                                              |
+| -------------------------- | -------------------------------------------------------------| -------------------------------------------------|
+| Model Version              | SSD ghostnet                                                 |SSD ghostnet                                      |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |NV SMX2 V100-32G                                 |
+| MindSpore Version          | 1.3.0                                                        |07/19/2021 (month/day/year)                      |
+| Dataset                    | COCO2017                                                     |COCO2017                                                     |
+| Training Parameters        | epoch = 500,  batch_size = 32                                | epoch = 500,  batch_size = 32                                |
+| Optimizer                  | Momentum                                                     |Momentum                                                     |
+| Loss Function              | Sigmoid Cross Entropy,SmoothL1Loss                           | Sigmoid Cross Entropy,SmoothL1Loss                           |
+| Total time                 | 8pcs: 12hours                                                | 8pcs: 25hours                                                |
 
 ### Inference Performance
 
-| Parameters          | Ascend                      |
-| ------------------- | ----------------------------|
-| Model Version       | SSD ghostnet                |
-| Resource            | Ascend 910; OS Euler2.8     |
-| Uploaded Date       | 07/05/2021 (month/day/year) |
-| MindSpore Version   | 1.3.0                       |
-| Dataset             | COCO2017                    |
-| batch_size          | 1                           |
-| outputs             | mAP                         |
-| Accuracy            | IoU=0.50: 24.1%             |
-| Model for inference | 55M(.ckpt file)             |
+| Parameters          | Ascend                      | GPU                      |
+| ------------------- | ----------------------------| ----------------------------|
+| Model Version       | SSD ghostnet                | SSD ghostnet                |
+| Resource            | Ascend 910; OS Euler2.8     |NV SMX2 V100-32G             |
+| Uploaded Date       | 07/05/2021 (month/day/year) |07/19/2021 (month/day/year)    |
+| MindSpore Version   | 1.3.0                       | 1.3.0                       |
+| Dataset             | COCO2017                    | COCO2017                    |
+| batch_size          | 1                           | 1                           |
+| outputs             | mAP                         | mAP                         |
+| Accuracy            | IoU=0.50: 24.1%             | IoU=0.50: 24.1%             |
+| Model for inference | 55M(.ckpt file)             | 53M(.ckpt file)             |
 
 #### 310Inference Performance
 

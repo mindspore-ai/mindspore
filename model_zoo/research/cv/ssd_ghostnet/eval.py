@@ -73,7 +73,7 @@ def ssd_eval(dataset_path, ckpt_path):
 def eval_net():
     """eval net"""
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend", device_id=get_device_id())
+                        device_target=config.device_target, device_id=get_device_id())
 
     prefix = "ssd_eval.mindrecord"
     mindrecord_dir = os.path.join(config.data_path, "MindRecord_COCO")

@@ -18,7 +18,7 @@
 import os
 import mindspore.nn as nn
 from mindspore import context, Tensor
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMonitor, TimeMonitor
 from mindspore.train import Model
 from mindspore.context import ParallelMode
@@ -35,7 +35,7 @@ from src.model_utils.moxing_adapter import moxing_wrapper
 def train_net():
     """train net"""
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend", device_id=config.device_id)
+                        device_target=config.device_target, device_id=config.device_id)
 
     if config.run_distribute:
         device_num = config.device_num
@@ -43,7 +43,7 @@ def train_net():
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
         init()
-        rank = config.device_id % device_num
+        rank = get_rank()
     else:
         rank = 0
         device_num = 1
@@ -98,7 +98,7 @@ def train_net():
         init_net_param(net)
 
         # checkpoint
-        ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
+        ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path + str(rank))
         ckpt_config = CheckpointConfig(
             save_checkpoint_steps=dataset_size * config.save_checkpoint_epochs, keep_checkpoint_max=60)
         ckpoint_cb = ModelCheckpoint(
