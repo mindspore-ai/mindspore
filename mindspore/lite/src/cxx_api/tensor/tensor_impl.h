@@ -113,9 +113,9 @@ class MSTensor::Impl {
       return empty;
     }
     auto shape = lite_tensor_->shape();
-    lite_shape.resize(shape.size());
-    std::transform(shape.begin(), shape.end(), lite_shape.begin(), [](int c) { return static_cast<int64_t>(c); });
-    return lite_shape;
+    lite_shape_.resize(shape.size());
+    std::transform(shape.begin(), shape.end(), lite_shape_.begin(), [](int c) { return static_cast<int64_t>(c); });
+    return lite_shape_;
   }
 
   virtual std::shared_ptr<Impl> Clone() const { return nullptr; }
@@ -221,7 +221,7 @@ class MSTensor::Impl {
  private:
   tensor::MSTensor *lite_tensor_ = nullptr;
   std::string tensor_name_ = "";
-  mutable std::vector<int64_t> lite_shape;
+  mutable std::vector<int64_t> lite_shape_;
   bool own_data_ = false;
   bool from_session_ = false;
 };
