@@ -100,6 +100,9 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
+    MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
+  }
   bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
   input_size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size");
   hidden_size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size");
@@ -126,9 +129,6 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   weight_h_size_ = weight_h_size_ * num_directions_;
   if (num_directions_ * num_layers_ != SizeToLong(src_h_shape[0])) {
     MS_LOG(EXCEPTION) << "Error iteration shape!";
-  }
-  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
-    MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
   }
 }
 

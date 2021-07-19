@@ -142,7 +142,8 @@ def _calculate_fan_in_and_fan_out(shape):
         num_output_fmaps = shape[0]
         receptive_field_size = 1
         if dimensions > 2:
-            receptive_field_size = shape[2] * shape[3]
+            for i in range(2, dimensions):
+                receptive_field_size *= shape[i]
         fan_in = num_input_fmaps * receptive_field_size
         fan_out = num_output_fmaps * receptive_field_size
     return fan_in, fan_out
