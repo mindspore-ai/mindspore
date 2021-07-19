@@ -192,6 +192,8 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   }
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
+    MS_LOG(ERROR)
+      << "The model maybe an old model, Please download the package whose version is before 1.2 and then try again.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return nullptr;
   }

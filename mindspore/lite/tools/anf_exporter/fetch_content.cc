@@ -448,7 +448,7 @@ void RemoveIfDepend(const CNodePtr &cnode) {
     }
     if (value_node->value() != nullptr && opt::CheckPrimitiveType(depend_node, prim::kPrimDepend)) {
       has_depend = true;
-      bool mask_out = (depend_node->inputs().size() == 3);
+      bool mask_out = (depend_node->inputs().size() == opt::kInputSizeThree);
       for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
         AnfNodePtr depend_input_node = depend_node->input(j);
         if (depend_input_node->isa<CNode>()) {

@@ -194,7 +194,7 @@ STATUS OnnxInputAdjust::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_
     MS_LOG(ERROR) << "shape is nullptr.";
   }
   auto shape_vector = shape_ptr->shape();
-  if (shape_vector.size() != 4) {
+  if (shape_vector.size() != opt::kInputSizeFour) {
     MS_LOG(DEBUG) << "only adjust 4 dims graph input.";
     return lite::RET_OK;
   }
@@ -219,7 +219,7 @@ STATUS OnnxInputAdjust::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_
   std::transform(perm.begin(), perm.end(), std::back_inserter(transpose_perm),
                  [](const int &val) { return val < 0 ? val + 4 : val; });
   if (transpose_perm[0] == 0 && transpose_perm[1] == 3 && transpose_perm[2] == 1) {
-    auto channel = shape_vector[3];
+    auto channel = shape_vector[opt::kInputIndexThree];
     shape_vector.pop_back();
     shape_vector.insert(shape_vector.begin() + 1, channel);
     param_node->abstract()->set_shape(std::make_shared<abstract::Shape>(shape_vector));
