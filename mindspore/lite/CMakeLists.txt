@@ -5,6 +5,7 @@ set(BUILD_LITE "on")
 add_compile_definitions(ENABLE_MSLITE)
 if(TOOLCHAIN_NAME STREQUAL "himix200")
   set(TARGET_HIMIX200 on)
+  set(ENABLE_MINDRT off)
   add_compile_definitions(SUPPORT_NNIE)
 endif()
 

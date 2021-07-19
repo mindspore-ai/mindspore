@@ -276,7 +276,7 @@ if(NOT APPLE AND PLATFORM_ARM)
     set(NDK_STRIP
         "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
     if(TARGET_HIMIX200)
-        set(NDK_STRIP "arm-himix200-linux-strip")
+        set(NDK_STRIP ${HIMIX_STRIP})
     endif()
 endif()
 

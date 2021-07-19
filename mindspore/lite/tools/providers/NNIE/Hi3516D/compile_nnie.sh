@@ -19,19 +19,27 @@ function Run_Build_x86() {
   export MSLITE_ENABLE_NNIE=on
   export MSLITE_ENABLE_CONVERTER=off
   export MSLITE_ENABLE_TRAIN=off
-  bash ${nnie_code_path}/mindspore/build.sh -I x86_64 -j 64
+  bash ${nnie_code_path}/mindspore/build.sh -I x86_64 -j ${thread_num}
   if [ $? = 0 ]; then
     echo "build x86 for nnie success"
     hi3516d_release_path=${open_source_ms_path}/output/mindspore-lite-${version}-linux-x64/tools/converter/providers/Hi3516D
     rm -rf ${hi3516d_release_path}
-    mkdir -p ${hi3516d_release_path}/third_party
-    cp -r ${nnie_code_path}/mindspore/mindspore/lite/tools/providers/NNIE/Hi3516D/opencv-4.2.0/ ${hi3516d_release_path}/third_party/
-    cp -r ${nnie_code_path}/mindspore/mindspore/lite/tools/providers/NNIE/Hi3516D/protobuf-3.9.0/ ${hi3516d_release_path}/third_party/
+    mkdir -p ${hi3516d_release_path}/third_party/opencv-4.2.0
+    mkdir -p ${hi3516d_release_path}/third_party/protobuf-3.9.0
+    cp ${nnie_code_path}/mindspore/mindspore/lite/tools/providers/NNIE/Hi3516D/opencv-4.2.0/lib/* ${hi3516d_release_path}/third_party/opencv-4.2.0/
+    cp ${nnie_code_path}/mindspore/mindspore/lite/tools/providers/NNIE/Hi3516D/protobuf-3.9.0/lib/* ${hi3516d_release_path}/third_party/protobuf-3.9.0/
     cp ${nnie_code_path}/mindspore/mindspore/lite/tools/providers/NNIE/Hi3516D/libnnie_mapper.so ${hi3516d_release_path}/
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/converter/nnie/libmslite_nnie_converter.so ${hi3516d_release_path}/ || exit 1
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/converter/nnie/data_process/libmslite_nnie_data_process.so ${hi3516d_release_path}/ || exit 1
-    echo "cp new nnie so to release pkg success"
+
     cd ${open_source_ms_path}/output/ || exit 1
+    # remove unused static library
+    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libcrypto.a
+    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libmindspore_core.a
+    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libmindspore_gvar.a
+    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libprotobuf.a
+    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libsecurec.a
+    echo "cp new nnie so to release pkg success"
     rm ${open_source_ms_path}/output/mindspore-lite-${version}-linux-x64.tar.gz
     tar -zcf ./mindspore-lite-${version}-linux-x64.tar.gz ./mindspore-lite-${version}-linux-x64/
     sha256sum ./mindspore-lite-${version}-linux-x64.tar.gz > ./mindspore-lite-${version}-linux-x64.tar.gz.sha256
@@ -59,7 +67,7 @@ function Run_Build_arm32() {
   cp -r ./runtime/ ${nnie_code_path}/mindspore/mindspore/lite/tools/benchmark/nnie_proposal/third_patry/
 
   # compile nnie runtime so
-  export TOOLCHAIN_FILE=${nnie_code_path}/mindspore/cmake/toolchains/himix200.toolchain.cmake
+  export TOOLCHAIN_FILE=${open_source_ms_path}/mindspore/lite/cmake/himix200.toolchain.cmake
   export TOOLCHAIN_NAME=himix200
 
   # disable gpu & npu & train
@@ -68,7 +76,7 @@ function Run_Build_arm32() {
   export MSLITE_ENABLE_TRAIN=off
   export MSLITE_ENABLE_NNIE=on
 
-  bash ${nnie_code_path}/mindspore/build.sh -I arm32 -j 64
+  bash ${nnie_code_path}/mindspore/build.sh -I arm32 -e cpu -j ${thread_num}
   if [ $? = 0 ]; then
     echo "build arm32 for nnie success"
     hi3516d_release_path=${open_source_ms_path}/output/mindspore-lite-${version}-linux-aarch32/providers/Hi3516D/
@@ -81,7 +89,7 @@ function Run_Build_arm32() {
     cd ${open_source_ms_path}/output/ || exit 1
     rm ${open_source_ms_path}/output/mindspore-lite-${version}-linux-aarch32.tar.gz
     tar -zcf ./mindspore-lite-${version}-linux-aarch32.tar.gz ./mindspore-lite-${version}-linux-aarch32/
-    sha256sum /mindspore-lite-${version}-linux-aarch32.tar.gz > /mindspore-lite-${version}-linux-aarch32.tar.gz.sha256
+    sha256sum ./mindspore-lite-${version}-linux-aarch32.tar.gz > ./mindspore-lite-${version}-linux-aarch32.tar.gz.sha256
   else
     echo "build arm32 for nnie failed"; return 1
   fi
@@ -94,7 +102,7 @@ echo "basepath is ${basepath}"
 open_source_ms_path=${basepath}/mindspore
 
 # Example:sh compile_nnie.sh -I arm32 -b nnie_master
-while getopts "I:b:" opt; do
+while getopts "I:b:j:" opt; do
     case ${opt} in
         I)
             task=${OPTARG}
@@ -103,6 +111,10 @@ while getopts "I:b:" opt; do
         b)
             branch_name=${OPTARG}
             echo "branch name is ${OPTARG}"
+            ;;
+        j)
+            thread_num=${OPTARG}
+            echo "thread_num is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
