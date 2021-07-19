@@ -67,6 +67,11 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::KPrimTransData,
     prim::kPrimBatchMatMul,
 #elif ENABLE_GPU
+    prim::kPrimSin,
+    prim::kPrimCos,
+    prim::kPrimAsin,
+    prim::kPrimACos,
+    prim::kPrimSign,
     prim::kPrimReduceMax,
     prim::kPrimReduceMin,
     prim::kPrimGreater,

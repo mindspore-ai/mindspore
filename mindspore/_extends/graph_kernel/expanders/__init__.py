@@ -53,6 +53,7 @@ from .softmax_grad_ext import SoftmaxGradExt
 from .sqrt_grad import SqrtGrad
 from .square import Square
 from .square_sum_v1 import SquareSumV1
+from .squared_difference import SquaredDifference
 from .squeeze import Squeeze
 from .tanh_grad import TanhGrad
 from .tile import Tile
