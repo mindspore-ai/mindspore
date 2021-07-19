@@ -584,11 +584,14 @@ build_lite()
     write_commit_file
 
     if [[ "${local_lite_platform}" == "arm32" ]]; then
-      if [[ "${TOOLCHAIN_FILE}" && "${TOOLCHAIN_NAME}" ]]; then
+      if [[ "${TOOLCHAIN_NAME}" == "ohos-lite" ]]; then
         COMPILE_MINDDATA_LITE="off"
-        CMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
-        CMAKE_TOOLCHAIN_NAME=${TOOLCHAIN_NAME}
-        CMAKE_BUILD_TYPE=${LITE_BUILD_TYPE}
+        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/ohos-lite.toolchain.cmake
+        CMAKE_TOOLCHAIN_NAME="ohos-lite"
+      elif [[ "${TOOLCHAIN_NAME}" == "himix200" ]]; then
+        COMPILE_MINDDATA_LITE="off"
+        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/himix200.toolchain.cmake
+        CMAKE_TOOLCHAIN_NAME="himix200"
       else
         CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
         ANDROID_NATIVE_API_LEVEL="19"
@@ -596,7 +599,6 @@ build_lite()
         CMAKE_ANDROID_ABI="armeabi-v7a"
         CMAKE_ANDROID_TOOLCHAIN_NAME="clang"
         CMAKE_ANDROID_STL=${MSLITE_ANDROID_STL}
-        CMAKE_BUILD_TYPE=${LITE_BUILD_TYPE}
         ENABLE_FP16="on"
       fi
     fi
@@ -630,7 +632,7 @@ build_lite()
         echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
         cmake -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DTOOLCHAIN_NAME=${CMAKE_TOOLCHAIN_NAME} -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}          \
               -DANDROID_NDK=${CMAKE_ANDROID_NDK} -DANDROID_ABI=${CMAKE_ANDROID_ABI} -DANDROID_TOOLCHAIN_NAME=${CMAKE_ANDROID_TOOLCHAIN_NAME}                    \
-              -DANDROID_STL=${CMAKE_ANDROID_STL}  -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+              -DANDROID_STL=${CMAKE_ANDROID_STL}  -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DPLATFORM_ARM32="on" -DENABLE_NEON="on"  -DENABLE_FP16=${ENABLE_FP16} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp           \
               -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}    \
               -DENABLE_ASAN=${ENABLE_ASAN} -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
@@ -669,6 +671,23 @@ build_lite()
           mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         fi
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/tmp/
+        if [[ "${MSLITE_ENABLE_NNIE}" == "on" ]]; then
+          compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
+          cd ${BASEPATH}/../
+          if [[ "${local_lite_platform}" == "x86_64" ]]; then
+            sh ${compile_nnie_script} -I x86_64 -b nnie_r1.3 -j $THREAD_NUM
+            if [[ $? -ne 0 ]]; then
+              echo "compile x86_64 for nnie failed."
+              exit 1
+            fi
+          elif [[ "${local_lite_platform}" == "arm32" ]]; then
+            sh ${compile_nnie_script} -I arm32 -b nnie_r1.3 -j $THREAD_NUM
+            if [[ $? -ne 0 ]]; then
+              echo "compile arm32 for nnie failed."
+              exit 1
+            fi
+          fi
+        fi
         echo "---------------- mindspore lite: build success ----------------"
     fi
 }
