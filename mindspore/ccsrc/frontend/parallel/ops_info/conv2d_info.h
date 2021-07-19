@@ -46,6 +46,7 @@ class Conv2DInfo : public OperatorInfo {
   Status GetAttrsBase();
   Status GetAttrs() override;
   Status CheckStrategyBase(const StrategyPtr &strategy);
+  Status CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy);
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
@@ -117,10 +118,10 @@ class Conv2DBackpropInputInfo : public Conv2DInfo {
   Status InferTensorMap() override;
   Status InferMirrorOps() override;  // can not use OperatorInfo::InferMirrorOps(), since the 'out_shape' is not tensor
 
-  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
-  void InferNewPadList();
-  int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
-  int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
+  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) override;
+  void InferNewPadList() override;
+  int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias) override;
+  int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias) override;
 
  private:
   Shape out_shape_;
