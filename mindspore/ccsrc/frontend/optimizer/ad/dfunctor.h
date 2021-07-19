@@ -44,7 +44,7 @@ class DFunctor;
 using DFunctorPtr = std::shared_ptr<DFunctor>;
 
 // Flag to control if fv should be lifted before grad. If this lift_fv feature is mature, then this flag can be removed.
-extern int lift_fv_before_grad;
+extern bool lift_fv_before_grad;
 
 // D Functor's rules to map closure object and morphisms.
 class DFunctor : public std::enable_shared_from_this<DFunctor> {

@@ -60,16 +60,6 @@ FuncGraphPtr LiftFv(const pipeline::ResourceBasePtr &resource, const FuncGraphPt
   }
   return opt_fg;
 }
-
-bool NeedLiftFv(const FuncGraphPtr &func_graph) {
-  size_t switch_num = 0;
-  for (auto node : func_graph->manager()->all_nodes()) {
-    if (IsPrimitiveCNode(node, prim::kPrimSwitch)) {
-      ++switch_num;
-    }
-  }
-  return switch_num > 1;
-}
 }  // namespace
 
 FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &resources, bool is_top) {
@@ -84,11 +74,8 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
   manager_ptr->AddFuncGraph(func_graph);
 
   FuncGraphPtr grad_fg = func_graph;
-  // Only calculate lift_fv_before_grad once.
-  if (lift_fv_before_grad == -1) {
-    lift_fv_before_grad = (common::GetEnv("ENV_DONT_LIFT_FV_BEFORE_GRAD") != "1") && NeedLiftFv(func_graph) ? 1 : 0;
-  }
-  if (lift_fv_before_grad == 1 && func_graph->func_graphs_used().size() != 0) {
+  lift_fv_before_grad = (common::GetEnv("ENV_DONT_LIFT_FV_BEFORE_GRAD") != "1");
+  if (lift_fv_before_grad && func_graph->func_graphs_used().size() != 0) {
     grad_fg = LiftFv(resources, func_graph);
   }
   auto multi_graph_sink = [&func_graph](const FuncGraphPtr &f) {
