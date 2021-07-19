@@ -40,14 +40,10 @@ def create_dataset_cifar(dataset_path,
     Returns:
         dataset
     """
-    if target == "Ascend":
-        device_num, rank_id = _get_rank_info()
-    elif target == "CPU":
+    if target == "CPU":
         device_num = 1
     else:
-        init()
-        rank_id = get_rank()
-        device_num = get_group_size()
+        device_num, rank_id = _get_rank_info()
 
     if device_num == 1:
         data_set = ds.Cifar10Dataset(dataset_path,
@@ -165,7 +161,8 @@ def _get_rank_info():
     rank_size = int(os.environ.get("RANK_SIZE", 1))
 
     if rank_size > 1:
-        from mindspore.communication.management import get_rank, get_group_size
+        from mindspore.communication.management import init, get_rank, get_group_size
+        init()
         rank_size = get_group_size()
         rank_id = get_rank()
     else:

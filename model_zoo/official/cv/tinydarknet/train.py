@@ -21,7 +21,7 @@ import time
 
 from mindspore import Tensor
 from mindspore import context
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, FixedLossScaleManager
@@ -36,7 +36,7 @@ from src.tinydarknet import TinyDarkNet
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
-from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from src.model_utils.device_adapter import get_device_id, get_device_num
 
 set_seed(1)
 
@@ -132,11 +132,11 @@ def run_train():
     else:
         context.set_context(device_id=get_device_id())
         if device_num > 1:
+            init()
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
-            init()
-            rank = get_rank_id()
+            rank = get_rank()
 
     if config.dataset_name == "imagenet":
         dataset = create_dataset_imagenet(config.train_data_dir, 1)
@@ -204,10 +204,12 @@ def run_train():
 
     if device_target == "CPU":
         model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'}, loss_scale_manager=loss_scale_manager)
-    else:
+    elif device_target == "Ascend":
         model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
                       amp_level="O3", loss_scale_manager=loss_scale_manager)
-
+    elif device_target == "GPU":
+        model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
+                      amp_level="O2", loss_scale_manager=loss_scale_manager)
     config_ck = CheckpointConfig(save_checkpoint_steps=batch_num * 50, keep_checkpoint_max=config.keep_checkpoint_max)
     time_cb = TimeMonitor(data_size=batch_num)
     ckpt_save_dir = os.path.join(config.ckpt_save_dir, str(rank))

@@ -57,7 +57,7 @@ do
     mkdir ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cp ../train.py ./train_parallel$i
-    cp ../*.yaml ./train_parallel$i
+    cp -r ../config ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
     cd ./train_parallel$i || exit
     env > env.log

@@ -22,7 +22,7 @@ rm -rf ./eval
 mkdir ./eval
 cp -r ../src ./eval
 cp ../eval.py ./eval
-cp ../*.yaml ./eval
+cp -r ../config ./eval
 cd ./eval || exit
 env >env.log
 python ./eval.py > ./eval.log 2>&1 &
