@@ -18,6 +18,7 @@
 #include <fstream>
 #include "common/ms_log.h"
 #include "include/model.h"
+#include "common/jni_utils.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEnv *env, jobject thiz, jobject buffer) {
   if (buffer == nullptr) {
@@ -37,19 +38,19 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEn
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModelByPath(JNIEnv *env, jobject thiz,
                                                                                  jstring model_path) {
-  auto model_path_char = env->GetStringUTFChars(model_path, JNI_FALSE);
-  if (nullptr == model_path_char) {
+  auto model_path_char = RealPath(env->GetStringUTFChars(model_path, JNI_FALSE));
+  if (model_path_char.empty()) {
     MS_LOGE("model_path_char is nullptr");
     return reinterpret_cast<jlong>(nullptr);
   }
   std::ifstream ifs(model_path_char);
   if (!ifs.good()) {
-    MS_LOGE("file: %s is not exist", model_path_char);
+    MS_LOGE("file: %s is not exist", model_path_char.c_str());
     return reinterpret_cast<jlong>(nullptr);
   }
 
   if (!ifs.is_open()) {
-    MS_LOGE("file: %s open failed", model_path_char);
+    MS_LOGE("file: %s open failed", model_path_char.c_str());
     return reinterpret_cast<jlong>(nullptr);
   }
 
@@ -57,7 +58,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModelByPath
   auto size = ifs.tellg();
   auto buf = new (std::nothrow) char[size];
   if (buf == nullptr) {
-    MS_LOGE("malloc buf failed, file: %s", model_path_char);
+    MS_LOGE("malloc buf failed, file: %s", model_path_char.c_str());
     ifs.close();
     return reinterpret_cast<jlong>(nullptr);
   }
