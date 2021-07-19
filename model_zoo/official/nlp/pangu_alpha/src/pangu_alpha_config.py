@@ -111,11 +111,11 @@ def set_parse(args_opt):
             args_opt.start_lr = 5e-5
             args_opt.end_lr = 1e-6
             args_opt.optimizer_shard = 1
-            args_opt.stage_num = 1
-            args_opt.micro_size = 1
             args_opt.full_batch = 0
             if args_opt.per_batch_size == 0:
                 args_opt.per_batch_size = 8
+            if args_opt.stage_num > 1:
+                args_opt.word_emb_dp = 0
         elif args_opt.run_type == "predict":
             args_opt.stage_num = 1
             args_opt.micro_size = 1
@@ -130,11 +130,11 @@ def set_parse(args_opt):
             args_opt.start_lr = 1e-4
             args_opt.end_lr = 1e-6
             args_opt.optimizer_shard = 1
-            args_opt.stage_num = 1
-            args_opt.micro_size = 1
             args_opt.full_batch = 0
             if args_opt.per_batch_size == 0:
-                args_opt.per_batch_size = 8
+                args_opt.per_batch_size = 16
+            if args_opt.stage_num > 1:
+                args_opt.word_emb_dp = 0
         elif args_opt.run_type == "predict":
             args_opt.stage_num = 1
             args_opt.micro_size = 1

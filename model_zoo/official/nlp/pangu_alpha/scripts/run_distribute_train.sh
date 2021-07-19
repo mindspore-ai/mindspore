@@ -17,7 +17,12 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "bash run_distributed_train.sh DATA_DIR RANK_TABLE_FILE DEVICE_NUM TYPE MODE"
-echo "for example: bash run_distributed_train.sh /path/dataset /path/hccl.json 8 fp32 2.6B"
+echo "for example:"
+echo "#######no pipeline#######"
+echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 8 fp32 2.6B 1 1 16 0"
+echo "#######pipeline#######"
+echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 16 0"
+echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 16 8"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -27,15 +32,19 @@ export RANK_TABLE_FILE=$2
 RANK_SIZE=$3
 PARAM_INIT_TYPE=$4
 MODE=$5
-
+STAGE_NUM=$6
+MICRO_SIZE=$7
+PER_BATCH=$8
+RANK_START=$9
 
 for((i=0;i<${RANK_SIZE};i++));
 do
     rm ${ROOT_PATH}/device$i/ -rf
     mkdir ${ROOT_PATH}/device$i
     cd ${ROOT_PATH}/device$i || exit
-    export RANK_ID=$i
+    export RANK_ID=$[i+RANK_START]
     export DEVICE_ID=$i
     python ${ROOT_PATH}/train.py --distribute=true --device_num=$RANK_SIZE --data_url=$DATA_DIR --run_type=train \
-    --param_init_type=$PARAM_INIT_TYPE --mode=$MODE > log$i.log 2>&1 &
+    --param_init_type=$PARAM_INIT_TYPE --mode=$MODE --stage_num=$STAGE_NUM --micro_size=$MICRO_SIZE \
+    --per_batch_size=$PER_BATCH > log$i.log 2>&1 &
 done

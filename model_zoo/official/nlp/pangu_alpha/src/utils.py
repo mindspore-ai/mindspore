@@ -303,8 +303,8 @@ def add_training_params(opt):
                      help="head size, default is 128.")
     opt.add_argument("--stage_num",
                      type=int,
-                     default=4,
-                     help="Pipeline stage num, default is 4.")
+                     default=1,
+                     help="Pipeline stage num, default is 1.")
     opt.add_argument("--micro_size",
                      type=int,
                      default=1,

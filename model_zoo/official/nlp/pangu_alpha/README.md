@@ -136,7 +136,7 @@ Currently the scripts provide three default configures : `2.6B` `13B` and `200B`
 
 # run distributed training example
 
-bash scripts/run_distribute_training.sh DATASET RANK_TABLE RANK_SIZE TYPE MODE
+bash scripts/run_distribute_train.sh DATASET RANK_TABLE RANK_SIZE TYPE MODE STAGE_NUM MICRO_SIZE PER_BATCH RANK_START
 
 ```
 
@@ -147,13 +147,26 @@ The above command involves some `args` described below:
 - RANK_SIZE: The device number. This can be your total device numbers. For example, 8, 16, 32 ...
 - TYPE: The param init type. The parameters will be initialized with float32. Or you can replace it with `fp16`. This will save a little memory used on the device.
 - MODE: The configure mode. This mode will set the `hidden size` and `layers` to make the parameter number near 2.6 billions. The other mode can be `13B` (`hidden size` 5120 and `layers` 40, which needs at least 16 cards to train.) and `200B`.
+- STAGE_NUM: The number of pipeline stages. When the `stage_num` is large than 1, the pipeline parallel mode would be applied. This configure indicates the number of sub graphs in pipeline parallel mode.
+- MICRO_SIZE: The number of micro batches in pipeline parallel mode. It should large than `stage_num`.
+- PER_BATCH: The batch size for each data parallel-way. default 8.
+- RANK_START: The start of rank_id in current machines, it helps to set the rank_id for each machine in multi-machine scenario.
 
 The following command will launch he program will train 2.6B model with the following command:
 
 ```bash
-# run distributed training example
+# run distributed training example in one ascend machine
 
-bash scripts/run_distribute_training.sh /path/dataset /path/hccl.json 8 fp32 2.6B
+bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 8 fp32 2.6B 1 1 8 0
+```
+
+```bash
+# run distributed training example in two ascend machine
+
+# machine A
+bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 8 0
+# machine B
+bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 8 8
 ```
 
 For distributed training, an hccl configuration file with JSON format needs to be created in advance.
@@ -184,7 +197,7 @@ Then run the following command to start incremental training with `2.6B` configu
 
 ```bash
 export FILE_PATH=/home/your_path/ckpts
-bash scripts/run_distribute_train_incremental_train.sh DATASET RANK_TABLE 8 fp32 2.6B ${FILE_PATH}/strategy_load_ckpt/strategy.ckpt  ${FILE_PATH}/checkpoint_file filitered
+bash scripts/run_distribute_incremental_train.sh DATASET RANK_TABLE 8 fp32 2.6B 8 ${FILE_PATH}/strategy_load_ckpt/strategy.ckpt  ${FILE_PATH}/checkpoint_file filitered
 ```
 
 ## [Prediction](#contents)
@@ -231,12 +244,13 @@ ${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B fp32
 
 ### Prediction in Standalone mode
 
-The following script will run prediction on 1 Ascend cards. The difference is the net is initialized with float16 type.
+The following script will run prediction on 1 Ascend cards or 1 Nvidia GPU. The difference is the net is initialized with float16 type.
 
 ```bash
 $FILE_PATH=/home/your_path/ckpts
+$DEVICE_TARGET=Ascend # or GPU
 bash scripts/run_standalone_predict.sh ${FILE_PATH}/strategy_load_ckpt/strategy.ckpt \
-${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B
+${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B $DEVICE_TARGET
 ```
 
 ## [Serving](#contents)
