@@ -216,7 +216,7 @@ class GradExecutor {
 
   FuncGraphPtr GetDfbuilder(const std::string &cell_id = "");
   pipeline::ResourcePtr GetResource(const std::string &cell_id = "");
-  bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id);
+  bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id) const;
   bool IsBpropGraph(const std::string &cell_id);
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
@@ -250,8 +250,7 @@ class GradExecutor {
                                 const std::vector<int64_t> &index) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
   }
-  void CreateMakeTupleNodeForMultiOut(const std::string &cell_id, const FuncGraphPtr &curr_g, const py::object &out,
-                                      const std::string &out_id);
+  void CreateMakeTupleNodeForMultiOut(const FuncGraphPtr &curr_g, const py::object &out, const std::string &out_id);
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
 
  private:
