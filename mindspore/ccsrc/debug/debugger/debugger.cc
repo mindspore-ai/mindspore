@@ -341,7 +341,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
     debug_services_->ResetLoadedTensors();
   }
   // resets for the new graph
-  suspended_at_last_kernel_ = 0;
+  suspended_at_last_kernel_ = false;
 }
 bool Debugger::DumpDataEnabledIteration() const {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -370,7 +370,7 @@ void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
   uint32_t rank_id = GetRankID();
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    E2eDump::DumpParametersAndConstData(kernel_graph.get(), rank_id, debugger_.get());
+    (void)E2eDump::DumpParametersAndConstData(kernel_graph.get(), rank_id, debugger_.get());
   } else {
     DumpJsonParser::GetInstance().UpdateDumpIter();
   }
@@ -379,7 +379,7 @@ void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
 void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
   if (debugger_->DebuggerBackendEnabled()) {
     uint32_t rank_id = GetRankID();
-    E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get());
+    (void)E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get());
   }
 }
 
@@ -497,7 +497,7 @@ void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
       // if kernel is not watchpoint and is next_to or continue_to node, suspend
       // sets a bool to be checked in preExecute to avoid double stopping at last kernel in the last graph
       if (last_kernel) {
-        suspended_at_last_kernel_ = 1;
+        suspended_at_last_kernel_ = true;
       }
       CommandLoop();
     }
@@ -1147,7 +1147,7 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
       if (dir->d_type == DT_REG) {
         std::string file_path = overflow_bin_path;
         std::string file_name = dir->d_name;
-        file_path.append(file_name);
+        (void)file_path.append(file_name);
         std::fstream infile;
         infile.open(file_path.c_str(), std::ios::binary | std::ios::in);
         if (!infile.is_open()) {

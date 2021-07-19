@@ -273,9 +273,7 @@ class OrderEnforcer {
 
 }  // namespace
 
-//
 // Enforce order of execution for Load users node.
-//
 void OrderEnforce(const FuncGraphPtr &func_graph) {
   OrderEnforcer enforcer(func_graph);
   enforcer.Run();

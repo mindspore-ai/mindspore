@@ -116,7 +116,7 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      inputs.insert(inputs.begin() + 1, call_node);
+      (void)inputs.insert(inputs.begin() + 1, call_node);
     } else {
       inputs.emplace_back(call_node);
     }
@@ -175,7 +175,7 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      inputs.insert(inputs.begin() + 1, call_node);
+      (void)inputs.insert(inputs.begin() + 1, call_node);
     } else {
       inputs.emplace_back(call_node);
     }
@@ -216,7 +216,7 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      inputs.insert(inputs.begin() + 2, call_node);
+      (void)inputs.insert(inputs.begin() + 2, call_node);
     } else {
       inputs.emplace_back(call_node);
     }

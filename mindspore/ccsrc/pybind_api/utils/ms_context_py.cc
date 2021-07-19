@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace {
-void MsCtxSetParameter(std::shared_ptr<MsContext> ctx, MsCtxParam param, const py::object &value) {
+void MsCtxSetParameter(const std::shared_ptr<MsContext> &ctx, MsCtxParam param, const py::object &value) {
   MS_LOG(DEBUG) << "set param(" << param << ") with value '" << py::str(value).cast<std::string>() << "' of type '"
                 << py::str(value.get_type()).cast<std::string>() << "'.";
   if (param >= MS_CTX_TYPE_BOOL_BEGIN && param < MS_CTX_TYPE_BOOL_END && py::isinstance<py::bool_>(value)) {
