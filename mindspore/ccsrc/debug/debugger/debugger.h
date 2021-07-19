@@ -77,7 +77,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // enable debugger
   // send graph and wait for command
   // do nothing if graph is set already
-  void PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum = 1);
+  void PreExecute(const KernelGraphPtr &graph_ptr);
 
   // analyze tensors and wait for command
   // don't need a graph_ptr because it is saved during pre_execute
