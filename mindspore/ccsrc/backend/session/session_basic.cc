@@ -422,7 +422,6 @@ BaseRef CreateNodeOutputPlaceholder(const AnfNodePtr &anf, const KernelGraphPtr 
 void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size_t input_index) {
   const auto &tensor_shape = tensor->shape();
   const auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel, input_index);
-
   if (tensor_shape.size() != input_shape.size()) {
     MS_LOG(EXCEPTION) << "The input tensor's shape size: " << tensor_shape.size()
                       << " is not equal to expected size: " << input_shape.size() << " for input[" << input_index
@@ -1212,7 +1211,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
 }
 
 void SessionBasic::CreateOutputPlaceholder(
-  const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs,
+  const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *const outputs,
   std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
@@ -1273,7 +1272,7 @@ void SessionBasic::HandleOpInputs(const std::set<KernelWithIndex> &input_kernel,
 void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                                    const std::map<KernelWithIndex, size_t> &ref_count,
                                    std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map,
-                                   GraphOutputInfo *graph_output_info) {
+                                   GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(graph_output_info);
@@ -1410,7 +1409,7 @@ tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
                                                         const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                                         const std::map<AnfNodePtr, size_t> &parameter_index,
                                                         const std::vector<tensor::TensorPtr> &graph_inputs,
-                                                        InputTensorInfo *input_tensor_info, size_t input_index) {
+                                                        InputTensorInfo *const input_tensor_info, size_t input_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
   if (input_index >= cnode->inputs().size() - 1) {

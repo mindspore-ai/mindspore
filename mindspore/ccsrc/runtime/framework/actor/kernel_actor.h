@@ -69,7 +69,7 @@ class KernelActor : public DebugAwareActor {
   // The kernel actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
   // The kernel actor run when receive the input control and input tensors, used in step mode.
-  void RunOpControlWithInputTensor(AID *input_control, OpContext<DeviceTensor> *context,
+  void RunOpControlWithInputTensor(AID *const input_control, OpContext<DeviceTensor> *const context,
                                    const std::vector<TensorPtr> *input_tensors);
 
   // The memory related operation interface.

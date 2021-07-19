@@ -44,7 +44,7 @@ class GPUDeviceContext : public DeviceContext {
   bool AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
                                 const std::vector<size_t> &size_list) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) const override;
   DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kGPU; }
 

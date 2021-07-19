@@ -281,7 +281,7 @@ void PrepareDataForControlWeightNode(
 }
 
 void EraseValueNodeTensor(const std::vector<int64_t> *tensors_mask, const std::vector<TensorPtr> *input_tensors,
-                          std::vector<TensorPtr> *input_tensors_without_value_node) {
+                          std::vector<TensorPtr> *const input_tensors_without_value_node) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   if (input_tensors->size() != tensors_mask->size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
@@ -324,12 +324,12 @@ void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size
   }
 }
 
-void PrepareDataForInputData(HostQueueDataSourceActor *host_data_source_actor, const AnfNodePtr &node,
-                             const TensorPtr &tensor, std::vector<TensorPtr> *host_tensors,
-                             const DeviceContext *device_context) {
+void PrepareDataForInputData(const HostQueueDataSourceActor *host_data_source_actor, const AnfNodePtr &node,
+                             const TensorPtr &tensor, const DeviceContext *device_context,
+                             std::vector<TensorPtr> *const host_tensors) {
   MS_EXCEPTION_IF_NULL(tensor);
   // Fill the host tensors for non weighted parameters.
-  if (host_data_source_actor) {
+  if (host_data_source_actor != nullptr) {
     (*host_tensors)[host_data_source_actor->FetchDataNodePosition(node)] = tensor;
   }
 
@@ -698,7 +698,7 @@ void GraphScheduler::PrepareRunOp(const ActorSet *actor_set, const GraphCompiler
         // Prepare the device data for weights.
         PrepareDataForWeightNode(input_node, input_node, input_tensor, device_context);
       } else {
-        PrepareDataForInputData(host_data_source_actor, input_node, input_tensor, &host_tensors, device_context);
+        PrepareDataForInputData(host_data_source_actor, input_node, input_tensor, device_context, &host_tensors);
       }
     }
   }

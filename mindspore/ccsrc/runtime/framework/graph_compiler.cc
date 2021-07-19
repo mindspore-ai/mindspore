@@ -373,8 +373,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 }
 
 GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                                    const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *input_tensors,
-                                    bool *single_op_cache_hit, const DeviceContext *device_context) {
+                                    const std::vector<int64_t> *tensors_mask,
+                                    std::vector<TensorPtr> *const input_tensors, bool *single_op_cache_hit,
+                                    const DeviceContext *device_context) {
   // Check if the graph cache exists.
   auto iter = run_op_graphs_.find(graph_info);
   if (iter != run_op_graphs_.end()) {
@@ -438,7 +439,7 @@ void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const Devic
 }
 
 void GraphCompiler::GetParamAndOutputIndex(
-  const KernelGraphPtr &graph, const std::vector<TensorPtr> &inputs, VectorRef *outputs,
+  const KernelGraphPtr &graph, const std::vector<TensorPtr> &inputs, VectorRef *const outputs,
   std::map<AnfNodePtr, size_t> *parameter_index,
   std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) {
   MS_EXCEPTION_IF_NULL(session_);
@@ -450,7 +451,7 @@ void GraphCompiler::GetSingleOpInputTensors(const CNodePtr &kernel,
                                             const std::map<KernelWithIndex, TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
                                             const std::vector<TensorPtr> &graph_inputs,
-                                            InputTensorInfo *input_tensor_info) {
+                                            InputTensorInfo *const input_tensor_info) {
   MS_EXCEPTION_IF_NULL(session_);
   session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_tensor_info);
 }
@@ -459,14 +460,14 @@ TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
                                                        const std::map<KernelWithIndex, TensorPtr> &op_output,
                                                        const std::map<AnfNodePtr, size_t> &parameter_index,
                                                        const std::vector<TensorPtr> &graph_inputs,
-                                                       InputTensorInfo *input_tensor_info, size_t input_index) {
+                                                       InputTensorInfo *const input_tensor_info, size_t input_index) {
   MS_EXCEPTION_IF_NULL(session_);
   return session_->GetOpInputTensorByIndex(kernel, op_output, parameter_index, graph_inputs, input_tensor_info,
                                            input_index);
 }
 
 void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
-                                                   OpRunInfo *run_info, GraphInfo *graph_info) {
+                                                   OpRunInfo *const run_info, GraphInfo *const graph_info) {
   MS_EXCEPTION_IF_NULL(session_);
   session_->GetSingleOpRunInfo(kernel, run_info);
   *graph_info = session_->GetSingleOpGraphInfo(kernel, input_tensors);
@@ -487,7 +488,7 @@ void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernel
 void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                                        const std::map<KernelWithIndex, size_t> &ref_count,
                                        std::map<KernelWithIndex, TensorPtr> *op_output_map,
-                                       GraphOutputInfo *graph_output_info) const {
+                                       GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(session_);
   session_->HandleOpOutputs(kernel, op_outputs, ref_count, op_output_map, graph_output_info);
 }
