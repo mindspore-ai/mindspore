@@ -26,9 +26,9 @@ void TopKFusion::Init(const bool sorted, const int64_t axis, const int64_t large
   this->set_sorted(sorted);
 }
 
-void TopKFusion::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void TopKFusion::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
-void TopKFusion::set_largest(const int64_t largest) { this->AddAttr(kLargest, MakeValue(largest)); }
+void TopKFusion::set_largest(const int64_t largest) { (void)this->AddAttr(kLargest, MakeValue(largest)); }
 
 int64_t TopKFusion::get_axis() const {
   auto value_ptr = GetAttr(kAxis);

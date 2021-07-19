@@ -32,10 +32,12 @@ void ResizeGrad::Init(const ResizeMethod method, const bool align_corners) {
 
 void ResizeGrad::set_method(const ResizeMethod method) {
   auto swi = (int64_t)method;
-  this->AddAttr(kMethod, MakeValue(swi));
+  (void)this->AddAttr(kMethod, MakeValue(swi));
 }
 
-void ResizeGrad::set_align_corners(const bool align_corners) { this->AddAttr(kAlignCorners, MakeValue(align_corners)); }
+void ResizeGrad::set_align_corners(const bool align_corners) {
+  (void)this->AddAttr(kAlignCorners, MakeValue(align_corners));
+}
 
 ResizeMethod ResizeGrad::get_method() const {
   auto value_ptr = GetAttr(kMethod);

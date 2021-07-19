@@ -43,11 +43,11 @@ void Conv2DBackpropFilterFusion::Init(const int64_t out_channel, const std::vect
 
 void Conv2DBackpropFilterFusion::set_activation_type(const ActivationType activation_type) {
   int64_t swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 
 void Conv2DBackpropFilterFusion::set_in_channel(const int64_t in_channel) {
-  this->AddAttr(kInChannel, MakeValue(in_channel));
+  (void)this->AddAttr(kInChannel, MakeValue(in_channel));
 }
 
 ActivationType Conv2DBackpropFilterFusion::get_activation_type() const {

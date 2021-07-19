@@ -26,14 +26,14 @@ void BNGrad::Init(const float eps, const float momentum) {
   this->set_momentum(momentum);
 }
 
-void BNGrad::set_eps(const float eps) { this->AddAttr(kEps, MakeValue(eps)); }
+void BNGrad::set_eps(const float eps) { (void)this->AddAttr(kEps, MakeValue(eps)); }
 
 float BNGrad::get_eps() const {
   auto value_ptr = this->GetAttr(kEps);
   return GetValue<float>(value_ptr);
 }
 
-void BNGrad::set_momentum(const float momentum) { this->AddAttr(kMomentum, MakeValue(momentum)); }
+void BNGrad::set_momentum(const float momentum) { (void)this->AddAttr(kMomentum, MakeValue(momentum)); }
 
 float BNGrad::get_momentum() const {
   auto value_ptr = this->GetAttr(kMomentum);

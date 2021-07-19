@@ -20,19 +20,19 @@
 
 namespace mindspore {
 namespace ops {
-void FullConnection::set_has_bias(const bool has_bias) { this->AddAttr(kHasBias, MakeValue(has_bias)); }
+void FullConnection::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, MakeValue(has_bias)); }
+
 bool FullConnection::get_has_bias() const { return GetValue<bool>(GetAttr(kHasBias)); }
 
-void FullConnection::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void FullConnection::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 int64_t FullConnection::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
-void FullConnection::set_use_axis(const bool use_axis) { this->AddAttr(kUseAxis, MakeValue(use_axis)); }
+void FullConnection::set_use_axis(const bool use_axis) { (void)this->AddAttr(kUseAxis, MakeValue(use_axis)); }
 bool FullConnection::get_use_axis() const { return GetValue<bool>(GetAttr(kUseAxis)); }
 
 void FullConnection::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  int64_t swi = activation_type;
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 ActivationType FullConnection::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
@@ -58,9 +58,9 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   auto prim_axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   auto has_bias = GetValue<bool>(primitive->GetAttr(kHasBias));
   if (has_bias) {
-    CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 3, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 3, prim_name);
   } else {
-    CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 2, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 2, prim_name);
   }
   auto use_axis = GetValue<bool>(primitive->GetAttr(kUseAxis));
   if (use_axis && (prim_axis < 1 || prim_axis > (int64_t)input0_shape.size())) {
@@ -68,7 +68,7 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   }
   int64_t new_k = 1;
   if (use_axis) {
-    for (size_t t = prim_axis; t < input0_shape.size(); t++) {
+    for (size_t t = LongToSize(prim_axis); t < input0_shape.size(); t++) {
       new_k *= input0_shape[t];
     }
     if (new_k != input1_shape[1]) {
@@ -85,8 +85,8 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   }
   std::vector<int64_t> out_shape = {(int64_t)input0_shape.size()};
   if (use_axis) {
-    out_shape.resize(prim_axis + 1);
-    out_shape[prim_axis] = input1_shape[0];
+    out_shape.resize(LongToSize(prim_axis) + 1);
+    out_shape[LongToSize(prim_axis)] = input1_shape[0];
   } else {
     int64_t total = 1;
     for (size_t i = 0; i < input0_shape.size(); i++) {

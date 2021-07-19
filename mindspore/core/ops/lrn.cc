@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 void LRN::set_depth_radius(const int64_t depth_radius) {
-  CheckAndConvertUtils::CheckInteger(kDepthRadius, depth_radius, kGreaterEqual, 0, this->name());
+  (void)CheckAndConvertUtils::CheckInteger(kDepthRadius, depth_radius, kGreaterEqual, 0, this->name());
   this->AddAttr(kDepthRadius, MakeValue(depth_radius));
 }
 
@@ -79,7 +79,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("input shape", in_shape.size(), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(in_shape.size()), kEqual, 4, prim_name);
+
   return std::make_shared<abstract::Shape>(in_shape);
 }
 

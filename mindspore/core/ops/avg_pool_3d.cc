@@ -107,7 +107,7 @@ void GetPadsByPadding(int64_t in_d, int64_t in_h, int64_t in_w, int64_t kernel_d
     pad_list->push_back(static_cast<int64_t>(std::floor(pad_w / 2)));
     pad_list->push_back(pad_w - pad_list->at(4));
   } else if (pad_mode == PadMode::PAD) {
-    (void)pad_list->assign(padding.begin(), padding.end());
+    pad_list->assign(padding.begin(), padding.end());
   }
 }
 

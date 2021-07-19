@@ -31,15 +31,14 @@ AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t dim = SizeToLong(x_shape.size());
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  //  CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-dim, dim}, prim_name);
   if (axis < 0) {
     axis = axis + dim;
   }
   auto output_num = x_shape[LongToSize(axis)];
-  CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterThan, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterThan, 0, prim_name);
   auto output_valid_check = x_shape[axis] - output_num;
-  CheckAndConvertUtils::CheckInteger("The dimension which to unpack divides output_num", output_valid_check, kEqual, 0,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("The dimension which to unpack divides output_num", output_valid_check,
+                                           kEqual, 0, prim_name);
   std::vector<int64_t> infer_shape(x_shape.begin(), x_shape.begin() + axis);
   infer_shape.insert(infer_shape.end(), x_shape.begin() + axis + 1, x_shape.end());
   AbstractBasePtrList output;

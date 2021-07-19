@@ -41,12 +41,13 @@ void Conv2DBackpropInputFusion::Init(int64_t in_channel, int64_t out_channel, co
   this->set_activation_type(activation_type);
 }
 
-void Conv2DBackpropInputFusion::set_in_channel(int64_t in_channel) { this->AddAttr(kInChannel, MakeValue(in_channel)); }
+void Conv2DBackpropInputFusion::set_in_channel(int64_t in_channel) {
+  (void)this->AddAttr(kInChannel, MakeValue(in_channel));
+}
 
 void Conv2DBackpropInputFusion::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
-  this->AddAttr(kActivationType, MakeValue(swi));
+  int64_t swi = activation_type;
+  (void)this->AddAttr(kActivationType, MakeValue(swi));
 }
 int64_t Conv2DBackpropInputFusion::get_in_channel() const {
   auto value_ptr = GetAttr(kInChannel);

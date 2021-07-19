@@ -26,7 +26,7 @@ void CustomPredict::Init(const int64_t output_num, const float weight_threshold)
   this->set_weight_threshold(weight_threshold);
 }
 
-void CustomPredict::set_output_num(const int64_t output_num) { this->AddAttr(kOutputNum, MakeValue(output_num)); }
+void CustomPredict::set_output_num(const int64_t output_num) { (void)this->AddAttr(kOutputNum, MakeValue(output_num)); }
 
 int64_t CustomPredict::get_output_num() const {
   auto value_ptr = this->GetAttr(kOutputNum);

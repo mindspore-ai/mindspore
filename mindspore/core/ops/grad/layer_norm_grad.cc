@@ -26,7 +26,7 @@ AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   // Outputs: x_backprob, gamma_backprob, beta_backprob
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 5, op_name);
   auto x_backprob = input_args[0]->Broaden();
   auto gamma_backprob = input_args[4]->Broaden();
   auto beta_backprob = input_args[4]->Broaden();
@@ -41,10 +41,10 @@ void LayerNormGrad::Init(const int64_t begin_norm_axis, const int64_t begin_para
   this->set_begin_params_axis(begin_params_axis);
 }
 void LayerNormGrad::set_begin_norm_axis(const int64_t begin_norm_axis) {
-  this->AddAttr(kBeginNormAxis, MakeValue(begin_norm_axis));
+  (void)this->AddAttr(kBeginNormAxis, MakeValue(begin_norm_axis));
 }
 void LayerNormGrad::set_begin_params_axis(const int64_t begin_params_axis) {
-  this->AddAttr(kBeginParamsAxis, MakeValue(begin_params_axis));
+  (void)this->AddAttr(kBeginParamsAxis, MakeValue(begin_params_axis));
 }
 int64_t LayerNormGrad::get_begin_norm_axis() const {
   auto value_ptr = this->GetAttr(kBeginNormAxis);

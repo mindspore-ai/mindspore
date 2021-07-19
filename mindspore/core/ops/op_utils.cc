@@ -54,7 +54,7 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
 }
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args) {
   MS_LOG(INFO) << "Do infer shape for op " << op_name;
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 2, op_name);
+  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 2, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

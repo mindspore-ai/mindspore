@@ -99,13 +99,15 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto input_min_shape = input_shape->min_shape();
   auto input_max_shape = input_shape->max_shape();
   if (input_min_shape.empty() || input_max_shape.empty()) {
-    shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
-    shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
+    (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
+    (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
   } else {
     auto mean_var_shape_min = CalLayerNormMeanAndVarShape(begin_norm_axis, input_min_shape);
     auto mean_var_shape_max = CalLayerNormMeanAndVarShape(begin_norm_axis, input_min_shape);
-    shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape, mean_var_shape_min, mean_var_shape_max));
-    shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape, mean_var_shape_min, mean_var_shape_max));
+    (void)shapes_list.emplace_back(
+      std::make_shared<abstract::Shape>(mean_var_shape, mean_var_shape_min, mean_var_shape_max));
+    (void)shapes_list.emplace_back(
+      std::make_shared<abstract::Shape>(mean_var_shape, mean_var_shape_min, mean_var_shape_max));
   }
   return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
                                 std::make_shared<Tuple>(types_list));

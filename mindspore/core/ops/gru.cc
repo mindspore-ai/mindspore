@@ -33,33 +33,33 @@ void GRU::Init(bool bidirectional, int64_t cell_depth, float keep_prob, float ce
   this->set_gate_order(gate_order);
 }
 
-void GRU::set_bidirectional(bool bidirectional) { AddAttr(kBidirectional, MakeValue(bidirectional)); }
+void GRU::set_bidirectional(bool bidirectional) { (void)AddAttr(kBidirectional, MakeValue(bidirectional)); }
 
-void GRU::set_cell_depth(int64_t cell_depth) { AddAttr(kCellDepth, MakeValue(cell_depth)); }
+void GRU::set_cell_depth(int64_t cell_depth) { (void)AddAttr(kCellDepth, MakeValue(cell_depth)); }
 
-void GRU::set_keep_prob(float keep_prob) { AddAttr(kKeepProb, MakeValue(keep_prob)); }
+void GRU::set_keep_prob(float keep_prob) { (void)AddAttr(kKeepProb, MakeValue(keep_prob)); }
 
-void GRU::set_cell_clip(float cell_clip) { AddAttr(kCellClip, MakeValue(cell_clip)); }
+void GRU::set_cell_clip(float cell_clip) { (void)AddAttr(kCellClip, MakeValue(cell_clip)); }
 
 void GRU::set_num_proj(int64_t num_proj) {
-  CheckAndConvertUtils::CheckInteger(kNumProj, num_proj, kGreaterThan, 0, this->name());
-  AddAttr(kNumProj, MakeValue(num_proj));
+  (void)CheckAndConvertUtils::CheckInteger(kNumProj, num_proj, kGreaterThan, 0, this->name());
+  (void)AddAttr(kNumProj, MakeValue(num_proj));
 }
 
-void GRU::set_time_major(bool time_major) { AddAttr(kTimeMajor, MakeValue(time_major)); }
+void GRU::set_time_major(bool time_major) { (void)AddAttr(kTimeMajor, MakeValue(time_major)); }
 
-void GRU::set_reset_after(bool reset_after) { AddAttr(kResetAfter, MakeValue(reset_after)); }
+void GRU::set_reset_after(bool reset_after) { (void)AddAttr(kResetAfter, MakeValue(reset_after)); }
 
-void GRU::set_is_training(bool is_training) { AddAttr(kIsTraining, MakeValue(is_training)); }
+void GRU::set_is_training(bool is_training) { (void)AddAttr(kIsTraining, MakeValue(is_training)); }
 
 void GRU::set_activation(ActivationType activation) {
   int64_t swi = activation;
-  AddAttr(kActivation, MakeValue(swi));
+  (void)AddAttr(kActivation, MakeValue(swi));
 }
 
 void GRU::set_gate_order(GateOrderMode gate_order) {
   int64_t swi = gate_order;
-  AddAttr(kGateOrder, MakeValue(swi));
+  (void)AddAttr(kGateOrder, MakeValue(swi));
 }
 
 bool GRU::get_bidirectional() const {

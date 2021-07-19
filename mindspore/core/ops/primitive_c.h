@@ -55,6 +55,9 @@ class OpPrimCRegisterHelper {
     OpPrimCRegister::GetInstance().SetPrimCMap(kname, fn);
   }
   ~OpPrimCRegisterHelper() = default;
+
+ private:
+  int id_{0};
 };
 
 #define REGISTER_PRIMITIVE_C(kname, primc)               \

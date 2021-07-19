@@ -35,10 +35,10 @@ std::string Custom::get_type() const {
 void Custom::set_attr(const std::map<std::string, std::vector<uint8_t>> &attrs) {
   ValuePtrList value_ptr_list;
   for (const auto &attr : attrs) {
-    value_ptr_list.emplace_back(MakeValue<std::string>(attr.first));
-    value_ptr_list.emplace_back(MakeValue<std::vector<uint8_t>>(attr.second));
+    (void)value_ptr_list.emplace_back(MakeValue<std::string>(attr.first));
+    (void)value_ptr_list.emplace_back(MakeValue<std::vector<uint8_t>>(attr.second));
   }
-  this->AddAttr(kAttr, MakeValue(value_ptr_list));
+  (void)this->AddAttr(kAttr, MakeValue(value_ptr_list));
 }
 
 std::map<std::string, std::vector<uint8_t>> Custom::get_attr() const {

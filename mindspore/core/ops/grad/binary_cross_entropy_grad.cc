@@ -58,7 +58,7 @@ void BinaryCrossEntropyGrad::Init(const Reduction &reduction) { set_reduction(re
 
 void BinaryCrossEntropyGrad::set_reduction(const Reduction &reduction) {
   int64_t swi = reduction;
-  this->AddAttr(kReduction, MakeValue(swi));
+  (void)this->AddAttr(kReduction, MakeValue(swi));
 }
 Reduction BinaryCrossEntropyGrad::get_reduction() const {
   auto value_ptr = GetAttr(kReduction);
