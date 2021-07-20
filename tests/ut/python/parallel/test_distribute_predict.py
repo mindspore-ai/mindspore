@@ -49,7 +49,8 @@ class Net(nn.Cell):
 
 def test_distribute_predict():
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=True)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=True,
+                                      enable_parallel_optimizer=True)
     inputs = Tensor(np.ones([32, 128]).astype(np.float32))
     net = Net()
     model = Model(net)
@@ -69,9 +70,6 @@ def test_edge_case():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     with pytest.raises(RuntimeError):
         model.infer_predict_layout(inputs)
-    context.set_auto_parallel_context(full_batch=True, enable_parallel_optimizer=True)
-    with pytest.raises(RuntimeError):
-        model.predict(inputs)
 
 
 # standalone predict
