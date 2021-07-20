@@ -19,33 +19,25 @@ mindspore.run_check
 The goal is to provide a convenient API to check if the installation is successful or failed.
 """
 
-from importlib import import_module
-import numpy as np
-
-
-try:
-    ms = import_module("mindspore")
-except ModuleNotFoundError:
-    ms = None
-
-
 def _check_mul():
     """
     Define the mul method.
     """
+    from importlib import import_module
+    import numpy as np
+
+    try:
+        ms = import_module("mindspore")
+    except ModuleNotFoundError:
+        ms = None
+
+    print(f"MindSpore version:", ms.__version__)
+
     input_x = ms.Tensor(np.array([1.0, 2.0, 3.0]), ms.float32)
     input_y = ms.Tensor(np.array([4.0, 5.0, 6.0]), ms.float32)
     mul = ms.ops.Mul()
     mul(input_x, input_y)
     print(f"The result of multiplication calculation is correct, MindSpore has been installed successfully!")
-
-
-def _check_install():
-    """
-    Define the check install method.
-    Print MindSpore version.
-    """
-    print(f"MindSpore version:", ms.__version__)
 
 
 def run_check():
@@ -59,7 +51,6 @@ def run_check():
         The result of multiplication calculation is correct, MindSpore has been installed successfully!
     """
     try:
-        _check_install()
         _check_mul()
     # pylint: disable=broad-except
     except Exception as e:
