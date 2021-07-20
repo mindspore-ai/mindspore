@@ -569,7 +569,7 @@ class SideEffectFinder {
       size_t input_index = 0;
       // Support tuple index is negative
       if (top_index < 0) {
-        if (cnode->size() + top_index < 0) {
+        if (SizeToLong(cnode->size()) + top_index < 0) {
           MS_LOG(EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
         }
         input_index = static_cast<size_t>(cnode->size() + top_index);

@@ -296,8 +296,8 @@ bool Common::FileExists(const std::string &filepath) {
 
 struct GlogLogDirRegister {
   GlogLogDirRegister() {
-    const char *logtostderr = ::getenv("GLOG_logtostderr");
-    const char *log_dir = ::getenv("GLOG_log_dir");
+    const char *logtostderr = std::getenv("GLOG_logtostderr");
+    const char *log_dir = std::getenv("GLOG_log_dir");
     if (logtostderr != nullptr && log_dir != nullptr) {
       std::string logtostderr_str = std::string(logtostderr);
       std::string log_dir_str = std::string(log_dir);

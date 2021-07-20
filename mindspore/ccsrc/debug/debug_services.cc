@@ -405,8 +405,9 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
     MS_LOG(ERROR) << "Failed to read file (In ReadTensorFromNpy) " << file_path;
     return;
   }
-  uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer->data() + 8);
-  std::string header(buffer->data() + 9, header_len);
+  constexpr int header_len_offset = 8;
+  uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer->data() + header_len_offset);
+  std::string header(buffer->data() + header_len_offset + 1, header_len);
   std::size_t type_i = header.find("descr") + 10;
   *tensor_type = header.substr(type_i, 2);
   std::size_t shape_i_open = header.find("(");
