@@ -501,7 +501,7 @@ class PipelineCell(Cell):
 
     Args:
         network (Cell): The target network to wrap.
-        micro_size (Int): MicroBatch size.
+        micro_size (int): MicroBatch size.
 
     Examples:
         >>> net = Net()

@@ -13,11 +13,21 @@
 # limitations under the License.
 # ============================================================================
 
-"""grad experimental impl."""
-from .._grad.grad_base import get_bprop_fn
-from . import grad_array_ops
-from . import grad_inner_ops
-from . import grad_nn_ops
-from . import grad_comm_ops
+"""Generate bprop for comm ops"""
+from .._grad.grad_base import bprop_getters
+from ..operations._inner_ops import AllToAllv
 
-__all__ = ['get_bprop_fn']
+
+@bprop_getters.register(AllToAllv)
+def get_bprop_alltoallv(self):
+    """Generate bprop for AllToAllv."""
+    group = self.group
+    send_rank_ids = self.recv_rank_ids
+    recv_rank_ids = self.send_rank_ids
+    recv_shapes = self.recv_shapes_backward
+    recv_type = self.recv_type
+    alltoallv_grad = AllToAllv(send_rank_ids, recv_rank_ids, recv_shapes, recv_shapes, recv_type, group)
+
+    def bprop(x, out, dout):
+        return (alltoallv_grad(dout),)
+    return bprop
