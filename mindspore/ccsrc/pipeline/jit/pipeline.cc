@@ -138,14 +138,7 @@ bool CheckArgValid(const py::handle &arg) {
 
 std::string GetCompileExceptionInfo() {
   std::ostringstream oss;
-  trace::TraceGraphEval();
-  trace::GetEvalStackInfo(oss);
-  if (oss.str().empty()) {
-    DebugInfoPtr debug_info = TraceManager::GetParseOrResolveDebugInfo();
-    if (debug_info != nullptr) {
-      oss << "\n\n# " << trace::GetDebugInfo(debug_info);
-    }
-  }
+  trace::GetTraceStackInfo(oss);
   return oss.str();
 }
 

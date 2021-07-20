@@ -22,6 +22,7 @@
 #include <vector>
 #include <utility>
 #include <stack>
+#include <deque>
 
 #include "utils/trace_base.h"
 #include "utils/info.h"
@@ -32,15 +33,20 @@
 
 namespace mindspore {
 namespace trace {
+using TraceGraphEvalStack = std::deque<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>>;
+using TraceCNodeEvalStack = std::vector<abstract::AnfNodeConfigPtr>;
 DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
 void TraceGraphEval();
 void GetEvalStackInfo(std::ostringstream &oss);
 void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abstract::AnfNodeConfigPtr &node);
 void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context);
+void TraceGraphEvalStackPrepare(const TraceGraphEvalStack &graphEvals);
+void TraceEvalCNodeStackPrepare(const TraceCNodeEvalStack &cnodeEvals);
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
 void TraceEvalCNodeLeave();
-std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack();
-std::stack<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack();
+TraceCNodeEvalStack &GetCNodeDebugStack();
+TraceGraphEvalStack &GetCurrenGraphEvalStack();
+void GetTraceStackInfo(std::ostringstream &oss);
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
 void ClearTraceStack();
 }  // namespace trace

@@ -25,11 +25,23 @@ namespace mindspore {
 namespace abstract {
 AnalysisSchedule AnalysisSchedule::instance_;
 
-void AnalysisSchedule::HandleException() {
+void AnalysisSchedule::HandleException(const std::exception &ex) {
   // Just record the first exception information.
   if (!StaticAnalysisException::Instance().HasException()) {
     StaticAnalysisException::Instance().SetException();
-    MS_LOG(DEBUG) << "Catch the eval exception.";
+
+    // If python Exception, record the eval stack.
+    if (dynamic_cast<const py::error_already_set *>(&ex) != nullptr) {
+      try {
+        MS_LOG(DEBUG) << "Python exception happened, check the information as below.";
+        trace::GetTraceStackInfo(exceptionStream_);
+        if (!exceptionStream_.str().empty()) {
+          MS_LOG(ERROR) << "Exception happened, check the information as below.\n" << exceptionStream_.str();
+        }
+      } catch (const std::exception &e) {
+        // Ignored.
+      }
+    }
   }
   // Free all the locks. Let all the threads continue to run.
   std::lock_guard<std::mutex> lock(lock_);
@@ -38,6 +50,7 @@ void AnalysisSchedule::HandleException() {
   }
   asyncAbstractList_.clear();
 }
+
 void AnalysisSchedule::Wait() {
   py::gil_scoped_release infer_gil_release;
   EnterWaiting();
@@ -50,6 +63,7 @@ void AnalysisSchedule::Wait() {
     AnalysisResultCacheMgr::GetInstance().Todo();
   }
   MS_LOG(INFO) << "Infer finished.";
+  StaticAnalysisException::Instance().CheckException();
 }
 
 void AnalysisSchedule::SetNextRunnableImpl() {
