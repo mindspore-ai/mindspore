@@ -1,5 +1,5 @@
 files:
-  "*graph_kernel*":
+  ".*graph_kernel.*":
     approvers:
     - gaoxiong1
     - ckey_dou
