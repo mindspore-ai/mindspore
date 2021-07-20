@@ -22,7 +22,7 @@ from mindspore import Tensor
 from mindspore import load_param_into_net
 from mindspore import load_checkpoint
 import mindspore.dataset.vision.py_transforms as transforms
-from src.models.icnet import ICNet
+from models.icnet import ICNet
 
 __all__ = ['get_color_palette', 'set_img_color',
            'show_prediction', 'show_colorful_images', 'save_colorful_images']
@@ -115,28 +115,6 @@ def _getvocpalette(num_cls):
 
 vocpalette = _getvocpalette(256)
 
-cityspalette = [
-    128, 64, 128,
-    244, 35, 232,
-    70, 70, 70,
-    102, 102, 156,
-    190, 153, 153,
-    153, 153, 153,
-    250, 170, 30,
-    220, 220, 0,
-    107, 142, 35,
-    152, 251, 152,
-    0, 130, 180,
-    220, 20, 60,
-    255, 0, 0,
-    0, 0, 142,
-    0, 0, 70,
-    0, 60, 100,
-    0, 80, 100,
-    0, 0, 230,
-    119, 11, 32,
-]
-
 
 def _class_to_index(mask):
     """assert the value"""
@@ -150,9 +128,9 @@ def _class_to_index(mask):
     _mapping = np.array(range(-1, len(_key) - 1)).astype('int32')
     for value in values:
         assert value in _mapping
-
+    # Get the index of each pixel value in the mask corresponding to _mapping
     index = np.digitize(mask.ravel(), _mapping, right=True)
-
+    # According to the above index index, according to _key, the corresponding mask image is obtained
     return _key[index].reshape(mask.shape)
 
 
@@ -167,7 +145,7 @@ if __name__ == '__main__':
     ckpt_file_name = '/root/ICNet/ckpt/ICNet-160_93_699.ckpt'
     param_dict = load_checkpoint(ckpt_file_name)
     load_param_into_net(model, param_dict)
-    image_path = 'Test/val_lindau_000023_000019_leftImg8bit.png'
+    image_path = '../Test/val_lindau_000023_000019_leftImg8bit.png'
     image = Image.open(image_path).convert('RGB')
     image = _img_transform(image)
     image = Tensor(image)
@@ -181,4 +159,4 @@ if __name__ == '__main__':
     pred = pred.asnumpy()
     pred = pred.squeeze(0)
     pred = get_color_palette(pred, "citys")
-    pred.save('Test/visual_pred.png')
+    pred.save('Test/visual_pred_random.png')

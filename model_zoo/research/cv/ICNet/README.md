@@ -13,6 +13,7 @@
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
         - [Evaluation Result](#evaluation-result)
+    - [310 infer](#310-inference)
 - [Model Description](#model-description)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
@@ -50,27 +51,39 @@ It contains 5,000 finely annotated images split into training, validation and te
 ```python
 .
 └─ICNet
-  ├─configs
-    ├─icnet.yaml                          # config file
-  ├─models
-    ├─base_models
-      ├─resnt50_v1.py                     # used resnet50
-    ├─__init__.py
-    ├─icnet.py                            # validation network
-    ├─icnet_dc.py                         # training network
-  ├─scripts
-    ├─run_distribute_train8p.sh           # Multi card distributed training in ascend
-    ├─run_eval.sh                         # validation script
-  ├─utils
-    ├─__init__.py
-    ├─logger.py                           # logger
-    ├─loss.py                             # loss
-    ├─losses.py                           # SoftmaxCrossEntropyLoss
-    ├─lr_scheduler.py                     # lr
-    └─metric.py                           # metric
-  ├─eval.py                               # validation
-  ├─train.py                              # train
-  └─visualize.py                          # inference visualization
+    ├── ascend310_infer
+    │   ├── build.sh
+    │   ├── CMakeLists.txt
+    │   ├── inc
+    │   │   └── utils.h
+    │   └── src
+    │       ├── main.cc
+    │       └── utils.cc
+    ├── eval.py                                    # validation
+    ├── export.py                                  # export mindir
+    ├── postprocess.py                             # 310 infer calculate accuracy
+    ├── README.md                                  # descriptions about ICNet
+    ├── scripts
+    │   ├── run_distribute_train8p.sh              # multi cards distributed training in ascend
+    │   ├── run_eval.sh                            # validation script
+    │   └── run_infer_310.sh                       # 310 infer script
+    ├── src
+    │   ├── cityscapes_mindrecord.py               # create mindrecord dataset
+    │   ├── __init__.py
+    │   ├── logger.py                              # logger
+    │   ├── losses.py                              # used losses
+    │   ├── loss.py                                # loss
+    │   ├── lr_scheduler.py                        # lr
+    │   ├── metric.py                              # metric
+    │   ├── models
+    │   │   ├── icnet_1p.py                        # net single card
+    │   │   ├── icnet_dc.py                        # net multi cards
+    │   │   ├── icnet.py                           # validation card
+    │   │   └── resnet50_v1.py                     # backbone
+    │   ├── model_utils
+    │   │   └── icnet.yaml                         # config
+    │   └── visualize.py                           # inference visualization
+    └── train.py                                   # train
 ```
 
 ## Script Parameters
@@ -168,6 +181,14 @@ avgmiou 0.69962835
 avg_pixacc 0.94285786
 avgtime 0.19648232793807982
 ````
+
+## 310 infer
+
+```shell
+    bash run_infer_310.sh [The path of the MINDIR for 310 infer] [The path of the dataset for 310 infer]  0
+```
+
+Note:: Before executing 310 infer, create the MINDIR/AIR model using "python export.py --ckpt-file [The path of the CKPT for exporting]".
 
 # [Model Description](#Content)
 
