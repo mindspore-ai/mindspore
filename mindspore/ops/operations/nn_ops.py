@@ -2679,7 +2679,7 @@ class L2Loss(PrimitiveWithInfer):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
