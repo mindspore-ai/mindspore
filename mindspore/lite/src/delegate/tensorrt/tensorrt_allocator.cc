@@ -21,7 +21,7 @@
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
-void *TensorRTAllocator::MallocDeviceMem(mindspore::MSTensor host_tensor, size_t size) {
+void *TensorRTAllocator::MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size) {
   if (host_tensor == NULL) {
     return nullptr;
   }

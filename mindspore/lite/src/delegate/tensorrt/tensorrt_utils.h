@@ -46,16 +46,16 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
 
 ActivationParams ConvertActivationType(schema::ActivationType activation_type);
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor);
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor);
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor,
-                                               size_t expand_shape_size);
+nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
+                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size);
 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, void *value);
 
-nvinfer1::Weights TransposeWeight(mindspore::MSTensor ms_tensor, float **pack_weight);
+nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **pack_weight);
 
-nvinfer1::Weights ConvertWeight(mindspore::MSTensor ms_tensor);
+nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
 
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
