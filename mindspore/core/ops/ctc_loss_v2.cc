@@ -29,6 +29,7 @@ namespace ops {
 namespace {
 constexpr size_t kLenLogProbs = 3;
 constexpr size_t kLenTarget = 2;
+constexpr int64_t kMulti = 2;
 constexpr size_t kInputSize = 4;
 abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
@@ -54,7 +55,7 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
 
   ShapeVector output_shape;
   std::vector<int64_t> out_dim0 = {N};
-  std::vector<int64_t> out_dim1 = {N, T, 2 * S + 1};
+  std::vector<int64_t> out_dim1 = {N, T, kMulti * S + 1};
   abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(out_dim0);
   abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(out_dim1);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{neg_log_shape, log_alpha_shape});

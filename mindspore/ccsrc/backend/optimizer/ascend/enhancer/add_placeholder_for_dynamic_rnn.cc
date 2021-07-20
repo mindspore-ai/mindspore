@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace opt {
+constexpr size_t kInsertIdx = 3;
 const BaseRef InsertPlaceholderForDynamicRNN::DefinePattern() const {
   std::shared_ptr<Var> V = std::make_shared<CondVar>(UnVisited);
   std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
@@ -52,7 +53,7 @@ const AnfNodePtr InsertPlaceholderForDynamicRNN::Process(const FuncGraphPtr &fun
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
   for (size_t in_idx = 0; in_idx < input_num; in_idx++) {
     auto input_node = AnfAlgo::GetInputNode(cnode, in_idx);
-    if (in_idx == 3) {
+    if (in_idx == kInsertIdx) {
       auto value = std::make_shared<None>();
       auto value_node = NewValueNode(value);
       value_node->set_abstract(std::make_shared<abstract::AbstractNone>());

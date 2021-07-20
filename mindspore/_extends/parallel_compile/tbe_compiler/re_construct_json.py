@@ -143,7 +143,6 @@ def single_to_fusion(json_file, tune_mode):
         "l1_size": -1,
         "op_list": ops
     }
-    # op_info = {"fusion_op": end_file}
     res = json.dumps(end_file, ensure_ascii=False)
     return res
 

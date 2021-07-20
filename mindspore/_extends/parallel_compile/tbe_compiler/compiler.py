@@ -107,7 +107,6 @@ def build_op(build_type, json_str, tune_mode=None):
                 op_module = __import__("impl.dynamic." + op_name, globals(), locals(), [op_name], 0)
                 op_module_name = "impl.dynamic." + op_name
             else:
-                # op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
                 op_module_name = "impl." + op_name
         # get function
         if build_type == op_build:
