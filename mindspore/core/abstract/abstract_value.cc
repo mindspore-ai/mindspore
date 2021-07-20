@@ -30,8 +30,8 @@ namespace mindspore {
 namespace abstract {
 AnfNodePtr GetTraceNode(const AbstractBasePtr &abs) {
   AnfNodePtr node = nullptr;
-  if (abs->trace_node_provider_ != nullptr) {
-    abs->trace_node_provider_(&node);
+  if (mindspore::abstract::AbstractBase::trace_node_provider_ != nullptr) {
+    mindspore::abstract::AbstractBase::trace_node_provider_(&node);
   }
   return node;
 }
