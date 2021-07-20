@@ -203,8 +203,7 @@ void KernelAdjust::InsertEosDoneRecv(const std::shared_ptr<session::KernelGraph>
 
 void KernelAdjust::InsertGetNextLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                  std::vector<CNodePtr> *exec_order,
-                                                 const std::vector<uint32_t> &getnext_active_streams,
-                                                 uint32_t getnext_switch_stream_id) {
+                                                 const std::vector<uint32_t> &getnext_active_streams) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr getnext_active_app = CreateStreamActiveOp(kernel_graph_ptr);
@@ -489,7 +488,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   if (exist_getnext) {
     // small loop active
     getnext_active_streams.push_back(getnext_switch_stream_id);
-    InsertGetNextLoopStreamActive(kernel_graph_ptr, &exec_order, getnext_active_streams, getnext_switch_stream_id);
+    InsertGetNextLoopStreamActive(kernel_graph_ptr, &exec_order, getnext_active_streams);
   }
 
   (void)std::copy(other_list.begin(), other_list.end(), std::back_inserter(exec_order));
