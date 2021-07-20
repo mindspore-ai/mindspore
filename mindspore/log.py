@@ -290,6 +290,7 @@ def _get_env_config():
     return config_dict
 
 def _verify_config(kwargs):
+
     """
     Verify log configurations.
 

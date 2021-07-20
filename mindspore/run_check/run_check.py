@@ -27,7 +27,8 @@ try:
     ms = import_module("mindspore")
 except ModuleNotFoundError:
     ms = None
-
+finally:
+    pass
 
 def _check_mul():
     """
@@ -65,3 +66,5 @@ def run_check():
     except Exception as e:
         print("MindSpore running check failed.")
         print(str(e))
+    finally:
+        pass
