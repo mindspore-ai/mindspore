@@ -259,27 +259,27 @@ int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::M
   switch (tensor->data_type()) {
     case TypeId::kNumberTypeFloat:
     case TypeId::kNumberTypeFloat32: {
-      bias = CompareData<float>(name, tensor->shape(), mutableData);
+      bias = CompareData<float, int>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt8: {
-      bias = CompareData<int8_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int8_t, int>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeUInt8: {
-      bias = CompareData<uint8_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<uint8_t, int>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt32: {
-      bias = CompareData<int32_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int32_t, int>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt16: {
-      bias = CompareData<int16_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int16_t, int>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeBool: {
-      bias = CompareData<bool>(name, tensor->shape(), mutableData);
+      bias = CompareData<bool, int>(name, tensor->shape(), mutableData);
       break;
     }
     default:

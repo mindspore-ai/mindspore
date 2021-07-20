@@ -17,6 +17,7 @@
 #include <math.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
                  const InstanceNormParameter *param, size_t task_id) {
@@ -62,8 +63,8 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
         square_mean += vaddvq_f32(squarev);
 #elif defined(ENABLE_SSE)
         for (int i = 0; i < C4NUM; ++i) {
-          mean += srcv[i];
-          square_mean += squarev[i];
+          mean += MS_F32X4_GETI(srcv, i);
+          square_mean += MS_F32X4_GETI(squarev, i);
         }
 #else
         float32x2_t src_add2 = vadd_f32(vget_low_f32(srcv), vget_high_f32(srcv));

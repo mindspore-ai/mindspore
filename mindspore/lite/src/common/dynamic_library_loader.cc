@@ -17,15 +17,15 @@
 #include "src/common/dynamic_library_loader.h"
 #include <string.h>
 #include <climits>
-#include "include/errorcode.h"
 #ifndef _WIN32
 #include <dlfcn.h>
 #else
 #include <windows.h>
+#undef ERROR
+#undef SM_DEBUG
 #endif
-
-#define LOG_ERROR(content) \
-  { printf("[ERROR] %s|%d|%s: " #content "\r\n", __FILE__, __LINE__, __func__); }
+#include "include/errorcode.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,31 +33,16 @@ int DynamicLibraryLoader::Open(const char *lib_path) {
   if (handler_ != nullptr) {
     return RET_ERROR;
   }
-  if ((strlen(lib_path)) >= PATH_MAX) {
-    LOG_ERROR("path is too long");
-    return RET_ERROR;
-  }
-  char resolved_path[PATH_MAX];
+  std::string real_path = RealPath(lib_path);
 
 #ifndef _WIN32
-  char *real_path = realpath(lib_path, resolved_path);
+  handler_ = dlopen(real_path.c_str(), RTLD_LAZY);
 #else
-  char *real_path = _fullpath(resolved_path, lib_path, 1024);
-#endif
-
-  if (real_path == nullptr) {
-    LOG_ERROR("path not exist");
-    return RET_ERROR;
-  }
-
-#ifndef _WIN32
-  handler_ = dlopen(lib_path, RTLD_LAZY);
-#else
-  handler_ = LoadLibrary(lib_path);
+  handler_ = LoadLibrary(real_path.c_str());
 #endif
 
   if (handler_ == nullptr) {
-    LOG_ERROR("handler is nullptr.");
+    MS_LOG(ERROR) << "handler is nullptr.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -79,13 +64,13 @@ int DynamicLibraryLoader::Close() {
 #ifndef _WIN32
   auto close_res = dlclose(handler_);
   if (close_res != 0) {
-    LOG_ERROR("can not close handler");
+    MS_LOG(ERROR) << "can not close handler";
     return RET_ERROR;
   }
 #else
   auto close_res = FreeLibrary(reinterpret_cast<HINSTANCE__ *>(handler_));
   if (close_res == 0) {
-    LOG_ERROR("can not close handler");
+    MS_LOG(ERROR) << "can not close handler";
     return RET_ERROR;
   }
 #endif

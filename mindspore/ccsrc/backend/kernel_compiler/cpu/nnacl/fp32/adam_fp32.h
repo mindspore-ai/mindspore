@@ -20,7 +20,11 @@
 #include "nnacl/errorcode.h"
 
 #ifdef ENABLE_SSE
+#ifdef SUPPORT_MSVC
+#include <immintrin.h>
+#else
 #include <x86intrin.h>
+#endif
 #endif
 
 #ifdef ENABLE_AVX

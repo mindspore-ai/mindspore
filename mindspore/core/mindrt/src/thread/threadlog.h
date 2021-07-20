@@ -25,8 +25,8 @@ namespace mindspore {
 #define THREAD_ERROR(content, args...) \
   { printf("[ERROR] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
 #else
-#define THREAD_INFO(content, args...)
-#define THREAD_ERROR(content, args...)
+#define THREAD_INFO(content, ...)
+#define THREAD_ERROR(content, ...)
 #endif
 
 #define THREAD_ERROR_IF_NULL(ptr) \

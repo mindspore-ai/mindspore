@@ -30,6 +30,10 @@
 #include "securec/include/securec.h"
 
 #ifdef _WIN32
+#ifdef SUPPORT_MSVC
+#define PATH_MAX 1024
+#define F_OK 0
+#endif
 #define ACCESS(file_path, access_mode) _access(file_path, access_mode)
 #define MKDIR(file_path) _mkdir(file_path)
 #else

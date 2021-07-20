@@ -71,10 +71,10 @@ int BenchmarkBase::GenerateRandomData(size_t size, void *data, int data_type) {
       FillInputData<int16_t>(size, data, std::uniform_int_distribution<int16_t>(0, 1));
       break;
     case kNumberTypeInt8:
-      FillInputData<int8_t>(size, data, std::uniform_int_distribution<int8_t>(-127, 127));
+      FillInputData<int8_t>(size, data, std::uniform_int_distribution<int16_t>(-127, 127));
       break;
     case kNumberTypeUInt8:
-      FillInputData<uint8_t>(size, data, std::uniform_int_distribution<uint8_t>(0, 254));
+      FillInputData<uint8_t>(size, data, std::uniform_int_distribution<uint16_t>(0, 254));
       break;
     default:
       char *casted_data = static_cast<char *>(data);

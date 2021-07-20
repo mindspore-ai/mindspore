@@ -30,7 +30,6 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/int8/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/string/*.cc
         )
-list(REMOVE_ITEM KERNEL_OP_SRC ${LITE_DIR}/src/runtime/kernel/arm/base/random_standard_normal.cc)
 
 if(NOT PLATFORM_ARM AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
@@ -401,7 +400,6 @@ target_link_libraries(lite-test
         nnacl_mid
         dl
         mindspore::gtest
-        cpu_kernel_random_standard_normal
         )
 
 if(PLATFORM_ARM AND ENABLE_FP16)
