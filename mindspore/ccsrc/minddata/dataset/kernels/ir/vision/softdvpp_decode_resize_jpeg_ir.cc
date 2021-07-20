@@ -28,7 +28,7 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // SoftDvppDecodeResizeJpegOperation
-SoftDvppDecodeResizeJpegOperation::SoftDvppDecodeResizeJpegOperation(std::vector<int32_t> size) : size_(size) {}
+SoftDvppDecodeResizeJpegOperation::SoftDvppDecodeResizeJpegOperation(const std::vector<int32_t> &size) : size_(size) {}
 
 SoftDvppDecodeResizeJpegOperation::~SoftDvppDecodeResizeJpegOperation() = default;
 

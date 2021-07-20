@@ -28,9 +28,9 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // RandomResizedCropWithBBoxOperation
-RandomResizedCropWithBBoxOperation::RandomResizedCropWithBBoxOperation(std::vector<int32_t> size,
-                                                                       std::vector<float> scale,
-                                                                       std::vector<float> ratio,
+RandomResizedCropWithBBoxOperation::RandomResizedCropWithBBoxOperation(const std::vector<int32_t> &size,
+                                                                       const std::vector<float> &scale,
+                                                                       const std::vector<float> &ratio,
                                                                        InterpolationMode interpolation,
                                                                        int32_t max_attempts)
     : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}

@@ -28,8 +28,9 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // RandomCropWithBBoxOperation
-RandomCropWithBBoxOperation::RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding,
-                                                         bool pad_if_needed, std::vector<uint8_t> fill_value,
+RandomCropWithBBoxOperation::RandomCropWithBBoxOperation(const std::vector<int32_t> &size,
+                                                         const std::vector<int32_t> &padding, bool pad_if_needed,
+                                                         const std::vector<uint8_t> &fill_value,
                                                          BorderType padding_mode)
     : TensorOperation(true),
       size_(size),

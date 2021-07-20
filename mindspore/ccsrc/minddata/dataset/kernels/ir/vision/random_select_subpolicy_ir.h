@@ -38,7 +38,7 @@ constexpr char kRandomSelectSubpolicyOperation[] = "RandomSelectSubpolicy";
 class RandomSelectSubpolicyOperation : public TensorOperation {
  public:
   explicit RandomSelectSubpolicyOperation(
-    std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy);
+    const std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> &policy);
 
   ~RandomSelectSubpolicyOperation();
 

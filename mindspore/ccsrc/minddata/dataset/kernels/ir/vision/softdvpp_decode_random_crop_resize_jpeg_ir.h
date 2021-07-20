@@ -37,8 +37,9 @@ constexpr char kSoftDvppDecodeRandomCropResizeJpegOperation[] = "SoftDvppDecodeR
 
 class SoftDvppDecodeRandomCropResizeJpegOperation : public TensorOperation {
  public:
-  explicit SoftDvppDecodeRandomCropResizeJpegOperation(std::vector<int32_t> size, std::vector<float> scale,
-                                                       std::vector<float> ratio, int32_t max_attempts);
+  explicit SoftDvppDecodeRandomCropResizeJpegOperation(const std::vector<int32_t> &size,
+                                                       const std::vector<float> &scale, const std::vector<float> &ratio,
+                                                       int32_t max_attempts);
 
   ~SoftDvppDecodeRandomCropResizeJpegOperation();
 

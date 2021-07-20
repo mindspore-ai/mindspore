@@ -37,7 +37,7 @@ constexpr char kSoftDvppDecodeResizeJpegOperation[] = "SoftDvppDecodeResizeJpeg"
 
 class SoftDvppDecodeResizeJpegOperation : public TensorOperation {
  public:
-  explicit SoftDvppDecodeResizeJpegOperation(std::vector<int32_t> size);
+  explicit SoftDvppDecodeResizeJpegOperation(const std::vector<int32_t> &size);
 
   ~SoftDvppDecodeResizeJpegOperation();
 

@@ -37,7 +37,7 @@ constexpr char kAutoContrastOperation[] = "AutoContrast";
 
 class AutoContrastOperation : public TensorOperation {
  public:
-  explicit AutoContrastOperation(float cutoff, std::vector<uint32_t> ignore);
+  explicit AutoContrastOperation(float cutoff, const std::vector<uint32_t> &ignore);
 
   ~AutoContrastOperation();
 

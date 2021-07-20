@@ -32,7 +32,7 @@ constexpr size_t dimension_one = 1;
 constexpr size_t size_two = 2;
 
 // Function to create RandomSharpness.
-RandomSharpnessOperation::RandomSharpnessOperation(std::vector<float> degrees)
+RandomSharpnessOperation::RandomSharpnessOperation(const std::vector<float> &degrees)
     : TensorOperation(true), degrees_(degrees) {}
 
 RandomSharpnessOperation::~RandomSharpnessOperation() = default;

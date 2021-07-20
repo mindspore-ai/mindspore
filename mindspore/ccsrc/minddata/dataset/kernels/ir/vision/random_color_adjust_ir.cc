@@ -33,8 +33,10 @@ constexpr size_t size_two = 2;
 
 #ifndef ENABLE_ANDROID
 // RandomColorAdjustOperation.
-RandomColorAdjustOperation::RandomColorAdjustOperation(std::vector<float> brightness, std::vector<float> contrast,
-                                                       std::vector<float> saturation, std::vector<float> hue)
+RandomColorAdjustOperation::RandomColorAdjustOperation(const std::vector<float> &brightness,
+                                                       const std::vector<float> &contrast,
+                                                       const std::vector<float> &saturation,
+                                                       const std::vector<float> &hue)
     : brightness_(brightness), contrast_(contrast), saturation_(saturation), hue_(hue) {
   random_op_ = true;
 }

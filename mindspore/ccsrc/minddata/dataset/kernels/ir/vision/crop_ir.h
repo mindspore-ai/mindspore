@@ -37,7 +37,7 @@ constexpr char kCropOperation[] = "Crop";
 
 class CropOperation : public TensorOperation {
  public:
-  CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+  CropOperation(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size);
 
   ~CropOperation();
 

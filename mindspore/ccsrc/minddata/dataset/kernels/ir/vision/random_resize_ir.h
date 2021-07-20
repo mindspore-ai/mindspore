@@ -37,7 +37,7 @@ constexpr char kRandomResizeOperation[] = "RandomResize";
 
 class RandomResizeOperation : public TensorOperation {
  public:
-  explicit RandomResizeOperation(std::vector<int32_t> size);
+  explicit RandomResizeOperation(const std::vector<int32_t> &size);
 
   ~RandomResizeOperation();
 
