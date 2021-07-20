@@ -30,7 +30,7 @@ void PrimBpropOptGraphLevel2Info::TryFreeArgsValue(const ValuePtrList &op_args, 
   }
 
   ValuePtrList new_args(op_args);
-  new_args.emplace_back(out);
+  (void)new_args.emplace_back(out);
   TryFreeOneValue(new_args, args_value_using_info_);
 }
 
@@ -128,7 +128,7 @@ void PrimBpropOptGraphLevel2Info::AalysisForTupleGetItem(const NodeUsersMap &nod
                       << " TupleGetItem idx node:" << idx_node->ToString() << " idx Value :" << value_ptr;
   }
 
-  auto idx = value_ptr->cast<Int64ImmPtr>()->value();
+  auto idx = LongToSize(value_ptr->cast<Int64ImmPtr>()->value());
   arg_info->sub_using_info_[idx].using_flg_ = true;
   ArgInfoRefresh(cnode, &(arg_info->sub_using_info_[idx]));
 
@@ -157,7 +157,7 @@ void PrimBpropOptGraphLevel2Info::ArgInfoRefresh(const std::shared_ptr<AnfNode> 
 }
 
 PrimBpropOptimizer &PrimBpropOptimizer::GetPrimBpropOptimizerInst() {
-  static PrimBpropOptimizer g_prim_bprop_opt;
+  static PrimBpropOptimizer g_prim_bprop_opt = PrimBpropOptimizer();
   return g_prim_bprop_opt;
 }
 
@@ -296,7 +296,7 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
   return level_2_graph_info;
 }
 
-FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const ResourcePtr &res) {
+FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const ResourcePtr &res) const {
   MS_EXCEPTION_IF_NULL(res);
   auto after_opt_bg = BpropGraphFinalOptPass(res);
   return after_opt_bg;
@@ -339,7 +339,7 @@ void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList 
       arg_abs = arg_abs->PartialBroaden();
       MS_LOG(DEBUG) << "Broaden for " << prim->ToString();
     }
-    (*abs_list).emplace_back(arg_abs);
+    (void)abs_list->emplace_back(arg_abs);
   }
 }
 
@@ -351,8 +351,8 @@ abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr
   abstract::AbstractBasePtrList new_abs_list(abs_list);
   auto out_abs = out->ToAbstract();
   out_abs = out_abs->PartialBroaden();
-  new_abs_list.emplace_back(out_abs);
-  new_abs_list.emplace_back(out_abs);
+  (void)new_abs_list.emplace_back(out_abs);
+  (void)new_abs_list.emplace_back(out_abs);
   return new_abs_list;
 }
 }  // namespace pipeline
