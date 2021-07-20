@@ -49,7 +49,7 @@ AnfNodePtr BoolScalarEliminate::operator()(const OptimizerPtr &optimizer, const 
 
   AnfNodeIndexSet node_idx_set = iter->second;
   for (auto &item : node_idx_set) {
-    manager->Replace(item.first, vnode);
+    (void)manager->Replace(item.first, vnode);
   }
   return nullptr;
 }

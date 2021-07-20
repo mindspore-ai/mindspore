@@ -65,7 +65,7 @@ bool IsMulOverflow(const T &x, const T &y, const T &max, const T &min) {
 }
 
 template <typename T>
-bool IsDivOverflow(const T &x, const T &y, const T &max, const T &min) {
+bool IsDivOverflow(const T &x, const T &y, const T &min) {
   return (x == min && static_cast<int64_t>(y) == -1);
 }
 
@@ -89,7 +89,7 @@ bool IsSignedIntOverflow(T x, T y, OpType opType) {
   }
 
   if (opType == OpType::DIV || opType == OpType::MOD) {
-    return IsDivOverflow<T>(x, y, max, min);
+    return IsDivOverflow<T>(x, y, min);
   }
 
   MS_LOG(EXCEPTION) << "Unsupported operation type.";

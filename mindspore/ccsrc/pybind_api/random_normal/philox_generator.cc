@@ -43,19 +43,19 @@ void PhiloxGenerator::JumpStep(uint64_t step) {
   counter_[3] = static_cast<uint32_t>(max_counter >> kShiftNum);
 }
 
-std::array<uint32_t, gResultNum> PhiloxGenerator::Compute(const std::array<uint32_t, gResultNum> &counter_,
-                                                          const std::array<uint32_t, 2> &key_var_) {
+std::array<uint32_t, gResultNum> PhiloxGenerator::Compute(const std::array<uint32_t, gResultNum> &counter,
+                                                          const std::array<uint32_t, 2> &key_var) const {
   std::array<uint32_t, gResultNum> min_value;
   std::array<uint32_t, gResultNum> max_value;
   for (size_t i = 0; i < gResultNum; i += 2) {
-    uint64_t temp = static_cast<uint64_t>(keyConstant[i]) * counter_[i];
+    uint64_t temp = static_cast<uint64_t>(keyConstant[i]) * counter[i];
     min_value[i] = static_cast<uint32_t>(temp);
     max_value[i] = static_cast<uint32_t>(temp >> kShiftNum);
   }
   std::array<uint32_t, gResultNum> result;
-  result[0] = (max_value[2] ^ counter_[1] ^ key_var_[0]);
+  result[0] = (max_value[2] ^ counter[1] ^ key_var[0]);
   result[1] = min_value[2];
-  result[2] = (max_value[0] ^ counter_[3] ^ key_var_[0]);
+  result[2] = (max_value[0] ^ counter[3] ^ key_var[0]);
   result[3] = min_value[0];
   return result;
 }
