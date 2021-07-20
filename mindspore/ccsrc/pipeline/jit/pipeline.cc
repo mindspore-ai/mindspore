@@ -1285,10 +1285,6 @@ void FinalizeBackend() {
 
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
-  session::ExecutorManager::Instance().Clear();
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-  runtime::GraphScheduler::GetInstance().Clear();
-  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
@@ -1303,6 +1299,10 @@ void ClearResAtexit() {
     }
   }
 #endif
+  session::ExecutorManager::Instance().Clear();
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  runtime::GraphScheduler::GetInstance().Clear();
+  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
   PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
