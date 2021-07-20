@@ -45,7 +45,7 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
     return RET_NULL_PTR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  PackNHWCTo1HWCNXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel, packed_weight_,
+  PackNHWCToNXHWCXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel, packed_weight_,
                        ori_weight_data_);
   if (in_tensors_.size() == kInputSize2) {
     packed_bias_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_tile_ * sizeof(float)));
