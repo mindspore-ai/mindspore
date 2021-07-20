@@ -38,6 +38,7 @@
 
 using mindspore::dataset::Dataset;
 using mindspore::dataset::Mnist;
+using mindspore::dataset::SequentialSampler;
 using mindspore::dataset::TensorOperation;
 using mindspore::dataset::transforms::TypeCast;
 using mindspore::dataset::vision::Normalize;
@@ -185,7 +186,7 @@ float NetRunner::CalculateAccuracy(int max_tests) {
 }
 
 int NetRunner::InitDB() {
-  train_ds_ = Mnist(data_dir_ + "/train", "all");
+  train_ds_ = Mnist(data_dir_ + "/train", "all", std::make_shared<SequentialSampler>(0, 0));
 
   TypeCast typecast_f(mindspore::DataType::kNumberTypeFloat32);
   Resize resize({h_, w_});
