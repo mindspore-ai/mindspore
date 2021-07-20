@@ -23,6 +23,10 @@
 #include "include/ms_tensor.h"
 
 namespace mindspore::lite {
+struct CudaTensorParam {
+  void *data;
+  bool isValidMem;
+};
 class TensorRTAllocator {
  public:
   TensorRTAllocator() = default;
@@ -39,7 +43,7 @@ class TensorRTAllocator {
   int ClearDeviceMem();
 
  private:
-  std::map<std::string, void *> cuda_tensor_map_;
+  std::map<std::string, CudaTensorParam> cuda_tensor_map_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H
