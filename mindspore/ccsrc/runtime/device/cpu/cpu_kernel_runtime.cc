@@ -405,9 +405,11 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
+#ifndef ENABLE_SECURITY
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   bool iter_dump_flag = dump_json_parser.GetIterDumpFlag();
   uint32_t graph_id = kernel_graph->graph_id();
+#endif
 
   for (const auto &kernel : kernels) {
 #ifdef ENABLE_PROFILE
@@ -448,9 +450,11 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
     } catch (std::exception &e) {
       MS_LOG(EXCEPTION) << e.what() << "\nTrace:" << trace::DumpSourceLines(kernel);
     }
+#ifndef ENABLE_SECURITY
     if (iter_dump_flag) {
       CPUE2eDump::DumpCNodeData(kernel, graph_id);
     }
+#endif
     if (profiler_inst->GetEnableFlag()) {
       profiler_inst->OpDataProducerEnd();
     }
@@ -466,10 +470,14 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
     MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";
 #endif
   }
+#ifndef ENABLE_SECURITY
   if (iter_dump_flag) {
     CPUE2eDump::DumpParametersAndConst(kernel_graph, graph_id);
   }
-  dump_json_parser.UpdateDumpIter();
+  if (graph_id == 0) {
+    dump_json_parser.UpdateDumpIter();
+  }
+#endif
   return true;
 }
 }  // namespace cpu

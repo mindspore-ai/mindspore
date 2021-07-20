@@ -676,6 +676,7 @@ void PrepareForDebuggr(const GraphCompilerInfo &graph_compiler_info) {
   }
 #endif
 
+#ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
     DumpJsonParser::GetInstance().ClearGraph();
     for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
@@ -684,6 +685,7 @@ void PrepareForDebuggr(const GraphCompilerInfo &graph_compiler_info) {
       }
     }
   }
+#endif
 }
 }  // namespace
 
