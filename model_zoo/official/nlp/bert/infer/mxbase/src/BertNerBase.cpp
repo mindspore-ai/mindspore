@@ -92,8 +92,8 @@ APP_ERROR BertNerBase::DeInit() {
     return APP_ERR_OK;
 }
 
-APP_ERROR BertNerBase::ReadTensorFromFile(const std::string &file, uint32_t *data) {
-    if (data == NULL) {
+APP_ERROR BertNerBase::ReadTensorFromFile(const std::string &file, uint32_t *data, uint32_t size) {
+    if (data == NULL || size < MAX_LENGTH) {
         LogError << "input data is invalid.";
         return APP_ERR_COMM_INVALID_POINTER;
     }
@@ -113,7 +113,7 @@ APP_ERROR BertNerBase::ReadTensorFromFile(const std::string &file, uint32_t *dat
 APP_ERROR BertNerBase::ReadInputTensor(const std::string &fileName, uint32_t index,
                                        std::vector<MxBase::TensorBase> *inputs) {
     uint32_t data[MAX_LENGTH] = {0};
-    APP_ERROR ret = ReadTensorFromFile(fileName, data);
+    APP_ERROR ret = ReadTensorFromFile(fileName, data, MAX_LENGTH);
     if (ret != APP_ERR_OK) {
         LogError << "ReadTensorFromFile failed.";
         return ret;
@@ -153,7 +153,7 @@ APP_ERROR BertNerBase::Inference(const std::vector<MxBase::TensorBase> &inputs,
     MxBase::DynamicInfo dynamicInfo = {};
     dynamicInfo.dynamicType = MxBase::DynamicType::STATIC_BATCH;
     auto startTime = std::chrono::high_resolution_clock::now();
-     APP_ERROR ret = model_->ModelInference(inputs, *outputs, dynamicInfo);
+    APP_ERROR ret = model_->ModelInference(inputs, *outputs, dynamicInfo);
     auto endTime = std::chrono::high_resolution_clock::now();
     double costMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
     g_inferCost.push_back(costMs);
@@ -195,7 +195,7 @@ APP_ERROR BertNerBase::PostProcess(std::vector<MxBase::TensorBase> *outputs, std
 
 APP_ERROR BertNerBase::CountPredictResult(const std::string &labelFile, const std::vector<uint32_t> &argmax) {
     uint32_t data[MAX_LENGTH] = {0};
-    APP_ERROR ret = ReadTensorFromFile(labelFile, data);
+    APP_ERROR ret = ReadTensorFromFile(labelFile, data, MAX_LENGTH);
     if (ret != APP_ERR_OK) {
         LogError << "ReadTensorFromFile failed.";
         return ret;

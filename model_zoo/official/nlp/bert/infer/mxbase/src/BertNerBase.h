@@ -53,7 +53,7 @@ class BertNerBase {
     APP_ERROR Process(const std::string &inferPath, const std::string &fileName, bool eval);
     APP_ERROR PostProcess(std::vector<MxBase::TensorBase> *outputs, std::vector<uint32_t> *argmax);
  protected:
-    APP_ERROR ReadTensorFromFile(const std::string &file, uint32_t *data);
+    APP_ERROR ReadTensorFromFile(const std::string &file, uint32_t *data, uint32_t size);
     APP_ERROR ReadInputTensor(const std::string &fileName, uint32_t index, std::vector<MxBase::TensorBase> *inputs);
     APP_ERROR LoadLabels(const std::string &labelPath, std::vector<std::string> *labelMap);
     APP_ERROR ReadInputTensor(const std::string &fileName, const std::vector<uint32_t> &argmax);
