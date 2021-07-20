@@ -127,7 +127,7 @@ def get_all_path(output_path):
     token_path = os.path.join(output_path, "02_data")
     label_path = os.path.join(output_path, "03_data")
     for path in [ids_path, mask_path, token_path, label_path]:
-        os.makedirs(path, 0o755)
+        os.makedirs(path, 0o755, exist_ok=True)
 
     return ids_path, mask_path, token_path, label_path
 
