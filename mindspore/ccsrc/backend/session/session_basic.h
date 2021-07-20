@@ -181,7 +181,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                          std::map<AnfNodePtr, size_t> *parameter_index);
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
-                               VectorRef *outputs,
+                               VectorRef *const outputs,
                                std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
   void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count);
   void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<KernelWithIndex, size_t> *ref_count,
@@ -189,7 +189,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                        const std::map<KernelWithIndex, size_t> &ref_count,
-                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map, GraphOutputInfo *graph_output_info);
+                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map,
+                       GraphOutputInfo *const graph_output_info);
 
  protected:
   friend class Executor;
@@ -264,7 +265,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                             const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
                                             const std::vector<tensor::TensorPtr> &graph_inputs,
-                                            InputTensorInfo *input_tensor_info, size_t input_index);
+                                            InputTensorInfo *const input_tensor_info, size_t input_index);
 
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();

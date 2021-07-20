@@ -388,7 +388,7 @@ void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_partition_);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
 
-  bool contain_multi_target;
+  bool contain_multi_target = false;
   // Split graph to segments.
   const auto &segments = graph_partition_->Partition(func_graph, &contain_multi_target);
   MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size:" << segments.size();
@@ -450,7 +450,7 @@ const ActorInfo &MindRTBackend::CompileGraph(const OpRunInfo &op_run_info, const
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   device_context->Initialize();
 
-  bool single_op_cache_hit;
+  bool single_op_cache_hit = true;
   auto graph_id = graph_compiler_->CompileGraph(op_run_info, graph_info, tensors_mask, input_tensors,
                                                 &single_op_cache_hit, device_context);
   // The actor set name: graph_id + single operator name.
@@ -592,9 +592,8 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> graph_compiler, con
     VectorRef args;
     GetControlOpInput(graph_compiler, cnode, kernel, op_output_map, parameter_index, graph_inputs, input_tensor_info,
                       &args);
-
     BaseRef out = prim->RunHookFunction(args);
-
+    // Convert pyobject output to tensor.
     if (utils::isa<PyObjectRef>(out)) {
       PyObjectRef py_ref = utils::cast<PyObjectRef>(out);
       auto out_py_tuple = py_ref.object_;

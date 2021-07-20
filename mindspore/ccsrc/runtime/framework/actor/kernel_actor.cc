@@ -121,7 +121,7 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   }
 }
 
-void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<DeviceTensor> *context,
+void KernelActor::RunOpControlWithInputTensor(AID *const input_control, OpContext<DeviceTensor> *const context,
                                               const std::vector<TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(input_tensors);
@@ -140,11 +140,10 @@ void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<Devi
 }
 
 namespace {
-void AllocateMemory(std::vector<DeviceTensor *> *alloc_list, const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(alloc_list);
+void AllocateMemory(const std::vector<DeviceTensor *> &alloc_list, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
 
-  for (auto &device_tensor : *alloc_list) {
+  for (auto &device_tensor : alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
     if ((device_tensor->GetPtr() != nullptr) || (device_tensor->GetSize() == 0)) {
       continue;
@@ -159,10 +158,9 @@ void AllocateMemory(std::vector<DeviceTensor *> *alloc_list, const DeviceContext
   }
 }
 
-void FreeMemory(std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(free_list);
+void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
-  for (auto &device_tensor : *free_list) {
+  for (auto &device_tensor : free_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
     if (device_tensor->original_ref_count() == SIZE_MAX) {
       continue;
@@ -186,7 +184,7 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
     Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_context_, context,
           GetAID());
   } else {
-    AllocateMemory(&memory_alloc_list_, device_context_);
+    AllocateMemory(memory_alloc_list_, device_context_);
   }
 }
 
@@ -194,7 +192,7 @@ void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_context_, context);
   } else {
-    FreeMemory(&memory_free_list_, device_context_);
+    FreeMemory(memory_free_list_, device_context_);
   }
 }
 

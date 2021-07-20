@@ -198,7 +198,7 @@ bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressP
   return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
 }
 
-DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id) const {
   return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
@@ -361,7 +361,6 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(ms_context);
   bool is_pynative_infer = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   bool is_pynative_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
-
   if (is_pynative_infer || is_pynative_mode) {
     return;
   }
