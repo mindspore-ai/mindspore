@@ -19,3 +19,6 @@ Compression quant module.
 from .quantizer import OptimizeOption
 from .qat import QuantizationAwareTraining, create_quant_config
 from .quant_utils import load_nonquant_param_into_quant_net, query_quant_layers
+
+__all__ = ["load_nonquant_param_into_quant_net", "query_quant_layers", "QuantizationAwareTraining",
+           "create_quant_config", "OptimizeOption"]
