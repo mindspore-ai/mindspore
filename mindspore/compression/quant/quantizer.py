@@ -57,4 +57,8 @@ class Quantizer(ABC):
 
     @abstractmethod
     def quantize(self, network):
-        pass
+        """
+        Quant API to convert input network to a quantization aware training network
+        Args:
+            network (Cell): network to be quantized.
+        """

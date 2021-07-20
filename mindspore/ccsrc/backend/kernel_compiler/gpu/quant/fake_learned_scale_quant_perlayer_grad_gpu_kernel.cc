@@ -36,7 +36,6 @@ const std::vector<size_t> &FakeLearnedScaleQuantPerLayerGradGpuKernel::GetWorksp
 bool FakeLearnedScaleQuantPerLayerGradGpuKernel::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-
   if (input_num != 4) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num
                       << ", but FakeLearnedScaleQuantPerLayerGrad GpuKernel OP needs 4 input.";

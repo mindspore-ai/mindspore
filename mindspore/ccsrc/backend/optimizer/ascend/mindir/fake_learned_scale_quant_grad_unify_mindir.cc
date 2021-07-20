@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 void CreateOutputsOfLSQPerLayerGradD(const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
-                                     std::vector<AnfNodePtr> *lsq_perlayer_grad_d_outputs) {
+                                     std::vector<AnfNodePtr> *const lsq_perlayer_grad_d_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_node);
   const auto &lsq_perlayer_grad_inputs = lsq_perlayer_grad_node->inputs();
@@ -58,7 +58,7 @@ void CreateOutputsOfLSQPerLayerGradD(const FuncGraphPtr &graph, const CNodePtr &
 
 void CreateOutputsOfLSQPerLayerReduceGrad(const FuncGraphPtr &graph, const CNodePtr &lsq_perlayer_grad_node,
                                           const std::vector<AnfNodePtr> &lsq_perlayer_grad_d_outputs,
-                                          std::vector<AnfNodePtr> *lsq_perlayer_reduce_grad_outputs) {
+                                          std::vector<AnfNodePtr> *const lsq_perlayer_reduce_grad_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_node);
   MS_EXCEPTION_IF_NULL(lsq_perlayer_reduce_grad_outputs);
@@ -86,7 +86,7 @@ void CreateOutputsOfLSQPerLayerReduceGrad(const FuncGraphPtr &graph, const CNode
 }
 
 void CreateOutputsOfLSQPerChannelGradD(const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
-                                       std::vector<AnfNodePtr> *lsq_perchannel_grad_d_outputs) {
+                                       std::vector<AnfNodePtr> *const lsq_perchannel_grad_d_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_node);
   const auto &lsq_perchannel_grad_inputs = lsq_perchannel_grad_node->inputs();
@@ -116,7 +116,7 @@ void CreateOutputsOfLSQPerChannelGradD(const FuncGraphPtr &graph, const CNodePtr
 
 void CreateOutputsOfLSQPerChannelReduceGrad(const FuncGraphPtr &graph, const CNodePtr &lsq_perchannel_grad_node,
                                             const std::vector<AnfNodePtr> &lsq_perchannel_grad_d_outputs,
-                                            std::vector<AnfNodePtr> *lsq_perchannel_reduce_grad_outputs) {
+                                            std::vector<AnfNodePtr> *const lsq_perchannel_reduce_grad_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_node);
   MS_EXCEPTION_IF_NULL(lsq_perchannel_reduce_grad_outputs);
