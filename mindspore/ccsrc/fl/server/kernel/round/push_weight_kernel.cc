@@ -103,7 +103,7 @@ ResultCode PushWeightKernel::PushWeight(std::shared_ptr<FBBuilder> fbb,
     std::string reason = "Count for push weight request failed.";
     BuildPushWeightRsp(fbb, schema::ResponseCode_SystemError, reason, current_iter);
     MS_LOG(ERROR) << reason;
-    return count_reason == kNetworkError ? ResultCode::kSuccessAndReturn : ResultCode::kFail;
+    return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
   BuildPushWeightRsp(fbb, schema::ResponseCode_SUCCEED, "PushWeight succeed.", current_iter);
   return ResultCode::kSuccess;
