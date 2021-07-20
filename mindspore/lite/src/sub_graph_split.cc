@@ -223,6 +223,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
     size_t thread_num = subgraph.thread_;
     int new_sub_index = model_->sub_graphs_.size();
     int partial_index = model_->all_nodes_.size();
+    int particial_replace_index = partial_index;
 
     Model::SubGraph *new_sub_graph = new (std::nothrow) Model::SubGraph();
     if (new_sub_graph == nullptr) {
@@ -252,6 +253,11 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
       uint32_t node_index = subgraph.nodes_.front();
       Model::Node *cur_node = model_->all_nodes_[node_index];
       new_sub_graph->node_indices_.push_back(node_index);
+
+      auto iter = find(main_graphs->node_indices_.begin(), main_graphs->node_indices_.end(), node_index);
+      int cur_node_index = std::distance(std::begin(main_graphs->node_indices_), iter);
+      particial_replace_index = (cur_node_index < particial_replace_index) ? cur_node_index : particial_replace_index;
+
       VectorErase(&main_graphs->node_indices_, node_index);
       VectorErase(&subgraph.nodes_, node_index);
       cur_node->device_type_ = device_type;
@@ -291,7 +297,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
       new_partial_node->output_indices_.insert(new_partial_node->output_indices_.end(), outputs.begin(), outputs.end());
     }
 
-    main_graphs->node_indices_.push_back(partial_index);
+    main_graphs->node_indices_.insert(main_graphs->node_indices_.begin() + particial_replace_index, partial_index);
     model_->all_nodes_.push_back(std::move(new_partial_node));
     model_->sub_graphs_.push_back(std::move(new_sub_graph));
   }
