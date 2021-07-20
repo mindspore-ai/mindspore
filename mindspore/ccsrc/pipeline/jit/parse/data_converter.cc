@@ -109,6 +109,7 @@ class ByAttrDataConverter : public DataConverter {
           return convert_func(obj, use_sig);
         }),
         attr_name_(attr_name) {}
+  ~ByAttrDataConverter() override = default;
   bool Matched(const py::object &obj) override { return py::hasattr(obj, attr_name_); }
 
  private:

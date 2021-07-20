@@ -237,7 +237,7 @@ void EnvConfigParser::ConfigToString() {
   cur_config.append(rdr_path_);
   cur_config.append(", rdr_enable: ");
   std::string rdr_enable_flag = rdr_enabled_ ? "1" : "0";
-  cur_config.append(rdr_enable_flag);
+  (void)cur_config.append(rdr_enable_flag);
   MS_LOG(INFO) << cur_config;
 }
 }  // namespace mindspore

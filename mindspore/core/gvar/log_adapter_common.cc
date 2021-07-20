@@ -53,12 +53,15 @@ static const std::vector<std::string> sub_module_names = {
   "GE",                 // SM_GE
 };
 
-const std::string GetSubModuleName(SubModuleId module_id) { return sub_module_names[module_id % NUM_SUBMODUES]; }
+const std::string GetSubModuleName(SubModuleId module_id) {
+  return sub_module_names[static_cast<size_t>(module_id % NUM_SUBMODUES)];
+}
 
 // export GetTimeString for all sub modules
 std::string GetTimeString() {
 #define BUFLEN 80
-  char buf[BUFLEN] = {'\0'};
+  char buf[BUFLEN];
+  (void)memset(buf, '\0', BUFLEN);
 #if defined(_WIN32) || defined(_WIN64)
   time_t time_seconds = time(0);
   struct tm now_time;

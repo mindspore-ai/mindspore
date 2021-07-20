@@ -100,6 +100,7 @@ struct ParamUsingInfo {
 class PrimBpropOptGraphLevel2Info {
  public:
   explicit PrimBpropOptGraphLevel2Info(const FuncGraphPtr &func_graph) : opt_func_graph_(func_graph) {}
+  ~PrimBpropOptGraphLevel2Info() = default;
 
   const FuncGraphPtr &opt_func_graph() const { return opt_func_graph_; }
 
@@ -143,7 +144,7 @@ class PrimBpropOptimizer {
                                       const ValuePtr &out);
 
   // do inline opt for final bprop graph
-  FuncGraphPtr BpropGraphFinalOpt(const ResourcePtr &res);
+  FuncGraphPtr BpropGraphFinalOpt(const ResourcePtr &res) const;
 
  private:
   PrimBpropOptimizer() = default;
