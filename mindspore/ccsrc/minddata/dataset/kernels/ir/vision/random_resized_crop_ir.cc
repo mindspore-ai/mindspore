@@ -30,9 +30,9 @@ namespace vision {
 RandomResizedCropOperation::RandomResizedCropOperation(const RandomResizedCropOperation &) = default;
 
 // RandomResizedCropOperation
-RandomResizedCropOperation::RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale,
-                                                       std::vector<float> ratio, InterpolationMode interpolation,
-                                                       int32_t max_attempts)
+RandomResizedCropOperation::RandomResizedCropOperation(const std::vector<int32_t> &size,
+                                                       const std::vector<float> &scale, const std::vector<float> &ratio,
+                                                       InterpolationMode interpolation, int32_t max_attempts)
     : TensorOperation(true),
       size_(size),
       scale_(scale),

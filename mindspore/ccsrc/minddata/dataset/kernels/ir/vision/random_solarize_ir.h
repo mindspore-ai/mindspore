@@ -37,7 +37,7 @@ constexpr char kRandomSolarizeOperation[] = "RandomSolarize";
 
 class RandomSolarizeOperation : public TensorOperation {
  public:
-  explicit RandomSolarizeOperation(std::vector<uint8_t> threshold);
+  explicit RandomSolarizeOperation(const std::vector<uint8_t> &threshold);
 
   ~RandomSolarizeOperation();
 

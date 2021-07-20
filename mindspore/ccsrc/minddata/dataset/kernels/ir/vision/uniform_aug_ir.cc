@@ -28,7 +28,8 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // UniformAugOperation
-UniformAugOperation::UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops)
+UniformAugOperation::UniformAugOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms,
+                                         int32_t num_ops)
     : transforms_(transforms), num_ops_(num_ops) {}
 
 UniformAugOperation::~UniformAugOperation() = default;
@@ -51,8 +52,9 @@ Status UniformAugOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> UniformAugOperation::Build() {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
-  (void)std::transform(transforms_.begin(), transforms_.end(), std::back_inserter(tensor_ops),
-                       [](std::shared_ptr<TensorOperation> op) -> std::shared_ptr<TensorOp> { return op->Build(); });
+  (void)std::transform(
+    transforms_.begin(), transforms_.end(), std::back_inserter(tensor_ops),
+    [](const std::shared_ptr<TensorOperation> &op) -> std::shared_ptr<TensorOp> { return op->Build(); });
   std::shared_ptr<UniformAugOp> tensor_op = std::make_shared<UniformAugOp>(tensor_ops, num_ops_);
   return tensor_op;
 }

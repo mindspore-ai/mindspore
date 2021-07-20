@@ -37,7 +37,7 @@ constexpr char kPadOperation[] = "Pad";
 
 class PadOperation : public TensorOperation {
  public:
-  PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode);
+  PadOperation(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value, BorderType padding_mode);
 
   ~PadOperation();
 

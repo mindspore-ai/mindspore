@@ -37,8 +37,8 @@ constexpr char kRandomResizedCropOperation[] = "RandomResizedCrop";
 
 class RandomResizedCropOperation : public TensorOperation {
  public:
-  RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
-                             InterpolationMode interpolation, int32_t max_attempts);
+  RandomResizedCropOperation(const std::vector<int32_t> &size, const std::vector<float> &scale,
+                             const std::vector<float> &ratio, InterpolationMode interpolation, int32_t max_attempts);
 
   /// \brief default copy constructor
   explicit RandomResizedCropOperation(const RandomResizedCropOperation &);

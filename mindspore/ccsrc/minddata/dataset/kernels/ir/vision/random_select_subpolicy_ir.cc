@@ -29,7 +29,7 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 // RandomSelectSubpolicyOperation.
 RandomSelectSubpolicyOperation::RandomSelectSubpolicyOperation(
-  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy)
+  const std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> &policy)
     : TensorOperation(true), policy_(policy) {}
 
 RandomSelectSubpolicyOperation::~RandomSelectSubpolicyOperation() = default;

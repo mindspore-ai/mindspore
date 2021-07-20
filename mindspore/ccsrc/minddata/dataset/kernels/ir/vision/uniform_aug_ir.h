@@ -37,7 +37,7 @@ constexpr char kUniformAugOperation[] = "UniformAug";
 
 class UniformAugOperation : public TensorOperation {
  public:
-  explicit UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops);
+  explicit UniformAugOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, int32_t num_ops);
 
   ~UniformAugOperation();
 

@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace dataset {
 namespace vision {
-CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)
+CropOperation::CropOperation(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size)
     : coordinates_(coordinates), size_(size) {}
 
 CropOperation::~CropOperation() = default;

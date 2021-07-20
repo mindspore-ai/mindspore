@@ -37,8 +37,8 @@ constexpr char kRandomCropOperation[] = "RandomCrop";
 
 class RandomCropOperation : public TensorOperation {
  public:
-  RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                      std::vector<uint8_t> fill_value, BorderType padding_mode);
+  RandomCropOperation(const std::vector<int32_t> &size, const std::vector<int32_t> &padding, bool pad_if_needed,
+                      const std::vector<uint8_t> &fill_value, BorderType padding_mode);
 
   ~RandomCropOperation();
 
