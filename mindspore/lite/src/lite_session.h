@@ -34,8 +34,6 @@
 #include "include/api/delegate.h"
 #if GPU_OPENCL
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
-#elif GPU_VULKAN
-#include "src/runtime/gpu/vulkan/vulkan_runtime.h"
 #endif
 #include "src/scheduler_cb.h"
 
@@ -148,8 +146,6 @@ class LiteSession : public session::LiteSession {
   friend class TransferSession;
 #if GPU_OPENCL
   opencl::OpenCLRuntimeWrapper *opencl_runtime_wrapper_{nullptr};
-#elif GPU_VULKAN
-  gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime> *vk_runtime_wrap_{nullptr};
 #endif
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;

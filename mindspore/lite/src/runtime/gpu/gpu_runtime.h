@@ -45,7 +45,7 @@ struct GpuInfo {
   bool support_fp16{false};
   bool support_svm{false};
 };
-enum class GpuBackendType { OPENCL = 0, CUDA = 1, VULKAN = 2 };
+enum class GpuBackendType { OPENCL = 0, CUDA = 1 };
 class DevKey {
  public:
   std::string name{""};

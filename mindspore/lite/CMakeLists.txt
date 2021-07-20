@@ -20,7 +20,7 @@ endif()
 
 # Options that can be configured through environment variables or manually
 set(MSLITE_GPU_BACKEND "" CACHE STRING "enable gpu backend, \
-    only arm64 support opencl, only x86_64 support tensorrt, opencl/vulkan/cuda/tensorrt/off")
+    only arm64 support opencl, only x86_64 support tensorrt, opencl/cuda/tensorrt/off")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
 option(MSLITE_ENABLE_SSE "enable SSE instruction set, only x86_64 support" off)
@@ -217,9 +217,6 @@ endif()
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     include(${TOP_DIR}/cmake/external_libs/opencl.cmake)
 endif()
-if(MSLITE_GPU_BACKEND STREQUAL vulkan)
-    include(${TOP_DIR}/cmake/external_libs/vulkan.cmake)
-endif()
 
 if(MSLITE_ENABLE_CONVERTER OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper" OR
     MSLITE_ENABLE_TOOLS)
@@ -281,12 +278,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
     include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-headers-src/)
     include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-clhpp-src/include)
 endif()
-if(MSLITE_GPU_BACKEND STREQUAL vulkan)
-    add_definitions(-DGPU_VULKAN)
-    add_definitions(-DVK_NO_PROTOTYPES)
-    add_compile_definitions(SUPPORT_GPU)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/vulkan-headers-src/include)
-endif()
+
 if(MSLITE_GPU_BACKEND STREQUAL cuda)
     add_definitions(-DGPU_CUDA)
     add_compile_definitions(SUPPORT_GPU)

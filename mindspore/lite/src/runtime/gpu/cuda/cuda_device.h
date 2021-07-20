@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_LITE_SRC_CUDA_DEVICE_H_
 #define MINDSPORE_LITE_SRC_CUDA_DEVICE_H_
 
-#include <vulkan/vulkan.h>
 #include <assert.h>
 #include <exception>
 #include <algorithm>
