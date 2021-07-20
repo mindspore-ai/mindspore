@@ -18,19 +18,17 @@
 #include <string>
 #include <algorithm>
 #include <map>
-#include <memory>
 #include <set>
-#include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
-
 abstract::ShapePtr HShrinkGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, primitive->name());
   auto prim_name = primitive->name();
   auto gradients_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];

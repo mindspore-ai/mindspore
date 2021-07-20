@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,14 @@ namespace ops {
 constexpr auto kNameHShrink = "HShrink";
 class HShrink : public PrimitiveC {
  public:
-  HShrink() : PrimitiveC(kNameHShrink) {
-      InitIOName({"input_x"}, {"output"});
-  }
+  HShrink() : PrimitiveC(kNameHShrink) { InitIOName({"input_x"}, {"output"}); }
   ~HShrink() = default;
   MS_DECLARE_PARENT(HShrink, PrimitiveC);
 };
 
 AbstractBasePtr HShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+                             const std::vector<AbstractBasePtr> &input_args);
 using PrimHShrinkPtr = std::shared_ptr<HShrink>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_HSHRINK_H

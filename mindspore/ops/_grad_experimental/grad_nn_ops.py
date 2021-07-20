@@ -49,7 +49,7 @@ def get_bprop_softshrink(self):
 @bprop_getters.register(P.HShrink)
 def get_bprop_hshrink(self):
     """Grad definition for `HShrinkGrad` operation."""
-    grad = G.HShrinkGrad()
+    grad = G.HShrinkGrad(self.lambd)
 
     def bprop(features, out, gradients):
         dx = grad(gradients, features)

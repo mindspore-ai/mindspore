@@ -806,7 +806,7 @@ class SoftShrink(Cell):
 
 class HShrink(Cell):
     r"""
-    Applies the hard shrinkage function element-wise, each element comply the follow function:
+    Applies the hard shrinkage function element-wise, each element complies the follow function:
 
     .. math::
         \text{HardShrink}(x) =
@@ -817,16 +817,16 @@ class HShrink(Cell):
         \end{cases}
 
     Args:
-        lambd (float): The value for the Hardshrink formulation. Default: 0.5
+        lambd (float): The value for the HardShrink formulation. Default: 0.5
 
     Inputs:
-        - **input_x** (Tensor) - The input of hshrink with data type of float16 or float32.
+        - **input_x** (Tensor) - The input of HardShrink with data type of float16 or float32.
 
     Outputs:
-        Tensor, the same shape as the input.
+        Tensor, the same shape and data type as the input.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Raises:
         TypeError: If `lambd` is not a float.
@@ -840,9 +840,11 @@ class HShrink(Cell):
         [[ 0.      1.      2.    ]
         [ 0.      0.     -2.1233]]
     """
+
     def __init__(self, lambd=0.5):
         super(HShrink, self).__init__()
         self.hshrink = P.HShrink(lambd)
+
     def construct(self, input_x):
         return self.hshrink(input_x)
 

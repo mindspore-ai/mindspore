@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace ops {
-
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -36,13 +36,14 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(in_shape);
 }
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, primitive->name());
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  types.emplace("input_x", input_args[0]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types,
+                                                    primitive->name());
 }
 
 }  // namespace

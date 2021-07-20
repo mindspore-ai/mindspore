@@ -22,7 +22,7 @@ hshrink_grad_op_info = TBERegOp("HShrinkGrad") \
     .compute_cost(10) \
     .kernel_name("hard_shrink_grad") \
     .partial_flag(True) \
-    .attr("lambda", "optional", "float", "all", "0.5") \
+    .attr("lambd", "optional", "float", "all", "0.5") \
     .input(0, "gradients", False, "required", "all") \
     .input(1, "features", False, "required", "all") \
     .output(0, "backprops", False, "required", "all") \

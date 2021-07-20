@@ -8702,7 +8702,7 @@ class SoftShrink(Primitive):
 
 class HShrink(Primitive):
     r"""
-    Applies the hard shrinkage function element-wise, each element comply the follow function:
+    Applies the hard shrinkage function element-wise, each element complies the follow function:
 
     .. math::
         \text{HardShrink}(x) =
@@ -8711,18 +8711,18 @@ class HShrink(Primitive):
         x, & \text{ if } x < -\lambda \\
         0, & \text{ otherwise }
         \end{cases}
-        
+
     Args:
-        lambd (float): The value for the Hardshrink formulation. Default: 0.5
+        lambd (float): The value for the HardShrink formulation. Default: 0.5
 
     Inputs:
-        - **input_x** (Tensor) - The input of hshrink with data type of float16 or float32.
+        - **input_x** (Tensor) - The input of HardShrink with data type of float16 or float32.
 
     Outputs:
-        Tensor, the same shape as the input.
+        Tensor, the same shape and data type as the input.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Raises:
         TypeError: If `lambd` is not a float.
@@ -8736,7 +8736,11 @@ class HShrink(Primitive):
         [[ 0.      1.      2.    ]
         [ 0.      0.     -2.1233]]
     """
+
     @prim_attr_register
     def __init__(self, lambd=0.5):
         """Initialize HShrink"""
         validator.check_value_type('lambd', lambd, [float], self.name)
+        if lambd < 0.0:
+            lambd = 0.0
+            self.add_prim_attr('lambd', lambd)

@@ -15,7 +15,7 @@
 """HardShrink op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 hshrink_op_info = TBERegOp("HShrink") \
-    .fusion_type("ELEMWISE") \
+    .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("hard_shrink.so") \
     .compute_cost(10) \

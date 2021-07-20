@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_HShrink_GRAD_H_
-#define MINDSPORE_CORE_OPS_HShrink_GRAD_H_
-#include <map>
+#ifndef MINDSPORE_CORE_OPS_HSHRINK_GRAD_H_
+#define MINDSPORE_CORE_OPS_HSHRINK_GRAD_H_
 #include <vector>
-#include <string>
 #include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -39,5 +37,4 @@ AbstractBasePtr HShrinkGradInfer(const abstract::AnalysisEnginePtr &, const Prim
 using PrimHShrinkGradPtr = std::shared_ptr<HShrinkGrad>;
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_HShrink_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_HSHRINK_GRAD_H_

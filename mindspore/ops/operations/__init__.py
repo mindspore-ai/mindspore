@@ -76,7 +76,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, Mish, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
-                     ResizeBilinear, Sigmoid, SeLU,
+                     ResizeBilinear, Sigmoid, SeLU, HShrink,
                      SigmoidCrossEntropyWithLogits, NLLLoss, BCEWithLogitsLoss,
                      SmoothL1Loss, Softmax, Softsign, Softplus, LRN, RNNTLoss, DynamicRNN, DynamicGRUV2,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
@@ -86,7 +86,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      FusedSparseFtrl, FusedSparseProximalAdagrad,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
-                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink, HShrink)
+                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink)
 from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingBoxEncode,
@@ -485,7 +485,7 @@ __all__ = [
     "TensorScatterSub",
     "SoftShrink",
     "FFT3D",
-    "IFFT3D"
+    "IFFT3D",
     "HShrink"
 
 ]
