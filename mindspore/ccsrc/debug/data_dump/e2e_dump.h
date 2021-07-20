@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_H_
 
+#include <dirent.h>
 #include <stdlib.h>
 #include <map>
 #include <string>
@@ -43,11 +44,19 @@ class E2eDump {
                                  const Debugger *debugger = nullptr);
 
   static bool isDatasetGraph(const session::KernelGraph *graph);
+
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                             std::string *kernel_name, const Debugger *debugger);
+
   static void DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                              std::string *kernel_name, const Debugger *debugger);
+
+  static bool DumpDirExists(const std::string &dump_path);
+
+  static bool MoveDumpFiles(const std::string &first_dir, const std::string &second_dir);
+
+  static bool DeleteDirContents(const std::string &dir_path);
 
  private:
   static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);

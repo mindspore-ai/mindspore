@@ -16,10 +16,10 @@
 
 #include "debug/data_dump/e2e_dump.h"
 
+#include <unistd.h>
 #include <algorithm>
 #include <map>
 #include <vector>
-
 #include "debug/data_dump/dump_json_parser.h"
 #include "common/trans.h"
 #include "debug/anf_ir_utils.h"
@@ -306,20 +306,6 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
       MS_LOG(EXCEPTION) << "Failed at CreateNotExistDirs for " << root_cur_iter_dump_path;
       return;
     }
-
-    // test if cur_iter_dump_path dir already exists
-    std::string command = "test -d " + cur_iter_dump_path;
-    MS_LOG(INFO) << "test command: " << command;
-    if (system(command.c_str())) {
-      // create symlink to active dump dir for the iteration in final dump dir
-      command = "ln -fs " + zero_dir_dump_path + " " + cur_iter_dump_path;
-      MS_LOG(INFO) << "ln command: " << command;
-      if (system(command.c_str())) {
-        MS_LOG(EXCEPTION) << "did not create symlink to active dump dir for the iteration in final dump dir.";
-      }
-    } else {
-      MS_LOG(INFO) << "final dump dir already exists";
-    }
   }
 }
 
@@ -353,13 +339,6 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     MS_LOG(INFO) << "cur_iter_dump_path: " << cur_iter_dump_path;
 
     if (dump_json_parser.IsDumpIter(current_iter)) {
-      // remove symlink to active dump dir
-      std::string command = "rm -f " + cur_iter_dump_path;
-      MS_LOG(INFO) << "rm command: " << command;
-      if (system(command.c_str())) {
-        MS_LOG(WARNING) << "did not remove symlink to active dump dir, likely an actual dir";
-      }
-
       // create actual dir for iteration in final dump dir
       bool status = Common::CreateNotExistDirs(cur_iter_dump_path);
       if (!status) {
@@ -368,14 +347,14 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
 
       // test if zero_dir_dump_path exists (may not if there was
       // no data dumped, for example for an overflow dump)
-      command = "test -d " + zero_dir_dump_path;
-      MS_LOG(INFO) << "test command: " << command;
-      if (!system(command.c_str())) {
+      MS_LOG(INFO) << "Check " << zero_dir_dump_path << " exists.";
+      bool dir_exists = DumpDirExists(zero_dir_dump_path);
+      if (dir_exists) {
         // move contents from active dump dir to final dump dir
-        command = "mv " + zero_dir_dump_path + "/* " + cur_iter_dump_path + "/.";
-        MS_LOG(INFO) << "mv command: " << command;
-        if (system(command.c_str())) {
-          MS_LOG(INFO) << "issue with move command";
+        MS_LOG(INFO) << "Move contents from " << zero_dir_dump_path << " to " << cur_iter_dump_path;
+        bool move_files = MoveDumpFiles(zero_dir_dump_path, cur_iter_dump_path);
+        if (!move_files) {
+          MS_LOG(INFO) << "Issue with moving contents.";
         }
       } else {
         MS_LOG(INFO) << "active dump dir, not created yet";
@@ -383,13 +362,13 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     } else {
       // test if zero_dir_dump_path exists (may not if there was
       // no data dumped, for example for an overflow dump)
-      std::string command = "test -d " + zero_dir_dump_path;
-      MS_LOG(INFO) << "test command: " << command;
-      if (!system(command.c_str())) {
+      MS_LOG(INFO) << "Check " << zero_dir_dump_path << " exists.";
+      bool dir_exists = DumpDirExists(zero_dir_dump_path);
+      if (dir_exists) {
         // delete contents from active dump dir
-        command = "rm -f " + zero_dir_dump_path + "/*";
-        MS_LOG(INFO) << "rm command: " << command;
-        if (system(command.c_str())) {
+        MS_LOG(INFO) << "Delete contents from active dump dir " << zero_dir_dump_path;
+        bool delete_contents = DeleteDirContents(zero_dir_dump_path);
+        if (!delete_contents) {
           MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
         }
       } else {
@@ -439,5 +418,58 @@ bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
     }
   }
   return false;
+}
+bool E2eDump::DumpDirExists(const std::string &dump_path) {
+  DIR *dir = opendir(dump_path.c_str());
+  if (dir) {
+    MS_LOG(INFO) << "Dump dir " << dump_path << " exists";
+    closedir(dir);
+    return true;
+  }
+  return false;
+}
+
+bool E2eDump::MoveDumpFiles(const std::string &first_dir, const std::string &second_dir) {
+  DIR *d_handle = opendir(first_dir.c_str());
+  struct dirent *next_file;
+
+  while ((next_file = readdir(d_handle)) != NULL) {
+    if (next_file->d_type != DT_REG) {
+      continue;
+    }
+    // build the path for each file in the folder
+    std::string file_name = next_file->d_name;
+    std::string old_file_path = first_dir + "/" + file_name;
+    std::string new_file_path = second_dir + "/" + file_name;
+    if (rename(old_file_path.c_str(), new_file_path.c_str()) != 0) {
+      closedir(d_handle);
+      return false;
+    }
+  }
+
+  closedir(d_handle);
+  return true;
+}
+
+bool E2eDump::DeleteDirContents(const std::string &dir_path) {
+  DIR *d_handle = opendir(dir_path.c_str());
+  struct dirent *next_file;
+
+  while ((next_file = readdir(d_handle)) != NULL) {
+    if (next_file->d_type != DT_REG) {
+      continue;
+    }
+    // build the path for each file in the folder
+    std::string file_name = next_file->d_name;
+    std::string file_path = dir_path + "/" + file_name;
+    int res = remove(file_path.c_str());
+    if (res != 0) {
+      // Could not remove the file
+      closedir(d_handle);
+      return false;
+    }
+  }
+  closedir(d_handle);
+  return true;
 }
 }  // namespace mindspore
