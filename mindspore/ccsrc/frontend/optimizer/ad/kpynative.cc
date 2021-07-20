@@ -827,7 +827,6 @@ bool KPynativeCellImpl::BackPropagate(bool by_value) {
     MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->DebugString();
     auto fg = iter->second->fg();
     auto fg_type = iter->second->fg_type();
-
     if (fg_type == PynativeAdjoint::kBackwardPropagate) {
       BackPropagateOneCNodeWithBPropFuncGraph(cnode, iter->second, fg, by_value);
     } else {
