@@ -540,6 +540,7 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, std::pair
   in.open(realpath.value(), std::ios::in | std::ios::binary);
   if (!in.good()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << shard_address;
+    in.close();
     return FAILED;
   }
   (void)sqlite3_exec(db.second, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
