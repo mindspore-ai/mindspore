@@ -67,22 +67,19 @@ void MatmulFloatNeon64OptRow12(const float *a, const float *b, float *c, const f
                                int row, int col, size_t stride, size_t write_mode);
 void MatVecMulFp32Neon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col,
                          int align_col);
-#elif ENABLE_ARM32
+
+#elif defined(ENABLE_ARM32)
 void MatmulFloatNeon32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, int stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, int stride, int write_mode);
 void MatmulFloatNeon32Opt12x4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                               int row, int col, int stride, int write_mode);
-#elif ENABLE_SSE
-void DeconvMatmulFloatSse(const float *a, const float *b, float *c, int depth, int row, int col);
-void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                         int col, int stride, int write_mode);
-#ifdef ENABLE_AVX
+
+#elif defined(ENABLE_AVX)
 typedef void (*DeconvAvxKernel)(const float *src, const float *weight, float *dst, int col, int row, int depth,
                                 int stride);
-void DeconvMatmulFloatAvx(const float *a, const float *b, float *c, int depth, int row, int col, int kernel_plane);
-void DeconvAvxColXRowKernel(const float *src, const float *weight, float *dst, int col, int row, int depth, int stride);
+void DeconvMatmulAvx(const float *a, const float *b, float *c, int depth, int row, int col, int kernel_plane);
 void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, size_t act_type, size_t depth,
                        size_t row, size_t col, size_t stride, size_t write_mode);
 typedef void (*MatVecMulKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
@@ -98,11 +95,18 @@ void MatVecMul1x16Kernel(float *dst, const float *src, const float *weight, cons
 void MatVecMul1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
                         size_t row_block, size_t col_block, size_t col_algin, size_t deep);
 #ifdef ENABLE_DEBUG
+void DeconvColXRowAvxKernel(const float *src, const float *weight, float *dst, int col, int row, int depth, int stride);
+
 void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
                             size_t row_block, size_t col_block, size_t col_algin, size_t deep);
 #endif
+
+#elif defined(ENABLE_SSE)
+void DeconvMatmulFloatSse(const float *a, const float *b, float *c, int depth, int row, int col);
+void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
+                         int col, int stride, int write_mode);
 #endif
-#endif
+
 void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
                 int col, int stride, int out_type);
 

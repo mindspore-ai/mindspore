@@ -25,6 +25,7 @@
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #endif
 
+#define C1NUM 1
 #define C2NUM 2
 #define C3NUM 3
 #define C4NUM 4
