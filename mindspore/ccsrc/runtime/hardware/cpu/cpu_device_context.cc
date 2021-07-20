@@ -80,7 +80,7 @@ void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   address->ptr_ = nullptr;
 }
 
-DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id) const {
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
@@ -246,7 +246,7 @@ bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   return ret;
 }
 
-bool CPUDeviceContext::DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+bool CPUDeviceContext::DoLaunchKernel(KernelMod *const kernel_mod, const std::vector<AddressPtr> &inputs,
                                       const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);

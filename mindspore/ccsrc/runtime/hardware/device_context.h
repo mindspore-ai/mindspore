@@ -65,7 +65,7 @@ class DeviceContext {
   }
 
   // Create concrete device address according different device type.
-  virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+  virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) const = 0;
 
   // Get device address type according different device type, such GPU, Ascend.

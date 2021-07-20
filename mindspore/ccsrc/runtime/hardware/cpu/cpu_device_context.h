@@ -38,7 +38,7 @@ class CPUDeviceContext : public DeviceContext {
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
+  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) const override;
   DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kCPU; }
 
@@ -69,11 +69,10 @@ class CPUDeviceContext : public DeviceContext {
                                  const std::vector<AddressPtr> &outputs) const;
 
   // Launch a kernel by 'KernelMod' of the kernel.
-  bool DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+  bool DoLaunchKernel(KernelMod *const kernel_mod, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
 
   mutable std::mutex launch_mutex_;
-  uint32_t device_id_;
   std::shared_ptr<MemoryManager> mem_manager_;
   bool initialized_;
 };
