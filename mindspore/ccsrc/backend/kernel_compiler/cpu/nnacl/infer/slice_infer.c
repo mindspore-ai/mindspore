@@ -34,7 +34,7 @@ static bool CheckInputsDataType(const TensorC *const *inputs, size_t inputs_size
 
 int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
-  int ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
+  int ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 1);
   if (ret != NNACL_OK) {
     return ret;
   }

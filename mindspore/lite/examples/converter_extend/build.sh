@@ -35,7 +35,7 @@ fi
 if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
   wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
-tar -xzf ${BASEPATH}/build/${MINDSPORE_FILE}
+tar -xzf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/tools/converter/lib ${BASEPATH}/
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/tools/converter/include ${BASEPATH}/
 cd ${BASEPATH}/build || exit

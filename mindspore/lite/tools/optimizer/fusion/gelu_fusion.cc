@@ -29,6 +29,7 @@ CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNod
   MS_ASSERT(node != nullptr);
   auto gelu_prim = std::make_shared<ops::Activation>();
   gelu_prim->set_activation_type(mindspore::GELU);
+  gelu_prim->set_approximate(approximate_);
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
   MS_ASSERT(input_node != nullptr);
   auto gelu_cnode = func_graph->NewCNode(gelu_prim, {input_node});

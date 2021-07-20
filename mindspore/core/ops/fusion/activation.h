@@ -29,7 +29,7 @@ class Activation : public PrimitiveC {
   ~Activation() = default;
   MS_DECLARE_PARENT(Activation, PrimitiveC);
   void Init(const float alpha = 0.2, const float min_val = -1.0, const float max_val = 1.0,
-            const ActivationType &activation_type = NO_ACTIVATION);
+            const ActivationType &activation_type = NO_ACTIVATION, bool approximate = false);
   void set_alpha(const float alpha);
   void set_min_val(const float min_val);
   void set_max_val(const float max_val);
@@ -38,6 +38,8 @@ class Activation : public PrimitiveC {
   float get_min_val() const;
   float get_max_val() const;
   ActivationType get_activation_type() const;
+  void set_approximate(bool approximate);
+  bool get_approximate() const;
 };
 }  // namespace ops
 }  // namespace mindspore
