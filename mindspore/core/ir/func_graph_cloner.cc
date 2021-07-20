@@ -444,9 +444,8 @@ void Cloner::LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraph
   }
 }
 
-void Cloner::Lift() {
+void Cloner::Lift(const std::vector<FuncGraphPtr> &sorted) {
   // lift inner graph first
-  auto sorted = BroadFirstSearchGraphUsed(*(manager_->roots().begin()));
   for (auto r_iter = sorted.rbegin(); r_iter != sorted.rend(); ++r_iter) {
     auto func_graph = *r_iter;
     auto iter = repl_func_graph_params_.find(func_graph);
@@ -459,14 +458,14 @@ void Cloner::Lift() {
   }
 }
 
-void Cloner::LiftParameters() {
+void Cloner::LiftParameters(const FuncGraphPtr &lift_top_func_graph) {
   MS_EXCEPTION_IF_NULL(manager_);
   transaction_ = manager_->Transact();
-  const FuncGraphSet &func_graphs = manager_->func_graphs();
+  const auto &func_graphs = BroadFirstSearchGraphUsed(lift_top_func_graph);
   for (auto &func_graph : func_graphs) {
     GenParameters(func_graph);
   }
-  Lift();
+  Lift(func_graphs);
   for (auto &func_graph : func_graphs) {
     SetEdges(func_graph);
   }
@@ -542,7 +541,7 @@ void Cloner::Run() {
     // Lifting Clone
     CloneInfo item = todo_.back();
     manager_ = Manage(item.origin);
-    LiftParameters();
+    LiftParameters(item.origin);
   }
 }
 

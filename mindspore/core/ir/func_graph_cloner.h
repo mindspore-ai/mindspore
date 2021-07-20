@@ -99,8 +99,8 @@ class Cloner {
   void SetEdges(const FuncGraphPtr &func_graph);
   void LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                       const AnfNodePtrList &params);
-  void Lift();
-  void LiftParameters();
+  void Lift(const std::vector<FuncGraphPtr> &sorted);
+  void LiftParameters(const FuncGraphPtr &lift_top_func_graph);
 
   bool clone_all_valuenodes_;
   bool clone_all_child_graphs_;

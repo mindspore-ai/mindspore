@@ -180,7 +180,7 @@ def test_ad_fv_cnode_order():
 
 # True and False branch of switch have different number of parameters.
 def test_if_branch_with_different_params():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -211,3 +211,44 @@ def test_if_branch_with_different_params():
     net = Net()
     grad_net = GradNet(net)
     grad_net(idx, end, x)
+
+
+# Only lift fv in scope of lift_top_func_graph other than all func_graphs inside manager.
+# Otherwise, "Illegal AnfNode for evaluating" may be reported
+# because weight1 in Net may use old_parameter other than replicated one.
+def test_limit_lift_fv_scope():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.weight1 = Parameter(Tensor(np.array([1.0], dtype=np.float32)), name="weight1")
+
+        def construct(self, x, y):
+            def inner_add(a, b):
+                return a + b
+
+            out = inner_add(x, y) + self.weight1
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = ParameterTuple(net.trainable_params())
+
+        def construct(self, x, y):
+            def inner_grad_add(a, b):
+                return a + b
+
+            d_weight = grad_by_list(self.net, self.weights)(x, y)[0]
+            d_out = inner_grad_add(d_weight, y)
+            return d_out
+
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+
+    net = Net()
+    net.add_flags_recursive(defer_inline=True)
+    grad_net = GradNet(net)
+    grad_net.add_flags_recursive(defer_inline=True)
+    grad_net(x, y)
