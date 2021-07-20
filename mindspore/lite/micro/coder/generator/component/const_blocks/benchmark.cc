@@ -139,8 +139,19 @@ int main(int argc, const char **argv) {
       return lite::RET_ERROR;
     }
     context->thread_num_ = atoi(argv[5]);
+    if (context->thread_num_ < 1) {
+      printf("Thread number error! It should be greater than 0\n");
+      return lite::RET_ERROR;
+    }
     context->device_list_.resize(1);
-    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[6]))}}};
+    context->device_list_[0].device_type_ = lite::DT_CPU;
+    context->device_list_[0].device_info_.cpu_device_info_.enable_float16_ = false;
+    lite::CpuBindMode bind_mode = static_cast<lite::CpuBindMode>(atoi(argv[6]));
+    if (bind_mode < lite::NO_BIND || bind_mode > lite::MID_CPU) {
+      printf("Thread bind mode error! 0: No bind, 1: Bind hign cpu, 2: Bind mid cpu.\n");
+      return lite::RET_ERROR;
+    }
+    context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = bind_mode;
     printf("context: ThreadNum: %d, BindMode: %d\n", context->thread_num_,
            context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
   }
