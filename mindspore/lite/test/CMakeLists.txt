@@ -417,6 +417,7 @@ endif()
 
 if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
+    include_directories(${DDK_INCLUDE_PATH})
     target_link_libraries(lite-test npu_kernel_mid c++_shared)
 endif()
 if(MSLITE_ENABLE_CONVERTER)

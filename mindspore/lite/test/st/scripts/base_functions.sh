@@ -97,6 +97,7 @@ function Push_Files() {
     cp -a $1/mindspore-lite-$3-android-$2/runtime/third_party/hiai_ddk/lib/libhiai.so $4/libhiai.so || exit 1
     cp -a $1/mindspore-lite-$3-android-$2/runtime/third_party/hiai_ddk/lib/libhiai_ir.so $4/libhiai_ir.so || exit 1
     cp -a $1/mindspore-lite-$3-android-$2/runtime/third_party/hiai_ddk/lib/libhiai_ir_build.so $4/libhiai_ir_build.so || exit 1
+    cp -a $1/mindspore-lite-$3-android-$2/runtime/third_party/hiai_ddk/lib/libhiai_hcl_model_runtime.so $4/libhiai_hcl_model_runtime.so
     cp -a $1/mindspore-lite-$3-android-$2/runtime/lib/libmindspore-lite.so $4/libmindspore-lite.so || exit 1
     cp -a $1/mindspore-lite-$3-android-$2/tools/benchmark/benchmark $4/benchmark || exit 1
 
