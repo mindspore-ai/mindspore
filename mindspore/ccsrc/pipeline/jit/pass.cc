@@ -44,6 +44,7 @@
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
+#include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
@@ -442,7 +443,7 @@ OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &) {
 }
 
 OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig control_group = opt::OptPassConfig({irpass.convert_switch_replacement_}, true);
+  opt::OptPassConfig control_group = opt::OptPassConfig(opt::irpass::ConvertSwitchReplacement());
   OptPassGroupMap map({
     {"control_group", control_group},
     {"renormalize", opt::OptPassConfig::Renormalize()},
@@ -498,7 +499,7 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_trans_graph"] =
       Optimizer::MakeOptimizer("opt_trans_graph", res, GetOptPassesTransformGraph(irpass), true, true);
     g_pass_opts["renormal"] = Optimizer::MakeOptimizer("renormal", res, GetOptPassesC(irpass));
-    g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass), false, true);
+    g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass), true, true);
     g_pass_opts["opt_grad_epilogue"] =
       Optimizer::MakeOptimizer("opt_grad_epilogue", res, GetOptPynativeGradEpiloguePhases(irpass), true, false);
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));

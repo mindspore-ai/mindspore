@@ -95,63 +95,33 @@ AnfNodePtr TransformMergeBranches(const std::vector<AnfNodePtr> &block_nodes,
 }  // namespace internal
 
 // {{prim::kPrimSwitch, X, G1, G2}, Xs}
-class ConvertSwitchReplacement : public OptimizerCaller {
+class ConvertSwitchReplacement {
  public:
-  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
-      return nullptr;
+  ConvertSwitchReplacement() = default;
+  virtual ~ConvertSwitchReplacement() = default;
+
+  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) {
+    AnfNodePtr ret = root->get_return();
+    MS_EXCEPTION_IF_NULL(ret);
+    std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+
+    bool change = false;
+    for (auto &node : all_nodes) {
+      if (CheckSwitchWrapNode(node)) {
+        TransformSwitchBranchReplace(node);
+        change = true;
+      }
     }
-
-    PatternNode<AnfNodePtr> cond, true_br, false_br;
-
-    auto ConvertSwitchLambda = [&node, &cond, &true_br, &false_br]() -> AnfNodePtr {
-      auto g1_ = GetValueNode<FuncGraphPtr>(true_br.GetNode(node));
-      auto g2_ = GetValueNode<FuncGraphPtr>(false_br.GetNode(node));
-      auto x_ = cond.GetNode(node);
-
-      // for switch replace method, only graphs without graph inside can be replaced
-      for (auto &item : g1_->value_nodes()) {
-        auto value_node = item.first;
-        if (IsValueNode<FuncGraph>(value_node)) {
-          return nullptr;
-        }
-      }
-
-      for (auto &item : g2_->value_nodes()) {
-        auto value_node = item.first;
-        if (IsValueNode<FuncGraph>(value_node)) {
-          return nullptr;
-        }
-      }
-
-      auto true_output = g1_->output()->abstract();
-      auto false_output = g2_->output()->abstract();
-      auto trans_g1 = internal::TransformGraphCondTrueBranchNodes(g1_, x_);
-      auto trans_g2 = internal::TransformGraphCondFalseBranchNodes(g2_, x_);
-
-      std::vector<AnfNodePtr> params;
-      auto cnode = node->cast<CNodePtr>();
-      if (cnode && cnode->size() > 1) {
-        // There are arguments for the call of switch result,
-        // usually these are monad states added by auto-monad.
-        for (size_t i = 1; i < cnode->size(); ++i) {
-          params.push_back(cnode->inputs().at(i));
-        }
-      }
-      auto fg = node->func_graph();
-      auto cloned_g1 = InlineClone(trans_g1, fg, params);
-      auto cloned_g2 = InlineClone(trans_g2, fg, params);
-      auto nnode = internal::TransformMergeBranches({x_, cloned_g1, cloned_g2}, {true_output, false_output}, fg);
-
-      return nnode;
-    };
-
-    MATCH_REPLACE_LAMBDA_IF(
-      node, PCNode(PPrimitive(prim::kPrimSwitch, cond, true_br, false_br)).MinExtraNodes(0), ConvertSwitchLambda,
-      true_br.CheckFunc(IsValueNode<FuncGraph>, node) && false_br.CheckFunc(IsValueNode<FuncGraph>, node));
-
-    return nullptr;
+    return change;
   }
+
+ private:
+  // Determine whether there are graphs inside the branch graph.
+  bool CheckSwitchBranch(const AnfNodePtr &node);
+  // Determine whether node matches {{prim::kPrimSwitch, X, G1, G2}, Xs}.
+  bool CheckSwitchWrapNode(const AnfNodePtr &node);
+  // Replace switch branch.
+  void TransformSwitchBranchReplace(const AnfNodePtr &node);
 };
 
 // {prim::kPrimSwitch, {prim::kPrimDepend, ValueNode, X}, G1, G2} ->
