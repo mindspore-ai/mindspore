@@ -1162,19 +1162,6 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtr &backend
   auto backend_outputs = AnfAlgo::GetAllOutputWithIndex(backend_graph_output);
   auto front_outputs = AnfAlgo::GetAllOutputWithIndex(front_node);
   if (backend_outputs.size() != front_outputs.size()) {
-    for (const auto &backend_output : backend_outputs) {
-      const auto &graph = backend_output.first->func_graph();
-      if (graph != nullptr) {
-        const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
-        MS_EXCEPTION_IF_NULL(kernel_graph);
-        const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(backend_output.first);
-        if (front_node != nullptr) {
-          graph_output_to_front_node_map_[backend_output] = {front_node, backend_output.second};
-          MS_LOG(INFO) << "Backend output:" << backend_output.first->DebugString()
-                       << " map to front node:" << front_node->DebugString();
-        }
-      }
-    }
     MS_LOG(INFO) << "The size(" << backend_outputs.size()
                  << ") of backend output: " << backend_graph_output->DebugString() << " is not equal to the size("
                  << front_outputs.size() << ") of front output: " << front_node->DebugString();
