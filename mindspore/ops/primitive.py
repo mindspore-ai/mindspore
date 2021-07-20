@@ -124,7 +124,7 @@ class Primitive(Primitive_):
             >>> a = P.Add()
             >>> a = a.add_prim_attr("attr",1)
             >>> a = a.del_prim_attr("attr")
-            >>> a.attrs
+            >>> print(a.attrs)
             {'input_names': ['x', 'y'], 'output_names' : ['output']}
         """
         if name in self.__dict__ and name in self.attrs:
@@ -193,7 +193,7 @@ class Primitive(Primitive_):
             >>> import mindspore.ops as P
             >>> a = P.Add()
             >>> a.set_prim_instance_name("add")
-            >>> a.instance_name
+            >>> print(a.instance_name)
             'add'
         """
         self.set_instance_name(instance_name)
@@ -273,9 +273,9 @@ class Primitive(Primitive_):
             >>> import mindspore.ops as P
             >>> a = P.Add()
             >>> a.init_prim_io_names(["x","y"],["sum"])
-            >>> a.input_names
+            >>> print(a.input_names)
             ['x','y']
-            >>> a.output_names
+            >>> print(a.output_names)
             ['sum']
         """
         # for checking para names with kernel implementation
