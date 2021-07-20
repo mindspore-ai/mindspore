@@ -1849,7 +1849,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         TypeError: If `axis` is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)

@@ -14,21 +14,34 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/arrays/argmaxwithvalue_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/arrays/argmaxandminwithvalue_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   ArgMaxWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  ArgmaxWithValueGpuKernel, double, int)
+  ArgMaxAndMinWithValueGpuKernel, double, int)
 MS_REG_GPU_KERNEL_TWO(
   ArgMaxWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ArgmaxWithValueGpuKernel, float, int)
+  ArgMaxAndMinWithValueGpuKernel, float, int)
 MS_REG_GPU_KERNEL_TWO(
   ArgMaxWithValue,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  ArgmaxWithValueGpuKernel, half, int)
+  ArgMaxAndMinWithValueGpuKernel, half, int)
+
+MS_REG_GPU_KERNEL_TWO(
+  ArgMinWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  ArgMaxAndMinWithValueGpuKernel, double, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMinWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  ArgMaxAndMinWithValueGpuKernel, float, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMinWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  ArgMaxAndMinWithValueGpuKernel, half, int)
 }  // namespace kernel
 }  // namespace mindspore
