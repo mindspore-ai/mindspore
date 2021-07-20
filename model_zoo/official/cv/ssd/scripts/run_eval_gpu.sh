@@ -56,7 +56,7 @@ fi
 
 mkdir ./eval$3
 cp ./*.py ./eval$3
-cp ./*.yaml ./eval$3
+cp ./config/*.yaml ./eval$3
 cp -r ./src ./eval$3
 cd ./eval$3 || exit
 env > env.log

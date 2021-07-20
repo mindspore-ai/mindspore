@@ -12,41 +12,47 @@ output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
 device_target: "Ascend"
 checkpoint_path: "./checkpoint/"
-checkpoint_file_path: "ssd-500_458.ckpt"
+checkpoint_file_path: "resnet50.ckpt"
 
 # ==============================================================================
 # Training options
-model_name: "ssd_vgg16"
-img_shape: [300, 300]
-num_ssd_boxes: 7308
+model_name: "ssd_resnet50_fpn"
+img_shape: [640, 640]
+num_ssd_boxes: -1
 match_threshold: 0.5
 nms_threshold: 0.6
 min_score: 0.1
 max_boxes: 100
+all_reduce_fusion_config: [90, 183, 279]
 
-# learing rate settings
-lr_init: 0.001
-lr_end_rate: 0.001
+# learning rate settings
+global_step: 0
+lr_init: 0.01333
+lr_end_rate: 0.0
 warmup_epochs: 2
+weight_decay: 0.0004
 momentum: 0.9
-weight_decay: 0.00015
 ssd_vgg_bn: False
 pretrain_vgg_bn: False
 
 # network
-num_default: [3, 6, 6, 6, 6, 6]
-extras_in_channels: [256, 512, 1024, 512, 256, 256]
-extras_out_channels: [512, 1024, 512, 256, 256, 256]
+num_default: [6, 6, 6, 6, 6]
+extras_in_channels: [256, 512, 1024, 256, 256]
+extras_out_channels: [256, 256, 256, 256, 256]
 extras_strides: [1, 1, 2, 2, 2, 2]
 extras_ratio: [0.2, 0.2, 0.2, 0.25, 0.5, 0.25]
-feature_size: [38, 19, 10, 5, 3, 1]
+feature_size: [80, 40, 20, 10, 5]
 min_scale: 0.2
 max_scale: 0.95
-aspect_ratios: [[], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3]]
-steps: [8, 16, 32, 64, 100, 300]
+aspect_ratios: [[2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3]]
+steps: [8, 16, 32, 64, 128]
 prior_scaling: [0.1, 0.2]
 gamma: 2.0
-alpha: 0.75
+alpha: 0.25
+num_addition_layers: 4
+use_anchor_generator: True
+use_global_norm: True
+use_float16: True
 
 dataset: "coco"
 lr: 0.05
@@ -72,8 +78,9 @@ img_path: ""
 drop: False
 
 # `mindrecord_dir` and `coco_root` are better to use absolute path.
-feature_extractor_base_param: ""
-checkpoint_filter_list: ['multi_loc_layers', 'multi_cls_layers']
+feature_extractor_base_param: "/ckpt/resnet50.ckpt"
+checkpoint_filter_list: ['network.multi_box.cls_layers.0.weight', 'network.multi_box.cls_layers.0.bias',
+                               'network.multi_box.loc_layers.0.weight', 'network.multi_box.loc_layers.0.bias']
 mindrecord_dir: "MindRecord_COCO"
 coco_root: "coco_ori"
 train_data_type: "train2017"

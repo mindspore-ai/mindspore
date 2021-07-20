@@ -334,7 +334,7 @@ mAP: 0.24270569394180577
 | -------------------------- | -------------------------------------------------------------| -------------------------------------------------|
 | Model Version              | SSD ghostnet                                                 |SSD ghostnet                                      |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |NV SMX2 V100-32G                                 |
-| MindSpore Version          | 1.3.0                                                        |07/19/2021 (month/day/year)                      |
+| MindSpore Version          | 1.3.0                                                        |1.3.0                      |
 | Dataset                    | COCO2017                                                     |COCO2017                                                     |
 | Training Parameters        | epoch = 500,  batch_size = 32                                | epoch = 500,  batch_size = 32                                |
 | Optimizer                  | Momentum                                                     |Momentum                                                     |

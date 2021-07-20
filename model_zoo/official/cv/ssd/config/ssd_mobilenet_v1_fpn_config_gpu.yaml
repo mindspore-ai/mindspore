@@ -10,26 +10,28 @@ enable_profiling: False
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
-device_target: "Ascend"
+device_target: "GPU"
 checkpoint_path: "./checkpoint/"
-checkpoint_file_path: "resnet50.ckpt"
+checkpoint_file_path: "mobilenet_v1.ckpt"
 
 # ==============================================================================
 # Training options
-model_name: "ssd_resnet50_fpn"
+model_name: "ssd_mobilenet_v1_fpn"
 img_shape: [640, 640]
 num_ssd_boxes: -1
 match_threshold: 0.5
 nms_threshold: 0.6
 min_score: 0.1
 max_boxes: 100
+all_reduce_fusion_config: [29, 58, 89]
+use_float16: False
 
 # learning rate settings
 global_step: 0
 lr_init: 0.01333
 lr_end_rate: 0.0
 warmup_epochs: 2
-weight_decay: 0.0004
+weight_decay: 0.00004
 momentum: 0.9
 ssd_vgg_bn: False
 pretrain_vgg_bn: False
@@ -51,7 +53,6 @@ alpha: 0.25
 num_addition_layers: 4
 use_anchor_generator: True
 use_global_norm: True
-use_float16: True
 
 dataset: "coco"
 lr: 0.05
@@ -59,7 +60,7 @@ mode_sink: "sink"
 device_id: 0
 device_num: 1
 epoch_size: 500
-batch_size: 32
+batch_size: 16
 loss_scale: 1024
 pre_trained: ""
 pre_trained_epoch_size: 0
@@ -77,7 +78,7 @@ img_path: ""
 drop: False
 
 # `mindrecord_dir` and `coco_root` are better to use absolute path.
-feature_extractor_base_param: "/ckpt/resnet50.ckpt"
+feature_extractor_base_param: "/ckpt/mobilenet_v1.ckpt"
 checkpoint_filter_list: ['network.multi_box.cls_layers.0.weight', 'network.multi_box.cls_layers.0.bias',
                                'network.multi_box.loc_layers.0.weight', 'network.multi_box.loc_layers.0.bias']
 mindrecord_dir: "MindRecord_COCO"
@@ -113,16 +114,16 @@ file_format: "AIR"
 
 ---
 # Help description for each configuration
-enable_modelarts: "Whether training on modelarts, default: False"
-data_url: "Dataset url for obs"
-train_url: "Training output url for obs"
-checkpoint_url: "The location of checkpoint for obs"
-data_path: "Dataset path for local"
-output_path: "Training output path for local"
-load_path: "The location of checkpoint for obs"
-device_target: "Target device type, available: [Ascend, GPU, CPU]"
-enable_profiling: "Whether enable profiling while training, default: False"
-num_classes: "Class for dataset"
+enable_modelarts: 'Whether training on modelarts, default: False'
+data_url: 'Dataset url for obs'
+train_url: 'Training output url for obs'
+checkpoint_url: 'The location of checkpoint for obs'
+data_path: 'Dataset path for local'
+output_path: 'Training output path for local'
+load_path: 'The location of checkpoint for obs'
+device_target: 'Target device type, available: [Ascend, GPU, CPU]'
+enable_profiling: 'Whether enable profiling while training, default: False'
+num_classes: 'Class for dataset'
 batch_size: "Batch size for training and evaluation"
 epoch_size: "Total training epochs."
 keep_checkpoint_max: "keep the last keep_checkpoint_max checkpoint"

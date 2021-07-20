@@ -50,7 +50,7 @@ do
     rm -rf LOG$i
     mkdir ./LOG$i
     cp ./*.py ./LOG$i
-    cp ./*.yaml ./LOG$i
+    cp ./config/*.yaml ./LOG$i
     cp -r ./src ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i

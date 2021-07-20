@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,14 +84,6 @@ def set_graph_kernel_context(device_target, model):
         context.set_context(enable_graph_kernel=True,
                             graph_kernel_flags="--enable_parallel_fusion --enable_expand_ops=Conv2D")
 
-def set_parameter(model_name):
-    if model_name == "ssd_resnet50_fpn":
-        context.set_auto_parallel_context(all_reduce_fusion_config=[90, 183, 279])
-    if model_name == "ssd_vgg16":
-        context.set_auto_parallel_context(all_reduce_fusion_config=[20, 41, 62])
-    else:
-        context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 89])
-
 @moxing_wrapper()
 def train_net():
     if hasattr(config, 'num_ssd_boxes') and config.num_ssd_boxes == -1:
@@ -114,7 +106,8 @@ def train_net():
             context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                               device_num=device_num)
             init()
-            set_parameter(model_name=config.model_name)
+            if config.all_reduce_fusion_config:
+                context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
             rank = get_rank()
 
     mindrecord_file = create_mindrecord(config.dataset, "ssd.mindrecord", True)
@@ -134,7 +127,7 @@ def train_net():
     dataset_size = dataset.get_dataset_size()
     print(f"Create dataset done! dataset size is {dataset_size}")
     ssd = ssd_model_build()
-    if (hasattr(config, 'use_float16') and config.use_float16) or config.device_target == "GPU":
+    if (hasattr(config, 'use_float16') and config.use_float16):
         ssd.to_float(dtype.float16)
     net = SSDWithLossCell(ssd, config)
 
