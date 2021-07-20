@@ -223,7 +223,6 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
     auto abstract = EvalValueNode(value_node, conf);
     eval_result = std::make_shared<EvalResult>(abstract, std::make_shared<AttrValueMap>());
   } else if (node->isa<CNode>()) {
-    // CheckNoStackInSameFuncGraph(conf);
     auto cnode = node->cast<CNodePtr>();
     trace::TraceEvalCNodeEnter(conf);
     eval_result = EvalCNode(cnode, conf);

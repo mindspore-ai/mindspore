@@ -959,7 +959,6 @@ void KPynativeCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool ha
   }
   // Add sens parameter
   if (has_sens_arg) {
-    // sens parameter;
     auto sens_param = tape_->add_parameter();
     sens_param->debug_info()->set_name("sens");
     sens_param->set_abstract(last_node_adjoint_iter->second->out()->ToAbstract()->Broaden());

@@ -1338,7 +1338,7 @@ void ClearResAtexit() {
   trace::ClearTraceStack();
 }
 
-py::bytes PyEncrypt(char *plain_data, const size_t plain_len, char *key, const size_t key_len, std::string enc_mode) {
+py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode) {
   size_t encrypt_len;
   auto encrypt_data = mindspore::Encrypt(&encrypt_len, reinterpret_cast<Byte *>(plain_data), plain_len,
                                          reinterpret_cast<Byte *>(key), key_len, enc_mode);
@@ -1349,7 +1349,7 @@ py::bytes PyEncrypt(char *plain_data, const size_t plain_len, char *key, const s
   return py_encrypt_data;
 }
 
-py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const size_t key_len, std::string dec_mode) {
+py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_len, const std::string &dec_mode) {
   size_t decrypt_len;
   auto decrypt_data =
     mindspore::Decrypt(&decrypt_len, encrypt_data_path, reinterpret_cast<Byte *>(key), key_len, dec_mode);

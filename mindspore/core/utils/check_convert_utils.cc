@@ -402,7 +402,7 @@ ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &sha
 abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &prim_name,
                                                              const std::vector<AbstractBasePtr> &input_args,
                                                              int64_t index) {
-  auto abstract = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, index);
+  auto abstract = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, LongToSize(index));
   MS_EXCEPTION_IF_NULL(abstract);
   auto base_shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(base_shape);
@@ -516,7 +516,7 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
     MS_EXCEPTION_IF_NULL(type);
     if (!allow_mix) {
       // input must be all tensor or all other type
-      if (tensor_flag ^ type->isa<TensorType>()) {
+      if ((tensor_flag && !type->isa<TensorType>()) || (!tensor_flag && type->isa<TensorType>())) {
         buffer << "For " << prim_name << "'s "
                << "type is not same";
         for (const auto &error_elem : args) {
@@ -531,9 +531,9 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
       auto element = tensor_type->element();
       MS_EXCEPTION_IF_NULL(element);
       return_type = element->DeepCopy();
-      types_id.emplace(element->type_id());
+      (void)types_id.emplace(element->type_id());
     } else {
-      types_id.emplace(type->type_id());
+      (void)types_id.emplace(type->type_id());
       return_type = type->DeepCopy();
     }
     if (types_id.size() > 1) {
@@ -586,13 +586,13 @@ void CheckAndConvertUtils::CheckSummaryParam(const AbstractBasePtr &name, const 
   MS_EXCEPTION_IF_NULL(name);
   MS_EXCEPTION_IF_NULL(value);
   CheckMode(class_name);
-  CheckTypeValid("name", name->BuildType(), {kString}, class_name);
+  (void)CheckTypeValid("name", name->BuildType(), {kString}, class_name);
   auto s = GetValue<std::string>(name->BuildValue());
   if (s.empty()) {
     MS_EXCEPTION(ValueError) << "For 'name' the value should by valid string in " << class_name
                              << ", but got an empty string.";
   }
-  CheckTypeValid("value", value->BuildType(), {kTensorType}, class_name);
+  (void)CheckTypeValid("value", value->BuildType(), {kTensorType}, class_name);
 }
 
 void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
@@ -659,15 +659,15 @@ int64_t CheckAndConvertUtils::GetAndCheckFormat(const ValuePtr &value) {
   }
   return data_format;
 }
-int64_t CheckAndConvertUtils::GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list) {
-  int64_t remove_monad_count = abs_list.size();
+size_t CheckAndConvertUtils::GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list) {
+  size_t remove_monad_count = abs_list.size();
   for (const auto &item : abs_list) {
     if (item->isa<abstract::AbstractMonad>()) {
       --remove_monad_count;
     }
   }
 
-  for (int64_t i = 0; i < remove_monad_count; ++i) {
+  for (size_t i = 0; i < remove_monad_count; ++i) {
     if (abs_list[i]->isa<abstract::AbstractMonad>()) {
       MS_EXCEPTION(UnknownError) << "The monad inputs of the node must at last of the node inputs.";
     }
