@@ -245,6 +245,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/tf_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/onnx_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/squeeze_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/transpose_fusion.cc
             ${LITE_DIR}/tools/optimizer/graph/add_tensor_array.cc
             ${LITE_DIR}/tools/optimizer/graph/conv1d_weight_expanding_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
@@ -280,6 +281,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/common/node_util.cc
             ${LITE_DIR}/tools/common/storage.cc
             ${LITE_DIR}/tools/converter/parser/inputs_adjust.cc
+            ${LITE_DIR}/tools/converter/parser/insert_transpose.cc
             ${LITE_DIR}/tools/converter/parser/unused_node_remove_pass.cc
             ${LITE_DIR}/tools/converter/parser/conv1d_inout_adjust.cc
             ${LITE_DIR}/tools/converter/parser/tf_bidirection_gru_cf_fusion.cc

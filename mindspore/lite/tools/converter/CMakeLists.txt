@@ -36,6 +36,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unused_node_remove_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/insert_transpose.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindspore_importer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
@@ -73,6 +74,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/tf_gelu_fusion.cc
         ../optimizer/fusion/onnx_gelu_fusion.cc
         ../optimizer/fusion/squeeze_fusion.cc
+        ../optimizer/fusion/transpose_fusion.cc
         ../optimizer/fisson/eliminate_concat_split.cc
         ../optimizer/fisson/fisson_util.cc
         ../optimizer/fisson/iter_node_outputs.cc

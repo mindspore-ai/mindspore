@@ -23,6 +23,7 @@
 #include "tools/converter/import/mindir_adjust.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"
+#include "tools/converter/parser/insert_transpose.h"
 
 namespace mindspore::lite {
 namespace {
@@ -196,6 +197,11 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    return nullptr;
+  }
+  auto insert_transpose = std::make_shared<InsertTranspose>(lite::converter::FmkType_MS, flag.trainModel);
+  if (!insert_transpose->Run(func_graph)) {
+    MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
   if ((status = WeightFormatTransform(func_graph)) != RET_OK) {

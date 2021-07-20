@@ -67,6 +67,7 @@
 #include "tools/optimizer/parallel/parallel_pass.h"
 #include "include/registry/pass_registry.h"
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
+#include "tools/optimizer/fusion/transpose_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -82,6 +83,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   if (!config->trainModel) {
     // remove quantdtype when awaretraining
     fusion_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TransposeFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ReshapeReshapeFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
     auto conv_bn_pass = std::make_shared<opt::ConvBatchNormFusion>();
@@ -338,7 +340,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
 
   auto format_pass = std::make_shared<opt::UnifyFormatPass>();
   format_pass->Init(config->fmk, config->trainModel);
-  if (!format_pass->RunOnlyForShape(old_graph)) {
+  if (!format_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Run format pass failed.";
     return nullptr;
   }

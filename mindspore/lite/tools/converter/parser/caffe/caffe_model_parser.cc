@@ -31,6 +31,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/parser/insert_transpose.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
 namespace mindspore::lite {
@@ -101,6 +102,11 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    return nullptr;
+  }
+  auto insert_transpose = std::make_shared<InsertTranspose>(lite::converter::FmkType_CAFFE, false);
+  if (!insert_transpose->Run(res_graph_)) {
+    MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
   if ((status = WeightFormatTransform(res_graph_)) != RET_OK) {
