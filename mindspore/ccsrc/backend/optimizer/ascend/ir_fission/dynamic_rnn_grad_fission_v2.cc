@@ -535,6 +535,11 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   auto lstm_input_grad = AddLSTMInputGradNode(func_graph, dynamic_rnn_grad_cnode, &new_outputs);
 
   size_t t_size = AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode->input(kInIdx7), 0)[0];
+  size_t hidden_size = AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode->input(kInIdx7), 0)[kInIdx2];
+  if (hidden_size % kCubeSize != 0) {
+    MS_LOG(EXCEPTION) << "`hidden_size` in this node should be multiple of 16, but got " << hidden_size << ". "
+                      << dynamic_rnn_grad_cnode->DebugString();
+  }
   AnfNodePtr concat = nullptr;
   if (t_size != 1) {
     auto splitv = CreateSplitV(func_graph, dynamic_rnn_grad_cnode);
