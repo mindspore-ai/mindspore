@@ -156,8 +156,6 @@ int main(int argc, char **argv) {
     }
 
     average = average/infer_cnt;
-
-    snprintf_s(tmpCh, sizeof(tmpCh), "NN infer cost average time: %4.3f ms of infer_count %d\n", average, infer_cnt);
     std::cout << "NN inference cost average time: "<< average << "ms of infer_count " << infer_cnt << std::endl;
     std::string file_name = "./time_Result" + std::string("/test_perform_static.txt");
     std::ofstream file_stream(file_name.c_str(), std::ios::trunc);
