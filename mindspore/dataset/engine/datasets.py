@@ -19,7 +19,6 @@ high performance and parses data precisely. Some of the operations that are
 provided to users to preprocess data include shuffle, batch, repeat, map, and zip.
 """
 import atexit
-import errno
 import glob
 import json
 import math
@@ -2386,9 +2385,9 @@ def wait_child_processes(signum, frame):
             child_pid, _ = os.waitpid(-1, os.WNOHANG)
             if child_pid == 0:
                 break
-    except OSError as e:
-        if e.errno != errno.ECHILD:
-            raise
+    except OSError:
+        # waitpid may failed for some reasons so we ignored this error
+        pass
 
 
 # Pyfunc collection for multiprocess pyfunc
