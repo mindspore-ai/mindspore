@@ -73,7 +73,7 @@ do
        --test_dataset $TEST_DATASET --test_data_path $TEST_LABEL \
        --ckpt_path_doc $MODEL_CKPT  --ckpt_partition $CKPT_NUMBER \
        --ckpt_epoch $ckptepoch --result_path $result_path \
-       --distribute False --has_train_strategy True> log_cpm.log 2>&1
+       --distribute False --has_train_strategy True --result_path ./result.txt > log_cpm.log 2>&1
 
   cd ${current_exec_path} || exit
 done

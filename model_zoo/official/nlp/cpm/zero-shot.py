@@ -13,9 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Zero-shot."""
-import os
-import ast
-import argparse
 import time
 import numpy as np
 
@@ -33,14 +30,16 @@ from mindspore.parallel import set_algo_parameters
 from src.cpm import CPMModel
 from src.cpm_train import VirtualDatasetOneInputCell
 from src.cpm_loss import Cross_entropy
-from src.config import config_zero_shot_standalone, config_zero_shot_distrubute
 from eval import create_ckpt_file_list
 
-device_id = int(os.getenv("DEVICE_ID"))
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+
 context.set_context(mode=context.GRAPH_MODE,
                     save_graphs=False,
                     device_target="Ascend",
-                    device_id=device_id)
+                    device_id=get_device_id())
 
 
 class CPMForInfer(nn.Cell):
@@ -52,12 +51,12 @@ class CPMForInfer(nn.Cell):
         batch_size (int): Batch size of input dataset.
         seq_length (int): Length of input tensor sequence.
         vocab_size (int): Size of the dictionary of embeddings.
-        config: The config of networks.
+        cfg: The config of networks.
 
     Returns:
         Tensor, losses.
     """
-    def __init__(self, network, batch_size, seq_length, vocab_size, config):
+    def __init__(self, network, batch_size, seq_length, vocab_size, cfg):
         super(CPMForInfer, self).__init__(auto_prefix=False)
         self.network = network
         self.batch_size = batch_size
@@ -66,35 +65,13 @@ class CPMForInfer(nn.Cell):
         self.loss_net = Cross_entropy(batch_size=self.batch_size,
                                       seq_length=self.seq_length,
                                       vocab_size=self.vocab_size,
-                                      config=config)
+                                      config=cfg)
 
     def construct(self, input_ids, target, loss_mask):
         """Defines the computation performed."""
         logist = self.network(input_ids)
         loss = self.loss_net(logist, target, loss_mask)
         return loss
-
-
-def collate(sid, cid, input_ids, BatchInfo):
-    """Collate operation for dataset."""
-    bs = len(sid)
-    max_size = np.size(input_ids, 1)
-
-    attn_mask = np.tril(np.ones(shape=(max_size, max_size),))
-    attention_mask = np.expand_dims(attn_mask, 0)
-    attention_mask = np.tile(attention_mask, (bs, 1, 1))
-
-    position_ids = np.expand_dims(np.arange(max_size * 1), 0)
-    position_ids = np.tile(position_ids, (bs, 1))
-
-    sids_list = np.zeros(bs, dtype=np.int64)
-    cids_list = np.zeros(bs, dtype=np.int64)
-
-    for i in range(bs):
-        sids_list[i] = sid[i]
-        cids_list[i] = cid[i]
-
-    return input_ids, attention_mask, position_ids, sids_list, cids_list
 
 
 def _load_dataset(dataset_path, batch_size, rank_size=None, rank_id=None, shuffle=True, drop_remainder=True):
@@ -163,8 +140,8 @@ def run_eval(args, config_eval, ckpt_file_list=None):
 
     if args.distribute:
         dataset = load_dataset(args.dataset, config_eval.batch_size,
-                               rank_size=MultiAscend.get_group_size(),
-                               rank_id=MultiAscend.get_rank(),
+                               rank_size=get_device_num(),
+                               rank_id=get_rank_id(),
                                drop_remainder=False,
                                shuffle=False)
     else:
@@ -192,7 +169,7 @@ def run_eval(args, config_eval, ckpt_file_list=None):
                             batch_size=config_eval.batch_size,
                             seq_length=config_eval.seq_length,
                             vocab_size=config_eval.vocab_size,
-                            config=config_eval)
+                            cfg=config_eval)
 
     model = Model(infer_net)
 
@@ -254,38 +231,37 @@ def set_parallel_env():
     MultiAscend.init()
 
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
-                                      device_num=MultiAscend.get_group_size(),
+                                      device_num=get_device_num(),
                                       gradients_mean=True,
                                       full_batch=True)
     set_algo_parameters(elementwise_op_strategy_follow=True)
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="CPM inference")
-    parser.add_argument('--dataset', type=str, default="", help="dataset path.")
-    parser.add_argument('--truth_labels_path', type=str, default="", help="truth_labels path.")
-    parser.add_argument('--ckpt_path_doc', type=str, default="", help="checkpoint path doc or checkpoint path.")
-    parser.add_argument("--distribute", type=ast.literal_eval, default=False, help='Whether distributed evaluation'
-                                                                                   ' with model parallel.')
-    parser.add_argument("--has_train_strategy", type=ast.literal_eval, default=False,
-                        help='Whether the loaded checkpoints have distributed training strategy.')
-    parser.add_argument('--ckpt_partition', type=int, default=1, help="Number of checkpoint partition.")
-    args_parse = parser.parse_args()
-    if args_parse.distribute:
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_test():
+    '''test cpm network with zero_shot dataset.'''
+    config_zero_shot_standalone = config.config_zero_shot_standalone
+    config_zero_shot_distrubute = config.config_zero_shot_distrubute
+    if config.distribute:
         set_parallel_env()
 
     ckpt_file_list_test = None
-    if args_parse.has_train_strategy:
+    if config.has_train_strategy:
         # Get the checkpoint with train strategy.
-        train_strategy_list = create_ckpt_file_list(args_parse, train_strategy="train_strategy.ckpt")
+        train_strategy_list = create_ckpt_file_list(config, train_strategy="train_strategy.ckpt")
         context.set_auto_parallel_context(
             strategy_ckpt_load_file=train_strategy_list[0]
         )
-        ckpt_file_list_test = create_ckpt_file_list(args_parse)
+        ckpt_file_list_test = create_ckpt_file_list(config)
         print("Get checkpoint file lists++++", ckpt_file_list_test, flush=True)
-    if args_parse.distribute:
+    if config.distribute:
         print("Staring evaluating on 2 devices with model parallel.")
-        run_eval(args_parse, config_zero_shot_distrubute, ckpt_file_list_test)
+        run_eval(config, config_zero_shot_distrubute, ckpt_file_list_test)
     else:
         print("Staring evaluating on 1 device without model parallel.")
-        run_eval(args_parse, config_zero_shot_standalone, ckpt_file_list_test)
+        run_eval(config, config_zero_shot_standalone, ckpt_file_list_test)
+
+if __name__ == '__main__':
+    run_test()
