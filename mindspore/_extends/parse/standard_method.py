@@ -51,6 +51,7 @@ itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
 
 nan_tensor = Tensor(float('nan'), dtype=mstype.float32)
 
+
 def mean(x, axis=(), keep_dims=False):
     """
     Reduces a dimension of a tensor by averaging all elements in the dimension.
@@ -1647,6 +1648,7 @@ get_log2_size = constexpr(validator.get_log2_size)
 check_axis_type = constexpr(validator.check_axis_type)
 check_and_canonicalize_axes = constexpr(validator.check_and_canonicalize_axes)
 empty_compile = constexpr(validator.empty_compile)
+
 
 def tensor_bool(x):
     """tensor as condition, if is constant, return immediate bool value"""

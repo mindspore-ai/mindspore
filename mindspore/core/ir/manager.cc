@@ -671,15 +671,15 @@ void FuncGraphManager::EraseOneGraph(FuncGraph *fg) {
 }
 
 void FuncGraphTransaction::SetParameters(FuncGraphPtr fg, const std::vector<AnfNodePtr> &params) {
-  changes_.emplace_back(Change::kTxSetParams, ArgsOfSetParams{fg, params});
+  (void)changes_.emplace_back(Change::kTxSetParams, ArgsOfSetParams{fg, params});
 }
 
 void FuncGraphTransaction::AddParameter(FuncGraphPtr fg, const AnfNodePtr &param) {
-  changes_.emplace_back(Change::kTxAddParam, ArgsOfAddParam{fg, param});
+  (void)changes_.emplace_back(Change::kTxAddParam, ArgsOfAddParam{fg, param});
 }
 
 void FuncGraphTransaction::InsertFrontParameter(FuncGraphPtr fg, const AnfNodePtr &param) {
-  changes_.emplace_back(Change::kTxInsertFrontParam, ArgsOfInsertFrontParam{fg, param});
+  (void)changes_.emplace_back(Change::kTxInsertFrontParam, ArgsOfInsertFrontParam{fg, param});
 }
 
 bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
