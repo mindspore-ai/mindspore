@@ -9,10 +9,6 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/env_config_parser.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_json_parser.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/cpu_e2e_dump.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_utils.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/npy_header.cc"
 )
 
 set(_OFFLINE_SRC_LIST
@@ -45,9 +41,20 @@ if(ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/debugger_utils.cc"
         )
 endif()
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
-    list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/common.cc")
-    list(APPEND _DEBUG_SRC_LIST "data_dump/e2e_dump.cc")
+
+if(NOT ENABLE_SECURITY)
+    list(APPEND _DEBUG_SRC_LIST
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/cpu_e2e_dump.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_json_parser.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/dump_utils.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/npy_header.cc"
+        )
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+        list(APPEND _DEBUG_SRC_LIST
+            "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/e2e_dump.cc"
+            )
+    endif()
 endif()
 
 set_property(SOURCE ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST} PROPERTY COMPILE_DEFINITIONS

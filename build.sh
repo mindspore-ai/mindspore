@@ -46,6 +46,7 @@ usage()
   echo "    -i Enable increment building, default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
   echo "    -e Use cpu, gpu or ascend"
+  echo "    -s Enable security, default off"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
@@ -83,6 +84,7 @@ checkopts()
   THREAD_NUM=8
   DEBUG_MODE="off"
   VERBOSE=""
+  ENABLE_SECURITY="off"
   ENABLE_COVERAGE="off"
   RUN_TESTCASES="off"
   RUN_CPP_ST_TESTS="off"
@@ -118,8 +120,10 @@ checkopts()
   DEVICE=""
   ENABLE_HIDDEN="on"
   TENSORRT_HOME=""
+  USER_ENABLE_DUMP_IR=false
+  USER_ENABLE_DEBUGGER=false
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:A:S:k:W:H:L:' opt
+  while getopts 'drvj:c:t:hb:s:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:A:S:k:W:H:L:' opt
   do
     CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
@@ -205,6 +209,25 @@ checkopts()
         fi
         TRAIN_MODE=$(echo "$OPTARG" | tr '[a-z]' '[A-Z]')
         ;;
+      s)
+        check_on_off $OPTARG s
+        if [[ "X$OPTARG" == "Xon" ]]; then
+          if [[ $USER_ENABLE_DUMP_IR == true ]]; then
+            echo "enable security, the dump ir is not available"
+            usage
+            exit 1
+          fi
+          if [[ $USER_ENABLE_DEBUGGER == true ]]; then
+            echo "enable security, the debugger is not available"
+            usage
+            exit 1
+          fi
+          ENABLE_DUMP_IR="off"
+          ENABLE_DEBUGGER="off"
+        fi
+        ENABLE_SECURITY="$OPTARG"
+        echo "enable security"
+        ;;
       R)
         ENABLE_TIMELINE="on"
         echo "enable time_line record"
@@ -236,6 +259,14 @@ checkopts()
         ;;
       D)
         check_on_off $OPTARG D
+        if [[ "X$OPTARG" == "Xon" ]]; then
+          if [[ "X$ENABLE_SECURITY" == "Xon" ]]; then
+            echo "enable security, the dump ir is not available"
+            usage
+            exit 1
+          fi
+          USER_ENABLE_DUMP_IR=true
+        fi
         ENABLE_DUMP_IR="$OPTARG"
         echo "enable dump function graph ir"
         ;;
@@ -271,6 +302,14 @@ checkopts()
         ;;
       B)
         check_on_off $OPTARG B
+        if [[ "X$OPTARG" == "Xon" ]]; then
+          if [[ "X$ENABLE_SECURITY" == "Xon" ]]; then
+            echo "enable security, the debugger is not available"
+            usage
+            exit 1
+          fi
+          USER_ENABLE_DEBUGGER=true
+        fi
         ENABLE_DEBUGGER="$OPTARG"
         ;;
       E)
@@ -408,6 +447,9 @@ build_mindspore()
     fi
     if [[ "X$ENABLE_PROFILE" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_PROFILE=ON"
+    fi
+    if [[ "X$ENABLE_SECURITY" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SECURITY=ON"
     fi
     if [[ "X$ENABLE_TIMELINE" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_TIMELINE=ON"
