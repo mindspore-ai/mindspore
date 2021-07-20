@@ -37,7 +37,7 @@ if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
   wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/*.so ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/* ${BASEPATH}/lib
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/third_party/libjpeg-turbo/lib/*.so.* ${BASEPATH}/lib
 cd ${BASEPATH}/ || exit
 
