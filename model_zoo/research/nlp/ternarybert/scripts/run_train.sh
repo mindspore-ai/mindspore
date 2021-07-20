@@ -42,4 +42,4 @@ python ${PROJECT_DIR}/../train.py \
     --device_id=0 \
     --teacher_model_dir=$teacher_model_dir \
     --student_model_dir=$student_model_dir \
-    --data_dir=$data_dir> log.txt 2>&1 &
+    --data_dir=$data_dir> train_log.txt 2>&1 &
