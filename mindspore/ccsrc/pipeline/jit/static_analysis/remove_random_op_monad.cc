@@ -69,13 +69,13 @@ class RemoveMonad {
     auto &inputs = cnode->inputs();
     std::vector<AnfNodePtr> new_random_node_inputs;
     // Remove monad input, in order to parallel execution of random number operators
-    std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(new_random_node_inputs),
-                 [](const AnfNodePtr &input) { return !HasAbstractMonad(input); });
+    (void)std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(new_random_node_inputs),
+                       [](const AnfNodePtr &input) { return !HasAbstractMonad(input); });
     auto new_random_node = func_graph_->NewCNode(new_random_node_inputs);
     MS_EXCEPTION_IF_NULL(node->abstract());
     new_random_node->set_abstract(node->abstract());
     new_random_node->set_scope(node->scope());
-    manager_->Replace(node, new_random_node);
+    (void)manager_->Replace(node, new_random_node);
   }
 
   void RemoveRandomNodesFromMonadChain(const AnfNodePtr &node) {
@@ -88,7 +88,7 @@ class RemoveMonad {
     if (attach_input->isa<CNode>()) {
       auto prim = GetCNodePrimitive(attach_input);
       if (prim != nullptr && CheckPrimRandomEffect(prim)) {
-        manager_->Replace(cnode, monad_input);
+        (void)manager_->Replace(cnode, monad_input);
       }
     }
   }
