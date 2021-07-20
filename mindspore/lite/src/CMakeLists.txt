@@ -158,7 +158,7 @@ if(ENABLE_MINDRT)
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
-elseif(TARGET_HIMIX200)
+elseif(TARGET_HIMIX200 OR TARGET_OHOS_LITE)
     file(GLOB MINDRT_ACTOR ${CORE_DIR}/mindrt/src/actor/*.cc)
     set(LITE_SRC
         ${LITE_SRC}
@@ -247,7 +247,7 @@ if(SUPPORT_NPU)
     target_link_libraries(mindspore-lite npu_kernel_mid)
     target_link_libraries(mindspore-lite_static npu_kernel_mid)
 endif()
-if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX200)
+if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX200 AND NOT TARGET_OHOS_LITE)
     target_link_libraries(mindspore-lite log)
     target_link_libraries(mindspore-lite_static log)
 endif()
@@ -275,6 +275,8 @@ if(NOT APPLE AND PLATFORM_ARM)
         "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
     if(TARGET_HIMIX200)
         set(NDK_STRIP ${HIMIX_STRIP})
+    elseif(TARGET_OHOS_LITE)
+        set(NDK_STRIP "llvm-strip")
     endif()
 endif()
 
