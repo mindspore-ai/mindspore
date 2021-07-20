@@ -54,6 +54,9 @@ class Conv2DInfo : public OperatorInfo {
   Status InferRankBias();
   Status InferOverlapSize();
   void InferNewOperatorAttrs();
+  void InferSendRecvFlag();
+  void InferRecvShapes();
+  void InferStridedSliceAttrs();
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
   int64_t out_channel_ = 1;
@@ -73,6 +76,8 @@ class Conv2DInfo : public OperatorInfo {
   int64_t rank_bias_ = 0;
   int64_t left_rank_bias_ = -1;
   int64_t right_rank_bias_ = -1;
+  int64_t left_rank_id_ = -1;
+  int64_t right_rank_id_ = -1;
   int64_t overlap_left_size_ = 0;
   int64_t overlap_right_size_ = 0;
   int64_t left_rank_overlap_left_size_ = 0;
@@ -93,7 +98,8 @@ class Conv2DInfo : public OperatorInfo {
   Shape right_strided_slice_end_;
   Shape right_strided_slice_strides_;
 
-  std::vector<int64_t> exchange_rank_ids_;
+  std::vector<int64_t> send_rank_ids_;
+  std::vector<int64_t> recv_rank_ids_;
   Shapes recv_shapes_;
 
   virtual Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
