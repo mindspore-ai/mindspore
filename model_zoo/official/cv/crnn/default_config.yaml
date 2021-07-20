@@ -15,6 +15,7 @@ enable_profiling: False
 # common options
 run_distribute: False
 model: "lowercase"
+model_version: "V2"
 
 # ======================================================================================
 # Training options
