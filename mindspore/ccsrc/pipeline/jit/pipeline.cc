@@ -1299,6 +1299,10 @@ void ClearResAtexit() {
     }
   }
 #endif
+  session::ExecutorManager::Instance().Clear();
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  runtime::GraphScheduler::GetInstance().Clear();
+  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
   PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
@@ -1316,13 +1320,6 @@ void ClearResAtexit() {
 #else
   ConfigManager::GetInstance().ResetIterNum();
 #endif
-  session::ExecutorManager::Instance().Clear();
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-
-  // Clear the resource of mindRT.
-  runtime::GraphScheduler::GetInstance().Clear();
-  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
-
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
