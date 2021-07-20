@@ -59,11 +59,11 @@ void AdamWeightDecayCPUKernel::LaunchFusedAdam(const std::vector<AddressPtr> &in
   auto beta1 = reinterpret_cast<T *>(inputs[4]->addr)[0];
   auto beta2 = reinterpret_cast<T *>(inputs[5]->addr)[0];
   auto epsilon = reinterpret_cast<T *>(inputs[6]->addr)[0];
-  auto decay = reinterpret_cast<T *>(inputs[7]->addr);
+  auto decay = reinterpret_cast<T *>(inputs[7]->addr)[0];
   auto gradient16 = reinterpret_cast<S *>(inputs[8]->addr);
+  const auto beta1_minus = 1 - beta1;
+  const auto beta2_minus = 1 - beta2;
 
-  float beta1_minus = 1 - beta1;
-  float beta2_minus = 1 - beta2;
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
   std::function<void(size_t, size_t)> task;
@@ -77,7 +77,7 @@ void AdamWeightDecayCPUKernel::LaunchFusedAdam(const std::vector<AddressPtr> &in
       m[i] += (temp - m[i]) * beta1_minus;
       v[i] += (temp * temp - v[i]) * beta2_minus;
       T update = m[i] / (std::sqrt(v[i]) + epsilon);
-      update += *decay * var[i];
+      update += decay * var[i];
       var[i] -= lr * update;
     }
   };
@@ -94,10 +94,10 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPt
   auto beta1 = reinterpret_cast<T *>(inputs[4]->addr)[0];
   auto beta2 = reinterpret_cast<T *>(inputs[5]->addr)[0];
   auto epsilon = reinterpret_cast<T *>(inputs[6]->addr)[0];
-  auto decay = reinterpret_cast<T *>(inputs[7]->addr);
+  auto decay = reinterpret_cast<T *>(inputs[7]->addr)[0];
   auto gradient = reinterpret_cast<T *>(inputs[8]->addr);
-  auto beta1_minus = 1 - beta1;
-  auto beta2_minus = 1 - beta2;
+  const auto beta1_minus = 1 - beta1;
+  const auto beta2_minus = 1 - beta2;
 
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
@@ -110,7 +110,7 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPt
       m[i] += (gradient[i] - m[i]) * beta1_minus;
       v[i] += (gradient[i] * gradient[i] - v[i]) * beta2_minus;
       T update = m[i] / (std::sqrt(v[i]) + epsilon);
-      update += decay[0] * var[i];
+      update += decay * var[i];
       var[i] -= lr * update;
     }
   };
