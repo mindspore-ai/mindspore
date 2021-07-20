@@ -183,8 +183,8 @@ class IncorporateCallSwitch : public AnfVisitor {
     auto xs_size = inputs_x.size() - 1;
     auto ys_size = inputs.size() - 1;
     bool xs_first = true;
-    if ((xs_size > 0) && (inputs_x[xs_size - 1]->abstract() != nullptr) &&
-        (inputs_x[xs_size - 1]->abstract()->isa<abstract::AbstractMonad>())) {
+    if ((xs_size > 0) && (inputs_x[xs_size]->abstract() != nullptr) &&
+        (inputs_x[xs_size]->abstract()->isa<abstract::AbstractMonad>())) {
       xs_first = false;
     }
     auto new_g1 = call_output_transform_(g1_, ys_size, xs_first);

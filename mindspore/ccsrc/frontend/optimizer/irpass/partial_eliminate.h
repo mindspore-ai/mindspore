@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-// {{prim::kPrimPartial, X, Xs}, Ys} -> {X, Xs, Ys}
+// {{prim::kPrimPartial, X, Xs}, Ys} -> {X, Xs, Ys} or {X, Ys, Xs}
 class PartialEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
@@ -39,6 +39,7 @@ class PartialEliminater : public AnfVisitor {
       return nullptr;
     }
 
+    X_ = nullptr;
     Xs_.clear();
     auto &inputs = node->cast<CNodePtr>()->inputs();
     Visit(inputs[0]);
@@ -49,10 +50,42 @@ class PartialEliminater : public AnfVisitor {
 
     // {X, Xs, Ys}
     std::vector<AnfNodePtr> args{};
-    (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args));
+    const auto &xs_size = Xs_.size();
+    // Xs_ don't have monad or Ys_ is 0.
+    if (!HasAbstractMonad(Xs_.back()) || inputs.empty()) {
+      args.push_back(X_);
+      (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args));
+      (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args));
+      TraceGuard guard(std::make_shared<TracePartialTransform>(node->debug_info()));
+      auto new_node = node->func_graph()->NewCNode(args);
+      return new_node;
+    }
+    // {X, Ys, Xs} if Xs has monad
+    if (!IsValueNode<FuncGraph>(X_)) {
+      MS_LOG(EXCEPTION) << "not support yet as X_ is not a funcgraph. node: " << node->DebugString(2);
+    }
+    auto fg = GetValueNode<FuncGraphPtr>(X_);
+    MS_EXCEPTION_IF_NULL(fg);
+    if (fg->func_graph_cnodes_index().size() != 1) {
+      // If a graph is used by 2 or more partial nodes at the same time, clone the graph.
+      auto new_fg = BasicClone(fg);
+      auto new_fg_node = NewValueNode(new_fg);
+      fg->manager()->Replace(X_, new_fg_node);
+      fg = new_fg;
+      X_ = new_fg_node;
+    }
+    args.push_back(X_);
+    // Ys first;
     (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args));
+    (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args));
     TraceGuard guard(std::make_shared<TracePartialTransform>(node->debug_info()));
     auto new_node = node->func_graph()->NewCNode(args);
+
+    // reorder the formal parameter of fg.
+    AnfNodePtrList new_params;
+    std::copy(fg->parameters().cbegin() + xs_size, fg->parameters().cend(), std::back_inserter(new_params));
+    std::copy(fg->parameters().cbegin(), fg->parameters().cbegin() + xs_size, std::back_inserter(new_params));
+    fg->manager()->SetParameters(fg, new_params);
     return new_node;
   }
 
@@ -67,11 +100,13 @@ class PartialEliminater : public AnfVisitor {
       return;
     }
 
+    X_ = inputs[1];
     // fill Xs
-    (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(Xs_));
+    (void)std::copy(inputs.begin() + 2, inputs.end(), std::back_inserter(Xs_));
   }
 
  private:
+  AnfNodePtr X_{nullptr};
   std::vector<AnfNodePtr> Xs_{};
 };
 
@@ -122,9 +157,6 @@ class ChoicePartialEliminater : public AnfVisitor {
       auto fg = GetValueNode<FuncGraphPtr>(fg_node);
       MS_EXCEPTION_IF_NULL(fg);
       if (fg->func_graph_cnodes_index().size() != 1) {
-        for (auto iter : fg->func_graph_cnodes_index()) {
-          MS_LOG(DEBUG) << "fg user: " << iter.first->first->DebugString(1) << ", index: " << iter.first->second;
-        }
         // If a graph is used by 2 or more partial nodes at the same time, clone the graph.
         auto new_fg = BasicClone(fg);
         auto new_fg_node = NewValueNode(new_fg);
