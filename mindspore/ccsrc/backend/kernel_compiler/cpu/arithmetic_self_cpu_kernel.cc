@@ -57,7 +57,7 @@ void Neg(const T *in, T *out, size_t size) {
       out[i] = -in[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  CPUKernelUtils::ParallelFor(task, size, MAX_NEG_SERIAL_SIZE);
 }
 
 template <typename T>

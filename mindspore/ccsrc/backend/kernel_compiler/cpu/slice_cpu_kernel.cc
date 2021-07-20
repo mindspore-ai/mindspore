@@ -59,6 +59,7 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                                     const std::vector<int64_t> &size) {
+  origin_dim_size_ = input_shape.size();
   for (size_t i = 0; i < DIMENSION_8D; i++) {
     if (i < input_shape.size()) {
       int dim_len = SizeToInt(input_shape[i]);
@@ -82,6 +83,15 @@ void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, cons
   slice_param_.param_length_ = DIMENSION_8D;
 }
 
+void SliceSimpleDim2(const int8_t *input, int8_t *output, SliceParameter *param, int data_size, size_t row_size) {
+  size_t copy_size = data_size * param->size_[1];
+  for (size_t i = 0; i < row_size; ++i) {
+    auto dst = output + data_size * param->size_[1] * i;
+    auto src = input + data_size * (param->shape_[1] * i + param->begin_[1]);
+    (void)memcpy(dst, src, copy_size);
+  }
+}
+
 bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 1 || outputs.size() != 1) {
@@ -95,7 +105,19 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   }
   auto input_addr = inputs[0]->addr;
   auto output_addr = outputs[0]->addr;
+
+  if (origin_dim_size_ == 2) {
+    auto task = [&](size_t start, size_t end) {
+      auto src =
+        static_cast<int8_t *>(input_addr) + data_size_ * slice_param_.shape_[1] * (start + slice_param_.begin_[0]);
+      auto dst = static_cast<int8_t *>(output_addr) + data_size_ * slice_param_.size_[1] * start;
+      SliceSimpleDim2(src, dst, &slice_param_, data_size_, end - start);
+    };
+    CPUKernelUtils::ParallelForAutoSearch(task, slice_param_.size_[0], &parallel_search_info_);
+    return true;
+  }
   DoSliceNoParallel(input_addr, output_addr, &slice_param_, data_size_);
+
   return true;
 }
 }  // namespace kernel

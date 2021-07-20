@@ -19,6 +19,7 @@
 #include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "nnacl/fp32/power_fp32.h"
+#include "nnacl/fp32/sub_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -49,24 +50,37 @@ void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
-  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  if (output_size_ > MAX_SUB_SERIAL_SIZE) {
-    auto task = [&](size_t start, size_t end) {
-      auto iter = base_iter;
-      iter.SetPos(start);
-      for (size_t i = start; i < end; i++) {
-        out[i] = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
-        iter.GenNextPos();
-      }
-    };
-    CPUKernelUtils::ParallelFor(task, output_size_);
-  } else {
-    base_iter.SetPos(0);
-    for (size_t i = 0; i < output_size_; i++) {
-      out[i] = input1[base_iter.GetInputPosA()] - input2[base_iter.GetInputPosB()];
-      base_iter.GenNextPos();
+  if constexpr (std::is_same_v<T, float>) {
+    if (op_para.in_elements_num0_ == op_para.in_elements_num1_) {
+      auto task = [&](size_t start, size_t end) {
+        ElementSub(input1 + start, input2 + start, out + start, end - start);
+      };
+      CPUKernelUtils::ParallelFor(task, output_size_, MAX_SUB_SERIAL_SIZE);
+      return;
+    }
+    if (op_para.in_elements_num0_ == 1 || op_para.in_elements_num1_ == 1) {
+      auto task = [&](size_t start, size_t end) {
+        if (op_para.in_elements_num0_ == 1) {
+          ElementOptSub(input1, input2 + start, out + start, end - start, &op_para);
+        } else {
+          ElementOptSub(input1 + start, input2, out + start, end - start, &op_para);
+        }
+      };
+      CPUKernelUtils::ParallelFor(task, output_size_, MAX_SUB_SERIAL_SIZE);
+      return;
     }
   }
+
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      out[i] = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, output_size_, MAX_SUB_SERIAL_SIZE);
 }
 
 template <typename T>
@@ -84,7 +98,55 @@ void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
+void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_t delta_1, size_t delta_2) {
+  size_t idx_1 = 0;
+  size_t idx_2 = 0;
+  auto zero = (T)0;
+  for (size_t i = 0; i < size; ++i) {
+    auto dividend = input1[idx_1];
+    auto divisor = input2[idx_2];
+    if (divisor == zero) {
+      if (dividend == zero) {
+        out[i] = std::numeric_limits<T>::quiet_NaN();
+        continue;
+      }
+      if (std::numeric_limits<T>::has_infinity) {
+        out[i] = dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      } else {
+        out[i] = dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+      }
+      continue;
+    }
+    out[i] = dividend / divisor;
+    idx_1 += delta_1;
+    idx_2 += delta_2;
+  }
+}
+
+template <typename T>
 void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
+  if (op_para.in_elements_num0_ == op_para.in_elements_num1_) {
+    auto task = [&](size_t start, size_t end) {
+      ElementRealDiv<T>(input1 + start, input2 + start, out + start, end - start, 1, 1);
+    };
+    CPUKernelUtils::ParallelFor(task, output_size_, MAX_DIV_SERIAL_SIZE);
+    return;
+  }
+  if (op_para.in_elements_num0_ == 1) {
+    auto task = [&](size_t start, size_t end) {
+      ElementRealDiv<T>(input1, input2 + start, out + start, end - start, 0, 1);
+    };
+    CPUKernelUtils::ParallelFor(task, output_size_, MAX_DIV_SERIAL_SIZE);
+    return;
+  }
+  if (op_para.in_elements_num1_ == 1) {
+    auto task = [&](size_t start, size_t end) {
+      ElementRealDiv<T>(input1 + start, input2, out + start, end - start, 1, 0);
+    };
+    CPUKernelUtils::ParallelFor(task, output_size_, MAX_DIV_SERIAL_SIZE);
+    return;
+  }
+
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -299,6 +361,16 @@ void ArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   output_size_ = 1;
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_size_ *= output_shape_[i];
+  }
+
+  op_para.in_elements_num0_ = 1;
+  for (size_t i = 0; i < input_shape1_.size(); ++i) {
+    op_para.in_elements_num0_ *= input_shape1_[i];
+  }
+
+  op_para.in_elements_num1_ = 1;
+  for (size_t i = 0; i < input_shape2_.size(); ++i) {
+    op_para.in_elements_num1_ *= input_shape2_[i];
   }
 
   size_t l = input_shape1_.size();

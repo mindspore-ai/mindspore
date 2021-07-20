@@ -46,6 +46,7 @@ int ReduceSumSquare(int outer_size, int inner_size, int axis_size, const float *
                     int thread_num);
 int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_data, bool *dst_data, int tid,
               int thread_num);
+int ReduceSumDim2Axis0(size_t col_size, size_t col_len, size_t row_len, const float *src_data, float *dst_data);
 
 #ifdef ENABLE_NNACL_INFER_SHAPE
 int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,

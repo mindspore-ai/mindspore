@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/cpu/bias_add_cpu_kernel.h"
+#include "nnacl/fp32/add_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -83,13 +84,13 @@ bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
       }
     }
   } else {
-    size_t n_offset = 0;
-    for (size_t n = 0; n < input_shape_[0]; ++n) {
-      for (size_t c = 0; c < input_shape_[1]; ++c) {
-        output_addr[n_offset + c] = src_addr[n_offset + c] + bias_addr[c];
+    auto task = [&](size_t start, size_t end) {
+      for (size_t n = start; n < end; ++n) {
+        size_t n_offset = input_shape_[1] * n;
+        ElementAdd(src_addr + n_offset, bias_addr, output_addr + n_offset, input_shape_[1]);
       }
-      n_offset += input_shape_[1];
-    }
+    };
+    CPUKernelUtils::ParallelForAutoSearch(task, input_shape_[0], &parallel_search_info_);
   }
   return true;
 }

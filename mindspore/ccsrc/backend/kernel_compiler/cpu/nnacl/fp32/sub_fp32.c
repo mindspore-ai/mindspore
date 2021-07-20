@@ -16,12 +16,23 @@
 #include "nnacl/fp32/sub_fp32.h"
 
 int ElementOptSub(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 vin0_opt_8 = MS_MOV256_F32(in0[0]);
+  MS_FLOAT32X8 vin1_opt_8 = MS_MOV256_F32(in1[0]);
+#endif
 #ifdef ENABLE_NEON
   float32x4_t vin0_opt = vdupq_n_f32(in0[0]);
   float32x4_t vin1_opt = vdupq_n_f32(in1[0]);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+      MS_FLOAT32X8 vout = MS_SUB256_F32(vin0_opt_8, vin1);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
 #ifdef ENABLE_NEON
     for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin1 = vld1q_f32(in1 + index);
@@ -33,6 +44,13 @@ int ElementOptSub(const float *in0, const float *in1, float *out, int size, cons
       out[index] = in0[0] - in1[index];
     }
   } else {
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+      MS_FLOAT32X8 vout = MS_SUB256_F32(vin0, vin1_opt_8);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
 #ifdef ENABLE_NEON
     for (; index <= size - C4NUM; index += C4NUM) {
       float32x4_t vin0 = vld1q_f32(in0 + index);
@@ -154,6 +172,14 @@ int ElementSub(const float *in0, const float *in1, float *out, int size) {
     float32x4_t vin1 = vld1q_f32(in1 + index);
     float32x4_t vout = vsubq_f32(vin0, vin1);
     vst1q_f32(out + index, vout);
+  }
+#endif
+#ifdef ENABLE_AVX
+  for (; index <= size - C8NUM; index += C8NUM) {
+    MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+    MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+    MS_FLOAT32X8 vout = MS_SUB256_F32(vin0, vin1);
+    MS_ST256_F32(out + index, vout);
   }
 #endif
   for (; index < size; index++) {

@@ -122,6 +122,14 @@ enum OperateType {
   IDENTITY,
 };
 
+struct ParallelSearchInfo {
+  double min_cost_time{DBL_MAX};
+  double tmp_sum_cost_time{0};
+  float best_block_size;
+  size_t best_pow{0};
+  size_t search_count{0};
+};
+
 class CPUKernel : public kernel::KernelMod {
  public:
   CPUKernel() = default;
@@ -143,6 +151,7 @@ class CPUKernel : public kernel::KernelMod {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  ParallelSearchInfo parallel_search_info_;
 };
 
 class CPUKernelUtils {
@@ -151,9 +160,10 @@ class CPUKernelUtils {
   static size_t CalcOffset(const std::vector<size_t> &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3);
   static size_t GetElementNumOnAxis(const std::vector<size_t> &shape, int axis);
   static void GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num);
-  static void ParallelFor(const CTask &task, size_t count);
+  static void ParallelFor(const CTask &task, size_t count, float block_size = 128.0);
   static std::vector<size_t> FlatShapeByAxis(const std::vector<size_t> &shape, int axis);
   static std::vector<size_t> GetBroadcastShape(const std::vector<size_t> &x, const std::vector<size_t> &y);
+  static void ParallelForAutoSearch(const CTask &task, size_t count, ParallelSearchInfo *parallel_search_info);
 };
 
 class BroadcastIterator {

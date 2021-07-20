@@ -51,19 +51,22 @@ bool OneHotCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(int);
 
-  for (size_t i = 0; i < elem_num; i++) {
-    size_t stride_num = i / stride_;
-    size_t output_index = stride_num * depth_ * stride_ + i % stride_;
-    size_t index = IntToSize(indices[i]);
-    for (size_t j = 0; j < depth_; j++) {
-      if (index == j) {
-        output[output_index] = on_value;
-      } else {
-        output[output_index] = off_value;
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      size_t stride_num = i / stride_;
+      size_t output_index = stride_num * depth_ * stride_ + i % stride_;
+      size_t index = IntToSize(indices[i]);
+      for (size_t j = 0; j < depth_; j++) {
+        if (index == j) {
+          output[output_index] = on_value;
+        } else {
+          output[output_index] = off_value;
+        }
+        output_index += stride_;
       }
-      output_index += stride_;
     }
-  }
+  };
+  CPUKernelUtils::ParallelForAutoSearch(task, elem_num, &parallel_search_info_);
 
   return true;
 }

@@ -20,9 +20,11 @@
 #include <limits>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/arithmetic.h"
 
-#define MAX_SUB_SERIAL_SIZE 15000
-#define MAX_POW_SERIAL_SIZE 700
+const float MAX_SUB_SERIAL_SIZE = 10000;
+const float MAX_DIV_SERIAL_SIZE = 10000;
+const float MAX_POW_SERIAL_SIZE = 700;
 
 namespace mindspore {
 namespace kernel {
@@ -57,6 +59,7 @@ class ArithmeticCPUKernel : public CPUKernel {
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_element_num_;
   size_t output_size_;
+  ArithmeticParameter op_para;
   OperateType operate_type_{ADD};
   TypeId dtype_{kTypeUnknown};
   TypeId target_dtype_{kTypeUnknown};

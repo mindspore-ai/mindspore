@@ -32,6 +32,7 @@ class ReduceCPUKernel : public CPUKernel {
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+  void SimpleReduce(size_t start, size_t end, size_t stride, const T *input_addr, T *output_addr);
 
  private:
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
