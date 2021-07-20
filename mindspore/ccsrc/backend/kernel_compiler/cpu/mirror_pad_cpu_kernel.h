@@ -77,6 +77,20 @@ MS_REG_CPU_KERNEL(
 MS_REG_CPU_KERNEL(
   MirrorPad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
   MirrorPadCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  MirrorPad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  MirrorPadCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  MirrorPad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  MirrorPadCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  MirrorPad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  MirrorPadCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_CPU_KERNEL_H_

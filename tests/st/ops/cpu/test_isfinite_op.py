@@ -34,7 +34,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
     x0 = Tensor(np.array([np.log(-1), 0.4, np.log(0)]).astype(np.float16))

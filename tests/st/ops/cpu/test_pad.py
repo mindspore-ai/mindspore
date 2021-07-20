@@ -25,7 +25,7 @@ from mindspore.ops.composite import GradOperation
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_basic():
     """
@@ -53,7 +53,7 @@ def test_pad_basic():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_row():
     """
@@ -84,7 +84,7 @@ def test_pad_row():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_column():
     """
@@ -115,7 +115,7 @@ def test_pad_column():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_3d_pad():
     """
@@ -173,7 +173,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_3d_backprop():
     """
@@ -212,7 +212,7 @@ def test_pad_3d_backprop():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad_error_cases():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")

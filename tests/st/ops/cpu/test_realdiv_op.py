@@ -32,7 +32,7 @@ class NetRealDiv(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_real_div():
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)

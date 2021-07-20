@@ -34,7 +34,7 @@ class Net(Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_l2normalize_float32():
     x = np.arange(20*20*20*20).astype(np.float32).reshape(20, 20, 20, 20)
@@ -50,7 +50,7 @@ def test_l2normalize_float32():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_l2normalize_float16():
     x = np.arange(96).astype(np.float16).reshape(2, 3, 4, 4)
@@ -66,7 +66,7 @@ def test_l2normalize_float16():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_l2normalize_axis():
     axis = -2
@@ -83,7 +83,7 @@ def test_l2normalize_axis():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_l2normalize_epsilon():
     axis = -1

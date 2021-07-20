@@ -33,7 +33,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net01():
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')

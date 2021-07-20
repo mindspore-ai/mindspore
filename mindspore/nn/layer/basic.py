@@ -801,7 +801,7 @@ class Pad(Cell):
         if mode == "CONSTANT":
             self.pad = P.Pad(self.paddings)
         else:
-            self.paddings = Tensor(np.array(self.paddings))
+            self.paddings = Tensor(np.array(self.paddings), dtype=mstype.int64)
             self.pad = P.MirrorPad(mode=mode)
 
     def construct(self, x):

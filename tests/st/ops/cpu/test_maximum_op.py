@@ -42,7 +42,7 @@ class TwoTensorsMaximum(Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_constScalar_tensor_int():
     x = Tensor(np.array([[2, 3, 4], [100, 200, 300]]).astype(np.int32))
@@ -58,7 +58,7 @@ def test_maximum_constScalar_tensor_int():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_Not_Broadcast_int():
     x = Tensor(np.array([[2, 3, 4], [100, 200, 300]]).astype(np.int32))
@@ -75,7 +75,7 @@ def test_maximum_two_tensors_Not_Broadcast_int():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_Broadcast_int():
     x = Tensor(np.array([[2, 3, 4], [100, 200, 300]]).astype(np.int32))
@@ -92,7 +92,7 @@ def test_maximum_two_tensors_Broadcast_int():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_Broadcast_oneDimension_int():
     x = Tensor(np.array([[2, 3, 4], [100, 200, 300]]).astype(np.int32))
@@ -109,7 +109,7 @@ def test_maximum_two_tensors_Broadcast_oneDimension_int():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_notBroadcast_all_oneDimension_int():
     x = Tensor(np.array([[2]]).astype(np.int32))
@@ -126,7 +126,7 @@ def test_maximum_two_tensors_notBroadcast_all_oneDimension_int():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_notBroadcast_float32():
     x = Tensor(np.array([[2.0, 2.0], [-1, 100]]).astype(np.float32))
@@ -143,7 +143,7 @@ def test_maximum_two_tensors_notBroadcast_float32():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_two_tensors_notBroadcast_float64():
     x = Tensor(np.array([[2.0, 2.0], [-1, 100]]).astype(np.float64))

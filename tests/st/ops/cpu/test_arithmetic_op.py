@@ -82,7 +82,7 @@ def test_sub():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_div():
     prop = 1 if np.random.random() < 0.5 else -1
@@ -175,7 +175,7 @@ def test_div():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_floor_div():
     prop = 1 if np.random.random() < 0.5 else -1
@@ -240,7 +240,7 @@ def test_floor_div():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mod():
     prop = 1 if np.random.random() < 0.5 else -1
@@ -334,7 +334,7 @@ def test_mod():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_floor_mod():
     prop = 1 if np.random.random() < 0.5 else -1
