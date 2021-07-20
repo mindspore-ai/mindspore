@@ -271,16 +271,15 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
   if (device_target_ != kGPUDevice) {
     return;
   }
-  uint32_t graph_sum = graphs.size();
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
     if (debugger_) {
-      debugger_->PreExecute(graph, graph_sum);
+      debugger_->PreExecute(graph);
     }
     DumpSetup(graph);
   }
 }
-void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
+void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   CheckDatasetSinkMode();
@@ -294,10 +293,8 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
       rungraph_id_list_.push_back(graph_id);
     }
   }
-  // check and save graph_ptr, suspend if graph is new
-  MS_LOG(INFO) << "total number graph: " << graph_sum;
   // multiple graphs
-  if (graph_sum > 1) {
+  if (graph_proto_list_.size() > 1) {
     // there are more than one graphs are not dataset_graph
     if (not_dataset_graph_sum_ > 0) {
       // only try to enable debugger if they are not all dataset graphs
@@ -305,32 +302,21 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
         EnableDebugger();
       }
       if (debugger_enabled_) {
-        if (graph_proto_list_.size()) {
-          // only send compiled graphs once.
-          auto dbg_graph_ptr = graph_ptr_;
-          // use current graph ptr to load parameters
-          graph_ptr_ = graph_ptr;
-          LoadParametersAndConst();
-          // revert graph ptr to original value
-          graph_ptr_ = dbg_graph_ptr;
+        // only send compiled graphs once at the initial step.
+        auto dbg_graph_ptr = graph_ptr_;
+        // use current graph ptr to load parameters
+        graph_ptr_ = graph_ptr;
+        LoadParametersAndConst();
+        // revert graph ptr to original value
+        graph_ptr_ = dbg_graph_ptr;
 
-          SendMultiGraphsAndSuspend(graph_proto_list_);
+        SendMultiGraphsAndSuspend(graph_proto_list_);
 
-          graph_proto_list_.clear();
-        } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
-          // stop only when receive the first sub run graph for each step
-          // if we have stopped for the last kernel before, no need to stop again
-          if (pipeline::ExecutorPy::GetDebugTerminate()) {
-            return;
-          }
-          if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
-            CommandLoop();
-          }
-          debug_services_->ResetLoadedTensors();
-        }
+        graph_proto_list_.clear();
       }
     }
   } else if (graph_proto_list_.size() == 1) {
+    // single graph, and not the initial step
     if (device_target_ == kGPUDevice && num_step_ != 0) {
       if (debugger_enabled_ && !(run_level_ == "node" && suspended_at_last_kernel_)) {
         CommandLoop();
@@ -342,6 +328,17 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
       graph_ptr_ = nullptr;
       CheckGraphPtr(graph_ptr);
     }
+  } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
+    // Multiple graph, and not the initial step,
+    // stop only when receive the first sub run graph for each step
+    // if we have stopped for the last kernel before, no need to stop again
+    if (pipeline::ExecutorPy::GetDebugTerminate()) {
+      return;
+    }
+    if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
+      CommandLoop();
+    }
+    debug_services_->ResetLoadedTensors();
   }
   // resets for the new graph
   suspended_at_last_kernel_ = 0;
