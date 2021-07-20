@@ -171,11 +171,6 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
 
   //  The output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_;
-
-  // Used to indicate that in the control flow, when the input of the call node is a call node, the switch actor
-  // corresponding to the switch node called by the sub call node. At this time, the funcgraph of the input of
-  // the switch actor will return to a partial node or funcgraph.
-  bool is_mulit_call_{false};
 };
 
 using SwitchActorPtr = std::shared_ptr<SwitchActor>;

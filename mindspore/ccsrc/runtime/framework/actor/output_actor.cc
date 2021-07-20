@@ -25,28 +25,6 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index,
   MS_LOG(INFO) << "Create output tensor, output node: " << output_node->fullname_with_scope()
                << ", output index: " << output_index << ", output position: " << output_position;
 
-  // When there is a valuenode in the output, there is no device_address, and the valuenode is sent directly.
-  if (output_node->kernel_info() == nullptr && output_node->isa<ValueNode>()) {
-    const auto &node_value = output_node->cast<ValueNodePtr>()->value();
-    if (node_value->isa<ValueTuple>()) {
-      auto value_tuple = node_value->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(value_tuple);
-      auto tuple_value = value_tuple->value();
-      if (output_index >= tuple_value.size()) {
-        MS_LOG(ERROR) << "Invalid index of value tuple node, size:" << tuple_value.size() << " index:" << output_index;
-      }
-
-      if (tuple_value[output_index]->isa<tensor::Tensor>()) {
-        return tuple_value[output_index]->cast<TensorPtr>();
-      } else if (tuple_value[output_index]->isa<Int64Imm>()) {
-        return std::make_shared<tensor::Tensor>(GetValue<int64_t>(tuple_value[output_index]),
-                                                tuple_value[output_index]->type());
-      }
-    } else if (node_value->isa<tensor::Tensor>()) {
-      return node_value->cast<TensorPtr>();
-    }
-  }
-
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
   auto type_id = AnfAlgo::GetOutputInferDataType(output_node, output_index);

@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace runtime {
-constexpr size_t kSingleCallDepth = 1;
 namespace {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 // Fetch all the weight parameters related to node. It runs like this:
@@ -454,40 +453,6 @@ std::vector<AnfNodePtr> FetchParameterByControlNode(const std::vector<AnfNodePtr
   return parameters;
 }
 
-// Get the number of calls, that is, the number of times the input of the call node is the call node.
-size_t FetchCallDepth(const AnfNodePtr &node) {
-  if (!IsCallNode(node)) {
-    return 0;
-  }
-
-  const auto &cnode = node->cast<CNodePtr>();
-  const auto &inputs = cnode->inputs();
-  return kSingleCallDepth + FetchCallDepth(inputs[0]);
-}
-
-// Get the final subgraph called by fungraph through the depth of calls.
-FuncGraphPtr FetchFuncGraphByCallDepth(const FuncGraphPtr &func_graph, const size_t call_depth) {
-  if (call_depth <= kSingleCallDepth) {
-    return func_graph;
-  }
-
-  const auto &output = func_graph->output();
-  if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimPartial)) {
-    const auto &cnode = output->cast<CNodePtr>();
-    const auto &inputs = cnode->inputs();
-    if (inputs.size() < kPartialInputStartPos) {
-      MS_LOG(EXCEPTION) << "Invalid partial node:" << AnfAlgo::GetNodeDebugString(output);
-    }
-    const auto &called_func_graph = GetValueNode<FuncGraphPtr>(inputs[kPartialFuncGraphPos]);
-    return FetchFuncGraphByCallDepth(called_func_graph, call_depth - kSingleCallDepth);
-  } else if (output->isa<ValueNode>() && IsValueNode<FuncGraph>(output)) {
-    return FetchFuncGraphByCallDepth(GetValueNode<FuncGraphPtr>(output), call_depth - kSingleCallDepth);
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid output for call depth:" << call_depth << " funcgraph:" << func_graph->ToString()
-                      << " output node:" << AnfAlgo::GetNodeDebugString(output);
-  }
-}
-
 // Get funcgraph from node, the interface only accepts partial node and funcgraph value node.
 FuncGraphPtr FetchFuncGraphInNode(const auto &node) {
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
@@ -780,9 +745,6 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   RealToFormalNode formal_to_real_front_parameters;
   for (const auto real_to_formal_front_parameter : real_to_formal_front_parameters) {
     for (const auto formal_parameter : real_to_formal_front_parameter.second) {
-      MS_LOG(DEBUG) << "Control node parser front node pair, key:"
-                    << real_to_formal_front_parameter.first->DebugString()
-                    << " value:" << formal_parameter->DebugString();
       formal_to_real_front_parameters[formal_parameter].emplace_back(real_to_formal_front_parameter.first);
     }
   }
@@ -961,7 +923,6 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
             MS_LOG(INFO) << "Cannot find backend parameter for front parameter:"
                          << AnfAlgo::GetNodeDebugString(parameters[i - kCallInputStartPos])
                          << ", used the default format";
-
             CreateDeviceTensorForFrontParameter(inputs[i], device_contexts[0]);
             front_value_nodes_.push_back({inputs[i], device_contexts[0]});
             continue;
@@ -1148,6 +1109,7 @@ void ControlNodeParser::FetchFuncGraphCallNum(const std::vector<AnfNodePtr> &con
 
       for (const auto &func_graph : func_graphs) {
         MS_EXCEPTION_IF_NULL(func_graph);
+
         if (func_graph_to_call_num_.find(func_graph) == func_graph_to_call_num_.end()) {
           func_graph_to_call_num_[func_graph] = 1;
         } else {

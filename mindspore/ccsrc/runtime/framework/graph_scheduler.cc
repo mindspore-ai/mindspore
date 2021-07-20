@@ -1240,11 +1240,9 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
         continue;
       }
 
-      // If the output of funcgraph is a value node, no need to create gather actor.
       if (AnfAlgo::CheckPrimitiveType(inputs[kReturnInputPos], prim::kPrimPartial)) {
         continue;
       }
-
       auto actor_name = func_graph->ToString();
       std::vector<KernelWithIndex> parameters;
       for (const auto &parameter : func_graph->get_inputs()) {
@@ -2065,69 +2063,14 @@ void GraphScheduler::PrepareInputNodeForSwitchActor(const std::vector<AnfNodePtr
 
     // Before link data arrow, parameters of the call node in switch-call need to be add to the switch actor.
     if (inputs[0]->isa<CNode>()) {
-      // Add the input of call node to switch actor.
-      if (IsCallNode(inputs[0])) {
-        const auto &sub_call_cnode = inputs[0]->cast<CNodePtr>();
-        const auto &sub_inputs = sub_call_cnode->inputs();
-
-        if (AnfAlgo::CheckPrimitiveType(sub_inputs[0], prim::kPrimSwitchLayer)) {
-          auto actor = FetchActor(sub_inputs[0]->DebugString());
-          MS_EXCEPTION_IF_NULL(actor);
-          auto switch_actor = dynamic_cast<SwitchActor *>(actor);
-
-          for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
-            switch_actor->AddCommonInput(inputs[i]);
-          }
+      auto actor = FetchActor(inputs[0]->DebugString());
+      MS_EXCEPTION_IF_NULL(actor);
+      auto switch_actor = dynamic_cast<SwitchActor *>(actor);
+      for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
+        if (HasAbstractMonad(inputs[i])) {
+          continue;
         }
-      } else if (IsSubCallNode(cnode)) {
-        // Add the input of sub call node to switch actor.
-        auto actor = FetchActor(inputs[0]->DebugString());
-        MS_EXCEPTION_IF_NULL(actor);
-        auto switch_actor = dynamic_cast<SwitchActor *>(actor);
-
-        const auto &tuple_node = inputs[0]->cast<CNodePtr>()->input(kSwitchLayerBranchPos);
-        const auto &tuple_inputs = tuple_node->cast<CNodePtr>()->inputs();
-
-        FuncGraphPtr func_graph = nullptr;
-        for (size_t i = kMakeTupleInputStartPos; i < tuple_inputs.size(); ++i) {
-          int pre_real_parameter_num = 0;
-          if (AnfAlgo::CheckPrimitiveType(tuple_inputs[i], prim::kPrimPartial)) {
-            pre_real_parameter_num = (tuple_inputs[i]->cast<CNodePtr>()->inputs().size() - kPartialInputStartPos);
-            func_graph = GetValueNode<FuncGraphPtr>(tuple_inputs[i]->cast<CNodePtr>()->input(kPartialFuncGraphPos));
-          } else {
-            func_graph = GetValueNode<FuncGraphPtr>(tuple_inputs[i]);
-          }
-          const auto parameters = func_graph->parameters();
-          const auto &output = func_graph->output();
-          if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimPartial)) {
-            const auto &sub_partial_inputs = output->cast<CNodePtr>()->inputs();
-
-            // Check whether the input node of the sub call node needs to be added to the switch actor. Only when
-            // the final return is a partial node and the partial node needs this input, the input node is added
-            // to the switch actor/
-            for (size_t j = kPartialInputStartPos; j < sub_partial_inputs.size(); ++j) {
-              const auto &real_partial_input = AnfAlgo::VisitKernelWithReturnType(sub_partial_inputs[j], 0).first;
-              const auto &iter = find(parameters.begin(), parameters.end(), real_partial_input);
-
-              if ((iter != parameters.end()) && (iter - parameters.begin() >= pre_real_parameter_num) &&
-                  (iter - parameters.begin() <
-                   SizeToInt(pre_real_parameter_num + inputs.size() - kCallInputStartPos))) {
-                size_t pos = iter - parameters.begin() - pre_real_parameter_num + kCallInputStartPos;
-                switch_actor->AddSingleInput(inputs[pos], i - 1);
-              }
-            }
-          }
-        }
-      } else {
-        auto actor = FetchActor(inputs[0]->DebugString());
-        MS_EXCEPTION_IF_NULL(actor);
-        auto switch_actor = dynamic_cast<SwitchActor *>(actor);
-        for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
-          if (HasAbstractMonad(inputs[i])) {
-            continue;
-          }
-          switch_actor->AddCommonInput(inputs[i]);
-        }
+        switch_actor->AddCommonInput(inputs[i]);
       }
     }
   }
@@ -2244,11 +2187,6 @@ void GraphScheduler::LinkDataArrowByCallInput(const KernelWithIndex &call_node_w
   // Fetch all the funcgraph that call node would call.
   const auto cnode = call_node_with_index.first->cast<CNodePtr>();
   std::vector<FuncGraphPtr> func_graphs = FetchFuncGraphbyCallNode(cnode);
-  const auto &call_inputs = cnode->inputs();
-  auto switch_node = call_inputs[0];
-  if (IsCallNode(switch_node)) {
-    switch_node = call_inputs[0]->cast<CNodePtr>()->input(0);
-  }
 
   // Collect the output of each funcgraph.
   for (const auto &func_graph : func_graphs) {
