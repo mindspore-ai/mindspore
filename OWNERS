@@ -4,4 +4,10 @@ approvers:
 - baochong
 - zhaizhiqiang
 - leonwanghui
-- gaoxiong1
+
+files:
+  "akg":
+    approvers:
+    - gaoxiong1
+    - ckey_dou
+    - anyrenwei
