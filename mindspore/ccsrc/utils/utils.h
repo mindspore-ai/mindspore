@@ -297,6 +297,10 @@ constexpr auto kSparseSoftmaxCrossEntropyWithLogitsOpName = "SparseSoftmaxCrossE
 constexpr auto kOneHotOpName = "OneHot";
 constexpr auto kSoftmaxCrossEntropyWithLogitsOpName = "SoftmaxCrossEntropyWithLogits";
 constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
+constexpr auto kLogSoftmaxGradOpName = "LogSoftmaxGrad";
+constexpr auto kLayerNormGradOpName = "LayerNormGrad";
+constexpr auto kMinimumGradOpName = "MinimumGrad";
+constexpr auto kMaximumGradOpName = "MaximumGrad";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
@@ -531,7 +535,9 @@ constexpr auto kOpFormat_NCHW = "NCHW";
 constexpr auto kOpFormat_NHWC = "NHWC";
 constexpr auto kOpFormat_HWCN = "HWCN";
 constexpr auto kOpFormat_NC1HWC0 = "NC1HWC0";
+constexpr auto kNCHWShapeSize = 4;
 constexpr auto kOpFormat_FRAC_Z = "FracZ";
+constexpr auto kOpFormat_FRACTAL_Z = "FRACTAL_Z";
 constexpr auto kOpFormat_FRAC_NZ = "FRACTAL_NZ";
 constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
 constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";

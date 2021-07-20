@@ -1246,6 +1246,37 @@ KernelType AnfRuntimeAlgorithm::GetKernelType(const AnfNodePtr &node) {
   return build_info->kernel_type();
 }
 
+void AnfRuntimeAlgorithm::SetFusionType(const AnfNodePtr &node, const kernel::FusionType &type) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+  MS_EXCEPTION_IF_NULL(builder);
+  builder->SetFusionType(type);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+}
+
+void AnfRuntimeAlgorithm::SetOutputDataDesc(const AnfNodePtr &node, const std::vector<nlohmann::json> &desc) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+  MS_EXCEPTION_IF_NULL(builder);
+  builder->SetOutputDataDesc(desc);
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+}
+
+std::vector<nlohmann::json> AnfRuntimeAlgorithm::GetOutputDataDesc(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
+  if (kernel_info == nullptr) {
+    return {};
+  }
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr) {
+    return {};
+  }
+  return build_info->output_data_desc();
+}
+
 kernel::Processor AnfRuntimeAlgorithm::GetProcessor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
