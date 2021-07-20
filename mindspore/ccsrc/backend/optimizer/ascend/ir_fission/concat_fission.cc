@@ -60,7 +60,7 @@ AnfNodePtr CreateNewConcat(const FuncGraphPtr &func_graph, const CNodePtr &origi
   output_shape[axis] = 0;
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
     input_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, i - 1);
-    output_shape[axis] += LongToSize(input_shape[axis]);
+    output_shape[axis] += input_shape[axis];
   }
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_concat_cnode, 0)}, {output_shape},
                                       new_concat.get());
