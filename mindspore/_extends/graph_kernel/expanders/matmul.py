@@ -17,6 +17,7 @@ from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
 from ._utils import Expander, ExpanderInfoValidator as VLD
 
+
 @VLD.check_attrs('transpose_a', 'transpose_b', 'left_format', 'right_format')
 class MatMul(Expander):
     """
@@ -56,7 +57,7 @@ class MatMul(Expander):
     def _expand(self, graph_builder):
         if not self._optimize_to_mul():
             raise GKException("MatMul/BatchMatMul do not need to be replaced by Mul")
-        #Matmul is replaced by Mul([b m k], [b k n]) when k==1
+        # Matmul is replaced by Mul([b m k], [b k n]) when k==1
         input_a = self.inputs[0]
         input_b = self.inputs[1]
         if self.transpose_a:
@@ -69,6 +70,7 @@ class MatMul(Expander):
         if 'dst_type' in self.attrs and self.inputs[0].dtype != self.attrs['dst_type']:
             result = graph_builder.emit('Cast', [result], attrs={'dst_type': self.attrs['dst_type']})
         return result
+
 
 class BatchMatMul(MatMul):
     """BatchMatMul expander"""

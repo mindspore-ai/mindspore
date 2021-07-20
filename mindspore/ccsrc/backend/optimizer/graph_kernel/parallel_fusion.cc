@@ -16,22 +16,6 @@
 
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
 
-#include <algorithm>
-#include <cstddef>
-#include <list>
-#include <map>
-#include <memory>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <stack>
-#include <string>
-#include <tuple>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-#include <cstdlib>
-
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_cloner.h"
