@@ -63,6 +63,8 @@ class RegistryKernelImpl {
 
  private:
   std::mutex lock_;
+
+  kernel::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
 };
 }  // namespace mindspore::lite
 
