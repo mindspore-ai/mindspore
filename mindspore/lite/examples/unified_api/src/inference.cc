@@ -29,15 +29,13 @@ static void Usage() { std::cout << "Usage: infer -f <.ms model file>" << std::en
 static std::string ReadArgs(int argc, char *argv[]) {
   std::string infer_model_fn;
   int opt;
-  while ((opt = getopt(argc, argv, "f:h")) != -1) {
+  while ((opt = getopt(argc, argv, "f:")) != -1) {
     switch (opt) {
       case 'f':
         infer_model_fn = std::string(optarg);
         break;
-      case 'h':
       default:
-        Usage();
-        exit(-1);
+        break;
     }
   }
   return infer_model_fn;
@@ -45,6 +43,10 @@ static std::string ReadArgs(int argc, char *argv[]) {
 
 int main(int argc, char **argv) {
   std::string infer_model_fn = ReadArgs(argc, argv);
+  if (infer_model_fn.size() == 0) {
+    Usage();
+    return -1;
+  }
 
   auto context = std::make_shared<mindspore::Context>();
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
