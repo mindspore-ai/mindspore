@@ -53,6 +53,9 @@ bool IsCallNode(const AnfNodePtr &node);
 // Check if the call node is the input of another call node.
 bool IsSubCallNode(const AnfNodePtr &node);
 
+// Recursive interface, find the real output of funcgraph called by call node.
+AnfNodePtr FetchRealOutputByCallNode(const AnfNodePtr &node, std::set<AnfNodePtr> *call_nodes);
+
 // Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
 // it is determined whether it is a weight.
 bool HasAbstractRef(const AnfNodePtr &node);
