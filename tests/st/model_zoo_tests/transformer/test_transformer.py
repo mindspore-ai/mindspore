@@ -27,13 +27,29 @@ from mindspore.train.callback import Callback
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 from mindspore import context
-from src.transformer_model import TransformerConfig
-from src.transformer_for_train import TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
-from src.config import cfg, transformer_net_cfg
-from src.lr_schedule import create_dynamic_lr
+from easydict import EasyDict as edict
+from model_zoo.official.nlp.transformer.src.transformer_model import TransformerConfig
+from model_zoo.official.nlp.transformer.src.transformer_for_train import TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
+from model_zoo.official.nlp.transformer.src.lr_schedule import create_dynamic_lr
 from tests.st.model_zoo_tests import utils
 
+
 DATA_DIR = ["/home/workspace/mindspore_dataset/transformer/test-mindrecord"]
+
+cfg = edict({
+    'transformer_network': 'large',
+    'init_loss_scale_value': 1024,
+    'scale_factor': 2,
+    'scale_window': 2000,
+    'optimizer': 'Adam',
+    'optimizer_adam_beta2': 0.997,
+    'lr_schedule': edict({
+        'learning_rate': 2.0,
+        'warmup_steps': 8000,
+        'start_decay_step': 16000,
+        'min_lr': 0.0,
+    }),
+})
 
 
 def get_config(version='base', batch_size=1):
@@ -129,7 +145,7 @@ class TimeMonitor(Callback):
         self.per_step_mseconds_list.append(epoch_mseconds / self.data_size)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -144,7 +160,7 @@ def test_transformer():
     batch_size = 96
     epoch_size = 3
     config = get_config(version=version, batch_size=batch_size)
-    dataset = load_test_data(batch_size=transformer_net_cfg.batch_size, data_file=DATA_DIR)
+    dataset = load_test_data(batch_size=config.batch_size, data_file=DATA_DIR)
 
     netwithloss = TransformerNetworkWithLoss(config, True)
 
@@ -171,7 +187,7 @@ def test_transformer():
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    assert np.allclose(loss_value[0], 11.241606, 0, 0.000005)
+    assert np.allclose(loss_value[0], 11.241601, 0, 0.000005)
 
     expect_loss_value = [11.241606, 11.243232, 11.217459, 11.204157, 11.213804,
                          11.215373, 11.190564, 11.150393, 11.191823, 11.160045]
@@ -201,7 +217,7 @@ def test_transformer():
     assert per_step_mseconds <= expect_per_step_mseconds + 10
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
