@@ -379,8 +379,10 @@ function Run_CodeExamples() {
       accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.9) }')
       if [ $accurate -eq 1 ]; then
         echo "Unified API Trained and reached accuracy" >> ${run_code_examples_log_file}
+        echo 'code_examples: unified_api pass' >> ${run_benchmark_train_result_file}
       else
         echo "Unified API demo failure" >> ${run_code_examples_log_file}
+        echo 'code_examples: unified_api failed' >> ${run_benchmark_train_result_file}
         fail=1
       fi
       rm -rf package*/dataset
@@ -393,8 +395,10 @@ function Run_CodeExamples() {
       accurate=$(tail -10 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.9) }')
       if [ $accurate -eq 1 ]; then
         echo "Lenet Trained and reached accuracy" >> ${run_code_examples_log_file}
+        echo 'code_examples: train_lenet pass' >> ${run_benchmark_train_result_file}
       else
         echo "Train Lenet demo failure" >> ${run_code_examples_log_file}
+        echo 'code_examples: train_lenet failed' >> ${run_benchmark_train_result_file}
         fail=1
       fi
       rm -rf package*/dataset
