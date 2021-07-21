@@ -90,6 +90,9 @@ class Conv3dGpuKernel : public GpuKernel {
       return true;
     }
     CheckTensorSize({in_shape});
+    if (in_shape.size() != 5) {
+      MS_LOG(EXCEPTION) << "Conv3dGpuKernel input must have rank 5.";
+    }
     n_ = SizeToInt(in_shape[0]);
     c_ = SizeToInt(in_shape[1]);
     old_depth_ = SizeToInt(in_shape[2]);

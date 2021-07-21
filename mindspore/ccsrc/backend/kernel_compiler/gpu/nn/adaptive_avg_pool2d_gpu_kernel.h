@@ -79,6 +79,12 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     len = static_cast<uint>(input_shape.size());
+
+    if (len < 2) {
+      MS_LOG(ERROR) << "The input should have rank at least 2.";
+      return false;
+    }
+
     input_height = static_cast<uint>(input_shape[len - 2]);
     input_width = static_cast<uint>(input_shape[len - 1]);
     size = static_cast<uint>(len == 3 ? input_shape[0] : input_shape[0] * input_shape[1]);
