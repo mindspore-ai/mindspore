@@ -359,3 +359,84 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   lite_session->Init(context);
   ASSERT_EQ(mindspore::lite::RET_OK, lite_session->CompileGraph(model));
 }
+
+TEST_F(SchedulerTest, TestScheduleInt32OpToFp16Subgraph) {
+  auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
+  meta_graph->name = "graph";
+  meta_graph->version = mindspore::lite::Version();
+
+  auto cast = std::make_unique<mindspore::schema::CNodeT>();
+  cast->inputIndex = {0, 1};
+  cast->outputIndex = {2};
+  cast->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
+  cast->primitive->value.type = mindspore::schema::PrimitiveType_Cast;
+  auto primitive = new mindspore::schema::CastT;
+  cast->primitive->value.value = primitive;
+  cast->name = "cast";
+
+  auto abs = std::make_unique<mindspore::schema::CNodeT>();
+  abs->inputIndex = {2};
+  abs->outputIndex = {3};
+  abs->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
+  abs->primitive->value.type = mindspore::schema::PrimitiveType_Abs;
+  auto abs_primitive = new mindspore::schema::AbsT;
+  abs->primitive->value.value = abs_primitive;
+  abs->name = "abs";
+
+  auto tensor0 = std::make_unique<mindspore::schema::TensorT>();
+  tensor0->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor0->format = mindspore::schema::Format_NHWC;
+  tensor0->dataType = mindspore::TypeId::kNumberTypeInt32;
+  tensor0->dims = {1, 16, 16, 3};
+  tensor0->offset = -1;
+
+  auto tensor1 = std::make_unique<mindspore::schema::TensorT>();
+  tensor1->nodeType = mindspore::lite::NodeType_Parameter;
+  tensor1->format = mindspore::schema::Format_NHWC;
+  tensor1->dataType = mindspore::TypeId::kNumberTypeInt32;
+  std::vector<int> dst_type = {43};
+  tensor1->data.resize(sizeof(int));
+  ::memcpy(tensor1->data.data(), dst_type.data(), sizeof(int));
+  tensor1->dims = {1};
+  tensor1->offset = -1;
+
+  auto tensor2 = std::make_unique<mindspore::schema::TensorT>();
+  tensor2->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor2->format = mindspore::schema::Format_NHWC;
+  tensor2->dataType = mindspore::TypeId::kNumberTypeFloat32;
+  tensor2->dims = {1, 16, 16, 3};
+  tensor2->offset = -1;
+
+  auto tensor3 = std::make_unique<mindspore::schema::TensorT>();
+  tensor3->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor3->format = mindspore::schema::Format_NHWC;
+  tensor3->dataType = mindspore::TypeId::kNumberTypeFloat32;
+  tensor3->dims = {1, 16, 16, 3};
+  tensor3->offset = -1;
+
+  meta_graph->nodes.emplace_back(std::move(cast));
+  meta_graph->nodes.emplace_back(std::move(abs));
+
+  meta_graph->allTensors.emplace_back(std::move(tensor0));
+  meta_graph->allTensors.emplace_back(std::move(tensor1));
+  meta_graph->allTensors.emplace_back(std::move(tensor2));
+  meta_graph->allTensors.emplace_back(std::move(tensor3));
+
+  meta_graph->inputIndex = {0};
+  meta_graph->outputIndex = {3};
+  flatbuffers::FlatBufferBuilder builder(1024);
+  auto offset = mindspore::schema::MetaGraph::Pack(builder, meta_graph.get());
+  builder.Finish(offset);
+  mindspore::schema::FinishMetaGraphBuffer(builder, offset);
+  size_t size = builder.GetSize();
+  const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
+  auto model = mindspore::lite::Model::Import(content, size);
+  auto context = new InnerContext();
+  context->Init();
+  mindspore::lite::DeviceContext device_ctx = {mindspore::lite::DT_CPU, {true, mindspore::lite::NO_BIND}};
+  context->device_list_.emplace_back(device_ctx);
+  auto lite_session = new LiteSession();
+  lite_session->Init(context);
+  ASSERT_EQ(mindspore::lite::RET_OK, lite_session->CompileGraph(model));
+  ASSERT_EQ(1, lite_session->get_kernels().size());
+}

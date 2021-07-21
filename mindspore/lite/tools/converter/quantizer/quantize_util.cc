@@ -58,6 +58,13 @@ const std::vector<std::string> QuantStrategy::mul_types_ = {ops::kNameMatMul, op
 constexpr int kDim2 = 2;
 constexpr int kDim4 = 4;
 
+const int kLstmInputWeightIndex = 1;
+const int kLstmStateWeightIndex = 2;
+const int kLstmWeightShapeSize = 3;
+const int kSingleDirBiasTensorSize = 4;
+const int kLstmBiasShapeSize = 2;
+const int kLstmBiasIndex = 3;
+
 QuantStrategy::QuantStrategy(size_t weight_size, size_t conv_weight_quant_channel_threshold)
     : m_weight_size_(weight_size), m_conv_weight_quant_channel_threshold_(conv_weight_quant_channel_threshold) {}
 
@@ -957,19 +964,19 @@ void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes,
     *channel_at_first =
       index != 1 || (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b());
   } else if (primitive->name() == ops::kNameLSTM) {
-    if (index == 1 || index == 2) {
-      if (shapes.size() != 3) {
+    if (index == kLstmInputWeightIndex || index == kLstmStateWeightIndex) {
+      if (shapes.size() != kLstmWeightShapeSize) {
         MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
       } else {
         *channel_cnt = shapes[0] * shapes[1];
       }
-    } else if (index == 3) {
-      if (shapes.size() != 2) {
+    } else if (index == kLstmBiasIndex) {
+      if (shapes.size() != kLstmBiasShapeSize) {
         MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
       } else {
         auto tensor_elem_cnt = shapes[0] * shapes[1];
-        if (tensor_elem_cnt / 4 * 4 == tensor_elem_cnt) {
-          *channel_cnt = 4;
+        if (tensor_elem_cnt % kSingleDirBiasTensorSize == 0) {
+          *channel_cnt = kSingleDirBiasTensorSize;
         }
       }
     } else {
@@ -985,19 +992,19 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
     MS_ASSERT(matmul_prim != nullptr);
     *channel_at_first = index != 1 || matmul_prim->transpose_b;
   } else if (primitive.value.type == schema::PrimitiveType_LSTM) {
-    if (index == 1 || index == 2) {
-      if (shapes.size() != 3) {
+    if (index == kLstmInputWeightIndex || index == kLstmStateWeightIndex) {
+      if (shapes.size() != kLstmWeightShapeSize) {
         MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
       } else {
         *channel_cnt = shapes[0] * shapes[1];
       }
-    } else if (index == 3) {
-      if (shapes.size() != 2) {
+    } else if (index == kLstmBiasIndex) {
+      if (shapes.size() != kLstmBiasShapeSize) {
         MS_LOG(WARNING) << "unexpected lstm shape size: " << shapes.size();
       } else {
         auto tensor_elem_cnt = shapes[0] * shapes[1];
-        if (tensor_elem_cnt / 4 * 4 == tensor_elem_cnt) {
-          *channel_cnt = 4;
+        if (tensor_elem_cnt % kSingleDirBiasTensorSize == 0) {
+          *channel_cnt = kSingleDirBiasTensorSize;
         }
       }
     } else {
