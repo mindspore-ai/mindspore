@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ class ArgmaxGpuKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     S *output = GetDeviceAddress<S>(outputs, 0);
+    MS_EXCEPTION_IF_NULL(input);
+    MS_EXCEPTION_IF_NULL(output);
     CalArgmax(input, bound_, outer_size_, inner_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -46,6 +48,10 @@ class ArgmaxGpuKernel : public GpuKernel {
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     int64_t dims = shape.size();
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
+    if (axis < -dims || axis >= dims) {
+      MS_LOG(EXCEPTION) << "axis must be in the range [-rank, rank)";
+    }
+
     if (axis < 0) {
       axis += dims;
     }
