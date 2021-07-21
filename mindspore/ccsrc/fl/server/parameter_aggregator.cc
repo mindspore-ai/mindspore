@@ -281,16 +281,16 @@ bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<
   KernelParams aggr_params = {};
 
   const std::vector<std::string> &input_names = aggr_kernel->input_names();
-  std::transform(input_names.begin(), input_names.end(), std::back_inserter(aggr_params.inputs),
-                 [&](const std::string &name) { return memory_register->addresses()[name]; });
+  (void)std::transform(input_names.begin(), input_names.end(), std::back_inserter(aggr_params.inputs),
+                       [&](const std::string &name) { return memory_register->addresses()[name]; });
 
   const std::vector<std::string> &workspace_names = aggr_kernel->workspace_names();
-  std::transform(workspace_names.begin(), workspace_names.end(), std::back_inserter(aggr_params.workspace),
-                 [&](const std::string &name) { return memory_register->addresses()[name]; });
+  (void)std::transform(workspace_names.begin(), workspace_names.end(), std::back_inserter(aggr_params.workspace),
+                       [&](const std::string &name) { return memory_register->addresses()[name]; });
 
   const std::vector<std::string> &output_names = aggr_kernel->output_names();
-  std::transform(output_names.begin(), output_names.end(), std::back_inserter(aggr_params.outputs),
-                 [&](const std::string &name) { return memory_register->addresses()[name]; });
+  (void)std::transform(output_names.begin(), output_names.end(), std::back_inserter(aggr_params.outputs),
+                       [&](const std::string &name) { return memory_register->addresses()[name]; });
 
   aggr_kernel->SetParameterAddress(aggr_params.inputs, aggr_params.workspace, aggr_params.outputs);
   aggregation_kernel_parameters_.push_back(std::make_pair(aggr_kernel, aggr_params));
@@ -304,16 +304,16 @@ bool ParameterAggregator::GenerateOptimizerKernelParams(const std::shared_ptr<ke
   KernelParams optimizer_params = {};
 
   const std::vector<std::string> &input_names = optimizer_kernel->input_names();
-  std::transform(input_names.begin(), input_names.end(), std::back_inserter(optimizer_params.inputs),
-                 [&](const std::string &name) { return memory_register->addresses()[name]; });
+  (void)std::transform(input_names.begin(), input_names.end(), std::back_inserter(optimizer_params.inputs),
+                       [&](const std::string &name) { return memory_register->addresses()[name]; });
 
   const std::vector<std::string> &workspace_names = optimizer_kernel->workspace_names();
-  std::transform(workspace_names.begin(), workspace_names.end(), std::back_inserter(optimizer_params.workspace),
-                 [&](const std::string &name) { return memory_register->addresses()[name]; });
+  (void)std::transform(workspace_names.begin(), workspace_names.end(), std::back_inserter(optimizer_params.workspace),
+                       [&](const std::string &name) { return memory_register->addresses()[name]; });
 
   const std::vector<std::string> &output_names = optimizer_kernel->output_names();
-  std::transform(output_names.begin(), output_names.end(), std::back_inserter(optimizer_params.outputs),
-                 [&](const std::string &name) { return memory_register->addresses()[name]; });
+  (void)std::transform(output_names.begin(), output_names.end(), std::back_inserter(optimizer_params.outputs),
+                       [&](const std::string &name) { return memory_register->addresses()[name]; });
 
   optimizer_kernel_parameters_.push_back(std::make_pair(optimizer_kernel, optimizer_params));
   return true;

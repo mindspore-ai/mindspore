@@ -70,8 +70,14 @@ void FLWorker::Run() {
 
 void FLWorker::Finalize() {
   MS_EXCEPTION_IF_NULL(worker_node_);
-  worker_node_->Finish();
-  worker_node_->Stop();
+  if (!worker_node_->Finish()) {
+    MS_LOG(ERROR) << "Worker node finishing failed.";
+    return;
+  }
+  if (!worker_node_->Stop()) {
+    MS_LOG(ERROR) << "Worker node stopping failed.";
+    return;
+  }
 }
 
 bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size, ps::core::TcpUserCommand command,
@@ -201,8 +207,8 @@ void FLWorker::ProcessAfterScalingOut() {
   }
 
   MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize for worker.";
-  server_num_ = worker_node_->server_num();
-  worker_num_ = worker_node_->worker_num();
+  server_num_ = IntToUint(worker_node_->server_num());
+  worker_num_ = IntToUint(worker_node_->worker_num());
   MS_LOG(INFO) << "After scheduler scaling out, worker number is " << worker_num_ << ", server number is "
                << server_num_ << ". Exit safemode.";
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
@@ -215,8 +221,8 @@ void FLWorker::ProcessAfterScalingIn() {
   }
 
   MS_LOG(INFO) << "Cluster scaling in completed. Reinitialize for worker.";
-  server_num_ = worker_node_->server_num();
-  worker_num_ = worker_node_->worker_num();
+  server_num_ = IntToUint(worker_node_->server_num());
+  worker_num_ = IntToUint(worker_node_->worker_num());
   MS_LOG(INFO) << "After scheduler scaling in, worker number is " << worker_num_ << ", server number is " << server_num_
                << ". Exit safemode.";
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));

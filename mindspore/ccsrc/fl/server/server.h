@@ -33,6 +33,9 @@
 namespace mindspore {
 namespace fl {
 namespace server {
+// The sleeping time of the server thread before the networking is completed.
+constexpr uint32_t kServerSleepTimeForNetworking = 1000;
+
 // Class Server is the entrance of MindSpore's parameter server training mode and federated learning.
 class Server {
  public:
@@ -51,7 +54,7 @@ class Server {
 
   void SwitchToSafeMode();
   void CancelSafeMode();
-  bool IsSafeMode();
+  bool IsSafeMode() const;
 
  private:
   Server()
@@ -162,8 +165,6 @@ class Server {
   uint32_t server_num_;
   uint32_t worker_num_;
   uint16_t fl_server_port_;
-  size_t start_fl_job_cnt_;
-  size_t update_model_cnt_;
   size_t cipher_initial_client_cnt_;
   size_t cipher_exchange_secrets_cnt_;
   size_t cipher_share_secrets_cnt_;
@@ -171,9 +172,6 @@ class Server {
   size_t cipher_reconstruct_secrets_up_cnt_;
   size_t cipher_reconstruct_secrets_down_cnt_;
   uint64_t cipher_time_window_;
-
-  float percent_for_update_model_;
-  float percent_for_get_model_;
 };
 }  // namespace server
 }  // namespace fl

@@ -44,7 +44,7 @@
 #include "debug/common.h"
 #include "utils/trace_base.h"
 #include "frontend/parallel/context.h"
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -2482,7 +2482,7 @@ void SessionBasic::DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
 
 void SessionBasic::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIROptimization(graph); }
 
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) {
   if (!ps::PSContext::instance()->is_worker()) {
     return;

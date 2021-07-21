@@ -104,7 +104,7 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
     }
 
     CountResponse count_rsp;
-    count_rsp.ParseFromArray(report_cnt_rsp_msg->data(), SizeToInt(report_cnt_rsp_msg->size()));
+    (void)count_rsp.ParseFromArray(report_cnt_rsp_msg->data(), SizeToInt(report_cnt_rsp_msg->size()));
     if (!count_rsp.result()) {
       MS_LOG(ERROR) << "Reporting count failed:" << count_rsp.reason();
       if (reason != nullptr && count_rsp.reason().find(kNetworkError) != std::string::npos) {
@@ -138,8 +138,8 @@ bool DistributedCountService::CountReachThreshold(const std::string &name) {
     }
 
     CountReachThresholdResponse count_reach_threshold_rsp;
-    count_reach_threshold_rsp.ParseFromArray(query_cnt_enough_rsp_msg->data(),
-                                             SizeToInt(query_cnt_enough_rsp_msg->size()));
+    (void)count_reach_threshold_rsp.ParseFromArray(query_cnt_enough_rsp_msg->data(),
+                                                   SizeToInt(query_cnt_enough_rsp_msg->size()));
     return count_reach_threshold_rsp.is_enough();
   }
 }
@@ -178,7 +178,7 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core:
   }
 
   CountRequest report_count_req;
-  report_count_req.ParseFromArray(message->data(), SizeToInt(message->len()));
+  (void)report_count_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = report_count_req.name();
   const std::string &id = report_count_req.id();
 
@@ -228,7 +228,7 @@ void DistributedCountService::HandleCountReachThresholdRequest(
   }
 
   CountReachThresholdRequest count_reach_threshold_req;
-  count_reach_threshold_req.ParseFromArray(message->data(), SizeToInt(message->len()));
+  (void)count_reach_threshold_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = count_reach_threshold_req.name();
 
   std::unique_lock<std::mutex> lock(mutex_[name]);
@@ -256,7 +256,7 @@ void DistributedCountService::HandleCounterEvent(const std::shared_ptr<ps::core:
   communicator_->SendResponse(couter_event_rsp_msg.data(), couter_event_rsp_msg.size(), message);
 
   CounterEvent counter_event;
-  counter_event.ParseFromArray(message->data(), SizeToInt(message->len()));
+  (void)counter_event.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &type = counter_event.type();
   const auto &name = counter_event.name();
 

@@ -24,6 +24,7 @@
 namespace mindspore {
 namespace fl {
 namespace server {
+constexpr uint32_t kDefaultVirtualNodeNum = 32;
 // To support distributed storage and make servers easy to scale-out and scale-in for a large load of metadata in
 // server, we use class ConsistentHashRing to help servers find out which metadata is stored in which server node.
 
