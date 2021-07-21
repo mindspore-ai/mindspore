@@ -275,6 +275,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             data = param["data"].asnumpy().reshape(-1)
             data_list[key].append(data)
 
+    if not isinstance(ckpt_file_name, str):
+        raise ValueError("The ckpt_file_name must be string.")
+    ckpt_file_name = os.path.realpath(ckpt_file_name)
     if async_save:
         thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list, enc_key, enc_mode), name="asyn_save_ckpt")
         thr.start()
@@ -344,10 +347,11 @@ def load(file_name, **kwargs):
     """
     if not isinstance(file_name, str):
         raise ValueError("The file name must be string.")
-    if not os.path.exists(file_name):
-        raise ValueError("The file does not exist.")
     if not file_name.endswith(".mindir"):
         raise ValueError("The MindIR should end with mindir, please input the correct file name.")
+    if not os.path.exists(file_name):
+        raise ValueError("The file does not exist.")
+    file_name = os.path.realpath(file_name)
 
     logger.info("Execute the process of loading mindir.")
     if 'dec_key' in kwargs.keys():
@@ -479,6 +483,7 @@ def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
 
     if ckpt_file_name[-5:] != ".ckpt":
         raise ValueError("Please input the correct checkpoint file name.")
+    ckpt_file_name = os.path.realpath(ckpt_file_name)
 
     if filter_prefix is not None:
         if not isinstance(filter_prefix, (str, list, tuple)):
@@ -597,6 +602,9 @@ def _save_graph(network, file_name):
     """
     logger.info("Execute the process of saving graph.")
 
+    if not isinstance(file_name, str):
+        raise ValueError("The ckpt_file_name must be string.")
+    file_name = os.path.realpath(file_name)
     graph_pb = network.get_func_graph_proto()
     if graph_pb:
         with open(file_name, "wb") as f:
@@ -727,6 +735,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     check_input_data(*inputs, data_class=Tensor)
     if not isinstance(file_name, str):
         raise ValueError("Args file_name {} must be string, please check it".format(file_name))
+    file_name = os.path.realpath(file_name)
 
     Validator.check_file_name_by_regular(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
