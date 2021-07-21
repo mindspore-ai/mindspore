@@ -31,7 +31,7 @@ void Square(const T *in, T *out, size_t size) {
       out[i] = in[i] * in[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, size);
+  CPUKernelUtils::ParallelFor(task, size, MAX_SQUARE_SERIAL_SIZE);
 }
 
 template <typename T>

@@ -66,7 +66,7 @@ void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t size) {
   auto task = [&](size_t start, size_t end) {
     (void)DoSplit(input, reinterpret_cast<void **>(output), &input_shape_[0], start, end - start, &param, sizeof(T));
   };
-  CPUKernelUtils::ParallelFor(task, param.split_count_ * param.num_split_);
+  CPUKernelUtils::ParallelForAutoSearch(task, param.split_count_ * param.num_split_, &parallel_search_info_);
   return;
 }
 

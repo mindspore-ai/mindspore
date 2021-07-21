@@ -486,3 +486,31 @@ int ReduceSumDim2Axis0(size_t col_size, size_t col_len, size_t row_len, const fl
   }
   return NNACL_OK;
 }
+
+// [A, B] -> [A]
+int ReduceSumDim2Axis1(size_t col_len, const float *src_data, float *dst_data) {
+  if (src_data == NULL || dst_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  size_t k = 0;
+  float tmp = 0;
+#ifdef ENABLE_AVX
+  size_t block_mod = col_len % C8NUM;
+  size_t block_c8 = col_len - block_mod;
+  float tmp_arr[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  MS_FLOAT32X8 tmp_arr_8 = MS_MOV256_F32(tmp_arr[0]);
+  for (; k < block_c8; k += C8NUM) {
+    MS_FLOAT32X8 src_in = MS_LD256_F32(src_data + k);
+    tmp_arr_8 = MS_ADD256_F32(tmp_arr_8, src_in);
+  }
+  MS_ST256_F32(tmp_arr, tmp_arr_8);
+  for (size_t i = 0; i < 8; ++i) {
+    tmp += tmp_arr[i];
+  }
+#endif
+  for (; k < col_len; k++) {
+    tmp += src_data[k];
+  }
+  dst_data[0] = tmp;
+  return NNACL_OK;
+}

@@ -63,6 +63,9 @@ void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Dimension of HashMap must be 2, (n, 4)";
   }
   hashmap_length_ = hashmap_shape[0];
+  if (hashmap_length_ <= 0) {
+    MS_LOG(INFO) << "Value of hashmap_length_ must > 0!";
+  }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
