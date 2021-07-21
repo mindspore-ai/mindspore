@@ -103,7 +103,7 @@ std::vector<CNodePtr> FindCandidateRecomputedNodes(const FuncGraphManagerPtr &mn
     if (std::any_of(inputs.begin(), inputs.end(), [](const AnfNodePtr &node) { return IsBpropNode(node); })) {
       continue;
     }
-    candidate_recomputed_nodes.emplace_back(cnode);
+    (void)candidate_recomputed_nodes.emplace_back(cnode);
   }
   return candidate_recomputed_nodes;
 }
@@ -204,7 +204,7 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
         if (recomputed_origin_nodes.find(input->cast<CNodePtr>()) != recomputed_origin_nodes.end()) {
           continue;
         }
-        first_target_inputs.emplace_back(input);
+        (void)first_target_inputs.emplace_back(input);
       }
       break;
     }
@@ -261,7 +261,7 @@ void GetTupleGetItemOutputNodes(const FuncGraphManagerPtr &mng, const AnfNodePtr
   }
   for (const auto &node_index_set : output_set_iter->second) {
     if (IsPrimitiveCNode(node_index_set.first, prim::kPrimTupleGetItem)) {
-      tuple_getitem_output_nodes->emplace_back(node_index_set.first);
+      (void)tuple_getitem_output_nodes->emplace_back(node_index_set.first);
     }
   }
 }
@@ -304,7 +304,7 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
     auto prim_recompute_attr = prim->GetAttr(kAttrRecompute);
     int prim_recompute_val = -1;
     if (prim_recompute_attr != nullptr && prim_recompute_attr->isa<BoolImm>()) {
-      prim_recompute_val = GetValue<bool>(prim_recompute_attr);
+      prim_recompute_val = static_cast<int>(GetValue<bool>(prim_recompute_attr));
     }
     if ((SetRecomputedScope(cnode) && prim_recompute_val != 0) || prim_recompute_val == 1) {
       cnode->AddAttr(kAttrRecompute, MakeValue(true));
@@ -352,7 +352,7 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
     auto input = origin_node->input(i);
     MS_EXCEPTION_IF_NULL(input);
     if (!input->isa<CNode>()) {
-      new_inputs.emplace_back(input);
+      (void)new_inputs.emplace_back(input);
       continue;
     }
     auto input_cnode = input->cast<CNodePtr>();
@@ -360,14 +360,14 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
       if (IsPrimitiveCNode(input_cnode, prim::kPrimUpdateState)) {
         auto u = NewValueNode(kUMonad);
         u->set_abstract(kUMonad->ToAbstract());
-        new_inputs.emplace_back(u);
+        (void)new_inputs.emplace_back(u);
       } else {
-        new_inputs.emplace_back(input);
+        (void)new_inputs.emplace_back(input);
       }
     } else {
       has_recomputed_inputs = true;
-      new_inputs.emplace_back(NewRecomputedNode(graph, input_cnode, first_target_inputs, recomputed_origin_nodes,
-                                                origin_to_recomputed_nodes));
+      (void)new_inputs.emplace_back(NewRecomputedNode(graph, input_cnode, first_target_inputs, recomputed_origin_nodes,
+                                                      origin_to_recomputed_nodes));
     }
   }
   // Add the execution dependency.
@@ -404,14 +404,14 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const std::unordered_se
     for (const auto &input : target_cnode->inputs()) {
       MS_EXCEPTION_IF_NULL(input);
       if (!input->isa<CNode>()) {
-        new_target_inputs.emplace_back(input);
+        (void)new_target_inputs.emplace_back(input);
       } else {
         auto input_cnode = input->cast<CNodePtr>();
         if (origin_recomputed_nodes.find(input_cnode) != origin_recomputed_nodes.end()) {
-          new_target_inputs.emplace_back(NewRecomputedNode(graph, input_cnode, first_target_inputs,
-                                                           origin_recomputed_nodes, origin_to_recomputed_nodes));
+          (void)new_target_inputs.emplace_back(NewRecomputedNode(graph, input_cnode, first_target_inputs,
+                                                                 origin_recomputed_nodes, origin_to_recomputed_nodes));
         } else {
-          new_target_inputs.emplace_back(input_cnode);
+          (void)new_target_inputs.emplace_back(input_cnode);
         }
       }
     }
