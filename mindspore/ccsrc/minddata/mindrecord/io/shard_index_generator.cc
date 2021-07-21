@@ -106,22 +106,27 @@ std::pair<MSRStatus, std::string> ShardIndexGenerator::GetValueByField(const str
 std::string ShardIndexGenerator::TakeFieldType(const string &field_path, json schema) {
   std::vector<std::string> field_name = StringSplit(field_path, kPoint);
   for (uint64_t i = 0; i < field_name.size(); i++) {
-    if (i != field_name.size() - 1) {
-      // Get type information from json schema
-      schema = schema.at(field_name[i]);
-      schema = schema.at("properties");
-    } else {
-      // standard root layer exist "properties" if type is "object"
-      if (schema.find("properties") != schema.end()) {
+    try {
+      if (i != field_name.size() - 1) {
+        // Get type information from json schema
+        schema = schema.at(field_name[i]);
         schema = schema.at("properties");
-      }
-      schema = schema.at(field_name[i]);
-      std::string field_type = schema.at("type").dump();
-      if (field_type.length() <= 2) {
-        return "";
       } else {
-        return field_type.substr(1, field_type.length() - 2);
+        // standard root layer exist "properties" if type is "object"
+        if (schema.find("properties") != schema.end()) {
+          schema = schema.at("properties");
+        }
+        schema = schema.at(field_name[i]);
+        std::string field_type = schema.at("type").dump();
+        if (field_type.length() <= 2) {
+          return "";
+        } else {
+          return field_type.substr(1, field_type.length() - 2);
+        }
       }
+    } catch (...) {
+      MS_LOG(WARNING) << "Exception occurred while get field type.";
+      return "";
     }
   }
   return "";
@@ -330,6 +335,9 @@ MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
   const std::vector<std::vector<std::tuple<std::string, std::string, std::string>>> &data) {
   sqlite3_stmt *stmt = nullptr;
   if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
+    if (stmt) {
+      (void)sqlite3_finalize(stmt);
+    }
     MS_LOG(ERROR) << "SQL error: could not prepare statement, sql: " << sql;
     return FAILED;
   }
@@ -342,29 +350,34 @@ MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
       int index = sqlite3_bind_parameter_index(stmt, common::SafeCStr(place_holder));
       if (field_type == "INTEGER") {
         if (sqlite3_bind_int64(stmt, index, std::stoll(field_value)) != SQLITE_OK) {
+          (void)sqlite3_finalize(stmt);
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index
                         << ", field value: " << std::stoll(field_value);
           return FAILED;
         }
       } else if (field_type == "NUMERIC") {
         if (sqlite3_bind_double(stmt, index, std::stold(field_value)) != SQLITE_OK) {
+          (void)sqlite3_finalize(stmt);
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index
                         << ", field value: " << std::stold(field_value);
           return FAILED;
         }
       } else if (field_type == "NULL") {
         if (sqlite3_bind_null(stmt, index) != SQLITE_OK) {
+          (void)sqlite3_finalize(stmt);
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index << ", field value: NULL";
           return FAILED;
         }
       } else {
         if (sqlite3_bind_text(stmt, index, common::SafeCStr(field_value), -1, SQLITE_STATIC) != SQLITE_OK) {
+          (void)sqlite3_finalize(stmt);
           MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index << ", field value: " << field_value;
           return FAILED;
         }
       }
     }
     if (sqlite3_step(stmt) != SQLITE_DONE) {
+      (void)sqlite3_finalize(stmt);
       MS_LOG(ERROR) << "SQL error: Could not step (execute) stmt.";
       return FAILED;
     }
@@ -422,7 +435,12 @@ ROW_DATA ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, 
   std::vector<std::vector<std::tuple<std::string, std::string, std::string>>> full_data;
 
   // current raw data page
-  std::shared_ptr<Page> cur_raw_page = shard_header_.GetPage(shard_no, raw_page_id).first;
+  auto ret1 = shard_header_.GetPage(shard_no, raw_page_id);
+  if (ret1.second != SUCCESS) {
+    MS_LOG(ERROR) << "Get page failed";
+    return {FAILED, {}};
+  }
+  std::shared_ptr<Page> cur_raw_page = ret1.first;
 
   // related blob page
   vector<pair<int, uint64_t>> row_group_list = cur_raw_page->GetRowGroupIds();
@@ -430,7 +448,17 @@ ROW_DATA ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, 
   // pair: row_group id, offset in raw data page
   for (pair<int, int> blob_ids : row_group_list) {
     // get blob data page according to row_group id
-    std::shared_ptr<Page> cur_blob_page = shard_header_.GetPage(shard_no, blob_id_to_page_id.at(blob_ids.first)).first;
+    auto iter = blob_id_to_page_id.find(blob_ids.first);
+    if (iter == blob_id_to_page_id.end()) {
+      MS_LOG(ERROR) << "Convert blob id failed";
+      return {FAILED, {}};
+    }
+    auto ret2 = shard_header_.GetPage(shard_no, iter->second);
+    if (ret2.second != SUCCESS) {
+      MS_LOG(ERROR) << "Get page failed";
+      return {FAILED, {}};
+    }
+    std::shared_ptr<Page> cur_blob_page = ret2.first;
 
     // offset in current raw data page
     auto cur_raw_page_offset = static_cast<uint64_t>(blob_ids.second);
@@ -619,7 +647,12 @@ void ShardIndexGenerator::DatabaseWriter() {
     std::map<int, int> blob_id_to_page_id;
     std::vector<int> raw_page_ids;
     for (uint64_t i = 0; i < total_pages; ++i) {
-      std::shared_ptr<Page> cur_page = shard_header_.GetPage(shard_no, i).first;
+      auto ret = shard_header_.GetPage(shard_no, i);
+      if (ret.second != SUCCESS) {
+        write_success_ = false;
+        return;
+      }
+      std::shared_ptr<Page> cur_page = ret.first;
       if (cur_page->GetPageType() == "RAW_DATA") {
         raw_page_ids.push_back(i);
       } else if (cur_page->GetPageType() == "BLOB_DATA") {
