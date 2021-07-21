@@ -226,7 +226,7 @@ ValuePtr ConvertDataClass(const py::object &obj) {
   MS_LOG(DEBUG) << "Converting dataclass";
   // Maybe the obj is dataclass define
   auto desc = py::cast<std::string>(python_adapter::CallPyObjMethod(obj, PYTHON_GET_OBJ_DESC, obj));
-  // desc has format "<class xxxx>", strip the '<' and '>' by offset 1;
+  // desc has format "<class xxxx>", strip the '<' and '>' by offset 1
   auto converted = std::make_shared<ClassObject>(obj, std::string(desc.begin() + 1, desc.end() - 1));
   return converted;
 }

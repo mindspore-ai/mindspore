@@ -26,7 +26,6 @@
 
 namespace mindspore::pipeline {
 namespace {
-
 class OrderEnforcer {
  public:
   explicit OrderEnforcer(const FuncGraphPtr &func_graph) : func_graph_(func_graph), manager_(func_graph->manager()) {
