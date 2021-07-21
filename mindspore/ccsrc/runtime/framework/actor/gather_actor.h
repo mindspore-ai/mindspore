@@ -85,7 +85,7 @@ class GatherActor : public OpActor<DeviceTensor> {
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;
   // The branch if for current step.
-  int input_branch_id_;
+  int input_branch_id_{kInvalidBranchID};
 
   // Input data.
   std::unordered_map<uuids::uuid *, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_data_;

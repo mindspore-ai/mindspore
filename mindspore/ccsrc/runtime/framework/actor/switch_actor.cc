@@ -278,9 +278,8 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
   }
 
   DeviceTensor *device_tensor = input_device_tensors_[0];
-  if (device_tensor == nullptr) {
-    MS_LOG(ERROR) << "Index of switch actor is empty:" + GetAID().Name();
-  }
+  MS_EXCEPTION_IF_NULL(device_tensor);
+
   auto inputs = node_->inputs();
   TypeId type_id = AnfAlgo::GetOutputInferDataType(inputs[kSwitchCondPos], 0);
   size_t size = abstract::TypeIdSize(type_id);
