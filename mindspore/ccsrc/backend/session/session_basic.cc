@@ -628,7 +628,6 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   auto origin_inputs = cnode->inputs();
   const bool is_depend = IsPrimitiveCNode(cnode, prim::kPrimDepend);
-  const bool is_updatestate = IsPrimitiveCNode(cnode, prim::kPrimUpdateState);
   // if has multiple depends,only select first depend as parameter
   for (size_t input_idx = 1; input_idx < origin_inputs.size(); input_idx++) {
     auto anf = origin_inputs[input_idx];
@@ -637,8 +636,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
-    } else if ((is_depend && input_idx > kRealInputIndexInDepend) ||
-               (is_updatestate && input_idx > kUpdateStateRealInput)) {
+    } else if (is_depend && input_idx > kRealInputIndexInDepend) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {

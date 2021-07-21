@@ -38,6 +38,7 @@
 #include "debug/rdr/running_data_recorder.h"
 #include "utils/comm_manager.h"
 #include "debug/debugger/debugger.h"
+#include "backend/optimizer/pass/optimize_updatestate.h"
 
 namespace mindspore {
 namespace device {
@@ -251,6 +252,8 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    // Remove node only used by UpdateState, in order to ensure the correct execution sequence in CudnnInplaceAggregate.
+    pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
     pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
   }
   pm->AddPass(std::make_shared<opt::ReluV2Pass>());
