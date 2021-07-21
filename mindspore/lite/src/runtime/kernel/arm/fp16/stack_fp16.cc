@@ -29,6 +29,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int StackStep = 64;
+}  // namespace
+
 void StackFp16CPUKernel::InitMallocFlags() {
   malloc_buffers_.resize(in_tensors_.size());
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
@@ -100,7 +104,7 @@ int StackFp16CPUKernel::Run() {
     return ret;
   }
   // run stack
-  num_threads_ = MSMIN(UP_DIV(outer_size_, 64), this->op_parameter_->thread_num_);
+  num_threads_ = MSMIN(UP_DIV(outer_size_, StackStep), this->op_parameter_->thread_num_);
   ret = ParallelLaunch(this->ms_context_, StackRun, this, num_threads_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";

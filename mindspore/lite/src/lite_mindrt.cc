@@ -137,7 +137,7 @@ int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors
   /* Init output arrow */
   CompileArrow();
 
-  /* Init Actor output data*/
+  /* Init Actor output data */
   PrepareOutputData();
 
   /* subgraph transaction isolation */
