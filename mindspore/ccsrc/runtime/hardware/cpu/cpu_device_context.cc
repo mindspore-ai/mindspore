@@ -45,12 +45,14 @@ bool CPUDeviceContext::Initialize() {
   mem_manager_ = std::make_shared<CPUMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
 
+#ifndef ENABLE_SECURITY
   // Dump json config file if dump is enabled.
   auto rank_id = GetRankID();
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
   json_parser.CopyJsonToDir(rank_id);
   json_parser.CopyMSCfgJsonToDir(rank_id);
+#endif
 
   initialized_ = true;
   return true;
