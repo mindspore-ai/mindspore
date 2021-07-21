@@ -46,7 +46,7 @@ world_size: 8
 # logging related
 log_interval: 10
 ckpt_path: '../../output'
-ckpt_interval: 200
+ckpt_interval: 400
 
 # train/eval option
 data_dir: ''

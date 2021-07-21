@@ -38,9 +38,9 @@ def get_de_dataset(args):
                      VC.HWC2CHW()]
 
     de_dataset = de.ImageFolderDataset(dataset_dir=args.data_dir, num_shards=args.world_size,
-                                       shard_id=args.local_rank, shuffle=True)
-    de_dataset = de_dataset.map(input_columns="image", operations=transform_img)
-    de_dataset = de_dataset.map(input_columns="label", operations=transform_label)
+                                       shard_id=args.local_rank, shuffle=True, num_parallel_workers=4)
+    de_dataset = de_dataset.map(input_columns="image", operations=transform_img, num_parallel_workers=4)
+    de_dataset = de_dataset.map(input_columns="label", operations=transform_label, num_parallel_workers=4)
     de_dataset = de_dataset.project(columns=["image", "label"])
     de_dataset = de_dataset.batch(args.per_batch_size, drop_remainder=True)
 
