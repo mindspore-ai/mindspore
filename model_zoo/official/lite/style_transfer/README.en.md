@@ -66,7 +66,7 @@ This sample application demonstrates how to use the MindSpore Lite API and MindS
 
 ## Detailed Description of the Sample Application  
 
-The style transfer sample application on the Android device uses the Android Camera 2 API to enable a camera to obtain image frames and process images, as well as using [runtime](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html) to complete model inference.
+The style transfer sample application on the Android device uses the Android Camera 2 API to enable a camera to obtain image frames and process images, as well as using [runtime](https://www.mindspore.cn/lite/docs/en/r1.3/use/runtime.html) to complete model inference.
 
 ### Sample Application Structure
 

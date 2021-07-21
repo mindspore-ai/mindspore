@@ -446,7 +446,7 @@ python export.py
 
 ### 教程
 
-如果你需要在不同硬件平台（如GPU，Ascend 910 或者 Ascend 310）使用训练好的模型，你可以参考这个 [Link](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html)。以下是一个简单例子的步骤介绍：
+如果你需要在不同硬件平台（如GPU，Ascend 910 或者 Ascend 310）使用训练好的模型，你可以参考这个 [Link](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/multi_platform_inference.html)。以下是一个简单例子的步骤介绍：
 
 - Running on Ascend
 

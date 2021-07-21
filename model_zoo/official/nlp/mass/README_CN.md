@@ -537,7 +537,7 @@ subword-nmt
 rouge
 ```
 
-<https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html>
+<https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/multi_platform_inference.html>
 
 # 快速上手
 
@@ -599,7 +599,7 @@ sh run_gpu.sh -t t -n 1 -i 1
 
 ## 推理
 
-如果您需要使用此训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html)。
+如果您需要使用此训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/multi_platform_inference.html)。
 推理时，请先配置`config.json`中的选项：
 
 - 将`default_config.yaml`节点下的`data_path`配置为数据集路径。

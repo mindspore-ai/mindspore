@@ -69,7 +69,7 @@
 
 ## 示例程序详细说明  
 
-骨骼检测Android示例程序通过Android Camera 2 API实现摄像头获取图像帧，以及相应的图像处理等功能，在[Runtime](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/runtime.html)中完成模型推理的过程。
+骨骼检测Android示例程序通过Android Camera 2 API实现摄像头获取图像帧，以及相应的图像处理等功能，在[Runtime](https://www.mindspore.cn/lite/docs/zh-CN/r1.3/use/runtime.html)中完成模型推理的过程。
 
 ### 示例程序结构
 

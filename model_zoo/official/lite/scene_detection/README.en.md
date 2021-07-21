@@ -66,7 +66,7 @@ This sample application demonstrates how to use the MindSpore Lite C++ API (Andr
 
 ## Detailed Description of the Sample Application  
 
-The scene detection sample application on the Android device includes a Java layer and a JNI layer. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images (drawing frames based on the inference result). At the JNI layer, the model inference process is completed in [runtime](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html).
+The scene detection sample application on the Android device includes a Java layer and a JNI layer. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images (drawing frames based on the inference result). At the JNI layer, the model inference process is completed in [runtime](https://www.mindspore.cn/lite/docs/en/r1.3/use/runtime.html).
 
 > This following describes the JNI layer implementation of the sample application. At the Java layer, the Android Camera 2 API is used to enable a device camera and process image frames. Readers are expected to have the basic Android development knowledge.
 

@@ -213,7 +213,7 @@ epoch time: 1104929.793 ms, per step time: 97.162 ms
 
 ### 推理
 
-如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/infer.html)。
+如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/multi_platform_inference.html)。
 
 ### 迁移学习
 
