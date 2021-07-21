@@ -33,7 +33,7 @@ class CPUDeviceContext : public DeviceContext {
       : DeviceContext(device_context_key), mem_manager_(nullptr), initialized_(false) {}
   ~CPUDeviceContext() override = default;
 
-  bool Initialize() override;
+  void Initialize() override;
 
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;

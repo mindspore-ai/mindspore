@@ -289,7 +289,7 @@ void EraseValueNodeTensor(const std::vector<int64_t> *tensors_mask, const std::v
   }
   for (size_t index = 0; index < tensors_mask->size(); ++index) {
     if (tensors_mask->at(index) != kValueNodeTensorMask) {
-      input_tensors_without_value_node->emplace_back(input_tensors->at(index));
+      (void)input_tensors_without_value_node->emplace_back(input_tensors->at(index));
     }
   }
 }
@@ -2173,7 +2173,7 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
       LinkDataArrowByControlNode(graph_compiler_info, input_with_index, from_func_graph, gather_actor, i);
     }
   }
-  LinkBranchArrowForSwitchActor(graph_compiler_info, actor_set);
+  LinkBranchArrowForSwitchActor(graph_compiler_info);
 
   LinkBranchArrowForGatherActor(graph_compiler_info, actor_set);
 
@@ -2482,7 +2482,7 @@ void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> 
         if (actor != nullptr) {
           const auto &gather_actor = dynamic_cast<GatherActor *>(actor);
           MS_EXCEPTION_IF_NULL(gather_actor);
-          switch_actor->output_branch_control_arrows_[i].emplace_back(gather_actor->GetAID());
+          (void)switch_actor->output_branch_control_arrows_[i].emplace_back(gather_actor->GetAID());
           gather_actor->input_controls_num_++;
         }
       }
@@ -2516,13 +2516,12 @@ void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> 
         switch_actor->branch_id_to_index_[kMainBranchID] = branch_index;
       }
 
-      switch_actor->output_branch_control_arrows_[branch_index].emplace_back(to_actor->GetAID());
+      (void)switch_actor->output_branch_control_arrows_[branch_index].emplace_back(to_actor->GetAID());
     }
   }
 }
 
-void GraphScheduler::LinkBranchArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info,
-                                                   const ActorSet *actor_set) {
+void GraphScheduler::LinkBranchArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info) {
   for (const auto &control_node : graph_compiler_info.control_nodes_) {
     if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
         AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {

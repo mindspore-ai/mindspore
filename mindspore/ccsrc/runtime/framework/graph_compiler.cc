@@ -56,7 +56,7 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> graph_inputs = graph->inputs();
   const std::vector<bool> &graph_valid_input = graph->valid_inputs();
-  graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
+  (void)graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
 
   // Anf nodes which need create device address.
   std::vector<AnfNodePtr> nodes_list;
@@ -408,7 +408,7 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const
   auto &outputs_with_index = run_op_graph_output_nodes_[graph->graph_id()];
   for (auto &node : output_nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    outputs_with_index.emplace_back(AnfAlgo::VisitKernelWithReturnType(node, 0, false));
+    (void)outputs_with_index.emplace_back(AnfAlgo::VisitKernelWithReturnType(node, 0, false));
   }
 
   UpdateRefCountForGraphOutput(outputs_with_index);
