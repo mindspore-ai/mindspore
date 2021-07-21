@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_ONE_HOT_H_
-#define MINDSPORE_NNACL_FP32_ONE_HOT_H_
+#ifndef MINDSPORE_NNACL_FP16_ONE_HOT_H_
+#define MINDSPORE_NNACL_FP16_ONE_HOT_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -26,10 +26,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int OneHotToFp32(const int *indices, float on_value, float off_value, float *output,
+int OneHotToFp16(const int *indices, float16_t on_value, float16_t off_value, float16_t *output,
                  const OneHotParameter *one_hot_param, const int tid, const int thread_num);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_ONE_HOT_H_
+#endif  // MINDSPORE_NNACL_FP16_ONE_HOT_H_
