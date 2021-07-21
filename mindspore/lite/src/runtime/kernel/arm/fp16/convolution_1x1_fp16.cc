@@ -97,7 +97,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
         return RET_ERROR;
       }
     }
-    void *bias_origin_tmp = IsTrainable() ? in_tensors_.at(2)->data_c() : origin_bias_;
+    void *bias_origin_tmp = IsTrainable() ? in_tensors_.at(kBiasIndex)->data_c() : origin_bias_;
     memcpy(bias_data_, bias_origin_tmp, output_channel * sizeof(float16_t));
     memset(reinterpret_cast<char *>(bias_data_) + bias_size, 0, size - bias_size);
   }
@@ -295,5 +295,4 @@ int Convolution1x1FP16CPUKernel::Eval() {
   }
   return InnerKernel::Eval();
 }
-
 }  // namespace mindspore::kernel

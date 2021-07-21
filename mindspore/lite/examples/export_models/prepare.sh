@@ -15,7 +15,7 @@ checkopts()
 {
   DOCKER=""
   TRAIN_IO=""
-  CONFIG_FILE=""
+  CONFIG_FILE="models_train.cfg"
   #models_train.cfg" move me to prepare_all.sh
   while getopts 'c:d:iT' opt
   do

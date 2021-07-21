@@ -23,7 +23,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 CkptSaver::CkptSaver(int save_every_n, const std::string &filename_prefix) {
   callback_impl_ = new CallbackImpl(new lite::CkptSaver(save_every_n, filename_prefix));
 }
@@ -37,5 +36,4 @@ CkptSaver::~CkptSaver() {
     delete internal_call_back;
   }
 }
-
 }  // namespace mindspore

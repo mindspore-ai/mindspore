@@ -198,7 +198,7 @@ TrainSession::~TrainSession() { FreeWorkSpace(); }
 int TrainSession::ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
                               const std::vector<kernel::LiteKernel *> &run_kernels) {
   for (auto *kernel : run_kernels) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Execute(before, after);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "Execute kernel failed, name: " << kernel->name();
@@ -309,7 +309,7 @@ int TrainSession::MixPrecisionExecKernels(const KernelCallBack &before, const Ke
                                           const std::vector<kernel::LiteKernel *> &run_kernels) {
   float scale = cfg_.mix_precision_cfg_.loss_scale_;
   for (auto *kernel : run_kernels) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel != nullptr);
     MixPrecisionPreProcess(kernel, scale);
     auto ret = kernel->Execute(before, after);
     if (RET_OK != ret) {
@@ -398,7 +398,7 @@ int TrainSession::Train() {
   train_mode_ = true;
   virtual_batch_idx_ = 0;
   for (auto &kernel : this->train_kernels_) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Train();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << kernel->name() << " failed to set train mode";
@@ -791,5 +791,4 @@ session::LiteSession *session::TrainSession::CreateTrainSession(const std::strin
   }
   return session.release();
 }
-
 }  // namespace mindspore

@@ -23,7 +23,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 int StepLRLambda(float *lr, int epoch, void *lr_cb_data) {
   if ((lr == nullptr) || (lr_cb_data == nullptr)) {
     MS_LOG(ERROR) << "nullptr passed as input to MultiplicativeLRLambda";
@@ -51,5 +50,4 @@ LRScheduler::~LRScheduler() {
     delete internal_call_back;
   }
 }
-
 }  // namespace mindspore

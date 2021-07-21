@@ -199,7 +199,7 @@ int NetRunner::TrainLoop() {
       session_->Export(cpkt_fn);
     }
 
-    std::cout << i + 1 << ": Loss is " << loss << " [min=" << min_loss << "]" << std::endl;
+    std::cout << (i + 1) << ": Loss is " << loss << " [min=" << min_loss << "]" << std::endl;
     if ((i + 1) % kBatchNum == 0) {
       session_->Eval();
       float acc = CalculateAccuracy(ds_.test_data(), session_);
