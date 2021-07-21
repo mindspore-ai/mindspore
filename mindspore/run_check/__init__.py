@@ -14,7 +14,7 @@
 # ============================================================================
 """.. run_check package."""
 
-from .run_check import run_check
 from ._check_version import check_version_and_env_config
+from .run_check import run_check
 
 __all__ = ['run_check']
