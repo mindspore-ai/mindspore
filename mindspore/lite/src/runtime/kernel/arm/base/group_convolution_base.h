@@ -23,15 +23,16 @@
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 #include "nnacl/fp32/conv_common_fp32.h"
+#include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 
 namespace mindspore::kernel {
 class GroupConvolutionBaseCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   GroupConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                std::vector<kernel::InnerKernel *> group_convs, const int group_num)
+                                GroupConvCreator *group_conv_creator, const int group_num)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
-        group_convs_(std::move(group_convs)),
+        group_conv_creator_(group_conv_creator),
         group_num_(group_num) {}  // opParameter(in channel, out channel) in this kernel has been split to groups, if
                                   // you want to get real params, multiply in channel / out channel with group num
   ~GroupConvolutionBaseCPUKernel() override { FreeSubKernel(); }
@@ -45,6 +46,7 @@ class GroupConvolutionBaseCPUKernel : public ConvolutionBaseCPUKernel {
   void FreeSubKernel();
 
  protected:
+  GroupConvCreator *group_conv_creator_ = nullptr;
   std::vector<kernel::InnerKernel *> group_convs_;
   const int group_num_;
   void *ori_in_data_ = nullptr;   // do not free

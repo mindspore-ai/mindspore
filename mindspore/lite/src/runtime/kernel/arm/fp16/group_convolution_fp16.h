@@ -29,11 +29,12 @@ class GroupConvolutionFP16CPUKernel : public GroupConvolutionBaseCPUKernel {
  public:
   GroupConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                std::vector<kernel::InnerKernel *> group_convs, const int group_num)
-      : GroupConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, std::move(group_convs), group_num) {
+                                GroupConvCreator *group_conv_creator, const int group_num)
+      : GroupConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, group_conv_creator, group_num) {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num
-  ~GroupConvolutionFP16CPUKernel() = default;
+  ~GroupConvolutionFP16CPUKernel() override = default;
+  int Init() override;
   int SeparateInput(int group_id) override;
   int PostConcat(int group_id) override;
 };

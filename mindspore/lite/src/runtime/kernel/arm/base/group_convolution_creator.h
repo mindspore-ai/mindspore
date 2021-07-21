@@ -38,7 +38,8 @@ class GroupConvCreator {
       : origin_inputs_(std::move(inputs)),
         origin_outputs_(std::move(outputs)),
         is_quant_(is_quant),
-        data_type_(data_type) {
+        data_type_(data_type),
+        ctx_(ctx) {
     auto shape = origin_outputs_.front()->shape();
     infered_ = std::find(shape.begin(), shape.end(), -1) == shape.end();
     conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter);
@@ -48,6 +49,7 @@ class GroupConvCreator {
 
  public:
   void SetShapeOfTensors();
+  int CreateConvs(std::vector<kernel::InnerKernel *> *group_convs);
   std::vector<kernel::InnerKernel *> *get_group_conv() { return &group_convs_; }
   void CopyQuantParam(std::vector<lite::Tensor *> *tensors);
   int GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,
@@ -75,6 +77,7 @@ class GroupConvCreator {
   bool infered_ = false;
   bool is_quant_ = false;
   TypeId data_type_;
+  const lite::InnerContext *ctx_ = nullptr;
 };
 
 ConvParameter *CreateNewConvParameter(ConvParameter *parameter);

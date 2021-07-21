@@ -176,25 +176,9 @@ kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &
 kernel::InnerKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs,
                                                    OpParameter *op_parameter, const InnerContext *ctx) {
-  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, false, kNumberTypeFloat16);
-  group_conv_creator.SetShapeOfTensors();
-
-  for (int i = 0; i < conv_param->group_; ++i) {
-    ConvParameter *new_conv_param = CreateNewConvParameter(conv_param);
-    std::vector<lite::Tensor *> new_inputs;
-    std::vector<lite::Tensor *> new_outputs;
-    auto ret = group_conv_creator.GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "GetSingleConv for fp16 group conv failed.";
-      return nullptr;
-    }
-    group_conv_creator.get_group_conv()->emplace_back(new (std::nothrow) ConvolutionDelegateFP16CPUKernel(
-      reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx));
-  }
-  return new (std::nothrow)
-    GroupConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()),
-                                  reinterpret_cast<ConvParameter *>(op_parameter)->group_);
+  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, ctx, false, kNumberTypeFloat16);
+  return new (std::nothrow) GroupConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, group_conv_creator,
+                                                          reinterpret_cast<ConvParameter *>(op_parameter)->group_);
 }
 
 /* creator func */
@@ -203,16 +187,6 @@ kernel::InnerKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> 
                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
-
-  auto weight_data_type = inputs.at(1)->data_type();
-  TypeId bias_data_type = weight_data_type;
-  if (inputs.size() == 3) {
-    bias_data_type = inputs.at(2)->data_type();
-  }
-  if (weight_data_type != kNumberTypeFloat16 || bias_data_type != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "Convfp16 only support fp16 weight and fp16 bias.";
-    return nullptr;
-  }
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::InnerKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
