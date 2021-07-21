@@ -119,7 +119,7 @@ void DeleteLoadUserUpdateState(const FuncGraphManagerPtr &manager, const AnfNode
   const auto &update_state_cnode = load_user->cast<CNodePtr>();
   constexpr size_t monad_index = 1;
   const auto &monad = update_state_cnode->input(monad_index);
-  manager->Replace(load_user, monad);
+  (void)manager->Replace(load_user, monad);
 }
 
 // Pattern2======================================
@@ -167,8 +167,9 @@ void ReplaceLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const FuncGrap
   const auto &new_make_tuple = fg->NewCNode(new_make_tuple_inputs);
   // Set abstract for the MakeTuple node.
   abstract::AbstractBasePtrList element_abstracts;
-  std::transform(new_make_tuple_inputs.begin() + 1, new_make_tuple_inputs.end(), std::back_inserter(element_abstracts),
-                 [](const AnfNodePtr &input) { return input->abstract(); });
+  (void)std::transform(new_make_tuple_inputs.begin() + 1, new_make_tuple_inputs.end(),
+                       std::back_inserter(element_abstracts),
+                       [](const AnfNodePtr &input) { return input->abstract(); });
   new_make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(element_abstracts));
   manager->Replace(make_tuple, new_make_tuple);
 }

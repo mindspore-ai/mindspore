@@ -113,7 +113,7 @@ bool MsContext::set_backend_policy(const std::string &policy) {
 }
 
 #ifdef ENABLE_TDTQUE
-void MsContext::CreateTensorPrintThread(PrintThreadCrt ctr) {
+void MsContext::CreateTensorPrintThread(const PrintThreadCrt &ctr) {
   uint32_t device_id = get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string kReceivePrefix = "TF_RECEIVE_";
   std::string channel_name = "_npu_log";

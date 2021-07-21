@@ -149,7 +149,7 @@ class MsContext {
   bool set_backend_policy(const std::string &policy);
 #ifdef ENABLE_TDTQUE
   using PrintThreadCrt = std::function<std::thread(std::string &, acltdtChannelHandle *)>;
-  void CreateTensorPrintThread(PrintThreadCrt ctr);
+  void CreateTensorPrintThread(const PrintThreadCrt &ctr);
   void DestroyTensorPrintThread();
 #endif
   static void device_seter(DeviceSeter device) { seter_ = device; }

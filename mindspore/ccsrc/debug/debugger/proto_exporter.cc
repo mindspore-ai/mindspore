@@ -402,7 +402,7 @@ void DebuggerProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, debugge
     }
     auto cnode = node->cast<CNodePtr>();
     if (cnode != func_graph->get_return()) {
-      ExportCNode(func_graph, cnode, &apply_map, const_map_ptr, graph_proto, dump_location);
+      ExportCNode(func_graph, cnode, &apply_map, const_map_ptr, graph_proto);
     } else {
       ExportFuncGraphOutput(func_graph, cnode, apply_map, const_map_ptr, graph_proto);
     }
@@ -412,7 +412,7 @@ void DebuggerProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, debugge
 void DebuggerProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                         std::map<AnfNodePtr, size_t> *apply_map_ptr,
                                         std::map<AnfNodePtr, size_t> *const_map_ptr,
-                                        debugger::GraphProto *const graph_proto, LocDebugDumpMode dump_location) {
+                                        debugger::GraphProto *const graph_proto) {
   if (func_graph == nullptr || node == nullptr || apply_map_ptr == nullptr || const_map_ptr == nullptr ||
       graph_proto == nullptr) {
     return;

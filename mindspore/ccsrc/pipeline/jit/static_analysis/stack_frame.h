@@ -90,7 +90,7 @@ class StackFrame : public Base {
   AnalysisContextPtr current_context() const { return current_context_; }
   AnalysisContextPtr parent_context() const { return parent_context_; }
 
-  AbstractBasePtrList &args_abs_list() { return args_abs_list_; }
+  const AbstractBasePtrList &args_abs_list() { return args_abs_list_; }
   void set_args_abs_list(const AbstractBasePtrList &&args_abs_list) { args_abs_list_ = args_abs_list; }
 
   std::string ToString() const override {
