@@ -485,7 +485,7 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
 void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                  const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   if (debugger_) {
-    debugger_->PreExecute(kernel_graph, graph_sum_);
+    debugger_->PreExecute(kernel_graph);
   }
 
   DumpSetup(kernel_graph);

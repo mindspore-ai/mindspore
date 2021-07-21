@@ -450,7 +450,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // build kernel
   BuildKernel(root_graph);
   if (debugger_ && debugger_->partial_memory()) {
-    debugger_->PreExecute(root_graph, graph_sum_);
+    debugger_->PreExecute(root_graph);
   }
   SetSummaryNodes(root_graph.get());
   // Alloc memory for child graph's inputs
@@ -539,7 +539,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (debugger_ && debugger_->partial_memory()) {
-    debugger_->PreExecute(graph, graph_sum_);
+    debugger_->PreExecute(graph);
   }
   if (ms_context->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
     MS_LOG(INFO) << "Precompile only, stop in build kernel step";
@@ -587,7 +587,7 @@ bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInser
 void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const) {
   if (debugger_) {
-    debugger_->PreExecute(kernel_graph, graph_sum_);
+    debugger_->PreExecute(kernel_graph);
   }
 #if ENABLE_CPU && ENABLE_D
   // Initialize parameter server
