@@ -343,7 +343,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
 void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
                                  nlohmann::json *output_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  GenDesCommonJson(output_desc);
+  GenDesJsonCommon(output_desc);
   std::vector<int64_t> shape;
   std::vector<int64_t> ori_shape;
   AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputDeviceShape(anf_node, node_out_idx), NOT_NULL(&shape));
@@ -376,7 +376,7 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
   (*output_desc)[kJOutputIndex] = desc_output_idx;
 }
 
-void TbeJsonCreator::GenDesCommonJson(nlohmann::json *output_desc) {
+void TbeJsonCreator::GenDesJsonCommon(nlohmann::json *output_desc) {
   MS_EXCEPTION_IF_NULL(output_desc);
   (*output_desc)[kJL1AddrOffset] = 0;
   (*output_desc)[kJL1FusionType] = -1;
@@ -396,6 +396,7 @@ bool TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann:
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   auto op_desc = AnfAlgo::GetOutputDataDesc(anf_node);
+  // get output_data_desc from prebuild
   if (!op_desc.empty() && op_desc.at(0).find(kJListArgs) != op_desc.at(0).end()) {
     (*compute_json)[kJOutputDataDesc] = GetJsonValue<nlohmann::json>(op_desc.at(0), kJListArgs);
   } else {
@@ -416,5 +417,4 @@ bool TbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const O
                                              nlohmann::json *attrs_json) {
   return true;
 }
-
 }  // namespace mindspore::kernel

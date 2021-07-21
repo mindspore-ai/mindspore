@@ -30,15 +30,6 @@
 //       the TBE back-end operator implementation difference
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT0 = 0;
-constexpr size_t INPUT1 = 1;
-constexpr size_t INPUT2 = 2;
-constexpr size_t INPUT3 = 3;
-constexpr size_t INPUT4 = 4;
-constexpr size_t INPUT5 = 5;
-constexpr size_t INPUT6 = 6;
-constexpr size_t INPUT7 = 7;
-constexpr size_t INPUT8 = 8;
 enum kCreaterType : int { SINGLE_BUILD = 0, OP_SELECT_FORMAT, CHECK_SUPPORTED, OP_PRE_COMPILE };
 namespace tbe {
 const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
@@ -75,27 +66,27 @@ class TbeAdapter {
       (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
     } else {
       if (op_name == kMinimumGradOpName || op_name == kMaximumGradOpName) {
-        inputs_json->push_back(inputs_list[INPUT2]);
-        inputs_json->push_back(inputs_list[INPUT0]);
-        inputs_json->push_back(inputs_list[INPUT1]);
+        inputs_json->push_back(inputs_list[kIndex2]);
+        inputs_json->push_back(inputs_list[kIndex0]);
+        inputs_json->push_back(inputs_list[kIndex1]);
         for (size_t i = 3; i < inputs_list.size(); ++i) {
           inputs_json->push_back(inputs_list[i]);
         }
       } else if (op_name == kApplyCenteredRMSPropOpName) {
         // Parameter order of ApplyCenteredRMSProp's TBE implementation is different from python API, so map
         // TBE parameter to correspond python API parameter by latter's index using hardcode
-        inputs_json->push_back(inputs_list[INPUT0]);
-        inputs_json->push_back(inputs_list[INPUT1]);
-        inputs_json->push_back(inputs_list[INPUT2]);
-        inputs_json->push_back(inputs_list[INPUT3]);
-        inputs_json->push_back(inputs_list[INPUT5]);
-        inputs_json->push_back(inputs_list[INPUT6]);
-        inputs_json->push_back(inputs_list[INPUT7]);
-        inputs_json->push_back(inputs_list[INPUT8]);
-        inputs_json->push_back(inputs_list[INPUT4]);
+        inputs_json->push_back(inputs_list[kIndex0]);
+        inputs_json->push_back(inputs_list[kIndex1]);
+        inputs_json->push_back(inputs_list[kIndex2]);
+        inputs_json->push_back(inputs_list[kIndex3]);
+        inputs_json->push_back(inputs_list[kIndex5]);
+        inputs_json->push_back(inputs_list[kIndex6]);
+        inputs_json->push_back(inputs_list[kIndex7]);
+        inputs_json->push_back(inputs_list[kIndex8]);
+        inputs_json->push_back(inputs_list[kIndex4]);
       } else {
-        inputs_json->push_back(inputs_list[INPUT1]);
-        inputs_json->push_back(inputs_list[INPUT0]);
+        inputs_json->push_back(inputs_list[kIndex1]);
+        inputs_json->push_back(inputs_list[kIndex0]);
         for (size_t i = 2; i < inputs_list.size(); ++i) {
           inputs_json->push_back(inputs_list[i]);
         }
@@ -126,7 +117,8 @@ class TbeAdapter {
   static bool IsPlaceHolderInput(const AnfNodePtr &node, const OpIOInfoPtr &input_ptr);
   static void CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *op_info_attrs,
                                   nlohmann::json *attrs_json);
-  static void CastJsonPostPass(const AnfNodePtr &anf_node, nlohmann::json *attrs_json);
+  static void CastAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json);
+  static void LayerNormAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json);
 
  private:
   // TODO(xxx): delete MaxiOrMinimumGradAttrJsonPass

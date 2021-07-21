@@ -99,6 +99,7 @@ constexpr auto kJUnknowShape = "unknown_shape";
 constexpr auto kJListArgs = "list_args";
 constexpr auto kAccuratelyBuild = "accurately_build";
 constexpr auto kPyPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe";
+constexpr auto kJMaxKernelIDValue = 10;
 
 class TbeJsonUtils {
  public:

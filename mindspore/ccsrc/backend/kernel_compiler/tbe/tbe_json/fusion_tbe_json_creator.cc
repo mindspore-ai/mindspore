@@ -95,16 +95,15 @@ bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_i
   auto input_nodes = fusion_scope_info.input_nodes;
   auto compute_nodes = fusion_scope_info.compute_nodes;
   size_t input_size = 0;
-  for (const auto &compute_node : compute_nodes) {
-    MS_EXCEPTION_IF_NULL(compute_node);
-    auto ccompute_node = compute_node->cast<CNodePtr>();
-    if (ccompute_node == nullptr) {
-      MS_LOG(ERROR) << "Fusion error: fusion compute node must be cnode, but the node is "
-                    << ccompute_node->DebugString();
+  for (const auto &node : compute_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      MS_LOG(ERROR) << "Fusion error: fusion compute node must be cnode, but the node is " << cnode->DebugString();
       return false;
     }
-    for (size_t i = 1; i < ccompute_node->inputs().size(); ++i) {
-      auto input = ccompute_node->input(i);
+    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      auto input = cnode->input(i);
       auto find_iter = std::find(input_nodes.begin(), input_nodes.end(), input);
       if (find_iter != input_nodes.end()) {
         input_size++;
@@ -278,7 +277,7 @@ bool FusionBuildTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohm
 
 void FusionBuildTbeJsonCreator::GenReusedOutputDesc(const AnfNodePtr &anf_node, size_t index, size_t output_index,
                                                     nlohmann::json *output_desc, size_t out_size) {
-  GenDesCommonJson(output_desc);
+  GenDesJsonCommon(output_desc);
   std::string output_desc_name = anf_node->fullname_with_scope() + "_" + std::to_string(index);
   (*output_desc)[kJName] = output_desc_name;
   (*output_desc)[kJOutputIndex] = output_index;
@@ -300,7 +299,7 @@ std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vec
 
 bool FusionBuildTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
                                                         nlohmann::json *attrs_json) {
-  tbe::TbeAdapter::CastJsonPostPass(anf_node, attrs_json);
+  tbe::TbeAdapter::CastAttrJsonPost(anf_node, attrs_json);
   return true;
 }
 }  // namespace mindspore::kernel
