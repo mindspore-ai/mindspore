@@ -346,7 +346,10 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
 OptPassGroupMap GetA1A2(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
-  OptPassGroupMap a1_a2({opt_a[0], opt_a[1], opt_a[2]});
+  constexpr auto opt_a1_index = 0;
+  constexpr auto parameter_eliminate = 1;
+  constexpr auto opt_a2_index = 2;
+  OptPassGroupMap a1_a2({opt_a[opt_a1_index], opt_a[parameter_eliminate], opt_a[opt_a2_index]});
   return a1_a2;
 }
 
