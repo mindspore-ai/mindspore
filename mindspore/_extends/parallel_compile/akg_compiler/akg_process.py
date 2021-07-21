@@ -21,6 +21,7 @@ from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 
+
 def copy_json(pid_path, ppid_path):
     """
     copy json from pid_path to ppid_path

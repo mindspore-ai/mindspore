@@ -17,12 +17,14 @@ from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
 from .expand_dims import ExpandDims
 
+
 @VLD.add_format(DF.NHWC, DF.NHWC, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
 @VLD.add_format(DF.NCHW, DF.NCHW, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
 @VLD.add_format(DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
 @VLD.check_attrs('is_training', 'epsilon')
 class BatchNormGrad(Expander):
     """BatchNormGrad expander"""
+
     def _expand(self, graph_builder):
         # get op info
         input_dy = self.inputs[0]

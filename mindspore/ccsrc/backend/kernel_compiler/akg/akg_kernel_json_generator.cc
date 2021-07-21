@@ -16,12 +16,6 @@
 
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 
-#include <algorithm>
-#include <functional>
-#include <map>
-#include <set>
-#include <sstream>
-#include <tuple>
 #include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
