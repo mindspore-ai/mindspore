@@ -55,7 +55,7 @@ class TensorRTSubGraph : public kernel::Kernel {
  private:
   int BuildEngine();
 
-  static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, mindspore::MSTensor in_tensor);
+  static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
   TensorRTRuntime *runtime_{nullptr};
 

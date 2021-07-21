@@ -76,7 +76,6 @@ int TensorRTDelegate::Build(DelegateModel *model) {
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     kernel::Kernel *kernel = *iter;
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
-
     if (tensorrt_op != nullptr) {
       // If tensorrt_ops does not equal nullptr, this kernel can be supported by delegate
       if (tensorrt_ops.size() == 0) {
@@ -115,7 +114,6 @@ TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schem
   auto out_tensors = kernel->outputs();
   auto name = kernel->name();
   auto node_type = primitive->value_type();
-
   if (op_func_lists_.find(node_type) != op_func_lists_.end()) {
     return op_func_lists_[node_type](primitive, in_tensors, out_tensors, name);
   } else {

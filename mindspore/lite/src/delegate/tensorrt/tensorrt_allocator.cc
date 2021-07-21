@@ -21,8 +21,8 @@
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
-void *TensorRTAllocator::MallocDeviceMem(mindspore::MSTensor host_tensor, size_t size) {
-  if (host_tensor == nullptr) {
+void *TensorRTAllocator::MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size) {
+  if (host_tensor == NULL) {
     return nullptr;
   }
   if (cuda_tensor_map_.find(host_tensor.Name()) != cuda_tensor_map_.end()) {

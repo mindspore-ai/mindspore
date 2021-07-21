@@ -38,10 +38,10 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
 
 nvinfer1::ActivationType ConvertActivationType(schema::ActivationType activation_type);
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor);
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor);
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor,
-                                               size_t expand_shape_size);
+nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
+                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size);
 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, void *value);
 }  // namespace mindspore::lite
