@@ -762,7 +762,7 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &
     (void)node_list.insert(node_list.end(), k_node_list.begin(), k_node_list.end());
     // out;
     node_list.push_back(adjoint->k_node());
-    // dout;
+    // dout
     node_list.push_back(adjoint->RealDout());
   }
   // Back propagate process

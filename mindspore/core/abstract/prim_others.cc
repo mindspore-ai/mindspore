@@ -575,6 +575,5 @@ AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(output);
   return output;
 }
-
 }  // namespace abstract
 }  // namespace mindspore
