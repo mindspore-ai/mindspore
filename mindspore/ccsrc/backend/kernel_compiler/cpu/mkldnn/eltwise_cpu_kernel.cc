@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/mkldnn/eltwise_cpu_kernel.h"
-
-#include <string>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"

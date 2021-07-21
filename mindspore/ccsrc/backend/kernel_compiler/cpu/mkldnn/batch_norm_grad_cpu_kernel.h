@@ -21,6 +21,10 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t SCALE_SHIFT_NUM = 2;
+constexpr size_t NC = 2;
+constexpr size_t NCHW = 4;
+
 class BatchNormGradCPUKernel : public MKLCPUKernel {
  public:
   BatchNormGradCPUKernel() = default;
@@ -40,6 +44,10 @@ class BatchNormGradCPUKernel : public MKLCPUKernel {
   size_t channel{0};
   size_t hw_size{0};
   size_t nhw_size{0};
+  enum format_ { N, C, H, W };
+  enum input_list_ { Y_BACKPROP, X, SCALE, SAVE_MEAN, SAVE_VARIANCE, RESERVE };
+  enum workspace_list_ { SCALE_BIAS, DIFF_SCALE_BIAS };
+  enum output_list_ { DX, DSCALE, DBIAS };
 };
 
 MS_REG_CPU_KERNEL(BatchNormGrad,

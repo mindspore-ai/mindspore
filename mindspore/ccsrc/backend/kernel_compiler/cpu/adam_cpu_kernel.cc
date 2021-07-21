@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cmath>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "backend/kernel_compiler/cpu/adam_cpu_kernel.h"
@@ -24,26 +23,26 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &outputs) {
-  T *var = reinterpret_cast<T *>(inputs[0]->addr);
-  T *m = reinterpret_cast<T *>(inputs[1]->addr);
-  T *v = reinterpret_cast<T *>(inputs[2]->addr);
-  float beta1_power = reinterpret_cast<float *>(inputs[3]->addr)[0];
-  float beta2_power = reinterpret_cast<float *>(inputs[4]->addr)[0];
-  float lr = reinterpret_cast<float *>(inputs[5]->addr)[0];
-  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[6]->addr)[0]);
-  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[7]->addr)[0]);
-  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[8]->addr)[0]);
-  T *gradient = reinterpret_cast<T *>(inputs[9]->addr);
-  if (beta1_power - 1.0 == 0) {
+void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &) {
+  T *var = reinterpret_cast<T *>(inputs[VAR]->addr);
+  T *m = reinterpret_cast<T *>(inputs[M]->addr);
+  T *v = reinterpret_cast<T *>(inputs[V]->addr);
+  float beta1_power = reinterpret_cast<float *>(inputs[BETA1_POWER]->addr)[SCALAR_INDEX];
+  float beta2_power = reinterpret_cast<float *>(inputs[BETA2_POWER]->addr)[SCALAR_INDEX];
+  float lr = reinterpret_cast<float *>(inputs[LR]->addr)[SCALAR_INDEX];
+  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[BETA1]->addr)[SCALAR_INDEX]);
+  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[BETA1]->addr)[SCALAR_INDEX]);
+  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[EPSILON]->addr)[SCALAR_INDEX]);
+  T *gradient = reinterpret_cast<T *>(inputs[GRAD]->addr);
+  constexpr float ONE = 1.0;
+  if (beta1_power - ONE == 0) {
     MS_LOG(EXCEPTION) << "The beta1_power can't be set 1.";
   }
-  T new_lr = static_cast<T>(lr * std::sqrt(1.0 - beta2_power) / (1 - beta1_power));
-  T one = static_cast<T>(1.0);
+  T new_lr = static_cast<T>(lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power));
   // multithreading
-  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
-  auto task = [&](size_t start, size_t end) {
+  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(T)) : 1;
+  auto task = [this, &var, &m, &v, &gradient, new_lr, beta1, beta2, epsilon](size_t start, size_t end) {
+    T one = static_cast<T>(1.0);
     for (size_t i = start; i < end; i++) {
       m[i] += (gradient[i] - m[i]) * (one - beta1);
       v[i] += (gradient[i] * gradient[i] - v[i]) * (one - beta2);
@@ -59,26 +58,30 @@ void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
-  float *var = reinterpret_cast<float *>(inputs[0]->addr);
-  float *m = reinterpret_cast<float *>(inputs[1]->addr);
-  float *v = reinterpret_cast<float *>(inputs[2]->addr);
-  float beta1_power = reinterpret_cast<float *>(inputs[3]->addr)[0];
-  float beta2_power = reinterpret_cast<float *>(inputs[4]->addr)[0];
-  float lr = reinterpret_cast<float *>(inputs[5]->addr)[0];
-  float beta1 = reinterpret_cast<float *>(inputs[6]->addr)[0];
-  float beta2 = reinterpret_cast<float *>(inputs[7]->addr)[0];
-  float epsilon = reinterpret_cast<float *>(inputs[8]->addr)[0];
-  float *gradient = reinterpret_cast<float *>(inputs[9]->addr);
-  if (beta1_power - 1.0 == 0) {
+                                    const std::vector<kernel::AddressPtr> &) {
+  float *var = reinterpret_cast<float *>(inputs[VAR]->addr);
+  float *m = reinterpret_cast<float *>(inputs[M]->addr);
+  float *v = reinterpret_cast<float *>(inputs[V]->addr);
+  float beta1_power = reinterpret_cast<float *>(inputs[BETA1_POWER]->addr)[SCALAR_INDEX];
+  float beta2_power = reinterpret_cast<float *>(inputs[BETA2_POWER]->addr)[SCALAR_INDEX];
+  float lr = reinterpret_cast<float *>(inputs[LR]->addr)[SCALAR_INDEX];
+  float beta1 = reinterpret_cast<float *>(inputs[BETA1]->addr)[SCALAR_INDEX];
+  float beta2 = reinterpret_cast<float *>(inputs[BETA2]->addr)[SCALAR_INDEX];
+  float epsilon = reinterpret_cast<float *>(inputs[EPSILON]->addr)[SCALAR_INDEX];
+  float *gradient = reinterpret_cast<float *>(inputs[GRAD]->addr);
+  constexpr float ONE = 1.0;
+  if (beta1_power - ONE == 0) {
     MS_LOG(EXCEPTION) << "The beta1_power can't be set 1.";
   }
-  float new_lr = lr * std::sqrt(1.0 - beta2_power) / (1 - beta1_power);
+  float new_lr = lr * std::sqrt(ONE - beta2_power) / (ONE - beta1_power);
 
   // multithreading
-  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
-  auto task = [&](size_t start, size_t end) {
-    AdamFp32(var, m, v, new_lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
+  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(float)) : 1;
+  auto task = [this, &var, &m, &v, &gradient, new_lr, beta1, beta2, epsilon](size_t start, size_t end) {
+    int ret = AdamFp32(var, m, v, new_lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
+    if (ret != NNACL_OK) {
+      MS_LOG(EXCEPTION) << "AdamFp32 failed.";
+    }
   };
   CPUKernelUtils::ParallelFor(task, lens);
 }
@@ -87,11 +90,11 @@ void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (input_num != 10) {
+  if (input_num != INPUT_NUMS) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but Adam needs 10 inputs.";
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 3) {
+  if (output_num != OUTPUT_NUMS) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but Adam needs 3 outputs.";
   }
   use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
@@ -99,18 +102,19 @@ void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 10) {
+  if (inputs.size() != INPUT_NUMS) {
     MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but Adam needs 10 inputs.";
   }
-  if (outputs.size() != 3) {
+  if (outputs.size() != OUTPUT_NUMS) {
     MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but Adam needs 3 outputs.";
   }
-  if (inputs[0]->size != inputs[1]->size || inputs[0]->size != inputs[2]->size || inputs[0]->size != inputs[9]->size) {
+  if (inputs[VAR]->size != inputs[M]->size || inputs[VAR]->size != inputs[V]->size ||
+      inputs[VAR]->size != inputs[GRAD]->size) {
     MS_LOG(EXCEPTION) << "Error input data size!";
   }
   size_t f_size = sizeof(float);
-  if (inputs[3]->size != f_size || inputs[4]->size != f_size || inputs[5]->size != f_size ||
-      inputs[6]->size != f_size || inputs[7]->size != f_size || inputs[8]->size != f_size) {
+  if (inputs[BETA1_POWER]->size != f_size || inputs[BETA2_POWER]->size != f_size || inputs[LR]->size != f_size ||
+      inputs[BETA1]->size != f_size || inputs[BETA2]->size != f_size || inputs[EPSILON]->size != f_size) {
     MS_LOG(EXCEPTION) << "The attribute beta_power, beta, lr and epsilon must be float!";
   }
 
