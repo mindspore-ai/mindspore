@@ -74,8 +74,9 @@ lite::Tensor *CreateConstTensor(lite::Tensor *tensor, const std::vector<int> &sh
     MS_LOG(ERROR) << "Malloc new_tensor failed.";
     return nullptr;
   }
-  memcpy(new_tensor->data_c(), reinterpret_cast<char *>(tensor->data_c()) + index * new_tensor->Size(),
-         new_tensor->Size());
+
+  uint8_t *new_tensor_data = reinterpret_cast<uint8_t *>(tensor->data_c()) + index * new_tensor->Size();
+  memcpy(new_tensor->data_c(), new_tensor_data, new_tensor->Size());
   return new_tensor;
 }
 
@@ -102,7 +103,7 @@ lite::Tensor *CreateVarTensor(const TensorInfo &tensor_info, bool inferred) {
   return tensor;
 }
 
-/* Class GroupConv Creator Implement Part*/
+/* Class GroupConv Creator Implement Part */
 void GroupConvCreator::CopyQuantParam(std::vector<lite::Tensor *> *tensors) {
   for (size_t j = 0; j < origin_inputs_.size(); ++j) {
     CopyTensorQuantParam(tensors->at(j), origin_inputs_.at(j));

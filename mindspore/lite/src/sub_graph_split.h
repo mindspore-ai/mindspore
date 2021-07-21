@@ -31,13 +31,14 @@
 
 namespace mindspore::lite {
 constexpr int kDefaultDeviceType = -1;
-constexpr int kDefalutSubGraphSize = 2;
-constexpr int kDefalutFirstSubgraph = 0;
-constexpr int kDefalutSecondSubgraph = 1;
+constexpr int kDefaultSubGraphSize = 2;
+constexpr int kDefaultFirstSubgraph = 0;
+constexpr int kDefaultSecondSubgraph = 1;
 constexpr int kDefaultInputs = 1;
 constexpr int kMaxMultyInNode = 20;
 constexpr int kMaxSubGraphCount = 10;
 constexpr int kMinSubgraphCost = 50;
+constexpr double DefaultGpu = 0.5;
 class SearchSubGraph {
   enum TensorType { NORMAL, CONST, INPUT };
 

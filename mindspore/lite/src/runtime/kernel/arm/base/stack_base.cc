@@ -27,6 +27,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int StackStep = 64;
+}  // namespace
+
 static inline int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {
   int copy_num = 1;
   if (axis > 0) {
@@ -99,7 +103,7 @@ int StackBaseCPUKernel::Run() {
     all_inputs_[j] = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
   }
   // run stack
-  num_threads_ = MSMIN(UP_DIV(outer_size_, 64), op_parameter_->thread_num_);
+  num_threads_ = MSMIN(UP_DIV(outer_size_, StackStep), op_parameter_->thread_num_);
   auto ret = ParallelLaunch(this->ms_context_, StackRun, this, num_threads_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StackBaseCPUKernel Run error: error_code[" << ret << "]";
