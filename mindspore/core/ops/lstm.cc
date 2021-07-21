@@ -19,7 +19,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t get_good_ld(const int64_t dim, const int64_t type_size) {
+constexpr int64_t type_size = 4;
+int64_t get_good_ld(const int64_t dim) {
   int64_t ld = ((dim + (64 / type_size) - 1) / (64 / type_size)) * (64 / type_size);
   if (ld * 256 == 0) {
     return ld + 64 / type_size;
@@ -54,9 +55,8 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
 
   std::vector<int64_t> y_shape = {x_input_shape[0], x_input_shape[1], hidden_size * num_directions};
 
-  int64_t type_size = 4;
-  int64_t gates_ws_ld = get_good_ld(hidden_size * 4, type_size);
-  int64_t states_ws_ld = get_good_ld(std::max(hidden_size, input_size), type_size);
+  int64_t gates_ws_ld = get_good_ld(hidden_size * 4);
+  int64_t states_ws_ld = get_good_ld(std::max(hidden_size, input_size));
   int64_t ws_gates_size = num_layers * num_directions * x_input_shape[0] * x_input_shape[1] * gates_ws_ld * type_size;
   int64_t ws_states_size =
     (num_layers + 1) * num_directions * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
