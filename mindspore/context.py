@@ -644,7 +644,7 @@ def set_context(**kwargs):
             suffix to the file. Default: ''.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
-            `<https://www.mindspore.cn/doc/programming_guide/zh-CN/master/tensor.html>`_.
+            `<https://www.mindspore.cn/docs/programming_guide/zh-CN/master/tensor.html>`_.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
         env_config_path (str): Config path for DFX.
         auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance,

@@ -66,7 +66,7 @@ This sample application demonstrates how to use the MindSpore Lite C++ API (Andr
 
 ## Detailed Description of the Sample Application  
 
-The scene detection sample application on the Android device includes a Java layer and a JNI layer. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images (drawing frames based on the inference result). At the JNI layer, the model inference process is completed in [runtime](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html).
+The scene detection sample application on the Android device includes a Java layer and a JNI layer. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images (drawing frames based on the inference result). At the JNI layer, the model inference process is completed in [runtime](https://www.mindspore.cn/lite/docs/en/master/use/runtime.html).
 
 > This following describes the JNI layer implementation of the sample application. At the Java layer, the Android Camera 2 API is used to enable a device camera and process image frames. Readers are expected to have the basic Android development knowledge.
 
@@ -107,7 +107,7 @@ app
 
 ### Configuring MindSpore Lite Dependencies
 
-When MindSpore C++ APIs are called at the Android JNI layer, related library files are required. You can refer to [Building MindSpore Lite](https://www.mindspore.cn/tutorial/lite/en/master/use/build.html) to generate the `mindspore-lite-{version}-minddata-{os}-{device}.tar.gz` library file package (including the `libmindspore-lite.so` library file and related header files) and decompress it. The following example uses the build command with the image preprocessing module.
+When MindSpore C++ APIs are called at the Android JNI layer, related library files are required. You can refer to [Building MindSpore Lite](https://www.mindspore.cn/lite/docs/en/master/use/build.html) to generate the `mindspore-lite-{version}-minddata-{os}-{device}.tar.gz` library file package (including the `libmindspore-lite.so` library file and related header files) and decompress it. The following example uses the build command with the image preprocessing module.
 
 > version: version number in the output file, which is the same as the version number of the built branch code.
 >

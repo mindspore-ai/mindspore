@@ -73,7 +73,7 @@ YOLOv5作为先进的检测器，它比所有可用的替代检测器更快（FP
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 更多关于Mindspore的信息，请查看以下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
     - [MindSpore API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 # [快速入门](#目录)
