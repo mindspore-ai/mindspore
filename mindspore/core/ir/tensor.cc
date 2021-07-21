@@ -149,6 +149,10 @@ std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, TypeId
       auto buf = static_cast<double *>(data);
       return NewData<T>(buf, size);
     }
+    case kObjectTypeString: {
+      auto buf = static_cast<uint8_t *>(data);
+      return NewData<T>(buf, size);
+    }
     default:
       break;
   }

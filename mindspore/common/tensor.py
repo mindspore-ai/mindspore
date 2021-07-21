@@ -91,8 +91,9 @@ class Tensor(Tensor_):
             validator.check_value_type('input_data', input_data, (Tensor_, np.ndarray, list, tuple, float, int, bool),
                                        'Tensor')
             valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
-                            np.float16, np.float32, np.float64, np.bool_)
-            if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes:
+                            np.float16, np.float32, np.float64, np.bool_, np.str_)
+            if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
+                input_data.dtype.kind != 'U':  # Support dtype np.str_
                 raise TypeError(f"For Tensor, the input_data is a numpy array, "
                                 f"but it's data type: {input_data.dtype} is not in supported list:\
                                 {list(i.__name__ for i in valid_dtypes)}.")
@@ -100,7 +101,7 @@ class Tensor(Tensor_):
                 if np.array(input_data).dtype not in valid_dtypes:
                     raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
             if dtype is not None:
-                validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_,), "Tensor")
+                validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_, mstype.string), "Tensor")
 
             if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
                 input_data = np.ascontiguousarray(input_data)

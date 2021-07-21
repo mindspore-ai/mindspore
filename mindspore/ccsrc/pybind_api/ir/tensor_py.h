@@ -102,7 +102,7 @@ class TensorPy {
   // brief Create Tensor from a numpy array without copy.
   //
   // param input [py::array] Data value of the tensor.
-  static TensorPtr MakeTensorNoCopy(const py::array &input);
+  static TensorPtr MakeTensorOfNumpy(const py::array &input);
 
   static py::array SyncAsNumpy(const Tensor &tensor);
 
