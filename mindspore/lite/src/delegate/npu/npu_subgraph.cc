@@ -160,7 +160,7 @@ int NPUSubGraph::BuildNPUInputOp() {
     for (int i = 0; i < op->inputs().size(); ++i) {
       auto in_tensor = op->inputs()[i];
       if (IsSubGraphInputTensor(in_tensor)) {
-        auto tensor_name = op->name() + "_" + std::to_string(count++);
+        auto tensor_name = "Input_" + std::to_string(count++) + '_' + op->name();
         hiai::op::Data *data;
         data = ConverterToNPUData(in_tensor, tensor_name);
         subgraph_input_ops_.push_back(*data);
