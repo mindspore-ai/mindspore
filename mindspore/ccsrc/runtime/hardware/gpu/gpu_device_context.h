@@ -34,7 +34,7 @@ class GPUDeviceContext : public DeviceContext {
   ~GPUDeviceContext() override = default;
 
   // Set device id and initialize device resource, such as stream, cudnn and cublas handle.
-  bool Initialize() override;
+  void Initialize() override;
 
   // Release device memory, stream, cudnn and cublas handle, etc.
   void Destroy() override;

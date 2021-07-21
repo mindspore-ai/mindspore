@@ -126,7 +126,7 @@ void KernelActor::RunOpControlWithInputTensor(AID *const input_control, OpContex
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(input_tensors);
   auto &sequential_num = context->sequential_num_;
-  input_op_controls_[sequential_num].emplace_back(input_control);
+  (void)input_op_controls_[sequential_num].emplace_back(input_control);
 
   PushInputDeviceTensor(input_tensors);
   // When all the inputs are collected, then allocate memory and callback launch.

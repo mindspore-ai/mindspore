@@ -64,7 +64,7 @@ void DeviceContextManager::UpdateDeviceContextKey(const DeviceContextKey &old_ke
   }
 
   handle.key() = new_key_str;
-  device_contexts_.insert(std::move(handle));
+  (void)device_contexts_.insert(std::move(handle));
 }
 }  // namespace device
 }  // namespace mindspore
