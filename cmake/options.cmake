@@ -11,6 +11,7 @@ option(ENABLE_ASAN "Enable Google Sanitizer to find memory bugs")
 option(ENABLE_LOAD_ANF_IR "Enable load ANF-IR as input of 'infer' stage of pipeline" OFF)
 option(ENABLE_COVERAGE "Enable code coverage report" OFF)
 option(USE_GLOG "Use glog to output log" OFF)
+option(ENABLE_SECURITY "Enable security, maintenance function will be disabled, default off" OFF)
 option(ENABLE_PROFILE "Enable pipeline profile, default off" OFF)
 option(ENABLE_TIMELINE "Enable time line record" OFF)
 option(ENABLE_DUMP_PROTO "Enable dump anf graph to file in ProtoBuffer format, default on" ON)
@@ -98,6 +99,10 @@ endif()
 
 if(ENABLE_PROFILE)
     add_compile_definitions(ENABLE_PROFILE)
+endif()
+
+if(ENABLE_SECURITY)
+    add_compile_definitions(ENABLE_SECURITY)
 endif()
 
 if(ENABLE_TIMELINE)
