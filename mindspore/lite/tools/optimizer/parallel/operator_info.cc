@@ -195,6 +195,5 @@ int OperatorInfo::DoSplit() {
   }
   return lite::RET_OK;
 }
-
 }  // namespace opt
 }  // namespace mindspore

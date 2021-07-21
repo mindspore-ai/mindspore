@@ -18,7 +18,6 @@
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::lite::micro::cmsis {
-
 int Conv2DBaseCoder::SetQuantArgs() {
   int channel = output_tensor_->Channel();
   size_t channel_data_size = static_cast<size_t>(channel) * sizeof(int32_t);
@@ -56,5 +55,4 @@ int Conv2DBaseCoder::SetQuantArgs() {
 
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::cmsis

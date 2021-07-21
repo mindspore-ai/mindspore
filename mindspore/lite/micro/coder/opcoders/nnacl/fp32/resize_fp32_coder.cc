@@ -28,7 +28,6 @@ using mindspore::schema::CoordinateTransformMode_HALF_PIXEL;
 using mindspore::schema::PrimitiveType_Resize;
 
 namespace mindspore::lite::micro::nnacl {
-
 int ResizeFP32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(ResizeBaseCoder::Init(), "ResizeBaseCoder::Init failed");
   MS_CHECK_RET_CODE(SelectCalculatorFunc(), "SelectCalculatorFunc failed");
@@ -63,8 +62,8 @@ int ResizeFP32Coder::ReSize() {
   }
 
   if (!const_shape_) {
-    new_height_ = output_tensor_->shape()[1];
-    new_width_ = output_tensor_->shape()[2];
+    new_height_ = output_tensor_->shape().at(kNHWC_H);
+    new_width_ = output_tensor_->shape().at(kNHWC_W);
   }
 
   MS_CHECK_RET_CODE_WITH_EXE(MallocTmpBuffer(), "MallocTmpBuffer failed", FreeTmpBuffer());
@@ -73,13 +72,10 @@ int ResizeFP32Coder::ReSize() {
   return RET_OK;
 }
 
-// Bilinear interpolation :
 // Bilinear interpolation considers the closest 2x2 neighborhood of known pixel values surrounding the unknown pixel.
 // It takes a weighted average of these 4 pixels to arrive at its final interpolated value. Thus, we need to reserve
 // twice bigger space than coordinates arrays for weight arrays. It means x_weight_len is twice as much as x_len in
 // detail.
-//
-// Bicubic interpolation:
 // Bicubic goes one step beyond bilinear by considering the closest 4x4 neighborhood of known pixels --- for a total of
 // 16 pixels. Since these are at various distances from the unknown pixel, closer pixels are given a higher weighting in
 // the calculation.
@@ -178,7 +174,7 @@ int ResizeFP32Coder::DoCode(CoderContext *const context) {
       code.CodeArray("y_weights", y_weights_, sizeof(float) * y_weight_len_, true);
       code.CodeArray("x_weights", x_weights_, sizeof(float) * x_weight_len_, true);
 
-      int c = input_tensor_->shape().at(3);
+      int c = input_tensor_->shape().at(kNHWC_C);
       code << "float *line0 = " << MemoryAllocator::GetInstance()->GetRuntimeAddr(line_buffer_) << ";\n";
       code << "float *line1 = line0 + " << new_width_ << " * " << c << ";\n";
       code.CodeFunction("ResizeBilinear", input_tensor_, output_tensor_, "input_shape", "output_shape", "y_bottoms",

@@ -21,7 +21,6 @@
 #include "coder/log.h"
 
 namespace mindspore::lite::micro::cmsis {
-
 int DWConvInt8Coder::Prepare(CoderContext *const context) {
   Conv2DBaseCoder::Init();
   MS_CHECK_RET_CODE(micro::Conv2DBaseCoder::CheckLayout(input_tensor_), "Check layout failed.");
@@ -157,5 +156,4 @@ int DWConvInt8Coder::InitTmpBuffer() {
   }
   return 0;
 }
-
 }  // namespace mindspore::lite::micro::cmsis

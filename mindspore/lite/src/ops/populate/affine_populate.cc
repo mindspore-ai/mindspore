@@ -21,7 +21,6 @@ using mindspore::schema::PrimitiveType_Affine;
 
 namespace mindspore {
 namespace lite {
-
 static void ReleaseParam(AffineParameter *affine, MatMulParameter *matmul) {
   if (affine != nullptr) {
     free(affine);
