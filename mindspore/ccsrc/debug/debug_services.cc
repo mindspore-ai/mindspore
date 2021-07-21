@@ -128,7 +128,7 @@ std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> 
 void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed) {
   void *previous_tensor_ptr = nullptr;
   std::shared_ptr<TensorData> tensor_prev;
-  if (previous_iter_tensor_needed && tensor->GetIteration() > 1) {
+  if (previous_iter_tensor_needed && tensor->GetIteration() >= 1) {
     // read data in offline mode
     std::vector<std::string> file_paths;
     if (!is_sync_mode) {
