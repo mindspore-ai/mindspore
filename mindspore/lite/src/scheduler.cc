@@ -396,8 +396,8 @@ int Scheduler::InferSwitchShape(const lite::Model::Node *switch_node) {
     return RET_PARAM_INVALID;
   }
   std::deque<lite::Model::Node *> partial_cnode_to_infer{};
-  auto true_branch_output_index = switch_node->input_indices_.at(1);
-  auto false_branch_output_index = switch_node->input_indices_.at(2);
+  auto true_branch_output_index = switch_node->input_indices_.at(kSwitchTrueBranch);
+  auto false_branch_output_index = switch_node->input_indices_.at(kSwitchFalseBranch);
   for (auto &node : src_model_->all_nodes_) {
     if ((IsContain(node->output_indices_, true_branch_output_index) ||
          IsContain(node->output_indices_, false_branch_output_index)) &&

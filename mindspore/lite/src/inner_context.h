@@ -26,6 +26,7 @@
 #endif
 
 namespace mindspore::lite {
+const constexpr int kMaxDeviceNums = 2;
 struct InnerContext : public Context {
  public:
   InnerContext() = default;

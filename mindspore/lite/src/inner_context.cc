@@ -122,7 +122,7 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
   }
-  if (this->device_list_.size() > 2) {
+  if (this->device_list_.size() > kMaxDeviceNums) {
     MS_LOG(ERROR) << "Not support device list more than 2.";
     return RET_NOT_SUPPORT;
   }
