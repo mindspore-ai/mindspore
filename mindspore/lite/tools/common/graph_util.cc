@@ -32,6 +32,8 @@ namespace lite {
 namespace {
 enum QuantBitNum { QuantBitNum_INT8 = 8, QuantBitNum_INT16 = 16 };
 }  // namespace
+const int kZeroPointGap = 128;
+
 OpDefCopyer GetSimpleOpCopyer() {
   return [](CNodeT *inCNode) -> std::unique_ptr<CNodeT> {
     std::unique_ptr<CNodeT> newCNode = std::make_unique<CNodeT>();
@@ -501,15 +503,15 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
       MS_ASSERT(prim != nullptr);
       if (prim->src_t == TypeId::kNumberTypeUInt8) {
         if (preTensor->dataType == TypeId::kNumberTypeUInt8) {
-          toAddTensor->quantParams.front()->zeroPoint -= 128;
+          toAddTensor->quantParams.front()->zeroPoint -= kZeroPointGap;
         } else {
-          preTensor->quantParams.front()->zeroPoint += 128;
+          preTensor->quantParams.front()->zeroPoint += kZeroPointGap;
         }
       } else if (prim->dst_t == TypeId::kNumberTypeUInt8) {
         if (preTensor->dataType == TypeId::kNumberTypeInt8) {
-          toAddTensor->quantParams.front()->zeroPoint += 128;
+          toAddTensor->quantParams.front()->zeroPoint += kZeroPointGap;
         } else {
-          preTensor->quantParams.front()->zeroPoint -= 128;
+          preTensor->quantParams.front()->zeroPoint -= kZeroPointGap;
         }
       }
       preTensor->dataType = prim->src_t;
@@ -579,15 +581,15 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       MS_ASSERT(prim != nullptr);
       if (prim->dst_t == TypeId::kNumberTypeUInt8) {
         if (postTensor->dataType == TypeId::kNumberTypeUInt8) {
-          postTensor->quantParams.front()->zeroPoint -= 128;
+          postTensor->quantParams.front()->zeroPoint -= kZeroPointGap;
         } else {
-          toAddTensor->quantParams.front()->zeroPoint += 128;
+          toAddTensor->quantParams.front()->zeroPoint += kZeroPointGap;
         }
       } else if (prim->src_t == TypeId::kNumberTypeUInt8) {
         if (postTensor->dataType == TypeId::kNumberTypeUInt8) {
-          toAddTensor->quantParams.front()->zeroPoint -= 128;
+          toAddTensor->quantParams.front()->zeroPoint -= kZeroPointGap;
         } else {
-          postTensor->quantParams.front()->zeroPoint += 128;
+          postTensor->quantParams.front()->zeroPoint += kZeroPointGap;
         }
       }
       postTensor->dataType = prim->src_t;
@@ -764,6 +766,5 @@ STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph) {
   }
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore
