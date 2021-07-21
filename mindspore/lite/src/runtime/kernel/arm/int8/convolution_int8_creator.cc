@@ -97,23 +97,9 @@ kernel::InnerKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tenso
                   << conv_param->input_channel_;
     return nullptr;
   }
-  GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, true, kNumberTypeInt8);
-  group_conv_creator.SetShapeOfTensors();
-  for (int i = 0; i < conv_param->group_; ++i) {
-    ConvParameter *new_conv_param = CreateNewConvParameter(conv_param);
-    std::vector<lite::Tensor *> new_inputs;
-    std::vector<lite::Tensor *> new_outputs;
-    auto ret = group_conv_creator.GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "GetSingleConv for int8 group conv failed.";
-      return nullptr;
-    }
-    group_conv_creator.CopyQuantParam(&new_inputs);
-    group_conv_creator.get_group_conv()->emplace_back(
-      CpuConvInt8KernelSelect(new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_param), ctx));
-  }
+  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, ctx, true, kNumberTypeInt8);
   return new (std::nothrow)
-    GroupConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()), group);
+    GroupConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx, group_conv_creator, group);
 }
 
 kernel::InnerKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,

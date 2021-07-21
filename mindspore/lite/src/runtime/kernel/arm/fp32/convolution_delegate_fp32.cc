@@ -18,17 +18,23 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32/convolution_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1_fp32.h"
-#include "src/runtime/kernel/arm/fp32/convolution_slidewindow_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
-#include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_x86_fp32.h"
-#include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 #include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3_fp32.h"
+#endif
+#if defined(ENABLE_ARM64)
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
+#endif
+#ifdef ENABLE_AVX
+#include "src/runtime/kernel/arm/fp32/convolution_slidewindow_fp32.h"
+#endif
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -240,24 +246,9 @@ kernel::InnerKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *
 kernel::InnerKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs,
                                                    OpParameter *op_parameter, const lite::InnerContext *ctx) {
-  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, false, kNumberTypeFloat32);
-  group_conv_creator.SetShapeOfTensors();
-  for (int i = 0; i < conv_param->group_; ++i) {
-    ConvParameter *new_conv_param = CreateNewConvParameter(conv_param);
-    std::vector<lite::Tensor *> new_inputs;
-    std::vector<lite::Tensor *> new_outputs;
-    auto ret = group_conv_creator.GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "GetSingleConv for fp32 group conv failed.";
-      return nullptr;
-    }
-    group_conv_creator.get_group_conv()->emplace_back(new (std::nothrow) ConvolutionDelegateCPUKernel(
-      reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx));
-  }
-  auto group_kernel = new (std::nothrow)
-    GroupConvolutionFp32CPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()),
-                                  reinterpret_cast<ConvParameter *>(op_parameter)->group_);
+  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, ctx, false, kNumberTypeFloat32);
+  auto group_kernel = new (std::nothrow) GroupConvolutionFp32CPUKernel(
+    op_parameter, inputs, outputs, ctx, group_conv_creator, reinterpret_cast<ConvParameter *>(op_parameter)->group_);
   if (group_kernel == nullptr) {
     MS_LOG(ERROR) << "New GroupConvolutionFp32CPUKernel failed.";
     return nullptr;
