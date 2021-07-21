@@ -52,6 +52,7 @@ void FeedTeOpTensorInputArg(const NotNull<CNodePtr> &cnode,
     auto input_node = input_node_with_index.first;
     auto input_index = input_node_with_index.second;
     auto output_shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
+    auto output_ori_shape = AnfAlgo::GetOutputInferShape(input_node, input_index);
     auto output_format = AnfAlgo::GetOutputFormat(input_node, input_index);
     auto output_dtype = AnfAlgo::GetOutputDeviceDataType(input_node, input_index);
     auto iter = type_name_map.find(output_dtype);
@@ -65,6 +66,7 @@ void FeedTeOpTensorInputArg(const NotNull<CNodePtr> &cnode,
     tensor_arg.arg_type = optiling::TA_SINGLE;
     tensor.dtype = ge_output_dtype;
     tensor.shape.insert(tensor.shape.end(), output_shape.begin(), output_shape.end());
+    tensor.ori_shape.insert(tensor.ori_shape.end(), output_ori_shape.begin(), output_ori_shape.end());
 
     tensor.format = GeTypesConvert::GetGeTilingFormat(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
     MS_LOG(INFO) << "Tiling Format:" << tensor.format;
@@ -79,6 +81,7 @@ void FeedTeOpTensorOutputArg(const NotNull<CNodePtr> &cnode,
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode.get());
   for (size_t i = 0; i < output_size; ++i) {
     auto output_shape = AnfAlgo::GetOutputDeviceShape(cnode.get(), i);
+    auto output_ori_shape = AnfAlgo::GetOutputInferShape(cnode.get(), i);
     auto output_format = AnfAlgo::GetOutputFormat(cnode.get(), i);
     auto data_type = AnfAlgo::GetOutputDeviceDataType(cnode.get(), i);
     auto iter = type_name_map.find(data_type);
@@ -91,6 +94,7 @@ void FeedTeOpTensorOutputArg(const NotNull<CNodePtr> &cnode,
     tensor_arg.arg_type = optiling::TA_SINGLE;
     tensor.dtype = iter->second;
     tensor.shape.insert(tensor.shape.end(), output_shape.begin(), output_shape.end());
+    tensor.ori_shape.insert(tensor.ori_shape.end(), output_ori_shape.begin(), output_ori_shape.end());
     tensor.format = GeTypesConvert::GetGeTilingFormat(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));
     MS_LOG(INFO) << "Tiling Format:" << tensor.format;
     tensor_arg.tensor.emplace_back(tensor);

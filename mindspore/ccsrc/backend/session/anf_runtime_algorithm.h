@@ -154,6 +154,9 @@ class AnfRuntimeAlgorithm {
   static std::vector<size_t> GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx);
   // get input shapes which will built and run in device
   static std::vector<size_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
+  // get output shapes for tbe build
+  static std::vector<int64_t> GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t output_idx,
+                                                              const std::string &format);
   // Get Input Padding Axis
   static std::string GetInputReshapeType(const AnfNodePtr &node, size_t output_idx);
   // Get Output Padding Axis

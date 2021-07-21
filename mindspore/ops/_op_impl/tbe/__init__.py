@@ -46,6 +46,7 @@ from .assign import _assign_tbe
 from .assign_add import _assign_add_tbe
 from .assign_sub import _assign_sub_tbe
 from .batch_matmul import _batch_matmul_tbe
+from .batch_matmul_ds import _batch_matmul_ds_tbe
 from .batchnorm import _batch_norm_tbe
 from .batchnorm_grad import _batch_norm_grad_tbe
 from .bias_add import _bias_add_tbe
@@ -55,6 +56,7 @@ from .cast_ds import _cast_ds_tbe
 from .conv2d import _conv2d_tbe
 from .conv2d_backprop_filter import _conv2d_backprop_filter_tbe
 from .conv2d_backprop_input import _conv2d_backprop_input_tbe
+from .conv2d_ds import _conv2d_ds_tbe
 from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe
@@ -92,6 +94,7 @@ from .trans_data import _trans_data_tbe
 from .trans_data_ds import _trans_data_ds_tbe
 from .top_k import _top_k_tbe
 from .matmul import _matmul_tbe
+from .matmul_ds import _matmul_ds_tbe
 from .sub import _sub_tbe
 from .sub_ds import _sub_ds_tbe
 from .scatter_nd import _scatter_nd_tbe

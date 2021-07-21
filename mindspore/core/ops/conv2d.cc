@@ -24,13 +24,14 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
+using mindspore::abstract::Shape;
 namespace mindspore {
 namespace ops {
 namespace {
 // check functions
 void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
-    if ((shape[i] < 0) && (shape[i] != abstract::Shape::SHP_ANY)) {
+    if ((shape[i] < 0) && (shape[i] != Shape::SHP_ANY)) {
       MS_EXCEPTION(ValueError) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
                                << shape[i];
     }
@@ -74,28 +75,61 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
                        const std::vector<int64_t> &dilation, const int64_t &pad_mode,
                        const std::vector<int64_t> &padding) {
   if (pad_mode == PadMode::VALID) {
-    output_hw->push_back(static_cast<int64_t>(std::ceil(((x_h * 1.0) - dilation[0] * (kernel[0] - 1)) / stride[0])));
-    output_hw->push_back(static_cast<int64_t>(std::ceil(((x_w * 1.0) - dilation[1] * (kernel[1] - 1)) / stride[1])));
+    int64_t out_h = -1;
+    int64_t out_w = -1;
+    if (x_h != Shape::SHP_ANY) {
+      auto h_shape = static_cast<int64_t>(std::ceil(((x_h * 1.0) - dilation[0] * (kernel[0] - 1)) / stride[0]));
+      out_h = h_shape >= 1 ? h_shape : 1L;
+    }
+    if (x_w != Shape::SHP_ANY) {
+      auto w_shape = static_cast<int64_t>(std::ceil(((x_w * 1.0) - dilation[1] * (kernel[1] - 1)) / stride[1]));
+      out_w = w_shape >= 1 ? w_shape : 1L;
+    }
+    output_hw->push_back(out_h);
+    output_hw->push_back(out_w);
     (void)pad_list->insert(pad_list->begin(), 4, 0);
   } else if (pad_mode == PadMode::SAME) {
-    output_hw->push_back(static_cast<int64_t>(std::ceil((x_h * 1.0) / stride[0])));
-    output_hw->push_back(static_cast<int64_t>(std::ceil((x_w * 1.0) / stride[1])));
-    int64_t pad_needed_h = (output_hw->at(0) - 1) * stride[0] + dilation[0] * (kernel[0] - 1) + 1 - x_h;
-    pad_needed_h = std::max((int64_t)0, pad_needed_h);
-    pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_h / 2)));
-    pad_list->push_back(pad_needed_h - pad_list->at(0));
-    int64_t pad_needed_w = (output_hw->at(1) - 1) * stride[1] + dilation[1] * (kernel[1] - 1) + 1 - x_w;
-    pad_needed_w = std::max((int64_t)0, pad_needed_w);
-    pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_w / 2)));
-    pad_list->push_back(pad_needed_w - pad_list->at(2));
+    if (x_h == Shape::SHP_ANY) {
+      output_hw->push_back(Shape::SHP_ANY);
+      pad_list->push_back(Shape::SHP_ANY);
+      pad_list->push_back(Shape::SHP_ANY);
+    } else {
+      output_hw->push_back(static_cast<int64_t>(std::ceil((x_h * 1.0) / stride[0])));
+      int64_t pad_needed_h = (output_hw->at(0) - 1) * stride[0] + dilation[0] * (kernel[0] - 1) + 1 - x_h;
+      pad_needed_h = std::max((int64_t)0, pad_needed_h);
+      pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_h / 2)));
+      pad_list->push_back(pad_needed_h - pad_list->at(0));
+    }
+
+    if (x_w == Shape::SHP_ANY) {
+      output_hw->push_back(Shape::SHP_ANY);
+      pad_list->push_back(Shape::SHP_ANY);
+      pad_list->push_back(Shape::SHP_ANY);
+    } else {
+      output_hw->push_back(static_cast<int64_t>(std::ceil((x_w * 1.0) / stride[1])));
+      int64_t pad_needed_w = (output_hw->at(1) - 1) * stride[1] + dilation[1] * (kernel[1] - 1) + 1 - x_w;
+      pad_needed_w = std::max((int64_t)0, pad_needed_w);
+      pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_w / 2)));
+      pad_list->push_back(pad_needed_w - pad_list->at(2));
+    }
   } else if (pad_mode == PadMode::PAD) {
     (void)pad_list->insert(pad_list->begin(), padding.begin(), padding.end());
-    output_hw->push_back(static_cast<int64_t>(std::floor(
-      1 + ((x_h * 1.0) + pad_list->at(0) + pad_list->at(1) - kernel[0] - (kernel[0] - 1) * (dilation[0] - 1)) /
-            stride[0])));
-    output_hw->push_back(static_cast<int64_t>(std::floor(
-      1 + ((x_w * 1.0) + pad_list->at(2) + pad_list->at(3) - kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) /
-            stride[1])));
+    int64_t out_h = -1;
+    int64_t out_w = -1;
+    if (x_h != Shape::SHP_ANY) {
+      auto h_shape = static_cast<int64_t>(std::floor(
+        1 + ((x_h * 1.0) + pad_list->at(0) + pad_list->at(1) - kernel[0] - (kernel[0] - 1) * (dilation[0] - 1)) /
+              stride[0]));
+      out_h = h_shape >= 1 ? h_shape : 1L;
+    }
+    if (x_w != Shape::SHP_ANY) {
+      auto w_shape = static_cast<int64_t>(std::floor(
+        1 + ((x_w * 1.0) + pad_list->at(2) + pad_list->at(3) - kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) /
+              stride[1]));
+      out_w = w_shape >= 1 ? w_shape : 1L;
+    }
+    output_hw->push_back(out_h);
+    output_hw->push_back(out_w);
   }
 }
 
@@ -131,20 +165,20 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
     w_axis = 2;
   }
   int64_t group = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("group"), "group");
-  if ((x_shape[c_axis] != abstract::Shape::SHP_ANY) && (w_shape[c_axis] != abstract::Shape::SHP_ANY) &&
+  if ((x_shape[c_axis] != Shape::SHP_ANY) && (w_shape[c_axis] != Shape::SHP_ANY) &&
       ((x_shape[c_axis] / group) != w_shape[c_axis])) {
     MS_LOG(EXCEPTION) << "x_shape[C_in] / group must equal to w_shape[C_in] = " << w_shape[c_axis] << ", but got "
                       << (x_shape[c_axis] / group);
   }
   int64_t out_channel = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("out_channel"), "out_channel");
-  if ((w_shape[n_axis] != abstract::Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
+  if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
     MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis] << " must equal to = " << out_channel;
   }
   std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("kernel_size"), 0, 2);
-  if ((w_shape[h_axis] != abstract::Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
+  if ((w_shape[h_axis] != Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
     MS_LOG(EXCEPTION) << "weight height = " << w_shape[h_axis] << ", must equal to = " << kernel_size[0];
   }
-  if ((w_shape[w_axis] != abstract::Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
+  if ((w_shape[w_axis] != Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
     MS_LOG(EXCEPTION) << "weight width = " << w_shape[w_axis] << ", must equal to = " << kernel_size[1];
   }
   std::vector<int64_t> stride = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("stride"), 2, 2);
@@ -160,16 +194,6 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   std::vector<int64_t> pad_list_max;
   Conv2DPadFunction(&output_hw, &pad_list, x_shape[h_axis], x_shape[w_axis], kernel_size, stride, dilation, pad_mode,
                     padding);
-  if (x_shape[h_axis] == abstract::Shape::SHP_ANY) {
-    output_hw[0] = abstract::Shape::SHP_ANY;
-    pad_list[0] = abstract::Shape::SHP_ANY;
-    pad_list[1] = abstract::Shape::SHP_ANY;
-  }
-  if (x_shape[w_axis] == abstract::Shape::SHP_ANY) {
-    output_hw[1] = abstract::Shape::SHP_ANY;
-    pad_list[2] = abstract::Shape::SHP_ANY;
-    pad_list[3] = abstract::Shape::SHP_ANY;
-  }
   Conv2DPadFunction(&output_hw_min, &pad_list_min, x_min_shape[h_axis], x_min_shape[w_axis], kernel_size, stride,
                     dilation, pad_mode, padding);
   Conv2DPadFunction(&output_hw_max, &pad_list_max, x_max_shape[h_axis], x_max_shape[w_axis], kernel_size, stride,

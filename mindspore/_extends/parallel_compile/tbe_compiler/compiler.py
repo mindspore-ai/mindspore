@@ -44,7 +44,7 @@ def _initialize(impl_path):
 
 def _replace_range(args):
     for arg in args:
-        if not arg.__contains__('range'):
+        if not arg or not arg.__contains__('range'):
             continue
         shape_range = arg["range"]
         for range_item in shape_range:

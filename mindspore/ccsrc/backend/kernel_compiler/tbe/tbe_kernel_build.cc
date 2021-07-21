@@ -129,6 +129,61 @@ void SetLicInfo(nlohmann::json *op_info_json) {
   (*op_info_json)[kJOpTuneList] = LicManager::GetInstance().GetOpTuneList();
   (*op_info_json)[kJPassList] = LicManager::GetInstance().GetPassSwitch();
 }
+
+std::vector<int64_t> GetOutputShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<int64_t> shape;
+  auto output_shape = AnfAlgo::GetOutputDetailShape(anf_node, real_index);
+  MS_EXCEPTION_IF_NULL(output_shape);
+  if (output_shape->isa<abstract::Shape>()) {
+    auto shape_ptr = output_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    shape = shape_ptr->shape();
+  }
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
+
+std::vector<int64_t> GetOutputDeviceShapeForTbeBuild(const kCreaterType creater_type, const AnfNodePtr &anf_node,
+                                                     const size_t real_index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<int64_t> shape;
+  if (creater_type == OP_SELECT_FORMAT || creater_type == CHECK_SUPPORTED) {
+    shape = GetOutputShapeForTbeBuild(anf_node, real_index);
+  } else {
+    auto format = AnfAlgo::GetOutputFormat(anf_node, real_index);
+    shape = AnfAlgo::GetOutputDeviceShapeForTbeBuild(anf_node, real_index, format);
+  }
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
+
+std::vector<int64_t> GetInputShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, real_index);
+  return GetOutputShapeForTbeBuild(kernel_with_index.first, kernel_with_index.second);
+}
+
+std::vector<int64_t> GetInputDeviceShapeForTbeBuild(const kCreaterType creater_type, const AnfNodePtr &anf_node,
+                                                    const size_t real_index) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<int64_t> shape;
+  session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, real_index);
+  if (creater_type == OP_SELECT_FORMAT || creater_type == CHECK_SUPPORTED) {
+    shape = GetOutputShapeForTbeBuild(kernel_with_index.first, kernel_with_index.second);
+  } else {
+    auto format = AnfAlgo::GetInputFormat(anf_node, real_index);
+    shape = AnfAlgo::GetOutputDeviceShapeForTbeBuild(kernel_with_index.first, kernel_with_index.second, format);
+  }
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
 }  // namespace
 bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspore::AnfNode> &anf_node,
                                                   nlohmann::json *kernel_json) {
@@ -232,16 +287,13 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
   auto def_format = kOpFormat_NCHW;
   auto dtype = GetDeviceInputType(anf_node, real_input_index);
   auto format = GetDeviceInputFormat(anf_node, real_input_index);
-  auto shape = GetDeviceInputShape(anf_node, real_input_index);
-  auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
+  auto shape = GetInputDeviceShapeForTbeBuild(creater_type_, anf_node, real_input_index);
+  auto ori_shape = GetInputShapeForTbeBuild(anf_node, real_input_index);
   if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
     def_format = kOpFormat_NCDHW;
   }
   if (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     format = kOpFormat_NCDHW;
-  }
-  if (ori_shape.empty()) {
-    ori_shape.emplace_back(1);
   }
   nlohmann::json input_desc_json;
   input_desc_json[kJDtype] = dtype;
@@ -463,16 +515,11 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
     auto dtype = GetDeviceOutputType(anf_node, *output_idx);
     auto format = GetDeviceOutputFormat(anf_node, *output_idx);
 
-    std::vector<int64_t> shape;
-    AnfAlgo::GetRealDynamicShape(GetDeviceOutputShape(anf_node, *output_idx), NOT_NULL(&shape));
+    std::vector<int64_t> shape = GetOutputDeviceShapeForTbeBuild(creater_type_, anf_node, *output_idx);
+    std::vector<int64_t> ori_shape = GetOutputShapeForTbeBuild(anf_node, *output_idx);
 
-    std::vector<int64_t> ori_shape;
-    AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, *output_idx), NOT_NULL(&ori_shape));
     if (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) {
       format = kOpFormat_NCDHW;
-    }
-    if (ori_shape.empty()) {
-      ori_shape.emplace_back(1);
     }
     nlohmann::json output_obj;
     output_obj[kJDtype] = dtype;
