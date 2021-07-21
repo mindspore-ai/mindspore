@@ -24,7 +24,7 @@ lr_init: 0.00
 lr_end: 0.00
 lr_max: 0.4
 momentum: 0.9
-weight_decay: 0.00004 # 4e-5
+weight_decay: 0.00004
 label_smooth: 0.1
 loss_scale: 1024
 save_checkpoint: True
@@ -32,10 +32,10 @@ save_checkpoint_epochs: 1
 keep_checkpoint_max: 200
 save_checkpoint_path: "./"
 platform: 'Ascend'
-device_id: int(os.getenv('DEVICE_ID', '0'))
-rank_id: int(os.getenv('RANK_ID', '0'))
-rank_size: int(os.getenv('RANK_SIZE', '1'))
-run_distribute: int(os.getenv('RANK_SIZE', '1')) > 1.
+device_id: 0
+rank_id: 0
+rank_size: 1
+run_distribute: False
 activation: "Softmax"
         
 # Image classification trian. train_parse_args():return train_args
