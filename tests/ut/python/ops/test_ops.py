@@ -1042,6 +1042,18 @@ class SparseApplyRMSPropNet(nn.Cell):
         out = self.sparse_apply_r_m_s_prop(self.var, self.ms, self.mom, lr, grad, indices)
         return out
 
+
+class ApplyKerasMomentumNet(nn.Cell):
+    def __init__(self, use_locking=False, use_nesterov=False):
+        super(ApplyKerasMomentumNet, self).__init__()
+        self.apply_keras_momentum = P.ApplyKerasMomentum(use_locking, use_nesterov)
+        self.var = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="accum")
+
+    def construct(self, lr, grad, momentum):
+        out = self.apply_keras_momentum(self.var, self.accum, lr, grad, momentum)
+        return out
+
 test_case_math_ops = [
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -2305,6 +2317,12 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(0.01, mstype.float32),
                         Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32)),
                         Tensor(np.array([0, 1], dtype=np.int32))],
+        'skip': ['backward']}),
+    ('ApplyKerasMomentum', {
+        'block': ApplyKerasMomentumNet(),
+        'desc_inputs': [Tensor(0.001, mstype.float32),
+                        Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32)),
+                        Tensor(0.99, mstype.float32)],
         'skip': ['backward']}),
 ]
 
