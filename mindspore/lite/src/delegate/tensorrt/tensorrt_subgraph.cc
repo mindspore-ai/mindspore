@@ -99,7 +99,7 @@ int TensorRTSubGraph::SetDeviceConfig() {
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
   }
 
-  // config setMaxWorkspaceSize to x MB
+  // config setMaxWorkspaceSize to 256 MB for max limit
   config_->setMaxWorkspaceSize(256 * (1 << 20));
   return RET_OK;
 }
@@ -248,7 +248,7 @@ int TensorRTSubGraph::Execute() {
   return RET_OK;
 }
 
-nvinfer1::ITensor *TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, mindspore::MSTensor in_tensor) {
+nvinfer1::ITensor *TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor) {
   for (auto input_op : cur_op->in_ops()) {
     for (size_t i = 0; i < input_op->outputs().size(); i++) {
       auto out_tensor = input_op->outputs().at(i);

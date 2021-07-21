@@ -26,7 +26,7 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::lite {
 class TensorRTLogger : public nvinfer1::ILogger {
-  void log(Severity severity, const char *msg) override {
+  void log(Severity severity, const char *msg) noexcept override {
     if (severity == Severity::kINTERNAL_ERROR || severity == Severity::kERROR) {
       MS_LOG(ERROR) << msg;
     } else if (severity == Severity::kWARNING) {

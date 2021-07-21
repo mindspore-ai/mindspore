@@ -86,15 +86,18 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
   return SetTranspose(network, input, perm);
 }
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor) {
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
   }
   nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
-
-  nvinfer1::Weights weights{data_type, ms_tensor.MutableData(), ms_tensor.ElementNum()};
+  if (ms_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << "ConvertConstantTensor from a MSTensor with nullptr data";
+    return nullptr;
+  }
+  nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -140,8 +143,8 @@ ActivationParams ConvertActivationType(schema::ActivationType activation_type) {
   return action_param;
 }
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor,
-                                               size_t expand_shape_size) {
+nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
+                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
@@ -158,8 +161,11 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   }
   nvinfer1::Dims dims = ConvertCudaDims(shape);
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
-
-  nvinfer1::Weights weights{data_type, ms_tensor.MutableData(), ms_tensor.ElementNum()};
+  if (ms_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << "ConvertTensorWithExpandDims from a MSTensor with nullptr data";
+    return nullptr;
+  }
+  nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -169,7 +175,7 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
 }
-nvinfer1::Weights TransposeWeight(mindspore::MSTensor ms_tensor, float **pack_weight) {
+nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **pack_weight) {
   // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
   nvinfer1::Weights weights{};
   weights.count = ms_tensor.ElementNum();
@@ -178,7 +184,15 @@ nvinfer1::Weights TransposeWeight(mindspore::MSTensor ms_tensor, float **pack_we
   }
   weights.type = nvinfer1::DataType::kFLOAT;
   auto weight_shape = ms_tensor.Shape();
-  float *src_val = reinterpret_cast<float *>(ms_tensor.MutableData());
+  const void *src_ptr = ms_tensor.Data().get();
+  const float *src_val;
+  if (src_ptr == nullptr) {
+    src_val = nullptr;
+    MS_LOG(ERROR) << "TransposeWeight from a MSTensor with nullptr data";
+    return weights;
+  }
+  src_val = reinterpret_cast<const float *>(src_ptr);
+
   float *pack_weight_tmp = reinterpret_cast<float *>(malloc(ms_tensor.ElementNum() * sizeof(float)));
   if (pack_weight_tmp == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -191,12 +205,14 @@ nvinfer1::Weights TransposeWeight(mindspore::MSTensor ms_tensor, float **pack_we
   return weights;
 }
 
-nvinfer1::Weights ConvertWeight(mindspore::MSTensor ms_tensor) {
+nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor) {
   nvinfer1::Weights weights{};
   weights.type = ConvertDataType(ms_tensor.DataType());
-  weights.values = ms_tensor.MutableData();
+  weights.values = ms_tensor.Data().get();
   weights.count = ms_tensor.ElementNum();
+  if (weights.values == nullptr) {
+    MS_LOG(ERROR) << "ConvertWeight from a MSTensor with nullptr data";
+  }
   return weights;
 }
-
 }  // namespace mindspore::lite

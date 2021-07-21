@@ -33,7 +33,7 @@ class TensorRTAllocator {
 
   ~TensorRTAllocator() = default;
 
-  void *MallocDeviceMem(mindspore::MSTensor host_tensor, size_t size);
+  void *MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size);
 
   void *GetDevicePtr(const std::string &tensor_name);
 
