@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace opt {
-
 void CacheManager::Update(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto type_iter = type_map_.find(node);
