@@ -133,6 +133,5 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   }
   return parallel_operator->replace_op();
 }
-
 }  // namespace opt
 }  // namespace mindspore

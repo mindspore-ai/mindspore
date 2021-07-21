@@ -23,7 +23,6 @@
 
 using mindspore::schema::PrimitiveType_Cast;
 namespace mindspore::lite::micro {
-
 int DTypeCastCoder::Prepare(CoderContext *const context) {
   data_num_ = input_tensor_->ElementsNum();
   if (data_num_ == 0) {

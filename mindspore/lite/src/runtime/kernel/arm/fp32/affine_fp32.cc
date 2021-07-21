@@ -29,9 +29,11 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_Affine;
 namespace mindspore::kernel {
-
 constexpr auto kAffineMinInputNum = 3;
+constexpr auto kAffineMaxInputNum = 4;
 constexpr auto kAffineMaxOutputNum = 1;
+constexpr auto kInputRow = 1;
+constexpr auto kInputCol = 2;
 
 int AffineFp32CPUKernel::DoActivation(lite::Tensor *tensor) {
   auto data = static_cast<float *>(tensor->MutableData());
@@ -127,10 +129,10 @@ int AffineFp32CPUKernel::FullRunInit() {
     return RET_ERROR;
   }
   // src and dst shape: {batch, row, col}
-  splice_src_row_ = src_shape.at(1);
-  splice_src_col_ = src_shape.at(2);
-  splice_dst_row_ = dst_shape.at(1);
-  splice_dst_col_ = dst_shape.at(2);
+  splice_src_row_ = src_shape.at(kInputRow);
+  splice_src_col_ = src_shape.at(kInputCol);
+  splice_dst_row_ = dst_shape.at(kInputRow);
+  splice_dst_col_ = dst_shape.at(kInputCol);
   if (splice_src_col_ * affine_parameter_->context_size_ != splice_dst_col_) {
     MS_LOG(ERROR) << "splice kernel src_col not match dst_col";
     return RET_ERROR;
@@ -155,7 +157,7 @@ int AffineFp32CPUKernel::IncrementInit() {
   // For affine op, the possible inputs are:
   // { input, weight, bias, tensor_array_read }
   // { input, weight, tensor_array_read }
-  if (in_tensors_.size() == 4) {
+  if (in_tensors_.size() == kAffineMaxInputNum) {
     tensor_read_ = in_tensors_.at(3);
   } else {
     tensor_read_ = in_tensors_.at(2);
@@ -163,8 +165,8 @@ int AffineFp32CPUKernel::IncrementInit() {
 
   auto out_tensor = out_tensors_.at(kOutputIndex);
   auto out_shape = out_tensor->shape();
-  matmul_col_ = out_shape.back();
-  matmul_row_ = out_shape.at(out_shape.size() - 2);
+  matmul_col_ = out_shape.at(kInputCol);
+  matmul_row_ = out_shape.at(kInputRow);
   if (out_tensor->Size() != matmul_row_ * matmul_col_ * sizeof(float)) {
     MS_LOG(ERROR) << "size mismatch!";
     MS_LOG(ERROR) << "out_tensor->Size() = " << out_tensor->Size();
@@ -257,7 +259,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
   // For affine op, the possible inputs are:
   // { input, weight, bias, tensor_array_read }
   // { input, weight, tensor_array_read }
-  if (in_tensors_.size() == 4) {
+  if (in_tensors_.size() == kAffineMaxInputNum) {
     input_tensors = {full_input_, in_tensors_.at(kWeightIndex), in_tensors_.at(kBiasIndex)};
   } else {
     input_tensors = {full_input_, in_tensors_.at(kWeightIndex)};
@@ -302,7 +304,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
   increment_output_ = new lite::Tensor(kNumberTypeFloat32, {1, 1, matmul_col});
   increment_output_->MallocData();
 
-  if (in_tensors_.size() < 3) {
+  if (in_tensors_.size() < kAffineMinInputNum) {
     MS_LOG(ERROR) << "wrong affine input size";
     return nullptr;
   }
@@ -311,7 +313,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
   // For affine op, the possible inputs are:
   // { input, weight, bias, tensor_array_read }
   // { input, weight, tensor_array_read }
-  if (in_tensors_.size() == 4) {
+  if (in_tensors_.size() == kAffineMaxInputNum) {
     input_tensors = {increment_input_, in_tensors_.at(kWeightIndex), in_tensors_.at(kBiasIndex)};
   } else {
     input_tensors = {increment_input_, in_tensors_.at(kWeightIndex)};

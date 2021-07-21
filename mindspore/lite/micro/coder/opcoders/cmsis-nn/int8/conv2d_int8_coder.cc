@@ -25,7 +25,6 @@
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::lite::micro::cmsis {
-
 int Conv2DInt8Coder::Prepare(CoderContext *const context) {
   Conv2DBaseCoder::Init();
   MS_CHECK_RET_CODE(micro::Conv2DBaseCoder::CheckLayout(input_tensor_), "CheckLayout failed");
@@ -97,9 +96,9 @@ int Conv2DInt8Coder::DoCode(CoderContext *const context) {
 }
 
 int Conv2DInt8Coder::SetParameters() {
-  MS_CHECK_TRUE(input_tensor_->Channel() == filter_tensor_->DimensionSize(3),
+  MS_CHECK_TRUE(input_tensor_->Channel() == filter_tensor_->DimensionSize(kNHWC_C),
                 "input Channel and filter size not match!");
-  MS_CHECK_TRUE(output_tensor_->Channel() == filter_tensor_->DimensionSize(0),
+  MS_CHECK_TRUE(output_tensor_->Channel() == filter_tensor_->DimensionSize(kNHWC_N),
                 "output Channel and filter size not match!");
 
   input_x_ = input_tensor_->Width();
@@ -107,8 +106,8 @@ int Conv2DInt8Coder::SetParameters() {
   input_ch_ = input_tensor_->Channel();
   input_batches_ = input_tensor_->Batch();
 
-  kernel_x_ = filter_tensor_->DimensionSize(2);
-  kernel_y_ = filter_tensor_->DimensionSize(1);
+  kernel_x_ = filter_tensor_->DimensionSize(kNHWC_W);
+  kernel_y_ = filter_tensor_->DimensionSize(kNHWC_H);
   pad_x_ = conv_param_->pad_l_;
   pad_y_ = conv_param_->pad_u_;
 
@@ -123,8 +122,8 @@ int Conv2DInt8Coder::SetParameters() {
   input_offset_ = -input_quant_arg.zeroPoint;
   out_offset_ = output_quant_arg.zeroPoint;
 
-  output_x_ = output_tensor_->DimensionSize(2);
-  output_y_ = output_tensor_->DimensionSize(1);
+  output_x_ = output_tensor_->DimensionSize(kNHWC_W);
+  output_y_ = output_tensor_->DimensionSize(kNHWC_H);
   output_ch_ = output_tensor_->Channel();
 
   CalculateActivationRangeQuantized(conv_param_->act_type_ == ActType_Relu, conv_param_->act_type_ == ActType_Relu6,

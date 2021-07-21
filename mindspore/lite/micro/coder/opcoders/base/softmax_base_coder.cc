@@ -18,7 +18,6 @@
 #include <type_traits>
 
 namespace mindspore::lite::micro {
-
 int SoftmaxBaseCoder::Init() {
   this->softmax_param_ = reinterpret_cast<SoftmaxParameter *>(parameter_);
   std::vector<int> in_shape = input_tensor_->shape();
@@ -52,5 +51,4 @@ int SoftmaxBaseCoder::ReSize() {
   softmax_param_->element_size_ = ele_size;
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro

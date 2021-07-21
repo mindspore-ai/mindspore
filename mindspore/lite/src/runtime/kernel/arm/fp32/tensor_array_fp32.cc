@@ -32,7 +32,6 @@ using mindspore::schema::PrimitiveType_TensorArrayRead;
 using mindspore::schema::PrimitiveType_TensorArrayWrite;
 
 namespace mindspore::kernel {
-
 constexpr int kTensorArrayReadInSize = 3;
 constexpr int kTensorArrayWriteInSize = 4;
 constexpr int kHandleIndex = 0;

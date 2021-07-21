@@ -63,7 +63,6 @@ std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &o
 }
 
 namespace {
-
 bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info,
                          std::vector<int64_t> *split_axis_out_shape,
                          std::vector<int64_t> *split_axis_reduce_out_shape) {
