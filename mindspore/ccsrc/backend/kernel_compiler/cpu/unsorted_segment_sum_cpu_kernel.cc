@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/unsorted_segment_sum_cpu_kernel.h"
-#include <string>
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "common/thread_pool.h"
 

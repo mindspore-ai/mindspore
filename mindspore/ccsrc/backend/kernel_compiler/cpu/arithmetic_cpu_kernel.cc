@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cmath>
 #include <string>
 #include <map>
 #include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
@@ -37,7 +36,7 @@ void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -86,7 +85,7 @@ void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -148,7 +147,7 @@ void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
   }
 
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -177,7 +176,7 @@ void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -206,7 +205,7 @@ void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -235,7 +234,7 @@ void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) 
 template <typename T>
 void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -257,7 +256,7 @@ void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -275,7 +274,7 @@ template <typename T>
 void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   if (output_size_ > MAX_POW_SERIAL_SIZE) {
-    auto task = [&](size_t start, size_t end) {
+    auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
       auto iter = base_iter;
       iter.SetPos(start);
       for (size_t i = start; i < end; i++) {
@@ -300,7 +299,7 @@ void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
@@ -315,7 +314,7 @@ void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2,
 template <typename T>
 void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
