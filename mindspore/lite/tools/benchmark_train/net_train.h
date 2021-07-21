@@ -73,9 +73,12 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::loss_name_, "lossName", "loss layer name", "");
     AddFlag(&NetTrainFlags::inference_file_, "inferenceFile", "MS file to export inference model", "");
     AddFlag(&NetTrainFlags::virtual_batch_, "virtualBatch", "use virtual batch", false);
+    AddFlag(&NetTrainFlags::resize_dims_in_, "inputShapes",
+            "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
   }
 
   ~NetTrainFlags() override = default;
+  void InitResizeDimsList();
 
  public:
   // common
@@ -101,7 +104,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::string export_file_ = "";
   std::string resize_dims_in_ = "";
   bool layer_checksum_ = false;
-  std::vector<std::vector<int64_t>> resize_dims_;
+  std::vector<std::vector<int>> resize_dims_;
   std::string loss_name_ = "";
   std::string inference_file_ = "";
 };
@@ -126,6 +129,14 @@ class MS_API NetTrain {
   int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
   int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, int train_session, int epochs,
                           bool check_accuracy = true);
+
+  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForInference(const std::string &filename,
+                                                                        const Context &context);
+
+  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForTrain(const std::string &filename,
+                                                                    const std::string &bb_filename,
+                                                                    const Context &context, const TrainCfg &train_cfg,
+                                                                    int epochs);
 
   int InitCallbackParameter();
 

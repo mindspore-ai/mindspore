@@ -81,7 +81,7 @@ class TrainSession : virtual public lite::LiteSession {
     return lite::LiteSession::GetOutputByTensorName(tensor_name);
   }
   int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override {
-    return lite::RET_ERROR;
+    return lite::LiteSession::Resize(inputs, dims);
   }
 
   std::vector<tensor::MSTensor *> GetPredictions() const override {
