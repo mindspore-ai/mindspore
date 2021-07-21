@@ -19,7 +19,8 @@ train:
   epochs: 160
   val_epoch: 1        # run validation every val-epoch
   ckpt_dir: "./ckpt/" # ckpt and training log will be saved here
-  mindrecord_dir: '/root/ICNet/mindrecord'
+  mindrecord_dir: '/data/cityscapes_mindrecord'
+  pretrained_model_path: '/root/ResNet50V1B-150_625.ckpt'
   save_checkpoint_epochs: 5
   keep_checkpoint_max: 10
 

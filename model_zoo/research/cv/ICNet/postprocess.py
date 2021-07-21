@@ -106,7 +106,7 @@ if __name__ == '__main__':
     from src.metric import SegmentationMetric
     from src.logger import SetupLogger
     # Set config file
-    config_file = "/src/model_utils/icnet.yaml"
+    config_file = "src/model_utils/icnet.yaml"
     config_path = os.path.join(args_opt.project_path, config_file)
     with open(config_path, "r") as yaml_file:
         cfg = yaml.load(yaml_file.read())
