@@ -22,7 +22,6 @@ import numpy as np
 
 import mindspore
 from mindspore import context
-from mindspore import Tensor
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.callback import ModelCheckpoint, RunContext, _InternalCallbackParam, CheckpointConfig
@@ -66,6 +65,9 @@ def init_argument():
     # parallel_mode 'STAND_ALONE' do not support parameter_broadcast and mirror_mean
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=config.world_size,
                                       gradients_mean=True)
+
+    if config.device_target == 'Ascend' and config.is_distributed:
+        context.set_auto_parallel_context(all_reduce_fusion_config=[1, 10])
 
     mindspore.common.set_seed(1)
 
@@ -141,7 +143,13 @@ def run_train():
     de_dataset, steps_per_epoch, class_num = get_de_dataset(cfg)
     cfg.steps_per_epoch = steps_per_epoch
     cfg.logger.info('step per epoch: %s', cfg.steps_per_epoch)
-    de_dataloader = de_dataset.create_tuple_iterator()
+
+    # increase training speed for Ascend and distribute mode
+    if config.device_target == 'Ascend' and config.is_distributed:
+        de_dataloader = de_dataset.create_tuple_iterator(do_copy=False)
+    else:
+        de_dataloader = de_dataset.create_tuple_iterator()
+
     cfg.logger.info('class num original: %s', class_num)
     if class_num % 16 != 0:
         class_num = (class_num // 16 + 1) * 16
@@ -214,8 +222,6 @@ def run_train():
     cfg.logger.important_info('====start train====')
     for i, total_data in enumerate(de_dataloader):
         data, gt = total_data
-        data = Tensor(data)
-        gt = Tensor(gt)
 
         loss = train_net(data, gt)
         loss_meter.update(loss.asnumpy())
