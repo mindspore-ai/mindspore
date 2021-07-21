@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_ONE_HOT_H_
-#define MINDSPORE_NNACL_FP32_ONE_HOT_H_
-
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
+#ifndef MINDSPORE_NNACL_ONE_HOT_PARAMETER_H_
+#define MINDSPORE_NNACL_ONE_HOT_PARAMETER_H_
 #include "nnacl/op_base.h"
-#include "nnacl/one_hot_parameter.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int OneHotToFp32(const int *indices, float on_value, float off_value, float *output,
-                 const OneHotParameter *one_hot_param, const int tid, const int thread_num);
-#ifdef __cplusplus
-}
-#endif
+typedef struct OneHotParameter {
+  // Primitive parameter
+  OpParameter op_parameter_;
+  int axis_;
+  // other parameter
+  int depth_;
+  int outer_size_;
+  int inner_size_;
+  bool support_neg_index_;  // if true, support neg index in indices tensor; if false, set off_value on neg index.
+} OneHotParameter;
 
-#endif  // MINDSPORE_NNACL_FP32_ONE_HOT_H_
+#endif  // MINDSPORE_NNACL_ONE_HOT_PARAMETER_H_

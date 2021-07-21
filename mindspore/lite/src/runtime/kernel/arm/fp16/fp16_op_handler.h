@@ -15,8 +15,10 @@
  */
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
-#endif
+#ifdef ENABLE_FP16
 #include "nnacl/fp16/cast_fp16.h"
+#endif
+#endif
 #include "nnacl/nnacl_common.h"
 
 #ifdef __cplusplus
