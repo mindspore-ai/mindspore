@@ -43,6 +43,7 @@ class KernelBuildInfo {
     outputs_format_ = {};
     inputs_device_type_ = {};
     outputs_device_type_ = {};
+    output_data_desc_ = {};
   }
 
   ~KernelBuildInfo() = default;
@@ -81,6 +82,8 @@ class KernelBuildInfo {
 
   OpPattern op_pattern() const { return op_pattern_; }
 
+  std::vector<nlohmann::json> output_data_desc() const { return output_data_desc_; }
+
   FusionType fusion_type() const { return fusion_type_; }
 
   Processor processor() const { return processor_; }
@@ -110,6 +113,7 @@ class KernelBuildInfo {
   std::vector<std::string> output_reshape_type_;
   std::vector<TypeId> inputs_device_type_;
   std::vector<TypeId> outputs_device_type_;
+  std::vector<nlohmann::json> output_data_desc_;
   FusionType fusion_type_;
   Processor processor_;
 };
@@ -156,6 +160,8 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
   void SetOutputsReshapeType(const std::vector<std::string> &output_reshape_type);
 
   void SetFusionType(FusionType fusion_type);
+  // save prebuild result
+  void SetOutputDataDesc(const std::vector<nlohmann::json> &data_desc);
 
   void SetProcessor(Processor processor);
 

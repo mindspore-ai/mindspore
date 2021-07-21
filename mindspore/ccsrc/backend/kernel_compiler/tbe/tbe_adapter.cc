@@ -21,32 +21,58 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <set>
 #include <algorithm>
-
+#include <unordered_map>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/oplib/opinfo.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
+#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
+#include "backend/kernel_compiler/tbe/tbe_json/tbe_json_utils.h"
+#include "utils/json_operation_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace tbe {
-constexpr size_t INPUT0 = 0;
-constexpr size_t INPUT1 = 1;
-constexpr size_t INPUT2 = 2;
-constexpr size_t INPUT3 = 3;
-constexpr size_t INPUT4 = 4;
-constexpr size_t INPUT5 = 5;
-constexpr size_t INPUT6 = 6;
-constexpr size_t INPUT7 = 7;
-constexpr size_t INPUT8 = 8;
+namespace {
 
-std::unordered_set<std::string> input_order_adjusted_ops = {
-  "Conv2DBackpropInput",        "Conv2DBackpropFilter", "LogSoftmaxGrad", "LayerNormGrad",       "LayerNormXBackprop",
-  "LayerNormBetaGammaBackprop", "MinimumGrad",          "MaximumGrad",    "ApplyCenteredRMSProp"};
+constexpr int kInvalid = -1;
+constexpr int kFloat = 0;
+constexpr int kFloat16 = 1;
+constexpr int kInt8 = 2;
+constexpr int kInt32 = 3;
+constexpr int kUint8 = 4;
+constexpr int kUint64 = 10;
+constexpr int kBool = 12;
+int TypeStrToDstType(const std::string &type_str) {
+  std::unordered_map<std::string, int> type_name_type_id_map = {
+    {"Float", kFloat}, {"Float32", kFloat}, {"Float16", kFloat16}, {"Int8", kInt8},
+    {"Int32", kInt32}, {"UInt8", kUint8},   {"UInt64", kUint64},   {"Bool", kBool}};
+  auto iter = type_name_type_id_map.find(type_str);
+  if (iter != type_name_type_id_map.end()) {
+    return iter->second;
+  } else {
+    MS_LOG(INFO) << "Error type str is invailed: " << type_str;
+  }
+  return kInvalid;
+}
+
+}  // namespace
+std::unordered_set<std::string> TbeAdapter::input_order_adjusted_ops_ = {
+  kConv2DBackpropInputOpName, kConv2DBackpropFilterOpName, kLogSoftmaxGradOpName,
+  kLayerNormGradOpName,       kLayerNormXBackpropOpName,   kLayerNormBetaGammaBackpropOpName,
+  kMinimumGradOpName,         kMaximumGradOpName,          kApplyCenteredRMSPropOpName};
+
+std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {
+  // TODO(xxx): tbeadapter max and min
+  // {"MaximumGrad", TbeAdapter::MaximumGradAttrJsonPass},
+  // {"MinimumGrad", TbeAdapter::MinimumGradAttrJsonPass},
+  {"Cast", TbeAdapter::CastAttrJsonPass}};
 
 void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vector<nlohmann::json>> const &inputs_list,
                                 nlohmann::json *inputs_json) {
   MS_EXCEPTION_IF_NULL(inputs_json);
-  if (input_order_adjusted_ops.find(op_name) == input_order_adjusted_ops.end()) {
+  if (input_order_adjusted_ops_.find(op_name) == input_order_adjusted_ops_.end()) {
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
@@ -81,7 +107,7 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
 void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vector<nlohmann::json> &inputs_list,
                                       std::vector<nlohmann::json> *inputs_json) {
   MS_EXCEPTION_IF_NULL(inputs_json);
-  if (input_order_adjusted_ops.find(op_name) == input_order_adjusted_ops.end()) {
+  if (input_order_adjusted_ops_.find(op_name) == input_order_adjusted_ops_.end()) {
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
@@ -104,7 +130,7 @@ void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vec
 void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vector<AnfNodePtr> &data_layer,
                                      std::vector<AnfNodePtr> *reorder_data_layer) {
   MS_EXCEPTION_IF_NULL(reorder_data_layer);
-  if (input_order_adjusted_ops.find(op_name) == input_order_adjusted_ops.end()) {
+  if (input_order_adjusted_ops_.find(op_name) == input_order_adjusted_ops_.end()) {
     (void)std::copy(data_layer.begin(), data_layer.end(), std::back_inserter((*reorder_data_layer)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
@@ -124,13 +150,7 @@ void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vect
   }
 }
 
-std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {
-  {"MaximumGrad", TbeAdapter::MaxiOrMinimumGradAttrJsonPass},
-  {"MinimumGrad", TbeAdapter::MaxiOrMinimumGradAttrJsonPass},
-  {"Cast", TbeAdapter::CastAttrJsonPass}};
-
-bool TbeAdapter::RunAttrPass(const mindspore::AnfNodePtr &anf_node,
-                             const std::vector<std::shared_ptr<mindspore::kernel::OpAttr>> &op_info_attrs,
+bool TbeAdapter::RunAttrPass(const mindspore::AnfNodePtr &anf_node, const std::vector<OpAttrPtr> &op_info_attrs,
                              nlohmann::json *attrs_json) {
   MS_EXCEPTION_IF_NULL(attrs_json);
   auto cnode_name = AnfAlgo::GetCNodeName(anf_node);
@@ -166,35 +186,6 @@ void TbeAdapter::MaxiOrMinimumGradAttrJsonPass(const AnfNodePtr &anf_node,
     attrs_json->push_back(attr_obj);
   }
   MS_LOG(INFO) << "MaxiOrMinimumGradAttrJsonPass done.";
-}
-
-static int TypeStrToDstType(const std::string &type_str) {
-  constexpr int kInvalid = -1;
-  constexpr int kFloat = 0;
-  constexpr int kFloat16 = 1;
-  constexpr int kInt8 = 2;
-  constexpr int kInt32 = 3;
-  constexpr int kUint8 = 4;
-  constexpr int kUint64 = 10;
-  constexpr int kBool = 12;
-  if (type_str == "Float" || type_str == "Float32") {
-    return kFloat;
-  } else if (type_str == "Float16") {
-    return kFloat16;
-  } else if (type_str == "Int8") {
-    return kInt8;
-  } else if (type_str == "Int32") {
-    return kInt32;
-  } else if (type_str == "UInt8") {
-    return kUint8;
-  } else if (type_str == "UInt64") {
-    return kUint64;
-  } else if (type_str == "Bool") {
-    return kBool;
-  } else {
-    MS_LOG(INFO) << "Error type str is invailed: " << type_str;
-  }
-  return kInvalid;
 }
 
 void TbeAdapter::CastAttrJsonPass(const mindspore::AnfNodePtr &anf_node,
@@ -249,6 +240,192 @@ void TbeAdapter::GenTopKV2IndicesTensorInfo(const std::shared_ptr<mindspore::Anf
   input_desc_json["valid"] = true;
   input_list->emplace_back(input_desc_json);
 }
+
+bool TbeAdapter::IsSpecialFusionComputeNode(const std::vector<mindspore::AnfNodePtr> &compute_nodes) {
+  auto result = std::find_if(compute_nodes.begin(), compute_nodes.end(), [](const auto &it) {
+    auto op_name = AnfAlgo::GetCNodeName(it);
+    return (op_name == kConv2DBackpropInputOpName || op_name == kConv2DOpName);
+  });
+  return result != compute_nodes.end();
+}
+
+bool TbeAdapter::GetSpecInputLayers(const std::string &op_name, const std::vector<mindspore::AnfNodePtr> &reorder_layer,
+                                    std::map<const AnfNodePtr, FusionDataType> *spec_data_input) {
+  if ((op_name == kReluGradV2OpName || op_name == kAddNOpName || op_name == kTensorAddOpName) &&
+      reorder_layer.empty()) {
+    MS_LOG(WARNING) << "Fusion error: node(" << op_name << " )'s input is null. ";
+    return false;
+  }
+  if (op_name == kReluGradV2OpName) {
+    (*spec_data_input)[reorder_layer[0]] = kFusionReLUGradV2;
+  } else if (op_name == kAddNOpName) {
+    for (const auto &it : reorder_layer) {
+      (*spec_data_input)[it] = kFusionAddN;
+    }
+  } else if (op_name == kTensorAddOpName) {
+    (*spec_data_input)[reorder_layer[0]] = kFusionAdd;
+  }
+  return true;
+}
+
+void TbeAdapter::FusionDescJsonPass(const AnfNodePtr &node, nlohmann::json *output_desc,
+                                    const std::map<const AnfNodePtr, tbe::FusionDataType> &spec_data_input) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(output_desc);
+  tbe::FusionDataType fusion_data_type =
+    spec_data_input.find(node) != spec_data_input.end() ? spec_data_input.at(node) : tbe::kFusionNormal;
+  std::vector<size_t> shape = (*output_desc)["shape"];
+  if ((fusion_data_type == kFusionAddN || fusion_data_type == kFusionAdd) && shape.size() == 5) {
+    std::vector<size_t> spec_shape = {};
+    spec_shape.emplace_back(shape[0]);
+    spec_shape.emplace_back(shape[1]);
+    spec_shape.emplace_back(shape[2] * shape[3]);
+    spec_shape.emplace_back(shape[4]);
+    (*output_desc)["shape"] = spec_shape;
+  } else if (fusion_data_type == kFusionReLUGradV2) {
+    std::vector<size_t> spec_shape = {};
+    spec_shape.emplace_back(shape[0]);
+    spec_shape.emplace_back(shape[1]);
+    spec_shape.emplace_back(shape[2] * shape[3]);
+    spec_shape.emplace_back(16);
+    (*output_desc)["shape"] = spec_shape;
+    (*output_desc)["data_type"] = "bool";
+  }
+}
+
+std::string TbeAdapter::GetRealOpType(const std::string &origin_type) {
+  static std::map<std::string, std::string> buffer_fussion_op_map = {
+    {parallel::DEPTHWISE_CONV2D_NATIVE, parallel::DEPTHWISE_CONV2D}};
+  auto iter = buffer_fussion_op_map.find(origin_type);
+  return (iter != buffer_fussion_op_map.end()) ? iter->second : origin_type;
+}
+
+std::string TbeAdapter::GetNodeFusionType(const mindspore::CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto node_type = AnfAlgo::GetCNodeName(cnode);
+  static std::map<std::string, std::string> fusion_type_map = {{kConv2DOpName, "Convolution"},
+                                                               {kBNTrainingReduceOpName, "bn_reduce"},
+                                                               {kBNTrainingUpdateOpName, "bn_update"},
+                                                               {kReluV2OpName, "ElemWise"},
+                                                               {kTensorAddOpName, "ElemWise"},
+                                                               {kConv2DBackpropInputOpName, "Conv2d_backprop_input"},
+                                                               {kConv2DBackpropFilterOpName, "Conv2d_backprop_filter"},
+                                                               {kDepthwiseConv2dNativeOpName, "DepthwiseConvolution"},
+                                                               {kAddNOpName, "ElemWise"},
+                                                               {kReluGradV2OpName, "ElemWise"},
+                                                               {kRealDivOpName, "ElemWise"},
+                                                               {kBiasAddOpName, "BiasAdd"}};
+  auto find = fusion_type_map.find(node_type);
+  if (find == fusion_type_map.end()) {
+    MS_LOG(INFO) << "Fusion warning: get node fusion type failed from lists, origin node type: " << node_type;
+    auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(node_type, cnode);
+    MS_EXCEPTION_IF_NULL(op_info);
+    return op_info->fusion_type();
+  } else {
+    return find->second;
+  }
+}
+
+std::string TbeAdapter::FormatPass(const std::string &format, const size_t &origin_shape_size) {
+  if (format == kOpFormat_DEFAULT) {
+    return origin_shape_size == kNCHWShapeSize ? kOpFormat_NCHW : kOpFormat_ND;
+  } else if (format == kOpFormat_FRAC_Z) {
+    return kOpFormat_FRACTAL_Z;
+  } else {
+    return format;
+  }
+}
+
+bool TbeAdapter::GetSpecDataInput(const FusionScopeInfo &fusion_scope_info,
+                                  std::map<const AnfNodePtr, tbe::FusionDataType> *spec_data_input) {
+  MS_EXCEPTION_IF_NULL(spec_data_input);
+  auto input_nodes = fusion_scope_info.input_nodes;
+  auto compute_nodes = fusion_scope_info.compute_nodes;
+  for (const auto &compute_node : compute_nodes) {
+    MS_EXCEPTION_IF_NULL(compute_node);
+    std::vector<mindspore::AnfNodePtr> layer = {};
+    std::vector<mindspore::AnfNodePtr> reorder_layer = {};
+    auto op_name = AnfAlgo::GetCNodeName(compute_node);
+    auto ccompute_node = compute_node->cast<CNodePtr>();
+    if (ccompute_node == nullptr) {
+      MS_LOG(WARNING) << "Fusion error: fusion compute node must be cnode, but the node is "
+                      << ccompute_node->DebugString();
+      return false;
+    }
+    for (size_t i = 1; i < ccompute_node->inputs().size(); ++i) {
+      auto input = ccompute_node->input(i);
+      auto find_iter = std::find(input_nodes.begin(), input_nodes.end(), input);
+      if (find_iter != input_nodes.end()) {
+        layer.emplace_back((*find_iter));
+      }
+    }
+    InputOrderPass<AnfNodePtr>(op_name, layer, &reorder_layer);
+    if (IsSpecialFusionComputeNode(compute_nodes)) {
+      if (!GetSpecInputLayers(op_name, reorder_layer, spec_data_input)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+bool TbeAdapter::IsPlaceHolderInput(const AnfNodePtr &node, const OpIOInfoPtr &input_ptr) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(input_ptr);
+  static std::set<std::string> node_set = {kDynamicRNNOpName, kDynamicGRUV2OpName};
+  auto cnode_name = AnfAlgo::GetCNodeName(node);
+  if (node_set.find(cnode_name) == node_set.end()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfAlgo::HasNodeAttr("placeholder_index", cnode)) {
+    auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "placeholder_index");
+    return find(none_index.begin(), none_index.end(), input_ptr->index()) != none_index.end();
+  } else {
+    MS_LOG(EXCEPTION) << "Cnode: " << cnode_name << "doesn't has attribute placeholder_index.";
+  }
+}
+void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *op_info_attrs,
+                                     nlohmann::json *attrs_json) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(attrs_json);
+  if (AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
+    return;
+  }
+  if (op_info_attrs->size() != 1) {
+    MS_LOG(INFO) << "cast node should has dst_type attr";
+    return;
+  }
+  auto attr_name = (*op_info_attrs)[0]->name();
+  auto type_ptr = std::make_shared<TensorType>(TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, 0)));
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  auto type_element = type_ptr->element();
+  MS_EXCEPTION_IF_NULL(type_element);
+  auto dtype = type_element->ToString();
+  auto dst_type_value = TypeStrToDstType(dtype);
+  nlohmann::json attr_obj;
+  attr_obj["value"] = dst_type_value;
+  attr_obj["valid"] = true;
+  attr_obj["name"] = attr_name;
+  attrs_json->push_back(attr_obj);
+  op_info_attrs->clear();
+}
+
+void TbeAdapter::CastJsonPostPass(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {
+  if (AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
+    return;
+  }
+  std::map<int, std::string> dst_type_map{{0, "float32"}, {1, "float16"}, {2, "int8"}, {3, "int32"},
+                                          {4, "uint8"},   {10, "uint64"}, {12, "bool"}};
+  auto type_id = GetJsonValue<int>(attrs_json->at(0), kJValue);
+  auto iter = dst_type_map.find(type_id);
+  if (iter != dst_type_map.end()) {
+    attrs_json->at(0)[kJValue] = iter->second;
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid type:" << type_id;
+  }
+}
+
 }  // namespace tbe
 }  // namespace kernel
 }  // namespace mindspore

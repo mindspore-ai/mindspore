@@ -7526,7 +7526,8 @@ class DynamicRNN(PrimitiveWithInfer):
         validator.check("h_shape[1]", h_shape[1], "batch_size", batch_size, Rel.EQ, self.name)
         validator.check("h_shape[2]", h_shape[2], "hidden_size", hidden_size, Rel.EQ, self.name)
         validator.check("c_shape", c_shape, "h_shape", h_shape, Rel.EQ, self.name)
-
+        self.placeholder_index = [3]
+        self.add_prim_attr("placeholder_index", self.placeholder_index)
         y_shape = (num_step, batch_size, hidden_size)
         return y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape
 
