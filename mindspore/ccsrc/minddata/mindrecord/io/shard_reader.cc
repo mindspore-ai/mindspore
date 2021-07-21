@@ -340,67 +340,78 @@ MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::str
                                           int shard_id, const std::vector<std::string> &columns,
                                           std::shared_ptr<std::vector<std::vector<json>>> col_val_ptr) {
   for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
-    uint64_t group_id = std::stoull(labels[i][0]);
-    uint64_t offset_start = std::stoull(labels[i][1]) + kInt64Len;
-    uint64_t offset_end = std::stoull(labels[i][2]);
-    (*offset_ptr)[shard_id].emplace_back(
-      std::vector<uint64_t>{static_cast<uint64_t>(shard_id), group_id, offset_start, offset_end});
-    if (!all_in_index_) {
-      int raw_page_id = std::stoi(labels[i][3]);
-      uint64_t label_start = std::stoull(labels[i][4]) + kInt64Len;
-      uint64_t label_end = std::stoull(labels[i][5]);
-      auto len = label_end - label_start;
-      auto label_raw = std::vector<uint8_t>(len);
-      auto &io_seekg = fs->seekg(page_size_ * raw_page_id + header_size_ + label_start, std::ios::beg);
-      if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
-        MS_LOG(ERROR) << "File seekg failed";
-        fs->close();
-        return FAILED;
-      }
+    try {
+      uint64_t group_id = std::stoull(labels[i][0]);
+      uint64_t offset_start = std::stoull(labels[i][1]) + kInt64Len;
+      uint64_t offset_end = std::stoull(labels[i][2]);
+      (*offset_ptr)[shard_id].emplace_back(
+        std::vector<uint64_t>{static_cast<uint64_t>(shard_id), group_id, offset_start, offset_end});
+      if (!all_in_index_) {
+        int raw_page_id = std::stoi(labels[i][3]);
+        uint64_t label_start = std::stoull(labels[i][4]) + kInt64Len;
+        uint64_t label_end = std::stoull(labels[i][5]);
+        auto len = label_end - label_start;
+        auto label_raw = std::vector<uint8_t>(len);
+        auto &io_seekg = fs->seekg(page_size_ * raw_page_id + header_size_ + label_start, std::ios::beg);
+        if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
+          MS_LOG(ERROR) << "File seekg failed";
+          fs->close();
+          return FAILED;
+        }
 
-      auto &io_read = fs->read(reinterpret_cast<char *>(&label_raw[0]), len);
-      if (!io_read.good() || io_read.fail() || io_read.bad()) {
-        MS_LOG(ERROR) << "File read failed";
-        fs->close();
-        return FAILED;
-      }
-      json label_json = json::from_msgpack(label_raw);
-      json tmp;
-      if (!columns.empty()) {
-        for (auto &col : columns) {
-          if (label_json.find(col) != label_json.end()) {
-            tmp[col] = label_json[col];
+        auto &io_read = fs->read(reinterpret_cast<char *>(&label_raw[0]), len);
+        if (!io_read.good() || io_read.fail() || io_read.bad()) {
+          MS_LOG(ERROR) << "File read failed";
+          fs->close();
+          return FAILED;
+        }
+        json label_json = json::from_msgpack(label_raw);
+        json tmp;
+        if (!columns.empty()) {
+          for (auto &col : columns) {
+            if (label_json.find(col) != label_json.end()) {
+              tmp[col] = label_json[col];
+            }
+          }
+        } else {
+          tmp = label_json;
+        }
+        (*col_val_ptr)[shard_id].emplace_back(tmp);
+      } else {
+        json construct_json;
+        for (unsigned int j = 0; j < columns.size(); ++j) {
+          // construct json "f1": value
+          auto schema = shard_header_->GetSchemas()[0]->GetSchema()["schema"];
+
+          // convert the string to base type by schema
+          if (schema[columns[j]]["type"] == "int32") {
+            construct_json[columns[j]] = StringToNum<int32_t>(labels[i][j + 3]);
+          } else if (schema[columns[j]]["type"] == "int64") {
+            construct_json[columns[j]] = StringToNum<int64_t>(labels[i][j + 3]);
+          } else if (schema[columns[j]]["type"] == "float32") {
+            construct_json[columns[j]] = StringToNum<float>(labels[i][j + 3]);
+          } else if (schema[columns[j]]["type"] == "float64") {
+            construct_json[columns[j]] = StringToNum<double>(labels[i][j + 3]);
+          } else {
+            construct_json[columns[j]] = std::string(labels[i][j + 3]);
           }
         }
-      } else {
-        tmp = label_json;
+        (*col_val_ptr)[shard_id].emplace_back(construct_json);
       }
-      (*col_val_ptr)[shard_id].emplace_back(tmp);
-    } else {
-      json construct_json;
-      for (unsigned int j = 0; j < columns.size(); ++j) {
-        // construct json "f1": value
-        auto schema = shard_header_->GetSchemas()[0]->GetSchema()["schema"];
-
-        // convert the string to base type by schema
-        if (schema[columns[j]]["type"] == "int32") {
-          construct_json[columns[j]] = StringToNum<int32_t>(labels[i][j + 3]);
-        } else if (schema[columns[j]]["type"] == "int64") {
-          construct_json[columns[j]] = StringToNum<int64_t>(labels[i][j + 3]);
-        } else if (schema[columns[j]]["type"] == "float32") {
-          construct_json[columns[j]] = StringToNum<float>(labels[i][j + 3]);
-        } else if (schema[columns[j]]["type"] == "float64") {
-          construct_json[columns[j]] = StringToNum<double>(labels[i][j + 3]);
-        } else {
-          construct_json[columns[j]] = std::string(labels[i][j + 3]);
-        }
-      }
-      (*col_val_ptr)[shard_id].emplace_back(construct_json);
+    } catch (std::out_of_range &e) {
+      MS_LOG(ERROR) << "Out of range: " << e.what();
+      return FAILED;
+    } catch (std::invalid_argument &e) {
+      MS_LOG(ERROR) << "Invalid argument: " << e.what();
+      return FAILED;
+    } catch (...) {
+      MS_LOG(ERROR) << "Exception was caught while convert label to json.";
+      return FAILED;
     }
   }
 
   return SUCCESS;
-}
+}  // namespace mindrecord
 
 MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, const std::vector<std::string> &columns,
                                           std::shared_ptr<std::vector<std::vector<std::vector<uint64_t>>>> offset_ptr,
@@ -965,8 +976,12 @@ MSRStatus ShardReader::CountTotalRows(const std::vector<std::string> &file_paths
       num_samples = category_op->GetNumSamples(num_samples, num_classes);
       if (std::dynamic_pointer_cast<ShardPkSample>(op)) {
         auto tmp = std::dynamic_pointer_cast<ShardPkSample>(op)->GetNumSamples();
-        if (tmp != 0) {
+        if (tmp != 0 && num_samples != -1) {
           num_samples = std::min(num_samples, tmp);
+        }
+        if (-1 == num_samples) {
+          MS_LOG(ERROR) << "Number of samples exceeds the upper limit: " << std::numeric_limits<int64_t>::max();
+          return FAILED;
         }
       }
     } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
