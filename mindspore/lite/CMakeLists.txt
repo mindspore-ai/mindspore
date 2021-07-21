@@ -4,6 +4,7 @@ project(Lite)
 set(BUILD_LITE "on")
 if(TOOLCHAIN_NAME STREQUAL "himix200")
   set(TARGET_HIMIX200 on)
+  set(ENABLE_MINDRT off)
   add_compile_definitions(SUPPORT_NNIE)
 endif()
 

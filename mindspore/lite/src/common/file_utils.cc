@@ -147,7 +147,11 @@ int CreateOutputDir(std::string *file_path) {
       return RET_ERROR;
     }
   }
+#ifdef _WIN32
+  *file_path += "\\" + std::to_string(count);
+#else
   *file_path += "/" + std::to_string(count);
+#endif
   int ret = MKDIR(file_path->c_str());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "mkdir failed. " << file_path->c_str();
