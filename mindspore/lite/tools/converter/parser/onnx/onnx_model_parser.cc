@@ -41,6 +41,10 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
+constexpr int kTensorListDatasize = 3;
+constexpr int kTypeIndex = 0;
+constexpr int kElementShapeIndex = 1;
+constexpr int kTensorsNumIndex = 2;
 }  // namespace
 std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_INT8, mindspore::kNumberTypeInt8},
@@ -1028,10 +1032,10 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
   for (int i = 0; i < act_output_num; i++) {
     // tensor_array need as root while input
     auto while_tensor_array_input = anf_root_graph->add_parameter();
-    std::vector<int> tensor_list_data(3);
-    tensor_list_data[0] = kTypeUnknown;
-    tensor_list_data[1] = 0;
-    tensor_list_data[2] = -1;
+    std::vector<int> tensor_list_data(kTensorListDatasize);
+    tensor_list_data[kTypeIndex] = kTypeUnknown;
+    tensor_list_data[kElementShapeIndex] = 0;
+    tensor_list_data[kTensorsNumIndex] = -1;
     auto tensor_info = CreateTensorInfo(tensor_list_data.data(), tensor_list_data.size() * sizeof(int),
                                         {static_cast<int64_t>(tensor_list_data.size())}, kObjectTypeTensorType);
     if (tensor_info == nullptr) {

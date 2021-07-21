@@ -232,5 +232,4 @@ bool LiteKernelUtil::InputsContainsSpecificNode(const kernel::LiteKernel *kernel
   }
   return false;
 }
-
 }  // namespace mindspore::kernel

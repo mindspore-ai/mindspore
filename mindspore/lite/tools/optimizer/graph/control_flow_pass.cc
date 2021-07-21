@@ -24,7 +24,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore::opt {
-
 ValueNodePtr ControlFlowPass::GetSwitchAnfPrim() {
   auto switch_prim = std::make_shared<mindspore::ops::Switch>();
   ValueNodePtr switch_anf_prim = NewValueNode(switch_prim);
@@ -603,7 +602,7 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
     then_fg->DropNode(then_fg_output);
   }
 
-  size_t if_output_size = after_partial_cnode_inputs.size() - 2;
+  size_t if_output_size = after_partial_cnode_inputs.size() - kCNodeSecondInputIndex;
 
   // add after fg inputs to partial node
   std::copy(then_nodes_used_by_after_partial.begin(), then_nodes_used_by_after_partial.end(),
