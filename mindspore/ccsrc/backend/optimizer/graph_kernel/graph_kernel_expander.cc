@@ -86,6 +86,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSoftmaxCrossEntropyWithLogits,
     prim::kPrimSquaredDifference,
     prim::kPrimSqueeze,
+    prim::kPrimEqualCount,
 #endif
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();
