@@ -1249,7 +1249,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
         if (HasAbstractMonad(parameter) || HasAbstractRef(parameter)) {
           continue;
         }
-        parameters.push_back({parameter, 0});
+        parameters.emplace_back(parameter, 0);
       }
 
       const auto branch_id = parser->GetBranchIDByFuncGraph(func_graph);
@@ -1278,7 +1278,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
         if (HasAbstractMonad(inputs[i]) || (inputs[i]->isa<Parameter>() && HasAbstractRef(inputs[i]))) {
           continue;
         }
-        parameters.push_back({inputs[i], 0});
+        parameters.emplace_back(inputs[i], 0);
       }
 
       auto func_graph = control_node->func_graph();
@@ -1322,7 +1322,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
   if (from_kernel->isa<Parameter>() && graph_compiler_info.control_node_parser_->IsCallInputKernelGraph(graph)) {
     const auto &kernel_with_index = GetFrontNodeByKernelGraph(from_kernel, graph);
     const auto &real_front_node_with_index =
-      AnfAlgo::VisitKernelWithReturnType(kernel_with_index.first, kernel_with_index.second);
+      AnfAlgo::VisitKernelWithReturnType(kernel_with_index.first, SizeToInt(kernel_with_index.second));
     if (HasAbstractRef(real_front_node_with_index.first)) {
       to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second,
                                                        real_front_node_with_index.first.get());
@@ -2059,7 +2059,6 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
 void GraphScheduler::PrepareInputNodeForSwitchActor(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &node : control_nodes) {
     CNodePtr cnode = node->cast<CNodePtr>();
-    const auto &from_func_graph = node->func_graph();
     auto inputs = cnode->inputs();
 
     // Before link data arrow, parameters of the call node in switch-call need to be add to the switch actor.
@@ -2114,8 +2113,8 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
             continue;
           }
 
-          gather_actor->device_tensor_store_keys_.push_back(
-            {i - kCallInputStartPos - persist_input_num, inputs[i].get()});
+          gather_actor->device_tensor_store_keys_.emplace_back(i - kCallInputStartPos - persist_input_num,
+                                                               inputs[i].get());
           gather_actor->device_contexts_[i - kCallInputStartPos - persist_input_num] =
             graph_compiler_info.control_node_parser_->GetFrontValueNodeDeviceContext(inputs[i]);
         } else if ((inputs[i]->isa<Parameter>() && HasAbstractRef(inputs[i]->cast<ParameterPtr>())) ||

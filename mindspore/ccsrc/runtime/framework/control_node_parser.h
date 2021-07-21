@@ -150,7 +150,6 @@ class ControlNodeParser {
   // 2. The parameter from control nodes.
   void FetchFrontToBackendParameter(const std::vector<KernelGraphPtr> &graphs,
                                     const std::vector<DeviceContext *> &device_contexts,
-                                    const std::vector<AnfNodePtr> &control_nodes,
                                     const RealToFormalNode &real_to_formal_front_parameters,
                                     const RealToFormalNode &formal_to_real_front_parameters);
   // Get the relationship between the front and backend of the executable kernel in all kernel graphs.
