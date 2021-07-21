@@ -124,7 +124,7 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 
 ```shell script
 # GPU分布式训练
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH]
+bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH]
 ```
 
 ```shell script
@@ -207,10 +207,15 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
       │   ├──device_adapter.py            ## 设备配置
       │   ├──local_adapter.py             ## 本地设备配置
       │   ├──moxing_adapter.py            ## modelarts设备配置
-    ├─ ssd_mobilenet_v1_fpn_config.yaml ## 参数配置
-    ├─ ssd_resnet50_fpn_config.yaml ## 参数配置
-    ├─ ssd_vgg16_config.yaml ## 参数配置
-    ├─ ssd300_config.yaml ## 参数配置
+    ├─ config
+        ├─ ssd_mobilenet_v1_fpn_config.yaml ## 参数配置
+        ├─ ssd_resnet50_fpn_config.yaml ## 参数配置
+        ├─ ssd_vgg16_config.yaml ## 参数配置
+        ├─ ssd300_config.yaml ## 参数配置
+        ├─ ssd_mobilenet_v1_fpn_config_gpu.yaml ## GPU参数配置
+        ├─ ssd_resnet50_fpn_config_gpu.yaml ## GPU参数配置
+        ├─ ssd_vgg16_config_gpu.yaml ## GPU参数配置
+        ├─ ssd300_config_gpu.yaml ## GPU参数配置
     ├─ Dockerfile                         ## docker文件
     ├─ eval.py                            ## 评估脚本
     ├─ export.py                          ## 导出 AIR,MINDIR模型的脚本
@@ -291,10 +296,10 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
 - 分布式
 
 ```shell script
-    sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
-此脚本需要四或六个参数。
+此脚本需要五或七个参数。
 
 - `DEVICE_NUM`：分布式训练的设备数。
 - `EPOCH_NUM`：分布式训练的轮次数。
@@ -325,7 +330,7 @@ epoch time: 150753.701, per step time: 329.157
 sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
-此脚本需要两个参数。
+此脚本需要四个参数。
 
 - `DATASET`：评估数据集的模式。
 - `CHECKPOINT_PATH`：检查点文件的绝对路径。
@@ -361,7 +366,7 @@ mAP: 0.23808886505483504
 sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
-此脚本需要两个参数。
+此脚本需要四个参数。
 
 - `DATASET`：评估数据集的模式。
 - `CHECKPOINT_PATH`：检查点文件的绝对路径。

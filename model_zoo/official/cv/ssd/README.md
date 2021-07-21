@@ -257,10 +257,15 @@ Then you can run everything just like on ascend.
       │   ├── device_adapter.py           ## device adapter
       │   ├── local_adapter.py            ## local adapter
       │   ├── moxing_adapter.py           ## moxing adapter
-    ├─ ssd_mobilenet_v1_fpn_config.yaml ## parameter configuration
-    ├─ ssd_resnet50_fpn_config.yaml ## parameter configuration
-    ├─ ssd_vgg16_config.yaml ## parameter configuration
-    ├─ ssd300_config.yaml ## parameter configuration
+    ├─ config
+        ├─ ssd_mobilenet_v1_fpn_config.yaml ## parameter configuration
+        ├─ ssd_resnet50_fpn_config.yaml ## parameter configuration
+        ├─ ssd_vgg16_config.yaml ## parameter configuration
+        ├─ ssd300_config.yaml ## parameter configuration
+        ├─ ssd_mobilenet_v1_fpn_config_gpu.yaml ## GPU parameter configuration
+        ├─ ssd_resnet50_fpn_config_gpu.yaml ## GPU parameter configuration
+        ├─ ssd_vgg16_config_gpu.yaml ## GPU parameter configuration
+        ├─ ssd300_config_gpu.yaml ## GPU parameter configuration
     ├─ Dockerfile                         ## docker file
     ├─ eval.py                            ## eval scripts
     ├─ export.py                          ## export mindir script
@@ -357,7 +362,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
     bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
-We need four or six parameters for this scripts.
+We need five or seven parameters for this scripts.
 
 - `DEVICE_NUM`: the device number for distributed train.
 - `EPOCH_NUM`: epoch num for distributed train.
@@ -401,7 +406,7 @@ You can train your own model based on either pretrained classification model or 
 bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
-We need two parameters for this scripts.
+We need four parameters for this scripts.
 
 - `DATASET`：the dataset mode of evaluation dataset.
 - `CHECKPOINT_PATH`: the absolute path for checkpoint file.
@@ -437,7 +442,7 @@ mAP: 0.23808886505483504
 bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
-We need two parameters for this scripts.
+We need four parameters for this scripts.
 
 - `DATASET`：the dataset mode of evaluation dataset.
 - `CHECKPOINT_PATH`: the absolute path for checkpoint file.
@@ -506,8 +511,8 @@ Export on ModelArts (If you want to run in modelarts, please check the official 
 
 ### Infer on Ascend310
 
-Before performing inference, the mindir file must bu exported by `export.py` script. We only provide an example of inference using MINDIR model.
-Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space, otherwise the process will be killed for execeeding memory limits.
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch size can only be set to 1. The precision calculation process needs about 70G+ memory space, otherwise the process will be killed for execeeding memory limits.
 
 ```shell
 # Ascend310 inference
@@ -542,34 +547,34 @@ mAP: 0.33880018942412393
 
 #### Evaluation Performance
 
-| Parameters          | Ascend                                                                        | GPU                                                                           | Ascend                                                                        |
-| ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Model Version       | SSD V1                                                                        | SSD V1                                                                        | SSD-Mobilenet-V1-Fpn                                                          |
-| Resource            | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                               | NV SMX2 V100-16G                                                              | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
-| uploaded Date       | 07/05/2021 (month/day/year)                                                   | 09/24/2020 (month/day/year)                                                   | 01/13/2021 (month/day/year)                                                   |
-| MindSpore Version   | 1.3.0                                                                         | 1.0.0                                                                         | 1.1.0                                                                         |
-| Dataset             | COCO2017                                                                      | COCO2017                                                                      | COCO2017                                                                      |
-| Training Parameters | epoch = 500,  batch_size = 32                                                 | epoch = 800,  batch_size = 32                                                 | epoch = 60,  batch_size = 32                                                  |
-| Optimizer           | Momentum                                                                      | Momentum                                                                      | Momentum                                                                      |
-| Loss Function       | Sigmoid Cross Entropy,SmoothL1Loss                                            | Sigmoid Cross Entropy,SmoothL1Loss                                            | Sigmoid Cross Entropy,SmoothL1Loss                                            |
-| Speed               | 8pcs: 90ms/step                                                               | 8pcs: 121ms/step                                                              | 8pcs: 547ms/step                                                              |
-| Total time          | 8pcs: 4.81hours                                                               | 8pcs: 12.31hours                                                              | 8pcs: 4.22hours                                                               |
-| Parameters (M)      | 34                                                                            | 34                                                                            | 48M                                                                           |
-| Scripts             | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> |
+| Parameters          | Ascend                                                                        | GPU                                                                           | Ascend                                                                        | GPU                                                                        |
+| ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |----------------------------------------------------------------------------- |
+| Model Version       | SSD V1                                                                        | SSD V1                                                                        | SSD-Mobilenet-V1-Fpn                                                          |SSD-Mobilenet-V1-Fpn                                                          |
+| Resource            | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                               | NV SMX2 V100-16G                                                              | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |NV SMX2 V100-32G                                                         |
+| uploaded Date       | 07/05/2021 (month/day/year)                                                   | 09/24/2020 (month/day/year)                                                   | 01/13/2021 (month/day/year)                                                   |07/20/2021 (month/day/year)                                                   |
+| MindSpore Version   | 1.3.0                                                                         | 1.0.0                                                                         | 1.1.0                                                                         |1.3.0                                                                         |
+| Dataset             | COCO2017                                                                      | COCO2017                                                                      | COCO2017                                                                      |COCO2017                                                                      |
+| Training Parameters | epoch = 500,  batch_size = 32                                                 | epoch = 800,  batch_size = 32                                                 | epoch = 60,  batch_size = 32                                                  | epoch = 60,  batch_size = 16                                                  |
+| Optimizer           | Momentum                                                                      | Momentum                                                                      | Momentum                                                                      |Momentum                                                                      |
+| Loss Function       | Sigmoid Cross Entropy,SmoothL1Loss                                            | Sigmoid Cross Entropy,SmoothL1Loss                                            | Sigmoid Cross Entropy,SmoothL1Loss                                            |Sigmoid Cross Entropy,SmoothL1Loss                                            |
+| Speed               | 8pcs: 90ms/step                                                               | 8pcs: 121ms/step                                                              | 8pcs: 547ms/step                                                              |1pcs: 547ms/step                                                              |
+| Total time          | 8pcs: 4.81hours                                                               | 8pcs: 12.31hours                                                              | 8pcs: 4.22hours                                                               |1pcs: 4.22hours                                                               |
+| Parameters (M)      | 34                                                                            | 34                                                                            | 48M                                                                           |97M                                                                           |
+| Scripts             | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> |<https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> |
 
 #### Inference Performance
 
-| Parameters          | Ascend                      | GPU                         | Ascend                      |
-| ------------------- | --------------------------- | --------------------------- | --------------------------- |
-| Model Version       | SSD V1                      | SSD V1                      | SSD-Mobilenet-V1-Fpn        |
-| Resource            | Ascend 910; OS Euler2.8                  | GPU                         |Ascend 910; OS Euler2.8                  |
-| Uploaded Date       | 07/05/2020 (month/day/year) | 09/24/2020 (month/day/year) | 09/24/2020 (month/day/year) |
-| MindSpore Version   | 1.3.0                       | 1.0.0                       | 1.1.0                       |
-| Dataset             | COCO2017                    | COCO2017                    | COCO2017                    |
-| batch_size          | 1                           | 1                           | 1                           |
-| outputs             | mAP                         | mAP                         | mAP                         |
-| Accuracy            | IoU=0.50: 23.8%             | IoU=0.50: 22.4%             | Iout=0.50: 30%              |
-| Model for inference | 34M(.ckpt file)             | 34M(.ckpt file)             | 48M(.ckpt file)             |
+| Parameters          | Ascend                      | GPU                         | Ascend                      | GPU                      |
+| ------------------- | --------------------------- | --------------------------- | --------------------------- |--------------------------- |
+| Model Version       | SSD V1                      | SSD V1                      | SSD-Mobilenet-V1-Fpn        | SSD-Mobilenet-V1-Fpn        |
+| Resource            | Ascend 910; OS Euler2.8                  | GPU                         |Ascend 910; OS Euler2.8                  | NV SMX2 V100-32G                  |
+| Uploaded Date       | 07/05/2020 (month/day/year) | 09/24/2020 (month/day/year) | 09/24/2020 (month/day/year) | 07/20/2021 (month/day/year) |
+| MindSpore Version   | 1.3.0                       | 1.0.0                       | 1.1.0                       | 1.3.0                       |
+| Dataset             | COCO2017                    | COCO2017                    | COCO2017                    | COCO2017                    |
+| batch_size          | 1                           | 1                           | 1                           | 1                           |
+| outputs             | mAP                         | mAP                         | mAP                         | mAP                         |
+| Accuracy            | IoU=0.50: 23.8%             | IoU=0.50: 22.4%             | Iout=0.50: 30%              | Iout=0.50: 30%              |
+| Model for inference | 34M(.ckpt file)             | 34M(.ckpt file)             | 48M(.ckpt file)             | 97M(.ckpt file)             |
 
 ## [Description of Random Situation](#contents)
 

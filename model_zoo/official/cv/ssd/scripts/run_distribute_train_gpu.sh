@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE LR DATASET  CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "for example: sh run_distribute_train_gpu.sh 8 500 0.2 coco /config_path /opt/ssd-300.ckpt(optional) 200(optional)"
+echo "bash run_distribute_train_gpu.sh DEVICE_NUM EPOCH_SIZE LR DATASET CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "for example: bash run_distribute_train_gpu.sh 8 500 0.2 coco /config_path /opt/ssd-300.ckpt(optional) 200(optional)"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
 if [ $# != 5 ] && [ $# != 7 ]
 then
-    echo "Usage: sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] \
+    echo "Usage: bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] \
 [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
@@ -46,7 +46,7 @@ PRE_TRAINED_EPOCH_SIZE=$7
 rm -rf LOG
 mkdir ./LOG
 cp ./*.py ./LOG
-cp ./*.yaml ./LOG
+cp ./config/*.yaml ./LOG
 cp -r ./src ./LOG
 cd ./LOG || exit
 
@@ -79,5 +79,5 @@ then
     --device_target="GPU" \
     --epoch_size=$EPOCH_SIZE \
     --config_path=$CONFIG_PATH \
-     --output_path './output' > log.txt 2>&1 &
+    --output_path './output' > log.txt 2>&1 &
 fi
