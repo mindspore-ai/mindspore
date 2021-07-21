@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace opt {
 constexpr auto kInferDone = "infer_done";
-constexpr auto kTransDone = "trans_done";
 enum FormatTransNodeType { kNCHW2NHWC, kNHWC2NCHW, kNONE };
 struct TransTypePair {
   FormatTransNodeType pre_;

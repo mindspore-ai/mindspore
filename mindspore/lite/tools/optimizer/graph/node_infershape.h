@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
 #include "tools/anf_exporter/fetch_content.h"
@@ -41,9 +42,9 @@ class NodeInferShape {
   bool JudgeOpSupportInfer(const CNodePtr &cnode);
   std::vector<int> GetInputShape(const CNodePtr &cnode, size_t index);
   std::vector<int> GetIntVecInput(const CNodePtr &cnode, size_t index);
+  STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *inputs);
 
  private:
-  STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *inputs);
   STATUS GetCNodeConstInput(const CNodePtr &cnode, std::vector<lite::Tensor *> *const_ms_inputs);
   STATUS GetCNodeVarInput(const CNodePtr &cnode, std::vector<lite::Tensor *> *var_ms_inputs);
   lite::Tensor *GetCNodeTensorListVarInput(const lite::DataInfo &data_info);

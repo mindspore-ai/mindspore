@@ -335,6 +335,9 @@ STATUS UnifyFormatPass::GenNewInput(const FuncGraphPtr &func_graph, const CNodeP
     }
   }
   auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+  }
   MS_ASSERT(manager != nullptr);
   auto tr = manager->Transact();
   if (before) {
@@ -428,6 +431,7 @@ STATUS UnifyFormatPass::InsertPreTransNode(const FuncGraphPtr &func_graph, const
     }
   }
   status = node_infer_shape_.InferShape(cnode);
+
   if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
     MS_LOG(ERROR) << "infer shape failed.";
     return lite::RET_ERROR;
@@ -523,47 +527,8 @@ STATUS UnifyFormatPass::HandleGraphInput(const FuncGraphPtr &func_graph, const C
       MS_LOG(ERROR) << "infer shape failed.";
       return lite::RET_ERROR;
     }
-    func_graph->manager()->Replace(param_node, trans_cnode);
-  }
-  return lite::RET_OK;
-}
 
-STATUS UnifyFormatPass::HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  auto prim_node = cnode->input(0);
-  auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
-  if (prim->GetAttr(kTransDone) != nullptr && GetValue<bool>(prim->GetAttr(kTransDone))) {
-    return lite::RET_OK;
-  }
-  prim->AddAttr(kTransDone, MakeValue<bool>(true));
-  TransTypePair trans_info;
-  GetTransNodeFormatType(cnode, &trans_info);
-  if (trans_info.pre_ == kNONE || trans_info.post_ == kNONE) {
-    if (!need_reset_ && TransTransFusion(func_graph, cnode)) {
-      return lite::RET_OK;
-    }
-    auto status = node_infer_shape_.InferShape(cnode);
-    if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-      MS_LOG(ERROR) << "infer shape failed: " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
-    return lite::RET_NO_CHANGE;
-  }
-  auto before_perm = trans_info.pre_ == kNHWC2NCHW ? NH2NC : NC2NH;
-  auto after_perm = trans_info.post_ == kNCHW2NHWC ? NC2NH : NH2NC;
-  if (InsertPreTransNode(func_graph, cnode, before_perm) != lite::RET_OK) {
-    MS_LOG(ERROR) << "insert pre node failed." << cnode->fullname_with_scope();
-    return lite::RET_ERROR;
-  }
-  auto status = node_infer_shape_.InferShape(cnode);
-  if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-    MS_LOG(ERROR) << "infer shape failed.";
-    return lite::RET_ERROR;
-  }
-  if (InsertPostTransNode(func_graph, cnode, after_perm) != lite::RET_OK) {
-    MS_LOG(ERROR) << "insert post node failed." << cnode->fullname_with_scope();
-    return lite::RET_ERROR;
+    func_graph->manager()->Replace(param_node, trans_cnode);
   }
   return lite::RET_OK;
 }
@@ -763,58 +728,6 @@ void UnifyFormatPass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraph
   prim->AddAttr(kInferDone, MakeValue<bool>(infer_done));
 }
 
-bool UnifyFormatPass::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph) {
-  MS_ASSERT(func_graph != nullptr);
-  auto graph_name = GetValue<std::string>(func_graph->get_attr("graph_name"));
-  auto manager = Manage(func_graph, true);
-  if (manager == nullptr) {
-    MS_LOG(ERROR) << "manager is nullptr.";
-    return false;
-  }
-  auto node_list = TopoSort(func_graph->get_return());
-  int status;
-  for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    if (IsSpecialType(cnode)) {
-      continue;
-    }
-    if (main_graph && !need_reset_) {
-      status = HandleGraphInput(func_graph, cnode);
-      if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-        return false;
-      }
-    }
-    if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
-      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
-      }
-      SetSubGraphInput(cnode, sub_func_graph);
-      (void)BasicProcess(sub_func_graph, false);
-      SetSubGraphOutput(cnode, sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
-      if (sub_func_graph == nullptr) {
-        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
-      }
-      SetSubGraphInput(cnode, sub_func_graph);
-      (void)BasicProcess(sub_func_graph, false);
-      SetSubGraphOutput(cnode, sub_func_graph);
-      SetSubGraphAbstract(cnode, sub_func_graph);
-      continue;
-    }
-    status = HandleGraphNode(func_graph, cnode);
-    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-      return false;
-    }
-  }
-  return true;
-}
-
 bool UnifyFormatPass::DecreaseTransposeForSingleOp(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto graph_name = GetValue<std::string>(func_graph->get_attr("graph_name"));
@@ -935,33 +848,6 @@ bool UnifyFormatPass::ResetFuncGraph(const FuncGraphPtr &func_graph) {
     if (prim->GetAttr(kInferDone) != nullptr) {
       prim->EraseAttr(kInferDone);
     }
-    if (prim->GetAttr(kTransDone) != nullptr) {
-      prim->EraseAttr(kTransDone);
-    }
-    if (pre_insert_trans_.find(cnode) != pre_insert_trans_.end()) {
-      manager->Replace(node, cnode->input(1));
-    }
-    if (post_insert_trans_.find(cnode) != post_insert_trans_.end()) {
-      auto cnode_abstract = cnode->abstract();
-      if (!utils::isa<abstract::AbstractTensorPtr>(cnode_abstract)) {
-        MS_LOG(ERROR) << "abstract is not abstract tensor.";
-        return false;
-      }
-      auto cnode_abstract_tensor = cnode_abstract->cast<abstract::AbstractTensorPtr>();
-      if (!utils::isa<abstract::ShapePtr>(cnode_abstract_tensor->BuildShape())) {
-        MS_LOG(ERROR) << "shape of abstract tensor should be ShapePtr.";
-        return false;
-      }
-      auto shape_ptr = utils::cast<abstract::ShapePtr>(cnode_abstract_tensor->BuildShape());
-      auto input_abstract = GetCNodeInputAbstract(cnode, 1);
-      if (!utils::isa<abstract::AbstractTensorPtr>(input_abstract)) {
-        MS_LOG(ERROR) << "abstract is not abstract tensor.";
-        return false;
-      }
-      auto input_abstract_tensor = input_abstract->cast<abstract::AbstractTensorPtr>();
-      input_abstract_tensor->set_shape(shape_ptr);
-      manager->Replace(node, cnode->input(1));
-    }
     if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
       if (sub_func_graph == nullptr) {
@@ -1025,18 +911,140 @@ bool UnifyFormatPass::RunOnlyForShape(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "exist op cannot support infer shape.";
     return false;
   }
-  need_reset_ = true;
-  // insert transpose for some ops whose format must be NHWC, which is depend on framework.
-  // In this process, transpose op cannot be fused to restore the original graph.
-  if (!BasicProcess(func_graph, true)) {
-    MS_LOG(ERROR) << "run framework transpose unify failed.";
+  if (!RunNodeInferShape(func_graph)) {
+    MS_LOG(ERROR) << "RunNodeInferShape failed.";
     return false;
   }
   ResetSubGraphInput();
-  // delete insert transpose op and update op output shape.
-  if (!ResetFuncGraph(func_graph)) {
-    MS_LOG(ERROR) << "reset func_graph failed.";
-    return false;
+  ResetFuncGraph(func_graph);
+  return true;
+}
+
+bool UnifyFormatPass::RunNodeInferShape(const FuncGraphPtr &func_graph) {
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (IsSpecialType(cnode)) {
+      continue;
+    }
+    if (CheckPrimitiveType(cnode, prim::kPrimIf) || CheckPrimitiveType(cnode, prim::kPrimWhile)) {
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      SetSubGraphInput(cnode, sub_func_graph);
+      if (!RunNodeInferShape(sub_func_graph)) {
+        MS_LOG(ERROR) << "subgraph infer shape failed.";
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
+        return false;
+      }
+      SetSubGraphOutput(cnode, sub_func_graph);
+
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      SetSubGraphInput(cnode, sub_func_graph);
+      if (!RunNodeInferShape(sub_func_graph)) {
+        MS_LOG(ERROR) << "subgraph infer shape failed.";
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
+        return false;
+      }
+      SetSubGraphOutput(cnode, sub_func_graph);
+      SetSubGraphAbstract(cnode, sub_func_graph);
+      continue;
+    }
+    auto status = node_infer_shape_.InferShape(cnode);
+    if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
+      MS_LOG(ERROR) << "infer shape failed." << cnode->fullname_with_scope();
+      return false;
+    }
+  }
+  return true;
+}
+
+bool UnifyFormatPass::RunDoFixFormat(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  auto prim_node = cnode->input(0);
+  auto prim = GetValueNode<PrimitivePtr>(prim_node);
+  auto &nchw_op = GetNCHWOpMap();
+  if (!utils::isa<CNodePtr>(cnode->input(1))) {
+    return true;
+  }
+  if (utils::isa<CNodePtr>(cnode->input(1))) {
+    auto format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
+    if (nchw_op.find(prim->name()) != nchw_op.end() && format != NCHW) {
+      InsertPreTransNode(func_graph, cnode, {0, 3, 1, 2});
+      InsertPostTransNode(func_graph, cnode, {0, 2, 3, 1});
+    }
+  }
+  {
+    if (CheckPrimitiveType(cnode, prim::kPrimTranspose)) {
+      MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+      auto manager = func_graph->manager();
+      if (manager == nullptr) {
+        manager = Manage(func_graph, true);
+      }
+      auto shape = node_infer_shape_.GetInputShape(cnode, 1);
+      std::vector<int> perm;
+      auto status = GetTransposePerm(cnode, &perm);
+      if (status != RET_OK) {
+        return false;
+      }
+      if (!shape.empty() && shape.size() != perm.size()) {
+        manager->Replace(cnode, cnode->input(1));
+      }
+    }
+  }
+  return true;
+}
+
+bool UnifyFormatPass::DoFixFormat(const FuncGraphPtr &func_graph) {
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (IsSpecialType(cnode)) {
+      continue;
+    }
+    if (CheckPrimitiveType(cnode, prim::kPrimIf) || CheckPrimitiveType(cnode, prim::kPrimWhile)) {
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      SetSubGraphInput(cnode, sub_func_graph);
+      if (!DoFixFormat(sub_func_graph)) {
+        MS_LOG(ERROR) << "subgraph infer shape failed.";
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
+        return false;
+      }
+      SetSubGraphOutput(cnode, sub_func_graph);
+
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      SetSubGraphInput(cnode, sub_func_graph);
+      if (!DoFixFormat(sub_func_graph)) {
+        MS_LOG(ERROR) << "subgraph infer shape failed.";
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
+        return false;
+      }
+      SetSubGraphOutput(cnode, sub_func_graph);
+      SetSubGraphAbstract(cnode, sub_func_graph);
+      continue;
+    }
+    if (!RunDoFixFormat(func_graph, cnode)) {
+      return false;
+    }
   }
   return true;
 }
@@ -1049,22 +1057,23 @@ bool UnifyFormatPass::Run(const FuncGraphPtr &func_graph) {
     if (prim == nullptr) {
       continue;
     }
-    if (prim->GetAttr(kTransDone) != nullptr) {
-      return true;
-    }
   }
   if (!JudgeAllOpsCanInfer(func_graph)) {
     MS_LOG(ERROR) << "exist op cannot support infer shape.";
     return false;
   }
-  // insert transpose for some ops whose format must be NHWC, which is depend on framework.
-  // In this process, tranpose can be fused, which the original graph may not be able to restored.
-  if (!BasicProcess(func_graph, true)) {
-    MS_LOG(ERROR) << "run framework transpose unify failed.";
+  if (!RunNodeInferShape(func_graph)) {
+    MS_LOG(ERROR) << "infer shape failed.";
     return false;
   }
   ResetSubGraphInput();
-  // if input format of a certain op can be NHWC, can try transform this op to decrease the number of transpose op.
+
+  if (!DoFixFormat(func_graph)) {
+    MS_LOG(ERROR) << "DoFixFormat failed.";
+    return false;
+  }
+  ResetSubGraphInput();
+
   if (!DecreaseTransposeForSingleOp(func_graph)) {
     MS_LOG(ERROR) << "run local trans insert optimizer failed.";
     return false;

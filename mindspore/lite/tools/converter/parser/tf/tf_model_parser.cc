@@ -33,6 +33,7 @@
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/common/tensor_util.h"
+#include "tools/converter/parser/insert_transpose.h"
 
 using mindspore::lite::converter::FmkType_TF;
 namespace mindspore {
@@ -573,6 +574,11 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
   if ((status = TF2AnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "TF2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    return nullptr;
+  }
+  auto insert_transpose = std::make_shared<InsertTranspose>(lite::converter::FmkType_TF, false);
+  if (!insert_transpose->Run(res_graph_)) {
+    MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
   if ((status = WeightFormatTransform(res_graph_)) != RET_OK) {

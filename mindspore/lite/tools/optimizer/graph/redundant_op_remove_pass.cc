@@ -32,7 +32,13 @@ constexpr size_t kInputTripleNum = 3;
 int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto first_input = cnode->input(1);
+  if (CheckPrimitiveType(first_input, prim::kPrimTranspose)) {
+    first_input = cnode->input(1)->cast<CNodePtr>()->input(1);
+  }
   auto second_input = cnode->input(2);
+  if (CheckPrimitiveType(second_input, prim::kPrimTranspose)) {
+    second_input = cnode->input(2)->cast<CNodePtr>()->input(1);
+  }
   AnfNodePtr must_monad = nullptr;
   AnfNodePtr not_must_monad = nullptr;
   if (utils::isa<ValueNode>(first_input)) {
@@ -72,6 +78,12 @@ int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr
     pre_node = cnode->input(2);
     post_node = cnode->input(1);
   }
+  if (CheckPrimitiveType(pre_node, prim::kPrimTranspose)) {
+    pre_node = cnode->input(1)->cast<CNodePtr>()->input(1);
+  }
+  if (CheckPrimitiveType(post_node, prim::kPrimTranspose)) {
+    post_node = cnode->input(2)->cast<CNodePtr>()->input(1);
+  }
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   auto node_users = manager->node_users()[pre_node];
@@ -102,6 +114,10 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
   auto make_tuple_prim = NewValueNode(std::make_shared<lite::MakeTuple>());
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
+  if (CheckPrimitiveType(cnode->input(0), prim::kPrimTranspose)) {
+    manager->Replace(cnode->input(0)->cast<CNodePtr>()->input(0), make_tuple_prim);
+    return RET_OK;
+  }
   manager->Replace(cnode->input(0), make_tuple_prim);
   return lite::RET_OK;
 }

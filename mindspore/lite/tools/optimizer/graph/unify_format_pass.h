@@ -45,23 +45,25 @@ class UnifyFormatPass : public Pass {
   bool RunOnlyForShape(const FuncGraphPtr &func_graph);
 
  private:
+  STATUS InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
+  STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
+  STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm, bool before,
+                     size_t index = 0);
+  bool RunDoFixFormat(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  bool DoFixFormat(const FuncGraphPtr &func_graph);
+  bool RunNodeInferShape(const FuncGraphPtr &func_graph);
   bool JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph);
   bool ResetFuncGraph(const FuncGraphPtr &func_graph);
-  bool BasicProcess(const FuncGraphPtr &func_graph, bool main_graph);
   bool DecreaseTransposeForSingleOp(const FuncGraphPtr &func_graph);
   bool DecreaseTransposeForMultiOp(const FuncGraphPtr &func_graph);
   bool TransTransFusion(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS PostTransposeFusion(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm, bool before,
-                     size_t index = 0);
+
   void GetTransNodeFormatType(const CNodePtr &cnode, TransTypePair *trans_info);
   STATUS HandleGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS HandleGraphMultiNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                               std::set<CNodePtr> *visit_transposes);
-  STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_insert_info);
-  STATUS InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   void SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   void ResetSubGraphInput();
   void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);

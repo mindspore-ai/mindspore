@@ -165,6 +165,8 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   }
   if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
     auto set_status = SetCNodeAbstract(cnode, outputs, ret);
+    auto cnode_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    cnode_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
       FreeTensors(&inputs);
@@ -336,6 +338,7 @@ STATUS NodeInferShape::GetCNodeVarInput(const CNodePtr &cnode, std::vector<lite:
       tensor = GetCNodeTensorListVarInput(data_info);
     } else {
       tensor = new (std::nothrow) lite::Tensor(TypeId(data_info.data_type_), data_info.shape_);
+      tensor->set_format((Format)(data_info.format_));
     }
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "new a lite tensor failed";
