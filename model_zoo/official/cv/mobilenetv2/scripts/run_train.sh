@@ -35,7 +35,7 @@ run_ascend()
         exit 1
     fi;
 
-    if [ $2 -lt 1 ] && [ $2 -gt 8 ]
+    if [ $2 -lt 1 ] || [ $2 -gt 8 ]
     then
         echo "error: DEVICE_NUM=$2 is not in (1-8)"
     exit 1
@@ -116,11 +116,14 @@ run_gpu()
               GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]"
         exit 1
     fi;
-    if [ $2 -lt 1 ] && [ $2 -gt 8 ]
-    then
+    if [ $2 -eq 1 ] ; then
+        RUN_DISTRIBUTE=False
+    elif [ $2 -gt 1 ] && [ $2 -le 8 ] ; then
+        RUN_DISTRIBUTE=True
+    else
         echo "error: DEVICE_NUM=$2 is not in (1-8)"
-    exit 1
-    fi
+        exit 1
+    fi;
 
     if [ ! -d $4 ]
     then
@@ -144,6 +147,7 @@ run_gpu()
     python ${BASEPATH}/../train.py \
         --config_path=$CONFIG_FILE \
         --platform=$1 \
+        --run_distribute=$RUN_DISTRIBUTE \
         --dataset_path=$4 \
         --pretrain_ckpt=$PRETRAINED_CKPT \
         --freeze_layer=$FREEZE_LAYER \
