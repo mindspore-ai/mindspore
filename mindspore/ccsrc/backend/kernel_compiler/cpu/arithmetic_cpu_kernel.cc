@@ -424,7 +424,6 @@ bool ArithmeticCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const
     SquaredDifference(input1, input2, output);
   } else {
     MS_LOG(EXCEPTION) << "Not support " << operate_type_;
-    return false;
   }
   return true;
 }
