@@ -335,16 +335,26 @@ Status Conv2DInfo::InferRankBias() {
   if (it == group_devices.begin()) {
     left_rank_bias_ = -1;
     right_rank_bias_ = rank_bias_ + 1;
+
+    left_rank_id_ = -1;
+    right_rank_id_ = *(it + 1);
   } else if (it == group_devices.end() - 1) {
     left_rank_bias_ = rank_bias_ - 1;
     right_rank_bias_ = -1;
+
+    left_rank_id_ = *(it - 1);
+    right_rank_id_ = -1;
   } else {
     left_rank_bias_ = rank_bias_ - 1;
     right_rank_bias_ = rank_bias_ + 1;
+
+    left_rank_id_ = *(it - 1);
+    right_rank_id_ = *(it + 1);
   }
   MS_LOG(INFO) << name_ << ": The current rank is " << rank << ", the device list of w dimension is " << group_devices
                << ", the rank bias is " << rank_bias_ << ", the left rank bias is " << left_rank_bias_
-               << ", the right rank bias is " << right_rank_bias_;
+               << ", the right rank bias is " << right_rank_bias_ << ", the left rank id is " << left_rank_id_
+               << ", the right rank id is " << right_rank_id_;
   return SUCCESS;
 }
 
@@ -464,11 +474,7 @@ void Conv2DInfo::InferNewPadList() {
   MS_LOG(INFO) << name_ << ": the new pad list is " << new_pad_list_;
 }
 
-void Conv2DInfo::InferNewOperatorAttrs() {
-  // new_pad_list
-  InferNewPadList();
-
-  // send/recv flag
+void Conv2DInfo::InferSendRecvFlag() {
   if (rank_bias_ == 0) {  // the first rank
     left_need_send_ = false;
     left_need_recv_ = false;
@@ -489,17 +495,26 @@ void Conv2DInfo::InferNewOperatorAttrs() {
                << left_need_recv_ << ", the right need send is " << right_need_send_ << ", the right need recv is "
                << right_need_recv_;
 
-  // the exchange rank ids
-  if (left_need_send_ || left_need_recv_) {
-    exchange_rank_ids_.push_back(left_rank_bias_);
+  if (left_need_send_) {
+    send_rank_ids_.push_back(left_rank_id_);
   }
 
-  if (right_need_send_ || right_need_recv_) {
-    exchange_rank_ids_.push_back(right_rank_bias_);
+  if (right_need_send_) {
+    send_rank_ids_.push_back(right_rank_id_);
   }
-  MS_LOG(INFO) << name_ << ": The exchange rank ids is " << exchange_rank_ids_;
 
-  // the recv reshapes
+  if (left_need_recv_) {
+    recv_rank_ids_.push_back(left_rank_id_);
+  }
+
+  if (right_need_recv_) {
+    recv_rank_ids_.push_back(right_rank_id_);
+  }
+
+  MS_LOG(INFO) << name_ << ": The send rank ids is " << send_rank_ids_ << ", the recv rank ids is " << recv_rank_ids_;
+}
+
+void Conv2DInfo::InferRecvShapes() {
   if (left_need_recv_) {
     Shape left_recv_shape = input_slice_shape_;
     left_recv_shape[3] = overlap_left_size_;
@@ -512,8 +527,9 @@ void Conv2DInfo::InferNewOperatorAttrs() {
     recv_shapes_.push_back(right_recv_shape);
   }
   MS_LOG(INFO) << name_ << ": the recv shapes is " << recv_shapes_;
+}
 
-  // the begin, end and strides of StridedSlice
+void Conv2DInfo::InferStridedSliceAttrs() {
   if (left_need_send_) {
     left_strided_slice_begin_ = {0, 0, 0, 0};
     left_strided_slice_end_ = input_slice_shape_;
@@ -531,6 +547,16 @@ void Conv2DInfo::InferNewOperatorAttrs() {
     MS_LOG(INFO) << name_ << ": The right strided slice begin is " << right_strided_slice_begin_ << ", end is "
                  << right_strided_slice_end_;
   }
+}
+
+void Conv2DInfo::InferNewOperatorAttrs() {
+  InferNewPadList();
+
+  InferSendRecvFlag();
+
+  InferRecvShapes();
+
+  InferStridedSliceAttrs();
 }
 
 ReplaceGraphPtr Conv2DInfo::replace_graph(const CNodePtr &cnode) {
