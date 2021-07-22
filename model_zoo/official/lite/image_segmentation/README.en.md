@@ -66,7 +66,7 @@ The following describes how to use the MindSpore Lite JAVA APIs and MindSpore Li
 
 ## Detailed Description of the Sample Program  
 
-This image segmentation sample program on the Android device is implemented through Java. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images. Then Java API is called to infer.[Runtime](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html).
+This image segmentation sample program on the Android device is implemented through Java. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images. Then Java API is called to infer.[Runtime](https://www.mindspore.cn/lite/docs/en/r1.3/use/runtime.html).
 
 ### Sample Program Structure
 

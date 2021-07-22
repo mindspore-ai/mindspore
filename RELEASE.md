@@ -81,7 +81,7 @@
 
 ###### `mindspore.dataset.Dataset.device_que` interface removes unused parameter `prefetch_size`([!18973](https://gitee.com/mindspore/mindspore/pulls/18973))
 
-Previously, we have a parameter `prefetch_size` in `device_que` to define the prefetch number of records ahead of the user's request. But indeed this parameter is never used which means it is an ineffective parameter. Therefore, we remove this parameter in 1.3.0 and users can set this configuration by [mindspore.dataset.config.set_prefetch_size](https://www.mindspore.cn/docs/api/zh-CN/r1.3/api_python/mindspore.dataset.config.html#mindspore.dataset.config.set_prefetch_size).
+Previously, we have a parameter `prefetch_size` in `device_que` to define the prefetch number of records ahead of the user's request. But indeed this parameter is never used which means it is an ineffective parameter. Therefore, we remove this parameter in 1.3.0 and users can set this configuration by [mindspore.dataset.config.set_prefetch_size](https://www.mindspore.cn/docs/api/en/r1.3/api_python/mindspore.dataset.config.html#mindspore.dataset.config.set_prefetch_size).
 
 <table>
 <tr>
@@ -136,7 +136,7 @@ thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, ba
 
 ##### Dump Config
 
-Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/r1.3/advanced_use/dump_in_graph_mode.html#dump).
+Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/docs/programming_guide/en/r1.3/dump_in_graph_mode.html#dump).
 
 | 1.2.1                                                  | 1.3.0                                                                                       |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
@@ -520,7 +520,7 @@ However, currently MindSpore Parser cannot parse numpy.ndarray in JIT-graph. To 
 
 ###### mindspore.numpy interfaces remove support for keyword arguments `out` and `where`([!12726](https://gitee.com/mindspore/mindspore/pulls/12726))
 
-Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
+Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/docs/api/en/r1.3/api_python/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
 
 <table>
 <tr>
@@ -819,7 +819,7 @@ MSTensor::DestroyTensorPtr(tensor);
 
 ###### `nn.MatMul` is now deprecated in favor of `ops.matmul` ([!12817](https://gitee.com/mindspore/mindspore/pulls/12817))
 
-[ops.matmul](https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) follows the API of [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html) as closely as possible. As a function interface, [ops.matmul](https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) is applied without instantiation, as opposed to `nn.MatMul`, which should only be used as a class instance.
+[ops.matmul](https://www.mindspore.cn/docs/api/en/r1.3/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) follows the API of [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html) as closely as possible. As a function interface, [ops.matmul](https://www.mindspore.cn/docs/api/en/r1.3/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) is applied without instantiation, as opposed to `nn.MatMul`, which should only be used as a class instance.
 
 <table>
 <tr>

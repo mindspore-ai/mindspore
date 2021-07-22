@@ -434,7 +434,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
 
 ### 推理
 
-如果您需要在GPU、Ascend 910、Ascend 310等多个硬件平台上使用训练好的模型进行推理，请参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html)。以下为简单示例：
+如果您需要在GPU、Ascend 910、Ascend 310等多个硬件平台上使用训练好的模型进行推理，请参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/multi_platform_inference.html)。以下为简单示例：
 
 - Ascend处理器环境运行
 

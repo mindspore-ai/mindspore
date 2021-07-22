@@ -469,7 +469,7 @@ python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkp
 
 #### 推理
 
-如果您需要使用训练好的模型在Ascend 910、Ascend 310等多个硬件平台上进行推理上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/migrate_3rd_scripts.html)。下面是一个简单的操作步骤示例：
+如果您需要使用训练好的模型在Ascend 910、Ascend 310等多个硬件平台上进行推理上进行推理，可参考此[链接](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/multi_platform_inference.html)。下面是一个简单的操作步骤示例：
 
 ##### Ascend 310环境运行
 
