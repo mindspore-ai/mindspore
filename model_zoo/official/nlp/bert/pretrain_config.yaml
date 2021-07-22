@@ -78,7 +78,7 @@ Thor:
     damping_power: 4.0
     damping_total_steps: 30000
     momentum: 0.9
-    weight_decay: 0.00001  # 1e-5,
+    weight_decay: 0.00001  # 1e-5
     loss_scale: 1024.0
     frequency: 100
 # ==============================================================================
