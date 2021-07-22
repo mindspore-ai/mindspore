@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/group_convolution_int8.h"
+#include "src/runtime/kernel/arm/int8/convolution_int8_creator.h"
 
 using mindspore::lite::RET_OK;
 
@@ -49,5 +50,26 @@ int GroupConvolutionInt8CPUKernel::PostConcat(int group_id) {
     dst_ptr += ori_out_channel;
   }
   return RET_OK;
+}
+
+int GroupConvolutionInt8CPUKernel::Init() {
+  if (group_conv_creator_ == nullptr) {
+    return lite::RET_ERROR;
+  }
+  group_conv_creator_->SetShapeOfTensors();
+  for (int i = 0; i < conv_param_->group_; ++i) {
+    auto *new_conv_param = CreateNewConvParameter(conv_param_);
+    std::vector<lite::Tensor *> new_inputs;
+    std::vector<lite::Tensor *> new_outputs;
+    auto ret = group_conv_creator_->GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetSingleConv for fp32 group conv failed.";
+      return lite::RET_ERROR;
+    }
+    group_conv_creator_->CopyQuantParam(&new_inputs);
+    group_convs_.emplace_back(
+      CpuConvInt8KernelSelect(new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_param), ctx_));
+  }
+  return GroupConvolutionBaseCPUKernel::Init();
 }
 }  // namespace mindspore::kernel
