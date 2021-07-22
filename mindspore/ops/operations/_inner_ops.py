@@ -492,29 +492,30 @@ class Receive(PrimitiveWithInfer):
         return self.dtype
 
 
-class AllToAllv(Primitive):
+class NeighborExchange(Primitive):
     """
-    AlltoAllv is a collective operation.
+    NeighborExchange is a collective operation.
 
-    AlltoAllv sends data from the local rank to ranks in the send_rank_ids, as while receive data from recv_rank_ids.
+    NeighborExchange sends data from the local rank to ranks in the send_rank_ids,
+    as while receive data from recv_rank_ids.
 
     Args:
         send_rank_ids (list): Ranks which the data is sent to.
         recv_rank_ids (list): Ranks which the data is received from.
         recv_shapes (list): Data shape which received from recv_rank_ids.
-        recv_shapes_backward (list): Data shape which received from send_rank_ids in the backward.
+        send_shapes (list): Data shape which send to the send_rank_ids.
         recv_type (type): Data type which received from recv_rank_ids
         group (str):
     """
 
     @prim_attr_register
-    def __init__(self, send_rank_ids, recv_rank_ids, recv_shapes, recv_shapes_backward, recv_type,
+    def __init__(self, send_rank_ids, recv_rank_ids, recv_shapes, send_shapes, recv_type,
                  group=GlobalComm.WORLD_COMM_GROUP):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         self.send_rank_ids = send_rank_ids
         self.recv_rank_ids = recv_rank_ids
         self.recv_shapes = recv_shapes
-        self.recv_shapes_backward = recv_shapes_backward
+        self.send_shapes = send_shapes
         self.recv_type = recv_type
 
 

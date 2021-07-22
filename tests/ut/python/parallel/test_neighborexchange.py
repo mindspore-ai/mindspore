@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
-from mindspore.ops.operations._inner_ops import AllToAllv
+from mindspore.ops.operations._inner_ops import NeighborExchange
 
 
 class MatMulNet(nn.Cell):
@@ -28,8 +28,8 @@ class MatMulNet(nn.Cell):
         super(MatMulNet, self).__init__()
         self.matmul = P.MatMul()
         self.mul = P.Mul()
-        self.alltoallv = AllToAllv(send_rank_ids=[0], recv_rank_ids=[1, 2], recv_shapes=([32, 32], [32, 64]),
-                                   recv_shapes_backward=([32, 32], [32, 16]), recv_type=ms.float32)
+        self.alltoallv = NeighborExchange(send_rank_ids=[0], recv_rank_ids=[1, 2], recv_shapes=([32, 32], [32, 64]),
+                                          send_shapes=([32, 32], [32, 16]), recv_type=ms.float32)
         self.weight1 = Parameter(weight1, "w1")
 
     def construct(self, x1, x2):
@@ -44,8 +44,8 @@ class MatMulNet2(nn.Cell):
         super(MatMulNet2, self).__init__()
         self.matmul = P.MatMul()
         self.mul = P.Mul()
-        self.alltoallv = AllToAllv(send_rank_ids=[0], recv_rank_ids=[1, 2], recv_shapes=([32, 32], [32, 64]),
-                                   recv_shapes_backward=([32, 32],), recv_type=ms.float32)
+        self.alltoallv = NeighborExchange(send_rank_ids=[0], recv_rank_ids=[1, 2], recv_shapes=([32, 32], [32, 64]),
+                                          send_shapes=([32, 32],), recv_type=ms.float32)
         self.weight1 = Parameter(weight1, "w1")
 
     def construct(self, x1, x2):
@@ -68,13 +68,13 @@ def compile_net(net):
     _executor.compile(train_net, _x1, _x2)
 
 
-def test_AllToAllv_two_inputs():
+def test_NeighborExchange_two_inputs():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = MatMulNet(_w1)
     compile_net(net)
 
 
-def test_AllToAllv_single_input():
+def test_NeighborExchange_single_input():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = MatMulNet2(_w1)
     compile_net(net)

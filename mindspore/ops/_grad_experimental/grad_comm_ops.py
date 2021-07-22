@@ -15,19 +15,19 @@
 
 """Generate bprop for comm ops"""
 from .._grad.grad_base import bprop_getters
-from ..operations._inner_ops import AllToAllv
+from ..operations._inner_ops import NeighborExchange
 
 
-@bprop_getters.register(AllToAllv)
-def get_bprop_alltoallv(self):
-    """Generate bprop for AllToAllv."""
+@bprop_getters.register(NeighborExchange)
+def get_bprop_neighborexchange(self):
+    """Generate bprop for NeighborExchange."""
     group = self.group
     send_rank_ids = self.recv_rank_ids
     recv_rank_ids = self.send_rank_ids
-    recv_shapes = self.recv_shapes_backward
+    recv_shapes = self.send_shapes
     recv_type = self.recv_type
-    alltoallv_grad = AllToAllv(send_rank_ids, recv_rank_ids, recv_shapes, recv_shapes, recv_type, group)
+    neighborexchange_grad = NeighborExchange(send_rank_ids, recv_rank_ids, recv_shapes, recv_shapes, recv_type, group)
 
     def bprop(x, out, dout):
-        return (alltoallv_grad(dout),)
+        return (neighborexchange_grad(dout),)
     return bprop

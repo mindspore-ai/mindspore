@@ -55,9 +55,12 @@ class Conv2DInfo : public OperatorInfo {
   Status InferOverlapSize();
   void InferNewOperatorAttrs();
   void InferSendRecvFlag();
-  void InferRecvShapes();
+  void InferOverlapShapes();
   void InferStridedSliceAttrs();
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
+  OperatorAttrs CreatNeighborExchangeAttrs(const CNodePtr &cnode);
+  OperatorAttrs CreatConv2DAttrs();
+  Status ComputeReplaceGraph(const CNodePtr &cnode);
 
   int64_t out_channel_ = 1;
   std::vector<int64_t> kernel_size_;  // two integers
@@ -100,6 +103,7 @@ class Conv2DInfo : public OperatorInfo {
 
   std::vector<int64_t> send_rank_ids_;
   std::vector<int64_t> recv_rank_ids_;
+  Shapes send_shapes_;
   Shapes recv_shapes_;
 
   virtual Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy);
