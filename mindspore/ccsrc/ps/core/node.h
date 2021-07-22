@@ -117,6 +117,8 @@ class Node {
   //  }
   // }
   std::unique_ptr<Configuration> config_;
+  // Used to synchronize the connected nodes
+  std::mutex client_mutex_;
 };
 }  // namespace core
 }  // namespace ps

@@ -15,6 +15,7 @@
 
 import argparse
 import subprocess
+import os
 
 parser = argparse.ArgumentParser(description="Run test_mobile_lenet.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     scheduler_manage_port = args.scheduler_manage_port
     config_file_path = args.config_file_path
 
+    os.environ['MS_NODE_ID'] = "20"
     cmd_sched = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && rm -rf ${execute_path}/scheduler/ &&"
     cmd_sched += "mkdir ${execute_path}/scheduler/ &&"
     cmd_sched += "cd ${execute_path}/scheduler/ || exit && export GLOG_v=1 &&"

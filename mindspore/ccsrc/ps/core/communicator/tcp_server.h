@@ -53,7 +53,7 @@ class TcpConnection {
   explicit TcpConnection(struct bufferevent *bev, const evutil_socket_t &fd, TcpServer *server)
       : buffer_event_(bev), fd_(fd), server_(server) {}
   TcpConnection(const TcpConnection &);
-  virtual ~TcpConnection() = default;
+  virtual ~TcpConnection();
 
   using Callback = std::function<void(const std::shared_ptr<CommMessage>)>;
 

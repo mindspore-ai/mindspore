@@ -27,13 +27,13 @@ bool WorkerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "[Worker start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
 
-  StartHeartbeatTimer(client_to_scheduler_);
-  MS_LOG(INFO) << "[Worker start]: 5. Worker start heartbeat timer!";
-
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start Worker node timeout!";
     return false;
   }
+
+  StartHeartbeatTimer(client_to_scheduler_);
+  MS_LOG(INFO) << "[Worker start]: 5. Worker start heartbeat timer!";
 
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Worker start]: 6. Successfully start worker node!";
@@ -69,7 +69,7 @@ void WorkerNode::CreateTcpServer() {
   std::string server_ip;
   CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
   server_ = std::make_shared<TcpServer>(server_ip, 0, config_.get());
-  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+  server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &protos, const void *data, size_t size) {
     if (server_handler_.count(meta->cmd()) == 0) {
       MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";

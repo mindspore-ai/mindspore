@@ -9,5 +9,6 @@
     "client_cert_path": "client.crt",
     "client_password": "client_password",
     "ca_cert_path": "ca.crt",
-    "Key_encrypt_decrypt_algorithm": ""
+    "Key_encrypt_decrypt_algorithm": "",
+    "node_id": 1
 }

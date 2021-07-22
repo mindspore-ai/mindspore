@@ -83,7 +83,15 @@ void SchedulerNode::Initialize() {
   InitCommandHandler();
   CreateTcpServer();
   is_already_stopped_ = false;
-  node_info_.node_id_ = CommUtil::GenerateUUID();
+  if (PSContext::instance()->node_id().empty() && config_->Exists(kNodeId)) {
+    node_info_.node_id_ = config_->Get(kNodeId, "");
+  } else {
+    node_info_.node_id_ = PSContext::instance()->node_id();
+  }
+
+  if (node_info_.node_id_.empty()) {
+    node_info_.node_id_ = CommUtil::GenerateUUID();
+  }
   node_info_.node_role_ = NodeRole::SCHEDULER;
   leader_scaler_ = std::make_unique<LeaderScaler>(this);
   MS_LOG(INFO) << "[Scheduler start]: 2. The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -141,6 +149,12 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
   }
   const std::string &node_id = register_message.node_id();
   node_manager_.UpdateHeartbeat(node_id);
+
+  client_mutex_.lock();
+  if (connected_nodes_.count(node_id)) {
+    connected_nodes_.erase(node_id);
+  }
+  client_mutex_.unlock();
 
   RegisterRespMessage register_resp_message;
   register_resp_message.set_node_id(node_id);
@@ -414,6 +428,7 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
 }
 
 const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInfo &node_info) {
+  std::lock_guard<std::mutex> lock(client_mutex_);
   if (connected_nodes_.count(node_info.node_id_)) {
     return connected_nodes_[node_info.node_id_];
   } else {
@@ -423,8 +438,9 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
     auto client = std::make_shared<TcpClient>(ip, port, config_.get());
-    client->SetMessageCallback([&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
-                                   size_t size) { NotifyMessageArrival(meta); });
+    client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *, size_t) {
+      NotifyMessageArrival(meta);
+    });
     client->Init();
     if (is_client_started_ == false) {
       is_client_started_ = true;

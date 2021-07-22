@@ -15,6 +15,7 @@
 
 import argparse
 import subprocess
+import os
 
 parser = argparse.ArgumentParser(description="Run test_hybrid_train_lenet.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -46,6 +47,7 @@ if local_worker_num == -1:
 assert local_worker_num <= worker_num, "The local worker number should not be bigger than total worker number."
 
 for i in range(local_worker_num):
+    os.environ['MS_NODE_ID'] = str(10 + i)
     cmd_worker = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && "
     cmd_worker += "rm -rf ${execute_path}/worker_" + str(i) + "/ &&"
     cmd_worker += "mkdir ${execute_path}/worker_" + str(i) + "/ &&"

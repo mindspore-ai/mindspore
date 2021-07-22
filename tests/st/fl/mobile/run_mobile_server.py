@@ -15,6 +15,7 @@
 
 import argparse
 import subprocess
+import os
 
 parser = argparse.ArgumentParser(description="Run test_mobile_lenet.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -79,6 +80,7 @@ if __name__ == "__main__":
     assert local_server_num <= server_num, "The local server number should not be bigger than total server number."
 
     for i in range(local_server_num):
+        os.environ['MS_NODE_ID'] = str(i)
         cmd_server = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && "
         cmd_server += "rm -rf ${execute_path}/server_" + str(i) + "/ &&"
         cmd_server += "mkdir ${execute_path}/server_" + str(i) + "/ &&"

@@ -15,6 +15,7 @@
 
 import argparse
 import subprocess
+import os
 
 parser = argparse.ArgumentParser(description="Run train_cloud.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -34,6 +35,7 @@ scheduler_ip = args.scheduler_ip
 scheduler_port = args.scheduler_port
 scheduler_manage_port = args.scheduler_manage_port
 
+os.environ['MS_NODE_ID'] = "20"
 cmd_sched = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && rm -rf ${execute_path}/scheduler/ &&"
 cmd_sched += "mkdir ${execute_path}/scheduler/ &&"
 cmd_sched += "cd ${execute_path}/scheduler/ || exit && export GLOG_v=1 &&"
