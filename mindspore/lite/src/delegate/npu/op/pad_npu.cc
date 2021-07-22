@@ -19,6 +19,9 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
+constexpr int PAD_INPUT_SIZE = 2;
+constexpr int PAD_EXPAND_DIM = 2;
+
 int PadNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                         const std::vector<mindspore::MSTensor> &out_tensors) {
   auto pad_prim = primitive->value_as_PadFusion();
@@ -33,7 +36,7 @@ int PadNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mi
   if (pad_prim->paddings() != nullptr) {
     return RET_OK;
   }
-  if (in_tensors.size() >= 2 && in_tensors[1].Data() != nullptr) {
+  if (in_tensors.size() >= PAD_INPUT_SIZE && in_tensors[1].Data() != nullptr) {
     return RET_OK;
   }
   MS_LOG(WARNING) << "NPU pad only support constant pad size.";
@@ -67,7 +70,7 @@ int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspo
       auto paddings = std::vector<int64_t>(paddings_data->begin(), paddings_data->end());
       paddings_vec_.insert(paddings_vec_.end(), paddings.begin(), paddings.end());
     }
-  } else if (in_tensors.size() >= 2 && in_tensors[1].Data() != nullptr) {
+  } else if (in_tensors.size() >= PAD_INPUT_SIZE && in_tensors[1].Data() != nullptr) {
     for (int i = 0; i < in_tensors[1].ElementNum(); i++) {
       paddings_vec_.push_back(static_cast<const int *>(in_tensors[1].Data().get())[i]);
     }
@@ -89,10 +92,10 @@ int PadNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspo
 int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors,
                            const std::vector<ge::Operator *> &npu_inputs) {
-  int size = static_cast<int>(paddings_vec_.size() / 2);
-  ge::TensorDesc padding_tensor_desc(ge::Shape({size, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
+  int size = static_cast<int>(paddings_vec_.size());
+  ge::TensorDesc padding_tensor_desc(ge::Shape({size / 2, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
-  padding_tensor->SetData(reinterpret_cast<uint8_t *>(paddings_vec_.data()), 2 * size * sizeof(int));
+  padding_tensor->SetData(reinterpret_cast<uint8_t *>(paddings_vec_.data()), size * sizeof(int));
   paddings_ = new hiai::op::Const(name_ + "paddings");
   paddings_->set_attr_value(padding_tensor);
   pad_->set_input_paddings(*paddings_);
@@ -107,17 +110,17 @@ int PadNPUOp::HandleAxis() {
   if (paddings_vec_.size() != 8) {
     return RET_ERROR;
   }
-  int c1 = paddings_vec_[6];
-  int c2 = paddings_vec_[7];
+  int c1 = paddings_vec_[NHWC_C * PAD_EXPAND_DIM];
+  int c2 = paddings_vec_[NHWC_C * PAD_EXPAND_DIM + 1];
   // 0 1 2 3 4 5 6 7
   // n n h h w w c c
   // n n c c h h w w
-  paddings_vec_[6] = paddings_vec_[4];
-  paddings_vec_[7] = paddings_vec_[5];
-  paddings_vec_[4] = paddings_vec_[2];
-  paddings_vec_[5] = paddings_vec_[3];
-  paddings_vec_[2] = c1;
-  paddings_vec_[3] = c2;
+  paddings_vec_[NCHW_H * PAD_EXPAND_DIM] = paddings_vec_[NHWC_H * PAD_EXPAND_DIM];
+  paddings_vec_[NCHW_H * PAD_EXPAND_DIM + 1] = paddings_vec_[NHWC_H * PAD_EXPAND_DIM + 1];
+  paddings_vec_[NCHW_W * PAD_EXPAND_DIM] = paddings_vec_[NHWC_W * PAD_EXPAND_DIM];
+  paddings_vec_[NCHW_W * PAD_EXPAND_DIM + 1] = paddings_vec_[NHWC_W * PAD_EXPAND_DIM + 1];
+  paddings_vec_[NCHW_C * PAD_EXPAND_DIM] = c1;
+  paddings_vec_[NCHW_C * PAD_EXPAND_DIM + 1] = c2;
   return RET_OK;
 }
 

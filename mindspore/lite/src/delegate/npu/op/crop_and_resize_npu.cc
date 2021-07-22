@@ -16,11 +16,16 @@
 
 #include "src/delegate/npu/op/crop_and_resize_npu.h"
 namespace mindspore {
+constexpr int BOXES_INDEX = 1;
+constexpr int BOX_INDEX = 2;
+constexpr int CROP_SIZE_INDEX = 3;
+constexpr int CROP_RESIZE_INPUT_SIZE = 4;
+
 int CropAndResizeNPUOp::IsSupport(const schema::Primitive *primitive,
                                   const std::vector<mindspore::MSTensor> &in_tensors,
                                   const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors.size() < 4) {
-    MS_LOG(WARNING) << "NPU CropAndResize got nput inputs size < 4";
+  if (in_tensors.size() < CROP_RESIZE_INPUT_SIZE) {
+    MS_LOG(WARNING) << "NPU CropAndResize got inputs size < 4";
     return RET_NOT_SUPPORT;
   }
   auto crop_and_resize_prim = primitive->value_as_CropAndResize();
@@ -67,9 +72,9 @@ int CropAndResizeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_
                                      const std::vector<mindspore::MSTensor> &out_tensors,
                                      const std::vector<ge::Operator *> &npu_inputs) {
   crop_and_resize_->set_input_x(*npu_inputs[0]);
-  crop_and_resize_->set_input_boxes(*npu_inputs[1]);
-  crop_and_resize_->set_input_box_index(*npu_inputs[2]);
-  crop_and_resize_->set_input_crop_size(*npu_inputs[3]);
+  crop_and_resize_->set_input_boxes(*npu_inputs[BOXES_INDEX]);
+  crop_and_resize_->set_input_box_index(*npu_inputs[BOX_INDEX]);
+  crop_and_resize_->set_input_crop_size(*npu_inputs[CROP_SIZE_INDEX]);
   return RET_OK;
 }
 

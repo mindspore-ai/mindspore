@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/npu/op/convolution_depthwise_npu.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
 int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_prim) {
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
@@ -32,10 +33,10 @@ int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_p
     conv_dw_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
     conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
-    auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin()));
-    auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + 1));
-    auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + 2));
-    auto pad_r = static_cast<int>(*(conv_prim->pad_list()->begin() + 3));
+    auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_UP));
+    auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_DOWN));
+    auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_LEFT));
+    auto pad_r = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_RIGHT));
     conv_dw_->set_attr_pads(ge::AttrValue::LIST_INT({pad_u, pad_d, pad_l, pad_r}));
   }
   return RET_OK;
@@ -80,7 +81,7 @@ int ConvolutionDepthwiseNPUOp::SetNPUInputs(const std::vector<mindspore::MSTenso
   }
   conv_dw_->set_input_filter(*weight_);
 
-  if (in_tensors.size() == 3) {
+  if (in_tensors.size() == CONV_INPUT_SIZE) {
     ret = InitBiasConst(in_tensors);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Set bias for convolution depthwise op " << name_ << " failed when running npu";

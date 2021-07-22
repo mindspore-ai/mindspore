@@ -82,7 +82,8 @@ void StackBaseCPUKernel::Execute(int task_id) {
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
-  Stack(all_inputs_, output_data + input_num * start * copy_size_, input_num, copy_size_, start, end);
+  auto output = output_data + input_num * start * copy_size_;
+  Stack(all_inputs_, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
 }
 
 static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
@@ -94,13 +95,13 @@ static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 int StackBaseCPUKernel::Run() {
   // malloc temporary memory to store all the inputs
   size_t inputs_num = in_tensors_.size();
-  all_inputs_ = static_cast<char **>(ms_context_->allocator->Malloc(inputs_num * sizeof(char *)));
+  all_inputs_ = static_cast<void **>(ms_context_->allocator->Malloc(inputs_num * sizeof(void *)));
   if (all_inputs_ == nullptr) {
     MS_LOG(ERROR) << "malloc all_inputs failed.";
     return RET_ERROR;
   }
   for (size_t j = 0; j < inputs_num; ++j) {
-    all_inputs_[j] = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
+    all_inputs_[j] = reinterpret_cast<void *>(in_tensors_.at(j)->data_c());
   }
   // run stack
   num_threads_ = MSMIN(UP_DIV(outer_size_, StackStep), op_parameter_->thread_num_);

@@ -33,7 +33,7 @@ std::set<mindspore::schema::PrimitiveType> insert_nodes = {
 // by inserting nchw2nhwc or nhwc2nchw before or after the operator (e.g. concat, add, etc..) together with
 // fusion pass. If transpose inserted are more than half of input output, we will insert remaining input
 // output with transpose and hopefully do a fusion pass. Otherwise, we don't insert anything.
-//
+
 // Typically concat accept output from nchw2nhwc, we fill other input with nh2nc and nc2nh so that inputs to concat are
 // format same and then fusion all nchw2nhwc op.
 // e.g.
@@ -41,7 +41,7 @@ std::set<mindspore::schema::PrimitiveType> insert_nodes = {
 // current pass (conv->nchw2nhwc, add->nhwc2nchw->nchw2nhwc) -> concat -> (nhwc2nchw->conv)
 // fusion pass  (conv, add->nhwc2nchw) -> concat -> conv
 // original 2 cpusubgraph, after 2 pass, only 1 cpu subgraph
-//
+
 // node:
 // Such ops require inputs all have same format, could be nchw or nhwc or other format.
 // Their inputs outputs may not be 4d, or are already format ok,

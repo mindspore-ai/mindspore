@@ -48,7 +48,16 @@ class LstmFp16CPUKernel : public InnerKernel {
   float16_t *weight_h_ptr_ = nullptr;
   float16_t *input_bias_ = nullptr;
   float16_t *state_bias_ = nullptr;
+
   float16_t *buffer_[6];
+  const int gate_num = 4;
+  const int packed_input_index = 0;
+  const int input_gate_index = 1;
+  const int packed_state_index = 2;
+  const int state_gate_index = 3;
+  const int cell_state_index = 4;
+  const int hidden_state_index = 5;
+
   int weight_batch_ = 0;
   bool is_vec_ = false;
   LstmParameter *lstm_param_ = nullptr;

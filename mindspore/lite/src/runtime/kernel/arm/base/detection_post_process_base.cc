@@ -137,7 +137,7 @@ void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
 int DetectionPostProcessBaseCPUKernel::ParamInit() {
   num_boxes_ = in_tensors_.at(0)->shape().at(1);
   num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
-  params_->decoded_boxes_ = ms_context_->allocator->Malloc(num_boxes_ * 4 * sizeof(float));
+  params_->decoded_boxes_ = ms_context_->allocator->Malloc(num_boxes_ * DIMENSION_4D * sizeof(float));
   if (params_->decoded_boxes_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->decoded_boxes_ failed.";
     FreeAllocatedBuffer();

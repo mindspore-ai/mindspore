@@ -22,11 +22,11 @@ namespace mindspore {
 int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors) {
   // Only onnx StridedSlice has 5 in_tensors, of which the 4th input is axes and the 5th input is strides.
-  if (in_tensors.size() == 5) {
+  if (in_tensors.size() == ONNX_INPUT_SIZE) {
     vector<int> axes;
-    size_t size = in_tensors[3].Shape()[0];
+    size_t size = in_tensors[STRIDE_INDEX].Shape()[0];
     axes.resize(size);
-    memcpy(axes.data(), in_tensors[3].Data().get(), sizeof(int) * size);
+    memcpy(axes.data(), in_tensors[STRIDE_INDEX].Data().get(), sizeof(int) * size);
     for (int i = 0; i < axes.size(); ++i) {
       if (i != axes[i]) {
         MS_LOG(WARNING) << "Does not support setting axis, so the axis must be continuous.";
@@ -67,14 +67,14 @@ int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
   strided_slice_->set_attr_new_axis_mask(new_axis_mask_);
   // StridedSliceV2 supports setting axes, but it will cause an endless loop.
   strided_slice_->set_input_x(*npu_inputs[0]);
-  strided_slice_->set_input_begin(*npu_inputs[1]);
-  strided_slice_->set_input_end(*npu_inputs[2]);
+  strided_slice_->set_input_begin(*npu_inputs[BEGIN_INDEX]);
+  strided_slice_->set_input_end(*npu_inputs[END_INDEX]);
 
   // The strides position of onnx is the 5th, and the others are the 4th.
-  if (npu_inputs.size() == 5) {
-    strided_slice_->set_input_strides(*npu_inputs[4]);
+  if (npu_inputs.size() == ONNX_INPUT_SIZE) {
+    strided_slice_->set_input_strides(*npu_inputs[ONNX_STRIDE_INDEX]);
   } else {
-    strided_slice_->set_input_strides(*npu_inputs[3]);
+    strided_slice_->set_input_strides(*npu_inputs[STRIDE_INDEX]);
   }
   return RET_OK;
 }

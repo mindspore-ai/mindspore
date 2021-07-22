@@ -25,6 +25,9 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite {
+constexpr int INPUT_SIZE2 = 2;
+constexpr int INPUT_SIZE3 = 3;
+
 class TensorRTOp {
  public:
   explicit TensorRTOp(const schema::Primitive *primitive, std::vector<mindspore::MSTensor> in_tensors,

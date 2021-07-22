@@ -46,7 +46,14 @@ class GruCPUKernel : public InnerKernel {
   float *weight_r_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
+
   float *buffer_[4];
+  const int gate_num = 3;
+  const int packed_input_index = 0;
+  const int input_gate_index = 1;
+  const int packed_state_index = 2;
+  const int state_gate_index = 3;
+
   int row_tile_ = 0;
   int col_tile_ = 0;
   int weight_batch_ = 0;

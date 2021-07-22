@@ -72,6 +72,10 @@ ge::Operator *SplitNPUOp::GetNPUOp() { return this->split_; }
 
 int SplitNPUOp::HandleAxis() {
   axis_ = TransFormAxis(axis_);
+  if (axis_ == NCHW_INVALID) {
+    MS_LOG(ERROR) << "Transform axis for split op failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

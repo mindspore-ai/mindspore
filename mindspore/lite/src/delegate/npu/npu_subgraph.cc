@@ -161,8 +161,7 @@ int NPUSubGraph::BuildNPUInputOp() {
       auto in_tensor = op->inputs()[i];
       if (IsSubGraphInputTensor(in_tensor)) {
         auto tensor_name = op->name() + "_" + std::to_string(count++);
-        hiai::op::Data *data;
-        data = ConverterToNPUData(in_tensor, tensor_name);
+        auto data = ConverterToNPUData(in_tensor, tensor_name);
         subgraph_input_ops_.push_back(*data);
         input_ops.push_back(data);
         op_buffer_.push_back(data);
@@ -278,7 +277,6 @@ int NPUSubGraph::Init() {
   npu_manager_->AddModel(model_buffer_data, GetOMModelName(), npu_manager_->GetFrequency());
 
   executor_ = new (std::nothrow) NPUExecutor(GetOMModelName(), npu_manager_);
-
   if (executor_ == nullptr) {
     MS_LOG(ERROR) << "Create NPUExecutor failed.";
     return RET_ERROR;

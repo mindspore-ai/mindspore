@@ -217,7 +217,7 @@ bool NPUPassUtils::Scale4dCase(NPUOp *op) {
   auto axis = scale_op->GetAxis();
   auto in_tensor = op->inputs().at(0);
   auto scale_tensor = op->inputs().at(1);
-  return in_tensor.Shape().size() == 4 && scale_tensor.Shape().size() == 1 && (axis == 3 || axis == -1);
+  return in_tensor.Shape().size() == NPU_SHAPE_SIZE && scale_tensor.Shape().size() == 1 && (axis == 3 || axis == -1);
 }
 
 void NPUPassUtils::AssistDataNHWC2NCHW(int *data, size_t unit_size) {

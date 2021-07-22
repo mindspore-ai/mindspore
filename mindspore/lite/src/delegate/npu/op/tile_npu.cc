@@ -25,7 +25,7 @@ int TileNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<m
     return RET_ERROR;
   }
   auto multiple_tensor = in_tensors[1];
-  if (multiple_tensor.ElementNum() > 4 || multiple_tensor.Data() == nullptr) {
+  if (multiple_tensor.ElementNum() > NPU_SHAPE_SIZE || multiple_tensor.Data() == nullptr) {
     return RET_NOT_SUPPORT;
   }
   return RET_OK;

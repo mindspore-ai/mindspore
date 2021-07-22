@@ -17,6 +17,7 @@
 #include "src/delegate/npu/pass/npu_fusion_pass.h"
 #include <vector>
 #include "src/delegate/npu/pass/npu_pass_utils.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 #include "src/delegate/npu/op/concat_npu.h"
 #include "src/delegate/npu/op/split_npu.h"
 #include "src/delegate/npu/op/pad_npu.h"
@@ -187,7 +188,7 @@ int UpdatePostTensors(NPUOp *cur_op) {
     MS_LOG(ERROR) << "nhwc_shape < " << kNumDims;
     return RET_ERROR;
   }
-  tensor.SetShape({nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]});
+  tensor.SetShape({nhwc_shape[NHWC_N], nhwc_shape[NHWC_C], nhwc_shape[NHWC_H], nhwc_shape[NHWC_W]});
   for (auto out_op : cur_op->out_ops()) {
     auto out_tensor = out_op->outputs()[0];
     if (out_op->out_ops().empty()) {
@@ -314,15 +315,15 @@ int NPUFusionPass::StridedSliceFusion(NPUOp *cur_op) {
   if (cur_op->type() != schema::PrimitiveType_StridedSlice) {
     return RET_ERROR;
   }
-  auto begin_tensor = cur_op->inputs().at(1);
+  auto begin_tensor = cur_op->inputs().at(BEGIN_INDEX);
   int *begin = reinterpret_cast<int *>(begin_tensor.MutableData());
   (void)NPUPassUtils::AssistDataNHWC2NCHW(begin, 1);
-  auto end_tensor = cur_op->inputs().at(2);
+  auto end_tensor = cur_op->inputs().at(END_INDEX);
   int *end = reinterpret_cast<int *>(end_tensor.MutableData());
   NPUPassUtils::AssistDataNHWC2NCHW(end, 1);
-  auto stride_tensor = cur_op->inputs().at(3);
-  if (cur_op->inputs().size() == 5) {
-    stride_tensor = cur_op->inputs().at(4);
+  auto stride_tensor = cur_op->inputs().at(STRIDE_INDEX);
+  if (cur_op->inputs().size() == ONNX_INPUT_SIZE) {
+    stride_tensor = cur_op->inputs().at(ONNX_STRIDE_INDEX);
   }
   int *stride = reinterpret_cast<int *>(stride_tensor.MutableData());
   NPUPassUtils::AssistDataNHWC2NCHW(stride, 1);
