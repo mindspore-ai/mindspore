@@ -256,5 +256,4 @@ void CoderGraph::DumpUnSupportLayer(Target target) {
     }
   });
 }
-
 }  // namespace mindspore::lite::micro

@@ -64,5 +64,4 @@ int SoftMaxFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Softmax, CPUOpCoderCreator<SoftMaxFP32Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

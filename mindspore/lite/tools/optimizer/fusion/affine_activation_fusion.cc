@@ -21,7 +21,6 @@
 #include "ops/affine.h"
 
 namespace mindspore::opt {
-
 static bool IsAffineNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);

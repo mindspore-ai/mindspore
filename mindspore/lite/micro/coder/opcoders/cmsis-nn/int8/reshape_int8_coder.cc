@@ -22,7 +22,6 @@
 using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::lite::micro::cmsis {
-
 int ReshapeInt8Coder::DoCode(CoderContext *const context) {
   int elements_num = input_tensor_->ElementsNum();
 
@@ -47,5 +46,4 @@ int ReshapeInt8Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeInt8Coder>)
-
 }  // namespace mindspore::lite::micro::cmsis
