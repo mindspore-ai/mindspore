@@ -60,6 +60,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimTile,
     prim::kPrimMatMul,
     prim::kPrimBatchMatMul,
+    prim::kPrimErfc,
 #if ENABLE_D
     prim::kPrimSqrtGrad,
     prim::kPrimClipByNormNoDivSum,

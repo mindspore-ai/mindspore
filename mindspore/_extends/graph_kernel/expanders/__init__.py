@@ -24,6 +24,8 @@ from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
 from .conv2d import Conv2D
 from .complex import CAbs, CAdd, CDiv, CMul, CSub
 from .dropout_grad import DropoutGrad
+from .equal_count import EqualCount
+from .erfc import Erfc
 from .expand_dims import ExpandDims
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
@@ -57,4 +59,3 @@ from .squared_difference import SquaredDifference
 from .squeeze import Squeeze
 from .tanh_grad import TanhGrad
 from .tile import Tile
-from .equal_count import EqualCount

@@ -622,6 +622,7 @@ inline const PrimitivePtr kPrimLayerNormFusion = std::make_shared<Primitive>("La
 inline const PrimitivePtr kPrimDType = std::make_shared<Primitive>("DType");
 inline const PrimitivePtr kPrimDivFusion = std::make_shared<Primitive>("DivFusion");
 inline const PrimitivePtr kPrimErf = std::make_shared<Primitive>("Erf");
+inline const PrimitivePtr kPrimErfc = std::make_shared<Primitive>("Erfc");
 inline const PrimitivePtr kPrimSplice = std::make_shared<Primitive>("Splice");
 inline const PrimitivePtr kPrimAffine = std::make_shared<Primitive>("Affine");
 
