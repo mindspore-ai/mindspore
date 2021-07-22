@@ -17,7 +17,8 @@ import copy
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim import LARS
 from mindspore import log as logger
-from mindspore.common import Parameter
+from mindspore.common import Parameter, Tensor
+from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -136,6 +137,8 @@ class ParameterProcess:
             group_params = []
             params_name = [param.name for param in parameters]
             new_params_count = copy.deepcopy(params_name)
+            new_params_clone = {}
+            max_key_number = 0
             for group_param in origin_params_copy:
                 if 'order_params' in group_param.keys():
                     new_group_param = copy.deepcopy(group_param)
@@ -151,12 +154,19 @@ class ParameterProcess:
                 new_group_param = copy.deepcopy(group_param)
                 new_group_param['params'] = params_value
                 group_params.append(new_group_param)
+                if len(group_param.keys()) > max_key_number:
+                    max_key_number = len(group_param.keys())
+                    new_params_clone = copy.deepcopy(group_param)
             if new_params_count:
                 params_value = []
                 for param in new_params_count:
                     index = params_name.index(param)
                     params_value.append(parameters[index])
-                group_params.append({"params": params_value})
+                if new_params_clone:
+                    new_params_clone['params'] = params_value
+                    group_params.append(new_params_clone)
+                else:
+                    group_params.append({"params": params_value})
         return group_params
 
 _gradient_accumulation_op = C.MultitypeFuncGraph("gradient_accumulation_op")
