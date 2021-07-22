@@ -44,7 +44,6 @@ int DynamicLibraryLoader::Open(const char *lib_path) {
 #else
   char *real_path = _fullpath(resolved_path, lib_path, 1024);
 #endif
-
   if (real_path == nullptr) {
     LOG_ERROR("path not exist");
     return RET_ERROR;
@@ -55,7 +54,6 @@ int DynamicLibraryLoader::Open(const char *lib_path) {
 #else
   handler_ = LoadLibrary(lib_path);
 #endif
-
   if (handler_ == nullptr) {
     LOG_ERROR("handler is nullptr.");
     return RET_ERROR;
@@ -98,6 +96,5 @@ DynamicLibraryLoader::~DynamicLibraryLoader() {
     Close();
   }
 }
-
 }  // namespace lite
 }  // namespace mindspore

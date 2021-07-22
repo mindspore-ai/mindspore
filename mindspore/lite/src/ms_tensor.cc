@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace tensor {
-
 tensor::MSTensor *tensor::MSTensor::CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape,
                                                  const void *data, size_t data_len) {
   auto tensor = new (std::nothrow) lite::Tensor();
