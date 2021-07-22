@@ -770,12 +770,63 @@ class PushWeight(PrimitiveWithInfer):
     def __init__(self):
         """Initialize PushWeight"""
         self.add_prim_attr("primitive_target", "CPU")
-        self.init_prim_io_names(inputs=['weight', "name", "index"], outputs=['output'])
+        self.init_prim_io_names(inputs=["weight", "name", "index"], outputs=["output"])
 
     def infer_shape(self, weight, name, index):
         return [1]
 
     def infer_dtype(self, weight, ps_key, index):
+        return mstype.float32
+
+
+class StartFLJob(PrimitiveWithInfer):
+    """
+    StartFLJob for federated learning worker.
+    """
+    @prim_attr_register
+    def __init__(self, data_size):
+        self.add_prim_attr("primitive_target", "CPU")
+        self.add_prim_attr("data_size", data_size)
+        self.init_prim_io_names(inputs=[], outputs=["result"])
+
+    def infer_shape(self):
+        return [1]
+
+    def infer_dtype(self):
+        return mstype.float32
+
+
+class UpdateModel(PrimitiveWithInfer):
+    """
+    UpdateModel for federated learning worker.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr("primitive_target", "CPU")
+        self.add_prim_attr('side_effect_mem', True)
+        self.init_prim_io_names(inputs=["weights"], outputs=["result"])
+
+    def infer_shape(self, weights):
+        return [1]
+
+    def infer_dtype(self, weights):
+        return mstype.float32
+
+
+class GetModel(PrimitiveWithInfer):
+    """
+    GetModel for federated learning worker.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr("primitive_target", "CPU")
+        self.add_prim_attr('side_effect_mem', True)
+        self.init_prim_io_names(inputs=["weights"], outputs=["result"])
+
+    def infer_shape(self, weights):
+        return [1]
+
+    def infer_dtype(self, weights):
         return mstype.float32
 
 

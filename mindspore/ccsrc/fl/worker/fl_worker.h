@@ -22,6 +22,7 @@
 #include <vector>
 #include "proto/comm.pb.h"
 #include "schema/fl_job_generated.h"
+#include "schema/cipher_generated.h"
 #include "ps/ps_context.h"
 #include "ps/core/worker_node.h"
 #include "ps/core/cluster_metadata.h"
@@ -64,11 +65,21 @@ class FLWorker {
 
   uint32_t server_num() const;
   uint32_t worker_num() const;
+  uint32_t rank_id() const;
   uint64_t worker_step_num_per_iteration() const;
 
   // These methods set the worker's iteration state.
   void SetIterationRunning();
   void SetIterationCompleted();
+
+  void set_fl_iteration_num(uint64_t iteration_num);
+  uint64_t fl_iteration_num() const;
+
+  void set_data_size(int data_size);
+  int data_size() const;
+
+  std::string fl_name() const;
+  std::string fl_id() const;
 
  private:
   FLWorker()
@@ -77,6 +88,7 @@ class FLWorker {
         scheduler_ip_(""),
         scheduler_port_(0),
         worker_node_(nullptr),
+        rank_id_(UINT32_MAX),
         worker_step_num_per_iteration_(1),
         server_iteration_state_(IterationState::kCompleted),
         worker_iteration_state_(IterationState::kCompleted),
@@ -100,11 +112,19 @@ class FLWorker {
   void ProcessAfterScalingOut();
   void ProcessAfterScalingIn();
 
+  bool running_;
   uint32_t server_num_;
   uint32_t worker_num_;
   std::string scheduler_ip_;
   uint16_t scheduler_port_;
   std::shared_ptr<ps::core::WorkerNode> worker_node_;
+  uint32_t rank_id_;
+
+  // The federated learning iteration number.
+  std::atomic<uint64_t> iteration_num_;
+
+  // Data size for this federated learning job.
+  int data_size_;
 
   // The worker standalone training step number before communicating with server. This used in hybrid training mode.
   uint64_t worker_step_num_per_iteration_;

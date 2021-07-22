@@ -243,10 +243,6 @@ void PSContext::set_worker_num(uint32_t worker_num) {
     MS_LOG(EXCEPTION) << "The worker number should be set to 1 in hybrid training mode.";
     return;
   }
-  if (server_mode_ == kServerModeFL && worker_num != 0) {
-    MS_LOG(EXCEPTION) << "The worker number should be 0 in federated learning mode.";
-    return;
-  }
   worker_num_ = worker_num;
 }
 uint32_t PSContext::worker_num() const { return worker_num_; }
