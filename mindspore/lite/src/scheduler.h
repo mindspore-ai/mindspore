@@ -59,6 +59,7 @@ class Scheduler {
   int InferNodeShape(const Model::Node *node);
   int InferSubGraphShape(size_t subgraph_index);
   // schedule a node to kernel according to context and kernels registered
+  int HandleBuildinCpuKernelWeight(kernel::SubGraphType belong_subgraph_type, kernel::LiteKernel *kernel);
   kernel::LiteKernel *FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                         const std::vector<Tensor *> &out_tensors, const Model::Node *node,
                                         TypeId prefer_data_type = kTypeUnknown);
