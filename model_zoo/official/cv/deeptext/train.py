@@ -29,9 +29,9 @@ from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 import mindspore.common.dtype as mstype
-from mindspore import context, Tensor
+from mindspore import context, Tensor, Parameter
 from mindspore.common import set_seed
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_group_size, get_rank
 from mindspore.context import ParallelMode
 from mindspore.nn import Momentum
 from mindspore.train import Model
@@ -42,7 +42,8 @@ np.set_printoptions(threshold=np.inf)
 
 set_seed(1)
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
+
 
 def modelarts_pre_process():
     '''modelarts pre process function.'''
@@ -54,8 +55,7 @@ def modelarts_pre_process():
             if zip_isexist:
                 fz = zipfile.ZipFile(zip_file, 'r')
                 data_num = len(fz.namelist())
-                print("Extract Start...", flush=True)
-                print("unzip file num: {}".format(data_num), flush=True)
+                print("Extract Start. unzip file num: {}".format(data_num), flush=True)
                 data_print = int(data_num / 100) if data_num > 100 else 1
                 i = 0
                 for file in fz.namelist():
@@ -100,12 +100,21 @@ def modelarts_pre_process():
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
+    device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "GPU"
     if config.run_distribute:
-        rank = get_rank_id()
-        device_num = get_device_num()
+        if device_type == "Ascend":
+            rank = get_rank_id()
+            device_num = get_device_num()
+
+        else:
+            context.reset_auto_parallel_context()
+            rank = get_rank()
+            device_num = get_group_size()
+
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
         init()
+
     else:
         rank = get_rank_id()
         device_num = 1
@@ -151,9 +160,13 @@ def run_train():
     load_path = config.pre_trained
     if load_path != "":
         param_dict = load_checkpoint(load_path)
+        if device_type == "GPU":
+            print("Converting pretrained checkpoint from fp16 to fp32", flush=True)
+            for key, value in param_dict.items():
+                tensor = value.asnumpy().astype(np.float32)
+                param_dict[key] = Parameter(tensor, key)
         load_param_into_net(net, param_dict)
 
-    device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
     if device_type == "Ascend":
         net.to_float(mstype.float16)
 
