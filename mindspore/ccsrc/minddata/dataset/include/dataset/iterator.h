@@ -94,6 +94,7 @@ class Iterator {
     ~_Iterator() {
       if (cur_row_) {
         delete cur_row_;
+        cur_row_ = nullptr;
       }
     }
 
