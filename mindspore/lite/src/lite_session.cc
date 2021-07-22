@@ -926,23 +926,6 @@ int LiteSession::InitGPURuntime() {
       MS_LOG(WARNING) << "GPU do not support shared memory!";
     }
   }
-#elif GPU_VULKAN
-  if (this->context_->IsGpuEnabled()) {
-    auto gpu_device_info = this->context_->GetGpuInfo();
-    vk_runtime_wrap_ = new (std::nothrow) gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime>;
-    if (vk_runtime_wrap_ == nullptr) {
-      MS_LOG(ERROR) << "create vk_runtime failed";
-      return RET_ERROR;
-    }
-    auto vk_runtime = vk_runtime_wrap_->GetInstance();
-    vk_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
-    if (vk_runtime->Init() != RET_OK) {
-      this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
-      MS_LOG(WARNING) << "Init Vulkan runtime failed, change to CPU mode.";
-    } else {
-      MS_LOG(INFO) << "Init Vulkan runtime success.";
-    }
-  }
 #endif
   // Setting the binding core will affect the opencl drive scheduling.
   thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));

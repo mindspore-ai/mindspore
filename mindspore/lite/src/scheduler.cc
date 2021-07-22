@@ -874,9 +874,6 @@ kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKerne
       delete innerkernel;
       return nullptr;
     }
-#elif GPU_VULKAN
-    delete innerkernel;
-    return nullptr;
 #else
     delete innerkernel;
     return nullptr;

@@ -109,17 +109,6 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
             )
 endif()
 
-if(MSLITE_GPU_BACKEND STREQUAL vulkan)
-    file(GLOB VULKAN_RUNTIME_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/*.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/vulkan/*.cc
-            )
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${VULKAN_RUNTIME_SRC}
-            )
-endif()
-
 if(MSLITE_GPU_BACKEND STREQUAL cuda)
     file(GLOB CUDA_RUNTIME_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/*.cc

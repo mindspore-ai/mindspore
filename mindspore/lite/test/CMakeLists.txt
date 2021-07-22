@@ -60,15 +60,6 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
             ${LITE_DIR}/src/runtime/kernel/opencl/utils.cc
             )
 endif()
-if(MSLITE_GPU_BACKEND STREQUAL vulkan)
-    file(GLOB GPU_KERNEL_OP_SRC
-            ${LITE_DIR}/src/runtime/kernel/vulkan/kernel/*.cc
-            )
-    set(KERNEL_OP_SRC
-            ${KERNEL_OP_SRC}
-            ${GPU_KERNEL_OP_SRC}
-            )
-endif()
 
 ### runtime framework
 add_definitions(-DENABLE_V0)
@@ -158,17 +149,6 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
             ${OPENCL_RUNTIME_SRC}
-            )
-endif()
-if(MSLITE_GPU_BACKEND STREQUAL vulkan)
-    include_directories(${LITE_DIR}/build/_deps/vulkan-headers-src/include)
-    file(GLOB VULKAN_RUNTIME_SRC
-            ${LITE_DIR}/src/runtime/gpu/*.cc
-            ${LITE_DIR}/src/runtime/vulkan/*.cc
-            )
-    set(TEST_LITE_SRC
-            ${TEST_LITE_SRC}
-            ${VULKAN_RUNTIME_SRC}
             )
 endif()
 
