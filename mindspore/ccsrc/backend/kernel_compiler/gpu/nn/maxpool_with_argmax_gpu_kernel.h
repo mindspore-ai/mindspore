@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,10 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
 
  private:
   void SetPad() {
+    if (stride_height_ == 0) {
+      MS_LOG(EXCEPTION) << "stride height cannot be 0.";
+    }
+
     pad_height_ = std::max<int>(
       0, (((input_height_ / stride_height_) * stride_height_ == input_height_ ? (input_height_ / stride_height_)
                                                                               : (input_height_ / stride_height_) + 1) -

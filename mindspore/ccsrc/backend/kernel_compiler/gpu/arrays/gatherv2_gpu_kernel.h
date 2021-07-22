@@ -53,6 +53,9 @@ class GatherV2GpuFwdKernel : public GpuKernel {
       Reshape();
     }
     auto input_dim1 = input_shapes_[IntToSize(axis_)];
+
+    MS_EXCEPTION_IF_NULL(input_addr);
+    MS_EXCEPTION_IF_NULL(indices_addr);
     GatherV2(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], input_dim1,
              reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;

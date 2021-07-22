@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,12 @@ class DetTriangleGpuKernel : public GpuKernel {
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
+
+    if (input_shape.size() < 2) {
+      MS_LOG(ERROR) << "The input should have rank at least 2.";
+      return false;
+    }
+
     matrix_n_ = input_shape[input_shape.size() - 1];
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < output_shape.size(); i++) {
