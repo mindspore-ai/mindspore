@@ -38,7 +38,7 @@ void GatherActor::Init() {
 
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
     output_data_.emplace_back(data.get());
-    output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(std::move(data));
+    output_data_by_output_index_[IntToSize(data_arrow->from_output_index_)].emplace_back(std::move(data));
   }
 }
 
@@ -113,7 +113,7 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   // 2.Send output result.
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
-    size_t from_index = result_arrow->from_output_index_;
+    size_t from_index = IntToSize(result_arrow->from_output_index_);
     const auto &front_node = data_nodes_[from_index].first;
     for (const auto &backend_node : front_to_backend_parameter_.at(front_node)) {
       if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second, false).get() ==
