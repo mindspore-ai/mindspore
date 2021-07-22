@@ -357,9 +357,9 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
       } else if (HasAbstractIOMonad(primal_node)) {
         extra_node = NewValueNode(kIOMonad);
       } else {
-        MS_LOG(EXCEPTION) << "Function: " << current_primal_fg->ToString()
-                          << ", has extra parameter which is not UMoand or IOMonad, but: "
-                          << primal_node->DebugString();
+        MS_EXCEPTION(TypeError) << "Function: " << current_primal_fg->ToString()
+                                << ", has extra parameter which is not UMoand or IOMonad, but: "
+                                << primal_node->DebugString();
       }
       extra_args.push_back(extra_node);
       MS_LOG(DEBUG) << "Insert to bprop_fg for node: " << primal_node->DebugString();

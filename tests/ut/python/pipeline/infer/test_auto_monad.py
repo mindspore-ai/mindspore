@@ -181,7 +181,7 @@ def test_user_defined_bad_bprop():
     net = GradNet(user_defined_net)
     x = Tensor(np.array([2.0], np.float32))
     y = Tensor(np.array([3.0], np.float32))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         net(x, y)
 
 
