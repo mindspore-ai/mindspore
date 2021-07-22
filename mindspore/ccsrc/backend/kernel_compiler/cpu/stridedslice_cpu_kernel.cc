@@ -31,7 +31,8 @@ enum PosType { kBegin, kEnd };
 int NormalizePos(int pos, int dim_len, PosType pos_type) {
   if (pos < 0) {
     int normal_pos = pos + dim_len;
-    normal_pos = std::max(normal_pos, 0);
+    int threshold = pos_type == kBegin ? 0 : -1;
+    normal_pos = std::max(normal_pos, threshold);
     return normal_pos;
   }
   int max_pos = pos_type == kBegin ? dim_len - 1 : dim_len;
