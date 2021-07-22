@@ -51,3 +51,18 @@ class SimCLR(nn.Cell):
     def inference(self, x):
         h = self.encoder(x)
         return h
+
+class SimCLR_Classifier(nn.Cell):
+    """
+    SimCLR with Classifier.
+    """
+    def __init__(self, encoder, classifier):
+        super(SimCLR_Classifier, self).__init__()
+        self.encoder = encoder
+        self.classifier = classifier
+        self.softmax = nn.Softmax()
+
+    def construct(self, x):
+        y = self.encoder(x)
+        z = self.classifier(y)
+        return self.softmax(z)
