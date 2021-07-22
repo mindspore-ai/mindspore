@@ -272,6 +272,23 @@ void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) 
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
+  if constexpr (std::is_same_v<T, float>) {
+    if (op_para.in_elements_num0_ == op_para.in_elements_num1_) {
+      auto task = [&](size_t start, size_t end) {
+        (void)Power(input1 + start, input2 + start, out + start, end - start, 1, 0, false);
+      };
+      CPUKernelUtils::ParallelFor(task, output_size_);
+      return;
+    }
+    if (op_para.in_elements_num1_ == 1) {
+      auto task = [&](size_t start, size_t end) {
+        (void)Power(input1 + start, input2, out + start, end - start, 1, 0, true);
+      };
+      CPUKernelUtils::ParallelFor(task, output_size_);
+      return;
+    }
+  }
+
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   if (output_size_ > MAX_POW_SERIAL_SIZE) {
     auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
