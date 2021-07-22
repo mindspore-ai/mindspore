@@ -31,6 +31,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
+
 public class ReconstructSecretReq {
     private static final Logger LOGGER = Logger.getLogger(ReconstructSecretReq.class.toString());
     private FLCommunication flCommunication;
@@ -57,7 +59,6 @@ public class ReconstructSecretReq {
 
     public FLClientStatus sendReconstructSecret(List<DecryptShareSecrets> decryptShareSecretsList, List<String> u3ClientList, int iteration) {
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============sendReconstructSecret url: " + url + "=============="));
         FlatBufferBuilder builder = new FlatBufferBuilder();
         int desFlId = builder.createString(localFLParameter.getFlID());
         String dateTime = LocalDateTime.now().toString();
@@ -91,6 +92,12 @@ public class ReconstructSecretReq {
             byte[] msg = builder.sizedByteArray();
             try {
                 byte[] responseData = flCommunication.syncRequest(url + "/reconstructSecrets", msg);
+                if (Common.isSafeMod(responseData, localFLParameter.getSafeMod())) {
+                    LOGGER.info(Common.addTag("[sendReconstructSecret] The cluster is in safemode, need wait some time and request again"));
+                    Common.sleep(SLEEP_TIME);
+                    nextRequestTime = "";
+                    return FLClientStatus.RESTART;
+                }
                 ByteBuffer buffer = ByteBuffer.wrap(responseData);
                 mindspore.schema.ReconstructSecret reconstructSecretRsp = mindspore.schema.ReconstructSecret.getRootAsReconstructSecret(buffer);
                 FLClientStatus status = judgeSendReconstructSecrets(reconstructSecretRsp);

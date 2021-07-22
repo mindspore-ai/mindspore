@@ -170,7 +170,7 @@ public class UpdateModel {
     private UpdateModel() {
     }
 
-    public static synchronized UpdateModel getInstance() {
+    public static UpdateModel getInstance() {
         UpdateModel localRef = updateModel;
         if (localRef == null) {
             synchronized (UpdateModel.class) {

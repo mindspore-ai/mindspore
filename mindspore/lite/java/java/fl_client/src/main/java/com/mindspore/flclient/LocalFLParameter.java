@@ -42,7 +42,7 @@ public class LocalFLParameter {
         Common.setAlbertWeightName(albertWeightName);
     }
 
-    public static synchronized LocalFLParameter getInstance() {
+    public static LocalFLParameter getInstance() {
         LocalFLParameter localRef = localFLParameter;
         if (localRef == null) {
             synchronized (LocalFLParameter.class) {
