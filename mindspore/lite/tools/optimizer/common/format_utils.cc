@@ -185,5 +185,11 @@ bool IsMonadNode(const AnfNodePtr &node) {
   }
   return false;
 }
+
+bool IsSpecialType(const CNodePtr &cnode) {
+  return CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || CheckPrimitiveType(cnode, prim::kPrimDepend) ||
+         CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, kPrimMakeTupleV2) ||
+         CheckPrimitiveType(cnode, prim::kPrimReturn);
+}
 }  // namespace opt
 }  // namespace mindspore

@@ -31,14 +31,6 @@ namespace {
 constexpr size_t kNCHWDimNumber = 4;
 const std::vector<int> NH2NC = {0, 3, 1, 2};
 const std::vector<int> NC2NH = {0, 2, 3, 1};
-bool IsSpecialType(const CNodePtr &cnode) {
-  if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || CheckPrimitiveType(cnode, prim::kPrimDepend) ||
-      CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, kPrimMakeTupleV2) ||
-      CheckPrimitiveType(cnode, prim::kPrimReturn)) {
-    return true;
-  }
-  return false;
-}
 
 STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNodePtr &root_node,
                                      std::set<CNodePtr> *in_nodes, std::set<CNodePtr> *out_nodes,

@@ -209,6 +209,8 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
+  auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
+  convert_pm->AddPass(infershape_pass);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
@@ -228,9 +230,6 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
   update_conv2d_param_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(update_conv2d_param_pass);
-  auto infershape_pass = std::make_shared<opt::InferShapePass>();
-  infershape_pass->SetFmkType(config->fmk);
-  const_fold_pm->AddPass(infershape_pass);
   optimizer->AddPassManager(const_fold_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run const fold failed.";
@@ -338,16 +337,16 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
+  status = RunPluginPass(old_graph, opt::POSITION_BEGIN);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run plugin pass failed.";
+    return nullptr;
+  }
+
   auto format_pass = std::make_shared<opt::UnifyFormatPass>();
   format_pass->Init(config->fmk, config->trainModel);
   if (!format_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Run format pass failed.";
-    return nullptr;
-  }
-
-  status = RunPluginPass(old_graph, opt::POSITION_BEGIN);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run plugin pass failed.";
     return nullptr;
   }
 
