@@ -126,19 +126,19 @@ Format GetFormat(const CNodePtr &cnode) {
 
 STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm) {
   MS_ASSERT(perm_node != nullptr);
-  if (cnode->size() != 3) {
+  if (cnode->size() != kInputSizeThree) {
     MS_LOG(ERROR) << "transpose op input size must be three.";
     return lite::RET_ERROR;
   }
-  if (utils::isa<CNodePtr>(cnode->input(2))) {
+  if (utils::isa<CNodePtr>(cnode->input(kInputIndexTwo))) {
     return lite::RET_OK;
   }
   lite::DataInfo data_info;
   int status;
-  if (utils::isa<ParameterPtr>(cnode->input(2))) {
-    status = lite::FetchDataFromParameterNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+  if (utils::isa<ParameterPtr>(cnode->input(kInputIndexTwo))) {
+    status = lite::FetchDataFromParameterNode(cnode, kInputIndexTwo, lite::converter::FmkType_MS, false, &data_info);
   } else {
-    status = lite::FetchDataFromValueNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+    status = lite::FetchDataFromValueNode(cnode, kInputIndexTwo, lite::converter::FmkType_MS, false, &data_info);
   }
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "fetch transpose perm data failed.";
