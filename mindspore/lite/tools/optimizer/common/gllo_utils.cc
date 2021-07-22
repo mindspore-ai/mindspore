@@ -1396,7 +1396,7 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr
     }
   } else {
     tensor_info_new->set_data_type(tensor_info->data_type());
-    auto *tensor_data = reinterpret_cast<char *>(tensor_info_new->data_c());
+    auto *tensor_data = reinterpret_cast<int8_t *>(tensor_info_new->data_c());
     if (tensor_data == nullptr) {
       MS_LOG(ERROR) << "new data failed";
       return nullptr;
@@ -1519,7 +1519,9 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   auto cnode = func_graph->NewCNode(trans_prim, {input_node, perm_node});
   MS_ASSERT(cnode != nullptr);
   cnode->set_fullname_with_scope(cnode_name);
-  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(2, 1);
+  size_t input_size = 2;
+  size_t output_size = 1;
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(input_size, output_size);
   auto trans_insert_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   trans_insert_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;

@@ -217,8 +217,8 @@ STATUS WeightQuantizer::DoGatherQuantize(const CNodePtr &cnode) {
     return RET_OK;
   }
 
-  if (tensor_info->Size() / 4 < quant_strategy_->m_weight_size_) {
-    MS_LOG(INFO) << cnode->fullname_with_scope() << " param cnt: " << tensor_info->Size() / 4 << " < "
+  if (tensor_info->Size() / sizeof(float) < quant_strategy_->m_weight_size_) {
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " param cnt: " << (tensor_info->Size() / sizeof(float)) << " < "
                  << quant_strategy_->m_weight_size_;
     return RET_OK;
   }
@@ -337,8 +337,9 @@ STATUS WeightQuantizer::ProcessLstmWeightByIndex(const CNodePtr &cnode, const Pr
     MS_LOG(WARNING) << "tensor_info tensor type is: " << tensor_info->data_type() << " not quant";
     return RET_OK;
   }
-  if (tensor_info->Size() / 4 < quant_strategy_->m_weight_size_) {
-    MS_LOG(INFO) << op_name << " weight_i cnt: " << tensor_info->Size() / 4 << " < " << quant_strategy_->m_weight_size_;
+  if (tensor_info->Size() / sizeof(float) < quant_strategy_->m_weight_size_) {
+    MS_LOG(INFO) << op_name << " weight_i cnt: " << (tensor_info->Size() / sizeof(float)) << " < "
+                 << quant_strategy_->m_weight_size_;
     return RET_OK;
   }
   auto status = RET_ERROR;

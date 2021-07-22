@@ -57,13 +57,15 @@ abstract::AbstractBasePtr InferShapePass::ConvertLiteTensorToAbstract(lite::Tens
       MS_LOG(ERROR) << "cast tensor_list failed";
       return nullptr;
     }
-    auto tensor_data = new int[tensor_list->element_shape().size() + 2];
+    size_t tensor_list_shape_index = 2;
+    auto tensor_data = new int[tensor_list->element_shape().size() + tensor_list_shape_index];
     tensor_data[0] = tensor_list->tensors_data_type();
     tensor_data[1] = tensor_list->element_shape().size();
     for (size_t i = 0; i < tensor_list->element_shape().size(); ++i) {
-      tensor_data[i + 2] = tensor_list->element_shape()[i];
+      tensor_data[i + tensor_list_shape_index] = tensor_list->element_shape()[i];
     }
-    auto status = lite::SetTensorData(tensor_info, tensor_data, tensor_list->element_shape().size() + 2);
+    auto status =
+      lite::SetTensorData(tensor_info, tensor_data, tensor_list->element_shape().size() + tensor_list_shape_index);
     delete[] tensor_data;
     if (status != RET_OK) {
       MS_LOG(ERROR) << "set tensor data failed";

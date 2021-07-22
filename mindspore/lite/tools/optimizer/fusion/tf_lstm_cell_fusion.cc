@@ -32,6 +32,8 @@ constexpr size_t kCondNodesNum = 12;
 constexpr size_t kCondCNodesNum = 4;
 constexpr size_t kBodyNodesNum = 82;
 constexpr size_t kBodyCNodesNum = 30;
+constexpr auto kUnidirectionalGateNum = 4;
+constexpr auto kBidirectionalGateNum = 8;
 const auto &p1 = std::placeholders::_1;
 
 bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
@@ -124,7 +126,7 @@ STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight,
       }
     }
   }
-  auto tensor_info = lite::CreateTensorInfo(tensor_data, param_num * 4, shape, kNumberTypeFloat32);
+  auto tensor_info = lite::CreateTensorInfo(tensor_data, param_num * sizeof(float), shape, kNumberTypeFloat32);
   delete[] tensor_data;
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";
@@ -178,13 +180,13 @@ STATUS TfLstmCellFusion::SplitWeights(const AnfNodePtr &weight, const ParameterP
   }
   const auto input_size = data_shape[0] - hidden_size;
 
-  std::vector<int64_t> shape_i{1, 4 * hidden_size, input_size};
+  std::vector<int64_t> shape_i{1, kUnidirectionalGateNum * hidden_size, input_size};
   if (SetWeightAbstractAndDefault(weight_i, shape_i, data_ptr, hidden_size) != RET_OK) {
     MS_LOG(ERROR) << "get weight_i failed";
     return RET_ERROR;
   }
 
-  std::vector<int64_t> shape_c{1, 4 * hidden_size, hidden_size};
+  std::vector<int64_t> shape_c{1, kUnidirectionalGateNum * hidden_size, hidden_size};
   if (SetWeightAbstractAndDefault(weight_c, shape_c, data_ptr + input_size * data_shape[1], hidden_size) != RET_OK) {
     MS_LOG(ERROR) << "get weight_i failed";
     return RET_ERROR;
@@ -222,7 +224,7 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
     return RET_ERROR;
   }
 
-  std::vector<int64_t> shape{1, 8 * hidden_size};
+  std::vector<int64_t> shape{1, kBidirectionalGateNum * hidden_size};
   std::unique_ptr<float[]> tensor_data(new (std::nothrow) float[hidden_size * 8]);
 
   auto forget_bias_node = utils::cast<AnfNodePtr>((*body_equiv)[forget_bias_]);
@@ -249,7 +251,8 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
     }
   }
 
-  auto tensor_info = lite::CreateTensorInfo(tensor_data.get(), hidden_size * 8 * 4, shape, kNumberTypeFloat32);
+  auto tensor_info = lite::CreateTensorInfo(tensor_data.get(), hidden_size * kBidirectionalGateNum * sizeof(float),
+                                            shape, kNumberTypeFloat32);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
