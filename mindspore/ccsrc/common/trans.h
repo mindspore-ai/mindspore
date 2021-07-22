@@ -31,14 +31,22 @@
 
 namespace mindspore {
 namespace trans {
-enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims, kNcdhw };
+enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims };
 enum Axis5D : int {
   N_ncdhw = 0,
   C_ncdhw,
   D_ncdhw,
   H_ncdhw,
   W_ncdhw,
+  kNcdhw,
+  N_ndc1hwc0 = 0,
+  D_ndc1hwc0,
+  C1_ndc1hwc0,
+  H_ndc1hwc0,
+  W_ndc1hwc0,
+  C0_ndc1hwc0
 };
+
 struct TypeIdArgs {
   const void *data;
   size_t host_shape_size;  // Multiply each dimension elements. [a, b, c, d] => a*b*c*d
@@ -118,25 +126,25 @@ std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape) {
   }
   std::vector<T> shape_5d(kNcdhw, 1);
   switch (shape.size()) {
-    case 0:
+    case N_ncdhw:
       return shape_5d;
-    case 1:
-      shape_5d[1] = shape[0];
+    case C_ncdhw:
+      shape_5d[C_ncdhw] = shape[N_ncdhw];
       break;
-    case 2:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
+    case D_ncdhw:
+      shape_5d[C_ncdhw] = shape[N_ncdhw];
+      shape_5d[D_ncdhw] = shape[C_ncdhw];
       break;
-    case 3:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
-      shape_5d[3] = shape[2];
+    case H_ncdhw:
+      shape_5d[C_ncdhw] = shape[N_ncdhw];
+      shape_5d[D_ncdhw] = shape[C_ncdhw];
+      shape_5d[H_ncdhw] = shape[D_ncdhw];
       break;
-    case 4:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
-      shape_5d[3] = shape[2];
-      shape_5d[4] = shape[3];
+    case W_ncdhw:
+      shape_5d[C_ncdhw] = shape[N_ncdhw];
+      shape_5d[D_ncdhw] = shape[C_ncdhw];
+      shape_5d[H_ncdhw] = shape[D_ncdhw];
+      shape_5d[W_ncdhw] = shape[H_ncdhw];
       break;
     default:
       MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
@@ -148,21 +156,21 @@ template <typename T>
 std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape) {
   std::vector<T> shape_4d(kNchwDims, 1);
   switch (shape.size()) {
-    case 0:
+    case kN:
       return shape_4d;
-    case 1:
+    case kC:
       shape_4d[kC] = shape[kN];
       break;
-    case 2:
+    case kH:
       shape_4d[kC] = shape[kN];
       shape_4d[kH] = shape[kC];
       break;
-    case 3:
+    case kW:
       shape_4d[kC] = shape[kN];
       shape_4d[kH] = shape[kC];
       shape_4d[kW] = shape[kH];
       break;
-    case 4:
+    case kNchwDims:
       std::copy(shape.begin(), shape.end(), shape_4d.begin());
       break;
     default:

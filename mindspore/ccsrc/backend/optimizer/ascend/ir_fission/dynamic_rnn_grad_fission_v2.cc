@@ -26,6 +26,7 @@ namespace opt {
 namespace {
 constexpr size_t kDynamicRNNGradInputNum = 16;
 constexpr size_t kSplitVOutputNum = 2;
+constexpr size_t kBasicCellOutputNum = 2;
 
 void CreateTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                      std::vector<std::vector<AnfNodePtr>> *result_nodes) {
@@ -66,8 +67,8 @@ void CreateTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn
     // Create split
     std::vector<AnfNodePtr> splitv_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
     auto split_v = func_graph->NewCNode(splitv_input);
-    auto origin_output2_shape = AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode, 2);
-    auto origin_output3_shape = AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode, 3);
+    auto origin_output2_shape = AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode, kIndex2);
+    auto origin_output3_shape = AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode, kIndex3);
     std::vector<size_t> split_v_output0_shape{IntToSize(1), origin_output2_shape[kDim1], origin_output2_shape[kDim2]};
     std::vector<size_t> split_v_output1_shape{IntToSize(1), origin_output3_shape[kDim0], origin_output3_shape[kDim1]};
     AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32, kNumberTypeFloat32},
@@ -210,7 +211,8 @@ AnfNodePtr AddLSTMInputGradNode(const FuncGraphPtr &func_graph, const CNodePtr &
     AnfAlgo::CopyNodeAttrs(basic_lstm_cell_c_state_grad_nodes[i], basic_lstm_cell_c_state_grad);
     // Create outputs for current basic_lstm_cell_c_state_grad node
     std::vector<AnfNodePtr> basic_lstm_cell_c_state_grad_outputs;
-    CreateMultipleOutputsOfAnfNode(func_graph, basic_lstm_cell_c_state_grad, 2, &basic_lstm_cell_c_state_grad_outputs);
+    CreateMultipleOutputsOfAnfNode(func_graph, basic_lstm_cell_c_state_grad, kBasicCellOutputNum,
+                                   &basic_lstm_cell_c_state_grad_outputs);
     pre_basic_lstm_cell_c_state_grad_outputs = basic_lstm_cell_c_state_grad_outputs;
 
     // Create MatMul
@@ -232,7 +234,7 @@ AnfNodePtr AddLSTMInputGradNode(const FuncGraphPtr &func_graph, const CNodePtr &
 
     // Create outputs for current split node
     std::vector<AnfNodePtr> split_outputs;
-    CreateMultipleOutputsOfAnfNode(func_graph, split_v, 2, &split_outputs);
+    CreateMultipleOutputsOfAnfNode(func_graph, split_v, kSplitVOutputNum, &split_outputs);
     pre_split_outputs = split_outputs;
 
     lstm_x_concat_input[idx + 1] = split_outputs[0];
@@ -376,7 +378,8 @@ AnfNodePtr CreateConcatNodeT1(const FuncGraphPtr &func_graph, const CNodePtr &dy
   auto origin_input4_shape = AnfAlgo::GetOutputInferShape(origin_input4, 0);
   // Create reshape to change shape
   std::vector<size_t> shape_tmp;
-  if (origin_input4_shape.size() == 3) {
+  constexpr size_t kShapeDimNum = 3;
+  if (origin_input4_shape.size() == kShapeDimNum) {
     shape_tmp = origin_input4_shape;
   } else {
     shape_tmp = {1, origin_input4_shape[0], origin_input4_shape[1]};
@@ -506,7 +509,7 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
   if (dynamic_rnn_grad_cnode->inputs().size() < kDynamicRNNGradInputNum + 1) {
     MS_LOG(INFO) << "The node " << dynamic_rnn_grad_cnode->DebugString() << " has less than "
-                 << kDynamicRNNGradInputNum + 1 << " inputs";
+                 << (kDynamicRNNGradInputNum + 1) << " inputs";
     return nullptr;
   }
   std::vector<AnfNodePtr> new_outputs;
