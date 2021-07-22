@@ -47,7 +47,7 @@ std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeI
   return truncated_shape;
 }
 Status LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor) {
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(srcTensor));
+  auto impl = std::make_shared<MSTensor::Impl>(srcTensor);
   if (impl == nullptr || impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
     return kLiteError;
