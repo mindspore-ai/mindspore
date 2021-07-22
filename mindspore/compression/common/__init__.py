@@ -17,3 +17,5 @@ Compression common module.
 """
 
 from .constant import QuantDtype
+
+__all__ = ["QuantDtype"]
