@@ -29,6 +29,7 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t kInputDoubleNum = 2;
 constexpr size_t kInputTripleNum = 3;
+constexpr size_t kTransposePermIndex = 2;
 int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto first_input = cnode->input(1);
@@ -300,7 +301,7 @@ int RemoveRedundantOpPass::RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, 
     MS_LOG(DEBUG) << "The node inputs size is bigger than 2";
     return lite::RET_NO_CHANGE;
   }
-  auto index_node = cnode->inputs()[2]->cast<ParameterPtr>();
+  auto index_node = cnode->inputs()[kTransposePermIndex]->cast<ParameterPtr>();
   if (index_node == nullptr) {
     return RET_OK;
   }

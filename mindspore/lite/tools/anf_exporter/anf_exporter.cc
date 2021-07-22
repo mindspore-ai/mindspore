@@ -499,7 +499,6 @@ FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph) {
   // get output
   CNodePtr call_cnode = nullptr;
   auto fg_output = func_graph->output();
-
   if (opt::CheckPrimitiveType(fg_output, prim::kPrimCall)) {
     call_cnode = fg_output->cast<CNodePtr>();
   } else {

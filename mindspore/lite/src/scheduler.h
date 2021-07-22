@@ -31,6 +31,8 @@
 #include "include/api/delegate.h"
 
 namespace mindspore::lite {
+const constexpr int kSwitchTrueBranch = 1;
+const constexpr int kSwitchFalseBranch = 2;
 class Scheduler {
  public:
   Scheduler(const InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model,

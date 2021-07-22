@@ -360,7 +360,6 @@ int LiteOpActor::CastTensorInputData(Tensor *dst, Tensor *src) {
   auto src_nums_size = src->ElementsNum();
   auto dst_data_type = static_cast<int>(dst->data_type());
   auto src_data_type = static_cast<int>(src->data_type());
-
   if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeFloat16) {
     Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size, support_fp16_);
   } else if (dst_data_type == kNumberTypeFloat16 && src_data_type == kNumberTypeFloat32) {
@@ -473,8 +472,9 @@ int LiteOpActor::PrepareOutputData() {
   outputs_data_.resize(output_data_arrows_.size());
   for (size_t i = 0; i < output_data_arrows_.size(); i++) {
     auto &arrow = output_data_arrows_[i];
-    auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
-                                                 static_cast<int>(arrow->to_input_index_));
+    auto data =
+      std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
+                                       static_cast<int>(arrow->to_input_index_));
     outputs_data_.at(i) = data;
   }
   return RET_OK;
@@ -644,16 +644,18 @@ int LiteSwitchOpActor::PrepareOutputData() {
   true_branch_outputs_data_.resize(true_branch_output_data_arrows_.size());
   for (size_t i = 0; i < true_branch_output_data_arrows_.size(); i++) {
     auto &arrow = true_branch_output_data_arrows_[i];
-    auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
-                                                 static_cast<int>(arrow->to_input_index_));
+    auto data =
+      std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
+                                       static_cast<int>(arrow->to_input_index_));
     true_branch_outputs_data_.at(i) = data;
   }
 
   false_branch_outputs_data_.resize(false_branch_output_data_arrows_.size());
   for (size_t i = 0; i < false_branch_output_data_arrows_.size(); i++) {
     auto &arrow = false_branch_output_data_arrows_[i];
-    auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
-                                                 static_cast<int>(arrow->to_input_index_));
+    auto data =
+      std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
+                                       static_cast<int>(arrow->to_input_index_));
     auto iter = std::find_if(true_branch_outputs_data_.begin(), true_branch_outputs_data_.end(),
                              [&data](const auto &true_branch_data) { return true_branch_data->data_ == data->data_; });
     if (iter != true_branch_outputs_data_.end() && !data->data_->IsConst()) {
