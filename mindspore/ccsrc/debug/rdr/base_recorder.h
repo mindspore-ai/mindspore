@@ -52,7 +52,7 @@ class BaseRecorder {
       }
     }
   }
-  ~BaseRecorder() {}
+  virtual ~BaseRecorder() {}
 
   std::string GetModule() const { return module_; }
   std::string GetName() const { return name_; }

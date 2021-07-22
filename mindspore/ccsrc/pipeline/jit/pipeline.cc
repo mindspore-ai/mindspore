@@ -445,9 +445,6 @@ void ExecutorPy::DelNetRes(const std::string &id) {
 #endif
   }
   nested_called = false;
-#ifdef ENABLE_DUMP_IR
-  mindspore::RDR::ClearAll();
-#endif
 }
 
 void ExecutorPy::ClearRes() {
@@ -1132,6 +1129,9 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   app_init->set_abstract(abstract_none);
   // Before the graph compiling, need reset the iter num.
   ConfigManager::GetInstance().ResetIterNum();
+#ifdef ENABLE_DUMP_IR
+  mindspore::RDR::ResetRecorder();
+#endif
 
   compile::SetMindRTEnable();
   auto backend = compile::CreateBackend();
@@ -1298,6 +1298,9 @@ void ClearResAtexit() {
       ps::Worker::GetInstance().Finalize();
     }
   }
+#endif
+#ifdef ENABLE_DUMP_IR
+  mindspore::RDR::ResetRecorder();
 #endif
   session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();

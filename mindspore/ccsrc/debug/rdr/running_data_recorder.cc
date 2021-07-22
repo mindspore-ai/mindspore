@@ -118,7 +118,7 @@ bool UpdateGPUMemAddressInfo(const SubModuleId module, const std::string &name, 
 
 void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 
-void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
+void ResetRecorder() { mindspore::RecorderManager::Instance().ClearAll(); }
 
 void ClearGPUMemAddressInfo() {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
