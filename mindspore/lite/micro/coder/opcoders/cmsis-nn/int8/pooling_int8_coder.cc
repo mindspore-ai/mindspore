@@ -105,5 +105,4 @@ int PoolingInt8Coder::SetParameters() {
 
 REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
 REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_MaxPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
-
 }  // namespace mindspore::lite::micro::cmsis

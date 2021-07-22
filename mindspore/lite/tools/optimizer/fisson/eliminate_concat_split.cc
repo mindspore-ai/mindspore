@@ -26,9 +26,7 @@
 #include "tools/optimizer/parallel/spliter.h"
 
 namespace mindspore {
-
 namespace opt {
-
 const BaseRef EliminateConcatSplit::DefinePattern() const {
   auto concat_var = std::make_shared<CondVar>(IsConcatNode);
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
@@ -41,13 +39,11 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
-
   if (IsRealCNodeKernel(cnode)) {
     return cnode;
   }
 
   auto input0 = cnode->input(0);
-
   if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
     auto temp_node = cnode->input(1);
     if (temp_node == nullptr) {
@@ -81,7 +77,6 @@ void ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   int pre_inputs_node_size = pre_inputs_size - 1;
   auto pre_prim = GetValueNode<std::shared_ptr<ops::Concat>>(pre_cnode->input(kAnfPrimitiveIndex));
   auto prim = GetValueNode<std::shared_ptr<ops::SplitWithOverlap>>(cnode->input(kAnfPrimitiveIndex));
-
   if (prim->get_number_split() != pre_inputs_node_size) {
     return;
   }

@@ -25,8 +25,9 @@
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
-
 constexpr auto kRowAxis = 1;
+constexpr auto kInputWithBiasNum = 4;
+constexpr auto kInputBias = 3;
 
 static bool IsSpliceNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
@@ -108,8 +109,8 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
   }
   // construct affine node
   std::vector<AnfNodePtr> affine_inputs = {NewValueNode(affine_prim), splice_node->input(1), matmul_node->input(2)};
-  if (matmul_node->inputs().size() == 4) {
-    affine_inputs.push_back(matmul_node->input(3));
+  if (matmul_node->inputs().size() == kInputWithBiasNum) {
+    affine_inputs.push_back(matmul_node->input(kInputBias));
   }
   auto affine_node = func_graph->NewCNode(affine_inputs);
   affine_node->set_fullname_with_scope(matmul_node->fullname_with_scope());

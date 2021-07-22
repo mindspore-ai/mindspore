@@ -32,7 +32,6 @@
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
 namespace opt {
-
 int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   int split_count = 0;
   Strategys strategys = strategy.strategys;

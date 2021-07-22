@@ -21,7 +21,6 @@
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::lite::micro::cmsis {
-
 int FullConnectionInt8Coder::Prepare(CoderContext *const context) {
   FullConnectionBaseCoder::Init();
   ConfigInputOutput();

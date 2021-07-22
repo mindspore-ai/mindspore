@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace opt {
-
 AnfNodePtr IterNodeOutputs::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
     return nullptr;
@@ -41,6 +40,5 @@ AnfNodePtr IterNodeOutputs::Run(const FuncGraphPtr &func_graph, const AnfNodePtr
   }
   return nullptr;
 }
-
 }  // namespace opt
 }  // namespace mindspore

@@ -26,7 +26,6 @@
 #include "tools/converter/ops/ops_def.h"
 
 namespace mindspore::opt {
-
 constexpr auto kDefaultIndex = 0;
 constexpr auto kInputIndex = 1;
 constexpr auto kDefaultNumTensors = 1;
@@ -188,5 +187,4 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
 
   return node;
 }
-
 }  // namespace mindspore::opt

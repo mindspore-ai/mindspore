@@ -23,7 +23,6 @@ using mindspore::schema::PrimitiveType_TensorArrayWrite;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateTensorArrayParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
