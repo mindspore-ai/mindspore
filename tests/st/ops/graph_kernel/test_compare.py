@@ -65,8 +65,8 @@ def gen_data():
     y1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float16)
     x2_np = np.random.randint(1, 5, 1).astype(np.int32)
     y2_np = np.random.randint(1, 5, 1).astype(np.int32)
-    x3_np = np.array(768).astype(np.float32)
-    y3_np = np.array(3072.5).astype(np.float32)
+    x3_np = np.array([768]).astype(np.float32)
+    y3_np = np.array([3072.5]).astype(np.float32)
 
     x0 = Tensor(x0_np)
     y0 = Tensor(y0_np)

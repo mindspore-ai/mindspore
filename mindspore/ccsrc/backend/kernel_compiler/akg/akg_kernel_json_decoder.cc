@@ -335,6 +335,10 @@ class CNodeDecoder {
 };
 }  // namespace
 
+ShapeVector GetFakeAbstractShape(const ShapeVector &device_shape, const std::string &format) {
+  return AbstractShapeCreator::GetFakeAbstractShape(device_shape, format);
+}
+
 ParameterPtr AkgKernelJsonDecoder::DecodeParameter(const nlohmann::json &parameter_json,
                                                    const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "start decode parameter, " << parameter_json;

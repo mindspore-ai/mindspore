@@ -14,6 +14,7 @@ if(ENABLE_D)
     file(GLOB_RECURSE _D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "ascend/*.cc"
         "graph_kernel/*.cc"
+        "graph_kernel/model/*.cc"
     )
     list(APPEND _PREACTIVATE_SRC_LIST ${_D_SRC_LIST})
 endif()
@@ -22,6 +23,7 @@ if(ENABLE_GPU)
     file(GLOB_RECURSE _GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "gpu/*.cc"
         "graph_kernel/*.cc"
+        "graph_kernel/model/*.cc"
     )
     list(APPEND _PREACTIVATE_SRC_LIST ${_GPU_SRC_LIST})
 endif()

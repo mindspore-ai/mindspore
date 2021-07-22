@@ -323,16 +323,23 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
   std::vector<TypeId> graph_output_type;
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
-    auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-    graph_input_format.push_back(input_format);
-    auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-    graph_input_type.push_back(input_type);
+    if (kernel_with_index.first->isa<ValueNode>()) {
+      auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
+      MS_EXCEPTION_IF_NULL(tensor);
+      graph_input_format.emplace_back(kOpFormat_DEFAULT);
+      graph_input_type.emplace_back(tensor->data_type());
+    } else {
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      graph_input_format.emplace_back(std::move(input_format));
+      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+      graph_input_type.emplace_back(input_type);
+    }
     auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
     fg->parameters()[i]->set_abstract(input_abs);
     fg->parameters()[i]->set_kernel_info(std::make_shared<device::KernelInfo>());
     kernel::KernelBuildInfo::KernelBuildInfoBuilder para_info_builder;
-    para_info_builder.SetOutputsFormat({input_format});
-    para_info_builder.SetOutputsDeviceType({input_type});
+    para_info_builder.SetOutputsFormat({graph_input_format.back()});
+    para_info_builder.SetOutputsDeviceType({graph_input_type.back()});
     para_info_builder.SetKernelType(KernelType::AKG_KERNEL);
     para_info_builder.SetProcessor(kernel::GetProcessorFromContext());
     AnfAlgo::SetSelectKernelBuildInfo(para_info_builder.Build(), fg->parameters()[i].get());
@@ -675,7 +682,8 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
   return axis;
 }
 
-CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info) {
+CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info,
+                     bool use_fake_abstract) {
   // Limitation: 1. Node's attributes should be set out of this function; 2. only one output.
   MS_EXCEPTION_IF_NULL(out_info.type);
   auto out_type = out_info.type;
@@ -688,8 +696,14 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(cnode);
 
   // Setup abstract.
-  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(out_type, out_info.shape);
-  cnode->set_abstract(abs_tensor);
+  if (use_fake_abstract) {
+    auto abs_shape = kernel::GetFakeAbstractShape(out_info.shape, out_info.format);
+    auto abs_tensor = std::make_shared<abstract::AbstractTensor>(out_type, abs_shape);
+    cnode->set_abstract(abs_tensor);
+  } else {
+    auto abs_tensor = std::make_shared<abstract::AbstractTensor>(out_type, out_info.shape);
+    cnode->set_abstract(abs_tensor);
+  }
 
   // Setup kernel info.
   auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -799,6 +813,126 @@ void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string>
       ops->erase(iter, ops->end());
     }
   }
+}
+
+graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
+  graphkernel::LiteGraph::GraphBuilder gb(GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)));
+  std::map<AnfNodePtr, graphkernel::NodePtr> node_map;
+  auto todos = TopoSort(func_graph->output());
+  const auto &params = func_graph->parameters();
+  auto ExtractBuildInfo = [](const AnfNodePtr &node) {
+    auto shape = GetDeviceShape(node);
+    auto type = AnfAlgo::GetOutputDeviceDataType(node, 0);
+    auto format = AnfAlgo::GetOutputFormat(node, 0);
+    return graphkernel::NodeBase({shape, type, format});
+  };
+  // set inputs
+  for (size_t i = 0; i < params.size(); i++) {
+    node_map[params[i]] = gb.Parameter(ExtractBuildInfo(params[i]), std::string("input_") + std::to_string(i));
+  }
+  // set ops
+  for (auto node : todos) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) continue;
+    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) break;
+    auto prim = AnfAlgo::GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(prim);
+    graphkernel::NodePtrList inputs;
+    std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(inputs),
+                   [&node_map, &gb](const AnfNodePtr &no) {
+                     auto iter = node_map.find(no);
+                     if (iter != node_map.end()) {
+                       return iter->second;
+                     } else {
+                       auto tensor = GetValueNode<tensor::TensorPtr>(no);
+                       MS_EXCEPTION_IF_NULL(tensor);
+                       return gb.Value(tensor);
+                     }
+                   });
+    node_map[node] = gb.Op(AnfAlgo::GetCNodeName(node), ExtractBuildInfo(node), inputs, prim->attrs());
+  }
+  // set outputs
+  auto output_node = func_graph->output();
+  if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
+    graphkernel::NodePtrList outputs;
+    auto mt = output_node->cast<CNodePtr>();
+    std::transform(mt->inputs().begin() + 1, mt->inputs().end(), std::back_inserter(outputs),
+                   [&node_map](const AnfNodePtr &no) { return node_map[no]; });
+    gb.SetOutputs(std::move(outputs));
+  } else {
+    gb.SetOutputs({node_map[output_node]});
+  }
+  return gb.Get();
+}
+
+FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs) {
+  auto func_graph = std::make_shared<FuncGraph>();
+  std::map<graphkernel::NodePtr, AnfNodePtr> node_map;
+  for (const auto &inp : lite_graph->inputs()) {
+    auto param = func_graph->add_parameter();
+    node_map[inp] = param;
+    auto abs_shape = kernel::GetFakeAbstractShape(inp->shape, inp->format);
+    param->set_abstract(std::make_shared<abstract::AbstractTensor>(TypeIdToType(inp->type), abs_shape));
+    param->set_kernel_info(std::make_shared<device::KernelInfo>());
+    auto build_info = BuildSelectKernelBuildInfo({}, {}, {inp->format}, {inp->type});
+    AnfAlgo::SetSelectKernelBuildInfo(build_info, param.get());
+  }
+  // Create CNodes. the ops is already in topo order
+  for (const auto &op_node : lite_graph->ops()) {
+    if (op_node->NodeType() != graphkernel::NType::Primitive) {
+      MS_LOG(EXCEPTION) << "Node " << op_node->name() << "should be a Primitive node";
+    }
+    auto op = std::static_pointer_cast<graphkernel::PrimOp>(op_node);
+    AnfNodePtrList inputs = {NewValueNode(std::make_shared<Primitive>(op->op(), op->attrs()))};
+    std::transform(op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
+                   [&node_map](const graphkernel::NodePtr &inp) -> AnfNodePtr {
+                     auto iter = node_map.find(inp);
+                     if (iter != node_map.end()) {
+                       return iter->second;
+                     } else {
+                       if (inp->NodeType() != graphkernel::NType::Value) {
+                         MS_LOG(EXCEPTION) << "Node " << inp->name() << "should be a Value node";
+                       }
+                       auto inp_value = inp->As<graphkernel::ConstTensorNode>()->data();
+                       auto value_node = NewValueNode(inp_value);
+                       value_node->set_abstract(inp_value->ToAbstract());
+                       value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+                       auto build_info = BuildSelectKernelBuildInfo({}, {}, {inp->format}, {inp->type});
+                       AnfAlgo::SetSelectKernelBuildInfo(build_info, value_node.get());
+                       return value_node;
+                     }
+                   });
+    auto cnode = CreateCNode(inputs, func_graph, {op->format, op->shape, TypeIdToType(op->type)}, true);
+    MS_EXCEPTION_IF_NULL(cnode);
+    node_map[op_node] = cnode;
+  }
+  if (lite_graph->GetOutputs().empty()) {
+    MS_LOG(EXCEPTION) << "The output of LiteGraph " << lite_graph->name() << " is empty.";
+  } else if (lite_graph->GetOutputs().size() == 1) {
+    func_graph->set_output(node_map[lite_graph->GetOutputs()[0]]);
+    if (outputs != nullptr) {
+      outputs->emplace_back(func_graph->output());
+    }
+  } else {
+    AnfNodePtrList mt_inputs;
+    AbstractBasePtrList out_abs_list;
+    std::transform(lite_graph->GetOutputs().begin(), lite_graph->GetOutputs().end(), std::back_inserter(mt_inputs),
+                   [&node_map, &out_abs_list](const graphkernel::NodePtr &out) {
+                     auto out_node = node_map[out];
+                     MS_EXCEPTION_IF_NULL(out_node);
+                     out_abs_list.emplace_back(out_node->abstract());
+                     return out_node;
+                   });
+    auto mt = func_graph->NewCNode(prim::kPrimMakeTuple, mt_inputs);
+    mt->set_abstract(std::make_shared<abstract::AbstractTuple>(out_abs_list));
+    mt->set_kernel_info(std::make_shared<device::KernelInfo>());
+    func_graph->AddNode(mt);
+    func_graph->set_output(mt);
+    if (outputs != nullptr) {
+      *outputs = std::move(mt_inputs);
+    }
+  }
+  return func_graph;
 }
 }  // namespace opt
 }  // namespace mindspore

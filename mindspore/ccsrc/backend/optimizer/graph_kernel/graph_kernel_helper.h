@@ -31,6 +31,7 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include <nlohmann/json.hpp>
+#include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
 namespace mindspore {
 namespace opt {
@@ -90,7 +91,8 @@ ShapeVector GetShape(const AnfNodePtr &node);
 ShapeVector GetDeviceShape(const AnfNodePtr &node);
 std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
 
-CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info);
+CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info,
+                     bool use_fake_abstract = false);
 void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
 bool IsKeepBasicNode(const AnfNodePtr &node);
 void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string> &enable_ops_only,
@@ -130,6 +132,10 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
 
   return new_value_node;
 }
+
+// functions to graphkernel model
+graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
+FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs = nullptr);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_
