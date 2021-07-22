@@ -463,6 +463,24 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_sharding_propagation()
 
+    def set_enable_alltoall(self, enable_a2a):
+        """
+        Set the value of enabling AllToAll. If False, AllGather and Split are used to circumvent AllToAll.
+        Default: False.
+
+        Args:
+            enable_a2a (bool): Enable/disable AllToAll.
+        """
+        self.check_context_handle()
+        if not isinstance(enable_a2a, bool):
+            raise TypeError("'enable_a2a' is an invalid type.")
+        self._context_handle.set_enable_alltoall(enable_a2a)
+
+    def get_enable_alltoall(self):
+        """Get the value of enabling AllToAll."""
+        self.check_context_handle()
+        return self._context_handle.get_enable_alltoall()
+
     def set_communi_parallel_mode(self, communi_parallel_mode):
         """
         Set communication parallel mode.
@@ -584,7 +602,8 @@ _set_auto_parallel_context_func_map = {
     "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().set_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save,
-    "sharding_propagation": auto_parallel_context().set_sharding_propagation}
+    "sharding_propagation": auto_parallel_context().set_sharding_propagation,
+    "enable_alltoall": auto_parallel_context().set_enable_alltoall}
 
 
 _get_auto_parallel_context_func_map = {
@@ -606,7 +625,8 @@ _get_auto_parallel_context_func_map = {
     "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode,
     "optimizer_weight_shard_size": auto_parallel_context().get_optimizer_weight_shard_size,
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().get_optimizer_weight_shard_aggregated_save,
-    "sharding_propagation": auto_parallel_context().get_sharding_propagation}
+    "sharding_propagation": auto_parallel_context().get_sharding_propagation,
+    "enable_alltoall": auto_parallel_context().get_enable_alltoall}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
@@ -616,7 +636,7 @@ _get_auto_parallel_context_func_map = {
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int,
                  optimizer_weight_shard_aggregated_save=bool,
-                 sharding_propagation=bool)
+                 sharding_propagation=bool, enable_alltoall=bool)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -682,6 +702,8 @@ def _set_auto_parallel_context(**kwargs):
                                     the strategy-configured operators will propagate the strategies to other
                                     operators with minimum redistribution cost; otherwise, the algorithm will
                                     search the desired strategies. Default: False.
+        enable_alltoall (bool): Set the value of enabling AllToAll. If False, AllGather and Split are used to
+                                circumvent AllToAll. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

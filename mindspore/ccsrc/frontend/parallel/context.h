@@ -126,6 +126,8 @@ class ParallelContext {
   std::string communi_parallel_mode() const { return communi_parallel_mode_; }
   void set_sharding_propagation(const bool);
   bool sharding_propagation() const { return sharding_propagation_; }
+  void set_enable_all2all(const bool);
+  bool enable_all2all() const { return enable_all2all_; }
 
   void Reset();
   void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
@@ -165,6 +167,8 @@ class ParallelContext {
   // In AUTO_PARALLEL mode, 'sharding_propagation_' = True indicates that sharding-configured operators
   // will propagate the sharding strategies to other operators with minimum redistribution cost.
   bool sharding_propagation_;
+  // Enable AllToAll or not. If false, use AllGather and Split.
+  bool enable_all2all_;
 };
 
 }  // namespace parallel
