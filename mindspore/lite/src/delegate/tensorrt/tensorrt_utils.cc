@@ -86,15 +86,18 @@ nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const 
   return SetTranspose(network, input, perm);
 }
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor) {
+nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
   }
   nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
-
-  nvinfer1::Weights weights{data_type, ms_tensor.MutableData(), ms_tensor.ElementNum()};
+  if (ms_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << "ConvertConstantTensor from a MSTensor with nullptr data";
+    return nullptr;
+  }
+  nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -137,8 +140,8 @@ nvinfer1::ActivationType ConvertActivationType(schema::ActivationType activation
   return action_code;
 }
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network, mindspore::MSTensor ms_tensor,
-                                               size_t expand_shape_size) {
+nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
+                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
     return nullptr;
@@ -155,8 +158,11 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   }
   nvinfer1::Dims dims = ConvertCudaDims(shape);
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
-
-  nvinfer1::Weights weights{data_type, ms_tensor.MutableData(), ms_tensor.ElementNum()};
+  if (ms_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << "ConvertTensorWithExpandDims from a MSTensor with nullptr data";
+    return nullptr;
+  }
+  nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
