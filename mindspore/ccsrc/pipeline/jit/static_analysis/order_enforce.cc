@@ -79,6 +79,31 @@ class OrderEnforcer {
     return abs != nullptr && abs->isa<abstract::AbstractRef>();
   }
 
+  // Find Load or parameter users as the candidate nodes to enforce order of execution.
+  std::unordered_set<AnfNodePtr> GetSpecialOperatorRealUsers(const AnfNodePtr &node) {
+    auto &node_users = manager_->node_users();
+    auto iter = node_users.find(node);
+    if (iter == node_users.end()) {
+      return {};
+    }
+    std::unordered_set<AnfNodePtr> real_users;
+    auto &users = iter->second;
+    for (auto &user : users) {
+      auto &user_node = user.first;
+      real_users.insert(user_node);
+    }
+    return real_users;
+  }
+
+  bool IsOneOfPrimitive(const AnfNodePtr &node, const std::set<PrimitivePtr> &special_node_types) {
+    for (const auto &type : special_node_types) {
+      if (IsPrimitiveCNode(node, type)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void EnforceOrderForOtherCNode(const CNodePtr &cnode) {
     // Find refs from the cnode inputs.
     auto &inputs = cnode->inputs();
@@ -87,6 +112,7 @@ class OrderEnforcer {
     if (!IsPrimitiveCNode(last_input, prim::kPrimUpdateState)) {
       return;
     }
+    const std::set<PrimitivePtr> special_operators = {prim::kPrimExpandDims};
     for (size_t i = 1; i < inputs.size(); ++i) {
       auto &input = inputs.at(i);
       if (!IsRef(input)) {
@@ -96,7 +122,17 @@ class OrderEnforcer {
       auto loads = FindLoadUsers(input);
       for (auto load : loads) {
         std::unordered_set<AnfNodePtr> load_users = FindUsers(load);
-        AddInputEdges(last_input->cast<CNodePtr>(), load_users);
+        std::unordered_set<AnfNodePtr> real_users;
+        for (auto load_user : load_users) {
+          // check the special operator, only one level of user is considered for now
+          if (IsOneOfPrimitive(load_user, special_operators)) {
+            std::unordered_set<AnfNodePtr> special_real_users = GetSpecialOperatorRealUsers(load_user);
+            real_users.insert(special_real_users.begin(), special_real_users.end());
+          } else {
+            real_users.insert(load_user);
+          }
+        }
+        AddInputEdges(last_input->cast<CNodePtr>(), real_users);
       }
     }
   }
@@ -126,7 +162,10 @@ class OrderEnforcer {
   void AddInputEdges(const CNodePtr &update_state, const std::unordered_set<AnfNodePtr> &load_users) {
     auto sorted_load_users = SortLoadUsers(load_users);
     for (auto &load_user : sorted_load_users) {
-      if (!IsDependOn(load_user, update_state) && !IsPrimitiveCNode(load_user, prim::kPrimUpdateState)) {
+      if (IsPrimitiveCNode(load_user, prim::kPrimMakeTuple) || IsPrimitiveCNode(load_user, prim::kPrimUpdateState)) {
+        continue;
+      }
+      if (!IsDependOn(load_user, update_state)) {
         processed_nodes_.insert(load_user);
         if (!IsInUpdateState(load_user, update_state)) {
           manager_->AddEdge(update_state, load_user);
@@ -225,7 +264,6 @@ class OrderEnforcer {
     return loads;
   }
 
- private:
   const FuncGraphPtr &func_graph_;
   FuncGraphManagerPtr manager_;
   std::unordered_map<AnfNodePtr, size_t> topo_sort_map_;
