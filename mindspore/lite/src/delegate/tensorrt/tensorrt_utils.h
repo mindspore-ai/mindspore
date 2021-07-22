@@ -34,7 +34,7 @@ struct ActivationParams {
 nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape);
 
 // Convert Tensor data to Cuda dims.
-nvinfer1::Dims ConvertCudaDims(void *data, size_t size);
+nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size);
 
 nvinfer1::Dims ConvertCudaDims(int data, size_t size);
 

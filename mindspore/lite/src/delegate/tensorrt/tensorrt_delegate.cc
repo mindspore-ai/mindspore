@@ -33,6 +33,9 @@
 #include "src/delegate/tensorrt/op/unary_tensorrt.h"
 #include "src/delegate/tensorrt/op/matmul_tensorrt.h"
 #include "src/delegate/tensorrt/op/scale_tensorrt.h"
+#include "src/delegate/tensorrt/op/slice_tensorrt.h"
+#include "src/delegate/tensorrt/op/pool_tensorrt.h"
+#include "src/delegate/tensorrt/op/pad_tensorrt.h"
 
 namespace mindspore::lite {
 bool IsHardwareSupport() {
@@ -76,12 +79,16 @@ int TensorRTDelegate::Init() {
     {schema::PrimitiveType_DivFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_PowFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_AddFusion, GetTensorRTOp<ElementWiseTensorRT>},
+    {schema::PrimitiveType_MulFusion, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Eltwise, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Transpose, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_ReduceFusion, GetTensorRTOp<ReduceTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
     {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
+    {schema::PrimitiveType_StridedSlice, GetTensorRTOp<SliceTensorRT>},
+    {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
+    {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},
   };
   return RET_OK;
 }

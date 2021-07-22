@@ -190,8 +190,8 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(ERROR) << "AddReshapeOp size of in tensort needs check: " << in_tensors_.size();
     return RET_ERROR;
   }
-  mindspore::MSTensor shape_tensor = in_tensors_[1];
-  nvinfer1::Dims reshape_dims = ConvertCudaDims(shape_tensor.MutableData(), shape_tensor.ElementNum());
+  mindspore::MSTensor &shape_tensor = in_tensors_[1];
+  nvinfer1::Dims reshape_dims = ConvertCudaDims(shape_tensor.Data().get(), shape_tensor.ElementNum());
   int ret = InferReshapeDims(tensorrt_in_tensors_[0]->getDimensions(), &reshape_dims);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "invalid dims for reshape " << op_name_;
