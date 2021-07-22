@@ -28,7 +28,6 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 3;
-#define NBDIMS 4
 template <typename T>
 class PoolingGradGpuKernel : public GpuKernel {
  public:
@@ -42,10 +41,13 @@ class PoolingGradGpuKernel : public GpuKernel {
         pooling_mode_(CUDNN_POOLING_MAX),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         compute_format_(CUDNN_TENSOR_NCHW),
+        old_depth_(0),
         old_height_(0),
         old_width_(0),
+        pad_depth_(0),
         pad_height_(0),
         pad_width_(0),
+        pad_front_(0),
         pad_top_(0),
         pad_left_(0),
         n_(0),
@@ -88,8 +90,8 @@ class PoolingGradGpuKernel : public GpuKernel {
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     format_attr_ = GetAttr<std::string>(kernel_node, "format");
-    if (format_attr_ == kOpFormat_NHWC) {
-      data_format = kOpFormat_NHWC;
+    if (Anyone(format_attr_, kOpFormat_NHWC, kOpFormat_NDHWC)) {
+      data_format = format_attr_;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_mask);
@@ -99,7 +101,11 @@ class PoolingGradGpuKernel : public GpuKernel {
       return false;
     }
     CheckTensorSize({input_shape, input_mask, dout_shape, output_shape});
-    SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format);
+    if (nbDims == kDim2DShapeSize) {
+      SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format);
+    } else if (nbDims == kDim3DShapeSize) {
+      SetNCDHW(input_shape, &n_, &c_, &old_depth_, &old_height_, &old_width_, data_format);
+    }
     SetDimA(input_shape, dimA, nbDims, data_format);
     SetStrideA(input_shape, strideAin, nbDims, data_format);
     SetDimA(input_mask, dimAy, nbDims, data_format);
@@ -117,15 +123,17 @@ class PoolingGradGpuKernel : public GpuKernel {
     if (!CheckParam(kernel_node)) {
       return false;
     }
-    const int nbDims = 4;
-    int dimA[NBDIMS];
-    int strideAin[NBDIMS];
-    int dimAy[NBDIMS];
-    int strideAiny[NBDIMS];
-    int dimAdy[NBDIMS];
-    int strideAdy[NBDIMS];
-    int dimAout[NBDIMS];
-    int strideAout[NBDIMS];
+    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    int nbDims = SizeToInt(input_shape.size());
+
+    int dimA[kPoolingNbDims];
+    int strideAin[kPoolingNbDims];
+    int dimAy[kPoolingNbDims];
+    int strideAiny[kPoolingNbDims];
+    int dimAdy[kPoolingNbDims];
+    int strideAdy[kPoolingNbDims];
+    int dimAout[kPoolingNbDims];
+    int strideAout[kPoolingNbDims];
     if (!InitShape(kernel_node, dimA, strideAin, dimAy, strideAiny, dimAdy, strideAdy, dimAout, strideAout, nbDims)) {
       return true;
     }
@@ -142,7 +150,11 @@ class PoolingGradGpuKernel : public GpuKernel {
                                 cudnnSetTensorNdDescriptor(x_descriptor_, cudnn_data_type_, nbDims, dimA, strideAin),
                                 "cudnnSetTensor4dDescriptor failed");
     SetPoolingMode(kernel_node);
-    SetPad(kernel_node);
+    if (nbDims == kDim2DShapeSize) {
+      SetPad(kernel_node);
+    } else if (nbDims == kDim3DShapeSize) {
+      SetPad3D(kernel_node);
+    }
     InitSizeLists();
     return true;
   }
@@ -230,17 +242,8 @@ class PoolingGradGpuKernel : public GpuKernel {
     int paddingA[2] = {0, 0};
     int strideA[2] = {stride_h, stride_w};
     if (kSamePadModeUpperCase == pad_mode_ || kSamePadModeLowerCase == pad_mode_) {
-      pad_height_ =
-        std::max<int>(0, (((old_height_ / stride_h) * stride_h == old_height_ ? (old_height_ / stride_h)
-                                                                              : (old_height_ / stride_h) + 1) -
-                          1) *
-                             stride_h +
-                           window_height - old_height_);
-      pad_width_ = std::max<int>(
-        0, (((old_width_ / stride_w) * stride_w == old_width_ ? (old_width_ / stride_w) : (old_width_ / stride_w) + 1) -
-            1) *
-               stride_w +
-             window_width - old_width_);
+      pad_height_ = GetPad(old_height_, window_height, stride_h);
+      pad_width_ = GetPad(old_width_, window_width, stride_w);
       pad_top_ = pad_height_ / 2;
       pad_left_ = pad_width_ / 2;
       paddingA[0] = pad_top_;
@@ -256,6 +259,57 @@ class PoolingGradGpuKernel : public GpuKernel {
                                                             2, windowDimA, paddingA, strideA),
                                 "cudnnSetPoolingNdDescriptor failed");
   }
+
+  void SetPad3D(const CNodePtr &kernel_node) {
+    pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
+    std::vector<int64_t> stride_me = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
+    std::vector<int> window;
+    std::vector<int64_t> window_me = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
+    (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    int window_depth = window[2];
+    int window_height = window[3];
+    int window_width = window[4];
+    int stride_d = stride_[2];
+    int stride_h = stride_[3];
+    int stride_w = stride_[4];
+    if (format_attr_ == kOpFormat_NDHWC) {
+      window_depth = window[1];
+      window_height = window[2];
+      window_width = window[3];
+      stride_d = stride_[1];
+      stride_h = stride_[2];
+      stride_w = stride_[3];
+    }
+    int windowDimA[3] = {window_depth, window_height, window_width};
+    int paddingA[3] = {0, 0, 0};
+    int strideA[3] = {stride_d, stride_h, stride_w};
+    if (kSamePadModeUpperCase == pad_mode_ || kSamePadModeLowerCase == pad_mode_) {
+      pad_depth_ = GetPad(old_depth_, window_depth, stride_d);
+      pad_height_ = GetPad(old_height_, window_height, stride_h);
+      pad_width_ = GetPad(old_width_, window_width, stride_w);
+      pad_front_ = pad_depth_ / 2;
+      pad_top_ = pad_height_ / 2;
+      pad_left_ = pad_width_ / 2;
+      paddingA[0] = pad_front_;
+      paddingA[1] = pad_top_;
+      paddingA[2] = pad_left_;
+    } else {
+      if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
+        pad_depth_ = 0;
+        pad_height_ = 0;
+        pad_width_ = 0;
+      }
+    }
+
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnSetPoolingNdDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
+                                                            3, windowDimA, paddingA, strideA),
+                                "cudnnSetPoolingNdDescriptor failed");
+  }
+
   void SetPoolingMode(const CNodePtr &kernel_node) {
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPoolGrad") {
@@ -283,10 +337,13 @@ class PoolingGradGpuKernel : public GpuKernel {
   std::string format_attr_ = kOpFormat_NCHW;
   cudnnDataType_t cudnn_data_type_;
   cudnnTensorFormat_t compute_format_;
+  int old_depth_;
   int old_height_;
   int old_width_;
+  int pad_depth_;
   int pad_height_;
   int pad_width_;
+  int pad_front_;
   int pad_top_;
   int pad_left_;
   int n_;

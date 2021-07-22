@@ -32,6 +32,20 @@ MS_REG_GPU_KERNEL_ONE(MaxPoolGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       PoolingGradGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(MaxPool3DGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      PoolingGradGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(MaxPool3DGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      PoolingGradGpuKernel, half)
 MS_REG_GPU_KERNEL_ONE(AvgPoolGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
