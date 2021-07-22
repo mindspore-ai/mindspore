@@ -34,6 +34,7 @@ constexpr size_t kCondNodesNum = 12;
 constexpr size_t kCondCNodesNum = 4;
 constexpr size_t kBodyNodesNum = 69;
 constexpr size_t kBodyCNodesNum = 25;
+constexpr auto kGateNum = 2;
 const auto &p1 = std::placeholders::_1;
 }  // namespace
 
@@ -300,8 +301,8 @@ STATUS TfBidirectionGruFusion::ConvertWeightData(const AnfNodePtr &gate_weight, 
   MS_ASSERT(cand_weight != nullptr);
   MS_ASSERT(gate_tensor_data != nullptr);
   MS_ASSERT(recu_tensor_data != nullptr);
-  const std::vector<int64_t> gate_shape{input_size + hidden_size, hidden_size * 2};
-  const std::vector<int64_t> cand_shape{hidden_size * 2, hidden_size};
+  const std::vector<int64_t> gate_shape{input_size + hidden_size, hidden_size * kGateNum};
+  const std::vector<int64_t> cand_shape{hidden_size * kGateNum, hidden_size};
   auto gate_weight_value = GetDefaultTensorInfo(gate_weight);
   if (gate_weight_value == nullptr) {
     return RET_ERROR;
@@ -327,24 +328,24 @@ STATUS TfBidirectionGruFusion::ConvertWeightData(const AnfNodePtr &gate_weight, 
   }
 
   // input_update_weight
-  CopyFlattenMatData(gate_weight_data, hidden_size * 2, 0, input_size, hidden_size, hidden_size * 2, gate_tensor_data,
-                     true);
+  CopyFlattenMatData(gate_weight_data, hidden_size * kGateNum, 0, input_size, hidden_size, hidden_size * kGateNum,
+                     gate_tensor_data, true);
   // input_reset_weight
-  CopyFlattenMatData(gate_weight_data, hidden_size * 2, 0, input_size, 0, hidden_size,
+  CopyFlattenMatData(gate_weight_data, hidden_size * kGateNum, 0, input_size, 0, hidden_size,
                      gate_tensor_data + input_size * hidden_size, true);
   // input_hidden_weight
   CopyFlattenMatData(cand_weight_data, hidden_size, 0, input_size, 0, hidden_size,
-                     gate_tensor_data + input_size * hidden_size * 2, true);
+                     gate_tensor_data + input_size * hidden_size * kGateNum, true);
 
   // state_update_weight
-  CopyFlattenMatData(gate_weight_data, hidden_size * 2, input_size, input_size + hidden_size, hidden_size,
-                     hidden_size * 2, recu_tensor_data, true);
+  CopyFlattenMatData(gate_weight_data, hidden_size * kGateNum, input_size, input_size + hidden_size, hidden_size,
+                     hidden_size * kGateNum, recu_tensor_data, true);
   // state_reset_weight
-  CopyFlattenMatData(gate_weight_data, hidden_size * 2, input_size, input_size + hidden_size, 0, hidden_size,
+  CopyFlattenMatData(gate_weight_data, hidden_size * kGateNum, input_size, input_size + hidden_size, 0, hidden_size,
                      recu_tensor_data + hidden_size * hidden_size, true);
   // state_hidden_weight
   CopyFlattenMatData(cand_weight_data, hidden_size, input_size, input_size + hidden_size, 0, hidden_size,
-                     recu_tensor_data + hidden_size * hidden_size * 2, true);
+                     recu_tensor_data + hidden_size * hidden_size * kGateNum, true);
   return RET_OK;
 }
 
@@ -352,7 +353,7 @@ STATUS TfBidirectionGruFusion::ConvertBiasData(const AnfNodePtr &gate_bias, cons
                                                const int hidden_size, float *tensor_data) {
   MS_ASSERT(bias != nullptr);
   MS_ASSERT(tensor_data != nullptr);
-  std::vector<int64_t> gate_shape{hidden_size * 2};
+  std::vector<int64_t> gate_shape{hidden_size * kGateNum};
   std::vector<int64_t> cand_shape{hidden_size};
   auto gate_bias_value = GetDefaultTensorInfo(gate_bias);
   if (gate_bias_value == nullptr) {
@@ -371,11 +372,12 @@ STATUS TfBidirectionGruFusion::ConvertBiasData(const AnfNodePtr &gate_bias, cons
   }
 
   // update_gate bias
-  CopyFlattenMatData(gate_bias_data, hidden_size * 2, 0, 1, hidden_size, hidden_size * 2, tensor_data, false);
+  CopyFlattenMatData(gate_bias_data, hidden_size * kGateNum, 0, 1, hidden_size, hidden_size * kGateNum, tensor_data,
+                     false);
   // reset_gate bias
-  CopyFlattenMatData(gate_bias_data, hidden_size * 2, 0, 1, 0, hidden_size, tensor_data + hidden_size, false);
+  CopyFlattenMatData(gate_bias_data, hidden_size * kGateNum, 0, 1, 0, hidden_size, tensor_data + hidden_size, false);
   // hidden_gate bias
-  CopyFlattenMatData(cand_bias_data, hidden_size, 0, 1, 0, hidden_size, tensor_data + hidden_size * 2, false);
+  CopyFlattenMatData(cand_bias_data, hidden_size, 0, 1, 0, hidden_size, tensor_data + hidden_size * kGateNum, false);
 
   return RET_OK;
 }

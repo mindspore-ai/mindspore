@@ -40,6 +40,15 @@
 namespace mindspore::lite {
 enum MS_API InDataType { kImage = 0, kBinary = 1 };
 
+enum MS_API AiModelDescription_Frequency {
+  AiModelDescription_Frequency_LOW = 1,
+  AiModelDescription_Frequency_MEDIUM = 2,
+  AiModelDescription_Frequency_HIGH = 3,
+  AiModelDescription_Frequency_EXTREME = 4
+};
+
+enum MS_API DumpMode { DUMP_MODE_ALL = 0, DUMP_MODE_INPUT = 1, DUMP_MODE_OUTPUT = 2 };
+
 constexpr float relativeTolerance = 1e-5;
 constexpr float absoluteTolerance = 1e-8;
 

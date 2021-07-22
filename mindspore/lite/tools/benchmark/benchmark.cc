@@ -163,7 +163,7 @@ void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
 
   if (flags_->device_ == "NPU") {
     DeviceContext npu_device_ctx{DT_NPU};
-    npu_device_ctx.device_info_.npu_device_info_.frequency_ = 3;
+    npu_device_ctx.device_info_.npu_device_info_.frequency_ = AiModelDescription_Frequency_HIGH;
     context->device_list_.push_back(npu_device_ctx);
   }
 
@@ -796,9 +796,8 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
-
     if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
-      if (input_output_mode == 0 || input_output_mode == 1) {
+      if (input_output_mode == DUMP_MODE_ALL || input_output_mode == DUMP_MODE_INPUT) {
         for (size_t i = 0; i < before_inputs.size(); i++) {
           auto ms_tensor = before_inputs.at(i);
           auto file_name = GenerateOutputFileName(ms_tensor, call_param.node_name, "input", i);
@@ -820,9 +819,8 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
-
     if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
-      if (input_output_mode == 0 || input_output_mode == 2) {
+      if (input_output_mode == DUMP_MODE_ALL || input_output_mode == DUMP_MODE_OUTPUT) {
         for (size_t i = 0; i < after_outputs.size(); i++) {
           auto ms_tensor = after_outputs.at(i);
           auto file_name = GenerateOutputFileName(ms_tensor, call_param.node_name, "output", i);
