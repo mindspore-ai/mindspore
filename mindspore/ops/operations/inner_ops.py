@@ -384,6 +384,7 @@ class MakeRefKey(Primitive):
     def __call__(self):
         pass
 
+
 class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
     """
     Optimizer that implements the Momentum algorithm with weight decay and loss scale.
