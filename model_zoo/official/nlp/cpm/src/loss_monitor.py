@@ -16,6 +16,7 @@
 import time
 import math
 
+from mindspore import log as logger
 from mindspore.train.callback import Callback
 
 
