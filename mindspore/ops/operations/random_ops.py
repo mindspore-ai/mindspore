@@ -404,7 +404,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> rnd_choice_mask = ops.RandomChoiceWithMask()

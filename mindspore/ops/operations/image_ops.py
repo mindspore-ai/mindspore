@@ -59,7 +59,7 @@ class CropAndResize(PrimitiveWithInfer):
         ValueError: If `method` is not one of 'bilinear', 'nearest', 'bilinear_v2'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class CropAndResizeNet(nn.Cell):
