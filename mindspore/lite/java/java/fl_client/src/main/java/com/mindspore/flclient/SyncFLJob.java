@@ -264,13 +264,16 @@ public class SyncFLJob {
                 LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return is -1"));
                 return FLClientStatus.FAILED;
             }
-            flParameter.setUseSSL(flParameter.isUseSSL());
             FLCommunication flCommunication = FLCommunication.getInstance();
             String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-            LOGGER.info(Common.addTag("[getModel] ===========getModel url: " + url + "=============="));
             GetModel getModelBuf = GetModel.getInstance();
             byte[] buffer = getModelBuf.getRequestGetModel(flParameter.getFlName(), 0);
             byte[] message = flCommunication.syncRequest(url + "/getModel", buffer);
+            if (Common.isSafeMod(message, localFLParameter.getSafeMod())) {
+                LOGGER.info(Common.addTag("[getModel] The cluster is in safemode, need wait some time and request again"));
+                status = FLClientStatus.WAIT;
+                return status;
+            }
             LOGGER.info(Common.addTag("[getModel] get model request success"));
             ByteBuffer debugBuffer = ByteBuffer.wrap(message);
             ResponseGetModel responseDataBuf = ResponseGetModel.getRootAsResponseGetModel(debugBuffer);

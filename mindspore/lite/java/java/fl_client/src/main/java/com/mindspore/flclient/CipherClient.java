@@ -261,7 +261,6 @@ public class CipherClient {
     public FLClientStatus requestExchangeKeys() {
         LOGGER.info(Common.addTag("[PairWiseMask] ==============request flID: " + localFLParameter.getFlID() + "=============="));
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============requestExchangeKeys url: " + url + "=============="));
         genDHKeyPairs();
         byte[] cPK = cKey.get(0);
         byte[] sPK = sKey.get(0);
@@ -276,6 +275,12 @@ public class CipherClient {
         byte[] msg = fbBuilder.sizedByteArray();
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/exchangeKeys", msg);
+            if (Common.isSafeMod(responseData, localFLParameter.getSafeMod())) {
+                LOGGER.info(Common.addTag("[requestExchangeKeys] The cluster is in safemode, need wait some time and request again"));
+                Common.sleep(SLEEP_TIME);
+                nextRequestTime = "";
+                return FLClientStatus.RESTART;
+            }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ResponseExchangeKeys responseExchangeKeys = ResponseExchangeKeys.getRootAsResponseExchangeKeys(buffer);
             FLClientStatus status = judgeRequestExchangeKeys(responseExchangeKeys);
@@ -313,7 +318,6 @@ public class CipherClient {
 
     public FLClientStatus getExchangeKeys() {
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============getExchangeKeys url: " + url + "=============="));
         FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
         int id = fbBuilder.createString(localFLParameter.getFlID());
         String dateTime = LocalDateTime.now().toString();
@@ -323,6 +327,12 @@ public class CipherClient {
         byte[] msg = fbBuilder.sizedByteArray();
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/getKeys", msg);
+            if (Common.isSafeMod(responseData, localFLParameter.getSafeMod())) {
+                LOGGER.info(Common.addTag("[getExchangeKeys] The cluster is in safemode, need wait some time and request again"));
+                Common.sleep(SLEEP_TIME);
+                nextRequestTime = "";
+                return FLClientStatus.RESTART;
+            }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ReturnExchangeKeys returnExchangeKeys = ReturnExchangeKeys.getRootAsReturnExchangeKeys(buffer);
             FLClientStatus status = judgeGetExchangeKeys(returnExchangeKeys);
@@ -378,7 +388,6 @@ public class CipherClient {
 
     public FLClientStatus requestShareSecrets() throws Exception {
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============requestShareSecrets url: " + url + "=============="));
         genIndividualSecret();
         genEncryptExchangedKeys();
         encryptShares();
@@ -410,6 +419,12 @@ public class CipherClient {
             byte[] msg = fbBuilder.sizedByteArray();
             try {
                 byte[] responseData = flCommunication.syncRequest(url + "/shareSecrets", msg);
+                if (Common.isSafeMod(responseData, localFLParameter.getSafeMod())) {
+                    LOGGER.info(Common.addTag("[requestShareSecrets] The cluster is in safemode, need wait some time and request again"));
+                    Common.sleep(SLEEP_TIME);
+                    nextRequestTime = "";
+                    return FLClientStatus.RESTART;
+                }
                 ByteBuffer buffer = ByteBuffer.wrap(responseData);
                 ResponseShareSecrets responseShareSecrets = ResponseShareSecrets.getRootAsResponseShareSecrets(buffer);
                 FLClientStatus status = judgeRequestShareSecrets(responseShareSecrets);
@@ -448,7 +463,6 @@ public class CipherClient {
 
     public FLClientStatus getShareSecrets() {
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============getShareSecrets url: " + url + "=============="));
         FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
         int id = fbBuilder.createString(localFLParameter.getFlID());
         String dateTime = LocalDateTime.now().toString();
@@ -458,6 +472,12 @@ public class CipherClient {
         byte[] msg = fbBuilder.sizedByteArray();
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/getSecrets", msg);
+            if (Common.isSafeMod(responseData, localFLParameter.getSafeMod())) {
+                LOGGER.info(Common.addTag("[getShareSecrets] The cluster is in safemode, need wait some time and request again"));
+                Common.sleep(SLEEP_TIME);
+                nextRequestTime = "";
+                return FLClientStatus.RESTART;
+            }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ReturnShareSecrets returnShareSecrets = ReturnShareSecrets.getRootAsReturnShareSecrets(buffer);
             FLClientStatus status = judgeGetShareSecrets(returnShareSecrets);
