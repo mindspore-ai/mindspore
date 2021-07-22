@@ -14,8 +14,9 @@
 # ============================================================================
 """train resnet."""
 import os
+import numpy as np
 from mindspore import context
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore.nn.optim import Momentum, thor
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -25,6 +26,7 @@ from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_rank
+from mindspore.common import dtype as mstype
 from mindspore.common import set_seed
 from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
@@ -60,6 +62,26 @@ elif config.net_name == "resnet101":
 else:
     from src.resnet import se_resnet50 as resnet
     from src.dataset import create_dataset4 as create_dataset
+
+def acc_group_params_generator(net, weight_decay):
+    acc_weight = 'end_point.weight'
+    acc_multiplier = 'end_point.multiplier'
+    weight = Parameter(Tensor(np.ones([1]), mstype.float32), requires_grad=True, name=acc_weight)
+    multiplier = Parameter(Tensor(np.ones([1]), mstype.float32), requires_grad=True, name=acc_multiplier)
+    decayed_params = []
+    no_decayed_params = []
+    for param in net.trainable_params():
+        if acc_weight in param.name or acc_multiplier in param.name:
+            continue
+        if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
+            decayed_params.append(param)
+        else:
+            no_decayed_params.append(param)
+    acc_params = [weight, multiplier]
+    group_params = [{'params': decayed_params, 'weight_decay': weight_decay},
+                    {'params': no_decayed_params},
+                    {'params': acc_params, 'weight_decay': weight_decay}]
+    return group_params
 
 
 def filter_checkpoint_parameter_by_list(origin_dict, param_filter):
@@ -216,6 +238,8 @@ def train_net():
     group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]
+    if config.acc_mode in ["O1", "O2"]:
+        group_params = acc_group_params_generator(net, config.weight_decay)
     opt = Momentum(group_params, lr, config.momentum, loss_scale=config.loss_scale)
     loss = init_loss_scale()
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
