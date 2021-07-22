@@ -70,6 +70,10 @@ echo $PRETRAINED_BACKBONE
 export RANK_TABLE_FILE=$RANK_TABLE
 export RANK_SIZE=8
 
+cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
+avg=`expr $cpus \/ $RANK_SIZE`
+gap=`expr $avg \- 1`
+
 config_path="${dirname_path}/reid_8p_ascend_config.yaml"
 echo "config path is : ${config_path}"
 
@@ -77,12 +81,15 @@ echo 'start training'
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
     echo 'start rank '$i
+    start=`expr $i \* $avg`
+    end=`expr $start \+ $gap`
+    cmdopt=$start"-"$end
     mkdir ${current_exec_path}/device$i
     cd ${current_exec_path}/device$i  || exit
     export RANK_ID=$i
     dev=`expr $i + 0`
     export DEVICE_ID=$dev
-    python ${dirname_path}/${SCRIPT_NAME} \
+    taskset -c $cmdopt python ${dirname_path}/${SCRIPT_NAME} \
         --config_path=$config_path \
         --is_distributed=1 \
         --data_dir=$DATA_DIR \
