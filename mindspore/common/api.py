@@ -535,7 +535,7 @@ class _Executor:
         graph = self._executor.get_func_graph(phase)
 
         if graph is None:
-            logger.error("%r graph compile failed.", phase)
+            raise RuntimeError("Compile graph failed for phase {}.".format(phase))
 
         self._auto_parallel_process(obj, phase, is_sink_mode, auto_parallel_mode, *args)
 
