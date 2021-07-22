@@ -466,6 +466,7 @@ const size_t kBNChannelMultipleFactor = 4;
 const int kParameterDataTensorMask = 0;
 const int kParameterWeightTensorMask = 1;
 const int kValueNodeTensorMask = 2;
+constexpr auto kNCHWShapeSize = 4;
 
 // define special index in special node
 constexpr auto kAnfPrimitiveIndex = 0;
@@ -535,7 +536,6 @@ constexpr auto kOpFormat_NCHW = "NCHW";
 constexpr auto kOpFormat_NHWC = "NHWC";
 constexpr auto kOpFormat_HWCN = "HWCN";
 constexpr auto kOpFormat_NC1HWC0 = "NC1HWC0";
-constexpr auto kNCHWShapeSize = 4;
 constexpr auto kOpFormat_FRAC_Z = "FracZ";
 constexpr auto kOpFormat_FRACTAL_Z = "FRACTAL_Z";
 constexpr auto kOpFormat_FRAC_NZ = "FRACTAL_NZ";

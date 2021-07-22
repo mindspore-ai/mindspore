@@ -153,7 +153,7 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
                                             nlohmann::json *input_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_desc);
-  GenDesCommonJson(input_desc);
+  GenDesJsonCommon(input_desc);
   auto shape = AnfAlgo::GetInputDeviceShape(anf_node, real_input_index);
   auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
   if (shape.empty()) {
@@ -203,12 +203,9 @@ bool SingleTbeJsonCreator::AssignInputsJson(const AnfNodePtr &anf_node, const st
     if (param_type == kJParamOptional) {
       nlohmann::json current_input_desc;
       // DynamicRnn and DynamicGRUV2 exist placeholder input
+      current_input_desc = inputs_desc.at(inputs_desc_index);
       if (TbeAdapter::IsPlaceHolderInput(anf_node, input_ptr)) {
         current_input_desc[kJValid] = false;
-        current_input_desc[kJShape] = kJNull;
-        current_input_desc[kJDataType] = 0;
-      } else {
-        current_input_desc = inputs_desc.at(inputs_desc_index);
       }
       current_input_desc[kJName] = input_ptr->name() + "_optional_";
       current_input_desc[kJParamType] = input_ptr->param_type();
@@ -324,7 +321,7 @@ void SingleTbeJsonCreator::GenOtherJson(const AnfNodePtr &anf_node, nlohmann::js
   (*compute_json)[kJOriName] = {anf_node->fullname_with_scope()};
   (*compute_json)[kJBuildType] = kAccuratelyBuild;
   (*compute_json)[kJMissSupportInfo] = "";
-  (*compute_json)[kJMaxKernelID] = 10;
+  (*compute_json)[kJMaxKernelID] = kJMaxKernelIDValue;
   (*compute_json)[kJUnknowShape] = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
   MS_LOG(DEBUG) << "End.";
 }
@@ -332,7 +329,7 @@ void SingleTbeJsonCreator::GenOtherJson(const AnfNodePtr &anf_node, nlohmann::js
 void SelectTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
                                        nlohmann::json *output_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  GenDesCommonJson(output_desc);
+  GenDesJsonCommon(output_desc);
   std::vector<int64_t> shape;
   std::vector<int64_t> ori_shape;
   AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, node_out_idx), NOT_NULL(&ori_shape));
@@ -356,7 +353,7 @@ void SelectTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_o
 void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index,
                                             nlohmann::json *input_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  GenDesCommonJson(input_desc);
+  GenDesJsonCommon(input_desc);
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
   if (shape.empty()) {
     shape.emplace_back(1);
@@ -379,21 +376,14 @@ bool SelectTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, c
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   MS_EXCEPTION_IF_NULL(attrs_json);
-  auto node_name = AnfAlgo::GetCNodeName(anf_node);
-  if (node_name == parallel::LAYER_NORM) {
-    for (auto json_item = attrs_json->begin(); json_item < attrs_json->end(); json_item++) {
-      if (GetJsonValue<std::string>(*json_item, kJName) == kAttrEpsilon) {
-        json_item = attrs_json->erase(json_item);
-      }
-    }
-  }
+  tbe::TbeAdapter::LayerNormAttrJsonPost(anf_node, attrs_json);
   return true;
 }
 
 void CheckTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
                                       nlohmann::json *output_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  GenDesCommonJson(output_desc);
+  GenDesJsonCommon(output_desc);
   std::vector<int64_t> shape;
   std::vector<int64_t> ori_shape;
   AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, node_out_idx), NOT_NULL(&ori_shape));
@@ -417,7 +407,7 @@ void CheckTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_ou
 void CheckTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index,
                                            nlohmann::json *input_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  GenDesCommonJson(input_desc);
+  GenDesJsonCommon(input_desc);
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
   if (shape.empty()) {
     shape.emplace_back(1);

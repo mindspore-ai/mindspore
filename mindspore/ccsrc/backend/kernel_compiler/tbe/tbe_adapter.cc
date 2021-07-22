@@ -76,27 +76,27 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
-      inputs_json->push_back(inputs_list[INPUT2]);
-      inputs_json->push_back(inputs_list[INPUT0]);
-      inputs_json->push_back(inputs_list[INPUT1]);
+      inputs_json->push_back(inputs_list[kIndex2]);
+      inputs_json->push_back(inputs_list[kIndex0]);
+      inputs_json->push_back(inputs_list[kIndex1]);
       for (size_t i = 3; i < inputs_list.size(); ++i) {
         inputs_json->push_back(inputs_list[i]);
       }
     } else if (op_name == "ApplyCenteredRMSProp") {
       // Parameter order of ApplyCenteredRMSProp's TBE implementation is different from python API, so map
       // TBE parameter to correspond python API parameter by latter's index using hardcode
-      inputs_json->push_back(inputs_list[INPUT0]);
-      inputs_json->push_back(inputs_list[INPUT1]);
-      inputs_json->push_back(inputs_list[INPUT2]);
-      inputs_json->push_back(inputs_list[INPUT3]);
-      inputs_json->push_back(inputs_list[INPUT5]);
-      inputs_json->push_back(inputs_list[INPUT6]);
-      inputs_json->push_back(inputs_list[INPUT7]);
-      inputs_json->push_back(inputs_list[INPUT8]);
-      inputs_json->push_back(inputs_list[INPUT4]);
+      inputs_json->push_back(inputs_list[kIndex0]);
+      inputs_json->push_back(inputs_list[kIndex1]);
+      inputs_json->push_back(inputs_list[kIndex2]);
+      inputs_json->push_back(inputs_list[kIndex3]);
+      inputs_json->push_back(inputs_list[kIndex5]);
+      inputs_json->push_back(inputs_list[kIndex6]);
+      inputs_json->push_back(inputs_list[kIndex7]);
+      inputs_json->push_back(inputs_list[kIndex8]);
+      inputs_json->push_back(inputs_list[kIndex4]);
     } else {
-      inputs_json->push_back(inputs_list[1]);
-      inputs_json->push_back(inputs_list[0]);
+      inputs_json->push_back(inputs_list[kIndex1]);
+      inputs_json->push_back(inputs_list[kIndex0]);
       for (size_t i = 2; i < inputs_list.size(); ++i) {
         inputs_json->push_back(inputs_list[i]);
       }
@@ -134,15 +134,15 @@ void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vect
     (void)std::copy(data_layer.begin(), data_layer.end(), std::back_inserter((*reorder_data_layer)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
-      (void)reorder_data_layer->emplace_back(data_layer[INPUT2]);
-      (void)reorder_data_layer->emplace_back(data_layer[INPUT0]);
-      (void)reorder_data_layer->emplace_back(data_layer[INPUT1]);
+      (void)reorder_data_layer->emplace_back(data_layer[kIndex2]);
+      (void)reorder_data_layer->emplace_back(data_layer[kIndex0]);
+      (void)reorder_data_layer->emplace_back(data_layer[kIndex1]);
       for (size_t i = 3; i < data_layer.size(); ++i) {
         (void)reorder_data_layer->emplace_back(data_layer[i]);
       }
     } else {
-      (void)reorder_data_layer->emplace_back(data_layer[INPUT1]);
-      (void)reorder_data_layer->emplace_back(data_layer[INPUT0]);
+      (void)reorder_data_layer->emplace_back(data_layer[kIndex1]);
+      (void)reorder_data_layer->emplace_back(data_layer[kIndex0]);
       for (size_t i = 2; i < data_layer.size(); ++i) {
         reorder_data_layer->emplace_back(data_layer[i]);
       }
@@ -275,7 +275,7 @@ void TbeAdapter::FusionDescJsonPass(const AnfNodePtr &node, nlohmann::json *outp
   tbe::FusionDataType fusion_data_type =
     spec_data_input.find(node) != spec_data_input.end() ? spec_data_input.at(node) : tbe::kFusionNormal;
   std::vector<size_t> shape = (*output_desc)["shape"];
-  if ((fusion_data_type == kFusionAddN || fusion_data_type == kFusionAdd) && shape.size() == 5) {
+  if ((fusion_data_type == kFusionAddN || fusion_data_type == kFusionAdd) && shape.size() == kShape5dDims) {
     std::vector<size_t> spec_shape = {};
     spec_shape.emplace_back(shape[0]);
     spec_shape.emplace_back(shape[1]);
@@ -411,7 +411,7 @@ void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpA
   op_info_attrs->clear();
 }
 
-void TbeAdapter::CastJsonPostPass(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {
+void TbeAdapter::CastAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {
   if (AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
     return;
   }
@@ -423,6 +423,17 @@ void TbeAdapter::CastJsonPostPass(const AnfNodePtr &anf_node, nlohmann::json *at
     attrs_json->at(0)[kJValue] = iter->second;
   } else {
     MS_LOG(EXCEPTION) << "Invalid type:" << type_id;
+  }
+}
+void TbeAdapter::LayerNormAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(attrs_json);
+  if (AnfAlgo::GetCNodeName(anf_node) == parallel::LAYER_NORM) {
+    for (auto json_item = attrs_json->begin(); json_item < attrs_json->end(); json_item++) {
+      if (GetJsonValue<std::string>(*json_item, kJName) == kAttrEpsilon) {
+        json_item = attrs_json->erase(json_item);
+      }
+    }
   }
 }
 
