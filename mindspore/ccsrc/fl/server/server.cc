@@ -85,8 +85,8 @@ void Server::Run() {
   lock.unlock();
 
   // Wait communicators to stop so the main thread is blocked.
-  std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Join(); });
+  (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Join(); });
   communicator_with_server_->Join();
   MsException::Instance().CheckException();
   return;
@@ -303,8 +303,9 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpC
   communicator->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
     MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
     safemode_ = true;
-    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)std::for_each(
+      communicators_with_worker_.begin(), communicators_with_worker_.end(),
+      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
     (void)communicator_with_server_->Stop();
   });
 
@@ -313,8 +314,9 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpC
       << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
          "network building phase.";
     safemode_ = true;
-    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)std::for_each(
+      communicators_with_worker_.begin(), communicators_with_worker_.end(),
+      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
     (void)communicator_with_server_->Stop();
   });
 }
@@ -373,12 +375,12 @@ void Server::StartCommunicator() {
   MS_LOG(INFO) << "This server rank is " << server_node_->rank_id();
 
   MS_LOG(INFO) << "Start communicator with worker.";
-  std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
-                  if (!communicator->Start()) {
-                    MS_LOG(EXCEPTION) << "Starting communicator with worker failed.";
-                  }
-                });
+  (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                        if (!communicator->Start()) {
+                          MS_LOG(EXCEPTION) << "Starting communicator with worker failed.";
+                        }
+                      });
 }
 
 void Server::ProcessBeforeScalingOut() {
@@ -424,9 +426,10 @@ void Server::ProcessAfterScalingIn() {
 
   if (server_node_->rank_id() == UINT32_MAX) {
     MS_LOG(WARNING) << "This server the one to be scaled in. Server exiting.";
-    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
-    communicator_with_server_->Stop();
+    (void)std::for_each(
+      communicators_with_worker_.begin(), communicators_with_worker_.end(),
+      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)communicator_with_server_->Stop();
     return;
   }
 

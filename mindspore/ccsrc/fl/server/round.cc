@@ -116,7 +116,10 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   if (Server::GetInstance().IsSafeMode()) {
     MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
     std::string reason = "The cluster is in safemode.";
-    (void)communicator_->SendResponse(reason.c_str(), reason.size(), message);
+    if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
+      MS_LOG(ERROR) << "Sending response failed.";
+      return;
+    }
     return;
   }
 
@@ -128,10 +131,16 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   if (output->size == 0) {
     std::string reason = "The output of the round " + name_ + " is empty.";
     MS_LOG(WARNING) << reason;
-    (void)communicator_->SendResponse(reason.c_str(), reason.size(), message);
+    if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
+      MS_LOG(ERROR) << "Sending response failed.";
+      return;
+    }
     return;
   }
-  (void)communicator_->SendResponse(output->addr, output->size, message);
+  if (!communicator_->SendResponse(output->addr, output->size, message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
   kernel_->Release(output);
 
   // Must send response back no matter what value Launch method returns.

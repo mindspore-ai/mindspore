@@ -79,6 +79,10 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   }
 
   const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
+  if (start_fl_job_req == nullptr) {
+    MS_LOG(ERROR) << "RequestFLJob is nullptr.";
+    return false;
+  }
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
@@ -240,7 +244,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
 
   schema::ResponseFLJobBuilder rsp_fl_job_builder(*(fbb.get()));
-  rsp_fl_job_builder.add_retcode(retcode);
+  rsp_fl_job_builder.add_retcode(static_cast<int>(retcode));
   rsp_fl_job_builder.add_reason(fbs_reason);
   rsp_fl_job_builder.add_iteration(SizeToInt(LocalMetaStore::GetInstance().curr_iter_num()));
   rsp_fl_job_builder.add_is_selected(is_selected);

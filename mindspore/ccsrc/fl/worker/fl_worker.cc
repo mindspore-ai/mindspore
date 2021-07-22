@@ -67,7 +67,10 @@ void FLWorker::Run() {
   });
 
   InitializeFollowerScaler();
-  worker_node_->Start();
+  if (!worker_node_->Start()) {
+    MS_LOG(EXCEPTION) << "Starting worker node failed.";
+    return;
+  }
   rank_id_ = worker_node_->rank_id();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));

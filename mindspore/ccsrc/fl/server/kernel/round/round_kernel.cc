@@ -49,7 +49,7 @@ RoundKernel::RoundKernel() : name_(""), current_count_(0), required_count_(0), e
       }
       // Manually release unique_ptr data.
       heap_data_[addr_ptr].reset(nullptr);
-      heap_data_.erase(heap_data_.find(addr_ptr));
+      (void)heap_data_.erase(heap_data_.find(addr_ptr));
     }
   });
 }
@@ -124,7 +124,7 @@ void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, const v
   outputs[0]->size = len;
 
   std::unique_lock<std::mutex> lock(heap_data_mtx_);
-  heap_data_.insert(std::make_pair(outputs[0], std::move(output_data)));
+  (void)heap_data_.insert(std::make_pair(outputs[0], std::move(output_data)));
   return;
 }
 }  // namespace kernel

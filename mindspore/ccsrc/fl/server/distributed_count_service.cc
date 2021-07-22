@@ -82,7 +82,7 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
     }
 
     MS_LOG(INFO) << "Leader server increase count for " << name << " of " << id;
-    global_current_count_[name].insert(id);
+    (void)global_current_count_[name].insert(id);
     if (!TriggerCounterEvent(name, reason)) {
       MS_LOG(ERROR) << "Leader server trigger count event failed.";
       return false;
@@ -190,7 +190,11 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core:
     count_rsp.set_result(false);
     count_rsp.set_reason(reason);
     MS_LOG(ERROR) << reason;
-    communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(), message);
+    if (!communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(),
+                                     message)) {
+      MS_LOG(ERROR) << "Sending response failed.";
+      return;
+    }
     return;
   }
 
@@ -201,13 +205,17 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core:
     count_rsp.set_result(false);
     count_rsp.set_reason(reason);
     MS_LOG(ERROR) << reason;
-    communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(), message);
+    if (!communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(),
+                                     message)) {
+      MS_LOG(ERROR) << "Sending response failed.";
+      return;
+    }
     return;
   }
 
   // Insert the id for the counter, which means the count for the name is increased.
   MS_LOG(INFO) << "Leader server increase count for " << name << " of " << id;
-  global_current_count_[name].insert(id);
+  (void)global_current_count_[name].insert(id);
   std::string reason = "success";
   if (!TriggerCounterEvent(name, &reason)) {
     count_rsp.set_result(false);
@@ -216,7 +224,11 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core:
     count_rsp.set_result(true);
     count_rsp.set_reason(reason);
   }
-  communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(), message);
+  if (!communicator_->SendResponse(count_rsp.SerializeAsString().data(), count_rsp.SerializeAsString().size(),
+                                   message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
   return;
 }
 
@@ -239,8 +251,11 @@ void DistributedCountService::HandleCountReachThresholdRequest(
 
   CountReachThresholdResponse count_reach_threshold_rsp;
   count_reach_threshold_rsp.set_is_enough(global_current_count_[name].size() == global_threshold_count_[name]);
-  communicator_->SendResponse(count_reach_threshold_rsp.SerializeAsString().data(),
-                              count_reach_threshold_rsp.SerializeAsString().size(), message);
+  if (!communicator_->SendResponse(count_reach_threshold_rsp.SerializeAsString().data(),
+                                   count_reach_threshold_rsp.SerializeAsString().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
   return;
 }
 
@@ -253,7 +268,10 @@ void DistributedCountService::HandleCounterEvent(const std::shared_ptr<ps::core:
   // Respond as soon as possible so the leader server won't wait for each follower servers to finish calling the
   // callbacks.
   std::string couter_event_rsp_msg = "success";
-  communicator_->SendResponse(couter_event_rsp_msg.data(), couter_event_rsp_msg.size(), message);
+  if (!communicator_->SendResponse(couter_event_rsp_msg.data(), couter_event_rsp_msg.size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 
   CounterEvent counter_event;
   (void)counter_event.ParseFromArray(message->data(), SizeToInt(message->len()));

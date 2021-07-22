@@ -159,7 +159,14 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   for (auto weight : feature_map) {
     weight.second[kNewDataSize].addr = &data_size;
     weight.second[kNewDataSize].size = sizeof(size_t);
-    executor_->HandleModelUpdate(weight.first, weight.second);
+    if (!executor_->HandleModelUpdate(weight.first, weight.second)) {
+      std::string reason = "Updating weight " + weight.first + " failed.";
+      BuildUpdateModelRsp(
+        fbb, schema::ResponseCode_OutOfTime, reason,
+        std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+      MS_LOG(ERROR) << reason;
+      return ResultCode::kFail;
+    }
   }
 
   FLId fl_id;
@@ -220,7 +227,7 @@ void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fb
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
 
   schema::ResponseUpdateModelBuilder rsp_update_model_builder(*(fbb.get()));
-  rsp_update_model_builder.add_retcode(retcode);
+  rsp_update_model_builder.add_retcode(static_cast<int>(retcode));
   rsp_update_model_builder.add_reason(fbs_reason);
   rsp_update_model_builder.add_next_req_time(fbs_next_req_time);
   auto rsp_update_model = rsp_update_model_builder.Finish();
