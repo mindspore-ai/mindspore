@@ -23,7 +23,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 AccuracyMetrics::AccuracyMetrics(int accuracy_metrics, const std::vector<int> &input_indexes,
                                  const std::vector<int> &output_indexes) {
   metrics_impl_ = new MetricsImpl(new lite::AccuracyMetrics(accuracy_metrics, input_indexes, output_indexes));
@@ -56,5 +55,4 @@ float AccuracyMetrics::Eval() {
   auto internal_metrics = metrics_impl_->GetInternalMetrics();
   return (reinterpret_cast<lite::AccuracyMetrics *>(internal_metrics))->Eval();
 }
-
 }  // namespace mindspore

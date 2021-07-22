@@ -40,60 +40,6 @@
 #include "src/train/train_session.h"
 
 namespace mindspore {
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
-
-std::shared_ptr<session::LiteSession> CreateTrainSession(std::shared_ptr<Graph::GraphData> graph_data,
-                                                         std::shared_ptr<TrainCfg> cfg, lite::Context *context) {
-  bool is_train_session = graph_data->IsTrainModel();
-
-  if (is_train_session) {
-    auto model = graph_data->lite_model();
-    if (model == nullptr || model->buf == nullptr) {
-      MS_LOG(ERROR) << "Lite model has been freed.";
-      return nullptr;
-    }
-    std::shared_ptr<session::LiteSession> shared_session;
-    lite::TrainSession *session = new lite::TrainSession();
-    if (session == nullptr) {
-      MS_LOG(ERROR) << "create session failed";
-      return nullptr;
-    }
-    shared_session.reset(session);
-
-    lite::TrainCfg train_cfg;
-    if (cfg != nullptr) {
-      auto status = A2L_ConvertConfig(cfg.get(), &train_cfg);
-      if (status != kSuccess) {
-        MS_LOG(ERROR) << "Failed to convert Config to Lite Config";
-        return nullptr;
-      }
-    }
-
-    auto ret = session->Init(context, &train_cfg);
-    if (ret != mindspore::lite::RET_OK) {
-      MS_LOG(ERROR) << "init session failed";
-      return nullptr;
-    }
-
-    ret = session->CompileTrainGraph(model);
-    if (ret != mindspore::lite::RET_OK) {
-      MS_LOG(ERROR) << "Compiling Train Graph session failed";
-      return nullptr;
-    }
-    return shared_session;
-  }
-  MS_LOG(DEBUG) << "Session is not a train session.";
-  return nullptr;
-}
-
-class UnifiedAPISupportTrain {
- public:
-  UnifiedAPISupportTrain() { CreateTrainSessionCallbackHolder(CreateTrainSession); }
-};
-
-UnifiedAPISupportTrain support_train_api;
-
 Status ModelImpl::PrepareMetrics(Model *model, std::vector<session::Metrics *> *out_ms,
                                  std::vector<session::Metrics *> *adapter_ms) {
   if (out_ms == nullptr || adapter_ms == nullptr) {
@@ -157,5 +103,4 @@ Status ModelImpl::ConvertCallbacks(Model *model, std::vector<TrainCallBack *> *i
   }
   return kSuccess;
 }
-
 }  // namespace mindspore

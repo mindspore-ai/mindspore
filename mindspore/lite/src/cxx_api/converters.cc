@@ -24,6 +24,8 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+constexpr static int kMaxNumOfDevices = 2;
+
 Status A2L_ConvertContext(Context *a_context, lite::Context *l_context) {
   if ((a_context == nullptr) || (l_context == nullptr)) {
     MS_LOG(ERROR) << "Invalid context pointers.";
@@ -35,7 +37,7 @@ Status A2L_ConvertContext(Context *a_context, lite::Context *l_context) {
     MS_LOG(ERROR) << "Invalid device list.";
     return kLiteInputParamInvalid;
   }
-  if (device_list.size() > 2) {
+  if (device_list.size() > kMaxNumOfDevices) {
     MS_LOG(ERROR) << "Only CPU/CPU & GPU/CPU & NPU mode is supported.";
     return kLiteInputParamInvalid;
   }
@@ -71,7 +73,7 @@ Status A2L_ConvertContext(Context *a_context, lite::Context *l_context) {
   cpu_info.cpu_device_info_ = {cpu_context->GetEnableFP16(), mode};
   l_context->device_list_.push_back({lite::DT_CPU, cpu_info, cpu_context->GetProvider(),
                                      cpu_context->GetProviderDevice(), cpu_context->GetAllocator()});
-  if (device_list.size() == 2) {
+  if (device_list.size() == kMaxNumOfDevices) {
     lite::DeviceInfo device_info = {0};
     if (device_list[1]->GetDeviceType() == kGPU) {
       auto gpu_context = device_list[1]->Cast<GPUDeviceInfo>();

@@ -47,13 +47,11 @@ int RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::stri
   std::unique_lock<std::mutex> lock(lock_);
   if (custom_kernel_creators_[provider][arch][type] == nullptr) {
     custom_kernel_creators_[provider][arch][type] =
-      reinterpret_cast<CreateKernel *>(malloc(data_type_length_ * sizeof(CreateKernel)));
+      reinterpret_cast<CreateKernel *>(calloc(data_type_length_, sizeof(CreateKernel)));
     if (custom_kernel_creators_[provider][arch][type] == nullptr) {
       MS_LOG(ERROR) << "malloc custom kernel creator fail!provider: " << provider << ", arch: " << arch;
       return RET_ERROR;
     }
-    memset(reinterpret_cast<void *>(custom_kernel_creators_[provider][arch][type]), 0,
-           data_type_length_ * sizeof(CreateKernel));
   }
 
   int data_type_index = data_type - kNumberTypeBegin - 1;

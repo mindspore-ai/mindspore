@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-
 void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                          bool channel_at_first, float *desired_max, float *desired_min) {
   float min = FLT_MAX;
@@ -99,6 +98,5 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
 
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore
