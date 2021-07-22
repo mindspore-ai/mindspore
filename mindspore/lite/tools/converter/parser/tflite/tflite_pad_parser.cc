@@ -22,6 +22,10 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kTFlitePadInputSize = 3;
+constexpr int kTFlitePaddingIndex = 1;
+}  // namespace
 ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::PadFusion>();
@@ -51,14 +55,14 @@ ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT>
     prim->set_paddings(paddings);
   } else if (tflite_op_type == tflite::BuiltinOperator_PADV2) {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
-    if (tflite_op->inputs.size() < 3) {
+    if (tflite_op->inputs.size() < kTFlitePadInputSize) {
       MS_LOG(ERROR) << "tflite padv2 input size less than 3, which is " << tflite_op->inputs.size();
       return nullptr;
     }
 
     std::vector<float> constant_value;
     auto ret = GetTfliteData(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, constant_value);
-    if (ret != RET_OK || constant_value.size() != 1) {
+    if (ret != RET_OK || constant_value.size() != kTFlitePaddingIndex) {
       MS_LOG(ERROR) << "get Pad -> constant_value failed";
       return nullptr;
     }

@@ -46,8 +46,10 @@ using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
 namespace {
-constexpr int BIT_NUM_8 = 8;
-constexpr int BIT_NUM_16 = 16;
+constexpr int kBitNum8 = 8;
+constexpr int kBitNum16 = 16;
+constexpr int kIndexOfValueInputOfGetTupleItem = 2;
+
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
@@ -115,13 +117,13 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
     auto repetition_packed = false;
     MS_LOG(DEBUG) << dst_node->name;
     if (dst_node->quantType == schema::QuantType_QUANT_WEIGHT) {
-      if (bit_num <= BIT_NUM_8) {
+      if (bit_num <= kBitNum8) {
         repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);
       } else {
         repetition_packed = PackRepetition<int16_t>(bit_num, tensor_input);
       }
     }
-    if (bit_num != BIT_NUM_8 && bit_num != BIT_NUM_16 && !repetition_packed &&
+    if (bit_num != kBitNum8 && bit_num != kBitNum16 && !repetition_packed &&
         dst_node->quantType != schema::QuantType_QUANT_NONE) {
       auto status = DoBitPack(bit_num, tensor_input);
       if (status != RET_OK) {
@@ -619,7 +621,7 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, 
       return RET_ERROR;
     }
     auto get_item_input_cnode = inputs.at(1);
-    auto index_vnode = inputs.at(2);
+    auto index_vnode = inputs.at(kIndexOfValueInputOfGetTupleItem);
     if (!utils::isa<ValueNode>(index_vnode)) {
       MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
       return RET_ERROR;
@@ -754,8 +756,8 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
 
 void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                   schema::CNodeT *fb_node) {
-  MS_ASSERT(nullptr != meta_graphT);
-  MS_ASSERT(nullptr != fb_node);
+  MS_ASSERT(meta_graphT != nullptr);
+  MS_ASSERT(fb_node != nullptr);
   std::string cnode_name = fb_node->name;
 
   if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {

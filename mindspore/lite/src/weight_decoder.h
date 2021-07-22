@@ -122,6 +122,10 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor);
 
 class WeightDecoder {
  public:
+  static constexpr int kBitNum1 = 1;
+  static constexpr int kBitNum8 = 8;
+  static constexpr int kBitNum16 = 16;
+
   static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
   static int DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
