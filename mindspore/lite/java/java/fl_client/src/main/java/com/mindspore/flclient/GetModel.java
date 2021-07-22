@@ -72,7 +72,7 @@ public class GetModel {
     }
 
     private static final Logger LOGGER = Logger.getLogger(GetModel.class.toString());
-    private static GetModel getModel;
+    private static volatile  GetModel getModel;
 
     private GetModel() {
     }
@@ -81,10 +81,16 @@ public class GetModel {
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
 
     public static GetModel getInstance() {
-        if (getModel == null) {
-            getModel = new GetModel();
+        GetModel localRef = getModel;
+        if (localRef == null) {
+            synchronized (GetModel.class) {
+                localRef = getModel;
+                if (localRef == null) {
+                    getModel = localRef = new GetModel();
+                }
+            }
         }
-        return getModel;
+        return localRef;
     }
 
     public byte[] getRequestGetModel(String name, int iteration) {

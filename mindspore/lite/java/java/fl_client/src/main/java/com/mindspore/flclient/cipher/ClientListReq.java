@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
 import static com.mindspore.flclient.LocalFLParameter.IVEC_LEN;
 
 public class ClientListReq {
@@ -65,7 +66,6 @@ public class ClientListReq {
 
     public FLClientStatus getClientList(int iteration, List<String> u3ClientList, List<DecryptShareSecrets> decryptSecretsList, List<EncryptShare> returnShareList, Map<String, byte[]> cuvKeys) {
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============getClientList url: " + url + "=============="));
         FlatBufferBuilder builder = new FlatBufferBuilder();
         int id = builder.createString(localFLParameter.getFlID());
         String dateTime = LocalDateTime.now().toString();
@@ -75,6 +75,12 @@ public class ClientListReq {
         byte[] msg = builder.sizedByteArray();
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/getClientList", msg);
+            if (Common.isSafeMod(responseData, localFLParameter.getSafeMod())) {
+                LOGGER.info(Common.addTag("[getClientList] The cluster is in safemode, need wait some time and request again"));
+                Common.sleep(SLEEP_TIME);
+                nextRequestTime = "";
+                return FLClientStatus.RESTART;
+            }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             ReturnClientList clientListRsp = ReturnClientList.getRootAsReturnClientList(buffer);
             FLClientStatus status = judgeGetClientList(clientListRsp, u3ClientList, decryptSecretsList, returnShareList, cuvKeys);
