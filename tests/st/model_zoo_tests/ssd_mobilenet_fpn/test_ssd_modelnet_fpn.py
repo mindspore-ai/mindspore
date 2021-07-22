@@ -33,7 +33,7 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
     old_list = ["/cache/data", "MindRecord_COCO", "coco_ori", "/ckpt/mobilenet_v1.ckpt"]
     new_list = [os.path.join(utils.data_root, "coco/coco2017"), "mindrecord_train/ssd_mindrecord", ".",
                 os.path.join(utils.ckpt_root, "ssd_mobilenet_v1/mobilenet-v1.ckpt")]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "ssd_mobilenet_v1_fpn_config.yaml"))
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "config/ssd_mobilenet_v1_fpn_config.yaml"))
     old_list = ["config.epoch_size", "dataset_sink_mode=dataset_sink_mode"]
     new_list = ["5", "dataset_sink_mode=dataset_sink_mode, sink_size=20"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
