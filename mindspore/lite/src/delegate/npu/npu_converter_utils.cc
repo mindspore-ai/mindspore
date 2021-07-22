@@ -122,7 +122,7 @@ hiai::op::Data *ConverterToNPUData(mindspore::MSTensor src, const std::string &n
 }
 
 std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src) {
-  std::shared_ptr<ge::Tensor> ge_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  std::shared_ptr<ge::Tensor> ge_tensor = std::make_shared<ge::Tensor>();
   if (ge_tensor == nullptr) {
     MS_LOG(ERROR) << "new ge_tensor failed.";
     return nullptr;
