@@ -36,7 +36,6 @@
 
 namespace mindspore {
 namespace lite {
-
 int Benchmark::GenerateInputData() {
   for (auto tensor : ms_inputs_) {
     MS_ASSERT(tensor != nullptr);
@@ -694,13 +693,13 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
 
 namespace {
 template <typename T>
-std::string DataToString(void *data, size_t data_number) {
+std::string DataToString(void *data, size_t data_number, size_t print_len = 40) {
   if (data == nullptr) {
     return "Data of tensor is nullptr";
   }
   std::ostringstream oss;
   auto casted_data = static_cast<T *>(data);
-  for (size_t i = 0; i < 40 && i < data_number; i++) {
+  for (size_t i = 0; i < print_len && i < data_number; i++) {
     oss << " " << casted_data[i];
   }
   return oss.str();
@@ -838,6 +837,5 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
 }
 
 Benchmark::~Benchmark() { delete (session_); }
-
 }  // namespace lite
 }  // namespace mindspore
