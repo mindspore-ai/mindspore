@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace lite {
 namespace {
+constexpr int kNumWeightIndex = 2;
 constexpr size_t kTensorListMinSize = 3 * sizeof(int32_t);
 static const std::unordered_map<int, int> TypeToTypeMap = {
   {kNumberTypeInt, kNumberTypeInt32}, {kNumberTypeUInt, kNumberTypeUInt32}, {kNumberTypeFloat, kNumberTypeFloat32}};
@@ -298,7 +299,7 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
   if ((opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
        opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) ||
        opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) &&
-      (index == 2 && prim->GetAttr(ops::kFormat) != nullptr)) {
+      (index == kNumWeightIndex && prim->GetAttr(ops::kFormat) != nullptr)) {
     data_info->format_ = mindspore::KHWC;
   }
 
@@ -326,7 +327,7 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   MS_ASSERT(prim != nullptr);
   if (value->isa<tensor::Tensor>()) {
     ret = FetchFromTensorValue(value_node, prim, fmk_type, train_flag, data_info);
-    if (index == 2 && prim->GetAttr(ops::kFormat) != nullptr) {
+    if (index == kNumWeightIndex && prim->GetAttr(ops::kFormat) != nullptr) {
       data_info->format_ = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
     }
   } else if (value->isa<mindspore::Int32Imm>() || value->isa<mindspore::Int64Imm>()) {
@@ -365,6 +366,9 @@ int SetFormatForCnode(const CNodePtr &cnode, size_t index, converter::FmkType fm
     std::vector<int> perm;
     if (opt::GetTransposePerm(cnode->input(index)->cast<CNodePtr>(), &perm) != RET_OK) {
       return RET_ERROR;
+    }
+    if (perm.size() < 4) {
+      return RET_OK;
     }
     if (perm[0] == 0 && perm[1] == 3 && perm[2] == 1 && perm[3] == 2 &&
         (data_info->format_ == NHWC || data_info->format_ == KHWC)) {

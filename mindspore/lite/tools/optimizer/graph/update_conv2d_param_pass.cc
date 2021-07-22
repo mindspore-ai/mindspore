@@ -21,8 +21,12 @@
 
 namespace mindspore::opt {
 namespace {
+constexpr size_t kNumDim0 = 0;
+constexpr size_t kNumDim1 = 1;
+constexpr size_t kNumDim2 = 2;
+constexpr size_t kNumDim3 = 3;
 constexpr int kAnfPopulaterInputNumTwo = 2;
-}
+}  // namespace
 
 lite::STATUS UpdateConv2DParamPass::UpdateCommonConv2D(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
@@ -55,10 +59,10 @@ lite::STATUS UpdateConv2DParamPass::UpdateCommonConv2D(const CNodePtr &cnode) {
   auto default_param = weight_param->default_param();
   auto weight_tensor = std::dynamic_pointer_cast<tensor::Tensor>(default_param);
   auto weight_shape = weight_tensor->shape();
-  std::vector<int64_t> kernel_size = {weight_shape[1], weight_shape[2]};
+  std::vector<int64_t> kernel_size = {weight_shape[kNumDim1], weight_shape[kNumDim2]};
   conv->set_kernel_size(kernel_size);
-  conv->set_in_channel(weight_shape[3]);
-  conv->set_out_channel(weight_shape[0]);
+  conv->set_in_channel(weight_shape[kNumDim3]);
+  conv->set_out_channel(weight_shape[kNumDim0]);
   return lite::RET_OK;
 }
 

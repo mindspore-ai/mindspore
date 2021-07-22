@@ -39,6 +39,7 @@ constexpr size_t kInitialSize = 1024;
 constexpr int kMainGraphIndex = 0;
 constexpr int kCallInputMinSize = 1;
 constexpr int kSwitchInputMinSize = 3;
+constexpr int kNumDim2 = 2;
 
 void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *output_tensors) {
   if (input_tensors == nullptr) {
@@ -82,9 +83,9 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
       return;
     }
     for (int j = 0; j < data[1]; ++j) {
-      element_shape.push_back(data[j + 2]);
+      element_shape.push_back(data[j + kNumDim2]);
     }
-    tensor_shape = {data[data[1] + 2]};
+    tensor_shape = {data[data[1] + kNumDim2]};
   }
   lite_tensor = std::make_unique<TensorList>(tensor_shape, element_shape);
   if (lite_tensor == nullptr) {
