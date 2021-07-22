@@ -195,7 +195,10 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
   } else {
     update_meta_rsp_msg = "Success";
   }
-  (void)communicator_->SendResponse(update_meta_rsp_msg.data(), update_meta_rsp_msg.size(), message);
+  if (!communicator_->SendResponse(update_meta_rsp_msg.data(), update_meta_rsp_msg.size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
   return;
 }
 
@@ -213,7 +216,10 @@ void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps
   std::unique_lock<std::mutex> lock(mutex_[name]);
   PBMetadata stored_meta = metadata_[name];
   std::string getting_meta_rsp_msg = stored_meta.SerializeAsString();
-  (void)communicator_->SendResponse(getting_meta_rsp_msg.data(), getting_meta_rsp_msg.size(), message);
+  if (!communicator_->SendResponse(getting_meta_rsp_msg.data(), getting_meta_rsp_msg.size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
   return;
 }
 

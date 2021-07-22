@@ -85,6 +85,7 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
     grad_offset += IntToSize(lengths[i]);
   }
   float *grad_data = const_cast<float *>(values.data()) + grad_offset;
+  MS_EXCEPTION_IF_NULL(grad_data);
 #define google mindspore_private
   CHECK_EQ(size, IntToSize(lengths[grad_index]));
 #undef google
@@ -132,6 +133,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   void *dst_data = accum_grad_data + grads_offset_;
   void *src_data = incr_grad_data;
   MS_EXCEPTION_IF_NULL(dst_data);
+  MS_EXCEPTION_IF_NULL(src_data);
   int64_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
@@ -151,9 +153,9 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   }
 
   void *incr_indice_data_temp = const_cast<float *>(values.data()) + indice_offset;
-
   int *incr_indice_data = reinterpret_cast<int *>(incr_indice_data_temp);
 
+  MS_EXCEPTION_IF_NULL(incr_indice_data_temp);
   MS_EXCEPTION_IF_NULL(incr_indice_data);
   size_t incr_indice_size = lengths[indices_index];
   size_t incr_indice_data_size = incr_indice_size * sizeof(int);
@@ -162,6 +164,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   dst_data = accum_indices_data + indices_offset_;
   src_data = incr_indice_data;
   MS_EXCEPTION_IF_NULL(dst_data);
+  MS_EXCEPTION_IF_NULL(src_data);
   auto ret2 = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret2 != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret2 << ")";

@@ -62,7 +62,7 @@ bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
       MS_LOG(ERROR) << "Earliest model is nullptr.";
       return false;
     }
-    iteration_to_model_.erase(iteration_to_model_.begin());
+    (void)iteration_to_model_.erase(iteration_to_model_.begin());
   }
 
   // Copy new model data to the the stored model.

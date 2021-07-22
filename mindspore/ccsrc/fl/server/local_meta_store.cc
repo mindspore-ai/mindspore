@@ -22,7 +22,7 @@ namespace server {
 void LocalMetaStore::remove_value(const std::string &name) {
   std::unique_lock<std::mutex> lock(mtx_);
   if (key_to_meta_.count(name) != 0) {
-    key_to_meta_.erase(key_to_meta_.find(name));
+    (void)key_to_meta_.erase(key_to_meta_.find(name));
   }
 }
 
