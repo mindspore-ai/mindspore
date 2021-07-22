@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,10 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (pad_list.size() != 4) {
+      MS_LOG(EXCEPTION) << "Conv2dGpuFwdKernel pad_list must have length 4.";
+    }
+
     pad_height_ = pad_list[0];
     pad_width_ = pad_list[2];
     use_pad_ = !((pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]));

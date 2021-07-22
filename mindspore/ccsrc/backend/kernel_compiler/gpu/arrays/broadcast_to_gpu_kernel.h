@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,10 @@ class BroadcastToGpuKernel : public GpuKernel {
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     if (input_shapes.size() > SHAPE_SIZE || output_shapes.size() > SHAPE_SIZE) {
       MS_LOG(EXCEPTION) << "BroadcastTo operation not support dim greater than " << SHAPE_SIZE;
+    }
+
+    if (output_shapes.size() < input_shapes.size()) {
+      MS_LOG(EXCEPTION) << "The rank of BroadcastTo's output cannot be smaller than the rank of the input.";
     }
 
     size_t offset = output_shapes.size() - input_shapes.size();

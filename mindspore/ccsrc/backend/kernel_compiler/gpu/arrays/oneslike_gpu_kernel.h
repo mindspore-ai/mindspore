@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ class OnesLikeGpuKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
     int size = SizeToInt(input_size_ / sizeof(T));
+    MS_EXCEPTION_IF_NULL(output);
     CalOnesLike(size, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }

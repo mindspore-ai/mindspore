@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,6 +171,10 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
   void CheckShapeValidation(const std::vector<size_t> &logits_shape, const std::vector<size_t> &labels_shape) {
     size_t logits_dim_length = logits_shape.size();
     size_t labels_dim_length = labels_shape.size();
+    if (logits_dim_length == 0) {
+      MS_LOG(EXCEPTION) << "Logits shape cannot be empty";
+    }
+
     if (labels_dim_length != logits_dim_length) {
       MS_LOG(EXCEPTION) << "Labels shape length should be equal to Logits shape length for "
                            "SoftmaxCrossEntropyWithLogits, but got Labels "
@@ -178,7 +182,7 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
                         << labels_dim_length << ", Logits shape length:" << logits_dim_length;
     }
     if (!std::equal(labels_shape.begin(), labels_shape.end(), logits_shape.begin())) {
-      MS_LOG(EXCEPTION) << "The shape of labels should be the same as the shape of logits except its last demension.";
+      MS_LOG(EXCEPTION) << "The shape of labels should be the same as the shape of logits except its last dimension.";
     }
     return;
   }
