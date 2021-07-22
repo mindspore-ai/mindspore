@@ -33,7 +33,7 @@ class MaxmumGradNet(Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maximum_grad_random():
     np.random.seed(0)
@@ -49,7 +49,7 @@ def test_maximum_grad_random():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_broadcast_grad_cpu():
     x = np.array([[[[0.659578],

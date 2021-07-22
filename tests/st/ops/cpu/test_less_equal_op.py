@@ -30,7 +30,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_fp32():
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
@@ -84,7 +84,7 @@ def test_net_fp32():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_fp16():
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float16)
@@ -138,7 +138,7 @@ def test_net_fp16():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_int32():
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.int32)
@@ -156,7 +156,7 @@ def test_net_int32():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_int64():
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.int64)
@@ -174,7 +174,7 @@ def test_net_int64():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_float64():
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float64)
@@ -192,7 +192,7 @@ def test_net_float64():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_int16():
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.int16)

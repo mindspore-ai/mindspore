@@ -20,6 +20,7 @@
 namespace mindspore {
 namespace kernel {
 void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  CheckParam(kernel_node);
   std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (mode == "REFLECT") {
@@ -47,7 +48,6 @@ void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     tensor_size_ *= input_shape[i];
     input_shape_.push_back(SizeToLong(input_shape[i]));
   }
-
   std::vector<size_t> padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   num_paddings_ = SizeToLong(padding_shape[0]);
 
@@ -59,7 +59,6 @@ void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   int64_t max_width = input_shape_[3];
   int64_t max_height = input_shape_[2];
-
   if (mode_ == 1) {  // symmetric
     max_width = max_width + (2 * max_width);
     max_height = max_height + (2 * max_height);
@@ -110,7 +109,6 @@ void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   const int64_t padded_height = output_shape_[dim_offset];
   const int64_t padded_width = output_shape_[dim_offset + 1];
   const int64_t padd_dim = num_paddings_;
-
   const int64_t mode = mode_;
 
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers

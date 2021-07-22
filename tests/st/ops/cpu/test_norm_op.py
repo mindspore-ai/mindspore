@@ -41,7 +41,7 @@ class NetNorm(nn.Cell):
                 self.norm_4(indices))
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_norm():
     norm = NetNorm()

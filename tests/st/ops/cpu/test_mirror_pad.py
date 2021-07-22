@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -72,7 +72,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad_backprop():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -88,7 +88,7 @@ def test_mirror_pad_backprop():
     np.testing.assert_array_almost_equal(dx, expected_dx)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad_fwd_back_4d_int32_reflect():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -129,7 +129,7 @@ def test_mirror_pad_fwd_back_4d_int32_reflect():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mirror_pad_fwd_back_4d_int32_symm():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")

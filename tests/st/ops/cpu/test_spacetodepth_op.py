@@ -49,61 +49,61 @@ def SpaceToDepth(nptype):
     assert (output.asnumpy() == expect).all()
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_float32():
     SpaceToDepth(np.float32)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_float16():
     SpaceToDepth(np.float16)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_int32():
     SpaceToDepth(np.int32)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_int64():
     SpaceToDepth(np.int64)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_int8():
     SpaceToDepth(np.int8)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_int16():
     SpaceToDepth(np.int16)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint8():
     SpaceToDepth(np.uint8)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint16():
     SpaceToDepth(np.uint16)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint32():
     SpaceToDepth(np.uint32)
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_uint64():
     SpaceToDepth(np.uint64)

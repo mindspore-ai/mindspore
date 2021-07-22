@@ -32,7 +32,7 @@ class NetOnesLike(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_OnesLike():
     x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)

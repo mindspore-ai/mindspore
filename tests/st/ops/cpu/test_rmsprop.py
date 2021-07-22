@@ -82,7 +82,7 @@ def rmspropcented_numpy(variable, gradients, mean_gradients, mean_square, moment
 
 
 @pytest.mark.level0
-@pytest.mark.platform_cpu_training
+@pytest.mark.platform_cpu
 @pytest.mark.env_onecard
 def test_rmsprop():
     learning_rate, decay, momentum, epsilon, centered = [0.5, 0.8, 0.9, 1e-3, True]
@@ -143,7 +143,7 @@ def test_rmsprop():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_cpu_training
+@pytest.mark.platform_cpu
 @pytest.mark.env_onecard
 def test_rmspropcenter():
     learning_rate, decay, momentum, epsilon, centered = [0.1, 0.3, 0.9, 1.0, False]

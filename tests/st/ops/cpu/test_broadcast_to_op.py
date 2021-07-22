@@ -22,7 +22,7 @@ from mindspore.ops import operations as P
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -76,7 +76,7 @@ def test_broadcast():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_broadcast_dyn_init():
     """
@@ -105,7 +105,7 @@ def test_broadcast_dyn_init():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_broadcast_dyn_invalid_init():
     """
