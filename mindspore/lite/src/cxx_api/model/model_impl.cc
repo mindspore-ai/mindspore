@@ -74,7 +74,7 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
   auto session = std::shared_ptr<session::LiteSession>(lite::LiteSession::CreateSession(model_path, &lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
-    return kLiteNullptr;
+    return kLiteError;
   }
 
   session_.swap(session);

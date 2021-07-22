@@ -34,13 +34,22 @@ class OneHotCPUKernel : public InnerKernel {
   int OneHotImpl(int task_id);
 
  private:
-  int GetParams();
+  int InitParamsAndOnOffValue();
+  int InitOnOffValueForThreeInputs();
+  int InitOnOffValueForFourInputs();
 
  private:
   int thread_num_ = 1;
   int axis_ = 0;
   int outer_size_ = 0;
   int inner_size_ = 0;
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
+  float16_t on_value_ = 0.;
+  float16_t off_value_ = 0.;
+#else
+  float on_value_ = 0.;
+  float off_value_ = 0.;
+#endif
 };
 }  // namespace mindspore::kernel
 
