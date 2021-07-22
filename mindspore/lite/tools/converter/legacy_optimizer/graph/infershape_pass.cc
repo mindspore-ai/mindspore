@@ -577,9 +577,6 @@ void InferShapePass::ResetIncorrectTensorShape(MetaGraphT *graph) {
       auto shape = tensor->dims;
       if (shape == std::vector{-1}) {
         tensor->dims = {};
-        if (tensor->dataType == kObjectTypeTensorType) {
-          reinterpret_cast<TensorList *>(tensor.get())->set_tensors({});
-        }
       }
     }
   }
