@@ -208,7 +208,7 @@ void SwitchActor::AddInput(const KernelWithIndex node_with_index, const size_t b
       branch_inputs_pos_[branch].push_back(iter - input_nodes_.begin());
       return;
     }
-    device_tensor_store_keys_.push_back({input_nodes_.size(), node.get()});
+    device_tensor_store_keys_.emplace_back(input_nodes_.size(), node.get());
     branch_inputs_pos_[branch].push_back(input_nodes_.size());
     input_nodes_.push_back(node_with_index);
     return;
@@ -245,7 +245,7 @@ void SwitchActor::AddInput(const AnfNodePtr &node, const size_t branch) {
   } else if (IsCallNode(real_input.first)) {
     std::vector<AnfNodePtr> call_nodes;
     const auto call_output_num = FetchOutputSizebyCallNode(real_input.first, &call_nodes);
-    if (call_output_num <= 0) {
+    if (call_output_num == 0) {
       MS_LOG(EXCEPTION) << "Invalid output num for call input:" << AnfAlgo::GetNodeDebugString(real_input.first);
     }
     for (size_t i = 0; i < call_output_num; ++i) {
@@ -268,7 +268,7 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
         input_branch_ids_[context->sequential_num_].empty()) {
       MS_LOG(ERROR) << "Invalid branch id for actor:" + GetAID().Name();
     }
-    size_t branch_id = input_branch_ids_[context->sequential_num_].top();
+    auto branch_id = input_branch_ids_[context->sequential_num_].top();
     input_branch_ids_[context->sequential_num_].pop();
     if (branch_id_to_index_.find(branch_id) == branch_id_to_index_.end()) {
       MS_LOG(ERROR) << "Invalid branch id for switch actor:" + GetAID().Name() +
@@ -278,9 +278,8 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
   }
 
   DeviceTensor *device_tensor = input_device_tensors_[0];
-  if (device_tensor == nullptr) {
-    MS_LOG(ERROR) << "Index of switch actor is empty:" + GetAID().Name();
-  }
+  MS_EXCEPTION_IF_NULL(device_tensor);
+
   auto inputs = node_->inputs();
   TypeId type_id = AnfAlgo::GetOutputInferDataType(inputs[kSwitchCondPos], 0);
   size_t size = abstract::TypeIdSize(type_id);
@@ -291,7 +290,10 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
   int64_t index = 0;
   char buf[kMaxSwitchCondSize] = {0};
   ShapeVector host_shape;
-  device_tensor->SyncDeviceToHost(host_shape, size, type_id, static_cast<void *>(buf));
+  if (!device_tensor->SyncDeviceToHost(host_shape, size, type_id, static_cast<void *>(buf))) {
+    MS_LOG(ERROR) << GetAID().Name() + " get index from device address failed, type id:" + std::to_string(type_id) +
+                       ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
+  }
 
   if (type_id == TypeId::kNumberTypeInt32) {
     index = static_cast<int64_t>((static_cast<int32_t *>(static_cast<void *>(buf)))[0]);
@@ -306,7 +308,7 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
 
   // SwitchLayer node support negative index range [-size, -1].
   if (index < 0) {
-    index += branch_func_graph_.size();
+    index += SizeToInt(branch_func_graph_.size());
   }
   return static_cast<size_t>(index);
 }
@@ -403,7 +405,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
         " total:" + std::to_string(branch_inputs_pos_[index].size()) + " actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    size_t from_index = branch_inputs_pos_[index][result_arrow->from_output_index_];
+    size_t from_index = branch_inputs_pos_[index][IntToSize(result_arrow->from_output_index_)];
 
     MS_LOG(DEBUG) << "Switch actor:" << GetAID() << " send result addr:" << input_device_tensors_[from_index];
     bool is_send = false;
