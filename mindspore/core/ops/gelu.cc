@@ -57,6 +57,5 @@ AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GeLU, prim::kPrimGeLU, GeLUInfer, nullptr, true);
-
 }  // namespace ops
 }  // namespace mindspore

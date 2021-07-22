@@ -55,6 +55,5 @@ AbstractBasePtr ReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLU, prim::kPrimRelu, ReLUInfer, nullptr, true);
-
 }  // namespace ops
 }  // namespace mindspore

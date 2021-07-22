@@ -27,6 +27,5 @@ int64_t GLU::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
   return GetValue<int64_t>(value_ptr);
 }
-
 }  // namespace ops
 }  // namespace mindspore
