@@ -50,6 +50,10 @@ ge::Operator *ConcatNPUOp::GetNPUOp() { return this->concat_; }
 
 int ConcatNPUOp::HandleAxis() {
   axis_ = TransFormAxis(axis_);
+  if (axis_ == NCHW_INVALID) {
+    MS_LOG(ERROR) << "Transform axis for concat op failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

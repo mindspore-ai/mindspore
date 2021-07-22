@@ -65,18 +65,18 @@ std::vector<int64_t> GetNpuTensorShape(int dim, std::shared_ptr<hiai::AiTensor> 
 }
 
 std::vector<int> ExpandShapeTo4d(const std::vector<int> &shape) {
-  if (shape.size() == 0 || shape.size() >= 4) {
+  if (shape.size() == 0 || shape.size() >= NPU_SHAPE_SIZE) {
     return shape;
   }
   std::vector<int> ret{shape};
-  for (auto i = shape.size(); i < 4; ++i) {
+  for (auto i = shape.size(); i < NPU_SHAPE_SIZE; ++i) {
     ret.push_back(1);
   }
   return ret;
 }
 
 bool IsSameShapeTensor(mindspore::MSTensor tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
-  if (tensor.Shape().size() > 4) {
+  if (tensor.Shape().size() > NPU_SHAPE_SIZE) {
     MS_LOG(ERROR) << "Npu does not support output tensor dims greater than 4";
     return false;
   }

@@ -279,6 +279,5 @@ std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::
 
   return tensors;
 }
-
 }  // namespace lite
 }  // namespace mindspore

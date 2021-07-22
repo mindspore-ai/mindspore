@@ -17,6 +17,7 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 #include "src/common/log_adapter.h"
 namespace mindspore {
+#define C4NUM 4
 #define C8NUM 8
 #ifdef ENABLE_ARM64
 void Float32ToFloat16(const float *__restrict input, float16_t *__restrict output, int number) {
@@ -25,7 +26,7 @@ void Float32ToFloat16(const float *__restrict input, float16_t *__restrict outpu
   for (; i < count; i += C8NUM) {
     float32x4_t in1 = vld1q_f32(input + i);
     float16x4_t out1 = vcvt_f16_f32(in1);
-    float32x4_t in2 = vld1q_f32(input + i + 4);
+    float32x4_t in2 = vld1q_f32(input + i + C4NUM);
     float16x4_t out2 = vcvt_f16_f32(in2);
     float16x8_t out = vcombine_f16(out1, out2);
     vst1q_f16(output + i, out);
@@ -45,7 +46,7 @@ void Float16ToFloat32(const float16_t *__restrict input, float *__restrict outpu
     float32x4_t out1 = vcvt_f32_f16(in1);
     vst1q_f32(output + i, out1);
     float32x4_t out2 = vcvt_f32_f16(in2);
-    vst1q_f32(output + i + 4, out2);
+    vst1q_f32(output + i + C4NUM, out2);
   }
   for (; i < number; ++i) {
     output[i] = static_cast<float>(input[i]);
@@ -172,17 +173,35 @@ int ConverterToNPUEltwiseMode(schema::EltwiseMode mode) {
 
 int TransFormAxis(int axis) {
   switch (axis) {
-    case 0:
-      return 0;
-    case 1:
-      return 2;
-    case 2:
-      return 3;
-    case 3:
-    case -1:
-      return 1;
+    case NHWC_N:
+      return NCHW_N;
+    case NHWC_H:
+      return NCHW_H;
+    case NHWC_W:
+      return NCHW_W;
+    case NHWC_C:
+      return NCHW_C;
     default:
-      return -2;
+      return NCHW_INVALID;
+  }
+}
+
+int ConverterToNPUActivationMode(schema::ActivationType type) {
+  switch (type) {
+    case schema::ActivationType_SIGMOID:
+      return SIGMOID;
+    case schema::ActivationType_RELU:
+      return RELU;
+    case schema::ActivationType_TANH:
+      return TANH;
+    case schema::ActivationType_LEAKY_RELU:
+      return P_RELU;
+    case schema::ActivationType_HSIGMOID:
+      return HARD_SIGMOID;
+    case schema::ActivationType_RELU6:
+      return RELU6;
+    default:
+      return ACTIVATION_INVALID;
   }
 }
 

@@ -278,7 +278,6 @@ int NPUSubGraph::Init() {
   npu_manager_->AddModel(model_buffer_data, GetOMModelName(), npu_manager_->GetFrequency());
 
   executor_ = new (std::nothrow) NPUExecutor(GetOMModelName(), npu_manager_);
-
   if (executor_ == nullptr) {
     MS_LOG(ERROR) << "Create NPUExecutor failed.";
     return RET_ERROR;

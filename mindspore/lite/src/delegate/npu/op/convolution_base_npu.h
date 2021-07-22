@@ -22,6 +22,10 @@
 #include "include/graph/op/all_ops.h"
 #include "src/delegate/npu/op/npu_op.h"
 namespace mindspore {
+constexpr int WEIGHT_INDEX = 1;
+constexpr int BIAS_INDEX = 2;
+constexpr int CONV_INPUT_SIZE = 3;
+
 class ConvolutionBaseNPUOp : public NPUOp {
  public:
   ConvolutionBaseNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,

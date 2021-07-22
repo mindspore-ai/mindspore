@@ -50,12 +50,12 @@ void GruCPUKernel::FreeTmpBuffer() {
 }
 
 void GruCPUKernel::FreeRunBuffer() {
-  ms_context_->allocator->Free(buffer_[0]);
-  ms_context_->allocator->Free(buffer_[1]);
+  ms_context_->allocator->Free(buffer_[packed_input_index]);
+  ms_context_->allocator->Free(buffer_[input_gate_index]);
   if (!is_vec_) {
-    ms_context_->allocator->Free(buffer_[2]);
+    ms_context_->allocator->Free(buffer_[packed_state_index]);
   }
-  ms_context_->allocator->Free(buffer_[3]);
+  ms_context_->allocator->Free(buffer_[state_gate_index]);
 }
 
 int GruCPUKernel::InitParam() {
@@ -69,11 +69,11 @@ int GruCPUKernel::InitParam() {
   auto weight_g = in_tensors_.at(1);
   MS_ASSERT(weight_g != nullptr);
   std::vector<int> w_shape = weight_g->shape();
-  gru_param_->hidden_size_ = w_shape.at(1) / 3;
+  gru_param_->hidden_size_ = w_shape.at(1) / gate_num;
 
   gru_param_->output_step_ = gru_param_->bidirectional_ ? 2 * gru_param_->batch_ * gru_param_->hidden_size_
                                                         : gru_param_->batch_ * gru_param_->hidden_size_;
-  weight_batch_ = gru_param_->bidirectional_ ? 6 : 3;
+  weight_batch_ = gru_param_->bidirectional_ ? 2 * gate_num : gate_num;
 
 #ifdef ENABLE_AVX
   row_tile_ = C6NUM;
@@ -154,7 +154,7 @@ int GruCPUKernel::InitStateWeightBias() {
     return RET_ERROR;
   }
   memset(state_bias_, 0, weight_batch_ * gru_param_->state_col_align_ * sizeof(float));
-  auto state_bias = reinterpret_cast<float *>(in_tensors_.at(3)->data_c()) + 3 * gru_param_->hidden_size_;
+  auto state_bias = reinterpret_cast<float *>(in_tensors_.at(3)->data_c()) + gate_num * gru_param_->hidden_size_;
   PackLstmBias(state_bias_, state_bias, weight_batch_, gru_param_->hidden_size_, gru_param_->state_col_align_,
                gru_param_->bidirectional_);
   return RET_OK;
@@ -195,32 +195,32 @@ int GruCPUKernel::MallocRunBuffer() {
   for (int i = 0; i < 4; i++) {
     buffer_[i] = nullptr;
   }
-  buffer_[0] = reinterpret_cast<float *>(
+  buffer_[packed_input_index] = reinterpret_cast<float *>(
     ms_context_->allocator->Malloc(gru_param_->input_row_align_ * gru_param_->input_size_ * sizeof(float)));
-  if (buffer_[0] == nullptr) {
+  if (buffer_[packed_input_index] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc input * weight left matirx error.";
     return RET_ERROR;
   }
 
-  buffer_[1] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(3 * gru_param_->seq_len_ * gru_param_->batch_ *
-                                                                        gru_param_->hidden_size_ * sizeof(float)));
-  if (buffer_[1] == nullptr) {
+  buffer_[input_gate_index] = reinterpret_cast<float *>(ms_context_->allocator->Malloc(
+    gate_num * gru_param_->seq_len_ * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float)));
+  if (buffer_[input_gate_index] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc input * weight result matirx error.";
     return RET_ERROR;
   }
 
   if (!is_vec_) {
-    buffer_[2] = reinterpret_cast<float *>(
+    buffer_[packed_state_index] = reinterpret_cast<float *>(
       ms_context_->allocator->Malloc(gru_param_->state_row_align_ * gru_param_->hidden_size_ * sizeof(float)));
-    if (buffer_[2] == nullptr) {
+    if (buffer_[packed_state_index] == nullptr) {
       MS_LOG(ERROR) << "GruCPUKernel malloc state * weight left matirx error.";
       return RET_ERROR;
     }
   }
 
-  buffer_[3] = reinterpret_cast<float *>(
-    ms_context_->allocator->Malloc(3 * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float)));
-  if (buffer_[3] == nullptr) {
+  buffer_[state_gate_index] = reinterpret_cast<float *>(
+    ms_context_->allocator->Malloc(gate_num * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float)));
+  if (buffer_[state_gate_index] == nullptr) {
     MS_LOG(ERROR) << "GruCPUKernel malloc state gate buffer error.";
     return RET_ERROR;
   }

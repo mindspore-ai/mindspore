@@ -17,10 +17,14 @@
 #include "src/delegate/npu/op/matmul_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
+constexpr int BIAS_INDEX = 2;
+constexpr int MATMUL_OUTPUT_DIM = 2;
+constexpr int MATMUL_INPUT_SIZE = 3;
+
 int MatMulNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors.size() == 3) {
-    if (in_tensors[2].Shape().size() != 1) {
+  if (in_tensors.size() == MATMUL_INPUT_SIZE) {
+    if (in_tensors[BIAS_INDEX].Shape().size() != 1) {
       return RET_NOT_SUPPORT;
     }
   }
@@ -34,7 +38,7 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
     MS_LOG(ERROR) << "New matmul npu operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
-  if (in_tensors.size() == 3) {
+  if (in_tensors.size() == MATMUL_INPUT_SIZE) {
     has_bias_ = true;
   }
   auto matmul_prim = primitive->value_as_MatMul();
@@ -59,15 +63,15 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
       return RET_ERROR;
     }
     add_op_->set_input_x1(*matmul_);
-    auto bias_shape = in_tensors[2].Shape();
-    auto bias_tensor = ConverterToNPUTensor(in_tensors[2]);
+    auto bias_shape = in_tensors[BIAS_INDEX].Shape();
+    auto bias_tensor = ConverterToNPUTensor(in_tensors[BIAS_INDEX]);
     if (bias_tensor == nullptr) {
       MS_LOG(ERROR) << "Get bias_tensor failed.";
       return RET_ERROR;
     }
 
     ge::TensorDesc bias_tensor_desc(ConverterToNPUShape({1, bias_shape[0], 1, 1}));
-    if (out_tensors[0].Shape().size() == 2) {
+    if (out_tensors[0].Shape().size() == MATMUL_OUTPUT_DIM) {
       bias_tensor_desc.SetShape(ConverterToNPUShape({1, bias_shape[0]}));
     }
     bias_tensor->SetTensorDesc(bias_tensor_desc);

@@ -20,6 +20,10 @@
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
+constexpr int SCALE_INDEX = 1;
+constexpr int SHIFT_INDEX = 2;
+constexpr int POWER_INDEX = 3;
+
 int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 2 && in_tensors.size() != 3 && in_tensors.size() != 4) {
@@ -77,18 +81,18 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::Weights power{nvinfer1::DataType::kFLOAT, nullptr, 0};
   nvinfer1::Weights shift{nvinfer1::DataType::kFLOAT, nullptr, 0};
   nvinfer1::Weights scale{nvinfer1::DataType::kFLOAT, nullptr, 0};
-  if (in_tensors_.size() >= 2) {
-    scale.values = in_tensors_[1].MutableData();
-    scale.count = in_tensors_[1].ElementNum();
+  if (in_tensors_.size() > SCALE_INDEX) {
+    scale.values = in_tensors_[SCALE_INDEX].MutableData();
+    scale.count = in_tensors_[SCALE_INDEX].ElementNum();
     nd = input_weight_shape.size() == 1 ? false : true;
   }
-  if (in_tensors_.size() >= 3) {
-    shift.values = in_tensors_[2].MutableData();
-    shift.count = in_tensors_[2].ElementNum();
+  if (in_tensors_.size() > SHIFT_INDEX) {
+    shift.values = in_tensors_[SHIFT_INDEX].MutableData();
+    shift.count = in_tensors_[SHIFT_INDEX].ElementNum();
   }
-  if (in_tensors_.size() >= 4) {
-    power.values = in_tensors_[3].MutableData();
-    power.count = in_tensors_[3].ElementNum();
+  if (in_tensors_.size() > POWER_INDEX) {
+    power.values = in_tensors_[POWER_INDEX].MutableData();
+    power.count = in_tensors_[POWER_INDEX].ElementNum();
   }
   nvinfer1::IScaleLayer *cal_layer = nullptr;
   if (nd) {

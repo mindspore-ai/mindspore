@@ -15,6 +15,8 @@
  */
 
 #include "src/delegate/npu/transpose_kernel.h"
+#include "src/delegate/npu/npu_converter_utils.h"
+#include "src/delegate/npu/op/npu_op.h"
 namespace mindspore {
 #define C8NUM 8
 #ifdef ENABLE_ARM64
@@ -142,7 +144,7 @@ int TransposeNPUKernel::Execute() {
     return RET_ERROR;
   }
   auto shape = inputs()[0].Shape();
-  if (shape.size() != 4) {
+  if (shape.size() != NPU_SHAPE_SIZE) {
     MS_LOG(ERROR) << "NPU transpose op only supports input of 4 dims.";
     return RET_ERROR;
   }
@@ -151,9 +153,9 @@ int TransposeNPUKernel::Execute() {
   auto input = in_tensor.Data().get();
   auto output = out_tensor.MutableData();
   if (perm_ == nh2nc_perm) {
-    PackNHWCToNCHWFp32(input, output, shape[0], shape[1] * shape[2], shape[3]);
+    PackNHWCToNCHWFp32(input, output, shape[NHWC_N], shape[NHWC_H] * shape[NHWC_W], shape[NHWC_C]);
   } else if (perm_ == nc2nh_perm) {
-    PackNCHWToNHWCFp32(input, output, shape[0], shape[2] * shape[3], shape[1]);
+    PackNCHWToNHWCFp32(input, output, shape[NCHW_N], shape[NCHW_H] * shape[NCHW_W], shape[NCHW_C]);
   } else {
     MS_LOG(ERROR) << "NPU transpose op only supports nhwc->nchw or nchw->nhwc.";
     return RET_ERROR;

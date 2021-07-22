@@ -16,6 +16,7 @@
 #include "src/delegate/npu/pass/npu_transform_pass.h"
 #include <vector>
 #include "src/delegate/npu/pass/npu_pass_utils.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -29,8 +30,9 @@ std::set<mindspore::schema::PrimitiveType> nchw_nodes = {
 int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops) {
   bool is_input_op = op->in_ops().empty();
   // not always single input (like CropAndResize), but we care about the input with 4d.
-  auto it = std::find_if(op->in_ops().begin(), op->in_ops().end(),
-                         [](NPUOp *k) { return k->outputs().size() > 0 && k->outputs()[0].Shape().size() == 4; });
+  auto it = std::find_if(op->in_ops().begin(), op->in_ops().end(), [](NPUOp *k) {
+    return k->outputs().size() > 0 && k->outputs()[0].Shape().size() == NPU_SHAPE_SIZE;
+  });
   if (!is_input_op && it == op->in_ops().end()) {
     MS_LOG(ERROR) << "NPU Transform pass does not find in op with 4d output";
     return RET_ERROR;
@@ -44,7 +46,7 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
     // Create pre transform op's out tensor.
     auto name = op->name() + "_pre_trans" + "_Nhwc2Nchw_" + std::to_string(total++);
     auto nhwc_shape = op->inputs()[0].Shape();
-    std::vector<int64_t> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
+    std::vector<int64_t> nchw_shape = {nhwc_shape[NHWC_N], nhwc_shape[NHWC_C], nhwc_shape[NHWC_H], nhwc_shape[NHWC_W]};
     auto tensor =
       mindspore::MSTensor::CreateTensor(name + "/output0", op->inputs()[0].DataType(), nchw_shape, nullptr, 0);
     if (tensor == nullptr) {
@@ -100,7 +102,7 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
   auto name = op->name() + "_post_trans" + "_Nchw2Nhwc" + std::to_string(total++);
 
   auto nhwc_shape = op->outputs()[0].Shape();
-  std::vector<int64_t> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
+  std::vector<int64_t> nchw_shape = {nhwc_shape[NHWC_N], nhwc_shape[NHWC_C], nhwc_shape[NHWC_H], nhwc_shape[NHWC_W]};
   auto nc2nh_tensor =
     mindspore::MSTensor::CreateTensor(name + "/input0", op->outputs()[0].DataType(), nchw_shape, nullptr, 0);
   if (nc2nh_tensor == nullptr) {

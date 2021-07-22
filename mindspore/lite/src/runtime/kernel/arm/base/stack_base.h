@@ -40,7 +40,7 @@ class StackBaseCPUKernel : public InnerKernel {
   size_t copy_size_ = 0;
   int outer_size_ = 1;
   int num_threads_ = 1;
-  char **all_inputs_ = nullptr;
+  void **all_inputs_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_STACK_BASE_H_

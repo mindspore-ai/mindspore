@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Stack(char **inputs, char *output, size_t input_num, size_t copy_size, int outer_start, int outer_end);
+void Stack(void **inputs, void *output, size_t input_num, size_t copy_size, int outer_start, int outer_end);
 #ifdef __cplusplus
 }
 #endif

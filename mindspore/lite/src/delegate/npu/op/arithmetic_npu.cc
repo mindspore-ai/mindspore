@@ -15,9 +15,9 @@
  */
 
 #include "src/delegate/npu/op/arithmetic_npu.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
-constexpr int RELU_MODE = 1;
-constexpr int RELU6_MODE = 14;
+constexpr int ARITHMETIC_INPUT_NUM = 2;
 int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors[0].Shape() != in_tensors[1].Shape()) {
@@ -30,7 +30,7 @@ int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
     MS_LOG(WARNING) << name_ << " not support input 1d";
     return RET_NOT_SUPPORT;
   }
-  if (type == mindspore::schema::PrimitiveType_Equal && in_tensors[0].Shape().size() == 2) {
+  if (type == mindspore::schema::PrimitiveType_Equal && in_tensors[0].Shape().size() == ARITHMETIC_INPUT_NUM) {
     MS_LOG(WARNING) << name_ << " not support input 2d";
     return RET_NOT_SUPPORT;
   }
@@ -121,14 +121,12 @@ int ArithmeticNPUOp::SetActivation() {
       MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
       return RET_ERROR;
     }
-    if (act_type_ == schema::ActivationType_RELU) {
-      act_->set_attr_mode(RELU_MODE);
-    } else if (act_type_ == schema::ActivationType_RELU6) {
-      act_->set_attr_mode(RELU6_MODE);
-    } else {
+    auto act_mode = ConverterToNPUActivationMode(act_type_);
+    if (act_mode == ACTIVATION_INVALID) {
       MS_LOG(ERROR) << "Unsupported activation type for op " << name_;
       return RET_ERROR;
     }
+    act_->set_attr_mode(act_mode);
     act_->set_input_x(*op_);
   }
   return RET_OK;

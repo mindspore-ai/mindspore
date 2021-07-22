@@ -18,6 +18,9 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
+constexpr int OFFSET_INDEX = 1;
+constexpr int SLICE_SIZE_INDEX = 2;
+
 int SliceNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                      const std::vector<mindspore::MSTensor> &out_tensors) {
   slice_ = new (std::nothrow) hiai::op::Slice(name_);
@@ -32,8 +35,8 @@ int SliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
   slice_->set_input_x(*npu_inputs[0]);
-  slice_->set_input_offsets(*npu_inputs[1]);
-  slice_->set_input_size(*npu_inputs[2]);
+  slice_->set_input_offsets(*npu_inputs[OFFSET_INDEX]);
+  slice_->set_input_size(*npu_inputs[SLICE_SIZE_INDEX]);
   return RET_OK;
 }
 

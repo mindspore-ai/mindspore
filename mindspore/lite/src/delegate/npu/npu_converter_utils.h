@@ -29,6 +29,41 @@
 #include "include/api/data_type.h"
 
 namespace mindspore {
+enum NCHW_SHAPE { NCHW_INVALID = -1, NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
+enum NHWC_SHAPE { NHWC_N = 0, NHWC_H = 1, NHWC_W = 2, NHWC_C = 3 };
+
+enum NPU_ACTIVATION_MODE {
+  ACTIVATION_INVALID = -1,
+  SIGMOID = 0,
+  RELU = 1,
+  TANH = 2,
+  CLIPPED_RELU = 3,
+  ELU = 4,
+  P_RELU = 5,
+  ABS = 6,
+  RELU1 = 7,
+  SOFTSIGN = 8,
+  SOFTPLUS = 9,
+  HARD_SIGMOID = 10,
+  THRESHOLD_RELU = 11,
+  SELU = 12,
+  LINEAR = 13,
+  RELU6 = 14,
+  GELU = 15,
+};
+
+enum PAD {
+  PAD_UP = 0,
+  PAD_DOWN = 1,
+  PAD_LEFT = 2,
+  PAD_RIGHT = 3,
+};
+
+enum NPU_PAD_MODE {
+  PAD_VALID = 5,
+  PAD_SAME = 6,
+};
+
 #ifdef ENABLE_ARM64
 void Float32ToFloat16(const float *__restrict input, float16_t *__restrict output, int number);
 
@@ -46,6 +81,8 @@ ge::DataType ConverterToNPUDataType(DataType type_id);
 ge::Shape ConverterToNPUShape(const std::vector<int64_t> &src_shape);
 
 int ConverterToNPUEltwiseMode(schema::EltwiseMode mode);
+
+int ConverterToNPUActivationMode(schema::ActivationType type);
 
 int TransFormAxis(int axis);
 
