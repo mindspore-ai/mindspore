@@ -14,7 +14,7 @@
 # ===========================================================================
 """Cost model splitter"""
 import os
-from functools import reduce
+from functools import reduce as prod_reduce
 from mindspore import log as logger
 from .model import PrimLib, Graph, Tensor, Operator
 from .model import DataFormat as DF
@@ -98,6 +98,7 @@ class GraphSplitByPattern:
             return str(self)
 
         def get_relation(self, op, i):
+            """Get op relation"""
             relation = PrimLib.UNKNOWN
             _, elem_relation = PrimLib.input_relation(op, i)
             for r in elem_relation:
@@ -122,6 +123,7 @@ class GraphSplitByPattern:
                 self.reach_tab.sync(self.unique_id, out.unique_id)
 
         def update_stitch_info(self, stitch_info):
+            """Update stitch info"""
             if stitch_info.stitch_ops:
                 self.stitch_info.stitch_ops.update(stitch_info.stitch_ops)
             if stitch_info.stitch_atomic_ops:
@@ -180,9 +182,11 @@ class GraphSplitByPattern:
             return True
 
         def dom_op(self):
+            """Get dom op"""
             return self.ops[0]
 
         def reduce_out_exclude(self, area):
+            """Check whether op is redcue_out_exclude """
             if self.output_excluded:
                 for op in self.output_excluded:
                     if op in area.ops:
@@ -265,7 +269,7 @@ class GraphSplitByPattern:
         limit_size = 200  # an experience number
         area_sizes = map(lambda area: len(area.ops), fuse_areas)
         dom_size = len(dominant.ops)
-        if dom_size + reduce(lambda x, y: x+y, area_sizes) <= limit_size:
+        if dom_size + prod_reduce(lambda x, y: x + y, area_sizes) <= limit_size:
             return fuse_areas
         # fuse the smaller area in priority
         fuse_areas.sort(key=lambda area: len(area.ops))
@@ -561,6 +565,7 @@ class GraphSplitGpu(GraphSplitByPattern):
     REDUCE_FUSE_DEPTH = 20
 
     def get_default_mode(self, op):
+        """Get default mode in GPU"""
         if op.prim == "MatMul":
             return self.Area.MODE_COMPOSITE if op.inputs[0].dtype == "float16" and op.attrs['Akg'] else \
                 self.Area.MODE_BASIC
@@ -693,7 +698,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             op = dom.ops[0]
             reduce_axis = op.attrs["reduce_axis"]
             if len(op.inputs[0].shape) - 1 in reduce_axis:
-                reduce_size = reduce(lambda x, y: x * y, [op.inputs[0].shape[i] for i in reduce_axis])
+                reduce_size = prod_reduce(lambda x, y: x * y, [op.inputs[0].shape[i] for i in reduce_axis])
                 return reduce_size >= 1024
             return True
 
@@ -748,7 +753,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             if a.pattern <= PrimLib.REDUCE and r <= PrimLib.BROADCAST and dom.check_acyclic(a):
                 if _reduce_nums(a.ops) < 2:
                     dom_outs = [op.output for op in dom.ops]
-                    a_ins = [input for op in a.ops for input in op.inputs]
+                    a_ins = [op_input for op in a.ops for op_input in op.inputs]
                     a_outs = [op.output for op in a.ops]
                     a_final_outs = [tensor for tensor in a_outs if tensor not in a_ins]
                     stitch_tensors = [tensor for tensor in dom_outs if tensor in a_ins]
@@ -827,6 +832,7 @@ class GraphSplitAscend(GraphSplitByPattern):
     REDUCE_FUSE_DEPTH = 10
 
     def get_default_mode(self, op):
+        """Get default mode in Ascend"""
         if op.prim == "MatMul" or op.prim == "BatchMatMul":
             return self.Area.MODE_COMPOSITE if op.inputs[0].dtype == "float16" else self.Area.MODE_BASIC
         if op.prim in ("Tile", "BroadcastTo", "ExpandDims"):

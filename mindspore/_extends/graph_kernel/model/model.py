@@ -74,12 +74,6 @@ class DataType:
     BOOL = "bool"
 
 
-class Config:
-    R0 = 8.0
-    UB_SIZE = 256 * 1024
-    MAX_BLOCK = 32
-
-
 class PrimLib:
     """Prim lib"""
 
@@ -101,6 +95,7 @@ class PrimLib:
                 self.relation_func = lambda *x: self.default_relation_func[iter_type](self, *x)
 
         def default_reshape_relation(self, op, input_idx):
+            """Process reshape relation"""
             axis_relation, elem_relation = self.unknown_relation(op, input_idx)
             elem_relation = [PrimLib.RESHAPE] * len(elem_relation)
             return axis_relation, elem_relation
@@ -198,6 +193,7 @@ class PrimLib:
 
     @classmethod
     def get_prim(cls, op):
+        """get op primtive"""
         prim = cls.primtives.get(op.prim, None)
         if prim is None:
             print('[WARN] primtive is not registered: ' + op.prim)
@@ -206,22 +202,27 @@ class PrimLib:
 
     @classmethod
     def input_relation(cls, op, input_idx):
+        """According to input_idx to get op's input_relation"""
         return cls.get_prim(op).relation_func(op, input_idx)
 
     @classmethod
     def iter_type(cls, op):
+        """Get op's iter type"""
         return cls.get_prim(op).iter_type
 
     @classmethod
     def is_reduce(cls, op):
+        """Check whether op's iter type is reduce"""
         return cls.get_prim(op).iter_type == cls.REDUCE
 
     @classmethod
     def calibrate_iter_size(cls, op, iter_size):
+        """Get calibrate_iter_size"""
         return cls.get_prim(op).calibrate * iter_size
 
     @classmethod
     def dtype_bytes(cls, dtype):
+        """Get dtype bytes"""
         bits, unit = 1, 1
         for i in range(len(dtype) - 1, 0, -1):
             if dtype[i].isdecimal():
@@ -233,6 +234,7 @@ class PrimLib:
 
     @classmethod
     def inplace_reuse(cls, op, input_idx, start_axis=0):
+        """Check whether op is inplace reuse"""
         if cls.dtype_bytes(op.output.dtype) > cls.dtype_bytes(op.inputs[input_idx].dtype):
             return False
         _, elem_relation = cls.get_prim(op).relation_func(op, input_idx)
@@ -250,6 +252,8 @@ class Tensor:
     PARA_OUTPUT = 2
 
     class Buddy:
+        """Buddy"""
+
         def __init__(self, leader):
             self.members = [leader]
 
@@ -301,6 +305,7 @@ class Value:
         return "%s.%s%s" % (self.name, self.dtype, str(list(self.shape)))
 
     def get_size(self):
+        """Get Size"""
         return 1
 
 
@@ -338,6 +343,7 @@ class Graph:
         self.outputs = []
         self.stitch_info = stitch_info
         self.recompute_ops = recompute_ops
+        self.processor = ''
 
     def set_processor(self, processor):
         """Set processor"""
@@ -471,7 +477,7 @@ class AlignShape(GraphVisitor):
     """Align shape"""
 
     def __init__(self):
-        super().__init__()
+        super(AlignShape, self).__init__()
 
     def visit(self, op):
         """Visit op node"""
@@ -490,7 +496,7 @@ class AddControlBuddy(GraphVisitor):
     """Add control buddy"""
 
     def __init__(self):
-        super().__init__()
+        super(AddControlBuddy, self).__init__()
         self.buddies = {}  # {op : [ctrl_op]}
 
     def visit(self, op):
@@ -509,13 +515,15 @@ class AddControlBuddy(GraphVisitor):
 
     def visit_graph(self, graph):
         """Visit graph nodes"""
-        super().visit_graph(graph)
+        super(AddControlBuddy, self).visit_graph(graph)
         for owner in self.buddies:
             for op in self.buddies[owner]:
                 owner.add_buddy(op.output)
 
 
 class GraphKernelUnsupportedException(Exception):
+    """"GraphKernel Unsupported Exception"""
+
     def __init__(self, message):
-        super().__init__()
+        super(GraphKernelUnsupportedException, self).__init__()
         self.message = message
