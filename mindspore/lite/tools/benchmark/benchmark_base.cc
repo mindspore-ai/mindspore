@@ -20,6 +20,7 @@
 #undef __STDC_FORMAT_MACROS
 #include <algorithm>
 #include <utility>
+#include <regex>
 #include <functional>
 #include "include/context.h"
 #include "include/ms_tensor.h"
@@ -36,6 +37,26 @@
 
 namespace mindspore {
 namespace lite {
+constexpr int kThreadNumMin = 1;
+constexpr int kParallelThreadNumMin = 1;
+constexpr int kColumnLen = 4;
+constexpr int kPrintColNum = 5;
+constexpr int kPrintRowLenMax = 100;
+
+constexpr float kInputDataFloatMin = 0.1f;
+constexpr float kInputDataFloatMax = 1.0f;
+constexpr double kInputDataDoubleMin = 0.1;
+constexpr double kInputDataDoubleMax = 1.0;
+constexpr int64_t kInputDataInt64Min = 0;
+constexpr int64_t kInputDataInt64Max = 1;
+constexpr int32_t kInputDataInt32Min = 0;
+constexpr int32_t kInputDataInt32Max = 1;
+constexpr int16_t kInputDataInt16Min = 0;
+constexpr int16_t kInputDataInt16Max = 1;
+constexpr int16_t kInputDataInt8Min = -127;
+constexpr int16_t kInputDataInt8Max = 127;
+constexpr int16_t kInputDataUint8Min = 0;
+constexpr int16_t kInputDataUint8Max = 254;
 
 const std::unordered_map<int, std::string> TYPE_ID_MAP{
   {kNumberTypeFloat16, "Float16"}, {kNumberTypeFloat, "Float32"},    {kNumberTypeFloat32, "Float32"},
@@ -55,26 +76,31 @@ int BenchmarkBase::GenerateRandomData(size_t size, void *data, int data_type) {
   switch (data_type) {
     case kNumberTypeFloat32:
     case kNumberTypeFloat:
-      FillInputData<float>(size, data, std::uniform_real_distribution<float>(0.1f, 1.0f));
+      FillInputData<float>(size, data, std::uniform_real_distribution<float>(kInputDataFloatMin, kInputDataFloatMax));
       break;
     case kNumberTypeFloat64:
-      FillInputData<double>(size, data, std::uniform_real_distribution<double>(0.1, 1.0));
+      FillInputData<double>(size, data,
+                            std::uniform_real_distribution<double>(kInputDataDoubleMin, kInputDataDoubleMax));
       break;
     case kNumberTypeInt64:
-      FillInputData<int64_t>(size, data, std::uniform_int_distribution<int64_t>(0, 1));
+      FillInputData<int64_t>(size, data,
+                             std::uniform_int_distribution<int64_t>(kInputDataInt64Min, kInputDataInt64Max));
       break;
     case kNumberTypeInt:
     case kNumberTypeInt32:
-      FillInputData<int32_t>(size, data, std::uniform_int_distribution<int32_t>(0, 1));
+      FillInputData<int32_t>(size, data,
+                             std::uniform_int_distribution<int32_t>(kInputDataInt32Min, kInputDataInt32Max));
       break;
     case kNumberTypeInt16:
-      FillInputData<int16_t>(size, data, std::uniform_int_distribution<int16_t>(0, 1));
+      FillInputData<int16_t>(size, data,
+                             std::uniform_int_distribution<int16_t>(kInputDataInt16Min, kInputDataInt16Max));
       break;
     case kNumberTypeInt8:
-      FillInputData<int8_t>(size, data, std::uniform_int_distribution<int16_t>(-127, 127));
+      FillInputData<int8_t>(size, data, std::uniform_int_distribution<int16_t>(kInputDataInt8Min, kInputDataInt8Max));
       break;
     case kNumberTypeUInt8:
-      FillInputData<uint8_t>(size, data, std::uniform_int_distribution<uint16_t>(0, 254));
+      FillInputData<uint8_t>(size, data,
+                             std::uniform_int_distribution<uint16_t>(kInputDataUint8Min, kInputDataUint8Max));
       break;
     default:
       char *casted_data = static_cast<char *>(data);
@@ -200,14 +226,14 @@ void BenchmarkFlags::InitResizeDimsList() {
 }
 
 int BenchmarkBase::CheckThreadNumValid() {
-  if (this->flags_->num_threads_ < 1) {
+  if (this->flags_->num_threads_ < kThreadNumMin) {
     MS_LOG(ERROR) << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0";
     std::cerr << "numThreads:" << this->flags_->num_threads_ << " must be greater than 0" << std::endl;
     return RET_ERROR;
   }
 
   if (flags_->enable_parallel_) {
-    if (flags_->num_threads_ < 2) {
+    if (flags_->num_threads_ < kParallelThreadNumMin) {
       MS_LOG(ERROR) << "enable parallel need more than 1 thread.";
       std::cerr << "enable parallel need more than 1 thread." << std::endl;
       return RET_ERROR;
@@ -402,50 +428,54 @@ int BenchmarkBase::Init() {
 
 int BenchmarkBase::PrintResult(const std::vector<std::string> &title,
                                const std::map<std::string, std::pair<int, float>> &result) {
-  std::vector<size_t> columnLenMax(5);
+  std::vector<size_t> columnLenMax(kPrintColNum);
   std::vector<std::vector<std::string>> rows;
 
   for (auto &iter : result) {
-    char stringBuf[5][100] = {};
+    char stringBuf[kPrintColNum][kPrintRowLenMax] = {};
     std::vector<std::string> columns;
     size_t len = 0;
-
+    int index = 0;
     len = iter.first.size();
-    if (len > columnLenMax.at(0)) {
-      columnLenMax.at(0) = len + 4;
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
     columns.push_back(iter.first);
 
-    len =
-      snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / static_cast<float>(flags_->loop_count_));
-    if (len > columnLenMax.at(1)) {
-      columnLenMax.at(1) = len + 4;
+    index++;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%f",
+                   iter.second.second / static_cast<float>(flags_->loop_count_));
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[1]);
+    columns.emplace_back(stringBuf[index]);
 
-    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second / op_cost_total_);
-    if (len > columnLenMax.at(2)) {
-      columnLenMax.at(2) = len + 4;
+    index++;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%f", iter.second.second / op_cost_total_);
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[2]);
+    columns.emplace_back(stringBuf[index]);
 
-    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%d", iter.second.first);
-    if (len > columnLenMax.at(3)) {
-      columnLenMax.at(3) = len + 4;
+    index++;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%d", iter.second.first);
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[3]);
+    columns.emplace_back(stringBuf[index]);
 
-    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second);
-    if (len > columnLenMax.at(4)) {
-      columnLenMax.at(4) = len + 4;
+    index++;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%f", iter.second.second);
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[4]);
+    columns.emplace_back(stringBuf[index]);
 
     rows.push_back(columns);
   }
 
   printf("-------------------------------------------------------------------------\n");
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < kPrintColNum; i++) {
     auto printBuf = title[i];
     if (printBuf.size() > columnLenMax.at(i)) {
       columnLenMax.at(i) = printBuf.size();
@@ -455,7 +485,7 @@ int BenchmarkBase::PrintResult(const std::vector<std::string> &title,
   }
   printf("\n");
   for (auto &row : rows) {
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < kPrintColNum; j++) {
       auto printBuf = row[j];
       printBuf.resize(columnLenMax.at(j), ' ');
       printf("%s\t", printBuf.c_str());
@@ -468,51 +498,53 @@ int BenchmarkBase::PrintResult(const std::vector<std::string> &title,
 #ifdef ENABLE_ARM64
 int BenchmarkBase::PrintPerfResult(const std::vector<std::string> &title,
                                    const std::map<std::string, std::pair<int, struct PerfCount>> &result) {
-  std::vector<size_t> columnLenMax(5);
+  std::vector<size_t> columnLenMax(kPrintColNum);
   std::vector<std::vector<std::string>> rows;
 
   for (auto &iter : result) {
-    char stringBuf[5][100] = {};
+    char stringBuf[kPrintColNum][kPrintRowLenMax] = {};
     std::vector<std::string> columns;
     size_t len = 0;
-
+    int index = 0;
     len = iter.first.size();
-    if (len > columnLenMax.at(0)) {
-      columnLenMax.at(0) = len + 4;
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
     columns.push_back(iter.first);
-
-    float tmp = float_t(flags_->num_threads_) * iter.second.second.value[0] / float_t(flags_->loop_count_) / 1000.0f;
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%.2f", tmp);
-    if (len > columnLenMax.at(1)) {
-      columnLenMax.at(1) = len + 4;
+    index++;
+    float tmp = float_t(flags_->num_threads_) * iter.second.second.value[0] / float_t(flags_->loop_count_) / kFloatMSEC;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%.2f", tmp);
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[1]);
-
-    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second.value[0] / op_cost_total_);
-    if (len > columnLenMax.at(2)) {
-      columnLenMax.at(2) = len + 4;
+    columns.emplace_back(stringBuf[index]);
+    index++;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%f", iter.second.second.value[0] / op_cost_total_);
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[2]);
+    columns.emplace_back(stringBuf[index]);
 
-    tmp = float_t(flags_->num_threads_) * iter.second.second.value[1] / float_t(flags_->loop_count_) / 1000.0f;
-    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%.2f", tmp);
-    if (len > columnLenMax.at(3)) {
-      columnLenMax.at(3) = len + 4;
+    index++;
+    tmp = float_t(flags_->num_threads_) * iter.second.second.value[1] / float_t(flags_->loop_count_) / kFloatMSEC;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%.2f", tmp);
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[3]);
+    columns.emplace_back(stringBuf[index]);
 
-    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second.value[1] / op_cost2_total_);
-    if (len > columnLenMax.at(4)) {
-      columnLenMax.at(4) = len + 4;
+    index++;
+    len = snprintf(stringBuf[index], sizeof(stringBuf[index]), "%f", iter.second.second.value[1] / op_cost2_total_);
+    if (len > columnLenMax.at(index)) {
+      columnLenMax.at(index) = len + kColumnLen;
     }
-    columns.emplace_back(stringBuf[4]);
+    columns.emplace_back(stringBuf[index]);
 
     rows.push_back(columns);
   }
 
   printf("-------------------------------------------------------------------------\n");
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < kPrintColNum; i++) {
     auto printBuf = title[i];
     if (printBuf.size() > columnLenMax.at(i)) {
       columnLenMax.at(i) = printBuf.size();
@@ -522,7 +554,7 @@ int BenchmarkBase::PrintPerfResult(const std::vector<std::string> &title,
   }
   printf("\n");
   for (auto &row : rows) {
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < kPrintColNum; j++) {
       auto printBuf = row[j];
       printBuf.resize(columnLenMax.at(j), ' ');
       printf("%s\t", printBuf.c_str());
@@ -539,6 +571,5 @@ BenchmarkBase::~BenchmarkBase() {
   }
   this->benchmark_data_.clear();
 }
-
 }  // namespace lite
 }  // namespace mindspore
