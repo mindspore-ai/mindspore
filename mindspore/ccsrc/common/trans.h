@@ -30,13 +30,8 @@
 
 namespace mindspore {
 namespace trans {
-enum Axis5D : int {
-  N_ncdhw = 0,
-  C_ncdhw,
-  D_ncdhw,
-  H_ncdhw,
-  W_ncdhw,
-};
+enum Axis5D : int { N_ncdhw = 0, C_ncdhw, D_ncdhw, H_ncdhw, W_ncdhw, kNcdhw };
+enum Ndc1hwc0 : int { N_dc1hwc0 = 0, D_dc1hwc0, C1_dc1hwc0, H_dc1hwc0, W_dc1hwc0, C0_dc1hwc0 };
 struct TypeIdArgs {
   const void *data;
   size_t host_shape_size;  // Multiply each dimension elements. [a, b, c, d] => a*b*c*d
