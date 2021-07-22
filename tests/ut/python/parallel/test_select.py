@@ -65,7 +65,6 @@ _w2 = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
 
 
 def compile_net(net):
-    context.set_context(save_graphs=True)
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2

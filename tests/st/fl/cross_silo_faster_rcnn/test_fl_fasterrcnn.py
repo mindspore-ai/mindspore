@@ -86,7 +86,7 @@ ctx = {
     "encrypt_type": encrypt_type
 }
 
-context.set_context(mode=context.GRAPH_MODE, device_target=device_target, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
 context.set_fl_context(**ctx)
 # print(**ctx, flush=True)
 # context.set_context(mode=context.GRAPH_MODE, device_target="GPU", device_id=get_device_id())

@@ -28,6 +28,7 @@ from mindspore import context, Tensor
 from mindspore.common import ParameterTuple
 from mindspore.common.parameter import Parameter
 from mindspore.ops.composite import GradOperation
+from tests.security_utils import security_off_wrap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -128,7 +129,7 @@ class SideEffectCastAll(Cell):
         out_b = self.cast(self.parameter_b, self.dtype)
         return out_a, out_b
 
-
+@security_off_wrap
 def test_side_effect_castall():
     clear_files()
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
@@ -333,7 +334,7 @@ class InplaceNet(Cell):
         output = self.add(tmp_c1, tmp_c2)
         return output
 
-
+@security_off_wrap
 def test_ir_fusion_inplace_bn_conv_conv():
     clear_files()
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
@@ -458,7 +459,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
         assert len(castnum) == cast_num
     return out_me
 
-
+@security_off_wrap
 def test_auto_mixed_precision_controlflow_auto():
     context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True)
     net = MixControlNet(3, 5)
@@ -472,7 +473,7 @@ def test_auto_mixed_precision_controlflow_auto():
     use_build_train_network_controlflow_check_cast_num(net, "auto", input_x,
                                                        label, cast_num)
 
-
+@security_off_wrap
 def test_updatestate_between_assigns():
     class UpdateState_Assigns(Cell):
         def __init__(self):
@@ -497,7 +498,7 @@ def test_updatestate_between_assigns():
         updatestate_num = re.findall('UpdateState', content)
         assert len(updatestate_num) == 1
 
-
+@security_off_wrap
 def test_updatestate_between_maketuple_assign():
     class UpdateState_MakeTuple_Assign(Cell):
         def __init__(self):
@@ -524,7 +525,7 @@ def test_updatestate_between_maketuple_assign():
         updatestate_num = re.findall('UpdateState', content)
         assert len(updatestate_num) == 1
 
-
+@security_off_wrap
 def test_updatestate_between_assign_maketuple():
     class UpdateState_Assign_MakeTuple(Cell):
         def __init__(self):

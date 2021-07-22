@@ -24,11 +24,6 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
-# from tests.vm_impl.math_ops_vm_impl import *
-# from tests.vm_impl.vm_interface import *
-# from tests.vm_impl import *
-# context.set_context(save_graphs=True)
-
 
 grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)

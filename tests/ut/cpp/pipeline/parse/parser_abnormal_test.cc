@@ -50,14 +50,6 @@ TEST_F(TestParserAbnormal, TestParseRecursion) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_recursion_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 int test_performance(int x) { return x; }
@@ -97,14 +89,6 @@ TEST_F(TestParserAbnormal, TestParseExprStatement) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw func graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_ExprStatement_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 
   // check the 'append' node
   bool is_append_node = false;

@@ -24,7 +24,7 @@ import mindspore.ops as ops
 from mindspore import context
 from dataset import create_dataset
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="GPU")
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):

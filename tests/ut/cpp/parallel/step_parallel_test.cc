@@ -416,7 +416,6 @@ TEST_F(TestStepParallel, ForwardCommunication1) {
     PrimitivePtr prim = cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
     if (prim->name() == "MatMul") {
       ForwardCommunication(op_list, cnode);
-      draw::Draw("forwardcommunication.dot", func_graph);
     }
   }
   AnfNodeSet after_nodes = manager->all_nodes();

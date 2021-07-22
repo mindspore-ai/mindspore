@@ -1981,9 +1981,11 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
 }
 
 void GradExecutor::DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph) {
+#ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR(filename, graph);
   }
+#endif
 }
 
 inline bool GradExecutor::IsNestedGrad() const {
@@ -2319,7 +2321,9 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
   // Just only dump the last forward graph
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && is_top_cell_end) {
     curr_g_->set_output(GetObjNode(out, out_id));
+#ifdef ENABLE_DUMP_IR
     DumpIR("fg.ir", curr_g_);
+#endif
   }
 
   // Reset grad flag and update output node of top cell

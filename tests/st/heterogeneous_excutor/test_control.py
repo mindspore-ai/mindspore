@@ -60,7 +60,6 @@ def test_net():
     net1 = Net1()
     output1 = net1(Tensor(x), Tensor(y))
 
-    context.set_context(save_graphs=True)
     net2 = Net2()
     output2 = net2(Tensor(x), Tensor(y))
     assert np.allclose(output1[0].asnumpy(), output2[0].asnumpy())

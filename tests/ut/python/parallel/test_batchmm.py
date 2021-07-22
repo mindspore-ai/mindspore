@@ -54,7 +54,7 @@ _wo = Tensor(np.ones([48, 64, 16]), dtype=ms.float32)
 
 
 def compile_net(net):
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()

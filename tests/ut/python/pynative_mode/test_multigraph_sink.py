@@ -20,7 +20,7 @@ from mindspore.common.tensor import Tensor
 
 
 def setup_module(module):
-    context.set_context(mode=context.PYNATIVE_MODE, save_graphs=False, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 
 c1 = Tensor([2], mstype.int32)

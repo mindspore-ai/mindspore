@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_cast_op_attr():

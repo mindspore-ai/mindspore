@@ -32,7 +32,7 @@ def maskedselect():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_maskedselect():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     y = maskedselect()
     expect = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
     assert (y.asnumpy() == expect).all()
@@ -68,7 +68,7 @@ def masked_select_grad():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_masked_select_grad():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     dx = masked_select_grad()
     expect = [4, 6, 8, 10]
     assert (dx.asnumpy() == expect).all()

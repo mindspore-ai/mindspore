@@ -46,11 +46,13 @@ std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr &graph, const std::str
 }
 
 void DumpGraph(const FuncGraphPtr &root, const std::string &name) {
+#ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw(name + ".dot", root);
     DumpIR(name + ".ir", root);
     ExportIR(name + ".dat", root);
   }
+#endif
 }
 
 // Return true if the cnode is in a for-loop and loop_index indicates the i-th loop;

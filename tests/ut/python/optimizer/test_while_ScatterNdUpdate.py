@@ -18,7 +18,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE)
 
 class Net(nn.Cell):
     def __init__(self, data):

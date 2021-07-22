@@ -963,7 +963,7 @@ def test_strided_slice_const():
             return out
 
     net = StridedSLiceConstNet()
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones([6, 7, 8, 9, 10]), mstype.float32)
     ret = net(x)
     assert ret.shape == (0, 1, 7, 8, 9, 3, 1)

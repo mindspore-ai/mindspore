@@ -164,14 +164,6 @@ TEST_F(TestParser, TestParseGraphForStatement) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_for_loop_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 TEST_F(TestParser, TestParseGraphCompareExprLt) {
@@ -321,14 +313,6 @@ TEST_F(TestParser, TestParseGraphBoolNot) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_for_not_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 TEST_F(TestParser, TestCallPythonFnUseTupleParamete) {

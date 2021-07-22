@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.ops import functional as F
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class ForwardNet(nn.Cell):

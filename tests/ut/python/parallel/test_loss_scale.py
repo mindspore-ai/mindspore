@@ -191,7 +191,7 @@ def test_loss_scale():
 
 
 def test_loss_scale2():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8)
     predict = Tensor(np.ones([64, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64,]), dtype=ms.int32)

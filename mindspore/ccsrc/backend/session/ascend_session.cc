@@ -337,12 +337,14 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   SessionBasic::UnifyMindIR(graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
     DumpIRProto(graph, "before_unify_mindir_hwopt_" + std::to_string(graph->graph_id()));
   }
+#endif
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
   unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
@@ -384,10 +386,12 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
   }
+#endif
 }
 
 void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
@@ -533,6 +537,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(root_graph));
   // root root_graph valiate,include genearte execute order and so on
   RootGraphExecutorValidate(NOT_NULL(root_graph));
+#ifdef ENABLE_DUMP_IR
   // dump graph before remove nop nodes
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -540,6 +545,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   if (save_graphs) {
     DumpIRProto(root_graph, "before_removeNop_" + std::to_string(graph_sum_));
   }
+#endif
 
   // adjust kernel
   AdjustKernel(root_graph);
@@ -659,6 +665,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   MS_LOG(INFO) << "CompileChildGraph " << child_graph->ToString();
   opt::AscendBackendIRFusionOptimization(child_graph);
   child_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -666,12 +673,15 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
     std::string file_name = "select_kernel_before_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
     DumpIR(file_name, child_graph);
   }
+#endif
   // select kernel build info
   SelectKernel(*child_graph);
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
     DumpIR(file_name, child_graph);
   }
+#endif
   // optimize graph
   HardwareOptimize(child_graph);
   // assign static memory of parameters
@@ -1197,12 +1207,14 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   BuildKernel(kernel_graph);
   device::ascend::KernelBuildPreprocess(kernel_graph.get());
   device::KernelAdjust::GetInstance().InsertSwitchLoop(kernel_graph);
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     DumpIR("after_adjust_kernel.ir", kernel_graph);
   }
+#endif
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1678,7 +1690,7 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
   memo->insert(graph.get());
   opt::AscendBackendIRFusionOptimization(graph);
   graph->SetExecOrderByDefault();
-
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -1686,6 +1698,7 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
     std::string file_name = "select_kernel_before_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph.get());
   }
+#endif
 
   for (auto &child_graph : graph->child_graph_order()) {
     IrFusionPass(NOT_NULL(child_graph.lock()), memo);
@@ -1744,7 +1757,7 @@ void AscendSession::RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph,
       (*reduce_precision_count)++;
     }
   }
-
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -1752,6 +1765,7 @@ void AscendSession::RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph,
     std::string file_name = "select_kernel_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph.get());
   }
+#endif
   MS_LOG(INFO) << "Finish selecting kernel info in graph: " << graph->graph_id();
 }
 

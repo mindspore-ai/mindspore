@@ -34,6 +34,7 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/common.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "utils/convert_utils_py.h"
@@ -45,7 +46,6 @@
 #include "backend/session/executor_manager.h"
 #include "debug/trace.h"
 #include "debug/draw.h"
-#include "debug/common.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
 #include "pybind_api/pybind_patch.h"
@@ -909,7 +909,6 @@ void Pipeline::Run(const std::string &phase) {
         }
         MS_LOG(INFO) << "Recording FuncGraph in pipeline end.";
       }
-#endif
 
       if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
         user_graph = graph;
@@ -926,6 +925,7 @@ void Pipeline::Run(const std::string &phase) {
         // generate IR file in a heavily commented format, which can also be reloaded
         ExportIR(base_name + ".dat", graph);
       }
+#endif
       i++;
 #ifdef ENABLE_TIMELINE
       dump_time.Record(action.first, GetTime(), false);
@@ -937,9 +937,11 @@ void Pipeline::Run(const std::string &phase) {
   MsProfile::Reset();
 #endif
 
+#ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && (user_graph != nullptr)) {
     draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
   }
+#endif
   MS_LOG(INFO) << "End";
 }
 
@@ -1345,12 +1347,14 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_
                         const std::string &dec_mode) {
   auto func_graph =
     mindspore::LoadMindIR(file_name, false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode);
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     DumpIR("load.ir", func_graph);
   }
+#endif
   return func_graph;
 }
 

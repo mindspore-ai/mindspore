@@ -42,7 +42,7 @@ class GradNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_while_grad():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = Tensor([2.0], dtype=mstype.float32)
     y = Tensor([2.0], dtype=mstype.float32)
     GradNet(Net())(x, y)

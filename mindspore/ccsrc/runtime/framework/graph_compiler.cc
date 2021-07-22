@@ -313,12 +313,13 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-
+#ifdef ENABLE_DUMP_IR
   bool save_graphs = ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   // Dump .pb graph before graph optimization.
   if (save_graphs) {
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
+#endif
 
   MS_LOG(INFO) << "Get graph outputs before optimizer, graph id: " << graph->graph_id();
   auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
@@ -350,11 +351,12 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   session_->SetSummaryNodes(graph.get());
   SetSummaryNodesRefCount(graph.get());
-
+#ifdef ENABLE_DUMP_IR
   // Dump .pb graph after graph optimization.
   if (save_graphs) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
   }
+#endif
 
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();

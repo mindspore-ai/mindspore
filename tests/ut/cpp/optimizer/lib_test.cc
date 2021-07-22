@@ -65,11 +65,6 @@ class TestOptLib : public UT::Common {
     FuncGraphPtr gbefore_clone = BasicClone(gbefore);
     OptimizerPtr optimizer = std::make_shared<Optimizer>("ut_test", std::make_shared<pipeline::Resource>());
     transform(gbefore_clone, optimizer);
-    if (save_graphs) {
-      draw::Draw("before.dot", gbefore);
-      draw::Draw("after.dot", gbefore_clone);
-      draw::Draw("expected.dot", gafter);
-    }
     return Isomorphic(gbefore_clone, gafter, &equiv_graph, &equiv_node);
   }
   bool CheckOpt(FuncGraphPtr before, FuncGraphPtr after, std::vector<SubstitutionPtr> opts = {},
@@ -563,6 +558,7 @@ TEST_F(TestOptLib, test_reducesum_one) {
   ASSERT_TRUE(CheckOpt(before4, after3, patterns));
 }
 
+#ifndef ENABLE_SECURITY
 TEST_F(TestOptLib, test_print_tuple_wrapper) {
   FuncGraphPtr before1 = getPyFun.CallAndParseRet("test_print_tuple_wrapper", "before1");
   FuncGraphPtr before2 = getPyFun.CallAndParseRet("test_print_tuple_wrapper", "before2");
@@ -574,6 +570,7 @@ TEST_F(TestOptLib, test_print_tuple_wrapper) {
   ASSERT_TRUE(CheckOpt(before2, after2, patterns));
   ASSERT_TRUE(CheckOpt(before3, before3, patterns));
 }
+#endif
 
 TEST_F(TestOptLib, test_constant_duplicate_mul) {
   FuncGraphPtr beforell = getPyFun.CallAndParseRet("test_constant_duplicate_mul", "beforell");

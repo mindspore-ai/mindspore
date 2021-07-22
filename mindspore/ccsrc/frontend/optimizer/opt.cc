@@ -299,7 +299,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
       bool change = ApplySubstitutionToIR(optimizer, func_graph, substitution);
       changes = changes || change;
       loop = loop || change;
-
+#ifdef ENABLE_DUMP_IR
       static const auto enable_dump_pass_ir = (common::GetEnv("ENV_DUMP_PASS_IR") == "1");
       if (enable_dump_pass_ir && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
         auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->CurPass_.counter) + "_" +
@@ -310,6 +310,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
           ExportIR(fg_name + ".dat", func_graph);
         }
       }
+#endif
 
       // Record the status of each substitution
       if (optimizer->is_on_debug_) {

@@ -83,10 +83,11 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
     0
   }, end_time{0};
   (void)gettimeofday(&start_time, nullptr);
-
+#ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw(STEP_AUTO_PARALLEL_BEGIN, root);
   }
+#endif
   MS_LOG(INFO) << "Now entering step auto parallel";
   TOTAL_OPS = 0;
   AnfNodePtr ret = root->get_return();

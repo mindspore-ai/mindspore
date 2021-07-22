@@ -1022,7 +1022,7 @@ def test_recursive_call():
             out = self.fc(x)
             return out
 
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     os.environ['ENV_RECURSIVE_EVAL'] = '1'
     old_max_call_depth = context.get_context('max_call_depth')
     context.set_context(max_call_depth=80)

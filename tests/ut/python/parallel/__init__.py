@@ -21,7 +21,7 @@ from mindspore.communication._comm_helper import GlobalComm
 
 def setup_module():
     auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     GlobalComm.INITED = True
     reset_cost_model_context()
     reset_algo_parameters()

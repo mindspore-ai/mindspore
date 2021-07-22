@@ -213,12 +213,13 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::di
     MS_LOG(ERROR) << "Convert df graph failed, err:" << converter.ErrCode();
     return false;
   }
-
+#ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     converter.DrawComputeGraph(GetSaveGraphsPathName("ge_graph.dot"));                      // for debug
     converter.DrawInitGraph(GetSaveGraphsPathName("init_graph.dot"));                       // for debug
     converter.DrawSaveCheckpointGraph(GetSaveGraphsPathName("save_checkpoint_graph.dot"));  // for debug
   }
+#endif
   std::string init_graph = "init_subgraph." + net_id;
   std::string checkpoint_name = "save." + net_id;
   if (phase.find("train") != std::string::npos) {
@@ -243,11 +244,12 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
     MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
-
+#ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw("anf_graph.dot", anf_graph);  // for debug
     DumpIR("anf_graph.ir", anf_graph, true);
   }
+#endif
 
   if (!AddDFGraph(info, init_params, phase, broadcast_params)) {
     MS_LOG(ERROR) << "GenConvertor failed";

@@ -139,11 +139,7 @@ TEST_F(TestSpecializeGraph, test_specialize1) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   AnalysisResult result = engine_->Run(graph_alpha_, args_spec_list);
-  draw::Draw("befor_graph_alpha.dot", graph_alpha_);
   FuncGraphPtr new_graph = special_->Run(graph_alpha_, result.context);
-  if (new_graph) {
-    draw::Draw("after_graph_alpha.dot", new_graph);
-  }
 }
 
 class TestSpecializeMetaFuncGraph : public UT::Common {
@@ -220,12 +216,7 @@ TEST_F(TestSpecializeMetaFuncGraph, test_specialize) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   AnalysisResult result = engine_->Run(graph_, args_spec_list);
-
-  draw::Draw("befor_graph.dot", graph_);
   FuncGraphPtr new_graph = special_->Run(graph_, result.context);
-  if (new_graph) {
-    draw::Draw("after_graph.dot", new_graph);
-  }
 }
 
 }  // namespace abstract

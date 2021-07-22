@@ -20,7 +20,7 @@ from mindspore import Tensor, Parameter
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 grad_all = C.GradOperation(get_all=True)
 grad_all_with_sens = C.GradOperation(sens_param=True)

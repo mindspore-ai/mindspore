@@ -82,7 +82,6 @@ TEST_F(TestParserIntegrate, TestParseGraphTestNone) {
 TEST_F(TestParserIntegrate, TestParseGraphResolveGetAttr) {
   getPyFun.SetDoResolve(true);
   auto func_graph = getPyFun("test_get_attr");
-  draw::Draw("getattr.dot", func_graph);
   ASSERT_TRUE(func_graph != nullptr);
 }
 

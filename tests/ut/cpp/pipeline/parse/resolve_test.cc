@@ -52,14 +52,6 @@ TEST_F(TestResolve, TestResolveApi) {
   ASSERT_TRUE(ret_);
 
   ASSERT_EQ(manager->func_graphs().size(), (size_t)2);
-
-  // draw graph
-  int i = 0;
-  for (auto func_graph : manager->func_graphs()) {
-    std::string name = "ut_resolve_graph_" + std::to_string(i) + ".dot";
-    draw::Draw(name, func_graph);
-    i++;
-  }
 }
 
 TEST_F(TestResolve, TestParseGraphTestClosureResolve) {
@@ -67,7 +59,6 @@ TEST_F(TestResolve, TestParseGraphTestClosureResolve) {
     python_adapter::CallPyFn("gtest_input.pipeline.parse.parser_test", "test_reslove_closure", 123);
   FuncGraphPtr func_graph = ParsePythonCode(test_fn);
   ASSERT_TRUE(func_graph != nullptr);
-  draw::Draw("test_reslove_closure.dot", func_graph);
   // save the func_graph to manager
   std::shared_ptr<FuncGraphManager> manager = Manage(func_graph);
 
@@ -77,14 +68,6 @@ TEST_F(TestResolve, TestParseGraphTestClosureResolve) {
   ASSERT_TRUE(ret_);
 
   ASSERT_EQ(manager->func_graphs().size(), (size_t)2);
-
-  // draw graph
-  int i = 0;
-  for (auto func_graph : manager->func_graphs()) {
-    std::string name = "ut_test_reslove_closure_graph_" + std::to_string(i) + ".dot";
-    draw::Draw(name, func_graph);
-    i++;
-  }
 }
 }  // namespace parse
 }  // namespace mindspore

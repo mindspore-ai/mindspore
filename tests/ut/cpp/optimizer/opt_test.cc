@@ -185,7 +185,6 @@ TEST_F(TestOptOpt, CSE) {
 
   // add func_graph the GraphManager
   FuncGraphManagerPtr manager1 = Manage(test_graph1);
-  draw::Draw("opt_cse_before_1.dot", test_graph1);
 
   ASSERT_EQ(manager1->all_nodes().size(), 9);
 
@@ -196,20 +195,16 @@ TEST_F(TestOptOpt, CSE) {
   ASSERT_TRUE(is_changed);
   ASSERT_EQ(manager1->all_nodes().size(), 8);
 
-  draw::Draw("opt_cse_after_1.dot", test_graph1);
-
   // test a more complicated case test_f2
   FuncGraphPtr test_graph2 = getPyFun.CallAndParseRet("test_cse", "test_f2");
 
   ASSERT_TRUE(nullptr != test_graph2);
 
   FuncGraphManagerPtr manager2 = Manage(test_graph2);
-  draw::Draw("opt_cse_before_2.dot", test_graph2);
   ASSERT_EQ(manager2->all_nodes().size(), 16);
   is_changed = cse->Cse(test_graph2, manager2);
   ASSERT_TRUE(is_changed);
   ASSERT_EQ(manager2->all_nodes().size(), 12);
-  draw::Draw("opt_cse_after_2.dot", test_graph2);
 }
 
 }  // namespace opt

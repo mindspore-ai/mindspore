@@ -136,7 +136,6 @@ TEST_F(TestPartialEvaluator, test_infer_dataclass_resolved) {
   getPyFun.SetDoResolve(true);
   FuncGraphPtr func_graph = getPyFun("test_dataclass_fun_sub");
   ASSERT_TRUE(nullptr != func_graph);
-  draw::Draw("test_dataclass_fun_sub.dot", func_graph);
 
   AbstractBasePtrList args_spec_list;
   float x = 5.1;
@@ -226,7 +225,6 @@ TEST_F(TestPartialEvaluator, test_infer_construct_sub_unresolved) {
   getPyFun.SetDoResolve(false);
   FuncGraphPtr func_graph = getPyFun.CallAndParseRet("test_net_construct_sub");
   ASSERT_TRUE(nullptr != func_graph);
-  draw::Draw("test_infer_simple_net.dot", func_graph);
 
   AbstractBasePtrList args_spec_list;
   double x = 1.2;

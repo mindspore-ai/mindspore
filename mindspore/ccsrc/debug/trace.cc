@@ -427,12 +427,14 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     MS_LOG(INFO) << "Length of analysis information stack is empty.";
     return;
   }
+  oss << "\nThe function call stack";
+#ifndef ENABLE_SECURITY
   std::string file_name = GetEvalFailDatPath();
   auto ret = OutputAnalyzedGraphWithType(file_name);
-  oss << "\nThe function call stack";
   if (ret) {
     oss << " (See file '" << file_name << "' for more details)";
   }
+#endif
   oss << ":\n";
 
   int index = 0;

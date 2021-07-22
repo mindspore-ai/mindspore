@@ -23,7 +23,7 @@ import mindspore.ops as ops
 from mindspore.nn.probability.dpn import VAE
 from mindspore.nn.probability.infer import ELBO, SVI
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="GPU")
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 IMAGE_SHAPE = (-1, 1, 32, 32)
 image_path = os.path.join('/home/workspace/mindspore_dataset/mnist', "train")
 

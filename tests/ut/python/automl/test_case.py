@@ -33,7 +33,7 @@ class Net(nn.Cell):
 
 
 def test_case():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     data = Tensor(np.ones((1, 1, 224, 224)), mindspore.float32)
     idx = Tensor(1, mindspore.int32)

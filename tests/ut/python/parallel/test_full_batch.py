@@ -69,7 +69,7 @@ def all_to_all_common(strategy1):
     momentum = 0.9
     epoch_size = 2
 
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8,
                                       dataset_strategy="full_batch")
@@ -96,7 +96,7 @@ def test_data_parallel_mode():
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, full_batch=True)
     predict = Tensor(np.ones([256, 128]), dtype=ms.float32)

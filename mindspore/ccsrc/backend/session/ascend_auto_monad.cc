@@ -58,6 +58,7 @@ const char OUTPUT[] = "output";
 // Attribute to indicate that the node is last node in an iteration.
 const char ITEREND[] = "PROFILING_ITER_END";
 
+#ifdef ENABLE_DUMP_IR
 bool IsSaveGraph() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -85,8 +86,10 @@ void DumpGraphForDebug(NotNull<KernelGraphPtr> kg) {
     DumpAllGraphs(kg, &memo);
   }
 }
+#endif
 
 void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
+#ifndef ENABLE_SECURITY
   if (!IsSaveGraph()) {
     return;
   }
@@ -135,6 +138,7 @@ void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
     index++;
   }
   fout.close();
+#endif
 }
 
 // Return kNoLabel when label id attribute not set for the graph.
@@ -1859,7 +1863,9 @@ void AscendAutoMonad::Run() {
   kernel_graph_->set_recursive_call(context.HasRecursiveCall());
   kernel_graph_->set_subgraph_multi_call(context.HasSubgraphMultiCall());
   MS_LOG(DEBUG) << "Ascend auto-monad finish.";
+#ifdef ENABLE_DUMP_IR
   DumpGraphForDebug(kernel_graph_);
+#endif
 }
 
 void AscendAutoMonad::GenerateExecuteOrder() {
@@ -1868,7 +1874,9 @@ void AscendAutoMonad::GenerateExecuteOrder() {
   ExecuteOrderGenerator generator(context, kernel_graph_.get());
   generator.Run();
   MS_LOG(DEBUG) << "Ascend generate execute order finish.";
+#ifndef ENABLE_SECURITY
   DumpExecuteOrder(kernel_graph_);
+#endif
 }
 }  // namespace session
 }  // namespace mindspore

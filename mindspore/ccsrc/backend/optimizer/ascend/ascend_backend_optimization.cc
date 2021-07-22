@@ -275,12 +275,14 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     std::string file_name = "hwopt_d_ir_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
     DumpIRProto(kernel_graph, "before_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
+#endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
@@ -307,10 +309,12 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_d_ir_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
 }
 
 void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -320,10 +324,12 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
     MS_LOG(INFO) << "IRFusion is not enable, skip";
     return;
   }
+#ifdef ENABLE_DUMP_IR
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     DumpIR("hwopt_d_ir_fusion_before.ir", kernel_graph);
   }
+#endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
@@ -353,9 +359,11 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     DumpIR("hwopt_d_ir_fusion_after.ir", kernel_graph);
   }
+#endif
 }
 
 void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -375,11 +383,13 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     std::string file_name = "hwopt_d_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
   // data layout optimization
   AscendDataLayout(kernel_graph);
   // mixed precision optimization
@@ -425,13 +435,13 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   const std::vector<CNodePtr> &exec_order = kernel_graph->execution_order();
   std::string exec_order_name = "graph_exec_order." + std::to_string(kernel_graph->graph_id());
   (void)mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_OPTIMIZER, exec_order_name, exec_order);
-#endif
   if (save_graphs) {
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kWholeStack);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
     kernel_graph->DumpFuncGraph("hwopt_d_end");
   }
+#endif
 }
 
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -454,11 +464,13 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
       build_manager.AscendPreBuild(kernel_graph);
     }
   }
+#ifdef ENABLE_DUMP_IR
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     std::string file_name = "hwopt_d_ub_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
   auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
   MS_EXCEPTION_IF_NULL(fusion_id_allocator);
   fusion_id_allocator->Init();
@@ -487,10 +499,12 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   optimizer->AddPassManager(ub_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_d_ub_fusion_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
 }
 }  // namespace opt
 }  // namespace mindspore

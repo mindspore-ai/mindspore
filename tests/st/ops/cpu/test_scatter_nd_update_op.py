@@ -23,7 +23,7 @@ from mindspore import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target='CPU', save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 @pytest.mark.level0

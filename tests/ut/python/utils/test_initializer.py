@@ -246,7 +246,7 @@ class Net(nn.Cell):
 
 
 def test_weight_shape():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     a = np.arange(20).reshape(5, 4)
     t = Tensor(a, dtype=ms.float32)
     net = Net()

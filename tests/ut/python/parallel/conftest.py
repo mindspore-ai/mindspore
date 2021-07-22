@@ -24,7 +24,7 @@ from mindspore.parallel.algo_parameter_config import reset_algo_parameters
 def reset_test_context():
     context.reset_auto_parallel_context()
     auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     reset_cost_model_context()
     reset_algo_parameters()
     _reset_op_id()

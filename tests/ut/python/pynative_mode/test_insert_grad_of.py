@@ -111,7 +111,7 @@ def test_print_shape_type():
 
 
 def test_cell_assign():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
 
     class GradNetWrap(nn.Cell):
         """ GradNetWrap definition """

@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore import Tensor, context
+from mindspore import Tensor
 from mindspore.context import set_auto_parallel_context, ParallelMode
 from mindspore.ops import composite as C
 from mindspore.parallel.nn import Transformer, TransformerOpParallelConfig, MoEConfig
@@ -64,7 +64,6 @@ class NetWithLossFiveInputs(nn.Cell):
 
 
 def test_transformer_model():
-    context.set_context(save_graphs=True)
     set_auto_parallel_context(device_num=16, global_rank=0,
                               full_batch=True, enable_alltoall=True,
                               parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)

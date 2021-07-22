@@ -126,6 +126,7 @@ std::string PassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) co
 }
 
 void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const {
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -137,6 +138,7 @@ void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &
     oss << pass_fullname + ".ir";
     DumpIR(oss.str(), func_graph, true);
   }
+#endif
 }
 
 bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const {
@@ -149,7 +151,9 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
     if (pass != nullptr) {
       pass->SetCacheManager(cache_manager_);
       changed = RunPass(func_graph, num, pass) || changed;
+#ifdef ENABLE_DUMP_IR
       DumpPassIR(func_graph, GetPassFullname(num, pass));
+#endif
       num++;
     }
   }

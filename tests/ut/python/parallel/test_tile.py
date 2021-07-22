@@ -78,7 +78,6 @@ _b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
 
 
 def compile_net(net, x=_b, b=_b):
-    context.set_context(save_graphs=True)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()

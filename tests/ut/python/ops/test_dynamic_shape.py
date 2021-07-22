@@ -19,7 +19,7 @@ from mindspore import Tensor, context, nn, Parameter
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_sparse_apply_proximal_ada_grad():

@@ -19,7 +19,7 @@ import mindspore
 from mindspore import context
 from mindspore.common.tensor import Tensor
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path="graph_paths")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(nn.Cell):

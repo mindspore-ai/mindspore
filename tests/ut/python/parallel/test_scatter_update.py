@@ -40,7 +40,7 @@ class Net(nn.Cell):
 
 
 def test_distribute_predict():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=True)
     inputs = Tensor(np.ones([32, 64, 128]).astype(np.float32))
     strategy1 = ((1, 2, 4), (1, 1), (1, 1, 2, 4))
@@ -54,7 +54,7 @@ def test_distribute_predict():
 
 
 def test_scatter_update_wrong_strategy():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=True)
     inputs = Tensor(np.ones([32, 64, 128]).astype(np.float32))
     strategy1 = ((1, 2, 4), (1, 1), (1, 1, 4, 2))
@@ -67,7 +67,7 @@ def test_scatter_update_wrong_strategy():
 
 
 def test_distribute_predict_auto_parallel():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, full_batch=True)
     inputs = Tensor(np.ones([32, 64, 128]).astype(np.float32))
     net = Net()

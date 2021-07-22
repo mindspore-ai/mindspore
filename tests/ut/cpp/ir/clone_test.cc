@@ -113,7 +113,6 @@ TEST_F(TestCloner, test_clone_closure) {
   Cloner cl(gs, true);
 
   auto g_clone = cl[g];
-  draw::Draw("test_clone_closure_g_clone.dot", g_clone);
   FuncGraphIndex idx2(g_clone, DeepLinkedGraphSearch);
 
   std::string name_list = "xy";
@@ -130,10 +129,8 @@ TEST_F(TestCloner, test_clone_lifting) {
 
   // parse ast to graph
   FuncGraphPtr parsed_f = getPyFun(py_code);
-  draw::Draw("test_clone_before_lifting.dot", parsed_f);
 
   auto g_lifting = LiftingClone(parsed_f);
-  draw::Draw("test_clone_after_lifting.dot", g_lifting);
 
   FuncGraphIndex idx(g_lifting);
   auto g = idx.GetFirstFuncGraph("j");

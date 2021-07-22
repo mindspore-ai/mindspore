@@ -21,8 +21,7 @@ from mindspore import Tensor
 from mindspore import Parameter
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE,
-                    device_target='CPU', save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class UpdateCacheNet(nn.Cell):
