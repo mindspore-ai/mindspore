@@ -39,6 +39,11 @@ CRNN was a neural network for image based sequence recognition and its Applicati
 
 CRNN use a vgg16 structure for feature extraction, the appending with two-layer bidirectional LSTM, finally use CTC to calculate loss. See src/crnn.py for details.
 
+We provide 2 versions of network using different ways to transfer the hidden size to class numbers. You could choose different version by modifying the `model_version` in config yaml.
+
+- V1 using an full connection after the RNN parts.
+- V2 change the output feature size of the last RNN, to output a feature with the same size of class numbers.
+
 ## [Dataset](#content)
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
