@@ -2478,9 +2478,8 @@ CNodePtr HandleDependLoss(const CNodePtr &cnode, size_t curr_depth) {
     return nullptr;
   }
   // Handle return->depend->loss
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(prim);
-  if (prim->name() == DEPEND) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
+      (IsPrimitiveCNode(cnode, prim::kPrimCast) && !cnode->has_user_data<OperatorInfo>())) {
     auto depend_before = cnode->input(1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(depend_before);
     return HandleDependLoss(depend_before, ++curr_depth);
@@ -2494,16 +2493,20 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
   CNodePtr return_node = func_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
   if (return_node->size() < 2) {
-    MS_LOG(EXCEPTION) << "Failure: " << return_node->ToString() << " size is smaller than 2";
+    MS_LOG(EXCEPTION) << "Failure: " << return_node->DebugString() << " size is smaller than 2";
   }
   AnfNodePtr pre_node = return_node->input(1);
   MS_EXCEPTION_IF_NULL(pre_node);
-  if (IsPrimitiveCNode(pre_node, prim::kPrimDepend)) {
-    pre_node = pre_node->cast<CNodePtr>()->input(1);
-    MS_EXCEPTION_IF_NULL(pre_node);
-  }
-
   auto pre_cnode = pre_node->cast<CNodePtr>();
+  pre_cnode = HandleDependLoss(pre_cnode, 0);
+  if (pre_cnode->input(0)->isa<CNode>()) {
+    auto switch_cnode = pre_cnode->input(0)->cast<CNodePtr>();
+    if (IsPrimitiveCNode(switch_cnode, prim::kPrimSwitch)) {
+      MS_EXCEPTION_IF_NULL(switch_cnode);
+      auto switch_graph = GetValueNode<FuncGraphPtr>(switch_cnode->input(2));
+      return FindLossCNode(switch_graph);
+    }
+  }
   if (pre_cnode == nullptr || !IsValueNode<Primitive>(pre_cnode->input(0))) {
     return loss_node_info;
   }
@@ -2511,15 +2514,7 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
     MS_LOG(DEBUG) << "pre_cnode:" << pre_cnode->ToString();
     return loss_node_info;
   }
-  auto prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
-  // return -> cast
-  if (prim->name() == CAST && !pre_cnode->has_user_data<OperatorInfo>()) {
-    pre_cnode = pre_cnode->input(1)->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(pre_cnode);
-  }
-  pre_cnode = HandleDependLoss(pre_cnode, 0);
   auto current_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
-
   // notice: the GetNext op has not input
   if (INVALID_LOSS_OPS.find(current_prim->name()) != INVALID_LOSS_OPS.end()) {
     MS_LOG(INFO) << "The loss is: " << current_prim->name();
