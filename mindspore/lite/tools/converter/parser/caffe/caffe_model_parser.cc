@@ -132,8 +132,7 @@ STATUS CaffeModelParser::WeightFormatTransform(const FuncGraphPtr &graph) {
       MS_LOG(ERROR) << "weight node must param value";
       return RET_OK;
     }
-    lite::STATUS status;
-    status = HardCodeCaffe(conv_cnode, tensor_info, graph);
+    auto status = HardCodeCaffe(conv_cnode, tensor_info, graph);
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
       return RET_ERROR;
