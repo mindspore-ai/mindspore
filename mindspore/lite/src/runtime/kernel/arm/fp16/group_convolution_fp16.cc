@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/group_convolution_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_delegate_fp16.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -79,5 +80,25 @@ int GroupConvolutionFP16CPUKernel::PostConcat(int group_id) {
     dst_ptr += ori_out_channel;
   }
   return RET_OK;
+}
+
+int GroupConvolutionFP16CPUKernel::Init() {
+  if (group_conv_creator_ == nullptr) {
+    return lite::RET_ERROR;
+  }
+  group_conv_creator_->SetShapeOfTensors();
+  for (int i = 0; i < conv_param_->group_; ++i) {
+    auto *new_conv_param = CreateNewConvParameter(conv_param_);
+    std::vector<lite::Tensor *> new_inputs;
+    std::vector<lite::Tensor *> new_outputs;
+    auto ret = group_conv_creator_->GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetSingleConv for fp16 group conv failed.";
+      return lite::RET_ERROR;
+    }
+    group_convs_.emplace_back(new (std::nothrow) ConvolutionDelegateFP16CPUKernel(
+      reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx_));
+  }
+  return GroupConvolutionBaseCPUKernel::Init();
 }
 }  // namespace mindspore::kernel

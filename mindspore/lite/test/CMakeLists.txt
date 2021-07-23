@@ -42,8 +42,16 @@ file(GLOB KERNEL_OP_TRAIN_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/fp32_grad/*.cc
         )
 
+file(GLOB FP16_KERNEL_OP_SRC
+        ${LITE_DIR}/src/runtime/kernel/arm/fp16/*.cc
+        )
+
 if(SUPPORT_TRAIN)
     list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
+endif()
+
+if(ENABLE_FP16)
+    list(APPEND KERNEL_OP_SRC ${FP16_KERNEL_OP_SRC})
 endif()
 
 ### gpu kernel
