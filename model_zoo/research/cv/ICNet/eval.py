@@ -47,7 +47,7 @@ class Evaluator:
         self.image_paths, self.mask_paths = _get_city_pairs(config["train"]["cityscapes_root"], "val")
 
         # create network
-        self.model = ICNet(nclass=19, backbone='resnet50', istraining=False)
+        self.model = ICNet(nclass=19, pretrained_path=cfg["train"]["pretrained_model_path"], istraining=False)
 
         # load ckpt
         ckpt_file_name = args_opt.checkpoint_path
@@ -74,6 +74,7 @@ class Evaluator:
             mask = self._mask_transform(mask)  # mask shape: (H,w)
 
             image = Tensor(image)
+            print(image)
 
             expand_dims = ops.ExpandDims()
             image = expand_dims(image, 0)
@@ -163,7 +164,8 @@ if __name__ == '__main__':
     from src.metric import SegmentationMetric
     from src.logger import SetupLogger
     # Set config file
-    config_path = args_opt.project_path + "/src/model_utils/icnet.yaml"
+    config_file = "src/model_utils/icnet.yaml"
+    config_path = os.path.join(args_opt.project_path, config_file)
     with open(config_path, "r") as yaml_file:
         cfg = yaml.load(yaml_file.read())
     logger = SetupLogger(name="semantic_segmentation",
