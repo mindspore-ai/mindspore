@@ -46,10 +46,11 @@ std::vector<std::string> GetTokens(const std::string &str, const std::string &de
 std::pair<std::string, std::string> ParseFlag(const std::string &flag) {
   auto i = flag.find("--");
   // check the string starts with "--".
-  if (i != 0 || flag.size() == 2) {
+  constexpr size_t expected_size = 2;
+  if (i != 0 || flag.size() == expected_size) {
     return std::pair<std::string, std::string>();
   }
-  i += 2;
+  i += expected_size;
 
   auto j = flag.find('=', i + 1);  // the key should not be empty, "--=" is invalid
   if (j == std::string::npos) {

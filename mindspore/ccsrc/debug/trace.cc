@@ -342,7 +342,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename,
     if (printed_func_graphs.find(fg) != printed_func_graphs.end()) {
       continue;
     }
-    printed_func_graphs.emplace(fg);
+    (void)printed_func_graphs.emplace(fg);
 
     if (engine_ == nullptr) {
       engine_ = node_config->engine();

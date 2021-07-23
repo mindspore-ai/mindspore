@@ -58,8 +58,8 @@ bool IsSerializableBprop(const PrimitivePtr &prim) {
                      [&prim](const PrimitivePtr &serializable_bprop_prim) {
                        auto str1 = prim->name();
                        auto str2 = serializable_bprop_prim->name();
-                       transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
-                       transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
+                       (void)transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
+                       (void)transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
                        return str1 == str2;
                      });
 }
@@ -175,7 +175,7 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
     func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
   }
   pipeline::ResourceBasePtr res = (resources != nullptr) ? resources : std::make_shared<pipeline::Resource>();
-  parse::ResolveFuncGraph(func_graph, res);
+  (void)parse::ResolveFuncGraph(func_graph, res);
 #ifndef _WIN32
   // Check whether the bprop needs to be exported.
   if (serializable) {
@@ -312,7 +312,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   if (resources != nullptr) {
     auto manager = resources->manager();
     auto &users = manager->node_users()[value_node];
-    for (auto user_iter = users.begin(); user_iter != users.end(); user_iter++) {
+    for (auto user_iter = users.begin(); user_iter != users.end(); ++user_iter) {
       primal_debug_infos.push_back(user_iter->first->debug_info());
     }
   }
@@ -476,8 +476,8 @@ void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check
   inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   constexpr int primitive_size = 1;
   constexpr int brprop_offset_size = 2;
-  inputs.insert(inputs.begin() + primitive_size, bprop_fg->parameters().begin(),
-                bprop_fg->parameters().end() - brprop_offset_size);
+  (void)inputs.insert(inputs.begin() + primitive_size, bprop_fg->parameters().begin(),
+                      bprop_fg->parameters().end() - brprop_offset_size);
   AnfNodePtr params = bprop_fg->NewCNode(inputs);
 
   inputs.clear();
