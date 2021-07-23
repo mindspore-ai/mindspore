@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <vector>
 #include <utility>
@@ -60,29 +61,7 @@ namespace dataset {
     out << std::hex << std::setw(2) << std::setfill('0') << o << std::dec << std::setfill(' '); \
     break;                                                                                      \
   }
-/// Copy memory with no max limit since memcpy_s  will fail when byte_size > 2^31 - 1 (SECUREC_MEM_MAX_LEN).
-/// \param dest Destination buffer.
-/// \param destMax Size of the destination buffer.
-/// \param src Buffer to copy from.
-/// \param count Number of characters to copy
-/// \return Error number. Returns 0 for succuss copying.
-errno_t memcpy_ss(uchar *dest, size_t destMax, const uchar *src, size_t count) {
-  uint32_t step = 0;
-  while (count >= SECUREC_MEM_MAX_LEN) {
-    int ret_code = memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, destMax - step * SECUREC_MEM_MAX_LEN,
-                            src + step * SECUREC_MEM_MAX_LEN, SECUREC_MEM_MAX_LEN);
-    if (ret_code != 0) {
-      return ret_code;
-    }
-    count -= SECUREC_MEM_MAX_LEN;
-    step++;
-  }
-  if (count > 0) {
-    return memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, destMax - step * SECUREC_MEM_MAX_LEN,
-                    src + step * SECUREC_MEM_MAX_LEN, count);
-  }
-  return 0;
-}
+
 Tensor::Tensor(const TensorShape &shape, const DataType &type) : shape_(shape), type_(type), data_(nullptr) {
   // grab the mem pool from global context and create the allocator for char data area
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
@@ -134,8 +113,16 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
   if (src != nullptr) {
     // Given the shape/type of this tensor, compute the data size and copy in the input bytes.
     int64_t byte_size = (*out)->SizeInBytes();
-    int ret_code = memcpy_ss((*out)->data_, byte_size, src, byte_size);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
+    if (byte_size == 0) {
+      return Status::OK();
+    }
+    if (byte_size < SECUREC_MEM_MAX_LEN) {
+      int ret_code = memcpy_s((*out)->data_, byte_size, src, byte_size);
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
+    } else {
+      auto ret_code = std::memcpy((*out)->data_, src, byte_size);
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == (*out)->data_, "Failed to copy data into tensor.");
+    }
   }
   return Status::OK();
 }
@@ -156,8 +143,16 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
   }
 
   RETURN_IF_NOT_OK((*out)->AllocateBuffer(length));
-  int ret_code = memcpy_ss((*out)->data_, length, src, length);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
+  if (length == 0) {
+    return Status::OK();
+  }
+  if (length < SECUREC_MEM_MAX_LEN) {
+    int ret_code = memcpy_s((*out)->data_, length, src, length);
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
+  } else {
+    auto ret_code = std::memcpy((*out)->data_, src, length);
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == (*out)->data_, "Failed to copy data into tensor.");
+  }
 
   return Status::OK();
 }
