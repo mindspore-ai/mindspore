@@ -148,7 +148,7 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   args["num_parallel_workers"] = num_workers_;
   args["input_columns"] = input_columns_;
   args["output_columns"] = output_columns_;
-  if (!project_columns_.empty()) args["column_order"] = project_columns_;
+  args["project_columns"] = project_columns_;
   if (cache_ != nullptr) {
     nlohmann::json cache_args;
     RETURN_IF_NOT_OK(cache_->to_json(&cache_args));

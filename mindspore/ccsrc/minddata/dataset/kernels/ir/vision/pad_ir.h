@@ -49,6 +49,8 @@ class PadOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<int32_t> padding_;
   std::vector<uint8_t> fill_value_;

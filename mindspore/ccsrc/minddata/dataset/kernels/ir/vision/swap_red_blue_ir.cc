@@ -40,6 +40,11 @@ std::shared_ptr<TensorOp> SwapRedBlueOperation::Build() {
   std::shared_ptr<SwapRedBlueOp> tensor_op = std::make_shared<SwapRedBlueOp>();
   return tensor_op;
 }
+
+Status SwapRedBlueOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::SwapRedBlueOperation>();
+  return Status::OK();
+}
 #endif
 }  // namespace vision
 }  // namespace dataset

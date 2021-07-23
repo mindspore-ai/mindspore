@@ -80,6 +80,24 @@ Status AffineOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status AffineOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Fail to find degrees");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("translate") != op_params.end(), "Fail to find translate");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("scale") != op_params.end(), "Fail to find scale");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("shear") != op_params.end(), "Fail to find shear");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resample") != op_params.end(), "Fail to find resample");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Fail to find fill_value");
+  float_t degrees = op_params["degrees"];
+  std::vector<float> translation = op_params["translate"];
+  float scale = op_params["scale"];
+  std::vector<float> shear = op_params["shear"];
+  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["resample"]);
+  std::vector<uint8_t> fill_value = op_params["fill_value"];
+  *operation = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear, interpolation, fill_value);
+  return Status::OK();
+}
+
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

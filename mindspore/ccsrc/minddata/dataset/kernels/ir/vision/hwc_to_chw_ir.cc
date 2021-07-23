@@ -35,6 +35,11 @@ std::string HwcToChwOperation::Name() const { return kHwcToChwOperation; }
 Status HwcToChwOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> HwcToChwOperation::Build() { return std::make_shared<HwcToChwOp>(); }
+
+Status HwcToChwOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::HwcToChwOperation>();
+  return Status::OK();
+}
 #endif
 }  // namespace vision
 }  // namespace dataset

@@ -62,6 +62,17 @@ Status RandomColorOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["degrees"] = std::vector<float>{t_lb_, t_ub_};
   return Status::OK();
 }
+
+Status RandomColorOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degrees") != op_params.end(), "Fail to find degrees");
+  std::vector<float> degrees = op_params["degrees"];
+  CHECK_FAIL_RETURN_UNEXPECTED(degrees.size() == 2, "The number of degrees should be 2");
+  float t_lb = degrees[0];
+  float t_ub = degrees[1];
+  *operation = std::make_shared<vision::RandomColorOperation>(t_lb, t_ub);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

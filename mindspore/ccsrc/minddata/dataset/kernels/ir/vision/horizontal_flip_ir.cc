@@ -39,6 +39,11 @@ std::shared_ptr<TensorOp> HorizontalFlipOperation::Build() {
   std::shared_ptr<HorizontalFlipOp> tensor_op = std::make_shared<HorizontalFlipOp>();
   return tensor_op;
 }
+
+Status HorizontalFlipOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::HorizontalFlipOperation>();
+  return Status::OK();
+}
 #endif
 
 }  // namespace vision

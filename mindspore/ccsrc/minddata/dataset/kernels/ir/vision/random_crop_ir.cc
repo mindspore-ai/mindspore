@@ -117,6 +117,22 @@ Status RandomCropOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status RandomCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("padding") != op_params.end(), "Fail to find padding");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("pad_if_needed") != op_params.end(), "Fail to find pad_if_needed");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Fail to find fill_value");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("padding_mode") != op_params.end(), "Fail to find padding_mode");
+  std::vector<int32_t> size = op_params["size"];
+  std::vector<int32_t> padding = op_params["padding"];
+  bool pad_if_needed = op_params["pad_if_needed"];
+  std::vector<uint8_t> fill_value = op_params["fill_value"];
+  BorderType padding_mode = static_cast<BorderType>(op_params["padding_mode"]);
+  *operation = std::make_shared<vision::RandomCropOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

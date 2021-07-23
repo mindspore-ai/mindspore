@@ -51,6 +51,8 @@ class RandomAffineOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<float_t> degrees_;          // min_degree, max_degree
   std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage

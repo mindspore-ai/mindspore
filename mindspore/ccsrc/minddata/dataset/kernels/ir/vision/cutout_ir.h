@@ -49,6 +49,8 @@ class CutOutOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   int32_t length_;
   int32_t num_patches_;

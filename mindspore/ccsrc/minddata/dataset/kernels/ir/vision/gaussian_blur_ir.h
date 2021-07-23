@@ -46,6 +46,8 @@ class GaussianBlurOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<int32_t> kernel_size_;
   std::vector<float> sigma_;

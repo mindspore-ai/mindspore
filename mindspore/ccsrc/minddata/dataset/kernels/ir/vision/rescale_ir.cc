@@ -55,6 +55,16 @@ Status RescaleOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status RescaleOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("rescale") != op_params.end(), "Fail to find rescale");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("shift") != op_params.end(), "Fail to find shift");
+  float rescale = op_params["rescale"];
+  float shift = op_params["shift"];
+  *operation = std::make_shared<vision::RescaleOperation>(rescale, shift);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

@@ -83,11 +83,27 @@ Status RandomResizedCropOperation::to_json(nlohmann::json *out_json) {
   args["size"] = size_;
   args["scale"] = scale_;
   args["ratio"] = ratio_;
-  args["interpolation_"] = interpolation_;
+  args["interpolation"] = interpolation_;
   args["max_attempts"] = max_attempts_;
   *out_json = args;
   return Status::OK();
 }
+
+Status RandomResizedCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("scale") != op_params.end(), "Fail to find scale");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Fail to find ratio");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("interpolation") != op_params.end(), "Fail to find interpolation");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("max_attempts") != op_params.end(), "Fail to find max_attempts");
+  std::vector<int32_t> size = op_params["size"];
+  std::vector<float> scale = op_params["scale"];
+  std::vector<float> ratio = op_params["ratio"];
+  InterpolationMode interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
+  int32_t max_attempts = op_params["max_attempts"];
+  *operation = std::make_shared<vision::RandomResizedCropOperation>(size, scale, ratio, interpolation, max_attempts);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

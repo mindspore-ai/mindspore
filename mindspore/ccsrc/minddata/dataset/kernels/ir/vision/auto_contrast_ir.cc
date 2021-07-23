@@ -66,6 +66,16 @@ Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status AutoContrastOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("cutoff") != op_params.end(), "Fail to find cutoff");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ignore") != op_params.end(), "Fail to find ignore");
+  float cutoff = op_params["cutoff"];
+  std::vector<uint32_t> ignore = op_params["ignore"];
+  *operation = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore);
+  return Status::OK();
+}
+
 #endif
 }  // namespace vision
 }  // namespace dataset

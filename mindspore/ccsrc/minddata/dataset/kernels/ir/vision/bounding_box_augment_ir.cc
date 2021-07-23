@@ -47,8 +47,11 @@ std::shared_ptr<TensorOp> BoundingBoxAugmentOperation::Build() {
 
 Status BoundingBoxAugmentOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args, transform_args;
+  nlohmann::json op_item;
   RETURN_IF_NOT_OK(transform_->to_json(&transform_args));
-  args["transform"] = transform_args;
+  op_item["tensor_op_params"] = transform_args;
+  op_item["tensor_op_name"] = transform_->Name();
+  args["transform"] = op_item;
   args["ratio"] = ratio_;
   *out_json = args;
   return Status::OK();

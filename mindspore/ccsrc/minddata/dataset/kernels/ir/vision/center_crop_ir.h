@@ -24,8 +24,10 @@
 #include <vector>
 
 #include "include/api/status.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 
 namespace mindspore {
@@ -48,6 +50,8 @@ class CenterCropOperation : public TensorOperation {
   std::string Name() const override;
 
   Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
   std::vector<int32_t> size_;

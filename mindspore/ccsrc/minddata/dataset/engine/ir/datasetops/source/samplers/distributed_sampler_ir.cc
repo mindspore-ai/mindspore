@@ -99,8 +99,10 @@ Status DistributedSamplerObj::to_json(nlohmann::json *const out_json) {
   args["num_shards"] = num_shards_;
   args["shard_id"] = shard_id_;
   args["shuffle"] = shuffle_;
+  args["seed"] = seed_;
   args["offset"] = offset_;
   args["num_samples"] = num_samples_;
+  args["even_dist"] = even_dist_;
   *out_json = args;
   return Status::OK();
 }

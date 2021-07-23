@@ -83,6 +83,29 @@ Status RotateOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
+Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+#ifndef ENABLE_ANDROID
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("degree") != op_params.end(), "Fail to find degree");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("resample") != op_params.end(), "Fail to find resample");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("expand") != op_params.end(), "Fail to find expand");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("center") != op_params.end(), "Fail to find center");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Fail to find fill_value");
+  float degrees = op_params["degree"];
+  InterpolationMode resample = static_cast<InterpolationMode>(op_params["resample"]);
+  bool expand = op_params["expand"];
+  std::vector<float> center = op_params["center"];
+  std::vector<uint8_t> fill_value = op_params["fill_value"];
+  *operation = std::make_shared<vision::RotateOperation>(degrees, resample, expand, center, fill_value);
+#else
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("angle_id") != op_params.end(), "Fail to find angle_id");
+  uint64_t angle_id = op_params["angle_id"];
+  std::shared_ptr<RotateOperation> rotate_operation = std::make_shared<vision::RotateOperation>();
+  rotate_operation.get()->setAngle(angle_id);
+  *operation = rotate_operation;
+#endif
+  return Status::OK();
+}
+
 void RotateOperation::setAngle(uint64_t angle_id) {
   std::dynamic_pointer_cast<RotateOp>(rotate_op_)->setAngle(angle_id);
 }
