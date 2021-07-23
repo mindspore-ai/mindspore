@@ -72,46 +72,18 @@ _confmap_dict = {'level': 'GLOG_v', 'console': 'GLOG_logtostderr', 'filepath': '
 class _MultiCompatibleRotatingFileHandler(RotatingFileHandler):
     """Inherit RotatingFileHandler for multiprocess compatibility."""
 
-    def rolling_rename(self):
-        """Rolling rename log files and set permission of Log file"""
-        for i in range(self.backupCount - 1, 0, -1):
-            sfn = self.rotation_filename("%s.%d" % (self.baseFilename, i))
-            dfn = self.rotation_filename("%s.%d" % (self.baseFilename, i + 1))
-            if os.path.exists(sfn):
-                if os.path.exists(dfn):
-                    os.remove(dfn)
-                # Modify the permission of Log file
-                os.chmod(sfn, stat.S_IREAD)
-                os.rename(sfn, dfn)
-
     def doRollover(self):
         """Override doRollover for multiprocess compatibility
         and setting permission of Log file"""
-        if self.stream:
-            self.stream.close()
-            self.stream = None
 
         # Attain an exclusive lock with blocking mode by `fcntl` module.
         with open(self.baseFilename, 'a') as file_pointer:
             if platform.system() != "Windows":
                 fcntl.lockf(file_pointer.fileno(), fcntl.LOCK_EX)
-
-        if self.backupCount > 0:
-            self.rolling_rename()
-
-        dfn = self.rotation_filename(self.baseFilename + ".1")
-        if os.path.exists(dfn):
-            os.remove(dfn)
-        # Modify the permission of Log file
-        os.chmod(self.baseFilename, stat.S_IREAD)
-        self.rotate(self.baseFilename, dfn)
-
-        with open(self.baseFilename, 'a'):
+            os.chmod(self.baseFilename, stat.S_IREAD)
+            super().doRollover()
             # Modify the permission of Log file
             os.chmod(self.baseFilename, stat.S_IREAD | stat.S_IWRITE)
-
-        if not self.delay:
-            self.stream = self._open()
 
 
 class _DataFormatter(logging.Formatter):
@@ -525,6 +497,10 @@ def _setup_logger(kwargs):
             logfile_handler.name = 'FileHandler'
             logfile_handler.formatter = _DataFormatter(sub_module, formatter)
             logger.addHandler(logfile_handler)
+
+            with open(file_name, 'a'):
+                # Modify the permission of Log file
+                os.chmod(file_name, stat.S_IREAD | stat.S_IWRITE)
 
             # Write the file and output warning and error logs to stderr
             console_handler = logging.StreamHandler(sys.stderr)
