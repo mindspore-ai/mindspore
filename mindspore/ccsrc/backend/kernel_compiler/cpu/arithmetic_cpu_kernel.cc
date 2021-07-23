@@ -104,6 +104,8 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
   for (size_t i = 0; i < size; ++i) {
     auto dividend = input1[idx_1];
     auto divisor = input2[idx_2];
+    idx_1 += delta_1;
+    idx_2 += delta_2;
     if (divisor == zero) {
       if (dividend == zero) {
         out[i] = std::numeric_limits<T>::quiet_NaN();
@@ -117,8 +119,6 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
       continue;
     }
     out[i] = dividend / divisor;
-    idx_1 += delta_1;
-    idx_2 += delta_2;
   }
 }
 

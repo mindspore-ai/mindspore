@@ -79,8 +79,9 @@ template <typename T>
 void ReduceCPUKernel<T>::SimpleReduce(size_t start, size_t end, size_t stride, const T *input_addr, T *output_addr) {
   auto pos = start * stride;
   for (size_t i = start; i < end; ++i) {
-    output_addr[i] = 0;
-    for (size_t j = 0; j < stride; ++j) {
+    output_addr[i] = input_addr[pos];
+    pos++;
+    for (size_t j = 1; j < stride; ++j) {
       reduce_func_(input_addr, pos, &output_addr[i]);
       pos++;
     }
