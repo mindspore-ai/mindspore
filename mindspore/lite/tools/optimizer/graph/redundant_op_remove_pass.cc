@@ -27,13 +27,10 @@
 
 namespace mindspore::opt {
 namespace {
-constexpr size_t kInputDoubleNum = 2;
-constexpr size_t kInputTripleNum = 3;
-constexpr size_t kTransposePermIndex = 2;
 int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto first_input = cnode->input(1);
-  auto second_input = cnode->input(2);
+  auto second_input = cnode->input(kInputIndexTwo);
   AnfNodePtr must_monad = nullptr;
   AnfNodePtr not_must_monad = nullptr;
   if (utils::isa<ValueNode>(first_input)) {
@@ -68,9 +65,9 @@ int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
 int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool pre_node_is_first) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   AnfNodePtr pre_node = cnode->input(1);
-  AnfNodePtr post_node = cnode->input(2);
+  AnfNodePtr post_node = cnode->input(kInputIndexTwo);
   if (!pre_node_is_first) {
-    pre_node = cnode->input(2);
+    pre_node = cnode->input(kInputIndexTwo);
     post_node = cnode->input(1);
   }
   auto manager = func_graph->manager();
@@ -115,21 +112,21 @@ int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraph
   }
   auto cnode = anf_node->cast<CNodePtr>();
   if (CheckPrimitiveType(anf_node, kPrimIdentity)) {
-    if (cnode->size() != kInputDoubleNum) {
+    if (cnode->size() != kInputSizeTwo) {
       MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
       remove_cnode_.insert(anf_node);
       return lite::RET_NO_CHANGE;
     }
   }
   if (CheckPrimitiveType(anf_node, prim::kPrimDepend)) {
-    if (cnode->size() != kInputDoubleNum) {
+    if (cnode->size() != kInputSizeTwo) {
       MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
       remove_cnode_.insert(anf_node);
       return lite::RET_NO_CHANGE;
     }
   }
   if (CheckPrimitiveType(anf_node, prim::kPrimTranspose)) {
-    if (cnode->size() != kInputTripleNum) {
+    if (cnode->size() != kInputSizeThree) {
       MS_LOG(DEBUG) << "The node inputs size is bigger than 2";
       remove_cnode_.insert(anf_node);
       return lite::RET_NO_CHANGE;
@@ -166,7 +163,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
-  if (cnode->inputs().size() != kInputTripleNum) {
+  if (cnode->inputs().size() != kInputSizeThree) {
     MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->inputs().size();
     return RET_ERROR;
   }
@@ -174,7 +171,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     return lite::RET_NO_CHANGE;
   }
   auto get_item_input_cnode = cnode->input(1)->cast<CNodePtr>();
-  auto index_vnode = cnode->input(2);
+  auto index_vnode = cnode->input(kInputIndexTwo);
   if (!utils::isa<ValueNode>(index_vnode)) {
     MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
     return lite::RET_ERROR;
@@ -201,7 +198,7 @@ int RemoveRedundantOpPass::RemoveDropoutOp(const AnfNodePtr &anf_node, const Fun
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
-  if (cnode->size() > kInputDoubleNum) {
+  if (cnode->size() > kInputSizeTwo) {
     MS_LOG(ERROR) << "dropout input invalid.";
     return lite::RET_ERROR;
   }
@@ -216,7 +213,7 @@ int RemoveRedundantOpPass::RemoveDropoutOp(const AnfNodePtr &anf_node, const Fun
         MS_LOG(ERROR) << "dropout out node is invalid.";
         return lite::RET_ERROR;
       }
-      auto get_index_node = node->cast<CNodePtr>()->input(kInputDoubleNum)->cast<ValueNodePtr>();
+      auto get_index_node = node->cast<CNodePtr>()->input(kInputIndexTwo)->cast<ValueNodePtr>();
       if (get_index_node == nullptr) {
         MS_LOG(ERROR) << "tuple get item node is invalid.";
         return lite::RET_ERROR;
@@ -244,17 +241,18 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
     return lite::RET_NO_CHANGE;
   }
   auto is_invalid = true;
-  if (cnode->size() > kInputDoubleNum) {
-    auto padding_node = cnode->input(2);
+  if (cnode->size() > kInputSizeTwo) {
+    auto padding_node = cnode->input(kInputIndexTwo);
     lite::DataInfo data_info;
     if (utils::isa<Parameter>(padding_node)) {
-      auto status = lite::FetchDataFromParameterNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+      auto status =
+        lite::FetchDataFromParameterNode(cnode, kInputIndexTwo, lite::converter::FmkType_MS, false, &data_info);
       if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
         MS_LOG(ERROR) << "fetch data from parameter node failed.";
         return lite::RET_ERROR;
       }
     } else if (utils::isa<ValueNode>(padding_node)) {
-      auto status = lite::FetchDataFromValueNode(cnode, 2, lite::converter::FmkType_MS, false, &data_info);
+      auto status = lite::FetchDataFromValueNode(cnode, kInputIndexTwo, lite::converter::FmkType_MS, false, &data_info);
       if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
         MS_LOG(ERROR) << "fetch data from value node failed.";
         return lite::RET_ERROR;
@@ -297,11 +295,11 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
 
 int RemoveRedundantOpPass::RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   auto cnode = anf_node->cast<CNodePtr>();
-  if (cnode->size() != kInputTripleNum) {
+  if (cnode->size() != kInputSizeThree) {
     MS_LOG(DEBUG) << "The node inputs size is bigger than 2";
     return lite::RET_NO_CHANGE;
   }
-  auto index_node = cnode->inputs()[kTransposePermIndex]->cast<ParameterPtr>();
+  auto index_node = cnode->inputs()[kInputIndexTwo]->cast<ParameterPtr>();
   if (index_node == nullptr) {
     return RET_OK;
   }
@@ -350,7 +348,7 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
         return false;
       }
       (void)Run(sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(2));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;

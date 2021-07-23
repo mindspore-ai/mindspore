@@ -28,7 +28,6 @@ using mindspore::lite::NCHW_SHAPE;
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kNCHWDimNumber = 4;
 const std::vector<int> NH2NC = {0, 3, 1, 2};
 const std::vector<int> NC2NH = {0, 2, 3, 1};
 bool IsSpecialType(const CNodePtr &cnode) {
@@ -168,9 +167,9 @@ void ConvertNcTensor2Nh(const FuncGraphPtr &func_graph, const CNodePtr &cnode, s
   std::vector<int> new_shape = data_info.shape_;
   if (data_info.shape_.size() == 1) {
     new_shape = {1, 1, 1, data_info.shape_[0]};
-  } else if (data_info.shape_.size() == 2) {
+  } else if (data_info.shape_.size() == kInputSizeTwo) {
     new_shape = {1, 1, data_info.shape_[0], data_info.shape_[1]};
-  } else if (data_info.shape_.size() == 3) {
+  } else if (data_info.shape_.size() == kInputSizeThree) {
     new_shape = {1, data_info.shape_[0], data_info.shape_[1], data_info.shape_[2]};
   }
   auto size = data_info.data_.size() / sizeof(float);
@@ -503,7 +502,7 @@ STATUS UnifyFormatPass::HandleGraphInput(const FuncGraphPtr &func_graph, const C
       return lite::RET_ERROR;
     }
     auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
-    if (shape_vector.size() != kNCHWDimNumber) {
+    if (shape_vector.size() != kInputSizeFour) {
       continue;
     }
     if (func_graph->get_inputs().size() == 1 && fmk_type_ == lite::converter::FmkType_ONNX && shape_vector[3] == 3 &&
@@ -638,7 +637,7 @@ void UnifyFormatPass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr
     auto last_underline = node_name.find_last_of("_");
     node_name = node_name.substr(0, last_underline);
     last_underline = node_name.find_last_of("_");
-    auto index = std::stoi(node_name.substr(last_underline + 1)) + 3;
+    auto index = std::stoi(node_name.substr(last_underline + 1)) + static_cast<int>(kInputSizeThree);
     param_node->set_abstract(GetCNodeInputAbstract(cnode, index)->Clone());
     if (utils::isa<CNodePtr>(cnode->input(index))) {
       ShapeVector shape_vec = {-1};
@@ -701,7 +700,7 @@ void UnifyFormatPass::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPt
       continue;
     }
     auto node_name = return_node->input(i)->fullname_with_scope();
-    if (node_name.substr(node_name.size() - 5) != "_post") {
+    if (node_name.size() < kInputSizeFive || node_name.substr(node_name.size() - kInputSizeFive) != "_post") {
       continue;
     }
     auto trans_cnode = return_node->input(i)->cast<CNodePtr>();
@@ -796,7 +795,7 @@ bool UnifyFormatPass::BasicProcess(const FuncGraphPtr &func_graph, bool main_gra
       SetSubGraphInput(cnode, sub_func_graph);
       (void)BasicProcess(sub_func_graph, false);
       SetSubGraphOutput(cnode, sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
@@ -842,7 +841,7 @@ bool UnifyFormatPass::DecreaseTransposeForSingleOp(const FuncGraphPtr &func_grap
       SetSubGraphInput(cnode, sub_func_graph);
       (void)DecreaseTransposeForSingleOp(sub_func_graph);
       SetSubGraphOutput(cnode, sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
@@ -898,7 +897,7 @@ bool UnifyFormatPass::DecreaseTransposeForMultiOp(const FuncGraphPtr &func_graph
         return false;
       }
       (void)DecreaseTransposeForMultiOp(sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         return false;
       }
@@ -968,7 +967,7 @@ bool UnifyFormatPass::ResetFuncGraph(const FuncGraphPtr &func_graph) {
         return false;
       }
       (void)ResetFuncGraph(sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         return false;
       }

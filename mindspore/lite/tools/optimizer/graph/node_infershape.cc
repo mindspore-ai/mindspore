@@ -63,7 +63,7 @@ void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inp
   }
   for (auto &input : inputs) {
     auto shape = input->shape();
-    if (shape.size() == 4 && shape[3] == 3 && shape[1] == -1) {
+    if (shape.size() == kInputSizeFour && shape[3] == 3 && shape[1] == -1) {
       input->set_format(mindspore::NHWC);
     }
   }
@@ -521,7 +521,7 @@ STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, con
 }
 
 abstract::AbstractBasePtr NodeInferShape::ConvertLiteTensorToAbstract(lite::Tensor *tensor) {
-  MS_ASSERT(nullptr != tensor);
+  MS_ASSERT(tensor != nullptr);
   if (tensor->data_type() == kObjectTypeTensorType) {
     return ConvertTensorListToAbstract(tensor);
   }
@@ -536,7 +536,7 @@ abstract::AbstractBasePtr NodeInferShape::ConvertLiteTensorToAbstract(lite::Tens
 // stract save tensorlist's type and shape. tensor_info save tensorlist's data and data type.
 // both of them is different in term of shape and type.
 abstract::AbstractBasePtr NodeInferShape::ConvertTensorListToAbstract(lite::Tensor *tensor) {
-  MS_ASSERT(nullptr != tensor);
+  MS_ASSERT(tensor != nullptr);
   auto tensor_list = dynamic_cast<lite::TensorList *>(tensor);
   if (tensor_list == nullptr) {
     MS_LOG(ERROR) << "cast tensor_list failed";
