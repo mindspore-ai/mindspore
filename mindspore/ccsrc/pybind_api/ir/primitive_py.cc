@@ -64,7 +64,7 @@ PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterP
     : Primitive(adapter->name_, false), python_obj_(python_obj), adapter_(adapter) {
   MS_LOG(DEBUG) << "New primitive:" << adapter->name_;
   set_signatures(adapter->signatures_);
-  Primitive::SetAttrs(adapter->attrs_);
+  (void)Primitive::SetAttrs(adapter->attrs_);
   Primitive::set_prim_type(adapter->prim_type_);
   Primitive::set_const_prim(adapter->is_const_prim_);
   Primitive::set_const_input_indexes(adapter->const_input_indexes_);
@@ -305,7 +305,7 @@ void PrimitivePy::CopyHookFunction(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive_py);
   this->set_hook(primitive_py->hook());
   if (primitive_py->HasAttr(kBpropAttrName)) {
-    this->AddAttr(kBpropAttrName, primitive_py->GetAttr(kBpropAttrName));
+    (void)this->AddAttr(kBpropAttrName, primitive_py->GetAttr(kBpropAttrName));
   }
 }
 
@@ -392,11 +392,11 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   if (kOpAttrNameReplaceMap.find(attr_name) != kOpAttrNameReplaceMap.end()) {
     attr_name = kOpAttrNameReplaceMap[attr_name];
   }
-  CheckAndConvertUtils::ConvertAttrValueToInt(name_, name, &converted_ret);
+  (void)CheckAndConvertUtils::ConvertAttrValueToInt(name_, name, &converted_ret);
   attrs_[attr_name] = converted_ret;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
-    prim->AddAttr(attr_name, converted_ret);
+    (void)prim->AddAttr(attr_name, converted_ret);
   }
 
   if (attr_name == "primitive_target") {
@@ -415,10 +415,10 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
 }
 
 void PrimitivePyAdapter::DelPyAttr(const py::str &name) {
-  attrs_.erase(name);
+  (void)attrs_.erase(name);
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
-    prim->DelAttr(name);
+    (void)prim->DelAttr(name);
   }
 }
 

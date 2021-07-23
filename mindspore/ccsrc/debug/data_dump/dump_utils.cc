@@ -140,5 +140,4 @@ std::string GetOpNameWithoutScope(const std::string &fullname_with_scope) {
   }
   return op_name;
 }
-
 }  // namespace mindspore

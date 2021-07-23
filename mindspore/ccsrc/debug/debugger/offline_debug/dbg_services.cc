@@ -173,9 +173,6 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   std::vector<int32_t> error_codes;
   std::vector<unsigned int> rank_id;
   std::vector<unsigned int> root_graph_id;
-  // #ifdef ENABLE_D
-  //  overflow_ops = CheckOpOverflow();
-  // #endif
 
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::vector<std::string> file_paths;

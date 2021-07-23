@@ -303,7 +303,6 @@ struct GlogLogDirRegister {
       std::string log_dir_str = std::string(log_dir);
 
       auto real_log_dir_str = Common::GetRealPath(log_dir_str);
-
       // While 'GLOG_logtostderr' = 0, logs output to files.
       // 'GLOG_log_dir' must be specified as the path of log files.
       if (logtostderr_str == "0" && real_log_dir_str.has_value()) {
