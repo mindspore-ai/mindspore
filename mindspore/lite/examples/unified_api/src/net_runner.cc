@@ -56,6 +56,8 @@ constexpr int kNCHWCDim = 2;
 constexpr int kPrintTimes = 100;
 constexpr int kSaveEpochs = 3;
 constexpr float kGammaFactor = 0.7f;
+constexpr static int kElem2Print = 10;
+
 class Rescaler : public mindspore::TrainCallBack {
  public:
   explicit Rescaler(float scale) : scale_(scale) {
@@ -127,7 +129,9 @@ bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inpu
     auto d = reinterpret_cast<float *>(after_outputs.at(i)->MutableData());
     int num2p = (after_outputs.at(i)->ElementsNum());
     printf("ou%zu(%d): ", i, num2p);
-    if (num2p > 10) num2p = 10;
+    if (num2p > kElem2Print) {
+      num2p = kElem2Print
+    }
     for (int j = 0; j < num2p; j++) printf("%f, ", d[j]);
     printf("\n");
   }
@@ -161,16 +165,12 @@ void NetRunner::InitAndFigureInputs() {
     MS_ASSERT(status != mindspore::kSuccess);
   }
 
-  // if (verbose_) {
-  //  loop_->SetKernelCallBack(nullptr, after_callback);
-  //}
   acc_metrics_ = std::shared_ptr<AccuracyMetrics>(new AccuracyMetrics);
   model_->InitMetrics({acc_metrics_.get()});
 
   auto inputs = model_->GetInputs();
   MS_ASSERT(inputs.size() >= 1);
   auto nhwc_input_dims = inputs.at(0).Shape();
-  // MS_ASSERT(nhwc_input_dims.size() == kNCHWDims);
   batch_size_ = nhwc_input_dims.at(0);
   h_ = nhwc_input_dims.at(1);
   w_ = nhwc_input_dims.at(kNCHWCDim);
@@ -185,8 +185,6 @@ float NetRunner::CalculateAccuracy(int max_tests) {
   TypeCast typecast(mindspore::DataType::kNumberTypeInt32);
   test_ds_ = test_ds_->Map({&typecast}, {"label"});
   test_ds_ = test_ds_->Batch(batch_size_, true);
-
-  // Rescaler rescale(kScalePoint);
 
   model_->Evaluate(test_ds_, {});
   std::cout << "Accuracy is " << acc_metrics_->Eval() << std::endl;

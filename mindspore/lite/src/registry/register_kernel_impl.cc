@@ -47,13 +47,11 @@ int RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::stri
   std::unique_lock<std::mutex> lock(lock_);
   if (custom_kernel_creators_[provider][arch][type] == nullptr) {
     custom_kernel_creators_[provider][arch][type] =
-      reinterpret_cast<CreateKernel *>(malloc(data_type_length_ * sizeof(CreateKernel)));
+      reinterpret_cast<CreateKernel *>(calloc(data_type_length_, sizeof(CreateKernel)));
     if (custom_kernel_creators_[provider][arch][type] == nullptr) {
       MS_LOG(ERROR) << "malloc custom kernel creator fail!provider: " << provider << ", arch: " << arch;
       return RET_ERROR;
     }
-    memset(reinterpret_cast<void *>(custom_kernel_creators_[provider][arch][type]), 0,
-           data_type_length_ * sizeof(CreateKernel));
   }
 
   int data_type_index = data_type - kNumberTypeBegin - 1;
@@ -70,21 +68,19 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
   std::unique_lock<std::mutex> lock(lock_);
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
-    kernel_creators_[provider][arch] = reinterpret_cast<CreateKernel *>(malloc(kKernelMaxNum * sizeof(CreateKernel)));
+    kernel_creators_[provider][arch] = reinterpret_cast<CreateKernel *>(calloc(kKernelMaxNum, sizeof(CreateKernel)));
     if (kernel_creators_[provider][arch] == nullptr) {
       MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
       return RET_ERROR;
     }
-    memset(reinterpret_cast<void *>(kernel_creators_[provider][arch]), 0, kKernelMaxNum * sizeof(CreateKernel));
   } else {
     auto iter_arch = iter->second.find(arch);
     if (iter_arch == iter->second.end()) {
-      iter->second[arch] = reinterpret_cast<CreateKernel *>(malloc(kKernelMaxNum * sizeof(CreateKernel)));
+      iter->second[arch] = reinterpret_cast<CreateKernel *>(calloc(kKernelMaxNum, sizeof(CreateKernel)));
       if (iter->second[arch] == nullptr) {
         MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
         return RET_ERROR;
       }
-      memset(reinterpret_cast<void *>(iter->second[arch]), 0, kKernelMaxNum * sizeof(CreateKernel));
     }
   }
 

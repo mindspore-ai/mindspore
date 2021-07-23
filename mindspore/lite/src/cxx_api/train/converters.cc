@@ -24,7 +24,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 Status A2L_ConvertConfig(const TrainCfg *a_train_cfg, lite::TrainCfg *l_train_cfg) {
   if ((a_train_cfg == nullptr) || (l_train_cfg == nullptr)) {
     MS_LOG(ERROR) << "Invalid train_cfg pointers";
@@ -39,5 +38,4 @@ Status A2L_ConvertConfig(const TrainCfg *a_train_cfg, lite::TrainCfg *l_train_cf
 
   return kSuccess;
 }
-
 }  // namespace mindspore

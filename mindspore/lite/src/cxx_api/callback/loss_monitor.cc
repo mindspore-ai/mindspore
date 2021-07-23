@@ -23,7 +23,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 LossMonitor::LossMonitor(int print_every_n_steps) {
   callback_impl_ = new CallbackImpl(new lite::LossMonitor(print_every_n_steps));
 }
@@ -53,5 +52,4 @@ const std::vector<GraphPoint> &LossMonitor::GetLossPoints() {
 
   return (reinterpret_cast<lite::LossMonitor *>(internal_call_back))->GetLossPoints();
 }
-
 }  // namespace mindspore

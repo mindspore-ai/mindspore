@@ -23,7 +23,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-
 TrainAccuracy::TrainAccuracy(int print_every_n, int accuracy_metrics, const std::vector<int> &input_indexes,
                              const std::vector<int> &output_indexes) {
   callback_impl_ = new CallbackImpl(
@@ -55,5 +54,4 @@ const std::vector<GraphPoint> &TrainAccuracy::GetAccuracyPoints() {
 
   return (reinterpret_cast<lite::ClassificationTrainAccuracyMonitor *>(internal_call_back))->GetAccuracyPoints();
 }
-
 }  // namespace mindspore

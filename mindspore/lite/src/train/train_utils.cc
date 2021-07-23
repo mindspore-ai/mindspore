@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace lite {
-
 size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter) {
   for (size_t i = 0; i < where.size(); i++) {
     if (where[i] == searchParameter) {
@@ -199,6 +198,5 @@ int ScaleTensor(Tensor *tensor, float scale) {
   MS_LOG(DEBUG) << "Scale tensor: " << tensor->tensor_name() << " " << scale;
   return tensor->Scale<float>(scale);
 }
-
 }  // namespace lite
 }  // namespace mindspore

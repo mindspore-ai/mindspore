@@ -24,6 +24,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Select;
 
 namespace mindspore::kernel {
+constexpr static int kFirstIdx = 1;
+constexpr static int kSecondIdx = 2;
+
 int SelectCPUKernel::Init() { return RET_OK; }
 
 int SelectCPUKernel::ReSize() { return RET_OK; }
@@ -70,8 +73,8 @@ int SelectCPUKernel::Run() {
     MS_ASSERT(in_tensors_.at(1)->Size() == out_tensors_.at(0)->Size());
     auto size = in_tensors_.at(1)->ElementsNum();
     auto condition = static_cast<bool *>(bool_tensor->data_c());
-    auto input1 = static_cast<float *>(in_tensors_.at(1)->data_c());
-    auto input2 = static_cast<float *>(in_tensors_.at(2)->data_c());
+    auto input1 = static_cast<float *>(in_tensors_.at(kFirstIdx)->data_c());
+    auto input2 = static_cast<float *>(in_tensors_.at(kSecondIdx)->data_c());
     auto output = static_cast<float *>(out_tensors_.at(0)->data_c());
     for (int i = 0; i < size; i++) {
       output[i] = condition[i] ? input1[i] : input2[i];

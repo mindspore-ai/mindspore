@@ -26,14 +26,17 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+constexpr static int kX1Idx = 0;
+constexpr static int kX2Idx = 1;
+constexpr static int kDyIdx = 2;
 
 int ArithmeticGradCPUKernelFp16::Init() { return RET_OK; }
 
 void ArithmeticGradCPUKernelFp16::ArithmeticGradMaximum(float16_t *dy, int dy_size, float16_t *dx1, int dx1_size,
                                                         float16_t *dx2, int dx2_size) {
-  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
-  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[1]->data_c());
-  dy = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c());
+  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[kX1Idx]->data_c());
+  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[kX2Idx]->data_c());
+  dy = reinterpret_cast<float16_t *>(in_tensors_[kDyIdx]->data_c());
 
   MaximumByAxesFp16(x1, x2, dy, arithmeticParameter_->in_shape0_, arithmeticParameter_->in_shape1_,
                     arithmeticParameter_->out_shape_, dx1, dx2, arithmeticParameter_->ndim_);
@@ -41,9 +44,9 @@ void ArithmeticGradCPUKernelFp16::ArithmeticGradMaximum(float16_t *dy, int dy_si
 
 void ArithmeticGradCPUKernelFp16::ArithmeticGradMinimum(float16_t *dy, int dy_size, float16_t *dx1, int dx1_size,
                                                         float16_t *dx2, int dx2_size) {
-  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
-  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[1]->data_c());
-  dy = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c());
+  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[kX1Idx]->data_c());
+  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[kX2Idx]->data_c());
+  dy = reinterpret_cast<float16_t *>(in_tensors_[kDyIdx]->data_c());
 
   MinimumByAxesFp16(x1, x2, dy, arithmeticParameter_->in_shape0_, arithmeticParameter_->in_shape1_,
                     arithmeticParameter_->out_shape_, dx1, dx2, arithmeticParameter_->ndim_);

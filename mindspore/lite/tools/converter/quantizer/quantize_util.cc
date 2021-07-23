@@ -55,6 +55,9 @@ using std::vector;
 namespace mindspore::lite::quant {
 const std::vector<std::string> QuantStrategy::conv_types_ = {ops::kNameConv2DFusion, ops::kNameConv2dTransposeFusion};
 const std::vector<std::string> QuantStrategy::mul_types_ = {ops::kNameMatMul, ops::kNameFullConnection};
+constexpr int kDim2 = 2;
+constexpr int kDim4 = 4;
+
 QuantStrategy::QuantStrategy(size_t weight_size, size_t conv_weight_quant_channel_threshold)
     : m_weight_size_(weight_size), m_conv_weight_quant_channel_threshold_(conv_weight_quant_channel_threshold) {}
 
@@ -209,7 +212,7 @@ bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &inputNode) const {
   }
 
   auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-  if (weight_shape.size() < 2) {  // do not quant single dim tensors
+  if (weight_shape.size() < kDim2) {  // do not quant single dim tensors
     return false;
   }
 
@@ -222,7 +225,7 @@ bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &inputNode) const {
     return false;
   }
 
-  if (weight_shape.size() == 4) {  // assume Convolution
+  if (weight_shape.size() == kDim4) {  // assume Convolution
     if (weight_shape[0] <= static_cast<int>(m_conv_weight_quant_channel_threshold_)) {
       MS_LOG(INFO) << "channel less m_conv_weight_quant_channel_threshold_!" << weight_shape[0];
       return false;

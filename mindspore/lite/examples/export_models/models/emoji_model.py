@@ -15,6 +15,7 @@
 """emoji_model."""
 import mindspore as MS
 
+
 class GlobalAvgPooling(MS.nn.Cell):
     """
     Global avg pooling definition.
@@ -32,6 +33,7 @@ class GlobalAvgPooling(MS.nn.Cell):
     def construct(self, x):
         x = self.mean(x, (2, 3))
         return x
+
 
 class EmojiModel(MS.nn.Cell):
     """emoji model"""
