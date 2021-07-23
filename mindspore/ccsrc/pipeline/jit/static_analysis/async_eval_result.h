@@ -44,13 +44,14 @@ class AnalysisSchedule {
   static AnalysisSchedule &GetInstance() { return instance_; }
   static void SetThreadID(const std::string &caller);
   static std::string &GetThreadID();
-
-  void HandleException();
+  void HandleException(const std::exception &ex);
+  std::string GetExtendException() { return exceptionStream_.str(); }
   void Wait();
 
   void Reset() {
     activeThreadCount_ = 1;
     threadNum_ = 0;
+    exceptionStream_.clear();
   }
 
   void SetNextRunnable() {
@@ -62,8 +63,6 @@ class AnalysisSchedule {
     MS_LOG(DEBUG) << "The active thread count: " << activeThreadCount_;
     if (activeThreadCount_ == 0) {
       SetNextRunnableImpl();
-    } else if (activeThreadCount_ < 0) {
-      MS_LOG(WARNING) << "There is something wrong. active thread count: " << activeThreadCount_;
     }
   }
 
@@ -104,6 +103,7 @@ class AnalysisSchedule {
   std::mutex lock_;
   std::condition_variable condition_var_;
   std::list<AsyncAbstractPtr> asyncAbstractList_;
+  std::ostringstream exceptionStream_;
 };
 
 template <typename KeyType, typename ValueType, typename CacheType>

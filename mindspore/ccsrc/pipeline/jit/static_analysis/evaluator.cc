@@ -512,12 +512,11 @@ EvalResultPtr Evaluator::SingleRun(AnalysisEnginePtr engine, const ConfigPtrList
   EvalResultPtr result;
   try {
     result = this->Run(engine, args_conf_list, out_conf);
-  } catch (const std::exception &e) {
+  } catch (const std::exception &ex) {
     MS_LOG(INFO) << "Eval " << ToString() << " throw exception.";
-    AnalysisSchedule::GetInstance().HandleException();
+    AnalysisSchedule::GetInstance().HandleException(ex);
   }
   AnalysisSchedule::GetInstance().Wait();
-  StaticAnalysisException::Instance().CheckException();
   return result;
 }
 }  // namespace abstract

@@ -89,9 +89,9 @@ void DumpInferStack(std::ostringstream &oss) {
   }
   std::vector<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> infer_vec;
   while (!graph_stack.empty()) {
-    auto top = graph_stack.top();
+    auto top = graph_stack.back();
     infer_vec.push_back(top);
-    graph_stack.pop();
+    graph_stack.pop_back();
   }
   std::reverse(infer_vec.begin(), infer_vec.end());
   int index = 0;
@@ -118,12 +118,12 @@ void TraceGraphEval() {
     MS_LOG(INFO) << "Length of analysis graph stack is empty.";
     return;
   }
-  MS_LOG(ERROR) << "\n*******************************graph evaluate stack**********************************";
   std::ostringstream oss;
+  oss << "\n*******************************graph evaluate stack**********************************";
   oss << std::endl;
   DumpInferStack(oss);
+  oss << "\n*************************************************************************************";
   MS_LOG(ERROR) << oss.str();
-  MS_LOG(ERROR) << "\n*************************************************************************************";
 }
 
 class AnalyzeFailExporter : public AnfExporter {
@@ -131,7 +131,7 @@ class AnalyzeFailExporter : public AnfExporter {
   AnalyzeFailExporter() : AnfExporter(true, false) {}
   ~AnalyzeFailExporter() override = default;
 
-  bool ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack);
+  bool ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack);
 
  private:
   void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
@@ -339,8 +339,7 @@ void AnalyzeFailExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode,
   ofs << "\n";
 }
 
-bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename,
-                                          const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack) {
+bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack) {
   if (node_config_stack.empty()) {
     MS_LOG(DEBUG) << "Node configs is empty";
     return false;
@@ -398,8 +397,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     MS_LOG(INFO) << "Length of analysis information stack is empty.";
     return;
   }
-  static int fileNumber = 0;
-  string file_name = "analyze_fail_" + std::to_string(fileNumber++) + ".dat";
+  string file_name = "analyze_fail.dat";
   auto ms_om_path = common::GetEnv("MS_OM_PATH");
   if (!ms_om_path.empty()) {
     auto path = ms_om_path + "/" + file_name;
@@ -443,62 +441,68 @@ void GetEvalStackInfo(std::ostringstream &oss) {
 }
 
 // Trace the graph evaluator stack
-thread_local static std::stack<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
+thread_local TraceGraphEvalStack graph_infer_stack;
 // Trace the cnode infer debug info
-thread_local static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};
+thread_local TraceCNodeEvalStack cnode_debug_stack{};
 
 void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abstract::AnfNodeConfigPtr &node) {
   if (context == nullptr) {
     MS_LOG(EXCEPTION) << "GraphInferEnter got null context";
   }
-  (void)graph_infer_stack.emplace(std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>(context, node));
+  (void)graph_infer_stack.push_back(std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>(context, node));
 }
 
 void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context) {
   if (context == nullptr || graph_infer_stack.empty()) {
     MS_LOG(EXCEPTION) << "The context is null, or call stack is empty.";
   }
-  if (context != graph_infer_stack.top().first) {
+  if (context != graph_infer_stack.back().first) {
     MS_LOG(EXCEPTION) << "Different context: " << context->func_graph()->ToString() << ", "
-                      << graph_infer_stack.top().first->func_graph()->ToString();
+                      << graph_infer_stack.back().first->func_graph()->ToString();
   }
-  graph_infer_stack.pop();
+  graph_infer_stack.pop_back();
+}
+
+void TraceGraphEvalStackPrepare(const TraceGraphEvalStack &graphEvals) {
+  graph_infer_stack.insert(graph_infer_stack.end(), graphEvals.begin(), graphEvals.end());
+}
+
+void TraceEvalCNodeStackPrepare(const TraceCNodeEvalStack &cnodeEvals) {
+  cnode_debug_stack.insert(cnode_debug_stack.end(), cnodeEvals.begin(), cnodeEvals.end());
 }
 
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_config) { cnode_debug_stack.push_back(node_config); }
 
 void TraceEvalCNodeLeave() { cnode_debug_stack.pop_back(); }
 
-std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack() { return cnode_debug_stack; }
+TraceCNodeEvalStack &GetCNodeDebugStack() { return cnode_debug_stack; }
 
-std::stack<std::pair<abstract::AnalysisContextPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack() {
-  return graph_infer_stack;
-}
+TraceGraphEvalStack &GetCurrenGraphEvalStack() { return graph_infer_stack; }
 
 void ClearTraceStack() {
   while (!graph_infer_stack.empty()) {
-    graph_infer_stack.pop();
+    graph_infer_stack.pop_back();
   }
   cnode_debug_stack.clear();
 }
 
+void GetTraceStackInfo(std::ostringstream &oss) {
+  TraceGraphEval();
+  std::ostringstream trace_info;
+  GetEvalStackInfo(trace_info);
+  if (trace_info.str().empty()) {
+    DebugInfoPtr debug_info = TraceManager::GetParseOrResolveDebugInfo();
+    if (debug_info != nullptr) {
+      oss << "\n\n# " << trace::GetDebugInfo(debug_info);
+    }
+  } else {
+    oss << trace_info.str();
+  }
+}
+
 // Register trace provider to LogWriter.
 struct TraceProviderRegister {
-  TraceProviderRegister() {
-    LogWriter::set_trace_provider([](std::ostringstream &oss) {
-      TraceGraphEval();
-      std::ostringstream trace_info;
-      GetEvalStackInfo(trace_info);
-      if (trace_info.str().empty()) {
-        DebugInfoPtr debug_info = TraceManager::GetParseOrResolveDebugInfo();
-        if (debug_info != nullptr) {
-          oss << "\n\n# " << trace::GetDebugInfo(debug_info);
-        }
-      } else {
-        oss << trace_info.str();
-      }
-    });
-  }
+  TraceProviderRegister() { LogWriter::set_trace_provider(GetTraceStackInfo); }
   ~TraceProviderRegister() = default;
 } trace_provider_regsiter;
 
