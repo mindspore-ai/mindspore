@@ -132,8 +132,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   int32_t step_num() const;
 
-  void SetStreamTaskToOpnameMap(const std::map<std::pair<uint32_t, uint32_t>, std::string> &mapping);
-
   // check if any feature that uses the debugger backend is enabled
   bool DebuggerBackendEnabled() const;
 
@@ -163,7 +161,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
 
-  std::list<KernelGraphPtr> GetGraphPtrList() const { return graph_ptr_list_; }
+  const KernelGraphPtr GetGraphPtr() const { return graph_ptr_; }
+
+  const std::list<KernelGraphPtr> GetGraphPtrList() const { return graph_ptr_list_; }
 
   bool TensorExistsInCurrent(const std::string &tensor_name);
 
@@ -232,9 +232,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // send watchpoints that hit
   void SendWatchpoints(const std::list<WatchpointHit> &points);
 
-  // Find if any operation overflow happened and return their names
-  std::vector<std::string> CheckOpOverflow();
-
   // Check if the port is valid
   bool CheckPort(const std::string &port) const;
 
@@ -260,10 +257,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   bool is_dataset_graph_;
   bool partial_memory_;
   std::mutex access_lock_;
-  std::map<std::pair<uint32_t, uint32_t>, std::string> stream_task_to_opname_;
-  std::map<uint32_t, std::vector<std::string>> overflow_ops_;
-  double last_overflow_bin_;
-  std::map<uint32_t, std::string> overflow_bin_path_;
   // flag to keep track of the very first suspension of debugger
   bool initial_suspend_;
 
@@ -302,7 +295,5 @@ ProtoVector<TensorProto> GetTensors(const EventReply &reply);
 bool GetMiVersionMatched(const EventReply &reply);
 // get the full name of a tensor, which is the name used in TensorLoader
 std::string GetTensorFullName(const TensorProto &tensor);
-
-uint64_t BytestoUInt64(const std::vector<char> &buffer);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_H_
