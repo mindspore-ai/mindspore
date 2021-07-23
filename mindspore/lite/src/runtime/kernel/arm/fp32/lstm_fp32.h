@@ -59,7 +59,17 @@ class LstmCPUKernel : public InnerKernel {
   float *weight_h_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
+
   float *buffer_[7];
+  const int gate_num = 4;
+  const int packed_input_index = 0;
+  const int input_gate_index = 1;
+  const int packed_state_index = 2;
+  const int state_gate_index = 3;
+  const int cell_state_index = 4;
+  const int hidden_state_index = 5;
+  const int avx_state_output_index = 6;
+
   int row_tile_ = 0;
   int col_tile_ = 0;
   int state_row_tile_ = 0;

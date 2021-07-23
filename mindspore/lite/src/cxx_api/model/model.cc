@@ -28,7 +28,7 @@ namespace mindspore {
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode) {
-  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteNullptr;
@@ -46,7 +46,7 @@ Status Model::Build(const std::string &model_path, ModelType model_type, const s
     MS_LOG(ERROR) << "Invalid Model path.";
     return kLiteInputParamInvalid;
   }
-  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteNullptr;
@@ -65,7 +65,7 @@ Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_conte
     MS_LOG(DEBUG) << "Model has been already built.";
     return kSuccess;
   }
-  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
     err_msg << "Model implement is null.";
     MS_LOG(ERROR) << err_msg.str();

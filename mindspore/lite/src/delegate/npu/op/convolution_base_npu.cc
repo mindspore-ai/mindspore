@@ -60,21 +60,21 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
     return RET_ERROR;
   }
   if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
-    PackNHWCToNCHWFp32(fp32_weight, nchw_weight, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+    PackNHWCToNCHWFp32(fp32_weight, nchw_weight, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W], w_shape[NHWC_C]);
   } else if (inputs[1].DataType() == DataType::kNumberTypeFloat32) {
-    PackNHWCToNCHWFp32(origin_weight, nchw_weight, w_shape[0], w_shape[1] * w_shape[2], w_shape[3]);
+    PackNHWCToNCHWFp32(origin_weight, nchw_weight, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W], w_shape[NHWC_C]);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of weight tensor for npu convolution.";
     return RET_ERROR;
   }
 
-  std::shared_ptr<ge::Tensor> weight_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  auto weight_tensor = std::make_shared<ge::Tensor>();
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "new weight_tensor failed.";
     return RET_ERROR;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape({w_shape[0], w_shape[3], w_shape[1], w_shape[2]}), ge::FORMAT_NCHW,
-                             ConverterToNPUDataType(inputs[1].DataType()));
+  ge::TensorDesc tensor_desc(ConverterToNPUShape({w_shape[NHWC_N], w_shape[NHWC_C], w_shape[NHWC_H], w_shape[NHWC_W]}),
+                             ge::FORMAT_NCHW, ConverterToNPUDataType(inputs[1].DataType()));
   weight_tensor->SetTensorDesc(tensor_desc);
   weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_weight), inputs[1].ElementNum() * sizeof(float));
 
@@ -95,7 +95,7 @@ int ConvolutionBaseNPUOp::InitBiasConst(const std::vector<mindspore::MSTensor> &
       MS_LOG(ERROR) << "New bias const failed.";
       return RET_ERROR;
     }
-    std::shared_ptr<ge::Tensor> bias_tensor = ConverterToNPUTensor(inputs[2]);
+    std::shared_ptr<ge::Tensor> bias_tensor = ConverterToNPUTensor(inputs[BIAS_INDEX]);
     if (bias_tensor == nullptr) {
       MS_LOG(ERROR) << "Get bias_tensor failed.";
       return RET_ERROR;

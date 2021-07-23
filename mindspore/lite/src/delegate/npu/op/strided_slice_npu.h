@@ -22,6 +22,12 @@
 #include "src/delegate/npu/op/npu_op.h"
 
 namespace mindspore {
+constexpr int ONNX_INPUT_SIZE = 5;
+constexpr int BEGIN_INDEX = 1;
+constexpr int END_INDEX = 2;
+constexpr int STRIDE_INDEX = 3;
+constexpr int ONNX_STRIDE_INDEX = 4;
+
 class StridedSliceNPUOp : public NPUOp {
  public:
   StridedSliceNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,

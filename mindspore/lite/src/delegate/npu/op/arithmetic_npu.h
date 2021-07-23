@@ -49,7 +49,7 @@ class ArithmeticNPUOp : public NPUOp {
 
  private:
   int SetActivation();
-  int act_type_;
+  schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
   ge::Operator *op_ = nullptr;
   hiai::op::Activation *act_ = nullptr;
 };  // namespace mindspore

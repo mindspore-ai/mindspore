@@ -17,14 +17,17 @@
 #include "src/delegate/npu/op/gather_npu.h"
 
 namespace mindspore {
+constexpr int AXIS_INDEX = 2;
+constexpr int GATHER_INPUT_SIZE = 3;
+
 int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors[1].DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << "Gather indices only support Int32";
     return RET_NOT_SUPPORT;
   }
-  if (in_tensors.size() >= 3 && in_tensors[2].ElementNum() == 1) {
-    axis_ = static_cast<const int *>(in_tensors[2].Data().get())[0];
+  if (in_tensors.size() >= GATHER_INPUT_SIZE && in_tensors[AXIS_INDEX].ElementNum() == 1) {
+    axis_ = static_cast<const int *>(in_tensors[AXIS_INDEX].Data().get())[0];
   } else {
     MS_LOG(WARNING) << "NPU axis is attribute.";
     return RET_NOT_SUPPORT;

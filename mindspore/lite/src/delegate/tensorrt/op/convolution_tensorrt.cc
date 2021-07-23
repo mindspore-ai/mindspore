@@ -19,6 +19,8 @@
 #include "nnacl/pack.h"
 
 namespace mindspore::lite {
+constexpr int BIAS_INDEX = 2;
+
 int ConvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
                                    const std::vector<mindspore::MSTensor> &in_tensors,
                                    const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -89,8 +91,8 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   // bias
   nvinfer1::Weights biasWeights{};
-  if (in_tensors_.size() >= 3) {
-    auto bias_tensor = in_tensors_[2];
+  if (in_tensors_.size() >= INPUT_SIZE3) {
+    auto bias_tensor = in_tensors_[BIAS_INDEX];
     biasWeights.type = ConvertDataType(bias_tensor.DataType());
     biasWeights.values = bias_tensor.MutableData();
     biasWeights.count = bias_tensor.ElementNum();

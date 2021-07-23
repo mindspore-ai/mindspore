@@ -31,6 +31,8 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NOT_SUPPORT;
 using mindspore::lite::RET_OK;
 namespace mindspore {
+constexpr int NPU_SHAPE_SIZE = 4;
+
 class NPUOp {
  public:
   NPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -119,7 +121,7 @@ NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<mindspore:
     return nullptr;
   }
 
-  if (in_tensors[0].Shape().size() > 4) {
+  if (in_tensors[0].Shape().size() > NPU_SHAPE_SIZE) {
     MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
     return nullptr;
   }

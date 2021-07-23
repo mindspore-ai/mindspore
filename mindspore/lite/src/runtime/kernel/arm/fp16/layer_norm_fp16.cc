@@ -83,12 +83,12 @@ int LayerNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 int LayerNormFp16CPUKernel::Run() {
   int ret = RET_OK;
   src_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  gamma_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c());
-  beta_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data_c());
+  gamma_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(GAMMA_INDEX)->data_c());
+  beta_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(BETA_INDEX)->data_c());
   dst_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-  if (out_tensors_.size() == 3) {
-    mean_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(1)->data_c());
-    var_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(2)->data_c());
+  if (out_tensors_.size() == kInputSize2) {
+    mean_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(MEAN_INDEX)->data_c());
+    var_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(VARIANCE_INDEX)->data_c());
   } else {
     mean_data_ =
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
@@ -96,7 +96,7 @@ int LayerNormFp16CPUKernel::Run() {
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(param_->norm_outer_size_ * sizeof(float16_t)));
   }
   ret = ParallelLaunch(this->ms_context_, LayerNormFp16Run, this, op_parameter_->thread_num_);
-  if (out_tensors_.size() != 3) {
+  if (out_tensors_.size() != kInputSize2) {
     ms_context_->allocator->Free(mean_data_);
     ms_context_->allocator->Free(var_data_);
   }
