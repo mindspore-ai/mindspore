@@ -130,7 +130,7 @@ Status PullIterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
   return Status::OK();
 }
 
-Iterator::_Iterator::_Iterator(Iterator *lt) : lt_{lt}, cur_row_{nullptr}, ind_{0} {
+Iterator::_Iterator::_Iterator(Iterator *lt) : ind_{0}, lt_{lt}, cur_row_{nullptr} {
   if (lt_) {
     cur_row_ = new MSTensorMap();
     Status rc = lt_->GetNextRow(cur_row_);

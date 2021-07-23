@@ -97,14 +97,14 @@ CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, char 
       rows_connector_(connector),
       csv_field_delim_(field_delim),
       column_default_(std::move(column_default)),
-      file_path_(std::move(file_path)),
       cur_state_(START_OF_FILE),
       pos_(0),
       cur_col_(0),
       total_rows_(0),
       start_offset_(0),
       end_offset_(std::numeric_limits<int64_t>::max()),
-      err_message_("unknown") {}
+      err_message_("unknown"),
+      file_path_(std::move(file_path)) {}
 
 void CsvOp::CsvParser::Reset() {
   cur_state_ = START_OF_FILE;
