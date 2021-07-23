@@ -92,7 +92,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
     return false;
   }
   DIR *open_dir = opendir(dir_in.c_str());
-  if (NULL == open_dir) {
+  if (open_dir == NULL) {
     MS_LOG(EXCEPTION) << "open dir " << dir_in.c_str() << " failed";
   }
   dirent *p = nullptr;
@@ -217,7 +217,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
       return nullptr;
     }
     abs_path[path_len] = '\0';
-    snprintf(abs_path + path_len, sizeof(abs_path), "variables");
+    snprintf(abs_path + path_len, sizeof(abs_path) - path_len, "variables");
     std::ifstream ifs(abs_path);
     if (ifs.good()) {
       MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";

@@ -275,8 +275,6 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             data = param["data"].asnumpy().reshape(-1)
             data_list[key].append(data)
 
-    if not isinstance(ckpt_file_name, str):
-        raise ValueError("The ckpt_file_name must be string.")
     ckpt_file_name = os.path.realpath(ckpt_file_name)
     if async_save:
         thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list, enc_key, enc_mode), name="asyn_save_ckpt")
@@ -400,7 +398,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
         >>> print(param_dict["conv2.weight"])
-        Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True
+        Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)
     """
     ckpt_file_name, filter_prefix = _check_checkpoint_param(ckpt_file_name, filter_prefix)
     dec_key = Validator.check_isinstance('dec_key', dec_key, (type(None), bytes))
@@ -602,8 +600,6 @@ def _save_graph(network, file_name):
     """
     logger.info("Execute the process of saving graph.")
 
-    if not isinstance(file_name, str):
-        raise ValueError("The ckpt_file_name must be string.")
     file_name = os.path.realpath(file_name)
     graph_pb = network.get_func_graph_proto()
     if graph_pb:
@@ -735,9 +731,8 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     check_input_data(*inputs, data_class=Tensor)
     if not isinstance(file_name, str):
         raise ValueError("Args file_name {} must be string, please check it".format(file_name))
-    file_name = os.path.realpath(file_name)
-
     Validator.check_file_name_by_regular(file_name)
+    file_name = os.path.realpath(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
         if file_format != 'MINDIR':
