@@ -301,6 +301,17 @@ class DebugServices {
   std::vector<std::shared_ptr<TensorData>> GetNodeTensor(const CNodePtr &kernel);
 #endif
 
+  // Find if any operation overflow happened on a particular node name
+  bool CheckOpOverflow(std::string node_name_to_find, unsigned int device_id = 0, unsigned int root_graph_id = 0,
+                       unsigned int iteration = 0);
+
+  bool GetAttrsFromAsyncFilename(const std::string &file_name, std::string *node_name, uint64_t *task_id,
+                                 uint64_t *stream_id);
+
+  std::string RealPath(const std::string &input_path);
+
+  uint64_t BytestoUInt64(const std::vector<char> &buffer);
+
   bool TensorExistsInCurrent(const std::string &tensor_name);
 
   void MoveTensorCurrentToPrev(const std::string &tensor_name);
@@ -320,10 +331,13 @@ class DebugServices {
  private:
   std::mutex lock_;
   std::mutex wp_lock_;
+  std::mutex overflow_wp_lock_;
 
   // to keep track of watchpoints that have been checked already for a tensor in current step
   std::unordered_map<std::string, std::set<int32_t>> wp_id_cache;
   std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;
+  // key is the iteration path, value is vector of op_names which have overflowed
+  std::unordered_map<std::string, std::vector<std::string>> overflow_ops;
   std::string net_name;
   std::string dump_dir;
   bool is_sync_mode;

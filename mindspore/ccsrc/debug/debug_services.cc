@@ -24,8 +24,11 @@
 #include <map>
 #include <numeric>
 #include <unordered_set>
+#include <utility>
 #include "pybind11/embed.h"
 #ifdef ONLINE_DBG_MODE
+#include "debug/common.h"
+#include "debug/debugger/debugger.h"
 #include "debug/anf_ir_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #endif
@@ -259,7 +262,8 @@ void DebugServices::CheckWatchpointsForTensor(
       int error_code = 0;
       std::vector<parameter_t> parameter_list = {};
       if (wp.condition.type == IS_OVERFLOW) {
-        is_hit = (std::find(op_overflows.begin(), op_overflows.end(), tensor_name_no_slot) != op_overflows.end());
+        is_hit =
+          CheckOpOverflow(tensor_name_no_slot, tensor->GetDeviceId(), tensor->GetRootGraphId(), tensor->GetIteration());
       } else if (base_summary_ptr != nullptr) {
         auto item = base_summary_ptr->IsWatchpointHit(wp);
         is_hit = std::get<ITensorSummary::eHitPos>(item);
@@ -1037,6 +1041,7 @@ void DebugServices::ResetLoadedTensors() {
   tensor_loader_->EmptyCurrentTensor();
   // will move parameters from previous to current map
   tensor_loader_->SwapCurrentPrev();
+  overflow_ops.clear();
 }
 
 #ifdef ONLINE_DBG_MODE
@@ -1053,6 +1058,220 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNod
   return result;
 }
 #endif
+
+bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int device_id, unsigned int root_graph_id,
+                                    unsigned int iteration) {
+  std::replace(node_name_to_find.begin(), node_name_to_find.end(), '/', '_');
+  std::vector<std::string> op_names;
+  std::string overflow_bin_path;
+
+#ifdef ONLINE_DBG_MODE
+  auto debugger = Debugger::GetInstance();
+  overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(debugger->GetGraphPtr()->graph_id());
+  auto realpath = Common::GetRealPath(overflow_bin_path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed for overflow_bin_path.";
+    return false;
+  }
+  overflow_bin_path = realpath.value();
+#else
+  overflow_bin_path = dump_dir + "/rank_" + std::to_string(device_id) + "/" + net_name + "/" +
+                      std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
+  overflow_bin_path = RealPath(overflow_bin_path);
+#endif
+
+  overflow_wp_lock_.lock();
+
+  MS_LOG(INFO) << "Searching for overflow in node " << node_name_to_find;
+  auto found_overflows = overflow_ops.find(overflow_bin_path);
+  if (found_overflows != overflow_ops.end()) {
+    MS_LOG(INFO) << "Found already computed overflows for " << overflow_bin_path;
+    op_names = overflow_ops[overflow_bin_path];
+  } else {
+    std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
+    std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;
+    const std::string overflow_file_prefix = "Opdebug.Node_OpDebug.";
+
+    MS_LOG(INFO) << "Processing bin file path " << overflow_bin_path;
+
+    DIR *d = opendir(overflow_bin_path.c_str());
+    if (d != nullptr) {
+      struct dirent *dir = nullptr;
+      while ((dir = readdir(d)) != nullptr) {
+        if (dir->d_type == DT_REG) {
+          // form fully qualified  filename
+          std::string file_path = overflow_bin_path;
+          std::string file_name = dir->d_name;
+          file_path.append(file_name);
+          // attempt to read the file
+          std::ifstream infile;
+          infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
+          if (!infile.is_open()) {
+            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
+            MS_LOG(ERROR) << "Error: " << strerror(errno);
+            continue;
+          }
+
+          std::string node_name;
+          uint64_t task_id = 0;
+          uint64_t stream_id = 0;
+          // detect overflow bin file
+          if (file_name.rfind(overflow_file_prefix, 0) == 0) {
+            // start of op overflow data in bin file
+            const uint32_t offset = 321;
+            (void)infile.seekg(offset, std::ios::beg);
+            std::vector<char> buffer;
+            // size of op overflow info section
+            const size_t buf_size = 256;
+            buffer.resize(buf_size);
+            (void)infile.read(buffer.data(), buf_size);
+            const uint8_t stream_id_offset = 16;
+            const uint8_t task_id_offset = 24;
+            // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
+            // byte values currently.
+            stream_id = BytestoUInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
+            task_id = BytestoUInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
+            MS_LOG(INFO) << "Overflow bin file " << file_name << ", task_id " << task_id << ", stream_id " << stream_id
+                         << ".";
+            task_stream_hit.push_back(std::make_pair(task_id, stream_id));
+          } else {
+            // regular bin file
+            bool success_parse = GetAttrsFromAsyncFilename(file_name, &node_name, &task_id, &stream_id);
+            if (success_parse) {
+              task_stream_to_opname[std::make_pair(task_id, stream_id)] = node_name;
+            }
+          }
+          infile.close();
+        }
+      }
+    } else {
+      MS_LOG(INFO) << "OverFlow bin directory does not exist!";
+    }
+    closedir(d);
+
+    // find the op_names with an overflow hit
+    for (auto &task_stream : task_stream_hit) {
+      auto op_name = task_stream_to_opname[task_stream];
+      if (!op_name.empty()) {
+        MS_LOG(INFO) << "Operation overflow detected in " << op_name;
+        op_names.push_back(op_name);
+      }
+    }
+
+    overflow_ops[overflow_bin_path] = op_names;
+  }
+
+  overflow_wp_lock_.unlock();
+
+  // determine if overflow wp has been triggered for node_name_to_find
+  if (find(op_names.begin(), op_names.end(), node_name_to_find) != op_names.end()) {
+    MS_LOG(INFO) << "Operation overflow watchpoint triggered for  " << node_name_to_find;
+    return true;
+  }
+
+  return false;
+}
+
+bool DebugServices::GetAttrsFromAsyncFilename(const std::string &file_name, std::string *node_name, uint64_t *task_id,
+                                              uint64_t *stream_id) {
+  // get the node_name, task_id, and stream_id from async dump filename
+  // node_type.node_name.task_id.stram_id.timestamp
+  // WARNING: node_name may have dots in it
+  size_t fourth_dot = file_name.rfind(".");
+  size_t third_dot = file_name.rfind(".", fourth_dot - 1);
+  size_t second_dot = file_name.rfind(".", third_dot - 1);
+  size_t first_dot = file_name.find(".");
+
+  // check if dots were found
+  if (first_dot == std::string::npos || second_dot == std::string::npos || third_dot == std::string::npos ||
+      fourth_dot == std::string::npos) {
+    return false;
+  }
+
+  // check if its not an async bin file
+  if (file_name.substr(fourth_dot) == ".npy") {
+    return false;
+  }
+
+  // get node_name
+  if (first_dot < second_dot) {
+    *node_name = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
+  } else {
+    MS_LOG(ERROR) << "Async filename parse error to get node_name.";
+    return false;
+  }
+
+  // get task id
+  if (second_dot < third_dot) {
+    std::string extracted_task_id = file_name.substr(second_dot + 1, third_dot - second_dot - 1);
+    try {
+      *task_id = std::stoull(extracted_task_id);
+    } catch (...) {
+      MS_LOG(ERROR) << "stoull failed on extracted_task_id to get task_id.";
+      return false;
+    }
+  } else {
+    MS_LOG(ERROR) << "Async filename parse error to get task_id.";
+    return false;
+  }
+
+  // get stream id
+  if (third_dot < fourth_dot) {
+    std::string extracted_stream_id = file_name.substr(third_dot + 1, fourth_dot - third_dot - 1);
+    try {
+      *stream_id = std::stoull(extracted_stream_id);
+    } catch (...) {
+      MS_LOG(ERROR) << "stoull failed on extracted_stream_id to get stream_id.";
+      return false;
+    }
+  } else {
+    MS_LOG(ERROR) << "Async filename parse error to get stream_id.";
+    return false;
+  }
+
+  return true;
+}
+
+std::string DebugServices::RealPath(const std::string &input_path) {
+  if (input_path.length() >= PATH_MAX) {
+    MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
+  }
+
+  size_t path_split_pos = input_path.find_last_of('/');
+
+  // get real path
+  char real_path[PATH_MAX] = {0};
+
+  // input_path is dir + file_name
+  if (path_split_pos != std::string::npos) {
+    std::string prefix_path = input_path.substr(0, path_split_pos);
+    std::string file_name = input_path.substr(path_split_pos);
+
+    if (file_name.length() > NAME_MAX) {
+      MS_LOG(EXCEPTION) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
+    }
+    if (realpath(prefix_path.c_str(), real_path) == nullptr) {
+      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
+      return "";
+    }
+
+    return std::string(real_path) + file_name;
+  }
+
+  // input_path is only file_name
+  if (input_path.length() > NAME_MAX) {
+    MS_LOG(EXCEPTION) << "The length of file name : " << input_path.length() << " exceeds limit: " << NAME_MAX;
+  }
+  if (realpath(input_path.c_str(), real_path) == nullptr) {
+    MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
+  }
+
+  return std::string(real_path);
+}
+
+uint64_t DebugServices::BytestoUInt64(const std::vector<char> &buffer) {
+  return le64toh(*reinterpret_cast<const uint64_t *>(buffer.data()));
+}
 
 bool DebugServices::TensorExistsInCurrent(const std::string &tensor_name) {
   return tensor_loader_->TensorExistsInCurrent(tensor_name);
