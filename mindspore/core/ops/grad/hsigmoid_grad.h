@@ -34,6 +34,7 @@ class HSigmoidGrad : public PrimitiveC {
   ~HSigmoidGrad() = default;
   MS_DECLARE_PARENT(HSigmoidGrad, PrimitiveC);
 };
+
 AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);
 using PrimHSigmoidGradPtr = std::shared_ptr<HSigmoidGrad>;

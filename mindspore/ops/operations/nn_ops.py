@@ -794,6 +794,46 @@ class Sigmoid(PrimitiveWithInfer):
         return input_x
 
 
+class HSigmoid(Primitive):
+    r"""
+    Hard sigmoid activation function.
+
+    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard sigmoid is defined as:
+
+    .. math::
+
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
+
+    where :math:`x_i` is an element of the input Tensor.
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> hsigmoid = ops.HSigmoid()
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mstype.float16)
+        >>> result = hsigmoid(input_x)
+        >>> print(result)
+        [0.3333 0.1666 0.5    0.8335 0.6665]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize HSigmoid."""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+
+
 class Tanh(PrimitiveWithInfer):
     r"""
     Tanh activation function.
@@ -8667,43 +8707,3 @@ class SoftShrink(Primitive):
         """Initialize SoftShrink"""
         validator.check_value_type("lambd", lambd, [float], self.name)
         validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
-
-class HSigmoid(Primitive):
-    r"""
-    Hard sigmoid activation function.
-
-    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
-
-    Hard sigmoid is defined as:
-
-    .. math::
-
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> hsigmoid = ops.HSigmoid()
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mstype.float16)
-        >>> result = hsigmoid(input_x)
-        >>> print(result)
-        [0.3333 0.1666 0.5    0.8335 0.6665]
-    """
-    @prim_attr_register
-    def __init__(self):
-        """Initialize HSigmoid."""
-        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])

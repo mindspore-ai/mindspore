@@ -32,6 +32,10 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, primitive->name());
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto prim_name = primitive->name();
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
@@ -45,7 +49,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
   types.emplace("grads", input_args[0]->BuildType());
   types.emplace("input_x", input_args[1]->BuildType());
@@ -58,6 +62,5 @@ AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const Pri
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(HSigmoidGrad, prim::kPrimHSigmoidGrad, HSigmoidGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

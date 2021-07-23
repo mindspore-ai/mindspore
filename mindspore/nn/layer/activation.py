@@ -675,14 +675,14 @@ class HSigmoid(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
-        - **x** (Tensor) - The input of HSigmoid, data type must be float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **input_x** (Tensor) - The input of HSigmoid. The shape is :math:`(N,*)` where :math:`*` means, any number of
+          additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef MINDSPORE_CORE_OPS_HSIGMOID_H_
+#define MINDSPORE_CORE_OPS_HSIGMOID_H_
 #include <vector>
 #include <memory>
 
@@ -36,3 +39,5 @@ AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const Primiti
 using PrimHSigmoidPtr = std::shared_ptr<HSigmoid>;
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_HSIGMOID_H_
