@@ -33,8 +33,8 @@
 
 namespace mindspore::lite {
 size_t CommConvMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
-  size_t cost = output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3] * weight_shape[1] *
-                weight_shape[2] * weight_shape[3];
+  size_t cost = output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] * output_shape[NHWC_C] *
+                weight_shape[NHWC_H] * weight_shape[NHWC_W] * weight_shape[NHWC_C];
   return cost;
 }
 
@@ -44,8 +44,8 @@ size_t WinogradConvMul() {
 }
 
 size_t CommConvdwMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
-  size_t cost =
-    output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3] * weight_shape[1] * weight_shape[2];
+  size_t cost = output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] * output_shape[NHWC_C] *
+                weight_shape[NHWC_H] * weight_shape[NHWC_W];
   return cost;
 }
 
@@ -74,7 +74,7 @@ void SearchSubGraph::UpdateOfflineParallelFlag() {
 }
 
 bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgraphs) {
-  if (subgraphs.size() != kDefalutSubGraphSize) {
+  if (subgraphs.size() != kDefaultSubGraphSize) {
     return false;
   }
 
@@ -195,7 +195,7 @@ const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph
   auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_PartialFusion, val_offset.o);
   fbb.Finish(prim_offset);
   auto tmp_buf = fbb.GetBufferPointer();
-  auto prim_buf = reinterpret_cast<char *>(malloc(fbb.GetSize()));
+  void *prim_buf = malloc(fbb.GetSize());
   if (prim_buf == nullptr) {
     return nullptr;
   }
@@ -209,7 +209,7 @@ const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph
 }
 
 void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
-  if (sub_graphs->size() != kDefalutSubGraphSize) {
+  if (sub_graphs->size() != kDefaultSubGraphSize) {
     return;
   }
   Model::SubGraph *main_graphs = model_->sub_graphs_.front();
@@ -344,7 +344,6 @@ bool SearchSubGraph::IsNodeSubGraphHeadWithRoot(uint32_t node_index, const std::
 
 void SearchSubGraph::SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes) {
   std::vector<uint32_t> all_main_sub_nodes = model_->sub_graphs_[0]->node_indices_;
-
   for (size_t i = 0; i < all_main_sub_nodes.size(); i++) {
     uint32_t node_index = all_main_sub_nodes[i];
     Model::Node *node = node_list_[node_index];
@@ -352,10 +351,8 @@ void SearchSubGraph::SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes) {
     if (IsPartialNode(node->primitive_)) {
       continue;
     }
-
     int input_count = std::count_if(node->input_indices_.begin(), node->input_indices_.end(),
                                     [&](uint32_t in_tensor_index) { return tensors_[in_tensor_index].type_ != CONST; });
-
     if (input_count > 1) {
       multy_in_nodes->push_back(node_index);
     }
@@ -433,7 +430,7 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph, uint32_t las
 }
 
 void SearchSubGraph::OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint32_t root_node_index) {
-  MS_ASSERT(sub_graphs->size() == 2);
+  MS_ASSERT(sub_graphs->size() == kDefaultSubGraphSize);
   for (Subgraph &sub : *sub_graphs) {
     if (sub.nodes_.empty()) {
       return;
@@ -687,12 +684,12 @@ void SearchSubGraph::InitSubgraphRuntimeInfo(std::vector<Subgraph> *sub_graphs) 
   tmp_group.resize(sub_graphs->size());
   cor_group.resize(sub_graphs->size());
 
-  int except_value = total_cost_ * 0.5; /* major device responsible for 50% calculation */
+  int except_value = total_cost_ * DefaultGpu; /* major device responsible for 50% calculation */
   int min_value = INT32_MAX;
 
   dfs(0, sub_graphs->size(), 0, except_value, &min_value, &tmp_group, &cor_group, sub_graphs);
 
-  /* make bigger half using major_dt_*/
+  /* make bigger half using major_dt_ */
   int true_value = 0;
   for (size_t i = 0; i < sub_graphs->size(); i++) {
     if (cor_group.at(i)) {
@@ -726,7 +723,7 @@ void SearchSubGraph::InitMainGraphDevice(DeviceType dt) {
 }
 
 void SearchSubGraph::SubgraphFusion(std::vector<Subgraph> *sub_graphs) {
-  while (sub_graphs->size() > 2) {
+  while (sub_graphs->size() > kDefaultSubGraphSize) {
     size_t sub1_index = 0;
     size_t sub2_index = 0;
     bool is_found = false;
@@ -788,7 +785,7 @@ void SearchSubGraph::CalculateCostModel(std::vector<Subgraph> *sub_graphs) {
 }
 
 void SearchSubGraph::SubGraphSplitByOutput() {
-  if (output_nodes_->size() < kDefalutSubGraphSize) {
+  if (output_nodes_->size() < kDefaultSubGraphSize) {
     return;
   }
 
@@ -800,8 +797,8 @@ void SearchSubGraph::SubGraphSplitByOutput() {
     CheckSubHeadEnd(&sub);
   }
 
-  if (sub_graphs_.at(kDefalutFirstSubgraph).cost_.cost() < kMinSubgraphCost ||
-      sub_graphs_.at(kDefalutSecondSubgraph).cost_.cost() < kMinSubgraphCost) {
+  if (sub_graphs_.at(kDefaultFirstSubgraph).cost_.cost() < kMinSubgraphCost ||
+      sub_graphs_.at(kDefaultSecondSubgraph).cost_.cost() < kMinSubgraphCost) {
     return;
   }
 
@@ -812,7 +809,7 @@ void SearchSubGraph::SubGraphSplitByMiddle() {
   InitSearchSubGraphByMiddle();
   for (auto map : node_sub_map_) {
     std::vector<Subgraph> &subgraphs = map.second;
-    if (subgraphs.size() < kDefalutSubGraphSize) {
+    if (subgraphs.size() < kDefaultSubGraphSize) {
       continue;
     }
 
@@ -824,8 +821,8 @@ void SearchSubGraph::SubGraphSplitByMiddle() {
     InitSubgraphRuntimeInfo(&subgraphs);
     SubgraphFusion(&subgraphs);
 
-    MS_ASSERT(subgraphs.size() == kDefalutSubGraphSize);
-    if (subgraphs.at(kDefalutFirstSubgraph).nodes_.empty() || subgraphs.at(kDefalutSecondSubgraph).nodes_.empty()) {
+    MS_ASSERT(subgraphs.size() == kDefaultSubGraphSize);
+    if (subgraphs.at(kDefaultFirstSubgraph).nodes_.empty() || subgraphs.at(kDefaultSecondSubgraph).nodes_.empty()) {
       continue;
     }
 
@@ -833,8 +830,8 @@ void SearchSubGraph::SubGraphSplitByMiddle() {
 
     /* redo cost-model and pre-set-info after optimize */
     CalculateCostModel(&subgraphs);
-    if (subgraphs.at(kDefalutFirstSubgraph).cost_.cost() < kMinSubgraphCost ||
-        subgraphs.at(kDefalutSecondSubgraph).cost_.cost() < kMinSubgraphCost) {
+    if (subgraphs.at(kDefaultFirstSubgraph).cost_.cost() < kMinSubgraphCost ||
+        subgraphs.at(kDefaultSecondSubgraph).cost_.cost() < kMinSubgraphCost) {
       continue;
     }
 
@@ -917,7 +914,7 @@ SearchSubGraph::SearchSubGraph(const InnerContext *context, Model *model, std::v
     major_thread_ = 1;
     minor_thread_ = context_->thread_num_ - 1;
   } else if (major_dt_ == DT_CPU) {
-    major_thread_ = UP_DIV(context_->thread_num_, 2);
+    major_thread_ = UP_DIV(context_->thread_num_, kDefaultSubGraphSize);
     minor_thread_ = context_->thread_num_ - major_thread_;
   }
   MS_ASSERT(major_thread_ > 0);

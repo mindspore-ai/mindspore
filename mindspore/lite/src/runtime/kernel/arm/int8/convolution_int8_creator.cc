@@ -34,6 +34,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int WinogradConvHW = 3;
+}  // namespace
+
 kernel::InnerKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                 const InnerContext *ctx, const kernel::KernelKey &desc) {
@@ -63,8 +67,9 @@ kernel::InnerKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &
                                              const InnerContext *ctx) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::InnerKernel *kernel = nullptr;
-  if (conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_h_ == 1 &&
-      conv_param->stride_w_ == 1 && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1) {
+  if (conv_param->kernel_h_ == WinogradConvHW && conv_param->kernel_w_ == WinogradConvHW &&
+      conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->dilation_h_ == 1 &&
+      conv_param->dilation_w_ == 1) {
 #ifdef ENABLE_ARM64
     if (mindspore::lite::IsSupportSDot()) {
       kernel = new (std::nothrow) ConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx);
