@@ -28,8 +28,8 @@ pretrain_epoch_size: 0
 save_checkpoint: True
 save_checkpoint_epochs: 5
 keep_checkpoint_max: 10
-warmup_epochs: 0
-lr_decay_mode: "linear"
+warmup_epochs: 5
+lr_decay_mode: "cosine"
 use_label_smooth: True
 label_smooth_factor: 0.1
 lr_init: 0
