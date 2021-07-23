@@ -8,14 +8,14 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-device_target: "GPU"
+device_target: "Ascend"
 enable_profiling: False
 
 # ======================================================================================
 # common options
 run_distribute: False
 model: "lowercase"
-model_version: "V2"
+model_version: "V1"
 
 # ======================================================================================
 # Training options
@@ -64,8 +64,8 @@ file_format: "MINDIR"
 
 # ======================================================================================
 #postprocess
-ann_file: True
-result_path: True
+ann_file: ""
+result_path: ""
 dataset: "ic03"
 
 ---
