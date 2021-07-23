@@ -1260,7 +1260,7 @@ def check_numpyslicesdataset(method):
 
         data = param_dict.get("data")
         column_names = param_dict.get("column_names")
-        if not data:
+        if data is None or len(data) == 0:  # pylint: disable=len-as-condition
             raise ValueError("Argument data cannot be empty")
         type_check(data, (list, tuple, dict, np.ndarray), "data")
         if isinstance(data, tuple):
