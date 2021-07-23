@@ -122,8 +122,8 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
 
 int endsWith(string s, string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
 
-bool ParseModelProto(mind_ir::ModelProto *model, std::string path, const unsigned char *dec_key, const size_t key_len,
-                     const std::string &dec_mode) {
+bool ParseModelProto(mind_ir::ModelProto *model, const std::string &path, const unsigned char *dec_key,
+                     const size_t key_len, const std::string &dec_mode) {
   if (dec_key != nullptr) {
     size_t plain_len;
     auto plain_data = Decrypt(&plain_len, path, dec_key, key_len, dec_mode);
@@ -131,7 +131,7 @@ bool ParseModelProto(mind_ir::ModelProto *model, std::string path, const unsigne
       MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
       return false;
     }
-    if (!model->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), plain_len)) {
+    if (!model->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), static_cast<int32_t>(plain_len))) {
       MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file, dec_key or dec_mode.";
       return false;
     }
@@ -145,8 +145,8 @@ bool ParseModelProto(mind_ir::ModelProto *model, std::string path, const unsigne
   return true;
 }
 
-bool ParseGraphProto(mind_ir::GraphProto *graph, std::string path, const unsigned char *dec_key, const size_t key_len,
-                     const std::string &dec_mode) {
+bool ParseGraphProto(mind_ir::GraphProto *graph, const std::string &path, const unsigned char *dec_key,
+                     const size_t key_len, const std::string &dec_mode) {
   if (dec_key != nullptr) {
     size_t plain_len;
     auto plain_data = Decrypt(&plain_len, path, dec_key, key_len, dec_mode);
@@ -154,7 +154,7 @@ bool ParseGraphProto(mind_ir::GraphProto *graph, std::string path, const unsigne
       MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
       return false;
     }
-    if (!graph->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), plain_len)) {
+    if (!graph->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), static_cast<int32_t>(plain_len))) {
       MS_LOG(ERROR) << "Load variable file failed, please check the correctness of the mindir's variable file, "
                        "dec_key or dec_mode";
       return false;
