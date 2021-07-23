@@ -1124,10 +1124,27 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
 
 void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
                                                     const AnfWithOutIndex &front_node_with_index) {
-  if (parameter == nullptr) {
+  if ((parameter == nullptr) || (front_node_with_index.first == nullptr)) {
     return;
   }
-  internal_parameter_to_front_node_map_[parameter] = front_node_with_index;
+
+  auto front_outputs = AnfAlgo::GetAllOutputWithIndex(front_node_with_index.first);
+  AnfWithOutIndex new_front_node_with_index;
+  if (front_node_with_index.second < front_outputs.size()) {
+    new_front_node_with_index = front_outputs[front_node_with_index.second];
+  } else {
+    new_front_node_with_index = front_node_with_index;
+  }
+
+  if (new_front_node_with_index.first == nullptr) {
+    return;
+  }
+  MS_LOG(INFO) << "Cache internal parameter: " << parameter->DebugString()
+               << " to front node: " << new_front_node_with_index.first->DebugString()
+               << " with index: " << new_front_node_with_index.second
+               << ", from front node: " << front_node_with_index.first->DebugString()
+               << " with index: " << front_node_with_index.second;
+  internal_parameter_to_front_node_map_[parameter] = new_front_node_with_index;
 }
 
 AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {
