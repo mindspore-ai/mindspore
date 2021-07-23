@@ -35,7 +35,7 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int WinogradConvHW = 3;
+constexpr int kWinogradConvHW = 3;
 }  // namespace
 
 kernel::InnerKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -67,7 +67,7 @@ kernel::InnerKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &
                                              const InnerContext *ctx) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::InnerKernel *kernel = nullptr;
-  if (conv_param->kernel_h_ == WinogradConvHW && conv_param->kernel_w_ == WinogradConvHW &&
+  if (conv_param->kernel_h_ == kWinogradConvHW && conv_param->kernel_w_ == kWinogradConvHW &&
       conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->dilation_h_ == 1 &&
       conv_param->dilation_w_ == 1) {
 #ifdef ENABLE_ARM64

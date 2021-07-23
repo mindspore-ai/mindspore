@@ -44,7 +44,7 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int MaxDwConvSWSize = 32;
+constexpr int kMaxDwConvSWSize = 32;
 }  // namespace
 
 float *ConvolutionDelegateCPUKernel::CopyData(lite::Tensor *tensor) {
@@ -242,7 +242,7 @@ kernel::InnerKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *
       kernel = new (std::nothrow) kernel::ConvolutionDepthwiseIndirectCPUKernel(opParameter, inputs, outputs, ctx);
     }
 #endif
-    if (kernel == nullptr && conv_param->input_channel_ < MaxDwConvSWSize) {
+    if (kernel == nullptr && conv_param->input_channel_ < kMaxDwConvSWSize) {
       kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWCPUKernel(opParameter, inputs, outputs, ctx);
     }
 #endif

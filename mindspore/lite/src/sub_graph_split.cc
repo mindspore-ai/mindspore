@@ -684,7 +684,7 @@ void SearchSubGraph::InitSubgraphRuntimeInfo(std::vector<Subgraph> *sub_graphs) 
   tmp_group.resize(sub_graphs->size());
   cor_group.resize(sub_graphs->size());
 
-  int except_value = total_cost_ * DefaultGpu; /* major device responsible for 50% calculation */
+  int except_value = total_cost_ * kDefaultGpu; /* major device responsible for 50% calculation */
   int min_value = INT32_MAX;
 
   dfs(0, sub_graphs->size(), 0, except_value, &min_value, &tmp_group, &cor_group, sub_graphs);

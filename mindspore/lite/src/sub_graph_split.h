@@ -38,7 +38,7 @@ constexpr int kDefaultInputs = 1;
 constexpr int kMaxMultyInNode = 20;
 constexpr int kMaxSubGraphCount = 10;
 constexpr int kMinSubgraphCost = 50;
-constexpr double DefaultGpu = 0.5;
+constexpr double kDefaultGpu = 0.5;
 class SearchSubGraph {
   enum TensorType { NORMAL, CONST, INPUT };
 
