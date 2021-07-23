@@ -66,8 +66,9 @@ AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &r
 }  // namespace internal
 
 bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+  auto manager = optimizer->manager();
   // Search all j nodes.
-  GetJPrim(optimizer->resource()->manager());
+  GetJPrim(manager);
   // Get j nodes that don't have embed j nodes.
   std::vector<CNodePtr> todo;
   // If graph also contains J(FuncGraph) or J(Primitive), then ignore this graph.
@@ -78,7 +79,7 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   bool change = false;
   for (auto &j_node : todo) {
     auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer->resource());
-    optimizer->resource()->manager()->Replace(j_node, expanded_j);
+    manager->Replace(j_node, expanded_j);
     change = true;
   }
   return change;

@@ -250,6 +250,7 @@ class InlinerBase : public AnfVisitor {
     auto &fg_params = fg->parameters();
     std::vector<int64_t> used_param_index;
     auto mng = fg->manager();
+    MS_EXCEPTION_IF_NULL(mng);
     bool should_simplify = false;
     for (size_t i = 0; i < fg_params.size(); i++) {
       if (mng->node_users()[fg_params[i]].size() != 0) {

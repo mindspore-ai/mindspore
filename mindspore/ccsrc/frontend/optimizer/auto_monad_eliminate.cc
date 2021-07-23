@@ -20,6 +20,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
+#include <memory>
 
 #include "base/core_ops.h"
 
@@ -258,6 +259,7 @@ bool ReplaceUpdateStateForLoad(const FuncGraphPtr &fg, const std::vector<AnfNode
       continue;
     }
     auto mgr = fg->manager();
+    MS_EXCEPTION_IF_NULL(mgr);
     mgr->SetEdge(load_node, second_input_index, monad);
     change = true;
   }
