@@ -22,17 +22,23 @@
 #include "ops/fusion/conv2d_fusion.h"
 
 namespace mindspore::lite {
+namespace {
+constexpr size_t kNumDim1 = 1;
+constexpr size_t kNumDim2 = 2;
+constexpr size_t kNumDim3 = 3;
+constexpr size_t kNumDim4 = 4;
+}  // namespace
 STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels, std::vector<int64_t> *strides,
                     std::vector<int64_t> *dilation, std::vector<int64_t> *pads, bool *conv1d) {
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "dilations") {
       switch (onnx_node_attr.ints().size()) {
-        case 1:
+        case kNumDim1:
           *conv1d = true;
           dilation->push_back(1);
           dilation->push_back(onnx_node_attr.ints(0));
           break;
-        case 2:
+        case kNumDim2:
           dilation->push_back(onnx_node_attr.ints(0));
           dilation->push_back(onnx_node_attr.ints(1));
           break;
@@ -42,12 +48,12 @@ STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kern
       }
     } else if (onnx_node_attr.name() == "kernels") {
       switch (onnx_node_attr.ints().size()) {
-        case 1:
+        case kNumDim1:
           *conv1d = true;
           kernels->push_back(1);
           kernels->push_back(onnx_node_attr.ints(0));
           break;
-        case 2:
+        case kNumDim2:
           kernels->push_back(onnx_node_attr.ints(0));
           kernels->push_back(onnx_node_attr.ints(1));
           break;
@@ -57,12 +63,12 @@ STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kern
       }
     } else if (onnx_node_attr.name() == "kernel_shape") {
       switch (onnx_node_attr.ints().size()) {
-        case 1:
+        case kNumDim1:
           *conv1d = true;
           kernels->push_back(1);
           kernels->push_back(onnx_node_attr.ints(0));
           break;
-        case 2:
+        case kNumDim2:
           kernels->push_back(onnx_node_attr.ints(0));
           kernels->push_back(onnx_node_attr.ints(1));
           break;
@@ -72,14 +78,14 @@ STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kern
       }
     } else if (onnx_node_attr.name() == "pads") {
       switch (onnx_node_attr.ints().size()) {
-        case 2:
+        case kNumDim2:
           *conv1d = true;
           pads->push_back(0);
           pads->push_back(0);
           pads->push_back(onnx_node_attr.ints(0));
           pads->push_back(onnx_node_attr.ints(1));
           break;
-        case 4:
+        case kNumDim4:
           pads->push_back(onnx_node_attr.ints(0));
           pads->push_back(onnx_node_attr.ints(2));
           pads->push_back(onnx_node_attr.ints(1));
@@ -91,12 +97,12 @@ STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kern
       }
     } else if (onnx_node_attr.name() == "strides") {
       switch (onnx_node_attr.ints().size()) {
-        case 1:
+        case kNumDim1:
           *conv1d = true;
           strides->push_back(1);
           strides->push_back(onnx_node_attr.ints(0));
           break;
-        case 2:
+        case kNumDim2:
           strides->push_back(onnx_node_attr.ints(0));
           strides->push_back(onnx_node_attr.ints(1));
           break;
