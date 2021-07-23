@@ -2145,6 +2145,16 @@ test_case_nn_ops = [
                         Tensor(np.zeros((1, 1, 2, 2)), mstype.uint16)],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('SoftShrink', {
+        'block': P.SoftShrink(),
+        'desc_inputs': [Tensor(np.array([[0.5297, 0.7871, 1.1754], [0.7836, 0.6218, -1.1542]]), mstype.float32)],
+        'desc_bprop': [Tensor(np.array([[0, 0.4, 1], [1, 2, 4]]), mstype.float32)]}),
+    ('SoftShrinkGrad', {
+        'block': G.SoftShrinkGrad(),
+        'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), mstype.float16),
+                        Tensor(np.array([[-3, -2, 0], [1, 2, 4]]), mstype.float16)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [

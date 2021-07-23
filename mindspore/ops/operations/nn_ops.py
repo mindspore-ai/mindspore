@@ -8670,3 +8670,49 @@ class Conv3DTranspose(PrimitiveWithInfer):
             'dtype': x['dtype'],
         }
         return out
+
+
+class SoftShrink(Primitive):
+    r"""
+    Applies the soft shrinkage function elementwise.
+    .. math::
+        \text{SoftShrink}(x) =
+        \begin{cases}
+        x - \lambda, & \text{ if } x > \lambda \\
+        x + \lambda, & \text{ if } x < -\lambda \\
+        0, & \text{ otherwise }
+        \end{cases}
+
+    Args:
+        lambd: the :math:`\lambda` must be no less than zero value for the Softshrink formulation. Default: 0.5.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of SoftShrink with data type of float16 or float32.
+          Any number of additional dimensions.
+
+    Outputs:
+        Tensor, has the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If lambd is not a float.
+        TypeError: If input_x is not a Tensor.
+        TypeError: If dtype of input_x is neither float16 nor float32.
+        ValueError: If lambd is less than 0.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mstype.float16)
+        >>> softshrink = ops.SoftShrink()
+        >>> output = softshrink(input_x)
+        >>> print(output)
+        [[ 0.02979  0.287    0.676  ]
+         [ 0.2837   0.1216  -0.6543 ]]
+    """
+
+    @prim_attr_register
+    def __init__(self, lambd=0.5):
+        """Initialize SoftShrink"""
+        validator.check_value_type("lambd", lambd, [float], self.name)
+        validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
