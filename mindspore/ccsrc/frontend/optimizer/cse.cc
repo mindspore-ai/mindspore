@@ -129,6 +129,7 @@ static bool HasSideEffect(const AnfNodePtr &node) {
   }
   return false;
 }
+
 // If true do not merge the node.
 bool CSE::CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const {
   bool has_random_effect = false;
