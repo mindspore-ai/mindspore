@@ -69,7 +69,7 @@ TEST_F(TestDShape, ToString) {
   ASSERT_EQ(shp_3.ToString(), "(1, 2)");
   ASSERT_EQ(shp_noshp_1.ToString(), "NoShape");
   ASSERT_EQ(shp_tuple_2.ToString(), "TupleShape(NoShape, (1, 1, 1))");
-  ASSERT_EQ(shp_5.ToString(), "{ shape : (-1, 2) | min shape: (1, 2) | max shape: (3, 3) }");
+  ASSERT_EQ(shp_5.ToString(), "{shape:(-1, 2)|min shape:(1, 2)|max shape:(3, 3)}");
 }
 
 TEST_F(TestDShape, Clone) {

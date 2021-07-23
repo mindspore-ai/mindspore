@@ -67,15 +67,15 @@ std::string Shape::ToString() const {
   std::ostringstream buffer;
   bool has_dyn_shape = IsDynamic();
   if (has_dyn_shape) {
-    buffer << "{ shape : ";
+    buffer << "{shape:";
   }
   buffer << ShapeVectorToStr(shape_);
   if (has_dyn_shape) {
-    buffer << " | min shape: ";
+    buffer << "|min shape:";
     buffer << ShapeVectorToStr(min_shape_);
-    buffer << " | max shape: ";
+    buffer << "|max shape:";
     buffer << ShapeVectorToStr(max_shape_);
-    buffer << " }";
+    buffer << "}";
   }
   return buffer.str();
 }
