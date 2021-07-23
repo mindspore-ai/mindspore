@@ -655,7 +655,7 @@ int LiteSession::Init(const Context *context) {
   }
 #if SUPPORT_NPU
   if (delegate_ == nullptr && context_->IsNpuEnabled()) {
-    delegate_ = std::shared_ptr<NPUDelegate>(new (std::nothrow) NPUDelegate(context_->GetNpuInfo()));
+    delegate_ = std::make_shared<NPUDelegate>(context_->GetNpuInfo());
     if (delegate_ == nullptr) {
       MS_LOG(ERROR) << "New delegate_ failed";
       return RET_ERROR;
@@ -664,7 +664,7 @@ int LiteSession::Init(const Context *context) {
 #endif
 #if GPU_TENSORRT
   if (delegate_ == nullptr && context_->IsGpuEnabled()) {
-    delegate_ = std::shared_ptr<TensorRTDelegate>(new (std::nothrow) TensorRTDelegate());
+    delegate_ = std::make_shared<TensorRTDelegate>();
     if (delegate_ == nullptr) {
       MS_LOG(ERROR) << "New tensorrt delegate_ failed";
       return RET_ERROR;
