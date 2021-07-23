@@ -38,7 +38,7 @@ class LessBatchNormalization : public AnfVisitor {
   void Visit(const CNodePtr &cnode) override;
   void Reset();
   void IsRemoveNode(const CNodePtr &cnode, const std::vector<kStructureTuple> &match_pattern);
-  bool MatchStructureNode(const CNodePtr &cnode, const int32_t index, const kStructureTuple &patternTuple);
+  bool MatchStructureNode(const CNodePtr &cnode, const int32_t index, const kStructureTuple &patternTuple) const;
   bool MatchGraphStructure(const CNodePtr &cnode, const std::vector<kStructureTuple> &match_pattern);
 
  private:
