@@ -608,8 +608,7 @@ STATUS TFModelParser::WeightFormatTransform(const FuncGraphPtr &graph) {
     auto weight_node = conv_cnode->input(kConvWeightIndex);
     MS_ASSERT(weight_node != nullptr);
     auto tensor_info = opt::GetTensorInfo(weight_node);
-    lite::STATUS status;
-    status = HardCodeTF(conv_cnode, tensor_info, graph);
+    auto status = HardCodeTF(conv_cnode, tensor_info, graph);
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
       return RET_ERROR;
@@ -647,7 +646,6 @@ STATUS TFModelParser::HardCodeTF(const CNodePtr &conv_node, const tensor::Tensor
           prim->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
           weight_src_format = schema::Format::Format_HWKC;
         }
-
       } else if (opt::CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
         prim->AddAttr(ops::kFormat, MakeValue<int64_t>(weight_dst_format));
         weight_src_format = schema::Format::Format_HWCK;

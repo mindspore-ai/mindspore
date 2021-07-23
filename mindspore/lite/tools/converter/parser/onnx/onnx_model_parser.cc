@@ -122,8 +122,7 @@ STATUS OnnxModelParser::WeightFormatTransform(const std::set<FuncGraphPtr> &all_
       auto weight_node = conv_cnode->input(kConvWeightIndex);
       MS_ASSERT(weight_node != nullptr);
       auto tensor_info = opt::GetTensorInfo(weight_node);
-      lite::STATUS status;
-      status = HardCodeONNX(conv_cnode, tensor_info, graph);
+      auto status = HardCodeONNX(conv_cnode, tensor_info, graph);
       if (status != lite::RET_OK) {
         MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
         return RET_ERROR;
