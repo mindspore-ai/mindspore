@@ -145,7 +145,7 @@ def train():
     opt = nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum)
 
     net = WithLossCell(net, loss)
-    net = TrainOneStepCellWithGradClip(net, opt).set_train()
+    net = TrainOneStepCellWithGradClip(net, opt, device_num).set_train()
     # define model
     model = Model(net)
     # define callbacks
