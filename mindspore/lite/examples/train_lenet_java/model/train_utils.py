@@ -17,9 +17,10 @@
 import mindspore.nn as nn
 from mindspore.common.parameter import ParameterTuple
 
-def TrainWrap(net, loss_fn=None, optimizer=None, weights=None):
+
+def train_wrap(net, loss_fn=None, optimizer=None, weights=None):
     """
-    TrainWrap
+    train_wrap
     """
     if loss_fn is None:
         loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean', sparse=True)

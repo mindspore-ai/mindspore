@@ -38,6 +38,15 @@ static const char *DELIM_SLASH = "/";
 constexpr const char *DELIM_COLON = ":";
 constexpr const char *DELIM_COMMA = ",";
 constexpr int RET_TOO_BIG = -9;
+constexpr int kField0 = 0;
+constexpr int kField1 = 1;
+constexpr int kField2 = 2;
+constexpr int kField3 = 3;
+constexpr int kField4 = 4;
+constexpr int kFieldsToPrint = 5;
+constexpr int kPrintOffset = 4;
+constexpr int kCPUBindFlag2 = 2;
+constexpr int kCPUBindFlag1 = 1;
 
 namespace {
 float *ReadFileBuf(const char *file, size_t *size) {
@@ -60,7 +69,7 @@ float *ReadFileBuf(const char *file, size_t *size) {
 
   ifs.seekg(0, std::ios::end);
   *size = ifs.tellg();
-  std::unique_ptr<float[]> buf((new (std::nothrow) float[*size / sizeof(float) + 1]));
+  std::unique_ptr<float[]> buf = std::make_unique<float[]>(*size / sizeof(float) + 1);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
     ifs.close();
@@ -136,7 +145,7 @@ int NetTrain::ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_input
       MS_ASSERT(cur_tensor != nullptr);
       size_t size;
       std::string file_name = flags_->in_data_file_ + std::to_string(i + 1) + ".bin";
-      char *bin_buf = ReadFile(file_name.c_str(), &size);
+      auto bin_buf = ReadFile(file_name.c_str(), &size);
       if (bin_buf == nullptr) {
         MS_LOG(ERROR) << "ReadFile return nullptr";
         return RET_ERROR;
@@ -312,10 +321,10 @@ int NetTrain::MarkAccuracy(const std::unique_ptr<session::LiteSession> &session,
 }
 
 static CpuBindMode FlagToBindMode(int flag) {
-  if (flag == 2) {
+  if (flag == kCPUBindFlag2) {
     return MID_CPU;
   }
-  if (flag == 1) {
+  if (flag == kCPUBindFlag1) {
     return HIGHER_CPU;
   }
   return NO_BIND;
@@ -337,7 +346,6 @@ std::unique_ptr<session::LiteSession> NetTrain::CreateAndRunNetworkForTrain(cons
       std::cout << "RunNetTrain CreateTranferSession failed while running " << model_name.c_str() << std::endl;
       return nullptr;
     }
-
   } else {
     MS_LOG(INFO) << "CreateTrainSession from model file" << filename.c_str();
     std::cout << "CreateTrainSession from model file " << filename.c_str() << std::endl;
@@ -428,8 +436,8 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
   }
 
   auto end_prepare_time = GetTimeUs();
-  MS_LOG(INFO) << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
-  std::cout << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms" << std::endl;
+  MS_LOG(INFO) << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / 1000) << " ms";
+  std::cout << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / 1000) << " ms" << std::endl;
   // Load input
   MS_LOG(INFO) << "Load input data";
   auto ms_inputs = session->GetInputs();
@@ -719,43 +727,47 @@ int NetTrain::Init() {
 
 int NetTrain::PrintResult(const std::vector<std::string> &title,
                           const std::map<std::string, std::pair<int, float>> &result) {
-  std::vector<size_t> columnLenMax(5);
+  std::vector<size_t> columnLenMax(kFieldsToPrint);
   std::vector<std::vector<std::string>> rows;
 
   for (auto &iter : result) {
-    char stringBuf[5][100] = {};
+    std::string stringBuf[kFieldsToPrint];
     std::vector<std::string> columns;
     size_t len;
 
     len = iter.first.size();
-    if (len > columnLenMax.at(0)) {
-      columnLenMax.at(0) = len + 4;
+    if (len > columnLenMax.at(kField0)) {
+      columnLenMax.at(kField0) = len + kPrintOffset;
     }
     columns.push_back(iter.first);
 
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / flags_->epochs_);
-    if (len > columnLenMax.at(1)) {
-      columnLenMax.at(1) = len + 4;
+    stringBuf[kField1] = to_string(iter.second.second / flags_->epochs_);
+    len = stringBuf[kField1].length();
+    if (len > columnLenMax.at(kField1)) {
+      columnLenMax.at(kField1) = len + kPrintOffset;
     }
-    columns.emplace_back(stringBuf[1]);
+    columns.emplace_back(stringBuf[kField1]);
 
-    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second / op_cost_total_);
-    if (len > columnLenMax.at(2)) {
-      columnLenMax.at(2) = len + 4;
+    stringBuf[kField2] = to_string(iter.second.second / op_cost_total_);
+    len = stringBuf[kField2].length();
+    if (len > columnLenMax.at(kField2)) {
+      columnLenMax.at(kField2) = len + kPrintOffset;
     }
-    columns.emplace_back(stringBuf[2]);
+    columns.emplace_back(stringBuf[kField2]);
 
-    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%d", iter.second.first);
-    if (len > columnLenMax.at(3)) {
-      columnLenMax.at(3) = len + 4;
+    stringBuf[kField3] = to_string(iter.second.first);
+    len = stringBuf[kField3].length();
+    if (len > columnLenMax.at(kField3)) {
+      columnLenMax.at(kField3) = len + kPrintOffset;
     }
-    columns.emplace_back(stringBuf[3]);
+    columns.emplace_back(stringBuf[kField3]);
 
-    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second);
-    if (len > columnLenMax.at(4)) {
-      columnLenMax.at(4) = len + 4;
+    stringBuf[kField4] = to_string(iter.second.second);
+    len = stringBuf[kField4].length();
+    if (len > columnLenMax.at(kField4)) {
+      columnLenMax.at(kField4) = len + kPrintOffset;
     }
-    columns.emplace_back(stringBuf[4]);
+    columns.emplace_back(stringBuf[kField4]);
 
     rows.push_back(columns);
   }

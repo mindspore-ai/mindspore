@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define _STUB
 #include "src/train/train_export.h"
 #include <unistd.h>
 #include <sys/stat.h>
@@ -29,6 +28,8 @@
 
 namespace mindspore {
 namespace lite {
+constexpr static int kFmkVal = 3;
+constexpr static int kTransformTensorDim = 4;
 
 std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
   uint8_t *tensor_data = reinterpret_cast<uint8_t *>(tensor->data_c());
@@ -209,7 +210,7 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTransformTensor(size_t id) {
   tensorT->dataType = scTensor->dataType;
   std::vector<int32_t> dims;
   std::vector<int32_t> val = {0, 2, 3, 1};
-  if (scTensor->dims.size() == 4) {
+  if (scTensor->dims.size() == kTransformTensorDim) {
     for (size_t i = 0; i < val.size(); i++) {
       dims.push_back(scTensor->dims.at(val[i]));
     }
@@ -233,7 +234,7 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTransformConst(size_t last_i
   }
   tensorT->nodeType = lite::NodeType_ValueNode;
   tensorT->dataType = TypeId::kNumberTypeInt32;
-  tensorT->dims = {4};
+  tensorT->dims = {kTransformTensorDim};
   tensorT->format = schema::Format_NCHW;
   tensorT->name = "const-" + std::to_string(last_id);
   tensorT->refCount = 0;
@@ -406,7 +407,7 @@ int TrainExport::ExportInit(const std::string model_name, std::string version) {
     MS_LOG(ERROR) << "cannot allocate meta_graph";
     return RET_ERROR;
   }
-  meta_graph_->fmkType = 3;
+  meta_graph_->fmkType = kFmkVal;
   meta_graph_->name = model_name;
   meta_graph_->version = version;
   return RET_OK;
@@ -420,6 +421,5 @@ int TrainExport::IsInputTensor(const schema::TensorT &t) {
 }
 
 TrainExport::~TrainExport() { delete meta_graph_; }
-
 }  // namespace lite
 }  // namespace mindspore

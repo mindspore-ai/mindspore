@@ -31,7 +31,6 @@
 #include "nnacl/fp32_grad/resize_grad.h"
 namespace mindspore {
 namespace kernel {
-
 OpParameter *PopulateSmoothL1LossParameter(const void *prim) {
   SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
   if (p == nullptr) {

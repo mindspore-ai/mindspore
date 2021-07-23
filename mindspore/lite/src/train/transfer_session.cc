@@ -39,7 +39,6 @@
 
 namespace mindspore {
 namespace lite {
-
 TransferSession::TransferSession(const char *model_buf_backbone, size_t size_backbone, const lite::Context *context)
     : is_valid_(false) {
   lite_model_ = reinterpret_cast<char *>(malloc(size_backbone));
@@ -92,18 +91,18 @@ int TransferSession::CompileTransferGraph() {
           nchw2nhwc_ = CompileFormatTransform(output, input, nchw2nhwc_mask, 4);
           match = nchw2nhwc_;
         }
-        if (true == match) {
+        if (match) {
           break;
         }
       }
     }
-    if (true == match) {
+    if (match) {
       backbone_head_map_.push_back(std::make_pair(input, output));
     } else {
       combined_inputs_.push_back(input);
     }
   }
-  if (0 == backbone_head_map_.size()) {
+  if (backbone_head_map_.size() == 0) {
     ret = RET_ERROR;
   }
   return ret;
@@ -113,7 +112,7 @@ mindspore::tensor::MSTensor *TransferSession::GetInputsByTensorName(const std::s
   /* First look in backbone netwok */
   auto ret = backbone_session_->GetInputsByTensorName(tensor_name);
   /* If not found look in head network */
-  if (nullptr == ret) {
+  if (ret == nullptr) {
     ret = TrainSession::GetInputsByTensorName(tensor_name);
   }
   return ret;
@@ -220,7 +219,6 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
   if (orig_train_state) Train();
   return status;
 }
-
 }  // namespace lite
 
 static session::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
@@ -316,5 +314,4 @@ session::LiteSession *session::TrainSession::CreateTransferSession(const std::st
   }
   return CreateTransferSessionInt(buf_backbone, size_backbone, buf_head, size_head, ctxt, train_mode, cfg);
 }
-
 }  // namespace mindspore
