@@ -29,6 +29,9 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+enum QuantBitNum { QuantBitNum_INT8 = 8, QuantBitNum_INT16 = 16 };
+}  // namespace
 OpDefCopyer GetSimpleOpCopyer() {
   return [](CNodeT *inCNode) -> std::unique_ptr<CNodeT> {
     std::unique_ptr<CNodeT> newCNode = std::make_unique<CNodeT>();
@@ -410,7 +413,7 @@ int DoBitPack(const int &bit_num, schema::TensorT *tensor_input) {
       MS_LOG(ERROR) << "memcpy_s failed. " << status;
       return RET_ERROR;
     }
-  } else if (bit_num > 8 && bit_num < 16) {
+  } else if (bit_num > QuantBitNum_INT8 && bit_num < QuantBitNum_INT16) {
     auto shape_size =
       std::accumulate(tensor_input->dims.begin(), tensor_input->dims.end(), size_t(1), std::multiplies<size_t>());
     std::vector<int16_t> origin_data(shape_size);

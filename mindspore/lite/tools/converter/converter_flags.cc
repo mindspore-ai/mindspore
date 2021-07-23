@@ -29,6 +29,10 @@
 namespace mindspore {
 namespace lite {
 namespace converter {
+namespace {
+constexpr int kBase = 10;
+constexpr int kQuantBitNumInt16 = 16;
+}  // namespace
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
   AddFlag(&Flags::modelFile, "modelFile",
@@ -129,7 +133,7 @@ int Flags::InitFmk() {
 
 bool Flags::IsValidNum(const std::string &str, int *num) {
   char *ptr = nullptr;
-  *num = strtol(str.c_str(), &ptr, 10);
+  *num = strtol(str.c_str(), &ptr, kBase);
   return ptr == (str.c_str() + str.size());
 }
 
@@ -154,7 +158,7 @@ int Flags::QuantParamInputCheck() {
     std::cerr << "bitNum should be a valid number." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
-  if (this->bitNum <= 0 || this->bitNum > 16) {
+  if (this->bitNum <= 0 || this->bitNum > kQuantBitNumInt16) {
     std::cerr << "bitNum should be greater than zero and lesser than 16 currently." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }

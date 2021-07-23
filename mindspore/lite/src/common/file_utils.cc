@@ -34,11 +34,6 @@
 #define PATH_MAX 1024
 #define F_OK 0
 #endif
-#define ACCESS(file_path, access_mode) _access(file_path, access_mode)
-#define MKDIR(file_path) _mkdir(file_path)
-#else
-#define ACCESS(file_path, accessMode) access(file_path, accessMode)
-#define MKDIR(file_path) mkdir(file_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
 #endif
 
 namespace mindspore {
@@ -118,8 +113,13 @@ int CreateOutputDir(std::string *file_path) {
 
   for (size_t i = 0; i < file_path->size(); i++) {
     if ((*file_path).at(i) == '\\' || (*file_path).at(i) == '/') {
-      if (ACCESS(file_path->substr(0, i + 1).c_str(), F_OK) != 0) {
-        int ret = MKDIR(file_path->substr(0, i + 1).c_str());
+#ifdef _WIN32
+      if (_access(file_path->substr(0, i + 1).c_str(), F_OK) != 0) {
+        int ret = _mkdir(file_path->substr(0, i + 1).c_str());
+#else
+      if (access(file_path->substr(0, i + 1).c_str(), F_OK) != 0) {
+        int ret = mkdir(file_path->substr(0, i + 1).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "mkdir failed. " << file_path->substr(0, i + 1);
           return RET_ERROR;
@@ -129,8 +129,13 @@ int CreateOutputDir(std::string *file_path) {
   }
 
   if (file_path->back() != '\\' && file_path->back() != '/') {
-    if (ACCESS(file_path->c_str(), F_OK) != 0) {
-      int ret = MKDIR(file_path->c_str());
+#ifdef _WIN32
+    if (_access(file_path->c_str(), F_OK) != 0) {
+      int ret = _mkdir(file_path->c_str());
+#else
+    if (access(file_path->c_str(), F_OK) != 0) {
+      int ret = mkdir(file_path->c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "mkdir failed. " << file_path;
         return RET_ERROR;
@@ -139,7 +144,11 @@ int CreateOutputDir(std::string *file_path) {
   }
 
   int count = 1;
-  while (ACCESS((*file_path + "/" + std::to_string(count)).c_str(), F_OK) == 0) {
+#ifdef _WIN32
+  while (_access((*file_path + "/" + std::to_string(count)).c_str(), F_OK) == 0) {
+#else
+  while (access((*file_path + "/" + std::to_string(count)).c_str(), F_OK) == 0) {
+#endif
     MS_LOG(DEBUG) << "current file_path has existed, file_path cnt plus 1.";  // such as: /xxx/1 ==> /xxx/2
     count++;
     if (count > MAXIMUM_NUMBERS_OF_FOLDER) {
@@ -149,10 +158,11 @@ int CreateOutputDir(std::string *file_path) {
   }
 #ifdef _WIN32
   *file_path += "\\" + std::to_string(count);
+  int ret = _mkdir(file_path->c_str());
 #else
   *file_path += "/" + std::to_string(count);
+  int ret = mkdir(file_path->c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #endif
-  int ret = MKDIR(file_path->c_str());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "mkdir failed. " << file_path->c_str();
     return RET_ERROR;
