@@ -87,7 +87,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
 #ifdef ENABLE_TDTQUE
-  auto thread_crt = [](std::string &path, acltdtChannelHandle *acl_handle) {
+  auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
     return std::thread(TensorPrint(path, acl_handle));
   };
   ms_context_ptr->CreateTensorPrintThread(thread_crt);

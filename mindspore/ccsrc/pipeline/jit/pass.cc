@@ -115,7 +115,6 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
   opt::OptPassConfig pynative_eliminate = opt::OptPassConfig({
     irpass.pynative_eliminate_,
   });
-  opt::irpass::ResolveIRPassLib resolve_irpass;
 
   opt::OptPassConfig switch_simplify = opt::OptPassConfig({
     irpass.switch_simplify_,
@@ -320,7 +319,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     false, true);
   opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({irpass.less_batch_normalization_});
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
-  opt::irpass::ResolveIRPassLib resolve_irpass;
 
   opt::OptPassConfig after_resolve_pass =
     opt::OptPassConfig({irpass.get_make_ref_eliminate_, irpass.replace_old_param_});

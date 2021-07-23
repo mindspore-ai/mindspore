@@ -66,8 +66,8 @@ std::string GetTimeString() {
   time_t time_seconds = time(0);
   struct tm now_time;
   localtime_s(&now_time, &time_seconds);
-  snprintf(buf, BUFLEN, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
-           now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
+  (void)snprintf(buf, BUFLEN, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
+                 now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
 #else
   struct timeval cur_time;
   (void)gettimeofday(&cur_time, nullptr);
@@ -77,8 +77,8 @@ std::string GetTimeString() {
   constexpr int64_t time_convert_unit = 1000;
   (void)localtime_r(&cur_time.tv_sec, &now);
   (void)strftime(buf, BUFLEN, "%Y-%m-%d-%H:%M:%S", &now);  // format date and time
-  snprintf(buf + time_str_len, BUFLEN - time_str_len, ".%03ld.%03ld", cur_time.tv_usec / time_convert_unit,
-           cur_time.tv_usec % time_convert_unit);
+  (void)snprintf(buf + time_str_len, BUFLEN - time_str_len, ".%03ld.%03ld", cur_time.tv_usec / time_convert_unit,
+                 cur_time.tv_usec % time_convert_unit);
 #endif
   return std::string(buf);
 }
