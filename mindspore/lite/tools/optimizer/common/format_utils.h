@@ -40,6 +40,7 @@ Format GetFormat(const CNodePtr &cnode);
 STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm);
 void RemoveIfMonad(const CNodePtr &cnode);
 bool IsMonadNode(const AnfNodePtr &node);
+bool IsSpecialType(const CNodePtr &cnode);
 }  // namespace opt
 }  // namespace mindspore
 

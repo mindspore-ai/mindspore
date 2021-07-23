@@ -32,7 +32,8 @@ namespace mindspore {
 namespace opt {
 class NodeInferShape {
  public:
-  NodeInferShape() = default;
+  explicit NodeInferShape(FmkType fmk_type = lite::converter::FmkType_MS, bool train_flag = false)
+      : fmk_type_(fmk_type), train_flag_(train_flag) {}
   virtual ~NodeInferShape() = default;
   void Init(FmkType fmk_type, bool train_flag) {
     fmk_type_ = fmk_type;

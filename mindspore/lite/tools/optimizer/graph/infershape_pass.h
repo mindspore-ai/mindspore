@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,40 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_INFERSHAPE_PASS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_INFERSHAPE_PASS_H_
-#include <vector>
+
+#include <map>
 #include <memory>
-#include <string>
-#include "tools/converter/converter_flags.h"
-#include "tools/optimizer/common/gllo_utils.h"
+#include <vector>
 #include "backend/optimizer/common/pass.h"
-#include "mindspore/lite/src/tensor.h"
-#include "mindspore/lite/src/tensorlist.h"
-#include "mindspore/lite/include/errorcode.h"
-using mindspore::lite::STATUS;
-using mindspore::lite::converter::FmkType;
-namespace mindspore::opt {
+#include "tools/optimizer/graph/node_infershape.h"
+
+namespace mindspore {
+namespace opt {
 class InferShapePass : public Pass {
  public:
-  InferShapePass() : Pass("infershape_pass") {}
-  ~InferShapePass() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
-  void SetFmkType(FmkType fmkType) { this->fmk_type = fmkType; }
+  explicit InferShapePass(FmkType fmk_type = lite::converter::FmkType_MS, bool train_flag = false)
+      : Pass("infer_shape"), fmk_type_(fmk_type), train_flag_(train_flag) {}
+  ~InferShapePass() = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  static void FreeTensors(std::vector<lite::Tensor *> *tensors);
-  static abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
-  static STATUS GetCNodeInputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *input_tensors);
-  static STATUS GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *output_tensors);
-  static STATUS SetParameterAbstract(const ParameterPtr &parameter);
-  static STATUS SetCNodeAbstract(const std::vector<lite::Tensor *> &output_tensors,
-                                 const std::shared_ptr<CNode> &cnode);
-  static int StrIsContain(const std::vector<std::string> &total, const std::string &aim);
-  static int SetSubGraphInputsAbstract(const CNodePtr &cnode, const FuncGraphPtr &func_graph);
+  STATUS InferProcess(const FuncGraphPtr &func_graph);
+  void SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  void SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  void ResetSubGraphInput();
 
- private:
-  FmkType fmk_type = lite::converter::FmkType_ONNX;
+  FmkType fmk_type_{lite::converter::FmkType_MS};
+  bool train_flag_{false};
+  std::shared_ptr<NodeInferShape> node_infer_shape_{nullptr};
+  std::map<FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_;
 };
-}  // namespace mindspore::opt
+}  // namespace opt
+}  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_INFERSHAPE_PASS_H_
