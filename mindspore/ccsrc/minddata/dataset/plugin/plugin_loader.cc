@@ -81,7 +81,8 @@ Status PluginLoader::LoadPlugin(const std::string &filename, plugin::PluginManag
   }
 
   // save the name and handle
-  plugins_.insert({filename, {*singleton_plugin, handle}});
+  std::pair<plugin::PluginManagerBase *, void *> plugin_new = std::make_pair(*singleton_plugin, handle);
+  plugins_.insert({filename, plugin_new});
   return Status::OK();
 }
 
