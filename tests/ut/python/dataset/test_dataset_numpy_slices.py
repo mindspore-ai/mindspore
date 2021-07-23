@@ -51,6 +51,16 @@ def test_numpy_slices_list_3():
         assert np.equal(data[0].asnumpy(), np_data[i]).all()
 
 
+def test_numpy_slices_numpy():
+    logger.info("Test NumPy structure data.")
+
+    np_data = np.array([[[1, 1], [2, 2]], [[3, 3], [4, 4]]])
+    ds = de.NumpySlicesDataset(np_data, column_names=["col1"], shuffle=False)
+
+    for i, data in enumerate(ds):
+        assert np.equal(data[0].asnumpy(), np_data[i]).all()
+
+
 def test_numpy_slices_list_append():
     logger.info("Test reading data of image list.")
 
