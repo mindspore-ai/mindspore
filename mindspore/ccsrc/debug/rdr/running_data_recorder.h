@@ -60,7 +60,7 @@ bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
                          const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 #endif  // ENABLE_D
 void TriggerAll();
-void ClearAll();
+void ResetRecorder();
 void ClearGPUMemAddressInfo();
 }  // namespace RDR
 }  // namespace mindspore

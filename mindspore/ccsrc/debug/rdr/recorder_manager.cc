@@ -105,7 +105,7 @@ void RecorderManager::TriggerAll() {
   if (!trigger) {
     MS_LOG(WARNING) << "There is no recorder to export.";
   } else {
-    MS_LOG(INFO) << "RDR export all recorders' info.";
+    MS_LOG(INFO) << "RDR export all recorders.";
   }
 }
 
@@ -116,6 +116,6 @@ void RecorderManager::ClearAll() {
   std::lock_guard<std::mutex> lock(mtx_);
   recorder_container_.clear();
   rdr_has_record_mem_ = false;
-  MS_LOG(INFO) << "RDR clear all recorders' info.";
+  MS_LOG(INFO) << "RDR clear all recorders.";
 }
 }  // namespace mindspore
