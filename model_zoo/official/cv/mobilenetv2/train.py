@@ -41,10 +41,6 @@ from src.model_utils.device_adapter import get_device_id, get_device_num, get_ra
 
 
 set_seed(1)
-config.device_id = get_device_id()
-config.rank_id = get_rank_id()
-config.rank_size = get_device_num()
-
 
 def modelarts_pre_process():
     def unzip(zip_file, save_dir):
@@ -105,6 +101,13 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_mobilenetv2():
     config.dataset_path = os.path.join(config.dataset_path, 'train')
+
+    config.device_id = get_device_id()
+    config.rank_id = get_rank_id()
+    config.rank_size = get_device_num()
+    if config.platform == 'Ascend':
+        config.run_distribute = config.rank_size > 1.
+
     print('\nconfig: \n', config)
     start = time.time()
     # set context and device init
