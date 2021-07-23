@@ -36,6 +36,7 @@ constexpr size_t kCondCNodesNum = 4;
 constexpr size_t kBodyNodesNum = 95;
 constexpr size_t kBodyCNodesNum = 34;
 constexpr size_t kLSTMOutputNum = 3;
+constexpr auto kUnidirectionalGateNum = 4;
 const auto &p1 = std::placeholders::_1;
 constexpr float EPSILON = 1e-5;
 
@@ -351,7 +352,7 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
       MS_LOG(ERROR) << "weight data shape error";
       return RET_ERROR;
     }
-    new_shape = std::vector<int64_t>({1, data_shapes[0][0] * 4, data_shapes[0][1]});
+    new_shape = std::vector<int64_t>({1, data_shapes[0][0] * kUnidirectionalGateNum, data_shapes[0][1]});
     step = data_shapes[0][0] * data_shapes[0][1];
     data_size = 4 * step;
   }
