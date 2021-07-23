@@ -470,7 +470,7 @@ def onp_average(x):
     return a, b, c, d, e, f, g, h, i
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -831,7 +831,7 @@ def onp_logaddexp(x1, x2):
     return onp.logaddexp(x1, x2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -839,9 +839,6 @@ def onp_logaddexp(x1, x2):
 @pytest.mark.env_onecard
 def test_logaddexp():
     test_cases = [
-        onp.random.randint(1, 5, (2)).astype('float16'),
-        onp.random.randint(1, 5, (3, 2)).astype('float16'),
-        onp.random.randint(1, 5, (1, 3, 2)).astype('float16'),
         onp.random.randint(1, 5, (5, 6, 3, 2)).astype('float16')]
     for _, x1 in enumerate(test_cases):
         for _, x2 in enumerate(test_cases):
@@ -961,7 +958,7 @@ def onp_clip(x):
     return a, b, c, d, e, f
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1133,7 +1130,7 @@ def onp_remainder(x, y):
     return onp.remainder(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1294,10 +1291,20 @@ def onp_kron(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_kron():
-    run_binop_test(mnp_kron, onp_kron, test_case)
+    x = rand_int()
+    y = rand_int(2, 3, 4)
+    match_res(mnp.kron, onp.kron, x, y)
+
+    x = rand_int(6, 1)
+    y = rand_int(7, 1, 5)
+    match_res(mnp.kron, onp.kron, x, y)
+
+    x = rand_int(1, 1, 2, 3)
+    y = rand_int(1, 1, 2, 3)
+    match_res(mnp.kron, onp.kron, x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1737,7 +1744,7 @@ def test_convolve():
         match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1745,23 +1752,8 @@ def test_convolve():
 @pytest.mark.env_onecard
 def test_cov():
     x = onp.random.random((3, 4)).tolist()
-    mnp_res = mnp.cov(x)
-    onp_res = onp.cov(x)
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-    mnp_res = mnp.cov(x[0])
-    onp_res = onp.cov(x[0])
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
     w1 = [0, 1, 2, 3]
     w2 = [4, 5, 6, 7]
-    mnp_res = mnp.cov(x, fweights=w1)
-    onp_res = onp.cov(x, fweights=w1)
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-    mnp_res = mnp.cov(x, aweights=w2)
-    onp_res = onp.cov(x, aweights=w2)
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-    mnp_res = mnp.cov(x, fweights=w1, aweights=w2)
-    onp_res = onp.cov(x, fweights=w1, aweights=w2)
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
     mnp_res = mnp.cov(x, fweights=w1, aweights=w2, ddof=3)
     onp_res = onp.cov(x, fweights=w1, aweights=w2, ddof=3)
     match_all_arrays(mnp_res, onp_res, error=1e-5)
@@ -1815,7 +1807,7 @@ def onp_lcm(x, y):
     return onp.lcm(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1948,26 +1940,20 @@ def test_nansum():
 
 
 def mnp_nanmean(x):
-    a = mnp.nanmean(x)
-    b = mnp.nanmean(x, keepdims=True)
-    c = mnp.nanmean(x, axis=-2)
-    d = mnp.nanmean(x, axis=0, keepdims=True)
-    e = mnp.nanmean(x, axis=(-2, 3))
-    f = mnp.nanmean(x, axis=(-3, -1), keepdims=True)
-    return a, b, c, d, e, f
+    a = mnp.nanmean(x, keepdims=True)
+    b = mnp.nanmean(x, axis=(-2, 3))
+    c = mnp.nanmean(x, axis=(-3, -1), keepdims=True)
+    return a, b, c
 
 
 def onp_nanmean(x):
-    a = onp.nanmean(x)
-    b = onp.nanmean(x, keepdims=True)
-    c = onp.nanmean(x, axis=-2)
-    d = onp.nanmean(x, axis=0, keepdims=True)
-    e = onp.nanmean(x, axis=(-2, 3))
-    f = onp.nanmean(x, axis=(-3, -1), keepdims=True)
-    return a, b, c, d, e, f
+    a = onp.nanmean(x, keepdims=True)
+    b = onp.nanmean(x, axis=(-2, 3))
+    c = onp.nanmean(x, axis=(-3, -1), keepdims=True)
+    return a, b, c
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -2018,7 +2004,7 @@ def test_mean():
     run_multi_test(mnp_mean, onp_mean, test_case.scalars, error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2028,9 +2014,6 @@ def test_corrcoef():
     x = onp.random.random((3, 4)).tolist()
     mnp_res = mnp.corrcoef(x)
     onp_res = onp.corrcoef(x)
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-    mnp_res = mnp.corrcoef(x[0])
-    onp_res = onp.corrcoef(x[0])
     match_all_arrays(mnp_res, onp_res, error=1e-5)
     mnp_res = mnp.corrcoef(x, rowvar=False)
     onp_res = onp.corrcoef(x, rowvar=False)
@@ -2052,7 +2035,7 @@ def test_multi_dot():
     match_all_arrays(mnp.multi_dot(mnp_arrays[1:-1]), onp.linalg.multi_dot(arrays[1:-1]))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2060,12 +2043,6 @@ def test_multi_dot():
 @pytest.mark.env_onecard
 def test_gradient():
     f = onp.random.random((3, 4, 5)).tolist()
-    mnp_res = mnp.gradient(f)
-    onp_res = onp.gradient(f)
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-    mnp_res = mnp.gradient(f, axis=1)
-    onp_res = onp.gradient(f, axis=1)
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
     mnp_res = mnp.gradient(f, -3, axis=(-1, 1))
     onp_res = onp.gradient(f, -3, axis=(-1, 1))
     match_all_arrays(mnp_res, onp_res, error=1e-5)
@@ -2106,7 +2083,7 @@ def test_argmin():
         match_res(mnp.argmin, onp.argmin, x, axis=i)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2116,9 +2093,6 @@ def test_searchsorted():
     x = onp.arange(-10, 10)
     y = onp.random.randint(-15, 15, size=(2, 3, 4)) + onp.random.choice([0, 0.5], (2, 3, 4))
     sorter = onp.random.shuffle(onp.arange(20))
-    match_res(mnp.searchsorted, onp.searchsorted, x, y)
-    match_res(mnp.searchsorted, onp.searchsorted, x, y, side='right')
-    match_res(mnp.searchsorted, onp.searchsorted, x, y, sorter=sorter)
     match_res(mnp.searchsorted, onp.searchsorted, x, y, side='right', sorter=sorter)
 
 
@@ -2184,21 +2158,18 @@ def test_bincount():
 def test_histogram():
     x = onp.random.randint(-10, 10, 10)
     weights = onp.random.randn(10)
-    for bins in [(1, 2, 3), [2], 1, 5, 10]:
+    for bins in [(1, 2, 3), [2], 1, 5]:
         # pylint: disable=redefined-builtin
-        for range in [None, (3, 3), (2, 20)]:
+        for range in [None, (2, 20)]:
             match_res(mnp.histogram, onp.histogram, x, bins=bins, range=range, error=1)
             match_res(mnp.histogram, onp.histogram, x, bins=bins, range=range, density=True, error=1)
-            mnp_res = mnp.histogram(to_tensor(x), bins=bins, range=range, weights=to_tensor(weights))
-            onp_res = onp.histogram(x, bins=bins, range=range, weights=weights)
-            match_all_arrays(mnp_res, onp_res, error=1)
             mnp_res = mnp.histogram(to_tensor(x), bins=bins, range=range,
                                     weights=to_tensor(weights), density=True)
             onp_res = onp.histogram(x, bins=bins, range=range, weights=weights, density=True)
             match_all_arrays(mnp_res, onp_res, error=1)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2209,9 +2180,9 @@ def test_histogramdd():
     y = [onp.random.randint(-10, 10, 5), onp.random.randint(-10, 10, 5), onp.random.randint(-10, 10, 5)]
     mnp_y = list(map(to_tensor, y))
     weights = onp.random.randn(5)
-    for bins in [(15, 4, 9), 10]:
+    for bins in [(15, 4, 9)]:
         # pylint: disable=redefined-builtin
-        for range in [None, [[0, 5], [2, 7], [1, 3]]]:
+        for range in [[[0, 5], [2, 7], [1, 3]]]:
             mnp_res = mnp.histogramdd(to_tensor(x), bins=bins, range=range)
             onp_res = onp.histogramdd(x, bins=bins, range=range)
             match_all_arrays(mnp_res[0], onp_res[0], error=1)
@@ -2521,7 +2492,7 @@ def test_result_type():
         assert actual == expected
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2530,8 +2501,8 @@ def test_result_type():
 def test_unwrap():
     x = onp.linspace(onp.linspace((0, 1), (10, 15), 5), onp.linspace((0, 2), (3*onp.pi, 7*onp.pi), 5), 7)
     x[5:2] += onp.pi
-    for i in range(-3, 3):
-        match_res(mnp.unwrap, onp.unwrap, x, axis=i, error=3)
+    match_res(mnp.unwrap, onp.unwrap, x, axis=0, error=3)
+    match_res(mnp.unwrap, onp.unwrap, x, axis=-1, error=3)
 
 
 @pytest.mark.level1
@@ -2604,7 +2575,7 @@ def test_ravel_multi_index():
         match_array(actual.asnumpy(), expected, error=5)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2708,17 +2679,13 @@ def onp_correlate(a, v):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_correlate():
-    first_sequences = [[1], [1, 2], [0, 0, 0, 1], [1, 2, 3, 4, 5]]
-    second_sequences = [[2], [0, 1], [1, 2, 3]]
-    for a in first_sequences:
-        for v in second_sequences:
-            mnp_res = mnp_correlate(a, v)
-            onp_res = onp_correlate(a, v)
-            match_all_arrays(mnp_res, onp_res)
+    mnp_res = mnp_correlate([1, 2, 3, 4, 5], [1, 2, 3])
+    onp_res = onp_correlate([1, 2, 3, 4, 5], [1, 2, 3])
+    match_all_arrays(mnp_res, onp_res)
 
 
 @pytest.mark.level1

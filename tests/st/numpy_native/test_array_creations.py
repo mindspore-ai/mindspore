@@ -593,7 +593,7 @@ def onp_trace(arr):
     return onp.trace(arr, offset=4, axis1=1, axis2=2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -602,16 +602,10 @@ def onp_trace(arr):
 def test_trace():
 
     arr = rand_int(3, 5)
-    for i in [-1, 0]:
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=0, axis2=1)
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=1, axis2=0)
+    match_res(mnp.trace, onp.trace, arr, offset=-1, axis1=0, axis2=1)
 
     arr = rand_int(7, 4, 9)
-    for i in [-1, 0, 2]:
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=0, axis2=-1)
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=-2, axis2=2)
-        match_res(mnp.trace, onp.trace, arr, offset=i, axis1=-1, axis2=-2)
-
+    match_res(mnp.trace, onp.trace, arr, offset=0, axis1=-2, axis2=2)
 
 
 def mnp_meshgrid(*xi):
@@ -630,7 +624,7 @@ def onp_meshgrid(*xi):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -644,38 +638,6 @@ def test_meshgrid():
         mnp_arrs = map(to_tensor, arrs)
         for mnp_res, onp_res in zip(mnp_meshgrid(*mnp_arrs), onp_meshgrid(*arrs)):
             match_all_arrays(mnp_res, onp_res)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_mgrid():
-    mnp_res = mnp.mgrid[0:5]
-    onp_res = onp.mgrid[0:5]
-    match_all_arrays(mnp_res, onp_res, error=5)
-
-    mnp_res = mnp.mgrid[2:30:4j, -10:20:7, 2:5:0.5]
-    onp_res = onp.mgrid[2:30:4j, -10:20:7, 2:5:0.5]
-    match_all_arrays(mnp_res, onp_res, error=5)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_ogrid():
-    mnp_res = mnp.ogrid[0:5]
-    onp_res = onp.ogrid[0:5]
-    match_all_arrays(mnp_res, onp_res, error=5)
-
-    mnp_res = mnp.ogrid[2:30:4j, -10:20:7, 2:5:0.5]
-    onp_res = onp.ogrid[2:30:4j, -10:20:7, 2:5:0.5]
-    match_all_arrays(mnp_res, onp_res, error=5)
 
 
 @pytest.mark.level1
@@ -920,7 +882,7 @@ def test_tril_indices_from():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -928,11 +890,9 @@ def test_tril_indices_from():
 @pytest.mark.env_onecard
 def test_histogram_bin_edges():
     x = onp.random.randint(-10, 10, 10)
-    for bins in [(1, 2, 3), [2], 1, 5, 10]:
-        # pylint: disable=redefined-builtin
-        for range in [None, (3, 3), (2, 20)]:
-            match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, bins=bins, range=range, error=3)
     match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, onp.arange(5))
+    match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, bins=(1, 2, 3), range=None, error=3)
+    match_res(mnp.histogram_bin_edges, onp.histogram_bin_edges, x, bins=10, range=(2, 20), error=3)
 
 
 @pytest.mark.level1
@@ -968,7 +928,7 @@ def test_empty_like_exception():
         mnp.empty_like([[1, 2, 3], [4, 5]])
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

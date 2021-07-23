@@ -610,7 +610,7 @@ def onp_where(condition, x, y):
     return onp.where(condition, x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -890,7 +890,7 @@ def onp_broadcast_to(x):
     return a, b
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1252,6 +1252,10 @@ def test_select():
     match_res(mnp.select, onp.select, condlist, choicelist, default=10)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_choose():
     x = rand_int(2, 1, 4).astype(onp.int32)
     y = rand_int(3, 2, 5, 4).astype(onp.int32)
@@ -1588,7 +1592,7 @@ def test_piecewise():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
