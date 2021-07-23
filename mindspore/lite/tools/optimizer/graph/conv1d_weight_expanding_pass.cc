@@ -38,10 +38,12 @@ lite::STATUS Conv1DWeightExpandingPass::ExpandFilterShape(const AnfNodePtr &weig
   switch (format) {
     case schema::Format_NCHW:
     case schema::Format_KCHW:
+      // expand the 'w' dimension.
       new_shape.insert(new_shape.begin() + 2, 1);
       break;
     case schema::Format_NHWC:
     case schema::Format_KHWC:
+      // expand the 'w' dimension.
       new_shape.insert(new_shape.begin() + 1, 1);
       break;
     default:
