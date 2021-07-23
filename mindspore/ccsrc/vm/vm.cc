@@ -35,7 +35,7 @@ StructPartial::StructPartial(int64_t fn, const VectorRef &args, const FuncGraphP
     : fn_(fn), args_(args), fg_(fg) {}
 
 std::ostream &operator<<(std::ostream &os, const StructPartial &other) {
-  os << "partial(" << other.fn_ << ", " << other.args_.ToString() << ")";
+  os << "Partial(" << other.fn_ << ", " << other.args_.ToString() << ")";
   return os;
 }
 
@@ -228,9 +228,12 @@ void FinalVM::InstTailCall(const VectorRef &args) {
     return;
   }
 
-  int64_t jmp = utils::cast<int64_t>(args[0]);
-  int64_t height = utils::cast<int64_t>(args[1]);
-  int64_t nargs = utils::cast<int64_t>(args[2]);
+  const size_t jmp_index = 0;
+  const size_t height_index = 1;
+  const size_t nargs_index = 2;
+  int64_t jmp = utils::cast<int64_t>(args[jmp_index]);
+  int64_t height = utils::cast<int64_t>(args[height_index]);
+  int64_t nargs = utils::cast<int64_t>(args[nargs_index]);
 
   auto new_jmp = Ref(jmp);
   MoveStack(nargs, height);
@@ -299,13 +302,17 @@ void FinalVM::InstRealSwitch(const VectorRef &args) {
     return;
   }
 
-  int64_t cond = utils::cast<int64_t>(args[0]);
-  int64_t vtrue = utils::cast<int64_t>(args[1]);
-  int64_t vfalse = utils::cast<int64_t>(args[2]);
+  const size_t cond_index = 0;
+  const size_t vtrue_index = 1;
+  const size_t vfalse_index = 2;
+  int64_t cond = utils::cast<int64_t>(args[cond_index]);
+  int64_t vtrue = utils::cast<int64_t>(args[vtrue_index]);
+  int64_t vfalse = utils::cast<int64_t>(args[vfalse_index]);
 
   BaseRef c = Ref(cond);
   MS_LOG(DEBUG) << vtrue << " false:" << vfalse << " InstSwitch: " << c.ToString();
   bool bool_value = false;
+  MS_EXCEPTION_IF_NULL(backend_);
   if (backend_->GetCond(c, &bool_value)) {
     MS_LOG(DEBUG) << "Cond:" << bool_value;
     if (bool_value) {
@@ -339,6 +346,7 @@ void FinalVM::InstSwitchLayer(const VectorRef &args) {
 
   BaseRef index = Ref(idx);
   int64_t idx_value = 0;
+  MS_EXCEPTION_IF_NULL(backend_);
   if (!backend_->GetIndex(index, &idx_value)) {
     MS_LOG(EXCEPTION) << "Not supported type to be casted to int64_t.";
   }
@@ -426,7 +434,8 @@ void FinalVM::InstExternal(const VectorRef &args) {
   VectorRef tuple;
   RunFunctionRef run_ref = utils::cast<RunFunctionRef>(args[0]);
   compile::RunFuncPtr fn = run_ref.func_;
-  for (size_t i = 2; i < args.size(); ++i) {
+  const size_t arg_start_index = 2;
+  for (size_t i = arg_start_index; i < args.size(); ++i) {
     auto index = utils::cast<int64_t>(args[i]);
     tuple.push_back(Ref(index));
   }
@@ -436,7 +445,7 @@ void FinalVM::InstExternal(const VectorRef &args) {
   }
 
   auto outs = (*fn)(tuple);
-  MS_LOG(DEBUG) << "'fn' out size:" << outs.size();
+  MS_LOG(DEBUG) << "The 'fn' out size:" << outs.size();
   for (auto &o : outs) {
     MS_LOG(DEBUG) << "InstExternal value:" << o.ToString();
     Push(o);
@@ -485,7 +494,7 @@ void FinalVM::SyncData(const py::object &arg) {
 }
 
 BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
-  MS_LOG(DEBUG) << "input for operation:";
+  MS_LOG(DEBUG) << "Input for operation:";
   MS_EXCEPTION_IF_NULL(prim);
   return prim->RunHookFunction(args);
 }

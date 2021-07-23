@@ -50,6 +50,7 @@ AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
     return output;
   }
   for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
     }
@@ -104,6 +105,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   AnfNodePtrToAnfNodePtrMap eqv;
   // Merge CNodes into a AnfGraph that represents a linear instruction segment
   for (auto n : lst) {
+    MS_EXCEPTION_IF_NULL(n);
     if (!n->isa<CNode>()) {
       MS_LOG(EXCEPTION) << "Inst is not CNode";
     }
@@ -121,13 +123,15 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     if (IsPrimitive(fn, prim::kPrimDepend) && inps.size() >= kDependInputSize &&
         eqv.find(inps[kDependAttachNodeIndex]) == eqv.end()) {
       args.emplace_back(RefSubGraphNode(fg, inps[kRealInputIndexInDepend], &inputs, &eqv));
-      for (size_t i = 2; i < inps.size(); ++i) {
+      const size_t value_start_index = 2;
+      for (size_t i = value_start_index; i < inps.size(); ++i) {
         args.emplace_back(NewValueNode(MakeValue(0)));
       }
     } else if (IsPrimitive(fn, prim::kPrimUpdateState)) {
       args.emplace_back(RefSubGraphNode(fg, inps[1], &inputs, &eqv));
       args.emplace_back(RefSubGraphNode(fg, inps[kUpdateStateRealInput], &inputs, &eqv));
-      for (size_t i = 3; i < inps.size(); ++i) {
+      const size_t additional_input_index = 3;
+      for (size_t i = additional_input_index; i < inps.size(); ++i) {
         auto &input = inps[i];
         if (eqv.find(input) != eqv.end()) {
           args.emplace_back(RefSubGraphNode(fg, input, &inputs, &eqv));
@@ -138,6 +142,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
                            [&fg, &inputs, &eqv](const AnfNodePtr &a) { return RefSubGraphNode(fg, a, &inputs, &eqv); });
     }
     TraceGuard tg(std::make_shared<TraceSegmentTransform>(n->debug_info()));
+    MS_EXCEPTION_IF_NULL(fg);
     eqv[n] = fg->NewCNode(args);
     eqv[n]->set_abstract(n->abstract());
     eqv[n]->set_kernel_info(n->kernel_info_ptr());
