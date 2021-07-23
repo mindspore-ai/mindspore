@@ -254,6 +254,19 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
   }
   return false;
 }
+
+void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphManagerPtr> manager,
+                       NotNull<std::set<KernelGraphPtr> *> memo) {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+  manager->AddFuncGraph(graph.get(), false);
+
+  for (auto &child_graph : graph->child_graph_order()) {
+    AddGraphToManager(NOT_NULL(child_graph.lock()), manager, memo);
+  }
+}
 }  // namespace
 
 void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
@@ -409,10 +422,15 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // Handle control flow by auto-monad.
   HandleControlFlow(NOT_NULL(root_graph));
 
+  std::set<KernelGraphPtr> memo;
+  // add all graphs to manager first, so that don't have to make new manager in following passes.
+  auto manager = Manage(root_graph, true);
+  AddGraphToManager(NOT_NULL(root_graph), NOT_NULL(manager), NOT_NULL(&memo));
+  memo.clear();
+
   // resource initialize
   InitRuntimeResource();
 
-  std::set<KernelGraphPtr> memo;
   IrFusionPass(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
   SelectKernel(NOT_NULL(root_graph));
