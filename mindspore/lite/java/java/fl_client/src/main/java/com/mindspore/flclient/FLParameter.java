@@ -51,6 +51,8 @@ public class FLParameter {
 
     private static volatile FLParameter flParameter;
 
+    private FLParameter() {}
+
     public static FLParameter getInstance() {
         FLParameter localRef = flParameter;
         if (localRef == null) {
@@ -290,8 +292,8 @@ public class FLParameter {
     }
 
     public int getServerNum() {
-        if (serverNum == 0) {
-            LOGGER.severe(Common.addTag("[flParameter] the parameter of <serverNum> is zero, please set it before use"));
+        if (serverNum <= 0) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <serverNum> is <= 0, it should be > 0, please set it before use"));
             throw new RuntimeException();
         }
         return serverNum;

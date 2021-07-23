@@ -171,7 +171,6 @@ public class FLLiteClient {
     public FLClientStatus startFLJob() {
         LOGGER.info(Common.addTag("[startFLJob] ====================================Verify server===================================="));
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[startFLJob] ==============startFLJob url: " + url + "=============="));
         StartFLJob startFLJob = StartFLJob.getInstance();
         Date date = new Date();
         long time = date.getTime();
@@ -261,7 +260,6 @@ public class FLLiteClient {
 
     public FLClientStatus updateModel() {
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[updateModel] ==============updateModel url: " + url + "=============="));
         UpdateModel updateModelBuf = UpdateModel.getInstance();
         byte[] updateModelBuffer = updateModelBuf.getRequestUpdateFLJob(iteration, secureProtocol, trainDataSize);
         if (updateModelBuf.getStatus() == FLClientStatus.FAILED) {
@@ -299,7 +297,6 @@ public class FLLiteClient {
 
     public FLClientStatus getModel() {
         String url = Common.generateUrl(flParameter.isUseHttps(), flParameter.isUseElb(), flParameter.getIp(), flParameter.getPort(), flParameter.getServerNum());
-        LOGGER.info(Common.addTag("[getModel] ===========getModel url: " + url + "=============="));
         GetModel getModelBuf = GetModel.getInstance();
         byte[] buffer = getModelBuf.getRequestGetModel(flParameter.getFlName(), iteration);
         try {
@@ -502,6 +499,10 @@ public class FLLiteClient {
             LOGGER.info(Common.addTag("[set input] " + "dataPath: " + dataPath + " dataSize: " + +dataSize + " vocabFile: " + flParameter.getVocabFile() + " idsFile: " + flParameter.getIdsFile()));
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
+            if (dataPath.split(",").length < 2) {
+                LOGGER.info(Common.addTag("[set input] the set dataPath for lenet is not valid, should be the format of <data.bin,label.bin>"));
+                return -1;
+            }
             dataSize = trainLenet.initDataSet(dataPath.split(",")[0], dataPath.split(",")[1]);
             LOGGER.info(Common.addTag("[set input] " + "dataPath: " + dataPath.split(",")[0] + " dataSize: " + +dataSize + " labelPath: " + dataPath.split(",")[1]));
         }

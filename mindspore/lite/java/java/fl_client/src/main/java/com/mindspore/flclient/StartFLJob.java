@@ -86,7 +86,7 @@ public class StartFLJob {
         }
     }
 
-    private static StartFLJob startFLJob;
+    private static volatile StartFLJob startFLJob;
 
     private FLClientStatus status;
 
@@ -101,10 +101,16 @@ public class StartFLJob {
     }
 
     public static StartFLJob getInstance() {
-        if (startFLJob == null) {
-            startFLJob = new StartFLJob();
+        StartFLJob localRef = startFLJob;
+        if (localRef == null) {
+            synchronized (StartFLJob.class) {
+                localRef = startFLJob;
+                if (localRef == null) {
+                    startFLJob = localRef = new StartFLJob();
+                }
+            }
         }
-        return startFLJob;
+        return localRef;
     }
 
     public String getNextRequestTime() {
@@ -218,7 +224,7 @@ public class StartFLJob {
     }
 
     public FLClientStatus doResponse(ResponseFLJob flJob) {
-        LOGGER.info(Common.addTag("[startFLJob] return code: " + flJob.retcode()));
+        LOGGER.info(Common.addTag("[startFLJob] return retCode: " + flJob.retcode()));
         LOGGER.info(Common.addTag("[startFLJob] reason: " + flJob.reason()));
         LOGGER.info(Common.addTag("[startFLJob] iteration: " + flJob.iteration()));
         LOGGER.info(Common.addTag("[startFLJob] is selected: " + flJob.isSelected()));
@@ -246,7 +252,7 @@ public class StartFLJob {
                 LOGGER.info(Common.addTag("[startFLJob] catch RequestError or SystemError"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[startFLJob] the return <retcode> from server is invalid: " + retCode));
+                LOGGER.severe(Common.addTag("[startFLJob] the return <retCode> from server is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }
