@@ -75,11 +75,11 @@ Status MnistOp::Builder::SanityCheck() {
 MnistOp::MnistOp(std::string usage, int32_t num_workers, std::string folder_path, int32_t queue_size,
                  std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
-      usage_(std::move(usage)),
       folder_path_(std::move(folder_path)),
+      usage_(std::move(usage)),
+      data_schema_(std::move(data_schema)),
       image_path_({}),
-      label_path_({}),
-      data_schema_(std::move(data_schema)) {
+      label_path_({}) {
   io_block_queues_.Init(num_workers, queue_size);
 }
 
