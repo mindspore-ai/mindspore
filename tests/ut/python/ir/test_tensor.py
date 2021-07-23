@@ -320,9 +320,9 @@ def test_tensor_input_empty():
 
 
 def test_tensor_input_ndarray_str():
-    with pytest.raises(TypeError):
-        inp = np.array(["88", 2, 4])
-        ms.Tensor(inp)
+    inp = np.array(["88", 0, 9])
+    tensor = ms.Tensor(inp)
+    assert str(tensor) == "['88' '0' '9']"
 
 
 def test_tensor_input_ndarray_bool():
