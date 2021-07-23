@@ -83,7 +83,6 @@ class OptimizeIRPassLib {
   SubstitutionPtr switch_simplify_;
   SubstitutionPtr float_tuple_getitem_switch_;
   SubstitutionPtr float_env_getitem_switch_;
-  SubstitutionPtr convert_switch_replacement_;
   SubstitutionPtr exchange_switch_depend_value_;
 
   SubstitutionPtr switch_partial_eliminater_;

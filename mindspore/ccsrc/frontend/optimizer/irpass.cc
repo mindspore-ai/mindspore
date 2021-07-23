@@ -157,8 +157,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                                  "float_tuple_getitem_switch", prim::kPrimTupleGetItem);
   float_env_getitem_switch_ =
     MakeSubstitution(std::make_shared<FloatEnvGetItemSwitch>(), "float_env_getitem_switch", prim::kPrimEnvGetItem);
-  convert_switch_replacement_ =
-    MakeSubstitution(std::make_shared<ConvertSwitchReplacement>(), "convert_switch_replacement", IsCNodeDup);
   exchange_switch_depend_value_ =
     MakeSubstitution(std::make_shared<ExchangeSwitchDependValue>(), "exchange_switch_depend_value", prim::kPrimSwitch);
 

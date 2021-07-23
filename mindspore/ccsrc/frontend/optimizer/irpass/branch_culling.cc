@@ -26,6 +26,9 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+constexpr size_t kCondIndex = 1;
+constexpr size_t kTrueBranchIndex = 2;
+constexpr size_t kFalseBranchIndex = 3;
 namespace internal {
 AnfNodePtr GenerateSwitchNode(const FuncGraphPtr &graph, const AnfNodePtr &cond, const AnfNodePtr &data,
                               int64_t switch_idx) {
@@ -505,6 +508,66 @@ AnfNodePtr TransformMergeBranches(const std::vector<AnfNodePtr> &block_nodes,
   return GenerateMergeNodes(block_nodes, branch_output_abs, func_graph);
 }
 }  // namespace internal
+
+bool ConvertSwitchReplacement::CheckSwitchBranch(const AnfNodePtr &node) {
+  if (!IsValueNode<FuncGraph>(node)) {
+    return false;
+  }
+  // If graph contains FuncGraph, then ignore this node.
+  auto graph = GetValueNode<FuncGraphPtr>(node);
+  for (auto &item : graph->value_nodes()) {
+    auto value_node = item.first;
+    if (IsValueNode<FuncGraph>(value_node)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ConvertSwitchReplacement::CheckSwitchWrapNode(const AnfNodePtr &node) {
+  // {{prim::kPrimSwitch, X, G1, G2}, Xs}.
+  if (node->isa<CNode>()) {
+    auto inp0 = node->cast<CNodePtr>()->input(0);
+    if (IsPrimitiveCNode(inp0, prim::kPrimSwitch)) {
+      auto switch_node = inp0->cast<CNodePtr>();
+      // for switch replace method, only graphs without graph inside can be replaced
+      if (CheckSwitchBranch(switch_node->input(kTrueBranchIndex)) &&
+          CheckSwitchBranch(switch_node->input(kFalseBranchIndex))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void ConvertSwitchReplacement::TransformSwitchBranchReplace(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  auto switch_cnode = cnode->input(0)->cast<CNodePtr>();
+  auto cond = switch_cnode->input(kCondIndex);
+  auto true_br = switch_cnode->input(kTrueBranchIndex);
+  auto false_br = switch_cnode->input(kFalseBranchIndex);
+
+  auto g1 = GetValueNode<FuncGraphPtr>(true_br);
+  auto g2 = GetValueNode<FuncGraphPtr>(false_br);
+  auto true_output = g1->output()->abstract();
+  auto false_output = g2->output()->abstract();
+  auto trans_g1 = internal::TransformGraphCondTrueBranchNodes(g1, cond);
+  auto trans_g2 = internal::TransformGraphCondFalseBranchNodes(g2, cond);
+
+  std::vector<AnfNodePtr> params;
+  if (cnode && cnode->size() > 1) {
+    // There are arguments for the call of switch result,
+    // usually these are monad states added by auto-monad.
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      params.push_back(cnode->inputs().at(i));
+    }
+  }
+  auto fg = node->func_graph();
+  auto cloned_g1 = InlineClone(trans_g1, fg, params);
+  auto cloned_g2 = InlineClone(trans_g2, fg, params);
+  auto new_node = internal::TransformMergeBranches({cond, cloned_g1, cloned_g2}, {true_output, false_output}, fg);
+  fg->manager()->Replace(node, new_node);
+}
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
