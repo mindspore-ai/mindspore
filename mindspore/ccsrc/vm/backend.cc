@@ -50,7 +50,7 @@ bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBoo
 bool Backend::GetIndex(const BaseRef &c, int64_t *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
 Backend::Backend(const std::string &name) : name_(name) {
-  MS_LOG(DEBUG) << "select backend:" << name;
+  MS_LOG(DEBUG) << "Select backend:" << name;
   convert_fn_ = MsVmConvert;
   is_multi_graph_sink_ = false;
 }
@@ -117,7 +117,7 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
 
 // compile set input output
 VectorRef MsBackend::MsSimuRunGraph(const GraphId &g, const VectorRef &args) {
-  MS_LOG(DEBUG) << "set graph input:" << g;
+  MS_LOG(DEBUG) << "Set graph input:" << g;
   std::vector<BaseRef> outputs;
   (void)std::transform(graph_id_map_[g].outputs.begin(), graph_id_map_[g].outputs.end(), std::back_inserter(outputs),
                        [](const AnfNodePtr &v) { return v; });
@@ -205,6 +205,7 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
 }
 
 void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
+  MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     // if is graph return nothing ,the function should return a null anylist
@@ -241,9 +242,8 @@ void UpdateOutputDeviceAddress(const std::vector<session::KernelWithIndex> &outp
   }
 }
 
-void UpdateInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+void UpdateInputDeviceAddress(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(device_context);
   for (const auto &node : graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
@@ -254,7 +254,7 @@ void UpdateInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
-  MS_LOG(DEBUG) << "start ms graph run:" << args.size() << ", g:" << g;
+  MS_LOG(DEBUG) << "Start ms graph run:" << args.size() << ", g:" << g;
   // Run graph
   std::vector<tensor::TensorPtr> inputs;
   for (const auto &arg : args) {
@@ -264,6 +264,7 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   VectorRef outputs;
   // Call ms RunGraphAsync or RunOpsInGraph (graphId, input ,output)
   const session::SessionPtr &exe_session = ((target != target_device_ && !target.empty()) ? other_sess_ : target_sess_);
+  MS_EXCEPTION_IF_NULL(exe_session);
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode) {
@@ -363,6 +364,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   CompileGraph(root_graph_);
 
   // Compile sub graphs.
+  MS_EXCEPTION_IF_NULL(root_graph_->manager());
   FuncGraphSet sub_graphs = root_graph_->manager()->func_graphs();
   for (auto sub_graph : sub_graphs) {
     if (sub_graph != func_graph && sub_graph != nullptr) {
@@ -378,6 +380,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
     const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
     runtime::GraphScheduler::GetInstance().Schedule(actor_set);
   }
+  MS_EXCEPTION_IF_NULL(graph_compiler_info);
   const ActorInfo &actor_info = graph_compiler_info->name_;
   actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   return actor_info;
@@ -469,6 +472,7 @@ const ActorInfo &MindRTBackend::CompileGraph(const OpRunInfo &op_run_info, const
   auto graph_compiler_info = ConstructGraphCompilerInfo(actor_info, tensors_mask, input_tensors);
   const auto actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+  MS_EXCEPTION_IF_NULL(graph_compiler_info);
   graph_compiler_info->input_tensors_.clear();
 
   auto ret = actor_to_graph_compiler_info_.emplace(actor_info, std::move(graph_compiler_info));
@@ -570,6 +574,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> graph_compiler, con
                         const std::map<AnfNodePtr, size_t> &parameter_index,
                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
                         VectorRef *op_outputs) {
+  MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtr front_node = graph->GetFrontAnfByBackendAnf(kernel);
   MS_EXCEPTION_IF_NULL(front_node);
   if (!front_node->isa<CNode>()) {
@@ -613,6 +618,7 @@ void TensorValueToVector(const ValuePtr &value, VectorRef *outputs) {
     MS_EXCEPTION_IF_NULL(value_tuple);
     for (size_t i = 0; i < value_tuple->size(); ++i) {
       ValuePtr element = value_tuple->value()[i];
+      MS_EXCEPTION_IF_NULL(element);
       if (element->isa<tensor::Tensor>()) {
         auto tensor = element->cast<tensor::TensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
@@ -629,6 +635,8 @@ void TensorValueToVector(const ValuePtr &value, VectorRef *outputs) {
 }
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const VectorRef &args, VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(graph_output);
+  MS_EXCEPTION_IF_NULL(outputs);
   if (graph_output->isa<ValueNode>()) {
     MS_LOG(INFO) << "Graph's output is a constant. No need to execute.";
     VectorRef output_tmp;
@@ -694,6 +702,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
+    MS_EXCEPTION_IF_NULL(graph);
     std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
     std::map<AnfNodePtr, size_t> parameter_index;
     GraphOutputInfo graph_output_info;
@@ -751,6 +760,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
   MS_LOG(INFO) << "Run actor begin, actor name: " << actor_info;
+  MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
     return;
   }
@@ -775,6 +785,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   std::vector<std::vector<tensor::TensorPtr>> input_tensors;
   for (const auto &kernel_graph : graph_compiler_info.graphs_) {
     std::vector<tensor::TensorPtr> input_tensor;
+    MS_EXCEPTION_IF_NULL(kernel_graph);
     for (const auto &input_node : kernel_graph->input_nodes()) {
       const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
       PushTensor(args, origin_parameters, front_node, &input_tensor);
@@ -822,6 +833,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   }
   for (size_t i = 0; i < graph_compiler_info.device_contexts_.size(); ++i) {
     const auto &device_context = graph_compiler_info.device_contexts_[i];
+    MS_EXCEPTION_IF_NULL(device_context);
     if ((device_context != first_device_context) && (!device_context->SyncStream())) {
       MS_LOG(EXCEPTION) << "Sync stream failed:" << device_context->device_context_key().ToString();
     }
@@ -835,7 +847,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
   }
   MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
-
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
   // Update device address for output node of graph.
@@ -845,6 +857,8 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
 void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
                                      const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,
                                      VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  MS_EXCEPTION_IF_NULL(outputs);
   // The makeTuple node need expand and recurse.
   if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
     auto make_tuple = output_node->cast<CNodePtr>();
@@ -957,9 +971,10 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   std::vector<DeviceContext *> device_contexts;
   runtime::KernelMapPosition outputs_order;
   size_t position = 0;
-
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
   for (const auto &graph_info_to_context : graph_info_to_device_context_) {
     const auto &graph = graph_compiler_->Fetch(graph_info_to_context.first);
+    MS_EXCEPTION_IF_NULL(graph);
     graphs.emplace_back(graph);
     device_contexts.emplace_back(graph_info_to_context.second);
 
@@ -986,6 +1001,9 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,
                              const std::vector<int64_t> *tensors_mask,
                              const std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(tensors_mask);
   const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
   if (graph_iter == actor_to_graph_compiler_info_.end()) {
     MS_LOG(EXCEPTION) << "Can't find the graph compiler info.";
@@ -1044,7 +1062,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
 
   // Update device address for input and output of graph.
   UpdateOutputDeviceAddress(output_nodes, graph_compiler_info.device_contexts_.front());
-  UpdateInputDeviceAddress(graph, graph_compiler_info.device_contexts_.front());
+  UpdateInputDeviceAddress(graph);
 }
 }  // namespace compile
 }  // namespace mindspore

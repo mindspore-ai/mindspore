@@ -139,6 +139,7 @@ void CompileGraph::PushParameters(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> parameters = graph->parameters();
   for (size_t i = parameters.size(); i != 0; i--) {
+    MS_EXCEPTION_IF_NULL(parameters[i - 1]);
     Push(parameters[i - 1]);
     MS_LOG(DEBUG) << "Push parameter " << (i - 1) << ": " << parameters[i - 1]->DebugString(true);
   }
@@ -240,6 +241,7 @@ bool CompileGraph::Compile(const FuncGraphPtr &graph) {
     } else {
       MS_LOG(DEBUG) << "Start a cut node";
       auto &cut_node = segment->nodes_[0];
+      MS_EXCEPTION_IF_NULL(cut_node);
       if (!cut_node->isa<CNode>()) {
         MS_LOG(EXCEPTION) << "must be anfnode here NodeInfo: " << trace::GetDebugInfo(graph->debug_info());
       }
@@ -261,6 +263,7 @@ InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
   Reset();
   PushParameters(graph);
   int64_t param_height = height_;
+  MS_EXCEPTION_IF_NULL(graph->get_return());
   MS_LOG(DEBUG) << "'param_height': " << height_ << " to split graph: " << graph->get_return()->DebugString(true);
 
   if (!Compile(graph)) {
@@ -293,8 +296,12 @@ void CompileGraph::AddTailCall(const AnfNodePtr &fn, size_t size) {
 }
 
 void CompileGraph::AddPartial(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto inputs = node->inputs();
   VectorRef args;
+  if (inputs.size() <= 1) {
+    MS_LOG(EXCEPTION) << "The node:" << node->DebugString() << "do not have two input.";
+  }
   auto fn = inputs[1];
   if (!IsValueNode<FuncGraph>(fn)) {
     MS_LOG(EXCEPTION) << "The type of 1st input of node must be FuncGraph";
@@ -306,6 +313,7 @@ void CompileGraph::AddPartial(const CNodePtr &node) {
 }
 
 void CompileGraph::AddMakeTuple(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto inputs = node->inputs();
   VectorRef args;
   for (size_t i = 1; i < inputs.size(); i++) {
@@ -315,6 +323,7 @@ void CompileGraph::AddMakeTuple(const CNodePtr &node) {
 }
 
 void CompileGraph::AddSwitch(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto inputs = node->inputs();
   if (inputs.size() < kSwitchInputSize) {
     MS_LOG(EXCEPTION) << "Length of inputs of primitive " << prim::kPrimSwitch->name() << " is less than 4";
@@ -327,24 +336,32 @@ void CompileGraph::AddSwitch(const CNodePtr &node) {
 }
 
 void CompileGraph::AddSwitchLayer(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto inputs = node->inputs();
   if (inputs.size() != kSwitchLayerInputSize) {
     MS_LOG(EXCEPTION) << "Switch layer must have index and branches.";
   }
   VectorRef args;
-  args.emplace_back(Ref(inputs[1]));
-  args.emplace_back(Ref(inputs[2]));
+  const size_t cond_index = 1;
+  const size_t tuple_index = 2;
+  args.emplace_back(Ref(inputs[cond_index]));
+  args.emplace_back(Ref(inputs[tuple_index]));
   AddInst(Instruction::kSwitchLayer, args);
 }
 
 void CompileGraph::AddReturn(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   VectorRef args;
+  if (node->inputs().size() <= 1) {
+    MS_LOG(EXCEPTION) << "The node:" << node->DebugString() << "do not have two input.";
+  }
   args.emplace_back(Ref(node->input(1)));
   args.emplace_back(height_);
   AddInst(Instruction::kReturn, args);
 }
 
 void CompileGraph::AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(node);
   auto inputs = node->inputs();
   VectorRef args;
   args.push_back(prim);
@@ -355,6 +372,8 @@ void CompileGraph::AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim) 
 }
 
 int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto inputs = node->inputs();
   AnfNodePtr fn = inputs[0];
   (void)Ref(fn);
@@ -392,6 +411,7 @@ void TraverseGraphMap(
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MS_EXCEPTION_IF_NULL(tr);
   for (const auto &fg : fgs) {
+    MS_EXCEPTION_IF_NULL(fg);
     for (const auto &ct_any : fg->value_nodes()) {
       AnfNodePtr const_primitive_node = ct_any.first;
       if (const_primitive_node != nullptr && IsValueNode<Primitive>(const_primitive_node)) {
@@ -515,6 +535,7 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
   FuncGraphPtr prim_graph = WrapPrimitives(graph);
   Compile(prim_graph);
   MS_EXCEPTION_IF_NULL(prim_graph);
+  MS_EXCEPTION_IF_NULL(prim_graph->manager());
   FuncGraphSet graphs = prim_graph->manager()->func_graphs();
   for (auto g : graphs) {
     if (g != graph && g != nullptr) {
