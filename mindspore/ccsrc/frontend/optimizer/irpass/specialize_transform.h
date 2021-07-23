@@ -60,7 +60,7 @@ class SpecializeTransform {
           new_params.push_back(params[i]);
           continue;
         }
-        // replace the parameter with arg.
+        // replace the parameter with arg in new_fg without changing origin func_graph.
         mng->Replace(params[i], NewReplaceValueNode(need_eliminate_args[i]));
       }
       mng->SetParameters(new_fg, new_params);

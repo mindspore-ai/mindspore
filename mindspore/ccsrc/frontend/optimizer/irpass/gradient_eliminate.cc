@@ -65,36 +65,27 @@ AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &r
 }
 }  // namespace internal
 
-bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
-  auto manager = optimizer->manager();
-  // Search all j nodes.
-  GetJPrim(manager);
-  // Get j nodes that don't have embed j nodes.
-  std::vector<CNodePtr> todo;
-  // If graph also contains J(FuncGraph) or J(Primitive), then ignore this graph.
-  // ExpandJ innermost graph or primitive first.
-  std::copy_if(j_nodes_.begin(), j_nodes_.end(), std::back_inserter(todo),
-               [](const CNodePtr &j_node) { return !internal::CheckIfEmbedJ(j_node); });
-  // Expand j nodes that don't have embed j nodes.
-  bool change = false;
-  for (auto &j_node : todo) {
-    auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer->resource());
-    manager->Replace(j_node, expanded_j);
-    change = true;
-  }
-  return change;
-}
+bool ExpandJPrim::operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) {
+  AnfNodePtr ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
 
-void ExpandJPrim::GetJPrim(const FuncGraphManagerPtr &manager) {
-  j_nodes_.clear();
-  for (auto &fg : manager->func_graphs()) {
-    std::vector<AnfNodePtr> toposet = TopoSort(fg->get_return());
-    for (const auto &node : toposet) {
-      if (IsPrimitiveCNode(node, prim::kPrimJ)) {
-        j_nodes_.push_back(node->cast<CNodePtr>());
+  bool change = false;
+  auto manager = optimizer->manager();
+  for (auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
+      auto j_node = node->cast<CNodePtr>();
+      // If graph also contains J(FuncGraph) or J(Primitive), then ignore this graph.
+      // ExpandJ innermost graph or primitive first.
+      if (internal::CheckIfEmbedJ(j_node)) {
+        continue;
       }
+      auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer->resource());
+      manager->Replace(j_node, expanded_j);
+      change = true;
     }
   }
+  return change;
 }
 }  // namespace irpass
 }  // namespace opt

@@ -157,9 +157,6 @@ class OptimizeIRPassLib {
   // Pynative Eliminate
   SubstitutionPtr pynative_eliminate_;
 
-  // Eliminate getattr bool scalar
-  SubstitutionPtr bool_scalar_eliminate_;
-
   // Recompute
   SubstitutionPtr set_cell_output_no_recompute_;
 };

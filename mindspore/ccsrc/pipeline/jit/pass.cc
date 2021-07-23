@@ -125,14 +125,8 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
     irpass.inline_,
   });
 
-  opt::OptPassConfig bool_scalar_eliminate = opt::OptPassConfig({
-    irpass.bool_scalar_eliminate_,
-  });
-
-  OptPassGroupMap map({{"ad_eliminate", pynative_eliminate},
-                       {"ad_inline", inline_opt},
-                       {"bool_scalar_eliminate", bool_scalar_eliminate},
-                       {"ad_switch_simplify", switch_simplify}});
+  OptPassGroupMap map(
+    {{"ad_eliminate", pynative_eliminate}, {"ad_inline", inline_opt}, {"ad_switch_simplify", switch_simplify}});
 
   auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", res, map);
   FuncGraphPtr func_graph = res->func_graph();
@@ -320,7 +314,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     false, true);
   opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({irpass.less_batch_normalization_});
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
-
   opt::OptPassConfig after_resolve_pass =
     opt::OptPassConfig({irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
 
