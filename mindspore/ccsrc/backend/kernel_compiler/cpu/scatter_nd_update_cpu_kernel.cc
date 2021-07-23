@@ -40,8 +40,8 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
-    auto ret =
-      memcpy_s(x + offset, params->x_mem_size_, updates + params->unit_size_ * i, params->unit_size_ * sizeof(T));
+    auto ret = memcpy_s(x + offset, params->x_mem_size_ - offset, updates + params->unit_size_ * i,
+                        params->unit_size_ * sizeof(T));
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
     }

@@ -33,10 +33,8 @@
 #include "debug/common.h"
 
 namespace mindspore {
-
 // namespace to support debug utils
 namespace draw {
-
 namespace {
 // Only for ValueNode
 std::string ValueType(const ValueNodePtr &node) {
@@ -44,7 +42,7 @@ std::string ValueType(const ValueNodePtr &node) {
     return "";
   }
   auto v = node->value();
-
+  MS_EXCEPTION_IF_NULL(v);
   return v->type_name();
 }
 
@@ -230,7 +228,7 @@ void DrawUserFuncGraph(const std::string &, const FuncGraphPtr &) {
 }
 #endif
 
-std::string Graphviz::Shape(AnfNodePtr node) {
+std::string Graphviz::Shape(const AnfNodePtr &node) {
   if (node == nullptr) {
     return "";
   }
@@ -302,7 +300,7 @@ void BaseDigraph::Tail(const FuncGraphPtr &func_graph) {
   buffer_ << "node" << func_graph->get_return() << "_" << 0;
 }
 
-void BaseDigraph::Edge(AnfNodePtr start, FuncGraphPtr end, int id_start) {
+void BaseDigraph::Edge(const AnfNodePtr &start, const FuncGraphPtr &end, int id_start) {
   Head(start, id_start);
   buffer_ << "->";
   Tail(end);
@@ -521,7 +519,7 @@ static void DrawCNode(Graphviz *const graph_obj, const CNodePtr &node) {
   graph_obj->buffer() << "</table>>,";
 }
 
-void Digraph::Node(AnfNodePtr node, int id) {
+void Digraph::Node(const AnfNodePtr &node, int id) {
   if (node == nullptr) {
     return;
   }
@@ -558,7 +556,7 @@ void Digraph::Node(AnfNodePtr node, int id) {
   buffer_ << "]" << std::endl;
 }
 
-void Digraph::Edge(AnfNodePtr start, AnfNodePtr end, int idx, int id_start) {
+void Digraph::Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int id_start) {
   if (start == nullptr || end == nullptr) {
     return;
   }
@@ -591,7 +589,7 @@ ModelDigraph::~ModelDigraph() {
   }
 }
 
-std::string ModelDigraph::Shape(AnfNodePtr node) {
+std::string ModelDigraph::Shape(const AnfNodePtr &node) {
   if (node == nullptr) {
     return "";
   }
@@ -611,7 +609,7 @@ std::string ModelDigraph::Shape(AnfNodePtr node) {
   return "plaintext";
 }
 
-void ModelDigraph::Node(AnfNodePtr node, int id) {
+void ModelDigraph::Node(const AnfNodePtr &node, int id) {
   if (node == nullptr) {
     return;
   }
@@ -644,7 +642,7 @@ void ModelDigraph::Node(AnfNodePtr node, int id) {
   buffer_ << "]" << std::endl;
 }
 
-void ModelDigraph::Edge(AnfNodePtr start, AnfNodePtr end, int idx, int id_start) {
+void ModelDigraph::Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int id_start) {
   if (start == nullptr || end == nullptr) {
     return;
   }

@@ -106,6 +106,7 @@ static irpb::DataType GetNumberDataType(const TypePtr &type) {
 }
 
 void CheckIfValidType(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
   if (type->isa<Problem>()) {
     MS_LOG(WARNING) << "The type: " << type->type_name();
   }
