@@ -622,6 +622,8 @@ class MulCost : public SubCost {
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 
+using GatherDCost = MulCost;
+
 class DivCost : public SubCost {
  public:
   DivCost() : SubCost() {}
