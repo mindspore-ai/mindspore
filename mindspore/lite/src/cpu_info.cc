@@ -19,10 +19,11 @@
 #include <fstream>
 #include "src/common/log_adapter.h"
 #include "nnacl/nnacl_utils.h"
-#ifndef MS_COMPILE_IOS
+#ifdef __ANDROID__
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
-#else
+#endif
+#ifdef MS_COMPILE_IOS
 #include <mach/mach.h>
 #include <mach/machine.h>
 #include <mach/thread_act.h>
@@ -46,7 +47,7 @@
 #endif
 #endif
 namespace mindspore::lite {
-#ifndef MS_COMPILE_IOS
+#ifdef __ANDROID__
 uint32_t CpuInfo::MidrSetPart(uint32_t part) {
   return ((part << ARM_CPU_PART_OFFSET) & ARM_CPU_PART_MASK) | (midr_ & ~ARM_CPU_PART_MASK);
 }
@@ -137,6 +138,7 @@ bool CpuInfo::ArmIsSupportFp16() {
   }
   return false;
 #else
+#ifdef __ANDROID__
 #ifdef ENABLE_ARM32
   GetArmProcCpuInfo(&android_cpu_info_);
   midr_ = MidrSetPart(android_cpu_info_.cpu_part);
@@ -174,6 +176,7 @@ bool CpuInfo::ArmIsSupportFp16() {
   } else {
     MS_LOG(DEBUG) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
   }
+#endif
 #endif
   return fp16_flag_;
 #endif

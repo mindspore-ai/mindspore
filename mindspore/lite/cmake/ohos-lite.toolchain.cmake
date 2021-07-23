@@ -1,0 +1,31 @@
+if(NOT DEFINED ENV{OHOS_SYSROOT_PATH})
+    message(FATAL_ERROR "No defined environment variable: OHOS_SYSROOT_PATH")
+endif()
+set(OHOS_SYSROOT_PATH "$ENV{OHOS_SYSROOT_PATH}")
+
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_CXX_COMPILER_ID Clang)
+set(CMAKE_TOOLCHAIN_PREFIX llvm-)
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_C_FLAGS "--target=arm-liteos -D__clang__ -march=armv7-a -w")
+set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_CXX_FLAGS "--target=arm-liteos -D__clang__ -march=armv7-a -w")
+set(MY_LINK_FLAGS "--target=arm-liteos --sysroot=${OHOS_SYSROOT_PATH}")
+set(CMAKE_LINKER clang)
+set(CMAKE_CXX_LINKER clang++)
+set(CMAKE_C_LINKER clang)
+set(CMAKE_C_LINK_EXECUTABLE
+    "${CMAKE_C_LINKER} ${MY_LINK_FLAGS} <FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+set(CMAKE_CXX_LINK_EXECUTABLE
+    "${CMAKE_CXX_LINKER} ${MY_LINK_FLAGS} <FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+set(CMAKE_SYSROOT ${OHOS_SYSROOT_PATH})
+
+set(ENABLE_MINDRT "off")
+find_path(GCC_PATH gcc)
+find_path(GXX_PATH g++)
+if(NOT ${GCC_PATH} STREQUAL "GCC_PATH-NOTFOUND" AND NOT ${GXX_PATH} STREQUAL "GXX_PATH-NOTFOUND")
+    set(FLATC_GCC_COMPILER ${GCC_PATH}/gcc)
+    set(FLATC_GXX_COMPILER ${GXX_PATH}/g++)
+endif()
+
+string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,--gc-sections")

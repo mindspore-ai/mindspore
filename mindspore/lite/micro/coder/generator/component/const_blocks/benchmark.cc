@@ -140,7 +140,9 @@ int main(int argc, const char **argv) {
     }
     context->thread_num_ = atoi(argv[5]);
     context->device_list_.resize(1);
-    context->device_list_[0] = {lite::DT_CPU, {{false, static_cast<lite::CpuBindMode>(atoi(argv[6]))}}};
+    context->device_list_[0].device_type_ = lite::DT_CPU;
+    context->device_list_[0].device_info_.cpu_device_info_.enable_float16_ = false;
+    context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = static_cast<lite::CpuBindMode>(atoi(argv[6]));
     printf("context: ThreadNum: %d, BindMode: %d\n", context->thread_num_,
            context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
   }
