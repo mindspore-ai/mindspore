@@ -667,10 +667,6 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
       }
       cnode_inputs->push_back(parameter_from_cnode);
       (*other_graph_cnode)[anf] = parameter_from_cnode;
-      KernelWithIndex front_node_with_index(anf, 0);
-      MS_LOG(INFO) << "The " << input_idx << " input of node:" << cnode->fullname_with_scope()
-                   << " is from front node:" << anf->fullname_with_scope();
-      graph->CacheInternalParameterToFrontNode(parameter_from_cnode, front_node_with_index);
     }
   }
 }
