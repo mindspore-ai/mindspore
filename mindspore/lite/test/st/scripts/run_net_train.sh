@@ -375,8 +375,8 @@ function Run_CodeExamples() {
       cd ${basepath}/../../examples/unified_api || exit 1
       chmod 777 ./prepare_and_run.sh
       chmod 777 ./*/*.sh
-      ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir >> ${run_code_examples_log_file}
-      accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.9) }')
+      ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
+      accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
       if [ $accurate -eq 1 ]; then
         echo "Unified API Trained and reached accuracy" >> ${run_code_examples_log_file}
         echo 'code_examples: unified_api pass' >> ${run_benchmark_train_result_file}
@@ -391,8 +391,8 @@ function Run_CodeExamples() {
       cd ${basepath}/../../examples/train_lenet || exit 1
       chmod 777 ./prepare_and_run.sh
       chmod 777 ./*/*.sh
-      ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir >> ${run_code_examples_log_file}
-      accurate=$(tail -10 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.9) }')
+      ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
+      accurate=$(tail -10 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
       if [ $accurate -eq 1 ]; then
         echo "Lenet Trained and reached accuracy" >> ${run_code_examples_log_file}
         echo 'code_examples: train_lenet pass' >> ${run_benchmark_train_result_file}

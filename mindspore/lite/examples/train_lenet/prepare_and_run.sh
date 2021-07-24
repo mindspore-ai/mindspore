@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-b virtual_batch] [-m mindir]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-b virtual_batch] [-m mindir] [-e epochs_to_train]\n"
 }
 
 checkopts()
@@ -14,7 +14,8 @@ checkopts()
   QUANTIZE=""
   FP16_FLAG=""
   VIRTUAL_BATCH=-1
-  while getopts 'D:b:d:m:oqr:t:' opt
+  EPOCHS="-e 5"
+  while getopts 'D:b:d:e:m:oqr:t:' opt
   do
     case "${opt}" in
       b)
@@ -25,6 +26,9 @@ checkopts()
         ;;
       d)
         DOCKER=$OPTARG
+        ;;
+      e)
+        EPOCHS="-e $OPTARG"
         ;;
       m)
         MINDIR_FILE=$OPTARG
@@ -139,7 +143,7 @@ if [ "${TARGET}" == "arm64" ]; then
   adb push ${PACKAGE} /data/local/tmp/
 
   echo "========Training on Device====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
+  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
 
   echo
   echo "===Evaluating trained Model====="
@@ -148,7 +152,7 @@ if [ "${TARGET}" == "arm64" ]; then
 else
   cd ${PACKAGE} || exit 1
   echo "======Training Locally========="
-  ./train.sh
+  ./train.sh ${EPOCHS}
 
   echo "===Evaluating trained Model====="
   ./eval.sh
