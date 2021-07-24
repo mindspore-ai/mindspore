@@ -52,10 +52,14 @@ class SplitGpuFwdKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
+    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    int dims = SizeToInt(input_shape.size());
     axis_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "axis"));
+    if (axis_ < -dims || axis_ >= dims) {
+      MS_LOG(EXCEPTION) << "axis must be in the range [-rank, rank)";
+    }
     if (axis_ < 0) {
-      auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-      axis_ += SizeToInt(input_shape.size());
+      axis_ += dims;
     }
 
     auto origin_data_format = AnfAlgo::GetOriginDataFormat(kernel_node);
@@ -67,8 +71,6 @@ class SplitGpuFwdKernel : public GpuKernel {
     if (!CheckParam(kernel_node)) {
       return false;
     }
-
-    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     input_size_ = 1;
     all_size_before_axis_ = 1;
     all_size_axis_ = 1;
@@ -122,7 +124,10 @@ class SplitGpuFwdKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     int dims = SizeToInt(input_shape.size());
     int output_num = SizeToInt(AnfAlgo::GetOutputTensorNum(kernel_node));
-
+    if (output_num <= 0) {
+      MS_LOG(ERROR) << "Output number is " << output_num << ", must > 0.";
+      return false;
+    }
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but Split needs 1 input.";
       return false;
