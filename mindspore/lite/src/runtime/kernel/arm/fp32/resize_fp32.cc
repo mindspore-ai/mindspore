@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_Resize;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int ResizeSizeDouble = 2;
+constexpr int kResizeSizeDouble = 2;
 }  // namespace
 
 int ResizeCPUKernel::Init() {
@@ -137,7 +137,7 @@ int ResizeCPUKernel::MallocTmpBuffer() {
 
   {
     line_buffer_ = reinterpret_cast<float *>(
-      malloc(sizeof(float) * x_len * in_tensors_.at(0)->Channel() * ResizeSizeDouble * op_parameter_->thread_num_));
+      malloc(sizeof(float) * x_len * in_tensors_.at(0)->Channel() * kResizeSizeDouble * op_parameter_->thread_num_));
     CHECK_MALLOC_RES(line_buffer_, RET_NULL_PTR)
   }
   return RET_OK;
