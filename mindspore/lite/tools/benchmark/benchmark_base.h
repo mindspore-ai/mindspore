@@ -53,6 +53,8 @@ enum MS_API DumpMode { DUMP_MODE_ALL = 0, DUMP_MODE_INPUT = 1, DUMP_MODE_OUTPUT 
 constexpr float relativeTolerance = 1e-5;
 constexpr float absoluteTolerance = 1e-8;
 
+constexpr float kFloatMSEC = 1000.0f;
+
 constexpr int kNumPrintMin = 5;
 constexpr const char *DELIM_COLON = ":";
 constexpr const char *DELIM_COMMA = ",";

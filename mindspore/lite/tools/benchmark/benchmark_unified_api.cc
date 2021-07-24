@@ -35,8 +35,12 @@
 #endif
 
 namespace mindspore {
-namespace lite {
+constexpr size_t kDataToStringMaxNum = 40;
+constexpr int kPrintDataNum = 20;
+constexpr int kFrequencyDefault = 3;
+constexpr int kPercentageDivisor = 100;
 
+namespace lite {
 int BenchmarkUnifiedApi::GenerateInputData() {
   for (auto tensor : ms_inputs_for_api_) {
     MS_ASSERT(tensor != nullptr);
@@ -50,7 +54,6 @@ int BenchmarkUnifiedApi::GenerateInputData() {
       std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
       MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
       return RET_ERROR;
-      //      status = StringsToMSTensor({"you're the best."}, tensor);
     } else {
       status = GenerateRandomData(tensor.DataSize(), input_data, static_cast<int>(tensor.DataType()));
     }
@@ -85,7 +88,6 @@ int BenchmarkUnifiedApi::ReadInputFile() {
         std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
         MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
         return RET_ERROR;
-
       } else {
         auto tensor_data_size = cur_tensor.DataSize();
         if (size != tensor_data_size) {
@@ -164,7 +166,7 @@ void BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context
 
   if (flags_->device_ == "NPU") {
     std::shared_ptr<KirinNPUDeviceInfo> npu_device_info = std::make_shared<KirinNPUDeviceInfo>();
-    npu_device_info->SetFrequency(3);
+    npu_device_info->SetFrequency(kFrequencyDefault);
     device_list.push_back(npu_device_info);
   }
 }
@@ -185,7 +187,6 @@ int BenchmarkUnifiedApi::CompareOutput() {
       std::cerr << "Unsupported  kObjectTypeString:" << std::endl;
       MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
       return RET_ERROR;
-      // ret = CompareStringData(node_or_tensor_name, tensor);
     } else {
       ret = CompareDataGetTotalBiasAndSize(node_or_tensor_name, &tensor, &total_bias, &total_size);
     }
@@ -198,7 +199,7 @@ int BenchmarkUnifiedApi::CompareOutput() {
   }
   float mean_bias;
   if (total_size != 0) {
-    mean_bias = total_bias / float_t(total_size) * 100;
+    mean_bias = ((total_bias / float_t(total_size)) * kPercentageDivisor);
   } else {
     mean_bias = 0;
   }
@@ -362,11 +363,11 @@ int BenchmarkUnifiedApi::MarkPerformance() {
   if (flags_->loop_count_ > 0) {
     time_avg /= flags_->loop_count_;
     MS_LOG(INFO) << "Model = " << flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-                 << ", NumThreads = " << flags_->num_threads_ << ", MinRunTime = " << time_min / 1000.0f
-                 << ", MaxRuntime = " << time_max / 1000.0f << ", AvgRunTime = " << time_avg / 1000.0f;
+                 << ", NumThreads = " << flags_->num_threads_ << ", MinRunTime = " << time_min / kFloatMSEC
+                 << ", MaxRuntime = " << time_max / kFloatMSEC << ", AvgRunTime = " << time_avg / kFloatMSEC;
     printf("Model = %s, NumThreads = %d, MinRunTime = %f ms, MaxRuntime = %f ms, AvgRunTime = %f ms\n",
            flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1).c_str(), flags_->num_threads_,
-           time_min / 1000.0f, time_max / 1000.0f, time_avg / 1000.0f);
+           time_min / kFloatMSEC, time_max / kFloatMSEC, time_avg / kFloatMSEC);
   }
   return RET_OK;
 }
@@ -415,7 +416,7 @@ int BenchmarkUnifiedApi::PrintInputData() {
       MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
       return RET_ERROR;
     }
-    size_t print_num = std::min(static_cast<int>(input.ElementNum()), 20);
+    size_t print_num = std::min(static_cast<int>(input.ElementNum()), kPrintDataNum);
     const void *in_data = input.MutableData();
     if (in_data == nullptr) {
       MS_LOG(ERROR) << "in_data is nullptr.";
@@ -490,8 +491,8 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 
   ms_inputs_for_api_ = ms_model_.GetInputs();
   auto end_prepare_time = GetTimeUs();
-  MS_LOG(INFO) << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
-  std::cout << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms" << std::endl;
+  MS_LOG(INFO) << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kFloatMSEC) << " ms";
+  std::cout << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kFloatMSEC) << " ms" << std::endl;
 
   // Load input
   MS_LOG(INFO) << "start generate input data";
@@ -563,7 +564,7 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
       MS_LOG(INFO) << "The num of after outputs is empty";
     }
 
-    float cost = static_cast<float>(opEnd - op_begin_) / 1000.0f;
+    float cost = static_cast<float>(opEnd - op_begin_) / kFloatMSEC;
     if (flags_->device_ == "GPU") {
       auto gpu_param = reinterpret_cast<const GPUCallBackParam &>(call_param);
       cost = static_cast<float>(gpu_param.execute_time);
@@ -681,7 +682,7 @@ std::string DataToString(void *data, size_t data_number) {
   }
   std::ostringstream oss;
   auto casted_data = static_cast<T *>(data);
-  for (size_t i = 0; i < 40 && i < data_number; i++) {
+  for (size_t i = 0; i < kDataToStringMaxNum && i < data_number; i++) {
     oss << " " << casted_data[i];
   }
   return oss.str();
@@ -774,7 +775,6 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
-
     if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
       if (input_output_mode == 0 || input_output_mode == 1) {
         for (size_t i = 0; i < before_inputs.size(); i++) {
@@ -797,7 +797,6 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
-
     if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
       if (input_output_mode == 0 || input_output_mode == 2) {
         for (size_t i = 0; i < after_outputs.size(); i++) {
@@ -817,6 +816,5 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
 }
 
 BenchmarkUnifiedApi::~BenchmarkUnifiedApi() {}
-
 }  // namespace lite
 }  // namespace mindspore

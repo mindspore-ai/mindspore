@@ -18,7 +18,6 @@
 #include <string>
 namespace mindspore {
 namespace lite {
-
 int RunBenchmark(int argc, const char **argv) {
   BenchmarkFlags flags;
   Option<std::string> err = flags.ParseFlags(argc, argv);
