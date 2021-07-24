@@ -382,13 +382,14 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
 }
 
 STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
+  const int default_input_dim_size = 4;
   for (int i = 0; i < caffe_model_.input_size(); i++) {
     std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(caffe_model_.input(i));
     if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
       MS_LOG(WARNING) << "Can not find name in map. name is " << caffe_model_.input(i);
     }
     if (shape.empty()) {
-      if (caffe_model_.input_dim_size() > 4) {
+      if (caffe_model_.input_dim_size() > default_input_dim_size) {
         int step = caffe_model_.input_dim_size() / caffe_model_.input_size();
         for (int j = i * step; j < (i + 1) * step; j++) {
           shape.push_back(caffe_model_.input_dim(j));
