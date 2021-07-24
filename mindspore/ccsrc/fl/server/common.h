@@ -111,6 +111,7 @@ constexpr auto kAdamEps = "eps";
 constexpr auto kFtrlLinear = "linear";
 constexpr auto kDataSize = "data_size";
 constexpr auto kNewDataSize = "new_data_size";
+constexpr auto kStat = "stat";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.
@@ -155,11 +156,14 @@ const OptimParamNameToIndex kAdamWeightDecayNameToIdx = {{"inputs",
                                                            {"weight_decay", 7},
                                                            {"grad", 8}}},
                                                          {"outputs", {}}};
-const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {{kApplyMomentumOpName, kMomentumNameToIdx},
-                                                                    {kFusedSparseAdamName, kSparseAdamNameToIdx},
-                                                                    {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx},
-                                                                    {kApplyAdamOpName, kAdamNameToIdx},
-                                                                    {"AdamWeightDecay", kAdamWeightDecayNameToIdx}};
+const OptimParamNameToIndex kSGDNameToIdx = {
+  {"inputs", {{kWeight, 0}, {kGradient, 1}, {kLearningRate, 2}, {kAccumulation, 3}, {kMomentum, 4}, {kStat, 5}}},
+  {"outputs", {}}};
+
+const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {
+  {kApplyMomentumOpName, kMomentumNameToIdx},     {kFusedSparseAdamName, kSparseAdamNameToIdx},
+  {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx}, {kApplyAdamOpName, kAdamNameToIdx},
+  {"AdamWeightDecay", kAdamWeightDecayNameToIdx}, {kSGDName, kSGDNameToIdx}};
 
 constexpr uint32_t kLeaderServerRank = 0;
 constexpr size_t kWorkerMgrThreadPoolSize = 32;
