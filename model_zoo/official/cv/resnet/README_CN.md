@@ -213,9 +213,10 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
   ├── resnet18_imagenet2012_config.yaml    # 参数配置
   ├── resnet34_imagenet2012_config.yaml    # 参数配置
   ├── resnet50_cifar10_config.yaml         # 参数配置
-  ├── resnet50_imagenet2012_Ascend_config.yaml # 参数配置
+  ├── resnet50_imagenet2012_Acc_config.yaml # 参数配置
+  ├── resnet50_imagenet2012_Ascend_Thor_config.yaml # 参数配置
   ├── resnet50_imagenet2012_config.yaml    # 参数配置
-  ├── resnet50_imagenet2012_GPU_config.yaml # 参数配置
+  ├── resnet50_imagenet2012_GPU_Thor_config.yaml # 参数配置
   ├── resnet101_imagenet2012_config.yaml   # 参数配置
   ├── se-resnet50_imagenet2012_config.yaml # 参数配置
   ├── eval.py                              # 评估网络

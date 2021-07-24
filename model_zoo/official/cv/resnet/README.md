@@ -230,9 +230,10 @@ If you want to run in modelarts, please check the official documentation of [mod
   ├── resnet18_imagenet2012_config.yaml    # parameter configuration
   ├── resnet34_imagenet2012_config.yaml    # parameter configuration
   ├── resnet50_cifar10_config.yaml         # parameter configuration
-  ├── resnet50_imagenet2012_Ascend_config.yaml # parameter configuration
+  ├── resnet50_imagenet2012_Acc_config.yaml # parameter configuration
+  ├── resnet50_imagenet2012_Ascend_Thor_config.yaml # parameter configuration
   ├── resnet50_imagenet2012_config.yaml    # parameter configuration
-  ├── resnet50_imagenet2012_GPU_config.yaml # parameter configuration
+  ├── resnet50_imagenet2012_GPU_Thor_config.yaml # parameter configuration
   ├── resnet101_imagenet2012_config.yaml   # parameter configuration
   ├── se-resnet50_imagenet2012_config.yaml # parameter configuration
   ├── export.py                            # export model for inference
