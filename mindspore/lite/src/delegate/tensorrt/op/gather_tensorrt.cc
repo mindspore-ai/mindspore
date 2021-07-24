@@ -18,6 +18,8 @@
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
+constexpr int AXIS_INDEX = 2;
+
 int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != 3) {
@@ -32,7 +34,7 @@ int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     MS_LOG(ERROR) << "Gather indices only support Int32";
     return RET_ERROR;
   }
-  if (in_tensors[2].ElementNum() == 1) {
+  if (in_tensors[AXIS_INDEX].ElementNum() == 1) {
     axis_ = static_cast<const int *>(in_tensors[2].Data().get())[0];
   } else {
     MS_LOG(ERROR) << "TensorRT axis is attribute.";

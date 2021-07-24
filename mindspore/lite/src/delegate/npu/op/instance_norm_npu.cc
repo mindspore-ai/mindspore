@@ -18,6 +18,9 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
+constexpr int GAMMA_INDEX = 1;
+constexpr int BETA_INDEX = 2;
+
 int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
   instance_norm_ = new (std::nothrow) hiai::op::InstanceNorm(name_);
@@ -39,8 +42,8 @@ int InstanceNormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
                                     const std::vector<ge::Operator *> &npu_inputs) {
   instance_norm_->set_input_x(*npu_inputs[0]);
 
-  auto gamma_shape = in_tensors[1].Shape();
-  auto gamma_tensor = ConverterToNPUTensor(in_tensors[1]);
+  auto gamma_shape = in_tensors[GAMMA_INDEX].Shape();
+  auto gamma_tensor = ConverterToNPUTensor(in_tensors[GAMMA_INDEX]);
   if (gamma_tensor == nullptr) {
     MS_LOG(ERROR) << "Get gamma_tensor failed.";
     return RET_ERROR;
@@ -55,8 +58,8 @@ int InstanceNormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
   gamma_->set_attr_value(gamma_tensor);
   instance_norm_->set_input_gamma(*gamma_);
 
-  auto beta_shape = in_tensors[2].Shape();
-  auto beta_tensor = ConverterToNPUTensor(in_tensors[2]);
+  auto beta_shape = in_tensors[BETA_INDEX].Shape();
+  auto beta_tensor = ConverterToNPUTensor(in_tensors[BETA_INDEX]);
   if (beta_tensor == nullptr) {
     MS_LOG(ERROR) << "Get beta_tensor failed.";
     return RET_ERROR;

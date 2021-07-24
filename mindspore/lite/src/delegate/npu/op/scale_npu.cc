@@ -18,6 +18,9 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
+constexpr int SCALE_INDEX = 1;
+constexpr int BIAS_INDEX = 2;
+
 int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                           const std::vector<mindspore::MSTensor> &out_tensors) {
   auto scale_prim = primitive->value_as_ScaleFusion();
@@ -29,7 +32,7 @@ int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<
   if (axis_ < 0) {
     axis_ = axis_ + in_tensors[0].Shape().size();
   }
-  if (axis_ != 1 && axis_ != 3) {
+  if (axis_ != NHWC_C && axis_ != NCHW_C) {
     MS_LOG(WARNING) << "Npu scale axis attr only support 1 or channel, now is " << axis_;
     return RET_NOT_SUPPORT;
   }
@@ -65,9 +68,9 @@ int ScaleNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
   op_->set_input_x(*npu_inputs.at(0));
-  MS_ASSERT(in_tensors.size() > 1);
-  auto scale_shape = in_tensors[1].Shape();
-  auto scale_tensor = ConverterToNPUTensor(in_tensors[1]);
+  MS_ASSERT(in_tensors.size() > SCALE_INDEX);
+  auto scale_shape = in_tensors[SCALE_INDEX].Shape();
+  auto scale_tensor = ConverterToNPUTensor(in_tensors[SCALE_INDEX]);
   if (scale_tensor == nullptr) {
     MS_LOG(ERROR) << "Get scale_tensor failed.";
     return RET_ERROR;
@@ -82,9 +85,9 @@ int ScaleNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
   scale_->set_attr_value(scale_tensor);
   op_->set_input_scale(*scale_);
 
-  if (in_tensors.size() > 2 && in_tensors[2] != nullptr) {
-    auto bias_shape = in_tensors[2].Shape();
-    auto bias_tensor = ConverterToNPUTensor(in_tensors[2]);
+  if (in_tensors.size() > BIAS_INDEX && in_tensors[BIAS_INDEX] != nullptr) {
+    auto bias_shape = in_tensors[BIAS_INDEX].Shape();
+    auto bias_tensor = ConverterToNPUTensor(in_tensors[BIAS_INDEX]);
     if (bias_tensor == nullptr) {
       MS_LOG(ERROR) << "Get bias_tensor failed.";
       return RET_ERROR;

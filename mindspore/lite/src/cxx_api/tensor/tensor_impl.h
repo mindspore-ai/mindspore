@@ -168,12 +168,6 @@ class MSTensor::Impl {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
     }
-
-    if (DataSize() == 0) {
-      MS_LOG(ERROR) << "Invalid data size.";
-      return nullptr;
-    }
-
     return std::shared_ptr<const void>(lite_tensor_->data(), [](const void *) {});
   }
 

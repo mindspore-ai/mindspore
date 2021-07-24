@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/npu/op/activation_npu.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
 int ActivationNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -45,29 +46,15 @@ int ActivationNPUOp::Init(const schema::Primitive *primitive, const std::vector<
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-  switch (act_type_) {
-    case schema::ActivationType_SIGMOID:
-      act_->set_attr_mode(0);
-      break;
-    case schema::ActivationType_RELU:
-      act_->set_attr_mode(1);
-      break;
-    case schema::ActivationType_TANH:
-      act_->set_attr_mode(2);
-      break;
-    case schema::ActivationType_LEAKY_RELU:
-      act_->set_attr_mode(5);
-      act_->set_attr_negative_slope(act_prim->alpha());
-      break;
-    case schema::ActivationType_HSIGMOID:
-      act_->set_attr_mode(10);
-      break;
-    case schema::ActivationType_RELU6:
-      act_->set_attr_mode(14);
-      break;
-    default:
-      MS_LOG(ERROR) << "Unsupported activation type for activation op " << name_ << "when running npu";
-      return RET_ERROR;
+  auto act_mode = ConverterToNPUActivationMode(act_type_);
+  if (act_mode == ACTIVATION_INVALID) {
+    MS_LOG(ERROR) << "Unsupported activation type for activation op " << name_ << "when running npu";
+    return RET_ERROR;
+  }
+  act_->set_attr_mode(act_mode);
+
+  if (act_type_ == schema::ActivationType_LEAKY_RELU) {
+    act_->set_attr_negative_slope(act_prim->alpha());
   }
   return RET_OK;
 }

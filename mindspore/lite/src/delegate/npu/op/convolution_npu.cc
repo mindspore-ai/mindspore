@@ -16,6 +16,7 @@
 
 #include "src/delegate/npu/op/convolution_npu.h"
 #include "src/delegate/npu/op/convolution_depthwise_npu.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
 int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                 const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -27,7 +28,7 @@ int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::v
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
   auto in_shape = in_tensors[0].Shape();  // default format: nhwc, RunPass not called
-  if (stride_h > in_shape[1] || stride_w > in_shape[2]) {
+  if (stride_h > in_shape[NHWC_H] || stride_w > in_shape[NHWC_W]) {
     MS_LOG(WARNING) << "Npu convolution does not support stride greater than input size.";
     return RET_NOT_SUPPORT;
   }
@@ -52,10 +53,10 @@ int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
     conv_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
     conv_->set_attr_pad_mode(ge::AttrValue::STR{"SPECIFIC"});
-    auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin()));
-    auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + 1));
-    auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + 2));
-    auto pad_r = static_cast<int>(*(conv_prim->pad_list()->begin() + 3));
+    auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_UP));
+    auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_DOWN));
+    auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_LEFT));
+    auto pad_r = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_RIGHT));
     conv_->set_attr_pads(ge::AttrValue::LIST_INT({pad_u, pad_d, pad_l, pad_r}));
   }
   return RET_OK;
@@ -99,7 +100,7 @@ int ConvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_te
     return RET_ERROR;
   }
   conv_->set_input_filter(*weight_);
-  if (in_tensors.size() == 3) {
+  if (in_tensors.size() == CONV_INPUT_SIZE) {
     ret = InitBiasConst(in_tensors);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Set bias for convolution op " << name_ << " failed when running npu";
@@ -133,7 +134,7 @@ NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindsp
     return nullptr;
   }
 
-  if (in_tensors[0].Shape().size() > 4) {
+  if (in_tensors[0].Shape().size() > NPU_SHAPE_SIZE) {
     MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
     return nullptr;
   }
@@ -147,8 +148,8 @@ NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindsp
   NPUOp *op = nullptr;
   auto conv_prim = primitive->value_as_Conv2DFusion();
   auto group = static_cast<int>(conv_prim->group());
-  auto input_channel = in_tensors.front().Shape()[3];
-  auto output_channel = out_tensors.front().Shape()[3];
+  auto input_channel = in_tensors.front().Shape()[NHWC_C];
+  auto output_channel = out_tensors.front().Shape()[NHWC_C];
   if (group == input_channel && group == output_channel) {
     op = new (std::nothrow) ConvolutionDepthwiseNPUOp(primitive, in_tensors, out_tensors, name);
   } else {

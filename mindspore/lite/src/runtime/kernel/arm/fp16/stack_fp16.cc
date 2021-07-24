@@ -44,7 +44,7 @@ void StackFp16CPUKernel::InitMallocFlags() {
 int StackFp16CPUKernel::MallocAssignBuffer() {
   buffers_.resize(in_tensors_.size(), nullptr);
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
-    buffers_.at(i) = reinterpret_cast<char *>(
+    buffers_.at(i) = reinterpret_cast<void *>(
       ConvertInputFp32toFp16(in_tensors_.at(i), static_cast<const lite::InnerContext *>(ms_context_)));
     if (buffers_.at(i) == nullptr) {
       return RET_ERROR;
@@ -82,12 +82,13 @@ int StackFp16CPUKernel::Init() {
 
 void StackFp16CPUKernel::Execute(int task_id) {
   auto inputs = buffers_.data();
-  char *output = reinterpret_cast<char *>(out_buffer_);
+  char *output_data = reinterpret_cast<char *>(out_buffer_);
   auto step = UP_DIV(outer_size_, num_threads_);
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
-  Stack(inputs, output + input_num * start * copy_size_, input_num, copy_size_, start, end);
+  auto output = output_data + input_num * start * copy_size_;
+  Stack(inputs, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
 }
 
 static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {

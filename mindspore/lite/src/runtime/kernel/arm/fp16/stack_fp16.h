@@ -38,7 +38,7 @@ class StackFp16CPUKernel : public StackBaseCPUKernel {
 
  private:
   std::vector<bool> malloc_buffers_;
-  std::vector<char *> buffers_;
+  std::vector<void *> buffers_;
   float16_t *out_buffer_ = nullptr;
   bool malloc_out_;
 };

@@ -19,6 +19,9 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
+constexpr int FC_INPUT_DIM = 2;
+constexpr int FC_INPUT_SIZE = 3;
+
 int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
   auto fc_prim = primitive->value_as_FullConnection();
@@ -40,9 +43,9 @@ int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vec
   }
   reshape_op_ = new (std::nothrow) hiai::op::Const(name_ + "_reshape_data");
   vector<int> reshape_data = {static_cast<int>(input_shape[0]), col};
-  ge::TensorDesc reshape_tensor_desc(ge::Shape({2}), ge::FORMAT_NCHW, ge::DT_FLOAT);
+  ge::TensorDesc reshape_tensor_desc(ge::Shape({FC_INPUT_DIM}), ge::FORMAT_NCHW, ge::DT_FLOAT);
   ge::TensorPtr reshape_tensor = std::make_shared<hiai::Tensor>(reshape_tensor_desc);
-  reshape_tensor->SetData(reinterpret_cast<uint8_t *>(reshape_data.data()), 2 * sizeof(float));
+  reshape_tensor->SetData(reinterpret_cast<uint8_t *>(reshape_data.data()), FC_INPUT_DIM * sizeof(int32_t));
   reshape_op_->set_attr_value(reshape_tensor);
   reshape_->set_input_shape(*reshape_op_);
 
@@ -69,7 +72,7 @@ int FullconnectionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in
   weight_->set_attr_value(weight_tensor);
   fc_->set_input_x2(*weight_).set_attr_transpose_x2(true);
 
-  if (in_tensors.size() >= 3) {
+  if (in_tensors.size() >= FC_INPUT_SIZE) {
     has_bias_ = true;
   }
   if (has_bias_) {

@@ -19,6 +19,9 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
+constexpr int RESIZE_INPUT_SIZE = 2;
+constexpr int SHAPE_SIZE = 2;
+
 int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
   auto resize_prim = primitive->value_as_Resize();
@@ -32,7 +35,8 @@ int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     return RET_NOT_SUPPORT;
   }
 
-  if (in_tensors[0].Shape()[1] > out_tensors[0].Shape()[1] || in_tensors[0].Shape()[2] > out_tensors[0].Shape()[2]) {
+  if (in_tensors[0].Shape()[NHWC_H] > out_tensors[0].Shape()[NHWC_H] ||
+      in_tensors[0].Shape()[NHWC_W] > out_tensors[0].Shape()[NHWC_W]) {
     MS_LOG(WARNING) << "Npu resize does not support reduction.";
     return RET_NOT_SUPPORT;
   }
@@ -49,23 +53,23 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   if (in_tensors.size() == 1) {
     new_height_ = resize_prim->new_height();
     new_width_ = resize_prim->new_width();
-  } else if (in_tensors.size() == 2) {
+  } else if (in_tensors.size() == RESIZE_INPUT_SIZE) {
     auto out_size = in_tensors.at(1).Data();
     if (out_size == nullptr) {
       MS_LOG(ERROR) << "Out size is not assigned";
       return RET_ERROR;
     }
-    new_height_ = out_tensors.at(0).Shape().at(1);
-    new_width_ = out_tensors.at(0).Shape().at(2);
+    new_height_ = out_tensors.at(0).Shape().at(NHWC_H);
+    new_width_ = out_tensors.at(0).Shape().at(NHWC_W);
   } else {
     MS_LOG(ERROR) << "Get resize op new_height and new_width error.";
     return RET_ERROR;
   }
 
-  ge::TensorDesc sizeTensorDesc(ge::Shape({2}), ge::FORMAT_NCHW, ge::DT_INT32);
+  ge::TensorDesc sizeTensorDesc(ge::Shape({SHAPE_SIZE}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr sizeTensor = std::make_shared<hiai::Tensor>(sizeTensorDesc);
   vector<int32_t> dataValue = {static_cast<int32_t>(new_height_), static_cast<int32_t>(new_width_)};
-  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), 2 * sizeof(int32_t));
+  sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), SHAPE_SIZE * sizeof(int32_t));
   out_size_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
   out_size_->set_attr_value(sizeTensor);
 

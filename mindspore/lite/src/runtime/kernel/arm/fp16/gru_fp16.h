@@ -46,7 +46,14 @@ class GruFp16CPUKernel : public InnerKernel {
   float16_t *weight_r_ptr_ = nullptr;
   float16_t *input_bias_ = nullptr;
   float16_t *state_bias_ = nullptr;
+
   float16_t *buffer_[4];
+  const int gate_num = 3;
+  const int packed_input_index = 0;
+  const int input_gate_index = 1;
+  const int packed_state_index = 2;
+  const int state_gate_index = 3;
+
   int weight_batch_ = 0;
   bool is_vec_ = false;
   GruParameter *gru_param_ = nullptr;

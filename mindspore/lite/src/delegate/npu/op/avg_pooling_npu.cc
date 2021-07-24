@@ -15,6 +15,7 @@
  */
 
 #include "src/delegate/npu/op/avg_pooling_npu.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
 int AvgPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -25,8 +26,8 @@ int AvgPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
   }
   auto stride_h = static_cast<int>(*(pooling_prim->strides()->begin()));
   auto stride_w = static_cast<int>(*(pooling_prim->strides()->begin() + 1));
-  auto pad_u = static_cast<int>(*(pooling_prim->pad()->begin()));
-  auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + 2));
+  auto pad_u = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_UP));
+  auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_LEFT));
   if (pad_u > stride_h || pad_l > stride_w) {
     MS_LOG(WARNING) << "Npu pooling does not support pad > stride.";
     return RET_NOT_SUPPORT;
@@ -47,17 +48,17 @@ int AvgPoolingNPUOp::SetPoolingParam(const schema::AvgPoolFusion *pooling_prim) 
   auto stride_w = static_cast<int>(*(pooling_prim->strides()->begin() + 1));
   pooling_->set_attr_stride(ge::AttrValue::LIST_INT({stride_h, stride_w}));
   if (pooling_prim->pad_mode() == schema::PadMode_SAME) {
-    pooling_->set_attr_pad_mode(6);
+    pooling_->set_attr_pad_mode(PAD_SAME);
     pooling_->set_attr_pad({0, 0, 0, 0});
   } else if (pooling_prim->pad_mode() == schema::PadMode_VALID) {
-    pooling_->set_attr_pad_mode(5);
+    pooling_->set_attr_pad_mode(PAD_VALID);
     pooling_->set_attr_pad({0, 0, 0, 0});
   } else {
     pooling_->set_attr_pad_mode(0);
-    auto pad_u = static_cast<int>(*(pooling_prim->pad()->begin()));
-    auto pad_d = static_cast<int>(*(pooling_prim->pad()->begin() + 1));
-    auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + 2));
-    auto pad_r = static_cast<int>(*(pooling_prim->pad()->begin() + 3));
+    auto pad_u = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_UP));
+    auto pad_d = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_DOWN));
+    auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_LEFT));
+    auto pad_r = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_RIGHT));
     pooling_->set_attr_pad(ge::AttrValue::LIST_INT({pad_u, pad_d, pad_l, pad_r}));
   }
 
