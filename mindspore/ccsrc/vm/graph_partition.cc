@@ -42,6 +42,7 @@ std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
     }
@@ -54,6 +55,8 @@ std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
 }
 
 void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(nodes_ref);
   std::queue<AnfNodePtr> queue;
   queue.push(graph->get_return());
   std::set<AnfNodePtr> visited;
@@ -104,7 +107,8 @@ std::vector<AnfNodePtr> ReorderVirtualNode(const std::vector<AnfNodePtr> &nodes,
     return false;
   };
   for (auto &node : nodes) {
-    if (node->isa<CNode>() && IsPrimitiveCNode(node, reorder_prim)) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (IsPrimitiveCNode(node, reorder_prim)) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto &inputs = cnode->inputs();
@@ -133,6 +137,7 @@ std::vector<AnfNodePtr> ReorderVirtualNode(const std::vector<AnfNodePtr> &nodes,
 }
 
 std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &default_target) {
+  MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> result;
   std::stack<AnfNodePtr> to_visit;
   std::stack<AnfNodePtr> next_to_visit;
@@ -160,6 +165,7 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
       std::reverse(node_inputs.begin(), node_inputs.end());
     }
     for (auto &input : node_inputs) {
+      MS_EXCEPTION_IF_NULL(input);
       auto iter = nodes_ref.find(input);
       if (iter != nodes_ref.end()) {
         iter->second--;
@@ -210,6 +216,7 @@ GraphNodesDependencyInfo GetNodesDependencyInfo(const FuncGraphPtr &graph) {
     auto node_inputs = cnode->inputs();
     bool independent = true;
     for (auto &input : node_inputs) {
+      MS_EXCEPTION_IF_NULL(input);
       if (input->isa<CNode>()) {
         independent = false;
         auto output_edge_iter = info.output_edges_.find(input);
@@ -374,6 +381,7 @@ std::vector<AnfNodePtr> ParallelSort(const FuncGraphPtr &graph, const std::strin
 }
 
 void AddSegmentDependency(const FuncGraphPtr &graph, const std::map<AnfNodePtr, GraphSegmentPtr> &node_to_segment) {
+  MS_EXCEPTION_IF_NULL(graph);
   std::stack<AnfNodePtr> to_visit;
   std::map<AnfNodePtr, size_t> nodes_ref;
   CalcNodeRefCount(graph, &nodes_ref);
@@ -492,6 +500,7 @@ void SplitDynamicNodeSegment(const std::vector<AnfNodePtr> &segment_nodes, std::
                              const std::set<AnfNodePtr> &dynamic_nodes_set) {
   SplitDynamicNodesHelper helper;
   for (auto &node : segment_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto &inputs = cnode->inputs();
@@ -540,6 +549,7 @@ void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<G
   MS_EXCEPTION_IF_NULL(node_to_segment);
   std::set<AnfNodePtr> dynamic_nodes_set;
   for (auto &node : segment_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     if (AnfUtils::IsNodeOutputDynamicShape(cnode)) {
       (void)dynamic_nodes_set.insert(node);
