@@ -35,7 +35,7 @@ class PQC(PrimitiveWithInfer):
         - **gate_obj_qubits** (List[List[int]]) - Object qubits of each gate.
         - **gate_ctrl_qubits** (List[List[int]]) - Control qubits of each gate.
         - **gate_params_names** (List[List[str]]) - Parameter names of each gate.
-        - **gate_coeff** (List[List[float]]) - Coefficient of eqch parameter of each gate.
+        - **gate_coeff** (List[List[float]]) - Coefficient of each parameter of each gate.
         - **gate_requires_grad** (List[List[bool]]) - Whether to calculate gradient
             of parameters of gates.
         - **hams_pauli_coeff** (List[List[float]]) - Coefficient of pauli words.

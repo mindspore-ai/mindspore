@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -503,7 +503,7 @@ def _get_bbox(rank, shape, central_fraction):
 
 class CentralCrop(Cell):
     """
-    Crops the centeral region of the images with the central_fraction.
+    Crops the central region of the images with the central_fraction.
 
     Args:
         central_fraction (float): Fraction of size to crop. It must be float and in range (0.0, 1.0].
