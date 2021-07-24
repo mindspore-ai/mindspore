@@ -713,6 +713,7 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
   // deal four ctrl nodes.
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto tensor = inputs[i];
+    MS_EXCEPTION_IF_NULL(tensor);
     size_t deal_index = input_nodes.size() - input_ctrl_size + i;
     if (deal_index >= input_nodes.size()) {
       MS_LOG(EXCEPTION) << "deal_index[" << deal_index << "] out of range";
@@ -722,7 +723,6 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>()) {
       auto pk_node = input_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
       MS_EXCEPTION_IF_NULL(pk_node);
       if (tensor->NeedSyncHostToDevice() || !pk_node->has_default()) {
         need_sync = true;

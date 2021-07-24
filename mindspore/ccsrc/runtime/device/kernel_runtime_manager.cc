@@ -72,7 +72,7 @@ KernelRuntime *KernelRuntimeManager::GetSingleKernelRuntime(const std::string &d
   auto runtime_iter = runtime_map_.find(runtime_key);
   if (runtime_iter != runtime_map_.end()) {
     return runtime_iter->second.get();
-  } else if (runtime_map_.size() > 0) {
+  } else if (!runtime_map_.empty()) {
     auto cur_runtime_key = runtime_map_.begin()->first;
     auto find_pos = cur_runtime_key.rfind('_');
     if (find_pos != std::string::npos) {
