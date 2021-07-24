@@ -21,7 +21,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 void MemoryRegister::RegisterAddressPtr(const std::string &name, const AddressPtr &address) {
-  addresses_.try_emplace(name, address);
+  (void)addresses_.try_emplace(name, address);
 }
 
 void MemoryRegister::StoreFloatArray(std::unique_ptr<float[]> *array) { float_arrays_.push_back(std::move(*array)); }

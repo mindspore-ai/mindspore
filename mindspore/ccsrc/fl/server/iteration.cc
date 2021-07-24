@@ -63,15 +63,15 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
     return;
   }
 
-  std::for_each(communicators.begin(), communicators.end(),
-                [&](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
-                  for (auto &round : rounds_) {
-                    if (round == nullptr) {
-                      continue;
-                    }
-                    round->Initialize(communicator, timeout_cb, finish_iteration_cb);
-                  }
-                });
+  (void)std::for_each(communicators.begin(), communicators.end(),
+                      [&](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                        for (auto &round : rounds_) {
+                          if (round == nullptr) {
+                            continue;
+                          }
+                          round->Initialize(communicator, timeout_cb, finish_iteration_cb);
+                        }
+                      });
 
   // The time window for one iteration, which will be used in some round kernels.
   size_t iteration_time_window = std::accumulate(rounds_.begin(), rounds_.end(), IntToSize(0),
@@ -203,7 +203,10 @@ void Iteration::HandleSyncIterationRequest(const std::shared_ptr<ps::core::Messa
   SyncIterationResponse sync_iter_rsp;
   sync_iter_rsp.set_iteration(iteration_num_);
   std::string sync_iter_rsp_msg = sync_iter_rsp.SerializeAsString();
-  (void)communicator_->SendResponse(sync_iter_rsp_msg.data(), sync_iter_rsp_msg.size(), message);
+  if (!communicator_->SendResponse(sync_iter_rsp_msg.data(), sync_iter_rsp_msg.size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 }
 
 bool Iteration::IsMoveToNextIterRequestReentrant(uint64_t iteration_num) {
@@ -238,8 +241,11 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
 
   NotifyLeaderMoveToNextIterResponse notify_leader_to_next_iter_rsp;
   notify_leader_to_next_iter_rsp.set_result("success");
-  (void)communicator_->SendResponse(notify_leader_to_next_iter_rsp.SerializeAsString().data(),
-                                    notify_leader_to_next_iter_rsp.SerializeAsString().size(), message);
+  if (!communicator_->SendResponse(notify_leader_to_next_iter_rsp.SerializeAsString().data(),
+                                   notify_leader_to_next_iter_rsp.SerializeAsString().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 
   NotifyLeaderMoveToNextIterRequest notify_leader_to_next_iter_req;
   (void)notify_leader_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
@@ -286,7 +292,7 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
   }
 
   // Retry sending to offline servers to notify them to prepare.
-  std::for_each(offline_servers.begin(), offline_servers.end(), [&](uint32_t rank) {
+  (void)std::for_each(offline_servers.begin(), offline_servers.end(), [&](uint32_t rank) {
     // Should avoid endless loop if the server communicator is stopped.
     while (communicator_->running() &&
            !communicator_->SendPbRequest(prepare_next_iter_req, rank, ps::core::TcpUserCommand::kPrepareForNextIter)) {
@@ -313,8 +319,11 @@ void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::
 
   PrepareForNextIterResponse prepare_next_iter_rsp;
   prepare_next_iter_rsp.set_result("success");
-  (void)communicator_->SendResponse(prepare_next_iter_rsp.SerializeAsString().data(),
-                                    prepare_next_iter_rsp.SerializeAsString().size(), message);
+  if (!communicator_->SendResponse(prepare_next_iter_rsp.SerializeAsString().data(),
+                                   prepare_next_iter_rsp.SerializeAsString().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 }
 
 void Iteration::PrepareForNextIter() {
@@ -347,8 +356,11 @@ void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<ps::core::Mess
 
   MoveToNextIterResponse proceed_to_next_iter_rsp;
   proceed_to_next_iter_rsp.set_result("success");
-  (void)communicator_->SendResponse(proceed_to_next_iter_rsp.SerializeAsString().data(),
-                                    proceed_to_next_iter_rsp.SerializeAsString().size(), message);
+  if (!communicator_->SendResponse(proceed_to_next_iter_rsp.SerializeAsString().data(),
+                                   proceed_to_next_iter_rsp.SerializeAsString().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 
   MoveToNextIterRequest proceed_to_next_iter_req;
   (void)proceed_to_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
@@ -413,8 +425,11 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
                          std::to_string(iteration_num_) + ", iteration to be ended is " + std::to_string(last_iter_num);
     EndLastIterResponse end_last_iter_rsp;
     end_last_iter_rsp.set_result(reason);
-    (void)communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
-                                      end_last_iter_rsp.SerializeAsString().size(), message);
+    if (!communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
+                                     end_last_iter_rsp.SerializeAsString().size(), message)) {
+      MS_LOG(ERROR) << "Sending response failed.";
+      return;
+    }
     return;
   }
 
@@ -422,8 +437,11 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
 
   EndLastIterResponse end_last_iter_rsp;
   end_last_iter_rsp.set_result("success");
-  (void)communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
-                                    end_last_iter_rsp.SerializeAsString().size(), message);
+  if (!communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
+                                   end_last_iter_rsp.SerializeAsString().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
 }
 
 void Iteration::EndLastIter() {

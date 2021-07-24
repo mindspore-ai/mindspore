@@ -48,6 +48,8 @@ class OptimizerInfoBuilder {
   template <typename T>
   AddressPtr GenInputAddrPtr(const std::string &optim_type, const std::string &input_name, void *ps_data,
                              const Lengths &lens, const InputsShapePtr &inputs_shape = nullptr);
+
+  std::vector<std::unique_ptr<char[]>> arrays_;
   size_t worker_num_;
 };
 

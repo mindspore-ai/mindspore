@@ -323,9 +323,9 @@ std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const C
   std::vector<std::string> aggregation_algorithm = {};
   if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
       ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
-    aggregation_algorithm.push_back("FedAvg");
+    (void)aggregation_algorithm.emplace_back("FedAvg");
   } else if (ps::PSContext::instance()->server_mode() == ps::kServerModePS) {
-    aggregation_algorithm.push_back("DenseGradAccum");
+    (void)aggregation_algorithm.emplace_back("DenseGradAccum");
   } else {
     MS_LOG(ERROR) << "Server doesn't support mode " << ps::PSContext::instance()->server_mode();
   }
