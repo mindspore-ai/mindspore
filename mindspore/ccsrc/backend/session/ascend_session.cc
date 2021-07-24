@@ -941,7 +941,7 @@ void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kerne
 }
 
 static CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
-  uint32_t node_sizes = kernel_nodes.size();
+  size_t node_sizes = kernel_nodes.size();
   if (index >= node_sizes - 1) {
     MS_LOG(EXCEPTION) << "there is no node after this node:" << kernel_nodes[index]->DebugString();
   }
@@ -960,7 +960,8 @@ static std::vector<CNodePtr> HandleRecursiveCall(const std::vector<CNodePtr> &ke
   std::vector<CNodePtr> front;
   std::vector<CNodePtr> back_temp;
   bool back_flag = false;
-  for (uint32_t i = *index; i < kernel_cnodes.size(); i++) {
+  uint32_t i = *index;
+  while (i < kernel_cnodes.size()) {
     if (!back_flag) {
       front.emplace_back(kernel_cnodes[i]);
     } else {
@@ -973,14 +974,12 @@ static std::vector<CNodePtr> HandleRecursiveCall(const std::vector<CNodePtr> &ke
     }
     if (AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
       back_flag = true;
-      if (AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
-        continue;
-      } else {
+      if (!AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
         auto temp = HandleRecursiveCall(kernel_cnodes, back_label, &(++i), &back_temp);
         front.insert(front.end(), temp.begin(), temp.end());
-        continue;
       }
     }
+    i++;
   }
   return front;
 }
@@ -1029,7 +1028,7 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   std::unordered_map<uint32_t, uint32_t> label_id_index_map;
   auto kernel_cnodes = kernel_graph->execution_order();
   std::vector<CNodePtr> mem_reuse_order;
-  for (size_t i = 0; i < kernel_cnodes.size(); i++) {
+  for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
     mem_reuse_order.emplace_back(kernel_cnodes[i]);
     if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSwitch) &&
         !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
