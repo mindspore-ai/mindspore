@@ -73,7 +73,7 @@ Status CacheClientGreeter::DoServiceStop() {
     void *tag;
     while (cq_.Next(&tag, &success)) {
       auto r = reinterpret_cast<CacheClientRequestTag *>(tag);
-      (void)req_.erase(r->seqNo_);
+      (void)req_.erase(r->seq_no_);
     }
   }
   return Status::OK();
@@ -82,8 +82,8 @@ Status CacheClientGreeter::DoServiceStop() {
 Status CacheClientGreeter::HandleRequest(std::shared_ptr<BaseRequest> rq) {
   // If there is anything extra we need to do before we send.
   RETURN_IF_NOT_OK(rq->Prepare());
-  auto seqNo = request_cnt_.fetch_add(1);
-  auto tag = std::make_unique<CacheClientRequestTag>(std::move(rq), seqNo);
+  auto seq_no = request_cnt_.fetch_add(1);
+  auto tag = std::make_unique<CacheClientRequestTag>(std::move(rq), seq_no);
   // One minute timeout
   auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kRequestTimeoutDeadlineInSec);
   tag->ctx_.set_deadline(deadline);
@@ -93,7 +93,7 @@ Status CacheClientGreeter::HandleRequest(std::shared_ptr<BaseRequest> rq) {
   // Insert it into the map.
   {
     std::unique_lock<std::mutex> lck(mux_);
-    auto r = req_.emplace(seqNo, std::move(tag));
+    auto r = req_.emplace(seq_no, std::move(tag));
     if (!r.second) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__);
     }
@@ -133,9 +133,9 @@ Status CacheClientGreeter::WorkerEntry() {
       {
         // We can now free the memory
         std::unique_lock<std::mutex> lck(mux_);
-        auto seqNo = rq->seqNo_;
-        auto n = req_.erase(seqNo);
-        CHECK_FAIL_RETURN_UNEXPECTED(n == 1, "Sequence " + std::to_string(seqNo) + " not found");
+        auto seq_no = rq->seq_no_;
+        auto n = req_.erase(seq_no);
+        CHECK_FAIL_RETURN_UNEXPECTED(n == 1, "Sequence " + std::to_string(seq_no) + " not found");
       }
     } else if (r == grpc_impl::CompletionQueue::NextStatus::TIMEOUT) {
       // If we are interrupted, exit. Otherwise wait again.

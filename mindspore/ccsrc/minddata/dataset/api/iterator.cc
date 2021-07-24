@@ -31,6 +31,7 @@ Status Iterator::GetNextRowCharIF(MSTensorMapChar *row) {
   // Clean data buffer
   row->clear();
   std::unordered_map<std::string, std::shared_ptr<dataset::Tensor>> md_map;
+  CHECK_FAIL_RETURN_UNEXPECTED(consumer_ != nullptr, "consumer_ is null, pls launch iterator first.");
   Status rc = consumer_->GetNextAsMap(&md_map);
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetNextRow: Failed to get next row. Error status: " << rc;
@@ -52,6 +53,7 @@ Status Iterator::GetNextRow(MSTensorVec *row) {
   row->clear();
   // create a dataset tensor row and fetch. Then we convert the output to MSTensor
   std::vector<std::shared_ptr<dataset::Tensor>> md_row;
+  CHECK_FAIL_RETURN_UNEXPECTED(consumer_ != nullptr, "consumer_ is null, pls launch iterator first.");
   Status rc = consumer_->GetNextAsVector(&md_row);
   if (rc.IsError()) {
     row->clear();
@@ -75,8 +77,10 @@ void Iterator::Stop() {
 // Function to build and launch the execution tree.
 Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs) {
   runtime_context_ = std::make_unique<NativeRuntimeContext>();
+  CHECK_FAIL_RETURN_UNEXPECTED(runtime_context_ != nullptr, "Create runtime_context_ failed.");
   RETURN_IF_NOT_OK(runtime_context_->Init());
   auto consumer = std::make_unique<IteratorConsumer>(num_epochs);
+  CHECK_FAIL_RETURN_UNEXPECTED(consumer != nullptr, "Create consumer failed.");
   consumer_ = consumer.get();
   RETURN_IF_NOT_OK(consumer->Init(ds->IRNode()));
   runtime_context_->AssignConsumer(std::move(consumer));
@@ -84,9 +88,11 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epo
 }
 
 PullIterator::PullIterator() : pull_consumer_(nullptr) {}
+
 // Get the next row from the data pipeline.
 Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "Consumer is nullptr. Please launch iterator fist.");
   for (int i = 0; i < num_rows; i++) {
     std::vector<std::shared_ptr<dataset::Tensor>> md_row;
     Status rc = pull_consumer_->GetNextAsVector(&md_row);
@@ -129,7 +135,10 @@ Status PullIterator::GetNextRow(MSTensorVec *const row) {
 // for the tree, the reason why this is the case is due to the fact that PullBasedIterator does not need
 // to instantiate threads for each op. As such, the call to the consumer will by pass the execution tree.
 Status PullIterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
-  if (pull_consumer_ == nullptr) pull_consumer_ = std::make_unique<PullBasedIteratorConsumer>();
+  if (pull_consumer_ == nullptr) {
+    pull_consumer_ = std::make_unique<PullBasedIteratorConsumer>();
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "pull_consumer_ is nullptr");
   RETURN_IF_NOT_OK(pull_consumer_->Init(std::move(ds->IRNode())));
   return Status::OK();
 }
@@ -137,6 +146,9 @@ Status PullIterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
 Iterator::_Iterator::_Iterator(Iterator *lt) : ind_{0}, lt_{lt}, cur_row_{nullptr} {
   if (lt_) {
     cur_row_ = new MSTensorMap();
+    if (cur_row_ == nullptr) {
+      return;
+    }
     Status rc = lt_->GetNextRow(cur_row_);
     if (rc.IsError()) {
       MS_LOG(ERROR) << "Error getting next row. Message: " << rc;

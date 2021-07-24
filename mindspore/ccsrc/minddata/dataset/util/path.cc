@@ -56,7 +56,7 @@ Path &Path::operator=(Path &&p) noexcept {
 Path::Path(Path &&p) noexcept { this->path_ = std::move(p.path_); }
 
 Path Path::operator+(const Path &p) {
-  std::string q = path_ + p.toString();
+  std::string q = path_ + p.ToString();
   return Path(q);
 }
 
@@ -71,7 +71,7 @@ Path Path::operator+(const char *p) {
 }
 
 Path &Path::operator+=(const Path &rhs) {
-  path_ += rhs.toString();
+  path_ += rhs.ToString();
   return *this;
 }
 
@@ -86,7 +86,7 @@ Path &Path::operator+=(const char *p) {
 }
 
 Path Path::operator/(const Path &p) {
-  std::string q = path_ + separator_ + p.toString();
+  std::string q = path_ + separator_ + p.ToString();
   return Path(q);
 }
 
@@ -170,10 +170,10 @@ std::string Path::ParentPath() {
 
 Status Path::CreateDirectories(bool is_common_dir) {
   if (IsDirectory()) {
-    MS_LOG(DEBUG) << "Directory " << toString() << " already exists.";
+    MS_LOG(DEBUG) << "Directory " << ToString() << " already exists.";
     return Status::OK();
   } else {
-    MS_LOG(DEBUG) << "Creating directory " << toString() << ".";
+    MS_LOG(DEBUG) << "Creating directory " << ToString() << ".";
     std::string parent = ParentPath();
     if (!parent.empty()) {
       if (Path(parent).CreateDirectories(is_common_dir)) {
@@ -319,8 +319,8 @@ Path::DirIterator::~DirIterator() {
 }
 
 Path::DirIterator::DirIterator(Path *f) : dir_(f), dp_(nullptr), entry_(nullptr) {
-  MS_LOG(DEBUG) << "Open directory " << f->toString() << ".";
-  dp_ = opendir(f->toString().c_str());
+  MS_LOG(DEBUG) << "Open directory " << f->ToString() << ".";
+  dp_ = opendir(f->ToString().c_str());
 }
 
 bool Path::DirIterator::HasNext() {

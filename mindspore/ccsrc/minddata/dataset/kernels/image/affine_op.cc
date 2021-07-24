@@ -47,10 +47,12 @@ AffineOp::AffineOp(float_t degrees, const std::vector<float_t> &translation, flo
 
 Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(translation_.size() >= 2, "AffineOp::Compute translation_ size should >= 2");
   float_t translation_x = translation_[0];
   float_t translation_y = translation_[1];
   float_t degrees = 0.0;
   RETURN_IF_NOT_OK(DegreesToRadians(degrees_, &degrees));
+  CHECK_FAIL_RETURN_UNEXPECTED(shear_.size() >= 2, "AffineOp::Compute shear_ size should >= 2");
   float_t shear_x = shear_[0];
   float_t shear_y = shear_[1];
   RETURN_IF_NOT_OK(DegreesToRadians(shear_x, &shear_x));
@@ -73,8 +75,12 @@ Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   // Thus, the affine matrix is M = T * C * RSS * C^-1
 
   // image is hwc, rows = shape()[0]
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "AffineOp::Compute input->shape() size should >= 2");
   float_t cx = ((input->shape()[1] - 1) / 2.0);
   float_t cy = ((input->shape()[0] - 1) / 2.0);
+
+  CHECK_FAIL_RETURN_UNEXPECTED(cos(shear_y) != 0.0, "AffineOp: cos(shear_y) should not be zero.");
+
   // Calculate RSS
   std::vector<float_t> matrix{
     static_cast<float>(scale_ * cos(degrees + shear_y) / cos(shear_y)),

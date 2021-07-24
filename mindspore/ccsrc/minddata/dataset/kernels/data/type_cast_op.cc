@@ -26,6 +26,7 @@ TypeCastOp::TypeCastOp(const DataType &new_type) : type_(new_type) {}
 TypeCastOp::TypeCastOp(const std::string &data_type) { type_ = DataType(data_type); }
 
 Status TypeCastOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   return TypeCast(input, output, type_);
 }
 Status TypeCastOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {

@@ -105,7 +105,7 @@ Status SentencePieceTokenizerOp::GetModelRealPath(const std::string &model_path,
   }
 #endif
   std::string abs_path = real_path;
-  file_path_ = (Path(abs_path) / Path(filename)).toString();
+  file_path_ = (Path(abs_path) / Path(filename)).ToString();
   return Status::OK();
 }
 

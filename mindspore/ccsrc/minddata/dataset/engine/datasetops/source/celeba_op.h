@@ -48,6 +48,10 @@ class CelebAOp : public MappableLeafOp {
   // @param int32_t - num_workers - Num of workers reading images in parallel
   // @param std::string - dir directory of celeba dataset
   // @param int32_t queueSize - connector queue size
+  // @param bool decode - decode the images after reading
+  // @param std::string usage - specify the train, valid, test part or all parts of dataset
+  // @param std::set<std::string> exts - list of file extensions to be included in the dataset
+  // @param std::unique_ptr<DataSchema> schema - path to the JSON schema file or schema object
   // @param std::unique_ptr<Sampler> sampler - sampler tells CelebAOp what to read
   CelebAOp(int32_t num_workers, const std::string &dir, int32_t queue_size, bool decode, const std::string &usage,
            const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema, std::shared_ptr<SamplerRT> sampler);

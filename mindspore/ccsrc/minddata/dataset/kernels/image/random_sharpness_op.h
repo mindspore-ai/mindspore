@@ -35,7 +35,7 @@ class RandomSharpnessOp : public SharpnessOp {
   /// \@param[in] start_degree A float indicating the beginning of the range.
   /// \@param[in] end_degree A float indicating the end of the range.
 
-  explicit RandomSharpnessOp(float start_degree = kDefStartDegree, const float end_degree = kDefEndDegree);
+  explicit RandomSharpnessOp(float start_degree = kDefStartDegree, float end_degree = kDefEndDegree);
   ~RandomSharpnessOp() override = default;
   void Print(std::ostream &out) const override { out << Name(); }
 

@@ -112,7 +112,7 @@ Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vec
 
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
-    if (access(dataset_file.toString().c_str(), R_OK) == -1) {
+    if (access(dataset_file.ToString().c_str(), R_OK) == -1) {
       std::string err_msg = dataset_name + ": No access to specified dataset file: " + f;
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);

@@ -70,7 +70,7 @@ void BBoxOpCommon::GetInputImagesAndAnnotations(const std::string &dir, std::siz
   while (image_dir_itr->HasNext()) {
     Path image_path = image_dir_itr->Next();
     if (image_path.Extension() == std::string(kImageExt)) {
-      paths_to_fetch.push_back(image_path.toString());
+      paths_to_fetch.push_back(image_path.ToString());
     }
   }
   // sort fetched files

@@ -48,7 +48,7 @@ Status JsonHelper::CreateAlbum(const std::string &in_dir, const std::string &out
 
     // create json file in output dir with the path
     std::string out_file = out_dir + "/" + std::to_string(index) + ".json";
-    RETURN_IF_NOT_OK(UpdateValue(out_file, "image", v.toString(), out_file));
+    RETURN_IF_NOT_OK(UpdateValue(out_file, "image", v.ToString(), out_file));
     index++;
   }
   return Status::OK();

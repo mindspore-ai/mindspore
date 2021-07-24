@@ -446,12 +446,16 @@ Status SaveToDisk::FetchFloatData(std::shared_ptr<Tensor> tensor, std::string co
     std::unique_ptr<float> data, dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_FLOAT64) {
     std::unique_ptr<double> data, dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, data_ptr, &dummy);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   }
   return Status::OK();
 }
@@ -469,40 +473,54 @@ Status SaveToDisk::FetchItemData(std::shared_ptr<Tensor> tensor, std::string col
     std::unique_ptr<int8_t> dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_INT16) {
     std::unique_ptr<int32_t> data;
     std::unique_ptr<int16_t> dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_UINT16) {
     std::unique_ptr<int32_t> data;
     std::unique_ptr<uint16_t> dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_UINT8) {
     std::unique_ptr<uint8_t> data, dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_INT32) {
     std::unique_ptr<int32_t> data, dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_UINT32) {
     std::unique_ptr<int64_t> data;
     std::unique_ptr<uint32_t> dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy, true);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_INT64) {
     std::unique_ptr<int64_t> data, dummy;
     s = TransformTensor(tensor->GetBuffer(), tensor->shape(), tensor->Size(), &data, &data_ptr, &dummy);
     RETURN_IF_NOT_OK(s);
-    if (data != nullptr) (*row_raw_data)[column_name] = std::move(*data);
+    if (data != nullptr) {
+      (*row_raw_data)[column_name] = std::move(*data);
+    }
   } else if (column_type == DataType::DE_FLOAT32 || column_type == DataType::DE_FLOAT64) {
     s = FetchFloatData(tensor, column_name, row_raw_data, &data_ptr);
     RETURN_IF_NOT_OK(s);
@@ -661,9 +679,14 @@ Status TreeGetters::GetClassIndexing(std::vector<std::pair<std::string, std::vec
 }
 
 Status TreeGetters::InternalInit() {
-  if (init_flag_) return Status::OK();
+  if (init_flag_) {
+    return Status::OK();
+  }
+
   Status s = tree_adapter_->Compile(std::move(root_), 1);
-  if (s.IsOk()) init_flag_ = true;
+  if (s.IsOk()) {
+    init_flag_ = true;
+  }
   return s;
 }
 

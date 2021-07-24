@@ -391,6 +391,7 @@ static bool ConvertBGR(const unsigned char *data, LDataType data_type, int w, in
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 3, LDataType::UINT8);
     unsigned char *dst_ptr = mat;
+    // mindspore lite version, there is no securec lib
     (void)memcpy(dst_ptr, data, w * h * 3 * sizeof(unsigned char));
   } else {
     return false;
@@ -637,6 +638,7 @@ static bool CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, 
   for (int i_h = 0; i_h < dst_h; i_h++) {
     const T *src_index_p = src_start_p + (y + i_h) * src.width_ * dst_c + x * dst_c;
     T *dst_index_p = dst_start_p + i_h * dst_w * dst_c;
+    // mindspore lite version, there is no securec lib
     (void)memcpy(dst_index_p, src_index_p, dst_w * dst_c * sizeof(T));
   }
   return true;
@@ -769,6 +771,7 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
   uint8_t *dst_ptr = reinterpret_cast<uint8_t *>(dst.data_ptr_);
   uint8_t *src_ptr = reinterpret_cast<uint8_t *>(src.data_ptr_);
   for (int i = 0; i < top; i++) {
+    // mindspore lite version, there is no securec lib
     memcpy(dst_ptr + i * dst_step, const_ptr, dst_step);
   }
 
@@ -776,12 +779,14 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
   int right_size = right * dst.channel_ * dst.elem_size_;
   uint8_t *dst_raw_data = dst_ptr + top * dst_step + left_size;
   for (int i = 0; i < src.height_; i++, dst_raw_data += dst_step, src_ptr += src_step) {
+    // mindspore lite version, there is no securec lib
     memcpy(dst_raw_data, src_ptr, src_step);
     memcpy(dst_raw_data - left_size, const_ptr, left_size);
     memcpy(dst_raw_data + src_step, const_ptr, right_size);
   }
 
   for (int i = dst.height_ - bottom; i < dst.height_; i++) {
+    // mindspore lite version, there is no securec lib
     memcpy(dst_ptr + i * dst_step, const_ptr, dst_step);
   }
 }
@@ -807,6 +812,7 @@ static void PadImplement(const LiteMat &src, LiteMat &dst, const int top, const 
   uint8_t *src_data_ptr = reinterpret_cast<uint8_t *>(src.data_ptr_);
   uint8_t *dst_data_ptr = reinterpret_cast<uint8_t *>(dst.data_ptr_);
   for (int i = 0; i < src.height_; i++) {
+    // mindspore lite version, there is no securec lib
     memcpy(dst_data_ptr + (i + top) * dst.steps_[0] + left * dst.steps_[1], src_data_ptr + i * src.steps_[0],
            src.steps_[0]);
   }
@@ -1752,14 +1758,18 @@ void ImageToolsConvertImage(const LiteMat &src, const LiteMat &dst, imageToolsIm
   imageOut->dataType = IM_TOOL_DATA_TYPE_FLOAT;
 }
 
-void InvAffine2x3(float M[2][3], float invM[][3]) {
+int InvAffine2x3(float M[2][3], float invM[][3]) {
   float inv_det = M[0][0] * M[1][1] - M[1][0] * M[0][1];
+  if (inv_det == 0.0) {
+    return IM_TOOL_RETURN_STATUS_FAILED;
+  }
   invM[1][1] = M[0][0] / inv_det;
   invM[0][1] = -M[0][1] / inv_det;
   invM[1][0] = -M[1][0] / inv_det;
   invM[0][0] = M[1][1] / inv_det;
   invM[0][2] = (M[0][1] * M[1][2] - M[1][1] * M[0][2]) / inv_det;
   invM[1][2] = -(M[0][0] * M[1][2] - M[1][0] * M[0][2]) / inv_det;
+  return IM_TOOL_RETURN_STATUS_SUCCESS;
 }
 
 static float *CalDst(float *dst, float v1, float v2, float v3) {
@@ -1904,7 +1914,9 @@ int ImageWarpAffineHWC(imageToolsImage_t image, imageToolsImage_t warped_image, 
       }
     }
   } else {
-    InvAffine2x3(M, invM);
+    if (InvAffine2x3(M, invM) != IM_TOOL_RETURN_STATUS_SUCCESS) {
+      return IM_TOOL_RETURN_STATUS_FAILED;
+    }
   }
 
   if (IM_TOOL_DATA_TYPE_FLOAT == image.dataType) {
@@ -1931,6 +1943,14 @@ bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float 
   const float divisor = 2.0;
   int rotationDstWidth = src.width_;
   int rotationDstHeight = src.height_;
+  if (rotationDstWidth == 0 || rotationDstHeight == 0) {
+    return false;
+  }
+
+  if (dst.height_ == 0) {
+    return false;
+  }
+
   if (img_orientation > IM_TOOL_EXIF_ORIENTATION_0_DEG) {
     UpdateOrientationAfineMat(src, &rotationDstWidth, &rotationDstHeight, &varM, img_orientation);
   }
@@ -1962,7 +1982,9 @@ bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float 
   /* Resize and shift by affine transform  */
   imageToolsImage_t imageIn, imageOut;
   ImageToolsConvertImage(src, dst, &imageIn, &imageOut);
-  InvAffine2x3(varM, *invM);
+  if (InvAffine2x3(varM, *invM) != IM_TOOL_RETURN_STATUS_SUCCESS) {
+    return false;
+  }
   int retVal = ImageWarpAffineHWC(imageIn, imageOut, *invM, true);
   if (retVal != 0) {
     return false;

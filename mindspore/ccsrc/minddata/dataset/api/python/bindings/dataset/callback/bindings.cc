@@ -26,12 +26,12 @@ namespace dataset {
 PYBIND_REGISTER(PyDSCallback, 0, ([](const py::module *m) {
                   (void)py::class_<PyDSCallback, std::shared_ptr<PyDSCallback>>(*m, "PyDSCallback")
                     .def(py::init<int32_t>())
-                    .def("set_begin", &PyDSCallback::setBegin)
-                    .def("set_end", &PyDSCallback::setEnd)
-                    .def("set_epoch_begin", &PyDSCallback::setEpochBegin)
-                    .def("set_epoch_end", &PyDSCallback::setEpochEnd)
-                    .def("set_step_begin", &PyDSCallback::setStepBegin)
-                    .def("set_step_end", &PyDSCallback::setStepEnd);
+                    .def("set_begin", &PyDSCallback::SetBegin)
+                    .def("set_end", &PyDSCallback::SetEnd)
+                    .def("set_epoch_begin", &PyDSCallback::SetEpochBegin)
+                    .def("set_epoch_end", &PyDSCallback::SetEpochEnd)
+                    .def("set_step_begin", &PyDSCallback::SetStepBegin)
+                    .def("set_step_end", &PyDSCallback::SetStepEnd);
                 }));
 
 PYBIND_REGISTER(CallbackParam, 0, ([](const py::module *m) {

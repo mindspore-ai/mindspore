@@ -37,7 +37,7 @@ class RandomSolarizeOp : public SolarizeOp {
     is_deterministic_ = false;
   }
 
-  ~RandomSolarizeOp() = default;
+  ~RandomSolarizeOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 

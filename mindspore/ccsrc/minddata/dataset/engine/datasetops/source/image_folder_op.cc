@@ -159,9 +159,9 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
     while (dirItr->HasNext()) {
       Path file = dirItr->Next();
       if (extensions_.empty() || extensions_.find(file.Extension()) != extensions_.end()) {
-        (void)imgs.insert(file.toString().substr(dirname_offset_));
+        (void)imgs.insert(file.ToString().substr(dirname_offset_));
       } else {
-        MS_LOG(WARNING) << "Image folder operator unsupported file found: " << file.toString()
+        MS_LOG(WARNING) << "Image folder operator unsupported file found: " << file.ToString()
                         << ", extension: " << file.Extension() << ".";
       }
     }
@@ -186,8 +186,8 @@ Status ImageFolderOp::RecursiveWalkFolder(Path *dir) {
     Path subdir = dir_itr->Next();
     if (subdir.IsDirectory()) {
       if (class_index_.empty() ||
-          class_index_.find(subdir.toString().substr(dirname_offset_ + 1)) != class_index_.end()) {
-        RETURN_IF_NOT_OK(folder_name_queue_->EmplaceBack(subdir.toString().substr(dirname_offset_)));
+          class_index_.find(subdir.ToString().substr(dirname_offset_ + 1)) != class_index_.end()) {
+        RETURN_IF_NOT_OK(folder_name_queue_->EmplaceBack(subdir.ToString().substr(dirname_offset_)));
       }
       if (recursive_ == true) {
         MS_LOG(ERROR) << "RecursiveWalkFolder(&subdir) functionality is disabled permanently. No recursive walk of "
@@ -259,7 +259,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
   while (dir_itr->HasNext()) {
     Path subdir = dir_itr->Next();
     if (subdir.IsDirectory()) {
-      folder_paths.push(subdir.toString());
+      folder_paths.push(subdir.ToString());
       if (!class_index.empty()) folder_names.insert(subdir.Basename());
     }
   }
@@ -281,7 +281,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
     Path subdir(folder_paths.front());
     dir_itr = Path::DirIterator::OpenDirectory(&subdir);
     if (subdir.Exists() == false || dir_itr == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + subdir.toString());
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + subdir.ToString());
     }
     while (dir_itr->HasNext()) {
       if (exts.empty() || exts.find(subdir.Extension()) != exts.end()) {

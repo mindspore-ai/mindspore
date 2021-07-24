@@ -52,8 +52,12 @@ Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr
     *out = std::static_pointer_cast<Tensor>(cvt_out);
     return Status::OK();
   }
-  // return blended image. addWeighted takes care of overflow for uint8_t
-  cv::addWeighted(m1, t, cvt_out->mat(), 1 - t, 0, cvt_out->mat());
+  try {
+    // return blended image. addWeighted takes care of overflow for uint8_t
+    cv::addWeighted(m1, t, cvt_out->mat(), 1 - t, 0, cvt_out->mat());
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("RandomColorOp: cv::addWeighted " + std::string(e.what()));
+  }
   *out = std::static_pointer_cast<Tensor>(cvt_out);
   return Status::OK();
 }

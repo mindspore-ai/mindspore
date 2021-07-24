@@ -60,6 +60,7 @@ std::shared_ptr<TensorOp> UniformAugOperation::Build() {
 }
 
 Status UniformAugOperation::to_json(nlohmann::json *out_json) {
+  CHECK_FAIL_RETURN_UNEXPECTED(out_json != nullptr, "parameter out_json is nullptr");
   nlohmann::json args;
   std::vector<nlohmann::json> transforms;
   for (auto op : transforms_) {

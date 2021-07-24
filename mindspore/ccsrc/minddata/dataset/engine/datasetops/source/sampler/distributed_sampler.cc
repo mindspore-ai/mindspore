@@ -61,11 +61,17 @@ Status DistributedSamplerRT::InitSampler() {
   rnd_.seed(seed_++);
 
   if (offset_ != -1 || !even_dist_) {
-    if (offset_ == -1) offset_ = 0;
+    if (offset_ == -1) {
+      offset_ = 0;
+    }
     samples_per_tensor_ = (num_rows_ + offset_) / num_devices_;
     int64_t remainder = (num_rows_ + offset_) % num_devices_;
-    if (device_id_ < remainder) samples_per_tensor_++;
-    if (device_id_ < offset_) samples_per_tensor_--;
+    if (device_id_ < remainder) {
+      samples_per_tensor_++;
+    }
+    if (device_id_ < offset_) {
+      samples_per_tensor_--;
+    }
   } else {
     offset_ = 0;
     samples_per_tensor_ = (num_rows_ + num_devices_ - 1) / num_devices_;  // equals to ceil(num_rows/num_devices)
@@ -78,7 +84,9 @@ Status DistributedSamplerRT::InitSampler() {
     }
     std::shuffle(shuffle_vec_.begin(), shuffle_vec_.end(), rnd_);
   }
-  if (!samples_per_tensor_) non_empty_ = false;
+  if (!samples_per_tensor_) {
+    non_empty_ = false;
+  }
 
   is_initialized = true;
   return Status::OK();
@@ -174,15 +182,23 @@ int64_t DistributedSamplerRT::CalculateNumSamples(int64_t num_rows) {
   int64_t remainder = (child_num_rows + offset_) % num_devices_;
   int64_t shard_size = (child_num_rows + offset_) / num_devices_;
   if (offset_ != -1 || !even_dist_) {
-    if (offset_ == -1) offset_ = 0;
-    if (device_id_ < remainder) shard_size++;
-    if (device_id_ < offset_) shard_size--;
+    if (offset_ == -1) {
+      offset_ = 0;
+    }
+    if (device_id_ < remainder) {
+      shard_size++;
+    }
+    if (device_id_ < offset_) {
+      shard_size--;
+    }
   } else {
     shard_size = (child_num_rows + num_devices_ - 1) / num_devices_;
   }
   // add 1 to an empty shard
   // this logic is needed to follow the logic in initSampler that is written for ConcatDataset
-  if (shard_size == 0) shard_size++;
+  if (shard_size == 0) {
+    shard_size++;
+  }
 
   return std::min(num_samples, shard_size);
 }

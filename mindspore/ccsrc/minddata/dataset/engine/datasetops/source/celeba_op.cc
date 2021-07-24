@@ -71,20 +71,20 @@ Status CelebAOp::ParseAttrFile() {
   TaskManager::FindMe()->Post();
   Path folder_path(folder_path_);
 
-  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").toString());
+  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").ToString());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").toString();
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").toString());
+    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").ToString());
   }
 
   std::ifstream attr_file(realpath.value());
   if (!attr_file.is_open()) {
-    std::string attr_file_name = (folder_path / "list_attr_celeba.txt").toString();
+    std::string attr_file_name = (folder_path / "list_attr_celeba.txt").ToString();
     return Status(StatusCode::kMDFileNotExist, __LINE__, __FILE__,
                   "Invalid file, failed to open Celeba attr file: " + attr_file_name);
   }
 
-  attr_file_ = (folder_path / "list_attr_celeba.txt").toString();
+  attr_file_ = (folder_path / "list_attr_celeba.txt").ToString();
   const auto PushBackToQueue = [this](std::vector<std::string> &vec, std::ifstream &attr_file,
                                       std::ifstream &partition_file) {
     Status s = attr_info_queue_->EmplaceBack(vec);
@@ -135,7 +135,7 @@ Status CelebAOp::ParseAttrFile() {
 bool CelebAOp::CheckDatasetTypeValid() {
   if (!partition_file_.is_open()) {
     Path folder_path(folder_path_);
-    partition_file_.open((folder_path / "list_eval_partition.txt").toString());
+    partition_file_.open((folder_path / "list_eval_partition.txt").ToString());
     if (!partition_file_.is_open()) {
       MS_LOG(ERROR) << "Celeba partition file does not exist!";
       return false;
@@ -186,7 +186,7 @@ Status CelebAOp::ParseImageAttrInfo() {
       Path path(folder_path_);
       Path file_path = path / split[0];
       if (!extensions_.empty() && extensions_.find(file_path.Extension()) == extensions_.end()) {
-        MS_LOG(WARNING) << "Unsupported file found at " << file_path.toString().c_str() << ", its extension is "
+        MS_LOG(WARNING) << "Unsupported file found at " << file_path.ToString().c_str() << ", its extension is "
                         << file_path.Extension().c_str() << ".";
         continue;
       }
@@ -247,12 +247,12 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
 
   Path path(folder_path_);
   Path image_path = path / image_label.first;
-  RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_path.toString(), &image));
+  RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_path.ToString(), &image));
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
       image = nullptr;
-      std::string err_msg = "Invalid data, failed to decode image: " + image_path.toString();
+      std::string err_msg = "Invalid data, failed to decode image: " + image_path.ToString();
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
     }
   }
@@ -271,7 +271,7 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
 
   (*row) = TensorRow(row_id, {std::move(image), std::move(label)});
   // Add file path info
-  row->setPath({image_path.toString(), attr_file_});
+  row->setPath({image_path.ToString(), attr_file_});
   return Status::OK();
 }
 

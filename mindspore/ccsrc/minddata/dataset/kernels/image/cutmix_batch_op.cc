@@ -29,11 +29,11 @@ namespace dataset {
 constexpr size_t kMinLabelShapeSize = 2;
 constexpr size_t kMaxLabelShapeSize = 3;
 constexpr size_t kExpectedImageShapeSize = 4;
-constexpr size_t dimension_one = 1;
-constexpr size_t dimension_two = 2;
-constexpr size_t dimension_three = 3;
-constexpr int64_t value_one = 1;
-constexpr int64_t value_three = 3;
+constexpr size_t kDimensionOne = 1;
+constexpr size_t kDimensionTwo = 2;
+constexpr size_t kDimensionThree = 3;
+constexpr int64_t kValueOne = 1;
+constexpr int64_t kValueThree = 3;
 
 CutMixBatchOp::CutMixBatchOp(ImageBatchFormat image_batch_format, float alpha, float prob)
     : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {
@@ -81,11 +81,11 @@ Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
       "L is the number of labels in each row, and C is the number of classes. "
       "labels must be in one-hot format and in a batch.");
   }
-  if ((image_shape[dimension_one] != value_one && image_shape[dimension_one] != value_three) &&
+  if ((image_shape[kDimensionOne] != kValueOne && image_shape[kDimensionOne] != kValueThree) &&
       image_batch_format_ == ImageBatchFormat::kNCHW) {
     RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the NCHW format.");
   }
-  if ((image_shape[dimension_three] != value_one && image_shape[dimension_three] != value_three) &&
+  if ((image_shape[kDimensionThree] != kValueOne && image_shape[kDimensionThree] != kValueThree) &&
       image_batch_format_ == ImageBatchFormat::kNHWC) {
     RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the NHWC format.");
   }
@@ -104,22 +104,22 @@ Status CutMixBatchOp::ComputeImage(const TensorRow &input, const int64_t rand_in
 
   RETURN_IF_NOT_OK(input.at(0)->StartAddrOfIndex({rand_indx_i, 0, 0, 0}, &start_addr_of_index, &remaining));
   RETURN_IF_NOT_OK(Tensor::CreateFromMemory(
-    TensorShape({image_shape[dimension_one], image_shape[dimension_two], image_shape[dimension_three]}),
+    TensorShape({image_shape[kDimensionOne], image_shape[kDimensionTwo], image_shape[kDimensionThree]}),
     input.at(0)->type(), start_addr_of_index, &rand_image));
 
   // Compute image
   if (image_batch_format_ == ImageBatchFormat::kNHWC) {
     // NHWC Format
-    GetCropBox(static_cast<int32_t>(image_shape[dimension_one]), static_cast<int32_t>(image_shape[dimension_two]), lam,
+    GetCropBox(static_cast<int32_t>(image_shape[kDimensionOne]), static_cast<int32_t>(image_shape[kDimensionTwo]), lam,
                &x, &y, &crop_width, &crop_height);
     std::shared_ptr<Tensor> cropped;
     RETURN_IF_NOT_OK(Crop(rand_image, &cropped, x, y, crop_width, crop_height));
     RETURN_IF_NOT_OK(MaskWithTensor(cropped, image_i, x, y, crop_width, crop_height, ImageFormat::HWC));
-    *label_lam = value_one - (crop_width * crop_height /
-                              static_cast<float>(image_shape[dimension_one] * image_shape[dimension_two]));
+    *label_lam = kValueOne - (crop_width * crop_height /
+                              static_cast<float>(image_shape[kDimensionOne] * image_shape[kDimensionTwo]));
   } else {
     // NCHW Format
-    GetCropBox(static_cast<int32_t>(image_shape[dimension_two]), static_cast<int32_t>(image_shape[dimension_three]),
+    GetCropBox(static_cast<int32_t>(image_shape[kDimensionTwo]), static_cast<int32_t>(image_shape[kDimensionThree]),
                lam, &x, &y, &crop_width, &crop_height);
     std::vector<std::shared_ptr<Tensor>> channels;          // A vector holding channels of the CHW image
     std::vector<std::shared_ptr<Tensor>> cropped_channels;  // A vector holding the channels of the cropped CHW
@@ -135,8 +135,8 @@ Status CutMixBatchOp::ComputeImage(const TensorRow &input, const int64_t rand_in
     RETURN_IF_NOT_OK(TensorVectorToBatchTensor(cropped_channels, &cropped));
 
     RETURN_IF_NOT_OK(MaskWithTensor(cropped, image_i, x, y, crop_width, crop_height, ImageFormat::CHW));
-    *label_lam = value_one - (crop_width * crop_height /
-                              static_cast<float>(image_shape[dimension_two] * image_shape[dimension_three]));
+    *label_lam = kValueOne - (crop_width * crop_height /
+                              static_cast<float>(image_shape[kDimensionTwo] * image_shape[kDimensionThree]));
   }
 
   return Status::OK();
@@ -194,8 +194,8 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   // Tensor holding the output labels
   std::shared_ptr<Tensor> out_labels;
   RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), &out_labels, DataType(DataType::DE_FLOAT32)));
-  int64_t row_labels = label_shape.size() == value_three ? label_shape[dimension_one] : value_one;
-  int64_t num_classes = label_shape.size() == value_three ? label_shape[dimension_two] : label_shape[dimension_one];
+  int64_t row_labels = label_shape.size() == kValueThree ? label_shape[kDimensionOne] : kValueOne;
+  int64_t num_classes = label_shape.size() == kValueThree ? label_shape[kDimensionTwo] : label_shape[kDimensionOne];
 
   // Compute labels and images
   for (size_t i = 0; i < static_cast<size_t>(image_shape[0]); i++) {
@@ -204,6 +204,8 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
     // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)
     float x1 = gamma_distribution(rnd_);
     float x2 = gamma_distribution(rnd_);
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2,
+                                 "CutMixBatchOp: gamma_distribution x1 and x2 are too large.");
     float lam = x1 / (x1 + x2);
     double random_number = uniform_distribution(rnd_);
     if (random_number < prob_) {
