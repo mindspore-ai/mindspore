@@ -3712,7 +3712,8 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
         if idx is None:
             # When the queue is out of scope from master process, a None item can be fetched from the queue.
             # Upon receiving None, worker process should check if eof is set.
-            assert eof.is_set(), ""
+            if not eof.is_set():
+                raise Exception("")
             return
         if eof.is_set():
             if is_multiprocessing:

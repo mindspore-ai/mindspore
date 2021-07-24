@@ -86,7 +86,7 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
     return APP_ERR_OK;
   }
   std::string &aclConfigPath = resourceInfo.aclConfigPath;
-  APP_ERROR ret;
+  APP_ERROR ret = APP_ERR_OK;
   if (aclConfigPath.length() == 0) {
     // Init acl without aclconfig
     acl_env_ = mindspore::AclEnvGuard::GetAclEnv("");
