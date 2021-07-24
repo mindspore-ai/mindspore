@@ -70,7 +70,7 @@ int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
 }
 
 int PadFp16CPUKernel::Run() {
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == kInputSize2) {
     auto pad_value = in_tensors_.at(2);
     auto value_num = pad_value->ElementsNum();
     if (value_num != 1) {
