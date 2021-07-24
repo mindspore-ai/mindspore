@@ -76,7 +76,12 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     indices_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     if (!is_dynamic_shape_) {
+      int dims = SizeToInt(input_shapes_.size());
       axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+      if (axis_ < -dims || axis_ >= dims) {
+        MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
+        return false;
+      }
       Reshape();
     }
     InitSizeLists();
@@ -113,7 +118,7 @@ class GatherV2GpuFwdKernel : public GpuKernel {
       axis_ = axis_ + SizeToInt(input_shapes_.size());
     }
     size_t dim_before_axis = 1;
-    for (size_t i = 0; i < IntToSize(axis_); i++) {
+    for (size_t i = 0; i < std::min(IntToSize(axis_), output_shapes_.size()); i++) {
       dim_before_axis *= output_shapes_[i];
     }
     size_t dim_of_indices = 1;

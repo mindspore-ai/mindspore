@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,10 @@ class ResizeNearestNeighborGpuKernel : public GpuKernel {
     if (shape_size_ != RESIZENEARESTNEIGHBOR_DIMENSION) {
       MS_LOG(ERROR) << "Input is " << shape_size_ << "-D, but ResizeNearestNeighbor supports only "
                     << RESIZENEARESTNEIGHBOR_DIMENSION << "-D inputs.";
+      return false;
+    }
+    if (shape_size_ != output_shape.size()) {
+      MS_LOG(ERROR) << "The dim of input and output must be same.";
       return false;
     }
     input_size_ = 1;
