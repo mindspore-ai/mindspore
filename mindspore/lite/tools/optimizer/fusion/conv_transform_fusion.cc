@@ -28,6 +28,8 @@ constexpr size_t kConvWeightIndex = 2;
 constexpr size_t kConvBiasIndex = 3;
 constexpr size_t kConvNoBiasLen = 3;
 constexpr size_t kConvWithBiasLen = 4;
+constexpr size_t kNumDim1 = 1;
+constexpr size_t kNumDim2 = 2;
 int GetOutChannels(const CNodePtr &conv_node) {
   MS_ASSERT(conv_node != nullptr);
   auto value_node = conv_node->input(0);
@@ -72,7 +74,7 @@ void GenerateNewWeightConv2DTranspose(float *dst_weight, const float *scale_weig
   MS_ASSERT(group > 0);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->data_c());
   auto cin_group = weight_tensor->shape()[0] / group;
-  int area_size = weight_tensor->shape()[1] * weight_tensor->shape()[2];
+  int area_size = weight_tensor->shape()[kNumDim1] * weight_tensor->shape()[kNumDim2];
   for (int k = 0; k < cin_group; ++k) {
     for (int j = 0; j < area_size; j++) {
       for (int i = 0; i < kernel_num; ++i) {

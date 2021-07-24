@@ -29,6 +29,7 @@ namespace mindspore::lite {
 namespace {
 constexpr size_t kTripleNum = 3;
 constexpr size_t kConvWeightIndex = 2;
+constexpr int64_t kNumDim2 = 2;
 }  // namespace
 CNodePtr Conv1DInOutAdjust::NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
                                                const std::vector<int64_t> &axis) {
@@ -75,7 +76,7 @@ lite::STATUS Conv1DInOutAdjust::ExpandFilterShape(const AnfNodePtr &weight_node,
   switch (format) {
     case schema::Format_NCHW:
     case schema::Format_KCHW:
-      new_shape.insert(new_shape.begin() + 2, 1);
+      new_shape.insert(new_shape.begin() + kNumDim2, 1);
       break;
     case schema::Format_NHWC:
     case schema::Format_KHWC:

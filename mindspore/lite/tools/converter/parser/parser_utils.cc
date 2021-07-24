@@ -28,13 +28,15 @@
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite {
+namespace {
+constexpr size_t kNumWeightIndex = 2;
+}
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
   if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
     all_func_graphs->insert(func_graph);
   } else {
     return;
   }
-
   auto nodes = func_graph->nodes();
   for (auto &node : nodes) {
     if (IsValueNode<FuncGraph>(node)) {
@@ -221,7 +223,7 @@ int TransposeInsertForWeightConst(const FuncGraphPtr &graph, const CNodePtr &con
   prim->AddAttr("quant_params", std::make_shared<QuantParamHolder>(1, 1));
   auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
   transpose_node->set_fullname_with_scope(weight_node->fullname_with_scope() + "_const_post");
-  conv_node->set_input(2, transpose_node);
+  conv_node->set_input(kNumWeightIndex, transpose_node);
   return lite::RET_OK;
 }
 
@@ -244,5 +246,4 @@ int HandleWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, cons
   }
   return status;
 }
-
 }  // namespace mindspore::lite
