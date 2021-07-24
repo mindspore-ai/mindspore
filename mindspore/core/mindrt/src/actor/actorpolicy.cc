@@ -75,7 +75,6 @@ ShardedThread::~ShardedThread() {}
 
 void ShardedThread::Terminate(const ActorBase *aActor) {
   std::string actorName = aActor->GetAID().Name();
-  MS_LOG(DEBUG) << "ACTOR ShardedThread received terminate message,v=" << actorName.c_str();
 
   mailboxLock.lock();
   terminated = true;

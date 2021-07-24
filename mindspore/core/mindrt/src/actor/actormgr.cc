@@ -69,7 +69,6 @@ void ActorMgr::AddUrl(const std::string &protocol, const std::string &url) {
 void ActorMgr::AddIOMgr(const std::string &protocol, const std::shared_ptr<IOMgr> &ioMgr) { ioMgrs[protocol] = ioMgr; }
 
 void ActorMgr::RemoveActor(const std::string &name) {
-  MS_LOG(DEBUG) << "ACTOR was terminated with aid= " << name.c_str();
   actorsMutex.lock();
   (void)actors.erase(name);
   actorsMutex.unlock();

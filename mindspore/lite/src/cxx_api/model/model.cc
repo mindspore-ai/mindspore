@@ -28,7 +28,7 @@ namespace mindspore {
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode) {
-  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteNullptr;
