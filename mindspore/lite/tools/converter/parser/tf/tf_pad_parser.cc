@@ -24,8 +24,8 @@
 namespace mindspore {
 namespace lite {
 namespace {
-constexpr int INDEX_TWO = 2;
-constexpr int SIZE_THREE = 3;
+constexpr int kInputIndexTwo = 2;
+constexpr int kInputSizeThree = 3;
 }  // namespace
 ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
@@ -37,11 +37,11 @@ ops::PrimitiveC *TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_constant_value(0.0f);
   } else if (tf_op.op() == "PadV2") {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
-    if (tf_op.input_size() < SIZE_THREE) {
+    if (tf_op.input_size() < kInputSizeThree) {
       MS_LOG(ERROR) << "tf padv2 input size less than 3, which is " << tf_op.input_size();
       return nullptr;
     }
-    auto &const_value_name = tf_op.input(INDEX_TWO);
+    auto &const_value_name = tf_op.input(kInputIndexTwo);
     if (tf_node_map.find(const_value_name) == tf_node_map.end()) {
       MS_LOG(ERROR) << "cannot find the input.";
       return nullptr;
