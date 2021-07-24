@@ -64,7 +64,7 @@ std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
   return oss.str();
 }
 
-std::string GetGraphParamString(const FuncGraphPtr &graph, abstract::AbstractBasePtrList args_spec_list) {
+std::string GetGraphParamString(const FuncGraphPtr &graph, const abstract::AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(graph);
   std::ostringstream oss;
   oss << "graph:" << graph->ToString() << " with args[";
@@ -219,6 +219,8 @@ AbstractBasePtr AnalyzeFailExporter::GetNodeAbstract(const AnfNodePtr &node) {
 }
 
 AnfNodeConfigPtr AnalyzeFailExporter::GetFordwardConfig(const AnfNodeConfigPtr &cfg) {
+  MS_EXCEPTION_IF_NULL(cfg);
+  MS_EXCEPTION_IF_NULL(engine_);
   AnfNodeConfigPtr cur_cfg = cfg;
   auto iter = engine_->anfnode_config_map().find(cur_cfg);
   while (iter != engine_->anfnode_config_map().end()) {
@@ -419,7 +421,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   std::string last_location_info = "";
   for (size_t i = 0; i < stack.size(); ++i) {
     auto node_config = stack[i];
-
+    MS_EXCEPTION_IF_NULL(node_config);
     auto cnode = dyn_cast<CNode>(node_config->node());
     if (cnode == nullptr) {
       MS_LOG(DEBUG) << "CNode of elements[" << i << "] is nullptr.";

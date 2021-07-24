@@ -37,7 +37,7 @@ class Graphviz {
   virtual void Start() {}
   virtual void End() {}
 
-  virtual std::string Shape(AnfNodePtr node);
+  virtual std::string Shape(const AnfNodePtr &node);
   std::string Color(const AnfNodePtr &node);
   std::ostringstream &buffer() { return buffer_; }
   std::ostringstream buffer_;
@@ -54,12 +54,12 @@ class BaseDigraph : public Graphviz {
   explicit BaseDigraph(const std::string &name) : Graphviz(name) {}
   ~BaseDigraph() override = default;
 
-  virtual void Node(AnfNodePtr node, int id = 0) = 0;
-  virtual void Edge(AnfNodePtr start, AnfNodePtr end, int idx, int idx_start = 0) = 0;
+  virtual void Node(const AnfNodePtr &node, int id = 0) = 0;
+  virtual void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start = 0) = 0;
 
   void Start() override;
   void End() override;
-  virtual void Edge(AnfNodePtr start, FuncGraphPtr end, int id_start);
+  virtual void Edge(const AnfNodePtr &start, const FuncGraphPtr &end, int id_start);
   void FuncGraphParameters(const FuncGraphPtr &key);
   void SubGraph(const FuncGraphPtr &key, const std::shared_ptr<BaseDigraph> &gsub);
 
@@ -77,8 +77,8 @@ class Digraph : public BaseDigraph {
   explicit Digraph(const std::string &name) : BaseDigraph(name) {}
   ~Digraph() override;
 
-  void Node(AnfNodePtr node, int id = 0) override;
-  void Edge(AnfNodePtr start, AnfNodePtr end, int idx, int idx_start = 0) override;
+  void Node(const AnfNodePtr &node, int id = 0) override;
+  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start = 0) override;
 };
 
 class ModelDigraph : public BaseDigraph {
@@ -87,9 +87,9 @@ class ModelDigraph : public BaseDigraph {
   explicit ModelDigraph(const std::string &name) : BaseDigraph(name) {}
   ~ModelDigraph() override;
 
-  std::string Shape(AnfNodePtr node) override;
-  void Node(AnfNodePtr node, int id = 0) override;
-  void Edge(AnfNodePtr start, AnfNodePtr end, int idx, int idx_start = 0) override;
+  std::string Shape(const AnfNodePtr &node) override;
+  void Node(const AnfNodePtr &node, int id = 0) override;
+  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start = 0) override;
 };
 
 // API to draw
