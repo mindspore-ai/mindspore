@@ -35,6 +35,13 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::STATUS;
 namespace mindspore {
 namespace opt {
+inline constexpr int kInputIndexTwo = 2;
+inline constexpr int kInputIndexThree = 3;
+inline constexpr int kInputIndexFour = 4;
+inline constexpr size_t kInputSizeTwo = 2;
+inline constexpr size_t kInputSizeThree = 3;
+inline constexpr size_t kInputSizeFour = 4;
+inline constexpr size_t kInputSizeFive = 5;
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
 inline const PrimitivePtr kPrimConv2DBackpropInputFusion =

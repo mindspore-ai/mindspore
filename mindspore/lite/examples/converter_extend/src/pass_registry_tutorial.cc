@@ -51,7 +51,7 @@ AnfNodePtr PassTutorial::CreateCustomOp(const FuncGraphPtr func_graph, const CNo
   }
   primc->set_type("Custom_Add");
   std::map<std::string, std::vector<uint8_t>> custom_attrs;
-  std::string input_num = std::to_string(2);
+  std::string input_num = std::to_string(cnode->size() - 1);
   std::vector<uint8_t> input_num_attr(input_num.begin(), input_num.end());
   custom_attrs["input_num"] = input_num_attr;
   std::string op_kind = "custom op";
