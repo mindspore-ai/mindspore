@@ -325,6 +325,5 @@ AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const Pri
                                                     StridedSliceInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameStridedSlice, StridedSlice);
-
 }  // namespace ops
 }  // namespace mindspore

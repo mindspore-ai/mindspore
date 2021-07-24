@@ -58,6 +58,5 @@ AbstractBasePtr ReLUGradV2Infer(const abstract::AnalysisEnginePtr &, const Primi
   return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLUGradV2, prim::kPrimReluGradV2, ReLUGradV2Infer, nullptr, true);
-
 }  // namespace ops
 }  // namespace mindspore

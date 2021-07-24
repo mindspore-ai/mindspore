@@ -29,7 +29,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-
 void GetShapeVector(const ValuePtr &shape_attr, std::vector<std::vector<int64_t>> *shape_vec) {
   if (shape_attr == nullptr) {
     return;

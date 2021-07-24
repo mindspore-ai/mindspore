@@ -94,6 +94,5 @@ AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return abstract::MakeAbstract(TileInferShape(primitive, input_args), TileInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameTile, Tile);
-
 }  // namespace ops
 }  // namespace mindspore
