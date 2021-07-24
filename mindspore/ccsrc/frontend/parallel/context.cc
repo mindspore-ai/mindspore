@@ -72,6 +72,7 @@ void ParallelContext::Reset() {
   optimizer_weight_shard_size_ = -1;
   optimizer_weight_shard_aggregated_save_ = false;
   sharding_propagation_ = false;
+  enable_all2all_ = false;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -269,5 +270,7 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
 }
 
 void ParallelContext::set_sharding_propagation(const bool stra_pto) { sharding_propagation_ = stra_pto; }
+
+void ParallelContext::set_enable_all2all(const bool enable) { enable_all2all_ = enable; }
 }  // namespace parallel
 }  // namespace mindspore

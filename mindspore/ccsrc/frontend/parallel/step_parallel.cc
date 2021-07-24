@@ -815,7 +815,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
       replace_input.push_back(node->input(i));
     }
   }
-
+  SetCommunicationOpGroupLabel(replace_input);
   return replace_input;
 }
 
