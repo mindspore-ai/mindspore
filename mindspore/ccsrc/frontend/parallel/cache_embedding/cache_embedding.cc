@@ -352,10 +352,10 @@ AnfNodePtr CreateTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &
 void CreateTupleGetItems(const FuncGraphPtr &func_graph, const AnfNodePtr &input, std::vector<AnfNodePtr> *outputs) {
   auto input_abstract_tuple = dyn_cast<abstract::AbstractTuple>(input->abstract());
   auto size = input_abstract_tuple->elements().size();
+  MS_EXCEPTION_IF_NULL(outputs);
   for (size_t i = 0; i < size; ++i) {
     (*outputs).emplace_back(CreateTupleGetItem(func_graph, input, i));
   }
-  MS_EXCEPTION_IF_NULL(outputs);
 }
 
 AnfNodePtr CreateEmbeddingLookup(const FuncGraphPtr &graph, AnfNodePtr params, AnfNodePtr indices) {

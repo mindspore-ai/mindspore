@@ -20,7 +20,8 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
-const float MAX_NEG_SERIAL_SIZE = 10000;
+const float MAX_NEG_SERIAL_SIZE = 20000;
+const float MAX_SQUARE_SERIAL_SIZE = 20000;
 
 namespace mindspore {
 namespace kernel {

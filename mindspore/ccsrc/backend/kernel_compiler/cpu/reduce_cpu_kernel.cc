@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include "nnacl/fp32/reduce_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -73,20 +74,12 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       MS_LOG(EXCEPTION) << "Unsupported reduce operation:  " << kernel_name;
     }
   }
-}
 
-template <typename T>
-void ReduceCPUKernel<T>::SimpleReduce(size_t start, size_t end, size_t stride, const T *input_addr, T *output_addr) {
-  auto pos = start * stride;
-  for (size_t i = start; i < end; ++i) {
-    output_addr[i] = input_addr[pos];
-    pos++;
-    for (size_t j = 1; j < stride; ++j) {
-      reduce_func_(input_addr, pos, &output_addr[i]);
-      pos++;
-    }
-    if (reduce_type_ == kReduceMean) {
-      output_addr[i] /= stride;
+  // special accelerate for axis = 1 and input has 2 dims
+  if constexpr (std::is_same<T, float>::value) {
+    if ((reduce_type_ == kReduceMean || reduce_type_ == kReduceSum) && axis_.size() == 1 && axis_[0] == 1 &&
+        input_shape_.size() == 2) {
+      simple_execute_ = true;
     }
   }
 }
@@ -136,11 +129,19 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     }
 
     size_t output_size = outputs[0]->size / sizeof(T);
-    // special accelerate for axis = 1 and input has 2 dims
-    if (axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == 2) {
-      auto task = [&](size_t start, size_t end) { SimpleReduce(start, end, stride, input_addr, output_addr); };
-      CPUKernelUtils::ParallelForAutoSearch(task, output_size, &parallel_search_info_);
-      return true;
+    if constexpr (std::is_same<T, float>::value) {
+      if (simple_execute_) {
+        auto task = [&](size_t start, size_t end) {
+          for (size_t i = start; i < end; ++i) {
+            ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
+            if (reduce_type_ == kReduceMean) {
+              output_addr[i] /= stride;
+            }
+          }
+        };
+        CPUKernelUtils::ParallelForAutoSearch(task, output_size, &parallel_search_info_);
+        return true;
+      }
     }
     // Calculate transpose shape
     std::vector<size_t> transpose_shape(input_shape_.size());
