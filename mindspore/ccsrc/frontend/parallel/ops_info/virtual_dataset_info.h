@@ -50,6 +50,8 @@ class VirtualDatasetInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status GetAttrs() override;
   Status InferAsLossDivisor() override;
+  size_t max_size_strategy_dim_ = 0;
+  int64_t shard_num_ = 1;
 };
 }  // namespace parallel
 }  // namespace mindspore

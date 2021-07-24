@@ -65,6 +65,9 @@ class ParallelContext {
   void set_full_batch(bool full_batch);
   bool full_batch() const { return full_batch_; }
 
+  void set_dataset_strategy(const std::vector<std::vector<int64_t>> &dataset_strategy);
+  std::vector<std::vector<int64_t>> dataset_strategy() const { return dataset_strategy_; }
+
   void set_gradient_fp32_sync(bool gradient_fp32_sync);
   bool gradient_fp32_sync() const { return gradient_fp32_sync_; }
 
@@ -169,6 +172,7 @@ class ParallelContext {
   bool sharding_propagation_;
   // Enable AllToAll or not. If false, use AllGather and Split.
   bool enable_all2all_;
+  std::vector<std::vector<int64_t>> dataset_strategy_;
 };
 
 }  // namespace parallel

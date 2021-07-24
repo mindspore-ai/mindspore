@@ -53,7 +53,6 @@ class GetNextInfo : public OperatorInfo {
   Status GetAttrTypes();
   Status GetAttrShapes();
   Status GetAttrOutPutNum();
-  Strategys GetOutputStrategy();
   Status InferAsLossDivisor() override { return SUCCESS; }
 
  private:
@@ -61,7 +60,9 @@ class GetNextInfo : public OperatorInfo {
   std::vector<std::string> types_;
   Shapes shapes_;
   int64_t output_num_ = 0;
+  int64_t shard_num_ = 1;
   std::string shared_name_;
+  Strategys dataset_strategy_;
 };
 }  // namespace parallel
 }  // namespace mindspore

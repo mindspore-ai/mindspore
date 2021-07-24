@@ -256,6 +256,31 @@ class _AutoParallelContext:
             return False
         return self._context_handle.get_full_batch()
 
+    def set_dataset_strategy(self, dataset_strategy):
+        """
+        Set dataset sharding strategy.
+
+        Args:
+            dataset_strategy (tuple(tuple)): The dataset sharding strategy.
+        """
+        self.check_context_handle()
+        if not isinstance(dataset_strategy, tuple):
+            raise TypeError(f'strategy must be tuple type, but got:{type(dataset_strategy)}')
+        for ele in dataset_strategy:
+            if not isinstance(ele, tuple):
+                raise TypeError(f'The element of strategy must be tuple type, but got:{type(ele)}')
+            for dim in ele:
+                if not isinstance(dim, int):
+                    raise TypeError(f'The dim of each strategy value must be int type, but got:{type(dim)}')
+        self._context_handle.set_dataset_strategy(dataset_strategy)
+
+    def get_dataset_strategy(self):
+        """Get dataset sharding strategy."""
+        self.check_context_handle()
+        if _is_role_pserver():
+            return False
+        return self._context_handle.get_dataset_strategy()
+
     def set_grad_accumulation_step(self, grad_accumulation_step):
         """
         Set grad accumulation step.
@@ -596,6 +621,7 @@ _set_auto_parallel_context_func_map = {
     "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file,
     "group_ckpt_save_file": auto_parallel_context().set_group_ckpt_save_file,
     "full_batch": auto_parallel_context().set_full_batch,
+    "dataset_strategy": auto_parallel_context().set_dataset_strategy,
     "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer,
     "grad_accumulation_step": auto_parallel_context().set_grad_accumulation_step,
     "all_reduce_fusion_config": auto_parallel_context().set_all_reduce_fusion_split_indices,
@@ -619,6 +645,7 @@ _get_auto_parallel_context_func_map = {
     "strategy_ckpt_load_file": auto_parallel_context().get_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().get_strategy_ckpt_save_file,
     "full_batch": auto_parallel_context().get_full_batch,
+    "dataset_strategy": auto_parallel_context().get_dataset_strategy,
     "enable_parallel_optimizer": auto_parallel_context().get_enable_parallel_optimizer,
     "grad_accumulation_step": auto_parallel_context().get_grad_accumulation_step,
     "all_reduce_fusion_config": auto_parallel_context().get_all_reduce_fusion_split_indices,
@@ -632,7 +659,7 @@ _get_auto_parallel_context_func_map = {
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
                  loss_repeated_mean=bool, parallel_mode=str, auto_parallel_search_mode=str,
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
-                 strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
+                 strategy_ckpt_save_file=str, full_batch=bool, dataset_strategy=tuple, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int,
                  optimizer_weight_shard_aggregated_save=bool,
@@ -679,6 +706,7 @@ def _set_auto_parallel_context(**kwargs):
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         group_ckpt_save_file (str): The path to save parallel group checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
+        dataset_strategy (tuplr): Dataset sharding strategy. Default: ().
         enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how

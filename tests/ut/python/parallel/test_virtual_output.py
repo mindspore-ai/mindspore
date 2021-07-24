@@ -131,6 +131,7 @@ def compile_graph_two_input(x, y, net):
 
 
 def test_dense_relu_semi_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=False)
     net = DenseMutMulNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -140,6 +141,7 @@ def test_dense_relu_semi_auto():
             assert v[0][0] == 8
 
 def test_dense_relu_semi_auto_full_batch():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=True)
     net = DenseMutMulNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -149,6 +151,7 @@ def test_dense_relu_semi_auto_full_batch():
             assert v[0][0] == 1
 
 def test_dense_relu_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=False)
     net = DenseMutMulNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -158,6 +161,7 @@ def test_dense_relu_auto():
             assert v[0][0] == 8
 
 def test_dense_relu_auto_full_batch():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=True)
     net = DenseMutMulNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -167,6 +171,7 @@ def test_dense_relu_auto_full_batch():
             assert v[0][0] == 1
 
 def test_mul_neg_two_output_semi_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=False)
     net = MulNegTwoOutputNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -179,6 +184,7 @@ def test_mul_neg_two_output_semi_auto():
     assert count == 2
 
 def test_mul_neg_two_output_semi_auto_full_batch():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=True)
     net = MulNegTwoOutputNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -191,6 +197,7 @@ def test_mul_neg_two_output_semi_auto_full_batch():
     assert count == 2
 
 def test_mul_neg_two_output_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=False)
     net = MulNegTwoOutputNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -203,6 +210,7 @@ def test_mul_neg_two_output_auto():
     assert count == 2
 
 def test_mul_neg_two_output_full_batch():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=True)
     net = MulNegTwoOutputNet()
     x = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
@@ -215,6 +223,7 @@ def test_mul_neg_two_output_full_batch():
     assert count == 2
 
 def test_reshape_matmul_semi_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=False)
     strategy1 = None
     strategy2 = ((1, 1), (1, 8))
@@ -226,6 +235,7 @@ def test_reshape_matmul_semi_auto():
             assert v[0][0] == 8
 
 def test_reshape_matmul_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=False)
     strategy1 = None
     strategy2 = ((1, 1), (1, 8))
@@ -237,6 +247,7 @@ def test_reshape_matmul_auto():
             assert v[0][0] == 8
 
 def test_matmul_reshape_semi_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=False)
     strategy2 = None
     strategy1 = ((1, 1), (1, 8))
@@ -248,6 +259,7 @@ def test_matmul_reshape_semi_auto():
             assert v[0][0] == 8
 
 def test_matmul_reshape_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=False)
     strategy2 = None
     strategy1 = ((1, 1), (1, 8))
@@ -259,6 +271,7 @@ def test_matmul_reshape_auto():
             assert v[0][0] == 8
 
 def test_reshape_mul_semi_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=True)
     net = ReshapeMulNet()
     x = Tensor(np.ones([64, 4]), ms.float32)
@@ -268,6 +281,7 @@ def test_reshape_mul_semi_auto():
             assert v[0][0] == 1
 
 def test_reshape_mul_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=True)
     net = ReshapeMulNet()
     x = Tensor(np.ones([64, 4]), ms.float32)
@@ -277,6 +291,7 @@ def test_reshape_mul_auto():
             assert v[0][0] == 1
 
 def test_scalar_output_semi_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel", full_batch=False)
     net = ParallelMulNet()
     loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
@@ -292,6 +307,7 @@ def test_scalar_output_semi_auto():
     assert count == 1
 
 def test_scalar_output_auto():
+    context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel", full_batch=False)
     net = ParallelMulNet()
     loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')

@@ -73,6 +73,7 @@ void ParallelContext::Reset() {
   optimizer_weight_shard_aggregated_save_ = false;
   sharding_propagation_ = false;
   enable_all2all_ = false;
+  dataset_strategy_.clear();
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -88,6 +89,10 @@ void ParallelContext::set_global_rank(int64_t global_rank) {
 void ParallelContext::set_gradients_mean(bool gradients_mean) { gradients_mean_ = gradients_mean; }
 
 void ParallelContext::set_full_batch(bool full_batch) { full_batch_ = full_batch; }
+
+void ParallelContext::set_dataset_strategy(const std::vector<std::vector<int64_t>> &dataset_strategy) {
+  dataset_strategy_ = dataset_strategy;
+}
 
 void ParallelContext::set_grad_accumulation_step(int64_t grad_accumulation_step) {
   grad_accumulation_step_ = grad_accumulation_step;

@@ -170,6 +170,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_pipeline_stage_split_num", &ParallelContext::pipeline_stage_split_num, "Get pipeline stage split num.")
     .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
     .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
+    .def("set_dataset_strategy", &ParallelContext::set_dataset_strategy, "Set dataset sharding strategy.")
+    .def("get_dataset_strategy", &ParallelContext::dataset_strategy, "Get dataset sharding strategy.")
     .def("set_enable_parallel_optimizer", &ParallelContext::set_enable_parallel_optimizer,
          "Set enable/disable parallel optimizer.")
     .def("get_enable_parallel_optimizer", &ParallelContext::enable_parallel_optimizer,
