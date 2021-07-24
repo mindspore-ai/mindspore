@@ -62,6 +62,7 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
   // Ring ReduceScatter.
   MS_LOG(DEBUG) << "Start Ring ReduceScatter.";
   std::unique_ptr<T[]> tmp_recv_chunk = std::make_unique<T[]>(chunk_sizes[0]);
+  MS_EXCEPTION_IF_NULL(tmp_recv_chunk);
   for (size_t i = 0; i < rank_size - 1; i++) {
     // Step 1: Async send data to next rank.
     size_t send_chunk_index = (local_rank_ - i + rank_size) % rank_size;
@@ -147,6 +148,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
   MS_LOG(DEBUG) << "Start Reduce to rank 0 process.";
   if (local_rank_ == 0) {
     std::unique_ptr<T[]> tmp_recv_buff = std::make_unique<T[]>(count);
+    MS_EXCEPTION_IF_NULL(tmp_recv_buff);
     for (uint32_t i = 1; i < rank_size; i++) {
       std::shared_ptr<std::vector<unsigned char>> recv_str;
       MS_LOG(DEBUG) << "Reduce rank 0 receive from rank " << i;

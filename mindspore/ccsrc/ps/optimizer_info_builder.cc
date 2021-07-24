@@ -17,6 +17,7 @@
 #include "ps/optimizer_info_builder.h"
 #include <vector>
 #include <memory>
+#include <utility>
 #include <functional>
 #include "backend/kernel_compiler/cpu/ps/sparse_apply_ftrl_ps_kernel.h"
 
@@ -43,8 +44,11 @@ void OptimizerInfoBuilder::BuildWorkspaces(OptimizerInfo *info, const std::vecto
     size_t size = ws_sizes[i];
     AddressPtr workspace = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(workspace);
-    workspace->addr = new float[size];
+    auto unique_buffer = std::make_unique<char[]>(sizeof(float) * size);
+    MS_EXCEPTION_IF_NULL(unique_buffer);
+    workspace->addr = unique_buffer.get();
     MS_EXCEPTION_IF_NULL(workspace->addr);
+    (void)arrays_.emplace_back(std::move(unique_buffer));
     workspace->size = size;
     info->AddWorkspace(workspace);
   }
@@ -78,6 +82,7 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
     // addr_data_size should be calculated by inputs_shape if it's passed.
     size_t origin_index = origin_input_map.at(input_name);
     EXC_IF_VEC_IDX_OOB((*inputs_shape), origin_index);
+    MS_EXCEPTION_IF_NULL((*inputs_shape)[origin_index]);
     auto shape = *((*inputs_shape)[origin_index]);
     addr_data_size = std::accumulate(shape.begin(), shape.end(), worker_num_, std::multiplies<size_t>());
   } else {
@@ -88,12 +93,14 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
     IntToSize(std::accumulate(ps_lens.begin(), ps_lens.begin() + SizeToInt(ps_index), 0, std::plus<int>()));
 
   // The size in ps_lens instead of addr_data_size is the size of real data.
-  T *buffer = new T[addr_data_size];
+  auto unique_buffer = std::make_unique<char[]>(sizeof(T) * addr_data_size);
+  MS_EXCEPTION_IF_NULL(unique_buffer);
   addr_ptr->size = IntToSize(ps_lens[ps_index]) * sizeof(T);
-  addr_ptr->addr = buffer;
+  addr_ptr->addr = unique_buffer.get();
+  (void)arrays_.emplace_back(std::move(unique_buffer));
 
   size_t dst_size = addr_ptr->size;
-  size_t src_size = addr_ptr->size;
+  size_t src_size = IntToSize(ps_lens[ps_index]) * sizeof(T);
   void *dst_data = addr_ptr->addr;
   void *src_data = reinterpret_cast<T *>(ps_data) + addr_data_offset;
   MS_EXCEPTION_IF_NULL(dst_data);
@@ -101,8 +108,6 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
   int64_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    delete[] buffer;
-    buffer = nullptr;
     return nullptr;
   }
   return addr_ptr;
@@ -118,20 +123,26 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
 
   AddressPtr accumulate = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(accumulate);
-  accumulate->addr = new float[weight->size()];
+
+  auto unique_buffer = std::make_unique<char[]>(sizeof(float) * weight->size());
+  MS_EXCEPTION_IF_NULL(unique_buffer);
+  accumulate->addr = unique_buffer.get();
   MS_EXCEPTION_IF_NULL(accumulate->addr);
-  accumulate->size = weight->size() * sizeof(float);
+  (void)arrays_.emplace_back(std::move(unique_buffer));
+
+  accumulate->size = sizeof(float) * weight->size();
   int64_t ret = memset_s(accumulate->addr, accumulate->size, 0x00, accumulate->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
-    delete[] reinterpret_cast<float *>(accumulate->addr);
-    accumulate->addr = nullptr;
     return nullptr;
   }
 
   AddressPtr learning_rate = GenInputAddrPtr<float>(kApplyMomentum, "lr", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(learning_rate);
   AddressPtr gradient = GenInputAddrPtr<float>(kApplyMomentum, "grad", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(gradient);
   AddressPtr momentum = GenInputAddrPtr<float>(kApplyMomentum, "momentum", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(momentum);
   return new MomentumOptimInfo(weight_addr, accumulate, learning_rate, gradient, momentum);
 }
 
@@ -145,41 +156,53 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
 
   AddressPtr m = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(m);
-  m->addr = new float[weight->size()];
+
+  auto unique_buffer = std::make_unique<char[]>(sizeof(float) * weight->size());
+  MS_EXCEPTION_IF_NULL(unique_buffer);
+  m->addr = unique_buffer.get();
   MS_EXCEPTION_IF_NULL(m->addr);
+  (void)arrays_.emplace_back(std::move(unique_buffer));
+
   m->size = weight->size() * sizeof(float);
   int64_t ret = memset_s(m->addr, m->size, 0x00, m->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
-    delete[] reinterpret_cast<float *>(m->addr);
-    m->addr = nullptr;
     return nullptr;
   }
 
   AddressPtr v = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(v);
-  v->addr = new float[weight->size()];
+
+  unique_buffer = std::make_unique<char[]>(sizeof(float) * weight->size());
+  MS_EXCEPTION_IF_NULL(unique_buffer);
+  v->addr = unique_buffer.get();
   MS_EXCEPTION_IF_NULL(v->addr);
+  (void)arrays_.emplace_back(std::move(unique_buffer));
+
   v->size = weight->size() * sizeof(float);
   ret = memset_s(v->addr, v->size, 0x00, v->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
-    delete[] reinterpret_cast<float *>(v->addr);
-    v->addr = nullptr;
-    delete[] reinterpret_cast<float *>(m->addr);
-    m->addr = nullptr;
     return nullptr;
   }
 
   AddressPtr beta1_power = GenInputAddrPtr<float>(kSparseAdam, "beta1_power", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(beta1_power);
   AddressPtr beta2_power = GenInputAddrPtr<float>(kSparseAdam, "beta2_power", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(beta2_power);
   AddressPtr learning_rate = GenInputAddrPtr<float>(kSparseAdam, "lr", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(learning_rate);
   AddressPtr beta1 = GenInputAddrPtr<float>(kSparseAdam, "beta1", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(beta1);
   AddressPtr beta2 = GenInputAddrPtr<float>(kSparseAdam, "beta2", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(beta2);
   AddressPtr epsilon = GenInputAddrPtr<float>(kSparseAdam, "eps", const_cast<float *>(values.data()), lens);
+  MS_EXCEPTION_IF_NULL(epsilon);
   AddressPtr grad = GenInputAddrPtr<float>(kSparseAdam, "grad", const_cast<float *>(values.data()), lens, inputs_shape);
+  MS_EXCEPTION_IF_NULL(grad);
   AddressPtr indices =
     GenInputAddrPtr<float>(kSparseAdam, "indices", const_cast<float *>(values.data()), lens, inputs_shape);
+  MS_EXCEPTION_IF_NULL(indices);
   return new SparseAdamOptimInfo(weight_addr, m, v, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon,
                                  grad, indices, sharded);
 }
@@ -196,8 +219,13 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
 
   AddressPtr accum = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(accum);
-  accum->addr = new float[weight->size()];
+
+  auto unique_buffer = std::make_unique<char[]>(sizeof(float) * weight->size());
+  MS_EXCEPTION_IF_NULL(unique_buffer);
+  accum->addr = unique_buffer.get();
   MS_EXCEPTION_IF_NULL(accum->addr);
+  (void)arrays_.emplace_back(std::move(unique_buffer));
+
   accum->size = weight->size() * sizeof(float);
   for (size_t i = 0; i < weight->size(); i++) {
     float *tmp = reinterpret_cast<float *>(accum->addr);
@@ -206,20 +234,25 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
 
   AddressPtr linear = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(linear);
-  linear->addr = new float[weight->size()];
+
+  unique_buffer = std::make_unique<char[]>(sizeof(float) * weight->size());
+  MS_EXCEPTION_IF_NULL(unique_buffer);
+  linear->addr = unique_buffer.get();
   MS_EXCEPTION_IF_NULL(linear->addr);
+  (void)arrays_.emplace_back(std::move(unique_buffer));
+
+  linear->size = weight->size() * sizeof(float);
   int64_t ret = memset_s(linear->addr, weight->size() * sizeof(float), 0x00, weight->size() * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
-    delete[] reinterpret_cast<float *>(linear->addr);
-    linear->addr = nullptr;
     return nullptr;
   }
-  linear->size = weight->size() * sizeof(float);
 
   AddressPtr grad = GenInputAddrPtr<float>(kSparseFtrl, "grad", const_cast<float *>(values.data()), lens, inputs_shape);
+  MS_EXCEPTION_IF_NULL(grad);
   AddressPtr indices =
     GenInputAddrPtr<float>(kSparseFtrl, "indices", const_cast<float *>(values.data()), lens, inputs_shape);
+  MS_EXCEPTION_IF_NULL(indices);
   return new SparseFtrlOptimInfo(weight_addr, accum, linear, grad, indices, sharded);
 }
 }  // namespace ps

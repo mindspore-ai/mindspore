@@ -160,19 +160,19 @@ void FollowerScaler::ProcessAfterScaleIn() {
 }
 
 void FollowerScaler::RegisterBarrierBeforeScaleOut(const std::string &module, const BarrierBeforeScaleOut &barrier) {
-  barriers_before_scale_out_.try_emplace(module, barrier);
+  (void)barriers_before_scale_out_.try_emplace(module, barrier);
 }
 
 void FollowerScaler::RegisterBarrierBeforeScaleIn(const std::string &module, const BarrierBeforeScaleIn &barrier) {
-  barriers_before_scale_in_.try_emplace(module, barrier);
+  (void)barriers_before_scale_in_.try_emplace(module, barrier);
 }
 
 void FollowerScaler::RegisterHandlerAfterScaleOut(const std::string &module, const HandlerAfterScaleOut &handler) {
-  handlers_after_scale_out_.try_emplace(module, handler);
+  (void)handlers_after_scale_out_.try_emplace(module, handler);
 }
 
 void FollowerScaler::RegisterHandlerAfterScaleIn(const std::string &module, const HandlerAfterScaleIn &handler) {
-  handlers_after_scale_in_.try_emplace(module, handler);
+  (void)handlers_after_scale_in_.try_emplace(module, handler);
 }
 }  // namespace core
 }  // namespace ps

@@ -123,7 +123,7 @@ void GetModelKernel::BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, con
   auto fbs_feature_maps_vector = fbb->CreateVector(fbs_feature_maps);
 
   schema::ResponseGetModelBuilder rsp_get_model_builder(*(fbb.get()));
-  rsp_get_model_builder.add_retcode(retcode);
+  rsp_get_model_builder.add_retcode(static_cast<int>(retcode));
   rsp_get_model_builder.add_reason(fbs_reason);
   rsp_get_model_builder.add_iteration(static_cast<int>(iter));
   rsp_get_model_builder.add_feature_map(fbs_feature_maps_vector);
