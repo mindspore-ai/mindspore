@@ -28,12 +28,15 @@ Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) 
   IO_CHECK_VECTOR(input, output);
   RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
 
-  std::shared_ptr<Tensor> pad_image;
-  int32_t t_pad_top, t_pad_bottom, t_pad_left, t_pad_right;
+  std::shared_ptr<Tensor> pad_image = nullptr;
+  int32_t t_pad_top = 0;
+  int32_t t_pad_bottom = 0;
+  int32_t t_pad_left = 0;
+  int32_t t_pad_right = 0;
   size_t boxCount = input[1]->shape()[0];  // number of rows
 
-  int32_t padded_image_h;
-  int32_t padded_image_w;
+  int32_t padded_image_h = 0;
+  int32_t padded_image_w = 0;
   const int output_count = 2;
   output->resize(output_count);
   (*output)[1] = std::move(input[1]);  // since some boxes may be removed

@@ -41,7 +41,7 @@ Status StorageManager::AddOneContainer(int replaced_container_pos) {
   const std::string kSuffix = "LB";
   Path container_name = root_ / ConstructFileName(kPrefix, file_id_, kSuffix);
   std::shared_ptr<StorageContainer> sc;
-  RETURN_IF_NOT_OK(StorageContainer::CreateStorageContainer(&sc, container_name.toString()));
+  RETURN_IF_NOT_OK(StorageContainer::CreateStorageContainer(&sc, container_name.ToString()));
   containers_.push_back(sc);
   file_id_++;
   if (replaced_container_pos >= 0) {

@@ -34,7 +34,11 @@ uint8_t parse_bytes(const uint8_t *buf, bool intel_align) {
 
 template <>
 uint16_t parse_bytes(const uint8_t *buf, bool intel_align) {
-  uint16_t res;
+  if (buf == nullptr) {
+    return 0;
+  }
+
+  uint16_t res = 0;
   if (intel_align) {
     res = (static_cast<uint16_t>(buf[1]) << 8) | buf[0];
   } else {
@@ -45,7 +49,11 @@ uint16_t parse_bytes(const uint8_t *buf, bool intel_align) {
 
 template <>
 uint32_t parse_bytes(const uint8_t *buf, bool intel_align) {
-  uint32_t res;
+  if (buf == nullptr) {
+    return 0;
+  }
+
+  uint32_t res = 0;
   if (intel_align) {
     res = (static_cast<uint32_t>(buf[3]) << 24) | (static_cast<uint32_t>(buf[2]) << 16) |
           (static_cast<uint32_t>(buf[1]) << 8) | buf[0];

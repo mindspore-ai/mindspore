@@ -39,7 +39,7 @@ class CacheClientRequestTag {
  public:
   friend class CacheClientGreeter;
   explicit CacheClientRequestTag(std::shared_ptr<BaseRequest> rq, int64_t seqNo)
-      : base_rq_(std::move(rq)), seqNo_(seqNo) {}
+      : base_rq_(std::move(rq)), seq_no_(seqNo) {}
   ~CacheClientRequestTag() = default;
 
   /// \brief Notify the client that a result has come back from the server
@@ -50,7 +50,7 @@ class CacheClientRequestTag {
   grpc::Status rc_;
   grpc::ClientContext ctx_;
   std::unique_ptr<grpc::ClientAsyncResponseReader<CacheReply>> rpc_;
-  int64_t seqNo_;
+  int64_t seq_no_;
 };
 
 /// \brief A GRPC layer to convert BaseRequest into protobuf and send to the cache server using gRPC

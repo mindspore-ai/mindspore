@@ -39,14 +39,9 @@ class Monitor {
   // This function will be the entry point of mindspore::Dataset::Task
   Status operator()();
 
-  int64_t GetSamplingInterval() { return sampling_interval_; }
-
  private:
-  int64_t cur_row_;
-  int64_t max_samples_;
   int64_t sampling_interval_;
   ExecutionTree *tree_;
-  std::vector<std::shared_ptr<Sampling>> sampling_list_;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -73,6 +73,8 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
   return Status(StatusCode::kMDUnexpectedError, "RandomCropAndResize: invalid input shape");
 }
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {
+  CHECK_FAIL_RETURN_UNEXPECTED(crop_height != nullptr, "crop_height is nullptr.");
+  CHECK_FAIL_RETURN_UNEXPECTED(crop_width != nullptr, "crop_width is nullptr.");
   *crop_width = w_in;
   *crop_height = h_in;
   CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "RandomCropAndResize: Width cannot be 0.");
@@ -84,6 +86,12 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
     // Note rnd_aspect_ is already a random distribution of the input aspect ratio in logarithmic sample_scale.
     double const sample_aspect = exp(rnd_aspect_(rnd_));
 
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / h_in) > w_in,
+                                 "RandomCropAndResizeOp: multiplication out of bounds");
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / h_in / w_in) > sample_scale,
+                                 "RandomCropAndResizeOp: multiplication out of bounds");
+    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / h_in / w_in / sample_scale) > sample_aspect,
+                                 "RandomCropAndResizeOp: multiplication out of bounds");
     *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * sample_scale * sample_aspect)));
     *crop_height = static_cast<int32_t>(std::round(*crop_width / sample_aspect));
 

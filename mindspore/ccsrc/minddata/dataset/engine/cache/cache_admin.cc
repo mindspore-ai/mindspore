@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
   if (argc == 1) {
     args.Help();
-    return 0;
+    return 1;
   }
 
   // ingest all the args into a string stream for parsing

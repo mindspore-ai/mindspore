@@ -67,6 +67,8 @@ Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std
   int32_t outputH = -1, outputW = -1;
   // if expand_, then we cannot know the shape. We need the input image to find the output shape --> set it to
   // <-1,-1[,3]>
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0 && inputs[0].Size() >= 2,
+                               "RandomRotationOp::OutputShape inputs is invalid.");
   if (!expand_) {
     outputH = inputs[0][0];
     outputW = inputs[0][1];

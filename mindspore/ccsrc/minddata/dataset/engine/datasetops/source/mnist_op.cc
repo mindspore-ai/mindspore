@@ -229,15 +229,15 @@ Status MnistOp::WalkAllFiles() {
       Path file = dir_it->Next();
       std::string fname = file.Basename();  // name of the mnist file
       if ((fname.find(prefix + "-images") != std::string::npos) && (fname.find(img_ext) != std::string::npos)) {
-        image_names_.push_back(file.toString());
+        image_names_.push_back(file.ToString());
         MS_LOG(INFO) << "Mnist operator found image file at " << fname << ".";
       } else if ((fname.find(prefix + "-labels") != std::string::npos) && (fname.find(lbl_ext) != std::string::npos)) {
-        label_names_.push_back(file.toString());
+        label_names_.push_back(file.ToString());
         MS_LOG(INFO) << "Mnist Operator found label file at " << fname << ".";
       }
     }
   } else {
-    MS_LOG(WARNING) << "Mnist operator unable to open directory " << dir.toString() << ".";
+    MS_LOG(WARNING) << "Mnist operator unable to open directory " << dir.ToString() << ".";
   }
 
   std::sort(image_names_.begin(), image_names_.end());

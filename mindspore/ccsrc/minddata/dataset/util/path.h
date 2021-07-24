@@ -58,7 +58,7 @@ class Path {
 
   Path &operator=(Path &&) noexcept;
 
-  std::string toString() const { return path_; }
+  std::string ToString() const { return path_; }
 
   Path operator+(const Path &);
 

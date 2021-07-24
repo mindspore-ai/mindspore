@@ -105,7 +105,7 @@ Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *
   }
 #endif
 
-  std::string abs_real_path = (Path(real_path) / Path(filename)).toString();
+  std::string abs_real_path = (Path(real_path) / Path(filename)).ToString();
   auto realpath = Common::GetRealPath(abs_real_path);
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + abs_real_path);

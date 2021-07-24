@@ -37,9 +37,6 @@ class CacheClientGreeter : public Service {
   Status AttachToSharedMemory(bool *local_bypass) { RETURN_STATUS_UNEXPECTED("Not supported"); }
   std::string GetHostname() const { return "Not supported"; }
   int32_t GetPort() const { return 0; }
-
- protected:
- private:
 };
 }  // namespace dataset
 }  // namespace mindspore

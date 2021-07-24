@@ -56,9 +56,9 @@ Status CacheClient::Builder::SanityCheck() {
 // Constructor
 CacheClient::CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool spill, std::string hostname,
                          int32_t port, int32_t num_connections, int32_t prefetch_size)
-    : server_connection_id_(0),
-      cache_mem_sz_(cache_mem_sz),
+    : cache_mem_sz_(cache_mem_sz),
       spill_(spill),
+      server_connection_id_(0),
       client_id_(-1),
       local_bypass_(false),
       num_connections_(num_connections),

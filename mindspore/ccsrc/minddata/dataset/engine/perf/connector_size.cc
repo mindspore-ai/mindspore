@@ -97,7 +97,7 @@ Status ConnectorSize::SaveToFile() {
 }
 
 Status ConnectorSize::Init(const std::string &dir_path, const std::string &device_id) {
-  file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).toString();
+  file_path_ = (Path(dir_path) / Path("pipeline_profiling_" + device_id + ".json")).ToString();
   Path path = Path(file_path_);
   // Remove the file if it exists (from prior profiling usage)
   RETURN_IF_NOT_OK(path.Remove());

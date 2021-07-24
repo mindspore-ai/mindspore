@@ -97,15 +97,15 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   std::string line;
   Path folder_path(dataset_dir_);
 
-  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").toString());
+  auto realpath = Common::GetRealPath((folder_path / "list_attr_celeba.txt").ToString());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").toString();
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").toString());
+    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").ToString());
   }
 
   std::ifstream attr_file(realpath.value());
   if (!attr_file.is_open()) {
-    std::string attr_file_name = (folder_path / "list_attr_celeba.txt").toString();
+    std::string attr_file_name = (folder_path / "list_attr_celeba.txt").ToString();
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Celeba attr file: " + attr_file_name);
   }
 
@@ -136,10 +136,10 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
       }
     }
     if (!partition_file.is_open()) {
-      auto realpath_eval = Common::GetRealPath((folder_path / "list_eval_partition.txt").toString());
+      auto realpath_eval = Common::GetRealPath((folder_path / "list_eval_partition.txt").ToString());
       if (!realpath_eval.has_value()) {
-        MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_eval_partition.txt").toString();
-        RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_eval_partition.txt").toString());
+        MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_eval_partition.txt").ToString();
+        RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_eval_partition.txt").ToString());
       }
 
       partition_file.open(realpath_eval.value());

@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
-#include <algorithm>
-#include <vector>
+
+#include <limits>
 #include <stdexcept>
-#include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
-#include "minddata/dataset/kernels/image/lite_cv/image_process.h"
-#include "minddata/dataset/include/dataset/constants.h"
+#include <utility>
+#include <vector>
+
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
+#include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 #include "minddata/dataset/util/random.h"
 
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
@@ -716,8 +719,8 @@ static bool IsMirror(int orientation) {
 }
 // rotate the image by EXIF orientation
 Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation) {
-  if (input->Rank() != 3) {
-    RETURN_STATUS_UNEXPECTED("Rotate: input image is not in shape of <H,W,C>");
+  if (input->Rank() != 2 || input->Rank() != 3) {
+    RETURN_STATUS_UNEXPECTED("Rotate: input image is not in shape of <H,W,C> or <H,W>");
   }
 
   if (input->type() != DataType::DE_FLOAT32 && input->type() != DataType::DE_UINT8) {

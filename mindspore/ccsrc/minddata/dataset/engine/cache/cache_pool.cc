@@ -32,13 +32,13 @@ CachePool::CachePool(std::shared_ptr<NumaMemoryPool> mp, const std::string &root
 Status CachePool::DoServiceStart() {
   tree_ = std::make_shared<data_index>();
   // If we are given a disk path, set up the StorageManager
-  if (!root_.toString().empty()) {
+  if (!root_.ToString().empty()) {
     Path spill = GetSpillPath();
     RETURN_IF_NOT_OK(spill.CreateDirectories());
     auto &cs = CacheServer::GetInstance();
     sm_ = std::make_shared<StorageManager>(spill, cs.GetNumWorkers());
     RETURN_IF_NOT_OK(sm_->ServiceStart());
-    MS_LOG(INFO) << "CachePool will use disk folder: " << spill.toString();
+    MS_LOG(INFO) << "CachePool will use disk folder: " << spill.ToString();
   }
   return Status::OK();
 }
@@ -60,7 +60,7 @@ Status CachePool::DoServiceStop() {
   // release each buffer in the DataLocator one by one.
 
   tree_.reset();
-  if (!root_.toString().empty()) {
+  if (!root_.ToString().empty()) {
     Path spill = GetSpillPath();
     auto it = Path::DirIterator::OpenDirectory(&spill);
     while (it->HasNext()) {

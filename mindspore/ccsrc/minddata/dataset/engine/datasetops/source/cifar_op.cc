@@ -208,11 +208,11 @@ Status CifarOp::GetCifarFiles() {
     while (dirIt->HasNext()) {
       Path file = dirIt->Next();
       if (file.Extension() == kExtension) {
-        cifar_files_.push_back(file.toString());
+        cifar_files_.push_back(file.ToString());
       }
     }
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open directory: " + dir_path.toString() +
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open directory: " + dir_path.ToString() +
                              ", make sure file not damaged or permission denied.");
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!cifar_files_.empty(), "Invalid file, no .bin files found under " + folder_path_);
