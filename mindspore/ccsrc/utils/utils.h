@@ -301,6 +301,7 @@ constexpr auto kLogSoftmaxGradOpName = "LogSoftmaxGrad";
 constexpr auto kLayerNormGradOpName = "LayerNormGrad";
 constexpr auto kMinimumGradOpName = "MinimumGrad";
 constexpr auto kMaximumGradOpName = "MaximumGrad";
+constexpr auto kFusedDbnDwOpName = "FusedDbnDw";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
