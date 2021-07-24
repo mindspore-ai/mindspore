@@ -32,11 +32,9 @@
 #include "tools/converter/legacy_optimizer/graph/tensor_name_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
-#include "tools/converter/legacy_optimizer/graph/switch_pass.h"
 #include "tools/converter/legacy_optimizer/graph/convert_fp32_to_fp16_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_tensor_pass.h"
-#include "tools/converter/legacy_optimizer/graph/nested_loop_expand_pass.h"
 
 using std::string;
 namespace mindspore::lite {

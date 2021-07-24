@@ -39,7 +39,10 @@ constexpr size_t kInitialSize = 1024;
 constexpr int kMainGraphIndex = 0;
 constexpr int kCallInputMinSize = 1;
 constexpr int kSwitchInputMinSize = 3;
-constexpr int kNumDim2 = 2;
+constexpr int kTypeIndex = 0;
+constexpr int kElementShapeIndex = 1;
+constexpr int kFirstElementShapeIndex = 2;
+constexpr int kTensorListDatasize = 3;
 
 void FreeTensors(std::vector<Tensor *> *input_tensors, std::vector<Tensor *> *output_tensors) {
   if (input_tensors == nullptr) {
@@ -74,18 +77,21 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
   std::vector<int> element_shape;
   if (!tensorT->data.empty()) {
     int *data = reinterpret_cast<int *>(tensorT->data.data());
-    type = TypeId(data[0]);
-    if (tensorT->data.size() < 8 || (data[1] != 0 && (data[1] + 3) * 4 != static_cast<int>(tensorT->data.size()))) {
+    type = TypeId(data[kTypeIndex]);
+    if (tensorT->data.size() < kTensorDataSize ||
+        (data[kElementShapeIndex] != 0 && static_cast<int>((data[kElementShapeIndex] + kTensorListDatasize) *
+                                                           sizeof(int)) != static_cast<int>(tensorT->data.size()))) {
       MS_LOG(ERROR) << "tensorlist data length illegal, tensorT name: " << tensorT->name;
-      MS_LOG(ERROR) << "(data[1] + 3) * 4: " << (data[1] + 3) * 4;
+      MS_LOG(ERROR) << "(data[1] + 3) * sizeof(int): "
+                    << ((data[kElementShapeIndex] + kTensorListDatasize) * sizeof(int));
       MS_LOG(ERROR) << "static_cast<int>(tensorT->data.size()): " << static_cast<int>(tensorT->data.size());
       *convert_succ = false;
       return;
     }
-    for (int j = 0; j < data[1]; ++j) {
-      element_shape.push_back(data[j + kNumDim2]);
+    for (int j = 0; j < data[kElementShapeIndex]; ++j) {
+      element_shape.push_back(data[j + kFirstElementShapeIndex]);
     }
-    tensor_shape = {data[data[1] + kNumDim2]};
+    tensor_shape = {data[data[kElementShapeIndex] + kFirstElementShapeIndex]};
   }
   lite_tensor = std::make_unique<TensorList>(tensor_shape, element_shape);
   if (lite_tensor == nullptr) {
@@ -257,7 +263,7 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
     if (!tensor_list->tensors().empty()) {
       tensor_shape_dims = static_cast<int>(tensor_list->tensors().front()->shape().size());
     }
-    auto total_size = (tensor_shape_dims + 3) * sizeof(int);
+    auto total_size = (tensor_shape_dims + kTensorListDatasize) * sizeof(int);
     output_tensor->data.resize(total_size, 0);
     auto output_tensor_data = reinterpret_cast<int *>(output_tensor->data.data());
     if (tensor_list->tensors_data_type() == kTypeUnknown) {
@@ -265,16 +271,16 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
         tensor_list->set_tensors_data_type(tensor_list->tensors().front()->data_type());
       }
     }
-    output_tensor_data[0] = tensor_list->tensors_data_type();
+    output_tensor_data[kTypeIndex] = tensor_list->tensors_data_type();
     if (tensor_list->element_shape().empty() && !tensor_list->tensors().empty()) {
       tensor_list->set_element_shape(tensor_list->tensors().front()->shape());
     }
-    output_tensor_data[1] = static_cast<int>(tensor_list->element_shape().size());
+    output_tensor_data[kElementShapeIndex] = static_cast<int>(tensor_list->element_shape().size());
     for (size_t j = 0; j < tensor_list->element_shape().size(); ++j) {
-      output_tensor_data[j + 2] = tensor_list->element_shape().at(j);
+      output_tensor_data[j + kFirstElementShapeIndex] = tensor_list->element_shape().at(j);
     }
-    output_tensor_data[2 + output_tensor_data[1]] = static_cast<int>(tensor_list->tensors().size());
-
+    output_tensor_data[kFirstElementShapeIndex + output_tensor_data[kElementShapeIndex]] =
+      static_cast<int>(tensor_list->tensors().size());
   } else if (output_tensors[i]->data_type() == kTypeUnknown) {
     tensors->at(node->outputIndex[i]).is_inferred_ = false;
     return;
@@ -285,7 +291,6 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
 int PartialGraphIndex(const CNodeT *partial_node) {
   return partial_node->primitive->value.AsPartialFusion()->sub_graph_index;
 }
-
 }  // namespace
 
 int InferShapePass::CopyPartialShapeToSubGraph(const CNodeT *partial_node, MetaGraphT *graph) {
@@ -378,8 +383,8 @@ int InferShapePass::InferSwitchNode(const std::unique_ptr<CNodeT> &switch_node, 
 
   static std::set<CNodeT *> partial_cnode_inferred{};
   std::deque<CNodeT *> to_process{};
-  auto true_branch_output_index = switch_node->inputIndex.at(1);
-  auto false_branch_output_index = switch_node->inputIndex.at(2);
+  auto true_branch_output_index = switch_node->inputIndex.at(kSwitchTrueIndex);
+  auto false_branch_output_index = switch_node->inputIndex.at(kSwitchFalseIndex);
   for (auto &node : graph->nodes) {
     if (node->primitive->value.type != PrimitiveType_PartialFusion) {
       continue;
