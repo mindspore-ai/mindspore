@@ -675,24 +675,24 @@ class HSigmoid(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
-        - **x** (Tensor) - The input of HSigmoid, data type must be float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **input_x** (Tensor) - The input of HSigmoid. The shape is :math:`(N,*)` where :math:`*` means, any number of
+          additional dimensions.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hsigmoid = nn.HSigmoid()
         >>> result = hsigmoid(x)
         >>> print(result)
-        [0.3333  0.1666  0.5  0.833  0.6665]
+        [0.3333 0.1666 0.5    0.8335 0.6665]
     """
 
     def __init__(self):
@@ -700,8 +700,8 @@ class HSigmoid(Cell):
         super(HSigmoid, self).__init__()
         self.hsigmoid = P.HSigmoid()
 
-    def construct(self, x):
-        return self.hsigmoid(x)
+    def construct(self, input_x):
+        return self.hsigmoid(input_x)
 
 
 class LogSigmoid(Cell):

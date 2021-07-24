@@ -794,7 +794,7 @@ class Sigmoid(PrimitiveWithInfer):
         return input_x
 
 
-class HSigmoid(PrimitiveWithInfer):
+class HSigmoid(Primitive):
     r"""
     Hard sigmoid activation function.
 
@@ -810,37 +810,28 @@ class HSigmoid(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+          additional dimensions.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> hsigmoid = ops.HSigmoid()
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mstype.float16)
         >>> result = hsigmoid(input_x)
         >>> print(result)
-        [0.3333  0.1666  0.5  0.833  0.6665]
+        [0.3333 0.1666 0.5    0.8335 0.6665]
     """
-
     @prim_attr_register
     def __init__(self):
         """Initialize HSigmoid."""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, (mstype.float16, mstype.float32), self.name)
-        return x_dtype
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
 class Tanh(PrimitiveWithInfer):
