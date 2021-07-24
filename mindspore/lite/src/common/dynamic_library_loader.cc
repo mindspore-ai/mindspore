@@ -40,7 +40,6 @@ int DynamicLibraryLoader::Open(const char *lib_path) {
 #else
   handler_ = LoadLibrary(real_path.c_str());
 #endif
-
   if (handler_ == nullptr) {
     MS_LOG(ERROR) << "handler is nullptr.";
     return RET_ERROR;
@@ -83,6 +82,5 @@ DynamicLibraryLoader::~DynamicLibraryLoader() {
     Close();
   }
 }
-
 }  // namespace lite
 }  // namespace mindspore

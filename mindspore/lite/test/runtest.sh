@@ -4,6 +4,8 @@ set -e
 CUR_DIR=$(cd "$(dirname $0)"; pwd)
 BUILD_DIR=${CUR_DIR}/../build
 
+export GLOG_v=2
+
 # prepare run directory for ut
 mkdir -pv ${CUR_DIR}/do_test
 
