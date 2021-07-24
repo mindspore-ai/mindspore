@@ -75,7 +75,7 @@ Closure::Closure(const FuncGraphPtr &graph, const AnfNodePtrToBaseRefMap &values
     : func_graph_(graph), values_(values) {}
 
 BaseRef Closure::operator()(const VectorRef &args) {
-  MS_LOG(DEBUG) << "start closure";
+  MS_LOG(DEBUG) << "Start closure";
   return vm_->Evaluate(func_graph_, args, values_);
 }
 
@@ -179,7 +179,7 @@ BaseRef VM::Export(const BaseRef &value) {
 // This will evaluate the passed-in graph and return the resulting value.
 BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const AnfNodePtrToBaseRefMap &closure) {
   AcquireGraph(graph);
-  MS_LOG(DEBUG) << "evalue arg size: " << args.size();
+  MS_LOG(DEBUG) << "Evalue arg size: " << args.size();
   if (args.size() != graph->parameters().size()) {
     MS_LOG(EXCEPTION) << "Call with wrong number of arguments, expect " << graph->parameters().size() << ", but got "
                       << args.size();
@@ -330,10 +330,10 @@ BaseRef VM::DispatchCall(const AnfNodePtr &node, const VMFramePtr &frame, const 
     auto fnval = utils::cast<ValuePtr>(fn)->cast<PrimitivePtr>();
     MS_LOG(DEBUG) << "DispatchCall prim:" << fnval->name() << ", node:" << node->DebugString(true);
     if (args.empty()) {
-      MS_LOG(EXCEPTION) << "args is empty";
+      MS_LOG(EXCEPTION) << "Args is empty";
     }
     if (fnval == prim::kPrimReturn) {
-      MS_LOG(DEBUG) << "return args:" << args.size();
+      MS_LOG(DEBUG) << "Return args:" << args.size();
       return std::make_shared<ReturnWrap>(args[0]);
     }
 
@@ -408,7 +408,7 @@ BaseRef VM::HandleNode(const AnfNodePtr &node, const VMFramePtr &frame) {
     (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(fnArgs),
                          [&](const AnfNodePtr &inp) -> BaseRef { return (*frame)[inp]; });
     if (fnArgs.empty()) {
-      MS_LOG(EXCEPTION) << "function arguments is empty";
+      MS_LOG(EXCEPTION) << "Function arguments is empty";
     } else {
       auto args = VectorRef(fnArgs.begin() + 1, fnArgs.end());
       auto except = DispatchCall(node, frame, fnArgs[0], args);
@@ -434,7 +434,7 @@ VectorRef VM::RunGraph(const FuncGraphPtr &g, const VectorRef &args) {
 }
 
 BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args) {
-  MS_LOG(DEBUG) << "operation start " << prim->name();
+  MS_LOG(DEBUG) << "Operation start " << prim->name();
   MS_EXCEPTION_IF_NULL(prim);
   auto result = prim->RunComputeFunction(args);
   if (result.is_null()) {
