@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-
 constexpr auto kTensorArrayDynamicSize = "dynamic_size";
 constexpr auto kTensorArrayIdenticalElementShapes = "identical_element_shapes";
 constexpr auto kTensorArrayElementShape = "element_shape";

@@ -41,7 +41,6 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   (void)CheckAndConvertUtils::CheckTensorTypeValid("infer_type", infer_type, valid_type, op_name);
   return infer_type;
 }
-
 }  // namespace
 AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {

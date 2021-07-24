@@ -119,7 +119,6 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     MS_EXCEPTION_IF_NULL(shape_min);
     auto min_value = shape_min->isa<ValueList>() ? shape_min->cast<ValueListPtr>()->value()
                                                  : shape_min->cast<ValueTuplePtr>()->value();
-
     if (max_value.size() != shape_rank || min_value.size() != shape_rank) {
       MS_LOG(EXCEPTION) << "The size of max_value or min_value is not equal to the shape rank.";
     }
@@ -135,7 +134,6 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   ShapeVector out_shape = CalOutputShape(x_shape_data);
   return std::make_shared<abstract::Shape>(out_shape);
 }
-
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
