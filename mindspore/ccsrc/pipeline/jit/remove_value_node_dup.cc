@@ -29,6 +29,8 @@ namespace mindspore {
 namespace pipeline {
 void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, HashCache *const hash_cache,
                     HashValue *const hash_value) {
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(hash_cache);
   const auto &to_check_value = GetValueNode(node);
   MS_EXCEPTION_IF_NULL(to_check_value);
 

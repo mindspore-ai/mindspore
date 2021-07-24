@@ -32,13 +32,16 @@ namespace mindspore {
 namespace abstract {
 namespace {
 inline AbstractBasePtr GetEvaluatedValue(const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(conf);
   if (conf->node()->intermediate_abstract()) {
     return conf->node()->intermediate_abstract();
   }
+  MS_EXCEPTION_IF_NULL(conf->ObtainEvalResult());
   return conf->ObtainEvalResult()->abstract();
 }
 
 AnfNodePtr BuildValueNode(const ValuePtr &v, const AbstractBasePtr &abs_base) {
+  MS_EXCEPTION_IF_NULL(abs_base);
   AnfNodePtr value_node = NewValueNode(v);
   value_node->set_abstract(abs_base);
   MS_LOG(DEBUG) << "Create ValueNode: " << value_node->ToString() << ", with abstract: " << abs_base->ToString();
@@ -53,6 +56,7 @@ bool IsVisible(FuncGraphPtr fg, const FuncGraphPtr &parent) {
 }
 
 bool CheckAbstractTensor(const AbstractBasePtr &abs_base) {
+  MS_EXCEPTION_IF_NULL(abs_base);
   if (abs_base->isa<AbstractTensor>()) {
     return true;
   } else if (abs_base->isa<AbstractSequeue>()) {
@@ -69,7 +73,8 @@ bool CheckAbstractTensor(const AbstractBasePtr &abs_base) {
 FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(context);
-  MS_LOG(DEBUG) << "Specialize topmost function graph: " << context->func_graph()->ToString();
+  MS_LOG(DEBUG) << "Specialize topmost function graph: "
+                << (context->func_graph() ? context->func_graph()->ToString() : "FG(Null)");
   if (top_context_ == nullptr) {
     top_context_ = context;
     MS_LOG(INFO) << "Specialize set top func graph context: " << context->ToString();
@@ -82,6 +87,7 @@ FuncGraphPtr ProgramSpecializer::SpecializeFuncGraph(const FuncGraphPtr &fg, con
   MS_EXCEPTION_IF_NULL(context);
   auto iter = specializations_.find(context->SpecializeKey());
   if (iter != specializations_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
     return iter->second->specialized_func_graph();
   }
 
@@ -132,11 +138,11 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
   std::shared_ptr<FuncGraphSpecializer> specializer = GetTopSpecializer(node);
 
   // If had replicated, just return that.
+  MS_EXCEPTION_IF_NULL(specializer->repl_node_);
   auto iter = specializer->repl_node_->find(node);
   if (iter != specializer->repl_node_->end()) {
     return iter->second;
   }
-
   auto new_node = specializer->cloner_->CloneDisconnected(node);
   if (node->isa<CNode>()) {
     if (!new_node->isa<CNode>()) {
@@ -157,6 +163,7 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
 }
 
 void FuncGraphSpecializer::UpdateNewCNodeInputs(const AnfNodePtr &node, const AnfNodePtr &new_node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto c_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(c_node);
   auto inputs = c_node->inputs();
@@ -170,6 +177,7 @@ void FuncGraphSpecializer::UpdateNewCNodeInputs(const AnfNodePtr &node, const An
         MS_EXCEPTION_IF_NULL(c_inp);
         auto c_new_inp = new_inp->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(c_new_inp);
+        MS_EXCEPTION_IF_NULL(c_new_inp->func_graph());
         MS_LOG(DEBUG) << "Replace in order, inp node: " << inp->DebugString() << " -> " << new_inp->DebugString();
         c_new_inp->func_graph()->ReplaceInOrder(c_inp, c_new_inp);
       }
@@ -208,8 +216,9 @@ std::shared_ptr<FuncGraphSpecializer> FuncGraphSpecializer::GetTopSpecializer(co
       MS_EXCEPTION_IF_NULL(specializer_->top_context());
       if (specializer_->top_context()->func_graph() == fg) {  // `fg` is top func graph.
         specializer = specializer_->GetFuncGraphSpecializer(specializer_->top_context());
-        MS_LOG(INFO) << "Used top func graph specializer as parent for " << func_graph_->ToString()
-                     << ", node: " << node->DebugString() << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+        MS_LOG(INFO) << "Used top func graph specializer as parent for "
+                     << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << ", node: " << node->DebugString()
+                     << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info());
         MS_EXCEPTION_IF_NULL(specializer);
         break;
       }
@@ -219,21 +228,28 @@ std::shared_ptr<FuncGraphSpecializer> FuncGraphSpecializer::GetTopSpecializer(co
     if (specializer == nullptr) {
       MS_LOG(EXCEPTION) << "`specializer` should not be null, node: " << node->DebugString()
                         << ", NodeInfo: " << trace::GetDebugInfo(node->debug_info()) << ".\n"
-                        << func_graph_->ToString() << " has no parent context? At least not " << fg->ToString();
+                        << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
+                        << " has no parent context? At least not " << fg->ToString();
     }
   }
   return specializer;
 }
 
 void FuncGraphSpecializer::Run() {
-  MS_LOG(DEBUG) << "Before run, origin func graph name: " << func_graph_->ToString()
-                << ", cloned func graph name: " << specialized_func_graph_->ToString()
-                << ", func graph: " << func_graph_->get_return()->DebugString();
+  MS_LOG(DEBUG) << "Before run, origin func graph name: " << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
+                << ", cloned func graph name: "
+                << (specialized_func_graph_ ? specialized_func_graph_->ToString() : "FG(Null)") << ", func graph: "
+                << (func_graph_ ? func_graph_->get_return() ? func_graph_->get_return()->DebugString() : "return null"
+                                : "FG(null)");
   FirstPass();
   SecondPass();
-  MS_LOG(DEBUG) << "After run, origin func graph name: " << func_graph_->ToString()
-                << ", cloned func graph name: " << specialized_func_graph_->ToString()
-                << ", new func graph: " << specialized_func_graph_->get_return()->DebugString();
+  MS_LOG(DEBUG) << "After run, origin func graph name: " << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
+                << ", cloned func graph name: "
+                << (specialized_func_graph_ ? specialized_func_graph_->ToString() : "FG(Null)") << ", new func graph: "
+                << (specialized_func_graph_ ? specialized_func_graph_->get_return()
+                                                ? specialized_func_graph_->get_return()->DebugString()
+                                                : "return null"
+                                            : "FG(null)");
 }
 
 void FuncGraphSpecializer::FirstPass() {
@@ -291,8 +307,8 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(new_node);
   if (new_node->func_graph() != specialized_func_graph_) {
     MS_LOG(EXCEPTION) << "Error in specializer [A] node: " << node->DebugString()
-                      << ", new_node: " << new_node->DebugString()
-                      << ", new_node->func_graph(): " << new_node->func_graph()->ToString()
+                      << ", new_node: " << new_node->DebugString() << ", new_node->func_graph(): "
+                      << (new_node->func_graph() ? new_node->func_graph()->ToString() : "FG(Null)")
                       << ", specialized_func_graph_: " << specialized_func_graph_->ToString();
     return;
   }
@@ -310,6 +326,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     auto attrs = conf->ObtainEvalResult()->attribute();
     auto c_old = node->cast<CNodePtr>();
     auto c_new = new_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(c_new);
     auto new_inputs = c_new->inputs();
     auto old_inputs = c_old->inputs();
     for (size_t i = 0; i < old_inputs.size(); ++i) {
@@ -321,7 +338,6 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
       AnfNodePtr replace_node = BuildPossibleValueNode(iconf->node(), ival, attrs);
       if (replace_node == nullptr) {
         replace_node = BuildReplacedNode(iconf);
-        MS_EXCEPTION_IF_NULL(replace_node);
         replace_node->set_abstract(ival);
         MS_LOG(DEBUG) << "Set replaced: " << replace_node->ToString() << ", to abstract: " << ival->ToString();
       } else {
@@ -343,7 +359,7 @@ AnfNodePtr FuncGraphSpecializer::BuildReplacedNode(const AnfNodeConfigPtr &conf)
   auto conf_iter = engine_->anfnode_config_map().find(conf);
   AnfNodeConfigPtr new_conf = conf;
   while (conf_iter != engine_->anfnode_config_map().end()) {
-    MS_LOG(DEBUG) << "Origin conf: node(" << new_conf->node()->DebugString() << ")";
+    MS_LOG(DEBUG) << "Origin conf: node(" << (new_conf->node() ? new_conf->node()->DebugString() : "Node(Null)") << ")";
     new_conf = conf_iter->second;
     MS_EXCEPTION_IF_NULL(new_conf);
     const auto &forward_node = new_conf->node();
@@ -366,15 +382,17 @@ AnfNodePtr FuncGraphSpecializer::BuildReplacedNode(const AnfNodeConfigPtr &conf)
       // CloneOrderlist, and it will be replaced inside ReplicateDisconnectedNode.
       // For 2.1 the following code will do the job, replace replicated origin cnode with the replicated
       // forward one in the replicated func_graph.
+      MS_EXCEPTION_IF_NULL(conf_iter->first);
       const auto &origin_node = conf_iter->first->node();
       const auto &replicated_origin_node = GetReplicatedNode(origin_node);
       if (replicated_origin_node != origin_node) {
         MS_LOG(DEBUG) << "Replace replicated origin node in order list: " << replicated_origin_node->DebugString()
                       << ", with replicated forwarded node: " << replicated_forward_node->DebugString();
+        MS_EXCEPTION_IF_NULL(replicated_forward_node->func_graph());
         replicated_forward_node->func_graph()->ReplaceInOrder(replicated_origin_node, replicated_forward_node);
       } else {
         MS_LOG(EXCEPTION) << "Origin node is not replicated in specialized func_graph, origin node: "
-                          << origin_node->DebugString();
+                          << (origin_node ? origin_node->DebugString() : "Node(Null)");
       }
     }
     conf_iter = engine_->anfnode_config_map().find(new_conf);
@@ -406,6 +424,7 @@ inline bool CanSpecializeNode(const AnfNodePtr &node) {
 AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &node, const AbstractBasePtr &abs,
                                                       const AbstractBasePtrList &argvals) {
   MS_EXCEPTION_IF_NULL(abs);
+  MS_EXCEPTION_IF_NULL(node);
   AbstractFunctionPtr real_a = dyn_cast<AbstractFunction>(abs);
   MS_EXCEPTION_IF_NULL(real_a);
 
@@ -429,9 +448,11 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const AnfNodePtr &node, co
   }
 
   // Set the flag, so this MetaFuncGraph will be Re-AutoMonaded.
+  MS_EXCEPTION_IF_NULL(func);
   if (func->isa<MetaFuncGraphAbstractClosure>()) {
     auto specialized_fg = GetValueNode<FuncGraphPtr>(repl);
-    if (specialized_fg != nullptr && (argvals.size() > 1) && argvals[argvals.size() - 1]->isa<AbstractUMonad>()) {
+    if (specialized_fg != nullptr && (argvals.size() > 1) && argvals.back() != nullptr &&
+        argvals.back()->isa<AbstractUMonad>()) {
       specialized_fg->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
     }
   }
@@ -482,6 +503,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &nod
   AnalysisContextPtr context = MakeContext(engine_, real_eval, argvals);
   MS_LOG(DEBUG) << "Specialize function graph: " << context->func_graph()->ToString() << ", args: " << argvals.size()
                 << ", graph: " << context->func_graph()->get_return()->DebugString();
+  MS_EXCEPTION_IF_NULL(context->func_graph());
   if (context->func_graph()->stub()) {
     MS_LOG(DEBUG) << "Specialize stub function graph, return the original node: " << context->func_graph()->ToString()
                   << ", args: " << argvals.size() << ", graph: " << context->func_graph()->get_return()->DebugString()
@@ -489,6 +511,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &nod
     return node;
   }
   FuncGraphPtr v = specializer_->SpecializeFuncGraph(context->func_graph(), context);
+  MS_EXCEPTION_IF_NULL(v);
   v->set_flag(kFuncGraphFlagUndetermined, false);
   return BuildValueNode(v, abs);
 }
@@ -505,8 +528,13 @@ AnalysisContextPtr FuncGraphSpecializer::MakeContext(const AnalysisEnginePtr &en
 }
 
 AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &new_node) {
+  MS_EXCEPTION_IF_NULL(new_node);
   auto new_inputs = new_node->inputs();
+  if (new_inputs.empty()) {
+    MS_LOG(EXCEPTION) << "inputs can't be empty.";
+  }
   AnfNodePtr func = new_inputs[0];
+  MS_EXCEPTION_IF_NULL(new_inputs[0]);
   AbstractBasePtr fnval = new_inputs[0]->abstract();
 
   AbstractBasePtrList args;
@@ -549,6 +577,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &n
         partial_node_list.push_back(old_node);
       }
     }
+    MS_EXCEPTION_IF_NULL(new_node->func_graph());
     wrapped_node = new_node->func_graph()->NewCNode(partial_node_list);
     wrapped_node->set_abstract(partial_closure);
   }
@@ -556,6 +585,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &n
 }
 
 const EvaluatorCacheMgrPtr FuncGraphSpecializer::GetEvalCache(const EvaluatorPtr &eval) {
+  MS_EXCEPTION_IF_NULL(eval);
   auto cache_iter = evalcaches_.find(eval);
   if (cache_iter == evalcaches_.end()) {
     evalcaches_[eval] = eval->evaluator_cache_mgr();
@@ -571,7 +601,11 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   EvalResultPtr ret = nullptr;
   AbstractBasePtrList broaded_argvals;
   std::vector<AbstractBasePtrList> args_vector;
-  auto &origin_eval_cache = evalcaches_[eval]->GetCache();
+  auto eval_cache_iter = evalcaches_.find(eval);
+  if (eval_cache_iter == evalcaches_.end()) {
+    MS_LOG(EXCEPTION) << "Evaluator:" << eval->ToString() << " not exist in cache.";
+  }
+  auto &origin_eval_cache = eval_cache_iter->second->GetCache();
   for (auto &argvals_map : origin_eval_cache) {
     auto argvals = argvals_map.first;
     args_vector.push_back(argvals);
@@ -667,6 +701,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
       auto status = FindUniqueArgvals(func_abs, eval, empty_args, &result);
       MS_LOG(DEBUG) << "FindUniqueArgvals return status: " << status;
       // if a node is a poly node, or an input parameter is a PartialAbstractClosure, expand it early
+      MS_EXCEPTION_IF_NULL(func->func_graph());
       if (status == kSpecializeFindUniqueArgvalPoly ||
           (func->isa<Parameter>() && func->func_graph()->has_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER))) {
         auto wrapped_node = BuildSpecializedParameterNode(new_node);
@@ -697,6 +732,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
 
 namespace {
 void DumpEvaluatorCache(const EvaluatorCacheMgrPtr &evaluator_cache_mgr, const AbstractBasePtrList &argvals) {
+  MS_EXCEPTION_IF_NULL(evaluator_cache_mgr);
   MS_LOG(DEBUG) << "Find unique argvals failed: " << argvals.size() << ", " << argvals << ". Check cache all items.";
   int64_t i = 0;
   const EvalResultCache &map = evaluator_cache_mgr->GetCache();
@@ -706,6 +742,7 @@ void DumpEvaluatorCache(const EvaluatorCacheMgrPtr &evaluator_cache_mgr, const A
 }
 
 bool IsPolyFunc(const AbstractFunctionPtr &func, const AbstractBasePtrList &argvals) {
+  MS_EXCEPTION_IF_NULL(func);
   if (func->isa<PrimitiveAbstractClosure>() && argvals.empty()) {
     MS_LOG(DEBUG) << "High order primitive return POLY.";
     return true;
@@ -733,6 +770,7 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
   MS_EXCEPTION_IF_NULL(result);
 
   EvaluatorCacheMgrPtr evaluator_cache_mgr = eval->evaluator_cache_mgr();
+  MS_EXCEPTION_IF_NULL(evaluator_cache_mgr);
   auto data = evaluator_cache_mgr->GetValue(argvals);
   if (data != nullptr) {
     *result = std::make_pair(argvals, data->abstract());
@@ -740,13 +778,16 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
   }
   DumpEvaluatorCache(evaluator_cache_mgr, argvals);
 
-  MS_EXCEPTION_IF_NULL(GetEvalCache(eval));
-  const EvalResultCache &choices = GetEvalCache(eval)->GetCache();
+  auto cache = GetEvalCache(eval);
+  MS_EXCEPTION_IF_NULL(cache);
+  const EvalResultCache &choices = cache->GetCache();
   if (choices.get(argvals) != nullptr) {
-    *result = std::make_pair(argvals, GetEvalCache(eval)->GetValue(argvals)->abstract());
+    MS_EXCEPTION_IF_NULL(cache->GetValue(argvals));
+    *result = std::make_pair(argvals, cache->GetValue(argvals)->abstract());
     return kSpecializeSuccess;
   } else if (choices.size() == 1) {
     MS_LOG(DEBUG) << "Evaluator cache has a single item, just use it.";
+    MS_EXCEPTION_IF_NULL(choices.begin()->second);
     *result = std::make_pair(choices.begin()->first, choices.begin()->second->abstract());
     return kSpecializeSuccess;
   } else if (choices.empty()) {
@@ -768,11 +809,14 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
   }
 }
 static PrimitivePtr BuildPrimtiveValueWithAttributes(const PrimitivePtr &prim, const AttrValueMapPtr &attrs) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto &prim_attrs = prim->attrs();
   bool is_attr_same = true;
   for (auto &item : *attrs) {
     auto itr = prim_attrs.find(item.first);
     if (itr != prim_attrs.end()) {
+      MS_EXCEPTION_IF_NULL(itr->second);
+      MS_EXCEPTION_IF_NULL(item.second);
       if (!(*(itr->second) == *(item.second))) {
         is_attr_same = false;
         break;

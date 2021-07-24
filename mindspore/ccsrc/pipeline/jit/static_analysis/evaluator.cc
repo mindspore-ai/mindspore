@@ -38,7 +38,8 @@ string EvalEntryLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList
     ss << "Evaluator " << evaluator->ToString() << " run for " << out_conf->node()->scope()->name();
   }
   for (size_t i = 0; i < arg_spec_list.size(); i++) {
-    ss << evaluator->ToString() << " input[" << i << "] abstract value: " << arg_spec_list[i]->ToString();
+    ss << evaluator->ToString() << " input[" << i
+       << "] abstract value: " << (arg_spec_list[i] ? arg_spec_list[i]->ToString() : "null abstract.");
   }
   return ss.str();
 }
@@ -60,6 +61,9 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
 
 void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
                                              const StackFramePtr &new_stack_frame) {
+  MS_EXCEPTION_IF_NULL(current_stack_frame);
+  MS_EXCEPTION_IF_NULL(new_stack_frame);
+  MS_EXCEPTION_IF_NULL(engine);
   // Enter new func graph.
   auto &current_node = current_stack_frame->CurrentNode();
   auto current_context = current_stack_frame->current_context();
@@ -83,8 +87,8 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
                 << "), enter, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
 }
 
-void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &engine,
-                                             const StackFramePtr &current_stack_frame) {
+void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &, const StackFramePtr &current_stack_frame) {
+  MS_EXCEPTION_IF_NULL(current_stack_frame);
   // Leave current func graph.
   auto current_context = current_stack_frame->current_context();
   trace::TraceGraphEvalLeave(current_context);
@@ -149,8 +153,11 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
 
 AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
                                                             const AnalysisContextPtr &context) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(engine);
   const AnfNodePtr &func_node = fg->get_return();
   const auto &all_nodes = TopoSort(func_node, SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
+    MS_EXCEPTION_IF_NULL(node);
     if (node->isa<ValueNode>() || node->isa<Parameter>()) {
       return EXCLUDE;
     }
@@ -162,7 +169,9 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
                   << ", node_conf: " << node_conf->ToString();
     auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+    MS_EXCEPTION_IF_NULL(node_eval_result);
     res_base = node_eval_result->abstract();
+    MS_EXCEPTION_IF_NULL(res_base);
     MS_LOG(DEBUG) << GetInferThread() << "Eval ( " << node_conf->ToString() << ") = " << res_base->ToString();
   }
   MS_EXCEPTION_IF_NULL(res_base);
@@ -254,6 +263,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
 }
 
 void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList *broaded_args) {
+  MS_EXCEPTION_IF_NULL(broaded_args);
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(*broaded_args),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
@@ -467,6 +477,7 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
 
   // Call the original evaluator, get the result: y = f(x)
   EvalResultPtr result = evaluator_->Run(engine, args_conf_list, nullptr);
+  MS_EXCEPTION_IF_NULL(result);
   // Build a virtual function: bprop_f which use sense of y as input, return sense of function free variable and input
   // parameters. (sense_f, sense_x, ...)(*bpro_f) (sense_y)
   AbstractBasePtrList bparams;
