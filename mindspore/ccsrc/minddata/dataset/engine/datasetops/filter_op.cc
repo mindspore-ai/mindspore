@@ -62,7 +62,7 @@ Status FilterOp::operator()() {
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   int64_t cnt = 0;
-  while (child_iterator_->eof_handled() == false) {
+  while (child_iterator_->EofHandled() == false) {
     while (new_row.empty() == false) {
       RETURN_IF_NOT_OK(worker_queues_[cnt % num_workers_]->EmplaceBack(new_row));
       cnt++;

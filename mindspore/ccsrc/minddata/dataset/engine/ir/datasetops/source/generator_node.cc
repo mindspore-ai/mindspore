@@ -73,9 +73,9 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
     RETURN_IF_NOT_OK(data_schema->LoadSchemaString(schema_json_string, {}));
 
     for (int32_t i = 0; i < data_schema->NumColumns(); i++) {
-      ColDescriptor col = data_schema->column(i);
-      column_names_.push_back(col.name());
-      column_types_.push_back((col.type()));
+      ColDescriptor col = data_schema->Column(i);
+      column_names_.push_back(col.Name());
+      column_types_.push_back((col.Type()));
     }
   }
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;

@@ -123,7 +123,7 @@ Status TFReaderOp::Init() {
   }
 
   if (total_rows_ == 0) {
-    total_rows_ = data_schema_->num_rows();
+    total_rows_ = data_schema_->NumRows();
   }
   if (total_rows_ < 0) {
     RETURN_STATUS_UNEXPECTED(
@@ -332,12 +332,12 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
 Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, TensorRow *out_row) {
   int32_t num_columns = data_schema_->NumColumns();
   for (int32_t col = 0; col < num_columns; ++col) {
-    const ColDescriptor current_col = data_schema_->column(col);
+    const ColDescriptor current_col = data_schema_->Column(col);
     const dataengine::Features &example_features = tf_file->features();
     const google::protobuf::Map<std::string, dataengine::Feature> &feature_map = example_features.feature();
-    auto iter_column = feature_map.find(current_col.name());
+    auto iter_column = feature_map.find(current_col.Name());
     if (iter_column == feature_map.end()) {
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: " + current_col.name() + " does not exist.");
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: " + current_col.Name() + " does not exist.");
     }
     const dataengine::Feature &column_values_list = iter_column->second;
     RETURN_IF_NOT_OK(LoadFeature(out_row, column_values_list, current_col, col));
@@ -379,7 +379,7 @@ Status TFReaderOp::LoadFeature(TensorRow *tensor_row, const dataengine::Feature 
       // into the tensor
       TensorShape current_shape = TensorShape::CreateUnknownRankShape();
       RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(num_elements, &current_shape));
-      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(current_shape, current_col.type(), data_ptr, &ts));
+      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(current_shape, current_col.Type(), data_ptr, &ts));
       break;
     }
     case dataengine::Feature::KindCase::kInt64List: {
@@ -406,10 +406,10 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // kBytesList can map to the following DE types ONLY!
   // DE_UINT8, DE_INT8
   // Must be single byte type for each element!
-  if (current_col.type() != DataType::DE_UINT8 && current_col.type() != DataType::DE_INT8 &&
-      current_col.type() != DataType::DE_STRING) {
-    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.name() +
-                          ", data type should be int8, uint8 or string, but got " + current_col.type().ToString();
+  if (current_col.Type() != DataType::DE_UINT8 && current_col.Type() != DataType::DE_INT8 &&
+      current_col.Type() != DataType::DE_STRING) {
+    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.Name() +
+                          ", data type should be int8, uint8 or string, but got " + current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -417,7 +417,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
 
   *num_elements = bytes_list.value_size();
 
-  if (current_col.type() == DataType::DE_STRING) {
+  if (current_col.Type() == DataType::DE_STRING) {
     TensorShape shape = TensorShape::CreateScalar();
     RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(*num_elements, &shape));
     RETURN_IF_NOT_OK(Tensor::CreateFromByteList(bytes_list, shape, tensor));
@@ -436,14 +436,14 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   int64_t pad_size = max_size;
 
   // if user provides a shape in the form of [-1, d1, 2d, ... , dn], we need to pad to d1 * d2 * ... * dn
-  if (current_col.hasShape()) {
-    TensorShape cur_shape = current_col.shape();
+  if (current_col.HasShape()) {
+    TensorShape cur_shape = current_col.Shape();
     if (cur_shape.Size() >= 2 && cur_shape[0] == TensorShape::kDimUnknown) {
       int64_t new_pad_size = 1;
       for (int i = 1; i < cur_shape.Size(); ++i) {
         if (cur_shape[i] == TensorShape::kDimUnknown) {
           std::string err_msg =
-            "Invalid data, more than one unknown dimension in the shape of column: " + current_col.name();
+            "Invalid data, more than one unknown dimension in the shape of column: " + current_col.Name();
           RETURN_STATUS_UNEXPECTED(err_msg);
         }
         new_pad_size *= cur_shape[i];
@@ -451,7 +451,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
       pad_size = new_pad_size;
     } else {
       if (cur_shape.known() && cur_shape.NumOfElements() != max_size) {
-        std::string err_msg = "Shape in schema's column '" + current_col.name() + "' is incorrect." +
+        std::string err_msg = "Shape in schema's column '" + current_col.Name() + "' is incorrect." +
                               "\nshape received: " + cur_shape.ToString() +
                               "\ntotal elements in shape received: " + std::to_string(cur_shape.NumOfElements()) +
                               "\nexpected total elements in shape: " + std::to_string(max_size);
@@ -463,7 +463,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   // know how many elements there are and the total bytes, create tensor here:
   TensorShape current_shape = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape((*num_elements) * pad_size, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateFromByteList(bytes_list, current_shape, current_col.type(), pad_size, tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateFromByteList(bytes_list, current_shape, current_col.Type(), pad_size, tensor));
 
   return Status::OK();
 }
@@ -472,9 +472,9 @@ Status TFReaderOp::LoadFloatList(const ColDescriptor &current_col, const dataeng
                                  int32_t *num_elements, std::unique_ptr<float[]> *float_array) {
   // KFloatList can only map to DE types:
   // DE_FLOAT32
-  if (current_col.type() != DataType::DE_FLOAT32) {
-    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.name() +
-                          ", data type should be string, but got " + current_col.type().ToString();
+  if (current_col.Type() != DataType::DE_FLOAT32) {
+    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.Name() +
+                          ", data type should be string, but got " + current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -494,26 +494,26 @@ Status TFReaderOp::LoadFloatList(const ColDescriptor &current_col, const dataeng
 // Determines which template type to use and calls LoadIntList
 Status TFReaderOp::LoadIntListSwitch(const ColDescriptor &current_col, const dataengine::Feature &column_values_list,
                                      int32_t *num_elements, std::shared_ptr<Tensor> *tensor) {
-  if (current_col.type() == DataType::DE_UINT64) {
+  if (current_col.Type() == DataType::DE_UINT64) {
     RETURN_IF_NOT_OK(LoadIntList<uint64_t>(current_col, column_values_list, num_elements, tensor));
-  } else if (current_col.type() == DataType::DE_INT64) {
+  } else if (current_col.Type() == DataType::DE_INT64) {
     RETURN_IF_NOT_OK(LoadIntList<int64_t>(current_col, column_values_list, num_elements, tensor));
-  } else if (current_col.type() == DataType::DE_UINT32) {
+  } else if (current_col.Type() == DataType::DE_UINT32) {
     RETURN_IF_NOT_OK(LoadIntList<uint32_t>(current_col, column_values_list, num_elements, tensor));
-  } else if (current_col.type() == DataType::DE_INT32) {
+  } else if (current_col.Type() == DataType::DE_INT32) {
     RETURN_IF_NOT_OK(LoadIntList<int32_t>(current_col, column_values_list, num_elements, tensor));
-  } else if (current_col.type() == DataType::DE_UINT16) {
+  } else if (current_col.Type() == DataType::DE_UINT16) {
     RETURN_IF_NOT_OK(LoadIntList<uint16_t>(current_col, column_values_list, num_elements, tensor));
-  } else if (current_col.type() == DataType::DE_INT16) {
+  } else if (current_col.Type() == DataType::DE_INT16) {
     RETURN_IF_NOT_OK(LoadIntList<int16_t>(current_col, column_values_list, num_elements, tensor));
-  } else if (current_col.type() == DataType::DE_UINT8) {
+  } else if (current_col.Type() == DataType::DE_UINT8) {
     RETURN_IF_NOT_OK(LoadIntList<uint8_t>(current_col, column_values_list, num_elements, tensor));
-  } else if (current_col.type() == DataType::DE_INT8) {
+  } else if (current_col.Type() == DataType::DE_INT8) {
     RETURN_IF_NOT_OK(LoadIntList<int8_t>(current_col, column_values_list, num_elements, tensor));
   } else {
-    std::string err_msg = "Invalid data, invalid datatype for Tensor at column: " + current_col.name() +
+    std::string err_msg = "Invalid data, invalid datatype for Tensor at column: " + current_col.Name() +
                           ", data type should be uint64, int64, uint32, int32, uint16, int16, uint8 or int8" +
-                          ", but got " + current_col.type().ToString();
+                          ", but got " + current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -525,9 +525,9 @@ Status TFReaderOp::LoadIntListSwitch(const ColDescriptor &current_col, const dat
 template <typename T>
 Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengine::Feature &column_values_list,
                                int32_t *num_elements, std::shared_ptr<Tensor> *tensor) {
-  if (!(current_col.type().IsInt())) {
-    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.name() +
-                          ", data type should be int, but got " + current_col.type().ToString();
+  if (!(current_col.Type().IsInt())) {
+    std::string err_msg = "Invalid data, invalid data type for Tensor at column: " + current_col.Name() +
+                          ", data type should be int, but got " + current_col.Type().ToString();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -540,7 +540,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   // know how many elements there are, create tensor here:
   TensorShape current_shape = TensorShape::CreateUnknownRankShape();
   RETURN_IF_NOT_OK(current_col.MaterializeTensorShape(*num_elements, &current_shape));
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(current_shape, current_col.type(), tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(current_shape, current_col.Type(), tensor));
 
   int64_t i = 0;
   auto it = (*tensor)->begin<T>();
@@ -719,7 +719,7 @@ Status TFReaderOp::ComputeColMap() {
   // Construct the column name map for this operator (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->column(i).name()] = i;
+      column_name_id_map_[data_schema_->Column(i).Name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

@@ -65,6 +65,8 @@ Status BuddySpace::Init() {
 }
 
 Status BuddySpace::Alloc(const uint64_t sz, BSpaceDescriptor *desc, addr_t *p) noexcept {
+  RETURN_UNEXPECTED_IF_NULL(desc);
+  RETURN_UNEXPECTED_IF_NULL(p);
   std::lock_guard<std::mutex> lock(mutex_);
   addr_t addr = AllocNoLock(sz, desc);
   if (addr != NOSPACE) {
@@ -100,6 +102,10 @@ void BuddySpace::FreeNoLock(const BSpaceDescriptor *desc) {
 }
 
 void BuddySpace::Free(const BSpaceDescriptor *desc) {
+  if (desc == nullptr) {
+    MS_LOG(ERROR) << "The pointer[desc] is null.";
+    return;
+  }
   std::lock_guard<std::mutex> lock(mutex_);
   return FreeNoLock(desc);
 }
@@ -133,6 +139,18 @@ std::ostream &operator<<(std::ostream &os, const BuddySpace &s) {
     addr += sz;
   }
   return os;
+}
+
+uint32_t BuddySpace::SizeToBlock(const uint64_t sz) const {
+  if (min_ == 0) {
+    MS_LOG(ERROR) << "min_ can not be zero.";
+    return 0;
+  }
+  uint32_t reqSize = (sz / min_);
+  if (sz % min_) {
+    reqSize++;
+  }
+  return reqSize;
 }
 
 void BuddySpace::GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STATE *st) const {

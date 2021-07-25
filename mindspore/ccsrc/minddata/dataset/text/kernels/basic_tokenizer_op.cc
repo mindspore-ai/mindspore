@@ -54,10 +54,10 @@ BasicTokenizerOp::BasicTokenizerOp(const bool &lower_case, const bool &keep_whit
     : TokenizerOp(with_offsets),
       lower_case_(lower_case),
       keep_whitespace_(keep_whitespace),
+      normalization_form_(normalization_form),
       preserve_unused_token_(preserve_unused_token),
       case_fold_(std::make_unique<CaseFoldOp>()),
       nfd_normalize_(std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfd)),
-      normalization_form_(normalization_form),
       common_normalize_(std::make_unique<NormalizeUTF8Op>(normalization_form)),
       replace_accent_chars_(std::make_unique<RegexReplaceOp>("\\p{Mn}", "")),
       replace_control_chars_(std::make_unique<RegexReplaceOp>("\\p{Cc}|\\p{Cf}", " ")) {
@@ -81,6 +81,7 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::string_view &text
   icu::ErrorCode error;
   const icu::Normalizer2 *nfkc_case_fold = icu::Normalizer2::getNFKCCasefoldInstance(error);
   CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "BasicTokenizer: getNFKCCasefoldInstance failed.");
+  RETURN_UNEXPECTED_IF_NULL(output);
   output->clear();
 
   // 1. get start and end offsets of not case fold strs
@@ -131,7 +132,7 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor
   IO_CHECK(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "BasicTokenizer: input is not string datatype.");
   std::vector<std::string> strs(input->Size());
-  int i = 0;
+  size_t i = 0;
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {
     RETURN_IF_NOT_OK(CaseFoldWithoutUnusedWords(*iter, kUnusedWords, &strs[i++]));
   }

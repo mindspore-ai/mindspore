@@ -571,9 +571,8 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
 
   if (dst.IsEmpty()) {
     dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
-  } else if (src.width_ != dst.width_ || src.height_ != dst.height_ || src.channel_ != dst.channel_) {
-    return false;
-  } else if (dst.data_type_ != LDataType::FLOAT32) {
+  } else if (src.width_ != dst.width_ || src.height_ != dst.height_ || src.channel_ != dst.channel_ ||
+             dst.data_type_ != LDataType::FLOAT32) {
     return false;
   }
 
@@ -662,24 +661,16 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
 }
 
 static bool CheckZero(const std::vector<float> &vs) {
-  for (int i = 0; i < vs.size(); i++) {
-    if (Equal(vs[i], 0.0f)) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(vs.begin(), vs.end(), [](const float &v) { return Equal(v, 0.0f); });
 }
 
 static bool CheckZero(const std::vector<size_t> &vs) {
-  for (int i = 0; i < vs.size(); i++) {
-    if (vs[i] == 0) return true;
-  }
-  return false;
+  return std::any_of(vs.begin(), vs.end(), [](const float &v) { return v == 0; });
 }
 
 static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const std::vector<float> &mean,
                             const std::vector<float> &std) {
-  if (mean.size() == 0 && std.size() == 0) {
+  if (mean.empty() && std.empty()) {
     return false;
   }
   if (src.data_type_ != LDataType::FLOAT32) {
@@ -935,8 +926,8 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
   LDataType data_type = mv[0].data_type_;
 
   // The arrays in list must be single-channel
-  for (int i = 0; i < mv.size(); i++) {
-    if (mv[i].channel_ != 1) return false;
+  if (std::any_of(mv.begin(), mv.end(), [](const LiteMat &m) { return m.channel_ != 1; })) {
+    return false;
   }
 
   for (int i = 1; i < mv.size(); i++) {
@@ -998,7 +989,7 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
   return true;
 }
 
-std::vector<std::vector<float>> GetDefaultBoxes(BoxesConfig config) {
+std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config) {
   size_t size = config.num_default.size();
   if (size <= 1 || config.feature_size.size() != size || config.steps.size() != size ||
       config.aspect_rations.size() != size) {
@@ -1116,6 +1107,7 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
       }
     }
     std::vector<int> new_order;
+    new_order.reserve(inds.size());
     for (int k = 0; k < inds.size(); k++) {
       new_order.push_back(order[inds[k]]);
     }
