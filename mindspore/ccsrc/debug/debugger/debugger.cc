@@ -866,7 +866,7 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
   // items in ret_name will be in the same order with tensors if found
   debug_services_->ReadNodesTensors(name, &ret_name, &data_ptr, &data_size, &dtype, &shape);
   std::list<TensorProto> tensor_list;
-  unsigned int result_index = 0;
+  size_t result_index = 0;
 
   for (auto tensor : tensors) {
     ssize_t size_iter = 0;
@@ -897,6 +897,9 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
       }
       // add tensor to result list and increment result_index to check next item in ret_name
       tensor_list.push_back(tensor_item);
+      if (size_iter > INT_MAX - g_chunk_size) {
+        MS_EXCEPTION(ValueError) << size_iter << " + " << g_chunk_size << " would lead to integer overflow！";
+      }
       size_iter += g_chunk_size;
     }
     result_index++;
