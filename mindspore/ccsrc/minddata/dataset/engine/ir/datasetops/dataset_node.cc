@@ -30,6 +30,7 @@ namespace dataset {
 // Helper function to compute a default shuffle size
 Status ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
                           int64_t *shuffle_size) {
+  RETURN_UNEXPECTED_IF_NULL(shuffle_size);
   const int64_t average_files_multiplier = 4;
   const int64_t shuffle_max = 10000;
   int64_t avg_rows_per_file = 0;
@@ -59,6 +60,7 @@ Status ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_ro
 // Helper function to inject a shuffle operator over top of current operator being built
 Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
                     int32_t connector_que_size, std::shared_ptr<DatasetOp> *shuffle_op) {
+  RETURN_UNEXPECTED_IF_NULL(shuffle_op);
   int64_t shuffle_size = 0;
   RETURN_IF_NOT_OK(ComputeShuffleSize(num_files, num_devices, num_rows, total_rows, &shuffle_size));
   MS_LOG(INFO) << "Dataset::AddShuffleOp - num_rows: " << num_rows << ", shuffle_size: " << shuffle_size;

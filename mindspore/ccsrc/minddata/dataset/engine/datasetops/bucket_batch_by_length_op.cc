@@ -60,7 +60,7 @@ Status BucketBatchByLengthOp::operator()() {
   TensorRow current_row;
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
-  while (!child_iterator_->eof_handled()) {
+  while (!child_iterator_->EofHandled()) {
     while (!current_row.empty()) {
       int32_t element_length;
       RETURN_IF_NOT_OK(ObtainElementLength(&element_length, current_row));
@@ -99,6 +99,7 @@ Status BucketBatchByLengthOp::operator()() {
 }
 
 Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, TensorRow element) {
+  RETURN_UNEXPECTED_IF_NULL(out_element_length);
   // call pyfunc here if given pyfunc, otherwise return 0th dimension of shape of
   // the single column specified in length_dependent_columns_
   if (element_length_function_) {

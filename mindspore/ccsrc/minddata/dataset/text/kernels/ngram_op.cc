@@ -44,7 +44,9 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   offsets.reserve(1 + l_len_ + r_len_ + input->shape().NumOfElements());
   str_buffer.reserve(l_pad_with_sp_.size() * l_len_ + r_pad_with_sp_.size() * r_len_ + input->SizeInBytes());
   offsets.push_back(str_buffer.size());  // insert 0 as the starting pos
-  for (int l_i = 0; l_i < l_len_; l_i++) offsets.push_back((str_buffer += l_pad_with_sp_).size());
+  for (int l_i = 0; l_i < l_len_; l_i++) {
+    offsets.push_back((str_buffer += l_pad_with_sp_).size());
+  }
 
   for (auto itr = input->begin<std::string_view>(); itr != input->end<std::string_view>(); ++itr) {
     str_buffer += (*itr);
@@ -52,7 +54,9 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     offsets.push_back(str_buffer.size());
   }
 
-  for (int r_i = 0; r_i < r_len_; r_i++) offsets.push_back((str_buffer += r_pad_with_sp_).size());
+  for (int r_i = 0; r_i < r_len_; r_i++) {
+    offsets.push_back((str_buffer += r_pad_with_sp_).size());
+  }
 
   for (auto n : ngrams_) {
     CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "Ngram: ngrams needs to be a positive number.\n");

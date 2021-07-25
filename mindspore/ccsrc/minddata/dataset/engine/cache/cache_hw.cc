@@ -101,8 +101,8 @@ Status CacheServerHW::GetNumaNodeInfo() {
   };
   // Look for name starts with 'node' and followed by digits.
   const char kNodeName[] = "node";
-  while (it->hasNext()) {
-    auto p = it->next();
+  while (it->HasNext()) {
+    auto p = it->Next();
     const std::string entry = p.Basename();
     const char *name = entry.data();
     if (strncmp(name, kNodeName, strlen(kNodeName)) == 0 && isdigit_string(name + strlen(kNodeName))) {

@@ -49,7 +49,7 @@ typedef struct CpuInfo_s {
 typedef struct CpuOpInfo_s {
   float user_utilization_;
   float sys_utilization_;
-  int32_t op_id;
+  int32_t op_id_;
 } CpuOpUtil;
 
 // CPU utilization of process
@@ -78,11 +78,11 @@ class BaseCpu {
  protected:
   std::vector<CpuUtil> cpu_util_;
   CpuStat pre_cpu_stat_;
-  static bool fetched_all_process_shared;
-  static std::unordered_map<int32_t, std::vector<pid_t>> op_process_shared;
-  bool fetched_all_process;
-  bool pre_fetched_state;
-  std::unordered_map<int32_t, std::vector<pid_t>> op_process;
+  static bool fetched_all_process_shared_;
+  static std::unordered_map<int32_t, std::vector<pid_t>> op_process_shared_;
+  bool fetched_all_process_;
+  bool pre_fetched_state_;
+  std::unordered_map<int32_t, std::vector<pid_t>> op_process_;
   int32_t cpu_processor_num_;
 };
 
@@ -136,9 +136,9 @@ class OperatorCpu : public BaseCpu {
   bool first_collect_;
 
   // Store the id and its corresponding threads.
-  std::unordered_map<int32_t, std::vector<pid_t>> op_thread;
-  std::unordered_map<int32_t, std::string> op_name;
-  std::unordered_map<int32_t, int32_t> op_parallel_workers;
+  std::unordered_map<int32_t, std::vector<pid_t>> op_thread_;
+  std::unordered_map<int32_t, std::string> op_name_;
+  std::unordered_map<int32_t, int32_t> op_parallel_workers_;
   std::unordered_map<int32_t, std::unordered_map<int64_t, CpuOpStat>> pre_op_stat_;
   uint64_t pre_total_stat_;
   int32_t id_count_;
@@ -161,7 +161,7 @@ class ProcessCpu : public BaseCpu {
   std::vector<CpuProcessUtil> process_util_;
   uint64_t pre_total_stat_;
   std::unordered_map<int64_t, CpuOpStat> pre_process_stat_;
-  std::vector<pid_t> process_id;
+  std::vector<pid_t> process_id_;
 };
 
 // Sampling CPU information

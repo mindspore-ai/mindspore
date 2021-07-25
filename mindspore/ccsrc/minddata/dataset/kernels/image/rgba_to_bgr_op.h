@@ -29,7 +29,7 @@ namespace mindspore {
 namespace dataset {
 class RgbaToBgrOp : public TensorOp {
  public:
-  RgbaToBgrOp() {}
+  RgbaToBgrOp() = default;
 
   ~RgbaToBgrOp() override = default;
 

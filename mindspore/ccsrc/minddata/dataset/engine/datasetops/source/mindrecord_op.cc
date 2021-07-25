@@ -113,7 +113,7 @@ Status MindRecordOp::Init() {
       CHECK_FAIL_RETURN_UNEXPECTED(
         colname_to_ind.find(colname) != colname_to_ind.end(),
         "Invalid data, specified loading column name: " + colname + " does not exist in data file.");
-      RETURN_IF_NOT_OK(tmp_schema->AddColumn(data_schema_->column(colname_to_ind[colname])));
+      RETURN_IF_NOT_OK(tmp_schema->AddColumn(data_schema_->Column(colname_to_ind[colname])));
     }
     data_schema_ = std::move(tmp_schema);
   }
@@ -271,8 +271,8 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     }
 
     std::shared_ptr<Tensor> tensor;
-    const ColDescriptor &column = data_schema_->column(i_col);
-    DataType type = column.type();
+    const ColDescriptor &column = data_schema_->Column(i_col);
+    DataType type = column.Type();
 
     // Set shape
     CHECK_FAIL_RETURN_UNEXPECTED(column_data_type_size != 0, "Found memory size of column data type is 0.");
@@ -280,8 +280,8 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     if (type == DataType::DE_STRING) {
       std::string s{data, data + n_bytes};
       RETURN_IF_NOT_OK(Tensor::CreateScalar(s, &tensor));
-    } else if (column.hasShape()) {
-      auto new_shape = TensorShape(column.shape());
+    } else if (column.HasShape()) {
+      auto new_shape = TensorShape(column.Shape());
       // if the numpy is null, create empty tensor shape
       if (num_elements == 0) {
         new_shape = TensorShape({});

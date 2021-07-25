@@ -67,8 +67,8 @@ void BBoxOpCommon::GetInputImagesAndAnnotations(const std::string &dir, std::siz
     EXPECT_TRUE(dir_path.Exists());
   }
   // get image file paths
-  while (image_dir_itr->hasNext()) {
-    Path image_path = image_dir_itr->next();
+  while (image_dir_itr->HasNext()) {
+    Path image_path = image_dir_itr->Next();
     if (image_path.Extension() == std::string(kImageExt)) {
       paths_to_fetch.push_back(image_path.toString());
     }

@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "debug/common.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
@@ -58,13 +59,9 @@ Status TFRecordNode::ValidateParams() {
   }
 
   for (const auto &f : dataset_files_) {
-    Path dataset_file(f);
-    if (!dataset_file.Exists()) {
-      std::string err_msg = "TFRecordNode: dataset file: [" + f + "] is invalid or does not exist.";
-      MS_LOG(ERROR) << err_msg;
-
-      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
-    }
+    auto realpath = Common::GetRealPath(f);
+    CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(),
+                                 "TFRecordNode: dataset file: [" + f + "] is invalid or does not exist.");
   }
 
   if (num_samples_ < 0) {
@@ -107,6 +104,7 @@ Status TFRecordNode::ValidateParams() {
 
 // Function to build TFRecordNode
 Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
+  RETURN_UNEXPECTED_IF_NULL(node_ops);
   // Sort the datasets file in a lexicographical order
   std::vector<std::string> sorted_dir_files = dataset_files_;
   std::sort(sorted_dir_files.begin(), sorted_dir_files.end());
@@ -165,6 +163,8 @@ Status TFRecordNode::GetShardId(int32_t *const shard_id) {
 // Get Dataset size
 Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                                     int64_t *dataset_size) {
+  RETURN_UNEXPECTED_IF_NULL(size_getter);
+  RETURN_UNEXPECTED_IF_NULL(dataset_size);
   if (dataset_size_ > 0) {
     *dataset_size = dataset_size_;
     return Status::OK();
@@ -189,6 +189,7 @@ Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
 
 // Get the file list of the specific shard ID
 Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames) {
+  RETURN_UNEXPECTED_IF_NULL(shard_filenames);
   if (!shard_filenames->empty()) {
     RETURN_STATUS_UNEXPECTED("The initial file list must be empty.");
   }
@@ -201,6 +202,7 @@ Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames)
 }
 
 Status TFRecordNode::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
   args["dataset_files"] = dataset_files_;
@@ -262,6 +264,7 @@ Status TFRecordNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
 // inherit this sampler from the leaf, providing sampling support from the caching layer.
 // That is why we setup the sampler for a leaf node that does not use sampling.
 Status TFRecordNode::SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) {
+  RETURN_UNEXPECTED_IF_NULL(sampler);
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
   *sampler = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
   return Status::OK();
@@ -281,12 +284,16 @@ Status TFRecordNode::MakeSimpleProducer() {
 
 // Visitor accepting method for IRNodePass
 Status TFRecordNode::Accept(IRNodePass *p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<TFRecordNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
 Status TFRecordNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<TFRecordNode>(), modified);
 }

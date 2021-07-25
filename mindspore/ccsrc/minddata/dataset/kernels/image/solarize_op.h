@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
@@ -29,9 +30,9 @@ namespace mindspore {
 namespace dataset {
 class SolarizeOp : public TensorOp {
  public:
-  explicit SolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(threshold) {}
+  explicit SolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(std::move(threshold)) {}
 
-  ~SolarizeOp() = default;
+  ~SolarizeOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 

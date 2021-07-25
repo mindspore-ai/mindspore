@@ -30,7 +30,7 @@ namespace dataset {
 class SwapRedBlueOp : public TensorOp {
  public:
   /// \brief Constructor
-  SwapRedBlueOp() {}
+  SwapRedBlueOp() = default;
 
   SwapRedBlueOp(const SwapRedBlueOp &rhs) = default;
 

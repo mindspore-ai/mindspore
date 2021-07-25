@@ -25,6 +25,8 @@ std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<Tensor
   Serdes::func_ptr_ = Serdes::InitializeFuncPtr();
 
 Status Serdes::SaveToJSON(std::shared_ptr<DatasetNode> node, const std::string &filename, nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(node);
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   // Dump attributes of current node to json string
   nlohmann::json args;
   RETURN_IF_NOT_OK(node->to_json(&args));

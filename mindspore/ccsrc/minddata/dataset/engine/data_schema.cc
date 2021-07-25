@@ -73,7 +73,7 @@ ColDescriptor::ColDescriptor(const std::string &col_name, DataType col_type, Ten
 ColDescriptor::ColDescriptor(const ColDescriptor &in_cd)
     : type_(in_cd.type_), rank_(in_cd.rank_), tensor_impl_(in_cd.tensor_impl_), col_name_(in_cd.col_name_) {
   // If it has a tensor shape, make a copy of it with our own unique_ptr.
-  tensor_shape_ = in_cd.hasShape() ? std::make_unique<TensorShape>(in_cd.shape()) : nullptr;
+  tensor_shape_ = in_cd.HasShape() ? std::make_unique<TensorShape>(in_cd.Shape()) : nullptr;
 }
 
 // Assignment overload
@@ -84,7 +84,7 @@ ColDescriptor &ColDescriptor::operator=(const ColDescriptor &in_cd) {
     tensor_impl_ = in_cd.tensor_impl_;
     col_name_ = in_cd.col_name_;
     // If it has a tensor shape, make a copy of it with our own unique_ptr.
-    tensor_shape_ = in_cd.hasShape() ? std::make_unique<TensorShape>(in_cd.shape()) : nullptr;
+    tensor_shape_ = in_cd.HasShape() ? std::make_unique<TensorShape>(in_cd.Shape()) : nullptr;
   }
   return *this;
 }
@@ -113,7 +113,7 @@ Status ColDescriptor::MaterializeTensorShape(int32_t num_elements, TensorShape *
 
   // If the shape is not given in this column, then we assume the shape will be: {numElements}
   if (tensor_shape_ == nullptr) {
-    if (this->rank() == 0 && num_elements == 1) {
+    if (this->Rank() == 0 && num_elements == 1) {
       *out_shape = TensorShape::CreateScalar();
       return Status::OK();
     }
@@ -173,7 +173,7 @@ Status ColDescriptor::MaterializeTensorShape(int32_t num_elements, TensorShape *
 }
 
 // getter function for the shape
-TensorShape ColDescriptor::shape() const {
+TensorShape ColDescriptor::Shape() const {
   if (tensor_shape_ != nullptr) {
     return *tensor_shape_;  // copy construct a shape to return
   } else {
@@ -257,7 +257,7 @@ Status DataSchema::ColumnOrderLoad(nlohmann::json column_tree, const std::vector
 }
 
 // Internal helper function for parsing shape info and building a vector for the shape construction.
-static Status buildShape(const nlohmann::json &shapeVal, std::vector<dsize_t> *outShape) {
+static Status BuildShape(const nlohmann::json &shapeVal, std::vector<dsize_t> *outShape) {
   if (outShape == nullptr) {
     RETURN_STATUS_UNEXPECTED("null output shape");
   }
@@ -274,7 +274,8 @@ static Status buildShape(const nlohmann::json &shapeVal, std::vector<dsize_t> *o
 Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::string &col_name) {
   int32_t rank_value = -1;
   TensorImpl t_impl_value = TensorImpl::kFlexible;
-  std::string name, type_str;
+  std::string name = "";
+  std::string type_str = "";
   std::vector<dsize_t> tmp_shape = {};
   bool shape_field_exists = false;
   // Iterate over this column's attributes.
@@ -291,7 +292,7 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
       STR_TO_TENSORIMPL(it_child.value(), t_impl_value);
     } else if (it_child.key() == "shape") {
       shape_field_exists = true;
-      RETURN_IF_NOT_OK(buildShape(it_child.value(), &tmp_shape));
+      RETURN_IF_NOT_OK(BuildShape(it_child.value(), &tmp_shape));
     } else {
       std::string err_msg = "Unexpected column attribute " + it_child.key() + " for column " + col_name;
       RETURN_STATUS_UNEXPECTED(err_msg);
@@ -324,10 +325,10 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
   // Create the column descriptor for this column from the data we pulled from the json file
   TensorShape col_shape = TensorShape(tmp_shape);
   if (shape_field_exists)
-    (void)this->AddColumn(ColDescriptor(name, DataType(type_str), t_impl_value, rank_value, &col_shape));
+    RETURN_IF_NOT_OK(this->AddColumn(ColDescriptor(name, DataType(type_str), t_impl_value, rank_value, &col_shape)));
   else
     // Create a column descriptor that doesn't have a shape
-    (void)this->AddColumn(ColDescriptor(name, DataType(type_str), t_impl_value, rank_value));
+    RETURN_IF_NOT_OK(this->AddColumn(ColDescriptor(name, DataType(type_str), t_impl_value, rank_value)));
   return Status::OK();
 }
 
@@ -345,19 +346,30 @@ Status DataSchema::LoadSchemaFile(const std::string &schema_file_path,
     } catch (nlohmann::json::out_of_range &e) {
       num_rows_ = 0;
     } catch (nlohmann::json::exception &e) {
+      in.close();
       RETURN_STATUS_UNEXPECTED("Unable to parse \"numRows\" from schema");
     }
     nlohmann::json column_tree = js.at("columns");
     if (column_tree.empty()) {
+      in.close();
       RETURN_STATUS_UNEXPECTED("columns is null");
     }
     if (columns_to_load.empty()) {
       // Parse the json tree and load the schema's columns in whatever order that the json
       // layout decides
-      RETURN_IF_NOT_OK(this->AnyOrderLoad(column_tree));
+      Status rc = this->AnyOrderLoad(column_tree);
+      if (rc.IsError()) {
+        in.close();
+        return rc;
+      }
     } else {
-      RETURN_IF_NOT_OK(this->ColumnOrderLoad(column_tree, columns_to_load));
+      Status rc = this->ColumnOrderLoad(column_tree, columns_to_load);
+      if (rc.IsError()) {
+        in.close();
+        return rc;
+      }
     }
+    in.close();
   } catch (const std::exception &err) {
     // Catch any exception and convert to Status return code
     RETURN_STATUS_UNEXPECTED("Schema file failed to load with JSON tools. File is: " + schema_file_path);
@@ -394,7 +406,7 @@ Status DataSchema::LoadSchemaString(const std::string &schema_json_string,
 DataSchema::~DataSchema() = default;
 
 // Getter for the ColDescriptor by index
-const ColDescriptor &DataSchema::column(int32_t idx) const {
+const ColDescriptor &DataSchema::Column(int32_t idx) const {
   MS_ASSERT(idx < static_cast<int>(col_descs_.size()));
   return col_descs_[idx];
 }
@@ -411,9 +423,9 @@ void DataSchema::Print(std::ostream &out) const {
 Status DataSchema::AddColumn(const ColDescriptor &cd) {
   // Sanity check there's not a duplicate name before adding the column
   for (auto i = 0; i < col_descs_.size(); ++i) {
-    if (col_descs_[i].name() == cd.name()) {
+    if (col_descs_[i].Name() == cd.Name()) {
       std::ostringstream ss;
-      ss << "column name '" << cd.name() << "' already exists in schema.";
+      ss << "column name '" << cd.Name() << "' already exists in schema.";
       std::string err_msg = ss.str();
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
@@ -439,11 +451,11 @@ Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *ou
   }
 
   for (size_t i = 0; i < col_descs_.size(); ++i) {
-    if (col_descs_[i].name().empty()) {
+    if (col_descs_[i].Name().empty()) {
       return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                     "Constructing column name map from schema, but found empty column name.");
     }
-    (*out_column_name_map)[col_descs_[i].name()] = i;
+    (*out_column_name_map)[col_descs_[i].Name()] = i;
   }
 
   return Status::OK();
