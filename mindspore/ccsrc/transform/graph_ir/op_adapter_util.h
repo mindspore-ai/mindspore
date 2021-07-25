@@ -45,6 +45,7 @@ GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>);
 
 template <typename P, typename Q>
 std::vector<Q> ConvertAnyUtil(const ValuePtr &value, AnyTraits<P>, const AnyTraits<std::vector<Q>>) {
+  MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<ValueTuple>() && !value->isa<ValueList>()) {
     MS_LOG(EXCEPTION) << "error convert Value to vector for value: " << value->ToString()
                       << ", type: " << value->type_name() << ", value should be a tuple or list";
