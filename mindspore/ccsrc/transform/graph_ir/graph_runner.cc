@@ -166,6 +166,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
                              std::vector<MeTensorPtr> *const outputs) {
   std::vector<GeTensorPtr> ge_inputs;
   for (auto it : inputs) {
+    MS_EXCEPTION_IF_NULL(it);
     MS_LOG(INFO) << "inputs tensor's data size is: " << (*it).DataSize();
     auto shape = (*it).shape();
     std::string shape_str;
@@ -194,7 +195,7 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
   if (ret != Status::SUCCESS) {
     return ret;
   } else {
-    // conver GeTensor to MeTensor
+    // convert GeTensor to MeTensor
     for (auto &it : ge_outputs) {
       auto tensor = TransformUtil::ConvertGeTensor(it);
       if (tensor != nullptr) {
