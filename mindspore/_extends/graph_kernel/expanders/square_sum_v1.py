@@ -17,6 +17,7 @@ from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
 from ._utils import infer_shape_from_fractalNz, get_reduced_ori_shape, to_frac_z_axis
 
+
 @VLD.add_format(DF.FRAC_NZ)
 @VLD.add_format(DF.DEFAULT)
 @VLD.check_attrs('axis')
@@ -47,7 +48,7 @@ class SquareSumV1(Expander):
             axis = to_frac_z_axis(ori_shape, axis)
 
         square_res = graph_builder.emit('Mul', [x, x])
-        result = graph_builder.emit('ReduceSum', [square_res], attrs={'reduce_axis': axis, 'keep_dims': True})
+        result = graph_builder.emit('ReduceSum', [square_res], attrs={'reduce_axis': axis, 'keep_dims': False})
         if x.data_format == DF.FRAC_NZ:
             result = graph_builder.emit('Reshape', [result], attrs={'shape': ori_reduced_shape})
         return result
