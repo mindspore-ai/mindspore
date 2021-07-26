@@ -38,6 +38,11 @@ OpParameter *PopulateTileParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   auto dims = value->dims();
   if (dims != nullptr) {
+    if (dims->size() > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "Invalid dims size " << dims->size();
+      free(param);
+      return nullptr;
+    }
     for (size_t i = 0; i < dims->size(); ++i) {
       param->dims_[i] = static_cast<int>(dims->Get(i));
     }

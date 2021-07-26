@@ -57,6 +57,8 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
         break;
       default:
         MS_LOG(ERROR) << "The value of constant of shape is invalid";
+        free(param);
+        return nullptr;
     }
   }
   return reinterpret_cast<OpParameter *>(param);

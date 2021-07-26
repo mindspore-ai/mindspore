@@ -95,30 +95,42 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
   return RET_OK;
 }
 
+kernel::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Primitive *primitive,
+                                                                kernel::KernelDesc *desc) {
+  int data_type_index = static_cast<int>(desc->data_type) - kNumberTypeBegin - 1;
+  if (data_type_index < 0) {
+    return nullptr;
+  }
+  auto param = primitive->value_as_Custom();
+  MS_ASSERT(param != nullptr);
+  auto custom_type = param->type()->str();
+  if (!desc->provider.empty() && !desc->arch.empty()) {
+    auto creator_buf = custom_kernel_creators_[desc->provider][desc->arch][custom_type];
+    if (creator_buf != nullptr && creator_buf[data_type_index] != nullptr) {
+      return creator_buf[data_type_index];
+    }
+    return nullptr;
+  }
+  for (auto &&providers : custom_kernel_creators_) {
+    auto archs = providers.second;
+    auto archs_iter = std::find_if(archs.begin(), archs.end(), [custom_type, data_type_index](auto &&item) {
+      return item.second[custom_type] != nullptr && item.second[custom_type][data_type_index] != nullptr;
+    });
+    if (archs_iter != archs.end()) {
+      desc->arch = archs_iter->first;
+      return archs_iter->second[custom_type][data_type_index];
+    }
+  }
+
+  return nullptr;
+}
+
 kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const schema::Primitive *primitive,
                                                             kernel::KernelDesc *desc) {
   kernel::CreateKernel creator = nullptr;
   std::unique_lock<std::mutex> lock(lock_);
   if (desc->type == schema::PrimitiveType_Custom) {
-    int data_type_index = static_cast<int>(desc->data_type) - kNumberTypeBegin - 1;
-    if (data_type_index < 0) {
-      return nullptr;
-    }
-    auto param = primitive->value_as_Custom();
-    MS_ASSERT(param != nullptr);
-    auto custom_type = param->type()->str();
-    for (auto &&providers : custom_kernel_creators_) {
-      auto archs = providers.second;
-      auto archs_iter = std::find_if(archs.begin(), archs.end(), [custom_type, data_type_index](auto &&item) {
-        return item.second[custom_type] != nullptr && item.second[custom_type][data_type_index] != nullptr;
-      });
-      if (archs_iter != archs.end()) {
-        desc->arch = archs_iter->first;
-        return archs_iter->second[custom_type][data_type_index];
-      }
-    }
-
-    return nullptr;
+    return GetCustomKernelCreator(primitive, desc);
   }
   auto index = GetFuncIndex(*desc);
   if (index >= kKernelMaxNum || index < 0) {
