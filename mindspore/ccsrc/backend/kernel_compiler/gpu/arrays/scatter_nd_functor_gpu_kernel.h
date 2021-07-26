@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ND_UPDATE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ND_UPDATE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ND_FUNCTOR_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ND_FUNCTOR_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
+#include <map>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/scatter_nd_update_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/scatter_nd_functor_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
+
+static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMap = {
+  {"ScatterNdUpdate", SCATTER_ND_FUNC_UPDATE},
+  {"ScatterNdAdd", SCATTER_ND_FUNC_ADD},
+  {"ScatterNdSub", SCATTER_ND_FUNC_SUB},
+};
+
 template <typename T, typename S>
-class ScatterNdUpdateKernel : public GpuKernel {
+class ScatterNdFunctorKernel : public GpuKernel {
  public:
-  ScatterNdUpdateKernel() { ResetResource(); }
-  ~ScatterNdUpdateKernel() {
+  ScatterNdFunctorKernel() { ResetResource(); }
+  ~ScatterNdFunctorKernel() {
     if (indices_stride_ != nullptr) {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(indices_stride_));
     }
@@ -54,9 +63,9 @@ class ScatterNdUpdateKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(indices_stride_, &out_strides_[0], indices_len, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync failed in ScatterNdUpdateGpuFwdKernel::Launch.");
-    CalScatterNdUpdate(unit_size_, num_units_, index_depth_, indices_stride_, indices, updates, input,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+                               "cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::Launch.");
+    CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride_, indices,
+                        updates, input, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -65,15 +74,22 @@ class ScatterNdUpdateKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto iter = kScatterNdFunctorTypeMap.find(kernel_name);
+    if (iter == kScatterNdFunctorTypeMap.end()) {
+      MS_LOG(EXCEPTION) << "ScatterNd functor " << kernel_name << " is not supported.";
+    } else {
+      scatter_nd_functor_type_ = iter->second;
+    }
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ScatterNdUpdate needs 3 inputs.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but " << kernel_name << " needs 3 inputs.";
       return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ScatterNdUpdate has 1 output.";
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but " << kernel_name << " has 1 output.";
       return false;
     }
 
@@ -151,6 +167,7 @@ class ScatterNdUpdateKernel : public GpuKernel {
   }
 
  private:
+  ScatterNdFunctorType scatter_nd_functor_type_;
   size_t input_size_;
   size_t indices_size_;
   size_t updates_size_;
@@ -167,4 +184,4 @@ class ScatterNdUpdateKernel : public GpuKernel {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ND_UPDATE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ND_FUNCTOR_GPU_KERNEL_H_
