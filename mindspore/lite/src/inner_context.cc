@@ -26,6 +26,10 @@
 #endif
 
 namespace mindspore::lite {
+namespace {
+constexpr int kDefaultParallelNum = 2;
+}  // namespace
+
 InnerContext::InnerContext(const Context *context) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
@@ -67,7 +71,7 @@ int InnerContext::Init() {
     return RET_NOT_SUPPORT;
   }
   if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
-    int actor_parallel_thread = this->enable_parallel_ ? 2 : 1;
+    int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
     thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_);
     if (thread_pool_ == nullptr) {
       MS_LOG(ERROR) << "Create ThreadPool failed";
@@ -122,7 +126,7 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
   }
-  if (this->device_list_.size() > kMaxDeviceNums) {
+  if (this->device_list_.size() > 2) {
     MS_LOG(ERROR) << "Not support device list more than 2.";
     return RET_NOT_SUPPORT;
   }
@@ -197,6 +201,7 @@ bool InnerContext::IsGpuEnabled() const {
 
 bool InnerContext::IsNpuEnabled() const {
 #ifdef SUPPORT_NPU
+  //  return IsUserSetNpu() && npu_manager_->IsSupportNPU();
   return IsUserSetNpu();
 #else
   return false;

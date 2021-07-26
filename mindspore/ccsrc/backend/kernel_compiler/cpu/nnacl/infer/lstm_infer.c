@@ -40,7 +40,6 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     return NNACL_ERR;
   }
 
-  // int hidden_size = w_shape[1] / 4;
   int hidden_size = weight_i->shape_[1] / 4;
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;
