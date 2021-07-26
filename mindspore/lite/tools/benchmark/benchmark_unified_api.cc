@@ -39,6 +39,8 @@ constexpr size_t kDataToStringMaxNum = 40;
 constexpr int kPrintDataNum = 20;
 constexpr int kFrequencyDefault = 3;
 constexpr int kPercentageDivisor = 100;
+constexpr int kDumpInputsAndOutputs = 0;
+constexpr int kDumpOutputs = 2;
 
 namespace lite {
 int BenchmarkUnifiedApi::GenerateInputData() {
@@ -797,8 +799,9 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
-    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
-      if (input_output_mode == 0 || input_output_mode == 2) {
+    if (dump_mode == kDumpInputsAndOutputs ||
+        std::find(kernels.begin(), kernels.end(), call_param.node_name_) != kernels.end()) {
+      if (input_output_mode == kDumpInputsAndOutputs || input_output_mode == kDumpOutputs) {
         for (size_t i = 0; i < after_outputs.size(); i++) {
           auto ms_tensor = after_outputs.at(i);
           auto file_name = GenerateOutputFileName(&ms_tensor, call_param.node_name_, "output", i);

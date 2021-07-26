@@ -74,5 +74,4 @@ std::vector<MSTensor> LiteTensorsToMSTensors(const std::vector<mindspore::tensor
   }
   return dstTensors;
 }
-
 }  // namespace mindspore
