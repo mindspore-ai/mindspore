@@ -48,6 +48,7 @@ static std::string GetTraceName(const TraceInfoPtr &trace_info, TraceLabelType t
 NameWithTrace RootName(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
   NameWithTrace trace_name;
   // find debug info after Resolve/ExpandJ/GenMetaFuncGraph, it is a new node
+  MS_EXCEPTION_IF_NULL(debug_info);
   auto temp_info = debug_info;
   while (temp_info != nullptr) {
     if (temp_info->trace_info() != nullptr) {
