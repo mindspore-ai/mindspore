@@ -46,7 +46,7 @@ bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
     return false;
   }
 
-  std::shared_ptr<MemoryRegister> memory_register;
+  std::shared_ptr<MemoryRegister> memory_register = nullptr;
   if (iteration_to_model_.size() < max_model_count_) {
     // If iteration_to_model_.size() is not max_model_count_, need to assign new memory for the model.
     memory_register = AssignNewModelMemory();
@@ -123,10 +123,14 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
 
   // Assign new memory for the model.
   std::shared_ptr<MemoryRegister> memory_register = std::make_shared<MemoryRegister>();
+  MS_ERROR_IF_NULL_W_RET_VAL(memory_register, nullptr);
   for (const auto &weight : model) {
     const std::string weight_name = weight.first;
     size_t weight_size = weight.second->size;
     auto weight_data = std::make_unique<char[]>(weight_size);
+    MS_ERROR_IF_NULL_W_RET_VAL(weight_data, nullptr);
+    MS_ERROR_IF_NULL_W_RET_VAL(weight.second, nullptr);
+    MS_ERROR_IF_NULL_W_RET_VAL(weight.second->addr, nullptr);
     if (weight_data == nullptr) {
       MS_LOG(EXCEPTION) << "Assign memory for weight failed.";
       return nullptr;
@@ -139,7 +143,6 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return nullptr;
     }
-
     memory_register->RegisterArray(weight_name, &weight_data, weight_size);
   }
   return memory_register;

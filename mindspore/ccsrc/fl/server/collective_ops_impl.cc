@@ -29,6 +29,8 @@ void CollectiveOpsImpl::Initialize(const std::shared_ptr<ps::core::ServerNode> &
 
 template <typename T>
 bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size_t count) {
+  MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
   int ret = memcpy_s(recvbuff, count * sizeof(T), sendbuff, count * sizeof(T));
   if (ret != 0) {
     MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -135,6 +137,12 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
 
 template <typename T>
 bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *recvbuff, size_t count) {
+  MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
+  if (sendbuff == nullptr || recvbuff == nullptr) {
+    MS_LOG(ERROR) << "Input sendbuff or recvbuff for ReduceBroadcastAllReduce is nullptr.";
+    return false;
+  }
   uint32_t rank_size = server_num_;
   MS_LOG(DEBUG) << "Reduce Broadcast AllReduce rank_size:" << rank_size << ", local_rank_:" << local_rank_
                 << ", count:" << count;

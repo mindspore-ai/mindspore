@@ -53,19 +53,23 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
                               const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Launching StartFLJobKernel kernel.";
   if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "inputs or outputs size is invalid.";
-    return false;
+    std::string reason = "inputs or outputs size is invalid.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
   }
   void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
-    MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
-    return false;
+    std::string reason = "FBBuilder builder or req_data is nullptr.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
   }
 
   flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
   if (!verifier.VerifyBuffer<schema::RequestFLJob>()) {
-    std::string reason = "The schema of startFLJob is invalid.";
+    std::string reason = "The schema of RequestFLJob is invalid.";
     BuildStartFLJobRsp(fbb, schema::ResponseCode_RequestError, reason, false, "");
     MS_LOG(ERROR) << reason;
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
@@ -80,9 +84,15 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
 
   const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
   if (start_fl_job_req == nullptr) {
-    MS_LOG(ERROR) << "RequestFLJob is nullptr.";
-    return false;
+    std::string reason = "Building flatbuffers schema failed for RequestFLJob.";
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_RequestError, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
   }
+
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
@@ -94,9 +104,9 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   std::string update_reason = "";
   if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata, &update_reason)) {
     std::string reason = "Updating device metadata failed. " + update_reason;
-    BuildStartFLJobRsp(fbb, schema::ResponseCode_OutOfTime, reason, false,
-                       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
-                       {});
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_OutOfTime, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return update_reason == kNetworkError ? false : true;
   }
@@ -141,7 +151,7 @@ ResultCode StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<F
 }
 
 DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req) {
-  RETURN_IF_NULL(start_fl_job_req, {});
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, {});
   std::string fl_name = start_fl_job_req->fl_name()->str();
   std::string fl_id = start_fl_job_req->fl_id()->str();
   int data_size = start_fl_job_req->data_size();
@@ -172,7 +182,7 @@ ResultCode StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder>
 
 ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                                 const schema::RequestFLJob *start_fl_job_req) {
-  RETURN_IF_NULL(start_fl_job_req, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, ResultCode::kSuccessAndReturn);
   std::string count_reason = "";
   if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str(), &count_reason)) {
     std::string reason = "Counting start fl job request failed. Please retry later.";
@@ -201,6 +211,10 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
                                           const std::string &reason, const bool is_selected,
                                           const std::string &next_req_time,
                                           std::map<std::string, AddressPtr> feature_maps) {
+  if (fbb == nullptr) {
+    MS_LOG(ERROR) << "Input fbb is nullptr.";
+    return;
+  }
   auto fbs_reason = fbb->CreateString(reason);
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
   auto fbs_server_mode = fbb->CreateString(ps::PSContext::instance()->server_mode());
