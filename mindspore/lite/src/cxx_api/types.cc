@@ -348,5 +348,4 @@ bool Buffer::SetData(const void *data, size_t data_len) {
 }
 
 std::vector<char> CharVersion() { return StringToChar(lite::Version()); }
-
 }  // namespace mindspore
