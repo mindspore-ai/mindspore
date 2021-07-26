@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_WHILE_PARAMETER_H_
-#define MINDSPORE_NNACL_WHILE_PARAMETER_H_
 
-#include "nnacl/op_base.h"
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_REGISTRY_PASS_CONTENT_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_REGISTRY_PASS_CONTENT_H
 
-typedef struct WhileParemeter {
-  OpParameter op_parameter_;
-  int body_subgraph_index = 0;
-  int cond_subgraph_index = 0;
-} WhileParemeter;
+#include <map>
+#include <string>
+#include <vector>
+#include "include/registry/pass_registry.h"
 
-#endif  // MINDSPORE_NNACL_WHILE_PARAMETER_H_
+namespace mindspore {
+namespace opt {
+std::map<std::string, PassPtr> &MS_API PassStoreRoomInfo();
+std::map<PassPosition, std::vector<std::string>> &MS_API ExternalAssignedPassesInfo();
+}  // namespace opt
+}  // namespace mindspore
+
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_REGISTRY_PASS_CONTENT_H

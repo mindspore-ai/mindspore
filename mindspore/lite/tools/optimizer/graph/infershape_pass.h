@@ -29,10 +29,11 @@ class InferShapePass : public Pass {
  public:
   explicit InferShapePass(FmkType fmk_type = lite::converter::FmkType_MS, bool train_flag = false)
       : Pass("infer_shape"), fmk_type_(fmk_type), train_flag_(train_flag) {}
-  ~InferShapePass() = default;
+  ~InferShapePass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
+  bool JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph);
   STATUS InferProcess(const FuncGraphPtr &func_graph);
   void SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);

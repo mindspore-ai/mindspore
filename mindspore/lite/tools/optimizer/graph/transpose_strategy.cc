@@ -32,8 +32,6 @@ namespace {
 constexpr size_t kFirstInput = 1;
 constexpr size_t kHalfDivisor = 2;
 constexpr size_t kOnnxStridedSlice = 6;
-const std::vector<int> NH2NC = {0, 3, 1, 2};
-const std::vector<int> NC2NH = {0, 2, 3, 1};
 STATUS GetPostNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<AnfNodePtr> *out_nodes) {
   auto manager = func_graph->manager();
   if (manager == nullptr) {
@@ -70,7 +68,7 @@ AnfNodePtr TransposeStrategy::TransposePairFuseWhenInsert(const FuncGraphPtr &fu
       MS_LOG(ERROR) << "transpose perm get failed.";
       return nullptr;
     }
-    if ((perm == NH2NC && trans_perm == NC2NH) || (perm == NC2NH && trans_perm == NH2NC)) {
+    if ((perm == kNH2NC && trans_perm == kNC2NH) || (perm == kNC2NH && trans_perm == kNH2NC)) {
       return input_cnode->input(kFirstInput);
     }
   }
@@ -170,7 +168,8 @@ bool TransposeStrategy::CanChangeOpAxis(const FuncGraphPtr &func_graph, const CN
   return true;
 }
 
-STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                       FormatTransNodeType trans_type) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto shape = node_infer_shape_.GetInputShape(cnode, 1);
   if (shape.size() != kInputSizeFour) {
@@ -183,39 +182,17 @@ STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNo
       return lite::RET_NOT_SUPPORT;
     }
   }
-  auto axis_map = GetNC2NHAxisMap();
   if (CheckPrimitiveType(cnode, prim::kPrimConcat) || CheckPrimitiveType(cnode, prim::kPrimSplit)) {
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (prim->GetAttr(ops::kAxis) == nullptr) {
-      return lite::RET_NOT_SUPPORT;
-    }
-    auto axis = GetValue<int64_t>(prim->GetAttr(ops::kAxis));
-    auto new_axis = axis_map[axis < 0 ? axis + kInputSizeFour : axis];
-    prim->AddAttr(ops::kAxis, MakeValue<int64_t>(new_axis));
+    return ChangeCommonOp(cnode, trans_type);
   }
   if (CheckPrimitiveType(cnode, prim::kPrimCrop)) {
-    auto crop_prim = GetValueNode<std::shared_ptr<ops::Crop>>(cnode->input(0));
-    if (crop_prim == nullptr) {
-      return lite::RET_NULL_PTR;
-    }
-    auto axis = crop_prim->get_axis();
-    auto offsets = crop_prim->get_offsets();
-    auto new_axis = axis_map[axis < 0 ? axis + kInputSizeFour : axis];
-    if (new_axis == 0) {
-      offsets = {offsets[0], offsets[kInputIndexTwo], offsets[kInputIndexThree], offsets[1]};
-    } else if (new_axis == kInputIndexThree) {
-      offsets = {offsets[1], offsets[kInputIndexTwo], offsets[0]};
-    } else {
-      offsets.push_back(0);
-    }
-    crop_prim->set_axis(new_axis);
-    crop_prim->set_offsets(offsets);
+    return ChangeOpCrop(cnode, trans_type);
   }
   if (CheckPrimitiveType(cnode, prim::kPrimSliceFusion)) {
-    return ChangeOpSlice(func_graph, cnode);
+    return ChangeOpSlice(func_graph, cnode, trans_type);
   }
   if (CheckPrimitiveType(cnode, prim::kPrimStridedSlice)) {
-    return ChangeOpStrideSlice(func_graph, cnode);
+    return ChangeOpStrideSlice(func_graph, cnode, trans_type);
   }
   return lite::RET_OK;
 }
@@ -242,7 +219,7 @@ STATUS TransposeStrategy::TransposeInsertDependOnShape(const FuncGraphPtr &func_
   CNodePtr base_node = before ? cnode : node_users.front().first->cast<CNodePtr>();
   size_t input_index = before ? index : node_users.front().second;
   auto shape = node_infer_shape_.GetInputShape(base_node, input_index);
-  if (!shape.empty() && shape.size() != NH2NC.size()) {
+  if (!shape.empty() && shape.size() != kNH2NC.size()) {
     return lite::RET_NO_CHANGE;
   }
   return lite::RET_OK;
@@ -263,9 +240,9 @@ bool TransposeStrategy::IsInOutCanFuison(const FuncGraphPtr &func_graph, const s
       if (GetTransposePerm(cnode, &perm) != lite::RET_OK) {
         return false;
       }
-      if (perm == NH2NC) {
+      if (perm == kNH2NC) {
         cur_type = kNHWC2NCHW;
-      } else if (perm == NC2NH) {
+      } else if (perm == kNC2NH) {
         cur_type = kNCHW2NHWC;
       } else {
         return false;
@@ -297,8 +274,79 @@ void TransposeStrategy::DecidePreAndPostTransType(TransTypePair *trans_info, Tra
   }
 }
 
-STATUS TransposeStrategy::ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS TransposeStrategy::ChangeCommonOp(const CNodePtr &cnode, FormatTransNodeType trans_type) {
   MS_ASSERT(cnode != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
+  if (prim->GetAttr(ops::kAxis) == nullptr) {
+    return lite::RET_NOT_SUPPORT;
+  }
+  auto axis = GetValue<int64_t>(prim->GetAttr(ops::kAxis));
+  if (axis < 0) {
+    axis += kInputSizeFour;
+  }
+  auto new_axis = kNH2NC[axis];
+  if (trans_type == kNHWC2NCHW) {
+    new_axis = kNC2NH[axis];
+  }
+  prim->AddAttr(ops::kAxis, MakeValue<int64_t>(new_axis));
+  return lite::RET_OK;
+}
+
+STATUS TransposeStrategy::ChangeOpCrop(const CNodePtr &cnode, FormatTransNodeType trans_type) {
+  MS_ASSERT(cnode != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto crop_prim = GetValueNode<std::shared_ptr<ops::Crop>>(cnode->input(0));
+  if (crop_prim == nullptr) {
+    MS_LOG(ERROR) << "cnode is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto axis = crop_prim->get_axis();
+  if (axis < 0) {
+    axis += kInputSizeFour;
+  }
+  MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
+  auto offsets = crop_prim->get_offsets();
+  if (trans_type == kNCHW2NHWC) {
+    auto new_axis = kNH2NC[axis];
+    if (new_axis == 0) {
+      offsets = {offsets[0], offsets[kInputIndexTwo], offsets[kInputIndexThree], offsets[1]};
+    } else if (new_axis == kInputIndexThree) {
+      offsets = {offsets[1], offsets[kInputIndexTwo], offsets[0]};
+    } else {
+      offsets.push_back(0);
+    }
+    crop_prim->set_axis(new_axis);
+    crop_prim->set_offsets(offsets);
+  } else {
+    auto new_axis = kNC2NH[axis];
+    if (new_axis == 0) {
+      offsets = {offsets[0], offsets[kInputIndexThree], offsets[1], offsets[kInputIndexTwo]};
+    } else if (new_axis == kInputIndexThree) {
+      offsets = {offsets[kInputIndexTwo], offsets[0], offsets[1]};
+    } else {
+      offsets.pop_back();
+    }
+    crop_prim->set_axis(new_axis);
+    crop_prim->set_offsets(offsets);
+  }
+  return lite::RET_OK;
+}
+
+STATUS TransposeStrategy::ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                        FormatTransNodeType trans_type) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
   for (size_t i = 2; i < cnode->size(); ++i) {
     if (utils::isa<CNodePtr>(cnode->input(i))) {
       return lite::RET_NOT_SUPPORT;
@@ -321,15 +369,21 @@ STATUS TransposeStrategy::ChangeOpSlice(const FuncGraphPtr &func_graph, const CN
                    [](int64_t v) { return static_cast<int>(v); });
   }
   for (size_t i = 2; i < cnode->size(); ++i) {
-    TransformAttrByAxes(func_graph, cnode, i, axes);
+    TransformAttrByAxes(func_graph, cnode, i, axes, trans_type);
   }
-  auto tmp_axes = TransformOpAxesAttr(axes);
+  auto tmp_axes = TransformOpAxesAttr(axes, trans_type);
   std::vector<int64_t> new_axes(tmp_axes.begin(), tmp_axes.end());
   prim->set_axes(new_axes);
   return lite::RET_OK;
 }
 
-STATUS TransposeStrategy::ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS TransposeStrategy::ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                              FormatTransNodeType trans_type) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  if (trans_type == kNONE) {
+    MS_LOG(ERROR) << "trans_type is invalid.";
+    return lite::RET_ERROR;
+  }
   if (cnode->size() != kOnnxStridedSlice) {
     return lite::RET_NOT_SUPPORT;
   }
@@ -347,9 +401,9 @@ STATUS TransposeStrategy::ChangeOpStrideSlice(const FuncGraphPtr &func_graph, co
     if (index == kInputIndexFour) {
       continue;
     }
-    TransformAttrByAxes(func_graph, cnode, index, axes);
+    TransformAttrByAxes(func_graph, cnode, index, axes, trans_type);
   }
-  auto cur_axes = TransformOpAxesAttr(axes);
+  auto cur_axes = TransformOpAxesAttr(axes, trans_type);
   auto param_node =
     BuildIntVecParameterNode(func_graph, cur_axes, cnode->input(kInputIndexFour)->fullname_with_scope());
   func_graph->manager()->Replace(cnode->input(kInputIndexFour), param_node);
@@ -357,11 +411,10 @@ STATUS TransposeStrategy::ChangeOpStrideSlice(const FuncGraphPtr &func_graph, co
 }
 
 void TransposeStrategy::TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                                            const std::vector<int> &axes) {
+                                            const std::vector<int> &axes, FormatTransNodeType trans_type) {
   if (cnode == nullptr || input_index >= cnode->size() || axes.empty()) {
     return;
   }
-  auto axis_map = GetNC2NHAxisMap();
   auto origin_input = node_infer_shape_.GetIntVecInput(cnode, input_index);
   if (origin_input.size() != axes.size()) {
     return;
@@ -369,8 +422,16 @@ void TransposeStrategy::TransformAttrByAxes(const FuncGraphPtr &func_graph, cons
   std::vector<int> cur_input;
   for (int dim = 0; dim < static_cast<int>(kInputSizeFour); ++dim) {
     for (size_t index = 0; index < axes.size(); ++index) {
-      int nhwc_dim = axis_map[axes[index] < 0 ? axes[index] + kInputSizeFour : axes[index]];
-      if (nhwc_dim == dim) {
+      int axis = axes[index];
+      if (axis < 0) {
+        axis += kInputSizeFour;
+      }
+      MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
+      int cur_axis = kNH2NC[axis];
+      if (trans_type == kNHWC2NCHW) {
+        cur_axis = kNC2NH[axis];
+      }
+      if (cur_axis == dim) {
         cur_input.push_back(origin_input[index]);
       }
     }
@@ -379,14 +440,23 @@ void TransposeStrategy::TransformAttrByAxes(const FuncGraphPtr &func_graph, cons
   func_graph->manager()->Replace(cnode->input(input_index), param_node);
 }
 
-std::vector<int> TransposeStrategy::TransformOpAxesAttr(const std::vector<int> &origin_axes) {
-  auto axis_map = GetNC2NHAxisMap();
-  std::vector<int> cur_axis;
+std::vector<int> TransposeStrategy::TransformOpAxesAttr(const std::vector<int> &origin_axes,
+                                                        FormatTransNodeType trans_type) {
+  std::vector<int> cur_axes;
   for (size_t i = 0; i < origin_axes.size(); ++i) {
-    cur_axis.push_back(axis_map[origin_axes[i] < 0 ? origin_axes[i] + kInputSizeFour : origin_axes[i]]);
+    int axis = origin_axes[i];
+    if (axis < 0) {
+      axis += kInputSizeFour;
+    }
+    MS_ASSERT(axis >= 0 && axis < kInputSizeFour);
+    int cur_axis = kNH2NC[axis];
+    if (trans_type == kNHWC2NCHW) {
+      cur_axis = kNC2NH[axis];
+    }
+    cur_axes.push_back(cur_axis);
   }
-  std::sort(cur_axis.begin(), cur_axis.end());
-  return cur_axis;
+  std::sort(cur_axes.begin(), cur_axes.end());
+  return cur_axes;
 }
 }  // namespace opt
 }  // namespace mindspore

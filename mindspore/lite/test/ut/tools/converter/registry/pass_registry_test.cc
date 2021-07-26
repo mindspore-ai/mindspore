@@ -25,6 +25,7 @@
 #include "ops/addn.h"
 #include "ops/custom.h"
 #include "tools/converter/model_parser.h"
+#include "tools/converter/registry/pass_content.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/model_parser_test.h"
 
@@ -207,13 +208,17 @@ class TestFusion : public Pass {
     return true;
   }
 };
-REG_PASS(POSITION_BEGIN, TestFusion)
+REG_PASS(TestFusion, TestFusion)
+REG_SCHEDULED_PASS(POSITION_BEGIN, {"TestFusion"})
 }  // namespace opt
 
 TEST_F(PassRegistryTest, TestRegistry) {
-  auto passes = opt::PassRegistry::GetInstance()->GetPasses();
-  ASSERT_EQ(passes.size(), 1);
-  auto begin_pass = passes[opt::POSITION_BEGIN];
+  auto &passes = opt::PassStoreRoomInfo();
+  auto &assigned_passes = opt::ExternalAssignedPassesInfo();
+  ASSERT_EQ(assigned_passes.size(), 1);
+  auto pass_names = assigned_passes[opt::POSITION_BEGIN];
+  ASSERT_EQ(pass_names.size(), 1);
+  auto begin_pass = passes[pass_names.front()];
   ASSERT_NE(begin_pass, nullptr);
   auto begin_pass_test = std::dynamic_pointer_cast<opt::TestFusion>(begin_pass);
   ASSERT_NE(begin_pass_test, nullptr);

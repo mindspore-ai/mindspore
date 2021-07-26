@@ -20,13 +20,14 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "backend/optimizer/common/optimizer.h"
 #include "include/errorcode.h"
 #include "include/version.h"
 #include "ir/func_graph.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/dump_graph_init.h"
-#include "tools/optimizer/graph/unify_format_pass.h"
+#include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/graph/control_flow_pass.h"
 
 namespace mindspore {
@@ -192,10 +193,8 @@ STATUS ExportModel(const FuncGraphPtr &graph) {
     return RET_ERROR;
   }
   (void)Manage(mirror_graph, true);
-  auto format_pass = std::make_shared<opt::UnifyFormatPass>();
-  format_pass->Init(flags->fmk, flags->trainModel);
-  if (!format_pass->Run(mirror_graph)) {
-    MS_LOG(ERROR) << "Run format pass failed.";
+  if (!opt::RunOptimizerPass(mirror_graph, {"InferShapePass", "DecreaseTransposeAlgo"})) {
+    MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return RET_ERROR;
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();

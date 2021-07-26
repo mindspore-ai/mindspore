@@ -23,7 +23,7 @@
 #include "tools/converter/import/mindir_adjust.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/parser/insert_transpose.h"
+#include "tools/converter/parser/unify_format.h"
 
 namespace mindspore::lite {
 namespace {
@@ -208,8 +208,8 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto insert_transpose = std::make_shared<InsertTranspose>(lite::converter::FmkType_MS, flag.trainModel);
-  if (!insert_transpose->Run(func_graph)) {
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_MS, flag.trainModel);
+  if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }

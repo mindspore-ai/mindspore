@@ -20,8 +20,9 @@
 #include <unordered_map>
 #include <deque>
 #include "src/common/log_adapter.h"
+#include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/core/ir/primitive.h"
+#include "ir/primitive.h"
 #include "tools/optimizer/fusion/affine_activation_fusion.h"
 #include "tools/optimizer/fusion/affine_fusion.h"
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
@@ -56,7 +57,7 @@
 #include "tools/optimizer/graph/control_flow_pass.h"
 #include "tools/optimizer/graph/reduce_same_act_pass.h"
 #include "tools/optimizer/graph/split_one_pass.h"
-#include "tools/optimizer/graph/unify_format_pass.h"
+#include "tools/optimizer/graph/decrease_transpose_algo.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -68,6 +69,10 @@
 #include "include/registry/pass_registry.h"
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
+#include "tools/optimizer/format/delete_redundant_transpose.h"
+#include "tools/optimizer/format/to_nchw_format.h"
+#include "tools/optimizer/format/to_nhwc_format.h"
+#include "tools/optimizer/format/conv_weight_format.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -238,22 +243,6 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   return RET_OK;
 }
 
-STATUS AnfTransform::RunPluginPass(const FuncGraphPtr &old_graph, int position) {
-  auto instance = opt::PassRegistry::GetInstance();
-  auto plugin_passes = instance->GetPasses();
-  if (plugin_passes.find(position) == plugin_passes.end()) {
-    MS_LOG(DEBUG) << "there is no plugin pass in current position.";
-    return RET_OK;
-  }
-
-  auto plugin_pass = plugin_passes.at(position);
-  if (!plugin_pass->Run(old_graph)) {
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
   all_func_graphs->insert(func_graph);
   auto nodes = func_graph->GetOrderedCnodes();
@@ -337,16 +326,13 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  status = RunPluginPass(old_graph, opt::POSITION_BEGIN);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run plugin pass failed.";
+  if (!opt::RunExternalPass(old_graph, opt::POSITION_BEGIN)) {
+    MS_LOG(ERROR) << "Run external pass failed, place is BEGIN";
     return nullptr;
   }
 
-  auto format_pass = std::make_shared<opt::UnifyFormatPass>();
-  format_pass->Init(config->fmk, config->trainModel);
-  if (!format_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run format pass failed.";
+  if (!opt::RunOptimizerPass(old_graph, {"InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
+    MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return nullptr;
   }
 
@@ -370,16 +356,13 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     }
   }
 
-  format_pass = std::make_shared<opt::UnifyFormatPass>();
-  format_pass->Init(config->fmk, config->trainModel);
-  if (!format_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run format pass failed.";
+  if (!opt::RunOptimizerPass(old_graph, {"InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
+    MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return nullptr;
   }
 
-  status = RunPluginPass(old_graph, opt::POSITION_END);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run plugin pass failed.";
+  if (!opt::RunExternalPass(old_graph, opt::POSITION_END)) {
+    MS_LOG(ERROR) << "Run external pass failed, place is END";
     return nullptr;
   }
 
@@ -403,7 +386,20 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   return old_graph;
 }
 
+void AnfTransform::AppendPassToStoreRoom(const converter::Flags *config) {
+  auto fmk = config->fmk;
+  auto is_train = config->trainModel;
+  opt::PassRegistry("ConvWeightToKHWC", std::make_shared<opt::ConvWeightToKHWC>());
+  opt::PassRegistry("ConvWeightToKCHW", std::make_shared<opt::ConvWeightToKCHW>());
+  opt::PassRegistry("DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train));
+  opt::PassRegistry("DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>());
+  opt::PassRegistry("InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train));
+  opt::PassRegistry("ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train));
+  opt::PassRegistry("ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train));
+}
+
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
+  AppendPassToStoreRoom(config);
   auto new_graph = TransformFuncGraph(main_graph, config);
   if (new_graph == nullptr) {
     MS_LOG(ERROR) << "optimizer failed.";

@@ -852,10 +852,10 @@ STATUS GetFilterDim(const std::vector<int64_t> &oriDims, kTransFilterType type, 
                     int64_t *filterH, int64_t *filterW) {
   MS_ASSERT(oriDims.size() == 4);
   std::unordered_map<kTransFilterType, int> maps = {
-    {kKCHW2HWCK, 1}, {kKCHW2HWKC, 1}, {kKCHW2KHWC, 1}, {kKCHW2CKHW, 1}, {kCKHW2HWCK, 2},
-    {kCKHW2HWKC, 2}, {kCKHW2KHWC, 2}, {kHWCK2KCHW, 3}, {kHWCK2CKHW, 3}, {kHWCK2KHWC, 3},
-    {kHWKC2KCHW, 4}, {kHWKC2CKHW, 4}, {kHWKC2KHWC, 4}, {kNHWC2KCHW, 5}, {kNHWC2HWCK, 5},
-    {kNHWC2CKHW, 5}, {kCHWK2HWCK, 6}, {kCHWK2KHWC, 6}, {kKHWC2HWCK, 7}, {kKHWC2CHWK, 7},
+    {kKCHW2HWCK, 1}, {kKCHW2HWKC, 1}, {kKCHW2KHWC, 1}, {kKCHW2CKHW, 1}, {kCKHW2HWCK, 2}, {kCKHW2HWKC, 2},
+    {kCKHW2KHWC, 2}, {kHWCK2KCHW, 3}, {kHWCK2CKHW, 3}, {kHWCK2KHWC, 3}, {kHWKC2KCHW, 4}, {kHWKC2CKHW, 4},
+    {kHWKC2KHWC, 4}, {kNHWC2KCHW, 5}, {kNHWC2HWCK, 5}, {kNHWC2CKHW, 5}, {kKHWC2KCHW, 5}, {kCHWK2HWCK, 6},
+    {kCHWK2KHWC, 6}, {kKHWC2HWCK, 7}, {kKHWC2CHWK, 7},
   };
   if (maps.find(type) == maps.end()) {
     MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
@@ -915,10 +915,10 @@ STATUS SetFilterDim(const tensor::TensorPtr &tensor, kTransFilterType type, int3
                     int32_t filterH, int32_t filterW) {
   MS_ASSERT(tensor != nullptr);
   std::unordered_map<kTransFilterType, int> maps = {
-    {kKCHW2HWCK, 1}, {kCKHW2HWCK, 1}, {kNHWC2HWCK, 1}, {kKHWC2HWCK, 1}, {kCHWK2HWCK, 1},
-    {kKCHW2HWKC, 2}, {kCKHW2HWKC, 2}, {kHWCK2KCHW, 3}, {kHWKC2KCHW, 3}, {kNHWC2KCHW, 3},
-    {kHWCK2CKHW, 4}, {kHWKC2CKHW, 4}, {kNHWC2CKHW, 4}, {kKCHW2CKHW, 4}, {kKHWC2CHWK, 5},
-    {kKCHW2KHWC, 6}, {kCKHW2KHWC, 6}, {kCHWK2KHWC, 6}, {kHWCK2KHWC, 6}, {kHWKC2KHWC, 6},
+    {kKCHW2HWCK, 1}, {kCKHW2HWCK, 1}, {kNHWC2HWCK, 1}, {kKHWC2HWCK, 1}, {kCHWK2HWCK, 1}, {kKCHW2HWKC, 2},
+    {kCKHW2HWKC, 2}, {kHWCK2KCHW, 3}, {kHWKC2KCHW, 3}, {kNHWC2KCHW, 3}, {kKHWC2KCHW, 3}, {kHWCK2CKHW, 4},
+    {kHWKC2CKHW, 4}, {kNHWC2CKHW, 4}, {kKCHW2CKHW, 4}, {kKHWC2CHWK, 5}, {kKCHW2KHWC, 6}, {kCKHW2KHWC, 6},
+    {kCHWK2KHWC, 6}, {kHWCK2KHWC, 6}, {kHWKC2KHWC, 6},
   };
   if (maps.find(type) == maps.end()) {
     MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
@@ -1137,10 +1137,10 @@ static STATUS TransFilterData(const tensor::TensorPtr &tensor, kTransFilterType 
   T *p2Buff = nullptr;
 
   std::unordered_map<kTransFilterType, int> maps = {
-    {kCHWK2HWCK, 1}, {kCHWK2KHWC, 1}, {kKHWC2HWCK, 2}, {kKCHW2HWCK, 3}, {kKCHW2CKHW, 3},
-    {kKCHW2KHWC, 3}, {kKCHW2HWKC, 3}, {kCKHW2HWCK, 4}, {kCKHW2KHWC, 4}, {kCKHW2HWKC, 4},
-    {kHWCK2KCHW, 5}, {kHWCK2CKHW, 5}, {kHWCK2KHWC, 5}, {kHWKC2KCHW, 6}, {kHWKC2KHWC, 6},
-    {kHWKC2CKHW, 6}, {kNHWC2HWCK, 7}, {kNHWC2KCHW, 7}, {kNHWC2CKHW, 7}, {kKHWC2CHWK, 8},
+    {kCHWK2HWCK, 1}, {kCHWK2KHWC, 1}, {kKHWC2HWCK, 2}, {kKCHW2HWCK, 3}, {kKCHW2CKHW, 3}, {kKCHW2KHWC, 3},
+    {kKCHW2HWKC, 3}, {kCKHW2HWCK, 4}, {kCKHW2KHWC, 4}, {kCKHW2HWKC, 4}, {kHWCK2KCHW, 5}, {kHWCK2CKHW, 5},
+    {kHWCK2KHWC, 5}, {kHWKC2KCHW, 6}, {kHWKC2KHWC, 6}, {kHWKC2CKHW, 6}, {kNHWC2HWCK, 7}, {kNHWC2KCHW, 7},
+    {kKHWC2KCHW, 7}, {kNHWC2CKHW, 7}, {kKHWC2CHWK, 8},
   };
   if (maps.find(type) == maps.end()) {
     MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
@@ -1509,6 +1509,24 @@ CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &inp
   auto tuple_cnode = func_graph->NewCNode(tuple_get_item_prim, {input, second_input});
   tuple_cnode->set_fullname_with_scope(input->fullname_with_scope() + "_getitem_" + std::to_string(index));
   return tuple_cnode;
+}
+
+STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVector *shape) {
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "abstract of cnode is invalid.";
+    return lite::RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensor>(abstract)) {
+    MS_LOG(ERROR) << "abstract of cnode is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
+    MS_LOG(ERROR) << "shape of cnode's output is invalid.";
+    return lite::RET_ERROR;
+  }
+  *shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
+  return lite::RET_OK;
 }
 }  // namespace opt
 }  // namespace mindspore
