@@ -723,6 +723,18 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   int ret = RET_NOT_SUPPORT;
   auto prim_type = GetPrimitiveType(node->primitive_);
   if (prim_type == schema::PrimitiveType_Custom) {
+    for (auto &&device : context_->device_list_) {
+      if (!device.provider_.empty() && !device.provider_device_.empty()) {
+        kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, device.provider_device_,
+                               device.provider_};
+        ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
+                                                       kernel, node->primitive_);
+        if (ret == RET_OK && *kernel != nullptr) {
+          return ret;
+        }
+      }
+    }
+
     kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, "", ""};
     ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
                                                    kernel, node->primitive_);

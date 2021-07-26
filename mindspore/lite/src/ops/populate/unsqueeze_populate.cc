@@ -43,6 +43,11 @@ OpParameter *PopulateUnsqueezeParameter(const void *prim) {
     return nullptr;
   }
   auto flat_axis = std::vector<int>(axis->begin(), axis->end());
+  if (flat_axis.size() > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "Invalid axis size " << flat_axis.size();
+    free(param);
+    return nullptr;
+  }
   param->num_dim_ = flat_axis.size();
   int i = 0;
   for (int &flat_axi : flat_axis) {

@@ -126,32 +126,13 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
 }
 
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                    const InnerContext *ctx, const mindspore::Context *ms_ctx,
-                                    const kernel::KernelKey &key, kernel::LiteKernel **kernel, const void *primitive) {
+                                    const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
+                                    kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ms_ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
   kernel::KernelDesc desc;
-  auto prim_type = GetPrimitiveType(primitive);
-  CreateKernel creator;
-  if (prim_type == schema::PrimitiveType_Custom) {
-    for (auto &&device : ctx->device_list_) {
-      if (!device.provider_.empty() && !device.provider_device_.empty()) {
-        kernel::KernelKey key_tmp = key;
-        key_tmp.kernel_arch = device.provider_device_;
-        key_tmp.provider = device.provider_;
-        KernelKeyToKernelDesc(key_tmp, &desc);
-        creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
-        if (creator == nullptr) {
-          continue;
-        }
-      }
-    }
-  }
-
-  if (creator == nullptr) {
-    KernelKeyToKernelDesc(key, &desc);
-    creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
-  }
+  KernelKeyToKernelDesc(key, &desc);
+  CreateKernel creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
   }
@@ -198,7 +179,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       return RET_ERROR;
     }
   } else {
-    auto ret = GetCustomKernel(in_tensors, out_tensors, ctx, ms_ctx, key, kernel, primitive);
+    auto ret = GetCustomKernel(in_tensors, out_tensors, ms_ctx, key, kernel, primitive);
     if (ret == RET_OK) {
       (*kernel)->set_context(ctx);
     }

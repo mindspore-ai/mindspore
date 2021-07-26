@@ -20,6 +20,7 @@ using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore {
 namespace lite {
+constexpr auto kMinShapeSize = 2;
 OpParameter *PopulateDeconvParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
@@ -44,6 +45,13 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   auto output_paddings = value->output_paddings();
   if (kernel_size == nullptr || stride == nullptr || dilation == nullptr || output_paddings == nullptr) {
     MS_LOG(ERROR) << "nullptr";
+    free(param);
+    return nullptr;
+  }
+  if (kernel_size->size() < kMinShapeSize || stride->size() < kMinShapeSize || dilation->size() < kMinShapeSize) {
+    MS_LOG(ERROR) << "Invalid shape size!kernel_size size: " << kernel_size->size()
+                  << ", stride size: " << stride->size() << ", dilation size: " << dilation->size()
+                  << ", output_paddings size:" << output_paddings->size();
     free(param);
     return nullptr;
   }

@@ -43,7 +43,7 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
     return nullptr;
   }
   auto block_sizes = std::vector<int64_t>(block_size->begin(), block_size->end());
-  if (block_sizes.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
+  if (block_sizes.size() > COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "The value of block_sizes.size() is too big";
     free(param);
     return nullptr;
@@ -81,7 +81,11 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
     auto paddings_vec = std::vector<int64_t>(paddings_data->begin(), paddings_data->end());
     paddings.insert(paddings.end(), paddings_vec.begin(), paddings_vec.end());
   }
-
+  if (paddings.size() > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "Invalid paddings size " << paddings.size();
+    free(param);
+    return nullptr;
+  }
   for (size_t i = 0; i < block_sizes.size(); ++i) {
     param->block_sizes_[i] = static_cast<int>(block_sizes[i]);
   }

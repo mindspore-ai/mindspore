@@ -37,7 +37,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->num_split_ = value->output_num();
-  if (param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
+  if (param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int)) || param->num_split_ < 0) {
     MS_LOG(ERROR) << "The value of param->num_split_ is too big";
     free(param);
     return nullptr;
@@ -52,7 +52,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   }
   memset(param->split_sizes_, 0, param->num_split_ * sizeof(int));
   auto split_sizes_vector_ = value->size_splits();
-  if (split_sizes_vector_ != nullptr) {
+  if (split_sizes_vector_ != nullptr && split_sizes_vector_->size() <= static_cast<uint32_t>(param->num_split_)) {
     int i = 0;
     for (auto iter : *split_sizes_vector_) {
       param->split_sizes_[i++] = iter;
