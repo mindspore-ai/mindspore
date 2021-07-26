@@ -75,6 +75,7 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
                        [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
 
   ShapeVector res = BroadcastShape(shp_x, shp_y);
+  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
   if (res.empty()) {
     MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
                       << args_spec_list[1]->ToString();
@@ -115,16 +116,17 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
     (void)CheckDtypeSame(op_name, tensor_base, tensor);
     (void)CheckShapeSame(op_name, tensor_base, tensor);
   }
-
+  auto element = tensor_base->element();
+  MS_EXCEPTION_IF_NULL(element);
   primitive->set_attr("N", MakeValue(SizeToLong(tuple_len)));
-  primitive->set_attr("T", tensor_base->element()->BuildType());
+  primitive->set_attr("T", element->BuildType());
 
   AbstractTensorPtr ret = dyn_cast<AbstractTensor>(tensor_base->Broaden());
   MS_EXCEPTION_IF_NULL(ret);
   auto ret_shape_ptr = ret->shape();
   MS_EXCEPTION_IF_NULL(ret_shape_ptr);
-  auto ret_shape = ret->shape()->shape();
-  (void)ret_shape.insert(ret_shape.begin() + axis_value, tuple_len);
+  auto ret_shape = ret_shape_ptr->shape();
+  (void)ret_shape.insert(ret_shape.begin() + axis_value, SizeToLong(tuple_len));
   ret->set_shape(std::make_shared<Shape>(ret_shape));
   return ret;
 }
@@ -137,7 +139,8 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
 
   auto shape = input->shape();
-  if (shape->shape().size() != 1) {
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->shape().empty()) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
   }
   ShapeVector ids_shape = {Shape::SHP_ANY};
@@ -205,6 +208,10 @@ AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePt
   CheckArgsSize(op_name + " dout", dout->elements(), size_expected);
   auto ids = CheckArg<AbstractTensor>(op_name, dout->elements(), 0);
   auto ids_idx = CheckArg<AbstractTensor>(op_name, dout->elements(), 1);
+  auto ids_shape = ids->shape();
+  auto ids_idx_shape = ids_idx->shape();
+  MS_EXCEPTION_IF_NULL(ids_shape);
+  MS_EXCEPTION_IF_NULL(ids_idx_shape);
   if (ids->shape()->shape().size() != 1) {
     MS_LOG(EXCEPTION) << "Dims of dout[0] of " << op_name << "' input must be 1.";
   }
@@ -278,7 +285,6 @@ AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const Pri
   const size_t size_expected = 3;
   CheckArgsSize(op_name, args_spec_list, size_expected);
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(segment_ids);
@@ -411,12 +417,10 @@ AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitiveP
   const size_t size_expected = 5;
   CheckArgsSize(op_name, args_spec_list, size_expected);
   auto hash_map = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(hash_map);
   MS_EXCEPTION_IF_NULL(hash_map->shape());
 
   auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   auto indices_shp = indices->shape();
-  MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(indices_shp);
 
   ShapeVector shape;
@@ -451,12 +455,10 @@ AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, const Primiti
   CheckArgsSize(op_name, args_spec_list, size_expected);
   auto cache_table = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto cache_table_shp = cache_table->shape();
-  MS_EXCEPTION_IF_NULL(cache_table);
   MS_EXCEPTION_IF_NULL(cache_table_shp);
 
   auto swap_cache_idx = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   auto swap_cache_idx_shp = swap_cache_idx->shape();
-  MS_EXCEPTION_IF_NULL(swap_cache_idx);
   MS_EXCEPTION_IF_NULL(swap_cache_idx_shp);
 
   auto cache_table_shape = cache_table_shp->shape();
@@ -486,12 +488,6 @@ AbstractBasePtr InferImplUpdateCache(const AnalysisEnginePtr &, const PrimitiveP
                                      const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(input_x);
-  MS_EXCEPTION_IF_NULL(input_x->shape());
-
-  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(indices);
-  MS_EXCEPTION_IF_NULL(indices->shape());
 
   ShapeVector shape;
   shape.emplace_back(1);
@@ -505,7 +501,6 @@ AbstractBasePtr InferImplSubAndFilter(const AnalysisEnginePtr &, const Primitive
   const std::string op_name = primitive->name();
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto input_x_shp = input_x->shape();
-  MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x_shp);
 
   ShapeVector shape;
@@ -633,6 +628,7 @@ AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const Primitiv
 
   MS_LOG(INFO) << "InferImplDynamicAssign " << args_spec_list[0];
   auto type = args_spec_list[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
   if (type->type_id() == kObjectTypeRefKey) {
     return args_spec_list[1]->Broaden();
   } else {
@@ -654,12 +650,10 @@ AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const Primit
   const std::string op_name = primitive->name();
   auto params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto params_shp = params->shape();
-  MS_EXCEPTION_IF_NULL(params);
   MS_EXCEPTION_IF_NULL(params_shp);
   auto params_shape = params_shp->shape();
   auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   auto indices_shp = indices->shape();
-  MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(indices_shp);
   auto indices_shape = indices_shp->shape();
   auto indices_max_shape = indices_shp->max_shape();
@@ -711,8 +705,8 @@ AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const Primitive
   const std::string &op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(input->shape());
   auto shape = input->shape()->shape();
-
   bool has_dyn_shape = std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
   ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
   if (has_dyn_shape) {
@@ -735,6 +729,7 @@ AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto input_shp = input->shape()->shape();
   ValuePtr perm = primitive->GetAttr("perm");
+  MS_EXCEPTION_IF_NULL(perm);
   auto perm_val = perm->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(perm_val);
   auto perm_val_data = perm_val->value();
@@ -773,6 +768,7 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
     x_min_shape = x_shape;
   }
   ValuePtr sh = primitive->GetAttr("shape");
+  MS_EXCEPTION_IF_NULL(sh);
   auto reshape_value_tuple = sh->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(reshape_value_tuple);
   auto reshape_tuple = reshape_value_tuple->value();
@@ -851,7 +847,7 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
   ValuePtr axis = primitive->GetAttr("axis");
   int64_t axis_value = CheckAxis(op_name, axis, -(rank + 1), rank);
   uint64_t axis_value_pos = LongToUlong(GetPositiveAxis(axis_value, LongToSize(rank)));
-  int64_t output_num_value = primitive->GetAttr("output_num")->cast<Int64ImmPtr>()->value();
+  int64_t output_num_value = GetValue<int64_t>(primitive->GetAttr("output_num"));
   if ((x_shape[axis_value_pos] != Shape::SHP_ANY) && (x_shape[axis_value_pos] % output_num_value != 0)) {
     MS_LOG(EXCEPTION) << "x_shape[" << axis_value_pos << "] = " << x_shape[axis_value_pos]
                       << " must be divisible by output_num = " << output_num_value;

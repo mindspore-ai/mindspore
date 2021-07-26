@@ -74,7 +74,7 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   abstract::CheckArgsSize(op_name, args_spec_list, kSwitchLayerInputNum);
   auto index = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto &input_shape = index->shape()->shape();
-  if (input_shape.size() != 0) {
+  if (!input_shape.empty()) {
     MS_EXCEPTION(ValueError) << op_name << " index must be a 0 dimension tensor, but got a " << input_shape.size()
                              << " dimension tensor";
   }
@@ -86,7 +86,7 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   AbstractTuplePtr branches_abs = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
   AbstractBasePtrList branches = branches_abs->elements();
   const size_t maximum_layer_num = 1000;
-  if (branches.size() < 1 || branches.size() > maximum_layer_num) {
+  if (branches.empty() || branches.size() > maximum_layer_num) {
     MS_EXCEPTION(ValueError) << op_name << " support at least 1 and at most " << maximum_layer_num << " but got "
                              << branches.size() << " branches.";
   }

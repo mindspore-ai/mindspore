@@ -68,7 +68,7 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
       continue;
     }
     if (shape1->shape()[i] == Shape::SHP_ANY && shape2->shape()[i] != Shape::SHP_ANY) {
-      if (shape1->min_shape().empty() || shape1->max_shape().empty()) {
+      if (shape1->min_shape().size() <= i || shape1->max_shape().size() <= i) {
         MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
                                  << " has dynamic shape, but does not have min/max shape info.";
       }
@@ -77,7 +77,7 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
       continue;
     }
     if (shape1->shape()[i] != Shape::SHP_ANY && shape2->shape()[i] == Shape::SHP_ANY) {
-      if (shape2->min_shape().empty() || shape2->max_shape().empty()) {
+      if (shape2->min_shape().size() <= i || shape2->max_shape().size() <= i) {
         MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
                                  << " has dynamic shape, but does not have min/max shape info.";
       }
@@ -86,11 +86,11 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
       continue;
     }
     // both shapes contains dynamic shape
-    if (shape1->min_shape().empty() || shape1->max_shape().empty()) {
+    if (shape1->min_shape().size() <= i || shape1->max_shape().size() <= i) {
       MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
                                << " has dynamic shape, but does not have min/max shape info.";
     }
-    if (shape2->min_shape().empty() || shape2->max_shape().empty()) {
+    if (shape2->min_shape().size() <= i || shape2->max_shape().size() <= i) {
       MS_EXCEPTION(ValueError) << "Shape " << shape2->ToString()
                                << " has dynamic shape, but does not have min/max shape info.";
     }
@@ -109,10 +109,10 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   // lengths of two shapes are not same, join failed
   if (shape1->shape().size() != shape2->shape().size()) {
     // special case: shape(1), shape() -> shape(1)
-    if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().size() == 0) {
+    if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().empty()) {
       return shape1;
     }
-    if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().size() == 0) {
+    if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().empty()) {
       return shape2;
     }
     return nullptr;
@@ -138,7 +138,7 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
 }
 
 AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.size() < 1) {
+  if (args_spec_list.empty()) {
     MS_LOG(EXCEPTION) << "AbstractJoin requires at least 1 params, while the input size is " << args_spec_list.size()
                       << ".";
   }
@@ -205,7 +205,7 @@ bool CheckType(const TypePtr &expected_type, const TypePtr &x) {
 
 TypePtr CheckTypeList(const TypePtr &predicate, const TypePtrList &args_type_list) {
   MS_EXCEPTION_IF_NULL(predicate);
-  for (auto arg_type : args_type_list) {
+  for (const auto &arg_type : args_type_list) {
     MS_EXCEPTION_IF_NULL(arg_type);
     if (!CheckType(predicate, arg_type)) {
       MS_LOG(EXCEPTION) << "The expected is " << predicate->ToString() << ", not " << arg_type->ToString();
@@ -292,19 +292,6 @@ ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy) {
     }
   }
   return shp;
-}
-
-ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x,
-                           const AbstractTensorPtr &tensor_y) {
-  mindspore::abstract::ShapePtr tensor_x_shape = tensor_x->shape();
-  mindspore::abstract::ShapePtr tensor_y_shape = tensor_y->shape();
-  // if is the same shape ,just return the x_shape
-  if (*tensor_x_shape == *tensor_y_shape) {
-    return tensor_x_shape;
-  }
-  auto x_shape = tensor_x_shape->shape();
-  auto y_shape = tensor_y_shape->shape();
-  return std::make_shared<Shape>(RealBroadcast(op, x_shape, y_shape));
 }
 
 size_t TypeIdSize(const TypeId data_type) {

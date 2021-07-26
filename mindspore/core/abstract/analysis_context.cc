@@ -85,7 +85,7 @@ AnalysisContextPtr AnalysisContext::FindOwnOrParentContext(const FuncGraphPtr &f
       oss << "nullptr";
     }
     oss << " extant context list: {";
-    for (auto iter : extant_context_cache_) {
+    for (const auto &iter : extant_context_cache_) {
       if (iter.first == nullptr) {
         oss << " [graph: nullptr";
       } else {
@@ -108,10 +108,7 @@ AnalysisContextPtr AnalysisContext::DummyContext() {
 }
 
 bool AnalysisContext::IsDummyContext() {
-  if (parent_ == nullptr && func_graph_ == nullptr && args_spec_list_.empty()) {
-    return true;
-  }
-  return false;
+  return parent_ == nullptr && func_graph_ == nullptr && args_spec_list_.empty();
 }
 
 const AnalysisContextPtr kDummyAnalysisContext =

@@ -51,10 +51,9 @@ class ResourceBase {
 
   bool HasResult(const std::string &key) const { return results_.count(key) != 0; }
 
-  std::unordered_map<std::string, Any> results_;
-
  protected:
   FuncGraphManagerPtr manager_;
+  std::unordered_map<std::string, Any> results_;
 };
 
 using ResourceBasePtr = std::shared_ptr<pipeline::ResourceBase>;
