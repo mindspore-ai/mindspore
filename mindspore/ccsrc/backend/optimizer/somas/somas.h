@@ -55,10 +55,10 @@ class Somas {
   void DumpSomasMemoryIR(const string filename) const;
 
   static bool NodeSort(SomasNodePtr, SomasNodePtr);
-  std::vector<DynamicBitSet> reuse_matrix_;
   void ConvertToProfilingNode(uint32_t graph_id);
 
  private:
+  std::vector<DynamicBitSet> reuse_matrix_;
   // hash id
   std::string hash_id_;
   // Maps

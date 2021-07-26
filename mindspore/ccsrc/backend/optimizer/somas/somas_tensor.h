@@ -69,7 +69,6 @@ class SomasTensor {
   size_t aligned_size_{0};
   LifeLongType lifelong_value_;
 
-  bool ref_overlap_;
   bool between_streams_;
   bool contiguous_;
 
@@ -77,11 +76,9 @@ class SomasTensor {
   TensorType type_;
 
   size_t offset_{0};
-  size_t num_constraints_{0};
 
   std::set<SomasNodePtr> destinations_;
   std::set<SomasStreamPtr> destinationStreams_;
-  unordered_map<SomasStreamPtr, size_t> max_destination_id_;
   unordered_map<SomasStreamPtr, SomasNodePtr> max_destinations_;
 
   // Constructors/Destructors
@@ -116,6 +113,9 @@ class SomasTensor {
   void ComputeMaxDestinationId();
 
  private:
+  bool ref_overlap_;
+  size_t num_constraints_{0};
+  unordered_map<SomasStreamPtr, size_t> max_destination_id_;
   const size_t id_{0};
   const SomasNodePtr source_node_;
   SomasStreamPtr const source_stream_;

@@ -55,8 +55,6 @@ class Interval {
   }
   ~Interval() = default;
 
-  size_t m_a_;
-  size_t m_b_;
   bool intersect(const Interval &i) { return (in(i.m_a_) || in(i.m_b_)); }
   bool in(const size_t &a) { return ((a > m_a_) && (a < m_b_)); }
   Interval intersection(const Interval &i) {
@@ -78,6 +76,10 @@ class Interval {
     m_b_ = in.m_b_;
     return *this;
   }
+
+ private:
+  size_t m_a_;
+  size_t m_b_;
 };
 
 class BlockTensor {
@@ -114,7 +116,6 @@ class BlockTensor {
 class FootPrint : public std::enable_shared_from_this<FootPrint> {
  public:
   uint32_t m_solId_;
-  std::shared_ptr<FootPrint> m_foot_print_next_;
 
   FootPrint()
       : m_solId_(0),
@@ -143,6 +144,7 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
   void printStats();
 
  private:
+  std::shared_ptr<FootPrint> m_foot_print_next_;
   size_t m_offset_;
   vector<BlockTensor *> m_starts_;
   size_t m_alignment_;
