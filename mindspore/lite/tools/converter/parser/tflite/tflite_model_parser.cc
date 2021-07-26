@@ -281,6 +281,7 @@ STATUS TfliteModelParser::ConvertOps() {
     }
 
     // parse inputs
+    bool is_uint8_weight_quant = false;
     for (int i = 0; i < static_cast<int>(op->inputs.size()); i++) {
       auto input_idx = op->inputs.at(i);
       if (tflite_op_type == tflite::BuiltinOperator_FULLY_CONNECTED && input_idx == -1) {
@@ -290,6 +291,10 @@ STATUS TfliteModelParser::ConvertOps() {
         input_idx += tflite_subgraph->tensors.size();
       }
       const auto &input_tensor = tflite_subgraph->tensors[input_idx];
+      auto type_id = GetTfliteDataType(input_tensor.get()->type);
+      if (i == 0 && type_id != kNumberTypeUInt8) {
+        is_uint8_weight_quant = true;
+      }
       if (nodes_.find(input_idx) != nodes_.end()) {
         op_inputs.emplace_back(nodes_.at(input_idx));
         continue;
@@ -303,7 +308,7 @@ STATUS TfliteModelParser::ConvertOps() {
         tensor_name = GetTensorName(i, tflite_op_type, op_name);
       }
       auto parameter = res_graph_->add_parameter();
-      status = ConvertConstTensor(input_tensor.get(), parameter, tensor_name);
+      status = ConvertConstTensor(input_tensor.get(), parameter, tensor_name, is_uint8_weight_quant);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "convert " << op_name << " node: " << input_idx << " const node failed.";
         continue;
@@ -512,7 +517,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
 }
 
 STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, const ParameterPtr &parameter,
-                                             const std::string &tensor_name) {
+                                             const std::string &tensor_name, bool is_uint8_weight_quant) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null, get const tensor failed.";
     return RET_NULL_PTR;
@@ -559,6 +564,17 @@ STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, cons
       if (memcpy_s(tensor_data, tensor_info->Size(), data.data(), data.size()) != EOK) {
         MS_LOG(ERROR) << "memcpy failed.";
         return RET_ERROR;
+      }
+      if (is_uint8_weight_quant && type_id == kNumberTypeUInt8) {
+        int64_t shape_size = 1;
+        for (size_t i = 0; i < shape_vector.size(); i++) {
+          shape_size *= shape_vector[i];
+        }
+        auto uint8_tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+        for (int64_t i = 0; i < shape_size; i++) {
+          uint8_tensor_data[i] = static_cast<int8_t>(uint8_tensor_data[i]);
+        }
+        tensor_info->set_data_type(kNumberTypeInt8);
       }
     }
   }

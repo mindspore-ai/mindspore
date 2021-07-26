@@ -44,7 +44,7 @@ class TfliteModelParser : public ModelParser {
   char *tflite_model_buf_ = nullptr;
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const std::string &model_path);
   STATUS ConvertConstTensor(const tflite::TensorT *tensor, const ParameterPtr &parameter,
-                            const std::string &tensor_name);
+                            const std::string &tensor_name, bool is_uint8_weight_quant);
   STATUS ConvertOutputTensor(const tflite::OperatorT *op, const CNodePtr &dst_cnode);
   STATUS ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *primitive_c);
   STATUS ConvertOps();
