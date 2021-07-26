@@ -185,7 +185,10 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
       return nullptr;
     }
     func_graph = LoadMindIR(flag.modelFile, false, key, key_len, flag.dec_mode);
-    memset(key, 0, key_len);
+    auto ret = memset_s(key, sizeof(key), 0, key_len);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memset_s error";
+    }
   } else {
     func_graph = LoadMindIR(flag.modelFile);
   }
