@@ -40,10 +40,8 @@ using KernelGraph = mindspore::session::KernelGraph;
 
 class MemReuseUtil {
  public:
-  KernelRefs kernel_output_refs_;
   KernelRefCountPtrList total_refs_list_;
   KernelRefCountPtrList total_wk_ref_list_;
-  KernelRefs kernel_workspace_refs_;
   MemReuseUtil() : util_index_(kInitIndex), graph_(nullptr), is_all_nop_node_(false) {}
   ~MemReuseUtil() {
     if (graph_ != nullptr) {
@@ -90,6 +88,8 @@ class MemReuseUtil {
   session::KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &node, size_t i, bool visit_nop_node);
 
  private:
+  KernelRefs kernel_output_refs_;
+  KernelRefs kernel_workspace_refs_;
   int util_index_;
   const KernelGraph *graph_;
   bool is_all_nop_node_;

@@ -31,7 +31,6 @@ namespace memreuse {
 constexpr auto kSplitC = '/';
 class MemReuseChecker {
  public:
-  bool IsAddNewMembuf_ = false;
   static MemReuseChecker &GetInstance();
   MemReuseChecker(const MemReuseChecker &) = delete;
   MemReuseChecker &operator=(const MemReuseChecker &) = delete;
