@@ -77,9 +77,12 @@ void SetTransposeOpBuildInfo(const std::string &input_format, const std::string 
 // Insert transpose op between node and used_node whose position is used_node_index.
 CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &used_node,
                            int used_node_index, const std::vector<int64_t> &transpose_perm) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(used_node);
+
   MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << ", used node: " << used_node->fullname_with_scope()
                 << ", index: " << used_node_index;
-  MS_EXCEPTION_IF_NULL(graph);
   // 0.Judge whether it is a fake transpose
   auto transed_shape = AnfAlgo::GetInputDeviceShape(used_node, used_node_index);
   bool is_fake = IsFakeTranspose(transed_shape, transpose_perm);
@@ -94,6 +97,7 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   // 2.Set the input of transpose.
   std::vector<AnfNodePtr> transpose_input = {NewValueNode(transpose_prim), node};
   auto transpose_op = graph->NewCNode(transpose_input);
+  MS_EXCEPTION_IF_NULL(transpose_op);
   // 3.Set the output info of transpose.
   auto transpose_type = {AnfAlgo::GetPrevNodeOutputInferDataType(used_node, used_node_index)};
   auto transpose_shape = {AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index)};
@@ -144,6 +148,7 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
     if ((outputs_format[i] != kOpFormat_DEFAULT) && (outputs_format[i] != origin_data_format)) {
       // Find all nodes connected with node output, and change their inputs to transpose.
       auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, i);
+      MS_EXCEPTION_IF_NULL(used_node_list);
       for (size_t j = 0; j < used_node_list->size(); j++) {
         auto used_node = used_node_list->at(j).first;
         auto used_node_index = used_node_list->at(j).second - 1;
@@ -166,6 +171,7 @@ void InsertFormatTransformOp::ProcessForTupleItem(const FuncGraphPtr &graph, con
                                                   const std::vector<int64_t> &transpose_perm,
                                                   const std::string &transpose_format) const {
   auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, node_index);
+  MS_EXCEPTION_IF_NULL(used_node_list);
   for (size_t i = 0; i < used_node_list->size(); i++) {
     auto used_node = used_node_list->at(i).first;
     auto used_node_index = used_node_list->at(i).second - 1;

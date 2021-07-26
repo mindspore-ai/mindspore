@@ -26,11 +26,9 @@ const BaseRef ReplaceAddNFusion::DefinePattern() const {
   return addn;
 }
 
-const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                            const EquivPtr &equiv) const {
+const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(equiv);
   auto A = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   auto B = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
   MS_EXCEPTION_IF_NULL(A);
@@ -41,6 +39,7 @@ const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const Anf
     MS_EXCEPTION_IF_NULL(prim);
     std::vector<AnfNodePtr> inputs = {NewValueNode(prim), A, B};
     auto add_new = graph->NewCNode(inputs);
+    MS_EXCEPTION_IF_NULL(add_new);
     std::vector<TypeId> outputs_type;
     std::vector<std::vector<size_t>> outputs_shape;
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(A, 0));

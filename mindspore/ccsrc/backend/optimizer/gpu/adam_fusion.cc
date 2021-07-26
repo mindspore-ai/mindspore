@@ -34,6 +34,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
+  MS_EXCEPTION_IF_NULL(node);
   size_t input_num = AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
@@ -56,7 +57,9 @@ AnfNodePtr RelpaceOutputEdge(const AnfNodePtr &node, CNodePtr adam, AnfNodePtr u
   // the execution order of FusedAdam and the following operators.
   // n represents the operator assign_v in {prim::kPrimDepend, next_param, assign_v}
   const size_t assign_index = 2;
-  const auto &n = node->cast<CNodePtr>()->input(assign_index);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &n = cnode->input(assign_index);
   MS_EXCEPTION_IF_NULL(n);
   const auto &fg = n->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
@@ -73,8 +76,10 @@ AnfNodePtr RelpaceOutputEdge(const AnfNodePtr &node, CNodePtr adam, AnfNodePtr u
     if (IsPrimitiveCNode(user.first, prim::kPrimUpdateState)) {
       const size_t monad_index = 1;
       const size_t adam_index = 2;
-      (user.first)->cast<CNodePtr>()->set_input(monad_index, u_input);
-      (user.first)->cast<CNodePtr>()->set_input(adam_index, adam);
+      auto cnode_ptr = (user.first)->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode_ptr);
+      cnode_ptr->set_input(monad_index, u_input);
+      cnode_ptr->set_input(adam_index, adam);
       break;
     }
   }
