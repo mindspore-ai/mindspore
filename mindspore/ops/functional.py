@@ -22,6 +22,7 @@ from mindspore.ops import _constants
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
+from .composite import GradOperation
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -145,6 +146,23 @@ partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
 identity = P.identity()
+
+grad_first_parameter = GradOperation(get_all=False, get_by_list=False, sens_param=False)
+grad_all_parameters = GradOperation(get_all=True, get_by_list=False, sens_param=False)
+
+def grad(fn, grad_first_param=False):
+    """
+    A wrapper function to generate the gradient function for the input function.
+
+    Args:
+        fn (Function): Function to do GradOperation.
+        grad_first_param (bool): If True, get the gradient with respect to first input.
+            If False, get all the gradients with respect to inputs. Default: False.
+    """
+    if grad_first_param:
+        return grad_first_parameter(fn)
+    return grad_all_parameters(fn)
+
 
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive(_constants.kTupleGetItem)

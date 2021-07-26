@@ -22,7 +22,6 @@ from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Validator as validator, Rel
 from .._utils import get_concat_offset
 from ...common import dtype as mstype
-from .. import functional as F
 from ... import context
 
 
@@ -1951,6 +1950,7 @@ class EmbeddingLookupCommGrad(PrimitiveWithInfer):
     def __init__(self):
         self.init_prim_io_names(inputs=['dy', 'split_num'], outputs=['output'])
         self.add_prim_attr('primitive_target', 'CPU')
+        self.tuple_setitem = Primitive('tuple_setitem')
 
     def __infer__(self, dy, split_num):
         """
@@ -1965,7 +1965,7 @@ class EmbeddingLookupCommGrad(PrimitiveWithInfer):
         dy_shape = tuple(dy['shape'])
         split_num_value = split_num['value']
         validator.check_value_type("split_num_value", split_num_value, [int], self.name)
-        dy_shape_all = F.tuple_setitem(dy_shape, 0, dy_shape[0] * 8)
+        dy_shape_all = self.tuple_setitem(dy_shape, 0, dy_shape[0] * 8)
         return {'shape': dy_shape_all,
                 'dtype': dy['dtype'],
                 'value': None}

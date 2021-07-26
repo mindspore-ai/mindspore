@@ -954,17 +954,19 @@ bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, size_t seen_num) {
     MS_LOG(DEBUG) << fg->ToString() << " had been checked";
     return false;
   }
+
+  // Check J FuncGraph input.
   const auto &j_values = fg->j_value_nodes();
   if (!j_values.empty()) {
     auto contains_j =
       std::find_if(j_values.begin(), j_values.end(), [seen_num](const std::pair<AnfNodePtr, int> &iter) {
-        // check g1->J(fg)->g2->g cycle.
+        // Check g1->J(fg)->g2->g cycle.
         if (IsValueNode<FuncGraph>(iter.first)) {
           auto func_graph = GetValueNode<FuncGraphPtr>(iter.first);
           return func_graph->seen_ != seen_num;
         }
         if (IsValueNode<Primitive>(iter.first)) {
-          // exclude the primitive of J itself.
+          // Exclude the primitive of J itself.
           auto prim = GetValueNode<PrimitivePtr>(iter.first);
           return prim->name() != prim::kPrimJ->name();
         }
@@ -975,9 +977,26 @@ bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, size_t seen_num) {
       return true;
     }
   }
-  fg->seen_ = seen_num;
 
-  // check if func graphs used contains J(func_graph) or J(Primitive)
+  // Check J CNode as FV.
+  const auto &fv_nodes = fg->free_variables();
+  if (!fv_nodes.empty()) {
+    auto contains_j_cnode =
+      std::find_if(fv_nodes.begin(), fv_nodes.end(), [seen_num](const std::pair<AnfNodePtr, int> &iter) {
+        // Check if the FV is a J call CNode.
+        if (IsPrimitiveCNode(iter.first, prim::kPrimJ)) {
+          return true;
+        }
+        return false;
+      });
+    if (contains_j_cnode != fv_nodes.end()) {
+      MS_LOG(DEBUG) << fg->ToString() << " contains FV J(" << contains_j_cnode->first->DebugString() << ")";
+      return true;
+    }
+  }
+
+  // Check if func graphs used contains J(func_graph) or J(Primitive)
+  fg->seen_ = seen_num;
   for (auto &item : fg->func_graphs_used()) {
     auto used_g = item.first;
     if (SeekJ(used_g, seen_num)) {
