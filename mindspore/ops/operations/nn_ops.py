@@ -4079,23 +4079,33 @@ class MirrorPad(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
+        # case1: mode="REFLECT"
         >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.pad = ops.MirrorPad(mode="REFLECT")
-        ...     def construct(self, x, paddings):
-        ...         return self.pad(x, paddings)
+        ...    def __init__(self, mode):
+        ...        super(Net, self).__init__()
+        ...        self.pad = ops.MirrorPad(mode=mode)
+        ...        self.paddings = Tensor([[1, 1], [2, 2]])
+        ...    def construct(self, input_x):
+        ...        return self.pad(input_x, self.paddings)
         ...
-        >>> x = np.random.random(size=(2, 3)).astype(np.float32)
-        >>> paddings = Tensor([[1, 1], [2, 2]])
-        >>> pad = Net()
-        >>> output = pad(Tensor(x), paddings)
-        >>> print(output.shape)
-        (4, 7)
+        >>> input_x = Tensor([[1,2,3], [4,5,6], [7,8,9]])
+        >>> pad = Net("REFLECT")
+        >>> output = pad(input_x)
+        >>> print(output)
+        [[6 5 4 5 6 5 4]
+         [3 2 1 2 3 2 1]
+         [6 5 4 5 6 5 4]
+         [9 8 7 8 9 8 7]
+         [6 5 4 5 6 5 4]]
+        >>> # case2: mode="SYMMETRIC"
+        >>> pad = Net("SYMMETRIC")
+        >>> output = pad(input_x)
+        >>> print(output)
+        [[2 1 1 2 3 3 2]
+         [2 1 1 2 3 3 2]
+         [5 4 4 5 6 6 5]
+         [8 7 7 8 9 9 8]
+         [8 7 7 8 9 9 8]]
     """
 
     @prim_attr_register
@@ -7262,7 +7272,7 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
         ``Ascend``
 
     Examples:
-        >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]]
+        >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
         ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_greedyDecoder = ops.CTCGreedyDecoder()
