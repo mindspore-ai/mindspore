@@ -148,7 +148,7 @@ int GroupConvCreator::NewOutputTensor(std::vector<lite::Tensor *> *tensors, lite
 
 int GroupConvCreator::NewConstTensor(std::vector<lite::Tensor *> *tensors, int group_id) {
   std::vector<std::pair<int, std::vector<int>>> const_tensor_list{std::make_pair(kWeightIndex, filter_shape_)};
-  if (origin_inputs_.size() == 3) {
+  if (origin_inputs_.size() == kInputSize2) {
     const_tensor_list.emplace_back(std::make_pair(kBiasIndex, bias_shape_));
   }
   for (auto &info : const_tensor_list) {
