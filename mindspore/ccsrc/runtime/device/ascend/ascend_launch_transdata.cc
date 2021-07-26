@@ -49,6 +49,7 @@ void AscendLaunchTransData::LaunchOpKernel() {
   // obtain kernel_mod
   if (transdata_graph_->execution_order().size() != 1) {
     MS_LOG(ERROR) << "the execution order of the transdata graph should have only one node";
+    return;
   }
   kernel_mod_ = AnfAlgo::GetKernelMod(transdata_graph_->execution_order()[0]);
   MS_EXCEPTION_IF_NULL(kernel_mod_);
@@ -67,7 +68,7 @@ void AscendLaunchTransData::LaunchOpKernel() {
   // launch
   auto ret_status = kernel_mod_->Launch(kernel_inputs, kernel_workspace, kernel_outputs, stream_);
   if (!ret_status) {
-    MS_LOG(ERROR) << "Launch transdata single kernel failed";
+    MS_LOG(EXCEPTION) << "Launch transdata single kernel failed";
   }
 }
 
@@ -81,10 +82,9 @@ std::shared_ptr<session::KernelGraph> AscendLaunchTransData::ObtainTransDataKern
   std::vector<TypeId> output_dtypes = {dtype_};
   // obtain input & output shape
   std::vector<int64_t> input_shape;
-  std::transform(output_shape_.begin(), output_shape_.end(), std::back_inserter(input_shape),
-                 [](const size_t &value) { return static_cast<int64_t>(value); });
+  std::transform(shape_.begin(), shape_.end(), std::back_inserter(input_shape), SizeToLong);
   std::vector<std::vector<int64_t>> input_shapes = {{input_shape}};
-  std::vector<std::vector<size_t>> output_shapes = {{input_shape_}};
+  std::vector<std::vector<size_t>> output_shapes = {{shape_}};
   auto transdata_graph = session::SingleKernelGraph::ConstructKernelGraphBasedOnSingleOp(
     kTransDataOpName, input_dtypes, input_shapes, output_dtypes, output_shapes);
   MS_EXCEPTION_IF_NULL(transdata_graph);
@@ -99,7 +99,7 @@ void AscendLaunchTransData::ConstructKernelGraphAndSetAttr() {
   if (!transdata_graph_->execution_order().empty()) {
     auto transdata_node = transdata_graph_->execution_order()[0];
     // set output infer type and shape
-    AnfAlgo::SetOutputInferTypeAndShape({dtype_}, {output_shape_}, transdata_node.get());
+    AnfAlgo::SetOutputInferTypeAndShape({dtype_}, {shape_}, transdata_node.get());
     // set build info
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     builder->SetKernelType(KernelType::TBE_KERNEL);

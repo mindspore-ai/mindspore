@@ -233,26 +233,24 @@ std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *hos
 }
 
 std::shared_ptr<LaunchKernel> AscendDeviceAddress::CreateLaunchTransData(const std::vector<size_t> &host_shape,
-                                                                         const std::vector<size_t> &device_shape,
                                                                          const std::string &ori_format,
                                                                          const std::string &dst_format) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto stream = runtime_instance->compute_stream();
   auto launch_trans_data =
-    std::make_shared<AscendLaunchTransData>(stream, type_id_, size_, ori_format, dst_format, device_shape, host_shape);
+    std::make_shared<AscendLaunchTransData>(stream, type_id_, size_, ori_format, dst_format, host_shape);
   MS_EXCEPTION_IF_NULL(launch_trans_data);
   return launch_trans_data;
 }
 
 bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const std::vector<size_t> &host_shape,
-                                                                           const std::vector<size_t> &device_shape,
                                                                            size_t size, mindspore::TypeId type,
                                                                            void *host_ptr) const {
   bool sync_ok = true;
-  std::string dst_format = kOpFormat_NCHW;
+  const std::string dst_format = kOpFormat_NCHW;
   if (launch_transdata_ == nullptr) {
-    launch_transdata_ = CreateLaunchTransData(host_shape, device_shape, format_, dst_format);
+    launch_transdata_ = CreateLaunchTransData(host_shape, format_, dst_format);
     MS_EXCEPTION_IF_NULL(launch_transdata_);
   }
   // launch transdata
@@ -297,7 +295,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
       type_id_name_map.find(type_id_) != type_id_name_map.end()) {
     std::pair<std::string, std::string> type_format = std::make_pair(type_id_name_map.at(type_id_), format_);
     if (use_trans_data.find(type_format) != use_trans_data.end()) {
-      sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(host_shape, device_shape, size, type, host_ptr);
+      sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(host_shape, size, type, host_ptr);
       return sync_ok;
     }
   }

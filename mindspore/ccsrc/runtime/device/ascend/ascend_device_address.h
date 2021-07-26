@@ -59,13 +59,11 @@ class AscendDeviceAddress : public DeviceAddress {
  private:
   bool SyncDeviceToHostAndConvertFormat(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const;
   bool ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const;
-  bool SyncDeviceToHostAndConvertFormatBasedOnTransData(const std::vector<size_t> &host_shape,
-                                                        const std::vector<size_t> &device_shape, size_t size,
+  bool SyncDeviceToHostAndConvertFormatBasedOnTransData(const std::vector<size_t> &host_shape, size_t size,
                                                         mindspore::TypeId type, void *host_ptr) const;
   void SyncStream() const;
   std::vector<size_t> GetDeviceShape(std::vector<size_t> *host_shape) const;
   std::shared_ptr<LaunchKernel> CreateLaunchTransData(const std::vector<size_t> &host_shape,
-                                                      const std::vector<size_t> &device_shape,
                                                       const std::string &ori_format,
                                                       const std::string &dst_format) const;
   mutable std::shared_ptr<LaunchKernel> launch_transdata_{nullptr};

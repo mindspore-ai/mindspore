@@ -689,7 +689,8 @@ bool IsNeedPadding(const std::string &format, const size_t shape_size) {
   if (shape_size == 0) {
     return false;
   }
-  if (format == kOpFormat_DEFAULT || format == kOpFormat_FRAC_NZ || format == kOpFormat_ChannelLast) {
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_FRAC_NZ || format == kOpFormat_ChannelLast ||
+      format == kOpFormat_NCHW) {
     return false;
   } else if (shape_size < kNchwDims) {
     return true;
@@ -864,7 +865,7 @@ std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const
     {kOpFormat_NDC1HWC0, Ndc1hwc0DeviceDynamicShape},
     {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceDynamicShape}};
 
-  if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
+  if (format == kOpFormat_ND || format == kOpFormat_DEFAULT || format == kOpFormat_NCHW) {
     return shape;
   }
   if (groups > 1 && format == kOpFormat_FRAC_Z) {
