@@ -71,8 +71,7 @@ class HyperMap : public MetaFuncGraph {
   MetaFuncGraphPtr GetFnLeaf() { return fn_leaf_; }
 
  private:
-  AnfNodePtr FullMake(TypePtr type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
-                      const ArgsPairList &arg_map);
+  AnfNodePtr FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map);
   AnfNodePtr FullMake(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                       const ArgsPairList &arg_map);
   AnfNodePtr FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,

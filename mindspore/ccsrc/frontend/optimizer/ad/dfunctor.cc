@@ -350,12 +350,16 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
     return;
   }
   auto cnode_output = output->cast<CNodePtr>();
-  const size_t forward_output_index = 1;
+  constexpr size_t input_size = 3;
+  if (cnode_output->size() < input_size) {
+    MS_LOG(EXCEPTION) << "The inputs size of node " << cnode_output->DebugString() << " is less than " << input_size;
+  }
+  constexpr size_t forward_output_index = 1;
   auto &cnode_input = cnode_output->input(forward_output_index);
   if (!cnode_input->isa<CNode>()) {
     return;
   }
-  const size_t bprop_graph_index = 2;
+  constexpr size_t bprop_graph_index = 2;
   auto &input_fg = cnode_output->input(bprop_graph_index);
   if (!IsValueNode<FuncGraph>(input_fg)) {
     return;
@@ -417,7 +421,13 @@ bool DFunctor::IsFreeMorphism(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
     return false;
   }
-  auto &users = primal_graph_->manager()->node_users()[node];
+  MS_EXCEPTION_IF_NULL(primal_graph_->manager());
+  auto &node_users = primal_graph_->manager()->node_users();
+  auto iter = node_users.find(node);
+  if (iter == node_users.end()) {
+    return false;
+  }
+  auto &users = iter->second;
   // Do not care about isolated morphisms
   if (users.empty()) {
     return false;
