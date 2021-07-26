@@ -21,6 +21,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ExpandDims;
 using mindspore::schema::PrimitiveType_Flatten;
@@ -70,6 +71,9 @@ int ReshapeRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int ReshapeBaseCPUKernel::Run() {
   input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(kInputIndex)->data_c());
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(kOutputIndex)->data_c());
+  if (input_ptr_ == nullptr || output_ptr_ == nullptr) {
+    return RET_NULL_PTR;
+  }
   auto ret = ParallelLaunch(this->ms_context_, ReshapeRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reshape run error error_code[" << ret << "]";

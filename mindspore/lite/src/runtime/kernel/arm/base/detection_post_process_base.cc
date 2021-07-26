@@ -22,6 +22,7 @@
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
@@ -215,6 +216,9 @@ int DetectionPostProcessBaseCPUKernel::Run() {
   auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
   auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
   auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data_c());
+  if (output_boxes == nullptr || output_classes == nullptr || output_scores == nullptr || output_num == nullptr) {
+    return RET_NULL_PTR;
+  }
 
   if (ParamInit() != RET_OK) {
     MS_LOG(ERROR) << "ParamInit error";

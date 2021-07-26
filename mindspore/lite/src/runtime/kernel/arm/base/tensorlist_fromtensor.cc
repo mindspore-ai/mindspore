@@ -38,6 +38,9 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
     return RET_ERROR;
   }
   int *elements_shape = reinterpret_cast<int *>(input1_->data_c());  // element shape in tensor data
+  if (elements_shape == nullptr) {
+    return RET_NULL_PTR;
+  }
   for (int i = 0; i < in1_ele_num; ++i) {
     int dim0 = tensor_shape[i + 1];
     int dim1 = elements_shape[i];

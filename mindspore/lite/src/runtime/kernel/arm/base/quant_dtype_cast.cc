@@ -23,6 +23,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_QuantDTypeCast;
@@ -144,22 +145,37 @@ int QuantDTypeCastCPUKernel::Run() {
       out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
     float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+    if (int8_ptr_ == nullptr || float32_ptr_ == nullptr) {
+      return RET_NULL_PTR;
+    }
   } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32 &&
              out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
     float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data_c());
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+    if (float32_ptr_ == nullptr || int8_ptr_ == nullptr) {
+      return RET_NULL_PTR;
+    }
   } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
              out_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
     uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c());
+    if (int8_ptr_ == nullptr || uint8_ptr_ == nullptr) {
+      return RET_NULL_PTR;
+    }
   } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8 &&
              out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
     uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data_c());
     int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+    if (uint8_ptr_ == nullptr || int8_ptr_ == nullptr) {
+      return RET_NULL_PTR;
+    }
   } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
              out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
     int8_out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+    if (int8_ptr_ == nullptr || int8_out_ptr_ == nullptr) {
+      return RET_NULL_PTR;
+    }
     float32_ptr_ = new (std::nothrow) float[in_tensors_[0]->ElementsNum()];
     if (float32_ptr_ == nullptr) {
       MS_LOG(ERROR) << "new float[] failed";
@@ -169,10 +185,16 @@ int QuantDTypeCastCPUKernel::Run() {
              out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
     uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data_c());
     float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+    if (uint8_ptr_ == nullptr || float32_ptr_ == nullptr) {
+      return RET_NULL_PTR;
+    }
   } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32 &&
              out_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8) {
     float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data_c());
     uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c());
+    if (float32_ptr_ == nullptr || uint8_ptr_ == nullptr) {
+      return RET_NULL_PTR;
+    }
   }
 
   auto ret = ParallelLaunch(this->ms_context_, QuantDTypeCastRun, this, thread_n_num_);

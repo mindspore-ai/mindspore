@@ -20,6 +20,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Select;
 
@@ -76,6 +77,9 @@ int SelectCPUKernel::Run() {
     auto input1 = static_cast<float *>(in_tensors_.at(kFirstIdx)->data_c());
     auto input2 = static_cast<float *>(in_tensors_.at(kSecondIdx)->data_c());
     auto output = static_cast<float *>(out_tensors_.at(0)->data_c());
+    if (condition == nullptr || input1 == nullptr || input2 == nullptr || output == nullptr) {
+      return RET_NULL_PTR;
+    }
     for (int i = 0; i < size; i++) {
       output[i] = condition[i] ? input1[i] : input2[i];
     }

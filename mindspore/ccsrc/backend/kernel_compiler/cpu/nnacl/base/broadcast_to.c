@@ -41,6 +41,9 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
 
 #define BROADCAST_TO(type)                                                                             \
   int broadcast_to_##type(const type *input, BroadcastShapeInfo *shape_info, type *output) {           \
+    if (input == NULL || output == NULL) {                                                             \
+      return NNACL_NULL_PTR;                                                                           \
+    }                                                                                                  \
     if (shape_info->output_shape_size_ > MAX_SHAPE_SIZE) {                                             \
       return NNACL_ERR;                                                                                \
     }                                                                                                  \

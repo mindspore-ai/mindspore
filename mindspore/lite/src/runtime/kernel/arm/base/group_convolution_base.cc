@@ -47,6 +47,9 @@ int GroupConvolutionBaseCPUKernel::ReSize() {
       return RET_ERROR;
     }
   }
+  if (group_num_ == 0) {
+    return RET_ERROR;
+  }
   conv_param_->input_channel_ /= group_num_;
   conv_param_->output_channel_ /= group_num_;
   return RET_OK;
