@@ -71,8 +71,6 @@ class BatchNormGradGpuKernel : public GpuKernel {
     auto scale = GetDeviceAddress<float>(inputs, 2);
     auto save_mean = GetDeviceAddress<float>(inputs, 3);
     auto save_variance = GetDeviceAddress<float>(inputs, 4);
-    auto reserve_addr = GetDeviceAddress<float>(inputs, 5);
-    reserve_size_ = inputs[5]->size;
     void *bias = nullptr;
     T *y = nullptr;
     if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
@@ -88,11 +86,11 @@ class BatchNormGradGpuKernel : public GpuKernel {
       dz = GetDeviceAddress<T>(outputs, 3);
     }
 
-    void *workspace_addr = nullptr;
-    if (workspace_size_ != 0) {
-      workspace_addr = GetDeviceAddress<T>(workspace, 0);
-    }
     if (is_train_) {
+      auto reserve_addr = GetPossiblyNullDeviceAddress<float>(inputs, 5);
+      reserve_size_ = inputs[5]->size;
+      void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+
       const float alpha_data_diff = 1;
       const float alpha_param_diff = 1;
       const float beta_param_diff = 0;

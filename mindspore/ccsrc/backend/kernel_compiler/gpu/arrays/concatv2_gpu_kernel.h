@@ -43,11 +43,20 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (input_num_ == 0) {
+      return true;
+    }
+
     T *output = GetDeviceAddress<T>(outputs, 0);
     T **inputs_device = GetDeviceAddress<T *>(workspace, 0);
     int *len_axis_device = GetDeviceAddress<int>(workspace, 1);
+    int current_dim = 0;
     for (size_t i = 0; i < inputs.size(); i++) {
-      inputs_host_[i] = GetDeviceAddress<T>(inputs, i);
+      T *input = GetPossiblyNullDeviceAddress<T>(inputs, i);
+      if (input != nullptr) {
+        inputs_host_[current_dim] = input;
+        current_dim++;
+      }
     }
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(inputs_device, inputs_host_.get(), sizeof(T *) * input_num_,
@@ -83,14 +92,21 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     input_num_ = SizeToInt(AnfAlgo::GetInputTensorNum(kernel_node));
     inputs_host_ = std::make_unique<T *[]>(input_num_);
     len_axis_ = std::make_unique<int[]>(input_num_);
+    int current_dim = 0;
     for (int i = 0; i < input_num_; i++) {
       size_t input_size = 1;
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
       for (size_t j = 0; j < input_shape.size(); j++) {
         input_size *= input_shape[j];
       }
-      input_size_list_.push_back(input_size * sizeof(T));
-      len_axis_[i] = SizeToInt(input_shape[axis_]);
+
+      if (input_size == 0) {
+        input_num_--;
+      } else {
+        input_size_list_.push_back(input_size * sizeof(T));
+        len_axis_[current_dim] = SizeToInt(input_shape[axis_]);
+        current_dim++;
+      }
     }
     workspace_size_list_.push_back(sizeof(T *) * input_num_);
     workspace_size_list_.push_back(sizeof(int) * input_num_);

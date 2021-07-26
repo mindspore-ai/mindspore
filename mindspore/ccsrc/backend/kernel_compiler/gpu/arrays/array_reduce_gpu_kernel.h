@@ -49,7 +49,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *workspace_addr = GetDeviceAddress<T>(workspace, 0);
+    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
 
     T alpha = static_cast<T>(1.0f);
     T beta = static_cast<T>(0.0f);
