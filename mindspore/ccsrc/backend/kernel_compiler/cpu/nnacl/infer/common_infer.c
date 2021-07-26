@@ -408,6 +408,9 @@ int VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size) {
     vc->size_ = 0;
   } else {
     free(vc->data_);
+    if (vc->per_malloc_size_ == 0) {
+      return NNACL_ERR;
+    }
     vc->max_size_ = (src_shape_size / vc->per_malloc_size_ + 1) * vc->per_malloc_size_;
     vc->data_ = (int *)malloc(sizeof(int) * vc->max_size_);
     if (vc->data_ == NULL) {
