@@ -1632,33 +1632,58 @@ void AscendStreamAssign::InsertEventForIndependentParallel(const NotNull<KernelG
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> cnodes = cnode_ptr_list;
   uint32_t cur_event_id = resource_manager.ApplyNewEvent();
+  std::map<CNodePtr, CNodePtr> cnode_send_map;
+  std::map<CNodePtr, std::vector<CNodePtr>> cnode_recv_map;
   auto it = cnodes.begin();
   while (it != cnodes.end()) {
     MS_EXCEPTION_IF_NULL(*it);
     if (AnfAlgo::IsIndependentNode(*it)) {
       MS_LOG(DEBUG) << "Deal independent op[" << (*it)->DebugString() << "]";
       CNodePtr send_cnode_ptr = CreateSendApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId(*it));
-      it = cnodes.insert(it + 1, send_cnode_ptr);
 
       auto target = FindTargetOp(it, cnodes.end(), *(it - 1), false);
       if (target == cnodes.end()) {
+        it++;
         MS_LOG(DEBUG) << "Independent node[" << (*(it - 1))->fullname_with_scope()
                       << "] can't find target for insert recv op, no insert send/recv";
-        it = cnodes.erase(it);
         continue;
       }
 
       // deal recv op
       uint32_t stream_id = AnfAlgo::GetStreamId(*target);
       CNodePtr recv_cnode_ptr = CreateRecvApplyKernel(graph_ptr, cur_event_id, stream_id);
-      (void)cnodes.insert(target, recv_cnode_ptr);
+
+      cnode_send_map.insert(std::make_pair(*it, send_cnode_ptr));
+      auto result = cnode_recv_map.find(*target);
+      if (result == cnode_recv_map.end()) {
+        std::vector<CNodePtr> recv_cnodes = {recv_cnode_ptr};
+        cnode_recv_map.insert(std::make_pair(*target, recv_cnodes));
+      } else {
+        result->second.push_back(recv_cnode_ptr);
+      }
       cur_event_id = resource_manager.ApplyNewEvent();
     }
     ++it;
   }
   // one event allocated additional, should delete
   resource_manager.DeleteEvent();
-  graph_ptr->set_execution_order(cnodes);
+
+  std::vector<CNodePtr> new_cnodes;
+  for (const auto &cnode : cnodes) {
+    auto result_recv = cnode_recv_map.find(cnode);
+    if (result_recv != cnode_recv_map.end()) {
+      for (const auto &recv : result_recv->second) {
+        new_cnodes.push_back(recv);
+      }
+    }
+    new_cnodes.push_back(cnode);
+    auto result_send = cnode_send_map.find(cnode);
+    if (result_send != cnode_send_map.end()) {
+      new_cnodes.push_back(result_send->second);
+    }
+  }
+
+  graph_ptr->set_execution_order(new_cnodes);
   MS_LOG(INFO) << "After independent parallel, total event nums:" << resource_manager.get_cur_event_num();
   MS_LOG(INFO) << "End";
 }
