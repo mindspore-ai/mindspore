@@ -43,7 +43,11 @@ OpParameter *PopulateTileParameter(const void *prim) {
       free(tile_param);
       return nullptr;
     }
-
+    if (dims->size() > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "tile's attr dims size is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
+      free(tile_param);
+      return nullptr;
+    }
     for (size_t i = 0; i < dims->size(); i++) {
       tile_param->dims_[i] = static_cast<int>(dims->Get(i));
     }

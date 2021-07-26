@@ -43,6 +43,11 @@ OpParameter *PopulateBroadcastToParameter(const void *prim) {
     MS_LOG(ERROR) << "dst_shape is nullptr";
     return nullptr;
   }
+  if (dst_shape->size() > MAX_SHAPE_SIZE) {
+    free(broadcast_param);
+    MS_LOG(ERROR) << "broadcast_to's attr dst_shape size is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
+    return nullptr;
+  }
   broadcast_param->shape_size_ = dst_shape->size();
   for (size_t i = 0; i < broadcast_param->shape_size_; ++i) {
     broadcast_param->shape_[i] = *(dst_shape->begin() + i);

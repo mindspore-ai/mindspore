@@ -39,8 +39,8 @@ OpParameter *PopulateStridedSliceParameterV0(const void *prim) {
 
   auto begin = strided_slice_prim->begin();
   if (begin != nullptr) {
-    if (((size_t)begin->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
-      MS_LOG(ERROR) << "The value of begin.size() is too big";
+    if (((size_t)begin->size()) > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "The value of begin.size() is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
       free(strided_slice_param);
       return nullptr;
     }
@@ -48,8 +48,8 @@ OpParameter *PopulateStridedSliceParameterV0(const void *prim) {
   }
   auto end = strided_slice_prim->end();
   if (end != nullptr) {
-    if (((size_t)end->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
-      MS_LOG(ERROR) << "The value of end.size() is too big";
+    if (((size_t)end->size()) > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "The value of end.size() is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
       free(strided_slice_param);
       return nullptr;
     }
@@ -57,8 +57,8 @@ OpParameter *PopulateStridedSliceParameterV0(const void *prim) {
   }
   auto stride = strided_slice_prim->stride();
   if (stride != nullptr) {
-    if (((size_t)stride->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
-      MS_LOG(ERROR) << "The value of stride.size() is too big";
+    if (((size_t)stride->size()) > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "The value of stride.size() is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
       free(strided_slice_param);
       return nullptr;
     }

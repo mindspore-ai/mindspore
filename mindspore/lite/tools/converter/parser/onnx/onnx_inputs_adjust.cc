@@ -23,6 +23,9 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite {
+namespace {
+const std::vector<int> kNH2NCPerm = {0, 3, 1, 2};
+}
 STATUS OnnxInputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                                        const std::string &attr_name) {
   MS_ASSERT(cnode != nullptr);
@@ -117,15 +120,16 @@ STATUS OnnxInputAdjust::AdjustResize(const CNodePtr &cnode) {
   if (resize_prim->GetAttr(ops::kCoordinateTransformMode) == nullptr) {
     return lite::RET_OK;
   }
-  if (cnode->inputs().size() > 4 && resize_prim->get_coordinate_transform_mode() == mindspore::HALF_PIXEL) {
+  if (cnode->inputs().size() > opt::kInputSizeFour &&
+      resize_prim->get_coordinate_transform_mode() == mindspore::HALF_PIXEL) {
     std::vector<AnfNodePtr> new_resize_inputs;
     new_resize_inputs.push_back(cnode->inputs()[0]);
     new_resize_inputs.push_back(cnode->inputs()[1]);
-    new_resize_inputs.push_back(cnode->inputs()[4]);
+    new_resize_inputs.push_back(cnode->inputs()[opt::kInputIndexFour]);
     cnode->set_inputs(new_resize_inputs);
-  } else if (cnode->inputs().size() == 4) {
+  } else if (cnode->inputs().size() == opt::kInputSizeFour) {
     auto new_input = cnode->inputs();
-    new_input.erase(new_input.begin() + 2);
+    new_input.erase(new_input.begin() + opt::kInputIndexTwo);
     cnode->set_inputs(new_input);
   }
   return lite::RET_OK;
@@ -177,8 +181,8 @@ STATUS OnnxInputAdjust::ReplaceConstant(const FuncGraphPtr &func_graph, const CN
 STATUS OnnxInputAdjust::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
-  if (cnode->inputs().size() != 3) {
-    MS_LOG(ERROR) << "onnx transpose input size is 2, now is " << cnode->inputs().size() - 1;
+  if (cnode->inputs().size() != opt::kInputSizeThree) {
+    MS_LOG(ERROR) << "onnx transpose input size is 2, now is " << (cnode->inputs().size() - 1);
     return lite::RET_ERROR;
   }
   auto anf_node = cnode->input(1);
@@ -198,7 +202,7 @@ STATUS OnnxInputAdjust::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_
     MS_LOG(DEBUG) << "only adjust 4 dims graph input.";
     return lite::RET_OK;
   }
-  auto perm_anf = cnode->input(2);
+  auto perm_anf = cnode->input(opt::kInputIndexTwo);
   auto perm_param = perm_anf->cast<ParameterPtr>();
   if (perm_param == nullptr || !perm_param->has_default() ||
       !utils::isa<tensor::TensorPtr>(perm_param->default_param())) {
@@ -218,7 +222,7 @@ STATUS OnnxInputAdjust::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_
   std::vector<int> transpose_perm;
   std::transform(perm.begin(), perm.end(), std::back_inserter(transpose_perm),
                  [](const int &val) { return val < 0 ? val + 4 : val; });
-  if (transpose_perm[0] == 0 && transpose_perm[1] == 3 && transpose_perm[2] == 1) {
+  if (transpose_perm == kNH2NCPerm) {
     auto channel = shape_vector[opt::kInputIndexThree];
     shape_vector.pop_back();
     shape_vector.insert(shape_vector.begin() + 1, channel);
@@ -236,21 +240,21 @@ STATUS OnnxInputAdjust::AdjustStridedSlice(const FuncGraphPtr &func_graph, const
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
-  if (cnode->inputs().size() == 2) {
-    if (AddAttrToInput(func_graph, cnode, 2, "starts") != lite::RET_OK ||
-        AddAttrToInput(func_graph, cnode, 3, "ends") != lite::RET_OK ||
-        AddAttrToInput(func_graph, cnode, 4, "axes") != lite::RET_OK ||
-        AddAttrToInput(func_graph, cnode, 5, "steps") != lite::RET_OK) {
+  if (cnode->inputs().size() == opt::kInputSizeTwo) {
+    if (AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "starts") != lite::RET_OK ||
+        AddAttrToInput(func_graph, cnode, opt::kInputIndexThree, "ends") != lite::RET_OK ||
+        AddAttrToInput(func_graph, cnode, opt::kInputIndexFour, "axes") != lite::RET_OK ||
+        AddAttrToInput(func_graph, cnode, opt::kInputIndexFive, "steps") != lite::RET_OK) {
       MS_LOG(ERROR) << "attr to input failed.";
       return lite::RET_ERROR;
     }
-  } else if (cnode->inputs().size() <= 3) {
-    MS_LOG(ERROR) << "onnx slice's input size need to be >2, now is " << cnode->inputs().size() - 1;
+  } else if (cnode->inputs().size() <= opt::kInputSizeThree) {
+    MS_LOG(ERROR) << "onnx slice's input size need to be >2, now is " << (cnode->inputs().size() - 1);
     return lite::RET_INPUT_TENSOR_ERROR;
   }
   int size = 0;
   for (size_t i = 2; i < cnode->inputs().size(); ++i) {
-    const auto &param_node = cnode->input(2)->cast<ParameterPtr>();
+    const auto &param_node = cnode->input(opt::kInputIndexTwo)->cast<ParameterPtr>();
     if (param_node == nullptr || !param_node->has_default()) {
       continue;
     }
@@ -265,7 +269,7 @@ STATUS OnnxInputAdjust::AdjustStridedSlice(const FuncGraphPtr &func_graph, const
   }
   auto inputs = cnode->inputs();
   switch (cnode->inputs().size()) {
-    case 4: {
+    case opt::kInputSizeFour: {
       std::vector<int32_t> axes;
       for (int i = 0; i < size; ++i) {
         axes.push_back(i);
@@ -276,7 +280,7 @@ STATUS OnnxInputAdjust::AdjustStridedSlice(const FuncGraphPtr &func_graph, const
       }
       inputs.push_back(new_param_node);
     }
-    case 5: {
+    case opt::kInputSizeFive: {
       std::vector<int32_t> steps;
       for (int i = 0; i < size; ++i) {
         steps.push_back(1);

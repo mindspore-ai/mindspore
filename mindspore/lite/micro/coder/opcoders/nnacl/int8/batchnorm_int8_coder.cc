@@ -84,7 +84,6 @@ int BatchNormInt8Coder::InitConstTensor() {
   beta_addr_ = reinterpret_cast<float *>(
     allocator_->Malloc(kNumberTypeFloat, variance->ElementsNum() * sizeof(float), kOfflinePackWeight));
   MS_CHECK_PTR(beta_addr_);
-  // compute alpha, beta;
   auto eps = batchnorm_param_->epsilon_;
   int32_t zp_in = input->quant_params().at(0).zeroPoint;
   int32_t zp_mean = mean->quant_params().at(0).zeroPoint;
@@ -131,7 +130,6 @@ int BatchNormInt8Coder::InitFusedConstTensor() {
   beta_addr_ = reinterpret_cast<float *>(
     allocator_->Malloc(kNumberTypeFloat, variance->ElementsNum() * sizeof(float), kOfflinePackWeight));
   MS_CHECK_PTR(beta_addr_);
-  // compute alpha, beta;
   float eps = batchnorm_param_->epsilon_;
   int32_t zp_in = input->quant_params().at(0).zeroPoint;
   int32_t zp_scale = scale->quant_params().at(0).zeroPoint;

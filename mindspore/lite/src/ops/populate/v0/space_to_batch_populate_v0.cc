@@ -36,15 +36,15 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   }
   memset(space_batch_param, 0, sizeof(SpaceToBatchParameter));
   space_batch_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToBatch;
-  auto block_sizes = space_to_batch_prim->blockShape();  // maybe error
+  auto block_sizes = space_to_batch_prim->blockShape();
   if (block_sizes == nullptr) {
     MS_LOG(ERROR) << "block_sizes is nullptr";
     free(space_batch_param);
     return nullptr;
   }
   space_batch_param->m_ = block_sizes->size();
-  if (((size_t)block_sizes->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of block_sizes.size() is too big";
+  if (((size_t)block_sizes->size()) > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "The value of block_sizes.size() is too big，which cannot be bigger than " << COMM_SHAPE_SIZE;
     free(space_batch_param);
     return nullptr;
   }
@@ -55,8 +55,8 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
     free(space_batch_param);
     return nullptr;
   }
-  if (((size_t)paddings->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of paddings.size() is too big";
+  if (((size_t)paddings->size()) > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "The value of paddings.size() is too big，which cannot be bigger than " << COMM_SHAPE_SIZE;
     free(space_batch_param);
     return nullptr;
   }
