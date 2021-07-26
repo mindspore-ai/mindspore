@@ -115,7 +115,11 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Init() {
 }
 
 int ConvolutionDepthwise3x3Int8CPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel Init failed.";
+    return ret;
+  }
   InitSlidingParamConvDw(sliding_, conv_param_, conv_param_->input_channel_);
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
   return RET_OK;

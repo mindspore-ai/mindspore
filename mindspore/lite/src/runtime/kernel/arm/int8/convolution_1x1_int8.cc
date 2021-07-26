@@ -371,9 +371,13 @@ int Convolution1x1Int8CPUKernel::InitParam() {
 int Convolution1x1Int8CPUKernel::ReSize() {
   FreeResizeBuf();
 
-  ConvolutionBaseCPUKernel::Init();
+  int error_code = ConvolutionBaseCPUKernel::Init();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Convolution base init failed.";
+    return error_code;
+  }
 
-  int error_code = InitParam();
+  error_code = InitParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution base init failed.";
     return error_code;

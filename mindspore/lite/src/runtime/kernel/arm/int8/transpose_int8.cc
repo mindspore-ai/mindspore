@@ -23,6 +23,9 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t kMaxShapeSize = 20;
+}  // namespace
 int TransposeInt8CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -109,7 +112,15 @@ int TransposeInt8CPUKernel::Run() {
     NHNCTransposeFunc_(in_ptr_, out_ptr_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2]);
     return RET_OK;
   }
+  if (in_dims.size() > kMaxShapeSize) {
+    MS_LOG(ERROR) << "in_dims size > " << kMaxShapeSize << " cannot copy data.";
+    return RET_ERROR;
+  }
   memcpy(in_shape_, in_dims.data(), in_dims.size() * sizeof(int));
+  if (out_dims.size() > kMaxShapeSize) {
+    MS_LOG(ERROR) << "out_dims size > " << kMaxShapeSize << " cannot copy data.";
+    return RET_ERROR;
+  }
   memcpy(out_shape_, out_dims.data(), out_dims.size() * sizeof(int));
 
   if (out_tensor->shape().size() > DIMENSION_6D) {

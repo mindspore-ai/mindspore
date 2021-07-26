@@ -117,13 +117,21 @@ int LayerNormInt8CPUKernel::ReSize() {
 }
 
 int LayerNormInt8CPUKernel::DoExecute(int task_id) {
-  LayerNormInt8(src_ptr_, gamma_ptr_, beta_ptr_, dst_ptr_, param_, quant_param_, task_id);
+  auto ret = LayerNormInt8(src_ptr_, gamma_ptr_, beta_ptr_, dst_ptr_, param_, quant_param_, task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "DoExecute task id " << task_id << " failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
 int LayerNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LayerNormInt8CPUKernel *>(cdata);
-  kernel->DoExecute(task_id);
+  auto ret = kernel->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LayerNormInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
