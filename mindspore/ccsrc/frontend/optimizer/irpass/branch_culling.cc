@@ -340,6 +340,8 @@ void GenerateRepDepend(
   const CNodePtr &node, const FuncGraphPtr &graph, const AnfNodePtr &cond,
   const std::shared_ptr<std::unordered_map<AnfNodePtr, AnfNodePtr>> &repl_node,
   const std::function<AnfNodePtr(FuncGraphPtr graph, AnfNodePtr cond, AnfNodePtr data)> &generate_func) {
+  MS_EXCEPTION_IF_NULL(graph->manager());
+
   auto inputs = node->inputs();
   if (inputs.size() != kDependInputSize) {
     MS_LOG(EXCEPTION) << "Inputs should be [depend, actual_value, depended_node].";

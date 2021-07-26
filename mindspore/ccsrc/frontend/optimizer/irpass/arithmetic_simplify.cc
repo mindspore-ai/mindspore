@@ -174,14 +174,16 @@ void AdjustAllReduceMulAdd::ProcessDependEdge(const FuncGraphPtr &fg, const AnfN
                                               const AnfNodePtr &new_node) {
   // If has dynamic loss scale.
   MS_EXCEPTION_IF_NULL(fg);
-  auto &users_map = fg->manager()->node_users();
+  auto manager = fg->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &users_map = manager->node_users();
   auto it = users_map.find(mul_cnode_);
   if (it != users_map.end()) {
     auto users = it->second;
     for (auto &user_pair : users) {
       auto node = user_pair.first;
       if (node != addn_maketuple && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-        fg->manager()->SetEdge(node, user_pair.second, new_node);
+        manager->SetEdge(node, user_pair.second, new_node);
       }
     }
   }

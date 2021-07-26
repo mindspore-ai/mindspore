@@ -89,6 +89,7 @@ class GetItemTransformACrossGraph {
       ss << idx;
 
       auto new_fg_outer = TransformableClone(fg, std::make_shared<TraceTransform>(ss.str()));
+      MS_EXCEPTION_IF_NULL(fg->manager());
       fg->manager()->AddFuncGraph(new_fg_outer);
       auto output_outer = new_fg_outer->output();
       if (!IsValueNode<FuncGraph>(output_outer)) {
