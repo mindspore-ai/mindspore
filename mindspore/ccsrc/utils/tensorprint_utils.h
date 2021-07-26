@@ -30,14 +30,14 @@
 namespace mindspore {
 class TensorPrint {
  public:
-  explicit TensorPrint(const std::string &path, acltdtChannelHandle *acl_handle)
+  explicit TensorPrint(const std::string &path, const acltdtChannelHandle *acl_handle)
       : print_file_path_(path), acl_handle_(acl_handle) {}
   ~TensorPrint() = default;
   void operator()();
 
  private:
   std::string print_file_path_;
-  acltdtChannelHandle *acl_handle_ = nullptr;
+  const acltdtChannelHandle *acl_handle_;
 };
 }  // namespace mindspore
 #endif
