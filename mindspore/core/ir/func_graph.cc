@@ -140,12 +140,12 @@ bool FuncGraph::has_flag(const std::string &key) {
   return false;
 }
 
-bool FuncGraph::has_attr(const std::string &key) {
+bool FuncGraph::has_attr(const std::string &key) const {
   auto iter = attrs_.find(key);
   return !(iter == attrs_.cend());
 }
 
-ValuePtr FuncGraph::get_attr(const std::string &key) {
+ValuePtr FuncGraph::get_attr(const std::string &key) const {
   auto iter = attrs_.find(key);
   return iter == attrs_.cend() ? nullptr : iter->second;
 }
