@@ -23,12 +23,14 @@ namespace mindspore {
 namespace opt {
 namespace {
 bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vector<AnfNodePtr>> *deal_list) {
+  MS_EXCEPTION_IF_NULL(deal_list);
   std::vector<AnfNodePtr> cast_32to16_list;
   std::vector<AnfNodePtr> cast_16to32_list;
   AnfNodePtr cast_32to16_load_monad = nullptr;
   AnfNodePtr cast_16to32_load_monad = nullptr;
   constexpr size_t second_input_index = 2;
   for (auto &cast_node : node_list) {
+    MS_EXCEPTION_IF_NULL(cast_node);
     // currently, we only deal with the construct : [Param->Cast->] to avoid being a cycle.
     // { prim::kPrimCast, { prim::kPrimLoad, Parameter, U }}
     if (!IsPrimitiveCNode(cast_node, prim::kPrimCast)) {
@@ -89,42 +91,50 @@ bool CastAllFusion::Run(const FuncGraphPtr &graph) {
     std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
     // set inputs for CastAll
     for (size_t idx = 0; idx < cast_list.size(); ++idx) {
-      inputs.push_back(AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_list[idx]), 0));
-    }
-    TraceGuard guard(std::make_shared<TraceOpt>(cast_list[0]->debug_info()));
-    auto cast_all = graph->NewCNode(inputs);
-    auto kernel_info = std::make_shared<device::KernelInfo>();
-    MS_EXCEPTION_IF_NULL(kernel_info);
-    cast_all->set_kernel_info(kernel_info);
-    AbstractBasePtrList abstract_list;
-    for (size_t idx = 0; idx < cast_list.size(); ++idx) {
       auto cnode = utils::cast<CNodePtr>(cast_list[idx]);
       MS_EXCEPTION_IF_NULL(cnode);
-      abstract_list.push_back(cnode->abstract());
+      inputs.push_back(AnfAlgo::GetInputNode(cnode, 0));
     }
-    auto kernel_build_info = GenerateKernelBuildInfo(cast_list);
-    AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, cast_all.get());
-    auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
-    MS_EXCEPTION_IF_NULL(abstract_tuple);
-    cast_all->set_abstract(abstract_tuple);
-    AnfAlgo::SetNodeAttr("n", MakeValue(cast_list.size()), cast_all);
-    // 3 replace all the cast by CastAllv tuplegetitem[castall, idx]
-    for (size_t idx = 0; idx < cast_list.size(); ++idx) {
-      std::vector<AnfNodePtr> tuple_getitem_input;
-      tuple_getitem_input.push_back(NewValueNode(prim::kPrimTupleGetItem));
-      tuple_getitem_input.push_back(cast_all);
-      auto index = NewValueNode(SizeToLong(idx));
-      auto imm = std::make_shared<Int64Imm>(idx);
-      auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
-      MS_EXCEPTION_IF_NULL(abstract_scalar);
-      index->set_abstract(abstract_scalar);
-      tuple_getitem_input.push_back(index);
-      AnfNodePtr tuple_getitem = graph->NewCNode(tuple_getitem_input);
-      MS_EXCEPTION_IF_NULL(tuple_getitem);
-      tuple_getitem->set_abstract(cast_list[idx]->abstract());
-      if (!manager->Replace(cast_list[idx], tuple_getitem)) {
-        MS_LOG(EXCEPTION) << "manager replace node failed";
+    if (cast_list.size() > 0) {
+      TraceGuard guard(std::make_shared<TraceOpt>(cast_list[0]->debug_info()));
+      auto cast_all = graph->NewCNode(inputs);
+      auto kernel_info = std::make_shared<device::KernelInfo>();
+      MS_EXCEPTION_IF_NULL(cast_all);
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      cast_all->set_kernel_info(kernel_info);
+      AbstractBasePtrList abstract_list;
+      for (size_t idx = 0; idx < cast_list.size(); ++idx) {
+        auto cnode = utils::cast<CNodePtr>(cast_list[idx]);
+        MS_EXCEPTION_IF_NULL(cnode);
+        abstract_list.push_back(cnode->abstract());
       }
+      auto kernel_build_info = GenerateKernelBuildInfo(cast_list);
+      AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, cast_all.get());
+      auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+      MS_EXCEPTION_IF_NULL(abstract_tuple);
+      cast_all->set_abstract(abstract_tuple);
+      AnfAlgo::SetNodeAttr("n", MakeValue(cast_list.size()), cast_all);
+      // 3 replace all the cast by CastAllv tuplegetitem[castall, idx]
+      for (size_t idx = 0; idx < cast_list.size(); ++idx) {
+        std::vector<AnfNodePtr> tuple_getitem_input;
+        tuple_getitem_input.push_back(NewValueNode(prim::kPrimTupleGetItem));
+        tuple_getitem_input.push_back(cast_all);
+        auto index = NewValueNode(SizeToLong(idx));
+        auto imm = std::make_shared<Int64Imm>(idx);
+        auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
+        MS_EXCEPTION_IF_NULL(index);
+        MS_EXCEPTION_IF_NULL(abstract_scalar);
+        index->set_abstract(abstract_scalar);
+        tuple_getitem_input.push_back(index);
+        AnfNodePtr tuple_getitem = graph->NewCNode(tuple_getitem_input);
+        MS_EXCEPTION_IF_NULL(tuple_getitem);
+        tuple_getitem->set_abstract(cast_list[idx]->abstract());
+        if (!manager->Replace(cast_list[idx], tuple_getitem)) {
+          MS_LOG(EXCEPTION) << "manager replace node failed";
+        }
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "The size of cast_list is zero.";
     }
   }
   return true;

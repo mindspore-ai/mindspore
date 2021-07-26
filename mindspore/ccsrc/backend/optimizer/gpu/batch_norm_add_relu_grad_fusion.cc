@@ -35,6 +35,7 @@ constexpr size_t kBNAddReluGradOutputNum = 4;
 
 bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vector<AnfNodePtr> *bn_outputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(bn);
   MS_EXCEPTION_IF_NULL(bn_outputs);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -121,7 +122,7 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     return false;
   }
   auto shape = AnfAlgo::GetInputDeviceShape(node, 0);
-  if (shape.back() % kBNChannelMultipleFactor != 0) {
+  if ((shape.back() % kBNChannelMultipleFactor) != 0) {
     return false;
   }
 
@@ -188,7 +189,6 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
   if (!GetValue<bool>(is_train)) {
     return nullptr;
   }
-
   auto prim = std::make_shared<Primitive>(kBatchNormGradWithAddAndActivation);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};

@@ -29,10 +29,13 @@ namespace opt {
 namespace {
 void ReducePrecision(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i, const TypeId &src_type,
                      const TypeId &cast_type) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto prim = std::make_shared<Primitive>(prim::kPrimCast->name());
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i)};
   auto cast = graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(cast);
   auto cast_shape = {AnfAlgo::GetInputDeviceShape(node, i)};
   AnfAlgo::SetOutputInferTypeAndShape({cast_type}, cast_shape, cast.get());
   FuncGraphManagerPtr manager = graph->manager();
@@ -49,7 +52,10 @@ void ReducePrecision(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i
 }
 void ProcessTupleGetItem(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t node_index, const TypeId &src_type,
                          const TypeId &cast_type) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, node_index);
+  MS_EXCEPTION_IF_NULL(used_node_list);
   for (size_t i = 0; i < used_node_list->size(); i++) {
     auto used_node = used_node_list->at(i).first;
     auto used_node_index = used_node_list->at(i).second - 1;
@@ -64,6 +70,7 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   for (auto node : node_list) {
+    MS_EXCEPTION_IF_NULL(node);
     if (node != nullptr && node->isa<CNode>() && AnfAlgo::IsRealKernel(node)) {
       size_t input_num = AnfAlgo::GetInputTensorNum(node);
       size_t output_num = AnfAlgo::GetOutputTensorNum(node);
@@ -83,6 +90,7 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
           continue;
         }
         auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, i);
+        MS_EXCEPTION_IF_NULL(used_node_list);
         for (size_t j = 0; j < used_node_list->size(); j++) {
           auto used_node = used_node_list->at(j).first;
           auto used_node_index = used_node_list->at(j).second - 1;

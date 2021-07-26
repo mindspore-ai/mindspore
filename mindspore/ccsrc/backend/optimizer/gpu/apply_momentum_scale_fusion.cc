@@ -15,6 +15,10 @@
  */
 #include "backend/optimizer/gpu/apply_momentum_scale_fusion.h"
 
+#include <memory>
+#include <vector>
+#include <string>
+
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
@@ -26,7 +30,9 @@ bool ApplyMomentumScaleFusion::IsScalar(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     AnfNodePtr in = utils::cast<AnfNodePtr>(n);
     MS_EXCEPTION_IF_NULL(in);
-    auto shape = in->Shape()->cast<abstract::ShapePtr>();
+    auto shape_ptr = in->Shape();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    auto shape = shape_ptr->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->shape().size() != 0) {
       return false;
@@ -35,7 +41,11 @@ bool ApplyMomentumScaleFusion::IsScalar(const BaseRef &n) {
     if (dtype->type_id() != kObjectTypeTensorType) {
       return false;
     }
-    auto element_type = dyn_cast<TensorType>(dtype)->element()->type_id();
+    auto type_ptr = dyn_cast<TensorType>(dtype);
+    MS_EXCEPTION_IF_NULL(type_ptr);
+    auto element = type_ptr->element();
+    MS_EXCEPTION_IF_NULL(element);
+    auto element_type = element->type_id();
     if (element_type != kNumberTypeFloat32) {
       return false;
     }
