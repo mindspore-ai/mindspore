@@ -50,6 +50,10 @@ int PReluCPUKernel::Init() {
 
 int PReluCPUKernel::DoExcute(int task_id) {
   int thread_num = prelu_param_->op_parameter_.thread_num_;
+  if (thread_num == 0) {
+    MS_LOG(ERROR) << "thread_num is 0!";
+    return RET_ERROR;
+  }
   if (prelu_param_->channelShared) {
     int step = UP_DIV(prelu_param_->input_num_, thread_num);
     int start = task_id * step;

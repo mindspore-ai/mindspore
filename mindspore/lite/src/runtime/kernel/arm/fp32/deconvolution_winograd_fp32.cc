@@ -215,6 +215,10 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
     return RET_NULL_PTR;
   }
   int cur_count = 0;
+  if (conv_param_->stride_h_ == 0 || conv_param_->stride_w_ == 0) {
+    MS_LOG(ERROR) << "conv_param_->stride_w_ or conv_param_->stride_h_ is 0";
+    return RET_ERROR;
+  }
   for (int si_h = 0; si_h < conv_param_->stride_h_; si_h++) {
     if (si_h >= conv_param_->kernel_h_) {
       continue;
@@ -344,10 +348,18 @@ int DeConvolutionWinogradCPUKernel::DoDeconv(int task_id) {
     int calculate_count = MSMIN(DECONV_WINOGRAD_DEFAULT_TILE,
                                 deconv_param_->in_tile_w_count_ * deconv_param_->in_tile_h_count_ - start_index);
 
-    DeconvWg(nhwc_input_, tile_in, tile_out, start_index, calculate_count, conv_param_, deconv_param_, task_id);
-
+    auto ret =
+      DeconvWg(nhwc_input_, tile_in, tile_out, start_index, calculate_count, conv_param_, deconv_param_, task_id);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DeconvWg is error";
+      return ret;
+    }
     std::unique_lock<std::mutex> merge_lock(lock_);
-    DeconvWgPost(tile_out, nc4hw4_output_, conv_param_, deconv_param_, calculate_count, tile_index);
+    ret = DeconvWgPost(tile_out, nc4hw4_output_, conv_param_, deconv_param_, calculate_count, tile_index);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DeconvWgPost is error";
+      return ret;
+    }
   }
   return RET_OK;
 }

@@ -91,6 +91,10 @@ int ConvolutionDepthwise3x3CPUKernel::Execute(int task_id) {
   int units = UP_DIV(conv_param_->output_w_, C2NUM);  // F(2, 3) contains 2 conv units
   int c4 = UP_ROUND(conv_param_->input_channel_, C4NUM);
   auto buffer = buffer_ + C12NUM * c4 * units * task_id;
+  if (conv_param_->thread_num_ == 0) {
+    MS_LOG(ERROR) << "conv_param_->thread_num_ must be not equal to 0";
+    return RET_ERROR;
+  }
   int step_oh = UP_DIV(conv_param_->output_h_, conv_param_->thread_num_);
   int start_oh = step_oh * task_id;
   int end_oh = MSMIN(start_oh + step_oh, conv_param_->output_h_);

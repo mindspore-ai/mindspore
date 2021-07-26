@@ -29,8 +29,8 @@ void DepthwiseCenter(float *dst, const float *src, const float *weight, const fl
                      int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6);
 #endif
 
-void ConvDw(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
-            const ConvParameter *conv_param, int task_id);
+int ConvDw(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+           const ConvParameter *conv_param, int task_id);
 
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
 

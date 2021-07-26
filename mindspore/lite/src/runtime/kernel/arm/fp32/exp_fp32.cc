@@ -49,8 +49,9 @@ int ExpCPUKernel::ReSize() {
 }
 
 int ExpCPUKernel::DoExcute(int task_id) {
-  ExpFusionFp32(reinterpret_cast<float *>(input_addr_), reinterpret_cast<float *>(output_addr_), param_, task_id);
-  return RET_OK;
+  auto ret =
+    ExpFusionFp32(reinterpret_cast<float *>(input_addr_), reinterpret_cast<float *>(output_addr_), param_, task_id);
+  return ret;
 }
 
 int ExpRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {

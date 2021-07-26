@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/deconv_winograd_fp32.h"
+#include "nnacl/errorcode.h"
 
 static void TransposeWeight(float *dst, size_t number) {
 #ifdef ENABLE_AVX
@@ -506,8 +507,11 @@ void DeConvWgCalCommFp32(const float *tile_in, float *tile_out, const float *wei
   return;
 }
 
-void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
-              const ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
+int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
+             const ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
+  if (deconv_param->in_tile_w_count_ == 0) {
+    return NNACL_ERR;
+  }
   /* pack tile input */
   int tile_in_unit_stride = deconv_param->ic_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
 #ifdef ENABLE_ARM
@@ -555,7 +559,7 @@ void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int sta
 
       /* winograd a buffer */
       if (unit->winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
-        return;
+        return NNACL_ERR;
       }
       DeConvWgABuffer *wg_buf = &deconv_param->a_buffer_[unit->winograd_.kh_];
       float *wg_mid_a_buf = (float *)wg_buf->middle_buffer_ + task_id * unit->winograd_.kw_ * unit->winograd_.kh_ *
@@ -574,11 +578,14 @@ void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int sta
                           unit->h_size_, unit->w_size_, conv_param, deconv_param);
     }
   }
-  return;
+  return NNACL_OK;
 }
 
-void DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParameter *conv_param,
-                  const DeConvParam *deconv_param, int calculate_count, int tile_index) {
+int DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParameter *conv_param,
+                 const DeConvParam *deconv_param, int calculate_count, int tile_index) {
+  if (deconv_param->in_tile_w_count_ == 0) {
+    return NNACL_ERR;
+  }
   /* merge */
   int src_unit_stride = deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
 
@@ -608,5 +615,5 @@ void DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParamet
       }
     }
   }
-  return;
+  return NNACL_OK;
 }

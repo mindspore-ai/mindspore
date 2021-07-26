@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 #include "nnacl/fp32/space_to_batch_fp32.h"
+#include "nnacl/errorcode.h"
 
-void DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
-                    const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id) {
+int DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
+                   const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id) {
   if (thread == 0) {
-    return;
+    return NNACL_ERR;
   }
   const int depth = in_shape[3];
   const int input_width = in_shape[2];
@@ -33,7 +34,9 @@ void DoSpaceToBatch(const float *input, float *output, const int *in_shape, cons
   const int block_shape_width = blocks[1];
   const int padding_top = paddings[0];
   const int padding_left = paddings[2];
-
+  if (input_batch_size == 0 || block_shape_width == 0) {
+    return NNACL_ERR;
+  }
   size_t copy_size = depth * sizeof(float);
 
   for (int out_b = task_id; out_b < output_batch_size; out_b += thread) {
@@ -57,5 +60,5 @@ void DoSpaceToBatch(const float *input, float *output, const int *in_shape, cons
       }
     }
   }
-  return;
+  return NNACL_OK;
 }

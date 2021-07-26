@@ -37,7 +37,7 @@ class SpaceToBatchCPUKernel : public InnerKernel {
   void ProcessInput();
 
  public:
-  void DoRun(int task_id);
+  int DoRun(int task_id);
 
  protected:
   SpaceToBatchParameter *param_;

@@ -67,6 +67,10 @@ int SparseToDenseCPUKernel::DoExcute(int task_id) {
   }
   int index_start = task_id * count_unit_;
   int index_end = index_start + real_dst_count;
+  if (index_num == 0) {
+    MS_LOG(ERROR) << "invalid index_num div";
+    return RET_ERROR;
+  }
   int out_width = output_num / index_num;
   MS_ASSERT(sparse_indices_vect);
   MS_ASSERT(output_shape);
@@ -173,6 +177,7 @@ int SparseToDenseCPUKernel::Run() {
     }
   }
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output_data != nullptr);
   count_unit_ = thread_count_ > 1 ? UP_DIV(index_num, thread_count_) : index_num;
   ret = ParallelLaunch(this->ms_context_, SparseToDenseRun, this, s2d_param->thread_num_);
   if (ret != RET_OK) {

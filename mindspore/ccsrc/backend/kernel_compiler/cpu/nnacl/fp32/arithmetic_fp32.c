@@ -84,6 +84,7 @@ int ElementFloorDiv(const float *in0, const float *in1, float *out, int size) {
 
 int ElementFloorDivInt(const int *in0, const int *in1, int *out, int size) {
   for (int i = 0; i < size; i++) {
+    NNACL_ASSERT(in1[i] != 0);
     out[i] = in0[i] / in1[i];
   }
   return NNACL_OK;

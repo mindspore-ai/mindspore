@@ -74,6 +74,10 @@ int WhereCPUKernel::RunWithSingleInput() {
   ComputeStrides(in_tensors_.at(0)->shape().data(), strides, where_param_->rank_);
 
   auto data = ms_context_->allocator->Malloc(where_param_->condition_num_ * where_param_->rank_ * sizeof(int32_t));
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "macllov data is error!";
+    return RET_ERROR;
+  }
   int *result = reinterpret_cast<int *>(data);
 
   int result_index = 0;
@@ -83,6 +87,10 @@ int WhereCPUKernel::RunWithSingleInput() {
       true_num++;
       int dim = index;
       for (int j = 0; j < where_param_->rank_; j++) {
+        if (strides[j] == 0) {
+          MS_LOG(ERROR) << "strides[j] is 0!";
+          return RET_ERROR;
+        }
         result[result_index++] = dim / strides[j];
         dim %= strides[j];
       }

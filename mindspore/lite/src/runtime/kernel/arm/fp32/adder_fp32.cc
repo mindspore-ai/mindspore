@@ -97,8 +97,10 @@ int AdderCPUKernel::InitWeightBias() {
 
 int AdderCPUKernel::RunImpl(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = reinterpret_cast<float *>(input_tensor->data_c());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
+  MS_ASSERT(input_tensor != nullptr);
+  auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
+  MS_ASSERT(ori_input_data != nullptr);
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   AdderFp32(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), col_major_input_,
             output_addr, task_id, conv_param_);
   return RET_OK;

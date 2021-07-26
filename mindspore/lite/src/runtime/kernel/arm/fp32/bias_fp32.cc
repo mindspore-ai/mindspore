@@ -58,10 +58,10 @@ int BiasCPUKernel::Run() {
     ms_context_->allocator->Free(tile_bias);
     return RET_ERROR;
   }
-  BroadcastAdd(in, bias, tile_in, tile_bias, out, data_size, bias_param_);
+  auto ret = BroadcastAdd(in, bias, tile_in, tile_bias, out, data_size, bias_param_);
   ms_context_->allocator->Free(tile_in);
   ms_context_->allocator->Free(tile_bias);
-  return RET_OK;
+  return ret;
 }
 
 int BiasCPUKernel::Init() {

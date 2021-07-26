@@ -143,7 +143,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
       int dst_offset = dst_basic_offset;
 
       int value = index;
-      for (size_t i = 0; i < pad_region.size(); ++i) {
+      for (size_t i = 0; i < pad_region.size() && pad_region_stride[i] != 0; ++i) {
         pad_cord[i] = value / pad_region_stride[i];
         value = value % pad_region_stride[i];
       }
