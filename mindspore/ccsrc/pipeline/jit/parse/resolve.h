@@ -130,9 +130,6 @@ class SymbolResolver {
 
   AnfNodePtr resolved_node() { return resolved_node_; }
 
-  // Resolve result
-  py::object result_;
-
  private:
   // namespace where the symbol locates
   NameSpacePtr namespace_;
@@ -140,6 +137,8 @@ class SymbolResolver {
   SymbolPtr symbol_;
   // the node that has been resolved
   AnfNodePtr resolved_node_;
+  // Resolve result
+  py::object result_;
 };
 using SymbolResolverPtr = std::shared_ptr<SymbolResolver>;
 // Resolve symbol in namespace.

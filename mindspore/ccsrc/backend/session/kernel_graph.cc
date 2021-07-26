@@ -556,8 +556,6 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
 ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
   auto abstract = parameter == nullptr ? std::make_shared<abstract::AbstractNone>() : parameter->abstract();
   auto new_parameter = NewParameter(abstract);
-  MS_EXCEPTION_IF_NULL(new_parameter);
-
   // if don't use default parameter = nullptr,it remarks create a new parameter from a old parameter
   if (parameter != nullptr) {
     new_parameter->set_name(parameter->name());
@@ -574,7 +572,6 @@ ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
 ParameterPtr KernelGraph::NewParameter(const abstract::AbstractBasePtr &abstract) {
   ParameterPtr new_parameter = add_parameter();
   new_parameter->set_abstract(abstract);
-  MS_EXCEPTION_IF_NULL(new_parameter);
   // create kernel_info form new parameter
   SetKernelInfoForNode(new_parameter);
   AnfAlgo::SetGraphId(graph_id_, new_parameter.get());

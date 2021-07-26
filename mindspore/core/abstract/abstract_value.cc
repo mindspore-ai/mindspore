@@ -238,6 +238,7 @@ std::string AbstractError::ToString() const {
   std::ostringstream buffer;
   auto value_track = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
+  MS_EXCEPTION_IF_NULL(node_);
   buffer << type_name() << "("
          << "Value: " << value_track->ToString() << ", Node: " << node_->DebugString() << ")";
   return buffer.str();
@@ -594,6 +595,8 @@ bool AbstractTensor::equal_to(const AbstractTensor &other) const {
   if (v1->isa<AnyValue>() && v2->isa<AnyValue>()) {
     is_value_equal = true;
   }
+  MS_EXCEPTION_IF_NULL(element_);
+  MS_EXCEPTION_IF_NULL(other.element_);
   return (*element_ == *other.element_) && (*shape() == *other.shape()) && is_value_equal;
 }
 
@@ -912,6 +915,7 @@ AbstractBasePtr AbstractJTagged::Join(const AbstractBasePtr &other) {
   if (other_jtagged == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
+  MS_EXCEPTION_IF_NULL(element_);
   auto joined_elem = element_->Join(other_jtagged->element_);
   return std::make_shared<AbstractJTagged>(joined_elem);
 }
