@@ -40,6 +40,7 @@ bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
 
 void LiteKernel::InitOutTensorInitRefCount() {
   for (auto *tensor : this->out_tensors()) {
+    MS_ASSERT(tensor != nullptr);
     size_t init_ref_count = 0;
     for (auto *post_kernel : this->out_kernels_) {
       auto &post_in_tensors = post_kernel->in_tensors();
@@ -80,6 +81,7 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
   this->out_kernels_.clear();
   // find io kernels, need optimize time
   for (auto *tensor : this->in_tensors()) {
+    MS_ASSERT(tensor != nullptr);
     for (auto *scope_kernel : scope_kernels) {
       if (scope_kernel == this) {
         continue;
@@ -91,6 +93,7 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
   }
 
   for (auto *tensor : this->out_tensors()) {
+    MS_ASSERT(tensor != nullptr);
     for (auto *scope_kernel : scope_kernels) {
       if (scope_kernel == this) {
         continue;
