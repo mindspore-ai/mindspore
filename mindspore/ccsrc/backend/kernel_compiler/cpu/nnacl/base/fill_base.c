@@ -17,6 +17,9 @@
 #include "nnacl/base/fill_base.h"
 
 int FillFp32(float *output, int size, float data) {
+  if (output == NULL) {
+    return NNACL_NULL_PTR;
+  }
   for (int i = 0; i < size; ++i) {
     output[i] = data;
   }
@@ -24,6 +27,9 @@ int FillFp32(float *output, int size, float data) {
 }
 
 int FillInt32(int *output, int size, int data) {
+  if (output == NULL) {
+    return NNACL_NULL_PTR;
+  }
   for (int i = 0; i < size; ++i) {
     output[i] = data;
   }

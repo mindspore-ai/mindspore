@@ -32,7 +32,7 @@ class StackBaseCPUKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  void Execute(int task_id);
+  int Execute(int task_id);
 
  protected:
   int axis_ = 0;

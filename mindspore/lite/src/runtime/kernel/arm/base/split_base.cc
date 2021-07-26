@@ -20,6 +20,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
@@ -129,10 +130,16 @@ static int SplitRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 int SplitBaseCPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   input_ptr_ = input_tensor->data_c();
+  if (input_ptr_ == nullptr) {
+    return RET_NULL_PTR;
+  }
 
   for (int i = 0; i < param->num_split_; i++) {
     auto output_tensor = out_tensors_.at(i);
     output_ptr_.at(i) = output_tensor->data_c();
+    if (output_ptr_.at(i) == nullptr) {
+      return RET_NULL_PTR;
+    }
   }
 
   auto ret = ParallelLaunch(this->ms_context_, SplitRun, this, thread_n_num_);

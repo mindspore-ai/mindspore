@@ -21,6 +21,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ArgMaxFusion;
 using mindspore::schema::PrimitiveType_ArgMinFusion;
@@ -57,9 +58,15 @@ int ArgMinMaxCPUKernel::Run() {
 
   auto input_data = input->data_c();
   auto output_data = out_tensors_.at(0)->data_c();
+  if (input_data == nullptr || output_data == nullptr) {
+    return RET_NULL_PTR;
+  }
   void *output_value = nullptr;
   if (out_tensors_.size() == 2) {
     output_value = out_tensors_.at(1)->data_c();
+    if (output_value == nullptr) {
+      return RET_NULL_PTR;
+    }
   }
 
   MS_ASSERT(ms_context_->allocator != nullptr);
