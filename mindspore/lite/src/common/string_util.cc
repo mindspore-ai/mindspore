@@ -252,6 +252,9 @@ std::pair<uint64_t, uint64_t> HashLen32WithSeeds(const char *s, uint64_t a, uint
 }  // namespace
 
 uint64_t StringHash64(const char *s, size_t len) {
+  if (s == nullptr) {
+    return 0;
+  }
   const uint64_t seed_value = 81;
   if (len <= 16) {
     return HashStringLen0to16(s, len);

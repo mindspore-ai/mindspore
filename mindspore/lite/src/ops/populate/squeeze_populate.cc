@@ -39,6 +39,11 @@ OpParameter *PopulateSqueezeParameter(const void *prim) {
   auto axis = value->axis();
   if (axis != nullptr) {
     param->axis_size_ = axis->size();
+    if (param->axis_size_ > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "Invalid axis size " << param->axis_size_;
+      free(param);
+      return nullptr;
+    }
     for (size_t i = 0; i < param->axis_size_; i++) {
       param->axis_[i] = *(axis->begin() + i);
     }

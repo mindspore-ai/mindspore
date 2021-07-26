@@ -39,6 +39,11 @@ OpParameter *PopulateSliceParameter(const void *prim) {
   auto axes = value->axes();
   // if begin is not const input, then axis can not be decided in converter
   if (axes != nullptr) {
+    if (axes->size() > DIMENSION_8D) {
+      MS_LOG(ERROR) << "Invalid axes size: " << axes->size();
+      free(param);
+      return nullptr;
+    }
     for (size_t i = 0; i < axes->size(); ++i) {
       param->axis_[i] = axes->Get(i);
     }

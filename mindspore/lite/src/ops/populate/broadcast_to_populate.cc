@@ -41,6 +41,11 @@ OpParameter *PopulateBroadcastToParameter(const void *prim) {
     MS_LOG(WARNING) << "unable to get dst_shape from attribute.";
   } else {
     param->shape_size_ = dst_shape->size();
+    if (param->shape_size_ > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "Invalid shape size: " << param->shape_size_;
+      free(param);
+      return nullptr;
+    }
     for (size_t i = 0; i < param->shape_size_; ++i) {
       param->shape_[i] = dst_shape->Get(i);
     }

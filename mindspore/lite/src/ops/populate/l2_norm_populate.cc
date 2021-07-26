@@ -44,7 +44,11 @@ OpParameter *PopulateL2NormParameter(const void *prim) {
   }
   param->axis_num_ = axis_vec->size();
 
-  MS_ASSERT(axis_vec->size() < 8);
+  if (axis_vec->size() > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "axis_vec size " << axis_vec->size() << " is invalid!";
+    free(param);
+    return nullptr;
+  }
   for (size_t i = 0; i < axis_vec->size(); i++) {
     param->axis_[i] = static_cast<int>(axis_vec->Get(i));
   }
