@@ -46,8 +46,8 @@ class DeviceContext {
   explicit DeviceContext(const DeviceContextKey &device_context_key) : device_context_key_(device_context_key) {}
   virtual ~DeviceContext() = default;
 
-  // Initialize the device context and return success or not.
-  virtual bool Initialize() = 0;
+  // Initialize the device context.
+  virtual void Initialize() = 0;
 
   // Destroy device context and release device resource.
   virtual void Destroy() {}

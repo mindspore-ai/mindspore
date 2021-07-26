@@ -47,13 +47,13 @@ using KernelGraph = mindspore::session::KernelGraph;
 
 static thread_local bool cur_thread_device_inited{false};
 
-bool GPUDeviceContext::Initialize() {
+void GPUDeviceContext::Initialize() {
   if (initialized_ == true) {
     if (!BindDeviceToCurrentThread()) {
-      return false;
+      MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
     }
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
-    return true;
+    return;
   }
 
   // Set device id
@@ -74,10 +74,8 @@ bool GPUDeviceContext::Initialize() {
   }
 
   // Set device id and initialize device resource.
-  bool ret = InitDevice();
-  if (!ret) {
-    MS_LOG(ERROR) << "GPU InitDevice failed.";
-    return ret;
+  if (!InitDevice()) {
+    MS_LOG(EXCEPTION) << "GPU InitDevice failed.";
   }
 
   // Initialize memory pool.
@@ -101,7 +99,6 @@ bool GPUDeviceContext::Initialize() {
   json_parser.CopyMSCfgJsonToDir(rank_id);
 
   initialized_ = true;
-  return ret;
 }
 
 bool GPUDeviceContext::InitDevice() {
