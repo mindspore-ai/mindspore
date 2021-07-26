@@ -21,6 +21,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ConstantOfShape;
 
@@ -69,6 +70,9 @@ int ConstantOfShapeCPUKernel::Run() {
   param_->data_type_ = output->data_type();
   param_->element_size_ = output->ElementsNum();
   output_ptr_ = output->data_c();
+  if (output_ptr_ == nullptr) {
+    return RET_NULL_PTR;
+  }
   int thread_count = MSMIN(op_parameter_->thread_num_, param_->element_size_);
   if (thread_count == 0) {
     MS_LOG(ERROR) << "div zero";

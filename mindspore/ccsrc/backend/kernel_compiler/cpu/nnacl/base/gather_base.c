@@ -18,6 +18,9 @@
 
 int Gather(const void *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
            void *output, int data_size) {
+  if (input == NULL || output == NULL || indices == NULL) {
+    return NNACL_NULL_PTR;
+  }
   const int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
 

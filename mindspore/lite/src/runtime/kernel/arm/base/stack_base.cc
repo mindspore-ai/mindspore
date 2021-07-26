@@ -23,6 +23,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Stack;
 
@@ -76,14 +77,18 @@ int StackBaseCPUKernel::Init() {
   return ReSize();
 }
 
-void StackBaseCPUKernel::Execute(int task_id) {
+int StackBaseCPUKernel::Execute(int task_id) {
   auto output_data = reinterpret_cast<char *>(out_tensors_.at(0)->data_c());
+  if (output_data == nullptr) {
+    return RET_NULL_PTR;
+  }
   auto step = UP_DIV(outer_size_, num_threads_);
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
   auto output = output_data + input_num * start * copy_size_;
   Stack(all_inputs_, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
+  return RET_OK;
 }
 
 static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
@@ -101,7 +106,11 @@ int StackBaseCPUKernel::Run() {
     return RET_ERROR;
   }
   for (size_t j = 0; j < inputs_num; ++j) {
-    all_inputs_[j] = reinterpret_cast<void *>(in_tensors_.at(j)->data_c());
+    auto input_data = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
+    if (input_data == nullptr) {
+      return RET_NULL_PTR;
+    }
+    all_inputs_[j] = input_data;
   }
   // run stack
   num_threads_ = MSMIN(UP_DIV(outer_size_, kStackStep), op_parameter_->thread_num_);

@@ -21,6 +21,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SplitWithOverlap;
 
@@ -110,9 +111,15 @@ int SplitWithOverlapRun(void *cdata, int task_id, float lhs_scale, float rhs_sca
 
 int SplitWithOverlapBaseCPUKernel::Run() {
   input_ptr_ = reinterpret_cast<char *>(in_tensors_.front()->data_c());
+  if (input_ptr_ == nullptr) {
+    return RET_NULL_PTR;
+  }
   output_ptr_.clear();
   for (int i = 0; i < param_->num_split_; i++) {
     output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data_c()));
+    if (output_ptr_.at(i) == nullptr) {
+      return RET_NULL_PTR;
+    }
   }
 
   auto ret = ParallelLaunch(this->ms_context_, SplitWithOverlapRun, this, thread_count_);

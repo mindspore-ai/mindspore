@@ -22,6 +22,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
@@ -162,6 +163,9 @@ int StridedSliceCPUKernel::FastRun() {
   }
   input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.front()->data_c());
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data_c());
+  if (input_ptr_ == nullptr || output_ptr_ == nullptr) {
+    return RET_NULL_PTR;
+  }
   auto ret = ParallelLaunch(this->ms_context_, StrideRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Stride run error error_code[" << ret << "]";
