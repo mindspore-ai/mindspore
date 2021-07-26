@@ -37,9 +37,9 @@ namespace device {
 namespace cpu {
 using mindspore::kernel::KernelBuildInfo;
 
-bool CPUDeviceContext::Initialize() {
+void CPUDeviceContext::Initialize() {
   if (initialized_) {
-    return true;
+    return;
   }
 
   mem_manager_ = std::make_shared<CPUMemoryManager>();
@@ -55,7 +55,6 @@ bool CPUDeviceContext::Initialize() {
 #endif
 
   initialized_ = true;
-  return true;
 }
 
 bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
@@ -130,14 +129,14 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
   std::vector<TypeId> inputs_type;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_format.emplace_back(kOpFormat_DEFAULT);
+    (void)inputs_format.emplace_back(kOpFormat_DEFAULT);
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_format.emplace_back(kOpFormat_DEFAULT);
+    (void)outputs_format.emplace_back(kOpFormat_DEFAULT);
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
 
@@ -240,7 +239,7 @@ bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
-  uint32_t pid = getpid();
+  uint32_t pid = IntToUint(getpid());
   profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
   bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
   profiler_inst->OpDataProducerEnd();

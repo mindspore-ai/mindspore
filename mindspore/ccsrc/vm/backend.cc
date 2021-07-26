@@ -382,7 +382,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   }
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
   const ActorInfo &actor_info = graph_compiler_info->name_;
-  actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
+  (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   return actor_info;
 }
 
@@ -531,7 +531,7 @@ void PlantTensorTupleToVector(const py::tuple &tuple_inputs, std::vector<tensor:
     }
     auto tensor = py::cast<tensor::TensorPtr>(input_object);
     MS_EXCEPTION_IF_NULL(tensor);
-    tensors->emplace_back(tensor);
+    (void)tensors->emplace_back(tensor);
   }
 }
 
@@ -547,7 +547,7 @@ void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tenso
   MS_EXCEPTION_IF_NULL(value_tuple);
   tensor::TensorPtr tensor_ptr = opt::CreateTupleTensor(value_tuple);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  tensors->emplace_back(tensor_ptr);
+  (void)tensors->emplace_back(tensor_ptr);
 }
 
 void ConvertMultiPyObjectToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *tensors) {
@@ -714,7 +714,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     auto iter = cnode_ref_counts_.find(graph->graph_id());
     if (iter == cnode_ref_counts_.end()) {
       graph_compiler_->CalculateRefCount(graph, &cnode_ref_count);
-      cnode_ref_counts_.emplace(graph->graph_id(), cnode_ref_count);
+      (void)cnode_ref_counts_.emplace(graph->graph_id(), cnode_ref_count);
     } else {
       cnode_ref_count = iter->second;
     }
@@ -944,7 +944,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     std::vector<AnfNodePtr> call_nodes;
     size_t call_output_num = runtime::FetchOutputSizebyCallNode(root_output, &call_nodes);
     for (size_t i = 0; i < call_output_num; ++i) {
-      outputs.push_back({root_output, i});
+      (void)outputs.emplace_back(root_output, i);
     }
   }
   outputs_num = outputs.size();
@@ -952,7 +952,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     if (outputs_order.count(output) == 0) {
       outputs_order[output] = {position++};
     } else {
-      outputs_order[output].emplace_back(position++);
+      (void)outputs_order[output].emplace_back(position++);
     }
   }
 
@@ -983,7 +983,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
       if (outputs_order.count(output) == 0) {
         outputs_order[output] = {position++};
       } else {
-        outputs_order[output].emplace_back(position++);
+        (void)outputs_order[output].emplace_back(position++);
       }
     }
   }
@@ -1021,7 +1021,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
   }
   for (size_t index = 0; index < tensors_mask->size(); ++index) {
     if (tensors_mask->at(index) != kValueNodeTensorMask) {
-      tensors_without_value_node.emplace_back(input_tensors->at(index));
+      (void)tensors_without_value_node.emplace_back(input_tensors->at(index));
     }
   }
 

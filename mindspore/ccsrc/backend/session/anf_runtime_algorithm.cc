@@ -329,10 +329,10 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
       auto value_tuple = value->cast<ValueTuplePtr>();
       auto value_tuple_size = CountValueNum(value_tuple);
       for (size_t i = 0; i < value_tuple_size; ++i) {
-        ret.push_back({node, i});
+        ret.emplace_back(node, i);
       }
     } else {
-      ret.push_back({node, 0});
+      ret.emplace_back(node, 0);
     }
     return ret;
   }
