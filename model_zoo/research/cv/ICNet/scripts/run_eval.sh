@@ -30,6 +30,7 @@ get_real_path(){
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
+PATH3=$(get_real_path $3)
 
 
 if [ ! -d $PATH1 ]
@@ -44,9 +45,15 @@ then
 exit 1
 fi
 
+if [ ! -d $PATH3 ]
+then
+    echo "error: PROJECT_PATH=$PATH3 is not a directory"
+exit 1
+fi
+
 ulimit -u unlimited
 export DEVICE_NUM=1
-export DEVICE_ID=$5
+export DEVICE_ID=0
 export RANK_SIZE=1
 export RANK_ID=0
 
@@ -61,6 +68,6 @@ cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
+python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 --project_path=$PATH3 &> log &
 
 cd ..

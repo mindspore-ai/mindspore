@@ -8,6 +8,7 @@
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
+        - [Prepare Dataset](#prepare-dataset)
         - [Distributed Training](#distributed-training)
         - [Training Results](#training-results)
     - [Evaluation Process](#evaluation-process)
@@ -41,8 +42,8 @@ It contains 5,000 finely annotated images split into training, validation and te
 - frame:
     - [Mindspore](https://www.mindspore.cn/install)
 - For details, please refer to the following resources:
-    - [MindSpore course](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
+    - [MindSpore course](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
 # [Scription Description](#Content)
 
@@ -88,7 +89,7 @@ It contains 5,000 finely annotated images split into training, validation and te
 
 ## Script Parameters
 
-Set script parameters in configs/icnet.yaml .
+Set script parameters in src/model_utils/icnet.yaml .
 
 ### Model
 
@@ -112,22 +113,29 @@ weight_decay: 0.0001
 ```bash
 train_batch_size_percard: 4
 valid_batch_size: 1
-cityscapes_root: "/data/cityscapes/"
+cityscapes_root: "/data/cityscapes/" # set dataset path
 epochs: 160
-val_epoch: 1        # run validation every val-epoch
-ckpt_dir: "./ckpt/" # ckpt and training log will be saved here
-mindrecord_dir: '/root/bigpingping/mindrecord'
+val_epoch: 1
+ckpt_dir: "./ckpt/"                  # ckpt and training log will be saved here
+mindrecord_dir: ''                   # set mindrecord path
+pretrained_model_path: '/root/ResNet50V1B-150_625.ckpt' # set the pretrained model path correctly
 save_checkpoint_epochs: 5
 keep_checkpoint_max: 10
 ```
 
-### Valid
+## Training Process
 
-```bash
-ckpt_path: ""       # set the pretrained model path correctly
+### Prepare Datast
+
+- Convert dataset to Mindrecord
+
+```python
+    python cityscapes_mindrecord.py [DATASET_PATH] [MINDRECORD_PATH]
 ```
 
-## Training Process
+- Note:
+
+[MINDRCORD_PATH] in script should be consistent with 'mindrecord_dir' in config file.
 
 ### Distributed Training
 
