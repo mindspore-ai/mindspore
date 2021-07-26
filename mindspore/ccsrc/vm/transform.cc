@@ -225,7 +225,7 @@ bool CompileGraph::Compile(const FuncGraphPtr &graph) {
     int64_t ret = RET_SUCCESS;
     if (!segment->is_cut_) {
       MS_LOG(DEBUG) << "Start a extern LinConvert";
-      if (segment->nodes_.size() > 0) {
+      if (!segment->nodes_.empty()) {
         std::string cur_target = GetCNodeTarget(segment->nodes_[0]);
         ret = LinConvert(graph, segment, cur_target);
       } else {
@@ -238,14 +238,14 @@ bool CompileGraph::Compile(const FuncGraphPtr &graph) {
       if (ret == RET_CONTINUE) {
         continue;
       }
-    } else {
+    } else if (!segment->nodes_.empty()) {
       MS_LOG(DEBUG) << "Start a cut node";
       auto &cut_node = segment->nodes_[0];
       MS_EXCEPTION_IF_NULL(cut_node);
       if (!cut_node->isa<CNode>()) {
         MS_LOG(EXCEPTION) << "must be anfnode here NodeInfo: " << trace::GetDebugInfo(graph->debug_info());
       }
-      CNodePtr node = cut_node->cast<CNodePtr>();
+      auto node = cut_node->cast<CNodePtr>();
       ret = InterpretNode(graph, node);
       MS_LOG(DEBUG) << "End a cut node";
       if (ret == RET_BREAK) {
