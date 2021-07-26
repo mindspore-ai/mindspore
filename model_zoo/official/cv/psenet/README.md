@@ -11,7 +11,8 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
         - [Training](#training)
-        - [Distributed Training](#distributed-training)  
+        - [Distributed Ascend Training](#distributed-ascend-training)
+        - [Distributed GPU Training](#distributed-gpu-training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
     - [Inference Process](#inference-process)
@@ -49,8 +50,8 @@ A testing set containing about 2000 readable words
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor.
+- Hardware（Ascend or GPU）
+    - Prepare hardware environment with Ascend processor or GPU.
 - Framework
     - [MindSpore](http://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -101,8 +102,10 @@ sh scripts/run_eval_ascend.sh
  ├── README_CN.md                        // descriptions about PSENet in Chinese
  ├── README.md                           // descriptions about PSENet in English
  ├── scripts  
-  ├── run_distribute_train.sh    // shell script for distributed
-  └── run_eval_ascend.sh     // shell script for evaluation
+  ├── run_distribute_train.sh    // shell script for distributed ascend
+  ├── run_distribute_train_gpu.sh    // shell script for distributed gpu
+  ├── run_eval_ascend.sh    // shell script for evaluation ascend
+  ├── run_eval_gpu.sh     // shell script for evaluation gpu
   ├── ascend310_infer              // application for 310 inference
  ├── src  
   ├── model_utils
@@ -136,6 +139,7 @@ sh scripts/run_eval_ascend.sh
 ```default_config.yaml
 Major parameters in default_config.yaml are:
 
+--device_target: Ascend or GPU
 --pre_trained: Whether training from scratch or training based on the
                pre-trained model.Optional values are True, False.
 --device_id: Device ID used to train or evaluate the dataset. Ignore it
@@ -145,9 +149,9 @@ Major parameters in default_config.yaml are:
 
 ## [Training Process](#contents)
 
-### Distributed Training
+### Distributed Ascend Training
 
-  For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+  For distributed ascend training, a hccl configuration file with JSON format needs to be created in advance.
 
   Please follow the instructions in the link below: <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
 
@@ -166,6 +170,24 @@ device_0/log:epcoh: 2, step: 40, loss is 0.77951
 ...
 device_1/log:epoch: 1, step: 20, loss is 0.78026
 device_1/log:epcoh: 2, step: 40, loss is 0.76629
+
+```
+
+### Distributed GPU Training
+
+```shell
+sh scripts/run_distribute_train_gpu.sh [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
+```
+
+After training begins, log and loss.log file will be in train_parallel directory.
+
+```log
+# cat train_parallel/loss.log
+time: 2021-07-24 02:08:33, epoch: 10, step: 31, loss is 0.68408
+time: 2021-07-24 02:08:33, epoch: 10, step: 31, loss is 0.67984
+...
+time: 2021-07-24 04:01:07, epoch: 90, step: 31, loss is 0.61662
+time: 2021-07-24 04:01:07, epoch: 90, step: 31, loss is 0.58495
 
 ```
 
@@ -245,8 +267,10 @@ step 2: click "My Methods" button,then download Evaluation Scripts.
 step 3: it is recommended to symlink the eval method root to $MINDSPORE/model_zoo/psenet/eval_ic15/. if your folder structure is different,you may need to change the corresponding paths in eval script files.  
 
 ```shell
-sh ./script/run_eval_ascend.sh.sh  
+sh ./script/run_eval_ascend.sh
 ```
+
+The two scripts ./script/run_eval_ascend.sh and ./script/run_eval_gpu.sh are the same, you may run either for evaluating on ICDAR2015.
 
 #### Result
 
@@ -320,6 +344,24 @@ The `res` folder is generated in the upper-level directory. For details about th
 | Loss                       | 0.35                                                        |
 | Speed                      | 1pc: 444 ms/step;  8pcs: 446 ms/step                        |
 | Total time                 | 1pc: 75.48 h;  8pcs: 7.11 h                                |
+| Parameters (M)             | 27.36                                                       |
+| Checkpoint for Fine tuning | 109.44M (.ckpt file)                                        |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |
+
+| Parameters                 | GPU                                                   |
+| -------------------------- | ----------------------------------------------------------- |
+| Model Version              | PSENet                                                |
+| Resource                   | GPU(Tesla V100-PCIE); CPU 2.60 GHz, 26 cores; Memory 790G; OS Euler2.0             |
+| uploaded Date              | 07/24/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                       |
+| Dataset                    | ICDAR2015                                                   |
+| Training Parameters        | start_lr=0.1; lr_scale=0.1                                  |
+| Optimizer                  | SGD                                                         |
+| Loss Function              | LossCallBack                                                |
+| outputs                    | probability                                                 |
+| Loss                       | 0.40                                                        |
+| Speed                      | 1pc: 2726 ms/step;  8pcs: 2726 ms/step                        |
+| Total time                 | 1pc: 335.6 h;  8pcs: 41.95 h                                |
 | Parameters (M)             | 27.36                                                       |
 | Checkpoint for Fine tuning | 109.44M (.ckpt file)                                        |
 | Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |

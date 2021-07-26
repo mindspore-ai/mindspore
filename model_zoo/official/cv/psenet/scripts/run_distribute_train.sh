@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,10 +38,17 @@ then
 exit 1
 fi
 
-PATH2=$(get_real_path $2)
-if [ ! -f $PATH2 ]
+if [ ! -z "${2}" ];
 then
-    echo "error: PRETRAINED_PATH=$PATH2 is not a file"
+  PATH2=$(get_real_path $2)
+else
+  PATH2=$2
+fi
+
+PATH3=$(get_real_path $3)
+if [ ! -d $PATH3 ]
+then
+    echo "error: TRAIN_ROOT_DIR=$PATH3 is not a directory"
 exit 1
 fi
 
@@ -74,6 +81,6 @@ do
     cd ${current_exec_path}/device_$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
-    python ${current_exec_path}/train.py --run_distribute=True --pre_trained $PATH2 --TRAIN_ROOT_DIR=$3 >test_deep$i.log 2>&1 &
+    python ${current_exec_path}/train.py --run_distribute=True --pre_trained=$PATH2 --TRAIN_ROOT_DIR=$PATH3 >test_deep$i.log 2>&1 &
     cd ${current_exec_path} || exit
 done
