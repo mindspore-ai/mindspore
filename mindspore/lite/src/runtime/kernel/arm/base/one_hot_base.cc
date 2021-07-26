@@ -79,6 +79,9 @@ int OneHotCPUKernel::ReSize() {
   for (size_t i = 0; i < static_cast<size_t>(axis_); i++) {
     outer_size_ *= indices_shape[i];
   }
+  if (outer_size_ == 0) {
+    return RET_ERROR;
+  }
   inner_size_ = indices->ElementsNum() / outer_size_;
 
   return RET_OK;
@@ -100,21 +103,28 @@ int RunOneHot(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int OneHotCPUKernel::OneHotImpl(int task_id) {
   auto indices_data = static_cast<int *>(in_tensors_.at(0)->data());
+  if (indices_data == nullptr) {
+    return RET_NULL_PTR;
+  }
   auto output = out_tensors_.at(0);
   if (output == nullptr) {
     MS_LOG(ERROR) << "OneHot output nullptr";
     return RET_NULL_PTR;
   }
+  auto output_data = output->data();
+  if (output_data == nullptr) {
+    return RET_NULL_PTR;
+  }
   auto one_hot_param = reinterpret_cast<OneHotParameter *>(op_parameter_);
 
   if (output->data_type() == kNumberTypeFloat32) {
-    auto output_data = reinterpret_cast<float *>(output->data());
-    auto ret = OneHotToFp32(indices_data, on_value_, off_value_, output_data, one_hot_param, task_id, thread_num_);
+    auto ret = OneHotToFp32(indices_data, on_value_, off_value_, reinterpret_cast<float *>(output_data), one_hot_param,
+                            task_id, thread_num_);
     return ret;
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   } else if (output->data_type() == kNumberTypeFloat16) {
-    auto output_data = reinterpret_cast<float16_t *>(output->data());
-    auto ret = OneHotToFp16(indices_data, on_value_, off_value_, output_data, one_hot_param, task_id, thread_num_);
+    auto ret = OneHotToFp16(indices_data, on_value_, off_value_, reinterpret_cast<float16_t *>(output_data),
+                            one_hot_param, task_id, thread_num_);
     return ret;
 #endif
   } else {

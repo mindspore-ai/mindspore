@@ -59,6 +59,8 @@ int PriorBoxCPUKernel::ReSize() { return GeneratePriorBox(); }
 int PriorBoxCPUKernel::GeneratePriorBox() {
   const int fmap_w = in_tensors_.at(0)->Width();
   const int fmap_h = in_tensors_.at(0)->Height();
+  MS_ASSERT(fmap_w);
+  MS_ASSERT(fmap_h);
 
   const int image_w = prior_box_param_->image_size_w > 0 ? prior_box_param_->image_size_w : in_tensors_.at(1)->Width();
   const int image_h = prior_box_param_->image_size_h > 0 ? prior_box_param_->image_size_h : in_tensors_.at(1)->Height();
@@ -84,8 +86,6 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
     }
   }
 
-  MS_ASSERT(fmap_w);
-  MS_ASSERT(fmap_h);
   for (int i = 0; i < fmap_h; i++) {
     float cy = i + prior_box_param_->offset;
     for (int j = 0; j < fmap_w; j++) {
@@ -145,11 +145,18 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
 
 int PriorBoxCPUKernel::PriorBoxImpl(int task_id) {
   auto src = output_.data();
+  if (src == nullptr) {
+    return RET_NULL_PTR;
+  }
   auto output = out_tensors_.at(0);
   if (output == nullptr) {
     return RET_NULL_PTR;
   }
-  auto ret = PriorBox(src, reinterpret_cast<float *>(output->MutableData()), output_.size(), task_id, thread_count_);
+  auto output_data = reinterpret_cast<float *>(output->data());
+  if (output_data == nullptr) {
+    return RET_NULL_PTR;
+  }
+  auto ret = PriorBox(src, output_data, output_.size(), task_id, thread_count_);
   return ret;
 }
 

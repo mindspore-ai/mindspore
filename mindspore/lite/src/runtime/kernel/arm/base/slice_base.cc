@@ -20,6 +20,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SliceFusion;
 
@@ -76,10 +77,14 @@ int SliceCPUKernel::SliceParallelRun(int thread_id) {
 }
 
 int SliceCPUKernel::Run() {
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  if (input_data == nullptr || output_data == nullptr) {
+    return RET_NULL_PTR;
+  }
   // param_ shape info has already been extended to 8d
   if (param_->size_[5] < op_parameter_->thread_num_) {
-    DoSliceNoParallel(in_tensors_.at(0)->data_c(), out_tensors_.at(0)->data_c(), param_,
-                      lite::DataTypeSize(in_tensors_.at(0)->data_type()));
+    DoSliceNoParallel(input_data, output_data, param_, lite::DataTypeSize(in_tensors_.at(0)->data_type()));
     return RET_OK;
   }
   auto ret = ParallelLaunch(this->ms_context_, SliceLaunch, this, op_parameter_->thread_num_);
