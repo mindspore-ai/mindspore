@@ -28,6 +28,7 @@ using mindspore::schema::PrimitiveType_AddFusion;
 namespace mindspore::kernel {
 namespace {
 constexpr int kBaseShift = 20;
+constexpr size_t kMaxShapeSize = 10;
 }  // namespace
 
 QuantizedAddCPUKernel::~QuantizedAddCPUKernel() {
@@ -99,17 +100,29 @@ int QuantizedAddCPUKernel::ReSize() {
   arith_para_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
   arith_para_->out_elements_num_ = out_tensors_[0]->ElementsNum();
 
+  if (input0->shape().size() > kMaxShapeSize) {
+    MS_LOG(ERROR) << "input0->shape().size() " << input0->shape().size() << " > max shape size " << kMaxShapeSize;
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < in_tensors_[0]->shape().size(); i++) {
     if (arith_para_->in_shape0_[i] == -1) {
       memcpy(arith_para_->in_shape0_, input0->shape().data(), input0->shape().size() * sizeof(int));
       break;
     }
   }
+  if (input1->shape().size() > kMaxShapeSize) {
+    MS_LOG(ERROR) << "input1->shape().size() " << input1->shape().size() << " > max shape size " << kMaxShapeSize;
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < in_tensors_[1]->shape().size(); i++) {
     if (arith_para_->in_shape1_[i] == -1) {
       memcpy(arith_para_->in_shape1_, input1->shape().data(), input1->shape().size() * sizeof(int));
       break;
     }
+  }
+  if (output->shape().size() > kMaxShapeSize) {
+    MS_LOG(ERROR) << "output->shape().size() " << output->shape().size() << " > max shape size " << kMaxShapeSize;
+    return RET_ERROR;
   }
   for (size_t i = 0; i < out_tensors_[0]->shape().size(); i++) {
     if (arith_para_->out_shape_[i] == -1) {
@@ -145,8 +158,8 @@ int QuantizedAddCPUKernel::ReSize() {
 
 int AddInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto add = reinterpret_cast<QuantizedAddCPUKernel *>(cdata);
-  add->DoExecute(task_id);
-  return RET_OK;
+  auto ret = add->DoExecute(task_id);
+  return ret;
 }
 
 int QuantizedAddCPUKernel::BroadcastRun(int task_id) {
@@ -227,9 +240,9 @@ int QuantizedAddCPUKernel::Run() {
   input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->data_c());
   output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->data_c());
 
-  ParallelLaunch(this->ms_context_, AddInt8Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, AddInt8Run, this, thread_count_);
 
-  return RET_OK;
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_AddFusion, LiteKernelCreator<QuantizedAddCPUKernel>)

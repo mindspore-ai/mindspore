@@ -155,7 +155,7 @@ int MulInt8CPUKernel::Run() {
   if (fast_hw_broadcast_) {
     elements_num_ = out_tensors_.front()->Batch() * out_tensors_.front()->Height() * out_tensors_.front()->Width();
     count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
-    return ParallelLaunch(this->ms_context_, FastHWBroadcatMulInt8Run, this, thread_count_);
+    return ParallelLaunch(this->ms_context_, FastHWBroadcastMulInt8Run, this, thread_count_);
   }
 
   elements_num_ = out_tensors_.at(0)->ElementsNum();
@@ -185,15 +185,23 @@ int MulInt8CPUKernel::Run() {
   return ret;
 }
 
-int FastHWBroadcatMulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int FastHWBroadcastMulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
-  mul->FastDoExecute(task_id);
+  auto ret = mul->FastDoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "FastHWBroadcastMulInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return lite::RET_OK;
 }
 
 int MulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
-  mul->DoExecute(task_id);
+  auto ret = mul->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MulInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return lite::RET_OK;
 }
 

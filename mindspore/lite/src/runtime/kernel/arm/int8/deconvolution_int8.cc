@@ -56,8 +56,12 @@ void DeConvInt8CPUKernel::FreeTmpBuffer() {
 int DeConvInt8CPUKernel::ReSize() {
   FreeTmpBuffer();
 
-  ConvolutionBaseCPUKernel::Init();
-  int error_code = InitParam();
+  int error_code = ConvolutionBaseCPUKernel::Init();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 convolution base init failed.";
+    return error_code;
+  }
+  error_code = InitParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv int8 InitParam error!";
     return error_code;

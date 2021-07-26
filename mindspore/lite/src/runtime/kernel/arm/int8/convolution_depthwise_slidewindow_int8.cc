@@ -142,7 +142,11 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitFreeBefore() {
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
-  ReinitFreeBefore();  // remalloc quant param buffer
+  auto ret = ReinitFreeBefore();  // remalloc quant param buffer
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ReinitFreeBefore failed.";
+    return ret;
+  }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto channel = conv_param_->input_channel_;

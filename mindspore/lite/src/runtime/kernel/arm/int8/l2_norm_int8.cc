@@ -50,7 +50,11 @@ int L2NormInt8CPUKernel::Init() {
 
 int L2NormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<L2NormInt8CPUKernel *>(cdata);
-  kernel->DoExecute(task_id);
+  auto ret = kernel->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "L2NormInt8Run task id " << task_id << " failed.";
+    return ret;
+  }
   return lite::RET_OK;
 }
 

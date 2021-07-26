@@ -958,11 +958,14 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
   auto *model = lite::ImportFromBuffer(model_buf, size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
+    delete session;
     return nullptr;
   }
   auto ret = session->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
+    delete model;
+    delete session;
     return nullptr;
   }
   model->buf = nullptr;

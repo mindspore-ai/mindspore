@@ -100,10 +100,7 @@ int ConvolutionDepthwiseInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
-  return RET_OK;
-}
+int ConvolutionDepthwiseInt8CPUKernel::ReSize() { return ConvolutionBaseCPUKernel::Init(); }
 
 int ConvolutionDepthwiseInt8CPUKernel::Execute(int task_id) {
   auto buffer = row_buffer_ + conv_param_->output_w_ * conv_param_->output_channel_ * task_id;

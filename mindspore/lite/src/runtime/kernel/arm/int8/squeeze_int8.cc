@@ -97,7 +97,11 @@ int SqueezeInt8CPUKernel::Run() {
 
 int SqueezeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto Squeeze = reinterpret_cast<SqueezeInt8CPUKernel *>(cdata);
-  Squeeze->DoExecute(task_id);
+  auto ret = Squeeze->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SqueezeInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return RET_OK;
 }
 

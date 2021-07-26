@@ -39,6 +39,10 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // o, h, w, i -> o/8, h, w, i, 8; o equals to group, i equals to 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
+  if (origin_weight == nullptr) {
+    MS_LOG(ERROR) << "origin_weight nullptr";
+    return RET_ERROR;
+  }
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));

@@ -69,6 +69,7 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
     auto ret = CopyTensorData(src_tensor, result);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "CopyTensorData error";
+      delete result;
       return nullptr;
     }
     result->own_data_ = src_tensor.own_data_;
