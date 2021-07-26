@@ -28,7 +28,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
 class ICNetdc(nn.Cell):
     """Image Cascade Network"""
 
-    def __init__(self, nclass=19, backbone='resnet50', pretrained_base=True, istraining=True):
+    def __init__(self, nclass=19, pretrained_path="", istraining=True):
         super(ICNetdc, self).__init__()
         self.conv_sub1 = nn.SequentialCell(
             _ConvBNReLU(3, 32, 3, 2),
@@ -38,7 +38,7 @@ class ICNetdc(nn.Cell):
         self.istraining = istraining
         self.ppm = PyramidPoolingModule()
 
-        self.backbone = SegBaseModel()
+        self.backbone = SegBaseModel(root=pretrained_path)
 
         self.head = _ICHead(nclass)
 
@@ -235,11 +235,11 @@ class CascadeFeatureFusion24(nn.Cell):
 class SegBaseModel(nn.Cell):
     """Base Model for Semantic Segmentation"""
 
-    def __init__(self, nclass=19, backbone='resnet50', pretrained_base=True, **kwargs):
+    def __init__(self, nclass=19, backbone='resnet50', root=""):
         super(SegBaseModel, self).__init__()
         self.nclass = nclass
         if backbone == 'resnet50':
-            self.pretrained = get_resnet50v1b()
+            self.pretrained = get_resnet50v1b(ckpt_root=root)
 
     def construct(self, x):
         """forwarding pre-trained network"""
