@@ -226,7 +226,7 @@ result:{'top_1 acc':0.7974158653846154}
 | 总时长                 | 33时45分钟                                   |
 | 参数(M)             | 70.6                                           |
 | 微调检查点| 807.57M（.ckpt文件）                                      |
-| 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/Glore_resnet200) |
+| 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/research/cv/Glore_resnet200) |
 
 ### 推理性能
 
