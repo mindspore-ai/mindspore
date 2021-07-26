@@ -4084,14 +4084,14 @@ class MirrorPad(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> # case1: mode="REFLECT"
+        # case1: mode="REFLECT"
         >>> class Net(nn.Cell):
-        ...     def __init__(self, mode):
-        ...         super(Net, self).__init__()
-        ...         self.pad = ops.MirrorPad(mode=mode)
-        ...         self.paddings = Tensor([[1, 1], [2, 2]])
-        ...     def construct(self, input_x):
-        ...         return self.pad(input_x)
+        ...    def __init__(self, mode):
+        ...        super(Net, self).__init__()
+        ...        self.pad = ops.MirrorPad(mode=mode)
+        ...        self.paddings = Tensor([[1, 1], [2, 2]])
+        ...    def construct(self, input_x):
+        ...        return self.pad(input_x, self.paddings)
         ...
         >>> input_x = Tensor([[1,2,3], [4,5,6], [7,8,9]])
         >>> pad = Net("REFLECT")
@@ -7278,7 +7278,7 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
         ``Ascend``
 
     Examples:
-        >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]]
+        >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
         ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_greedyDecoder = ops.CTCGreedyDecoder()
