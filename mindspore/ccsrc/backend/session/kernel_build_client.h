@@ -67,8 +67,6 @@ class KernelBuildClient {
   constexpr inline static auto kCR = "[CR]";
   constexpr inline static auto kSP = "[SP]";
 
-  constexpr inline static unsigned int kTimeOutSeconds = 350;
-
   virtual std::string GetEnv() = 0;
   virtual std::string GetScript() = 0;
 

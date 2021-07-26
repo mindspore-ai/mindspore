@@ -206,6 +206,7 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
     }
 
     mindspore::TensorShape *tensorShape = node_inputs->mutable_tensor_shape();
+    MS_EXCEPTION_IF_NULL(tensorShape);
     for (auto item : input_shape) {
       mindspore::TensorShape_Dim *dim = tensorShape->add_dim();
       dim->set_size((::google::protobuf::int64)item);
