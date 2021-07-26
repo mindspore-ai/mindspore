@@ -4129,7 +4129,7 @@ class ScatterAdd(_ScatterOpDynamic):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class ScatterSub(_ScatterOp):
+class ScatterSub(_ScatterOpDynamic):
     r"""
     Updates the value of the input tensor through the subtraction operation.
 
@@ -4229,6 +4229,13 @@ class ScatterSub(_ScatterOp):
         [[ -8.  -8.  -8.]
          [-12. -12. -12.]]
     """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterSub"""
+        validator.check_value_type('use_locking', use_locking, [bool], self.name)
+        self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class ScatterMul(_ScatterOp):

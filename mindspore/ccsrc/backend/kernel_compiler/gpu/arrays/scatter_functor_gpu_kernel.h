@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_UPDATE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_UPDATE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_FUNCTOR_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_FUNCTOR_GPU_KERNEL_H_
 
 #include <vector>
+#include <string>
+#include <map>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/scatter_update_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/scatter_functor_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class ScatterUpdateKernel : public GpuKernel {
+
+static const std::map<std::string, ScatterFunctorType> kScatterFunctorTypeMap = {
+  {"ScatterUpdate", SCATTER_FUNC_UPDATE},
+  {"ScatterAdd", SCATTER_FUNC_ADD},
+  {"ScatterSub", SCATTER_FUNC_SUB},
+};
+
+template <typename T, typename S>
+class ScatterFunctorKernel : public GpuKernel {
  public:
-  ScatterUpdateKernel() { ResetResource(); }
-  ~ScatterUpdateKernel() override = default;
+  ScatterFunctorKernel() { ResetResource(); }
+  ~ScatterFunctorKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -37,10 +46,12 @@ class ScatterUpdateKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
-    int *indices = GetDeviceAddress<int>(inputs, 1);
+    S *indices = GetDeviceAddress<S>(inputs, 1);
     T *updates = GetDeviceAddress<T>(inputs, 2);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    CalScatterUpdate(inner_size_, indices_size_, indices, updates, input, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    ScatterFunc(scatter_functor_type_, inner_size_, indices_size_, indices, updates, input,
+                reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -49,15 +60,22 @@ class ScatterUpdateKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto iter = kScatterFunctorTypeMap.find(kernel_name);
+    if (iter == kScatterFunctorTypeMap.end()) {
+      MS_LOG(EXCEPTION) << "Scatter functor " << kernel_name << " is not supported.";
+    } else {
+      scatter_functor_type_ = iter->second;
+    }
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ScatterUpdate needs 3 inputs.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but " << kernel_name << " needs 3 inputs.";
       return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but ScatterUpdate has 1 output.";
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but " << kernel_name << " has 1 output.";
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -90,12 +108,13 @@ class ScatterUpdateKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(indices_size_ * sizeof(int));
+    input_size_list_.push_back(indices_size_ * sizeof(S));
     input_size_list_.push_back(updates_size_ * sizeof(T));
     output_size_list_.push_back(input_size_ * sizeof(T));
   }
 
  private:
+  ScatterFunctorType scatter_functor_type_;
   size_t input_size_;
   size_t inner_size_;
   size_t indices_size_;
@@ -106,4 +125,4 @@ class ScatterUpdateKernel : public GpuKernel {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_UPDATE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_FUNCTOR_GPU_KERNEL_H_

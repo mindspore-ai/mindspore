@@ -92,6 +92,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUnsortedSegmentMax, {InferImplUnsortedSegmentMax, nullptr, true}},
     {prim::kPrimUnsortedSegmentMin, {InferImplUnsortedSegmentMin, nullptr, true}},
     {prim::kPrimScatterAdd, {InferImplScatterAdd, nullptr, true}},
+    {prim::kPrimScatterSub, {InferImplScatterSub, nullptr, true}},
     {prim::kPrimSubAndFilter, {InferImplSubAndFilter, nullptr, true}},
     {prim::kPrimScatterUpdate, {InferImplScatterUpdate, nullptr, true}},
     {prim::kPrimMapCacheIdx, {InferImplMapCacheIdx, nullptr, true}},
