@@ -29,11 +29,11 @@ The SRGAN contains a generation network and a discriminator network.
 
 # [Dataset](#contents)
 
-Train SRGAN Dataset used: [DIV2K](<https://data.vision.ee.ethz.ch/cvl/DIV2K/>)
+Train SRGAN Dataset used: [DIV2K](https://data.vision.ee.ethz.ch/cvl/DIV2K/)
 
 - Note: Data will be processed in src/dataset/traindataset.py
 
-Validation and eval evaluationdataset used: [Set5](<http://people.rennes.inria.fr/a line.Roumy/results/SR_BMVC12.html>) [Set14](<https://sites.google.com/site/romanzeyde/research-interests>)
+Validation and eval evaluationdataset used: [Set5](http://people.rennes.inria.fr/Aline.Roumy/results/SR_BMVC12.html)/[Set14](https://sites.google.com/site/romanzeyde/research-interests)
 
 - Note:Data will be processed in src/dataset/testdataset.py
 
