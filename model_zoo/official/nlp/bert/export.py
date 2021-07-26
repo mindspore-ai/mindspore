@@ -14,6 +14,7 @@
 # ============================================================================
 """export checkpoint file into models"""
 import os
+import shutil
 import numpy as np
 
 import mindspore.common.dtype as mstype
@@ -83,6 +84,9 @@ def run_export():
     else:
         input_data = [input_ids, input_mask, token_type_id]
     export(net, *input_data, file_name=args.export_file_name, file_format=args.file_format)
+    if args.enable_modelarts:
+        air_file = f"{args.export_file_name}.{args.file_format.lower()}"
+        shutil.move(air_file, args.output_path)
 
 
 if __name__ == "__main__":
