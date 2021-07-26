@@ -197,10 +197,10 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
     if (target_nodes.find(node) != target_nodes.end()) {
       for (size_t i = 1; i < node->size(); ++i) {
         auto input = node->input(i);
+        MS_EXCEPTION_IF_NULL(input);
         if (!input->isa<CNode>()) {
           continue;
         }
-        MS_EXCEPTION_IF_NULL(input);
         if (recomputed_origin_nodes.find(input->cast<CNodePtr>()) != recomputed_origin_nodes.end()) {
           continue;
         }

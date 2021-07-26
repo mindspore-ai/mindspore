@@ -99,7 +99,12 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
 
 void ComputeReduceIndex(const std::vector<int64_t> &reverse_x, const std::vector<int64_t> &reverse_y,
                         std::vector<int64_t> *grad_x_reduce_idx, std::vector<int64_t> *grad_y_reduce_idy) {
+  MS_EXCEPTION_IF_NULL(grad_x_reduce_idx);
+  MS_EXCEPTION_IF_NULL(grad_y_reduce_idy);
   const size_t n = reverse_x.size();
+  if (reverse_y.size() < n) {
+    MS_LOG(EXCEPTION) << "The size of reverse_y is less than the size of reverse_x.";
+  }
   for (size_t i = 0; i < n; ++i) {
     State curr;
     const int64_t x_i = reverse_x[i];
@@ -298,6 +303,7 @@ AbstractBasePtr InferImplListMap(const AnalysisEnginePtr &engine, const Primitiv
     subargs.push_back(AbstractJoin(l_ptr->elements()));
   }
   EvalResultPtr engin_exc = engine->Execute(fn, subargs);
+  MS_EXCEPTION_IF_NULL(engin_exc);
   AbstractBasePtrList result;
   for (std::size_t i = 1; i < args_spec_list.size(); i++) {
     result.push_back(engin_exc->abstract());
@@ -318,7 +324,9 @@ AbstractBasePtr InferImplListReduce(const AnalysisEnginePtr &engine, const Primi
 
   AbstractBasePtr list_type = AbstractJoin(lst->elements());
   auto result1 = engine->Execute(fn, lst->elements());
+  MS_EXCEPTION_IF_NULL(result1);
   auto result2 = engine->Execute(fn, {dflt, list_type});
+  MS_EXCEPTION_IF_NULL(result2);
   MS_EXCEPTION_IF_NULL(result1->abstract());
   MS_EXCEPTION_IF_NULL(result2->abstract());
   return result1->abstract()->Join(result2->abstract());
