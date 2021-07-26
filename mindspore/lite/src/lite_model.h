@@ -71,6 +71,10 @@ class LiteModel : public Model {
         return false;
       }
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
+      if (c_node == nullptr) {
+        MS_LOG(ERROR) << "get as cnode fail!";
+        return false;
+      }
 #ifdef ENABLE_MODEL_OBF
       auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
       auto src_prim_type = src_prim->value_type();
