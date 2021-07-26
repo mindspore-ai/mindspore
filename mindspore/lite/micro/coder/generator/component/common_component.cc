@@ -188,14 +188,22 @@ void CodeGraphQuantArgsState(std::ofstream &ofs) {
 
 void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   std::vector<Tensor *> graph_inputs = ctx->graph_inputs();
+  if (graph_inputs.empty()) {
+    MS_LOG(ERROR) << "graph input tensors' number is 0";
+    return;
+  }
   Tensor *in_tensor = graph_inputs.at(kInputIndex);
   MS_CHECK_PTR_IF_NULL(in_tensor);
   std::vector<Tensor *> graph_outputs = ctx->graph_outputs();
+  if (graph_outputs.empty()) {
+    MS_LOG(ERROR) << "graph output tensors' number is 0";
+    return;
+  }
   Tensor *out_tensor = graph_outputs.at(kOutputIndex);
   MS_CHECK_PTR_IF_NULL(out_tensor);
   std::vector<QuantArg> in_quant_args = in_tensor->quant_params();
   std::vector<QuantArg> out_quant_args = out_tensor->quant_params();
-  if (graph_inputs.empty() || graph_outputs.empty() || in_quant_args.empty() || out_quant_args.empty()) {
+  if (in_quant_args.empty() || out_quant_args.empty()) {
     MS_LOG(ERROR) << "code model quant args failed";
     return;
   }
