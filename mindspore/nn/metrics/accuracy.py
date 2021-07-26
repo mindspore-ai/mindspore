@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,5 +114,5 @@ class Accuracy(EvaluationBase):
             RuntimeError: If the sample size is 0.
         """
         if self._total_num == 0:
-            raise RuntimeError('Accuary can not be calculated, because the number of samples is 0.')
+            raise RuntimeError('The accuracy can not be calculated, because the number of samples is 0.')
         return self._correct_num / self._total_num

@@ -337,7 +337,7 @@ class EmbeddingLookup(Cell):
                 return
             enable_ps = _get_ps_context("enable_ps")
             if not enable_ps:
-                logger.warning("The configuration of 'vocab_cache_size' is valid only in parameter server trainning "
+                logger.warning("The configuration of 'vocab_cache_size' is valid only in parameter server training "
                                "mode, current mode is not parameter server trainning mode, so it will be ignored.")
                 return
             parallel_mode = _get_parallel_mode()

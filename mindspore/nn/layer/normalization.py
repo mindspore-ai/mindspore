@@ -1066,9 +1066,9 @@ class GroupNorm(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> goup_norm_op = nn.GroupNorm(2, 2)
+        >>> group_norm_op = nn.GroupNorm(2, 2)
         >>> x = Tensor(np.ones([1, 2, 4, 4], np.float32))
-        >>> output = goup_norm_op(x)
+        >>> output = group_norm_op(x)
         >>> print(output)
         [[[[0. 0. 0. 0.]
            [0. 0. 0. 0.]

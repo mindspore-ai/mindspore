@@ -1662,7 +1662,7 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
 class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
     """
-    Add the potenrial energy caused by Lennard-Jones energy correction for each
+    Add the potential energy caused by Lennard-Jones energy correction for each
     necessary dihedral 1,4 terms to the total potential energy of each atom.
 
     The calculation formula is the same as operator Dihedral14LJEnergy().
@@ -1695,7 +1695,7 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
           Coulomb part of force correction for each dihedral 1,4 terms.
         - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair.
-        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones shceme of each atom pair type.
+        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair.
 
     Outputs:
@@ -2731,7 +2731,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         excluded_atom_numbers(int32): the total atom numbers in the excluded list.
         cutoff(float32): the cutoff distance for short-range force calculation. Default: 10.0.
         skin(float32): the overflow value of cutoff to maintain a neighbor list. Default: 2.0.
-        cutoff_square(float32): the suqare value of cutoff.
+        cutoff_square(float32): the square value of cutoff.
         half_skin_square(float32): skin*skin/4, indicates the maximum
           square value of the distance atom allowed to move between two updates.
         cutoff_with_skin(float32): cutoff + skin, indicates the

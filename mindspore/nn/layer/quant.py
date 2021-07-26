@@ -563,7 +563,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
     2D convolution which use the convolution layer statistics once to calculate Batch Normalization
     operation folded construct.
 
-    This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
+    This part is a more detailed overview of Conv2d operation. For more details about Quantization,
     please refer to the implementation of subclass of class:`_Observer`, for example,
     :class:`FakeQuantWithMinMaxObserver`.
 
@@ -801,7 +801,7 @@ class Conv2dBnFoldQuant(Cell):
     r"""
     2D convolution with Batch Normalization operation folded construct.
 
-    This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
+    This part is a more detailed overview of Conv2d operation. For more details about Quantization,
     please refer to the implementation of subclass of class:`_Observer`, for example,
     :class:`FakeQuantWithMinMaxObserver`.
 
@@ -1033,7 +1033,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
     r"""
     2D convolution and batchnorm without fold with fake quantized construct.
 
-    This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
+    This part is a more detailed overview of Conv2d operation. For more details about Quantization,
     please refer to the implementation of subclass of class:`_Observer`, for example,
     class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
@@ -1187,7 +1187,7 @@ class Conv2dQuant(Cell):
     r"""
     2D convolution with fake quantized operation layer.
 
-    This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
+    This part is a more detailed overview of Conv2d operation. For more details about Quantization,
     please refer to the implementation of subclass of class:`_Observer`, for example,
     class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
@@ -1329,7 +1329,7 @@ class DenseQuant(Cell):
     r"""
     The fully connected layer with fake quantized operation.
 
-    This part is a more detailed overview of Dense operation. For more detials about Quantilization,
+    This part is a more detailed overview of Dense operation. For more details about Quantization,
     please refer to the implementation of subclass of class:`_Observer`, for example,
     class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
@@ -1461,7 +1461,7 @@ class ActQuant(_QuantActivation):
     Quantization aware training activation function.
 
     Add the fake quantized operation to the end of activation operation, by which the output of activation
-    operation will be truncated. For more detials about Quantilization, please refer to the implementation
+    operation will be truncated. For more details about Quantization, please refer to the implementation
     of subclass of class:`_Observer`, for example, class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
@@ -1551,7 +1551,7 @@ class TensorAddQuant(Cell):
     r"""
     Adds fake quantized operation after TensorAdd operation.
 
-    This part is a more detailed overview of TensorAdd operation. For more detials about Quantilization,
+    This part is a more detailed overview of TensorAdd operation. For more details about Quantization,
     please refer to the implementation of subclass of class:`_Observer`, for example,
     class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
@@ -1614,7 +1614,7 @@ class MulQuant(Cell):
     r"""
     Adds fake quantized operation after `Mul` operation.
 
-    This part is a more detailed overview of `Mul` operation. For more detials about Quantilization,
+    This part is a more detailed overview of `Mul` operation. For more details about Quantization,
     please refer to the implementation of subclass of class:`_Observer`, for example,
     class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 

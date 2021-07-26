@@ -92,7 +92,7 @@ class SparseToDense(PrimitiveWithInfer):
 class SparseTensorDenseMatmul(PrimitiveWithInfer):
     """
     Multiplies sparse matrix `A` by dense matrix `B`.
-    The rank of sparse matrix and dense matrix must equal to `2`.
+    The rank of sparse matrix and dense matrix must be equal to `2`.
 
     Args:
         adjoint_st (bool): If true, sparse tensor is transposed before multiplication. Default: False.

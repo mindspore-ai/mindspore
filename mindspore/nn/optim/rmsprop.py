@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ class RMSProp(Optimizer):
                           greater than 0. Default: 0.0.
         epsilon (float): Term added to the denominator to improve numerical stability. Should be greater than
                          0. Default: 1e-10.
-        use_locking (bool):  Whether to enable a lock to protect the variable and accumlation tensors from being
+        use_locking (bool):  Whether to enable a lock to protect the variable and accumulation tensors from being
                              updated. Default: False.
         centered (bool): If true, gradients are normalized by the estimated variance of the gradient. Default: False.
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. In general, use the
