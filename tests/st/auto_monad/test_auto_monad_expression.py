@@ -81,3 +81,43 @@ def test_auto_monad_addn_adam():
     allclose_nparray(new_var_pyn.asnumpy(), new_var.asnumpy(), 0.001, 0.001)
     allclose_nparray(new_m_pyn.asnumpy(), new_m.asnumpy(), 0.001, 0.001)
     allclose_nparray(new_v_pyn.asnumpy(), new_v.asnumpy(), 0.001, 0.001)
+
+
+class AutoMonadTwoAssignTwoAddnDependencyNet(Cell):
+    def __init__(self):
+        super().__init__()
+        self.parameter1 = ms.Parameter(Tensor([1.0], ms.float32), name="parameter1")
+        self.parameter2 = ms.Parameter(Tensor([3.0], ms.float32), name="parameter2")
+        self.assign = P.Assign()
+        self.addN = P.AddN()
+
+    def construct(self, inputs):
+        self.assign(self.parameter1, inputs)
+        out = self.addN((inputs, self.parameter1, self.parameter2))
+        self.assign(self.parameter2, inputs)
+        out = self.addN((out, self.parameter1, self.parameter2))
+        return out
+
+
+class AutoMonadTwoAssignTwoAddnDependencyBenchmarkNet(Cell):
+    def __init__(self):
+        super().__init__()
+        self.parameter2 = ms.Parameter(Tensor([3.0], ms.float32), name="parameter2")
+        self.addN = P.AddN()
+
+    def construct(self, inputs):
+        out = self.addN((inputs, inputs, self.parameter2))
+        out = self.addN((out, inputs, inputs))
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_auto_monad_read_dependency_two_assign_two_addn():
+    net = AutoMonadTwoAssignTwoAddnDependencyNet()
+    benchmarknet = AutoMonadTwoAssignTwoAddnDependencyBenchmarkNet()
+    out1 = net(Tensor([9.0], ms.float32))
+    out2 = benchmarknet(Tensor([9.0], ms.float32))
+    allclose_nparray(out1.asnumpy(), out2.asnumpy(), 0.001, 0.001)
