@@ -1858,7 +1858,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0.0))
         >>> output = ops.ArgMinWithValue(keep_dims=True)(input_x)
         >>> print(output)
-        (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [0.0]))
+        (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
     """
 
     @prim_attr_register
