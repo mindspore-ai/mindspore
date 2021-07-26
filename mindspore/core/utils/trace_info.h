@@ -47,16 +47,14 @@ class TraceInfo : public Base {
       : Base(), debug_info_(info.debug_info_), symbol_(info.symbol_), full_name_(info.full_name_), name_(info.name_) {}
   ~TraceInfo() override = default;
   MS_DECLARE_PARENT(TraceInfo, Base);
-  virtual std::string name() { return name_; }
-  virtual std::string symbol() { return symbol_; }
-  virtual std::string full_name() { return full_name_; }
+  virtual std::string name() const { return name_; }
+  virtual std::string symbol() const { return symbol_; }
+  virtual std::string full_name() const { return full_name_; }
   virtual TraceInfoPtr clone() { return shared_from_base<TraceInfo>(); }
-  virtual std::string action_name() { return ""; }
-  virtual std::string GetActionBetweenNode(const DebugInfoPtr &info);
+  virtual std::string action_name() const { return ""; }
+  virtual std::string GetActionBetweenNode(const DebugInfoPtr &info) const;
   void set_debug_info(const DebugInfoPtr &info) { debug_info_ = info; }
-  DebugInfoPtr debug_info() { return debug_info_; }
-  DebugInfoPtr DebugInfoHasLoc();
-  std::vector<std::pair<DebugInfoPtr, TraceInfoPtr>> GetSourceCodeDebugInfo();
+  DebugInfoPtr debug_info() const { return debug_info_; }
 
  protected:
   DebugInfoPtr debug_info_;
@@ -255,9 +253,9 @@ class TraceSpecialize : public TraceInfo {
  public:
   explicit TraceSpecialize(const std::string &counter) : TraceInfo(nullptr, "specialize", "") { counter_ = counter; }
   MS_DECLARE_PARENT(TraceSpecialize, TraceInfo);
-  std::string name() override { return full_name_ + counter_; }
-  std::string symbol() override { return counter_ + "_"; }
-  std::string full_name() override { return full_name_ + counter_ + "_"; }
+  std::string name() const override { return full_name_ + counter_; }
+  std::string symbol() const override { return counter_ + "_"; }
+  std::string full_name() const override { return full_name_ + counter_ + "_"; }
   ~TraceSpecialize() override = default;
   TraceInfoPtr clone() override { return std::make_shared<TraceSpecialize>(*shared_from_base<TraceSpecialize>()); }
   std::string counter_;
@@ -334,9 +332,9 @@ class TraceTransform : public TraceInfo {
     transform_name_ = transform_name;
   }
 
-  std::string full_name() override { return full_name_ + transform_name_; }
+  std::string full_name() const override { return full_name_ + transform_name_; }
   MS_DECLARE_PARENT(TraceTransform, TraceInfo);
-  std::string symbol() override {
+  std::string symbol() const override {
     if (transform_name_.empty()) {
       return "";
     }

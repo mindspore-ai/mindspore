@@ -137,7 +137,7 @@ class Any {
       buffer << "<int> " << cast<int>();
     } else if (m_tpIndex == typeid(bool)) {
       buffer << "<bool> " << cast<bool>();
-    } else {
+    } else if (m_ptr != nullptr) {
       buffer << "<" << demangle(m_tpIndex.name()) << "> " << m_ptr->GetString();
     }
     return buffer.str();
