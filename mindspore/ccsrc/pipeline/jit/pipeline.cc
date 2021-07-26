@@ -1226,7 +1226,15 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len,
                         const std::string &dec_mode) {
-  return mindspore::LoadMindIR(file_name, false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode);
+  auto func_graph =
+    mindspore::LoadMindIR(file_name, false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    DumpIR("load.ir", func_graph);
+  }
+  return func_graph;
 }
 
 void ReleaseGeTsd() {
