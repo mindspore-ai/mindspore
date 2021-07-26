@@ -59,7 +59,8 @@ int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
                          src_tensor.quantParams()->Get(0) != nullptr && src_tensor.quantParams()->Get(0)->inited();
   if (need_bit_unpack) {
     auto num_bits = src_tensor.quantParams()->Get(0)->numBits();
-    need_bit_unpack = ((num_bits > 0 && num_bits < 8) || (num_bits > 8 && num_bits < 16));
+    need_bit_unpack = ((num_bits >= WeightDecoder::kBitNum1 && num_bits < WeightDecoder::kBitNum8) ||
+                       (num_bits > WeightDecoder::kBitNum8 && num_bits < WeightDecoder::kBitNum16));
   }
   if (!src_tensor.enableHuffmanCode() && !need_bit_unpack) {
     return RET_NO_CHANGE;

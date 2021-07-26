@@ -221,13 +221,13 @@ class Tensor : public mindspore::tensor::MSTensor {
 
  private:
   template <typename T>
-  std::string DataToString(void *data, size_t data_number) const {
+  std::string DataToString(void *data, size_t data_number, size_t print_len = 40) const {
     if (data == nullptr) {
       return "Data of tensor is nullptr";
     }
     std::ostringstream oss;
     auto casted_data = static_cast<T *>(data);
-    for (size_t i = 0; i < 40 && i < data_number; i++) {
+    for (size_t i = 0; i < print_len && i < data_number; i++) {
       oss << " " << casted_data[i];
     }
     return oss.str();

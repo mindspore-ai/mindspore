@@ -285,10 +285,10 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
   }
   dst_data = dst_tensor->data_c();
   int origin_bit = quant_param->numBits();
-  if (origin_bit < 8 && origin_bit > 0) {
+  if (origin_bit < kBitNum8 && origin_bit >= kBitNum1) {
     UnPackUtil<int8_t, uint8_t>(&src_tensor, origin_bit, dst_data);
     return RET_OK;
-  } else if (origin_bit < 16 && origin_bit > 8) {
+  } else if (origin_bit < kBitNum16 && origin_bit > kBitNum8) {
     UnPackUtil<int16_t, uint16_t>(&src_tensor, origin_bit, dst_data);
     return RET_OK;
   } else {

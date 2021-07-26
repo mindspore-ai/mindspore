@@ -30,9 +30,16 @@ namespace mindspore::kernel {
 RelativePositionAttentionCPUKernel::~RelativePositionAttentionCPUKernel() { FreeAllPackData(); }
 
 namespace {
+constexpr int kActivationTensorShapeSize = 3;
+constexpr int kActivationTensorBatch = 1;
+constexpr int kTensorShapeBatchIndex = 0;
+constexpr int k3DimsLeftMatrixDeepIndex = 2;
+constexpr int kRightMatrixDeepIndex = 0;
+
 bool AttentionActivationTensorCheck(lite::Tensor *tensor) {
-  if (tensor == nullptr || tensor->data_type() != kNumberTypeFloat32 || tensor->shape().size() != 3 ||
-      tensor->shape().at(0) != 1) {
+  if (tensor == nullptr || tensor->data_type() != kNumberTypeFloat32 ||
+      tensor->shape().size() != kActivationTensorShapeSize ||
+      tensor->shape().at(kTensorShapeBatchIndex) != kActivationTensorBatch) {
     return false;
   }
   return true;
@@ -60,31 +67,29 @@ int RelativePositionAttentionCPUKernel::CheckInputs() {
     MS_LOG(ERROR) << "input_p is abnormal.";
     return RET_ERROR;
   }
+  // Sequence length Q / 2 should be equal to sequence length of K
   if (input_p_tensor_->shape().at(1) / 2 != input_k_tensor_->shape().at(1)) {
     MS_LOG(ERROR) << "Sequence length of input_p / 2 != sequence length of input_k";
     return RET_ERROR;
   }
+  // Sequence length of V should be equal to sequence length of K
   if (input_v_tensor_->shape().at(1) != input_k_tensor_->shape().at(1)) {
     MS_LOG(ERROR) << "Sequence length of input_v != sequence length of input_k";
     return RET_ERROR;
   }
-  if (input_q_tensor_->shape().at(2) != weight_q_tensor_->shape().at(0)) {
+  if (input_q_tensor_->shape().at(k3DimsLeftMatrixDeepIndex) != weight_q_tensor_->shape().at(kRightMatrixDeepIndex)) {
     MS_LOG(ERROR) << "Shapes of input_q and weight_q are mismatched.";
     return RET_ERROR;
   }
-  if (input_k_tensor_->shape().at(2) != weight_k_tensor_->shape().at(0)) {
+  if (input_k_tensor_->shape().at(k3DimsLeftMatrixDeepIndex) != weight_k_tensor_->shape().at(kRightMatrixDeepIndex)) {
     MS_LOG(ERROR) << "Shapes of input_k and weight_k are mismatched.";
     return RET_ERROR;
   }
-  if (input_v_tensor_->shape().at(2) != weight_v_tensor_->shape().at(0)) {
+  if (input_v_tensor_->shape().at(k3DimsLeftMatrixDeepIndex) != weight_v_tensor_->shape().at(kRightMatrixDeepIndex)) {
     MS_LOG(ERROR) << "Shapes of input_v and weight_v are mismatched.";
     return RET_ERROR;
   }
-  if (input_k_tensor_->shape().at(1) != input_v_tensor_->shape().at(1)) {
-    MS_LOG(ERROR) << "Shapes of input_k and input_v are mismatched.";
-    return RET_ERROR;
-  }
-  if (input_v_tensor_->shape().at(2) != weight_o_tensor_->shape().at(0)) {
+  if (input_v_tensor_->shape().at(k3DimsLeftMatrixDeepIndex) != weight_o_tensor_->shape().at(kRightMatrixDeepIndex)) {
     MS_LOG(ERROR) << "Shapes of input_v and weight_o are mismatched.";
     return RET_ERROR;
   }
@@ -92,9 +97,10 @@ int RelativePositionAttentionCPUKernel::CheckInputs() {
 }
 
 namespace {
+constexpr int kWeightTensorShapeSize = 2;
 bool AttentionWeightTensorCheck(lite::Tensor *tensor) {
   if (tensor == nullptr || !tensor->IsConst() || tensor->data_type() != kNumberTypeFloat32 ||
-      tensor->shape().size() != 2) {
+      tensor->shape().size() != kWeightTensorShapeSize) {
     return false;
   }
   return true;
@@ -200,6 +206,15 @@ int RelativePositionAttentionCPUKernel::CheckBiases() {
   return RET_OK;
 }
 
+namespace {
+constexpr int kQSeqIndexInQ = 1;
+constexpr int kKSeqIndexInK = 1;
+constexpr int kVSeqIndexInV = 1;
+constexpr int kPSeqIndexInP = 1;
+constexpr int kNumHeadIndexInPositionU = 0;
+constexpr int kDModelIndexInQ = 2;
+}  // namespace
+
 int RelativePositionAttentionCPUKernel::PrepareParam() {
 #ifdef ENABLE_AVX
   param_->row_tile_ = C6NUM;
@@ -218,13 +233,13 @@ int RelativePositionAttentionCPUKernel::PrepareParam() {
   param_->col_tile_ = C8NUM;
   param_->bias_tile_ = C8NUM;
 #endif
-  param_->num_heads_ = pos_u_tensor_->shape().at(0);
-  param_->batch_ = input_q_tensor_->shape().at(0);
-  param_->d_model_ = input_q_tensor_->shape().at(2);
-  param_->q_seq_ = input_q_tensor_->shape().at(1);
-  param_->k_seq_ = input_k_tensor_->shape().at(1);
-  param_->v_seq_ = input_v_tensor_->shape().at(1);
-  param_->p_seq_ = input_p_tensor_->shape().at(1);
+  param_->num_heads_ = pos_u_tensor_->shape().at(kNumHeadIndexInPositionU);
+  param_->batch_ = input_q_tensor_->shape().at(kTensorShapeBatchIndex);
+  param_->d_model_ = input_q_tensor_->shape().at(kDModelIndexInQ);
+  param_->q_seq_ = input_q_tensor_->shape().at(kQSeqIndexInQ);
+  param_->k_seq_ = input_k_tensor_->shape().at(kKSeqIndexInK);
+  param_->v_seq_ = input_v_tensor_->shape().at(kVSeqIndexInV);
+  param_->p_seq_ = input_p_tensor_->shape().at(kPSeqIndexInP);
   if (param_->num_heads_ <= 1) {
     MS_LOG(ERROR) << "RelativePositionAttention only support multi-heads.";
     return RET_ERROR;
@@ -243,6 +258,7 @@ inline int PackLeftTensor(const lite::Tensor &tensor, Matrix *matrix, int row_ti
   MS_ASSERT(matrix->data_ == nullptr);
   matrix->data_ = reinterpret_cast<float *>(tensor.data_c());
   matrix->is_transpose_ = false;
+  // Left tensor is in [batch, row, col] shape
   matrix->batch_ = tensor.shape().at(0);
   matrix->row_ = tensor.shape().at(1);
   matrix->col_ = tensor.shape().at(2);
@@ -515,6 +531,7 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersLogits(int batch, int num_
     MS_LOG(ERROR) << "Malloc logits_with_v_pad buffer failed";
     return RET_ERROR;
   }
+  // relative shift output shape is [batch * num_heads, q_seq, p_seq / 2]
   (void)InitMatrix(&logits_with_v_shifted_mat_, batch * num_heads, param_->q_seq_, param_->p_seq_ / 2, false);
   ret = MallocLeftTensor(&logits_with_v_shifted_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {

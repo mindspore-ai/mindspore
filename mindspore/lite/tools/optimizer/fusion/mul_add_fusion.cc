@@ -54,6 +54,11 @@ bool MulAddFusion::ScaleInputShapeValid() const {
   return true;
 }
 
+namespace {
+constexpr int kInputIndex1 = 1;
+constexpr int kInputIndex2 = 2;
+}  // namespace
+
 bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
   MS_ASSERT(func_graph != nullptr);
   if (mul_anode_ == nullptr) {
@@ -82,12 +87,12 @@ bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
   // find mul's const input and mul input
   AnfNodePtr mul_pre_input_node = nullptr;
   AnfNodePtr mul_pre_const_node = nullptr;
-  auto mul_pre_node_1 = mul_node->input(1);
+  auto mul_pre_node_1 = mul_node->input(kInputIndex1);
   if (CheckIfAnfNodeIsNull(mul_pre_node_1) != lite::RET_OK) {
     MS_LOG(DEBUG) << "Pre-node of mul op is nullptr";
     return false;
   }
-  auto mul_pre_node_2 = mul_node->input(2);
+  auto mul_pre_node_2 = mul_node->input(kInputIndex2);
   if (CheckIfAnfNodeIsNull(mul_pre_node_2) != lite::RET_OK) {
     MS_LOG(DEBUG) << "Pre-node of mul op is nullptr";
     return false;
@@ -158,12 +163,12 @@ bool MulAddFusion::CheckAddNode() const {
   // find add's const input and mul input
   AnfNodePtr add_pre_input_node = nullptr;
   AnfNodePtr add_pre_const_node = nullptr;
-  auto add_pre_node_1 = add_cnode->input(1);
+  auto add_pre_node_1 = add_cnode->input(kInputIndex1);
   if (CheckIfAnfNodeIsNull(add_pre_node_1) != lite::RET_OK) {
     MS_LOG(DEBUG) << "Pre-node of add op is nullptr";
     return false;
   }
-  auto add_pre_node_2 = add_cnode->input(2);
+  auto add_pre_node_2 = add_cnode->input(kInputIndex2);
   if (CheckIfAnfNodeIsNull(add_pre_node_2) != lite::RET_OK) {
     MS_LOG(DEBUG) << "Pre-node of add op is nullptr";
     return false;
@@ -285,7 +290,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   scale_primitive->set_activation_type(scale_act_type_);
-  scale_primitive->set_axis(0 - bias_tensor_->shape_c().size());
+  scale_primitive->set_axis(-(bias_tensor_->shape_c().size()));
   // create scale op
   auto scale_node = func_graph->NewCNode(std::shared_ptr<ops::PrimitiveC>(scale_primitive),
                                          {mul_input_anode_, mul_const_anode_, add_const_anode_});

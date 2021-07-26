@@ -28,6 +28,10 @@
 using float16 = Eigen::half;
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kFp16ToFp32Multiply = 2;
+}
+
 STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
   if (!need_convert_) {
     return RET_NO_CHANGE;
@@ -40,12 +44,12 @@ STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
     }
     auto ele_num = lite::GetShapeSize(tensor->dims);
     auto origin_data = tensor->data;
-    if (origin_data.size() != ele_num * sizeof(float) || origin_data.size() % 2 != 0) {
+    if (origin_data.size() != ele_num * sizeof(float) || origin_data.size() % kFp16ToFp32Multiply != 0) {
       MS_LOG(ERROR) << "Tensor data length error.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }
-    std::vector<uint8_t> new_data(origin_data.size() / 2);
+    std::vector<uint8_t> new_data(origin_data.size() / kFp16ToFp32Multiply);
     auto fp32_data = reinterpret_cast<float *>(origin_data.data());
     auto fp16_data = reinterpret_cast<float16 *>(new_data.data());
     for (size_t i = 0; i < ele_num; i++) {

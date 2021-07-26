@@ -142,7 +142,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
     auto &node = graph->nodes.at(nodeIdx);
     sinkIdes.emplace_back(nodeIdx);
 
-    MS_ASSERT(nullptr != node->primitive);
+    MS_ASSERT(node->primitive != nullptr);
     if (IsContain(outputOp->types, node->primitive->value.type)) {
       entries.emplace_back(nodeIdx);
     }
