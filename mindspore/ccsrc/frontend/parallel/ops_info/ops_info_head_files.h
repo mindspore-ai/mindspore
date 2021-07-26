@@ -58,5 +58,6 @@
 #include "frontend/parallel/ops_info/conv2d_info.h"
 #include "frontend/parallel/ops_info/batchnorm_info.h"
 #include "frontend/parallel/ops_info/maxpool_info.h"
+#include "frontend/parallel/ops_info/gatherd_info.h"
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_

@@ -202,6 +202,7 @@ REGISTER(Conv2DTransposeInfo);
 REGISTER(BatchNormInfo);
 REGISTER(MaxPoolInfo);
 REGISTER(AvgPoolInfo);
+REGISTER(GatherDInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

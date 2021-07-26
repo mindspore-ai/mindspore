@@ -366,6 +366,7 @@ constexpr char KStridedSlice[] = "StridedSlice";
 constexpr char UNIQUE[] = "Unique";
 constexpr char GATHERND[] = "GatherNd";
 constexpr char SCATTER_UPDATE[] = "ScatterUpdate";
+constexpr char GATHERD[] = "GatherD";
 
 // pipeline
 constexpr char MICRO[] = "micro";
