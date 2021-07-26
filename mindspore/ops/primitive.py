@@ -194,7 +194,7 @@ class Primitive(Primitive_):
             >>> a = P.Add()
             >>> a.set_prim_instance_name("add")
             >>> print(a.instance_name)
-            'add'
+            add
         """
         self.set_instance_name(instance_name)
         self.instance_name = instance_name
@@ -236,7 +236,7 @@ class Primitive(Primitive_):
             >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
             >>> output = addn.check_elim((input_x,))
             >>> print(output)
-            (True, Tensor(shape = [3], dtype = Float32, value = [1.0000000e+00,2.0000000e+00,3.0000000e+00]))
+            (True, Tensor(shape=[3], dtype=Float32, value= [ 1.00000000e+00,  2.00000000e+00,  3.00000000e+00]))
     """
         return (False, None)
 
@@ -306,7 +306,7 @@ class Primitive(Primitive_):
             >>> import mindspore as ms
             >>> from mindspore.common.tensor import Tensor
             >>> import mindspore.ops as ops
-            >>> import mindspore.ops import operator as P
+            >>> import mindspore.ops.operator as P
             >>> import mindspore.nn as nn
             >>> import numpy as np
             >>> class NetRecompute(nn.Cell):
@@ -627,18 +627,22 @@ def constexpr(fn=None, get_instance=True, name=None):
         name (str): Defines the operator name. If `name` is None, use the function name as op name.
 
     Examples:
+        >>> from mindspore.ops import constexpr
         >>> a = (1, 2)
         >>> # make an operator to calculate tuple len
         >>> @constexpr
         >>> def tuple_len(x):
         ...     return len(x)
-        >>> assert tuple_len(a) == 2
         ...
+        >>> tuple_len(a)
+        2
         >>> # make an operator class to calculate tuple len
         >>> @constexpr(get_instance=False, name="TupleLen")
         >>> def tuple_len_class(x):
         ...     return len(x)
-        >>> assert tuple_len_class()(a) == 2
+        ...
+        >>>tuple_len_class()(a)
+        2
     """
 
     def deco(fn):
