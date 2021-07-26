@@ -150,10 +150,10 @@ def sequence_mask(lengths, maxlen=None):
         >>> x = Tensor(np.array([[1, 3], [2, 0]]))
         >>> output = C.sequence_mask(x, 3)
         >>> print(output)
-        [[[True, False, False],
-          [True, True, True]],
-         [[True, True, False],
-          [False, False, False]]]
+        [[[True False False]
+          [True True True]]
+         [[True True False]
+          [False False False]]]
     """
 
     argmax_op = P.ArgMaxWithValue()
