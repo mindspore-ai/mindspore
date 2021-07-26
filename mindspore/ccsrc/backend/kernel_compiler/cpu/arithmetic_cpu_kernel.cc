@@ -50,7 +50,7 @@ void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
 template <typename T>
 void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
-    if (op_para.in_elements_num0_ == op_para.in_elements_num1_) {
+    if (input_shape1_ == input_shape2_) {
       auto task = [&](size_t start, size_t end) {
         ElementSub(input1 + start, input2 + start, out + start, end - start);
       };
@@ -124,7 +124,7 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
 
 template <typename T>
 void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
-  if (op_para.in_elements_num0_ == op_para.in_elements_num1_) {
+  if (input_shape1_ == input_shape2_) {
     auto task = [&](size_t start, size_t end) {
       ElementRealDiv<T>(input1 + start, input2 + start, out + start, end - start, 1, 1);
     };
