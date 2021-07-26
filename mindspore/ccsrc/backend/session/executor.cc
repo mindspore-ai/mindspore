@@ -308,7 +308,7 @@ void Executor::RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_r
     if (sync && long_run) {
       mindspore::ScopedLongRunning long_running;
       sync_cond_var_.wait(lock, [this] { return sync_run_task_finished_; });
-    } else if (sync) {
+    } else {
       sync_cond_var_.wait(lock, [this] { return sync_run_task_finished_; });
     }
   }
