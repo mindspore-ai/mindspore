@@ -26,7 +26,8 @@ namespace opt {
 int64_t AxisNormalizer::NormAxis(int64_t x, size_t rank) const { return x >= 0 ? x : x + static_cast<int64_t>(rank); }
 
 bool AxisNormalizer::IsReduce(const AnfNodePtr &node) const {
-  std::vector<PrimitivePtr> node_with_axis = {prim::kPrimReduceSum, prim::kPrimReduceMax, prim::kPrimReduceMin};
+  std::vector<PrimitivePtr> node_with_axis = {prim::kPrimReduceSum, prim::kPrimReduceMax, prim::kPrimReduceMin,
+                                              prim::kPrimArgMax, prim::kPrimArgMin};
   return std::any_of(node_with_axis.begin(), node_with_axis.end(),
                      [&node](PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
 }
