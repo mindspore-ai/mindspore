@@ -236,7 +236,7 @@ int32_t Tensor::ElementsC4Num() const {
 
 int Tensor::DimensionSize(const size_t index) const {
   int dim_size = -1;
-  if (index < shape_.size()) {
+  if (index < shape_.size() && index >= 0) {
     dim_size = shape_[index];
   } else {
     MS_LOG(ERROR) << "Dimension index is wrong: " << index;
@@ -399,7 +399,7 @@ void Tensor::set_quant_clusters(const std::vector<float> &clusters) { this->quan
 
 std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src) {
   std::vector<tensor::MSTensor *> target(src.size());
-  std::transform(src.begin(), src.end(), target.begin(), [](Tensor *t) { return dynamic_cast<tensor::MSTensor *>(t); });
+  std::transform(src.begin(), src.end(), target.begin(), [](Tensor *t) { return static_cast<tensor::MSTensor *>(t); });
   return target;
 }
 
