@@ -346,6 +346,35 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
   func_graph->set_parameters(parameters);
 }
 
+namespace {
+void FilterMonadInput(const AnfNodePtrList &old_inputs, AnfNodePtrList *new_inputs, AnfNodePtr *possible_u_monad,
+                      AnfNodePtr *possible_io_monad) {
+  AnfNodePtr local_u_monad = nullptr, local_io_monad = nullptr;
+  std::copy_if(old_inputs.cbegin(), old_inputs.cend(), std::back_inserter(*new_inputs),
+               [&local_u_monad, &local_io_monad](const auto &input) {
+                 if (HasAbstractUMonad(input)) {
+                   if (local_u_monad != nullptr) {
+                     MS_LOG(EXCEPTION) << "Cannot have multiple U Monad in one call, first: "
+                                       << local_u_monad->ToString() << ", second: " << input->ToString();
+                   }
+                   local_u_monad = input;
+                   return false;
+                 }
+                 if (HasAbstractIOMonad(input)) {
+                   if (local_io_monad != nullptr) {
+                     MS_LOG(EXCEPTION) << "Cannot have multiple IO Monad in one call, first: "
+                                       << local_io_monad->ToString() << ", second: " << input->ToString();
+                   }
+                   local_io_monad = input;
+                   return false;
+                 }
+                 return true;
+               });
+  *possible_u_monad = local_u_monad;
+  *possible_io_monad = local_io_monad;
+}
+}  // namespace
+
 void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                        const AnfNodePtrList &params) {
   AnfNodePtr node = nullptr;
@@ -361,16 +390,36 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
     return;
   }
   auto cnode = node->cast<CNodePtr>();
-  auto inputs = cnode->inputs();
+  AnfNodePtr input_u_monad = nullptr, input_io_monad = nullptr, param_u_monad = nullptr, param_io_monad = nullptr;
+  AnfNodePtrList inputs;
+  std::vector<AnfNodePtr> add_params;
+  FilterMonadInput(cnode->inputs(), &inputs, &input_u_monad, &input_io_monad);
+  FilterMonadInput(params, &add_params, &param_u_monad, &param_io_monad);
+
   constexpr auto caller_first_arg_index = 2;
-  std::vector<AnfNodePtr> add_params{params.begin(), params.end()};
   for (size_t i = caller_first_arg_index; i < inputs.size(); i++) {
     auto ret = std::find(add_params.begin(), add_params.end(), inputs[i]);
     if (ret != add_params.end()) {
       add_params.erase(ret);
     }
   }
+  if (input_u_monad != nullptr && param_u_monad != nullptr && input_u_monad != param_u_monad) {
+    MS_LOG(EXCEPTION) << "Cannot have multiple U Monad in one call, first: " << input_u_monad->ToString()
+                      << ", second: " << param_u_monad->ToString();
+  }
+  if (input_io_monad != nullptr && param_io_monad != nullptr && input_io_monad != param_io_monad) {
+    MS_LOG(EXCEPTION) << "Cannot have multiple IO Monad in one call, first: " << input_io_monad->ToString()
+                      << ", second: " << param_io_monad->ToString();
+  }
   (void)std::copy(add_params.begin(), add_params.end(), std::back_inserter(inputs));
+  auto &u_monad = input_u_monad != nullptr ? input_u_monad : param_u_monad;
+  auto &io_monad = input_io_monad != nullptr ? input_io_monad : param_io_monad;
+  if (u_monad != nullptr) {
+    inputs.push_back(u_monad);
+  }
+  if (io_monad != nullptr) {
+    inputs.push_back(io_monad);
+  }
   cnode->set_inputs(inputs);
   OrderParameters(func_graph, inputs, caller_first_arg_index);
 }
