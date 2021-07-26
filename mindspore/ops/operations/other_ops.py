@@ -48,18 +48,10 @@ class Assign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.y = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="y")
-        ...
-        ...     def construct(self, x):
-        ...         ops.Assign()(self.y, x)
-        ...         return self.y
-        ...
-        >>> x = Tensor([2.0], mindspore.float32)
-        >>> net = Net()
-        >>> output = net(x)
+        >>> value = Tensor([2.0], mindspore.float32)
+        >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
+        >>> assign = ops.Assign()
+        >>> output = assign(variable, value)
         >>> print(output)
         [2.]
     """
