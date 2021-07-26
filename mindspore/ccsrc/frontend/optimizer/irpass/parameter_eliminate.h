@@ -38,6 +38,7 @@ class ParameterEliminator {
   virtual ~ParameterEliminator() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
     const auto &manager = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
     bool changes = false;
     while (true) {
       auto tr = manager->Transact();
@@ -81,6 +82,7 @@ class ParameterEliminator {
         continue;
       }
       const auto &parameters = fg->parameters();
+      MS_EXCEPTION_IF_NULL(fg->manager());
       const auto &manager_node_users = fg->manager()->node_users();
       bool exist_param_unused =
         std::any_of(parameters.begin(), parameters.end(), [&manager_node_users](const AnfNodePtr &parameter) {
@@ -98,6 +100,7 @@ class ParameterEliminator {
   }
 
   static std::unordered_set<size_t> EraseUnusedParameters(const FuncGraphPtr &fg, FuncGraphTransaction *tr) {
+    MS_EXCEPTION_IF_NULL(fg->manager());
     const auto &manager_node_users = fg->manager()->node_users();
     const auto &parameters = fg->parameters();
     std::unordered_set<size_t> unused_parameter_indexes;

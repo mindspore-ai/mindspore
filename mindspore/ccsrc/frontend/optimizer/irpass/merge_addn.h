@@ -37,7 +37,7 @@ class MergeAddN : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     Reset();
-    mng_ = optimizer->resource()->manager();
+    mng_ = optimizer->manager();
     is_outer_ = true;
     AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(node);
     // do not hold this manager

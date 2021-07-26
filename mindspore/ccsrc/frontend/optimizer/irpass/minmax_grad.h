@@ -60,7 +60,7 @@ class MinMaximumGrad : public AnfVisitor {
     }
 
     // check single use
-    auto mng = optimizer->resource()->manager();
+    auto mng = optimizer->manager();
     auto &users = mng->node_users();
     if (users.find(grad_) == users.end() || users[grad_].size() != 1) {
       return nullptr;

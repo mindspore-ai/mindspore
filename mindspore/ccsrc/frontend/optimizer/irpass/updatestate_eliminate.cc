@@ -341,6 +341,9 @@ void EliminateUselessNodesForUpdateStates(const std::vector<CNodePtr> &update_st
     return;
   }
   auto mgr = GetManager(update_states[0]);
+  if (mgr == nullptr) {
+    return;
+  }
 
   // 1. Remove the use of UpdateState nodes, except the last one.
   for (auto i = update_states.size() - 1; i > 0; i--) {
@@ -479,6 +482,7 @@ AnfNodePtr EliminateUpdateStateBetweenAssigns(const CNodePtr &update_state, cons
         auto fg = update_state->func_graph();
         MS_EXCEPTION_IF_NULL(fg);
         auto mgr = fg->manager();
+        MS_EXCEPTION_IF_NULL(mgr);
         mgr->Replace(u2, u1);
         AnfNodePtrList make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), a1, assign};
         auto make_tuple = MakeTupleForSameNodes(fg, update_state, make_tuple_inputs);
@@ -617,6 +621,7 @@ AnfNodePtr EliminateUpdateStateBetweenAssignMakeTuple(const CNodePtr &update_sta
           auto fg = update_state->func_graph();
           MS_EXCEPTION_IF_NULL(fg);
           auto mgr = fg->manager();
+          MS_EXCEPTION_IF_NULL(mgr);
           mgr->Replace(u2, u1);
           AnfNodePtrList new_make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), a1,
                                                make_tuple_cnode->input(kInputIndex),
