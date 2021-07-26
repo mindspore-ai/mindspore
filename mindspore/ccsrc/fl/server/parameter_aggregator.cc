@@ -80,8 +80,7 @@ bool ParameterAggregator::LaunchAggregators() {
   for (auto &aggregator_with_params : aggregation_kernel_parameters_) {
     KernelParams &params = aggregator_with_params.second;
     std::shared_ptr<kernel::AggregationKernel> aggr_kernel = aggregator_with_params.first;
-    RETURN_IF_NULL(aggr_kernel, false);
-
+    MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
     bool ret = aggr_kernel->Launch(params.inputs, params.workspace, params.outputs);
     if (!ret) {
       MS_LOG(ERROR) << "Launching aggregation kernel " << typeid(aggr_kernel.get()).name() << " failed.";
@@ -95,8 +94,7 @@ bool ParameterAggregator::LaunchOptimizers() {
   for (auto &optimizer_with_params : optimizer_kernel_parameters_) {
     KernelParams &params = optimizer_with_params.second;
     std::shared_ptr<kernel::OptimizerKernel> optimizer_kernel = optimizer_with_params.first;
-    RETURN_IF_NULL(optimizer_kernel, false);
-
+    MS_ERROR_IF_NULL_W_RET_VAL(optimizer_kernel, false);
     bool ret = optimizer_kernel->Launch(params.inputs, params.workspace, params.outputs);
     if (!ret) {
       MS_LOG(ERROR) << "Launching optimizer kernel " << typeid(optimizer_kernel.get()).name() << " failed.";
@@ -158,7 +156,7 @@ bool ParameterAggregator::IsAggregationDone() const {
   // Only consider aggregation done after each aggregation kernel is done.
   for (auto &aggregator_with_params : aggregation_kernel_parameters_) {
     std::shared_ptr<kernel::AggregationKernel> aggr_kernel = aggregator_with_params.first;
-    RETURN_IF_NULL(aggr_kernel, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
     if (!aggr_kernel->IsAggregationDone()) {
       return false;
     }
@@ -276,8 +274,8 @@ bool ParameterAggregator::AssignMemory(K server_kernel, const CNodePtr &cnode,
 
 bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernel> aggr_kernel,
                                                           const std::shared_ptr<MemoryRegister> memory_register) {
-  RETURN_IF_NULL(aggr_kernel, false);
-  RETURN_IF_NULL(memory_register, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(memory_register, false);
   KernelParams aggr_params = {};
 
   const std::vector<std::string> &input_names = aggr_kernel->input_names();
@@ -299,8 +297,8 @@ bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<
 
 bool ParameterAggregator::GenerateOptimizerKernelParams(const std::shared_ptr<kernel::OptimizerKernel> optimizer_kernel,
                                                         const std::shared_ptr<MemoryRegister> memory_register) {
-  RETURN_IF_NULL(optimizer_kernel, false);
-  RETURN_IF_NULL(memory_register, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(optimizer_kernel, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(memory_register, false);
   KernelParams optimizer_params = {};
 
   const std::vector<std::string> &input_names = optimizer_kernel->input_names();

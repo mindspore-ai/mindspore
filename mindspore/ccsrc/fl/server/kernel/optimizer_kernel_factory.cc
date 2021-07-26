@@ -22,6 +22,7 @@ namespace fl {
 namespace server {
 namespace kernel {
 bool OptimizerKernelFactory::Matched(const ParamsInfo &params_info, const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   std::string cnode_name = AnfAlgo::GetCNodeName(kernel_node);
   if (kNameToIdxMap.count(cnode_name) == 0) {
     MS_LOG(ERROR) << "Can't find index info for kernel " << cnode_name;
@@ -61,7 +62,6 @@ bool OptimizerKernelFactory::Matched(const ParamsInfo &params_info, const CNodeP
       return false;
     }
   }
-
   return true;
 }
 }  // namespace kernel

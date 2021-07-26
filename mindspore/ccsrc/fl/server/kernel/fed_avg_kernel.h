@@ -34,6 +34,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
+constexpr size_t kFedAvgInputsNum = 4;
 // The implementation for the federated average. We do weighted average for the weights. The uploaded weights from
 // FL-clients is already multiplied by its data size so only sum and division are done in this kernel.
 
@@ -106,6 +107,15 @@ class FedAvgKernel : public AggregationKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    if (inputs.size() != kFedAvgInputsNum) {
+      MS_LOG(ERROR) << "The inputs number of FedAvgKernel should be 4, but got " << inputs.size();
+      return false;
+    }
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[0]->addr, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[1]->addr, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[2]->addr, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[3]->addr, false);
+
     std::unique_lock<std::mutex> lock(weight_mutex_);
     // The weight and new_weight values should be multiplied by clients already, so we don't need to do multiplication
     // again.
@@ -160,12 +170,16 @@ class FedAvgKernel : public AggregationKernel {
   void GenerateReuseKernelNodeInfo() override {
     MS_LOG(INFO) << "FedAvg reuse 'weight' of the kernel node.";
     // Only the trainable parameter is reused for federated average.
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, cnode_weight_idx_));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, cnode_weight_idx_));
     return;
   }
 
   // In some cases, the Launch method is not called and the weights involved in AllReduce should be set to 0.
   void ClearWeightAndDataSize() {
+    MS_ERROR_IF_NULL_WO_RET_VAL(weight_addr_);
+    MS_ERROR_IF_NULL_WO_RET_VAL(data_size_addr_);
+    MS_ERROR_IF_NULL_WO_RET_VAL(weight_addr_->addr);
+    MS_ERROR_IF_NULL_WO_RET_VAL(data_size_addr_->addr);
     int ret = memset_s(weight_addr_->addr, weight_addr_->size, 0x00, weight_addr_->size);
     if (ret != 0) {
       MS_LOG(ERROR) << "memset_s error, errorno(" << ret << ")";

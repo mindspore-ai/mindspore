@@ -63,7 +63,7 @@ bool Executor::HandlePush(const std::string &param_name, const UploadData &uploa
   std::mutex &mtx = parameter_mutex_[param_name];
   std::unique_lock<std::mutex> lock(mtx);
   auto &param_aggr = param_aggrs_[param_name];
-
+  MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
   // Push operation needs to wait until the pulling process is done.
   while (!param_aggr->IsPullingDone()) {
     lock.unlock();
@@ -106,7 +106,7 @@ bool Executor::HandleModelUpdate(const std::string &param_name, const UploadData
   std::mutex &mtx = parameter_mutex_[param_name];
   std::unique_lock<std::mutex> lock(mtx);
   auto &param_aggr = param_aggrs_[param_name];
-
+  MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
   if (!param_aggr->UpdateData(upload_data)) {
     MS_LOG(ERROR) << "Updating data for parameter " << param_name << " failed.";
     return false;
@@ -131,7 +131,7 @@ bool Executor::HandleModelUpdateAsync(const std::map<std::string, UploadData> &f
     std::mutex &mtx = parameter_mutex_[param_name];
     std::unique_lock<std::mutex> lock(mtx);
     auto &param_aggr = param_aggrs_[param_name];
-
+    MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
     const UploadData &upload_data = trainable_param.second;
     if (!param_aggr->UpdateData(upload_data)) {
       MS_LOG(ERROR) << "Updating data for parameter " << param_name << " failed.";
@@ -156,7 +156,7 @@ bool Executor::HandlePushWeight(const std::map<std::string, Address> &feature_ma
     std::mutex &mtx = parameter_mutex_[param_name];
     std::unique_lock<std::mutex> lock(mtx);
     auto &param_aggr = param_aggrs_[param_name];
-
+    MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
     AddressPtr old_weight = param_aggr->GetWeight();
     if (old_weight == nullptr) {
       MS_LOG(ERROR) << "Get weight of " << param_name << " failed: the AddressPtr is nullptr.";
@@ -188,7 +188,7 @@ AddressPtr Executor::HandlePull(const std::string &param_name) {
   std::mutex &mtx = parameter_mutex_[param_name];
   std::unique_lock<std::mutex> lock(mtx);
   auto &param_aggr = param_aggrs_[param_name];
-
+  MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, nullptr);
   // Pulling must wait until the optimizing process is done.
   while (!param_aggr->IsOptimizingDone()) {
     lock.unlock();
@@ -214,7 +214,7 @@ std::map<std::string, AddressPtr> Executor::HandlePullWeight(const std::vector<s
     std::mutex &mtx = parameter_mutex_[param_name];
     std::unique_lock<std::mutex> lock(mtx);
     const auto &param_aggr = param_aggrs_[param_name];
-
+    MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, weights);
     AddressPtr addr = param_aggr->GetWeight();
     if (addr == nullptr) {
       MS_LOG(ERROR) << "Get weight of " << param_name << " failed: the AddressPtr is nullptr.";
@@ -236,7 +236,9 @@ bool Executor::IsWeightAggrDone(const std::vector<std::string> &param_names) {
 
     std::mutex &mtx = parameter_mutex_[name];
     std::unique_lock<std::mutex> lock(mtx);
-    if (!param_aggrs_[name]->IsAggregationDone()) {
+    auto &param_aggr = param_aggrs_[name];
+    MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
+    if (!param_aggr->IsAggregationDone()) {
       MS_LOG(DEBUG) << "Update model for " << name << " is not done yet.";
       return false;
     }
@@ -248,7 +250,9 @@ void Executor::ResetAggregationStatus() {
   for (const auto &param_name : param_names_) {
     std::mutex &mtx = parameter_mutex_[param_name];
     std::unique_lock<std::mutex> lock(mtx);
-    param_aggrs_[param_name]->ResetAggregationStatus();
+    auto &param_aggr = param_aggrs_[param_name];
+    MS_ERROR_IF_NULL_WO_RET_VAL(param_aggr);
+    param_aggr->ResetAggregationStatus();
   }
   return;
 }

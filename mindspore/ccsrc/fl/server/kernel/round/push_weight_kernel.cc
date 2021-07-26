@@ -36,8 +36,19 @@ bool PushWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
-    MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
-    return false;
+    std::string reason = "FBBuilder builder or req_data is nullptr.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
+  }
+
+  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  if (!verifier.VerifyBuffer<schema::RequestPushWeight>()) {
+    std::string reason = "The schema of RequestPushWeight is invalid.";
+    BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num());
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
   }
 
   const schema::RequestPushWeight *push_weight_req = flatbuffers::GetRoot<schema::RequestPushWeight>(req_data);
@@ -69,9 +80,8 @@ void PushWeightKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageH
 
 ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
                                         const schema::RequestPushWeight *push_weight_req) {
-  if (fbb == nullptr || push_weight_req == nullptr) {
-    return ResultCode::kSuccessAndReturn;
-  }
+  MS_ERROR_IF_NULL_W_RET_VAL(fbb, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, ResultCode::kSuccessAndReturn);
   size_t iteration = IntToSize(push_weight_req->iteration());
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
   if (iteration != current_iter) {
@@ -110,10 +120,10 @@ ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
 }
 
 std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::RequestPushWeight *push_weight_req) {
-  RETURN_IF_NULL(push_weight_req, {});
+  MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, {});
   std::map<std::string, Address> upload_feature_map;
   auto fbs_feature_map = push_weight_req->feature_map();
-  RETURN_IF_NULL(push_weight_req, upload_feature_map);
+  MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, upload_feature_map);
   for (size_t i = 0; i < fbs_feature_map->size(); i++) {
     std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
     float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
@@ -125,6 +135,10 @@ std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::R
 
 void PushWeightKernel::BuildPushWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                           const std::string &reason, size_t iteration) {
+  if (fbb == nullptr) {
+    MS_LOG(ERROR) << "Input fbb is nullptr.";
+    return;
+  }
   auto fbs_reason = fbb->CreateString(reason);
   schema::ResponsePushWeightBuilder rsp_push_weight_builder(*(fbb.get()));
   rsp_push_weight_builder.add_retcode(retcode);

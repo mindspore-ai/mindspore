@@ -90,6 +90,7 @@ void Iteration::MoveToNextIteration(bool is_last_iter_valid, const std::string &
     return;
   }
 
+  MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == kLeaderServerRank) {
     if (!BroadcastPrepareForNextIterRequest(is_last_iter_valid, reason)) {
       MS_LOG(ERROR) << "Broadcast prepare for next iteration request failed.";
@@ -114,10 +115,7 @@ void Iteration::MoveToNextIteration(bool is_last_iter_valid, const std::string &
 
 void Iteration::SetIterationRunning() {
   MS_LOG(INFO) << "Iteration " << iteration_num_ << " start running.";
-  if (server_node_ == nullptr) {
-    MS_LOG(ERROR) << "Server node is empty.";
-    return;
-  }
+  MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == kLeaderServerRank) {
     // This event helps worker/server to be consistent in iteration state.
     server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationRunning));
@@ -127,10 +125,7 @@ void Iteration::SetIterationRunning() {
 
 void Iteration::SetIterationCompleted() {
   MS_LOG(INFO) << "Iteration " << iteration_num_ << " completes.";
-  if (server_node_ == nullptr) {
-    MS_LOG(ERROR) << "Server node is empty.";
-    return;
-  }
+  MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == kLeaderServerRank) {
     // This event helps worker/server to be consistent in iteration state.
     server_node_->BroadcastEvent(static_cast<uint32_t>(ps::CustomEvent::kIterationCompleted));
@@ -167,6 +162,7 @@ const std::vector<std::shared_ptr<Round>> &Iteration::rounds() const { return ro
 bool Iteration::is_last_iteration_valid() const { return is_last_iteration_valid_; }
 
 bool Iteration::SyncIteration(uint32_t rank) {
+  MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
   SyncIterationRequest sync_iter_req;
   sync_iter_req.set_rank(rank);
 
@@ -190,10 +186,8 @@ bool Iteration::SyncIteration(uint32_t rank) {
 }
 
 void Iteration::HandleSyncIterationRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    MS_LOG(ERROR) << "Message is nullptr.";
-    return;
-  }
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
 
   SyncIterationRequest sync_iter_req;
   (void)sync_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
@@ -220,6 +214,7 @@ bool Iteration::IsMoveToNextIterRequestReentrant(uint64_t iteration_num) {
 }
 
 bool Iteration::NotifyLeaderMoveToNextIteration(bool is_last_iter_valid, const std::string &reason) {
+  MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
   MS_LOG(INFO) << "Notify leader server to control the cluster to proceed to next iteration.";
   NotifyLeaderMoveToNextIterRequest notify_leader_to_next_iter_req;
   notify_leader_to_next_iter_req.set_rank(server_node_->rank_id());
@@ -235,10 +230,8 @@ bool Iteration::NotifyLeaderMoveToNextIteration(bool is_last_iter_valid, const s
 }
 
 void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
   NotifyLeaderMoveToNextIterResponse notify_leader_to_next_iter_rsp;
   notify_leader_to_next_iter_rsp.set_result("success");
   if (!communicator_->SendResponse(notify_leader_to_next_iter_rsp.SerializeAsString().data(),
@@ -275,8 +268,8 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
 }
 
 bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, const std::string &reason) {
+  MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
   PrepareForNextIter();
-
   MS_LOG(INFO) << "Notify all follower servers to prepare for next iteration.";
   PrepareForNextIterRequest prepare_next_iter_req;
   prepare_next_iter_req.set_is_last_iter_valid(is_last_iter_valid);
@@ -307,10 +300,8 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
 }
 
 void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
   PrepareForNextIterRequest prepare_next_iter_req;
   (void)prepare_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &reason = prepare_next_iter_req.reason();
@@ -332,6 +323,7 @@ void Iteration::PrepareForNextIter() {
 }
 
 bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const std::string &reason) {
+  MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
   MS_LOG(INFO) << "Notify all follower servers to proceed to next iteration. Set last iteration number "
                << iteration_num_;
   MoveToNextIterRequest proceed_to_next_iter_req;
@@ -350,10 +342,8 @@ bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const st
 }
 
 void Iteration::HandleMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
   MoveToNextIterResponse proceed_to_next_iter_rsp;
   proceed_to_next_iter_rsp.set_result("success");
   if (!communicator_->SendResponse(proceed_to_next_iter_rsp.SerializeAsString().data(),
@@ -397,6 +387,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
 }
 
 bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
+  MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
   MS_LOG(INFO) << "Notify all follower servers to end last iteration.";
   EndLastIterRequest end_last_iter_req;
   end_last_iter_req.set_last_iter_num(last_iter_num);
@@ -412,10 +403,8 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
 }
 
 void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
   EndLastIterRequest end_last_iter_req;
   (void)end_last_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &last_iter_num = end_last_iter_req.last_iter_num();
@@ -456,7 +445,9 @@ void Iteration::EndLastIter() {
     ModelStore::GetInstance().Reset();
   }
 
+  std::unique_lock<std::mutex> lock(pinned_mtx_);
   pinned_iter_num_ = 0;
+  lock.unlock();
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   Server::GetInstance().CancelSafeMode();
   SetIterationCompleted();

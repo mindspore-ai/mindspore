@@ -232,6 +232,22 @@ class LogWriter {
     }                                                            \
   } while (0)
 
+#define MS_ERROR_IF_NULL_W_RET_VAL(ptr, val)                     \
+  do {                                                           \
+    if ((ptr) == nullptr) {                                      \
+      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
+      return val;                                                \
+    }                                                            \
+  } while (0)
+
+#define MS_ERROR_IF_NULL_WO_RET_VAL(ptr)                         \
+  do {                                                           \
+    if ((ptr) == nullptr) {                                      \
+      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
+      return;                                                    \
+    }                                                            \
+  } while (0)
+
 #ifdef DEBUG
 #include <cassert>
 #define MS_ASSERT(f) assert(f)

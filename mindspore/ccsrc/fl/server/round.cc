@@ -107,11 +107,7 @@ void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) 
 }
 
 void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    MS_LOG(ERROR) << "Message is nullptr.";
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   // If the server is still in the process of scaling, refuse the request.
   if (Server::GetInstance().IsSafeMode()) {
     MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
@@ -125,6 +121,8 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
 
   AddressPtr input = std::make_shared<Address>();
   AddressPtr output = std::make_shared<Address>();
+  MS_ERROR_IF_NULL_WO_RET_VAL(input);
+  MS_ERROR_IF_NULL_WO_RET_VAL(output);
   input->addr = message->data();
   input->size = message->len();
   bool ret = kernel_->Launch({input}, {}, {output});
