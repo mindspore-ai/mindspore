@@ -211,29 +211,3 @@ def test_async_dump_net_multi_layer_mode1():
             assert value.asnumpy() == dump_result["output0"][index]
     else:
         print('not find convert tools msaccucmp.pyc')
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_dump_with_diagnostic_path():
-    """
-    Test e2e dump when path is not set (set to empty) in dump json file and MS_DIAGNOSTIC_DATA_PATH is set.
-    Data is expected to be dumped into MS_DIAGNOSTIC_DATA_PATH/debug_dump.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    pwd = os.getcwd()
-    change_current_dump_json('e2e_dump.json', '')
-    os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + "/e2e_dump.json"
-    diagnose_path = pwd + "/e2e_dump"
-    os.environ['MS_DIAGNOSTIC_DATA_PATH'] = diagnose_path
-    dump_file_path = diagnose_path + '/debug_dump/rank_0/Net/0/0/'
-    if os.path.isdir(diagnose_path):
-        shutil.rmtree(diagnose_path)
-    add = Net()
-    add(Tensor(x), Tensor(y))
-    assert len(os.listdir(dump_file_path)) == 5
-
-    # Delete generated dump data
-    os.system("rm -rf {}".format(diagnose_path))

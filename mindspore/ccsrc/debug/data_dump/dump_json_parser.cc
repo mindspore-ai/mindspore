@@ -232,6 +232,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
 
   auto common_dump_settings = CheckJsonKeyExist(content, kCommonDumpSettings);
   auto dump_mode = CheckJsonKeyExist(*common_dump_settings, kDumpMode);
+  auto path = CheckJsonKeyExist(*common_dump_settings, kPath);
   auto net_name = CheckJsonKeyExist(*common_dump_settings, kNetName);
   auto iteration = CheckJsonKeyExist(*common_dump_settings, kIteration);
   auto input_output = CheckJsonKeyExist(*common_dump_settings, kInputOutput);
@@ -244,7 +245,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   }
 
   ParseDumpMode(*dump_mode);
-  ParseDumpPath(*common_dump_settings);  // Pass in the whole json string to parse because the path field is optional.
+  ParseDumpPath(*path);
   ParseNetName(*net_name);
   ParseIteration(*iteration);
   ParseInputOutput(*input_output);
@@ -301,28 +302,14 @@ void DumpJsonParser::ParseDumpMode(const nlohmann::json &content) {
 }
 
 void DumpJsonParser::ParseDumpPath(const nlohmann::json &content) {
-  std::string dump_path;
-  auto json_iter = content.find(kPath);
-  // Check if `path` field exists in dump json file.
-  if (json_iter != content.end()) {
-    CheckJsonStringType(*json_iter, kPath);
-    dump_path = *json_iter;
-  }
-  if (dump_path.empty()) {
-    // If no path is found or path is set as empty in dump json file, use MS_DIAGNOSTIC_DATA_PATH/debug_dump as the dump
-    // path value if the env exists.
-    dump_path = common::GetEnv("MS_DIAGNOSTIC_DATA_PATH");
-    if (dump_path.empty()) {
-      MS_LOG(EXCEPTION)
-        << "Dump path is empty. Please set it in dump json file or environment variable `MS_DIAGNOSTIC_DATA_PATH`.";
-    } else {
-      dump_path += "/debug_dump";
-    }
-  }
-  path_ = dump_path;
+  CheckJsonStringType(content, kPath);
+  path_ = content;
   if (!std::all_of(path_.begin(), path_.end(),
                    [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '/'; })) {
     MS_LOG(EXCEPTION) << "Dump path only support alphabets, digit or {'-', '_', '/'}, but got:" << path_;
+  }
+  if (path_.empty()) {
+    MS_LOG(EXCEPTION) << "Dump path is empty";
   }
   if (path_[0] != '/') {
     MS_LOG(EXCEPTION) << "Dump path only support absolute path and should start with '/'";
