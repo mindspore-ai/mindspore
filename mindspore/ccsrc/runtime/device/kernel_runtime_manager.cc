@@ -72,7 +72,7 @@ KernelRuntime *KernelRuntimeManager::GetSingleKernelRuntime(const std::string &d
   auto runtime_iter = runtime_map_.find(runtime_key);
   if (runtime_iter != runtime_map_.end()) {
     return runtime_iter->second.get();
-  } else if (runtime_map_.size() > 0) {
+  } else if (!runtime_map_.empty()) {
     auto cur_runtime_key = runtime_map_.begin()->first;
     auto find_pos = cur_runtime_key.rfind('_');
     if (find_pos != std::string::npos) {
@@ -101,8 +101,8 @@ KernelRuntime *KernelRuntimeManager::GetKernelRuntime(const std::string &device_
   if (creator_iter != runtime_creators_.end()) {
     MS_EXCEPTION_IF_NULL(creator_iter->second);
     kernel_runtime = (creator_iter->second)();
-    kernel_runtime->set_device_id(device_id);
     MS_EXCEPTION_IF_NULL(kernel_runtime);
+    kernel_runtime->set_device_id(device_id);
     runtime_map_[runtime_key] = kernel_runtime;
   } else {
     MS_LOG(EXCEPTION) << "No kernel runtime creator for " << device_name << " with device id " << device_id;

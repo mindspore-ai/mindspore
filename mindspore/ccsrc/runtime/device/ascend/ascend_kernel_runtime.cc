@@ -196,7 +196,11 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std
   }
 }
 
-void AscendKernelRuntime::ClearGlobalIdleMem() { mem_manager_->ClearGlobalIdleMem(); }
+void AscendKernelRuntime::ClearGlobalIdleMem() {
+  if (mem_manager_ != nullptr) {
+    mem_manager_->ClearGlobalIdleMem();
+  }
+}
 
 bool AscendKernelRuntime::NeedDestroyHccl() {
   auto context_ptr = MsContext::GetInstance();
@@ -317,6 +321,7 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
 }
 
 bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   bool need_dump = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.e2e_dump_enabled() && dump_json_parser.dump_mode() == 1) {
@@ -626,6 +631,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
 
   auto dynamic_kernels = iter->second;
   for (const auto &dynamic_kernel : dynamic_kernels) {
+    MS_EXCEPTION_IF_NULL(dynamic_kernel);
     if (dynamic_kernel->have_depends() || dynamic_kernel->GetKernelType() == KernelType::HCCL_KERNEL) {
       MS_LOG(INFO) << "Match Dynamic Kernel, Start SyncStream";
       if (!SyncStream()) {
@@ -870,6 +876,7 @@ bool AscendKernelRuntime::DestroyHccl() {
 }
 
 bool AscendKernelRuntime::GraphWithEmptyTaskList(const session::KernelGraph *graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   auto iter = task_map_.find(graph->graph_id());
   if (iter == task_map_.end()) {
     MS_LOG(EXCEPTION) << "Unknown graph ptr";

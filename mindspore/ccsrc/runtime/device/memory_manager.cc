@@ -143,6 +143,7 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddress
 uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) { return nullptr; }
 
 bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t size) {
+  MS_EXCEPTION_IF_NULL(address);
   auto device_ptr = MallocMemFromMemPool(size);
   if (!device_ptr) {
     return false;
@@ -176,7 +177,7 @@ void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
 bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
                                                    std::vector<size_t> size_list) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(total_size, size_list);
-  if (device_ptr_list.size() == 0) {
+  if (device_ptr_list.empty()) {
     return false;
   }
   if (addr_list.size() != device_ptr_list.size()) {
@@ -197,7 +198,9 @@ std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(size_t total_s
     MS_LOG(ERROR) << "MallocContinuousMemFromMemPool total_size is 0.";
   }
   std::vector<void *> device_ptr_list;
-  device_ptr_list.emplace_back(nullptr);
+  for (size_t i = 0; i < size_list.size(); ++i) {
+    device_ptr_list.emplace_back(nullptr);
+  }
   return device_ptr_list;
 }
 }  // namespace device

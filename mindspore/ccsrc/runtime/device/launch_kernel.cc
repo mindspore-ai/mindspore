@@ -22,7 +22,11 @@
 namespace mindspore::device {
 std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelAddress(const std::vector<size_t> &list,
                                                                   std::vector<uint8_t *> *addr) {
+  MS_EXCEPTION_IF_NULL(addr);
   std::vector<kernel::AddressPtr> kernel_address;
+  if (addr->size() < list.size()) {
+    MS_LOG_EXCEPTION << "Error addr size!";
+  }
   for (size_t i = 0; i < list.size(); ++i) {
     auto size = AlignSizeForLaunchKernel(list[i]);
     (*addr)[i] = AllocDeviceMem(size);

@@ -35,6 +35,9 @@ void ConvertSameType(void *dst, const void *src, size_t size, TypeId type);
 
 template <typename T>
 void ConvertSameType(T *dst, const T *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   for (size_t i = 0; i < elem_num; ++i) {
     dst[i] = src[i];
   }
