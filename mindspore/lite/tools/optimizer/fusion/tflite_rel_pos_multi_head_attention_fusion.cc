@@ -23,7 +23,6 @@
 namespace mindspore::opt {
 namespace {
 const auto &p1 = std::placeholders::_1;
-
 }  // namespace
 
 TfliteRelPosMultiHeadAttentionFusion::TfliteRelPosMultiHeadAttentionFusion(const string &name, bool multigraph)
@@ -298,5 +297,4 @@ const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineProcessOutputPattern
   result = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion)), result, bias});
   return result;
 }
-
 }  // namespace mindspore::opt

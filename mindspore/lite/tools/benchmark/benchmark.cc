@@ -36,7 +36,6 @@
 
 namespace mindspore {
 namespace lite {
-
 int Benchmark::GenerateInputData() {
   for (auto tensor : ms_inputs_) {
     MS_ASSERT(tensor != nullptr);
@@ -875,6 +874,5 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
 }
 
 Benchmark::~Benchmark() { delete (session_); }
-
 }  // namespace lite
 }  // namespace mindspore
