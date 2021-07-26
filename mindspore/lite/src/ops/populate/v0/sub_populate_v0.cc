@@ -35,7 +35,7 @@ OpParameter *PopulateSubParameter(const void *prim) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
-  param->op_parameter_.type_ = schema::PrimitiveType_SubFusion;  // note: maybe error noneed?
+  param->op_parameter_.type_ = schema::PrimitiveType_SubFusion;
   param->activation_type_ = sub_prim->activationType();
   return reinterpret_cast<OpParameter *>(param);
 }

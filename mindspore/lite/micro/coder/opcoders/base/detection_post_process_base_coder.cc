@@ -22,7 +22,12 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite::micro {
-
+namespace {
+constexpr int kIndexSecond = 2;
+constexpr int kIndexThird = 3;
+constexpr int kIndexForth = 4;
+constexpr int kMultiply = 4;
+}  // namespace
 int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
   MS_CHECK_PTR(parameter_);
   params_ = reinterpret_cast<DetectionPostProcessParameter *>(parameter_);
@@ -36,7 +41,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
   params_->single_class_indexes_ = nullptr;
   params_->selected_ = nullptr;
 
-  Tensor *anchor_tensor = input_tensors_.at(2);
+  Tensor *anchor_tensor = input_tensors_.at(kIndexSecond);
   MS_CHECK_PTR(anchor_tensor);
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
     QuantArg quant_param = anchor_tensor->quant_params().at(0);
@@ -76,8 +81,8 @@ int DetectionPostProcessBaseCoder::AllocateBuffer() {
   MS_CHECK_PTR(input_tensors_.at(0));
   MS_CHECK_PTR(input_tensors_.at(1));
   num_boxes_ = input_tensors_.at(0)->shape().at(1);
-  num_classes_with_bg_ = input_tensors_.at(1)->shape().at(2);
-  params_->decoded_boxes_ = allocator_->Malloc(kNumberTypeFloat, num_boxes_ * 4 * sizeof(float), kWorkspace);
+  num_classes_with_bg_ = input_tensors_.at(1)->shape().at(kIndexSecond);
+  params_->decoded_boxes_ = allocator_->Malloc(kNumberTypeFloat, num_boxes_ * kMultiply * sizeof(float), kWorkspace);
   MS_CHECK_PTR(params_->decoded_boxes_);
   params_->nms_candidate_ = allocator_->Malloc(kNumberTypeUInt8, num_boxes_ * sizeof(uint8_t), kWorkspace);
   MS_CHECK_PTR(params_->nms_candidate_);
@@ -125,8 +130,8 @@ int DetectionPostProcessBaseCoder::DoCode(CoderContext *const context) {
   MS_CHECK_RET_CODE(GetInputData(context, &code), "GetInputData failed");
   Tensor *output_boxes = output_tensors_.at(0);
   Tensor *output_classes = output_tensors_.at(1);
-  Tensor *output_scores = output_tensors_.at(2);
-  Tensor *output_num = output_tensors_.at(3);
+  Tensor *output_scores = output_tensors_.at(kIndexSecond);
+  Tensor *output_num = output_tensors_.at(kIndexThird);
 
   code.CodeBaseStruct("DetectionPostProcessParameter", "params", params_->op_parameter_, params_->h_scale_,
                       params_->w_scale_, params_->x_scale_, params_->y_scale_, params_->nms_iou_threshold_,
@@ -155,5 +160,4 @@ int DetectionPostProcessBaseCoder::DoCode(CoderContext *const context) {
 
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro

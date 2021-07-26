@@ -36,15 +36,20 @@ OpParameter *PopulateUnsqueezeParameter(const void *prim) {
   }
   memset(unsqueeze_param, 0, sizeof(UnSqueezeParameter));
   unsqueeze_param->op_parameter_.type_ = schema::PrimitiveType_Unsqueeze;
-  auto flatAxis = unsqueeze_prim->axis();
-  if (flatAxis == nullptr) {
-    MS_LOG(ERROR) << "flatAxis is nullptr";
+  auto flat_axis = unsqueeze_prim->axis();
+  if (flat_axis == nullptr) {
+    MS_LOG(ERROR) << "flat_axis is nullptr";
     free(unsqueeze_param);
     return nullptr;
   }
-  unsqueeze_param->num_dim_ = flatAxis->size();
+  if (flat_axis->size() > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "unsqueeze's attr axis size is too big, , which cannot be bigger than " << COMM_SHAPE_SIZE;
+    free(unsqueeze_param);
+    return nullptr;
+  }
+  unsqueeze_param->num_dim_ = flat_axis->size();
   int i = 0;
-  for (auto iter = flatAxis->begin(); iter != flatAxis->end(); iter++) {
+  for (auto iter = flat_axis->begin(); iter != flat_axis->end(); iter++) {
     unsqueeze_param->dims_[i++] = *iter;
   }
   return reinterpret_cast<OpParameter *>(unsqueeze_param);

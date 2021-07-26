@@ -164,7 +164,7 @@ std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
   return data_->device_info_list;
 }
 
-DeviceInfoContext::DeviceInfoContext() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
+DeviceInfoContext::DeviceInfoContext() : data_(std::make_shared<Data>()) {}
 
 std::string DeviceInfoContext::GetProvider() const {
   if (data_ == nullptr) {

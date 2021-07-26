@@ -43,8 +43,8 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
     return nullptr;
   }
   space_batch_param_nd->m_ = block_sizes->size();
-  if (((size_t)block_sizes->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of block_sizes.size() is too big";
+  if (((size_t)block_sizes->size()) > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "The value of block_sizes.size() is too big，which cannot be bigger than " << COMM_SHAPE_SIZE;
     free(space_batch_param_nd);
     return nullptr;
   }
@@ -55,8 +55,8 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
     free(space_batch_param_nd);
     return nullptr;
   }
-  if (((size_t)paddings->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of paddings.size() is too big";
+  if (((size_t)paddings->size()) > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "The value of paddings.size() is too big，which cannot be bigger than " << COMM_SHAPE_SIZE;
     free(space_batch_param_nd);
     return nullptr;
   }

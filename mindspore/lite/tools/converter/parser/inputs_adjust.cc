@@ -96,33 +96,33 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimTranspose)) {
       MS_LOG(INFO) << "Adjust Transpose";
-      status = AddAttrToInput(func_graph, cnode, 2, "perm", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "perm", 2);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimReshape)) {
       MS_LOG(INFO) << "Adjust Reshape";
-      status = AddAttrToInput(func_graph, cnode, 2, "shape", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "shape", 2);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimGather)) {
       MS_LOG(INFO) << "Adjust Gather";
-      status = AddAttrToInput(func_graph, cnode, 3, "axis", 1);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexThree, "axis", 1);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimCast)) {
       MS_LOG(INFO) << "Adjust Cast";
-      status = AddAttrToInput(func_graph, cnode, 2, "to", 1);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "to", 1);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimTopKFusion)) {
       MS_LOG(INFO) << "Adjust TopKFusion";
-      status = AddAttrToInput(func_graph, cnode, 2, "k", 1);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "k", 1);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimTileFusion)) {
       MS_LOG(INFO) << "Adjust TileFusion";
-      status = AddAttrToInput(func_graph, cnode, 2, "multiples", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "multiples", 2);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimReduceFusion)) {
       MS_LOG(INFO) << "Adjust ReduceFusion";
-      status = AddAttrToInput(func_graph, cnode, 2, "axes", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "axes", 2);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimPadFusion)) {
       MS_LOG(INFO) << "Adjust PadFusion";
-      status = AddAttrToInput(func_graph, cnode, 2, "paddings", 3);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "paddings", 3);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimPowFusion)) {
       MS_LOG(INFO) << "Adjust PowFuison";
-      status = AddAttrToInput(func_graph, cnode, 2, "power", 4);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "power", 4);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
-      status = AddAttrToInput(func_graph, cnode, 2, "zoom_factor", 1);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "zoom_factor", 1);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";
