@@ -42,7 +42,7 @@ CONFIG_PATH=$5
 PRE_TRAINED=$6
 PRE_TRAINED_EPOCH_SIZE=$7
 
-export DEVICE_ID=$DEVICE_ID
+export CUDA_VISIBLE_DEVICES=$DEVICE_ID
 rm -rf LOG$DEVICE_ID
 mkdir ./LOG$DEVICE_ID
 cp ./*.py ./LOG$DEVICE_ID
@@ -56,7 +56,7 @@ then
     python train.py  \
     --lr=$LR \
     --dataset=$DATASET \
-    --device_id=$DEVICE_ID  \
+    --device_id=0  \
     --loss_scale=1 \
     --device_target="GPU" \
     --config_path=$CONFIG_PATH \
@@ -68,7 +68,7 @@ then
     python train.py  \
     --lr=$LR \
     --dataset=$DATASET \
-    --device_id=$DEVICE_ID  \
+    --device_id=0  \
     --loss_scale=1 \
     --device_target="GPU" \
     --pre_trained=$PRE_TRAINED \
