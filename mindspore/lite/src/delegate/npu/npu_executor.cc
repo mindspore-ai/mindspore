@@ -75,37 +75,13 @@ bool IsSameShapeTensor(mindspore::MSTensor tensor, const std::shared_ptr<hiai::A
 int NPUExecutor::Run(const std::vector<mindspore::MSTensor> &in_tensors,
                      const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<NPUOp *> &in_ops) {
   hiai::AiContext context;
-  std::unordered_map<std::string, int> tensor_uses;
-  for (const auto op : in_ops) {
-    for (const auto op_input : op->inputs()) {
-      if (tensor_uses.find(op_input.Name()) == tensor_uses.end()) {
-        tensor_uses.insert({op_input.Name(), 1});
-      } else {
-        tensor_uses[op_input.Name()]++;
-      }
-    }
-  }
-  for (int i = 0; i < npu_input_tensors_.size(); ++i) {
-    int index = 0;
-    for (; index < in_tensors.size(); index++) {
-      if (tensor_uses[in_tensors[index].Name()] > 0 && IsSameShapeTensor(in_tensors[index], npu_input_tensors_[i])) {
-        auto data = in_tensors[index].Data();
-        if (data == nullptr) {
-          MS_LOG(ERROR) << "For " << model_name_ << ", the input tensor " << in_tensors[index].Name()
-                        << " data is nullptr";
-          return RET_ERROR;
-        }
-
-        memcpy(npu_input_tensors_[i]->GetBuffer(), data.get(), in_tensors[index].DataSize());
-        tensor_uses[in_tensors[index].Name()]--;
-        break;
-      }
-    }
-    if (index == in_tensors.size()) {
-      MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of the " << i << "th input tensor for npu executor "
-                    << model_name_;
+  for (size_t i = 0; i < npu_input_tensors_.size(); ++i) {
+    auto data = in_tensors[i].Data();
+    if (data == nullptr) {
+      MS_LOG(ERROR) << "For " << model_name_ << ", the input tensor " << in_tensors[i].Name() << " data is nullptr";
       return RET_ERROR;
     }
+    memcpy(npu_input_tensors_[i]->GetBuffer(), data.get(), in_tensors[i].DataSize());
   }
   context.AddPara("model_name", model_name_);
   if (this->client_ == nullptr) {
@@ -119,29 +95,15 @@ int NPUExecutor::Run(const std::vector<mindspore::MSTensor> &in_tensors,
     return RET_ERROR;
   }
 
-  std::vector<bool> outputs_visited(out_tensors.size(), false);
-  for (int i = 0; i < npu_output_tensors_.size(); ++i) {
-    int index = 0;
-    for (; index < out_tensors.size(); index++) {
-      if (!outputs_visited[index] && IsSameShapeTensor(out_tensors[index], npu_output_tensors_[i])) {
-        mindspore::MSTensor out_tensor = out_tensors[index];
-        auto data = out_tensor.MutableData();
-        if (data == nullptr) {
-          MS_LOG(ERROR) << "For " << model_name_ << ", the output tensor " << out_tensors[index].Name()
-                        << " data is nullptr";
-          return RET_ERROR;
-        }
-
-        memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
-        outputs_visited[index] = true;
-        break;
-      }
-    }
-    if (index == out_tensors.size()) {
-      MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of the " << i << "th output tensor for npu executor "
-                    << model_name_;
+  for (size_t i = 0; i < npu_output_tensors_.size(); ++i) {
+    mindspore::MSTensor out_tensor = out_tensors[i];
+    auto data = out_tensor.MutableData();
+    if (data == nullptr) {
+      MS_LOG(ERROR) << "For " << model_name_ << ", the output tensor " << out_tensors[i].Name() << " data is nullptr";
       return RET_ERROR;
     }
+
+    memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
   }
   return RET_OK;
 }
