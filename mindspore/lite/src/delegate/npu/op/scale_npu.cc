@@ -120,14 +120,13 @@ int ScaleNPUOp::SetActivation(const ge::Operator *input) {
     return RET_ERROR;
   }
   act_->set_input_x(*input);
-  if (act_type_ == schema::ActivationType_RELU) {
-    act_->set_attr_mode(1);
-  } else if (act_type_ == schema::ActivationType_RELU6) {
-    act_->set_attr_mode(14);
-  } else {
-    MS_LOG(ERROR) << "Unsupported activation type for scale.";
+
+  auto act_mode = ConverterToNPUActivationMode(act_type_);
+  if (act_mode == ACTIVATION_INVALID) {
+    MS_LOG(ERROR) << "Unsupported activation type for scale op " << name_;
     return RET_ERROR;
   }
+  act_->set_attr_mode(act_mode);
   return RET_OK;
 }
 

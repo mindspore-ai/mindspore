@@ -42,7 +42,6 @@ std::set<mindspore::schema::PrimitiveType> insert_nodes = {
 // fusion pass  (conv, add->nhwc2nchw) -> concat -> conv
 // original 2 cpusubgraph, after 2 pass, only 1 cpu subgraph
 
-// node:
 // Such ops require inputs all have same format, could be nchw or nhwc or other format.
 // Their inputs outputs may not be 4d, or are already format ok,
 // so we won't insert nc2nh or nh2nc when op's in ops and out ops contains no nc2nh or nh2nc.

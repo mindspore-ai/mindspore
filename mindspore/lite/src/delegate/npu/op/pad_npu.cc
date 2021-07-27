@@ -19,6 +19,8 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
+constexpr int PAD_PAIR_SIZE = 2;
+constexpr int PAD_SIZE = 8;
 constexpr int PAD_INPUT_SIZE = 2;
 constexpr int PAD_EXPAND_DIM = 2;
 
@@ -93,7 +95,7 @@ int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors,
                            const std::vector<ge::Operator *> &npu_inputs) {
   int size = static_cast<int>(paddings_vec_.size());
-  ge::TensorDesc padding_tensor_desc(ge::Shape({size / 2, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
+  ge::TensorDesc padding_tensor_desc(ge::Shape({size / PAD_PAIR_SIZE, PAD_PAIR_SIZE}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
   padding_tensor->SetData(reinterpret_cast<uint8_t *>(paddings_vec_.data()), size * sizeof(int));
   paddings_ = new hiai::op::Const(name_ + "paddings");
@@ -107,7 +109,7 @@ int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
 ge::Operator *PadNPUOp::GetNPUOp() { return this->pad_; }
 
 int PadNPUOp::HandleAxis() {
-  if (paddings_vec_.size() != 8) {
+  if (paddings_vec_.size() != PAD_SIZE) {
     return RET_ERROR;
   }
   int c1 = paddings_vec_[NHWC_C * PAD_EXPAND_DIM];

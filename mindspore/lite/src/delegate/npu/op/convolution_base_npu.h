@@ -38,9 +38,12 @@ class ConvolutionBaseNPUOp : public NPUOp {
   int InitWeightConst(const std::vector<mindspore::MSTensor> &inputs);
   int InitBiasConst(const std::vector<mindspore::MSTensor> &inputs);
   int SetActivation(const ge::Operator *input, schema::ActivationType act_type);
+  void FreeTmpWeight();
   hiai::op::Activation *act_ = nullptr;
   hiai::op::Const *weight_ = nullptr;
   hiai::op::Const *bias_ = nullptr;
+  float *fp32_weight_ = nullptr;
+  float *nchw_weight_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_BASE_NPU_H_
