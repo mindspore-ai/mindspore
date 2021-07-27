@@ -2580,7 +2580,9 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
   // Check the data source actors.
   for (const auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
-    if (data_source_actor->output_data_arrows_.size() + data_source_actor->output_result_arrows_.size() == 0) {
+    if (data_source_actor->output_data_arrows_.size() + data_source_actor->output_result_arrows_.size() +
+          data_source_actor->output_control_arrows_.size() ==
+        0) {
       MS_LOG(ERROR) << data_source_actor->GetAID().Name() << " has no user.";
       return false;
     }

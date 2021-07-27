@@ -33,6 +33,7 @@ from .fused_mul_add import FusedMulAdd
 from .gelu import GeLU
 from .gelu_grad import GeLUGrad
 from .gkdropout import GkDropout
+from .identity import Identity
 from .lamb_apply_optimizer_assign import LambApplyOptimizerAssign
 from .lamb_apply_weight_assign import LambApplyWeightAssign
 from .layernorm import LayerNorm
@@ -42,6 +43,7 @@ from .logsoftmax_grad import LogSoftmaxGrad
 from .matmul import BatchMatMul, MatMul
 from .maximum_grad import MaximumGrad
 from .minimum_grad import MinimumGrad
+from .oneslike import OnesLike
 from .reduce_mean import ReduceMean
 from .relu import ReLU
 from .relu_grad import ReluGrad
@@ -56,6 +58,7 @@ from .sqrt_grad import SqrtGrad
 from .square import Square
 from .square_sum_v1 import SquareSumV1
 from .squared_difference import SquaredDifference
+from .square_sum_all import SquareSumAll
 from .squeeze import Squeeze
 from .tanh_grad import TanhGrad
 from .tile import Tile

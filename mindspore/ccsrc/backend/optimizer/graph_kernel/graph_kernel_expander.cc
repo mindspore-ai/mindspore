@@ -88,6 +88,9 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSquaredDifference,
     prim::kPrimSqueeze,
     prim::kPrimEqualCount,
+    prim::kPrimSquareSumAll,
+    prim::kPrimIdentityMath,
+    prim::kPrimOnesLike,
 #endif
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();

@@ -94,6 +94,9 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::kPrimLogicalAnd,
     prim::kPrimLogicalOr,
     prim::kPrimLogicalNot,
+    prim::kPrimIsNan,
+    prim::kPrimIsInf,
+    prim::kPrimIsFinite,
 #endif
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();
