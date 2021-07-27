@@ -26,7 +26,7 @@ namespace mindspore::device::ascend {
 class AscendLaunchTransData : public AscendLaunchKernel {
  public:
   AscendLaunchTransData(void *stream, TypeId dtype, size_t total_size, std::string src_format, std::string dst_format,
-                        std::vector<size_t> input_shape, std::vector<size_t> output_shape)
+                        std::vector<size_t> host_shape)
       : AscendLaunchKernel(stream),
         dtype_(dtype),
         total_size_(total_size),
@@ -34,8 +34,7 @@ class AscendLaunchTransData : public AscendLaunchKernel {
         input_addr_(nullptr),
         src_format_(src_format),
         dst_format_(dst_format),
-        input_shape_(input_shape),
-        output_shape_(output_shape) {}
+        shape_(host_shape) {}
 
   ~AscendLaunchTransData() override = default;
 
@@ -56,8 +55,7 @@ class AscendLaunchTransData : public AscendLaunchKernel {
   uint8_t *input_addr_;
   std::string src_format_;
   std::string dst_format_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<size_t> shape_;
 
  private:
   std::shared_ptr<session::KernelGraph> ObtainTransDataKernelGraph();
