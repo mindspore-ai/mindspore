@@ -186,8 +186,19 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<SpecializeOnGraphArguments>(), "specialize_transform", IsCNodeGraph);
 
   // UpdateState eliminate
-  updatestate_eliminater_ =
-    MakeSubstitution(std::make_shared<UpdatestateEliminater>(), "updatestate_eliminater", prim::kPrimUpdateState);
+  updatestate_only_used_node_eliminater_ =
+    MakeSubstitution(std::make_shared<UpdatestateOnlyUsedNodeEliminater>(), "updatestate_only_used_node_eliminater",
+                     prim::kPrimUpdateState);
+  updatestate_pure_node_eliminater_ = MakeSubstitution(std::make_shared<UpdatestatePureNodeEliminater>(),
+                                                       "updatestate_pure_node_eliminater", prim::kPrimUpdateState);
+  updatestate_depend_eliminater_ = MakeSubstitution(std::make_shared<UpdatestateDependEliminater>(),
+                                                    "updatestate_depend_eliminater", prim::kPrimUpdateState);
+  updatestate_assign_eliminater_ = MakeSubstitution(std::make_shared<UpdatestateAssignEliminater>(),
+                                                    "updatestate_assign_eliminater", prim::kPrimUpdateState);
+  updatestate_maketuple_eliminater_ = MakeSubstitution(std::make_shared<UpdatestateMakeTupleEliminater>(),
+                                                       "updatestate_maketuple_eliminater", prim::kPrimUpdateState);
+  updatestate_loads_eliminater_ = MakeSubstitution(std::make_shared<UpdatestateLoadsEliminater>(),
+                                                   "updatestate_loads_eliminater", prim::kPrimUpdateState);
   switch_call_monad_eliminater_ = MakeSubstitution(std::make_shared<SwitchCallMonadParameterEliminater>(),
                                                    "switch_call_monad_eliminater", IsCNodeDup);
 
@@ -261,13 +272,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
-  resolver_resolve_and_getattr_ =
-    MakeSubstitution(std::make_shared<ResolverResolveAndGetAttr>(), "resolver_resolve_and_getattr",
-                     {prim::kPrimGetAttr, prim::kPrimResolve});
-  resolver_resolve_ = MakeSubstitution(std::make_shared<ResolverResolve>(), "resolver_resolve", prim::kPrimResolve);
-  resolver_getattr_ = MakeSubstitution(std::make_shared<ResolverGetAttr>(), "resolver_getattr", prim::kPrimGetAttr);
-  resolver_getattr_resolve_ =
-    MakeSubstitution(std::make_shared<ResolverGetAttrResolve>(), "resolver_getattr_resolve", prim::kPrimGetAttr);
+  // In resolver_getattr_resolve_, some patterns have priority over others.
+  resolver_getattr_resolve_ = MakeSubstitution(std::make_shared<ResolverGetAttrResolve>(), "getattr_resolve",
+                                               {prim::kPrimGetAttr, prim::kPrimResolve}, opt::CHECK_RENORM, true);
 }
 
 InferenceOptPrepareLib::InferenceOptPrepareLib() {
