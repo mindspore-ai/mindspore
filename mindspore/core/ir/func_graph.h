@@ -38,6 +38,7 @@
 #include "base/effect_info.h"
 #include "ir/func_graph_cloner.h"
 #include "abstract/abstract_value.h"
+#include "api/ir/func_graph.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -151,7 +152,7 @@ class FuncGraphBase : public Value {
   MS_DECLARE_PARENT(FuncGraphBase, Value);
 };
 
-class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
+class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
  public:
   FuncGraph();
   using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
@@ -164,15 +165,15 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   abstract::AbstractBasePtr ToAbstract() override;
 
   // get function graph inputs, but parameters
-  const std::vector<AnfNodePtr> get_inputs() const;
+  const std::vector<AnfNodePtr> get_inputs() const final;
   // Return the graph's output, or nullptr if not yet deduced.
   AnfNodePtr output() const;
   void set_output(const AnfNodePtr &value, bool force_new_ret = false);
 
-  const std::vector<AnfNodePtr> &parameters() const { return parameters_; }
+  const std::vector<AnfNodePtr> &parameters() const final { return parameters_; }
   // Append
   virtual ParameterPtr add_parameter();
-  void add_parameter(const ParameterPtr &p);
+  void add_parameter(const ParameterPtr &p) final;
   void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
   // Prepend
   virtual ParameterPtr InsertFrontParameter();
@@ -183,8 +184,8 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   ParameterPtr AddWeightParameter(const std::string &name);
 
   // Create a cnode with given inputs, bound to this graph.
-  virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
-  virtual CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
+  CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>()) override;
+  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
 
   // Create a cnode with given inputs, bound to this graph and push back to order list.
   CNodePtr NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
@@ -240,20 +241,22 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_flag(const std::string &key, bool flag) { attrs_[key] = MakeValue(flag); }
   void erase_flag(const std::string &key) { (void)attrs_.erase(key); }
 
-  bool has_attr(const std::string &key);
-  ValuePtr get_attr(const std::string &key);
-  void set_attr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
+  bool has_attr(const std::string &key) const final;
+  ValuePtr get_attr(const std::string &key) const final;
+  void set_attr(const std::string &key, const ValuePtr &value) final { attrs_[key] = value; }
 
   std::unordered_map<std::string, FuncGraphTransform> &transforms() { return transforms_; }
   void set_transforms(const std::unordered_map<std::string, FuncGraphTransform> &transforms) {
     transforms_ = transforms;
   }
 
-  CNodePtr get_return() const { return return_; }
+  CNodePtr get_return() const final { return return_; }
   void set_return(const CNodePtr &cnode) { return_ = cnode; }
 
   FuncGraphManagerPtr manager() const { return manager_.lock(); }
   void set_manager(const FuncGraphManagerPtr &m) { manager_ = std::weak_ptr<FuncGraphManager>(m); }
+
+  api::FuncGraphManagerPtr get_manager() const final { return manager_.lock(); }
 
   std::string ToString() const override;
   GraphDebugInfoPtr debug_info();

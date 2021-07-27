@@ -34,11 +34,12 @@
 #include "utils/signal.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
+#include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "utils/counter.h"
 #include "utils/hashing.h"
 #include "base/base_ref.h"
-#include "ir/anf.h"
+#include "api/ir/func_graph_manager.h"
 
 namespace mindspore {
 struct Change;
@@ -46,20 +47,9 @@ class FuncGraphTransaction;
 class FuncGraphManager;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
-struct AnfNodeIndexPairHasher {
-  std::size_t operator()(const std::pair<AnfNodePtr, int> &p1) const {
-    return std::hash<const AnfNode *>{}(p1.first.get());
-  }
-};
-
-struct AnfNodeIndexPairEqual {
-  bool operator()(const std::pair<AnfNodePtr, int> &lhs, const std::pair<AnfNodePtr, int> &rhs) const {
-    return lhs == rhs;
-  }
-};
-using AnfNodeIndexSet = OrderedSet<std::pair<AnfNodePtr, int>, AnfNodeIndexPairHasher, AnfNodeIndexPairEqual>;
+using AnfNodeIndexSet = api::AnfNodeIndexSet;
 // NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
-using NodeUsersMap = OrderedMap<AnfNodePtr, AnfNodeIndexSet>;
+using NodeUsersMap = api::NodeUsersMap;
 using FuncGraphSetPair = std::pair<FuncGraphPtr, FuncGraphSet>;
 using FuncGraphSetPtr = std::shared_ptr<FuncGraphSet>;
 using EdgeTuple = std::pair<AnfNodePtr, std::pair<int, AnfNodePtr>>;
@@ -294,7 +284,7 @@ class FuncGraphJTotalComputer final : public DepComputer {
   bool SeekJ(const FuncGraphPtr &fg, size_t seen_num);
 };
 
-class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
+class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, public api::FuncGraphManager {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
   ~FuncGraphManager() {
@@ -314,9 +304,9 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   void AddParameter(const FuncGraphPtr &fg, const AnfNodePtr &parameter);
   void InsertFrontParameter(const FuncGraphPtr &fg, const AnfNodePtr &parameter);
   void MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users = false);
-  bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
-  void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value);
-  void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value);
+  bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) final;
+  void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value) final;
+  void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) final;
   void MoveAllCNodeDropGraph(FuncGraphPtr source, FuncGraphPtr target, const ScopePtr &scope);
 
   FuncGraphTransaction Transact();
@@ -331,6 +321,8 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   AnfNodeSet &all_nodes() { return all_nodes_; }
 
   NodeUsersMap &node_users() { return node_users_; }
+
+  const NodeUsersMap &node_users() const final { return node_users_; }
 
   FVTotalMap &free_variables_total() const;
 
