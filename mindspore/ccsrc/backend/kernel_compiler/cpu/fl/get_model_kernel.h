@@ -42,9 +42,9 @@ class GetModelKernel : public CPUKernel {
     }
 
     const schema::ResponseGetModel *get_model_rsp = nullptr;
+    std::shared_ptr<std::vector<unsigned char>> get_model_rsp_msg = nullptr;
     int response_code = schema::ResponseCode_SucNotReady;
     while (response_code == schema::ResponseCode_SucNotReady) {
-      std::shared_ptr<std::vector<unsigned char>> get_model_rsp_msg = nullptr;
       if (!fl::worker::FLWorker::GetInstance().SendToServer(target_server_rank_, fbb_->GetBufferPointer(),
                                                             fbb_->GetSize(), ps::core::TcpUserCommand::kGetModel,
                                                             &get_model_rsp_msg)) {
