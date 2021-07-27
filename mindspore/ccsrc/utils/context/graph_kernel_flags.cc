@@ -198,6 +198,8 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_cluster_ops", &enable_cluster_ops);
   reg.AddFlag("enable_cluster_ops_only", &enable_cluster_ops_only);
   reg.AddFlag("disable_cluster_ops", &disable_cluster_ops);
+  reg.AddFlag("enable_simplify_exprs_only", &enable_simplify_exprs_only);
+  reg.AddFlag("disable_simplify_exprs", &disable_simplify_exprs);
   reg.AddFlag("enable_pass", &enable_pass);
   reg.AddFlag("disable_pass", &disable_pass);
 }
@@ -221,6 +223,8 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_cluster_ops"] = enable_cluster_ops;
   json["enable_cluster_ops_only"] = enable_cluster_ops_only;
   json["disable_cluster_ops"] = disable_cluster_ops;
+  json["enable_simplify_exprs_only"] = enable_simplify_exprs_only;
+  json["disable_simplify_exprs"] = disable_simplify_exprs;
   json["enable_pass"] = enable_pass;
   json["disable_pass"] = disable_pass;
 

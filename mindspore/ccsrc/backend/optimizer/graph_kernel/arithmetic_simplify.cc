@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,888 +17,640 @@
 
 #include <algorithm>
 #include <list>
-#include <utility>
+#include <string>
+#include <unordered_set>
+#include <functional>
+#include <set>
 #include <vector>
+#include <unordered_map>
+
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
-#include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "frontend/operator/ops.h"
-#include "ir/pattern_matcher.h"
-#include "utils/convert_utils.h"
-#include "utils/utils.h"
+#include "ir/anf.h"
+#include "utils/context/graph_kernel_flags.h"
 
 namespace mindspore {
 namespace opt {
-AnfNodePtr NewCNodeWithInfo(const AnfNodePtrList &inputs, const AnfNodePtr &ori_node) {
-  auto func_graph = ori_node->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  TraceManager::DebugTrace(std::make_shared<TraceOpt>(ori_node->debug_info()));
-  auto new_cnode = func_graph->NewCNode(inputs);
-  TraceManager::EndTrace();
-  new_cnode->set_abstract(ori_node->abstract());
-  new_cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-  if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-    ResetKernelInfo(new_cnode, AKG_KERNEL);
+// operator which follows commutative rules
+static std::unordered_set<std::string> commutative_ops{"Add", "Mul"};
+
+class PatternNode;
+using PatternNodePtr = std::shared_ptr<PatternNode>;
+using PatternNodePtrList = std::vector<PatternNodePtr>;
+
+class PatternNode {
+ public:
+  explicit PatternNode(const std::string &op) : op_(op) {}
+  ~PatternNode() = default;
+  std::string op() const { return op_; }
+  std::vector<PatternNodePtr> inputs() const { return inputs_; }
+  void AddInput(const PatternNodePtr &input) { inputs_.push_back(input); }
+
+ private:
+  std::string op_ = "";  // ex. "Add","const1","A","0.5" (any op, const or parameter)
+  std::vector<PatternNodePtr> inputs_;
+};
+
+using ParaMap = std::unordered_map<char, graphkernel::NodePtr>;
+using ConstMap = std::unordered_map<std::string, graphkernel::NodePtr>;
+
+/* This class works to store a kind of pattern tree; it needs a string expression to construct;
+ Ex."Pow(Exp(A),B)=Exp(Mul(A,B))"
+ then the left tree is
+          A                             A    B
+           \                             \  /
+            Exp    B                       Mul
+             \   /                           \
+ left tree:   Pow         right tree:         Exp
+ lhs_root_ is Pow ;lhs_root_ is Exp */
+class PatternTree {
+ public:
+  explicit PatternTree(const std::string &pattern_str) : pattern_str_(pattern_str) { BuildTree(pattern_str); }
+  ~PatternTree() = default;
+  PatternNodePtr lhs_root() { return lhs_root_; }
+  PatternNodePtr rhs_root() { return rhs_root_; }
+  std::string GetRootOp() const { return lhs_root_ == nullptr ? "" : lhs_root_->op(); }
+  // build tree with expression string
+  PatternNodePtr BuildTree(const std::string &pattern_str);
+  // traverse pattern tree, return order is topological order
+  void DfsTraverse(const std::shared_ptr<PatternNodePtrList> &res, const PatternNodePtr &cur) const;
+  // leverage pattern tree node and lite node's mapping relation to build lite node graph from pattern tree's right
+  // side
+  graphkernel::NodePtr AlterGraph(const std::shared_ptr<ParaMap> &para_to_ref,
+                                  const std::shared_ptr<ConstMap> &const_to_ref,
+                                  const graphkernel::NodePtr &origin_root);
+  // invoke DfsMatchGraph
+  graphkernel::NodePtrList MatchGraph(const graphkernel::NodePtr &root, const std::shared_ptr<ParaMap> &para_to_ref,
+                                      const std::shared_ptr<ConstMap> &const_to_ref);
+
+ protected:
+  // set attributes for certain pattern node if needed;
+  virtual std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(
+    const graphkernel::NodePtr &origin_root) {
+    auto right_pattern = std::make_shared<PatternNodePtrList>();
+    DfsTraverse(right_pattern, rhs_root_);
+    std::unordered_map<PatternNodePtr, graphkernel::DAttrs> attrs_map;
+    for (auto &i : (*right_pattern)) {
+      attrs_map[i] = {};
+    }
+    return attrs_map;
+  }
+  // check attributes meet requirements for certain pattern node if needed;
+  virtual bool CheckAttributes(const graphkernel::NodePtr &origin_root) const { return true; }
+
+ private:
+  PatternNodePtr lhs_root_ = nullptr;  // left side's root
+  PatternNodePtr rhs_root_ = nullptr;  // right side's root
+  std::string pattern_str_;            // ex."Pow(Exp(A),B)=Exp(Mul(A,B))"
+};
+
+std::string CutStr(const string &s, size_t start_pos = 0, size_t len = std::string::npos) {
+  std::string new_str = "";
+  if (start_pos >= s.length()) {
+    MS_LOG(EXCEPTION) << "Cut is illegal.";
+  }
+  for (size_t i = 0; i < len; i++) {
+    if (start_pos + i >= s.length()) break;
+    new_str += s[start_pos + i];
+  }
+  return new_str;
+}
+
+bool StartWith(const std::string &s, const std::string &prefix) {
+  if (s.length() < prefix.length()) return false;
+  return s.find(prefix) == 0;
+}
+
+// build pattern tree ;left side's root is lhs_root_ ; right side's root is rhs_root_
+PatternNodePtr PatternTree::BuildTree(const std::string &pattern_str) {
+  size_t pos = pattern_str.find("=");
+  if (pos != std::string::npos) {
+    auto left_expression = CutStr(pattern_str, 0, pos);
+    lhs_root_ = BuildTree(left_expression);
+    auto right_expression = CutStr(pattern_str, pos + 1);
+    rhs_root_ = BuildTree(right_expression);
   } else {
-    ResetKernelInfo(new_cnode, UNKNOWN_KERNEL_TYPE);
-  }
-  func_graph->AddNode(new_cnode);
-  return new_cnode;
-}
+    size_t p_start = pattern_str.find("(");
+    if (p_start != std::string::npos) {
+      size_t p_end = pattern_str.rfind(")");
+      auto op_name = CutStr(pattern_str, 0, p_start);
+      auto op_inputs = CutStr(pattern_str, p_start + 1, p_end - p_start - 1);
+      PatternNodePtr cur_node = std::make_shared<PatternNode>(op_name);
+      int tmp = 0;
+      size_t comma = 0;
+      while (comma < op_inputs.length()) {
+        if (op_inputs[comma] == '(') {
+          tmp++;
+        }
+        if (op_inputs[comma] == ')') {
+          tmp--;
+        }
+        if (op_inputs[comma] == ',' && tmp == 0) {
+          auto first_half = CutStr(op_inputs, 0, comma);
+          cur_node->AddInput(BuildTree(first_half));
+          auto second_half = CutStr(op_inputs, comma + 1);
+          op_inputs = second_half;
+          comma = 0;
+        } else {
+          comma++;
+        }
+      }
+      cur_node->AddInput(BuildTree(op_inputs));
+      return cur_node;
 
-AnfNodePtr SimplifyAdd(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimAdd)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y, z;
-  PConstant<AnfNodePtr> zero_num(node, false, 0);
-  PConstant<AnfNodePtr> zero_scalar(node, false, 0, true);
-  PConstant<AnfNodePtr> any_const(node);
-  PConstant<AnfNodePtr> any_const_2(node);
-
-  auto add_distri_lambda = [&node, &x, &y, &any_const]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), node_tmp, any_const.GetNode(node)}, node);
-    return new_cnode;
-  };
-  auto add_union_lambda = [&node, &x, &any_const, &any_const_2]() -> AnfNodePtr {
-    auto new_rhs = any_const.AddByPatternConst(any_const_2, x.GetNode(node));
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), new_rhs}, node);
-    return new_cnode;
-  };
-  // A + 0 = A
-  MATCH_REPLACE(node, x + zero_num, x);
-  // A*C + B*C = (A + B)*C
-  MATCH_REPLACE_LAMBDA_IF(node, (x * any_const) + (y * any_const_2), add_distri_lambda,
-                          PIsEqual<AnfNodePtr>()(any_const.GetNode(node), any_const_2.GetNode(node)));
-  // (A + C1) + C2 = A + (C1 + C2)
-  MATCH_REPLACE_LAMBDA(node, (x + any_const) + any_const_2, add_union_lambda);
-  // A + (-A) = 0
-  MATCH_REPLACE_IF(node, x + PUnaryOperation(prim::kPrimNeg, y), zero_scalar.NewValue(),
-                   PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  return nullptr;
-}
-
-AnfNodePtr SimplifySub(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimSub)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x;
-  PConstant<AnfNodePtr> zero_num(node, false, 0);
-  PConstant<AnfNodePtr> any_const(node);
-  auto sub_toadd_lambda = [&node, &x, &any_const]() -> AnfNodePtr {
-    auto new_rhs = any_const.ValueNodeWithOprations(prim::kPrimNeg);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), new_rhs}, node);
-    return new_cnode;
-  };
-  // A - 0 = A
-  MATCH_REPLACE(node, x - zero_num, x);
-  // A - const = A + (-const)
-  MATCH_REPLACE_LAMBDA(node, x - any_const, sub_toadd_lambda);
-  return nullptr;
-}
-
-AnfNodePtr SimplifyNeg(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimNeg)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x;
-  MATCH_REPLACE(node, PUnaryOperation(prim::kPrimNeg, PUnaryOperation(prim::kPrimNeg, x)), x);
-  return nullptr;
-}
-
-AnfNodePtr SimplifyLog(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimLog)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y;
-  auto ln_front_lambda = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimAbs), x.GetNode(node)}, node);
-    auto node_tmp_2 = NewCNodeWithInfo({NewValueNode(prim::kPrimLog), node_tmp}, node);
-    auto new_cnode =
-      NewCNodeWithInfo({NewValueNode(prim::kPrimMul), y.GetNode(node), node_tmp_2}, node->cast<CNodePtr>()->input(1));
-    return new_cnode;
-  };
-  auto sqrt_ln_lambda = [&node, &x]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimLog), x.GetNode(node)}, node);
-    auto value = MakeValue(std::make_shared<FP32Imm>(0.5));
-    auto tensor_ptr = mindspore::ScalarToTensor(value->cast<ScalarPtr>());
-    auto value_node_ptr = MakeValueNode(std::make_shared<ValueNode>(tensor_ptr));
-    value_node_ptr->set_abstract(node->abstract());
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), value_node_ptr, node_tmp}, node);
-    return new_cnode;
-  };
-  auto rsqrt_ln_lambda = [&node, &x]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimLog), x.GetNode(node)}, node);
-    auto value = MakeValue(std::make_shared<FP32Imm>(-0.5));
-    auto tensor_ptr = mindspore::ScalarToTensor(value->cast<ScalarPtr>());
-    auto value_node_ptr = MakeValueNode(std::make_shared<ValueNode>(tensor_ptr));
-    value_node_ptr->set_abstract(node->abstract());
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), value_node_ptr, node_tmp}, node);
-    return new_cnode;
-  };
-  // Ln(Exp(A)) = A
-  MATCH_REPLACE(node, PUnaryOperation(prim::kPrimLog, PUnaryOperation(prim::kPrimExp, x)), x);
-  // Ln(Pow(A,B)) = B*Ln(Abs(A))
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimLog, PBinOperation(prim::kPrimPow, x, y, false)),
-                       ln_front_lambda);
-  // Ln(Sqrt(A)) = 0.5*Ln(A)
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimLog, PUnaryOperation(prim::kPrimSqrt, x)), sqrt_ln_lambda);
-  // Ln(Rqrt(A)) = -0.5*Ln(A)
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimLog, PUnaryOperation(prim::kPrimRsqrt, x)), rsqrt_ln_lambda);
-  return nullptr;
-}
-
-AnfNodePtr SimplifyPow(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimPow)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y;
-  PConstant<AnfNodePtr> zero_num(node, false, 0);
-  PConstant<AnfNodePtr> one_const(node, false, 1);
-  PConstant<AnfNodePtr> two_const(node, false, 2);
-  PConstant<AnfNodePtr> negone_const(node, false, -1);
-  auto pow_zero_lambda = [&node]() -> AnfNodePtr {
-    auto value = MakeValue(std::make_shared<FP32Imm>(1));
-    auto tensor_ptr = mindspore::ScalarToTensor(value->cast<ScalarPtr>());
-    auto value_node_ptr = MakeValueNode(std::make_shared<ValueNode>(tensor_ptr));
-    value_node_ptr->set_abstract(node->abstract());
-    return value_node_ptr;
-  };
-  auto exp_power_lambda = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimExp), node_tmp}, node->cast<CNodePtr>()->input(1));
-    return new_cnode;
-  };
-  auto squre_power_lambda = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  auto r_power_lambda = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimReciprocal), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  // Pow(A, 0) = 1
-  MATCH_REPLACE_LAMBDA(node, PBinOperation(prim::kPrimPow, x, zero_num, false), pow_zero_lambda);
-  // Pow(A, 1) = A
-  MATCH_REPLACE(node, PBinOperation(prim::kPrimPow, x, one_const, false), x);
-  // Pow(exp(A),B) = exp(A*B)
-  MATCH_REPLACE_LAMBDA(node, PBinOperation(prim::kPrimPow, PUnaryOperation(prim::kPrimExp, x), y, false),
-                       exp_power_lambda);
-  // Pow(A, 2) = A*A
-  MATCH_REPLACE_LAMBDA(node, PBinOperation(prim::kPrimPow, x, two_const, false), squre_power_lambda);
-  // Pow(A, -1) = 1/A
-  MATCH_REPLACE_LAMBDA(node, PBinOperation(prim::kPrimPow, x, negone_const, false), r_power_lambda);
-  return nullptr;
-}
-
-AnfNodePtr SimplifySqrt(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimSqrt)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y;
-  auto mul_sqrt_lambda = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimAbs), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  auto square_sqrt_lambda = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimAbs), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  // pattern matcher cannot distinguish the same PatternNode in CaptureNode, so it needs to add judgment
-  // Sqrt(A*A) = |A|
-  MATCH_REPLACE_LAMBDA_IF(node, PUnaryOperation(prim::kPrimSqrt, PBinOperation(prim::kPrimMul, x, y)), mul_sqrt_lambda,
-                          PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  // Sqrt(Square(A)) = |A|
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimSqrt, PUnaryOperation(prim::kPrimSquare, x)),
-                       square_sqrt_lambda);
-  return nullptr;
-}
-
-AnfNodePtr SimplifyRsqrt(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimRsqrt)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x;
-  PConstant<AnfNodePtr> num_one(node, false, 1, true);
-  PConstant<AnfNodePtr> num_negtwo(node, false, -2, true);
-  auto power_rsqrt_lambda = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimAbs), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  auto div_rsqrt_lambda = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimSqrt), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  // Rsqrt(Pow(A, -2)) = |A|
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimRsqrt, PBinOperation(prim::kPrimPow, x, num_negtwo, false)),
-                       power_rsqrt_lambda);
-  // Rsqrt(Divide(1, A)) = Sqrt(A)
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimRsqrt, PBinOperation(prim::kPrimRealDiv, num_one, x, false)),
-                       div_rsqrt_lambda);
-  return nullptr;
-}
-
-AnfNodePtr SimplifySelect(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimSelect)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y, z;
-  // select(x,y,y) = y
-  MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimSelect, x, y, z), y,
-                   PIsEqual<AnfNodePtr>()(y.GetNode(node), z.GetNode(node)));
-  return nullptr;
-}
-
-AnfNodePtr SimplifyMul1(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimMul)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y;
-  PConstant<AnfNodePtr> const_1(node), const_2(node);
-
-  auto const_dup_lambda = [&node, &x, &y, &const_1, &const_2]() -> AnfNodePtr {
-    auto new_lhs = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), y.GetNode(node)}, node);
-    auto new_rhs = const_1.MulByPatternConst(const_2, x.GetNode(node));
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), new_lhs, new_rhs}, node);
-    return new_cnode;
-  };
-  auto const_dup_lambda2 = [&node, &x, &const_1, &const_2]() -> AnfNodePtr {
-    auto new_rhs = const_1.MulByPatternConst(const_2, x.GetNode(node));
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), new_rhs}, node);
-    return new_cnode;
-  };
-  auto exp_merge_lambda = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimExp), node_tmp}, node);
-    return new_cnode;
-  };
-  auto sqrt_merge_lambda = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimSqrt), node_tmp}, node);
-    return new_cnode;
-  };
-  // (x*C1)*(y*C2) ==> (x*y)*(C1*C2)
-  MATCH_REPLACE_LAMBDA(node, (const_1 * x) * (const_2 * y), const_dup_lambda);
-  // (x*C1)*C2 ==> x*(C1*C2)
-  MATCH_REPLACE_LAMBDA(node, (const_1 * x) * const_2, const_dup_lambda2);
-  // exp(x)*exp(y) ==> exp(x+y)
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimExp, x) * PUnaryOperation(prim::kPrimExp, y), exp_merge_lambda);
-  // sqrt(x)*sqrt(x) ==> x
-  MATCH_REPLACE_IF(node, PUnaryOperation(prim::kPrimSqrt, x) * PUnaryOperation(prim::kPrimSqrt, y), x,
-                   PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  // sqrt(x)*sqrt(y) ==> sqrt(x*y)
-  MATCH_REPLACE_LAMBDA_IF(node, PUnaryOperation(prim::kPrimSqrt, x) * PUnaryOperation(prim::kPrimSqrt, y),
-                          sqrt_merge_lambda, !PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  return nullptr;
-}
-
-AnfNodePtr SimplifyMul2(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimMul)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y;
-  PConstant<AnfNodePtr> const_1(node), const_2(node);
-
-  auto rsqrt_merge_lambda = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimReciprocal), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  auto rsqrt_merge_lambda_2 = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimRsqrt), node_tmp}, node);
-    return new_cnode;
-  };
-  auto rsqrt_merge_lambda_3 = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimSqrt), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  auto neg_mul_lambda = [&node, &x, &const_1]() -> AnfNodePtr {
-    auto new_rhs = const_1.ValueNodeWithOprations(prim::kPrimNeg);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), new_rhs}, node);
-    return new_cnode;
-  };
-  // rsqrt(x)*rsqrt(x) ==> 1/x
-  MATCH_REPLACE_LAMBDA_IF(node, PUnaryOperation(prim::kPrimRsqrt, x) * PUnaryOperation(prim::kPrimRsqrt, y),
-                          rsqrt_merge_lambda, PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  // rsqrt(x)*rsqrt(y) ==> rsqrt(x*y)
-  MATCH_REPLACE_LAMBDA_IF(node, PUnaryOperation(prim::kPrimRsqrt, x) * PUnaryOperation(prim::kPrimRsqrt, y),
-                          rsqrt_merge_lambda_2, !PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  // x*rsqrt(x) ==> sqrt(x)
-  MATCH_REPLACE_LAMBDA_IF(node, x * PUnaryOperation(prim::kPrimRsqrt, y), rsqrt_merge_lambda_3,
-                          PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  // Neg(x) * const | const * Neg(x) = x * (-const)
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimNeg, x) * const_1, neg_mul_lambda);
-  MATCH_REPLACE_LAMBDA(node, const_1 * PUnaryOperation(prim::kPrimNeg, x), neg_mul_lambda);
-  return nullptr;
-}
-
-AnfNodePtr SimplifyDiv1(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimRealDiv)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y, u, v;
-  PConstant<AnfNodePtr> const_1(node);
-  PConstant<AnfNodePtr> const_one(node, false, 1);
-  PConstant<AnfNodePtr> const_one_scalar(node, false, 1, true);
-
-  auto div_exp_lambda_1 = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimSub), x.GetNode(node), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimExp), node_tmp}, node);
-    return new_cnode;
-  };
-  auto div_exp_lambda_2 = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_neg = NewCNodeWithInfo({NewValueNode(prim::kPrimNeg), y.GetNode(node)}, node);
-    auto node_exp = NewCNodeWithInfo({NewValueNode(prim::kPrimExp), node_neg}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), node_exp}, node);
-    return new_cnode;
-  };
-  auto div_pow_const = [&node, &x, &y, &const_1]() -> AnfNodePtr {
-    auto new_const = const_1.ValueNodeWithOprations(prim::kPrimNeg);
-    auto new_rhs = NewCNodeWithInfo({NewValueNode(prim::kPrimPow), y.GetNode(node), new_const}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), new_rhs}, node);
-    return new_cnode;
-  };
-  auto div_sqrt_lambda_1 = [&node, &x]() -> AnfNodePtr {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimSqrt), x.GetNode(node)}, node);
-    return new_cnode;
-  };
-  // x/1 ==> x
-  MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarDiv, x, const_one_scalar, false), x);
-  MATCH_REPLACE(node, x / const_one, x);
-  // e^x/e^y ==> e^(x-y)
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimExp, x) / PUnaryOperation(prim::kPrimExp, y), div_exp_lambda_1);
-  // x / e^y ==> x * e^(-y)
-  MATCH_REPLACE_LAMBDA(node, x / PUnaryOperation(prim::kPrimExp, y), div_exp_lambda_2);
-  // x / y^const ==> x * y^(-const)
-  MATCH_REPLACE_LAMBDA(node, x / PBinOperation(prim::kPrimPow, y, const_1), div_pow_const);
-  // x / sqrt(x) ==> sqrt(x)
-  MATCH_REPLACE_LAMBDA_IF(node, x / PUnaryOperation(prim::kPrimSqrt, y), div_sqrt_lambda_1,
-                          PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  return nullptr;
-}
-
-AnfNodePtr SimplifyDiv2(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimRealDiv)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y, u, v;
-  PConstant<AnfNodePtr> const_1(node);
-
-  auto div_sqrt_lambda_2 = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_rsqrt = NewCNodeWithInfo({NewValueNode(prim::kPrimRsqrt), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), node_rsqrt}, node);
-    return new_cnode;
-  };
-  auto div_const = [&node, &x, &const_1]() -> AnfNodePtr {
-    auto new_const = const_1.ValueNodeWithOprations(prim::kPrimReciprocal);
-    if (new_const == nullptr) {
-      return nullptr;
-    }
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), new_const}, node);
-    return new_cnode;
-  };
-  auto div_rsqrt_lambda = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_rsqrt = NewCNodeWithInfo({NewValueNode(prim::kPrimSqrt), y.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), node_rsqrt}, node);
-    return new_cnode;
-  };
-  auto div_lambda_1 = [&node, &x, &y, &u, &v]() -> AnfNodePtr {
-    auto new_lhs = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), v.GetNode(node)}, node);
-    auto new_rhs = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), y.GetNode(node), u.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimRealDiv), new_lhs, new_rhs}, node);
-    return new_cnode;
-  };
-  // x / sqrt(y) ==> x * rsqrt(y)
-  MATCH_REPLACE_LAMBDA_IF(node, x / PUnaryOperation(prim::kPrimSqrt, y), div_sqrt_lambda_2,
-                          !PIsEqual<AnfNodePtr>()(x.GetNode(node), y.GetNode(node)));
-  // x / rsqrt(y) ==> x * sqrt(y)
-  MATCH_REPLACE_LAMBDA(node, x / PUnaryOperation(prim::kPrimRsqrt, y), div_rsqrt_lambda);
-  // // x / const ==> x * (1/const)
-  MATCH_REPLACE_LAMBDA(node, x / const_1, div_const);
-  // (x/y) / (u/v) ==> (x*v) / (y*u)
-  MATCH_REPLACE_LAMBDA(node, (x / y) / (u / v), div_lambda_1);
-  return nullptr;
-}
-
-AnfNodePtr SimplifyDiv3(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimRealDiv)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y, u, v;
-  PConstant<AnfNodePtr> const_1(node), const_2(node);
-
-  auto div_lambda_2 = [&node, &x, &y, &u]() -> AnfNodePtr {
-    auto new_rhs = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), y.GetNode(node), u.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimRealDiv), x.GetNode(node), new_rhs}, node);
-    return new_cnode;
-  };
-  auto div_lambda_3 = [&node, &x, &u, &v]() -> AnfNodePtr {
-    auto new_lhs = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), x.GetNode(node), v.GetNode(node)}, node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimRealDiv), new_lhs, u.GetNode(node)}, node);
-    return new_cnode;
-  };
-  auto neg_div_lambda = [&node, &x, &const_1]() -> AnfNodePtr {
-    auto new_rhs = const_1.ValueNodeWithOprations(prim::kPrimNeg);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimRealDiv), x.GetNode(node), new_rhs}, node);
-    return new_cnode;
-  };
-  // Neg(x) / const = x / (-const)
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimNeg, x) / const_1, neg_div_lambda);
-  // (x/y) / u ==> x / (y*u)
-  MATCH_REPLACE_LAMBDA(node, (x / y) / u, div_lambda_2);
-  // x / (u/v) ==> (x*v) / u
-  MATCH_REPLACE_LAMBDA(node, x / (u / v), div_lambda_3);
-  return nullptr;
-}
-
-#define PERFORM_REPLACE(OldNode, NewNode, Graph, FLAG)                    \
-  if ((NewNode) != nullptr) {                                             \
-    static_cast<void>((Graph)->manager()->Replace((OldNode), (NewNode))); \
-    (FLAG) = true;                                                        \
-  }
-
-bool TryTransposeToReshape(const AnfNodePtr &node) {
-  auto perm = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "perm");
-  auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  std::vector<int64_t> remove_one_perm;
-  for (auto idx : perm) {
-    if (idx < 0 || LongToSize(idx) >= ori_shape.size()) {
-      MS_EXCEPTION(ValueError);
-      return false;
-    }
-    if (ori_shape[LongToSize(idx)] != 1) {
-      remove_one_perm.emplace_back(idx);
+    } else {
+      return std::make_shared<PatternNode>(pattern_str);
     }
   }
-  if (remove_one_perm.size() < 2) {
-    return true;
+
+  return nullptr;
+}
+
+graphkernel::NType PatternNodeType(const std::string &n) {
+  // return (Primitive， Parameter or Value)
+  if (n.length() > 0 && '0' <= n[n.length() - 1] && n[n.length() - 1] <= '9') {
+    return graphkernel::NType::Value;
+  } else if (n.length() == 1 && 'A' <= n[0] && n[0] <= 'Z') {
+    return graphkernel::NType::Parameter;
+  } else {
+    return graphkernel::NType::Primitive;
   }
-  for (size_t idx = 1; idx < remove_one_perm.size(); idx++) {
-    if (remove_one_perm[idx] < remove_one_perm[idx - 1]) {
-      return false;
+}
+bool IsEqual(double a, double b) { return (abs(a - b) < 0.0000001); }
+
+std::string CleanStr(const std::string &s) {
+  std::string res = "";
+  std::for_each(s.begin(), s.end(), [&res](const char &c) {
+    if (c != '[' && c != ']' && c != ' ') {
+      res += c;
     }
+  });
+  return res;
+}
+
+bool CheckCurNode(const graphkernel::NodePtr &tmp_node, const std::string &tmp_pattern_op,
+                  const std::shared_ptr<ParaMap> &para_to_ref, const std::shared_ptr<ConstMap> &const_to_ref) {
+  // put lite graph node's mapping to pattern node into "para_to_ref" and "const_to_ref"
+  switch (PatternNodeType(tmp_pattern_op)) {
+    case graphkernel::NType::Parameter: {
+      if (para_to_ref->find(tmp_pattern_op[0]) != para_to_ref->end()) {
+        if ((*para_to_ref)[tmp_pattern_op[0]] != tmp_node) {
+          return false;
+        }
+      } else {
+        (*para_to_ref)[tmp_pattern_op[0]] = tmp_node;
+      }
+      break;
+    }
+    case graphkernel::NType::Value: {
+      if (tmp_node->NodeType() != graphkernel::NType::Value) {
+        return false;
+      }
+      auto node_value_str = std::static_pointer_cast<graphkernel::ConstTensorNode>(tmp_node)->ToString();
+      double node_value = std::stod(CleanStr(node_value_str));
+      if (StartWith(tmp_pattern_op, "const")) {
+        if (const_to_ref->find(tmp_pattern_op) != const_to_ref->end()) {
+          auto pattern_value_str =
+            std::static_pointer_cast<graphkernel::ConstTensorNode>((*const_to_ref)[tmp_pattern_op])->ToString();
+          double pattern_value = std::stod(CleanStr(pattern_value_str));
+          if (!IsEqual(pattern_value, node_value)) return false;
+        } else {
+          (*const_to_ref)[tmp_pattern_op] = tmp_node;
+        }
+      } else {
+        double pattern_value = std::stod(tmp_pattern_op);
+        if (!IsEqual(pattern_value, node_value)) {
+          return false;
+        }
+      }
+      break;
+    }
+    case graphkernel::NType::Primitive: {
+      if (tmp_node->NodeType() != graphkernel::NType::Primitive ||
+          std::static_pointer_cast<graphkernel::PrimOp>(tmp_node)->op() != tmp_pattern_op) {
+        return false;
+      }
+      break;
+    }
+    default:
+      break;
   }
   return true;
 }
 
-AnfNodePtr SimplifyTranspose(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimTranspose)) {
-    return nullptr;
+// recursion for thr match of lite node graph and pattern tree's left side, store the mapping of pattern tree node to
+// lite graph
+bool DfsMatchGraph(const graphkernel::NodePtr &tmp_node, const PatternNodePtr &tmp_pattern,
+                   const std::shared_ptr<ParaMap> &para_to_ref, const std::shared_ptr<ConstMap> &const_to_ref,
+                   const std::shared_ptr<graphkernel::NodePtrList> &res) {
+  std::string tmp_pattern_op = tmp_pattern->op();
+  if (!CheckCurNode(tmp_node, tmp_pattern_op, para_to_ref, const_to_ref)) {
+    return false;
   }
-  if (TryTransposeToReshape(node)) {
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimReshape), node->cast<CNodePtr>()->input(1)}, node);
-    return new_cnode;
+  std::vector<PatternNodePtr> tmp_pattern_inputs = tmp_pattern->inputs();
+  auto tmp_node_inputs = tmp_node->inputs();
+  // check if a node meets requiremnet，and DFS check its inputs
+  if (tmp_pattern_inputs.size() != 0 && tmp_node_inputs.size() != tmp_pattern_inputs.size()) {
+    return false;
   }
-  return nullptr;
-}
-
-AnfNodePtr SimplifyMatMul(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimMatMul)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x, y;
-  auto matmul_transpose_lambda = [&node, &x, &y]() -> AnfNodePtr {
-    auto new_matmul = NewCNodeWithInfo({NewValueNode(prim::kPrimMatMul), y.GetNode(node), x.GetNode(node)}, node);
-    auto new_abstract = node->abstract()->Clone();
-    auto ori_shape = node->abstract()->GetShapeTrack()->cast<abstract::ShapePtr>();
-    auto shape_value = ori_shape->shape();
-    ShapeVector new_shape_value;
-    std::copy(shape_value.rbegin(), shape_value.rend(), std::back_inserter(new_shape_value));
-    auto new_shape = std::make_shared<abstract::Shape>(new_shape_value);
-    new_abstract->set_shape(new_shape);
-    new_matmul->set_abstract(new_abstract);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimTranspose), new_matmul}, node);
-    auto transpose_a = AnfAlgo::GetNodeAttr<ValuePtr>(node, "transpose_a");
-    auto transpose_b = AnfAlgo::GetNodeAttr<ValuePtr>(node, "transpose_b");
-    auto transpose_x1 = AnfAlgo::GetNodeAttr<ValuePtr>(node, "transpose_x1");
-    auto transpose_x2 = AnfAlgo::GetNodeAttr<ValuePtr>(node, "transpose_x2");
-    auto perm = AnfAlgo::GetNodeAttr<ValuePtr>(node->cast<CNodePtr>()->input(1), "perm");
-    AnfAlgo::SetNodeAttr("transpose_a", transpose_b, new_matmul);
-    AnfAlgo::SetNodeAttr("transpose_b", transpose_a, new_matmul);
-    AnfAlgo::SetNodeAttr("transpose_x1", transpose_x2, new_matmul);
-    AnfAlgo::SetNodeAttr("transpose_x2", transpose_x1, new_matmul);
-    AnfAlgo::SetNodeAttr("perm", perm, new_cnode);
-    return new_cnode;
-  };
-  // MatMul(Transpose(x), Transpose(y)) ==> Transpose(MatMul(y, x))
-  MATCH_REPLACE_LAMBDA(node,
-                       PBinOperation(prim::kPrimMatMul, PUnaryOperation(prim::kPrimTranspose, x),
-                                     PUnaryOperation(prim::kPrimTranspose, y), false),
-                       matmul_transpose_lambda);
-  return nullptr;
-}
-
-ShapeVector TransAxisValueToVector(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  ShapeVector axis_vector;
-  if (value->isa<Int32Imm>()) {
-    axis_vector.emplace_back(GetValue<int64_t>(value));
-  }
-  if (value->isa<ValueTuple>() || value->isa<ValueList>()) {
-    axis_vector = GetValue<std::vector<int64_t>>(value);
-  }
-  return axis_vector;
-}
-
-ShapeVector GetNodeShape(const AnfNodePtr &node) {
-  auto base_shape = node->Shape()->cast<abstract::ShapePtr>();
-  std::vector<int64_t> shape;
-  std::transform(base_shape->shape().begin(), base_shape->shape().end(), std::back_inserter(shape), IntToSize);
-  return shape;
-}
-
-std::vector<std::pair<int64_t, int64_t>> GetUnmodifiedDim(const ShapeVector &a, const ShapeVector &b) {
-  std::vector<std::pair<int64_t, int64_t>> unmodified;
-  int64_t patial_a = 1, patial_b = 1;
-  for (size_t i = 0, j = 0;;) {
-    if (i >= a.size() && j >= b.size()) {
-      break;
-    }
-    if (i == j || patial_a == patial_b) {
-      patial_a *= a[i];
-      patial_b *= b[j];
-    }
-    if (patial_a == patial_b && a[i] == b[j]) {
-      unmodified.emplace_back(std::make_pair(i, j));
-      ++i;
-      ++j;
-      continue;
-    }
-    if (patial_a < patial_b) {
-      ++i;
-      patial_a *= a[i];
-      if (patial_a == patial_b) {
-        ++i;
-        ++j;
+  if (PatternNodeType(tmp_pattern_op) == graphkernel::NType::Primitive) {
+    // exchange inputs for the node who meets commutative rules
+    if (commutative_ops.find(tmp_pattern_op) != commutative_ops.end()) {
+      ParaMap para_to_ref_copy = *para_to_ref;
+      ConstMap const_to_ref_copy = *const_to_ref;
+      bool first_match = DfsMatchGraph(tmp_node_inputs[0], tmp_pattern_inputs[0], para_to_ref, const_to_ref, res) &&
+                         DfsMatchGraph(tmp_node_inputs[1], tmp_pattern_inputs[1], para_to_ref, const_to_ref, res);
+      if (!first_match) {
+        res->clear();
+        para_to_ref->clear();
+        const_to_ref->clear();
+        for (auto &i : para_to_ref_copy) {
+          (*para_to_ref)[i.first] = i.second;
+        }
+        for (auto &i : const_to_ref_copy) {
+          (*const_to_ref)[i.first] = i.second;
+        }
+        bool second_match = DfsMatchGraph(tmp_node_inputs[0], tmp_pattern_inputs[1], para_to_ref, const_to_ref, res) &&
+                            DfsMatchGraph(tmp_node_inputs[1], tmp_pattern_inputs[0], para_to_ref, const_to_ref, res);
+        if (!second_match) {
+          return false;
+        }
       }
-      continue;
-    }
-    if (patial_a > patial_b) {
-      ++j;
-      patial_b *= b[j];
-      if (patial_a == patial_b) {
-        ++i;
-        ++j;
+
+    } else {
+      for (size_t i = 0; i < tmp_pattern_inputs.size(); i++) {
+        if (!DfsMatchGraph(tmp_node_inputs[i], tmp_pattern_inputs[i], para_to_ref, const_to_ref, res)) {
+          return false;
+        }
       }
-      continue;
     }
+    res->push_back(tmp_node);
   }
-  return unmodified;
+  return true;
 }
 
-std::list<PrimitivePtr> RedOps = {prim::kPrimReduceSum, prim::kPrimReduceMax, prim::kPrimReduceMin};
+// traverse pattern tree and return topological order
+void PatternTree::DfsTraverse(const std::shared_ptr<PatternNodePtrList> &res, const PatternNodePtr &cur) const {
+  if (cur == nullptr) {
+    return;
+  }
+  for (auto &p : cur->inputs()) {
+    if (PatternNodeType(p->op()) == graphkernel::NType::Primitive) {
+      DfsTraverse(res, p);
+    }
+  }
+  res->push_back(cur);
+}
 
-bool IsRedOps(const AnfNodePtr &node) {
-  if (std::any_of(RedOps.begin(), RedOps.end(),
-                  [&node](const PrimitivePtr &ops) { return IsPrimitiveCNode(node, ops); })) {
-    return true;
+// invoke DfsMatchGraph
+graphkernel::NodePtrList PatternTree::MatchGraph(const graphkernel::NodePtr &root,
+                                                 const std::shared_ptr<ParaMap> &para_to_ref,
+                                                 const std::shared_ptr<ConstMap> &const_to_ref) {
+  auto res = std::make_shared<graphkernel::NodePtrList>();
+  if (!DfsMatchGraph(root, lhs_root_, para_to_ref, const_to_ref, res)) {
+    return {};
+  }
+  if (CheckAttributes(root)) {
+    return *res;
+  }
+  return {};
+}
+
+// leverage pattern tree node and lite node's mapping relation to build new lite node graph from pattern tree's right
+// side
+graphkernel::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &para_to_ref,
+                                             const std::shared_ptr<ConstMap> &const_to_ref,
+                                             const graphkernel::NodePtr &origin_root) {
+  auto res = std::make_shared<PatternNodePtrList>();
+  DfsTraverse(res, rhs_root_);
+  auto all_attrs = SetAttributes(origin_root);
+  graphkernel::LiteGraph::GraphBuilder gb("");
+  std::unordered_map<PatternNodePtr, graphkernel::NodePtr> pattern_to_ref;
+  for (auto &n : (*res)) {
+    if (PatternNodeType(n->op()) != graphkernel::NType::Primitive) continue;
+    graphkernel::NodePtrList inputs;
+    for (auto &i : n->inputs()) {
+      if (PatternNodeType(i->op()) == graphkernel::NType::Primitive) {
+        inputs.push_back(pattern_to_ref[i]);
+      } else if (PatternNodeType(i->op()) == graphkernel::NType::Parameter) {
+        inputs.push_back((*para_to_ref)[i->op()[0]]);
+      } else {
+        if (StartWith(i->op(), "const")) {
+          inputs.push_back((*const_to_ref)[i->op()]);
+        } else {
+          tensor::TensorPtr data = std::make_shared<tensor::Tensor>(static_cast<double>(std::stof(i->op())));
+          inputs.push_back(gb.Value(data));
+        }
+      }
+    }
+    auto p = gb.Emit(n->op(), inputs, all_attrs[n]);
+    pattern_to_ref[n] = p;
+  }
+  auto &alter_graph = gb.Get()->ops();
+  if (alter_graph.empty()) {
+    if (PatternNodeType(rhs_root_->op()) == graphkernel::NType::Parameter) {
+      return (*para_to_ref)[rhs_root_->op()[0]];
+    } else {
+      if (StartWith(rhs_root_->op(), "const")) {
+        return (*const_to_ref)[rhs_root_->op()];
+      } else {
+        tensor::TensorPtr data = std::make_shared<tensor::Tensor>(static_cast<double>(std::stof(rhs_root_->op())));
+        return gb.Value(data);
+      }
+    }
+  }
+  return alter_graph.back();
+}
+
+// Reduce(Reduce(A)) = Reduce(A)
+class ExtraReduce1PatternTree : public PatternTree {
+ public:
+  explicit ExtraReduce1PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~ExtraReduce1PatternTree() = default;
+
+ protected:
+  bool CheckAttributes(const graphkernel::NodePtr &origin_root) const override {
+    return (GetValue<bool>((origin_root->inputs()[0])->attrs().find("keep_dims")->second) ==
+            GetValue<bool>(origin_root->attrs().find("keep_dims")->second));
+  }
+  std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(
+    const graphkernel::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    std::vector<int64_t> axis;
+    std::set<int64_t> axis_set;
+    auto first_reduce = origin_root->inputs()[0];
+    bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
+    if (keep_dims) {
+      for (auto &i : GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second)) {
+        axis_set.insert(i);
+      }
+      for (auto &i : GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second)) {
+        axis_set.insert(i);
+      }
+
+    } else {
+      auto first_axis = GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second);
+      auto second_axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
+      std::set<int64_t> st(first_axis.begin(), first_axis.end());
+      std::unordered_map<int64_t, int64_t> mp;
+      int shift = 0;
+      for (size_t n = 0; n < first_reduce->inputs()[0]->shape.size(); n++) {
+        if (st.find(n) != st.end()) {
+          shift++;
+        } else {
+          mp[n - shift] = n;
+        }
+      }
+      for (auto &i : first_axis) {
+        axis_set.insert(i);
+      }
+      for (auto &i : second_axis) {
+        axis_set.insert(mp[i]);
+      }
+    }
+    std::copy(axis_set.begin(), axis_set.end(), std::back_inserter(axis));
+    attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}, {"axis", MakeValue(axis)}};
+    return attrs_map;
+  }
+};
+
+// "ReduceSum(Neg(A))=Neg(ReduceSum(A))"
+class ExtraReduce2PatternTree : public PatternTree {
+ public:
+  explicit ExtraReduce2PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~ExtraReduce2PatternTree() = default;
+
+ protected:
+  std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(
+    const graphkernel::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
+    auto axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
+    attrs_map[this->rhs_root()->inputs()[0]] = {{"keep_dims", MakeValue(keep_dims)}, {"axis", MakeValue(axis)}};
+    return attrs_map;
+  }
+};
+
+/*       A
+        /
+       Neg
+       /  \
+    Neg     Mul
+ Here we cannot transform Neg(Neg(A)) to A because Neg(A) is a input of Mul. OutsideRely is responsible for checking
+ this case.
+ */
+bool OutsideRely(const graphkernel::NodePtrList &nodes, const graphkernel::NodePtr &root) {
+  std::unordered_set<graphkernel::Node *> nodes_can_simplify;
+  std::for_each(nodes.begin(), nodes.end(), [&nodes_can_simplify](auto n) { nodes_can_simplify.insert(n.get()); });
+  for (auto &n : nodes) {
+    if (n == root) {
+      continue;
+    }
+    for (auto &usr : n->users()) {
+      if (nodes_can_simplify.find(usr.first) == nodes_can_simplify.end()) {
+        return true;
+      }
+    }
   }
   return false;
 }
 
-// Reduce(Reshape(A)) = Reduce(A) if reduce dimensions is not in reshape dimensions
-AnfNodePtr SimplifyReduce1(const AnfNodePtr &node) {
-  if (!IsRedOps(node)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x;
-  auto reshape_reduce_lambda = [&node, &x](PrimitivePtr &operation) -> AnfNodePtr {
-    auto tmp_node = node->cast<CNodePtr>();
-    auto arg_node = tmp_node->input(1);
-    auto input_shape = GetNodeShape(arg_node->cast<CNodePtr>()->input(1));
-    auto re_shape = GetNodeShape(arg_node);
-    auto reduce_dimensions = TransAxisValueToVector(AnfAlgo::GetNodeAttr<ValuePtr>(tmp_node, "axis"));
-    auto unmodified_dim_pair = GetUnmodifiedDim(input_shape, re_shape);
-    std::vector<bool> dim_in_output(re_shape.size(), true);
-    std::vector<bool> dim_unmodified(re_shape.size(), false);
-    for (auto dim : reduce_dimensions) {
-      dim_in_output[dim] = false;
-    }
-    for (auto pair_dim : unmodified_dim_pair) {
-      dim_unmodified[pair_dim.second] = true;
-    }
-    bool replace = true;
-    for (size_t i = 0; i < dim_in_output.size(); ++i) {
-      if (dim_in_output[i] && !dim_unmodified[i]) {
-        replace = false;
-      }
-    }
-    if (replace) {
-      ShapeVector un_dimensions;
-      for (auto pair_dim : unmodified_dim_pair) {
-        if (dim_in_output[pair_dim.second]) {
-          un_dimensions.emplace_back(pair_dim.first);
-        }
-      }
-      ShapeVector new_dimensions;
-      for (size_t i = 0; i < input_shape.size(); ++i) {
-        if (std::find(un_dimensions.begin(), un_dimensions.end(), i) == un_dimensions.end()) {
-          new_dimensions.emplace_back(i);
-        }
-      }
-      auto new_cnode = NewCNodeWithInfo({NewValueNode(operation), x.GetNode(node)}, node);
-      AnfAlgo::SetNodeAttr("axis", MakeValue(new_dimensions), new_cnode);
-      AnfAlgo::CopyNodeAttr("keep_dims", node, new_cnode);
-      return new_cnode;
-    }
-    return nullptr;
-  };
-  for (auto op : RedOps) {
-    MATCH_REPLACE_LAMBDA_FLAG(node, PPrimitive(op, PPrimitive(prim::kPrimReshape, x)), reshape_reduce_lambda, op);
-  }
-  return nullptr;
-}
+struct Expression {
+  size_t id;
+  std::string math_expr;
+  std::function<PatternTreePtr(const std::string &)> func;
+};
 
-AnfNodePtr SimplifyReduce2(const AnfNodePtr &node) {
-  if (!IsRedOps(node)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x;
-  auto reduce_reduce_lambda = [&node, &x](PrimitivePtr &operation) -> AnfNodePtr {
-    auto reduce2 = node->cast<CNodePtr>();
-    auto reduce1 = reduce2->input(1);
-    // if the "keep_dims" of two nodes are different, the result "keep_dims" could not match the output shape.
-    // inferring shape and another "Reshape" is needed, or skip this case.
-    if (AnfAlgo::GetBooleanAttr(reduce1, "keep_dims") != AnfAlgo::GetBooleanAttr(reduce2, "keep_dims")) {
-      return nullptr;
-    }
-    auto reduce1_axis = TransAxisValueToVector(AnfAlgo::GetNodeAttr<ValuePtr>(reduce1, "axis"));
-    auto reduce2_axis = TransAxisValueToVector(AnfAlgo::GetNodeAttr<ValuePtr>(reduce2, "axis"));
-    ShapeVector new_axis;
-    // offset the second node's reduction axes.
-    if (!AnfAlgo::GetBooleanAttr(reduce1, "keep_dims")) {
-      for (size_t i = 0; i < reduce1_axis.size(); ++i) {
-        for (size_t j = 0; j < reduce2_axis.size(); ++j) {
-          if (reduce2_axis[j] >= reduce1_axis[i]) {
-            ++reduce2_axis[j];
-          }
-        }
-      }
-    }
-    std::merge(reduce1_axis.begin(), reduce1_axis.end(), reduce2_axis.begin(), reduce2_axis.end(),
-               std::back_inserter(new_axis));
-    new_axis.erase(std::unique(new_axis.begin(), new_axis.end()), new_axis.end());
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(operation), x.GetNode(node)}, node);
-    SetNodeAttrSafely("axis", MakeValue(new_axis), new_cnode);
-    AnfAlgo::CopyNodeAttr("keep_dims", node, new_cnode);
-    return new_cnode;
-  };
-  auto neg_reducesum_lambda = [&node, &x]() -> AnfNodePtr {
-    auto arg_node = NewCNodeWithInfo({NewValueNode(prim::kPrimReduceSum->Clone()), x.GetNode(node)}, node);
-    AnfAlgo::CopyNodeAttr("axis", node, arg_node);
-    AnfAlgo::CopyNodeAttr("keep_dims", node, arg_node);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimNeg), arg_node}, node);
-    return new_cnode;
-  };
-  for (auto operation : RedOps) {
-    // Reduce(Reduce(A)) = Reduce(A)
-    MATCH_REPLACE_LAMBDA_FLAG(node, PPrimitive(operation, PPrimitive(operation, x)), reduce_reduce_lambda, operation);
-  }
-  // ReduceSum(Neg(x)) = Neg(ReduceSum(x))
-  MATCH_REPLACE_LAMBDA(node, PPrimitive(prim::kPrimReduceSum, PUnaryOperation(prim::kPrimNeg, x)),
-                       neg_reducesum_lambda);
-  return nullptr;
-}
+#define EXPR_PATTERN(cls) [](const std::string &expr) -> PatternTreePtr { return std::make_shared<cls>(expr); }
 
-// Reduce(Transpose(A))  = Reduce(A) if result is a scalar or vector
-AnfNodePtr SimplifyReduce3(const AnfNodePtr &node) {
-  if (!IsRedOps(node)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x;
-  auto trans_reduce_lambda = [&node, &x](PrimitivePtr &operation) -> AnfNodePtr {
-    auto shape = GetNodeShape(node);
-    if (shape.size() != 0 && shape.size() != 1) {
-      return nullptr;
+static std::vector<Expression> expressions = {
+  // add
+  {1, "Add(A,0)=A", EXPR_PATTERN(PatternTree)},
+  {2, "Add(Mul(A,C),Mul(A,B))=Mul(A,Add(B,C))", EXPR_PATTERN(PatternTree)},
+  {3, "Add(Add(A,const1),const2)=Add(A,Add(const1,const2))", EXPR_PATTERN(PatternTree)},
+  {4, "Add(A,Neg(A))=0", EXPR_PATTERN(PatternTree)},
+  {5, "Add(Add(A,B),Neg(A))=B", EXPR_PATTERN(PatternTree)},
+  {6, "Add(Add(A,B),Add(Neg(A),C))=Add(B,C)", EXPR_PATTERN(PatternTree)},
+  // sub
+  {7, "Sub(A,0)=A", EXPR_PATTERN(PatternTree)},
+  {8, "Sub(A,const1)=Add(A,Neg(const1))", EXPR_PATTERN(PatternTree)},
+  {9, "Sub(Mul(A,C),Mul(A,B))=Mul(A,Sub(B,C))", EXPR_PATTERN(PatternTree)},
+  {10, "Sub(Mul(A,C),Mul(B,C))=Mul(Sub(A,B),C)", EXPR_PATTERN(PatternTree)},
+  // log
+  {11, "Log(Exp(A))=A", EXPR_PATTERN(PatternTree)},
+  {12, "Log(Pow(A,B))=Mul(B,Log(Abs(A)))", EXPR_PATTERN(PatternTree)},
+  {13, "Log(Sqrt(A))=Mul(0.5,Log(A))", EXPR_PATTERN(PatternTree)},
+  {14, "Log(Rsqrt(A))=Mul(-0.5,Log(A))", EXPR_PATTERN(PatternTree)},
+  // pow
+  {15, "Pow(A,1)=A", EXPR_PATTERN(PatternTree)},
+  {16, "Pow(Exp(A),B)=Exp(Mul(A,B))", EXPR_PATTERN(PatternTree)},
+  {17, "Pow(A,2)=Mul(A,A)", EXPR_PATTERN(PatternTree)},
+  {18, "Pow(A,-1)=Reciprocal(A)", EXPR_PATTERN(PatternTree)},
+  // sqrt
+  {19, "Sqrt(Mul(A,A))=Abs(A)", EXPR_PATTERN(PatternTree)},
+  {20, "Rsqrt(Pow(A,-2))=Abs(A)", EXPR_PATTERN(PatternTree)},
+  {21, "Rsqrt(RealDiv(1,A))=Sqrt(A)", EXPR_PATTERN(PatternTree)},
+  {22, "Rsqrt(Reciprocal(A))=Sqrt(A)", EXPR_PATTERN(PatternTree)},
+  // select
+  {23, "Select(A,B,B)=B", EXPR_PATTERN(PatternTree)},
+  // Neg
+  {24, "Neg(Neg(A))=A", EXPR_PATTERN(PatternTree)},
+  // mul
+  {25, "Mul(Mul(A,const1),Mul(B,const2))=Mul(Mul(A,B),Mul(const1,const2))", EXPR_PATTERN(PatternTree)},
+  {26, "Mul(Mul(A,const1),const2)=Mul(A,Mul(const1,const2))", EXPR_PATTERN(PatternTree)},
+  {27, "Mul(Exp(A),Exp(B))=Exp(Add(A,B))", EXPR_PATTERN(PatternTree)},
+  {28, "Mul(Mul(Exp(A),C),Exp(B))=Mul(Exp(Add(A,B)),C)", EXPR_PATTERN(PatternTree)},
+  {29, "Mul(Mul(Exp(A),C),Mul(Exp(B),D))=Mul(Exp(Add(A,B)),Mul(C,D))", EXPR_PATTERN(PatternTree)},
+  {30, "Mul(Sqrt(A),Sqrt(A))=A", EXPR_PATTERN(PatternTree)},
+  {31, "Mul(Mul(A,Sqrt(B)),Mul(C,Sqrt(B)))=Mul(Mul(A,B),C)", EXPR_PATTERN(PatternTree)},
+  {32, "Mul(Mul(A,Sqrt(B)),Sqrt(B))=Mul(A,B)", EXPR_PATTERN(PatternTree)},
+  {33, "Mul(Sqrt(A),Sqrt(B))=Sqrt(Mul(A,B))", EXPR_PATTERN(PatternTree)},
+  {34, "Mul(Rsqrt(A),Rsqrt(A))=Reciprocal(A)", EXPR_PATTERN(PatternTree)},
+  {35, "Mul(Mul(A,Rsqrt(B)),Rsqrt(B))=RealDiv(A,B)", EXPR_PATTERN(PatternTree)},
+  {36, "Mul(Mul(A,Rsqrt(B)),Mul(C,Rsqrt(B)))=RealDiv(Mul(A,C),B)", EXPR_PATTERN(PatternTree)},
+  {37, "Mul(Rsqrt(A),Rsqrt(B))=Rsqrt(Mul(A,B))", EXPR_PATTERN(PatternTree)},
+  {38, "Mul(A,Rsqrt(A))=Sqrt(A)", EXPR_PATTERN(PatternTree)},
+  {39, "Mul(Abs(A),Abs(B))=Abs(Mul(A,B))", EXPR_PATTERN(PatternTree)},
+  {40, "Mul(Mul(Abs(A),C),Abs(B))=Mul(Abs(Mul(A,B)),C)", EXPR_PATTERN(PatternTree)},
+  {41, "Mul(Mul(Abs(A),C),Mul(Abs(B),D))=Mul(Abs(Mul(A,B)),Mul(C,D))", EXPR_PATTERN(PatternTree)},
+  {42, "Mul(Neg(A),const1)=Mul(A,Neg(const1))", EXPR_PATTERN(PatternTree)},
+  // realdiv
+  {43, "RealDiv(A,1)=A", EXPR_PATTERN(PatternTree)},
+  {44, "RealDiv(Exp(A),Exp(B))=Exp(Sub(A,B))", EXPR_PATTERN(PatternTree)},
+  {45, "RealDiv(A,Exp(B))=Mul(A,Exp(Neg(B)))", EXPR_PATTERN(PatternTree)},
+  {46, "RealDiv(A,Pow(B,const1))=Mul(A,Pow(B,Neg(const1)))", EXPR_PATTERN(PatternTree)},
+  {47, "RealDiv(A,Sqrt(A))=Sqrt(A)", EXPR_PATTERN(PatternTree)},
+  {48, "RealDiv(A,Sqrt(B))=Mul(A,Rsqrt(B))", EXPR_PATTERN(PatternTree)},
+  {49, "RealDiv(A,Rsqrt(B))=Mul(A,Sqrt(B))", EXPR_PATTERN(PatternTree)},
+  {50, "RealDiv(A,const1)=Mul(A,Reciprocal(const1))", EXPR_PATTERN(PatternTree)},
+  {51, "RealDiv(RealDiv(A,B),RealDiv(C,D))=RealDiv(Mul(A,D),Mul(B,C))", EXPR_PATTERN(PatternTree)},
+  {52, "RealDiv(Neg(A),const1)=RealDiv(A,Neg(const1))", EXPR_PATTERN(PatternTree)},
+  {53, "RealDiv(RealDiv(A,B),C)=RealDiv(A,Mul(B,C))", EXPR_PATTERN(PatternTree)},
+  {54, "RealDiv(A,RealDiv(B,C))=RealDiv(Mul(A,C),B)", EXPR_PATTERN(PatternTree)},
+  // reduce1
+  {55, "ReduceSum(ReduceSum(A))=ReduceSum(A)", EXPR_PATTERN(ExtraReduce1PatternTree)},
+  {56, "ReduceMin(ReduceMin(A))=ReduceMin(A)", EXPR_PATTERN(ExtraReduce1PatternTree)},
+  {57, "ReduceMax(ReduceMax(A))=ReduceMax(A)", EXPR_PATTERN(ExtraReduce1PatternTree)},
+  // reduce2
+  {58, "ReduceSum(Neg(A))=Neg(ReduceSum(A))", EXPR_PATTERN(ExtraReduce2PatternTree)},
+  {59, "ReduceSum(RealDiv(A,const1))=RealDiv(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
+  {60, "ReduceSum(Mul(A,const1))=Mul(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)}};
+
+std::unordered_map<std::string, std::vector<PatternTreePtr>> GetExpressions() {
+  const auto &flags = context::GraphKernelFlags::GetInstance();
+  std::unordered_map<std::string, std::vector<PatternTreePtr>> expression_map;
+  std::unordered_set<std::string> enable_ids{flags.enable_simplify_exprs_only.begin(),
+                                             flags.enable_simplify_exprs_only.end()};
+  std::unordered_set<std::string> disable_ids{flags.disable_simplify_exprs.begin(), flags.disable_simplify_exprs.end()};
+
+  for (auto &e : expressions) {
+    if (!enable_ids.empty()) {
+      if (enable_ids.count(std::to_string(e.id)) == 0) continue;
     } else {
-      auto tmp_node = node->cast<CNodePtr>();
-      auto transpose_node = tmp_node->input(1);
-      auto transpose_dimensions =
-        GetValue<std::vector<int64_t>>(AnfAlgo::GetNodeAttr<ValuePtr>(transpose_node, "perm"));
-      ShapeVector new_dimensions;
-      auto reduce_dimensions = TransAxisValueToVector(AnfAlgo::GetNodeAttr<ValuePtr>(tmp_node, "axis"));
-      std::transform(reduce_dimensions.begin(), reduce_dimensions.end(), std::back_inserter(new_dimensions),
-                     [&transpose_dimensions](const int64_t &dim) { return transpose_dimensions[dim]; });
-      std::sort(new_dimensions.begin(), new_dimensions.end());
-      auto new_cnode = NewCNodeWithInfo({NewValueNode(operation), x.GetNode(node)}, node);
-      AnfAlgo::SetNodeAttr("axis", MakeValue(new_dimensions), new_cnode);
-      AnfAlgo::CopyNodeAttr("keep_dims", node, new_cnode);
-      return new_cnode;
+      if (disable_ids.count(std::to_string(e.id)) > 0) continue;
     }
-  };
-  for (auto operation : RedOps) {
-    MATCH_REPLACE_LAMBDA_FLAG(node, PPrimitive(operation, PPrimitive(prim::kPrimTranspose, x)), trans_reduce_lambda,
-                              operation);
+    PatternTreePtr pt = e.func(e.math_expr);
+    expression_map[pt->GetRootOp()].push_back(pt);
   }
-  return nullptr;
+  return expression_map;
 }
 
-AnfNodePtr SimplifyReshape(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimReshape)) {
-    return nullptr;
-  }
-  PConstant<AnfNodePtr> any_const(node);
-  auto reshape_const = [&node, &any_const]() -> AnfNodePtr {
-    auto new_node = NewCNodeWithInfo({NewValueNode(prim::kPrimBroadcastTo->Clone()), any_const.GetNode(node)}, node);
-    AnfAlgo::CopyNodeAttr("shape", node, new_node);
-    return new_node;
-  };
-  MATCH_REPLACE_LAMBDA(node, PUnaryOperation(prim::kPrimReshape, any_const), reshape_const);
-  return nullptr;
-}
-
-AnfNodePtr TrySimplify(const AnfNodePtr &node) {
-  std::list<std::function<AnfNodePtr(const AnfNodePtr &)>> SimplifyFuncList = {SimplifyReduce2, SimplifyReshape};
-  for (auto f : SimplifyFuncList) {
-    auto ret = f(node);
-    if (ret != nullptr) {
-      return ret;
-    }
-  }
-  return nullptr;
-}
-
-void InlineSubgraph(const CNodePtr &kernel_node, const FuncGraphPtr &sub_graph, const FuncGraphPtr &main_func_graph) {
-  AnfNodePtrList ins;
-  ins.insert(ins.end(), kernel_node->inputs().begin() + 1, kernel_node->inputs().end());
-  auto out = InlineClone(sub_graph, main_func_graph, ins, kernel_node->input(0)->scope());
-  auto mng = main_func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  mng->Replace(kernel_node, out);
-}
-
-CNodePtr AddIdentityToEmptyPath(const AnfNodePtr &node, const FuncGraphPtr &sub_graph) {
-  if (node->isa<Parameter>() || node->isa<ValueNode>()) {
-    TraceGuard guard(std::make_shared<TraceOpt>(node->debug_info()));
-    auto identity_node = sub_graph->NewCNode({NewValueNode(prim::kPrimIdentity), node});
-    identity_node->set_abstract(node->abstract());
-    sub_graph->AddNode(identity_node);
-    return identity_node;
-  }
-  return nullptr;
-}
-
-// If the return of the subgraph contains input Parameters or a new ValueNode,
-// add identity mapping to them to avoid dealing with empty paths in subgraphs,
-// then inline the subgraph into the main graph
-bool CheckAndInlineEmptyGraph(const AnfNodePtr &node, const FuncGraphPtr &main_func_graph) {
-  if (!AnfAlgo::IsGraphKernel(node)) {
-    MS_LOG(ERROR) << node->ToString() << "is not a graph kernel\n";
-    return false;
-  }
-  auto kernel_node = node->cast<CNodePtr>();
-  auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(kernel_node);
-  auto mng = sub_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(sub_graph, false);
-    sub_graph->set_manager(mng);
-  }
-  auto sub_return = sub_graph->get_return();
-  auto pred_node_of_return = sub_return->input(1);
-  bool ret = false;
-  if (!IsPrimitiveCNode(pred_node_of_return, prim::kPrimMakeTuple)) {  // Single output
-    auto new_cnode = AddIdentityToEmptyPath(pred_node_of_return, sub_graph);
-    if (new_cnode != nullptr) {
-      sub_return->set_input(1, new_cnode);
-      ret = true;
-    }
-  } else {  // Multiple output
-    auto maketuple_node = pred_node_of_return->cast<CNodePtr>();
-    size_t size_ret = maketuple_node->inputs().size();
-    size_t empty_path_cnt = 0;
-    for (size_t i = 1; i < size_ret; i++) {
-      auto tmp_node = maketuple_node->input(i);
-      auto new_cnode = AddIdentityToEmptyPath(tmp_node, sub_graph);
-      if (new_cnode != nullptr) {
-        maketuple_node->set_input(i, new_cnode);
-        empty_path_cnt++;
-      }
-    }
-    if (empty_path_cnt == 0) {  // normal subgraph
-      return false;
-    } else if (empty_path_cnt < size_ret - 1) {
-      MS_EXCEPTION(NotSupportError);
-      return false;
-    } else {  // empty subgraph
-      ret = true;
-    }
-  }
-  if (ret) {
-    InlineSubgraph(kernel_node, sub_graph, main_func_graph);
-  }
-  return ret;
-}
-
-AnfNodePtr MatchIdentity(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimIdentity)) {
-    return nullptr;
-  }
-  PatternNode<AnfNodePtr> x;
-  MATCH_REPLACE(node, PUnaryOperation(prim::kPrimIdentity, x), x);
-  return nullptr;
-}
-
-void EliminateEmptyGraph(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto mng = func_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(func_graph, false);
-    func_graph->set_manager(mng);
-  }
-  bool empty_graph = false;
-  auto cnodes = func_graph->GetOrderedCnodes();
-  for (auto cnode : cnodes) {
-    if (AnfAlgo::IsGraphKernel(cnode)) {
-      empty_graph = empty_graph || CheckAndInlineEmptyGraph(cnode, func_graph);
-    }
-  }
-  if (empty_graph) {
-    cnodes = func_graph->GetOrderedCnodes();
-    for (auto cnode : cnodes) {
-      auto node = cnode->cast<AnfNodePtr>();
-      auto new_node = MatchIdentity(node);
-      if (new_node != nullptr) {
-        if (!mng->Replace(node, new_node)) {
-          MS_LOG(EXCEPTION) << "Manager replace node failed in arithmetic simplify";
+// arithmetic simplify
+bool ArithmeticSimplify::DoArithmeticTrans(const graphkernel::LiteGraphPtr &litegraph) {
+  auto ops_list = litegraph->ops();
+  bool changed = false;
+  graphkernel::NodePtrList matched_nodes;
+  auto para_to_ref = std::make_shared<ParaMap>();    // A（B，C ...)->Node* mapping
+  auto const_to_ref = std::make_shared<ConstMap>();  // const->Node* mapping
+  PatternTreePtr cur_pattern;
+  auto iter = ops_list.rbegin();
+  while (iter != ops_list.rend()) {
+    bool can_simplify = false;
+    auto this_op = std::static_pointer_cast<graphkernel::PrimOp>(*iter)->op();
+    if (expressions_map_.find(this_op) != expressions_map_.end()) {
+      for (auto p : expressions_map_[this_op]) {
+        cur_pattern = p;
+        if (!para_to_ref->empty()) {
+          para_to_ref->clear();
+        }
+        if (!const_to_ref->empty()) {
+          const_to_ref->clear();
+        }
+        // match a pattern;if return is empty,then fails to match
+        matched_nodes = p->MatchGraph(*iter, para_to_ref, const_to_ref);
+        if (!matched_nodes.empty()) {
+          if (OutsideRely(matched_nodes, *iter)) {
+            continue;
+          }
+          // if no outside rely,then this is a successful match
+          can_simplify = true;
+          // get the new node to replace
+          graphkernel::NodePtr alter_graph_node = cur_pattern->AlterGraph(para_to_ref, const_to_ref, *iter);
+          (*iter)->ReplaceWith(alter_graph_node);
+          ops_list = litegraph->GetOrderedNodes();
+          iter = ops_list.rbegin();
+          changed = true;
+          break;
         }
       }
     }
+    if (!can_simplify) {
+      iter++;
+    }
   }
+  return changed;
+}
+
+// constant fold
+bool ArithmeticSimplify::DoConstantFold(const graphkernel::LiteGraphPtr &litegraph) {
+  auto ops_list = litegraph->GetOrderedNodes();
+  bool changed = false;
+  auto iter = ops_list.begin();
+  while (iter != ops_list.end()) {
+    auto this_op = std::static_pointer_cast<graphkernel::PrimOp>(*iter);
+    auto value = this_op->InferValue(this_op->inputs(), this_op->attrs(), this_op->op());
+    if (value != nullptr) {
+      (*iter)->ReplaceWith(value);
+      ops_list = litegraph->GetOrderedNodes();
+      iter = ops_list.begin();
+      changed = true;
+    } else {
+      iter++;
+    }
+  }
+  return changed;
 }
 
 bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
   auto mng = func_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(func_graph, true);
-    func_graph->set_manager(mng);
-  }
-  bool replaced = false;
+  bool do_simplify = false;
+  expressions_map_ = GetExpressions();
   for (auto node : func_graph->GetOrderedCnodes()) {
     if (AnfAlgo::IsGraphKernel(node)) {
       auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-      auto mng_sub = sub_graph->manager();
-      if (mng_sub == nullptr) {
-        mng_sub = Manage(sub_graph, false);
-        sub_graph->set_manager(mng_sub);
+      graphkernel::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
+      bool find_pattern = true;
+      bool change_anf_graph = false;
+      while (find_pattern) {
+        find_pattern = false;
+        find_pattern = DoArithmeticTrans(lg) || find_pattern;
+        find_pattern = DoConstantFold(lg) || find_pattern;
+        change_anf_graph = change_anf_graph || find_pattern;
       }
-      bool need_traverse = true;
-      while (need_traverse) {
-        need_traverse = false;
-        for (auto node_sub : sub_graph->GetOrderedCnodes()) {
-          auto new_node = TrySimplify(node_sub);
-          if (new_node != nullptr) {
-            PERFORM_REPLACE(node_sub->cast<AnfNodePtr>(), new_node, sub_graph, replaced);
-            need_traverse = true;
-            break;
-          }
-        }
-      }
+      if (!change_anf_graph) continue;
+      AnfNodePtrList outputs;
+      auto new_funcgraph = LiteGraph2AnfGraph(lg, &outputs);
+      new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+      auto cnode = node->cast<CNodePtr>();
+      AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
+      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs, outputs);
+      SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
+      mng->Replace(node, new_node);
+      mng->AddFuncGraph(new_funcgraph);
+      do_simplify = true;
     }
   }
-  EliminateEmptyGraph(func_graph);
-  return replaced;
+  return do_simplify;
 }
 }  // namespace opt
 }  // namespace mindspore

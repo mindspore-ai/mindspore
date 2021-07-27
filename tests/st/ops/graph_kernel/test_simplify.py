@@ -32,6 +32,7 @@ class Net(Cell):
         self.pow = P.Pow()
         self.neg = P.Neg()
         self.reducemin = P.ReduceMin()
+        self.reducesum = P.ReduceSum(keep_dims=True)
         self.reshape = P.Reshape()
 
     def construct(self, x, y):
@@ -44,7 +45,9 @@ class Net(Cell):
         neg_res = self.neg(self.neg(pow_res))
         add_res3 = self.add(neg_res, div_res)
         resh_res = self.reshape(add_res3, (2, 12, 3))
-        return self.reducemin(resh_res, 1)
+        neg_res = self.neg(resh_res)
+        red_res = self.reducesum(neg_res, 0)
+        return self.reducemin(self.reducemin(red_res, 1), 1)
 
 
 def test_basic():
@@ -58,7 +61,9 @@ def test_basic():
     pow_res = input_y * input_y
     neg_res = pow_res
     add_res3 = neg_res + div_res
-    expect = np.min(add_res3, (1, 2))
+    neg_res = np.negative(add_res3)
+    red_res = np.sum(neg_res, axis=0, keepdims=True)
+    expect = np.min(red_res, (1, 2, 3))
 
     net = Net()
     result = net(Tensor(input_x), Tensor(input_y))
