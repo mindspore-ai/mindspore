@@ -410,66 +410,9 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         if not np.greater(max_array, min_array).all():
             raise ValueError("`min_init` is not less than `max_init`, please reset the initial value.")
         if self.mode == "DEFAULT":
-            # init tensor min and max for fake quantized operation
-            self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
-            self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
-
-            # init fake quant relative op
-            if self.per_channel:
-                quant_fun = partial(Q.FakeQuantPerChannel, channel_axis=self.channel_axis)
-                ema_fun = partial(Q.MinMaxUpdatePerChannel, channel_axis=self.channel_axis)
-            else:
-                quant_fun = Q.FakeQuantPerLayer
-                ema_fun = Q.MinMaxUpdatePerLayer
-
-            self.ema_update = ema_fun(ema=self.ema, ema_decay=self.ema_decay)
-            if self.is_ascend:
-                self.fake_quant_train = quant_fun(num_bits=self.quant_dtype.num_bits,
-                                                  symmetric=self.symmetric,
-                                                  narrow_range=self.narrow_range,
-                                                  quant_delay=self.quant_delay)
-                self.fake_quant_infer = self.fake_quant_train
-            else:
-                quant_fun = partial(quant_fun,
-                                    ema=self.ema,
-                                    ema_decay=ema_decay,
-                                    num_bits=self.quant_dtype.num_bits,
-                                    symmetric=self.symmetric,
-                                    narrow_range=self.narrow_range,
-                                    quant_delay=self.quant_delay)
-                self.fake_quant_train = quant_fun(training=True)
-                self.fake_quant_infer = quant_fun(training=False)
+            self._default_init(min_array, max_array)
         elif self.mode == "LEARNED_SCALE":
-            if not self.symmetric:
-                raise ValueError("The 'LEARNED_SCALE' mode only support symmetric quant, "
-                                 "please set symmetric to True.")
-            if self.neg_trunc:
-                min_array = self._get_init_array(0)
-                if self.narrow_range:
-                    raise ValueError("The 'LEARNED_SCALE' mode only support the combination of "
-                                     "neg_trunc=True and narrow_range=False config scenario.")
-            elif not self.narrow_range:
-                raise ValueError("The 'LEARNED_SCALE' mode only support narrow_range=True config, "
-                                 "except for neg_trunc=True scenario.")
-
-            self._calculate_quant_max()
-
-            self.minq = Parameter(Tensor(min_array), name='minq')
-            self.maxq = Parameter(Tensor(max_array), name='maxq')
-            self.quant_max = Parameter(Tensor(np.array([self._quant_max]).astype(np.float32)),
-                                       name="quant_max", requires_grad=False)
-
-            # init fake quant relative op
-            if self.per_channel:
-                quant_fun = partial(Q.FakeLearnedScaleQuantPerChannel, channel_axis=self.channel_axis)
-            else:
-                quant_fun = Q.FakeLearnedScaleQuantPerLayer
-
-            quant_fun = partial(quant_fun,
-                                quant_delay=self.quant_delay,
-                                neg_trunc=self.neg_trunc)
-            self.fake_quant_train = quant_fun(training=True)
-            self.fake_quant_infer = quant_fun(training=False)
+            self._learned_scale_init(min_array, max_array)
         else:
             raise ValueError("Invalid mode, currently only valid for `DEFAULT` and `LEARNED_SCALE` mode.")
 
@@ -496,6 +439,75 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
             self.quant_max.set_data(Tensor(np.array([self._quant_max]).astype(np.float32)))
         else:
             raise ValueError("The `reset` function is currently only valid for `LEARNED_SCALE` mode.")
+
+    def _default_init(self, min_array, max_array):
+        """
+        Initialization of `DEFAULT`(QAT) mode.
+        """
+        # init tensor min and max for fake quantized operation
+        self.minq = Parameter(Tensor(min_array), name='quant_min', requires_grad=False)
+        self.maxq = Parameter(Tensor(max_array), name='quant_max', requires_grad=False)
+
+        # init fake quant relative op
+        if self.per_channel:
+            quant_fun = partial(Q.FakeQuantPerChannel, channel_axis=self.channel_axis)
+            ema_fun = partial(Q.MinMaxUpdatePerChannel, channel_axis=self.channel_axis)
+        else:
+            quant_fun = Q.FakeQuantPerLayer
+            ema_fun = Q.MinMaxUpdatePerLayer
+
+        self.ema_update = ema_fun(ema=self.ema, ema_decay=self.ema_decay)
+        if self.is_ascend:
+            self.fake_quant_train = quant_fun(num_bits=self.quant_dtype.num_bits,
+                                              symmetric=self.symmetric,
+                                              narrow_range=self.narrow_range,
+                                              quant_delay=self.quant_delay)
+            self.fake_quant_infer = self.fake_quant_train
+        else:
+            quant_fun = partial(quant_fun,
+                                ema=self.ema,
+                                ema_decay=self.ema_decay,
+                                num_bits=self.quant_dtype.num_bits,
+                                symmetric=self.symmetric,
+                                narrow_range=self.narrow_range,
+                                quant_delay=self.quant_delay)
+            self.fake_quant_train = quant_fun(training=True)
+            self.fake_quant_infer = quant_fun(training=False)
+
+    def _learned_scale_init(self, min_array, max_array):
+        """
+        Initialization of `LEARNED_SCALE` mode.
+        """
+        if not self.symmetric:
+            raise ValueError("The 'LEARNED_SCALE' mode only support symmetric quant, "
+                             "please set symmetric to True.")
+        if self.neg_trunc:
+            min_array = self._get_init_array(0)
+            if self.narrow_range:
+                raise ValueError("The 'LEARNED_SCALE' mode only support the combination of "
+                                 "neg_trunc=True and narrow_range=False config scenario.")
+        elif not self.narrow_range:
+            raise ValueError("The 'LEARNED_SCALE' mode only support narrow_range=True config, "
+                             "except for neg_trunc=True scenario.")
+
+        self._calculate_quant_max()
+
+        self.minq = Parameter(Tensor(min_array), name='minq')
+        self.maxq = Parameter(Tensor(max_array), name='maxq')
+        self.quant_max = Parameter(Tensor(np.array([self._quant_max]).astype(np.float32)),
+                                   name="quant_max", requires_grad=False)
+
+        # init fake quant relative op
+        if self.per_channel:
+            quant_fun = partial(Q.FakeLearnedScaleQuantPerChannel, channel_axis=self.channel_axis)
+        else:
+            quant_fun = Q.FakeLearnedScaleQuantPerLayer
+
+        quant_fun = partial(quant_fun,
+                            quant_delay=self.quant_delay,
+                            neg_trunc=self.neg_trunc)
+        self.fake_quant_train = quant_fun(training=True)
+        self.fake_quant_infer = quant_fun(training=False)
 
     def _get_init_array(self, init_date):
         """
@@ -700,10 +712,9 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.format = Validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         self._target = context.get_context("device_target")
         self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
+        self.is_ge_backend = False
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
-        else:
-            self.is_ge_backend = False
         self.enable_default_train = self.is_graph_mode and \
                                     (self.is_ge_backend or self._target == "Ascend")
 
@@ -720,10 +731,9 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.channel_axis = channel_axis
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.bias_add = P.BiasAdd()
+        self.bias = None
         if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
-        else:
-            self.bias = None
 
         # initialize BatchNorm Parameter
         self.gamma = Parameter(initializer(gamma_init, [out_channels]), name='gamma')
@@ -953,10 +963,9 @@ class Conv2dBnFoldQuant(Cell):
         channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.bias_add = P.BiasAdd()
+        self.bias = None
         if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
-        else:
-            self.bias = None
 
         # initialize BatchNorm Parameter
         self.gamma = Parameter(initializer(gamma_init, [out_channels]), name='gamma')
