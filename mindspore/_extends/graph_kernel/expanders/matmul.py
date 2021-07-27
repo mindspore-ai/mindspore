@@ -25,7 +25,7 @@ class MatMul(Expander):
     """
 
     def __init__(self, expand_info):
-        super().__init__(expand_info)
+        super(MatMul, self).__init__(expand_info)
         self.transpose_a = self.attrs['transpose_a']
         self.transpose_b = self.attrs['transpose_b']
         self.left_format = self.attrs['left_format']
@@ -48,7 +48,8 @@ class MatMul(Expander):
         if input_num < 2:
             raise GKException("matul inputs number should bigger than 1, but got {}.".format(input_num))
 
-    def _trans_shape(self, shape):
+    @staticmethod
+    def _trans_shape(shape):
         trans_shape = list(shape)
         trans_shape[-2] = shape[-1]
         trans_shape[-1] = shape[-2]

@@ -28,11 +28,13 @@ class GraphBuilder:
             self.graph = Graph(name, [])
 
         def set_input(self, *para):
+            """set input to graph inputs"""
             for t in para:
                 t.para_type = Tensor.PARA_INPUT
                 self.graph.inputs.append(t)
 
         def set_output(self, *para):
+            """set output to graph outputs"""
             for t in para:
                 t.para_type = Tensor.PARA_OUTPUT
                 self.graph.outputs.append(t)
@@ -50,6 +52,8 @@ class GraphBuilder:
     def graph_scope(self, name):
         """The graph scope to be processed"""
         class GraphScope:
+            """Graph Scope"""
+
             def __init__(self, gb):
                 self.gb = gb
 
@@ -105,6 +109,7 @@ class GraphBuilder:
         return output
 
     def get(self):
+        """Get graphs"""
         return self.graphs
 
 
@@ -196,6 +201,7 @@ class CompositeGraph:
         self.desc = desc
 
     def add_stitch_info(self, subgraph, desc):
+        """add stitch info to desc"""
         if subgraph.stitch_info and subgraph.stitch_info.stitch_ops:
             buffer_stitch = {'stitch_op': list(subgraph.stitch_info.stitch_ops)}
             if subgraph.stitch_info.stitch_atomic_ops:
@@ -204,6 +210,7 @@ class CompositeGraph:
         return desc
 
     def add_recompute_ops(self, subgraph, desc):
+        """add recompute ops to desc"""
         if subgraph.recompute_ops:
             desc['recompute_ops'] = [op.output.name for op in subgraph.recompute_ops]
         return desc
