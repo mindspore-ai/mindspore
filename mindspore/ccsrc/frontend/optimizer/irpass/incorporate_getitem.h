@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class GetitemTransform {
   GetitemTransform() : cache_() {}
   ~GetitemTransform() = default;
 
-  FuncGraphPtr operator()(const FuncGraphPtr &fg, int64_t idx) {
+  FuncGraphPtr operator()(const AnfNodePtr &node, const FuncGraphPtr &fg, int64_t idx) {
     if (cache_.find(fg) == cache_.end()) {
       cache_[fg] = {};
     }
@@ -61,7 +61,11 @@ class GetitemTransform {
         }
         new_fg->set_output(cnode->input(ids));
       } else {
-        new_fg->set_output(new_fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), output, NewValueNode(idx)}));
+        auto idx_node = NewValueNode(idx);
+        idx_node->set_abstract(std::make_shared<abstract::AbstractScalar>(idx));
+        auto output_node = new_fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), output, idx_node});
+        output_node->set_abstract(node->abstract());
+        new_fg->set_output(output_node);
       }
 
       cache[idx] = new_fg;
@@ -78,7 +82,7 @@ class GetItemTransformACrossGraph {
   GetItemTransformACrossGraph() : cache_() {}
   ~GetItemTransformACrossGraph() = default;
 
-  FuncGraphPtr operator()(const FuncGraphPtr &fg, int64_t idx) {
+  FuncGraphPtr operator()(const AnfNodePtr &node, const FuncGraphPtr &fg, int64_t idx) {
     if (cache_.find(fg) == cache_.end()) {
       cache_[fg] = {};
     }
@@ -109,7 +113,11 @@ class GetItemTransformACrossGraph {
         }
         new_fg->set_output(cnode->input(ids));
       } else {
-        new_fg->set_output(new_fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), output, NewValueNode(idx)}));
+        auto idx_node = NewValueNode(idx);
+        idx_node->set_abstract(std::make_shared<abstract::AbstractScalar>(idx));
+        auto output_node = new_fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), output, idx_node});
+        output_node->set_abstract(node->abstract());
+        new_fg->set_output(output_node);
       }
 
       cache[idx] = new_fg_outer;
@@ -136,7 +144,7 @@ class IncorporateGetitem : public AnfVisitor {
       return nullptr;
     }
 
-    auto new_fg = getitem_transform_(fg_, idx_);
+    auto new_fg = getitem_transform_(node, fg_, idx_);
     (void)args_.insert(args_.begin(), NewValueNode(new_fg));
     auto new_node = node->func_graph()->NewCNode(args_);
     // Check if the another only usage of {G, Xs} is UpdateState{s, {G, Xs}}, if yes, replace
@@ -213,7 +221,7 @@ class IncorporateGetitemDepend : public AnfVisitor {
       return nullptr;
     }
 
-    auto new_fg = getitem_transform_(fg_, idx_);
+    auto new_fg = getitem_transform_(node, fg_, idx_);
     (void)args_.insert(args_.begin(), NewValueNode(new_fg));
     auto new_fg_cnode = node->func_graph()->NewCNode(args_);
     AnfNodePtr new_depend_cnode;
@@ -333,8 +341,8 @@ class IncorporateGetitemSwitch : public AnfVisitor {
         !ExistEnvNodeInTupleItem(g2_) && !has_env_type) {
       return nullptr;
     }
-    auto new_g1 = getitem_transform_(g1_, idx_);
-    auto new_g2 = getitem_transform_(g2_, idx_);
+    auto new_g1 = getitem_transform_(node, g1_, idx_);
+    auto new_g2 = getitem_transform_(node, g2_, idx_);
     auto sw_node = fg->NewCNode({NewValueNode(prim::kPrimSwitch), x_, NewValueNode(new_g1), NewValueNode(new_g2)});
     (void)args_.insert(args_.begin(), sw_node);
 
@@ -463,7 +471,7 @@ class IncorporateGetitemSwitchLayerA : public AnfVisitor {
 
     std::vector<AnfNodePtr> layers;
     for (auto &graph : graphs_) {
-      auto fg_transform = getitem_transform_(graph, idx_);
+      auto fg_transform = getitem_transform_(node, graph, idx_);
       if (fg_transform == nullptr) {
         return nullptr;
       }
@@ -554,7 +562,7 @@ class IncorporateGetitemSwitchLayerB : public AnfVisitor {
 
     std::vector<AnfNodePtr> layers;
     for (auto &graph : graphs_) {
-      auto fg_transform = getitem_transform_(graph, idx_);
+      auto fg_transform = getitem_transform_(node, graph, idx_);
       if (fg_transform == nullptr) {
         return nullptr;
       }

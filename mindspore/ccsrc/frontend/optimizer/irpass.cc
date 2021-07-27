@@ -49,7 +49,6 @@
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/switch_or_switch_layer_defer_inline.h"
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
-#include "frontend/optimizer/irpass/bool_scalar_eliminate.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 
 namespace mindspore {
@@ -255,8 +254,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // switch_layer defer inline
   switch_layer_defer_inline_ =
     MakeSubstitution(std::make_shared<SwitchLayerDeferInline>(), "switch_layer_defer_inline", prim::kPrimSwitchLayer);
-
-  bool_scalar_eliminate_ = MakeSubstitution(std::make_shared<BoolScalarEliminate>(), "bool_scalar_eliminate_", IsCNode);
 
   // recompute
   set_cell_output_no_recompute_ = MakeSubstitution(std::make_shared<SetCellOutputNoRecompute>(),

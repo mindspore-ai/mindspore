@@ -159,10 +159,10 @@ class ChoicePartialEliminater : public AnfVisitor {
       if (fg->func_graph_cnodes_index().size() != 1) {
         // If a graph is used by 2 or more partial nodes at the same time, clone the graph.
         auto new_fg = BasicClone(fg);
-        auto new_fg_node = NewValueNode(new_fg);
-        MS_EXCEPTION_IF_NULL(fg->manager());
-        fg->manager()->Replace(fg_node, new_fg_node);
-        fg_list_[i] = new_fg_node;
+        auto manager = fg->manager();
+        MS_EXCEPTION_IF_NULL(manager);
+        manager->AddFuncGraph(new_fg);
+        fg_node->cast<ValueNodePtr>()->set_value(new_fg);
       }
     }
     return true;
