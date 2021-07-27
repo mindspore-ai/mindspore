@@ -54,7 +54,7 @@ int CumSumCPUKernel::Init() {
 }
 
 int CumSumCPUKernel::ReSize() {
-  MS_ASSERT(in_tensors_.size() == 2);
+  MS_ASSERT(in_tensors_.size() == kInputSize1);
   auto input_tensor = in_tensors_.at(0);
   auto axis_tensor = in_tensors_.at(1);
   int *axis_data = reinterpret_cast<int *>(axis_tensor->data_c());
