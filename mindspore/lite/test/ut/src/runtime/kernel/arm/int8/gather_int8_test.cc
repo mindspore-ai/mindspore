@@ -38,13 +38,13 @@ TEST_F(TestGatherInt8, GatherTest) {
   op_param.axis_ = 0;
   std::vector<int> shape = {2, 1, 3, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
-  lite::QuantArg input_quant_arg_1;
+  lite::LiteQuantParam input_quant_arg_1;
   input_quant_arg_1.scale = 0.5;
   input_quant_arg_1.zeroPoint = 2;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 0.1;
   output_quant_arg.zeroPoint = 1;
 

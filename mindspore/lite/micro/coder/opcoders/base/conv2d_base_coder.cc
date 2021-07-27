@@ -184,7 +184,7 @@ int Conv2DBaseCoder::MallocQuantParam() {
 int Conv2DBaseCoder::SetInputTensorQuantParam() {
   size_t in_arg_num = conv_quant_arg_->input_arg_num_;
   if (in_arg_num == kPerTensor) {
-    QuantArg input_quant_arg = input_tensor_->quant_params().at(0);
+    LiteQuantParam input_quant_arg = input_tensor_->quant_params().at(0);
     conv_quant_arg_->input_quant_args_[0].zp_ = input_quant_arg.zeroPoint;
     conv_quant_arg_->input_quant_args_[0].scale_ = static_cast<float>(input_quant_arg.scale);
     return RET_OK;
@@ -198,11 +198,11 @@ int Conv2DBaseCoder::SetInputTensorQuantParam() {
 int Conv2DBaseCoder::SetFilterTensorQuantParam() {
   size_t weight_arg_num = conv_quant_arg_->filter_arg_num_;
   if (weight_arg_num == kPerTensor) {
-    QuantArg weight_quant_arg = filter_tensor_->quant_params().at(0);
+    LiteQuantParam weight_quant_arg = filter_tensor_->quant_params().at(0);
     conv_quant_arg_->filter_quant_args_[0].zp_ = weight_quant_arg.zeroPoint;
     conv_quant_arg_->filter_quant_args_[0].scale_ = static_cast<float>(weight_quant_arg.scale);
   } else {
-    std::vector<QuantArg> weight_quant_arg = filter_tensor_->quant_params();
+    std::vector<LiteQuantParam> weight_quant_arg = filter_tensor_->quant_params();
     for (int i = 0; i < static_cast<int>(weight_arg_num); ++i) {
       conv_quant_arg_->filter_quant_args_[i].zp_ = weight_quant_arg[i].zeroPoint;
       conv_quant_arg_->filter_quant_args_[i].scale_ = static_cast<float>(weight_quant_arg[i].scale);
@@ -214,7 +214,7 @@ int Conv2DBaseCoder::SetFilterTensorQuantParam() {
 int Conv2DBaseCoder::SetOutputTensorQuantParam() {
   size_t out_arg_num = conv_quant_arg_->output_arg_num_;
   if (out_arg_num == kPerTensor) {
-    QuantArg output_quant_arg = output_tensor_->quant_params().at(0);
+    LiteQuantParam output_quant_arg = output_tensor_->quant_params().at(0);
     conv_quant_arg_->output_quant_args_[0].zp_ = output_quant_arg.zeroPoint;
     conv_quant_arg_->output_quant_args_[0].scale_ = static_cast<float>(output_quant_arg.scale);
   } else {

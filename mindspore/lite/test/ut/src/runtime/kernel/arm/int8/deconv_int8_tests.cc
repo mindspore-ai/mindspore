@@ -28,7 +28,7 @@
 using mindspore::lite::DeviceType;
 
 namespace mindspore {
-using mindspore::lite::QuantArg;
+using mindspore::lite::LiteQuantParam;
 using mindspore::lite::Tensor;
 class TestDeconvInt8 : public mindspore::CommonTest {
  public:
@@ -277,7 +277,7 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
   in_t->MallocData();
   int8_t in[] = {6, 43, 38, 24, -8, 12, 41, -24, -20, 41, -19, -6, -26, -6, 23, -31, 34, 45, 8, 45, -39, -27, -48, 12};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
-  auto *in_quant_arg = new QuantArg();
+  auto *in_quant_arg = new LiteQuantParam();
   in_quant_arg->zeroPoint = -19, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
@@ -288,14 +288,14 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
                      64, 76, 92, 80,  90, 87, 106, 55, 105, 60, 75,  53, 81, 81, 98, 81, 86, 59,
                      74, 82, 97, 105, 71, 67, 79,  87, 72,  79, 80,  76, 96, 80, 83, 71, 61, 79};
   memcpy(weight_t->MutableData(), weight, sizeof(int8_t) * weight_t->ElementsNum());
-  auto *w_quant_arg = new QuantArg();
+  auto *w_quant_arg = new LiteQuantParam();
   w_quant_arg->zeroPoint = 83, w_quant_arg->scale = 0.023649725490196;
   weight_t->AddQuantParam(*w_quant_arg);
   inputs_->push_back(weight_t);
 
   auto *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, mindspore::NHWC, lite::Tensor::Category::VAR);
   out_t->MallocData();
-  auto *out_quant_arg = new QuantArg();
+  auto *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 31, out_quant_arg->scale = 0.3439215686275;
   out_t->AddQuantParam(*out_quant_arg);
   outputs_->push_back(out_t);

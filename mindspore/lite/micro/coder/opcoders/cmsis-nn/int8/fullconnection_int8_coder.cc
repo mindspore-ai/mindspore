@@ -55,9 +55,9 @@ int FullConnectionInt8Coder::SetParameters() {
   MS_CHECK_TRUE(!input_tensor_->quant_params().empty(), "input quant_params is empty");
   MS_CHECK_TRUE(!filter_tensor_->quant_params().empty(), "filter quant_params is empty");
   MS_CHECK_TRUE(!output_tensor_->quant_params().empty(), "output quant_params is empty");
-  QuantArg input_quant_arg = input_tensor_->quant_params().at(0);
-  QuantArg filter_quant_arg = filter_tensor_->quant_params().at(0);
-  QuantArg output_quant_arg = output_tensor_->quant_params().at(0);
+  LiteQuantParam input_quant_arg = input_tensor_->quant_params().at(0);
+  LiteQuantParam filter_quant_arg = filter_tensor_->quant_params().at(0);
+  LiteQuantParam output_quant_arg = output_tensor_->quant_params().at(0);
 
   double real_multiplier = input_quant_arg.scale * filter_quant_arg.scale / output_quant_arg.scale;
   QuantizeMultiplier(real_multiplier, &out_multiplier_, &out_shift_);

@@ -29,10 +29,10 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 namespace mindspore::kernel {
 int Unsqueezeint8CPUKernel::Init() {
   auto *input_tensor = in_tensors_.at(0);
-  auto quant_args = input_tensor->quant_params();
-  MS_ASSERT(quant_args.size() == 1);
-  param_->quant_arg.in_quant_args_.scale_ = quant_args.front().scale;
-  param_->quant_arg.in_quant_args_.zp_ = quant_args.front().zeroPoint;
+  auto quant_params = input_tensor->quant_params();
+  MS_ASSERT(quant_params.size() == 1);
+  param_->quant_arg.in_quant_args_.scale_ = quant_params.front().scale;
+  param_->quant_arg.in_quant_args_.zp_ = quant_params.front().zeroPoint;
 
   auto out_quant_args = input_tensor->quant_params();
   param_->quant_arg.out_quant_args_.scale_ = out_quant_args.front().scale;

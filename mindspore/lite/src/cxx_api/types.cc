@@ -25,9 +25,6 @@
 #include "include/version.h"
 
 namespace mindspore {
-namespace {
-constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
-}
 class Buffer::Impl {
  public:
   Impl() : data_() { MS_LOG(ERROR) << "Unsupported feature."; }
@@ -317,6 +314,22 @@ void MSTensor::SetData(void *data) {
     return;
   }
   return impl_->SetData(data);
+}
+
+std::vector<QuantParam> MSTensor::QuantParams() const {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return std::vector<QuantParam>{};
+  }
+  return impl_->QuantParams();
+}
+
+void MSTensor::SetQuantParams(std::vector<QuantParam> quant_params) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor implement.";
+    return;
+  }
+  return impl_->SetQuantParams(quant_params);
 }
 
 Buffer::Buffer() : impl_(nullptr) { MS_LOG(ERROR) << "Unsupported feature."; }

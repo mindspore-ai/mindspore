@@ -34,7 +34,7 @@
 
 namespace mindspore {
 namespace lite {
-struct QuantArg {
+struct LiteQuantParam {
   double scale;
   int32_t zeroPoint;
   float var_corr{1};
@@ -162,9 +162,11 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   std::string ToString() const;
 
-  void AddQuantParam(const QuantArg &quant_arg);
+  void AddQuantParam(const LiteQuantParam &quant_param);
 
-  std::vector<QuantArg> quant_params() const;
+  std::vector<LiteQuantParam> quant_params() const override;
+
+  void set_quant_params(std::vector<LiteQuantParam>) override;
 
   std::vector<float> quant_clusters() const;
 
@@ -242,7 +244,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   Category category_;
   std::atomic_int ref_count_ = {0};
   size_t init_ref_count_ = 0;
-  std::vector<QuantArg> quant_params_;
+  std::vector<LiteQuantParam> quant_params_;
   std::vector<float> quant_clusters_;
   AllocatorPtr allocator_ = nullptr;
   Tensor *root_tensor_ = nullptr;

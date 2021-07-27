@@ -29,6 +29,7 @@
 #include "include/errorcode.h"
 #include "include/lite_utils.h"
 #include "include/ms_tensor.h"
+#include "src/tensor.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
@@ -193,6 +194,39 @@ class MSTensor::Impl {
       return;
     }
     lite_tensor_->set_data(data);
+  }
+
+  virtual std::vector<QuantParam> QuantParams() const {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return std::vector<QuantParam>{};
+    }
+    auto lite_quant_params = lite_tensor_->quant_params();
+    std::vector<QuantParam> quant_params;
+    for (size_t i = 0; i < lite_quant_params.size(); i++) {
+      QuantParam param;
+      param.bit_num = lite_quant_params[i].bitNum;
+      param.scale = lite_quant_params[i].scale;
+      param.zero_point = lite_quant_params[i].zeroPoint;
+      quant_params.push_back(param);
+    }
+    return quant_params;
+  }
+
+  void SetQuantParams(std::vector<QuantParam> quant_params) {
+    if (lite_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "Invalid tensor.";
+      return;
+    }
+    std::vector<lite::LiteQuantParam> lite_quant_params;
+    for (size_t i = 0; i < quant_params.size(); i++) {
+      lite::LiteQuantParam lite_arg;
+      lite_arg.bitNum = quant_params[i].bit_num;
+      lite_arg.scale = quant_params[i].scale;
+      lite_arg.zeroPoint = quant_params[i].zero_point;
+      lite_quant_params.push_back(lite_arg);
+    }
+    lite_tensor_->set_quant_params(lite_quant_params);
   }
 
   virtual bool IsDevice() const { return false; }

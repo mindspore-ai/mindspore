@@ -39,10 +39,10 @@ TEST_F(TestPowerInt8, PowerInt8) {
   op_param.scale_ = 1;
   op_param.shift_ = 0;
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.0156863;
   input_quant_arg.zeroPoint = -128;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 0.0627451;
   output_quant_arg.zeroPoint = -128;
 
@@ -96,15 +96,15 @@ TEST_F(TestPowerInt8, normal) {
   op_param.scale_ = 1;
   op_param.shift_ = 0;
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.0156863;
   input_quant_arg.zeroPoint = -128;
 
-  lite::QuantArg exp_quant_arg;
+  lite::LiteQuantParam exp_quant_arg;
   exp_quant_arg.scale = 0.0156863;
   exp_quant_arg.zeroPoint = -128;
 
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 0.0352941;
   output_quant_arg.zeroPoint = -128;
 

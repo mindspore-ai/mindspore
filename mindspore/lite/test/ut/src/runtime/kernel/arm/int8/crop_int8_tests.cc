@@ -39,10 +39,10 @@ TEST_F(TestCropInt8, crop_1d_axis0_offset0_quant0_thread2) {
   const int output_size = 7;
   int8_t output[7];
   std::vector<int> output_shape = {7};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -105,10 +105,10 @@ TEST_F(TestCropInt8, crop_2d_axis1_offset0_quant0_thread2) {
   const int output_size = 14;
   int8_t output[14];
   std::vector<int> output_shape = {2, 7};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -171,10 +171,10 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread0) {
   const int output_size = 2;
   int8_t output[2];
   std::vector<int> output_shape = {2, 1, 1};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -238,10 +238,10 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread2) {
   const int output_size = 14;
   int8_t output[14];
   std::vector<int> output_shape = {2, 7, 1};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -304,10 +304,10 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread0) {
   const int output_size = 1;
   int8_t output[1];
   std::vector<int> output_shape = {1, 1, 1, 1};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -370,10 +370,10 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset0_quant0_thread0) {
   const int output_size = 2;
   int8_t output[2];
   std::vector<int> output_shape = {2, 1, 1, 1};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -436,10 +436,10 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant0_thread0) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {1, 1, 2, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -505,10 +505,10 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant1_thread0) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {1, 1, 2, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 2.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -576,10 +576,10 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread2) {
   const int output_size = 7;
   int8_t output[7];
   std::vector<int> output_shape = {1, 7, 1, 1};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -644,10 +644,10 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread3) {
   const int output_size = 7;
   int8_t output[7];
   std::vector<int> output_shape = {1, 7, 1, 1};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 

@@ -272,7 +272,7 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
   auto input_quant_params = quant_param_holder->get_input_quant_params();
   for (size_t m = 0; m < input_quant_params.size(); m++) {
     for (auto inputQuantParam : input_quant_params[m]) {
-      lite::QuantArg quant_arg{};
+      lite::LiteQuantParam quant_arg{};
       quant_arg.scale = inputQuantParam.scale;
       quant_arg.zeroPoint = inputQuantParam.zeroPoint;
       quant_arg.roundType = inputQuantParam.roundType;
@@ -283,7 +283,7 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
   auto output_quant_params = quant_param_holder->get_output_quant_params();
   for (size_t m = 0; m < output_quant_params.size(); m++) {
     for (auto outputQuantParam : output_quant_params[m]) {
-      lite::QuantArg quant_arg{};
+      lite::LiteQuantParam quant_arg{};
       quant_arg.scale = outputQuantParam.scale;
       quant_arg.zeroPoint = outputQuantParam.zeroPoint;
       quant_arg.roundType = outputQuantParam.roundType;

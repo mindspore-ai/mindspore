@@ -39,9 +39,9 @@ TEST_F(TestQuantizedAdd, Add) {
   in_tensor1.set_data(input_data1);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_in1 = {0.00784314f, 0};
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_in1 = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor0.AddQuantParam(quant_in0);
   in_tensor1.AddQuantParam(quant_in1);
   out_tensor.AddQuantParam(quant_out);

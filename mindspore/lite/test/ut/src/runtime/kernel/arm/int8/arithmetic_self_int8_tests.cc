@@ -38,10 +38,10 @@ TEST_F(TestArithmeticSelfInt8, floor_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -100,10 +100,10 @@ TEST_F(TestArithmeticSelfInt8, floor_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
@@ -162,10 +162,10 @@ TEST_F(TestArithmeticSelfInt8, round_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -224,10 +224,10 @@ TEST_F(TestArithmeticSelfInt8, round_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
@@ -286,10 +286,10 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -348,10 +348,10 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
@@ -410,10 +410,10 @@ TEST_F(TestArithmeticSelfInt8, abs_quant0_thread0) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -472,10 +472,10 @@ TEST_F(TestArithmeticSelfInt8, abs_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
@@ -534,10 +534,10 @@ TEST_F(TestArithmeticSelfInt8, sin_quant0_thread2) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {2, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -596,10 +596,10 @@ TEST_F(TestArithmeticSelfInt8, cos_quant0_thread2) {
   const int output_size = 4;
   int8_t output[4];
   std::vector<int> output_shape = {2, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -658,10 +658,10 @@ TEST_F(TestArithmeticSelfInt8, log_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -720,10 +720,10 @@ TEST_F(TestArithmeticSelfInt8, sqrt_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -782,10 +782,10 @@ TEST_F(TestArithmeticSelfInt8, rsqrt_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -844,10 +844,10 @@ TEST_F(TestArithmeticSelfInt8, square_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -906,10 +906,10 @@ TEST_F(TestArithmeticSelfInt8, square_quant1_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.8;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.5;
   output_quant_arg.zeroPoint = 0;
 
@@ -968,10 +968,10 @@ TEST_F(TestArithmeticSelfInt8, logical_not_quant0_thread2) {
   const int output_size = 12;
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 

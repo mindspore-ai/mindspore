@@ -17,11 +17,13 @@
 #ifndef MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 #define MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 
+#include <vector>
 #include "include/lite_utils.h"
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {
 enum Format : int64_t;
+
 namespace tensor {
 /// \brief MSTensor defined tensor in MindSpore Lite.
 class MS_API MSTensor {
@@ -117,6 +119,10 @@ class MS_API MSTensor {
 
   /// \brief Set the data of MSTensor.
   virtual void set_data(void *data) = 0;
+
+  virtual Vector<lite::LiteQuantParam> quant_params() const = 0;
+
+  virtual void set_quant_params(Vector<lite::LiteQuantParam>) = 0;
 };
 }  // namespace tensor
 }  // namespace mindspore

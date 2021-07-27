@@ -38,10 +38,10 @@ TEST_F(TestUnsqueezeInt8, Unsqueeze_1) {
   const int output_size = 8;
   int8_t output[8];
   std::vector<int> output_shape = {8, 1};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
