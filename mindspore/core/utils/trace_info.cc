@@ -19,7 +19,7 @@
 #include "ir/anf.h"
 
 namespace mindspore {
-std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr &info) {
+std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr &info) const {
   if (info == nullptr) {
     return "";
   }

@@ -460,7 +460,6 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
                             << type->ToString();
   }
   auto tensor_type = type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
   auto element = tensor_type->element();
   MS_EXCEPTION_IF_NULL(element);
   for (const TypePtr &item : check_list) {
@@ -527,7 +526,6 @@ TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr
     }
     if (type->isa<TensorType>()) {
       auto tensor_type = type->cast<TensorTypePtr>();
-      MS_EXCEPTION_IF_NULL(tensor_type);
       auto element = tensor_type->element();
       MS_EXCEPTION_IF_NULL(element);
       return_type = element->DeepCopy();
