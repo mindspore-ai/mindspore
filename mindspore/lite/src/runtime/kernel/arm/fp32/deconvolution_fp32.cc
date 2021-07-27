@@ -133,9 +133,9 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
   }
   auto tmp_buffer = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_align_;
 #ifdef ENABLE_AVX
-  DeconvMatmulFloatAvx(
-    pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_, tmp_buffer,
-    matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_, kernel_plane_);
+  DeconvMatmulAvx(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
+                  tmp_buffer, matmul_param_->deep_, matmul_param_->row_align_, oc * C8NUM * kernel_plane_,
+                  kernel_plane_);
 #elif ENABLE_SSE
   DeconvMatmulFloatSse(pack_input_,
                        weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
@@ -259,7 +259,9 @@ kernel::InnerKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *
 #ifdef ENABLE_AVX
     if ((conv_param->stride_h_ > 1 || conv_param->stride_w_ > 1) &&
         (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1) &&
-        (conv_param->kernel_w_ / conv_param->stride_w_ > 2 || conv_param->kernel_h_ / conv_param->stride_h_ > 2)) {
+        (conv_param->kernel_w_ / conv_param->stride_w_ > 2 || conv_param->kernel_h_ / conv_param->stride_h_ > 2 ||
+         conv_param->output_channel_ == 1)) {
+      // output_channel_ = 1 is not appropriate in gemm deconv in x86
       kernel = new (std::nothrow) kernel::DeConvolutionWinogradCPUKernel(op_parameter, inputs, outputs,
                                                                          static_cast<const lite::InnerContext *>(ctx));
     } else {
