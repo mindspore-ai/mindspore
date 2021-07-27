@@ -35,12 +35,12 @@ public class NetRunner {
     private long dataSize; // one input data size, in byte
     private DataSet ds = new DataSet();
     private long numOfClasses;
-    private long cycles = 3500;
+    private long cycles = 2000;
     private int idx = 1;
     private int virtualBatch = 16;
     private String trainedFilePath = "trained.ms";
 
-    public void initAndFigureInputs(String modelPath) {
+    public void initAndFigureInputs(String modelPath, int virtualBatchSize) {
         MSConfig msConfig = new MSConfig();
         // arg 0: DeviceType:DT_CPU -> 0
         // arg 1: ThreadNum -> 2
@@ -50,6 +50,7 @@ public class NetRunner {
         session = new LiteSession();
         System.out.println("Model path is " + modelPath);
         session = TrainSession.createTrainSession(modelPath, msConfig, false);
+        virtualBatch = virtualBatchSize;
         session.setupVirtualBatch(virtualBatch, 0.01f, 1.00f);
 
         List<MSTensor> inputs = session.getInputs();
@@ -217,9 +218,9 @@ public class NetRunner {
         return labelsVec;
     }
 
-    public void trainModel(String modelPath, String datasetPath) {
+    public void trainModel(String modelPath, String datasetPath, int virtualBatch) {
         System.out.println("==========Loading Model, Create Train Session=============");
-        initAndFigureInputs(modelPath);
+        initAndFigureInputs(modelPath, virtualBatch);
         System.out.println("==========Initing DataSet================");
         initDB(datasetPath);
         System.out.println("==========Training Model===================");

@@ -22,15 +22,16 @@ public class Main {
     public static void main(String[] args) {
         System.loadLibrary("mindspore-lite-jni");
         System.out.println(Version.version());
-        if (args.length < 2) {
-            System.err.println("model path and dataset path must be provided.");
+        if (args.length < 3) {
+            System.err.println("model path, dataset path and virtualBatch must be provided.");
             return;
         }
         String modelPath = args[0];
         String datasetPath = args[1];
+        String virtualBatch = args[2];
 
         NetRunner net_runner = new NetRunner();
-        net_runner.trainModel(modelPath, datasetPath);
+        net_runner.trainModel(modelPath, datasetPath, Integer.parseInt(virtualBatch));
     }
 
 
