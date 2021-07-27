@@ -23,7 +23,11 @@
 #include "nnacl/splice_parameter.h"
 
 namespace mindspore::kernel {
-
+constexpr auto kAffineMinInputNum = 2;
+constexpr auto kAffineMaxInputNum = 3;
+constexpr auto kAffineMaxOutputNum = 1;
+constexpr auto kInputRow = 1;
+constexpr auto kInputCol = 2;
 class AffineFp32CPUKernel : public InnerKernel {
  public:
   AffineFp32CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
@@ -60,8 +64,7 @@ class AffineFp32CPUKernel : public InnerKernel {
   lite::Tensor *full_input_{nullptr};
   lite::Tensor *increment_input_{nullptr};
   lite::Tensor *increment_output_{nullptr};
-
-  lite::Tensor *tensor_read_{nullptr};
+  float *previous_output_{nullptr};
 
   bool full_run_{true};
   int src_to_dst_row_offset_{0};

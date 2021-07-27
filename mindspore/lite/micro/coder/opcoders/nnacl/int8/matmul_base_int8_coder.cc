@@ -179,12 +179,16 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
             "nnacl/common_func.h",
             "nnacl/int8/common_func_int8.h",
             "nnacl/int8/matmul_int8.h",
+            "nnacl/int8/fixed_point.h",
+            "nnacl/int8/relux_int8.h",
             "wrapper/int8/matmul_int8_wrapper.h",
           },
           {
             "common_func.c",
             "common_func_int8.c",
             "matmul_int8.c",
+            "fixed_point.c",
+            "relux_int8.c",
             "matmul_int8_wrapper.c",
           });
   std::string value_str_end = ";\n";

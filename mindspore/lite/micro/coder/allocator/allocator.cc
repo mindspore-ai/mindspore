@@ -19,13 +19,14 @@
 #include <map>
 #include "coder/allocator/memory_manager.h"
 #include "coder/opcoders/op_coder.h"
-#include "coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
+namespace {
+const std::map<TypeId, size_t> size_map = {{kNumberTypeFloat, sizeof(float)},   {kNumberTypeFloat32, sizeof(float)},
+                                           {kNumberTypeInt32, sizeof(int32_t)}, {kNumberTypeInt16, sizeof(int16_t)},
+                                           {kNumberTypeInt8, sizeof(int8_t)},   {kNumberTypeUInt8, sizeof(uint8_t)}};
+}
 void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocType type) {
-  static const std::map<TypeId, size_t> size_map = {
-    {kNumberTypeFloat, sizeof(float)},   {kNumberTypeFloat32, sizeof(float)}, {kNumberTypeInt32, sizeof(int32_t)},
-    {kNumberTypeInt16, sizeof(int16_t)}, {kNumberTypeInt8, sizeof(int8_t)},   {kNumberTypeUInt8, sizeof(uint8_t)}};
   auto item = size_map.find(type_id);
   MS_CHECK_TRUE_RET_NULL(item != size_map.end(), "unsupported type idnex");
 
@@ -42,6 +43,15 @@ void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocTyp
   }
   MS_CHECK_RET_CODE_RET_NULL(weight->MallocData(), "weight malloc data failed!");
   return weight->data();
+}
+
+Tensor *MemoryAllocator::MallocTensor(TypeId data_type, const std::vector<int> &shape) {
+  auto result = new Tensor(data_type, shape);
+  size_t size = result->ElementsNum() * size_map.at(data_type);
+  AssignWorkspaces(result, size);
+  std::string addr = workspaces_addr_.at(result);
+  malloc_weights_addr_.insert(std::make_pair(result, addr));
+  return result;
 }
 
 void MemoryAllocator::Free() {

@@ -34,6 +34,8 @@ void CodeCreateSessionDestructor(std::ofstream &ofs, const Configurator *config)
 void CodeCopyOutputsState(std::ofstream &ofs);
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
+void CodeGlobalCodeBlocks(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+
 void CodeInputState(std::ofstream &ofs);
 void CodeInputImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 

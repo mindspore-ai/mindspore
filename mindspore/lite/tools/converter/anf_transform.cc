@@ -288,7 +288,6 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
   CHECK_NULL_RETURN(slice_prepose_pass);
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
-  graph_pm->AddPass(std::make_shared<opt::AddTensorArray>());
   optimizer->AddPassManager(graph_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run  graph pass failed.";

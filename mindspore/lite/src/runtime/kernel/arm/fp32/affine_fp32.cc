@@ -21,6 +21,7 @@
 #include "src/kernel_registry.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/splice_fp32.h"
+#include "src/common/utils.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -29,12 +30,6 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_Affine;
 namespace mindspore::kernel {
-constexpr auto kAffineMinInputNum = 3;
-constexpr auto kAffineMaxInputNum = 4;
-constexpr auto kAffineMaxOutputNum = 1;
-constexpr auto kInputRow = 1;
-constexpr auto kInputCol = 2;
-
 int AffineFp32CPUKernel::DoActivation(lite::Tensor *tensor) {
   auto data = static_cast<float *>(tensor->MutableData());
   int length = tensor->ElementsNum();
@@ -69,11 +64,7 @@ bool AffineFp32CPUKernel::CheckAffineValid() {
   if (out_tensors_.size() != kAffineMaxOutputNum) {
     return false;
   }
-  auto output_shape = out_tensors_.front()->shape();
-  auto input_read_shape = in_tensors_.back()->shape();
-
-  // read_tensor shape equals to output tesnor shape
-  return output_shape == input_read_shape;
+  return true;
 }
 
 int AffineFp32CPUKernel::CheckActivationValid() {
@@ -116,6 +107,11 @@ AffineFp32CPUKernel::~AffineFp32CPUKernel() {
     delete increment_output_;
     increment_output_ = nullptr;
   }
+
+  if (previous_output_ == nullptr) {
+    delete previous_output_;
+    previous_output_ = nullptr;
+  }
 }
 
 int AffineFp32CPUKernel::FullRunInit() {
@@ -154,15 +150,6 @@ int AffineFp32CPUKernel::FullRunInit() {
 }
 
 int AffineFp32CPUKernel::IncrementInit() {
-  // For affine op, the possible inputs are:
-  // { input, weight, bias, tensor_array_read }
-  // { input, weight, tensor_array_read }
-  if (in_tensors_.size() == kAffineMaxInputNum) {
-    tensor_read_ = in_tensors_.at(3);
-  } else {
-    tensor_read_ = in_tensors_.at(2);
-  }
-
   auto out_tensor = out_tensors_.at(kOutputIndex);
   auto out_shape = out_tensor->shape();
   matmul_col_ = out_shape.at(kInputCol);
@@ -173,6 +160,8 @@ int AffineFp32CPUKernel::IncrementInit() {
     MS_LOG(ERROR) << "matmul_row * matmul_col * sizeof(float) = " << matmul_row_ * matmul_col_ * sizeof(float);
     return RET_PARAM_INVALID;
   }
+  previous_output_ =
+    reinterpret_cast<float *>(this->ms_context_->allocator->Malloc(matmul_row_ * matmul_col_ * sizeof(float)));
   return RET_OK;
 }
 
@@ -353,7 +342,7 @@ OpParameter *AffineFp32CPUKernel::MatmulParameterCreate() {
   matmul_param->a_transpose_ = origin_matmul->a_transpose_;
   matmul_param->has_bias_ = origin_matmul->has_bias_;
   matmul_param->act_type_ = origin_matmul->act_type_;
-
+  matmul_param->op_parameter_.thread_num_ = this->context()->thread_num_;
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
 
@@ -410,13 +399,12 @@ int AffineFp32CPUKernel::IncrementMatmulRun() {
   }
 
   auto out_tensor = out_tensors_.at(kOutputIndex);
-  auto previous_data = static_cast<float *>(tensor_read_->MutableData());
   auto matmul_output = static_cast<float *>(increment_output_->MutableData());
   auto output_data = static_cast<float *>(out_tensor->MutableData());
 
-  memcpy(output_data, previous_data + matmul_col_, (matmul_row_ - 1) * matmul_col_ * sizeof(float));
+  memcpy(output_data, previous_output_ + matmul_col_, (matmul_row_ - 1) * matmul_col_ * sizeof(float));
   memcpy(output_data + (matmul_row_ - 1) * matmul_col_, matmul_output, matmul_col_ * sizeof(float));
-
+  memcpy(previous_output_, output_data, matmul_row_ * matmul_col_ * sizeof(float));
   return RET_OK;
 }
 
@@ -465,9 +453,10 @@ int AffineFp32CPUKernel::FullMatmulRun() {
       return ret;
     }
   }
-
+  auto output_tensor = out_tensors_.at(kOutputIndex);
+  auto output_data = static_cast<float *>(output_tensor->MutableData());
+  memcpy(previous_output_, output_data, matmul_row_ * matmul_col_ * sizeof(float));
   full_run_ = false;
-
   return RET_OK;
 }
 

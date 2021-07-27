@@ -42,6 +42,16 @@ class CoderContext {
   void set_train_blocks(const std::vector<std::string> &train_blocks) { train_blocks_ = train_blocks; }
   std::vector<std::string> train_blocks() const { return train_blocks_; }
 
+  void set_global_code_blocks(const std::vector<std::string> &global_code_blocks) {
+    global_code_blocks_ = global_code_blocks;
+  }
+  std::vector<std::string> global_code_blocks() const { return global_code_blocks_; }
+
+  void set_after_inference_code_blocks(const std::vector<std::string> &after_inference_code_blocks) {
+    after_inference_code_blocks_ = after_inference_code_blocks;
+  }
+  std::vector<std::string> after_inference_code_blocks() const { return after_inference_code_blocks_; }
+
   void set_tensor_map(const std::map<Tensor *, std::string> &tensor_map) {
     tensors_map_.insert(tensor_map.begin(), tensor_map.end());
   }
@@ -104,8 +114,10 @@ class CoderContext {
   std::set<std::string> h_files_;
   // net.c's content, include the Inference and Training implementation
   std::vector<std::string> code_blocks_;
+  std::vector<std::string> global_code_blocks_;
   std::vector<std::string> train_blocks_;
   std::vector<std::string> inference_blocks_;
+  std::vector<std::string> after_inference_code_blocks_;
 };
 
 }  // namespace mindspore::lite::micro

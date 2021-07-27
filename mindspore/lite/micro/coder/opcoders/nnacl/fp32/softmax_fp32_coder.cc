@@ -20,6 +20,7 @@
 #include "schema/inner/ops_generated.h"
 #include "coder/opcoders/file_collector.h"
 
+using mindspore::schema::PrimitiveType_LogSoftmax;
 using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::lite::micro::nnacl {
@@ -51,15 +52,22 @@ int SoftMaxFP32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp32/softmax_fp32.h",
+            "nnacl/fp32/log_softmax_fp32.h",
           },
           {
             "softmax_fp32.c",
+            "log_softmax_fp32.c",
             "exp_fp32.c",
           });
   NNaclFp32Serializer code;
   code.CodeStruct("softmax_parameter", *softmax_param_);
   code.CodeFunction("memset", sum_data_, "0", sum_data_size_);
-  code.CodeFunction("Softmax", input_tensor_, output_tensor_, sum_data_, "&softmax_parameter");
+  auto primitive_type = softmax_param_->op_parameter_.type_;
+  if (primitive_type == schema::PrimitiveType_Softmax) {
+    code.CodeFunction("Softmax", input_tensor_, output_tensor_, sum_data_, "&softmax_parameter");
+  } else {
+    code.CodeFunction("LogSoftmax", input_tensor_, output_tensor_, sum_data_, "&softmax_parameter");
+  }
   context->AppendCode(code.str());
   return RET_OK;
 }

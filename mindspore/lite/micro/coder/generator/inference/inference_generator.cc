@@ -59,6 +59,7 @@ int InferenceGenerator::CodeNetCFile() {
   if (config_->debug_mode()) {
     ofs << "#include \"" << kDebugUtils << "\"\n";
   }
+  CodeGlobalCodeBlocks(ofs, ctx_);
   CodeInputImplement(ofs, ctx_);
   CodeCopyOutputsImplement(ofs, ctx_);
   CodeInitResourceImplement(ofs, ctx_);
