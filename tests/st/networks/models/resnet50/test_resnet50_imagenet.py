@@ -333,9 +333,21 @@ def test_resnet_and_resnet_thor_imagenet_4p():
         process2.append(Process(target=train_process_thor,
                                 args=(q2, device_id + 4, epoch_size_2, device_num, enable_hccl)))
 
+    cpu_count = os.cpu_count()
+    half_cpu_count = cpu_count // 2
+    each_cpu_count = half_cpu_count // device_num
     for i in range(device_num):
         process[i].start()
         process2[i].start()
+        if each_cpu_count > 1:
+            cpu_start = each_cpu_count * i
+            cpu_end = each_cpu_count * (i + 1)
+            process_cpu = [x for x in range(cpu_start, cpu_end)]
+            process2_cpu = [x for x in range(cpu_start + half_cpu_count, cpu_end + half_cpu_count)]
+            pid1 = process[i].pid
+            pid2 = process2[i].pid
+            os.sched_setaffinity(pid1, set(process_cpu))
+            os.sched_setaffinity(pid2, set(process2_cpu))
 
     print("Waiting for all subprocesses done...")
 
