@@ -264,6 +264,7 @@ template <typename... TArgs>
 class PCNode : public PBase<PCNode<TArgs...> > {
  public:
   explicit PCNode(const TArgs &... args) : args_(args...) {}
+  ~PCNode() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
     tuple_utils::PTupleGetNode get_node(node);
