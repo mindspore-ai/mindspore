@@ -41,6 +41,7 @@ void SpaceToBatchCPUKernel::ProcessInput() {
   ComputeStrides(param_->output_shape_, param_->out_stride_, DIMENSION_4D);
   auto block_shape_data = in_tensors_[1]->data_c();
   auto block_shape = static_cast<int *>(block_shape_data);
+  MS_ASSERT(block_shape != nullptr);
   for (int i = 0; i < in_tensors_[1]->ElementsNum(); i++) {
     param_->block_sizes_[i] = block_shape[i];
   }
@@ -60,8 +61,8 @@ int SpaceToBatchCPUKernel::Init() {
 
 int SpaceToBatchFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto op = reinterpret_cast<SpaceToBatchCPUKernel *>(cdata);
-  op->DoRun(task_id);
-  return RET_OK;
+  auto ret = op->DoRun(task_id);
+  return ret;
 }
 
 int SpaceToBatchCPUKernel::ReSize() {
@@ -86,16 +87,19 @@ int SpaceToBatchCPUKernel::ReSize() {
   return RET_OK;
 }
 
-void SpaceToBatchCPUKernel::DoRun(int task_id) {
-  DoSpaceToBatch(input_ptr_, output_ptr_, param_->input_shape_, param_->output_shape_, param_->in_stride_,
-                 param_->out_stride_, param_->block_sizes_, param_->paddings_, op_parameter_->thread_num_, task_id);
-  return;
+int SpaceToBatchCPUKernel::DoRun(int task_id) {
+  auto ret =
+    DoSpaceToBatch(input_ptr_, output_ptr_, param_->input_shape_, param_->output_shape_, param_->in_stride_,
+                   param_->out_stride_, param_->block_sizes_, param_->paddings_, op_parameter_->thread_num_, task_id);
+  return ret;
 }
 
 int SpaceToBatchCPUKernel::Run() {
   MS_ASSERT(in_tensors_[0] != nullptr);
   input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  MS_ASSERT(input_ptr_ != nullptr);
   output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(output_ptr_ != nullptr);
   if (in_tensors_.size() == 3) {
     if (!in_tensors_[1]->IsConst() || !in_tensors_[2]->IsConst()) {
       ProcessInput();

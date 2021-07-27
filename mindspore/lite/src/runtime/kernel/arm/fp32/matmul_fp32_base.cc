@@ -316,7 +316,7 @@ int MatmulFp32BaseCPUKernel::Init() {
   if (params_->b_const_) {
     // only copy weight data
     // resize or run to pack
-    auto b_tensor = in_tensors_[1];
+    auto b_tensor = in_tensors_.at(1);
     src_b_ = reinterpret_cast<float *>(malloc(params_->batch * params_->deep_ * params_->col_ * sizeof(float)));
     if (src_b_ == nullptr) {
       MS_LOG(ERROR) << "matmul fp16 src_b_ is failed!";

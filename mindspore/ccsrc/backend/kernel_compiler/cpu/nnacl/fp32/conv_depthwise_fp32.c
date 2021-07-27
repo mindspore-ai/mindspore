@@ -17,6 +17,7 @@
 #include "nnacl/common_func.h"
 #include "nnacl/fp32/common_func_fp32.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/errorcode.h"
 
 #if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, int num_pixels,
@@ -30,10 +31,10 @@ void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weigh
 }
 #endif
 
-void ConvDw(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
-            const ConvParameter *conv_param, int task_id) {
-  if (conv_param->thread_num_ == 0 || conv_param->dilation_h_ == 0) {
-    return;
+int ConvDw(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+           const ConvParameter *conv_param, int task_id) {
+  if (conv_param->thread_num_ == 0 || conv_param->dilation_h_ == 0 || conv_param->stride_w_ == 0) {
+    return NNACL_ERR;
   }
   int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
   int h_start = h_step * task_id;
@@ -85,6 +86,7 @@ void ConvDw(float *output_data, const float *input_data, const float *weight_dat
       }
     }
   }
+  return NNACL_OK;
 }
 
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {

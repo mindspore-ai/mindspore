@@ -36,13 +36,12 @@ void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param
   int kernel_plane = kernel_h * kernel_w;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
-  if (dilation_h == 0 || dilation_w == 0) {
+  int out_w = conv_param->output_w_;
+  if (dilation_h == 0 || dilation_w == 0 || out_w == 0) {
     return;
   }
   int in_channel = conv_param->input_channel_;
   int in_w = conv_param->input_w_;
-  int out_w = conv_param->output_w_;
-
   for (int i = 0; i < real_cal_num; i++) {
     int block_start = block_index + i;
     int input_h = block_start / out_w * conv_param->stride_h_ - conv_param->pad_u_;

@@ -254,15 +254,21 @@ int Convolution1x1CPUKernel::Run() {
     } else {
       input_ptr_ = tmp_in;
     }
-
+    int ret = 0;
     if (multi_thread_by_hw_) {
-      ParallelLaunch(this->ms_context_, Convolution1x1RunHw, this, thread_count_);
+      ret = ParallelLaunch(this->ms_context_, Convolution1x1RunHw, this, thread_count_);
     } else {
       PackMatmulInput(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-      ParallelLaunch(this->ms_context_, Convolution1x1Run, this, thread_count_);
+      ret = ParallelLaunch(this->ms_context_, Convolution1x1Run, this, thread_count_);
+    }
+    if (ret != RET_OK) {
+      if (pack_input_ != nullptr) {
+        ctx_->allocator->Free(pack_input_);
+        pack_input_ = nullptr;
+      }
+      return ret;
     }
   }
-
   if (pack_input_ != nullptr) {
     ctx_->allocator->Free(pack_input_);
     pack_input_ = nullptr;

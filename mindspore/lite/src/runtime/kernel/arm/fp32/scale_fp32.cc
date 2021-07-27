@@ -182,11 +182,13 @@ int ScaleCPUKernel::Run() {
   if (!scale_param_->const_scale_) {
     auto scale_tensor = in_tensors_.at(1);
     scale_ = reinterpret_cast<float *>(scale_tensor->data_c());
+    MS_ASSERT(scale_ != nullptr);
   }
   if (!scale_param_->const_offset_) {
     MS_ASSERT(in_tensors_.size() == 3);
     auto offset_tensor = in_tensors_.at(2);
     offset_ = reinterpret_cast<float *>(offset_tensor->data_c());
+    MS_ASSERT(offset_ != nullptr);
   }
   auto out_tensor = out_tensors_.front();
   output_ptr_ = reinterpret_cast<float *>(out_tensor->MutableData());

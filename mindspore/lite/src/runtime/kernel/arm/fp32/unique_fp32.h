@@ -31,8 +31,6 @@ class UniqueCPUKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
 };
 }  // namespace mindspore::kernel
 

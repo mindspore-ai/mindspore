@@ -43,8 +43,12 @@ int ROIPoolingCPUKernel::ReSize() {
   auto in_shape = in_tensors_.front()->shape();
   auto out_shape = out_tensors_.front()->shape();
   int ndims = in_shape.size();
-  if (ndims > 4) {
-    MS_LOG(ERROR) << "ROIPooling ReSzie error ,shape dim greater than 4!";
+  if (ndims < C4NUM) {
+    MS_LOG(ERROR) << "ROIPooling in_shape.size() error ,shape dim greater than or equal to 4!";
+    return RET_ERROR;
+  }
+  if (out_shape.size() < C4NUM) {
+    MS_LOG(ERROR) << "ROIPooling out_shape.size() error ,shape dim greater than or equal to 4!";
     return RET_ERROR;
   }
   param_->ndim_ = ndims;

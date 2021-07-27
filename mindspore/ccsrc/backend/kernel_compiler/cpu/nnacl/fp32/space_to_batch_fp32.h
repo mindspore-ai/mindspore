@@ -40,8 +40,8 @@ typedef struct SpaceToBatchParameter {
 extern "C" {
 #endif
 
-void DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
-                    const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id);
+int DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
+                   const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id);
 #ifdef __cplusplus
 }
 #endif

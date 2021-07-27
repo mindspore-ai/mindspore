@@ -50,6 +50,9 @@ int ReduceMean(int outer_size, int inner_size, int axis_size, const float *src_d
 
 int IntReduceMean(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
                   int thread_num) {
+  if (axis_size == 0) {
+    return NNACL_ERR;
+  }
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }

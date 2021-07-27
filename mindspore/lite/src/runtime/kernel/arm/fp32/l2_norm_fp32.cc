@@ -102,6 +102,10 @@ int L2NormCPUKernel::DivSqrtSum(int task_id) {
 
 int L2NormCPUKernel::CalcL2NormTrailingAxis(int task_id) {
   auto input = in_tensors_.at(0);
+  if (input->shape().back() == 0) {
+    MS_LOG(ERROR) << "input->shape().back() is 0";
+    return RET_ERROR;
+  }
   int outer_size = input->ElementsNum() / input->shape().back();
   int unit = UP_DIV(outer_size, op_parameter_->thread_num_);
   int begin = task_id * unit;

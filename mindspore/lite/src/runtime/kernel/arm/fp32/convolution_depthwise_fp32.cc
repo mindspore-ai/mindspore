@@ -90,8 +90,9 @@ int ConvolutionDepthwiseCPUKernel::ReSize() {
 }
 
 int ConvolutionDepthwiseCPUKernel::Execute(int task_id) {
-  ConvDw(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
-  return RET_OK;
+  auto ret =
+    ConvDw(output_ptr_, input_ptr_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_, task_id);
+  return ret;
 }
 
 int ConvDwRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {

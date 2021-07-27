@@ -58,6 +58,9 @@ int AddNCPUKernel::Run() {
   auto input0_data = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto input1_data = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  MS_ASSERT(input0_data != nullptr);
+  MS_ASSERT(input1_data != nullptr);
+  MS_ASSERT(output_data != nullptr);
   if (static_cast<int>(elements_num_) < op_parameter_->thread_num_) {
     if (in_tensors_[0]->shape() == in_tensors_[1]->shape()) {
       ElementAdd(input0_data, input1_data, output_data, elements_num_);

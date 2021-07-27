@@ -61,14 +61,15 @@ int PoolingCPUKernel::RunImpl(int task_id) {
     minf = 0.f;
     maxf = 6.f;
   }
+  int ret = 0;
   if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
-    MaxPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+    ret = MaxPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
   } else {
-    auto ret = AvgPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "AcgPooling run failed.";
-      return ret;
-    }
+    ret = AvgPooling(input_ptr, output_ptr, pooling_param_, task_id, minf, maxf);
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "AcgPooling run failed.";
+    return ret;
   }
   return RET_OK;
 }
