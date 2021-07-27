@@ -47,24 +47,46 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
 
     Args:
         x (Tensor): Input data is used to count non-zero numbers.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Only constant value is allowed.
                                                   Default: (), reduce all dimensions.
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
-        dtype (Union[Number, mstype.bool\_]): The data type of the output tensor. Only constant value is allowed.
-                                             Default: mstype.int32
+        dtype (Union[Number, mindspore.bool\_]): The data type of the output tensor. Only constant value is allowed.
+                                             Default: mindspore.int32
 
     Returns:
-          Tensor, number of nonzero element. The data type is dtype.
+          Tensor, number of nonzero element. The data type is `dtype`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
-        >>> nonzero_num = count_nonzero(x=input_x, axis=[0, 1], keep_dims=True, dtype=mstype.int32)
+        >>> # case 1: each value specified.
+        >>> x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[0, 1], keep_dims=True, dtype=mindspore.int32)
         >>> print(nonzero_num)
         [[3]]
+        >>> # case 2: all value is default.
+        >>> nonzero_num = ops.count_nonzero(x=x)
+        >>> print(nonzero_num)
+        3
+        >>> # case 3: axis value was specified 0.
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[0,])
+        >>> print(nonzero_num)
+        [1 2 0]
+        >>> # case 4: axis value was specified 1.
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[1,])
+        >>> print(nonzero_num)
+        [1 2]
+        >>> # case 5: keep_dims value was specified.
+        >>> nonzero_num = ops.count_nonzero(x=x,  keep_dims=True)
+        >>> print(nonzero_num)
+        [[3]]
+        >>> # case 6: keep_dims and axis value was specified.
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[0,], keep_dims=True)
+        >>> print(nonzero_num)
+        [[1 2 0]]
     """
 
     const_utils.check_type_valid(F.dtype(x), mstype.number_type, 'input x')
@@ -239,7 +261,7 @@ def tensor_dot(x1, x2, axes):
     Examples:
         >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones(shape=[3, 1, 2]), mindspore.float32)
-        >>> output = C.tensor_dot(input_x1, input_x2, ((0,1),(1,2)))
+        >>> output = ops.tensor_dot(input_x1, input_x2, ((0,1),(1,2)))
         >>> print(output)
         [[2. 2. 2]
          [2. 2. 2]
@@ -303,7 +325,9 @@ def dot(x1, x2):
 
     Inputs:
         - **x1** (Tensor) - First tensor in Dot op with datatype float16 or float32
+          The rank must be greater than or equal to 2.
         - **x2** (Tensor) - Second tensor in Dot op with datatype float16 or float32
+          The rank must be greater than or equal to 2.
 
     Outputs:
         Tensor, dot product of x1 and x2.
@@ -319,10 +343,48 @@ def dot(x1, x2):
     Examples:
         >>> input_x1 = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
-        >>> output = C.dot(input_x1, input_x2)
+        >>> output = ops.dot(input_x1, input_x2)
         >>> print(output)
         [[[3. 3.]]
          [[3. 3.]]]
+        >>> print(output.shape)
+        (2, 1, 2)
+        >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input_x1, input_x2)
+        >>> print(output)
+        [[[[3. 3.]]
+          [[3. 3.]]]]
+        >>> print(output.shape)
+        (1, 2, 1, 2)
+        >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input_x1, input_x2)
+        >>> print(output)
+        [[[[3. 3.]
+           [3. 3.]]
+          [[3. 3.]
+           [3. 3.]]]]
+        >>> print(output.shape)
+        (1, 2, 2, 2)
+        >>> input_x1 = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[2, 1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input_x1, input_x2)
+        >>> print(output)
+        [[[[[3. 3.]]
+           [[3. 3.]]]
+          [[[3. 3.]]
+           [[3. 3.]]]]
+         [[[[3. 3.]]
+           [[3. 3.]]]
+          [[[3. 3.]]
+           [[3. 3.]]]]
+         [[[[3. 3.]]
+           [[3. 3.]]]
+          [[[3. 3.]]
+           [[3. 3.]]]]]
+        >>> print(output.shape)
+        (3, 2, 2, 1, 2)
     """
     shape_op = P.Shape()
     reshape_op = P.Reshape()
@@ -459,16 +521,18 @@ def batch_dot(x1, x2, axes=None):
         output = x1[batch, :] * x2[batch, :]
 
     Inputs:
-        - **x1** (Tensor) - First tensor in Batch Dot op with datatype float32
-        - **x2** (Tensor) - Second tensor in Batch Dot op with datatype float32. x2's datatype should
-          be same as x1's.
+        - **x1** (Tensor) - First tensor in Batch Dot op with datatype float32 and the rank of `x1` must be greater
+          than or equal to 2.
+        - **x2** (Tensor) - Second tensor in Batch Dot op with datatype float32. The datatype of `x2` should
+          be same as `x1` and the rank of `x2` must be greater than or equal to 2.
         - **axes** (Union[int, tuple(int), list(int)]) - Single value or tuple/list of length 2 with dimensions
           specified for `a` and `b` each. If single value `N` passed, automatically picks up last N dims from
-          `a` input shape and last N dims from `b` input shape in order as axes for each respectively.
+          `a` input shape and last N dimensions from `b` input shape in order as axes for each respectively.
 
     Outputs:
-        Tensor, batch dot product of x1 and x2. The Shape of output for input shapes (batch, d1, axes, d2) and
-        (batch, d3, axes, d4) is (batch, d1, d2, d3, d4)
+        Tensor, batch dot product of `x1` and `x2`.For example: The Shape of output
+        for input `x1` shapes (batch, d1, axes, d2) and `x2` shapes (batch, d3, axes, d4) is (batch, d1, d2, d3, d4),
+        where d1 and d2 means any number.
 
     Raises:
         TypeError: If type of x1 and x2 are not the same.
@@ -485,15 +549,35 @@ def batch_dot(x1, x2, axes=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x1 = Tensor(np.ones(shape=[2, 2, 3]), mindspore.float32)
-        >>> input_x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> x1 = Tensor(np.ones(shape=[2, 2, 3]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
         >>> axes = (-1, -2)
-        >>> output = C.batch_dot(input_x1, input_x2, axes)
+        >>> output = ops.batch_dot(x1, x2, axes)
         >>> print(output)
         [[[3. 3.]
           [3. 3.]]
          [[3. 3.]
           [3. 3.]]]
+        >>> x1 = Tensor(np.ones(shape=[2, 2]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> axes = (1, 2)
+        >>> output = ops.batch_dot(x1, x2, axes)
+        >>> print(output)
+        [[2. 2. 2.]
+         [2. 2. 2.]]
+        >>> print(output.shape)
+        (2, 3)
+        >>> x1 = Tensor(np.ones(shape=[6, 2, 3, 4]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[6, 5, 4, 8]), mindspore.float32)
+        >>> output = ops.batch_dot(x1, x2)
+        >>> print(output.shape)
+        (6, 2, 3, 5, 8)
+        >>> x1 = Tensor(np.ones(shape=[2, 2, 4]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[2, 5, 4, 5]), mindspore.float32)
+        >>> output = ops.batch_dot(x1, x2)
+        >>> print(output.shape)
+        (2, 2, 5, 5)
+
     """
 
     transpose_op = P.Transpose()
@@ -637,7 +721,11 @@ def matmul(x1, x2, dtype=None):
 
     Args:
         x1 (Tensor): Input tensor, scalar not allowed.
+          The last dimension of `x1` must be the same size as the second last dimension of `x2`.
+          And the shape of x1 and x2 could be broadcast.
         x2 (Tensor): Input tensor, scalar not allowed.
+          The last dimension of `x1` must be the same size as the second last dimension of `x2`.
+          And the shape of x1 and x2 could be broadcast.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -648,11 +736,13 @@ def matmul(x1, x2, dtype=None):
     Raises:
         ValueError: If the last dimension of `x1` is not the same size as the
             second-to-last dimension of `x2`, or if a scalar value is passed in.
+        ValueError: If the shape of `x1` and `x2` could not broadcast together。
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # case 1 : Reasonable application of broadcast mechanism
         >>> x1 = Tensor(np.arange(2*3*4).reshape(2, 3, 4), mindspore.float32)
         >>> x2 = Tensor(np.arange(4*5).reshape(4, 5), mindspore.float32)
         >>> output = ops.matmul(x1, x2)
@@ -663,6 +753,16 @@ def matmul(x1, x2, dtype=None):
         [[ 430.  484.  538.  592.  646.]
         [ 550.  620.  690.  760.  830.]
         [ 670.  756.  842.  928. 1014.]]]
+        >>> print(output.shape)
+        (2, 3, 5)
+        >>> # case 2 : the rank of `x1` is 1
+        >>> x1 = Tensor(np.ones([1, 2]), mindspore.float32)
+        >>> x2 = Tensor(np.ones([2,]), mindspore.float32)
+        >>> output = ops.matmul(x1, x2)
+        >>> print(output)
+        [2.]
+        >>> print(output.shape)
+        (1,)
     """
     # performs type promotion
     dtype1 = F.dtype(x1)

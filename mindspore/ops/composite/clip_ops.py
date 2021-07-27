@@ -51,25 +51,21 @@ def clip_by_value(x, clip_value_min, clip_value_max):
         'clip_value_min' needs to be less than or equal to 'clip_value_max'.
 
     Args:
-          x (Tensor): Input data.
+          x (Tensor): Input data. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
           clip_value_min (Tensor): The minimum value.
           clip_value_max (Tensor): The maximum value.
 
     Returns:
-          Tensor, a clipped Tensor.
+          Tensor, a clipped Tensor. It has the same shape and data type as `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import composite as C
-        >>> import mindspore.common.dtype as mstype
-        >>> min_value = Tensor(5, mstype.float32)
-        >>> max_value = Tensor(20, mstype.float32)
-        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mstype.float32)
-        >>> output = C.clip_by_value(x, min_value, max_value)
+        >>> min_value = Tensor(5, mindspore.float32)
+        >>> max_value = Tensor(20, mindspore.float32)
+        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> output = ops.clip_by_value(x, min_value, max_value)
         >>> print(output)
         [[ 5. 20.  5.  7.]
          [ 5. 11.  6. 20.]]
@@ -148,12 +144,15 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
         Input 'x' should be a tuple or list of tensors. Otherwise, it will raise an error.
 
     Args:
-          x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
-          clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default: 1.0
-          use_norm (None): The global norm. Default: None. Currently only none is supported.
+        x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
+          The shape of each Tensor in tuple is :math:`(N,*)` where :math:`*` means,
+          any number of additional dimensions.
+        clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default: 1.0
+        use_norm (None): The global norm. Default: None. Currently only none is supported.
 
     Returns:
-          tuple[Tensor], a clipped Tensor.
+        tuple[Tensor], a clipped Tensor. It has the same data type as `x` and each Tensor in the output tuple is the
+          same as the original input shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
