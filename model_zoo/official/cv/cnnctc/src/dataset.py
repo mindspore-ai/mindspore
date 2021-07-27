@@ -35,12 +35,14 @@ class NormalizePAD():
     def __call__(self, img):
         # toTensor
         img = np.array(img, dtype=np.float32)
+        # normalize
+        means = [121.58949, 123.93914, 123.418655]
+        stds = [65.70353, 65.142426, 68.61079]
+        img = np.subtract(img, means)
+        img = np.true_divide(img, stds)
+
         img = img.transpose([2, 0, 1])
         img = img.astype(np.float)
-        img = np.true_divide(img, 255)
-        # normalize
-        img = np.subtract(img, 0.5)
-        img = np.true_divide(img, 0.5)
 
         _, _, w = img.shape
         Pad_img = np.zeros(shape=self.max_size, dtype=np.float32)
