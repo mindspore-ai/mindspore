@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,28 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ARITHMETIC_SIMPLIFY_H_
 
 #include <memory>
+#include <vector>
+#include <unordered_map>
+#include <string>
+
 #include "backend/optimizer/common/optimizer.h"
 #include "ir/func_graph.h"
+#include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
 namespace mindspore {
 namespace opt {
+class PatternTree;
+using PatternTreePtr = std::shared_ptr<PatternTree>;
 class ArithmeticSimplify : public Pass {
  public:
   ArithmeticSimplify() : Pass("arithmetic_simplify") {}
   ~ArithmeticSimplify() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  bool DoArithmeticTrans(const graphkernel::LiteGraphPtr &litegraph);
+  bool DoConstantFold(const graphkernel::LiteGraphPtr &litegraph);
+  std::unordered_map<std::string, std::vector<PatternTreePtr>> expressions_map_;
 };
 using ArithmeticSimplifyPtr = std::shared_ptr<ArithmeticSimplify>;
 }  // namespace opt

@@ -15,11 +15,15 @@
  */
 #include "backend/optimizer/graph_kernel/model/op_node.h"
 
+#include <math.h>
 #include <sstream>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
+#include <functional>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "backend/optimizer/graph_kernel/model/node.h"
 
@@ -58,6 +62,87 @@ void PrimOp::Dump(std::ostringstream &os) const {
   if (has_attr) {
     os << "  // attr {" << attr_os.str() << "}";
   }
+}
+
+template <typename TM, typename TD>
+tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &op, TypeId tid) {
+  std::vector<TM> inputs_tm;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_tm), [](const NodePtr &i) {
+    return *static_cast<TM *>(std::static_pointer_cast<graphkernel::ConstTensorNode>(i)->data()->data_c());
+  });
+
+  std::unordered_map<std::string, std::function<TM(const std::vector<TM> &)>> func_map;
+  func_map["Add"] = [](const std::vector<TM> &n) { return n[0] + n[1]; };
+  func_map["Sub"] = [](const std::vector<TM> &n) { return n[0] - n[1]; };
+  func_map["Mul"] = [](const std::vector<TM> &n) { return n[0] * n[1]; };
+  func_map["RealDiv"] = [](const std::vector<TM> &n) { return n[0] / n[1]; };
+  func_map["Neg"] = [](const std::vector<TM> &n) { return -n[0]; };
+  func_map["Reciprocal"] = [](const std::vector<TM> &n) { return TM(1) / n[0]; };
+  func_map["Log"] = [](const std::vector<TM> &n) { return log(n[0]); };
+  func_map["Exp"] = [](const std::vector<TM> &n) { return exp(n[0]); };
+  func_map["Abs"] = [](const std::vector<TM> &n) { return n[0] < TM(0) ? (-n[0]) : n[0]; };
+  func_map["Sqrt"] = [](const std::vector<TM> &n) { return sqrt(n[0]); };
+  func_map["Rsqrt"] = [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); };
+
+  if (func_map.find(op) == func_map.end()) return nullptr;
+  return std::make_shared<tensor::Tensor>(static_cast<TD>(func_map[op](inputs_tm)), TypeIdToType(tid));
+}
+
+NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs, const std::string &op) {
+  for (auto i : inputs) {
+    if (i->NodeType() != NType::Value) return nullptr;
+  }
+  TypeId output_type = InferType(inputs, attrs);
+  tensor::TensorPtr res = nullptr;
+  switch (output_type) {
+    case TypeId::kNumberTypeUInt8: {
+      res = CalcByOperator<uint8_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeInt8: {
+      res = CalcByOperator<int8_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeInt16: {
+      res = CalcByOperator<int16_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeInt32: {
+      res = CalcByOperator<int32_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeInt64: {
+      res = CalcByOperator<int64_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeUInt16: {
+      res = CalcByOperator<uint16_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeUInt32: {
+      res = CalcByOperator<uint32_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeUInt64: {
+      res = CalcByOperator<uint64_t, int64_t>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeFloat16: {
+      res = CalcByOperator<float16, double>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeFloat32: {
+      res = CalcByOperator<float, double>(inputs, op, output_type);
+      break;
+    }
+    case TypeId::kNumberTypeFloat64: {
+      res = CalcByOperator<double, double>(inputs, op, output_type);
+      break;
+    }
+    default:
+      return nullptr;
+  }
+  return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
 }
 
 void ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {

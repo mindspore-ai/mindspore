@@ -141,6 +141,18 @@ class GraphKernelFlags {
   std::vector<std::string> disable_cluster_ops;
 
   /**
+   * Arithmetic simplify expressions to be enabled (case sensitive).
+   * The default list will be overwritten by this list.
+   * Note that "disable_simplify_exprs" will be ignored if this flag is set.
+   */
+  std::vector<std::string> enable_simplify_exprs_only;
+
+  /**
+   * Arithmetic simplify expressions to be disabled (case sensitive).
+   */
+  std::vector<std::string> disable_simplify_exprs;
+
+  /**
    * Passes to be enabled.
    * By default, the passes is controlled by "opt_level" and target device,
    * user can manually enable some passes by setting this flag.

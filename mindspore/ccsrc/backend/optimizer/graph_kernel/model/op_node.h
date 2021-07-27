@@ -45,6 +45,7 @@ class PrimOp : public Node {
 
   const std::string &op() const { return op_; }
   ComputeType compute_type() const { return compute_type_; }
+  virtual NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs, const std::string &op);
 
  protected:
   std::string op_;
