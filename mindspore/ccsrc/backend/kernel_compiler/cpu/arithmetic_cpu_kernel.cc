@@ -273,16 +273,30 @@ void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) 
 template <typename T>
 void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
-    if (op_para.in_elements_num0_ == op_para.in_elements_num1_) {
+    auto is_power_single = [this]() {
+      bool is_power_single = false;
+      if (input_shape1_.size() == input_shape2_.size()) {
+        is_power_single = true;
+        for (size_t i = 0; i < input_shape1_.size(); ++i) {
+          if (input_shape1_[i] != input_shape2_[i]) {
+            is_power_single = false;
+            break;
+          }
+        }
+      }
+      return is_power_single;
+    };
+
+    if (op_para.in_elements_num1_ == 1) {
       auto task = [&](size_t start, size_t end) {
-        (void)Power(input1 + start, input2 + start, out + start, end - start, 1, 0, false);
+        (void)Power(input1 + start, input2, out + start, end - start, 1, 0, true);
       };
       CPUKernelUtils::ParallelFor(task, output_size_);
       return;
     }
-    if (op_para.in_elements_num1_ == 1) {
+    if (is_power_single()) {
       auto task = [&](size_t start, size_t end) {
-        (void)Power(input1 + start, input2, out + start, end - start, 1, 0, true);
+        (void)Power(input1 + start, input2 + start, out + start, end - start, 1, 0, false);
       };
       CPUKernelUtils::ParallelFor(task, output_size_);
       return;
