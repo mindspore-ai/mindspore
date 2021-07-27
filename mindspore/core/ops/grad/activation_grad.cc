@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ void ActivationGrad::set_activation_type(const ActivationType &type) {
 
 ActivationType ActivationGrad::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
@@ -45,6 +46,7 @@ void ActivationGrad::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, 
 
 float ActivationGrad::get_alpha() const {
   auto value_ptr = GetAttr(kAlpha);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNameActivationGrad, ActivationGrad);

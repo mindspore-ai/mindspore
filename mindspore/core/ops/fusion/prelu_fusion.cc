@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,12 @@ void PReLUFusion::set_slope(const std::vector<float> &slope) { (void)this->AddAt
 
 bool PReLUFusion::get_channel_shared() const {
   auto value_ptr = GetAttr(kChannelShared);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 std::vector<float> PReLUFusion::get_slope() const {
   auto value_ptr = GetAttr(kSlope);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<float>>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNamePReLUFusion, PReLUFusion);

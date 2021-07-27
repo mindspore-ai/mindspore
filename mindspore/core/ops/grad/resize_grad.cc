@@ -41,11 +41,13 @@ void ResizeGrad::set_align_corners(const bool align_corners) {
 
 ResizeMethod ResizeGrad::get_method() const {
   auto value_ptr = GetAttr(kMethod);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ResizeMethod(GetValue<int64_t>(value_ptr));
 }
 
 bool ResizeGrad::get_align_corners() const {
   auto value_ptr = GetAttr(kAlignCorners);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 

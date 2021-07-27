@@ -49,6 +49,7 @@ class AssignGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     if (!CheckParam(kernel_node)) {
       return false;
@@ -71,6 +72,7 @@ class AssignGpuKernel : public GpuKernel {
 
  private:
   bool CheckParam(const CNodePtr &kernel_node) {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but AssignGpuKernel needs 2 output.";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ void PartialFusion::set_sub_graph_index(const int64_t sub_graph_index) {
 }
 int64_t PartialFusion::get_sub_graph_index() const {
   auto value_ptr = GetAttr(kSubGraphIndex);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNamePartialFusion, PartialFusion);

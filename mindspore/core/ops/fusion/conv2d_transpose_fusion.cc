@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,11 +71,13 @@ void Conv2dTransposeFusion::set_activation_type(ActivationType activation_type) 
 
 std::vector<int64_t> Conv2dTransposeFusion::get_output_paddings() const {
   auto value_ptr = GetAttr(kOutputPaddings);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 ActivationType Conv2dTransposeFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 

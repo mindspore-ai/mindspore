@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ void LayerNormFusion::set_elementwise_affine(const bool elementwise_affine) {
 
 bool LayerNormFusion::get_elementwise_affine() const {
   auto value_ptr = GetAttr(kElementwiseAffine);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNameLayerNormFusion, LayerNormFusion);

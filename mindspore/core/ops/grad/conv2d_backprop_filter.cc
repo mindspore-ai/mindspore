@@ -71,6 +71,7 @@ void Conv2DBackpropFilter::set_out_channel(const int64_t out_channel) {
 
 int64_t Conv2DBackpropFilter::get_out_channel() const {
   auto value_ptr = GetAttr(kOutChannel);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
@@ -80,6 +81,7 @@ void Conv2DBackpropFilter::set_kernel_size(const std::vector<int64_t> &kernel_si
 
 std::vector<int64_t> Conv2DBackpropFilter::get_kernel_size() const {
   auto value_ptr = GetAttr(kKernelSize);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -90,6 +92,7 @@ void Conv2DBackpropFilter::set_pad_mode(const PadMode &pad_mode) {
 
 PadMode Conv2DBackpropFilter::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
@@ -99,6 +102,7 @@ void Conv2DBackpropFilter::set_pad_list(const std::vector<int64_t> &pad_list) {
 
 std::vector<int64_t> Conv2DBackpropFilter::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -106,6 +110,7 @@ void Conv2DBackpropFilter::set_mode(const int64_t mode) { (void)this->AddAttr(kM
 
 int64_t Conv2DBackpropFilter::get_mode() const {
   auto value_ptr = GetAttr(kMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
@@ -113,6 +118,7 @@ void Conv2DBackpropFilter::set_stride(const std::vector<int64_t> &stride) { this
 
 std::vector<int64_t> Conv2DBackpropFilter::get_stride() const {
   auto value_ptr = GetAttr(kStride);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -122,6 +128,7 @@ void Conv2DBackpropFilter::set_dilation(const std::vector<int64_t> &dilation) {
 
 std::vector<int64_t> Conv2DBackpropFilter::get_dilation() const {
   auto value_ptr = GetAttr(kDilation);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -129,6 +136,7 @@ void Conv2DBackpropFilter::set_group(const int64_t group) { (void)this->AddAttr(
 
 int64_t Conv2DBackpropFilter::get_group() const {
   auto value_ptr = GetAttr(kGroup);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
@@ -139,6 +147,7 @@ void Conv2DBackpropFilter::set_format(const Format &format) {
 
 Format Conv2DBackpropFilter::get_format() const {
   auto value_ptr = GetAttr(kFormat);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return Format(GetValue<int64_t>(value_ptr));
 }
 

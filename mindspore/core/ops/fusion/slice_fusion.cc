@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ void SliceFusion::set_axes(const std::vector<int64_t> &axes) { (void)this->AddAt
 
 std::vector<int64_t> SliceFusion::get_axes() const {
   auto value_ptr = GetAttr(kAxes);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -39,6 +40,8 @@ AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto size_v = input_args[2]->BuildValue();
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
+  MS_EXCEPTION_IF_NULL(begin_v);
+  MS_EXCEPTION_IF_NULL(size_v);
   auto tensor_type = x_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto data_type = tensor_type->element();

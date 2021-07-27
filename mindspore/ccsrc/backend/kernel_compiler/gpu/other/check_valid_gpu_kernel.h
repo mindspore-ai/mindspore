@@ -55,6 +55,7 @@ class CheckValidGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but CheckValid needs 2 inputs.";
