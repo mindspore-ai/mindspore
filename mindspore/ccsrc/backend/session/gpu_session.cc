@@ -53,6 +53,7 @@
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/gpu/concat_outputs_for_all_gather.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/optimizer/pass/optimize_updatestate.h"
 #include "common/trans.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/data_dump/e2e_dump.h"
@@ -184,6 +185,8 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
+  // Remove node only used by UpdateState, in order to ensure the correct execution sequence in CudnnInplaceAggregate.
+  pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
   pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
   pm->AddPass(std::make_shared<opt::ReluV2Pass>());
   pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());

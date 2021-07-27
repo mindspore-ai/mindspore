@@ -20,7 +20,6 @@
 #include <string>
 #include "base/core_ops.h"
 #include "utils/utils.h"
-#include "backend/session/kernel_graph.h"
 
 namespace mindspore {
 namespace opt {

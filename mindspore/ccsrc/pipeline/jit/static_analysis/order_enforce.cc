@@ -37,7 +37,13 @@ class OrderEnforcer {
   void Run() {
     auto nodes = MakeTopoSortMap();
     for (auto &node : nodes) {
-      HandleNode(node);
+      if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+        HandleUpdateState(node);
+      } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+        // op(MakTuple(Load, ...)) sometimes do not attach update_state,
+        // So need special treatment in order to ensure the exec_order of MakeTuple users.
+        HandleMakeTupleUsers(node);
+      }
     }
   }
 
@@ -50,11 +56,7 @@ class OrderEnforcer {
     return nodes;
   }
 
-  void HandleNode(const AnfNodePtr &node) {
-    if (!IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
-      // Skip nodes other than UpdateState.
-      return;
-    }
+  void HandleUpdateState(const AnfNodePtr &node) {
     auto update_state = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(update_state);
     const size_t update_state_inputs_size = 3;
@@ -65,40 +67,105 @@ class OrderEnforcer {
       // Skip UpdateStates for IO.
       return;
     }
-    auto updated_refs = FindUpdatedRefs(update_state);
-    if (updated_refs.empty()) {
-      // Skip UpdateStates that do not have updated refs.
+    const size_t attach_index = 2;
+    auto &attach = update_state->input(attach_index);
+    if (IsPrimitiveCNode(attach, prim::kPrimLoad) || IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
       return;
-    }
-    auto &attach = update_state->input(2);
-    if (IsPrimitiveCNode(attach, prim::kPrimLoad)) {
-      // Handle UpdateState with Load.
-      EnforceOrderForLoad(update_state, attach->cast<CNodePtr>(), updated_refs);
-    } else if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
-      // Handle UpdateState with MakeTuple.
-      EnforceOrderForTuple(update_state, attach->cast<CNodePtr>(), updated_refs);
+    } else if (attach->isa<CNode>()) {
+      EnforceOrderForOtherCNode(attach->cast<CNodePtr>());
     }
   }
 
-  std::unordered_set<AnfNodePtr> FindUpdatedRefs(const CNodePtr &update_state) {
-    std::unordered_set<AnfNodePtr> updated_refs;
-    auto &users = manager_->node_users()[update_state];
+  bool CheckMakeTupleHaveLoad(const CNodePtr &cnode) {
+    auto inputs = cnode->inputs();
+    for (size_t index = 1; index < inputs.size(); index++) {
+      auto input = cnode->input(index);
+      if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  std::vector<AnfNodePtr> FindUpdateStateUsers(const CNodePtr &cnode) {
+    auto &node_users = manager_->node_users();
+    auto iter = node_users.find(cnode);
+    if (iter == node_users.end()) {
+      return {};
+    }
+    std::vector<AnfNodePtr> update_states;
+    auto &users = iter->second;
     for (auto &user : users) {
-      auto cnode = dyn_cast<CNode>(user.first);
-      if (cnode == nullptr) {
-        continue;
-      }
-      if (cnode->IsApply(prim::kPrimLoad) || cnode->IsApply(prim::kPrimDepend) ||
-          cnode->IsApply(prim::kPrimUpdateState)) {
-        continue;
-      }
-      for (auto &input : cnode->inputs()) {
-        if (IsRef(input)) {
-          updated_refs.insert(input);
+      auto &user_node = user.first;
+      if (IsPrimitiveCNode(user_node, prim::kPrimUpdateState)) {
+        update_states.emplace_back(user_node);
+      } else if (IsPrimitiveCNode(user_node, prim::kPrimMakeTuple)) {
+        auto make_tuple_users = FindUpdateStateUsers(user_node->cast<CNodePtr>());
+        for (auto make_tuple_user : make_tuple_users) {
+          if (IsPrimitiveCNode(make_tuple_user, prim::kPrimUpdateState)) {
+            update_states.emplace_back(make_tuple_user);
+          }
         }
       }
     }
-    return updated_refs;
+    return update_states;
+  }
+
+  AnfNodePtr FindLastUpdateState(const CNodePtr &cnode) {
+    auto inputs = cnode->inputs();
+    std::vector<AnfNodePtr> all_update_states;
+    for (size_t index = 1; index < inputs.size(); index++) {
+      auto input = cnode->input(index);
+      if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
+        std::vector<AnfNodePtr> update_states = FindUpdateStateUsers(input->cast<CNodePtr>());
+        std::copy(update_states.begin(), update_states.end(), std::back_inserter(all_update_states));
+      }
+    }
+    AnfNodePtr last_update_state = nullptr;
+    if (all_update_states.empty()) {
+      return last_update_state;
+    }
+    if (all_update_states.size() == 1) {
+      return all_update_states[0];
+    }
+    for (size_t i = 0; i < all_update_states.size() - 1; i++) {
+      auto cur_update_state = all_update_states[i];
+      auto next_update_state = all_update_states[i + 1];
+      if (topo_sort_map_[cur_update_state] < topo_sort_map_[next_update_state]) {
+        last_update_state = next_update_state;
+      }
+    }
+    return last_update_state;
+  }
+
+  // Convert:
+  // load1 = Load(para1, u1)
+  // load2 = Load(para2, u2)
+  // maketuple1 = MakeTuple(inputs, load1, load2)
+  // addn = AddN(maketupe1) or other-op
+  // maketuple2 = MakeTuple(load1, load2)
+  // u3 = UpdateState(u', maketuple2)
+  // assign = Assign(para2, inputs, u3)
+  // To:
+  // load1 = Load(para1, u1)
+  // load2 = Load(para2, u2)
+  // maketuple1 = MakeTuple(inputs, load1, load2)
+  // addn = AddN(maketupe1) or other-op
+  // maketuple2 = MakeTuple(load1, load2)
+  // u3 = UpdateState(u', maketuple2, addn) # need put addn or other-op into u3 inputs
+  // assign = Assign(para2, inputs, u3)
+  void HandleMakeTupleUsers(const AnfNodePtr &node) {
+    auto maketuple = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(maketuple);
+    if (CheckMakeTupleHaveLoad(maketuple)) {
+      auto update_state = FindLastUpdateState(maketuple);
+      if (update_state != nullptr) {
+        std::unordered_set<AnfNodePtr> maketuple_users = GetSpecialOperatorRealUsers(maketuple);
+        auto update_state_cnode = update_state->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(update_state_cnode);
+        AddInputEdges(update_state_cnode, maketuple_users);
+      }
+    }
   }
 
   bool IsRef(const AnfNodePtr &node) {
@@ -106,52 +173,62 @@ class OrderEnforcer {
     return abs != nullptr && abs->isa<abstract::AbstractRef>();
   }
 
-  void EnforceOrderForLoad(const CNodePtr &update_state, const CNodePtr &load,
-                           const std::unordered_set<AnfNodePtr> &refs) {
-    auto parameter = load->input(1);
-    if (refs.find(parameter) == refs.end()) {
-      // Skip if loaded parameter is not updated.
-      return;
+  // Find Load or parameter users as the candidate nodes to enforce order of execution.
+  std::unordered_set<AnfNodePtr> GetSpecialOperatorRealUsers(const AnfNodePtr &node) {
+    auto &node_users = manager_->node_users();
+    auto iter = node_users.find(node);
+    if (iter == node_users.end()) {
+      return {};
     }
-    // Find load users, ignore processed nodes.
-    auto load_users = FindUsers(load, update_state);
-    auto parameter_users = FindUsers(parameter, update_state);
-    load_users.insert(parameter_users.begin(), parameter_users.end());
-    // Find load users that not depend on the UpdateState,
-    // and than let UpdateState depend on them.
-    AddInputEdges(update_state, load_users);
+    std::unordered_set<AnfNodePtr> real_users;
+    auto &users = iter->second;
+    for (auto &user : users) {
+      auto &user_node = user.first;
+      real_users.insert(user_node);
+    }
+    return real_users;
   }
 
-  void EnforceOrderForTuple(const CNodePtr &update_state, const CNodePtr &make_tuple,
-                            const std::unordered_set<AnfNodePtr> &refs) {
-    // The UpdateState should be the only one user of the make_tuple.
-    // for performance, we only check the number of output edges.
-    if (manager_->node_users()[make_tuple].size() != 1) {
+  bool IsOneOfPrimitive(const AnfNodePtr &node, const std::set<PrimitivePtr> &special_node_types) {
+    for (const auto &type : special_node_types) {
+      if (IsPrimitiveCNode(node, type)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void EnforceOrderForOtherCNode(const CNodePtr &cnode) {
+    // Find refs from the cnode inputs.
+    auto &inputs = cnode->inputs();
+    const size_t last_index = inputs.size() - 1;
+    auto last_input = cnode->input(last_index);
+    if (!IsPrimitiveCNode(last_input, prim::kPrimUpdateState)) {
       return;
     }
-    // Find load users from the tuple of Load nodes.
-    std::unordered_set<AnfNodePtr> all_load_users;
-    auto &inputs = make_tuple->inputs();
+    const std::set<PrimitivePtr> special_operators = {prim::kPrimExpandDims};
     for (size_t i = 1; i < inputs.size(); ++i) {
       auto &input = inputs.at(i);
-      if (!IsPrimitiveCNode(input, prim::kPrimLoad)) {
-        // Skip non-Load nodes.
+      if (!IsRef(input)) {
         continue;
       }
-      auto load = input->cast<CNodePtr>();
-      auto parameter = load->input(1);
-      if (refs.find(parameter) == refs.end()) {
-        // Skip if loaded parameter is not updated.
-        continue;
+      // load ref users
+      auto loads = FindLoadUsers(input);
+      for (auto load : loads) {
+        std::unordered_set<AnfNodePtr> load_users = FindUsers(load);
+        std::unordered_set<AnfNodePtr> real_users;
+        for (auto load_user : load_users) {
+          // check the special operator, only one level of user is considered for now
+          if (IsOneOfPrimitive(load_user, special_operators)) {
+            std::unordered_set<AnfNodePtr> special_real_users = GetSpecialOperatorRealUsers(load_user);
+            real_users.insert(special_real_users.begin(), special_real_users.end());
+          } else {
+            real_users.insert(load_user);
+          }
+        }
+        AddInputEdges(last_input->cast<CNodePtr>(), real_users);
       }
-      auto load_users = FindUsers(load, make_tuple);
-      auto parameter_users = FindUsers(parameter, make_tuple);
-      all_load_users.insert(parameter_users.begin(), parameter_users.end());
-      all_load_users.insert(load_users.begin(), load_users.end());
     }
-    // Find load users that not depend on the UpdateState,
-    // and than let UpdateState depend on them.
-    AddInputEdges(update_state, all_load_users);
   }
 
   bool IsInUpdateState(const AnfNodePtr &load_user, const CNodePtr &update_state) {
@@ -159,6 +236,9 @@ class OrderEnforcer {
     const size_t input_size = update_state->inputs().size();
     for (size_t index = attach_index; index < input_size; index++) {
       auto attach = update_state->input(attach_index);
+      if (attach == load_user) {
+        return true;
+      }
       if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
         auto attach_cnode = attach->cast<CNodePtr>();
         auto inputs = attach_cnode->inputs();
@@ -167,8 +247,6 @@ class OrderEnforcer {
         if (has_load_user) {
           return true;
         }
-      } else if (attach == load_user) {
-        return true;
       }
     }
     return false;
@@ -178,6 +256,9 @@ class OrderEnforcer {
   void AddInputEdges(const CNodePtr &update_state, const std::unordered_set<AnfNodePtr> &load_users) {
     auto sorted_load_users = SortLoadUsers(load_users);
     for (auto &load_user : sorted_load_users) {
+      if (IsPrimitiveCNode(load_user, prim::kPrimMakeTuple) || IsPrimitiveCNode(load_user, prim::kPrimUpdateState)) {
+        continue;
+      }
       if (!IsDependOn(load_user, update_state)) {
         processed_nodes_.insert(load_user);
         if (!IsInUpdateState(load_user, update_state)) {
@@ -239,7 +320,7 @@ class OrderEnforcer {
   }
 
   // Find Load or parameter users as the candidate nodes to enforce order of execution.
-  std::unordered_set<AnfNodePtr> FindUsers(const AnfNodePtr &load_or_param, const AnfNodePtr &exclude) {
+  std::unordered_set<AnfNodePtr> FindUsers(const AnfNodePtr &load_or_param) {
     auto &node_users = manager_->node_users();
     auto iter = node_users.find(load_or_param);
     if (iter == node_users.end()) {
@@ -249,10 +330,6 @@ class OrderEnforcer {
     auto &users = iter->second;
     for (auto &user : users) {
       auto &user_node = user.first;
-      if (user_node == exclude) {
-        // Skip excluded node.
-        continue;
-      }
       if (processed_nodes_.find(user_node) != processed_nodes_.end()) {
         // Skip processed nodes.
         continue;
@@ -264,7 +341,23 @@ class OrderEnforcer {
     return load_param_users;
   }
 
- private:
+  std::unordered_set<AnfNodePtr> FindLoadUsers(const AnfNodePtr &param) {
+    auto &node_users = manager_->node_users();
+    auto iter = node_users.find(param);
+    if (iter == node_users.end()) {
+      return {};
+    }
+    std::unordered_set<AnfNodePtr> loads;
+    auto &users = iter->second;
+    for (auto &user : users) {
+      auto &user_node = user.first;
+      if (IsPrimitiveCNode(user_node, prim::kPrimLoad)) {
+        loads.insert(user_node);
+      }
+    }
+    return loads;
+  }
+
   const FuncGraphPtr &func_graph_;
   FuncGraphManagerPtr manager_;
   std::unordered_map<AnfNodePtr, size_t> topo_sort_map_;

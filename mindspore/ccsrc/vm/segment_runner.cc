@@ -59,11 +59,11 @@ AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
       continue;
     }
     auto &node_users = iter->second;
-    const bool has_outer_user = std::any_of(
-      std::begin(node_users), std::end(node_users), [&seen](const std::pair<AnfNodePtr, int64_t> &u) -> bool {
-        const bool is_outer_user = (seen.find(u.first) == seen.end());
-        return is_outer_user && !(IsPrimitiveCNode(u.first, prim::kPrimUpdateState) && u.second > 2);
-      });
+    const bool has_outer_user = std::any_of(std::begin(node_users), std::end(node_users),
+                                            [&seen](const std::pair<AnfNodePtr, int64_t> &u) -> bool {
+                                              const bool is_outer_user = (seen.find(u.first) == seen.end());
+                                              return is_outer_user;
+                                            });
     if (has_outer_user) {
       output.emplace_back(node);
     }
@@ -126,16 +126,6 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
       const size_t value_start_index = 2;
       for (size_t i = value_start_index; i < inps.size(); ++i) {
         args.emplace_back(NewValueNode(MakeValue(0)));
-      }
-    } else if (IsPrimitive(fn, prim::kPrimUpdateState)) {
-      args.emplace_back(RefSubGraphNode(fg, inps[1], &inputs, &eqv));
-      args.emplace_back(RefSubGraphNode(fg, inps[kUpdateStateRealInput], &inputs, &eqv));
-      const size_t additional_input_index = 3;
-      for (size_t i = additional_input_index; i < inps.size(); ++i) {
-        auto &input = inps[i];
-        if (eqv.find(input) != eqv.end()) {
-          args.emplace_back(RefSubGraphNode(fg, input, &inputs, &eqv));
-        }
       }
     } else {
       (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args),
