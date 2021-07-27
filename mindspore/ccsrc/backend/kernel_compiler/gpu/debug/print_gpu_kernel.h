@@ -87,6 +87,7 @@ class PrintGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     if (AnfAlgo::HasNodeAttr("string_pos", kernel_node)) {
       string_value_ = GetAttr<std::vector<std::string>>(kernel_node, "string_value");

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ namespace ops {
 void EmbeddingLookupFusion::set_max_norm(const float max_norm) { (void)this->AddAttr(kMaxNorm, MakeValue(max_norm)); }
 float EmbeddingLookupFusion::get_max_norm() const {
   auto value_ptr = GetAttr(kMaxNorm);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 void EmbeddingLookupFusion::Init(const float max_norm) { this->set_max_norm(max_norm); }

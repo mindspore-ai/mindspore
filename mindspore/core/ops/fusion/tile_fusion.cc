@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ void TileFusion::set_dims(const std::vector<int64_t> &dims) { (void)this->AddAtt
 
 std::vector<int64_t> TileFusion::get_dims() const {
   auto value_ptr = GetAttr(kDims);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNameTileFusion, TileFusion);

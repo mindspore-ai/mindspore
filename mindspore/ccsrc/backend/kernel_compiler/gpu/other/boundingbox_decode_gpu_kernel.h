@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but BoundingBoxDecode needs 2 inputs.";
@@ -89,10 +90,11 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
     InitSizeLists();
 
     const size_t coordinate_size = 4;
-    if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueTuple>() ||
-        AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueList>()) {
+    auto means = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means");
+    MS_EXCEPTION_IF_NULL(means);
+    if (means->isa<ValueTuple>() || means->isa<ValueList>()) {
       means_ = GetAttr<std::vector<float>>(kernel_node, "means");
-    } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
+    } else if (means->isa<FloatImm>()) {
       float mean = GetAttr<float>(kernel_node, "means");
       for (size_t i = 0; i < coordinate_size; i++) {
         means_.emplace_back(mean);
@@ -101,10 +103,11 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "Attribute means type is invalid.";
     }
 
-    if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueTuple>() ||
-        AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueList>()) {
+    auto stds = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds");
+    MS_EXCEPTION_IF_NULL(stds);
+    if (stds->isa<ValueTuple>() || stds->isa<ValueList>()) {
       stds_ = GetAttr<std::vector<float>>(kernel_node, "stds");
-    } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
+    } else if (stds->isa<FloatImm>()) {
       float std = GetAttr<float>(kernel_node, "stds");
       for (size_t i = 0; i < coordinate_size; i++) {
         stds_.emplace_back(std);

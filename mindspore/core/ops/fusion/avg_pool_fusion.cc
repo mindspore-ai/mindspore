@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,17 +40,22 @@ void AvgPoolFusion::set_activation_type(ActivationType activation_type) {
 
 bool AvgPoolFusion::get_global() const {
   auto value_ptr = GetAttr(kGlobal);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 
 ActivationType AvgPoolFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
@@ -66,6 +71,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto in_w = in_shape[3];
 
   auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
+  (void)CheckAndConvertUtils::CheckPositiveVector(kStride, strides, op_name);
   auto kernel_h = kernel_size[2];
   auto kernel_w = kernel_size[3];
   auto stride_h = strides[2];
@@ -90,8 +96,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
   }
   return input_args[0]->BuildType();
 }

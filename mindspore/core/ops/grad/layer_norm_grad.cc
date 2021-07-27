@@ -48,10 +48,12 @@ void LayerNormGrad::set_begin_params_axis(const int64_t begin_params_axis) {
 }
 int64_t LayerNormGrad::get_begin_norm_axis() const {
   auto value_ptr = this->GetAttr(kBeginNormAxis);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 int64_t LayerNormGrad::get_begin_params_axis() const {
   auto value_ptr = this->GetAttr(kBeginParamsAxis);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LayerNormGrad, prim::kPrimLayerNormGrad, LayerNormGradInfer, nullptr, true);

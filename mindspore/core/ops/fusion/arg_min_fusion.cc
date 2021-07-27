@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,21 @@ void ArgMinFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKe
 void ArgMinFusion::set_out_max_value(bool out_max_value) { (void)AddAttr(kOutMaxValue, MakeValue(out_max_value)); }
 void ArgMinFusion::set_top_k(int64_t top_k) { (void)this->AddAttr(kTopK, MakeValue(top_k)); }
 
-bool ArgMinFusion::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); }
+bool ArgMinFusion::get_keep_dims() const {
+  auto keep_dims = GetAttr(kKeepDims);
+  MS_EXCEPTION_IF_NULL(keep_dims);
+  return GetValue<bool>(keep_dims);
+}
+
 bool ArgMinFusion::get_out_max_value() const {
   auto value_ptr = GetAttr(kOutMaxValue);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 
 int64_t ArgMinFusion::get_top_k() const {
   auto value_ptr = GetAttr(kTopK);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 

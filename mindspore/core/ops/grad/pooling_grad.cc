@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ void PoolingGrad::set_window(const std::vector<int64_t> &window) { (void)this->A
 
 std::vector<int64_t> PoolingGrad::get_window() const {
   auto value_ptr = GetAttr(kWindow);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -54,6 +55,7 @@ void PoolingGrad::set_stride(const std::vector<int64_t> &stride) { (void)this->A
 
 std::vector<int64_t> PoolingGrad::get_stride() const {
   auto value_ptr = GetAttr(kStride);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -64,6 +66,7 @@ void PoolingGrad::set_pad_mode(const PadMode &pad_mode) {
 
 PadMode PoolingGrad::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
@@ -71,6 +74,7 @@ void PoolingGrad::set_pad_list(const std::vector<int64_t> &pad_list) { this->Add
 
 std::vector<int64_t> PoolingGrad::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -81,6 +85,7 @@ void PoolingGrad::set_round_mode(const RoundMode &round_mode) {
 
 RoundMode PoolingGrad::get_round_mode() const {
   auto value_ptr = GetAttr(kRoundMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return RoundMode(GetValue<int64_t>(value_ptr));
 }
 
@@ -91,6 +96,7 @@ void PoolingGrad::set_format(const Format &format) {
 
 Format PoolingGrad::get_format() const {
   auto value_ptr = GetAttr(kFormat);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return Format(GetValue<int64_t>(value_ptr));
 }
 
@@ -98,6 +104,7 @@ void PoolingGrad::set_global(const bool global) { (void)this->AddAttr(kGlobal, M
 
 bool PoolingGrad::get_global() const {
   auto value_ptr = GetAttr(kGlobal);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNamePoolingGrad, PoolingGrad);

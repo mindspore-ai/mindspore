@@ -76,6 +76,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
@@ -173,6 +174,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "range_max_ failed to cast";
     }
     range = static_cast<S>(range_max_);
+    MS_EXCEPTION_IF_ZERO("range", range);
     return static_cast<S>(1.0f / range);
   }
 
