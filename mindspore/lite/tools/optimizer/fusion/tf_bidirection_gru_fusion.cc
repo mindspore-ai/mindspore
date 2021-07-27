@@ -453,14 +453,14 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
   float *recu_tensor_data = nullptr;
   auto recu_weight = AddDefaultParameter(func_graph, base_name + "_cand_weight", recu_weight_shape, kNumberTypeFloat32,
                                          reinterpret_cast<void **>(&recu_tensor_data));
-  if (recu_weight == nullptr) {
+  if (recu_weight == nullptr || recu_tensor_data == nullptr) {
     return nullptr;
   }
   std::vector<int> bias_shape{2, hidden_size * 6};
   float *bias_tensor_data = nullptr;
   auto bias = AddDefaultParameter(func_graph, base_name + "_bias", bias_shape, kNumberTypeFloat32,
                                   reinterpret_cast<void **>(&bias_tensor_data));
-  if (bias == nullptr) {
+  if (bias == nullptr || bias_tensor_data == nullptr) {
     return nullptr;
   }
   for (int i = 0; i < 2 * hidden_size * 6; ++i) {
