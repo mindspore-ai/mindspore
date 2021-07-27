@@ -139,10 +139,6 @@ template <typename T>
 bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *recvbuff, size_t count) {
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
-  if (sendbuff == nullptr || recvbuff == nullptr) {
-    MS_LOG(ERROR) << "Input sendbuff or recvbuff for ReduceBroadcastAllReduce is nullptr.";
-    return false;
-  }
   uint32_t rank_size = server_num_;
   MS_LOG(DEBUG) << "Reduce Broadcast AllReduce rank_size:" << rank_size << ", local_rank_:" << local_rank_
                 << ", count:" << count;
@@ -218,11 +214,8 @@ template <typename T>
 bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t count) {
   // The collective communication API does not support calling Send and Recv concurrently with multiple threads;
   std::unique_lock<std::mutex> lock(mtx_);
-  if (sendbuff == nullptr || recvbuff == nullptr) {
-    MS_LOG(ERROR) << "AllReduce sendbuff or recvbuff is nullptr.";
-    return false;
-  }
-
+  MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
   uint32_t rank_size = server_num_;
   if (count >= rank_size) {
     return RingAllReduce<T>(sendbuff, recvbuff, count);
