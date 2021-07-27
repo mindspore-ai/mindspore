@@ -33,8 +33,10 @@ TRAIN_EPOCHS: 3
 run_distribute: False
 PRED_TRAINED: ""
 SAVE_PATH: "./"
-LR: 1e-4
-LR_PARA: 5e-4
+#LR
+base_lr: 0.0005
+warmup_step: 2000
+warmup_ratio: 0.0625
 MOMENTUM: 0.8
 LOSS_SCALE: 8096
 SAVE_CKPT_PER_N_STEP: 2000

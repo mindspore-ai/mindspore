@@ -15,9 +15,9 @@
 """cnnctc train"""
 
 
-import ast
 import mindspore
-from mindspore import context
+import mindspore.common.dtype as mstype
+from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.dataset import GeneratorDataset
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
@@ -27,6 +27,7 @@ from mindspore.common import set_seed
 from src.callback import LossCallBack
 from src.dataset import ST_MJ_Generator_batch_fixed_length, ST_MJ_Generator_batch_fixed_length_para
 from src.cnn_ctc import CNNCTC_Model, ctc_loss, WithLossCell
+from src.lr_schedule import dynamic_lr
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.device_adapter import get_device_id
@@ -63,9 +64,6 @@ def train():
         init()
         context.set_auto_parallel_context(parallel_mode="data_parallel")
 
-    config.LR = ast.literal_eval(config.LR)
-    config.LR_PARA = ast.literal_eval(config.LR_PARA)
-
     ds = dataset_creator(config.run_distribute)
 
     net = CNNCTC_Model(config.NUM_CLASS, config.HIDDEN_SIZE, config.FINAL_FEATURE_WIDTH)
@@ -79,8 +77,13 @@ def train():
         print('train from scratch...')
 
     criterion = ctc_loss()
-    opt = mindspore.nn.RMSProp(params=net.trainable_params(), centered=True, learning_rate=config.LR_PARA,
-                               momentum=config.MOMENTUM, loss_scale=config.LOSS_SCALE)
+    dataset_size = ds.get_dataset_size()
+    lr = Tensor(dynamic_lr(config, dataset_size), mstype.float32)
+    opt = mindspore.nn.RMSProp(params=net.trainable_params(),
+                               centered=True,
+                               learning_rate=lr,
+                               momentum=config.MOMENTUM,
+                               loss_scale=config.LOSS_SCALE)
 
     net = WithLossCell(net, criterion)
     loss_scale_manager = mindspore.train.loss_scale_manager.FixedLossScaleManager(config.LOSS_SCALE, False)
