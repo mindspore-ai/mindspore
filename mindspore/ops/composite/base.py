@@ -24,7 +24,9 @@ from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, Map_, Mult
     TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_exec, _wrap_func
-from .. import functional as F
+from ..primitive import Primitive
+from ..operations import _grad_ops
+from .. import operations as P
 from .. import signature as sig
 
 __all__ = [EnvInstance_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
@@ -659,7 +661,12 @@ zip_operation = _ZipOperation('zip_operation')
 env_get = MultitypeFuncGraph("env_get")
 
 
+env_getitem = Primitive('env_getitem')
+ref_to_embed = _grad_ops.RefToEmbed()
+zeros_like = P.ZerosLike()
+
+
 @env_get.register("EnvType", "Tensor")
 def _tensor_env_get(env, parameter):
     """Used to get env."""
-    return F.env_getitem(env, F.ref_to_embed(parameter), F.zeros_like(parameter))
+    return env_getitem(env, ref_to_embed(parameter), zeros_like(parameter))

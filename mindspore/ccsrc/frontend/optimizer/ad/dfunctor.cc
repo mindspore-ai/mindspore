@@ -31,6 +31,7 @@
 #include "utils/ms_context.h"
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace ad {
@@ -453,6 +454,9 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
   }
 
   for (auto &fv : free_variables_nodes) {
+    if (IsPrimitiveCNode(fv, prim::kPrimJ)) {  // Ignore if FV is a J CNode.
+      continue;
+    }
     auto fv_adjoint = anfnode_to_adjoin_.find(fv);
     if (fv_adjoint == anfnode_to_adjoin_.end()) {
       MS_LOG(EXCEPTION) << "AttachFvDoutToTape fv adjoint does not exist " << fv->ToString() << ".";
@@ -832,7 +836,31 @@ CNodePtr GetJUser(const NodeUsersMap &node_user_map, const CNodePtr &cnode, int 
   auto &j_users = it->second;
   auto size = j_users.size();
   if (size != 1) {
-    MS_LOG(EXCEPTION) << "Wrong J CNode use size " << size << " {" << cnode->DebugString(2) << "/" << index << "}";
+    bool has_multiple_j_call_user = false;
+    CNodePtr j_call_user = nullptr;
+    for (auto &user : j_users) {
+      // If J CNode is used as a FV, the j_users.size may exceed 1 user. It is allowed.
+      if (user.second == 0) {
+        // Real J CNode call user.
+        if (j_call_user == nullptr) {  // First user.
+          j_call_user = user.first->cast<CNodePtr>();
+        } else {  // More than 1 call user. Not allowed.
+          has_multiple_j_call_user = true;
+        }
+      }
+    }
+    if (has_multiple_j_call_user) {  // Has multiple J CNode call user.
+      std::ostringstream user_info;
+      for (auto &user : j_users) {
+        user_info << "    user: " << user.first->DebugString() << ", index: " << user.second << "\n";
+      }
+      DumpIR("J_User_Ex_" + cnode->func_graph()->ToString() + ".ir", cnode->func_graph());
+      MS_LOG(EXCEPTION) << "Incorrect J CNode user size: " << size << ", of {" << cnode->DebugString(2) << "/" << index
+                        << "}\nUser Info:\n"
+                        << user_info.str();
+    } else {
+      return j_call_user;
+    }
   }
   return j_users.begin()->first->cast<CNodePtr>();
 }

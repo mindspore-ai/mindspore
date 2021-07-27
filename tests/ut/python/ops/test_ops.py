@@ -22,6 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
 from mindspore import ops, Parameter, context
+from mindspore import ms_function
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -40,6 +41,44 @@ from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
 from ....ops_common import convert
 
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
+
+
+class TargetNet(nn.Cell):
+    def __init__(self):
+        super(TargetNet, self).__init__()
+        self.mul = P.Mul()
+
+    def construct(self, x, y):
+        return self.mul(x, y)
+
+# Recursive GradOperation in Cell.
+class Grad(nn.Cell):
+    def __init__(self, network):
+        super(Grad, self).__init__()
+        self.grad = C.GradOperation()
+        self.network = network
+
+    def construct(self, x, y):
+        return self.grad(self.network)(x, y)
+
+# Recursive GradOperaton with GradOperation object.
+grad1 = C.GradOperation()
+@ms_function
+def f1(x, y):
+    return grad1(grad1(TargetNet()))(x, y)
+
+# Recursive GradOperaton with F.grad.
+@ms_function
+def f2(x, y):
+    return F.grad(F.grad(TargetNet()))(x, y)
+
+def test_recursive_grad():
+    x = Tensor(3, mstype.float32)
+    y = Tensor(1, mstype.float32)
+
+    Grad(Grad(TargetNet()))(x, y)
+    f1(x, y)
+    f2(x, y)
 
 
 class InputBackward(nn.Cell):
