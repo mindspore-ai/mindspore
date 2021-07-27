@@ -123,13 +123,19 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
   }
 
   auto first_node_prim = AnfAlgo::GetCNodePrimitive(first_node);
+  MS_EXCEPTION_IF_NULL(first_node_prim);
   auto first_node_channel = first_node_prim.get()->GetAttr("out_channel");
   MS_EXCEPTION_IF_NULL(first_node_channel);
-  size_t first_channel = first_node_channel->cast<Int64ImmPtr>()->value();
+  auto first_imm_ptr = first_node_channel->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(first_imm_ptr);
+  size_t first_channel = first_imm_ptr->value();
   auto second_node_prim = AnfAlgo::GetCNodePrimitive(second_node);
+  MS_EXCEPTION_IF_NULL(second_node_prim);
   auto second_node_channel = second_node_prim.get()->GetAttr("out_channel");
   MS_EXCEPTION_IF_NULL(second_node_channel);
-  size_t second_channel = second_node_channel->cast<Int64ImmPtr>()->value();
+  auto second_imm_ptr = second_node_channel->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(second_imm_ptr);
+  size_t second_channel = second_imm_ptr->value();
   size_t cover_index = (first_channel >= second_channel) ? 0 : 1;
   bool ret = ExistDependencyFromAcc2Cover(inplace_node, cover_index);
   if (ret) {
@@ -165,6 +171,8 @@ void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cove
   //        |         |                           |           |     |
   //      Cover      Acc                          |          Acc    |
   //                                            Cover---------------+
+  MS_EXCEPTION_IF_NULL(inplace_node);
+  MS_EXCEPTION_IF_NULL(graph);
   size_t acc_index = cover_index == 1 ? 0 : 1;
   const CNodePtr &cover_node = inplace_node->at(cover_index).node->cast<CNodePtr>();
   const CNodePtr &acc_node = inplace_node->at(acc_index).node->cast<CNodePtr>();
@@ -177,9 +185,11 @@ void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cove
   bool ret = ExistRoute(acc_input, cover_node);
   if (ret) {
     auto new_input = graph->NewCNode(acc_input->inputs());
+    MS_EXCEPTION_IF_NULL(new_input);
     new_input->set_abstract(acc_input->abstract());
     CopyKernelInfo(acc_input, new_input);
     auto new_inplace_node = graph->NewCNode({acc_node->input(0), new_input, acc_node->input(2)});
+    MS_EXCEPTION_IF_NULL(new_inplace_node);
     new_inplace_node->set_abstract(acc_node->abstract());
     CopyKernelInfo(acc_node, new_inplace_node);
     auto manager = graph->manager();
@@ -191,6 +201,10 @@ void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cove
 
 void SetNodeAttr(AnfNodeIndex aggregate_node, AnfNodePtr skip_node, std::vector<AnfNodeIndex> *inplace_node,
                  const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(skip_node);
+  MS_EXCEPTION_IF_NULL(inplace_node);
+  MS_EXCEPTION_IF_NULL(graph);
+
   SetPrimAttr(aggregate_node.node, "aggregate", true);
   SetPrimAttr(aggregate_node.node, "aggregate_input_index", aggregate_node.index);
   SetPrimAttr(skip_node, "skip", true);
@@ -202,6 +216,7 @@ void SetNodeAttr(AnfNodeIndex aggregate_node, AnfNodePtr skip_node, std::vector<
   for (size_t i = 0; i < inplace_node->size(); i++) {
     auto algo = (i == cover_index) ? "cover" : "accumulation";
     auto node = (*inplace_node)[i].node;
+    MS_EXCEPTION_IF_NULL(node);
     SetPrimAttr(node, "inplace_algo", algo);
     SetPrimAttr(node, "inplace_group", group);
     SetPrimAttr(node, "inplace_output_index", (*inplace_node)[i].index);
@@ -209,10 +224,13 @@ void SetNodeAttr(AnfNodeIndex aggregate_node, AnfNodePtr skip_node, std::vector<
     if (order_required && i != cover_index) {
       auto acc_node = node;
       auto cover_node = (*inplace_node)[cover_index].node;
-      auto acc_node_input = acc_node->cast<CNodePtr>()->input(1);
+      auto cnode = acc_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto acc_node_input = cnode->input(1);
       std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                         acc_node_input, cover_node};
       auto depend_node = graph->NewCNode(inputs);
+      MS_EXCEPTION_IF_NULL(depend_node);
       depend_node->set_abstract(acc_node_input->abstract());
       auto manager = graph->manager();
       MS_EXCEPTION_IF_NULL(manager);
@@ -224,6 +242,9 @@ void SetNodeAttr(AnfNodeIndex aggregate_node, AnfNodePtr skip_node, std::vector<
 
 bool PatternMatch(const FuncGraphPtr &graph, const AnfNodePtr &node, AnfNodeIndex *aggregate, AnfNodePtr *skip_node,
                   std::vector<AnfNodeIndex> *inplace) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(inplace);
   MS_EXCEPTION_IF_NULL(skip_node);
   MS_EXCEPTION_IF_NULL(aggregate);
   if (!node->isa<CNode>()) {

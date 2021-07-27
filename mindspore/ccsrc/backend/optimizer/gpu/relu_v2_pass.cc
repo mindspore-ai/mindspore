@@ -40,6 +40,7 @@ CNodePtr GetRelu(const CNodePtr &relu_grad) {
 }
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
+  MS_EXCEPTION_IF_NULL(node);
   std::vector<std::string> inputs_format;
   std::vector<std::string> outputs_format;
   std::vector<TypeId> inputs_type;

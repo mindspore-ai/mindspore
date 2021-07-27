@@ -39,8 +39,6 @@ class ApplyMomentumWeightDecayFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  static bool IsScalar(const BaseRef &n);
-
   VarPtr monad_;
   VarPtr weight_decay_;
   VarPtr variable_;

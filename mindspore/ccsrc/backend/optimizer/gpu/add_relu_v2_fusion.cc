@@ -64,6 +64,8 @@ const AnfNodePtr AddReluV2Fusion::Process(const FuncGraphPtr &graph, const AnfNo
   MS_EXCEPTION_IF_NULL(equiv);
   auto x1 = utils::cast<AnfNodePtr>((*equiv)[x1_]);
   auto x2 = utils::cast<AnfNodePtr>((*equiv)[x2_]);
+  MS_EXCEPTION_IF_NULL(x1);
+  MS_EXCEPTION_IF_NULL(x2);
 
   auto tensor_add = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(tensor_add);

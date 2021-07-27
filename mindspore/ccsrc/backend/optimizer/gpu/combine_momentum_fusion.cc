@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace opt {
 bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vector<AnfNodePtr>> *deal_list) {
+  MS_EXCEPTION_IF_NULL(deal_list);
   std::vector<AnfNodePtr> momentum;
   std::vector<AnfNodePtr> momentum_decay;
   for (auto &momentum_node : node_list) {
@@ -55,6 +56,9 @@ bool CombineMomentumFusion::Run(const FuncGraphPtr &graph) {
     return false;
   }
   for (auto momentums : deal_list) {
+    if (momentums.size() == 0) {
+      MS_LOG(EXCEPTION) << "The size of momentums is zero.";
+    }
     // 2 create node momentum
     std::vector<AnfNodePtr> inputs = {};
     if (AnfAlgo::GetCNodeName(momentums[0]) == kFusedScaleApplyMomentum) {
@@ -70,12 +74,15 @@ bool CombineMomentumFusion::Run(const FuncGraphPtr &graph) {
     size_t input_num = AnfAlgo::GetInputTensorNum(momentums[0]);
     for (auto mom : momentums) {
       for (size_t i = 0; i < input_num; i++) {
-        inputs.push_back(AnfAlgo::GetInputNode(utils::cast<CNodePtr>(mom), i));
+        auto cnode = utils::cast<CNodePtr>(mom);
+        MS_EXCEPTION_IF_NULL(cnode);
+        inputs.push_back(AnfAlgo::GetInputNode(cnode, i));
       }
     }
     TraceGuard guard(std::make_shared<TraceOpt>(momentums[0]->debug_info()));
     auto combine_mom = graph->NewCNode(inputs);
     auto kernel_info = std::make_shared<device::KernelInfo>();
+    MS_EXCEPTION_IF_NULL(combine_mom);
     MS_EXCEPTION_IF_NULL(kernel_info);
     combine_mom->set_kernel_info(kernel_info);
     AbstractBasePtrList abstract_list;
