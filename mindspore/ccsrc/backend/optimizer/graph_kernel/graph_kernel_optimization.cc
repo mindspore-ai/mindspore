@@ -63,9 +63,6 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
   pm->AddPass(std::make_shared<SplitAssign>(), OptLevel_1);
 
-  // Remove redundant Cast(bias, fp16) for Matmul input
-  pm->AddPass(std::make_shared<CastMatmulFusion>(), OptLevel_2, is_ascend);
-
   // Spread the MakeTuple input of UpdateState
   pm->AddPass(std::make_shared<SpreadUpdateState>(), OptLevel_1);
   // Eliminate the common nodes that generated in SpreadUpdateState
@@ -92,6 +89,10 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
 
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   auto pm = std::make_shared<GraphKernelPassManager>(2, "highlevelopt1");
+
+  // Remove redundant Cast(bias, fp16) for Matmul input
+  pm->AddPass(std::make_shared<CastMatmulFusion>(), OptLevel_2, is_ascend);
+
   // Reorder Cast and Type-insensitive node
   pm->AddPass(std::make_shared<ReorderOps>(), OptLevel_2);
 
