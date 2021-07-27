@@ -66,7 +66,7 @@ int GruCPUKernel::InitParam() {
   gru_param_->batch_ = in_shape.at(1);
   gru_param_->input_size_ = in_shape.at(2);
 
-  auto weight_g = in_tensors_.at(1);
+  auto weight_g = in_tensors_.at(weight_g_index);
   MS_ASSERT(weight_g != nullptr);
   std::vector<int> w_shape = weight_g->shape();
   gru_param_->hidden_size_ = w_shape.at(1) / gate_num;
@@ -102,7 +102,7 @@ int GruCPUKernel::InitInputWeightBias() {
   // input -- row: seq_len * batch; col: input_size
   // weight -- row: hidden_size; col: input_size, need transpose
   // result -- row: seq_len * batch; col: hidden_size
-  auto weight_g = in_tensors_.at(1);
+  auto weight_g = in_tensors_.at(weight_g_index);
   MS_ASSERT(weight_g != nullptr);
   weight_g_ptr_ = reinterpret_cast<float *>(
     malloc(weight_batch_ * gru_param_->input_col_align_ * gru_param_->input_size_ * sizeof(float)));
@@ -121,7 +121,7 @@ int GruCPUKernel::InitInputWeightBias() {
     return RET_ERROR;
   }
   memset(input_bias_, 0, weight_batch_ * gru_param_->input_col_align_ * sizeof(float));
-  PackLstmBias(input_bias_, reinterpret_cast<float *>(in_tensors_.at(3)->data_c()), weight_batch_,
+  PackLstmBias(input_bias_, reinterpret_cast<float *>(in_tensors_.at(bias_index)->data_c()), weight_batch_,
                gru_param_->hidden_size_, gru_param_->input_col_align_, gru_param_->bidirectional_);
   return RET_OK;
 }
@@ -131,7 +131,7 @@ int GruCPUKernel::InitStateWeightBias() {
   // state -- row: batch; col: hidden_size
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
-  auto weight_r = in_tensors_.at(2);
+  auto weight_r = in_tensors_.at(weight_r_index);
   MS_ASSERT(weight_r != nullptr);
   auto weight_r_data = reinterpret_cast<float *>(weight_r->data_c());
   if (!is_vec_) {
@@ -154,7 +154,8 @@ int GruCPUKernel::InitStateWeightBias() {
     return RET_ERROR;
   }
   memset(state_bias_, 0, weight_batch_ * gru_param_->state_col_align_ * sizeof(float));
-  auto state_bias = reinterpret_cast<float *>(in_tensors_.at(3)->data_c()) + gate_num * gru_param_->hidden_size_;
+  auto state_bias =
+    reinterpret_cast<float *>(in_tensors_.at(bias_index)->data_c()) + gate_num * gru_param_->hidden_size_;
   PackLstmBias(state_bias_, state_bias, weight_batch_, gru_param_->hidden_size_, gru_param_->state_col_align_,
                gru_param_->bidirectional_);
   return RET_OK;

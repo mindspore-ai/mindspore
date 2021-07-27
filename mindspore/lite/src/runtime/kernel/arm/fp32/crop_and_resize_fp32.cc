@@ -78,7 +78,7 @@ int CropAndResizeCPUKernel::MallocTmpBuffer() {
     return RET_NULL_PTR;
   }
   line_buffer_ = reinterpret_cast<float *>(
-    ms_context_->allocator->Malloc(sizeof(float) * new_width_ * c * 2 * op_parameter_->thread_num_));
+    ms_context_->allocator->Malloc(sizeof(float) * new_width_ * c * mapped_point_num_ * op_parameter_->thread_num_));
   if (line_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;

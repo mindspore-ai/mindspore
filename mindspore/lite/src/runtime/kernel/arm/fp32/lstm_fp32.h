@@ -59,6 +59,9 @@ class LstmCPUKernel : public InnerKernel {
   float *weight_h_ptr_ = nullptr;
   float *input_bias_ = nullptr;
   float *state_bias_ = nullptr;
+  const int weight_i_index = 1;
+  const int weight_h_index = 2;
+  const int bias_index = 3;
 
   float *buffer_[7];
   const int gate_num = 4;
