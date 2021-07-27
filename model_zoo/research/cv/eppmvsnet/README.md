@@ -60,7 +60,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
 
   ```python
   # run evaluation example with BlendedMVS dataset
-  sh eval.sh
+  sh eval.sh [DATA_PATH] [GPU_ID]
   ```
 
 # [Script Description](#contents)
@@ -107,7 +107,7 @@ Parameters for EPP-MVSNet evaluation can be set in validate.py.
 - EPP-MVSNet evaluation on GPU
 
   ```python
-  sh eval.sh
+  sh eval.sh [DATA_PATH] [GPU_ID]
   ```
 
   Evaluation result will be stored in "./results/blendedmvs/val/metrics.txt". You can find the result like the
@@ -117,7 +117,7 @@ Parameters for EPP-MVSNet evaluation can be set in validate.py.
   stage3_l1_loss:1.1738
   stage3_less1_acc:0.8734
   stage3_less3_acc:0.938
-  mean forward time(s/pic):0.2697
+  mean forward time(s/pic):0.1259
   ```
 
 # [Model Description](#contents)
@@ -128,16 +128,16 @@ Parameters for EPP-MVSNet evaluation can be set in validate.py.
 
 | Parameter                      | EPP-MVSNet GPU               |
 | ------------------------------ | ---------------------------- |
-| Model Version                  | Inception V1                 |
+| Model Version                  | Inception V2                 |
 | Resource                       | Tesla V100 16GB; Ubuntu16.04 |
-| uploaded Date                  | 06/22/2021(month/day/year)   |
+| uploaded Date                  | 07/27/2021(month/day/year)   |
 | MindSpore Version              | 1.3.0                        |
 | Dataset                        | BlendedMVS                   |
 | Batch_size                     | 1                            |
 | Output                         | ./results/blendedmvs/val     |
 | Acc_less_1mm                   | 0.8734                       |
 | Acc_less_3mm                   | 0.938                        |
-| mean_time(s/pic)               | 0.2697                       |
+| mean_time(s/pic)               | 0.1259                       |
 
 # [Description of random situation](#contents)
 

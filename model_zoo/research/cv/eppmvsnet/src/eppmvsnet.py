@@ -54,15 +54,15 @@ class SingleStage(nn.Cell):
         depth_interval = depth_interval.view(B, 1, 1, 1)
         interim_scale = 1
 
-        ref_ncdhw = self.expand_dims(ref_feat, 2).view(B, C, 1, -1)
-        ref_ncdhw = self.tile(ref_ncdhw, (1, 1, D, 1)).view(B, C, D, H, W)
+        ref_ncdhw = self.transpose(ref_feat, (0, 2, 3, 1)).view(B, 1, -1, C)
+        ref_ncdhw = self.tile(ref_ncdhw, (1, D, 1, 1)).view(B, D, H, W, C)
 
         pair_results = []  # MVS
 
-        weight_sum = self.zeros((ref_ncdhw.shape[0], 1, 1, ref_ncdhw.shape[3] // interim_scale,
-                                 ref_ncdhw.shape[4] // interim_scale), mstype.float32)
-        fused_interim = self.zeros((ref_ncdhw.shape[0], 8, ref_ncdhw.shape[2] // interim_scale, ref_ncdhw.shape[3] //
-                                    interim_scale, ref_ncdhw.shape[4] // interim_scale), mstype.float32)
+        weight_sum = self.zeros((ref_ncdhw.shape[0], 1, 1, ref_ncdhw.shape[2] // interim_scale,
+                                 ref_ncdhw.shape[3] // interim_scale), mstype.float32)
+        fused_interim = self.zeros((ref_ncdhw.shape[0], 8, ref_ncdhw.shape[1] // interim_scale, ref_ncdhw.shape[2] //
+                                    interim_scale, ref_ncdhw.shape[3] // interim_scale), mstype.float32)
 
         depth_values = get_depth_values(depth_start, D, depth_interval, False)
 
@@ -221,8 +221,8 @@ class SingleStageP2_S1(nn.Cell):
 
         B, C, H, W = ref_feat.shape
 
-        ref_ncdhw = self.expand_dims(ref_feat, 2).view(B, C, 1, -1)
-        ref_ncdhw = self.tile(ref_ncdhw, (1, 1, 32, 1)).view(B, C, 32, H, W)
+        ref_ncdhw = self.transpose(ref_feat, (0, 2, 3, 1)).view(B, 1, -1, C)
+        ref_ncdhw = self.tile(ref_ncdhw, (1, 32, 1, 1)).view(B, 32, H, W, C)
 
         src_feat = src_feats[:, idx]
         proj_mat = proj_mats[:, idx]
@@ -279,8 +279,8 @@ class SingleStageP2_S3(nn.Cell):
         depth_start = depth_start.reshape(B, 1, 1, 1)
         depth_end = depth_start + (D - 1) * depth_interval
 
-        ref_ncdhw = self.expand_dims(ref_feat, 2).view(B, C, 1, -1)
-        ref_ncdhw = self.tile(ref_ncdhw, (1, 1, 96, 1)).view(B, C, 96, H, W)
+        ref_ncdhw = self.transpose(ref_feat, (0, 2, 3, 1)).view(B, 1, -1, C)
+        ref_ncdhw = self.tile(ref_ncdhw, (1, 96, 1, 1)).view(B, 96, H, W, C)
 
         src_feat = src_feats[:, idx]
         proj_mat = proj_mats[:, idx]

@@ -335,7 +335,6 @@ class HomoWarp(nn.Cell):
         x_s = squeeze(x_s)
         y_s = squeeze(y_s)
         out_fmap = self.bilinear_sampler(input_fmap, x_s, y_s)
-        out_fmap = trans(out_fmap, (0, 4, 1, 2, 3))
 
         return out_fmap
 
@@ -429,8 +428,8 @@ def entropy_num_based(volume, dim, depth_num, keepdim=False):
 
 
 def groupwise_correlation(v1, v2, groups, dim):
-    n, c, d, h, w = v1.shape
-    reshaped_size = (n, groups, c // groups, d, h, w)
+    n, d, h, w, c = v1.shape
+    reshaped_size = (n, d, h, w, groups, c // groups)
     v1_reshaped = v1.view(*reshaped_size)
     v2_reshaped = v2.view(*reshaped_size)
     vc = P.ReduceSum()(v1_reshaped * v2_reshaped, dim + 1)
