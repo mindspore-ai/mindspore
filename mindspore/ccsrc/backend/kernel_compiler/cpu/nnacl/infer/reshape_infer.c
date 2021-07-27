@@ -31,6 +31,9 @@ void CalShape(const int *data, const TensorC *const *inputs, int *out_shape, siz
     }
     ShapePush(out_shape, out_shape_size, data[i]);
   }
+  if (size == 0) {
+    return;
+  }
   if ((int)(data[index]) == -1) {
     out_shape[index] = input_count / size;
   }
