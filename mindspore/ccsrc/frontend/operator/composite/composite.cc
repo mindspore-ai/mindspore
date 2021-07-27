@@ -141,8 +141,7 @@ HyperMap::HyperMap(const HyperMap &h)
   Init();
 }
 
-AnfNodePtr HyperMap::FullMake(TypePtr, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
-                              const ArgsPairList &arg_map) {
+AnfNodePtr HyperMap::FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> inputs;
   if (fn_arg != nullptr) {
@@ -360,7 +359,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
       return FullMake(type, func_graph, fn_arg, arg_map);
     }
     default:
-      return FullMake(pair.second, func_graph, fn_arg, arg_map);
+      return FullMake(func_graph, fn_arg, arg_map);
   }
 }
 

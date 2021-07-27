@@ -188,6 +188,7 @@ MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std:
 }
 
 AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto prim_cast_class = prim::GetPythonOps("Cast", "mindspore.ops.operations");
   MS_EXCEPTION_IF_NULL(prim_cast_class);
   auto dtype_node = NewValueNode(TypeIdToType(type_id));
