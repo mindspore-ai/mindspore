@@ -67,7 +67,7 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
       }
     }
   }
-
+  MS_EXCEPTION_IF_NULL(out_conf);
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
@@ -240,6 +240,7 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
 EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                                const AnfNodeConfigPtr &out_conf) {
   AbstractBasePtrList args_spec_list;
+  MS_EXCEPTION_IF_NULL(out_conf);
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
@@ -254,9 +255,7 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
                        [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
 
   ScopePtr scope = kDefaultScope;
-  if (out_conf != nullptr) {
-    scope = out_conf->node()->scope();
-  }
+  scope = out_conf->node()->scope();
   ScopeGuard scope_guard(scope);
 
   FuncGraphPtr func_graph = out_conf->node()->func_graph();
