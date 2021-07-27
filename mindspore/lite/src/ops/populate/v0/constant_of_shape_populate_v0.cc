@@ -44,6 +44,8 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
   param->data_type_ = constant_of_shape_prim->dataType();
   if (value->size() == 0 || value->size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
+    free(param);
+    return nullptr;
   } else {
     switch (param->data_type_) {
       case kNumberTypeFloat32:
@@ -54,6 +56,8 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
         break;
       default:
         MS_LOG(ERROR) << "The value of constant of shape is invalid";
+        free(param);
+        return nullptr;
     }
   }
   return reinterpret_cast<OpParameter *>(param);

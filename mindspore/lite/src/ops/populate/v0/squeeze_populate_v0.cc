@@ -38,6 +38,11 @@ OpParameter *PopulateSqueezeParameter(const void *prim) {
   squeeze_param->op_parameter_.type_ = schema::PrimitiveType_Squeeze;
   auto axis = squeeze_prim->axis();
   if (axis != nullptr) {
+    if (axis->size() > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "squeeze's attr axis size is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
+      free(squeeze_param);
+      return nullptr;
+    }
     squeeze_param->axis_size_ = axis->size();
     for (size_t i = 0; i < squeeze_param->axis_size_; i++) {
       squeeze_param->axis_[i] = *(axis->begin() + i);

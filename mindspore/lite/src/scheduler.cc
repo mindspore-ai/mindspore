@@ -772,8 +772,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   TypeId data_type =
     (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::LiteKernel *kernel = nullptr;
-  int status;
-  status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
+  int status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
   if (status == RET_OK && kernel != nullptr) {
     return kernel;
   }

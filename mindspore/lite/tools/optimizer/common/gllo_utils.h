@@ -38,6 +38,7 @@ namespace opt {
 inline constexpr int kInputIndexTwo = 2;
 inline constexpr int kInputIndexThree = 3;
 inline constexpr int kInputIndexFour = 4;
+inline constexpr int kInputIndexFive = 5;
 inline constexpr size_t kInputSizeTwo = 2;
 inline constexpr size_t kInputSizeThree = 3;
 inline constexpr size_t kInputSizeFour = 4;

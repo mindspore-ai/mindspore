@@ -39,6 +39,11 @@ OpParameter *PopulateSliceParameter(const void *prim) {
   slice_param->op_parameter_.type_ = schema::PrimitiveType_SliceFusion;
   auto param_axis = slice_prim->axes();
   if (param_axis != nullptr) {
+    if (param_axis->size() > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "slice's attr axes size is too big, which cannot be bigger than " << MAX_SHAPE_SIZE;
+      free(slice_param);
+      return nullptr;
+    }
     for (size_t i = 0; i < param_axis->size(); ++i) {
       slice_param->axis_[i] = param_axis->Get(i);
     }

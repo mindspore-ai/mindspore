@@ -42,8 +42,7 @@ OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
   detection_post_process_parameter->w_scale_ = detection_post_process_prim->wScale();
   detection_post_process_parameter->x_scale_ = detection_post_process_prim->xScale();
   detection_post_process_parameter->y_scale_ = detection_post_process_prim->yScale();
-  detection_post_process_parameter->nms_iou_threshold_ =
-    detection_post_process_prim->NmsIouThreshold();  // why is not lower start letter
+  detection_post_process_parameter->nms_iou_threshold_ = detection_post_process_prim->NmsIouThreshold();
   detection_post_process_parameter->nms_score_threshold_ = detection_post_process_prim->NmsScoreThreshold();
   detection_post_process_parameter->max_detections_ = detection_post_process_prim->MaxDetections();
   detection_post_process_parameter->detections_per_class_ = detection_post_process_prim->DetectionsPerClass();
