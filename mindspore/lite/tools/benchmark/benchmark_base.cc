@@ -196,16 +196,13 @@ int BenchmarkBase::CompareStringData(const std::string &name, tensor::MSTensor *
 }
 
 void BenchmarkFlags::InitInputDataList() {
-  char *input_list = new char[this->in_data_file_.length() + 1];
-  snprintf(input_list, this->in_data_file_.length() + 1, "%s", this->in_data_file_.c_str());
-  char *cur_input;
-  const char *split_c = ",";
-  cur_input = strtok(input_list, split_c);
-  while (cur_input != nullptr) {
-    input_data_list_.emplace_back(cur_input);
-    cur_input = strtok(nullptr, split_c);
+  if (in_data_file_.empty()) {
+    input_data_list_ = {};
+    return;
   }
-  delete[] input_list;
+  std::regex re{"[\\s,]+"};
+  input_data_list_ = std::vector<std::string>{
+    std::sregex_token_iterator(in_data_file_.begin(), in_data_file_.end(), re, -1), std::sregex_token_iterator()};
 }
 
 void BenchmarkFlags::InitResizeDimsList() {
