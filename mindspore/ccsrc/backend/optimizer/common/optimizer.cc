@@ -88,6 +88,7 @@ FuncGraphPtr GraphOptimizer::Optimize(const FuncGraphPtr &func_graph, bool run_o
   MS_EXCEPTION_IF_NULL(func_graph);
   run_only_once_ = (pass_managers_.size() == 1) ? true : run_only_once;
   // Performance risk by creating new manager each time
+  // cppcheck-suppress *
   auto manager = Manage(func_graph, true);
 
   bool changed = true;
@@ -106,7 +107,6 @@ FuncGraphPtr GraphOptimizer::Optimize(const FuncGraphPtr &func_graph, bool run_o
 
   std::vector<FuncGraphPtr> func_graphs;
   func_graphs.push_back(func_graph);
-  manager->KeepRoots(func_graphs);
   (void)TopoSort(func_graph->get_return());
   return func_graph;
 }
