@@ -64,7 +64,12 @@ float GetMemoryUsage() {
       status_count++;
     }
 
-    (void)memset_s(buf, sizeof(buf), 0, sizeof(buf));
+    auto ret = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+    if (ret != 0) {
+      MS_LOG(WARNING) << "memset_s failed when get memory usage. This might be caused by insufficient memory.";
+      fclose(fd);
+      return 0.0;
+    }
   }
   fclose(fd);
 

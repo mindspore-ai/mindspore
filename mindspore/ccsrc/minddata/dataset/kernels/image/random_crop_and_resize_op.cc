@@ -80,6 +80,15 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
 
     *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * sample_scale * sample_aspect)));
     *crop_height = static_cast<int32_t>(std::round(*crop_width / sample_aspect));
+
+    // forbidden crop_width or crop_height is zero
+    if (*crop_width <= 0) {
+      *crop_width = 1;
+    }
+    if (*crop_height <= 0) {
+      *crop_height = 1;
+    }
+
     if (*crop_width <= w_in && *crop_height <= h_in) {
       std::uniform_int_distribution<> rd_x(0, w_in - *crop_width);
       std::uniform_int_distribution<> rd_y(0, h_in - *crop_height);
@@ -102,6 +111,14 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
     }
   }
   constexpr float crop_ratio = 2.0;
+  // forbidden crop_width or crop_height is zero
+  if (*crop_width <= 0) {
+    *crop_width = 1;
+  }
+  if (*crop_height <= 0) {
+    *crop_height = 1;
+  }
+
   *x = static_cast<int32_t>(std::round((w_in - *crop_width) / crop_ratio));
   *y = static_cast<int32_t>(std::round((h_in - *crop_height) / crop_ratio));
   return Status::OK();

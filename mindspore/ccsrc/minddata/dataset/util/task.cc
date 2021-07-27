@@ -43,7 +43,7 @@ void Task::operator()() {
   // The thread id in Linux may be duplicate
   ss << Services::GetUniqueID();
 #endif
-  MS_LOG(DEBUG) << my_name_ << " Thread ID " << ss.str() << " Started.";
+  MS_LOG(DEBUG) << "Task: " << my_name_ << " Thread ID " << ss.str() << " Started.";
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   native_handle_ = pthread_self();
@@ -64,7 +64,7 @@ void Task::operator()() {
       if (rc_.StatusCode() == StatusCode::kMDNetWorkError) {
         MS_LOG(WARNING) << rc_;
       } else {
-        MS_LOG(INFO) << "Task: " << my_name_ << " is terminated with err msg: " << rc_;
+        MS_LOG(ERROR) << "Task: " << my_name_ << " - thread(" << ss.str() << ") is terminated with err msg: " << rc_;
       }
       ShutdownGroup();
     }

@@ -585,10 +585,12 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     // image too large or too small, 1000 is arbitrary here to prevent opencv from segmentation fault
     const uint32_t kCropShapeLimits = 1000;
     if (crop_height == 0 || crop_width == 0 || target_height == 0 || target_height > crop_height * kCropShapeLimits ||
-        target_width == 0 || target_height > crop_width * kCropShapeLimits) {
+        target_width == 0 || target_width > crop_width * kCropShapeLimits) {
       std::string err_msg =
-        "CropAndResize: the resizing width or height 1) is too big, it's up to "
-        "1000 times the original image; 2) can not be 0.";
+        "CropAndResize: the resizing width or height 1) is too big, it's up to " + std::to_string(kCropShapeLimits) +
+        " times the original image; 2) can not be 0. Detail info is: crop_height: " + std::to_string(crop_height) +
+        ", crop_width: " + std::to_string(crop_width) + ", target_height: " + std::to_string(target_height) +
+        ", target_width: " + std::to_string(target_width);
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     cv::Rect roi(x, y, crop_width, crop_height);
