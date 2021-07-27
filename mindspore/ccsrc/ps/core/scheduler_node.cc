@@ -172,6 +172,7 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
         MS_LOG(INFO) << "The scheduler send metadata to scale in node:" << id;
         auto scale_in_client = GetOrCreateClient(nodes[id]);
         SendMetadata(scale_in_client, nodes[id].rank_id_);
+        node_manager_.UpdateHeartbeat(id);
       }
     }
     node_manager_.UpdateNodesInfo();
@@ -179,6 +180,7 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
       SendMetadata(client, kvs.second.rank_id_);
+      node_manager_.UpdateHeartbeat(kvs.first);
     }
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     wait_start_cond_.notify_all();

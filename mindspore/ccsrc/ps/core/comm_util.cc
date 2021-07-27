@@ -187,7 +187,7 @@ std::string CommUtil::ParseConfig(const Configuration &config, const std::string
     return "";
   }
 
-  std::string path = config.Get(key, "");
+  std::string path = config.GetString(key, "");
   return path;
 }
 }  // namespace core

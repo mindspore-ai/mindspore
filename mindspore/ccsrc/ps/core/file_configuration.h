@@ -56,6 +56,8 @@ class FileConfiguration : public Configuration {
 
   std::string Get(const std::string &key, const std::string &defaultvalue) const override;
 
+  std::string GetString(const std::string &key, const std::string &defaultvalue) const override;
+
   void Put(const std::string &key, const std::string &value) override;
 
   bool Exists(const std::string &key) override;

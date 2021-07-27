@@ -27,13 +27,13 @@ bool WorkerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "[Worker start]: 4. The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " successfully registered to the scheduler!";
 
+  StartHeartbeatTimer(client_to_scheduler_);
+  MS_LOG(INFO) << "[Worker start]: 5. Worker start heartbeat timer!";
+
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start Worker node timeout!";
     return false;
   }
-
-  StartHeartbeatTimer(client_to_scheduler_);
-  MS_LOG(INFO) << "[Worker start]: 5. Worker start heartbeat timer!";
 
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Worker start]: 6. Successfully start worker node!";

@@ -308,7 +308,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
 
     // 2. Parse the server password.
     std::string server_password = CommUtil::ParseConfig(*(server->config_), kServerPassword);
-    if (!server_password.empty()) {
+    if (server_password.empty()) {
       MS_LOG(EXCEPTION) << "The key:" << kServerPassword << "'s value is empty.";
     }
 

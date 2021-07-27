@@ -114,7 +114,7 @@ constexpr uint32_t kCheckRegisteredRetryCount = 30;
 constexpr uint32_t kCheckRegisteredIntervalInMs = 1000;
 
 // The type of persistent storage, currently only supports file storage.
-constexpr char kStoreType[] = "storge_type";
+constexpr char kStoreType[] = "storage_type";
 // The file used to storage metadata.
 constexpr char kStoreFilePath[] = "storage_file_path";
 // 1 indicates that the persistent storage type is file.
