@@ -28,10 +28,9 @@ const BaseRef ReplaceMomentumCastFusion::DefinePattern() const {
 }
 
 const AnfNodePtr ReplaceMomentumCastFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                    const EquivPtr &equiv) const {
+                                                    const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(equiv);
 
   auto grad_cast = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kGradIndex);
   MS_EXCEPTION_IF_NULL(grad_cast);

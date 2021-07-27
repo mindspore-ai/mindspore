@@ -36,7 +36,7 @@ const BaseRef BatchNormReluGradFusion::DefinePattern() const {
 }
 
 const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                  const EquivPtr &equiv) const {
+                                                  const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto is_train = AnfAlgo::GetCNodePrimitive(node)->GetAttr("is_training");

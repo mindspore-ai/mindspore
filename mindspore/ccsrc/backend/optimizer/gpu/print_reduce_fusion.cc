@@ -55,8 +55,13 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
                 std::vector<std::vector<int64_t>> *string_pos_vec,
                 std::vector<std::vector<std::string>> *string_value_vec,
                 std::vector<std::vector<std::pair<int64_t, int64_t>>> *not_tensor_pos_vec) {
+  MS_EXCEPTION_IF_NULL(opt_list);
+  MS_EXCEPTION_IF_NULL(string_pos_vec);
+  MS_EXCEPTION_IF_NULL(string_value_vec);
+
   for (auto &node : node_list) {
     // {prim::kPrimPrint} reduction only applies on print with string, tensor(scalar or tuple)
+    MS_EXCEPTION_IF_NULL(node);
     std::vector<int64_t> string_pos;
     std::vector<std::string> string_value;
     std::vector<std::pair<int64_t, int64_t>> value_type;
@@ -69,7 +74,10 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
           continue;
         }
         auto value_node = current_node->cast<ValueNodePtr>();
-        auto shape_node = dyn_cast<abstract::Shape>(value_node->abstract()->GetShapeTrack());
+        MS_EXCEPTION_IF_NULL(value_node);
+        auto shape = value_node->abstract();
+        MS_EXCEPTION_IF_NULL(shape);
+        auto shape_node = dyn_cast<abstract::Shape>(shape->GetShapeTrack());
         if (shape_node != nullptr) {
           // a scalar or tuple
           auto shape_size = shape_node->shape().size();
@@ -84,7 +92,9 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
           // not a string
           continue;
         }
-        if (node_value->type()->generic_type_id() == kObjectTypeString) {
+        auto type = node_value->type();
+        MS_EXCEPTION_IF_NULL(type);
+        if (type->generic_type_id() == kObjectTypeString) {
           auto current_string_value = GetValue<std::string>(node_value);
           string_pos.push_back(i);
           string_value.push_back(std::string(current_string_value));
@@ -122,6 +132,7 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
   for (size_t idx = 0; idx < opt_list.size(); idx++) {
     auto node = opt_list[idx];
     CNodePtr cnode = utils::cast<CNodePtr>(node);
+    MS_EXCEPTION_IF_NULL(cnode);
     size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
     auto prim = std::make_shared<Primitive>("Print");
     std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
@@ -157,6 +168,7 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
                          [](const std::pair<int64_t, int64_t> &value) { return value.second; });
     // create new cnode
     auto print_fused = graph->NewCNode(inputs);
+    MS_EXCEPTION_IF_NULL(print_fused);
     // hand over the attrs to new print
     AnfAlgo::SetNodeAttr("string_pos", MakeValue<std::vector<int64_t>>(string_pos), print_fused);
     AnfAlgo::SetNodeAttr("string_value", MakeValue<std::vector<std::string>>(string_value), print_fused);

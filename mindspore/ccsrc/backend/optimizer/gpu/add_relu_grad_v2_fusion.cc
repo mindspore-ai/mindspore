@@ -65,6 +65,9 @@ const AnfNodePtr AddReluGradV2Fusion::Process(const FuncGraphPtr &graph, const A
   auto x1 = utils::cast<AnfNodePtr>((*equiv)[x1_]);
   auto x2 = utils::cast<AnfNodePtr>((*equiv)[x2_]);
   auto mask = utils::cast<AnfNodePtr>((*equiv)[mask_]);
+  MS_EXCEPTION_IF_NULL(x1);
+  MS_EXCEPTION_IF_NULL(x2);
+  MS_EXCEPTION_IF_NULL(mask);
 
   auto tensor_add = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(tensor_add);
