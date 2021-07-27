@@ -130,11 +130,22 @@ int GatherRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return error_code;
 }
 
+void GatherFp16CPUKernel::FreeIndicesData() {
+  if (!is_indices_int32_) {
+    ms_context_->allocator->Free(indices_data_);
+    indices_data_ = nullptr;
+  }
+  if (!const_input_ && input_data_) {
+    ms_context_->allocator->Free(input_data_);
+    input_data_ = nullptr;
+  }
+}
+
 int GatherFp16CPUKernel::Run() {
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
-  bool isIndicesInt32 = indices_tensor->data_type() == kNumberTypeInt32;
-  int ret = AssignIndicesData(isIndicesInt32, indices_num, indices_tensor);
+  is_indices_int32_ = indices_tensor->data_type() == kNumberTypeInt32;
+  int ret = AssignIndicesData(is_indices_int32_, indices_num, indices_tensor);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "AssignIndicesData failed, error_code[" << ret << "]";
     return ret;
@@ -144,6 +155,11 @@ int GatherFp16CPUKernel::Run() {
     if (input_tensor->data_type() == kNumberTypeFloat32) {
       input_data_ =
         reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
+      if (input_data_ == nullptr) {
+        MS_LOG(ERROR) << "Malloc data failed";
+        FreeIndicesData();
+        return RET_ERROR;
+      }
       Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
     }
   }
@@ -151,14 +167,7 @@ int GatherFp16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Gather function error error_code[" << ret << "]";
   }
-  if (!isIndicesInt32) {
-    ms_context_->allocator->Free(indices_data_);
-    indices_data_ = nullptr;
-  }
-  if (!const_input_ && input_data_) {
-    ms_context_->allocator->Free(input_data_);
-    input_data_ = nullptr;
-  }
+  FreeIndicesData();
   return ret;
 }
 

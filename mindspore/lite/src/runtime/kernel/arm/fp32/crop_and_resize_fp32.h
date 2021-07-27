@@ -42,6 +42,7 @@ class CropAndResizeCPUKernel : public InnerKernel {
   void FreeTmpBuffer();
 
   CropAndResizeParameter *param_;
+  const int mapped_point_num_ = 2;
   int batch_ = 0;
   int new_height_ = 0;
   int new_width_ = 0;
