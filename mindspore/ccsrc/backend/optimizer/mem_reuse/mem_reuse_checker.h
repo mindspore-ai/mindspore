@@ -31,7 +31,6 @@ namespace memreuse {
 constexpr auto kSplitC = '/';
 class MemReuseChecker {
  public:
-  bool IsAddNewMembuf_ = false;
   static MemReuseChecker &GetInstance();
   MemReuseChecker(const MemReuseChecker &) = delete;
   MemReuseChecker &operator=(const MemReuseChecker &) = delete;
@@ -66,6 +65,7 @@ class MemReuseChecker {
  private:
   MemReuseChecker() = default;
   ~MemReuseChecker() {}
+  bool IsAddNewMembuf_ = false;
   size_t total_re_wkspe_size_checker_{0};
   std::vector<std::vector<MembufPtr>> membuf_all_infos_;
   std::vector<const void *> nor_output_tensors_;

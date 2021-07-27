@@ -62,8 +62,9 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size) {
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode) {
     // Growing at twice of alloc size
+    constexpr size_t kDouble = 2;
     while (alloc_mem_size < size) {
-      alloc_mem_size = alloc_mem_size * 2;
+      alloc_mem_size = alloc_mem_size * kDouble;
     }
   } else {
     alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
