@@ -14,9 +14,9 @@
 # ============================================================================
 """Train api."""
 import os
+import ast
 import argparse
 import numpy as np
-import moxing as mox
 
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
@@ -25,7 +25,7 @@ from mindspore.nn.optim import Lamb
 from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
-from mindspore.train.callback import  LossMonitor, SummaryCollector
+from mindspore.train.callback import LossMonitor, SummaryCollector
 from mindspore import context, Parameter
 from mindspore.context import ParallelMode
 from mindspore.communication import management as MultiAscend
@@ -42,27 +42,27 @@ from src.utils.optimizer import Adam
 
 parser = argparse.ArgumentParser(description='Seq2seq train entry point.')
 
-is_modelarts = False
-
-if is_modelarts:
-    parser.add_argument("--config", type=str, required=True, help="model config json file path.")
-    parser.add_argument("--data_url", type=str, required=True, help="pre-train dataset address.")
-    parser.add_argument('--train_url', required=True, default=None, help='Location of training outputs.')
-
+parser.add_argument("--is_modelarts", type=ast.literal_eval, default=False, help="model config json file path.")
+parser.add_argument("--data_url", type=str, default=None, help="pre-train dataset address.")
+parser.add_argument('--train_url', required=True, default=None, help='Location of training outputs.')
 parser.add_argument("--config", type=str, required=True, help="model config json file path.")
 parser.add_argument("--pre_train_dataset", type=str, required=True, help="pre-train dataset address.")
-
+args = parser.parse_args()
+if args.is_modelarts:
+    import moxing as mox
 context.set_context(
     mode=context.GRAPH_MODE,
     save_graphs=True,
     device_target="Ascend",
     reserve_class_name_in_scope=True)
 
+
 def get_config(config):
     config = Seq2seqConfig.from_json_file(config)
     config.compute_type = mstype.float16
     config.dtype = mstype.float32
     return config
+
 
 def _train(model, config: Seq2seqConfig,
            pre_training_dataset=None, fine_tune_dataset=None, test_dataset=None,
@@ -333,17 +333,16 @@ def _check_args(config):
     if not isinstance(config, str):
         raise ValueError("`config` must be type of str.")
 
+
 if __name__ == '__main__':
     _rank_size = os.getenv('RANK_SIZE')
-    args, _ = parser.parse_known_args()
-
-    if is_modelarts:
-        mox.file.copy_parallel(src_url=args.data_url, dst_url='/cache/dataset_menu/')
-        _config.pre_train_dataset = '/cache/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord'
-        _config.ckpt_path = '/cache/train_output/'
 
     _check_args(args.config)
     _config = get_config(args.config)
+    if args.is_modelarts:
+        mox.file.copy_parallel(src_url=args.data_url, dst_url='/cache/dataset_menu/')
+        _config.pre_train_dataset = '/cache/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord'
+        _config.ckpt_path = '/cache/train_output/'
     _config.pre_train_dataset = args.pre_train_dataset
 
     set_seed(_config.random_seed)
@@ -353,5 +352,5 @@ if __name__ == '__main__':
     else:
         train_single(_config)
 
-    if is_modelarts:
+    if args.is_modelarts:
         mox.file.copy_parallel(src_url='/cache/train_output/', dst_url=args.train_url)

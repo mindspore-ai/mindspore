@@ -81,7 +81,7 @@ class PredLogProbs(nn.Cell):
         Tensor, log softmax output.
     """
 
-    def __init__(self, config):
+    def __init__(self):
         super(PredLogProbs, self).__init__()
         self.reshape = P.Reshape()
         self.log_softmax = nn.LogSoftmax(axis=-1)
@@ -172,7 +172,7 @@ class Seq2seqTraining(nn.Cell):
     def __init__(self, config, is_training, use_one_hot_embeddings):
         super(Seq2seqTraining, self).__init__()
         self.seq2seq = Seq2seqModel(config, is_training, use_one_hot_embeddings)
-        self.projection = PredLogProbs(config)
+        self.projection = PredLogProbs()
 
     def construct(self, source_ids, source_mask, target_ids):
         """
@@ -285,7 +285,6 @@ class Seq2seqTrainOneStepWithLossScaleCell(nn.Cell):
         self.get_status = P.NPUGetFloatStatus()
         self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()

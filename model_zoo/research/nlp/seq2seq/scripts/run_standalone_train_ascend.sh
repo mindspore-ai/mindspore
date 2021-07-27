@@ -41,6 +41,7 @@ cd ./train || exit
 echo "start for training"
 env > env.log
 python train.py \
+  --is_modelarts=False \
   --config=${current_exec_path}/train/config/config.json \
   --pre_train_dataset=$PRE_TRAIN_DATASET > log_seq2seq_network.log 2>&1 &
 cd ..
