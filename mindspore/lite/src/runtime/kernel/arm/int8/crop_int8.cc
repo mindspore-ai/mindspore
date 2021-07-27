@@ -57,7 +57,11 @@ int CropInt8CPUKernel::Run() {
 
 int CropInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto crop = reinterpret_cast<CropInt8CPUKernel *>(cdata);
-  crop->DoExecute(task_id);
+  auto ret = crop->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CropInt8Run task id " << task_id << " run failed.";
+    return ret;
+  }
   return RET_OK;
 }
 

@@ -52,7 +52,12 @@ STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
   // each node should go through all node pass not each node pass go through all node
   for (auto &opDef : graphDefT->nodes) {
     for (auto pass : this->node_passes_) {
-      status = pass->Run(new (std::nothrow) GraphNode(graphDefT, opDef.get()));
+      auto graph_node = new (std::nothrow) GraphNode(graphDefT, opDef.get());
+      if (graph_node == nullptr) {
+        return RET_ERROR;
+      }
+      status = pass->Run(graph_node);
+      delete graph_node;
       if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
         MS_LOG(ERROR) << "Run NodePass failed";
         return status;

@@ -749,12 +749,17 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   auto session = session::LiteSession::CreateSession(&ctx);
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed.";
+    model->Free();
+    delete meta_graph;
     return sm;
   }
 
   status = session->CompileGraph(model);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CompileGraph error";
+    model->Free();
+    delete meta_graph;
+    delete session;
     return sm;
   }
   model->Free();

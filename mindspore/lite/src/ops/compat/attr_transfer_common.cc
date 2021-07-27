@@ -32,6 +32,7 @@ schema::Tensor *AttrToTensor(void *data, int data_size, bool is_array, TypeId ty
   auto dst_data = dst_tensor->MutableData();
   if (dst_data == nullptr) {
     MS_LOG(ERROR) << "Data from tensor is nullptr";
+    delete dst_tensor;
     return nullptr;
   }
   std::vector<uint8_t> uint8_data;

@@ -52,6 +52,6 @@ uint16_t Float32ToShort(float src_value) {
   res -= (127 - 15) << 13;
 
   // sign
-  res |= (src_value_bits.u & 0x400000000) >> 16;
+  res |= (src_value_bits.u & 0x80000000) >> 16;
   return res;
 }

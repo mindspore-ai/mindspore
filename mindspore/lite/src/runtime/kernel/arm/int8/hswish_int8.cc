@@ -73,7 +73,11 @@ int HswishInt8CPUKernel::DoActivation(int task_id) {
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
 
-  HSwishInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, &quant_arg_);
+  auto ret = HSwishInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, &quant_arg_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "DoActivation hswish int8 task id " << task_id << " failed.";
+    return ret;
+  }
   return RET_OK;
 }
 

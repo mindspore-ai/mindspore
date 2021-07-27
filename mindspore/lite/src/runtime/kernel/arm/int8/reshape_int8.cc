@@ -63,7 +63,11 @@ int ReshapeInt8CPUKernel::Run() {
 
 int ReshapeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reshape = reinterpret_cast<ReshapeInt8CPUKernel *>(cdata);
-  reshape->DoExecute(task_id);
+  auto ret = reshape->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Reshapeint8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return lite::RET_OK;
 }
 

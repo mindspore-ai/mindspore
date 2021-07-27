@@ -122,7 +122,11 @@ int ConcatInt8CPUKernel::Run() {
 
 int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto concat = reinterpret_cast<ConcatInt8CPUKernel *>(cdata);
-  concat->DoExecute(task_id);
+  auto ret = concat->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConcatInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return lite::RET_OK;
 }
 
