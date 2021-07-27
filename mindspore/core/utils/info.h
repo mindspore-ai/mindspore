@@ -42,8 +42,8 @@ class Location {
         column_(loc.column_),
         line_end_(loc.line_end_),
         column_end_(loc.column_end_) {}
-  std::string ToString(SourceLineTip tip = kSourceLineTipNextLine);
-  std::string file_name() { return file_name_; }
+  std::string ToString(SourceLineTip tip = kSourceLineTipNextLine) const;
+  std::string file_name() const { return file_name_; }
   int line() const { return line_; }
   void set_line(int line) { line_ = line; }
   int line_end() const { return line_end_; }
