@@ -212,13 +212,13 @@ void KernelGraph::SetExecOrderByDefault() {
   execution_order_.clear();
   std::unordered_set<AnfNodePtr> visited_nodes;
   std::queue<AnfNodePtr> zero_input_nodes;
-  std::stack<AnfNodePtr> delay_comm_stack;
+  std::queue<AnfNodePtr> delay_comm_stack;
   std::queue<AnfNodePtr> communication_descendants;
   std::string optimized_comm_group;
   while (!seed_nodes.empty() || !delay_comm_stack.empty()) {
     // seed nodes first, then delay comm nodes
     if (seed_nodes.empty()) {
-      EnqueueActiveNodes(delay_comm_stack.top(), &communication_descendants, &visited_nodes, false);
+      EnqueueActiveNodes(delay_comm_stack.front(), &communication_descendants, &visited_nodes, false);
       delay_comm_stack.pop();
     } else {
       zero_input_nodes.push(seed_nodes.front());
@@ -253,7 +253,7 @@ void KernelGraph::SetExecOrderByDefault() {
       }
       if (optimize_comm) {
         while (!delay_comm_stack.empty()) {
-          EnqueueActiveNodes(delay_comm_stack.top(), &communication_descendants, &visited_nodes, false);
+          EnqueueActiveNodes(delay_comm_stack.front(), &communication_descendants, &visited_nodes, false);
           delay_comm_stack.pop();
         }
         delay_comm_stack.push(node);
