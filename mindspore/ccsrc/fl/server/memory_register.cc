@@ -21,16 +21,29 @@ namespace mindspore {
 namespace fl {
 namespace server {
 void MemoryRegister::RegisterAddressPtr(const std::string &name, const AddressPtr &address) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(address);
   (void)addresses_.try_emplace(name, address);
 }
 
-void MemoryRegister::StoreFloatArray(std::unique_ptr<float[]> *array) { float_arrays_.push_back(std::move(*array)); }
+void MemoryRegister::StoreFloatArray(std::unique_ptr<float[]> *array) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(array);
+  float_arrays_.push_back(std::move(*array));
+}
 
-void MemoryRegister::StoreInt32Array(std::unique_ptr<int[]> *array) { int32_arrays_.push_back(std::move(*array)); }
+void MemoryRegister::StoreInt32Array(std::unique_ptr<int[]> *array) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(array);
+  int32_arrays_.push_back(std::move(*array));
+}
 
-void MemoryRegister::StoreUint64Array(std::unique_ptr<size_t[]> *array) { uint64_arrays_.push_back(std::move(*array)); }
+void MemoryRegister::StoreUint64Array(std::unique_ptr<size_t[]> *array) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(array);
+  uint64_arrays_.push_back(std::move(*array));
+}
 
-void MemoryRegister::StoreCharArray(std::unique_ptr<char[]> *array) { char_arrays_.push_back(std::move(*array)); }
+void MemoryRegister::StoreCharArray(std::unique_ptr<char[]> *array) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(array);
+  char_arrays_.push_back(std::move(*array));
+}
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

@@ -44,18 +44,32 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
 
 bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                const std::vector<AddressPtr> &outputs) {
+  MS_LOG(INFO) << "Launching UpdateModelKernel kernel.";
   if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "inputs or outputs size is invalid.";
-    return false;
+    std::string reason = "inputs or outputs size is invalid.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
   }
+
   void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
-    MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
-    return false;
+    std::string reason = "FBBuilder builder or req_data is nullptr.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
   }
 
-  MS_LOG(INFO) << "Launching UpdateModelKernel kernel.";
+  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  if (!verifier.VerifyBuffer<schema::RequestUpdateModel>()) {
+    std::string reason = "The schema of RequestUpdateModel is invalid.";
+    BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+
   ResultCode result_code = ReachThresholdForUpdateModel(fbb);
   if (result_code != ResultCode::kSuccess) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
@@ -63,6 +77,14 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   }
 
   const schema::RequestUpdateModel *update_model_req = flatbuffers::GetRoot<schema::RequestUpdateModel>(req_data);
+  if (update_model_req == nullptr) {
+    std::string reason = "Building flatbuffers schema failed for RequestUpdateModel.";
+    BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
+
   result_code = UpdateModel(update_model_req, fbb);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(ERROR) << "Updating model failed.";
@@ -119,7 +141,7 @@ ResultCode UpdateModelKernel::ReachThresholdForUpdateModel(const std::shared_ptr
 
 ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
                                           const std::shared_ptr<FBBuilder> &fbb) {
-  RETURN_IF_NULL(update_model_req, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kSuccessAndReturn);
   size_t iteration = IntToSize(update_model_req->iteration());
   if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
     std::string reason = "UpdateModel iteration number is invalid:" + std::to_string(iteration) +
@@ -149,9 +171,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   auto feature_map = ParseFeatureMap(update_model_req);
   if (feature_map.empty()) {
     std::string reason = "Feature map is empty.";
-    BuildUpdateModelRsp(
-      fbb, schema::ResponseCode_RequestError, reason,
-      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+    BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
     MS_LOG(ERROR) << reason;
     return ResultCode::kSuccessAndReturn;
   }
@@ -190,10 +210,10 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
 
 std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
   const schema::RequestUpdateModel *update_model_req) {
-  RETURN_IF_NULL(update_model_req, {});
+  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, {});
   std::map<std::string, UploadData> feature_map;
   auto fbs_feature_map = update_model_req->feature_map();
-  RETURN_IF_NULL(fbs_feature_map, feature_map);
+  MS_ERROR_IF_NULL_W_RET_VAL(fbs_feature_map, feature_map);
   for (size_t i = 0; i < fbs_feature_map->size(); i++) {
     std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
     float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
@@ -208,7 +228,8 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
 
 ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                                   const schema::RequestUpdateModel *update_model_req) {
-  RETURN_IF_NULL(update_model_req, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(fbb, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kSuccessAndReturn);
   std::string count_reason = "";
   if (!DistributedCountService::GetInstance().Count(name_, update_model_req->fl_id()->str(), &count_reason)) {
     std::string reason = "Counting for update model request failed. Please retry later. " + count_reason;
@@ -223,6 +244,10 @@ ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilde
 
 void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                             const std::string &reason, const std::string &next_req_time) {
+  if (fbb == nullptr) {
+    MS_LOG(ERROR) << "Input fbb is nullptr.";
+    return;
+  }
   auto fbs_reason = fbb->CreateString(reason);
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
 

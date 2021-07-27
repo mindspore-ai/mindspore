@@ -65,6 +65,10 @@ bool PullWeightKernel::Reset() {
 
 void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
                                   const schema::RequestPullWeight *pull_weight_req) {
+  if (fbb == nullptr || pull_weight_req == nullptr) {
+    MS_LOG(ERROR) << "fbb or pull_weight_req is nullptr.";
+    return;
+  }
   std::map<std::string, AddressPtr> feature_maps = {};
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
   size_t pull_weight_iter = IntToSize(pull_weight_req->iteration());
@@ -114,6 +118,10 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
 void PullWeightKernel::BuildPullWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                           const std::string &reason, size_t iteration,
                                           const std::map<std::string, AddressPtr> &feature_maps) {
+  if (fbb == nullptr) {
+    MS_LOG(ERROR) << "fbb is nullptr.";
+    return;
+  }
   auto fbs_reason = fbb->CreateString(reason);
   std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;
   for (auto feature_map : feature_maps) {

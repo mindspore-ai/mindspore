@@ -23,8 +23,8 @@ namespace mindspore {
 namespace fl {
 namespace server {
 void DistributedMetadataStore::Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node) {
-  server_node_ = server_node;
   MS_EXCEPTION_IF_NULL(server_node);
+  server_node_ = server_node;
   local_rank_ = server_node_->rank_id();
   server_num_ = ps::PSContext::instance()->initial_server_num();
   InitHashRing();
@@ -32,8 +32,8 @@ void DistributedMetadataStore::Initialize(const std::shared_ptr<ps::core::Server
 }
 
 void DistributedMetadataStore::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
+  MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
-  MS_EXCEPTION_IF_NULL(communicator_);
   communicator_->RegisterMsgCallBack(
     "updateMetadata", std::bind(&DistributedMetadataStore::HandleUpdateMetadataRequest, this, std::placeholders::_1));
   communicator_->RegisterMsgCallBack(
@@ -109,6 +109,7 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
       return false;
     }
 
+    MS_ERROR_IF_NULL_W_RET_VAL(update_meta_rsp_msg, false);
     std::string update_meta_rsp =
       std::string(reinterpret_cast<char *>(update_meta_rsp_msg->data()), update_meta_rsp_msg->size());
     if (update_meta_rsp != kSuccess) {
@@ -141,6 +142,8 @@ PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
       MS_LOG(ERROR) << "Sending getting metadata message to server " << stored_rank << " failed.";
       return get_metadata_rsp;
     }
+
+    MS_ERROR_IF_NULL_W_RET_VAL(get_meta_rsp_msg, get_metadata_rsp);
     (void)get_metadata_rsp.ParseFromArray(get_meta_rsp_msg->data(), SizeToInt(get_meta_rsp_msg->size()));
     return get_metadata_rsp;
   }
