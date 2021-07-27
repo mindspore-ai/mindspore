@@ -478,7 +478,7 @@ int MoveAttrSlice(const CNodePtr &cnode) {
   }
   auto dst_prim = std::make_shared<ops::SliceFusion>();
   MS_ASSERT(dst_prim != nullptr);
-  auto begin = GetValueNode<ValuePtr>(cnode->input(2));
+  auto begin = GetValueNode<ValuePtr>(cnode->input(opt::kInputIndexTwo));
   auto begin_value = GetValue<std::vector<int64_t>>(begin);
 
   std::vector<int64_t> axes(begin_value.size());

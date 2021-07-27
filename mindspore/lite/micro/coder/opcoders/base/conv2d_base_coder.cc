@@ -22,7 +22,9 @@
 #include "coder/log.h"
 #include "src/weight_decoder.h"
 namespace mindspore::lite::micro {
-
+namespace {
+constexpr int kRoundUp = 2;
+}
 Conv2DBaseCoder::~Conv2DBaseCoder() {
   FreeConvQuantParams();
   conv_param_ = nullptr;
@@ -290,7 +292,7 @@ void Conv2DBaseCoder::SetRoundingAndMultipilerMode() {
     case 1:
       conv_quant_arg_->round_mode_ = Rounding_Away_from_zero;
       break;
-    case 2:
+    case kRoundUp:
       conv_quant_arg_->round_mode_ = Rounding_Up;
       break;
     default:

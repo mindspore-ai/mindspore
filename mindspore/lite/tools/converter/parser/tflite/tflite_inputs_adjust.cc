@@ -66,7 +66,7 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
   size_t new_idx = 0;
   for (size_t idx : perm) {
     if (idx > cnode->inputs().size() - 1) {
-      MS_LOG(ERROR) << "Idx " << idx << " is larger than inputs size: " << cnode->inputs().size() - 1;
+      MS_LOG(ERROR) << "Idx " << idx << " is larger than inputs size: " << (cnode->inputs().size() - 1);
       return lite::RET_ERROR;
     }
     new_inputs.emplace_back(cnode->input(idx));
@@ -128,13 +128,13 @@ STATUS TfliteInputsAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_gr
 
 STATUS TfliteInputsAdjust::AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &graph) {
   auto cnode = node->cast<CNodePtr>();
-  if (cnode->inputs().size() < 4) {
+  if (cnode->inputs().size() < opt::kInputSizeFour) {
     MS_LOG(ERROR) << "Slice should own 3 inputs";
     return RET_ERROR;
   }
 
-  auto begin_param_node = cnode->input(2)->cast<ParameterPtr>();
-  auto size_param_node = cnode->input(3)->cast<ParameterPtr>();
+  auto begin_param_node = cnode->input(opt::kInputIndexTwo)->cast<ParameterPtr>();
+  auto size_param_node = cnode->input(opt::kInputIndexThree)->cast<ParameterPtr>();
   // slice's begin and size could be variable
   if (begin_param_node != nullptr && ReplaceInt64ParameterNode(graph, begin_param_node) != RET_OK) {
     MS_LOG(ERROR) << "Adjust begin for Slice failed";

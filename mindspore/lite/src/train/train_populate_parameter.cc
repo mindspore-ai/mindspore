@@ -31,6 +31,10 @@
 #include "nnacl/fp32_grad/resize_grad.h"
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr int kInputIndexTwo = 2;
+constexpr int kInputIndexThree = 3;
+}  // namespace
 OpParameter *PopulateSmoothL1LossParameter(const void *prim) {
   SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
   if (p == nullptr) {
@@ -280,8 +284,8 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
   param->dilation_w_ = value->dilation()->Get(1);
   param->pad_u_ = value->pad_list()->Get(0);
   param->pad_d_ = value->pad_list()->Get(1);
-  param->pad_l_ = value->pad_list()->Get(2);
-  param->pad_r_ = value->pad_list()->Get(3);
+  param->pad_l_ = value->pad_list()->Get(kInputIndexTwo);
+  param->pad_r_ = value->pad_list()->Get(kInputIndexThree);
   param->group_ = value->group();
   param->act_type_ = ActType_No;
   switch (value->activation_type()) {
@@ -317,8 +321,8 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *prim) {
   param->dilation_w_ = value->dilation()->Get(1);
   param->pad_u_ = value->pad_list()->Get(0);
   param->pad_d_ = value->pad_list()->Get(1);
-  param->pad_l_ = value->pad_list()->Get(2);
-  param->pad_r_ = value->pad_list()->Get(3);
+  param->pad_l_ = value->pad_list()->Get(kInputIndexTwo);
+  param->pad_r_ = value->pad_list()->Get(kInputIndexThree);
   param->group_ = value->group();
   param->act_type_ = ActType_No;
   switch (value->activation_type()) {

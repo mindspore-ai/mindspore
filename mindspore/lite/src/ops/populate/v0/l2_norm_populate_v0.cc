@@ -44,8 +44,8 @@ OpParameter *PopulateL2NormParameter(const void *prim) {
     return nullptr;
   }
   l2_norm_parameter->axis_num_ = axis_vec->size();
-  if (((size_t)axis_vec->size()) > SIZE_MAX / sizeof(int)) {
-    MS_LOG(ERROR) << "axis_vec size too big";
+  if (((size_t)axis_vec->size()) > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "axis_vec size too big， which cannot be bigger than " << MAX_SHAPE_SIZE;
     free(l2_norm_parameter);
     return nullptr;
   }
