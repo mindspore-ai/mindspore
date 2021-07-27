@@ -36,6 +36,7 @@ class ApplyMomentumKernel : public ApplyMomentumCPUKernel, public OptimizerKerne
   ~ApplyMomentumKernel() override = default;
 
   void InitKernel(const CNodePtr &cnode) override {
+    MS_EXCEPTION_IF_NULL(cnode);
     ApplyMomentumCPUKernel::InitKernel(cnode);
     InitServerKernelInputOutputSize(cnode);
     GenerateReuseKernelNodeInfo();

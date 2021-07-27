@@ -24,8 +24,8 @@ namespace fl {
 namespace server {
 void DistributedCountService::Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node,
                                          uint32_t counting_server_rank) {
+  MS_EXCEPTION_IF_NULL(server_node);
   server_node_ = server_node;
-  MS_EXCEPTION_IF_NULL(server_node_);
   local_rank_ = server_node_->rank_id();
   server_num_ = ps::PSContext::instance()->initial_server_num();
   counting_server_rank_ = counting_server_rank;
@@ -33,8 +33,8 @@ void DistributedCountService::Initialize(const std::shared_ptr<ps::core::ServerN
 }
 
 void DistributedCountService::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
+  MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
-  MS_EXCEPTION_IF_NULL(communicator_);
   communicator_->RegisterMsgCallBack(
     "count", std::bind(&DistributedCountService::HandleCountRequest, this, std::placeholders::_1));
   communicator_->RegisterMsgCallBack(
@@ -107,6 +107,7 @@ bool DistributedCountService::Count(const std::string &name, const std::string &
     (void)count_rsp.ParseFromArray(report_cnt_rsp_msg->data(), SizeToInt(report_cnt_rsp_msg->size()));
     if (!count_rsp.result()) {
       MS_LOG(ERROR) << "Reporting count failed:" << count_rsp.reason();
+      // If the error is caused by the network issue, return the reason.
       if (reason != nullptr && count_rsp.reason().find(kNetworkError) != std::string::npos) {
         *reason = kNetworkError;
       }

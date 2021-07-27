@@ -29,6 +29,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
+constexpr size_t kDenseGradAccumKernelInputsNum = 2;
 template <typename T>
 class DenseGradAccumKernel : public AggregationKernel {
  public:
@@ -53,8 +54,15 @@ class DenseGradAccumKernel : public AggregationKernel {
     return;
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override {
+    if (inputs.size() != kDenseGradAccumKernelInputsNum) {
+      MS_LOG(ERROR) << "The inputs number of DenseGradAccumKernel should be 2, but got " << inputs.size();
+      return false;
+    }
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[0]->addr, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(inputs[1]->addr, false);
+
     if (accum_count_ == 0) {
       int ret = memset_s(inputs[0]->addr, inputs[0]->size, 0x00, inputs[0]->size);
       if (ret != 0) {

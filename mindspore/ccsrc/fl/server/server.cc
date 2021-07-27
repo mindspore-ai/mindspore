@@ -137,7 +137,6 @@ void Server::InitCluster() {
 bool Server::InitCommunicatorWithServer() {
   MS_EXCEPTION_IF_NULL(task_executor_);
   MS_EXCEPTION_IF_NULL(server_node_);
-
   communicator_with_server_ =
     server_node_->GetOrCreateTcpComm(scheduler_ip_, scheduler_port_, worker_num_, server_num_, task_executor_);
   MS_EXCEPTION_IF_NULL(communicator_with_server_);
@@ -395,10 +394,7 @@ void Server::ProcessBeforeScalingIn() {
 
 void Server::ProcessAfterScalingOut() {
   std::unique_lock<std::mutex> lock(scaling_mtx_);
-  if (server_node_ == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (!DistributedMetadataStore::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedMetadataStore reinitializing failed.";
   }
@@ -420,10 +416,7 @@ void Server::ProcessAfterScalingOut() {
 
 void Server::ProcessAfterScalingIn() {
   std::unique_lock<std::mutex> lock(scaling_mtx_);
-  if (server_node_ == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == UINT32_MAX) {
     MS_LOG(WARNING) << "This server the one to be scaled in. Server exiting.";
     (void)std::for_each(

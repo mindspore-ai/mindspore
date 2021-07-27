@@ -41,11 +41,30 @@ void GetModelKernel::InitKernel(size_t) {
 
 bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                             const std::vector<AddressPtr> &outputs) {
+  if (inputs.size() != 1 || outputs.size() != 1) {
+    std::string reason = "inputs or outputs size is invalid.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
+  }
+
   void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
-    MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
-    return false;
+    std::string reason = "FBBuilder builder or req_data is nullptr.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
+  }
+
+  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  if (!verifier.VerifyBuffer<schema::RequestGetModel>()) {
+    std::string reason = "The schema of RequestGetModel is invalid.";
+    BuildGetModelRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num(), {},
+                     "");
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
   }
 
   ++retry_count_;
@@ -55,8 +74,10 @@ bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
 
   const schema::RequestGetModel *get_model_req = flatbuffers::GetRoot<schema::RequestGetModel>(req_data);
   if (get_model_req == nullptr) {
-    MS_LOG(ERROR) << "RequestGetModel is nullptr.";
-    return false;
+    std::string reason = "Building flatbuffers schema failed for RequestGetModel.";
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(outputs, reason.c_str(), reason.size());
+    return true;
   }
   GetModel(get_model_req, fbb);
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
@@ -110,6 +131,10 @@ void GetModelKernel::BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, con
                                       const std::string &reason, const size_t iter,
                                       const std::map<std::string, AddressPtr> &feature_maps,
                                       const std::string &timestamp) {
+  if (fbb == nullptr) {
+    MS_LOG(ERROR) << "Input fbb is nullptr.";
+    return;
+  }
   auto fbs_reason = fbb->CreateString(reason);
   auto fbs_timestamp = fbb->CreateString(timestamp);
   std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;
