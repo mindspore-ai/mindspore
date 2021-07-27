@@ -231,13 +231,13 @@ class Cast(_Elemwise):
 
 class InplaceAssign(_Elemwise):
     def _infer_shape(self):
-        return [1] if self.attrs["fake_output"] else self.inputs[2].shape
+        return self.inputs[2].shape
 
     def _infer_type(self):
         return self.inputs[2].dtype
 
     def _infer_format(self):
-        return DF.DEFAULT if self.attrs["fake_output"] else self.inputs[2].data_format
+        return self.inputs[2].data_format
 
 
 class BroadcastTo(OpInfer):
