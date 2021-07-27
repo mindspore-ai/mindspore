@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LOGICAL_NOT_GPU_KERNEL_H
-#define MINDSPORE_LOGICAL_NOT_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LOGICAL_NOT_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LOGICAL_NOT_GPU_KERNEL_H_
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -75,4 +75,4 @@ class LogicalNotGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LOGICAL_NOT_GPU_KERNEL_H_

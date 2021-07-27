@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CHOLESKY_SOLVE_GPU_KERNEL_H
-#define MINDSPORE_CHOLESKY_SOLVE_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -48,52 +48,52 @@ class CholeskyGpuKernel : public GpuKernel {
     auto output_addr = GetDeviceAddress<T>(outputs, 0);
     auto d_array_addr = GetDeviceAddress<T *>(workspace, 0);
     auto d_identity_addr = GetDeviceAddress<T *>(workspace, 1);
-    if (!use_split_matrix) {
+    if (!use_split_matrix_) {
       auto d_info_array_addr = GetDeviceAddress<int>(workspace, 2);
       for (size_t i = 0; i < batch_; i++) {
-        h_array[i] = input1_addr + i * lda_ * m_;
-        h_identity[i] = output_addr + i * ldb_ * m_;
+        h_array_[i] = input1_addr + i * lda_ * m_;
+        h_identity_[i] = output_addr + i * ldb_ * m_;
         CHECK_CUDA_RET_WITH_ERROR(
           kernel_node_,
-          cudaMemcpyAsync(output_addr + i * ldb_ * m_, h_identity_data.data(), sizeof(T) * ldb_ * m_,
+          cudaMemcpyAsync(output_addr + i * ldb_ * m_, h_identity_data_.data(), sizeof(T) * ldb_ * m_,
                           cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
           "cuda memcopy Fail");
       }
       CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(d_array_addr, h_array.data(), sizeof(T *) * batch_,
+                                cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_,
                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cuda memcopy Fail");
       CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(d_identity_addr, h_identity.data(), sizeof(T *) * batch_,
+                                cudaMemcpyAsync(d_identity_addr, h_identity_.data(), sizeof(T *) * batch_,
                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cuda memcopy Fail");
       CHECK_CUSOLVER_RET_WITH_EXCEPT(
-        kernel_node_, cusolverDnSpotrfBatched(handle_, uplo, m_, d_array_addr, lda_, d_info_array_addr, batch_),
+        kernel_node_, cusolverDnSpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
         "cusolver cholesky batched Fail");
-      TriangleMatrixCopy(input1_addr, output_addr, uplo, outputs[0]->size / sizeof(T), ldb_, m_,
+      TriangleMatrixCopy(input1_addr, output_addr, uplo_, outputs[0]->size / sizeof(T), ldb_, m_,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       auto d_info_array_addr = GetDeviceAddress<int>(workspace, 2);
       auto d_batch_input_addr = GetDeviceAddress<T>(workspace, 3);
       for (size_t i = 0; i < batch_; i++) {
-        h_array[i] = d_batch_input_addr + i * lda_ * m_;
-        h_identity[i] = output_addr + i * ldb_ * m_;
+        h_array_[i] = d_batch_input_addr + i * lda_ * m_;
+        h_identity_[i] = output_addr + i * ldb_ * m_;
       }
-      Eye(batch_ * split_dim * split_dim, split_dim, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-      MatrixSplit(batch_ * split_dim * split_dim, split_dim, width, input1_addr, d_batch_input_addr,
+      Eye(batch_ * split_dim_ * split_dim_, split_dim_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      MatrixSplit(batch_ * split_dim_ * split_dim_, split_dim_, width_, input1_addr, d_batch_input_addr,
                   reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(d_array_addr, h_array.data(), sizeof(T *) * batch_,
+                                cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_,
                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cuda memcopy Fail");
       CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(d_identity_addr, h_identity.data(), sizeof(T *) * batch_,
+                                cudaMemcpyAsync(d_identity_addr, h_identity_.data(), sizeof(T *) * batch_,
                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "cuda memcopy Fail");
       CHECK_CUSOLVER_RET_WITH_EXCEPT(
-        kernel_node_, cusolverDnSpotrfBatched(handle_, uplo, m_, d_array_addr, lda_, d_info_array_addr, batch_),
+        kernel_node_, cusolverDnSpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
         "cusolver cholesky batched Fail");
-      TriangleMatrixCopy(d_batch_input_addr, output_addr, uplo, outputs[0]->size / sizeof(T), ldb_, m_,
+      TriangleMatrixCopy(d_batch_input_addr, output_addr, uplo_, outputs[0]->size / sizeof(T), ldb_, m_,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
     }
     return true;
@@ -104,8 +104,8 @@ class CholeskyGpuKernel : public GpuKernel {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    split_dim = static_cast<int>(GetAttr<int64_t>(kernel_node, "split_dim"));
-    if (split_dim == 0) {
+    split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "split_dim"));
+    if (split_dim_ == 0) {
       if (!InitNoSpltDim(in_shape)) {
         return false;
       }
@@ -119,7 +119,7 @@ class CholeskyGpuKernel : public GpuKernel {
 
  protected:
   bool InitNoSpltDim(const std::vector<size_t> &in_shape) {
-    use_split_matrix = false;
+    use_split_matrix_ = false;
     if (in_shape.size() == 2) {
       batch_ = 1;
       if (in_shape[0] != in_shape[1]) {
@@ -140,15 +140,15 @@ class CholeskyGpuKernel : public GpuKernel {
     m_ = SizeToInt(in_shape[1]);
     lda_ = m_;
     ldb_ = m_;
-    h_array.resize(batch_);
-    h_identity.resize(batch_);
-    h_identity_data.resize(m_ * m_);
+    h_array_.resize(batch_);
+    h_identity_.resize(batch_);
+    h_identity_data_.resize(m_ * m_);
     for (size_t i = 0; i < m_; i++) {
       for (size_t j = 0; j < m_; j++) {
         if (i == j) {
-          h_identity_data[i * m_ + j] = 1;
+          h_identity_data_[i * m_ + j] = 1;
         } else {
-          h_identity_data[i * m_ + j] = 0;
+          h_identity_data_[i * m_ + j] = 0;
         }
       }
     }
@@ -161,52 +161,52 @@ class CholeskyGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "Cholesky Split Matrix Need Input Rank as 2.";
       return false;
     }
-    height = in_shape[0];
-    width = in_shape[1];
-    if (height != width) {
+    height_ = in_shape[0];
+    width_ = in_shape[1];
+    if (height_ != width_) {
       MS_LOG(ERROR) << "Cholesky Split Matrix Need Square Matrix as Input.";
       return false;
     }
-    if (SizeToInt(height) <= split_dim) {
-      use_split_matrix = false;
+    if (SizeToInt(height_) <= split_dim_) {
+      use_split_matrix_ = false;
       batch_ = 1;
       m_ = SizeToInt(in_shape[1]);
       lda_ = m_;
       ldb_ = m_;
-      h_array.resize(batch_);
-      h_identity.resize(batch_);
-      h_identity_data.resize(m_ * m_);
+      h_array_.resize(batch_);
+      h_identity_.resize(batch_);
+      h_identity_data_.resize(m_ * m_);
       for (size_t i = 0; i < m_; i++) {
         for (size_t j = 0; j < m_; j++) {
           if (i == j) {
-            h_identity_data[i * m_ + j] = 1;
+            h_identity_data_[i * m_ + j] = 1;
           } else {
-            h_identity_data[i * m_ + j] = 0;
+            h_identity_data_[i * m_ + j] = 0;
           }
         }
       }
       InitSizeLists();
     } else {
-      use_split_matrix = true;
-      int batch = SizeToInt(in_shape[1]) / split_dim;
-      res_dim = in_shape[1] - batch * split_dim;
-      if (res_dim == 0) {
+      use_split_matrix_ = true;
+      int batch = SizeToInt(in_shape[1]) / split_dim_;
+      res_dim_ = in_shape[1] - batch * split_dim_;
+      if (res_dim_ == 0) {
         batch_ = batch;
       } else {
         batch_ = batch + 1;
       }
-      m_ = split_dim;
+      m_ = split_dim_;
       lda_ = m_;
       ldb_ = m_;
-      h_array.resize(batch_);
-      h_identity.resize(batch_);
-      h_identity_data.resize(m_ * m_);
+      h_array_.resize(batch_);
+      h_identity_.resize(batch_);
+      h_identity_data_.resize(m_ * m_);
       for (size_t i = 0; i < m_; i++) {
         for (size_t j = 0; j < m_; j++) {
           if (i == j) {
-            h_identity_data[i * m_ + j] = 1;
+            h_identity_data_[i * m_ + j] = 1;
           } else {
-            h_identity_data[i * m_ + j] = 0;
+            h_identity_data_[i * m_ + j] = 0;
           }
         }
       }
@@ -219,10 +219,10 @@ class CholeskyGpuKernel : public GpuKernel {
     size_t unit_size = sizeof(T);
     size_t input_size;
     size_t workspace_size;
-    if (!use_split_matrix) {
+    if (!use_split_matrix_) {
       input_size = batch_ * m_ * lda_ * unit_size;
     } else {
-      input_size = height * width * unit_size;
+      input_size = height_ * width_ * unit_size;
       workspace_size = batch_ * m_ * lda_ * unit_size;
       workspace_size_list_.push_back(workspace_size);
     }
@@ -242,18 +242,18 @@ class CholeskyGpuKernel : public GpuKernel {
   size_t m_;
   size_t lda_;
   size_t ldb_;
-  int res_dim;
-  int split_dim;
+  int res_dim_;
+  int split_dim_;
   bool is_null_input_;
-  bool use_split_matrix;
-  size_t height;
-  size_t width;
+  bool use_split_matrix_;
+  size_t height_;
+  size_t width_;
   cusolverDnHandle_t handle_;
   cublasHandle_t blas_handle_;
-  cublasFillMode_t uplo = CUBLAS_FILL_MODE_UPPER;
-  std::vector<T *> h_array;
-  std::vector<T *> h_identity;
-  std::vector<T> h_identity_data;
+  cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
+  std::vector<T *> h_array_;
+  std::vector<T *> h_identity_;
+  std::vector<T> h_identity_data_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
@@ -261,4 +261,4 @@ class CholeskyGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CHOLESKY_SOLVE_GPU_KERNEL_H_
