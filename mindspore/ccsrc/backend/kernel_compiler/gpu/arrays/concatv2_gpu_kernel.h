@@ -47,7 +47,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     T **inputs_device = GetDeviceAddress<T *>(workspace, 0);
     int *len_axis_device = GetDeviceAddress<int>(workspace, 1);
     for (size_t i = 0; i < inputs.size(); i++) {
-      inputs_host_[i] = GetDeviceAddress<T>(inputs, i);
+      inputs_host_[i] = GetPossiblyNullDeviceAddress<T>(inputs, i);
     }
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(inputs_device, inputs_host_.get(), sizeof(T *) * input_num_,

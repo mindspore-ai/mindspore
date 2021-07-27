@@ -52,18 +52,16 @@ class BatchNormGpuKernel : public GpuKernel {
     auto running_variance = GetDeviceAddress<float>(inputs, 4);
     T *z = nullptr;
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      z = GetDeviceAddress<T>(inputs, 5);
+      z = GetPossiblyNullDeviceAddress<T>(inputs, 5);
     }
 
     auto y = GetDeviceAddress<T>(outputs, 0);
-    auto reserve_addr = GetDeviceAddress<float>(outputs, 2);
-    T *workspace_addr = nullptr;
-    if (workspace_size_ != 0) {
-      workspace_addr = GetDeviceAddress<T>(workspace, 0);
-    }
+    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+
     const float alpha = 1;
     const float beta = 0;
     if (is_train_) {
+      auto reserve_addr = GetPossiblyNullDeviceAddress<float>(outputs, 2);
       auto save_mean = GetDeviceAddress<float>(outputs, 3);
       auto save_variance = GetDeviceAddress<float>(outputs, 4);
       CHECK_CUDNN_RET_WITH_EXCEPT(
