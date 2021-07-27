@@ -405,6 +405,10 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   std::string bprop_hash() const { return bprop_hash_; }
   void set_bprop_hash(const std::string &bprop_hash) { bprop_hash_ = bprop_hash; }
 
+  const std::unordered_set<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
+  void set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes);
+  void ClearUsedForwardNodes() { used_forward_nodes_.clear(); }
+
  private:
   // Only used for func_graph manager to control resource free.
   int attached_mng_cnt() const { return attached_mng_cnt_; }
@@ -489,6 +493,10 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   bool dropped_ = false;
   // If the graph is a bprop graph, it should has a hash of the bprop directory.
   std::string bprop_hash_;
+
+  // If the graph is decorated by @ms_function and runs grad process in pynative mode,
+  // forward nodes used in grad graph will be added to output for holding output values.
+  std::unordered_set<AnfNodePtr> used_forward_nodes_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

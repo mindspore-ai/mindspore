@@ -71,6 +71,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
 
   ~ExecutorPy();
 
+  const std::string &phase() const { return phase_; }
   void SaveCompiledGraph(const std::string &phase_s);
   bool CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm,
                     const std::string &queue_name);
@@ -83,6 +84,8 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   py::object Run(const py::tuple &args, const py::object &phase);
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
+  FuncGraphPtr GetGradGraph(const std::string &phase);
+  void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &type);
   compile::VmEvalFuncPtr GetVmEvalFunc(const std::string &phase);
   bool HasCompiled(const std::string &phase) const;

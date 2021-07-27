@@ -317,6 +317,38 @@ FuncGraphPtr ExecutorPy::GetFuncGraph(const std::string &phase) {
   return info_[phase]->func_graph;
 }
 
+FuncGraphPtr ExecutorPy::GetGradGraph(const std::string &phase) {
+  if (phase.empty()) {
+    MS_LOG(EXCEPTION) << "The input phase is empty.";
+  }
+  if (info_.count(phase) == 0) {
+    MS_LOG(EXCEPTION) << "No phase in executor:" << phase;
+  }
+
+  auto execute_info = info_[phase];
+  MS_EXCEPTION_IF_NULL(execute_info);
+  auto grad_graph = execute_info->grad_graph;
+  MS_EXCEPTION_IF_NULL(grad_graph);
+  return grad_graph;
+}
+
+void ExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase) {
+  if (phase.empty()) {
+    MS_LOG(EXCEPTION) << "The input phase is empty.";
+  }
+  if (info_.count(phase) == 0) {
+    MS_LOG(EXCEPTION) << "No phase in executor: " << phase;
+  }
+
+  auto execute_info = info_[phase];
+  MS_EXCEPTION_IF_NULL(execute_info);
+  if (execute_info->grad_graph != nullptr) {
+    MS_LOG(DEBUG) << "The grad graph has existed, phase is: " << phase;
+  }
+  MS_EXCEPTION_IF_NULL(grad_graph);
+  execute_info->grad_graph = grad_graph;
+}
+
 compile::VmEvalFuncPtr ExecutorPy::GetVmEvalFunc(const std::string &phase) {
   ResourcePtr res = GetResource(phase);
   MS_EXCEPTION_IF_NULL(res);

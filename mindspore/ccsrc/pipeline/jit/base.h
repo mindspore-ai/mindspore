@@ -29,6 +29,8 @@ namespace mindspore {
 namespace pipeline {
 struct ExecutorInfo {
   FuncGraphPtr func_graph;
+  // The grad graph of func_graph, it will create in PyNative mode when @ms_function is used.
+  FuncGraphPtr grad_graph;
   ResourcePtr resource;
   // The num of input data.
   std::size_t arg_list_size;

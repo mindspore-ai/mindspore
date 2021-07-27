@@ -209,8 +209,11 @@ class _MindSporeFunction:
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
         output = self._executor(tuple(new_inputs), phase)
+
         if context.get_context("mode") == context.PYNATIVE_MODE:
             _pynative_exec.set_graph_phase(phase)
+            _pynative_exec.grad_ms_function(output, *new_inputs)
+            output = output[0]
         return output
 
 
@@ -274,17 +277,13 @@ def ms_function(fn=None, obj=None, input_signature=None):
     def wrap_mindspore(func):
         @wraps(func)
         def staging_specialize(*args):
-            input_args = args
             if obj is not None:
                 logger.warning("Obj is no longer in use, and the function's own object has been used to \
                                 distinguish whether it has been compiled.")
             process_obj = None
             if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
-                input_args = args[1:]
                 process_obj = args[0]
             out = _MindSporeFunction(func, input_signature, process_obj)(*args)
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                _pynative_exec.grad_ms_function(out, *input_args)
             return out
 
         return staging_specialize

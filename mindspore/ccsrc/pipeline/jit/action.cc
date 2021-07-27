@@ -26,6 +26,8 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/param_info.h"
 #include "ir/cell.h"
+#include "parse/python_adapter.h"
+#include "abstract/abstract_value.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/context.h"
 #include "pipeline/jit/pass.h"
@@ -34,17 +36,17 @@
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "pipeline/jit/static_analysis/order_enforce.h"
 #include "pipeline/jit/static_analysis/remove_monad.h"
-#include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "pipeline/jit/static_analysis/program_specialize.h"
 #include "pipeline/jit/resource.h"
-#include "utils/ms_context.h"
 #include "pipeline/jit/remove_value_node_dup.h"
+#include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/optimizer.h"
-#include "vm/transform.h"
-#include "parse/python_adapter.h"
+#include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#include "utils/ms_context.h"
+#include "vm/transform.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
@@ -116,6 +118,50 @@ void ExecuteActionForMindRT(const ResourcePtr &res) {
       return outputs[0];
     });
   res->results()[kOutput] = run;
+}
+
+// Modify the output node of func_graph to add forward nodes used in bprop graph.
+void ModifyOutputNode(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  const auto &used_forward_nodes = func_graph->used_forward_nodes();
+
+  // Get original output node and abstract
+  auto original_output_node = func_graph->output();
+  MS_EXCEPTION_IF_NULL(original_output_node);
+  auto original_output_abs = original_output_node->abstract();
+  MS_EXCEPTION_IF_NULL(original_output_abs);
+
+  // Create a new make tuple node to hold all forward used nodes.
+  abstract::AbstractBasePtrList added_abs_list;
+  std::vector<AnfNodePtr> added_node_list{NewValueNode(prim::kPrimMakeTuple)};
+  std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(),
+                [&added_abs_list, &added_node_list](const AnfNodePtr &node) {
+                  MS_EXCEPTION_IF_NULL(node);
+                  added_node_list.push_back(node);
+                  added_abs_list.push_back(node->abstract());
+                });
+  AnfNodePtr added_output_node = nullptr;
+  AbstractBasePtr added_output_abs = nullptr;
+  if (added_abs_list.empty()) {
+    added_output_node = NewValueNode(MakeValue<int32_t>(1));
+    added_output_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(1));
+  } else {
+    added_output_node = func_graph->NewCNode(added_node_list);
+    added_output_abs = std::make_shared<abstract::AbstractTuple>(added_abs_list);
+  }
+  added_output_node->set_abstract(added_output_abs);
+  MS_LOG(DEBUG) << "Added output node info: " << added_output_node->DebugString();
+
+  // Merge original output node and used forward nodes to return node.
+  std::vector<AnfNodePtr> new_output_nodes{NewValueNode(prim::kPrimMakeTuple), original_output_node, added_output_node};
+  auto merge_node = func_graph->NewCNode(new_output_nodes);
+  abstract::AbstractBasePtrList new_output_abs{original_output_abs, added_output_abs};
+  merge_node->set_abstract(std::make_shared<abstract::AbstractTuple>(new_output_abs));
+  MS_LOG(DEBUG) << "Merge node info: " << merge_node->DebugString(2);
+  func_graph->set_output(merge_node);
+
+  // Clear
+  func_graph->ClearUsedForwardNodes();
 }
 }  // namespace
 using CompileGraphs = compile::CompileGraphs;
@@ -590,6 +636,47 @@ bool CheckGraphOutputConstOrParameter(const FuncGraphPtr &func_graph) {
   return false;
 }
 
+bool EliminateForwardCNode(const ResourcePtr &res) {
+  // This function only works in Pynative mode. The func_graph is decorated by ms_function.
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    return true;
+  }
+
+  auto graph_executor = pipeline::ExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(graph_executor);
+  auto phase = graph_executor->phase();
+  MS_LOG(DEBUG) << "The phase of current pipeline graph is: " << phase;
+  // Export graph run in pynative mode no need to do this action.
+  if (phase.find("export") != std::string::npos) {
+    auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+    auto grad_exec = pynative_exec->grad_executor();
+    grad_exec->set_eliminate_forward(true);
+    return true;
+  }
+
+  // Run grad process for func_graph and replace forward nodes with its output tensors.
+  MS_LOG(DEBUG) << "Run eliminate forward nodes action.";
+  MS_EXCEPTION_IF_NULL(res);
+  auto ms_func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+  auto grad_exec = pynative_exec->grad_executor();
+  bool eliminate_forward = grad_exec->eliminate_forward();
+  grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());
+  auto grad_graph = ad::Grad(ms_func_graph, res);
+  MS_EXCEPTION_IF_NULL(grad_graph);
+  graph_executor->SetGradGraph(grad_graph, phase);
+  ModifyOutputNode(ms_func_graph);
+
+  // Keep roots for only keeping forward func graph in resource.
+  auto manager = res->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->KeepRoots({ms_func_graph});
+
+  grad_exec->set_eliminate_forward(true);
+  return true;
+}
+
 bool TaskEmitAction(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
@@ -994,6 +1081,9 @@ std::vector<ActionItem> VmPipeline() {
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
 
   (void)actions.emplace_back(std::make_pair("remove_monad_from_random_op", RemoveRandomOpMonadAction));
+
+  // eliminate forward cnode for grad graph
+  (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
 
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if ((defined ENABLE_CPU) && (!defined _WIN32))

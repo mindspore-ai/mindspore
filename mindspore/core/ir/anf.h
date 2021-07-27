@@ -268,8 +268,8 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
   void set_inputs_value(const std::vector<std::pair<ValuePtr, std::string>> &values) { inputs_value_ = values; }
   const std::vector<std::pair<ValuePtr, std::string>> &inputs_value() const { return inputs_value_; }
 
-  void set_forward(const ValuePtr &forward, const std::string &id) { output_value_ = std::make_pair(forward, id); }
-  const std::pair<ValuePtr, std::string> &forward() const { return output_value_; }
+  void set_forward(const ValueNodePtr &forward, const std::string &id) { output_value_ = std::make_pair(forward, id); }
+  const std::pair<ValueNodePtr, std::string> &forward() const { return output_value_; }
 
   bool stop_gradient() const { return stop_gradient_; }
   void set_stop_gradient(bool stop_gradient) { stop_gradient_ = stop_gradient; }
@@ -357,7 +357,7 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
   // inputs_value_ store cnode input value and id in pynative mode
   // output_value_ store cnode value and id in pynative mode
   std::vector<std::pair<ValuePtr, std::string>> inputs_value_;
-  std::pair<ValuePtr, std::string> output_value_;
+  std::pair<ValueNodePtr, std::string> output_value_;
   std::unordered_map<std::string, ValuePtr> attrs_;
   std::unordered_map<std::string, ValuePtr> primal_attrs_;
   std::vector<NodeDebugInfoPtr> primal_debug_infos_;

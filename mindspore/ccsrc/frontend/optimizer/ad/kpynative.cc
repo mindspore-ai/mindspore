@@ -462,6 +462,7 @@ void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node)
 
 namespace {
 ValuePtr ShallowCopyValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<mindspore::tensor::Tensor>()) {
     auto tensor_value = value->cast<mindspore::tensor::TensorPtr>();
     return std::make_shared<mindspore::tensor::Tensor>(*tensor_value);
@@ -613,6 +614,7 @@ void KPynativeCellImpl::BuildAdjointForInput(const CNodePtr &cnode, const ValueP
         }
         forged_adjoint->users().push_back(cnode);
       } else {
+        MS_EXCEPTION_IF_NULL(op_args[i - 1]);
         auto input_adjoint =
           std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, op_args[i - 1], FuncGraphPtr(nullptr));
         (void)anfnode_to_adjoin_.insert(std::make_pair(input, input_adjoint));

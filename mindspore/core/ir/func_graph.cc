@@ -735,6 +735,13 @@ bool FuncGraph::ContainMultiTarget() const {
   return false;
 }
 
+void FuncGraph::set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes) {
+  std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(), [this](const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    used_forward_nodes_.emplace(node);
+  });
+}
+
 size_t NewFgSeenGeneration() {
   static size_t fg_seen_generation = 0;
   return ++fg_seen_generation;

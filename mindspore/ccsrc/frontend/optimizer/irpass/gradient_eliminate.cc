@@ -15,6 +15,7 @@
  */
 
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "pipeline/pynative/pynative_execute.h"
 
 namespace mindspore {
 namespace opt {
@@ -74,6 +75,13 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   // ExpandJ innermost graph or primitive first.
   std::copy_if(j_nodes_.begin(), j_nodes_.end(), std::back_inserter(todo),
                [](const CNodePtr &j_node) { return !internal::CheckIfEmbedJ(j_node); });
+  // Check whether need to eliminate forward cnodes in pynative mode.
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+    auto grad_exec = pynative_exec->grad_executor();
+    bool eliminate_forward = grad_exec->eliminate_forward();
+    grad_exec->set_eliminate_forward(eliminate_forward && todo.empty());
+  }
   // Expand j nodes that don't have embed j nodes.
   bool change = false;
   auto manager = optimizer->manager();

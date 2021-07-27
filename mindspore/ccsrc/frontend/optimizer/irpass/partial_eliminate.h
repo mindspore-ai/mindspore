@@ -80,6 +80,7 @@ class PartialEliminater : public AnfVisitor {
     (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args));
     TraceGuard guard(std::make_shared<TracePartialTransform>(node->debug_info()));
     auto new_node = node->func_graph()->NewCNode(args);
+    new_node->set_abstract(node->abstract());
 
     // reorder the formal parameter of fg.
     AnfNodePtrList new_params;
@@ -357,6 +358,7 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
     }
     TraceGuard guard2(std::make_shared<TraceCopy>(old_cnode->debug_info()));
     auto new_node = old_cnode->func_graph()->NewCNode(args);
+    new_node->set_abstract(old_cnode->abstract());
     return new_node;
   }
 };
@@ -445,6 +447,7 @@ class SwitchLayerPartialEliminater : public ChoicePartialEliminater {
     }
     TraceGuard guard3(std::make_shared<TraceCopy>(old_cnode->debug_info()));
     auto new_node = old_cnode->func_graph()->NewCNode(args);
+    new_node->set_abstract(old_cnode->abstract());
     return new_node;
   }
 };
