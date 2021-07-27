@@ -32,7 +32,11 @@ int LeakyReluInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
     return RET_ERROR;
   }
   auto relu = reinterpret_cast<LeakyReluInt8CPUKernel *>(cdata);
-  relu->DoExecute(task_id);
+  auto ret = relu->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LeakyReluInt8Run task_id " << task_id << " failed.";
+    return ret;
+  }
   return RET_OK;
 }
 }  // namespace

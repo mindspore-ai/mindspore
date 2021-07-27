@@ -73,7 +73,11 @@ int SigmoidInt8CPUKernel::DoActivation(int task_id) {
   int stride = UP_DIV(length, op_parameter_->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);
 
-  SigmoidInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, table_list_);
+  auto ret = SigmoidInt8(input_addr + stride * task_id, count, output_addr + stride * task_id, table_list_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "DoActivation task_id " << task_id << " failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
