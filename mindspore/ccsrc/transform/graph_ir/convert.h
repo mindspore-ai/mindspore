@@ -52,8 +52,9 @@ using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
 using HcomBroadcast = ge::op::HcomBroadcast;
 class DfGraphConvertor {
  public:
-  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph)
-      : anf_graph_(anf_graph), df_graph_(std::make_shared<DfGraph>(anf_graph_->ToString())) {
+  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
+    MS_EXCEPTION_IF_NULL(anf_graph);
+    df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
 #if (!defined ENABLE_GE) || (defined ENABLE_INFER)
     training_ = anf_graph->has_flag("training");
 #else

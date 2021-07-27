@@ -85,20 +85,8 @@ std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
 }  // namespace
 
 // ---------------implement of DfGraphConvertor-------------
-PrimType GetCNodeFuncType(const CNodePtr cnode) {
-  if (cnode->inputs().empty()) {
-    return kPrimTypeUnknown;
-  }
-
-  AnfNodePtr valuenode = cnode->input(0);
-  if (IsValueNode<Primitive>(valuenode)) {
-    // check whether the valuenode is primitive
-    return GetValueNode<PrimitivePtr>(valuenode)->prim_type();
-  }
-  return kPrimTypeUnknown;
-}
-
 bool IsCaseNode(const CNodePtr node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->inputs().empty() && node->input(0)->isa<CNode>() &&
       GetCNodeFuncName(node->input(0)->cast<CNodePtr>()) == "switch_layer") {
     return true;
@@ -118,6 +106,7 @@ std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
 }
 
 OpAdapterPtr DfGraphConvertor::FindAdapter(const AnfNodePtr node, bool train) {
+  MS_EXCEPTION_IF_NULL(node);
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
 
@@ -301,7 +290,9 @@ void DfGraphConvertor::MakeDatasetHandler(const std::string &name, const size_t 
       MS_LOG(INFO) << "remap input_index:" << input_idx << " to getnext_index:" << getnext_idx << ".";
     }
     // use iterator_getnext op with output_name instead of data op in BuildGraph.
-    out_handle_cache_[it.get()] = OutHandler(dataset_iter_getnext_, "y" + std::to_string(getnext_idx));
+    if (dataset_iter_getnext_ != nullptr) {
+      out_handle_cache_[it.get()] = OutHandler(dataset_iter_getnext_, "y" + std::to_string(getnext_idx));
+    }
   }
 }
 
@@ -355,7 +346,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
 
       auto const_op_desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
       if (const_op_desc == nullptr) {
-        MS_LOG(ERROR) << "Create variable " << name << " output descriptor failed!";
+        MS_LOG(WARNING) << "Create variable " << name << " output descriptor failed!";
         continue;
       }
       (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*const_op_desc);
@@ -624,6 +615,7 @@ void DfGraphConvertor::TraceOutputFromTupleGetItem(const AnfNodePtr &anf_out) {
 }
 
 void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
+  MS_EXCEPTION_IF_NULL(node);
   AnfNodePtr anf_out = node;
   AnfNodePtr pre_node = nullptr;
 
@@ -687,6 +679,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
 }
 
 void DfGraphConvertor::TraceOutputFromParameter(const AnfNodePtr &anf_out) {
+  MS_EXCEPTION_IF_NULL(anf_out);
   if (anf_out->isa<Parameter>()) {
     MS_LOG(INFO) << "Add graph output: " << anf_out->fullname_with_scope();
     auto it = out_handle_cache_.find(anf_out.get());
@@ -1179,6 +1172,7 @@ void DfGraphConvertor::AutoMonadSetControlInput(const AnfNodePtr &node) {
 }
 
 void DfGraphConvertor::SetOpControlInput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   AutoMonadSetControlInput(node);
   if (control_edge_cache_.find(node.get()) == control_edge_cache_.end()) {
     return;
@@ -1705,7 +1699,11 @@ OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
 
 OperatorPtr DfGraphConvertor::ConvertParameter(const AnfNodePtr node) {
   // convert Parameter in ANF to variable in DataFlow
-  auto op = FindAdapter(node, training_)->generate(node);
+  auto adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    MS_LOG(EXCEPTION) << "Can not find adapter for Parameter";
+  }
+  auto op = adpt->generate(node);
   op_cache_[node.get()] = op;
 
   // build index for parameter using name
