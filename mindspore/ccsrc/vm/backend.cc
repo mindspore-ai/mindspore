@@ -201,6 +201,14 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   MS_EXCEPTION_IF_NULL(device_tensor);
   tensor->set_device_address(device_tensor);
 
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    // If execution mode is Graph Mode in MsContext, the tensor will be the input of graph which will execute in Graph
+    // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
+    tensor->data_sync(false);
+  }
+
   return tensor;
 }
 
