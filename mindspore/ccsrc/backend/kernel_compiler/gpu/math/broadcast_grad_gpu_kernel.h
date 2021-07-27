@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_BROADCAST_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_BROADCAST_GRAD_GPU_KERNEL_H_
 
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -29,6 +29,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int kMaxShapeSize = 4;
 template <typename T>
 class BroadcastOpGradGpuKernel : public GpuKernel {
  public:
@@ -71,8 +72,8 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     auto shape2 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto shape3 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
-    if (need_broadcast_ && shape1.size() > 4) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 4";
+    if (need_broadcast_ && shape1.size() > kMaxShapeSize) {
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << kMaxShapeSize;
     }
 
     for (size_t i = 0; i < shape3.size(); i++) {
@@ -84,14 +85,24 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     int x1_offset = shape3.size() - shape1.size();
     for (size_t i = 0; i < shape1.size(); i++) {
       if (need_broadcast_) {
-        x1_shape_[i + x1_offset] = shape1[i];
+        if ((i + x1_offset) >= 0 && (i + x1_offset) < kMaxShapeSize) {
+          x1_shape_[i + x1_offset] = shape1[i];
+        } else {
+          auto index = i + x1_offset;
+          MS_LOG(EXCEPTION) << "Invalid input1 index: " << index;
+        }
       }
       input1_num_ *= shape1[i];
     }
     int x2_offset = shape3.size() - shape2.size();
     for (size_t i = 0; i < shape2.size(); i++) {
       if (need_broadcast_) {
-        x2_shape_[i + x2_offset] = shape2[i];
+        if ((i + x2_offset) >= 0 && (i + x2_offset) < kMaxShapeSize) {
+          x2_shape_[i + x2_offset] = shape2[i];
+        } else {
+          auto index = i + x2_offset;
+          MS_LOG(EXCEPTION) << "Invalid input2 index: " << index;
+        }
       }
       input2_num_ *= shape2[i];
     }
@@ -109,9 +120,9 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     input1_num_ = 1;
     input2_num_ = 1;
     output_num_ = 1;
-    std::fill(x1_shape_, x1_shape_ + 4, 1);
-    std::fill(x2_shape_, x2_shape_ + 4, 1);
-    std::fill(dy_shape_, dy_shape_ + 4, 1);
+    std::fill(x1_shape_, x1_shape_ + kMaxShapeSize, 1);
+    std::fill(x2_shape_, x2_shape_ + kMaxShapeSize, 1);
+    std::fill(dy_shape_, dy_shape_ + kMaxShapeSize, 1);
     grad_x_ = false;
     grad_y_ = false;
     input_size_list_.clear();
@@ -151,9 +162,9 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
   size_t input1_num_;
   size_t input2_num_;
   size_t output_num_;
-  size_t x1_shape_[4] = {1, 1, 1, 1};
-  size_t x2_shape_[4] = {1, 1, 1, 1};
-  size_t dy_shape_[4] = {1, 1, 1, 1};
+  size_t x1_shape_[kMaxShapeSize] = {1, 1, 1, 1};
+  size_t x2_shape_[kMaxShapeSize] = {1, 1, 1, 1};
+  size_t dy_shape_[kMaxShapeSize] = {1, 1, 1, 1};
   bool grad_x_;
   bool grad_y_;
 
@@ -164,4 +175,4 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BINARYOP_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_BROADCAST_GRAD_GPU_KERNEL_H_

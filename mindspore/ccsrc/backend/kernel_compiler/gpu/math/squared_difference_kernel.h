@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SQUARED_DIFFERENCE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SQUARED_DIFFERENCE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_SQUARED_DIFFERENCE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_SQUARED_DIFFERENCE_GPU_KERNEL_H_
 
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -73,14 +73,24 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
     int lhs_offset = output_shape.size() - input_shape1.size();
     for (size_t j = 0; j < input_shape1.size(); j++) {
       if (need_broadcast_) {
-        lhs_shape_[j + lhs_offset] = input_shape1[j];
+        if ((j + lhs_offset) >= 0 && (j + lhs_offset) < MAX_DIMS) {
+          lhs_shape_[j + lhs_offset] = input_shape1[j];
+        } else {
+          auto index = j + lhs_offset;
+          MS_LOG(EXCEPTION) << "Invalid input1 index: " << index;
+        }
       }
       input1_num_ *= input_shape1[j];
     }
     int rhs_offset = output_shape.size() - input_shape2.size();
     for (size_t k = 0; k < input_shape2.size(); k++) {
       if (need_broadcast_) {
-        rhs_shape_[k + rhs_offset] = input_shape2[k];
+        if ((k + rhs_offset) >= 0 && (k + rhs_offset) < MAX_DIMS) {
+          rhs_shape_[k + rhs_offset] = input_shape2[k];
+        } else {
+          auto index = k + rhs_offset;
+          MS_LOG(EXCEPTION) << "Invalid input2 index: " << index;
+        }
       }
       input2_num_ *= input_shape2[k];
     }
@@ -137,8 +147,8 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-};  // namespace kernel
+};
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SQUARED_DIFFERENCE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_SQUARED_DIFFERENCE_GPU_KERNEL_H_
