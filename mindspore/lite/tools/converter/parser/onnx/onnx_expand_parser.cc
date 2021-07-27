@@ -21,11 +21,12 @@
 
 namespace mindspore {
 namespace lite {
+constexpr int kInputSize1 = 2;
 ops::PrimitiveC *OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::BroadcastTo>();
 
   std::vector<int64_t> dst_shape;
-  if (onnx_node.input_size() != 2) {
+  if (onnx_node.input_size() != kInputSize1) {
     for (const auto &onnx_node_attr : onnx_node.attribute()) {
       const auto &attribute_name = onnx_node_attr.name();
       if (attribute_name == "shape") {
