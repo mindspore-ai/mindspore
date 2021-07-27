@@ -24,7 +24,7 @@ namespace ops {
 abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input_numbers", input_args.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_numbers", input_args.size(), kEqual, 1, prim_name);
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTuple>(prim_name, input_args, 0);
   auto recv_shapes = primitive->GetAttr(RecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);
@@ -46,7 +46,8 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("NeighborExchange infer", input_args.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("NeighborExchange infer", SizeToLong(input_args.size()), kEqual, 1,
+                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto recv_shapes = primitive->GetAttr(RecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);

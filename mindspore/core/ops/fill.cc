@@ -45,6 +45,7 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto x_value = input_args[2]->BuildValue();
   auto abs = std::make_shared<abstract::AbstractTensor>(dtype, std::make_shared<abstract::Shape>(out_shape));
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(x_type_id, out_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
   auto mem_size = IntToSize(tensor->ElementsNum());
   if (x_type_id == kNumberTypeInt) {
     auto int_value = GetValue<int>(x_value);

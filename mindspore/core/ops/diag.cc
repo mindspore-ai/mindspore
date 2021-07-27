@@ -27,7 +27,7 @@ namespace {
 abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  CheckAndConvertUtils::CheckInteger("input rank", input_shape.size(), kGreaterEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input rank", input_shape.size(), kGreaterEqual, 1, primitive->name());
   std::vector<int64_t> out_shape(input_shape);
   out_shape.insert(out_shape.end(), input_shape.begin(), input_shape.end());
   return std::make_shared<abstract::Shape>(out_shape);
@@ -43,7 +43,7 @@ AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

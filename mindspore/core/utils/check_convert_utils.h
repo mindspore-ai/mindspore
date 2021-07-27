@@ -308,6 +308,10 @@ class CheckAndConvertUtils {
   static void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
   static int64_t GetAndCheckFormat(const ValuePtr &value);
   static size_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);
+  static void CheckInputArgs(const std::vector<AbstractBasePtr> &input_args, const CompareEnum compare_operator,
+                             const int64_t match_value, const std::string &prim_name);
+  static TypePtr GetInputTensorType(const std::vector<AbstractBasePtr> &input_args, const size_t index,
+                                    const std::string &prim_name);
 
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);

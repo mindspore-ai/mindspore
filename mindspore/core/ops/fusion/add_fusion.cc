@@ -56,7 +56,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr AddFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameAddFusion, AddFusion);
 }  // namespace ops

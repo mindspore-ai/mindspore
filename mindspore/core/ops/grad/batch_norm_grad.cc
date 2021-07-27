@@ -34,7 +34,9 @@ float BatchNormGrad::get_epsilon() const {
   return GetValue<float>(value_ptr);
 }
 
-void BatchNormGrad::set_is_training(const bool is_training) { this->AddAttr(kIsTraining, MakeValue(is_training)); }
+void BatchNormGrad::set_is_training(const bool is_training) {
+  (void)this->AddAttr(kIsTraining, MakeValue(is_training));
+}
 
 bool BatchNormGrad::get_is_training() const {
   auto value_ptr = this->GetAttr(kIsTraining);

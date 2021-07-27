@@ -385,6 +385,39 @@ int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t 
   MS_EXCEPTION(ValueError) << buffer.str();
 }
 
+void CheckAndConvertUtils::CheckInputArgs(const std::vector<AbstractBasePtr> &input_args,
+                                          const CompareEnum compare_operator, const int64_t match_value,
+                                          const std::string &prim_name) {
+  (void)CheckInteger("input number", SizeToLong(input_args.size()), compare_operator, match_value, prim_name);
+  for (size_t index = 0; index < input_args.size(); index++) {
+    if (input_args[index] == nullptr) {
+      MS_EXCEPTION(ValueError) << "The " << index << "'s input of " << prim_name << " is nullptr.";
+    }
+  }
+}
+
+TypePtr CheckAndConvertUtils::GetInputTensorType(const std::vector<AbstractBasePtr> &input_args, const size_t index,
+                                                 const std::string &prim_name) {
+  if (input_args.size() <= index) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the index " << index << " is out of the input number "
+                             << input_args.size();
+  }
+  auto input_arg = input_args[index];
+  if (input_arg == nullptr) {
+    MS_EXCEPTION(ValueError) << "The " << index << "'s input of " << prim_name << " is nullptr.";
+  }
+  auto base_type = input_arg->BuildType();
+  MS_EXCEPTION_IF_NULL(base_type);
+  if (!base_type->isa<TensorType>()) {
+    MS_EXCEPTION(ValueError) << "The " << index << "'s input type of " << prim_name << " is not Tensor.";
+  }
+  auto tensor_type = base_type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type);
+  auto type = tensor_type->element();
+  MS_EXCEPTION_IF_NULL(type);
+  return type;
+}
+
 ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   if (!shape->isa<abstract::Shape>()) {

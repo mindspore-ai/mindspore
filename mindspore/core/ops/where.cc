@@ -29,7 +29,7 @@ AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
     MS_EXCEPTION_IF_NULL(input);
   }
   auto op_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 3, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 3, op_name);
   auto input0_type_ = input_args[0]->BuildType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input0_type_);
   auto input0_type = input0_type_->element();

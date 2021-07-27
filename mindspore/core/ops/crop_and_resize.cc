@@ -29,11 +29,11 @@ void CropAndResize::Init(ResizeMethod method, float extrapolation_value) {
 
 void CropAndResize::set_method(ResizeMethod method) {
   auto swi = (int64_t)method;
-  this->AddAttr(kMethod, MakeValue(swi));
+  (void)this->AddAttr(kMethod, MakeValue(swi));
 }
 
 void CropAndResize::set_extrapolation_value(float extrapolation_value) {
-  this->AddAttr(kExtrapolationValue, MakeValue(extrapolation_value));
+  (void)this->AddAttr(kExtrapolationValue, MakeValue(extrapolation_value));
 }
 
 ResizeMethod CropAndResize::get_method() const {

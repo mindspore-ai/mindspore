@@ -55,8 +55,8 @@ AbstractBasePtr LayerNormBetaGammaBackpropInfer(const abstract::AnalysisEnginePt
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 4;
-  CheckAndConvertUtils::CheckInteger("LayerNormBetaGammaBackprop infer", SizeToLong(input_args.size()), kGreaterEqual,
-                                     input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("LayerNormBetaGammaBackprop infer", SizeToLong(input_args.size()),
+                                           kGreaterEqual, input_num, primitive->name());
   return abstract::MakeAbstract(LayerNormBetaGammaBackpropInferShape(primitive, input_args),
                                 LayerNormBetaGammaBackpropInferType(primitive, input_args));
 }

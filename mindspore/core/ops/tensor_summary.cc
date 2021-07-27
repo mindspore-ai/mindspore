@@ -30,11 +30,11 @@ abstract::ShapePtr TensorSummaryInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   // check
   auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("v rank", v_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("v rank", v_shape.size(), kGreaterEqual, 1, prim_name);
   return std::make_shared<abstract::Shape>(ShapeVector(1));
 }
 }  // namespace
-void TensorSummary::set_side_effect_io() { this->AddAttr(kSideEffectIO, MakeValue(true)); }
+void TensorSummary::set_side_effect_io() { (void)this->AddAttr(kSideEffectIO, MakeValue(true)); }
 
 bool TensorSummary::get_side_effect_io() const {
   auto value_ptr = GetAttr(kSideEffectIO);

@@ -39,7 +39,7 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -48,12 +48,13 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
   auto seq_lengths = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto seq_dim = GetValue<int64_t>(primitive->GetAttr(kSeqDim));
   auto batch_dim = GetValue<int64_t>(primitive->GetAttr(kBatchDim));
-  CheckAndConvertUtils::CheckInteger("seq_dim", seq_dim, kLessEqual, SizeToLong(input_shape.size()), prim_name);
-  CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kLessEqual, SizeToLong(input_shape.size()), prim_name);
-  CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kNotEqual, seq_dim, prim_name);
-  CheckAndConvertUtils::CheckInteger("seq_lengths rank", SizeToLong(seq_lengths.size()), kEqual, 1, prim_name);
-  CheckAndConvertUtils::CheckInteger("seq_lengths vector size", seq_lengths[0], kEqual,
-                                     input_shape[LongToSize(batch_dim)], prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("seq_dim", seq_dim, kLessEqual, SizeToLong(input_shape.size()), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kLessEqual, SizeToLong(input_shape.size()),
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kNotEqual, seq_dim, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("seq_lengths rank", SizeToLong(seq_lengths.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("seq_lengths vector size", seq_lengths[0], kEqual,
+                                           input_shape[LongToSize(batch_dim)], prim_name);
   // infer type
   std::set<TypePtr> valid_x_types(common_valid_types);
   valid_x_types.emplace(kBool);

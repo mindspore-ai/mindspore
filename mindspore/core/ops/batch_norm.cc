@@ -31,21 +31,21 @@ void BatchNorm::Init(const bool is_training, const float epsilon, const float mo
   set_momentum(momentum);
 }
 
-void BatchNorm::set_is_training(const bool is_training) { this->AddAttr(kIsTraining, MakeValue(is_training)); }
+void BatchNorm::set_is_training(const bool is_training) { (void)this->AddAttr(kIsTraining, MakeValue(is_training)); }
 
 void BatchNorm::set_epsilon(const float epsilon) {
   CheckAndConvertUtils::CheckInRange<float>(kEpsilon, epsilon, kIncludeBoth, {0.0, 1.0}, this->name());
-  this->AddAttr(kEpsilon, MakeValue(epsilon));
+  (void)this->AddAttr(kEpsilon, MakeValue(epsilon));
 }
 
 void BatchNorm::set_format(const Format &format) {
   int64_t f = format;
-  this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, MakeValue(f));
 }
 
 void BatchNorm::set_momentum(const float momentun) {
   CheckAndConvertUtils::CheckInRange<int64_t>(kMomentum, SizeToLong(momentun), kIncludeBoth, {0.0, 1.0}, this->name());
-  this->AddAttr(kMomentum, MakeValue(momentun));
+  (void)this->AddAttr(kMomentum, MakeValue(momentun));
 }
 
 float BatchNorm::get_momentum() const {
@@ -73,7 +73,7 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   // Infer shape
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("batch_norm_infer", SizeToLong(input_args.size()), kEqual, 5, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("batch_norm_infer", SizeToLong(input_args.size()), kEqual, 5, prim_name);
 
   auto input_x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
@@ -94,7 +94,7 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
     input_shape_norm.push_back(input_x[1]);
     input_shape_norm.push_back(input_x[2]);
   }
-  CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale.size()), kEqual, 1, prim_name);
   CheckAndConvertUtils::Check("scale shape", scale, kEqual, "bias shape", bias, prim_name, TypeError);
   CheckAndConvertUtils::Check("scale shape[0]", scale[0], kEqual, "input_x channel", input_shape_norm[1], prim_name,
                               TypeError);

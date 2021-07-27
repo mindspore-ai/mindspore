@@ -70,8 +70,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto kernel_w = kernel_size[3];
   auto stride_h = strides[2];
   auto stride_w = strides[3];
-  int64_t out_h = -1;
-  int64_t out_w = -1;
+  int64_t out_h = abstract::Shape::SHP_ANY;
+  int64_t out_w = abstract::Shape::SHP_ANY;
   if (pad_mode == VALID) {
     out_h = static_cast<int64_t>(ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
     out_w = static_cast<int64_t>(ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
@@ -100,7 +100,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameMaxPoolFusion, MaxPoolFusion);
 }  // namespace ops

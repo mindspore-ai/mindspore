@@ -56,7 +56,7 @@ TypePtr DropoutGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(DropoutGradInferType(primitive, input_args),
-                                                    DropoutGradInferShape(primitive, input_args)->shape());
+                                                    DropoutGradInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameDropoutGrad, DropoutGrad);
 }  // namespace ops

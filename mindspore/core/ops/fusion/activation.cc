@@ -54,7 +54,7 @@ ActivationType Activation::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-void Activation::set_approximate(bool approximate) { this->AddAttr(kApproximate, MakeValue(approximate)); }
+void Activation::set_approximate(bool approximate) { (void)this->AddAttr(kApproximate, MakeValue(approximate)); }
 
 bool Activation::get_approximate() const {
   auto value_ptr = this->GetAttr(kApproximate);

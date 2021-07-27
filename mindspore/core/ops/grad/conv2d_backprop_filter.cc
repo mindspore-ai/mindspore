@@ -109,7 +109,9 @@ int64_t Conv2DBackpropFilter::get_mode() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-void Conv2DBackpropFilter::set_stride(const std::vector<int64_t> &stride) { this->AddAttr(kStride, MakeValue(stride)); }
+void Conv2DBackpropFilter::set_stride(const std::vector<int64_t> &stride) {
+  (void)this->AddAttr(kStride, MakeValue(stride));
+}
 
 std::vector<int64_t> Conv2DBackpropFilter::get_stride() const {
   auto value_ptr = GetAttr(kStride);
@@ -117,7 +119,7 @@ std::vector<int64_t> Conv2DBackpropFilter::get_stride() const {
 }
 
 void Conv2DBackpropFilter::set_dilation(const std::vector<int64_t> &dilation) {
-  this->AddAttr(kDilation, MakeValue(dilation));
+  (void)this->AddAttr(kDilation, MakeValue(dilation));
 }
 
 std::vector<int64_t> Conv2DBackpropFilter::get_dilation() const {
@@ -134,7 +136,7 @@ int64_t Conv2DBackpropFilter::get_group() const {
 
 void Conv2DBackpropFilter::set_format(const Format &format) {
   int64_t swi = format;
-  this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, MakeValue(swi));
 }
 
 Format Conv2DBackpropFilter::get_format() const {
@@ -152,7 +154,7 @@ AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, c
     MS_EXCEPTION_IF_NULL(item);
   }
   return std::make_shared<abstract::AbstractTensor>(Conv2DBackpropFilterInferType(primitive, input_args),
-                                                    Conv2DBackpropFilterInferShape(primitive, input_args)->shape());
+                                                    Conv2DBackpropFilterInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter, Conv2DBackpropFilterInfer, nullptr,
                              true);

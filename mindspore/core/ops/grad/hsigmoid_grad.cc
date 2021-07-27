@@ -32,7 +32,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -45,7 +45,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

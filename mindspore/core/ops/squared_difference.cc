@@ -26,15 +26,11 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   return BroadCastInferShape(op_name, input_args);
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[0]->BuildType());
@@ -45,8 +41,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameSquaredDifference, SquaredDifference);
 }  // namespace ops

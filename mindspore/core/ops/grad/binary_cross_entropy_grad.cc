@@ -68,7 +68,7 @@ Reduction BinaryCrossEntropyGrad::get_reduction() const {
 AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(BinaryCrossEntroyGradInferType(primitive, input_args),
-                                                    BinaryCrossEntroyGradInferShape(primitive, input_args)->shape());
+                                                    BinaryCrossEntroyGradInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameBinaryCrossEntropyGrad, BinaryCrossEntropyGrad);
 }  // namespace ops

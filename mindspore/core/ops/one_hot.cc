@@ -28,19 +28,15 @@ void OneHot::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue
 int64_t OneHot::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 namespace {
 abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  (void)CheckAndConvertUtils::CheckInteger("one_hot infer", SizeToLong(input_args.size()), kEqual, 4, op_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
   auto max_shape = shape_map[kMinShape];
   auto min_shape = shape_map[kMaxShape];
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
-  MS_EXCEPTION_IF_NULL(input_args[1]);
   auto depth_val = GetValue<int64_t>(input_args[1]->BuildValue());
-  (void)CheckAndConvertUtils::CheckInteger("depth", depth_val, kGreaterEqual, 0, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("depth value", depth_val, kGreaterEqual, 0, op_name);
   if (min_shape.size() == 0 || max_shape.size() == 0) {
     if (axis >= 0) {
       in_shape.insert(in_shape.begin() + axis, depth_val);
@@ -62,7 +58,6 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
 }
 
 TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
   CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), {kInt32, kInt64}, op_name);
   CheckAndConvertUtils::CheckTypeValid("depth", input_args[1]->BuildType(), {kInt8, kInt16, kInt32, kInt64}, op_name);
@@ -73,6 +68,9 @@ TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 }  // namespace
 AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 4;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = OneHotInferType(primitive, input_args);
   auto infer_shape = OneHotInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

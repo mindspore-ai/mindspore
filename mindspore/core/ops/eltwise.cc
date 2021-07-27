@@ -23,7 +23,7 @@ namespace ops {
 void Eltwise::Init(const EltwiseMode &mode) { this->set_mode(mode); }
 void Eltwise::set_mode(const EltwiseMode &mode) {
   int64_t m = mode;
-  this->AddAttr(kMode, MakeValue(m));
+  (void)this->AddAttr(kMode, MakeValue(m));
 }
 EltwiseMode Eltwise::get_mode() const {
   auto value_ptr = this->GetAttr(kMode);

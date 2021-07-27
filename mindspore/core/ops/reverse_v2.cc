@@ -40,7 +40,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 
 void ReverseV2::Init(const std::vector<int64_t> &axis) { this->set_axis(axis); }
-void ReverseV2::set_axis(const std::vector<int64_t> &axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void ReverseV2::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 std::vector<int64_t> ReverseV2::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
   return GetValue<std::vector<int64_t>>(value_ptr);

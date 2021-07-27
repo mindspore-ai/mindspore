@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace ops {
 void Unpack::Init(const int64_t axis) { this->set_axis(axis); }
-void Unpack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
+void Unpack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
 int64_t Unpack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

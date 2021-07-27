@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,16 @@ namespace ops {
 AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  for (auto input : input_args) {
-    MS_EXCEPTION_IF_NULL(input);
-  }
+  const int64_t input_num = 3;
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
   std::vector<int64_t> hits_shape;
   auto input = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("logits size", SizeToLong(input.size()), kGreaterEqual, 1, op_name);
   hits_shape.push_back(input[0]);
 
   auto value_type = input_args[2]->BuildType();
+  MS_EXCEPTION_IF_NULL(value_type);
   auto tensor_type = value_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto data_type = tensor_type->element();
@@ -39,10 +41,6 @@ AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const 
   auto output = std::make_shared<abstract::AbstractTensor>(data_type, value_shape);
   auto hits = std::make_shared<abstract::AbstractTensor>(kInt8, hits_shape);
   AbstractBasePtrList output1 = {output, hits};
-
-  if (input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c() == nullptr) {
-    MS_LOG(INFO) << "Do infer shape in runtime.";
-  }
   return std::make_shared<abstract::AbstractTuple>(output1);
 }
 REGISTER_PRIMITIVE_C(kNameHashtableLookup, HashtableLookup);

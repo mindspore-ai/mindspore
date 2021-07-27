@@ -34,7 +34,7 @@ int64_t CustomPredict::get_output_num() const {
 }
 
 void CustomPredict::set_weight_threshold(const float weight_threshold) {
-  this->AddAttr(kWeightThreshold, MakeValue(weight_threshold));
+  (void)this->AddAttr(kWeightThreshold, MakeValue(weight_threshold));
 }
 
 float CustomPredict::get_weight_threshold() const {

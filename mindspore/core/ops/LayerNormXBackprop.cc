@@ -48,8 +48,8 @@ AbstractBasePtr LayerNormXBackpropInfer(const abstract::AnalysisEnginePtr &, con
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 5;
-  CheckAndConvertUtils::CheckInteger("LayerNormXBackprop infer", SizeToLong(input_args.size()), kGreaterEqual,
-                                     input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("LayerNormXBackprop infer", SizeToLong(input_args.size()), kGreaterEqual,
+                                           input_num, primitive->name());
   return abstract::MakeAbstract(LayerNormXBackpropInferShape(primitive, input_args),
                                 LayerNormXBackpropInferType(primitive, input_args));
 }

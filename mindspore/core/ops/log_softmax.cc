@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-void LogSoftmax::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void LogSoftmax::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t LogSoftmax::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
@@ -36,7 +36,7 @@ abstract::ShapePtr LogSoftmaxInferShape(const PrimitivePtr &primitive, const std
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  CheckAndConvertUtils::CheckInteger("log_softmax infer", input_args.size(), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("log_softmax infer", input_args.size(), kEqual, 1, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   if (shape_map.empty()) {
@@ -57,7 +57,7 @@ abstract::ShapePtr LogSoftmaxInferShape(const PrimitivePtr &primitive, const std
 TypePtr LogSoftmaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("log_softmax infer", input_args.size(), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("log_softmax infer", input_args.size(), kEqual, 1, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, op_name);

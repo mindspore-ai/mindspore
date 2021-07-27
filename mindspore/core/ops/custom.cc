@@ -25,7 +25,7 @@ void Custom::Init(const std::string &type, const std::map<std::string, std::vect
   this->set_attr(attrs);
 }
 
-void Custom::set_type(const std::string &type) { this->AddAttr(kType, MakeValue(type)); }
+void Custom::set_type(const std::string &type) { (void)this->AddAttr(kType, MakeValue(type)); }
 
 std::string Custom::get_type() const {
   auto value_ptr = this->GetAttr(kType);
