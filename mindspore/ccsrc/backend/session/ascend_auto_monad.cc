@@ -751,7 +751,7 @@ class AscendAutoMonadConverter {
       const auto &end_node = call_info.call_sites.back().cnode;
       end_iter = std::find(nodes.rbegin(), nodes.rend(), end_node);
     }
-    for (auto iter = nodes.rbegin(); iter != end_iter; iter++) {
+    for (auto iter = nodes.rbegin(); iter != end_iter; ++iter) {
       if (!AnfAlgo::IsRealCNodeKernel(*iter)) {
         continue;
       }
@@ -780,7 +780,7 @@ class AscendAutoMonadConverter {
       const auto &end_node = context->call_info_map[kg].call_sites.back().cnode;
       end_iter = std::find(nodes.rbegin(), nodes.rend(), end_node);
     }
-    for (auto iter = nodes.rbegin(); iter != end_iter; iter++) {
+    for (auto iter = nodes.rbegin(); iter != end_iter; ++iter) {
       if (!AnfAlgo::IsRealCNodeKernel(*iter)) {
         continue;
       }
@@ -888,7 +888,7 @@ class AscendAutoMonadConverter {
       MS_LOG(DEBUG) << "check node input[" << i << "]: " << node_input->DebugString();
       if (node_input->isa<Parameter>()) {
         MS_LOG(DEBUG) << "node_input:" << node_input->DebugString() << " is a param";
-        CNodePtr stack_pop = InsertStackPop(kernel_graph_, node_input, stack_pushs);
+        CNodePtr stack_pop = InsertStackPop(node_input, stack_pushs);
         node->set_input(i, stack_pop);
         KeepOrderForStackPop(kernel_graph_, stack_pop, node);
         continue;
@@ -896,7 +896,7 @@ class AscendAutoMonadConverter {
       auto iter = std::find_if(before_nodes.begin(), before_nodes.end(),
                                [node_input](auto before_node) { return before_node == node_input; });
       if (iter != before_nodes.end()) {
-        CNodePtr stack_pop = InsertStackPop(kernel_graph_, *iter, stack_pushs);
+        CNodePtr stack_pop = InsertStackPop(*iter, stack_pushs);
         node->set_input(i, stack_pop);
         KeepOrderForStackPop(kernel_graph_, stack_pop, node);
       }
@@ -904,7 +904,7 @@ class AscendAutoMonadConverter {
   }
 
   // Create StackOps for node_input.
-  CNodePtr InsertStackPop(const KernelGraphPtr &kg, const AnfNodePtr &node_input, std::vector<CNodePtr> *stack_pushs) {
+  CNodePtr InsertStackPop(const AnfNodePtr &node_input, std::vector<CNodePtr> *stack_pushs) {
     auto stack_push = StackPush(node_input);
     stack_pushs->emplace_back(stack_push);
     auto stack_pop = StackPop();
@@ -1608,7 +1608,7 @@ class ExecuteOrderGenerator {
     graph_->set_execution_order(std::move(execution_order));
   }
 
-  std::set<CNodePtr> GetAllNodes(std::map<CNodePtr, size_t> *search_list) {
+  std::set<CNodePtr> GetAllNodes(std::map<CNodePtr, const size_t> *search_list) {
     const auto &all_graphs = context_.visited_graphs();
     std::set<CNodePtr> all_nodes;
     for (auto &graph : all_graphs) {
@@ -1651,7 +1651,7 @@ class ExecuteOrderGenerator {
   void EraseParameter() {
     // Copy out execution order list.
     auto exec_order = graph_->execution_order();
-    std::map<CNodePtr, size_t> search_list;
+    std::map<CNodePtr, const size_t> search_list;
     for (size_t i = 0; i < exec_order.size(); i++) {
       search_list.emplace(exec_order[i], i);
     }
@@ -1681,7 +1681,7 @@ class ExecuteOrderGenerator {
           MS_EXCEPTION_IF_NULL(source);
           if (source->isa<Parameter>()) {
             auto it = param_write_times.find(source);
-            auto index = search_list[node];
+            const auto index = search_list[node];
             if (it != param_write_times.end() && it->second.first > 0 && it->second.second > index) {
               // Skip if Assign source is a parameter and be written in other place.
               ++iter;
@@ -1724,8 +1724,8 @@ class ExecuteOrderGenerator {
   }
 
   // Count parameter write times by check all assign nodes.
-  std::map<AnfNodePtr, std::pair<int, size_t>> CountParameterAssigns(const std::map<CNodePtr, size_t> &search_list,
-                                                                     const std::vector<CNodePtr> &exec_order) {
+  std::map<AnfNodePtr, std::pair<int, size_t>> CountParameterAssigns(
+    const std::map<CNodePtr, const size_t> &search_list, const std::vector<CNodePtr> &exec_order) {
     auto ref_map = graph_->GetRefMap();
     std::multimap<AnfNodePtr, std::tuple<size_t, AnfNodePtr, size_t>> ref_multimap;
     std::set<AnfNodePtr> root_inputs(graph_->inputs().begin(), graph_->inputs().end());
