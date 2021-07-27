@@ -652,9 +652,16 @@ class Profiler:
             return select_time
 
         if "output_path" not in kwargs:
-            selected_timestamp = _select_timestamp(os.getcwd(), re.compile(r'data-(\d+)'), current_time)
-            output_path = f"data-{selected_timestamp}"
-            self._output_path = validate_and_normalize_path(output_path)
+            # Environment variables are mainly set for the convenience of cloud profiler.
+            output_path = os.getenv("MS_DIAGNOSTIC_DATA_PATH")
+            if output_path:
+                self._output_path = validate_and_normalize_path(output_path)
+                selected_timestamp = _select_timestamp(self._output_path,
+                                                       re.compile(r'profiler-(\d+)'), current_time)
+            else:
+                selected_timestamp = _select_timestamp(os.getcwd(), re.compile(r'data-(\d+)'), current_time)
+                output_path = f"data-{selected_timestamp}"
+                self._output_path = validate_and_normalize_path(output_path)
         else:
             output_path = kwargs.pop("output_path")
             self._output_path = validate_and_normalize_path(output_path)
