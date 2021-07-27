@@ -17,7 +17,7 @@
 #include "wrapper/fp32/matmul_fp32_wrapper.h"
 void InitMatrixA(const float *src_ptr, float *dst_ptr, const MatMulParameter *params_, bool is_vector_a) {
   if (is_vector_a) {
-    memcpy(dst_ptr, src_ptr, params_->batch * params_->deep_ * sizeof(float));
+    memcpy(dst_ptr, src_ptr, (size_t)(params_->batch * params_->deep_) * sizeof(float));
     return;
   }
   for (int i = 0; i < params_->batch; i++) {
@@ -34,7 +34,7 @@ void InitMatrixA(const float *src_ptr, float *dst_ptr, const MatMulParameter *pa
 void InitMatrixB(const float *src_ptr, float *dst_ptr, const MatMulParameter *params_, bool is_vector_a) {
   if (is_vector_a) {
     if (params_->b_transpose_) {
-      memcpy(dst_ptr, src_ptr, params_->batch * params_->col_ * params_->deep_ * sizeof(float));
+      memcpy(dst_ptr, src_ptr, (size_t)(params_->batch * params_->col_ * params_->deep_) * sizeof(float));
     } else {
       for (int i = 0; i < params_->batch; i++) {
         const float *src = src_ptr + i * params_->deep_ * params_->col_;

@@ -150,11 +150,13 @@ int Conv2DInt8Coder::InitTmpBuffer() {
   switch (opt_) {
     case Basic:
       buffer_size_ =
-        (2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) * (int32_t)sizeof(int16_t);
+        static_cast<size_t>(2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
+        sizeof(int16_t);
       break;
     case Convolve_1_x_n:
       buffer_size_ =
-        (2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) * sizeof(int16_t);
+        static_cast<size_t>(2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
+        sizeof(int16_t);
       break;
     case Convolve_1x1_fast:
       // do nothing
