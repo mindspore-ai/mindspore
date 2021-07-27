@@ -18,6 +18,9 @@
 namespace mindspore {
 namespace device {
 void HalfToFloat(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto half_data = static_cast<const float16 *>(src);
   auto float_data = static_cast<float *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -27,6 +30,9 @@ void HalfToFloat(void *dst, const void *src, size_t elem_num) {
 }
 
 void FloatToHalf(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto float_data = static_cast<const float *>(src);
   auto half_data = static_cast<float16 *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -35,6 +41,9 @@ void FloatToHalf(void *dst, const void *src, size_t elem_num) {
 }
 
 void DoubleToFloat(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto double_data = static_cast<const double *>(src);
   auto float_data = static_cast<float *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -43,6 +52,9 @@ void DoubleToFloat(void *dst, const void *src, size_t elem_num) {
 }
 
 void FloatToDouble(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto float_data = static_cast<const float *>(src);
   auto double_data = static_cast<double *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -51,6 +63,9 @@ void FloatToDouble(void *dst, const void *src, size_t elem_num) {
 }
 
 void ShortToInt(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto half_data = static_cast<const int16_t *>(src);
   auto int_data = static_cast<int *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -59,6 +74,9 @@ void ShortToInt(void *dst, const void *src, size_t elem_num) {
 }
 
 void IntToShort(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto int_data = static_cast<const int *>(src);
   auto half_data = static_cast<int16_t *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -67,6 +85,9 @@ void IntToShort(void *dst, const void *src, size_t elem_num) {
 }
 
 void LongToInt(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto long_data = static_cast<const int64_t *>(src);
   auto int_data = static_cast<int *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -75,6 +96,9 @@ void LongToInt(void *dst, const void *src, size_t elem_num) {
 }
 
 void IntToLong(void *dst, const void *src, size_t elem_num) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   auto int_data = static_cast<const int *>(src);
   auto long_data = static_cast<int64_t *>(dst);
   for (size_t i = 0; i < elem_num; ++i) {
@@ -83,6 +107,9 @@ void IntToLong(void *dst, const void *src, size_t elem_num) {
 }
 
 void ConvertSameType(void *dst, const void *src, size_t size, TypeId type) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   if (type == kNumberTypeFloat16) {
     auto dst_data = static_cast<float16 *>(dst);
     auto src_data = static_cast<const float16 *>(src);

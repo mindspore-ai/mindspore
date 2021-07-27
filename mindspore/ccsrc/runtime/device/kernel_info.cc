@@ -51,7 +51,7 @@ bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t in
     for (size_t i = output_address_list_.size(); i <= index; i++) {
       output_address_list_.emplace_back(nullptr);
     }
-  } else if (output_address_list_.empty()) {
+  } else if (kernel_mod_ != nullptr && output_address_list_.empty()) {
     // set cnode
     for (size_t i = 0; i < kernel_mod_->GetOutputSizeList().size(); i++) {
       output_address_list_.emplace_back(nullptr);

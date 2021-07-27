@@ -66,7 +66,7 @@ void LaunchMul::ObtainMulInputsAddr() {
   if (device_num == 0) {
     MS_LOG(ERROR) << "device num can't be zero";
   }
-  input2_value_ = 1.0 / device_num;
+  input2_value_ = 1.0f / device_num;
   auto size = abstract::TypeIdSize(dtype_);
   auto input_size = AlignSizeForLaunchKernel(size * 1);
   // alloc memory
