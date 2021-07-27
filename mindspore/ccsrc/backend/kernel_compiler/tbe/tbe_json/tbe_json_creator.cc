@@ -346,8 +346,8 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
   GenDesJsonCommon(output_desc);
   std::vector<int64_t> shape;
   std::vector<int64_t> ori_shape;
-  AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputDeviceShape(anf_node, node_out_idx), NOT_NULL(&shape));
-  AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, node_out_idx), NOT_NULL(&ori_shape));
+  shape = TbeJsonUtils::GetOutputDeviceShapeForTbeBuild(anf_node, node_out_idx);
+  ori_shape = TbeJsonUtils::GetOutputOriShapeForTbeBuild(anf_node, node_out_idx);
   if (shape.empty()) {
     shape.emplace_back(1);
   }

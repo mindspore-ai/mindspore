@@ -179,8 +179,6 @@ def get_options_info(job_content):
     options["op_debug_level"] = job_content["SocInfo"]["op_debug_level"]
     options["op_impl_mode"] = job_content["SocInfo"]["op_impl_mode"]
     options["op_debug_dir"] = job_content["SocInfo"]["op_debug_dir"]
-    options["op_compiler_cache_dir"] = job_content["SocInfo"]["op_compiler_cache_dir"]
-    options["op_compiler_cache_mode"] = job_content["SocInfo"]["op_compiler_cache_mode"]
     options["mdl_bank_path"] = job_content["SocInfo"]["op_debug_level"]
     options["op_bank_path"] = job_content["SocInfo"]["op_bank_path"]
     options["deviceId"] = job_content["SocInfo"]["deviceId"]

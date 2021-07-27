@@ -128,7 +128,7 @@ class KernelPack {
   KernelPack() : json_(nullptr), kernel_(nullptr) {}
   KernelPack(const KernelPack &) = default;
   KernelJsonInfo kernel_json_info() const;
-  bool LoadKernelMeta(const std::string &json_f, const std::string &processor);
+  bool LoadKernelMeta(const std::string &json_f);
   bool ReadFromJsonFile(const std::string &json_f, const std::string &processor);
   const FlexArray *GetJson() const { return json_; }
   const FlexArray *GetKernel() const { return kernel_; }

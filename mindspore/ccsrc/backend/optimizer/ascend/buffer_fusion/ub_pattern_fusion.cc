@@ -21,6 +21,8 @@
 #include <memory>
 #include <string>
 #include <algorithm>
+#include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
+#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
 #include "backend/kernel_compiler/kernel_fusion.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -432,7 +434,16 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
         buffer_fusion_info.first, buffer_fusion_info.second.full_name, buffer_fusion_info.second.inputs_list,
         buffer_fusion_info.second.anf_nodes, buffer_fusion_info.second.outputs_list);
     });
-  auto kernel_mods = mindspore::kernel::KernelFusion(fusion_scope_infos);
+  std::map<int64_t, kernel::KernelModPtr> kernel_mods;
+  std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
+  if (!old_build.empty()) {
+    kernel_mods = mindspore::kernel::KernelFusion(fusion_scope_infos);
+  } else if (!fusion_scope_infos.empty()) {
+    auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+    MS_EXCEPTION_IF_NULL(build_manager);
+    build_manager->ResetOldTask();
+    kernel_mods = build_manager->AscendFusionOpCompile(fusion_scope_infos);
+  }
   std::set<int64_t> fusion_ids;
   for (auto &buffer_fusion_info : buffer_fusion_infos) {
     MS_LOG(DEBUG) << "anf node size: " << buffer_fusion_info.second.anf_nodes.size()
