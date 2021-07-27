@@ -37,7 +37,7 @@ constexpr char kNormalizeOperation[] = "Normalize";
 
 class NormalizeOperation : public TensorOperation {
  public:
-  NormalizeOperation(std::vector<float> mean, std::vector<float> std);
+  NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std);
 
   ~NormalizeOperation();
 

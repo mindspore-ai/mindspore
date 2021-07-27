@@ -37,7 +37,7 @@ constexpr char kResizeWithBBoxOperation[] = "ResizeWithBBox";
 
 class ResizeWithBBoxOperation : public TensorOperation {
  public:
-  explicit ResizeWithBBoxOperation(std::vector<int32_t> size, InterpolationMode interpolation_mode);
+  explicit ResizeWithBBoxOperation(const std::vector<int32_t> &size, InterpolationMode interpolation_mode);
 
   ~ResizeWithBBoxOperation();
 

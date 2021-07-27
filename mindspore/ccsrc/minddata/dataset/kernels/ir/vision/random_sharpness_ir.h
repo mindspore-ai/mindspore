@@ -37,7 +37,7 @@ constexpr char kRandomSharpnessOperation[] = "RandomSharpness";
 
 class RandomSharpnessOperation : public TensorOperation {
  public:
-  explicit RandomSharpnessOperation(std::vector<float> degrees);
+  explicit RandomSharpnessOperation(const std::vector<float> &degrees);
 
   ~RandomSharpnessOperation();
 

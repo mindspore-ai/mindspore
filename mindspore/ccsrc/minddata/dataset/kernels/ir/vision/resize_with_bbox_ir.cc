@@ -28,7 +28,7 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // ResizeWithBBoxOperation
-ResizeWithBBoxOperation::ResizeWithBBoxOperation(std::vector<int32_t> size, InterpolationMode interpolation)
+ResizeWithBBoxOperation::ResizeWithBBoxOperation(const std::vector<int32_t> &size, InterpolationMode interpolation)
     : size_(size), interpolation_(interpolation) {}
 
 ResizeWithBBoxOperation::~ResizeWithBBoxOperation() = default;

@@ -27,7 +27,7 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
-BoundingBoxAugmentOperation::BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio)
+BoundingBoxAugmentOperation::BoundingBoxAugmentOperation(const std::shared_ptr<TensorOperation> &transform, float ratio)
     : transform_(transform), ratio_(ratio) {}
 
 BoundingBoxAugmentOperation::~BoundingBoxAugmentOperation() = default;

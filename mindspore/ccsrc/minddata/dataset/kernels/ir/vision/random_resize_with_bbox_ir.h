@@ -37,7 +37,7 @@ constexpr char kRandomResizeWithBBoxOperation[] = "RandomResizeWithBBox";
 
 class RandomResizeWithBBoxOperation : public TensorOperation {
  public:
-  explicit RandomResizeWithBBoxOperation(std::vector<int32_t> size);
+  explicit RandomResizeWithBBoxOperation(const std::vector<int32_t> &size);
 
   ~RandomResizeWithBBoxOperation();
 

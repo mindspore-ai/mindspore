@@ -37,7 +37,7 @@ constexpr char kResizeOperation[] = "Resize";
 
 class ResizeOperation : public TensorOperation {
  public:
-  explicit ResizeOperation(std::vector<int32_t> size, InterpolationMode interpolation);
+  explicit ResizeOperation(const std::vector<int32_t> &size, InterpolationMode interpolation);
 
   ~ResizeOperation();
 

@@ -25,7 +25,7 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 // ResizeOperation
-ResizeOperation::ResizeOperation(std::vector<int32_t> size, InterpolationMode interpolation)
+ResizeOperation::ResizeOperation(const std::vector<int32_t> &size, InterpolationMode interpolation)
     : size_(size), interpolation_(interpolation) {}
 
 ResizeOperation::~ResizeOperation() = default;

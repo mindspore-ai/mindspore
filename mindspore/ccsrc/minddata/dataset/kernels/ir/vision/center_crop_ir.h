@@ -37,7 +37,7 @@ constexpr char kCenterCropOperation[] = "CenterCrop";
 
 class CenterCropOperation : public TensorOperation {
  public:
-  explicit CenterCropOperation(std::vector<int32_t> size);
+  explicit CenterCropOperation(const std::vector<int32_t> &size);
 
   ~CenterCropOperation();
 
