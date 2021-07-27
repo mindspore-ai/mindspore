@@ -16,7 +16,6 @@
 
 #include <pybind11/operators.h>
 #include "backend/kernel_compiler/oplib/oplib.h"
-#include "backend/kernel_compiler/oplib/oploader.h"
 #include "pipeline/jit/pipeline.h"
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -50,7 +49,6 @@ using PrimitivePy = mindspore::PrimitivePy;
 using MetaFuncGraph = mindspore::MetaFuncGraph;
 using EventWriter = mindspore::summary::EventWriter;
 using OpLib = mindspore::kernel::OpLib;
-using OpInfoLoaderPy = mindspore::kernel::OpInfoLoaderPy;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 using mindspore::MsCtxParam;
@@ -412,10 +410,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set dp norm clip for federated learning secure aggregation.")
     .def("set_encrypt_type", &PSContext::set_encrypt_type,
          "Set encrypt type for federated learning secure aggregation.");
-
-  (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
-    .def(py::init())
-    .def("get_all_ops_info", &OpInfoLoaderPy::GetAllOpsInfo, "get all ops info.");
 
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");

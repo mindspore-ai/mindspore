@@ -134,11 +134,11 @@ class KernelPack {
   const FlexArray *GetJson() const { return json_; }
   const FlexArray *GetKernel() const { return kernel_; }
   ~KernelPack() {
-    if (json_) {
+    if (json_ != nullptr) {
       delete[] json_;
       json_ = nullptr;
     }
-    if (kernel_) {
+    if (kernel_ != nullptr) {
       delete[] kernel_;
       kernel_ = nullptr;
     }

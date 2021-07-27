@@ -117,6 +117,8 @@ class CondVar : public Var {
     }
     return cond_fn_(value);
   }
+
+ private:
   ConditionFunc cond_fn_;
 };
 

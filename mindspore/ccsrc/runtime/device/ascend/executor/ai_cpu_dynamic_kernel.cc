@@ -62,6 +62,7 @@ void AiCpuDynamicKernel::Execute() {
 void AiCpuDynamicKernel::Initialize() {
   // is dynamic
   auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "Initialize node:" << cnode->fullname_with_scope();
   DynamicKernel::Initialize();
 
@@ -76,7 +77,6 @@ void AiCpuDynamicKernel::Initialize() {
   unknow_type_ = shape_type;
   // Parse aicpu ext info
   if (is_dynamic_shape_) {
-    MS_EXCEPTION_IF_NULL(cnode);
     ext_info_handler_ =
       std::make_shared<AicpuExtInfoHandler>(cnode->fullname_with_scope(), input_num_, output_num_, shape_type);
     ext_info_handler_->Parse(ext_info_data_);
