@@ -41,8 +41,8 @@ int PoolingInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   int window_h = param->window_h_;
   int window_w = param->window_w_;
   if (param->global_) {
-    window_h = input_h;
-    window_w = input_w;
+    param->window_h_ = window_h = input_h;
+    param->window_w_ = window_w = input_w;
   }
   int output_h = 0;
   int output_w = 0;
