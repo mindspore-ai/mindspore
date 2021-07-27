@@ -205,7 +205,11 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std
   }
 }
 
-void AscendKernelRuntime::ClearGlobalIdleMem() { mem_manager_->ClearGlobalIdleMem(); }
+void AscendKernelRuntime::ClearGlobalIdleMem() {
+  if (mem_manager_ != nullptr) {
+    mem_manager_->ClearGlobalIdleMem();
+  }
+}
 
 bool AscendKernelRuntime::NeedDestroyHccl() {
   auto context_ptr = MsContext::GetInstance();
@@ -346,6 +350,7 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
 }
 
 bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   bool need_dump = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.e2e_dump_enabled() && dump_json_parser.dump_mode() == 1) {
@@ -571,6 +576,9 @@ void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
 }
 
 CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taskid) {
+  if (current_graph_ == nullptr) {
+    return nullptr;
+  }
   auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(current_graph_->graph_id());
   for (const auto &iter : runtime_info_map) {
     auto task_id = std::get<kTupleTaskId>(*iter.second);
@@ -655,6 +663,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
 
   auto dynamic_kernels = iter->second;
   for (const auto &dynamic_kernel : dynamic_kernels) {
+    MS_EXCEPTION_IF_NULL(dynamic_kernel);
     if (dynamic_kernel->have_depends() || dynamic_kernel->GetKernelType() == KernelType::HCCL_KERNEL) {
       MS_LOG(INFO) << "Match Dynamic Kernel, Start SyncStream";
       if (!SyncStream()) {
@@ -898,6 +907,7 @@ bool AscendKernelRuntime::DestroyHccl() {
 }
 
 bool AscendKernelRuntime::GraphWithEmptyTaskList(const session::KernelGraph *graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   auto iter = task_map_.find(graph->graph_id());
   if (iter == task_map_.end()) {
     MS_LOG(EXCEPTION) << "Unknown graph ptr";
@@ -941,6 +951,7 @@ std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {
 
 uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
   auto ascend_mem_manager = std::dynamic_pointer_cast<AscendMemoryManager>(mem_manager_);
+  MS_EXCEPTION_IF_NULL(ascend_mem_manager);
   return ascend_mem_manager->GetDeviceMemSize();
 }
 
