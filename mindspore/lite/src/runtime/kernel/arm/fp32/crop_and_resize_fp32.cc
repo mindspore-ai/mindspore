@@ -28,6 +28,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_CropAndResize;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t kBoxIndex = 1;
+constexpr size_t kBoxIdIndex = 2;
+}  // namespace
 int CropAndResizeCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -112,11 +116,11 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
   if (input_data == nullptr) {
     return RET_NULL_PTR;
   }
-  auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
+  auto boxes = reinterpret_cast<float *>(in_tensors_.at(kBoxIndex)->data_c());
   if (boxes == nullptr) {
     return RET_NULL_PTR;
   }
-  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(kBoxIdIndex)->data_c());
   if (box_idx == nullptr) {
     return RET_NULL_PTR;
   }

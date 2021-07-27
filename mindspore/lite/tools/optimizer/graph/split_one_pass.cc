@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr size_t kMinCnodeSize = 2;
+}  // namespace
 bool SplitOnePass::Run(const FuncGraphPtr &func_graph) {
   auto node_list = TopoSort(func_graph->get_return());
   auto manager = Manage(func_graph, true);
@@ -50,7 +53,7 @@ bool SplitOnePass::Run(const FuncGraphPtr &func_graph) {
     if (primitive_c->get_output_num() != 1) {
       continue;
     }
-    if (cnode->size() < 2) {
+    if (cnode->size() < kMinCnodeSize) {
       return false;
     }
     func_graph->manager()->Replace(node, cnode->input(1));

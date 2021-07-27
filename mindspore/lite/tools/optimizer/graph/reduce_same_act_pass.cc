@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr size_t kMinUsersSize = 2;
+}
 bool ReduceSameActPass::Run(const FuncGraphPtr &func_graph) {
   auto node_list = TopoSort(func_graph->get_return());
   auto manager = Manage(func_graph, true);
@@ -37,7 +40,7 @@ bool ReduceSameActPass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cur_node_users = func_graph->manager()->node_users()[node];
-    if (cur_node_users.size() < 2) {
+    if (cur_node_users.size() < kMinUsersSize) {
       continue;
     }
 

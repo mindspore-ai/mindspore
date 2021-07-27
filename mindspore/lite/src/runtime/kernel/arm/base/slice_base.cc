@@ -83,7 +83,8 @@ int SliceCPUKernel::Run() {
     return RET_NULL_PTR;
   }
   // param_ shape info has already been extended to 8d
-  if (param_->size_[5] < op_parameter_->thread_num_) {
+  constexpr size_t kDimHUnder8D = 5;
+  if (param_->size_[kDimHUnder8D] < op_parameter_->thread_num_) {
     DoSliceNoParallel(input_data, output_data, param_, lite::DataTypeSize(in_tensors_.at(0)->data_type()));
     return RET_OK;
   }
