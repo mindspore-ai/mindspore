@@ -40,18 +40,15 @@ class DynamicKernel {
   virtual void UpdateArgs() = 0;
   virtual void Execute() = 0;
   virtual void PostExecute() = 0;
-  bool is_dynamic_shape() const { return is_dynamic_shape_; }
-  bool is_input_dynamic_shape() const { return is_input_dynamic_shape_; }
-  bool is_output_dynamic_shape() const { return is_output_dynamic_shape_; }
-  bool have_depends() const { return !depend_list_.empty(); }
+  [[nodiscard]] bool is_dynamic_shape() const { return is_dynamic_shape_; }
+  [[nodiscard]] bool have_depends() const { return !depend_list_.empty(); }
   virtual void Initialize();
-  std::string GetKernelName() const { return cnode_ptr_.lock()->fullname_with_scope(); }
-  int GetKernelType() const;
+  [[nodiscard]] int GetKernelType() const;
 
  protected:
   void RebuildDependTensor();
   void InferShapeRecursive();
-  void InferShapeForNopNode(AnfNodePtr *input_node);
+  static void InferShapeForNopNode(AnfNodePtr *input_node);
 
   void *stream_;
   const CNodeWeakPtr cnode_ptr_;

@@ -97,7 +97,6 @@ class KernelBuildInfo {
 
   bool operator!=(const KernelBuildInfo &other) const;
 
- public:
   static auto constexpr kInvalidFormat = "InvalidFormat";
 
  private:

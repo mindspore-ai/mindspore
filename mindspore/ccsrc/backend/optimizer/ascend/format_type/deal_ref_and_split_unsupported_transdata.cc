@@ -202,19 +202,20 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefForMultipleOutput(
   return make_tuple;
 }
 
-CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                                                 const std::shared_ptr<kernel::OpInfo> &op_info) const {
+CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefSingleOutput(
+  const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::shared_ptr<kernel::OpInfo> &op_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(op_info);
   auto ref_infos = op_info->ref_infos();
-  for (const auto &ref_info : ref_infos) {
-    if (ref_info.second > cnode->inputs().size()) {
-      MS_LOG(EXCEPTION) << "ref op has wrong inputs: op inputs num is " << cnode->inputs().size() << ", ref info is "
-                        << ref_info.second;
-    }
-    return AddAdditionalToRefOutput(func_graph, cnode, ref_info.first, ref_info.second, nullptr);
+  if (ref_infos.empty()) {
+    return nullptr;
   }
-  return nullptr;
+  auto ref_info = *(ref_infos.begin());
+  if (ref_info.second > cnode->inputs().size()) {
+    MS_LOG(EXCEPTION) << "ref op has wrong inputs: op inputs num is " << cnode->inputs().size() << ", ref info is "
+                      << ref_info.second;
+  }
+  return AddAdditionalToRefOutput(func_graph, cnode, ref_info.first, ref_info.second, nullptr);
 }
 
 const BaseRef DealRefAndSpiltUnSupportedTransdata::DefinePattern() const {
@@ -260,7 +261,7 @@ const AnfNodePtr DealRefAndSpiltUnSupportedTransdata::Process(const FuncGraphPtr
     auto type = cnode->Type();
     MS_EXCEPTION_IF_NULL(type);
     if (!type->isa<Tuple>()) {
-      return DealRefSigleOutput(graph, cnode, op_info);
+      return DealRefSingleOutput(graph, cnode, op_info);
     } else {
       return DealRefForMultipleOutput(graph, cnode, op_info);
     }

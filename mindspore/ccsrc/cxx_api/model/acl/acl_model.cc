@@ -56,6 +56,7 @@ Status AclModel::Build() {
     graph = iter->second;
   } else {
     auto func_graph = ModelImpl::GetFuncGraph();
+    MS_EXCEPTION_IF_NULL(func_graph);
     auto inputs = func_graph->parameters();
     std::vector<std::string> input_names;
     for (auto node : inputs) {
