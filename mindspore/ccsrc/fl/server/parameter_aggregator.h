@@ -57,7 +57,8 @@ class ParameterAggregator {
         aggregation_done_(false),
         optimizing_done_(false),
         pulling_done_(true),
-        memory_register_(nullptr) {}
+        memory_register_(nullptr),
+        requires_aggr_(true) {}
   ~ParameterAggregator() = default;
 
   // Initialize ParameterAggregator with a cnode. This cnode is normally a optimizer kernel for now.
@@ -94,6 +95,9 @@ class ParameterAggregator {
   bool IsOptimizingDone() const;
   bool IsPullingDone() const;
 
+  // Return whether this parameter requires aggragation.
+  bool requires_aggr() const;
+
  private:
   // Initializing aggregation/optimizer kenerls based on the cnode. The reason of this is described in the file
   // kernel/kernel_factory.h.
@@ -118,6 +122,9 @@ class ParameterAggregator {
   // configuration, etc.
   std::vector<std::string> SelectAggregationAlgorithm(const CNodePtr &cnode);
 
+  // Judge whether the parameter needs to be aggregated.
+  bool JudgeRequiresAggr(const CNodePtr &cnode);
+
   ServerMode server_mode_;
   size_t required_push_count_;
   size_t required_pull_count_;
@@ -135,6 +142,9 @@ class ParameterAggregator {
   // Here stores multiple pairs of server kernels to parameters of their Launch function.
   std::vector<std::pair<std::shared_ptr<kernel::AggregationKernel>, KernelParams>> aggregation_kernel_parameters_;
   std::vector<std::pair<std::shared_ptr<kernel::OptimizerKernel>, KernelParams>> optimizer_kernel_parameters_;
+
+  // Whether this parameter needs to be aggregated.
+  bool requires_aggr_;
 };
 }  // namespace server
 }  // namespace fl

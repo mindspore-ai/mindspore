@@ -231,6 +231,9 @@ bool Executor::IsWeightAggrDone(const std::vector<std::string> &param_names) {
     std::unique_lock<std::mutex> lock(mtx);
     auto &param_aggr = param_aggrs_[name];
     MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
+    if (!param_aggr->requires_aggr()) {
+      continue;
+    }
     if (!param_aggr->IsAggregationDone()) {
       MS_LOG(DEBUG) << "Update model for " << name << " is not done yet.";
       return false;
@@ -265,6 +268,8 @@ std::map<std::string, AddressPtr> Executor::GetModel() {
   return model;
 }
 
+const std::vector<std::string> &Executor::param_names() const { return param_names_; }
+
 bool Executor::Unmask() {
 #ifdef ENABLE_ARMOUR
   auto model = GetModel();
@@ -274,7 +279,17 @@ bool Executor::Unmask() {
 #endif
 }
 
-const std::vector<std::string> &Executor::param_names() const { return param_names_; }
+void Executor::set_unmasked(bool unmasked) { unmasked_ = unmasked; }
+
+bool Executor::unmasked() const {
+  std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
+  if (encrypt_type == ps::kPWEncryptType) {
+    return unmasked_.load();
+  } else {
+    // If the algorithm of pairwise encrypt is not enabled, consider_ unmasked flag as true.
+    return true;
+  }
+}
 
 std::string Executor::GetTrainableParamName(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);

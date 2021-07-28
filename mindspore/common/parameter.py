@@ -152,6 +152,7 @@ class Parameter(Tensor_):
         self.is_param_ps = False
         self.push_weight_to_server = False
         self.pull_weight_from_server = False
+        self.requires_aggr = True
         self._cast_type = None
         self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
@@ -236,18 +237,22 @@ class Parameter(Tensor_):
         self.init_in_server = init_in_server
         self.param_info.init_in_server = init_in_server
 
-    def set_param_fl(self, push_to_server=False, pull_from_server=False):
+    def set_param_fl(self, push_to_server=False, pull_from_server=False, requires_aggr=True):
         """
         Set the way of parameter and server interaction.
 
         Args:
             push_to_server (bool): Whether the parameter should be pushed to server. Default: False.
             pull_from_server (bool): Whether the parameter should be pulled from server. Default: False.
+            requires_aggr (bool): Whether the parameter should be aggregated in the server. Default: True.
         """
         if push_to_server:
             self.push_weight_to_server = True
         if pull_from_server:
             self.pull_weight_from_server = True
+        if not requires_aggr:
+            self.requires_aggr = False
+            self.param_info.requires_aggr = False
 
     @property
     def inited_param(self):
@@ -376,6 +381,7 @@ class Parameter(Tensor_):
         x.is_param_ps = self.is_param_ps
         x.init_in_server = self.init_in_server
         x.cache_enable = self.cache_enable
+        x.requires_aggr = self.requires_aggr
         if self.cache_shape:
             x.cache_shape = self.cache_shape
         if init != 'same':
