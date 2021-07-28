@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_INDEX_ADD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_INDEX_ADD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_INDEX_ADD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_INDEX_ADD_GPU_KERNEL_H_
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -77,11 +77,17 @@ class IndexAddGpuKernel : public GpuKernel {
       outer_size_ *= src_shape[i];
     }
     inner_size_ = 1;
-    for (int64_t i = axis + 1; i < src_rank; i++) {
+    for (int64_t i = axis + 1; i >= 0 && i < src_rank; i++) {
       inner_size_ *= src_shape[i];
     }
-    src_axis_size_ = src_shape[axis];
-    dst_axis_size_ = dst_shape[axis];
+    if (axis >= 0 && axis < SizeToInt(src_shape.size()) && axis < SizeToInt(dst_shape.size())) {
+      src_axis_size_ = src_shape[axis];
+      dst_axis_size_ = dst_shape[axis];
+    } else {
+      MS_LOG(EXCEPTION) << "Init axis size failed, actual src axis size is " << src_axis_size_
+                        << ", actual dst axis size is " << dst_axis_size_;
+    }
+
     dst_size_ = sizeof(T);
     for (auto x : dst_shape) {
       dst_size_ *= x;
@@ -124,4 +130,4 @@ class IndexAddGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_INDEX_ADD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_INDEX_ADD_GPU_KERNEL_H_

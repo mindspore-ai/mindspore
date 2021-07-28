@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_BROADCAST_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_BROADCAST_GPU_KERNEL_H_
 
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -72,7 +72,8 @@ class BroadcastOpGpuKernel : public GpuKernel {
     auto shape3 = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than: " << MAX_DIMS << ", actual size is "
+                        << shape1.size();
     }
 
     lhs_shape_.resize(MAX_DIMS, 1);
@@ -80,21 +81,35 @@ class BroadcastOpGpuKernel : public GpuKernel {
     output_shape_.resize(MAX_DIMS, 1);
     for (size_t i = 0; i < shape3.size(); i++) {
       if (need_broadcast_) {
-        output_shape_[i] = shape3[i];
+        if (i < MAX_DIMS) {
+          output_shape_[i] = shape3[i];
+        } else {
+          MS_LOG(EXCEPTION) << "Output index: " << i << " should less than " << MAX_DIMS;
+        }
       }
       output_num_ *= shape3[i];
     }
     int lhs_offset = shape3.size() - shape1.size();
     for (size_t j = 0; j < shape1.size(); j++) {
       if (need_broadcast_) {
-        lhs_shape_[j + lhs_offset] = shape1[j];
+        if ((j + lhs_offset) >= 0 && (j + lhs_offset) < MAX_DIMS) {
+          lhs_shape_[j + lhs_offset] = shape1[j];
+        } else {
+          auto index = j + lhs_offset;
+          MS_LOG(EXCEPTION) << "Invalid input1 index: " << index;
+        }
       }
       input1_num_ *= shape1[j];
     }
     int rhs_offset = shape3.size() - shape2.size();
     for (size_t k = 0; k < shape2.size(); k++) {
       if (need_broadcast_) {
-        rhs_shape_[k + rhs_offset] = shape2[k];
+        if ((k + rhs_offset) >= 0 && (k + rhs_offset) < MAX_DIMS) {
+          rhs_shape_[k + rhs_offset] = shape2[k];
+        } else {
+          auto index = k + rhs_offset;
+          MS_LOG(EXCEPTION) << "Invalid input2 index: " << index;
+        }
       }
       input2_num_ *= shape2[k];
     }
@@ -131,7 +146,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
   void GetOpType(const CNodePtr &kernel_node) {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
 
-    static std::map<std::string, BroadcastOpType> kBroadcastCmpTypeMap = {
+    static const std::map<std::string, BroadcastOpType> kBroadcastCmpTypeMap = {
       {"Greater", BROADCAST_TYPE_GREATER},
       {"Less", BROADCAST_TYPE_LESS},
       {"Equal", BROADCAST_TYPE_EQUAL},
@@ -149,7 +164,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
       return;
     }
 
-    static std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap = {
+    static const std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap = {
       {"Maximum", BROADCAST_TYPE_MAXIMUM},   {"Minimum", BROADCAST_TYPE_MINIMUM},   {"Pow", BROADCAST_TYPE_POWER},
       {"RealDiv", BROADCAST_TYPE_REALDIV},   {"Mul", BROADCAST_TYPE_MUL},           {"Sub", BROADCAST_TYPE_SUB},
       {"Add", BROADCAST_TYPE_ADD},           {"FloorDiv", BROADCAST_TYPE_FLOORDIV}, {"AbsGrad", BROADCAST_TYPE_ABSGRAD},
@@ -180,8 +195,8 @@ class BroadcastOpGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-};  // namespace kernel
+};
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BINARYOP_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_BROADCAST_GPU_KERNEL_H_

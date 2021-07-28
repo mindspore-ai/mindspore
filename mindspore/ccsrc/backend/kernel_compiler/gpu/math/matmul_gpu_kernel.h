@@ -129,7 +129,13 @@ class MatMulGpuKernel : public GpuKernel {
     bool transpose = GetAttr<bool>(kernel_node, "transpose_x1");
     transpose_x1_ = transpose ? CUBLAS_OP_T : CUBLAS_OP_N;
     auto input1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    k_ = transpose ? input1_shape[dims - 2] : input1_shape[dims - 1];
+    if (transpose && input1_shape.size() > (dims - 2)) {
+      k_ = input1_shape[dims - 2];
+    } else if (!transpose && input1_shape.size() > (dims - 1)) {
+      k_ = input1_shape[dims - 1];
+    } else {
+      MS_LOG(EXCEPTION) << "Init k_ via input1_shape failed.";
+    }
 
     transpose = GetAttr<bool>(kernel_node, "transpose_x2");
     transpose_x2_ = transpose ? CUBLAS_OP_T : CUBLAS_OP_N;
