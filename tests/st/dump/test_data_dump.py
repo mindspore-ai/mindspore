@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 import os
-import json
 import sys
 import tempfile
 import time
 import shutil
 import glob
-
+from importlib import import_module
+from pathlib import Path
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -32,6 +32,7 @@ from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
+from dump_test_utils import generate_dump_json
 
 
 class Net(nn.Cell):
@@ -47,14 +48,6 @@ x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
 
 
-def change_current_dump_json(file_name, dump_path, dump_config_path):
-    with open(file_name, 'r+') as f:
-        data = json.load(f)
-    data["common_dump_settings"]["path"] = dump_path
-    with open(dump_config_path, 'w') as f:
-        json.dump(data, f)
-
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -65,7 +58,7 @@ def test_async_dump():
     with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'async_dump')
         dump_config_path = os.path.join(tmp_dir, 'async_dump.json')
-        change_current_dump_json('async_dump.json', dump_path, dump_config_path)
+        generate_dump_json(dump_path, dump_config_path, 'test_async_dump')
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
         if os.path.isdir(dump_path):
@@ -83,7 +76,7 @@ def run_e2e_dump():
     with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'e2e_dump')
         dump_config_path = os.path.join(tmp_dir, 'e2e_dump.json')
-        change_current_dump_json('e2e_dump.json', dump_path, dump_config_path)
+        generate_dump_json(dump_path, dump_config_path, 'test_e2e_dump')
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
         if os.path.isdir(dump_path):
@@ -178,66 +171,44 @@ class ReluReduceMeanDenseRelu(Cell):
         return x_
 
 
-def search_path(path, keyword):
-    content = os.listdir(path)
-    for each in content:
-        each_path = path + os.sep + each
-        if keyword in each:
-            return each_path
-        read_write = os.access(each_path, os.W_OK) and os.access(each_path, os.R_OK)
-        if not read_write:
-            continue
-        if os.path.isdir(each_path):
-            search_path(each_path, keyword)
-    return None
-
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_async_dump_net_multi_layer_mode1():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_name = "test_async_dump_net_multi_layer_mode1"
-    json_file = os.path.join(os.getcwd(), "{}.json".format(test_name))
-    rank_id = 0
-    dump_full_path = os.path.join("/tmp/async_dump/", "{}_{}".format(test_name, rank_id))
-    os.system("rm -rf {}/*".format(dump_full_path))
-    os.environ["MINDSPORE_DUMP_CONFIG"] = json_file
-    weight = Tensor(np.ones((1000, 2048)).astype(np.float32))
-    bias = Tensor(np.ones((1000,)).astype(np.float32))
-    net = ReluReduceMeanDenseRelu(weight, bias, 2048, 1000)
-    criterion = SoftmaxCrossEntropyWithLogits(sparse=False)
-    optimizer = Momentum(learning_rate=0.1, momentum=0.1,
-                         params=filter(lambda x: x.requires_grad, net.get_parameters()))
-    net_with_criterion = WithLossCell(net, criterion)
-    train_network = TrainOneStepCell(net_with_criterion, optimizer)
-    train_network.set_train()
-    inputs = Tensor(np.random.randn(32, 2048, 7, 7).astype(np.float32))
-    label = Tensor(np.zeros(shape=(32, 1000)).astype(np.float32))
-    net_dict = train_network(inputs, label)
-
-    dump_path = "/tmp/async_dump/{}/rank_{}/test/0/0/".format(test_name, rank_id)
-    dump_file = os.listdir(dump_path)
-    dump_file_name = ""
-    for file in dump_file:
-        if "SoftmaxCrossEntropyWithLogits" in file:
-            dump_file_name = file
-    dump_file_full_path = os.path.join(dump_path, dump_file_name)
-    npy_path = os.path.join(os.getcwd(), "./{}".format(test_name))
-    if os.path.exists(npy_path):
-        shutil.rmtree(npy_path)
-    os.mkdir(npy_path)
-    tool_path = search_path('/usr/local/Ascend', 'msaccucmp.pyc')
-    if tool_path:
-        cmd = "python {0} convert -d {1} -out {2}".format(tool_path, dump_file_full_path, npy_path)
-        os.system(cmd)
-        npy_file_list = os.listdir(npy_path)
-        dump_result = {}
-        for file in npy_file_list:
-            if "output.0.npy" in file:
-                dump_result["output0"] = np.load(os.path.join(npy_path, file))
-        for index, value in enumerate(net_dict):
-            assert value.asnumpy() == dump_result["output0"][index]
-    else:
-        print('not find convert tools msaccucmp.pyc')
+    pwd = os.getcwd()
+    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'async_dump_net_multi_layer_mode1')
+        json_file_path = os.path.join(tmp_dir, "test_async_dump_net_multi_layer_mode1.json")
+        generate_dump_json(dump_path, json_file_path, 'test_async_dump_net_multi_layer_mode1')
+        os.environ['MINDSPORE_DUMP_CONFIG'] = json_file_path
+        weight = Tensor(np.ones((1000, 2048)).astype(np.float32))
+        bias = Tensor(np.ones((1000,)).astype(np.float32))
+        net = ReluReduceMeanDenseRelu(weight, bias, 2048, 1000)
+        criterion = SoftmaxCrossEntropyWithLogits(sparse=False)
+        optimizer = Momentum(learning_rate=0.1, momentum=0.1,
+                             params=filter(lambda x: x.requires_grad, net.get_parameters()))
+        net_with_criterion = WithLossCell(net, criterion)
+        train_network = TrainOneStepCell(net_with_criterion, optimizer)
+        train_network.set_train()
+        inputs = Tensor(np.random.randn(32, 2048, 7, 7).astype(np.float32))
+        label = Tensor(np.zeros(shape=(32, 1000)).astype(np.float32))
+        net_dict = train_network(inputs, label)
+        dump_file_path = os.path.join(dump_path, 'rank_0', 'test', '0', '0')
+        dump_file_name = list(Path(dump_file_path).rglob("*SoftmaxCrossEntropyWithLogits*"))[0]
+        dump_file_full_path = os.path.join(dump_file_path, dump_file_name)
+        npy_path = os.path.join(dump_path, "npy_files")
+        if os.path.exists(npy_path):
+            shutil.rmtree(npy_path)
+        os.mkdir(npy_path)
+        tool_path_search_list = list(Path('/usr/local/Ascend').rglob('msaccucmp.py*'))
+        if tool_path_search_list:
+            converter = import_module("mindspore.offline_debug.convert_async")
+            converter.AsyncDumpConverter([dump_file_full_path], npy_path).convert_files()
+            npy_result_file = list(Path(npy_path).rglob("*output.0.*.npy"))[0]
+            dump_result = np.load(os.path.join(npy_path, npy_result_file))
+            for index, value in enumerate(net_dict):
+                assert value.asnumpy() == dump_result[index]
+        else:
+            print('Failed to find hisi convert tools: msaccucmp.py or msaccucmp.pyc.')
