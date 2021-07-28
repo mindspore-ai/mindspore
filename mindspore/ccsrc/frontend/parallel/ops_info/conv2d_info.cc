@@ -25,6 +25,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "pipeline/jit/resource.h"
 
 namespace mindspore {
@@ -230,7 +231,7 @@ Status Conv2DInfo::CheckStrategyBase(const StrategyPtr &strategy) {
 
   if (weight_strategy[0] > 1) {
     out_channel_shard_ = true;
-    new_out_channel_ = out_channel_ / weight_strategy[1];
+    new_out_channel_ = out_channel_ / weight_strategy[0];
   } else {
     out_channel_shard_ = false;
   }
@@ -514,7 +515,7 @@ void Conv2DInfo::InferSendRecvFlag() {
   MS_LOG(INFO) << name_ << ": The send rank ids is " << send_rank_ids_ << ", the recv rank ids is " << recv_rank_ids_;
 }
 
-void Conv2DInfo::InferRecvShapes() {
+void Conv2DInfo::InferOverlapShapes() {
   if (left_need_recv_) {
     Shape left_recv_shape = input_slice_shape_;
     left_recv_shape[3] = overlap_left_size_;
@@ -535,6 +536,9 @@ void Conv2DInfo::InferStridedSliceAttrs() {
     left_strided_slice_end_ = input_slice_shape_;
     left_strided_slice_end_[3] = left_rank_overlap_right_size_;
     left_strided_slice_strides_ = {1, 1, 1, 1};
+    Shape left_send_shape = input_slice_shape_;
+    left_send_shape[3] = left_rank_overlap_right_size_;
+    send_shapes_.push_back(left_send_shape);
     MS_LOG(INFO) << name_ << ": The left strided slice begin is " << left_strided_slice_begin_ << ", end is "
                  << left_strided_slice_end_;
   }
@@ -544,6 +548,9 @@ void Conv2DInfo::InferStridedSliceAttrs() {
     right_strided_slice_begin_[3] = input_slice_shape_[3] - right_rank_overlap_left_size_;
     right_strided_slice_end_ = input_slice_shape_;
     right_strided_slice_strides_ = {1, 1, 1, 1};
+    Shape right_send_shape = input_slice_shape_;
+    right_send_shape[3] = right_rank_overlap_left_size_;
+    send_shapes_.push_back(right_send_shape);
     MS_LOG(INFO) << name_ << ": The right strided slice begin is " << right_strided_slice_begin_ << ", end is "
                  << right_strided_slice_end_;
   }
@@ -554,9 +561,99 @@ void Conv2DInfo::InferNewOperatorAttrs() {
 
   InferSendRecvFlag();
 
-  InferRecvShapes();
+  InferOverlapShapes();
 
   InferStridedSliceAttrs();
+}
+
+OperatorAttrs Conv2DInfo::CreatNeighborExchangeAttrs(const CNodePtr &cnode) {
+  auto type = cnode->Type();
+  MS_EXCEPTION_IF_NULL(type);
+  auto tensor_type = type->cast<mindspore::TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type);
+  auto dtype = tensor_type->element();
+  MS_EXCEPTION_IF_NULL(dtype);
+  Attr send_ranks = {SEND_RNAK_IDS, MakeValue(send_rank_ids_)};
+  Attr recv_ranks = {RECV_RNAK_IDS, MakeValue(recv_rank_ids_)};
+  Attr send_shapes = {SEND_SHAPES, MakeValue(send_shapes_)};
+  Attr recv_shapes = {RECV_SHAPES, MakeValue(recv_shapes_)};
+  Attr recv_type = {RECV_TYPE, dtype};
+  OperatorAttrs attrs = {send_ranks, recv_ranks, recv_shapes, send_shapes, recv_type};
+  return attrs;
+}
+
+OperatorAttrs Conv2DInfo::CreatConv2DAttrs() {
+  Attr out_channel = {OUT_CHANNEL, MakeValue(new_out_channel_)};
+  Attr kernel_size = {KERNEL_SIZE, MakeValue(kernel_size_)};
+  Attr mode = {MODE, MakeValue(mode_)};
+  Attr pad_mode = {PAD_MODE, MakeValue("pad")};
+  Attr pad = {PAD, MakeValue(new_pad_list_)};
+  Attr stride = {STRIDE, MakeValue(stride_)};
+  Attr dilation = {DILATION, MakeValue(dilation_)};
+  Attr group = {GROUP, MakeValue(group_)};
+  Attr data_format = {DATA_FORMAT, MakeValue(format_)};
+  OperatorAttrs attrs = {out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, data_format};
+  return attrs;
+}
+
+Status Conv2DInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+  auto graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes;
+  std::vector<AnfNodePtr> make_tuple_a_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  if (left_need_send_) {
+    auto slice_left_begin = CreatTuple(left_strided_slice_begin_);
+    auto slice_left_end = CreatTuple(left_strided_slice_end_);
+    auto slice_left_strided = CreatTuple(left_strided_slice_strides_);
+    auto slice_left = gen_g.PushBack(
+      {gen_g.NewOpInst(STRIDED_SLICE), cnode->input(1), slice_left_begin, slice_left_end, slice_left_strided});
+    make_tuple_a_inputs.push_back(slice_left);
+  }
+  if (right_need_send_) {
+    auto slice_right_begin = CreatTuple(right_strided_slice_begin_);
+    auto slice_right_end = CreatTuple(right_strided_slice_end_);
+    auto slice_right_strided = CreatTuple(right_strided_slice_strides_);
+    auto slice_right = gen_g.PushBack(
+      {gen_g.NewOpInst(STRIDED_SLICE), cnode->input(1), slice_right_begin, slice_right_end, slice_right_strided});
+    make_tuple_a_inputs.push_back(slice_right);
+  }
+  auto make_tuple_a = graph->NewCNode(make_tuple_a_inputs);
+  auto alltoall_attrs = CreatNeighborExchangeAttrs(cnode);
+  auto alltoall_v = gen_g.PushBack({gen_g.NewOpInst(NEIGHBOREXCHANGE, alltoall_attrs), make_tuple_a});
+  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  if (left_need_recv_) {
+    std::vector<AnfNodePtr> tuple_getitem_l_inputs = {NewValueNode(prim::kPrimTupleGetItem), alltoall_v,
+                                                      CreatInt64Imm(0)};
+    auto tuple_getitem_l = graph->NewCNode(tuple_getitem_l_inputs);
+    std::vector<AnfNodePtr> make_tuple_l_inputs = {NewValueNode(prim::kPrimMakeTuple), cnode->input(1),
+                                                   tuple_getitem_l};
+    auto make_tuple_l = graph->NewCNode(make_tuple_l_inputs);
+    auto concat_l = gen_g.PushBack({gen_g.NewOpInst(CONCAT), make_tuple_l});
+    make_tuple_inputs.push_back(concat_l);
+  }
+  if (right_need_recv_) {
+    std::vector<AnfNodePtr> tuple_getitem_r_inputs = {NewValueNode(prim::kPrimTupleGetItem), alltoall_v,
+                                                      CreatInt64Imm(0)};
+    auto tuple_getitem_r = graph->NewCNode(tuple_getitem_r_inputs);
+    make_tuple_inputs.push_back(tuple_getitem_r);
+  } else {
+    make_tuple_inputs.push_back(cnode->input(1));
+  }
+  auto make_tuple = graph->NewCNode(make_tuple_inputs);
+  Attr concat_axis = {AXIS, MakeValue(-1)};
+  OperatorAttrs concat_attrs = {concat_axis};
+  std::vector<AnfNodePtr> concat_inputs = {gen_g.NewOpInst(CONCAT, concat_attrs), make_tuple};
+  auto concat = graph->NewCNode(concat_inputs);
+  auto conv2d_attrs = CreatConv2DAttrs();
+  auto conv2d = gen_g.PushBack({gen_g.NewOpInst(CONV2D, conv2d_attrs), concat, cnode->input(2)});
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, conv2d));
+  return SUCCESS;
 }
 
 ReplaceGraphPtr Conv2DInfo::replace_graph(const CNodePtr &cnode) {
@@ -579,6 +676,11 @@ ReplaceGraphPtr Conv2DInfo::replace_graph(const CNodePtr &cnode) {
 
   InferNewOperatorAttrs();
 
+  if (ComputeReplaceGraph(cnode) != SUCCESS) {
+    return nullptr;
+  } else {
+    return replace_graph_;
+  }
   return nullptr;
 }
 

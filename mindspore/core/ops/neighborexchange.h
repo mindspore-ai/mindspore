@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_ALLTOALLV_H_
-#define MINDSPORE_CORE_OPS_ALLTOALLV_H_
+#ifndef MINDSPORE_CORE_OPS_NEIGHBOREXCHANGE_H_
+#define MINDSPORE_CORE_OPS_NEIGHBOREXCHANGE_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -24,20 +24,20 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameAllToAllv = "AllToAllv";
+constexpr auto kNameNeighborExchange = "NeighborExchange";
 constexpr auto RecvShapes = "recv_shapes";
 constexpr auto RecvType = "recv_type";
-class AllToAllv : public PrimitiveC {
+class NeighborExchange : public PrimitiveC {
  public:
-  AllToAllv() : PrimitiveC(kNameAllToAllv) {}
-  ~AllToAllv() = default;
-  MS_DECLARE_PARENT(AllToAllv, PrimitiveC);
+  NeighborExchange() : PrimitiveC(kNameNeighborExchange) {}
+  ~NeighborExchange() = default;
+  MS_DECLARE_PARENT(NeighborExchange, PrimitiveC);
   void Init() {}
 };
-AbstractBasePtr AllToAllvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
-using PrimAllToAllPtr = std::shared_ptr<AllToAllv>;
+AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args);
+using PrimNeighborExchangePtr = std::shared_ptr<NeighborExchange>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_ALLTOALLV_H_
+#endif  // MINDSPORE_CORE_OPS_NEIGHBOREXCHANGE_H_

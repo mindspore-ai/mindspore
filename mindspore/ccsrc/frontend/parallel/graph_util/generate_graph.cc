@@ -100,6 +100,14 @@ AnfNodePtr CreatInt64Imm(int64_t value) {
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 
+AnfNodePtr CreatTuple(const std::vector<int64_t> &tuple) {
+  std::vector<ValuePtr> value_list;
+  std::transform(tuple.begin(), tuple.end(), std::back_inserter(value_list),
+                 [](const int64_t value) { return MakeValue(value); });
+  ValueTuplePtr value_tuple_ptr = std::make_shared<ValueTuple>(value_list);
+  return ValuePtrToAnfNodePtr(value_tuple_ptr);
+}
+
 std::string GetInstanceNameByCNode(const CNodePtr &cnode) {
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (!prim) {
