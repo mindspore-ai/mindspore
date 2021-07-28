@@ -130,11 +130,11 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
 #ifdef ENABLE_DUMP_IR
   std::string name = "graph_build." + std::to_string(graph->graph_id());
   DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, name, graph, dump_params, ".ir");
+  (void)mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, name, graph, dump_params, ".ir");
 
   const std::vector<CNodePtr> &exec_order = graph->execution_order();
   std::string exec_order_name = "graph_exec_order." + std::to_string(graph->graph_id());
-  mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_SESSION, exec_order_name, exec_order);
+  (void)mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_SESSION, exec_order_name, exec_order);
 #endif
 
   // runtime init
