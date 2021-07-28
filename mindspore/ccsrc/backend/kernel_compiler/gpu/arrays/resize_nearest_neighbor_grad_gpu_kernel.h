@@ -66,15 +66,27 @@ class ResizeNearestNeighborGradGpuKernel : public GpuKernel {
                     << RESIZENEARESTNEIGHBORGRAD_DIMENSION << "-D inputs.";
       return false;
     }
+    if (shape_size_ != output_shape.size()) {
+      MS_LOG(ERROR) << "The dim of input and output must be same.";
+      return false;
+    }
     input_size_ = 1;
     for (size_t i = 0; i < shape_size_; i++) {
       input_size_ *= input_shape[i];
+      if (input_shape[i] == 0) {
+        MS_LOG(ERROR) << "The shape of input has 0.";
+        return false;
+      }
       input_shape_.push_back(input_shape[i]);
     }
     input_size_ *= sizeof(T);
     output_size_ = 1;
     for (size_t i = 0; i < shape_size_; i++) {
       output_size_ *= output_shape[i];
+      if (input_shape[i] == 0) {
+        MS_LOG(ERROR) << "The shape of output has 0.";
+        return false;
+      }
       output_shape_.push_back(output_shape[i]);
     }
     output_size_ *= sizeof(T);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +55,18 @@ class GatherGradGpuKernel : public GpuKernel {
     grad_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
+    if (grad_shapes_.size() != index_shapes_.size() || grad_shapes_.size() != output_shapes_.size()) {
+      MS_LOG(ERROR) << "The shape of grad, index and output should be same.";
+      return false;
+    }
+    int dims = SizeToInt(grad_shapes_.size());
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "dim"));
+    if (axis_ < -dims || axis_ >= dims) {
+      MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
+      return false;
+    }
     if (axis_ < 0) {
-      axis_ = axis_ + SizeToInt(index_shapes_.size());
+      axis_ += dims;
     }
 
     Reshape();

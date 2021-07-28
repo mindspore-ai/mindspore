@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,10 +66,15 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     if (!CheckParam(kernel_node)) {
       return false;
     }
+    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    int dims = SizeToInt(input_shape.size());
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+    if (axis_ < -dims || axis_ >= dims) {
+      MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
+      return false;
+    }
     if (axis_ < 0) {
-      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-      axis_ += SizeToInt(input_shape.size());
+      axis_ += dims;
     }
     auto origin_data_format = AnfAlgo::GetOriginDataFormat(kernel_node);
     auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);

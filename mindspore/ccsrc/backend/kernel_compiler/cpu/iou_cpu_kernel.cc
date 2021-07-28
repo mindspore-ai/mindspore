@@ -64,7 +64,7 @@ bool IOUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
 
   // multithreading
   auto task = [&anchor_boxes, &gt_boxes, &iou_score, this](size_t start, size_t end) {
-    const T ZERO = T(1);
+    const T ZERO = T(0);
     const T ONE = T(1);
     const T EPS = T(1e-10);
     constexpr size_t Y0_SHIFT = 1;
@@ -77,7 +77,9 @@ bool IOUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
       T I_y0 = std::max(anchor_boxes[idx1 + Y0_SHIFT], gt_boxes[idx2 + Y0_SHIFT]);
       T I_x1 = std::min(anchor_boxes[idx1 + X1_SHIFT], gt_boxes[idx2 + X1_SHIFT]);
       T I_y1 = std::min(anchor_boxes[idx1 + Y1_SHIFT], gt_boxes[idx2 + Y1_SHIFT]);
-      T overlaps = std::max(ZERO, (I_x1 - I_x0 + ONE) * (I_y1 - I_y0 + ONE));
+      T overlaps_w = std::max(ZERO, (I_x1 - I_x0 + ONE));
+      T overlaps_h = std::max(ZERO, (I_y1 - I_y0 + ONE));
+      T overlaps = overlaps_w * overlaps_h;
       T area1 = (anchor_boxes[idx1 + X1_SHIFT] - anchor_boxes[idx1] + ONE) *
                 (anchor_boxes[idx1 + Y1_SHIFT] - anchor_boxes[idx1 + Y0_SHIFT] + ONE);
       T area2 = (gt_boxes[idx2 + X1_SHIFT] - gt_boxes[idx2] + ONE) *
