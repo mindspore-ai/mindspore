@@ -20,18 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-errno_t memcpy_s_loop(uchar *dest, size_t destMax, const uchar *src, size_t count) {
-  int64_t step = 0;
-  while (count >= SECUREC_MEM_MAX_LEN) {
-    int ret_code = memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, SECUREC_MEM_MAX_LEN, src + step * SECUREC_MEM_MAX_LEN,
-                            SECUREC_MEM_MAX_LEN);
-    if (ret_code != 0) return ret_code;
-    count -= SECUREC_MEM_MAX_LEN;
-    step++;
-  }
-  return memcpy_s(dest + step * SECUREC_MEM_MAX_LEN, count, src + step * SECUREC_MEM_MAX_LEN, count);
-}
-
 Status PluginOp::PluginToTensorRow(const std::vector<plugin::Tensor> &in_row, TensorRow *out_row) {
   CHECK_FAIL_RETURN_UNEXPECTED(out_row != nullptr && out_row->empty(), "null/empty out_row received!");
   out_row->reserve(in_row.size());
@@ -53,8 +41,6 @@ Status PluginOp::TensorRowToPlugin(const TensorRow &in_row, std::vector<plugin::
     if (in_row[ind]->type().IsNumeric()) {
       dsize_t buffer_size = in_row[ind]->SizeInBytes();
       tensor.buffer_.resize(buffer_size);
-      int ret_code = memcpy_s_loop(tensor.buffer_.data(), buffer_size, in_row[ind]->GetBuffer(), buffer_size);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
       if (buffer_size < SECUREC_MEM_MAX_LEN) {
         int ret_code = memcpy_s(tensor.buffer_.data(), tensor.buffer_.size(), in_row[ind]->GetBuffer(), buffer_size);
         CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into plugin tensor.");
