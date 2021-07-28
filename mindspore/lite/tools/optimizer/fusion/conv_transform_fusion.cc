@@ -30,6 +30,7 @@ constexpr size_t kConvNoBiasLen = 3;
 constexpr size_t kConvWithBiasLen = 4;
 constexpr size_t kNumDim1 = 1;
 constexpr size_t kNumDim2 = 2;
+constexpr size_t kDim4D = 4;
 int GetOutChannels(const CNodePtr &conv_node) {
   MS_ASSERT(conv_node != nullptr);
   auto value_node = conv_node->input(0);
@@ -230,7 +231,7 @@ void ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const te
                                              int kernel_num, const float *trans_scale) const {
   MS_ASSERT(weight_data != nullptr);
   MS_ASSERT(trans_scale != nullptr);
-  if (weight_tensor->shape().size() > 4) {
+  if (weight_tensor->shape().size() > kDim4D) {
     MS_LOG(ERROR) << "weight tensor shape error";
     return;
   }
