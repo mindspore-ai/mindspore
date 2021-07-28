@@ -50,8 +50,12 @@ class ArgMaxAndMinWithValueGpuKernel : public GpuKernel {
     small_ = (kernel_name == "ArgMinWithValue") ? true : false;
     std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
-    int64_t dims = shape.size();
+    int64_t dims = SizeToLong(shape.size());
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
+    if (axis < -dims || axis >= dims) {
+      MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
+      return false;
+    }
     if (axis < 0) {
       axis += dims;
     }
