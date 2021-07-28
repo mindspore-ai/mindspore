@@ -64,12 +64,12 @@ do
 
     if [ $# == 2 ]
     then
-        python train.py --run_distribute=True  --data_url=$PATH2 &> train.log &
+        python train.py --run_distribute=True --device_num=$PATH1 --data_url=$PATH2 &> train.log &
     fi
 
     if [ $# == 3 ]
     then
-        python train.py --run_distribute=True  --data_url=$PATH2 --pre_trained=$PATH3 &> train.log &
+        python train.py --run_distribute=True --device_num=$PATH1 --data_url=$PATH2 --pre_trained=$PATH3 &> train.log &
     fi
 
     cd ../
