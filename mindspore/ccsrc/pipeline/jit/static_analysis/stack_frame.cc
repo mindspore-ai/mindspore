@@ -22,11 +22,15 @@ namespace mindspore {
 namespace abstract {
 AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &engine, const EvaluatorPtr &evaluator,
                                                     const CNodePtr current_cnode) {
+  MS_EXCEPTION_IF_NULL(current_cnode);
+  MS_EXCEPTION_IF_NULL(evaluator);
   AbstractBasePtrList args_abs_list;
   auto &inputs = current_cnode->inputs();
   for (std::size_t i = 1; i < inputs.size(); i++) {
     auto config = engine->MakeConfig(inputs[i], current_context_, current_context_->func_graph());
-    auto abs = config->ObtainEvalResult()->abstract();
+    auto result = config->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(result);
+    auto abs = result->abstract();
     args_abs_list.push_back(abs);
   }
   args_abs_list = evaluator->NormalizeArgs(args_abs_list);
@@ -36,6 +40,8 @@ AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &eng
 
 AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr &fg_evaluator,
                                                 const AbstractFunctionPtr &graph_func) {
+  MS_EXCEPTION_IF_NULL(graph_func);
+  MS_EXCEPTION_IF_NULL(fg_evaluator);
   AnalysisContextPtr parent_context = nullptr;
   auto func_graph_abs = dyn_cast<FuncGraphAbstractClosure>(graph_func);
   if (func_graph_abs != nullptr) {  // Set parent context for FuncGraphAbstractClosure.
@@ -55,6 +61,8 @@ AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr 
 // Inner jump implementation.
 StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr current_cnode,
                                  const AbstractFunctionPtr &graph_func) {
+  MS_EXCEPTION_IF_NULL(engine);
+  MS_EXCEPTION_IF_NULL(current_cnode);
   // Get the evaluator for func graph.
   auto evaluator = engine->GetEvaluatorFor(graph_func);
   auto fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(evaluator);
@@ -102,6 +110,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
 
 // Check if we need branch to another func graph.
 StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
+  MS_EXCEPTION_IF_NULL(engine);
   auto &current_node = CurrentNode();
   if (!current_node->isa<CNode>()) {
     return nullptr;
@@ -126,19 +135,23 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
 
 // Run one step in current func graph.
 EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
+  MS_EXCEPTION_IF_NULL(engine);
   auto &current_node = NextNode();
   MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
                 << ", current_context_: " << current_context_->ToString();
   AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_, current_context_->func_graph());
   auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
-  MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString()
-                << ") = " << node_eval_result->abstract()->ToString();
+  MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString() << ") = "
+                << (node_eval_result->abstract() ? node_eval_result->abstract()->ToString() : "Abstract null");
   return node_eval_result;
 }
 
 // Return back from child func graph.
 void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last_stack_frame,
                       const EvalResultPtr &eval_result) {
+  MS_EXCEPTION_IF_NULL(engine);
+  MS_EXCEPTION_IF_NULL(last_stack_frame);
+  MS_EXCEPTION_IF_NULL(eval_result);
   // Overwrite the result if func graph is stub.
   EvalResultPtr result = eval_result;
   if (last_stack_frame->func_graph()->stub()) {

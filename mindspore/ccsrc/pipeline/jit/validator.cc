@@ -48,6 +48,7 @@ void ValidateOperation(const AnfNodePtr &node) {
 
   // Primitive must in whitelist
   auto prim = GetValueNode<PrimitivePtr>(node);
+  MS_EXCEPTION_IF_NULL(prim);
   if (abstract::IsInWhiteList(prim)) {
     return;
   }
@@ -70,6 +71,7 @@ void ValidateOperation(const AnfNodePtr &node) {
 }
 
 bool CheckAbstractScalar(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   AbstractBasePtr ptrBase = node->abstract();
   if (ptrBase->isa<AbstractScalar>()) {
     TypePtr ptrType = ptrBase->GetTypeTrack();

@@ -54,6 +54,7 @@ void PrimBpropOptGraphLevel2Info::TryFreeOneValue(const ValuePtrList &op_args,
 }
 
 void PrimBpropOptGraphLevel2Info::AnalysisArgUsingInfo(const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(manager);
   if (analysis_finish_flg_) {
     return;
   }
@@ -106,7 +107,9 @@ void PrimBpropOptGraphLevel2Info::AalysisForTupleGetItem(const NodeUsersMap &nod
                                                          const std::shared_ptr<AnfNode> &param,
                                                          ParamUsingInfo *arg_info, const AnfNodePtr &user_node) const {
   MS_EXCEPTION_IF_NULL(arg_info);
+  MS_EXCEPTION_IF_NULL(user_node);
   auto cnode = user_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   const size_t tuple_get_item_size = 3;
   const size_t index = 2;
   if (cnode->size() != tuple_get_item_size) {
@@ -140,6 +143,7 @@ void PrimBpropOptGraphLevel2Info::AalysisForTupleGetItem(const NodeUsersMap &nod
 void PrimBpropOptGraphLevel2Info::ArgInfoRefresh(const std::shared_ptr<AnfNode> &param,
                                                  ParamUsingInfo *arg_info) const {
   MS_EXCEPTION_IF_NULL(arg_info);
+  MS_EXCEPTION_IF_NULL(param);
   auto abs = param->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractTensor>()) {
@@ -201,6 +205,7 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
 
 FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args,
                                                       const ValuePtr &out, const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(bprop_fg);
   abstract::AbstractBasePtrList abs_list;
   ArgsToAbs(prim, op_args, &abs_list);
 
@@ -233,6 +238,7 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
 
 FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args,
                                                  const ValuePtr &out, const PrimitivePtr &prim, bool hook_flg) {
+  MS_EXCEPTION_IF_NULL(bprop_fg);
   abstract::AbstractBasePtrList abs_list;
   ArgsToAbs(prim, op_args, &abs_list);
   if (!hook_flg) {
@@ -272,6 +278,7 @@ PrimBpropOptGraphInfoPtr PrimBpropOptimizer::PrimBpropOptStep1(const FuncGraphPt
 
 void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
                                              const abstract::AbstractBasePtrList &abs_list_input) {
+  MS_EXCEPTION_IF_NULL(bprop_fg);
   auto &params = bprop_fg->parameters();
   if (abs_list_input.size() != params.size()) {
     MS_LOG(EXCEPTION) << "Param num:" << params.size() << " not match inputs num " << abs_list_input.size();
@@ -306,6 +313,9 @@ ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
                                                      const abstract::AbstractBasePtrList &abs_list,
                                                      PrimBpropOptGraphLevel2InfoPtr *level_2_graph_info,
                                                      PrimBpropOptGraphInfoPtr *level_1_graph_info) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(level_1_graph_info);
+  MS_EXCEPTION_IF_NULL(level_2_graph_info);
   auto attrs_ = prim->attrs();
   for (auto &item : attrs_) {
     MS_LOG(DEBUG) << "prim:" << prim->ToString() << " attr: " << item.first << " value:" << item.second->ToString();
@@ -327,6 +337,8 @@ ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
 
 void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList &op_args,
                                    abstract::AbstractBasePtrList *abs_list) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(abs_list);
   auto const_input_index = prim->get_const_input_indexes();
   bool have_const_input = !const_input_index.empty();
   bool is_const_prim = prim->is_const_prim();
@@ -345,6 +357,7 @@ void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList 
 
 abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr &out,
                                                                   const abstract::AbstractBasePtrList &abs_list) {
+  MS_EXCEPTION_IF_NULL(out);
   if (!out->isa<tensor::Tensor>() && !out->isa<ValueTuple>()) {
     MS_LOG(EXCEPTION) << "Out value not Tensor or Tuple, please check the input arguments.";
   }

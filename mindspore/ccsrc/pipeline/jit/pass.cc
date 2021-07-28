@@ -63,6 +63,8 @@ using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
 namespace {
 void DoRenormalize(const bool &changed, const FuncGraphPtr &func_graph, const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(res);
   abstract::AbstractBasePtrList args_spec;
   auto parameters = func_graph->parameters();
   (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
@@ -76,15 +78,16 @@ void DoRenormalize(const bool &changed, const FuncGraphPtr &func_graph, const Re
 }  // namespace
 
 bool SimplifyDataStructuresPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res->func_graph());
-
+  MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   bool changed = opt::SimplifyDataStructures(func_graph, res->manager());
   DoRenormalize(changed, func_graph, res);
   return true;
 }
 
 bool TransformTopGraphPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "Transform top graph error.";
   }
@@ -103,15 +106,16 @@ bool TransformTopGraphPass(const ResourcePtr &res) {
 }
 
 bool CleanAfterOptAPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res->func_graph());
-
+  MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   bool changed = opt::CleanAfterOptA(func_graph, res->manager());
   DoRenormalize(changed, func_graph, res);
   return true;
 }
 
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   MS_EXCEPTION_IF_NULL(res->func_graph());
   opt::OptPassConfig pynative_eliminate = opt::OptPassConfig({
     irpass.pynative_eliminate_,
@@ -137,6 +141,7 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
 }
 
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   MS_EXCEPTION_IF_NULL(res->func_graph());
   opt::OptPassConfig special_op_simplify = opt::OptPassConfig({
     irpass.switch_simplify_,
@@ -513,6 +518,7 @@ void ReclaimOptimizer() {
 }
 
 bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->func_graph() == nullptr) {
     MS_LOG(ERROR) << "Opt passes int64_t error";
     return false;
@@ -551,6 +557,7 @@ bool AddRecomputationPass(const ResourcePtr &res) {
 }
 
 bool AddCacheEmbeddingPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
     return true;
@@ -571,6 +578,7 @@ bool AddCacheEmbeddingPass(const ResourcePtr &res) {
 }
 
 bool RemoveValueNodeDuplicationsPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "Remove value node duplications error.";
   }
@@ -588,6 +596,7 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &res) {
 }
 
 bool CconvPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   FuncGraphPtr new_fg = LiftingClone(func_graph);
@@ -602,6 +611,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> new_paras;
   for (const auto &param : func_graph->parameters()) {
     auto param_node = param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_node);
     if (param_node->has_default()) {
       new_paras.push_back(param_node);
       continue;
@@ -618,6 +628,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
 }
 
 bool ValidatePass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   Validate(func_graph);

@@ -228,7 +228,7 @@ class BaseFuncGraphEvaluator : public Evaluator {
                                    const AnalysisContextPtr &context);
   static void EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
                               const StackFramePtr &new_stack_frame);
-  static void LeaveStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame);
+  static void LeaveStackFrame(const AnalysisEnginePtr &, const StackFramePtr &current_stack_frame);
 };
 
 class FuncGraphEvaluator : public BaseFuncGraphEvaluator {

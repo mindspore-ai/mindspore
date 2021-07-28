@@ -503,7 +503,7 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   }
   ValuePtr converted = nullptr;
   bool matched = false;
-  auto &&converters = GetDataConverters();
+  auto converters = GetDataConverters();
   for (auto &converter : converters) {
     if (converter->Matched(obj)) {
       converted = converter->ConvertPyObject(obj, use_signature, dtype);

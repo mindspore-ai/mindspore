@@ -64,6 +64,7 @@ class RemoveMonad {
   }
 
   void RemoveMonadFromRandomNodes(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto &inputs = cnode->inputs();
@@ -79,6 +80,7 @@ class RemoveMonad {
   }
 
   void RemoveRandomNodesFromMonadChain(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     const size_t first_index = 1;

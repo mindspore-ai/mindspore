@@ -52,10 +52,17 @@ std::unordered_set<std::string> prims_to_skip_undetermined_infer{
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(engine);
+  MS_EXCEPTION_IF_NULL(out_conf);
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(ref);
+                         MS_EXCEPTION_IF_NULL(ref->ObtainEvalResult());
+                         return ref->ObtainEvalResult()->abstract();
+                       });
   auto do_signature = prim_->cast<prim::DoSignaturePrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(do_signature);
   auto &func = do_signature->function();
   if (func->isa<Primitive>()) {
     auto sig_prim = func->cast<PrimitivePtr>();
@@ -67,17 +74,16 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
       }
     }
   }
-  MS_EXCEPTION_IF_NULL(out_conf);
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
 
   auto out_node = dyn_cast<CNode>(out_conf->node());
+  MS_EXCEPTION_IF_NULL(out_node);
   const auto &out_node_inputs = out_node->inputs();
   if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
-    MS_LOG(EXCEPTION) << "Op: " << do_signature->function()->ToString()
-                      << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
-                      << ", inputs size " << out_node_inputs.size();
+    MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
+                      << args_conf_list.size() << ", inputs size " << out_node_inputs.size();
   }
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
 
@@ -90,11 +96,9 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   AnfNodePtr new_node = nullptr;
   if (bound_node() != nullptr) {
     TraceGuard trace_guard(std::make_shared<TraceDoSignature>(bound_node()->debug_info()));
-    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
-                                   args_inputs);
+    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), func, args_spec_list, args_inputs);
   } else {
-    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
-                                   args_inputs);
+    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), func, args_spec_list, args_inputs);
   }
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
 
@@ -137,12 +141,17 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_s
 
 EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(engine);
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
 
   auto unpack_graph = prim_->cast<prim::UnpackGraphPrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(unpack_graph);
   auto out_node = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_node);
   const auto &out_node_inputs = out_node->inputs();
   if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "UnpackGraphPrimitive"
@@ -152,8 +161,15 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(ref);
+                         MS_EXCEPTION_IF_NULL(ref->ObtainEvalResult());
+                         return ref->ObtainEvalResult()->abstract();
+                       });
   // get the forward graph
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << "args_spec_list can't be empty.";
+  }
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   auto fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
   if (fn == nullptr) {
@@ -165,7 +181,6 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(forward_graph);
   AbstractBasePtrList graph_specialize_args =
     GetUnpackGraphSpecArgsList(args_spec_list, unpack_graph->need_unpack_args());
-
   AbstractBasePtrList graph_specialize_args_without_sens;
   if (unpack_graph->with_sens_in_args() && graph_specialize_args.empty()) {
     MS_EXCEPTION(ValueError) << "Grad with sens, but the sens is not provided.";
@@ -188,6 +203,8 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
 
 AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const AbstractBasePtr &node_type,
                                     const AnfNodePtr &target_type, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(node_type);
+  MS_EXCEPTION_IF_NULL(func_graph);
   AnfNodePtr target_node = source_node;
   if (node_type->isa<AbstractTensor>()) {
     auto x = node_type->cast<AbstractTensorPtr>();
@@ -239,12 +256,14 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
 
 EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                                const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(engine);
   AbstractBasePtrList args_spec_list;
   MS_EXCEPTION_IF_NULL(out_conf);
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
   auto out_node = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_node);
   const auto &out_node_inputs = out_node->inputs();
   if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "MixedPrecisionCast"
@@ -258,8 +277,12 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   scope = out_conf->node()->scope();
   ScopeGuard scope_guard(scope);
 
-  FuncGraphPtr func_graph = out_conf->node()->func_graph();
+  FuncGraphPtr func_graph = out_node->func_graph();
   constexpr size_t source_node_index = 2;
+  if (out_node_inputs.size() <= source_node_index) {
+    MS_LOG(EXCEPTION) << "Input size:" << out_node_inputs.size() << " should bigger than 2.";
+  }
+
   AnfNodePtr new_node =
     MixedPrecisionCastHelper(out_node_inputs[source_node_index], args_spec_list[1], out_node_inputs[1], func_graph);
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
@@ -282,6 +305,7 @@ py::object BuildValue(const ValuePtr &value_ptr) {
 
 py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
   auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
+  MS_EXCEPTION_IF_NULL(arg_tuple);
   size_t len = arg_tuple->size();
   py::tuple shape_tuple(len);
   py::tuple dtype_tuple(len);
@@ -317,6 +341,7 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
   auto dic = py::dict();
   dic[ATTR_SHAPE] = shape_tuple;
   dic[ATTR_DTYPE] = dtype_tuple;
+  MS_EXCEPTION_IF_NULL(arg_tuple->BuildValue());
   if (arg_tuple->BuildValue()->isa<AnyValue>()) {
     dic[ATTR_VALUE] = py::none();
   } else {
@@ -337,6 +362,7 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
 
 py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
   auto arg_list = dyn_cast<AbstractList>(abs_base);
+  MS_EXCEPTION_IF_NULL(arg_list);
   size_t len = arg_list->size();
   py::list shape_list(len);
   py::list dtype_list(len);
@@ -361,6 +387,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
   auto dic = py::dict();
   dic[ATTR_SHAPE] = shape_list;
   dic[ATTR_DTYPE] = dtype_list;
+  MS_EXCEPTION_IF_NULL(arg_list->BuildValue());
   if (arg_list->BuildValue()->isa<AnyValue>()) {
     dic[ATTR_VALUE] = py::none();
   } else {
@@ -377,6 +404,9 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
 
 void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, py::dict *dic) {
   auto arg_tensor = dyn_cast<AbstractTensor>(abs_base);
+  MS_EXCEPTION_IF_NULL(dic);
+  MS_EXCEPTION_IF_NULL(arg_tensor);
+  MS_EXCEPTION_IF_NULL(arg_tensor->shape());
   (*dic)[ATTR_SHAPE] = arg_tensor->shape()->shape();
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     const auto &min_shape = arg_tensor->shape()->min_shape();
@@ -399,12 +429,15 @@ void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, py::dict *di
 }
 
 void ConvertAbstractFunctionToPython(const AbstractBasePtr &abs_base, py::dict *dic) {
+  MS_EXCEPTION_IF_NULL(dic);
+  MS_EXCEPTION_IF_NULL(abs_base);
   (*dic)[ATTR_SHAPE] = py::none();
   (*dic)[ATTR_DTYPE] = abs_base->BuildType();
   (*dic)[ATTR_VALUE] = py::none();
   if (abs_base->isa<PartialAbstractClosure>()) {
     AbstractBasePtrList args = abs_base->cast<PartialAbstractClosurePtr>()->args();
     if (!args.empty()) {
+      MS_EXCEPTION_IF_NULL(args[0]->BuildValue());
       auto value = args[0]->BuildValue()->cast<parse::ClassTypePtr>();
       if (value != nullptr) {
         (*dic)[ATTR_DTYPE] = std::make_shared<TypeType>();
@@ -466,6 +499,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic[ATTR_VALUE] = py::none();
   } else {
     auto value = abs_base->BuildValue();
+    MS_EXCEPTION_IF_NULL(value);
     if ((*value == *kAnyValue)) {
       auto value_desc = abs_base->value_desc();
       MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
@@ -490,6 +524,8 @@ py::tuple PreparePyInputs(const PrimitivePyPtr &prim_py, const AbstractBasePtrLi
 }
 
 void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBasePtr &res_spec) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(res_spec);
   const string kOutputNum = "output_num";
   if (prim->IsCustomPrim()) {
     // Raise error if output_num is not match the infer result.
@@ -609,8 +645,10 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   MS_EXCEPTION_IF_NULL(context);
   bool need_infer_value =
     (!(eval_impl_.in_white_list_) || (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode)) &&
-    std::all_of(args.begin(), args.end(),
-                [](const AbstractBasePtr &abs) -> bool { return (abs->BuildValue() != nullptr); });
+    std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
+      MS_EXCEPTION_IF_NULL(abs);
+      return (abs->BuildValue() != nullptr);
+    });
   AbstractBasePtr abs_base = nullptr;
   ValuePtr value = nullptr;
   prim_->BeginRecordAddAttr();
@@ -684,8 +722,16 @@ EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Ab
     TypePtrList selections;
     MS_EXCEPTION_IF_NULL(item.second);
     (void)std::transform(item.second->begin(), item.second->end(), std::back_inserter(selections),
-                         [&args](size_t arg_idx) -> TypePtr { return args[arg_idx]->GetTypeTrack(); });
+                         [&args](size_t arg_idx) -> TypePtr {
+                           if (arg_idx >= args.size()) {
+                             MS_LOG(EXCEPTION) << "Index:" << arg_idx << " out of range:" << args.size();
+                           }
+                           MS_EXCEPTION_IF_NULL(args[arg_idx]);
+                           return args[arg_idx]->GetTypeTrack();
+                         });
     TypePtr res = CheckTypeList(item.first, selections);
+    MS_EXCEPTION_IF_NULL(return_value_type_);
+    MS_EXCEPTION_IF_NULL(item.first);
     if (*return_value_type_ == *(item.first)) {
       ret_value_type = res;
     }
@@ -806,6 +852,7 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
   input.push_back(conf->node());
   MS_EXCEPTION_IF_NULL(old_conf);
   FuncGraphPtr func_graph = old_conf->node()->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr new_cnode = func_graph->NewCNode(input);
   if (require_type == REQUIRE_TYPE::ATTR) {
     new_cnode = func_graph->NewCNode({new_cnode});
@@ -829,11 +876,13 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engin
   MS_LOG(DEBUG) << "Args[0]: " << args_spec_list[0]->ToString();
   MS_LOG(DEBUG) << "Args[1]: " << args_spec_list[1]->ToString();
   auto data_v = args_spec_list[0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(data_v);
   if (!data_v->isa<parse::NameSpace>()) {
     MS_LOG(EXCEPTION) << "Data is not NameSpace : " << data_v->ToString();
   }
 
   auto item_v = args_spec_list[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(item_v);
   if (item_v->isa<StringImm>()) {
     item_v = std::make_shared<parse::Symbol>(item_v->cast<StringImmPtr>()->value());
   }
@@ -845,9 +894,10 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engin
   // item_name to func addr from obj_map
   parse::SymbolPtr symbol = item_v->cast<parse::SymbolPtr>();
   parse::NameSpacePtr name_space = data_v->cast<parse::NameSpacePtr>();
+  MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
   FuncGraphPtr func_graph = out_node->func_graph();
-
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto new_node = parse::ResolveSymbol(func_graph->manager(), name_space, symbol, out_node);
   if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
@@ -857,6 +907,7 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engin
   func_graph->ReplaceInOrder(out_node, new_node);
 
   AnalysisEnginePtr eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
   return eng->ForwardConfig(out_conf, fn_conf);
 }
@@ -877,7 +928,7 @@ EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &eng
   std::string item_name = item_v->cast<StringImmPtr>()->value();
   MS_LOG(DEBUG) << "Resolve name: " << cls->tag().name();
   MS_LOG(DEBUG) << "Resolve item: " << item_name;
-
+  MS_EXCEPTION_IF_NULL(cls);
   AbstractBasePtr attr = cls->GetAttribute(item_name);
   if (attr != nullptr) {
     return std::make_shared<EvalResult>(attr, nullptr);
@@ -885,6 +936,8 @@ EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &eng
 
   ValuePtr method = cls->GetMethod(item_name);
   if (method->isa<AnyValue>()) {
+    MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+    MS_EXCEPTION_IF_NULL(args_spec_list[0]->BuildType());
     MS_EXCEPTION(AttributeError) << "Unknown field, data type: " << args_spec_list[0]->BuildType()->ToString()
                                  << ", item value: " << item_v->ToString();
   }
@@ -920,6 +973,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (require.is<std::string>()) {
     // composite registered in standard_method_map go to this branch
     converted_v = prim::GetPythonOps(require.cast<std::string>());
+    MS_EXCEPTION_IF_NULL(converted_v);
     if (!converted_v->isa<Primitive>()) {
       AddToManager(engine, converted_v->cast<FuncGraphPtr>());
     }
@@ -945,6 +999,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     scope = out_conf->node()->scope();
   }
   ScopeGuard scope_guard(scope);
+  MS_EXCEPTION_IF_NULL(item_value);
   if (item_value->isa<AnyValue>()) {
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
@@ -973,7 +1028,7 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
     }
     AnfNodeConfigPtr node_conf = dyn_cast<AnfNodeConfig>(args_conf_list[0]);
     MS_EXCEPTION_IF_NULL(node_conf);
-
+    MS_EXCEPTION_IF_NULL(node_conf->ObtainEvalResult());
     AbstractBasePtr x = node_conf->ObtainEvalResult()->abstract();
     x = SensitivityTransform(x);
     SymbolicKeyInstancePtr key = std::make_shared<SymbolicKeyInstance>(node_conf->node(), x);
@@ -983,12 +1038,12 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
 };
 
 static AnfNodePtr FindParameterNodeByString(const FuncGraphManagerPtr &manager, const std::string &name) {
+  MS_EXCEPTION_IF_NULL(manager);
   auto root_g_set = manager->roots();
   if (root_g_set.size() != 1) {
     return nullptr;
   }
   const FuncGraphPtr &root_g = root_g_set.back();
-
   for (auto &param_node : root_g->parameters()) {
     auto param = param_node->cast<ParameterPtr>();
     if (param && name == param->name()) {
@@ -1014,8 +1069,9 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_LOG(ERROR) << "Conf should be AnfNodeConfig";
       return nullptr;
     }
+    MS_EXCEPTION_IF_NULL(node_conf->ObtainEvalResult());
     AbstractBasePtr abs = node_conf->ObtainEvalResult()->abstract();
-
+    MS_EXCEPTION_IF_NULL(abs);
     AbstractRefPtr ref_abs = abs->cast<AbstractRefPtr>();
     if (ref_abs == nullptr) {
       MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref, but " << abs->ToString();
@@ -1126,6 +1182,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     // Get the type parameter.
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     TypePtr type = args_spec_list[0]->GetTypeTrack();
+    MS_EXCEPTION_IF_NULL(type);
     if (type->type_id() != kMetaTypeTypeType) {
       MS_LOG(EXCEPTION) << "CreateInstanceEvaluator require first parameter should be an object of TypeType, but got "
                         << type->ToString();
@@ -1179,6 +1236,9 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     // Exclude class type by minus 1;
     std::size_t params_size = args_spec_list.size() - 1;
     auto params = py::tuple(params_size);
+    if (params_size > params.size()) {
+      MS_LOG(EXCEPTION) << "Unexpected params_size:" << params_size << ",params.size():" << params.size();
+    }
     if (params_size > 0) {
       for (size_t i = 0; i < params_size; i++) {
         // Only support the Scalar parameters type. Bypass class type by offset with 1.
@@ -1209,9 +1269,11 @@ class PartialEvaluator : public Evaluator {
     MS_EXCEPTION_IF_NULL(args_conf_list[0]);
     MS_EXCEPTION_IF_NULL(args_conf_list[0]->ObtainEvalResult());
     auto arg0_value = args_conf_list[0]->ObtainEvalResult()->abstract();
+    MS_EXCEPTION_IF_NULL(arg0_value);
     AbstractBasePtrList args_spec_list{arg0_value};
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
     if (arg0_value->isa<AbstractError>()) {
+      MS_EXCEPTION_IF_NULL(arg0_value->GetValueTrack());
       auto ret = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<StringImmPtr>(), out_conf->node());
       MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
                     << " as func is: " << arg0_value->ToString();
@@ -1259,7 +1321,8 @@ class PartialEvaluator : public Evaluator {
   }
 
   EvalResultPtr HandleDoSignature(const AnalysisEnginePtr &engine, const ValuePtr &signature_value,
-                                  const AnfNodeConfigPtr &out_conf = nullptr) const {
+                                  const AnfNodeConfigPtr &out_conf) const {
+    MS_EXCEPTION_IF_NULL(engine);
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
     auto cnode = out_conf->node()->cast<CNodePtr>();
@@ -1273,7 +1336,7 @@ class PartialEvaluator : public Evaluator {
 
     ScopePtr scope = out_conf->node()->scope();
     ScopeGuard scope_guard(scope);
-
+    MS_EXCEPTION_IF_NULL(func_graph);
     CNodePtr new_cnode = func_graph->NewCNode(new_nodes_inputs);
     AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
     return engine->ForwardConfig(out_conf, fn_conf);
@@ -1456,7 +1519,7 @@ bool IsSubtypeClass(const AbstractBasePtr x, const TypePtr model) {
   if (model->IsGeneric()) {
     return true;
   }
-
+  MS_EXCEPTION_IF_NULL(model_class);
   if (x_class->tag() == model_class->tag()) {
     auto m_attributes = model_class->GetAttributes();
     auto x_attributes = x_class->attributes();
