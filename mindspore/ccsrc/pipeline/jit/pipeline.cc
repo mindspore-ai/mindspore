@@ -855,7 +855,7 @@ void Pipeline::Run(const std::string &phase_s) {
             if (i == actions_.size()) {
               dump_params.dump_mode = static_cast<int>(kWholeStack);
             }
-            mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph_clone, dump_params, ".ir");
+            (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph_clone, dump_params, ".ir");
           } else {
             MS_LOG(WARNING) << "Clone FuncGraph failed in pipeline, no FuncGraph recording in RDR.";
           }
