@@ -89,22 +89,21 @@ class KernelPack {
   KernelJsonInfo kernel_json_info() const;
   bool LoadKernelMeta(const std::string &json_f, const std::string &processor);
   bool ReadFromJsonFile(const std::string &json_f, const std::string &processor);
-  const std::string Serialize() const;
   const FlexArray *GetJson() const { return json_; }
   const FlexArray *GetKernel() const { return kernel_; }
   ~KernelPack() {
-    if (json_) {
+    if (json_ != nullptr) {
       delete[] json_;
       json_ = nullptr;
     }
-    if (kernel_) {
+    if (kernel_ != nullptr) {
       delete[] kernel_;
       kernel_ = nullptr;
     }
   }
 
  private:
-  bool ReadFromJsonFileHelper(std::ifstream &kernelbin);
+  bool ReadFromJsonFileHelper(std::ifstream &kernel_bin);
   void ParseKernelJson(const nlohmann::json &js);
   KernelJsonInfo kernel_json_info_;
   FlexArray *json_;

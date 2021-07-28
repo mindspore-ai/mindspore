@@ -355,9 +355,8 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   }
   std::string target_processor = is_gpu ? kCUDA : kAiCore;
   for (auto [iter, end] = op_info_.equal_range(op_name); iter != end; ++iter) {
-    auto &op_info = iter->second;
+    auto &op_info = (*iter).second;
     MS_EXCEPTION_IF_NULL(op_info);
-
     if (op_info->imply_type() != imply_type) {
       continue;
     }
@@ -399,7 +398,7 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
 bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(op_info);
   for (auto [iter, end] = op_info_.equal_range(op_info->op_name()); iter != end; ++iter) {
-    auto &exist_op_info = iter->second;
+    auto &exist_op_info = (*iter).second;
     MS_EXCEPTION_IF_NULL(exist_op_info);
     if (exist_op_info->equals_to(op_info)) {
       return true;

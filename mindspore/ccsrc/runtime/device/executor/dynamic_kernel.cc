@@ -17,6 +17,7 @@
 #include "runtime/device/executor/dynamic_kernel.h"
 #include <vector>
 #include <algorithm>
+#include <stack>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 #include "common/trans.h"
@@ -57,13 +58,16 @@ void DynamicKernel::RebuildDependTensor() {
   depend_tensor_map_.clear();
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   for (auto depend : depend_list_) {
     auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, depend);
-    bool visit_nop_node = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) ? false : true;
+    bool visit_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
     auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, depend, visit_nop_node);
     std::vector<int64_t> shapes = trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
     auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
     auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
+    MS_EXCEPTION_IF_NULL(out_tensor);
     out_tensor->set_device_address(output_addr);
     auto ret = depend_tensor_map_.try_emplace(depend, out_tensor);
     if (!ret.second) {
@@ -124,6 +128,7 @@ void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
 
   while (!nop_road.empty()) {
     auto nop_node = nop_road.top();
+    MS_EXCEPTION_IF_NULL(nop_node);
     AnfAlgo::InferShape(nop_node->cast<CNodePtr>());
     nop_road.pop();
   }
