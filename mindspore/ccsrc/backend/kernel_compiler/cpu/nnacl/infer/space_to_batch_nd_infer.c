@@ -21,6 +21,9 @@
 int SpaceSetOutputShapeFromParam(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                  size_t outputs_size, OpParameter *parameter) {
   const TensorC *input = inputs[0];
+  if (input->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   if (input->shape_size_ != 4) {
     return NNACL_ERR;
   }

@@ -24,6 +24,7 @@ typedef enum ErrorCodeCommonEnum {
   NNACL_PARAM_INVALID,
   NNACL_INFER_INVALID,
   NNACL_INPUT_TENSOR_ERROR,
+  NNACL_FORMAT_ERROR,
   NNACL_COMMON_END = 9999
 } ErrorCodeCommonEnum;
 

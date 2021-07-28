@@ -26,6 +26,9 @@ int PoolingGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   }
 
   const TensorC *input = inputs[0];
+  if (input->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   int input_h = input->shape_[1];
   int input_w = input->shape_[2];
   if (input->shape_size_ != 4) {

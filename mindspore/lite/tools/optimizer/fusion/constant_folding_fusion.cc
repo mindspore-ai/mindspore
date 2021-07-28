@@ -193,7 +193,7 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   auto ret = KernelInferShape(inputs, *outputs, parameter);
   if (ret != lite::RET_OK) {
     free(parameter);
-    MS_LOG(ERROR) << "infershape failed.";
+    MS_LOG(ERROR) << "infershape failed!type: " << schema::EnumNamePrimitiveType(prim->value_type());
     return nullptr;
   }
   auto data_type = inputs.front()->data_type();

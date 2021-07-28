@@ -278,10 +278,6 @@ bool LiteModel::ModelVerify() const {
       MS_LOG(ERROR) << "Tensor in all tensors is nullptr.";
       return false;
     }
-    if (tensor->format() != schema::Format_NHWC) {
-      MS_LOG(ERROR) << "Graph input tensor should be NHWC";
-      return false;
-    }
   }
 
   if (std::any_of(this->output_indices_.begin(), this->output_indices_.end(),

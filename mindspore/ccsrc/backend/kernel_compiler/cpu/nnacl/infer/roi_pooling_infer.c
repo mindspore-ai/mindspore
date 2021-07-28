@@ -28,6 +28,9 @@ int ROIPoolingInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   }
 
   const TensorC *input = inputs[0];
+  if (input->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   const TensorC *roi = inputs[1];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);

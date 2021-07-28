@@ -362,6 +362,22 @@ int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   return NNACL_OK;
 }
 
+int CommonInferShapeWithNHWC(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                             OpParameter *parameter) {
+  if (parameter == NULL || inputs[0] == NULL || outputs[0] == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  if (inputs[0]->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
+  SetDataTypeFormat(outputs[0], inputs[0]);
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
+  SetShapeTensor(outputs[0], inputs[0]);
+  return NNACL_OK;
+}
+
 int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   const OpParameter *parameter) {
   int ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
@@ -527,7 +543,7 @@ REG_INFER(LeakyRelu, PrimType_LeakyRelu, CommonInferShape)
 REG_INFER(Log, PrimType_Log, CommonInferShape)
 REG_INFER(LogGrad, PrimType_LogGrad, CommonInferShape)
 REG_INFER(LogicalNot, PrimType_LogicalNot, CommonInferShape)
-REG_INFER(LRN, PrimType_LRN, CommonInferShape)
+REG_INFER(LRN, PrimType_LRN, CommonInferShapeWithNHWC)
 REG_INFER(L2Normalize, PrimType_L2NormalizeFusion, CommonInferShape)
 REG_INFER(Neg, PrimType_Neg, CommonInferShape)
 REG_INFER(NegGrad, PrimType_NegGrad, CommonInferShape)

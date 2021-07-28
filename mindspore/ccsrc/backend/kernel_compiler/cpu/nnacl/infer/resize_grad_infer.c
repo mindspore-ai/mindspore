@@ -25,6 +25,9 @@ int ResizeGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   }
 
   const TensorC *input = inputs[0];
+  if (input->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   if (input->shape_size_ != 4) {
     return NNACL_ERR;
   }
