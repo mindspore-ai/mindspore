@@ -73,17 +73,21 @@ std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &
 void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pad_list, const int64_t x_h,
                        const int64_t x_w, const std::vector<int64_t> &kernel, const std::vector<int64_t> &stride,
                        const std::vector<int64_t> &dilation, const int64_t &pad_mode,
-                       const std::vector<int64_t> &padding) {
+                       const std::vector<int64_t> &padding, const bool is_min_shape = false) {
   if (pad_mode == PadMode::VALID) {
     int64_t out_h = -1;
     int64_t out_w = -1;
     if (x_h != Shape::SHP_ANY) {
-      auto h_shape = static_cast<int64_t>(std::ceil(((x_h * 1.0) - dilation[0] * (kernel[0] - 1)) / stride[0]));
-      out_h = h_shape >= 1 ? h_shape : 1L;
+      out_h = static_cast<int64_t>(std::ceil(((x_h * 1.0) - dilation[0] * (kernel[0] - 1)) / stride[0]));
+      if (is_min_shape && out_h < 1) {
+        out_h = 1L;
+      }
     }
     if (x_w != Shape::SHP_ANY) {
-      auto w_shape = static_cast<int64_t>(std::ceil(((x_w * 1.0) - dilation[1] * (kernel[1] - 1)) / stride[1]));
-      out_w = w_shape >= 1 ? w_shape : 1L;
+      out_w = static_cast<int64_t>(std::ceil(((x_w * 1.0) - dilation[1] * (kernel[1] - 1)) / stride[1]));
+      if (is_min_shape && out_w < 1) {
+        out_w = 1L;
+      }
     }
     output_hw->push_back(out_h);
     output_hw->push_back(out_w);
@@ -117,16 +121,20 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     int64_t out_h = -1;
     int64_t out_w = -1;
     if (x_h != Shape::SHP_ANY) {
-      auto h_shape = static_cast<int64_t>(std::floor(
+      out_h = static_cast<int64_t>(std::floor(
         1 + ((x_h * 1.0) + pad_list->at(0) + pad_list->at(1) - kernel[0] - (kernel[0] - 1) * (dilation[0] - 1)) /
               stride[0]));
-      out_h = h_shape >= 1 ? h_shape : 1L;
+      if (is_min_shape && out_h < 1) {
+        out_h = 1L;
+      }
     }
     if (x_w != Shape::SHP_ANY) {
-      auto w_shape = static_cast<int64_t>(std::floor(
+      out_w = static_cast<int64_t>(std::floor(
         1 + ((x_w * 1.0) + pad_list->at(2) + pad_list->at(3) - kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) /
               stride[1]));
-      out_w = w_shape >= 1 ? w_shape : 1L;
+      if (is_min_shape && out_w < 1) {
+        out_w = 1L;
+      }
     }
     output_hw->push_back(out_h);
     output_hw->push_back(out_w);
@@ -195,7 +203,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   Conv2DPadFunction(&output_hw, &pad_list, x_shape[h_axis], x_shape[w_axis], kernel_size, stride, dilation, pad_mode,
                     padding);
   Conv2DPadFunction(&output_hw_min, &pad_list_min, x_min_shape[h_axis], x_min_shape[w_axis], kernel_size, stride,
-                    dilation, pad_mode, padding);
+                    dilation, pad_mode, padding, true);
   Conv2DPadFunction(&output_hw_max, &pad_list_max, x_max_shape[h_axis], x_max_shape[w_axis], kernel_size, stride,
                     dilation, pad_mode, padding);
   std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[0]), MakeValue(pad_list[1]), MakeValue(pad_list[2]),

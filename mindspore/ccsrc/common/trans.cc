@@ -596,7 +596,7 @@ std::vector<int64_t> FracZDeviceShapeWithGroups(const std::vector<int64_t> &shap
   int64_t c1_dim = Shape::SHP_ANY;
   int64_t g_dim = Shape::SHP_ANY;
   int64_t n1 = Shape::SHP_ANY;
-  if (HasShapeDynamic({shape[kC], shape[kN]})) {
+  if (!HasShapeDynamic({shape[kC], shape[kN]})) {
     size_t group_size = LongToSize(groups);
     size_t cin_ori_tmp = LongToSize(shape[kC]);
     size_t cout_ori_tmp = LongToSize(shape[kN]) / group_size;
@@ -609,7 +609,7 @@ std::vector<int64_t> FracZDeviceShapeWithGroups(const std::vector<int64_t> &shap
   }
 
   std::vector<int64_t> device_shape;
-  if (HasShapeDynamic({shape[kC], shape[kN], shape[kH], shape[kW]})) {
+  if (!HasShapeDynamic({shape[kC], shape[kN], shape[kH], shape[kW]})) {
     device_shape.push_back(g_dim * c1_dim * shape[kH] * shape[kW]);
   } else {
     device_shape.push_back(Shape::SHP_ANY);
