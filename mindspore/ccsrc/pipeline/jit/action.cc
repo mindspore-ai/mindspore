@@ -33,7 +33,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "pipeline/jit/static_analysis/order_enforce.h"
-#include "pipeline/jit/static_analysis/remove_random_op_monad.h"
+#include "pipeline/jit/static_analysis/remove_monad.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/program_specialize.h"

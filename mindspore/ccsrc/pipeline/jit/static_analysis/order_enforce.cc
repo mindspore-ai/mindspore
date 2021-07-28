@@ -189,7 +189,7 @@ class OrderEnforcer {
     return real_users;
   }
 
-  bool IsOneOfPrimitive(const AnfNodePtr &node, const std::set<PrimitivePtr> &special_node_types) {
+  bool IsOneOfPrimitive(const AnfNodePtr &node, const std::set<PrimitivePtr> &special_node_types) const {
     for (const auto &type : special_node_types) {
       if (IsPrimitiveCNode(node, type)) {
         return true;
