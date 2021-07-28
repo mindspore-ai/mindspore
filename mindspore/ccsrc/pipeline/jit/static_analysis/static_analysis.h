@@ -282,7 +282,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
-  void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
   bool enable_recursive_eval() const { return enable_recursive_eval_; }
   static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 

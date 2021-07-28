@@ -72,8 +72,10 @@ void AnalysisSchedule::SetNextRunnableImpl() {
     return;
   }
   // Check if enter endless loop
-  auto it = std::find_if(asyncAbstractList_.begin(), asyncAbstractList_.end(),
-                         [](const auto &item) { return item->HasResult(); });
+  auto it = std::find_if(asyncAbstractList_.begin(), asyncAbstractList_.end(), [](const auto &item) {
+    MS_EXCEPTION_IF_NULL(item);
+    return item->HasResult();
+  });
   if (it == asyncAbstractList_.end()) {
     // Enter endless loop if there is not ready result.
     MS_LOG(EXCEPTION) << "Enter endless loop. There isn't any branch that can been evaluated. Please check the code.";
@@ -184,6 +186,7 @@ void AnalysisResultCacheMgr::Todo() {
   std::lock_guard<std::mutex> lock(todo_lock_);
   while (!todo_.empty()) {
     AnfNodeConfigPtr conf = todo_.front();
+    MS_EXCEPTION_IF_NULL(conf);
     todo_.pop_front();
     if (GetValue(conf) == nullptr) {
       MS_LOG(INFO) << conf->node()->ToString() << " not in globle cache.";
@@ -193,11 +196,14 @@ void AnalysisResultCacheMgr::Todo() {
       MS_LOG(INFO) << conf->node()->ToString() << " not in switch cache";
       continue;
     }
-    if (!(*GetValue(conf)->abstract() == *TryGetSwitchValue(conf))) {
+    auto switch_value = TryGetSwitchValue(conf);
+    auto abstract = GetValue(conf)->abstract();
+    MS_EXCEPTION_IF_NULL(switch_value);
+    MS_EXCEPTION_IF_NULL(abstract);
+    if (!(*abstract == *switch_value)) {
       MS_LOG(WARNING) << " Switch Value is not eq. "
-                      << " switch cache: " << TryGetSwitchValue(conf)->ToString()
-                      << " globle cache: " << GetValue(conf)->abstract()->ToString()
-                      << "\tconf: " << conf->node()->ToString();
+                      << " switchCache: " << switch_value->ToString() << " globleCache: " << abstract->ToString()
+                      << "\t\tConf: " << conf->ToString();
     }
   }
 }

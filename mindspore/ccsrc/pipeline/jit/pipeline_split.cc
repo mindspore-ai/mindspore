@@ -69,6 +69,7 @@ static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num
 
 // Only auto_parallel and semi_auto_parallel support PipelineSplit
 bool PipelineSplit(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   if (parallel_mode != parallel::SEMI_AUTO_PARALLEL && parallel_mode != parallel::AUTO_PARALLEL) {
     MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support pipeline split.";
