@@ -218,7 +218,7 @@ class GraphScheduler {
   // 2. The processing of linking control arrows.
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
                                          const ControlNodeParserPtr &parser);
-  void LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node);
+  void LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node, const KernelGraphPtr &graph);
   // The skipped node doesn't run, so need link the control arrow between the inputs and user of skipped node.
   void LinkControlArrowBySkippedNode(KernelActor *to_actor, const AnfNodePtr &skipped_node);
   // Link the control arrows for allreduce kernel by the send/recv nodes in the kernel graph.
