@@ -25,6 +25,7 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t dim = x_shape.size();
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));

@@ -33,7 +33,7 @@ class BatchToSpaceND : public PrimitiveC {
   BatchToSpaceND() : PrimitiveC(kNameBatchToSpaceND) {}
   ~BatchToSpaceND() = default;
   MS_DECLARE_PARENT(BatchToSpaceND, PrimitiveC);
-  void Init(std::vector<int64_t> block_shape, std::vector<std::vector<int64_t>> crops);
+  void Init(const std::vector<int64_t> block_shape, const std::vector<std::vector<int64_t>> crops);
   void set_crops(std::vector<std::vector<int64_t>> crops);
   void set_block_shape(std::vector<int64_t> block_shape);
   std::vector<int64_t> get_block_shape() const;
