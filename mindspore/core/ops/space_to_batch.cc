@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
   for (size_t i = 0; i < 2; i++) {
     auto padded = output_shape[i + 2] + paddings[i][0] + paddings[i][1];
-    (void)CheckAndConvertUtils::CheckInteger("padded shape", padded % block_shape_vector.size(), kEqual, 0, prim_name);
-    output_shape[i + 2] = padded / block_shape_vector.size();
+    (void)CheckAndConvertUtils::CheckInteger("padded shape", SizeToLong(padded % block_shape_vector.size()), kEqual, 0,
+                                             prim_name);
+    output_shape[i + 2] = SizeToLong(padded / block_shape_vector.size());
   }
   output_shape[0] *= SizeToLong(block_shape_vector.size() * block_shape_vector.size());
   return std::make_shared<abstract::Shape>(output_shape);

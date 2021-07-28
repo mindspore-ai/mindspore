@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  int64_t dim = x_shape.size();
+  int64_t dim = SizeToLong(x_shape.size());
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   if (axis < 0) {
     axis = axis + dim;

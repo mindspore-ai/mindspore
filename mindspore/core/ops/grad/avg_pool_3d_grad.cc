@@ -30,12 +30,12 @@ constexpr size_t k5DInputDims = 5;
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kEqual, 2, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, 2, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("grad_rank", grad_shape.size(), kEqual, k5DInputDims, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("grad_rank", SizeToLong(grad_shape.size()), kEqual, k5DInputDims, op_name);
   std::vector<int64_t> origin_input_size;
   if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
     origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
@@ -48,7 +48,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kEqual, 2, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, 2, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

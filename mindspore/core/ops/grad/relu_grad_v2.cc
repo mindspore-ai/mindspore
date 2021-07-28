@@ -30,7 +30,7 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -43,7 +43,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("ReLUGradV2 infer", input_args.size(), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("ReLUGradV2 infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type_map = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type_map);
