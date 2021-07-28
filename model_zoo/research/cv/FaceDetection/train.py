@@ -21,7 +21,7 @@ import numpy as np
 from mindspore import context
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore import Tensor
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import CheckpointConfig
@@ -122,6 +122,8 @@ def run_train():
     # init distributed
     if config.world_size != 1:
         init()
+        config.local_rank = get_rank()
+        config.world_size = get_group_size()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, device_num=config.world_size,
                                           gradients_mean=True)
     config.logger = get_logger(config.outputs_dir, config.local_rank)
