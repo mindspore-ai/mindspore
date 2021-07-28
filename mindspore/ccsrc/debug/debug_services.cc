@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <utility>
 #include "pybind11/embed.h"
+#include "pybind11/stl.h"
 #ifdef ONLINE_DBG_MODE
 #include "debug/common.h"
 #include "debug/debugger/debugger.h"
@@ -549,6 +550,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
   std::string file_format = "npy";
   for (auto const &d : dir_to_files_map) {
     std::vector<std::string> files_to_convert_in_dir;
+    std::vector<std::string> files_after_convert_in_dir;
     std::string dump_key = d.first;
     for (auto const &file_name : d.second) {
       bool already_converted = false;
@@ -567,26 +569,19 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
       }
       if (!already_converted) {
         files_to_convert_in_dir.push_back(dump_key + "/" + file_name);
+        files_after_convert_in_dir.push_back(dump_key + "/" + file_name_without_scope);
       }
     }
-    std::ostringstream input_file_o;
-    const char *const delim = " ";
-    std::copy(files_to_convert_in_dir.begin(), files_to_convert_in_dir.end(),
-              std::ostream_iterator<std::string>(input_file_o, delim));
-    std::string input_files = input_file_o.str();
-    MS_LOG(INFO) << "Ops to convert: " << input_files;
-    if (input_files != "") {
+    MS_LOG(INFO) << "Number of files to convert: " << files_to_convert_in_dir.size();
+    if (!files_to_convert_in_dir.empty()) {
       // Look for the installation path to the conver_async package. If not found, throw exception and terminate the
       // later task.
       try {
         auto pkg = pybind11::module::import("mindspore.offline_debug.convert_async");
-        std::string convert_pkg_path = pkg.attr("__file__").cast<std::string>();
-        MS_LOG(INFO) << "The file for converting async dump data is in " << convert_pkg_path;
-        std::string convert_command = "python " + convert_pkg_path + " -out " + dump_key + " -t " + file_format +
-                                      " -d " + dump_key + " -f NCHW -l " + input_files;
-        (void)(system(convert_command.c_str()) + 1);
+        auto convert_obj = pkg.attr("AsyncDumpConverter")(pybind11::cast(files_to_convert_in_dir), dump_key);
+        (void)convert_obj.attr("convert_files")();
       } catch (pybind11::error_already_set &e) {
-        MS_LOG(EXCEPTION) << "Can't find package mindspore.offline_debug.convert_async";
+        MS_LOG(EXCEPTION) << "Failed to convert async dump data: " << e.what();
       }
 
       std::string abspath = RealPath(dump_key);
@@ -599,7 +594,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
       while ((dir = readdir(d_handle)) != nullptr) {
         if (dir->d_type == DT_REG) {
           std::string candidate = dir->d_name;
-          for (const std::string &file_to_find : files_to_convert_in_dir) {
+          for (const std::string &file_to_find : files_after_convert_in_dir) {
             std::string file_n = file_to_find.substr(file_to_find.find_last_of("\\/") + 1);
             if (candidate.find(file_n) != std::string::npos && candidate.rfind(file_format) != std::string::npos) {
               // we found a converted file for this op
