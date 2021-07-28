@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_API_FUNC_GRAPH_H_
-#define MINDSPORE_API_FUNC_GRAPH_H_
+#ifndef MINDSPORE_CORE_API_IR_FUNC_GRAPH_H_
+#define MINDSPORE_CORE_API_IR_FUNC_GRAPH_H_
 
 #include <vector>
 #include <memory>
@@ -47,4 +47,4 @@ class FuncGraph {
   virtual FuncGraphManagerPtr get_manager() const = 0;
 };
 }  // namespace mindspore::api
-#endif  // MINDSPORE_API_FUNC_GRAPH_H_
+#endif  // MINDSPORE_CORE_API_IR_FUNC_GRAPH_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_API_FUNC_GRAPH_MANAGER_H_
-#define MINDSPORE_API_FUNC_GRAPH_MANAGER_H_
+#ifndef MINDSPORE_CORE_API_IR_FUNC_GRAPH_MANAGER_H_
+#define MINDSPORE_CORE_API_IR_FUNC_GRAPH_MANAGER_H_
 
 #include <memory>
 #include <utility>
@@ -62,4 +62,4 @@ class FuncGraphManager {
 
 }  // namespace mindspore::api
 
-#endif  // MINDSPORE_API_FUNC_GRAPH_MANAGER_H_
+#endif  // MINDSPORE_CORE_API_IR_FUNC_GRAPH_MANAGER_H_
