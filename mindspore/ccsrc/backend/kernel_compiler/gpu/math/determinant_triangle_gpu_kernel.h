@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DETRMINANT_TRIANGLE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DETRMINANT_TRIANGLE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_DETRMINANT_TRIANGLE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_DETRMINANT_TRIANGLE_GPU_KERNEL_H_
 
 #include <cuda_runtime_api.h>
 #include <vector>
@@ -44,13 +44,7 @@ class DetTriangleGpuKernel : public GpuKernel {
 
     if (!CheckTriangle(input_addr, fill_mode_, matrix_n_, outputs[0]->size / sizeof(T),
                        reinterpret_cast<cudaStream_t>(stream_ptr))) {
-      if (fill_mode_ == 0) {
-        MS_LOG(ERROR) << "The elements in the upper half of the maxtices should be all 0.";
-      } else if (fill_mode_ == 1) {
-        MS_LOG(ERROR) << "The elements in the lower half of the maxtices should be all 0.";
-      } else {
-        MS_LOG(ERROR) << "The input matrix should be either upper filled or lower filled.";
-      }
+      MS_LOG(ERROR) << "The elements in the upper half of the matrix should be all 0, fill mode is: " << fill_mode_;
       return false;
     }
     DetTriangle(input_addr, output_addr, matrix_n_, outputs[0]->size / sizeof(T),
@@ -84,14 +78,15 @@ class DetTriangleGpuKernel : public GpuKernel {
     for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= output_shape[i];
     }
-    if (output_size_ != input_size_ / matrix_n_ / matrix_n_) {
+    if (matrix_n_ == 0 || output_size_ != input_size_ / matrix_n_ / matrix_n_) {
       MS_LOG(ERROR) << "The output shape is wrong.";
       return false;
     }
     if (input_shape[input_shape.size() - 2] != input_shape[input_shape.size() - 1]) {
-      MS_LOG(ERROR) << "The maxtices should be in shape of square.";
+      MS_LOG(ERROR) << "The matrix should be in shape of square.";
       return false;
     }
+    MS_EXCEPTION_IF_NULL(AnfAlgo::GetCNodePrimitive(kernel_node));
     fill_mode_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("fill_mode")));
     InitSizeLists();
     return true;
@@ -106,8 +101,8 @@ class DetTriangleGpuKernel : public GpuKernel {
  private:
   size_t input_size_;
   size_t output_size_;
-  size_t matrix_n_;
-  int fill_mode_;
+  size_t matrix_n_ = 0;
+  int fill_mode_ = 0;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
@@ -115,4 +110,4 @@ class DetTriangleGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DETRMINANT_TRIANGLE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_DETRMINANT_TRIANGLE_GPU_KERNEL_H_
