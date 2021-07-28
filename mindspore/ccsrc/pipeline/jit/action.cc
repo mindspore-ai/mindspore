@@ -153,6 +153,7 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraph
 
 FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context) {
+  MS_EXCEPTION_IF_NULL(res);
   MS_LOG(DEBUG) << "ProgramSpecialize start";
   abstract::ProgramSpecializer spc(res->engine());
   FuncGraphPtr result = spc.Run(func_graph, context);
@@ -165,6 +166,7 @@ FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_
 
 FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                          const abstract::AbstractBasePtrList &args_spec) {
+  MS_EXCEPTION_IF_NULL(res);
   MS_LOG(DEBUG) << "Renormalize start";
 #ifdef ENABLE_PROFILE
   double t1 = GetTime();
@@ -250,6 +252,7 @@ void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &load
 }
 
 bool ParseAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (!res->input()) {
     MS_LOG(EXCEPTION) << "Parse error";
   }
@@ -293,8 +296,8 @@ bool ParseAction(const ResourcePtr &res) {
 // graph1(x){base_graph(x, fv1, fv2)}, graph1(x){base_graph(x, fv3, fv4)}, base_graph(x, fv...){xxx,xxx}
 // all obj_map's graph shared base_graph
 bool CombineLikeGraphs(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   auto &obj_map = parse::data_converter::GetObjGraphs();
-
   for (auto it : obj_map) {
     auto &graphs = it.second;
     MS_LOG(DEBUG) << "Start combine like graph:" << it.first << ", size:" << graphs.size();
@@ -313,6 +316,7 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     for (auto &fv : fg->paramter_obj_nodes()) {
       TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
+      MS_EXCEPTION_IF_NULL(res->manager());
       auto &node_users = res->manager()->node_users()[fv];
       for (auto &n : node_users) {
         // If the user is not in this graph, no need to change.
@@ -321,6 +325,7 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
           continue;
         }
         auto repl_n = cloned->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(repl_n);
         repl_n->set_input(IntToSize(n.second), param);
       }
     }
@@ -346,6 +351,7 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
 }
 
 bool SymbolResolveAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "SymbolResolve error, manager is null";
   }
@@ -367,6 +373,7 @@ bool SymbolResolveAction(const ResourcePtr &res) {
 }
 
 bool AutoMonadAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "Auto-Monad failed, manager is null";
   }
@@ -379,6 +386,7 @@ bool AutoMonadAction(const ResourcePtr &res) {
 }
 
 bool OrderEnforceAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "Order-Enforce error, manager is null";
   }
@@ -391,6 +399,7 @@ bool OrderEnforceAction(const ResourcePtr &res) {
 }
 
 bool RemoveRandomOpMonadAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "Remove-Random-Op-Monad error, manager is null";
   }
@@ -403,6 +412,7 @@ bool RemoveRandomOpMonadAction(const ResourcePtr &res) {
 }
 
 bool InferenceOptPrepareAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "InferenceOptPrepare error, manager is null.";
   }
@@ -413,6 +423,7 @@ bool InferenceOptPrepareAction(const ResourcePtr &res) {
 }
 
 bool AbstractSpecializeAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "AbstractSpecialize error";
   }
@@ -428,8 +439,10 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   // get the hyper parameter
   for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
+    MS_EXCEPTION_IF_NULL(param_node);
     if (param_node->has_default()) {
       auto value = param_node->default_param();
+      MS_EXCEPTION_IF_NULL(value);
       auto abs_value = value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
       auto ref_key = std::make_shared<RefKey>(param_node->name());
       auto abs_ref_key = ref_key->ToAbstract();
@@ -466,6 +479,7 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
 }
 
 bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes) {
+  MS_EXCEPTION_IF_NULL(res);
   size_t counter = 0;
   for (auto &pass : passes) {
     WITH(MsProfile::GetProfile()->Step(pass.first))[&pass, &res, &counter]() {
@@ -513,16 +527,8 @@ bool VmOptimizeAction(const ResourcePtr &res) {
   return OptimizeAction(res, kVmPasses);
 }
 
-bool PynativeOptimizeAction(const ResourcePtr &resource) {
-  WITH(MsProfile::GetProfile())[&resource]() { (void)OptimizeAction(resource, kPynativePasses); };
-#ifdef ENABLE_PROFILE
-  MsProfile::Print();
-  MsProfile::Reset();
-#endif
-  return true;
-}
-
 bool PynativeElimOpt(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (res->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
   }
@@ -564,6 +570,7 @@ bool CheckGraphOutputConstOrParameter(const FuncGraphPtr &func_graph) {
 }
 
 bool TaskEmitAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
       CheckGraphOutputConstOrParameter(res->func_graph())) {
     return true;
@@ -613,6 +620,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
 }
 
 bool ExecuteAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
       CheckGraphOutputConstOrParameter(res->func_graph())) {
     return true;
@@ -672,6 +680,7 @@ bool StartFLWorkerAction(const ResourcePtr &) {
 }
 
 bool StartPSServerAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
   auto &ps = ps::ParameterServer::GetInstance();
   ps.Run(func_graph);
@@ -679,6 +688,7 @@ bool StartPSServerAction(const ResourcePtr &res) {
 }
 
 bool StartServerAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
   const std::string &server_mode_ = ps::PSContext::instance()->server_mode();
   uint32_t worker_num = ps::PSContext::instance()->initial_worker_num();
@@ -734,6 +744,8 @@ bool StartPSSchedulerAction(const ResourcePtr &) {
 // Here we temporarily avoid the problem by skipping valuenode merging used by parallel related primitive,
 // the final solution will be proposed later as a parallel feature.
 bool KeepValueNodeDuplication(const AnfNodePtr &value_node, const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  MS_EXCEPTION_IF_NULL(res->manager());
   auto &node_users = res->manager()->node_users();
   auto &users = node_users[value_node];
   auto used_by_keep_value_prim =
@@ -746,6 +758,7 @@ bool KeepValueNodeDuplication(const AnfNodePtr &value_node, const ResourcePtr &r
       auto prim_node = cnode->input(0);
       if (IsValueNode<Primitive>(prim_node)) {
         auto prim = GetValue<PrimitivePtr>(prim_node->cast<ValueNodePtr>()->value());
+        MS_EXCEPTION_IF_NULL(prim);
         // value_node is referenced by some parallel primitive
         return prim->HasAttr("keep_value_node_input");
       }
@@ -755,10 +768,11 @@ bool KeepValueNodeDuplication(const AnfNodePtr &value_node, const ResourcePtr &r
 }
 
 bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
-  if (res->func_graph() == nullptr) {
+  MS_EXCEPTION_IF_NULL(res);
+  FuncGraphPtr func_graph = res->func_graph();
+  if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "Remove value node duplications error.";
   }
-  FuncGraphPtr func_graph = res->func_graph();
   auto manager = res->manager();
   // Remove duplicated value nodes, due to replace operation, can't use reference.
   auto value_nodes = func_graph->value_nodes();
@@ -795,8 +809,8 @@ bool OptActionVmPyStub(const ResourcePtr &res) {
   if (ActionPyStub(res, opt::python_pass::Phase::OPT)) {
     if (opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
       // Renomalize
-      MS_EXCEPTION_IF_NULL(res->func_graph());
       FuncGraphPtr func_graph = res->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
       abstract::AbstractBasePtrList args_spec;
       auto parameters = func_graph->parameters();
       (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
@@ -816,8 +830,8 @@ bool OptActionGePyStub(const ResourcePtr &res) {
   if (ActionPyStub(res, opt::python_pass::Phase::OPT)) {
     if (opt::python_pass::PyPassManager::GetInstance()->ShouldRenorm()) {
       // Renomalize
-      MS_EXCEPTION_IF_NULL(res->func_graph());
       FuncGraphPtr func_graph = res->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
       abstract::AbstractBasePtrList args_spec;
       auto parameters = func_graph->parameters();
       (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),

@@ -81,6 +81,7 @@ size_t StackFrameDepth() { return stack_frame_depth; }
 size_t StackFrameMaxDepth() { return stack_frame_max_depth; }
 
 bool IsIntermediateAbstract(const AbstractBasePtr &arg_spec) {
+  MS_EXCEPTION_IF_NULL(arg_spec);
   if (dyn_cast<AbstractScalar>(arg_spec)) {
     auto v = arg_spec->GetValueTrack();
     if (v->isa<SymbolicKeyInstance>()) {
@@ -92,6 +93,7 @@ bool IsIntermediateAbstract(const AbstractBasePtr &arg_spec) {
 
 AbstractBasePtr IntermediateJoin(const AbstractBasePtr &arg1, const AbstractBasePtr &arg2) {
   if (dyn_cast<AbstractScalar>(arg1) && dyn_cast<AbstractScalar>(arg2)) {
+    MS_EXCEPTION_IF_NULL(arg1);
     return arg1->Join(arg2);
   }
   return nullptr;
@@ -122,6 +124,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   HealthPointMgr::GetInstance().Clear();
   AnalysisResult result;
   try {
+    MS_EXCEPTION_IF_NULL(func_graph);
     ConfigPtrList args_conf_list;
     (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(args_conf_list),
                          [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
@@ -243,42 +246,6 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   return eval_result;
 }
 
-void AnalysisEngine::CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf) {
-  auto &list = trace::GetCNodeDebugStack();
-  if (list.empty()) {
-    return;
-  }
-  auto &previous_stack = list.back();
-  MS_EXCEPTION_IF_NULL(previous_stack->node());
-  MS_EXCEPTION_IF_NULL(conf->node());
-  auto previous_cnode_fg = previous_stack->node()->func_graph();
-  auto current_cnode_fg = conf->node()->func_graph();
-  if (previous_cnode_fg != current_cnode_fg) {  // Normal.
-    return;
-  }
-  if (forward_count_ != 0) {  // Ignore Forward Config.
-    return;
-  }
-  auto &graph_stack = trace::GetCurrenGraphEvalStack();
-  if (graph_stack.empty()) {
-    return;
-  }
-  auto top_context = graph_stack.top().first;
-  auto top_context_fg = top_context->func_graph();
-  if (current_cnode_fg != top_context_fg) {  // Ignore FV call.
-    return;
-  }
-  MS_LOG(ERROR) << "Should not use call stack in the same function: " << top_context_fg->ToString() << ", for "
-                << conf->node()->DebugString(2);
-  for (size_t i = 0; i < list.size(); ++i) {
-    auto old_conf = list[i];
-    MS_LOG(ERROR) << "  #" << i << ": " << old_conf->node()->DebugString(2) << ", in "
-                  << old_conf->context()->func_graph()->ToString();
-  }
-  DumpIR("use_stack_error.ir", conf->node()->func_graph());
-  MS_LOG(EXCEPTION) << "To check above CNode stack and dumped use_stack_error.ir";
-}
-
 AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(value_node);
@@ -346,6 +313,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 }
 
 EvalResultPtr AnalysisEngine::Execute(const AbstractFunctionPtr &func, const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(func);
   ConfigPtrList args_conf_list;
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(args_conf_list),
                        [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
@@ -585,6 +553,8 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
 }
 
 EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf) {
+  MS_EXCEPTION_IF_NULL(orig_conf);
+  MS_EXCEPTION_IF_NULL(new_conf);
   // Use anfnode_config_map_[orig_conf] = new_conf will require AnfNodeConfig provide copy constructor.
   (void)anfnode_config_map_.emplace(orig_conf, new_conf);
   MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->node()->DebugString()
@@ -595,6 +565,7 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
     if (new_conf->node()->isa<CNode>()) {
       auto new_cnode = new_conf->node()->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(new_cnode);
+      MS_EXCEPTION_IF_NULL(old_cnode->func_graph());
       if (old_cnode->func_graph() == new_cnode->func_graph()) {
         MS_LOG(DEBUG) << "Try to remove forward node from order list, forward node: " << new_cnode->ToString()
                       << ", as origin node should be in order list, origin_node: " << old_cnode->ToString();
@@ -627,6 +598,7 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
 }
 
 void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg) {
+  MS_EXCEPTION_IF_NULL(evaluator);
   static std::mutex fg_lock;
   std::lock_guard<std::mutex> infer_lock(fg_lock);
   auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
@@ -655,6 +627,8 @@ void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const Fu
 EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators,
                                                    const EvaluatorPtr &eval, const AbstractBasePtrList &args_spec_list,
                                                    const EvalTraceRevIter &it, bool *continue_flag) {
+  MS_EXCEPTION_IF_NULL(continue_flag);
+  MS_EXCEPTION_IF_NULL(eval);
   *continue_flag = false;
   // Find latest entry function to handle nested recursion.
   EvaluatorPtr latest_entry = eval;
@@ -774,6 +748,7 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
 }
 
 bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
+  MS_EXCEPTION_IF_NULL(abstract);
   if (abstract->isa<AbstractFunction>()) {
     return true;
   }
@@ -792,6 +767,11 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
                    AsyncAbstractPtr async_run_flag) {
   AnalysisResultCacheMgr::UpdateCaller(caller);
   try {
+    MS_EXCEPTION_IF_NULL(async_run_flag);
+    MS_EXCEPTION_IF_NULL(eval);
+    MS_EXCEPTION_IF_NULL(async_result_branch);
+    MS_EXCEPTION_IF_NULL(async_result_main);
+    MS_EXCEPTION_IF_NULL(out_conf);
     trace::ClearTraceStack();
 
     // Wait for Signal to run
@@ -853,6 +833,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   std::vector<AsyncAbstractPtr> branchAsyncResults;
 
   for (auto &evaluator : evaluators) {
+    MS_EXCEPTION_IF_NULL(evaluator);
     SetUndeterminedFlag(evaluator, possible_parent_fg);
     AsyncAbstractPtr branchAsyncResult = std::make_shared<AsyncAbstract>();
     // Control the order to run.
@@ -870,8 +851,10 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     branchAsyncResults.emplace_back(std::move(branchAsyncResult));
   }
 
-  MS_LOG(DEBUG) << GetInferThread() << "async : wait for one of async to finish.  " << evaluators[0]->ToString()
-                << " or  " << evaluators[1]->ToString() << "...";
+  MS_LOG(DEBUG) << GetInferThread()
+                << (evaluators.size() >= 2 ? "async : wait for one of async to finish.  " + evaluators[0]->ToString() +
+                                               " or  " + evaluators[1]->ToString() + "..."
+                                           : " ");
   HealthPointMgr::GetInstance().Add2Schedule(asyncResult_main);  // Third order
   auto firstResult = asyncResult_main->GetResult();
   MS_EXCEPTION_IF_NULL(firstResult);
@@ -926,14 +909,12 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   auto possible_parent_fg = out_conf->node()->func_graph();
   for (auto eval : evaluators) {
     (void)SetUndeterminedFlag(eval, possible_parent_fg);
-
     const auto current_inf = EvaluatorArgs(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.
     auto it = std::find(eval_trace_.rbegin(), eval_trace_.rend(), current_inf);
     if (it == eval_trace_.rend()) {
       eval_trace_.push_back(current_inf);
-      MS_EXCEPTION_IF_NULL(eval);
       auto eval_result = eval->Run(shared_from_this(), args_conf_list, out_conf);
       auto eval_abstract = eval_result->abstract();
       MS_EXCEPTION_IF_NULL(eval_abstract);
@@ -998,6 +979,7 @@ abstract::AbstractBasePtr MakeAbstractClosure(const PrimitivePtr &primitive, con
 }
 
 AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &context, const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(value);
   AnfNodePtr anf_node = nullptr;
   if (conf != nullptr) {
     anf_node = conf->node();

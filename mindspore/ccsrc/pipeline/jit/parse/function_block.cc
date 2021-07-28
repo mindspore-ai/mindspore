@@ -63,7 +63,9 @@ static bool CanBeIsolatedNode(const std::string &var_name, const AnfNodePtr &nod
 
 // Write variable records the variable name to corresponding node
 void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr &node) {
-  MS_LOG(DEBUG) << func_graph_->ToString() << " write var " << var_name << " with node " << node->DebugString();
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " write var " << var_name << " with node "
+                << node->DebugString();
   auto [iter, is_new_name] = vars_.emplace(var_name, std::make_pair(node, false));
   if (!is_new_name) {
     // If a cnode variable with same name already existed but not used,
@@ -76,9 +78,10 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
     auto hidden_node = iter->second.first;
     auto is_isolated = CanBeIsolatedNode(var_name, hidden_node);
     if (!is_used && is_isolated) {
+      MS_EXCEPTION_IF_NULL(hidden_node);
       MS_LOG(INFO) << "Isolated node found(Hidden), hidden_node: " << hidden_node->DebugString(2) << " is hidden by "
                    << node->DebugString(2) << " with the same name, var_name: " << var_name << ", block: " << this
-                   << "/" << (func_graph() ? func_graph()->ToString() : "FG(Null)")
+                   << "/" << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(hidden_node->debug_info(), "", kSourceLineTipDiscard);
       AddIsolatedNode(hidden_node);
     }
@@ -124,7 +127,8 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
   debug_info->set_name(var);
   TraceGuard guard(std::make_shared<TracePhi>(debug_info));
   ParameterPtr phi_param = std::make_shared<Parameter>(func_graph());
-  MS_LOG(DEBUG) << func_graph_->ToString() << " generate phi node " << phi_param->ToString() << " for " << var;
+  MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " generate phi node "
+                << phi_param->ToString() << " for " << var;
   func_graph()->add_parameter(phi_param);
   phi_nodes_[phi_param] = var;
   WriteVariable(var, phi_param);
@@ -150,8 +154,9 @@ AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
 
 // Resolve class member, two possible: method, member variable
 AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr) {
-  py::object namespace_var =
-    parser_.ast()->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, parser_.ast()->obj());
+  auto ast = parser_.ast();
+  MS_EXCEPTION_IF_NULL(ast);
+  py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
   SymbolPtr symbol = std::make_shared<Symbol>(attr);
   return MakeResolve(name_space, symbol);
@@ -168,8 +173,13 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
     auto bits_str = value.substr(start);
     return MakeResolveClassMember(bits_str);
   }
-  py::tuple namespace_info = parser_.ast()->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
+  auto ast = parser_.ast();
+  MS_EXCEPTION_IF_NULL(ast);
+  py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
   const size_t namespace_info_size = 2;
+  if (namespace_info.size() < namespace_info_size) {
+    MS_EXCEPTION(NameError) << "namespace_info is less than 2";
+  }
   // If namespace is None, the symbol is an undefined name or an unsupported builtin function.
   if (namespace_info[0].is_none()) {
     // If the size of namespace_var is greater than or equal to 3, the error information is stored in namespace_var[2].
@@ -179,17 +189,15 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
     // If the size of namespace_var is less than 3, the default error information is used.
     MS_EXCEPTION(NameError) << "The name \'" << value << "\' is not defined.";
   }
-  if (namespace_info.size() < namespace_info_size) {
-    MS_EXCEPTION(NameError) << "namespace_info is less than 2";
-  }
-
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, namespace_info[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[1].cast<std::string>());
   return MakeResolve(name_space, symbol);
 }
 
 AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
-  py::tuple namespace_var = parser_.ast()->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL, value);
+  auto ast = parser_.ast();
+  MS_EXCEPTION_IF_NULL(ast);
+  py::tuple namespace_var = ast->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL, value);
   const size_t namespace_var_size = 2;
   if (namespace_var.size() < namespace_var_size) {
     MS_EXCEPTION(NameError) << "namespace_var is less than 2";
@@ -200,28 +208,32 @@ AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
 }
 
 AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const SymbolPtr &resolve_symbol) {
-  MS_LOG(DEBUG) << "MakeResolve for " << ((std::string)py::str(name_space->obj())) << " , "
-                << ((std::string)resolve_symbol->symbol());
+  MS_LOG(DEBUG) << "MakeResolve for " << (name_space ? (std::string)py::str(name_space->obj()) : "null namespace")
+                << " , " << (resolve_symbol ? (std::string)resolve_symbol->symbol() : "null resoleve symbol.");
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(resolve_symbol);
-  auto node = func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
+  auto node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
   return node;
 }
 
 // Add input for the block's phi parameter
 void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
+  MS_EXCEPTION_IF_NULL(phi);
   TraceGuard trace_guard(std::make_shared<TraceResolve>(phi->debug_info()));
   std::string var = phi_nodes_[phi];
-  MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " set phi " << phi->ToString() << " for var " << var;
+  MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " set phi " << phi->ToString()
+                << " for var " << var;
   auto removable = CollectRemovablePhi(phi);
   // If the phi node is not necessary, not need to add to jumps_ of the prev blocks.
   if (removable) {
-    MS_LOG(DEBUG) << "remove the phi when call graph " << func_graph_->ToString() << " var " << var;
+    MS_LOG(DEBUG) << "remove the phi when call graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
+                  << " var " << var;
     return;
   }
   for (auto &pred : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(pred);
-    MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " pred_blocks_ " << pred->func_graph_->ToString();
+    MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " pred_blocks_ "
+                  << (pred->func_graph_ ? pred->func_graph_->ToString() : "FG(Null)");
     AnfNodePtr arg_node = pred->ReadVariable(var);
     CNodePtr jump = pred->jumps_[this];
     MS_EXCEPTION_IF_NULL(jump);
@@ -235,18 +247,18 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const Parame
     MS_EXCEPTION_IF_NULL(prev);
     AnfNodePtr temp_node = prev->ReadVariable(var);
     MS_EXCEPTION_IF_NULL(temp_node);
-    MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " phi " << phi->ToString() << " for var " << var
-                  << " is " << temp_node->DebugString();
+    MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " phi "
+                  << (phi ? phi->ToString() : "null") << " for var " << var << " is " << temp_node->DebugString();
     if (temp_node != phi) {
       if (arg_node == nullptr) {
         arg_node = temp_node;
-        MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " phi " << phi->ToString()
-                      << " may be replaced by node " << arg_node->DebugString();
+        MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " phi "
+                      << (phi ? phi->ToString() : "null") << " may be replaced by node " << arg_node->DebugString();
       } else if (temp_node == arg_node) {
-        MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " phi " << phi->ToString() << " is same as node "
-                      << arg_node->DebugString();
+        MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " phi "
+                      << (phi ? phi->ToString() : "null") << " is same as node " << arg_node->DebugString();
       } else {
-        MS_LOG(DEBUG) << "phi " << phi->ToString()
+        MS_LOG(DEBUG) << "phi " << (phi ? phi->ToString() : "null")
                       << " cannot be removed as it assigns to different node. node1: " << arg_node->DebugString()
                       << ", node2: " << temp_node->DebugString();
         return nullptr;
@@ -283,8 +295,8 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   AnfNodePtr arg_node = SearchReplaceNode(var, phi);
   if (arg_node != nullptr) {
     arg_node->set_debug_info(phi->debug_info());
-    MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " phi " << phi->ToString() << " can be replaced with "
-                  << arg_node->DebugString();
+    MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " phi " << phi->ToString()
+                  << " can be replaced with " << arg_node->DebugString();
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
     WriteVariable(var, arg_node);
     removable_phis_[phi] = arg_node;
@@ -301,9 +313,10 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
         if (phi_iter.second->isa<Parameter>()) {
           const auto &param = phi_iter.second->cast<ParameterPtr>();
           if (param == phi) {
-            MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " var " << phi_iter.first->DebugString()
-                          << " can be replaced from " << param->DebugString() << " with " << arg_node->DebugString()
-                          << " in graph " << arg_node->func_graph()->ToString();
+            MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " var "
+                          << phi_iter.first->DebugString() << " can be replaced from " << param->DebugString()
+                          << " with " << arg_node->DebugString() << " in graph "
+                          << (arg_node->func_graph() ? arg_node->func_graph()->ToString() : "FG(Null)");
             prev->removable_phis_[phi_iter.first] = arg_node;
           }
         }
@@ -329,22 +342,25 @@ void FunctionBlock::Mature() {
 
 // Force the condition node to bool using bool operation
 CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
+  MS_EXCEPTION_IF_NULL(cond);
   TraceGuard trace_guard(std::make_shared<TraceForceBool>(cond->debug_info()));
-  CNodePtr op_apply_node = func_graph()->NewCNodeInOrder({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
+  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
   return op_apply_node;
 }
 
 CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
+  MS_EXCEPTION_IF_NULL(cond);
   TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(cond->debug_info()));
-  CNodePtr op_apply_node = func_graph()->NewCNodeInOrder({MakeResolveOperation("while_cond"), cond});
+  CNodePtr op_apply_node = func_graph_->NewCNodeInOrder({MakeResolveOperation("while_cond"), cond});
   return op_apply_node;
 }
 
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const AnfNodePtr &node) {
-  if (func_graph()->get_return() != nullptr) {
+  MS_EXCEPTION_IF_NULL(target_block);
+  if (func_graph_->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
-                      << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
+                      << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
   }
   std::vector<AnfNodePtr> input_nodes;
   input_nodes.emplace_back(NewValueNode(target_block->func_graph()));
@@ -352,25 +368,27 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const AnfNodePtr 
     input_nodes.emplace_back(node);
   }
 
-  CNodePtr jump = func_graph()->NewCNodeInOrder(input_nodes);
+  CNodePtr jump = func_graph_->NewCNodeInOrder(input_nodes);
   jumps_[target_block.get()] = jump;
   target_block->AddPrevBlock(shared_from_this());
-  func_graph()->set_output(jump);
+  func_graph_->set_output(jump);
 }
 
 // Perform a conditional jump using switch operation.
 // The first CNode select graph with condition, and than execute this graph
 void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &true_block,
                                     const FunctionBlockPtr &false_block, bool unroll_loop) {
-  if (func_graph()->get_return() != nullptr) {
+  MS_EXCEPTION_IF_NULL(true_block);
+  MS_EXCEPTION_IF_NULL(false_block);
+  if (func_graph_->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
-                      << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
+                      << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
   }
   CNodePtr switch_app =
-    func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), condNode, NewValueNode(true_block->func_graph()),
-                                   NewValueNode(false_block->func_graph())});
-  CNodePtr switch_app_new = func_graph()->NewCNodeInOrder({switch_app});
-  func_graph()->set_output(switch_app_new);
+    func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), condNode, NewValueNode(true_block->func_graph()),
+                                  NewValueNode(false_block->func_graph())});
+  CNodePtr switch_app_new = func_graph_->NewCNodeInOrder({switch_app});
+  func_graph_->set_output(switch_app_new);
 }
 
 // Create cnode for the assign statement like 'self.target = source'.
@@ -381,7 +399,7 @@ void FunctionBlock::SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &s
   ValueNodePtr assign_op = NewValueNode(prim::GetPythonOps(primitive_name, module_name, true));
   auto assign_node = func_graph_->NewCNodeInOrder({assign_op, target, source});
   MS_LOG(DEBUG) << "Isolated node found(Assign), assign_node: " << assign_node->DebugString(2) << ", block: " << this
-                << "/" << (func_graph() ? func_graph()->ToString() : "FG(Null)")
+                << "/" << func_graph_->ToString()
                 << ", Line: " << trace::GetDebugInfo(assign_node->debug_info(), "", kSourceLineTipDiscard);
   AddIsolatedNode(assign_node);
 }
@@ -430,15 +448,15 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   if (isolated_nodes_.empty()) {
     return;
   }
-
   std::vector<AnfNodePtr> states;
   states.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (auto &node : isolated_nodes_) {
-    MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
-    if (node->func_graph() == func_graph()) {
+    MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(2) << " in " << func_graph_->ToString();
+    if (node->func_graph() == func_graph_) {
       states.emplace_back(node);
     } else {
-      MS_LOG(INFO) << "Ignored FV dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
+      MS_LOG(INFO) << "Ignored FV dependency, node: " << node->DebugString(2) << " in " << func_graph_->ToString();
     }
   }
   isolated_nodes_.clear();
@@ -452,11 +470,11 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
     // do not need to MakeTuple, just use the node.
     state = states[1];
   } else {
-    state = func_graph()->NewCNode(states);
+    state = func_graph_->NewCNode(states);
   }
 
   AnfNodePtr old_output = nullptr;
-  auto return_node = func_graph()->get_return();
+  auto return_node = func_graph_->get_return();
   if (return_node) {
     const size_t return_input_size = 2;
     if (return_node->inputs().size() < return_input_size) {
@@ -466,15 +484,15 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   } else {
     old_output = NewValueNode(kNone);
   }
-  AnfNodePtr stop_grad_node = func_graph()->NewCNode({NewValueNode(prim::kPrimStopGradient), state});
-  CNodePtr depend_node = func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), old_output, stop_grad_node});
+  AnfNodePtr stop_grad_node = func_graph_->NewCNode({NewValueNode(prim::kPrimStopGradient), state});
+  CNodePtr depend_node = func_graph_->NewCNode({NewValueNode(prim::kPrimDepend), old_output, stop_grad_node});
   // We add this attribute for @constexpr use scene, since we must infer them before other nodes.
   // That means isolated nodes will be evaluated first. It's not complete, but works in most scenes.
   depend_node->AddAttr(kAttrTopoSortRhsFirst, MakeValue(true));
   MS_EXCEPTION_IF_NULL(state);
   MS_LOG(INFO) << "Attached for side-effect nodes, depend_node: " << depend_node->DebugString()
                << ", state: " << state->DebugString(2);
-  func_graph()->set_output(depend_node, true);
+  func_graph_->set_output(depend_node, true);
 }
 }  // namespace parse
 }  // namespace mindspore

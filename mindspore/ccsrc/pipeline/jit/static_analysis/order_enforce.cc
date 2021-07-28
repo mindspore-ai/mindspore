@@ -199,6 +199,7 @@ class OrderEnforcer {
   }
 
   void EnforceOrderForOtherCNode(const CNodePtr &cnode) {
+    MS_EXCEPTION_IF_NULL(cnode);
     // Find refs from the cnode inputs.
     auto &inputs = cnode->inputs();
     const size_t last_index = inputs.size() - 1;
@@ -232,6 +233,7 @@ class OrderEnforcer {
   }
 
   bool IsInUpdateState(const AnfNodePtr &load_user, const CNodePtr &update_state) {
+    MS_EXCEPTION_IF_NULL(update_state);
     const size_t attach_index = 2;
     const size_t input_size = update_state->inputs().size();
     for (size_t index = attach_index; index < input_size; index++) {
@@ -368,6 +370,7 @@ class OrderEnforcer {
 
 // Enforce order of execution for Load users node.
 void OrderEnforce(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   OrderEnforcer enforcer(func_graph);
   enforcer.Run();
   auto fg_used_total = func_graph->func_graphs_used_total();

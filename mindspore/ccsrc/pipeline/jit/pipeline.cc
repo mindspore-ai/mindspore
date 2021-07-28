@@ -162,6 +162,7 @@ std::string GetCompileExceptionInfo() {
 }
 
 void SetGpuLoopSink(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
   if (func_graph != nullptr && func_graph->manager() != nullptr) {
     auto manager = func_graph->manager();
@@ -462,13 +463,17 @@ ExecutorPy::~ExecutorPy() {
 
 void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
                                std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) {
+  MS_EXCEPTION_IF_NULL(root_node);
+  MS_EXCEPTION_IF_NULL(fake_quant_table);
   std::string weight_name;
   auto x = root_node->input(1);
   MS_EXCEPTION_IF_NULL(x);
   if (IsPrimitiveCNode(weight_node, prim::kPrimLoad)) {
     weight_name = weight_node->cast<CNodePtr>()->input(1)->cast<ParameterPtr>()->name();
   } else {
-    weight_name = weight_node->cast<ParameterPtr>()->name();
+    auto para = weight_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(para);
+    weight_name = para->name();
   }
   // find the fakequant from input
   int64_t count = 0;
@@ -511,9 +516,12 @@ void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weig
   if (IsPrimitiveCNode(fakequant_min_node, prim::kPrimLoad)) {
     fakequant_min_node_name = fakequant_min_node->cast<CNodePtr>()->input(1)->cast<ParameterPtr>()->name();
   } else {
-    fakequant_min_node_name = fakequant_min_node->cast<ParameterPtr>()->name();
+    auto param = fakequant_min_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    fakequant_min_node_name = param->name();
   }
   auto quant_op_value = cnode->input(0)->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(quant_op_value);
   if (!quant_op_value->isa<PrimitivePy>()) {
     return;
   }
@@ -612,6 +620,7 @@ bool IsPhaseTrain(const std::string &phase_s) {
 }
 
 std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
+  MS_EXCEPTION_IF_NULL(resource);
   bool is_air = IsPhaseExportAir(phase_s);
 
   std::string backend = MsContext::GetInstance()->backend_policy();
