@@ -16,13 +16,14 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_distributed_train.sh DATA_DIR RANK_TABLE_FILE DEVICE_NUM TYPE MODE"
+echo "bash run_distributed_train.sh DATA_DIR RANK_TABLE_FILE DEVICE_NUM TYPE MODE STAGE_NUM MICRO_SIZE"
+echo "PER_BATCH RANK_START RANK_START LOCAL_DEVICE_NUM"
 echo "for example:"
 echo "#######no pipeline#######"
-echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 8 fp32 2.6B 1 1 16 0"
+echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 8 fp32 2.6B 1 1 16 0 8"
 echo "#######pipeline#######"
-echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 16 0"
-echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 16 8"
+echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 16 0 8"
+echo "bash run_distributed_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 16 8 8"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -36,8 +37,9 @@ STAGE_NUM=$6
 MICRO_SIZE=$7
 PER_BATCH=$8
 RANK_START=$9
+LOCAL_DEVICE_NUM=${10}
 
-for((i=0;i<${RANK_SIZE};i++));
+for((i=0;i<${LOCAL_DEVICE_NUM};i++));
 do
     rm ${ROOT_PATH}/device$i/ -rf
     mkdir ${ROOT_PATH}/device$i

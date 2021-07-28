@@ -151,22 +151,23 @@ The above command involves some `args` described below:
 - MICRO_SIZE: The number of micro batches in pipeline parallel mode. It should large than `stage_num`.
 - PER_BATCH: The batch size for each data parallel-way. default 8.
 - RANK_START: The start of rank_id in current machines, it helps to set the rank_id for each machine in multi-machine scenario.
+- LOCAL_DEVICE_NUM: The device number of the local machine.
 
 The following command will launch he program will train 2.6B model with the following command:
 
 ```bash
 # run distributed training example in one ascend machine
 
-bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 8 fp32 2.6B 1 1 8 0
+bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 8 fp32 2.6B 1 1 8 0 8
 ```
 
 ```bash
 # run distributed training example in two ascend machine
 
 # machine A
-bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 8 0
+bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 8 0 8
 # machine B
-bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 8 8
+bash scripts/run_distribute_train.sh /path/dataset /path/hccl.json 16 fp32 2.6B 2 4 8 8 8
 ```
 
 For distributed training, an hccl configuration file with JSON format needs to be created in advance.

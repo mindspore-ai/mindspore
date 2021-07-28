@@ -102,7 +102,7 @@ def run_train(args_opt):
     """
     # Set execution mode
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
-    context.set_context(variable_memory_max_size="30GB")
+    context.set_context(variable_memory_max_size="31GB")
     # Set parallel context
     if args_opt.distribute == "true":
         D.init()
