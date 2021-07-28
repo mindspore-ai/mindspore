@@ -57,7 +57,7 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_n
 
 void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *logits, const float *labels,
                                                                 float *output1, float *output2) const {
-  float epsilon = 1e-6;
+  float epsilon = std::numeric_limits<float>::min();
   for (size_t i = 0; i < batch_size_; ++i) {
     output1[i] = 0;
     float loss = 0.0;
