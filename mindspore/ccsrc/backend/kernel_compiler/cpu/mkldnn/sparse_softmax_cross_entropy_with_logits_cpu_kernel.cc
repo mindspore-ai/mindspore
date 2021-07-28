@@ -63,6 +63,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &ke
 void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
                                                                       float *output) const {
   float total_loss = 0;
+  float epsilon = std::numeric_limits<float>::min();
   for (size_t i = 0; i < batch_size_; ++i) {
     if (labels[i] < 0) {
       MS_LOG(EXCEPTION) << "Label value must >= 0!";
@@ -71,7 +72,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int 
     if (label > class_num_) {
       MS_LOG(EXCEPTION) << "Error label input!";
     }
-    total_loss -= logf(losses[i * class_num_ + label]);
+    total_loss -= logf(losses[i * class_num_ + label] <= 0.0 ? epsilon : losses[i * class_num_ + label]);
   }
   output[0] = total_loss / batch_size_;
 }
