@@ -17,6 +17,7 @@ Transformer Networks
 This is an experimental interface that is subject to change and/or deletion.
 """
 from .transformer import *
+from .layers import *
 
 __all__ = []
 __all__.extend(transformer.__all__)

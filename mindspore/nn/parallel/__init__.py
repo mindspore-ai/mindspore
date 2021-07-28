@@ -17,5 +17,10 @@ Parallel Networks.
 This is an experimental interface that is subject to change and/or deletion.
 """
 from .transformer import *
+from .loss import *
+from .config import *
+
 __all__ = []
 __all__.extend(transformer.__all__)
+__all__.extend(loss.__all__)
+__all__.extend(config.__all__)
