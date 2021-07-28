@@ -164,11 +164,7 @@ void ConvertOtherTensor(MetaGraphT *graph, uint32_t index, bool *convert_succ, s
     lite_tensors->emplace_back(lite_tensor.release());
     return;
   }
-  if (lite_tensor->root_tensor() != nullptr) {
-    lite_tensor->root_tensor()->set_data(tensorT->data.data());
-  } else {
-    lite_tensor->set_data(tensorT->data.data());
-  }
+  lite_tensor->set_data(tensorT->data.data());
   lite_tensors->emplace_back(lite_tensor.release());
 }
 

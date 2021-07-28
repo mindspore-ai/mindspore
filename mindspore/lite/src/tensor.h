@@ -119,12 +119,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void *data() override { return this->data_; }
 
-  virtual void *data_c() const {
-    if (this->root_tensor_ != nullptr) {
-      return this->root_tensor_->data_;
-    }
-    return data_;
-  }
+  virtual void *data_c() const { return data_; }
 
   void set_data(void *data) override {
     this->data_ = data;
@@ -188,10 +183,6 @@ class Tensor : public mindspore::tensor::MSTensor {
     }
   }
 
-  virtual void set_root_tensor(Tensor *tensor);
-
-  Tensor *root_tensor() const { return this->root_tensor_; }
-
   bool IsReady() const {
     return this->IsConst() || (this->IsGraphInput() && this->data_ != nullptr) || ref_count() >= 1;
   }
@@ -247,7 +238,6 @@ class Tensor : public mindspore::tensor::MSTensor {
   std::vector<LiteQuantParam> quant_params_;
   std::vector<float> quant_clusters_;
   AllocatorPtr allocator_ = nullptr;
-  Tensor *root_tensor_ = nullptr;
   bool own_data_{false};
   float scale_ = 1.0f;
 };

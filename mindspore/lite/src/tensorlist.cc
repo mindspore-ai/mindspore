@@ -209,31 +209,8 @@ int TensorList::CheckTensorListParam() {
   return RET_OK;
 }
 
-void TensorList::set_root_tensor(Tensor *tensor) {
-  Tensor::set_root_tensor(tensor);
-  if (this->data_type_ != kObjectTypeTensorType || tensor == nullptr) {
-    return;
-  }
-  auto root_tensorlist = reinterpret_cast<TensorList *>(this->root_tensor_);
-  this->element_shape_ = root_tensorlist->element_shape_;
-  this->max_elements_num_ = root_tensorlist->max_elements_num_;
-  this->tensors_data_type_ = root_tensorlist->tensors_data_type_;
-}
-
 Tensor *TensorList::GetTensor(int index) {
   // return tensor[index] ptr. With this function, you can modify tensors_[index] at will.
-  if (this->root_tensor_ != nullptr) {
-    if (this->data_type_ != kObjectTypeTensorType) {
-      MS_LOG(ERROR) << "root_tensor of tensorlist should be a tensorlist";
-      return nullptr;
-    }
-    auto root_tensorlist = reinterpret_cast<TensorList *>(this->root_tensor_);
-    if (index < 0 || index >= static_cast<int>(root_tensorlist->tensors_.size())) {
-      MS_LOG(ERROR) << "index:" << index << " must in [0, " << this->ElementsNum() - 1 << "]!";
-      return nullptr;
-    }
-    return root_tensorlist->tensors_[index];
-  }
   if (index < 0 || index >= static_cast<int>(this->tensors_.size())) {
     MS_LOG(ERROR) << "index:" << index << " must in [0, " << this->ElementsNum() - 1 << "]!";
     return nullptr;

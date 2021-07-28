@@ -106,9 +106,6 @@ class LiteKernel {
       }
       for (auto &in_tensor : this->in_tensors()) {
         MS_ASSERT(in_tensor != nullptr);
-        if (in_tensor->root_tensor() == in_tensor) {
-          continue;
-        }
         in_tensor->DecRefCount();
       }
     }

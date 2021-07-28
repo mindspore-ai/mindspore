@@ -22,11 +22,11 @@
 #include "src/tensorlist.h"
 
 namespace mindspore::kernel {
-class SwitchCPUKernel : public CarryDataKernel {
+class SwitchCPUKernel : public InnerKernel {
  public:
   SwitchCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : CarryDataKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~SwitchCPUKernel() override = default;
   int Init() override;
   int ReSize() override;
