@@ -100,6 +100,8 @@ constexpr char STEP_AUTO_PARALLEL_BEGIN[] = "step_auto_parallel_begin.dot";
 constexpr char REQUIRES_GRAD[] = "requires_grad";
 constexpr char PARAM_NAME[] = "name";
 constexpr char RESHAPEINFO[] = "ReshapeInfo";
+constexpr char GETNEXTINFO[] = "GetNextInfo";
+constexpr char VIRTUALDATASETINFO[] = "VirtualDatasetInfo";
 
 constexpr char RELU_TYPE[] = "relu";
 constexpr char RELU6_TYPE[] = "relu6";

@@ -46,8 +46,38 @@ Status VirtualOutputInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-
+  if (!strategy_first.empty()) {
+    shard_num_ = strategy_first[0];
+  }
   return SUCCESS;
 }
+
+Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
+  StrategyPtr sp;
+  Strategys strategy;
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+  size_t total_dev_num;
+  if (full_batch) {
+    total_dev_num = 1;
+  } else {
+    total_dev_num = stage_device_size_;
+  }
+  for (auto &shape : inputs_shape_) {
+    Shape temp;
+    temp.emplace_back(SizeToLong(total_dev_num));
+    (void)temp.insert(temp.end(), shape.size() - 1, 1);
+    strategy.push_back(temp);
+  }
+  sp = std::make_shared<Strategy>(stage_id, strategy);
+  if (SetCostUnderStrategy(sp) == SUCCESS) {
+    MS_LOG(INFO) << name_ << ": Successfully dataset strategy.";
+    PrintStrategy(sp);
+  } else {
+    MS_LOG(ERROR) << name_ << ": Generating dataset strategy failed.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 }  // namespace parallel
 }  // namespace mindspore

@@ -116,7 +116,7 @@ std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNod
 void CoverSliceShape(const FuncGraphPtr &root);
 
 void SetVirtualDatasetStrategy(const CNodePtr &node);
-
+bool IsInsertVirtualOutput(const FuncGraphPtr &root);
 // Create parallel operator for primitive node(has strategy)
 void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_training = true);
 

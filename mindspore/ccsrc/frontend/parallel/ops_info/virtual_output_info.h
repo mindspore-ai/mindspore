@@ -35,6 +35,7 @@ class VirtualOutputInfo : public VirtualDatasetInfo {
                     const PrimitiveAttrs &attrs)
       : VirtualDatasetInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~VirtualOutputInfo() override = default;
+  Status GenerateStrategies(int64_t stage_id) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

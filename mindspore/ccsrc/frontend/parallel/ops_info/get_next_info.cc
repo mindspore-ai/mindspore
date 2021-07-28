@@ -30,19 +30,25 @@
 namespace mindspore {
 namespace parallel {
 Status GetNextInfo::InferTensorMap() {
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  bool full_batch = ParallelContext::GetInstance()->full_batch();
-
-  for (auto shp : shapes_) {
-    TensorMap out_tensor_map;
-    for (size_t i = 0; i < shp.size(); ++i) {
-      if (full_batch) {
-        out_tensor_map.push_back(MAP_NONE);
+  auto slice_dim_iter = std::find(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), shard_num_);
+  if (slice_dim_iter == dev_matrix_shape_.end()) {
+    MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support shard in one dim.";
+    return FAILED;
+  }
+  size_t slice_dim = size_t(slice_dim_iter - dev_matrix_shape_.begin());
+  for (size_t i = 0; i < dataset_strategy_.size(); i++) {
+    Shape tensor_map_index;
+    for (auto dim : dataset_strategy_[i]) {
+      if (dim == 1) {
+        tensor_map_index.push_back(MAP_NONE);
+      } else if (dim == shard_num_) {
+        tensor_map_index.push_back(dev_matrix_shape_.size() - 1 - slice_dim);
       } else {
-        out_tensor_map.push_back(SizeToLong(dev_matrix_shape_.size() - i - 1));
+        MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support fully shard in one dim.";
+        return FAILED;
       }
     }
-    outputs_tensor_map_.push_back(out_tensor_map);
+    outputs_tensor_map_.push_back(tensor_map_index);
   }
   return SUCCESS;
 }
@@ -62,19 +68,6 @@ Status GetNextInfo::InferTensorLayout(TensorLayouts *outputs_layout) {
   return SUCCESS;
 }
 
-Strategys GetNextInfo::GetOutputStrategy() {
-  Strategys outputs_strategy;
-  for (auto shp : shapes_) {
-    Dimensions out_strategy;
-    out_strategy.push_back(stage_device_size_);
-    for (size_t i = 1; i < shp.size(); ++i) {
-      out_strategy.push_back(1);
-    }
-    outputs_strategy.push_back(out_strategy);
-  }
-  return outputs_strategy;
-}
-
 Status GetNextInfo::InferTensorInfo() {
   TensorLayouts outputs_layout;
   if (InferTensorLayout(&outputs_layout) != SUCCESS) {
@@ -88,23 +81,25 @@ Status GetNextInfo::InferTensorInfo() {
 }
 
 Status GetNextInfo::InferDevMatrixShape() {
-  size_t max_shape_length = 0;
-  for (auto shp : shapes_) {
-    if (max_shape_length < shp.size()) {
-      max_shape_length = shp.size();
-    }
+  if (dataset_strategy_.empty()) {
+    MS_LOG(ERROR) << "The dataset strategy is empty";
+    return FAILED;
   }
-  if (max_shape_length == 0) {
-    MS_LOG(ERROR) << name_ << " : shape is 0";
+  auto dev_matrix_iter =
+    std::max_element(dataset_strategy_.begin(), dataset_strategy_.end(),
+                     [](Dimensions stra1, Dimensions stra2) { return stra1.size() < stra2.size(); });
+  if (dev_matrix_iter != dataset_strategy_.end()) {
+    dev_matrix_shape_ = *dev_matrix_iter;
   }
-  dev_matrix_shape_.push_back(stage_device_size_);
-  for (size_t i = 1; i < max_shape_length; ++i) {
-    dev_matrix_shape_.push_back(1);
+  auto shard_num_iter = std::max_element(dev_matrix_shape_.begin(), dev_matrix_shape_.end());
+  if (shard_num_iter != dev_matrix_shape_.end()) {
+    shard_num_ = *shard_num_iter;
   }
   return SUCCESS;
 }
 
 Status GetNextInfo::Init(const StrategyPtr &strategy) {
+  repeated_num_in_dev_matrix_right_ = false;
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed";
     return FAILED;
@@ -123,6 +118,25 @@ Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
     if (stra.size() != 0) {
       MS_LOG(ERROR) << name_ << " : Invalid strategy.";
       return FAILED;
+    }
+  }
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  if (!ParallelContext::GetInstance()->dataset_strategy().empty()) {
+    dataset_strategy_ = ParallelContext::GetInstance()->dataset_strategy();
+  } else {
+    bool full_batch = ParallelContext::GetInstance()->full_batch();
+    int64_t dev_num = full_batch ? 1 : SizeToLong(g_device_manager->stage_device_num());
+    for (size_t i = 0; i < outputs_shape_.size(); i++) {
+      Dimensions input_strategy;
+      for (size_t j = 0; j < outputs_shape_[i].size(); j++) {
+        input_strategy.push_back(1);
+      }
+      dataset_strategy_.push_back(input_strategy);
+    }
+    for (auto &stra : dataset_strategy_) {
+      if (!stra.empty()) {
+        stra[0] = dev_num;
+      }
     }
   }
   return SUCCESS;
@@ -191,23 +205,9 @@ Status GetNextInfo::GetAttrs() {
 }
 
 Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  bool full_batch = ParallelContext::GetInstance()->full_batch();
-
-  Shapes out_shapes = outputs_shape_;
-  for (size_t i = 0; i < out_shapes.size(); ++i) {
-    if (stage_device_size_ <= 0) {
-      MS_LOG(ERROR) << name_ << " : The dev num is 0.";
-      return FAILED;
-    }
-    if (!full_batch) {
-      if (out_shapes[i][0] % stage_device_size_ != 0) {
-        MS_LOG(ERROR) << name_ << " : batch num cannot floor div dev num.";
-        return FAILED;
-      }
-      out_shapes[i][0] = out_shapes[i][0] / stage_device_size_;
-    }
-  }
+  Shapes out_shapes;
+  std::transform(outputs_tensor_info_.begin(), outputs_tensor_info_.end(), std::back_inserter(out_shapes),
+                 [](auto tensor_info) { return tensor_info.slice_shape(); });
   ValuePtr new_shapes = MakeValue(out_shapes);
   Attr attr_types = std::make_pair(TYPES, attrs_[TYPES]);
   Attr attr_shapes = std::make_pair(SHAPES, new_shapes);

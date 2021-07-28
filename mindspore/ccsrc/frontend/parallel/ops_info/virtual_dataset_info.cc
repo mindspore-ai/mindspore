@@ -19,6 +19,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <algorithm>
+#include <functional>
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
@@ -39,42 +41,51 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": Strategy size must be larger than 1.";
     return FAILED;
   }
-  if (stra.size() == 1) {
-    MS_LOG(WARNING) << name_ << ": Strategy size is 1.";
-    return SUCCESS;
-  }
-  Dimensions strategy_first = stra.at(1);
-  for (auto iter_strategy = stra.begin() + 1; iter_strategy != stra.end(); ++iter_strategy) {
-    if (iter_strategy->empty()) {
-      MS_LOG(ERROR) << name_ << ": iter_strategy size is zero.";
-    }
-    if (strategy_first.at(0) != *(iter_strategy->begin())) {
-      MS_LOG(ERROR) << name_ << ": The first dimension of each strategy must be the same.";
-      return FAILED;
-    }
-
-    for (auto iter_element = iter_strategy->begin() + 1; iter_element != iter_strategy->end(); ++iter_element) {
-      if (*iter_element != 1) {
-        MS_LOG(ERROR) << name_ << ": All dimension except the first dimension of each strategy must be 1.";
+  used_devices_ = int64_t(std::accumulate(stra[0].begin(), stra[0].end(), 1, std::multiplies<int64_t>()));
+  for (size_t i = 0; i < stra.size(); ++i) {
+    bool find_shard_dim = false;
+    int64_t current_stra_shard_num = 1;
+    for (auto dim : stra[i]) {
+      if (dim == 1) {
+        continue;
+      }
+      if (find_shard_dim) {
+        MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support shard in one dim.";
         return FAILED;
+      } else {
+        find_shard_dim = true;
+        current_stra_shard_num = dim;
       }
     }
+    if (i == 0) {
+      shard_num_ = current_stra_shard_num;
+    } else if (current_stra_shard_num != 1 && current_stra_shard_num != shard_num_) {
+      MS_LOG(ERROR) << name_
+                    << ": For each dataset input, the shard strategy can be not shard, "
+                       "or shard in one dim with the same shard size between each input. "
+                       "Current shard size is: "
+                    << current_stra_shard_num << ". The previous shard size is " << shard_num_;
+      return FAILED;
+    }
+    if (stra[i].size() > stra[max_size_strategy_dim_].size()) {
+      max_size_strategy_dim_ = i;
+    }
+  }
+  if (std::find(stra[max_size_strategy_dim_].begin(), stra[max_size_strategy_dim_].end(), shard_num_) ==
+      stra[max_size_strategy_dim_].end()) {
+    MS_LOG(ERROR) << name_
+                  << ": For each dataset input, the shard strategy can be not shard, "
+                     "or shard in one dim with the same shard size between each input."
+                     " If using shard, the max length input must be shard, "
+                     "but the strategy of the max length input is: "
+                  << stra[max_size_strategy_dim_];
   }
   return SUCCESS;
 }
 
 Status VirtualDatasetInfo::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
-  Dimensions strategy_first = stra.at(0);
-  int64_t batch_split_num = ((int64_t)(strategy_first.at(0)));
-  dev_matrix_shape_.push_back(batch_split_num);
-  if (stage_device_size_ > batch_split_num) {
-    dev_matrix_shape_.push_back(stage_device_size_ / batch_split_num);
-  }
-  // Because 'VirtualDataSet' uses 'InitWithManualRepeatCalc' which does not calculates 'used_devices_',
-  // we calculate it here.
-  used_devices_ = batch_split_num;
-
+  dev_matrix_shape_ = stra[max_size_strategy_dim_];
   return SUCCESS;
 }
 
@@ -83,18 +94,24 @@ Status VirtualDatasetInfo::InferMirrorOps() { return SUCCESS; }
 Status VirtualDatasetInfo::InferForwardCommunication() { return SUCCESS; }
 
 Status VirtualDatasetInfo::InferTensorMap() {
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  bool full_batch = ParallelContext::GetInstance()->full_batch();
-
-  for (size_t i = 0; i < strategy_->GetInputNumber(); i++) {
+  auto slice_dim_iter = std::find(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), shard_num_);
+  if (slice_dim_iter == dev_matrix_shape_.end()) {
+    MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support shard in one dim.";
+    return FAILED;
+  }
+  size_t slice_dim = size_t(slice_dim_iter - dev_matrix_shape_.begin());
+  auto stra = strategy_->GetInputDim();
+  for (size_t i = 0; i < stra.size(); i++) {
     Shape tensor_map_index;
-    if (full_batch) {
-      tensor_map_index.push_back(MAP_NONE);
-    } else {
-      tensor_map_index.push_back((int64_t)(LAST_INDEX(dev_matrix_shape_.size())));
-    }
-    for (size_t j = 1; j < strategy_->GetInputDim()[i].size(); ++j) {
-      tensor_map_index.push_back(MAP_NONE);
+    for (auto dim : stra[i]) {
+      if (dim == 1) {
+        tensor_map_index.push_back(MAP_NONE);
+      } else if (dim == shard_num_) {
+        tensor_map_index.push_back(dev_matrix_shape_.size() - 1 - slice_dim);
+      } else {
+        MS_LOG(ERROR) << name_ << ": The dataset shard strategy only support shard in one dim.";
+        return FAILED;
+      }
     }
     inputs_tensor_map_.push_back(tensor_map_index);
     outputs_tensor_map_.push_back(tensor_map_index);
@@ -105,7 +122,8 @@ Status VirtualDatasetInfo::InferTensorMap() {
 Status VirtualDatasetInfo::GetAttrs() { return SUCCESS; }
 
 Status VirtualDatasetInfo::Init(const StrategyPtr &strategy) {
-  if (InitWithManualRepeatCalc(strategy) != SUCCESS) {
+  repeated_num_in_dev_matrix_right_ = false;
+  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
   }
@@ -113,7 +131,7 @@ Status VirtualDatasetInfo::Init(const StrategyPtr &strategy) {
 }
 
 Status VirtualDatasetInfo::InitForCostModel(const StrategyPtr &strategy) {
-  if (InitForCostModelWithManualRepeatCalc(strategy) != SUCCESS) {
+  if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
@@ -134,42 +152,31 @@ Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 
 Status VirtualDatasetInfo::GenerateStrategies(int64_t stage_id) {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  bool full_batch = ParallelContext::GetInstance()->full_batch();
-  size_t total_dev_num;
-
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": GetAttrs failed";
-    return FAILED;
-  }
-
-  if (full_batch) {
-    total_dev_num = 1;
-  } else {
-    total_dev_num = stage_device_size_;
-  }
   StrategyPtr sp;
   Strategys strategy;
-  for (auto &shape : inputs_shape_) {
-    Shape temp;
-    temp.emplace_back(SizeToLong(total_dev_num));
-    (void)temp.insert(temp.end(), shape.size() - 1, 1);
-    strategy.push_back(temp);
+  if (!ParallelContext::GetInstance()->dataset_strategy().empty()) {
+    strategy = ParallelContext::GetInstance()->dataset_strategy();
+  } else {
+    bool full_batch = ParallelContext::GetInstance()->full_batch();
+    size_t total_dev_num;
+    if (full_batch) {
+      total_dev_num = 1;
+    } else {
+      total_dev_num = stage_device_size_;
+    }
+    for (auto &shape : inputs_shape_) {
+      Shape temp;
+      temp.emplace_back(SizeToLong(total_dev_num));
+      (void)temp.insert(temp.end(), shape.size() - 1, 1);
+      strategy.push_back(temp);
+    }
   }
   sp = std::make_shared<Strategy>(stage_id, strategy);
-
   if (SetCostUnderStrategy(sp) == SUCCESS) {
-    if (full_batch) {
-      MS_LOG(INFO) << name_ << ": Successfully generated full-batch-parallel-strategy.";
-    } else {
-      MS_LOG(INFO) << name_ << ": Successfully generated batch-parallel-strategy.";
-    }
+    MS_LOG(INFO) << name_ << ": Successfully dataset strategy.";
     PrintStrategy(sp);
   } else {
-    if (full_batch) {
-      MS_LOG(ERROR) << name_ << ": Generating full-batch-parallel-strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Generating batch-parallel-strategy failed.";
-    }
+    MS_LOG(ERROR) << name_ << ": Generating dataset strategy failed.";
     return FAILED;
   }
   return SUCCESS;

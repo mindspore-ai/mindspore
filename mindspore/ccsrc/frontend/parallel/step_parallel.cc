@@ -2012,13 +2012,23 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->name() == VIRTUAL_DATA_SET || prim->name() == VIRTUAL_OUTPUT) {
     CheckGlobalDeviceManager();
+    auto attrs_temp = prim->attrs();
+    if (!ParallelContext::GetInstance()->dataset_strategy().empty() && prim->name() == VIRTUAL_DATA_SET) {
+      std::vector<ValuePtr> elements;
+      auto dataset_strategy = ParallelContext::GetInstance()->dataset_strategy();
+      std::transform(dataset_strategy.begin(), dataset_strategy.end(), std::back_inserter(elements),
+                     [](auto input_stra) { return MakeValue(input_stra); });
+      ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
+      attrs_temp[STRATEGY] = strategy;
+      (void)prim->SetAttrs(attrs_temp);
+      return;
+    }
     int64_t dev_num;
     if (full_batch) {
       dev_num = 1;
     } else {
       dev_num = SizeToLong(g_device_manager->stage_device_num());
     }
-    auto attrs_temp = prim->attrs();
     std::vector<Shapes> shape_list = ExtractShape(node);
     if (shape_list.empty()) {
       MS_LOG(EXCEPTION) << "Failure:node " << node->ToString() << " failed to extract shape";
@@ -3702,6 +3712,11 @@ void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr
   }
 }
 
+bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  return (!root->has_flag(TRAINING) && ParallelContext::GetInstance()->dataset_strategy().empty());
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -3762,7 +3777,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
       MS_LOG(EXCEPTION) << "The graph contain communication op";
     }
 
-    if (!root->has_flag(TRAINING)) {
+    if (IsInsertVirtualOutput(root)) {
       InsertVirtualOutput(root, all_nodes);
       AnfNodePtr ret_after = root->get_return();
       MS_EXCEPTION_IF_NULL(ret_after);

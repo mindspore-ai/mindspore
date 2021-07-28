@@ -95,7 +95,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   }
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
-  if (!root->has_flag(TRAINING)) {
+  if (IsInsertVirtualOutput(root)) {
     InsertVirtualOutput(root, all_nodes);
     AnfNodePtr ret_after = root->get_return();
     MS_EXCEPTION_IF_NULL(ret_after);

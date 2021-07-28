@@ -58,6 +58,9 @@ def _check_full_batch():
 
 def _need_to_full():
     """Check whether to convert input to full shape or tensor."""
+    dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    if dataset_strategy:
+        return True
     parallel_mode = _get_parallel_mode()
     full_batch = _get_full_batch()
     need = ((parallel_mode in ("semi_auto_parallel", "auto_parallel"))
@@ -68,6 +71,20 @@ def _need_to_full():
 def _to_full_shapes(shapes, device_num):
     """Expanding batch dimension according to device_num, adapt to mindspore minddata graph solution."""
     new_shapes = []
+    dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    if dataset_strategy:
+        if len(shapes) != len(dataset_strategy):
+            raise ValueError("The input shapes size {} is not equal to "
+                             "dataset strategy size {}".format(len(shapes), len(dataset_strategy)))
+        for index, shape in enumerate(shapes):
+            if len(shape) != len(dataset_strategy[index]):
+                raise ValueError("The input shapes item size {} is not equal to "
+                                 "dataset strategy item size {}".format(len(shape), len(dataset_strategy[index])))
+            new_shape = ()
+            for i, item in enumerate(shape):
+                new_shape += (item * dataset_strategy[index][i],)
+            new_shapes.append(new_shape)
+        return new_shapes
     for shape in shapes:
         new_shape = ()
         for i, item in enumerate(shape):
@@ -91,8 +108,12 @@ def _to_full_tensor(elem, global_device_num, global_rank, scaling_sens=None):
     if stage_rank >= device_num:
         raise ValueError("The global rank must be smaller than device number, the global rank is {}, "
                          "the device num is {}".format(stage_rank, device_num))
-
-    for data in elem:
+    dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    if elem and dataset_strategy:
+        if len(elem) != len(dataset_strategy):
+            raise ValueError("The input size {} is not equal to "
+                             "dataset strategy size {}".format(len(elem), len(dataset_strategy)))
+    for index, data in enumerate(elem):
         if isinstance(data, np.ndarray):
             data = Tensor(data)
         if not isinstance(data, Tensor):
@@ -100,16 +121,30 @@ def _to_full_tensor(elem, global_device_num, global_rank, scaling_sens=None):
         shape_ = data.shape
         type_ = data.dtype
         new_shape = ()
-        batchsize_per_device = 1
-        for i, item in enumerate(shape_):
-            if i == 0:
-                new_shape += (item * device_num,)
-                batchsize_per_device = item
-            else:
-                new_shape += (item,)
-        new_tensor_numpy = np.zeros(new_shape, dtype_to_nptype(type_))
-        start = stage_rank * batchsize_per_device
-        new_tensor_numpy[start: start + batchsize_per_device] = data.asnumpy()
+        if not dataset_strategy:
+            batchsize_per_device = 1
+            for i, item in enumerate(shape_):
+                if i == 0:
+                    new_shape += (item * device_num,)
+                    batchsize_per_device = item
+                else:
+                    new_shape += (item,)
+            new_tensor_numpy = np.zeros(new_shape, dtype_to_nptype(type_))
+            start = stage_rank * batchsize_per_device
+            new_tensor_numpy[start: start + batchsize_per_device] = data.asnumpy()
+        else:
+            if len(shape_) != len(dataset_strategy[index]):
+                raise ValueError("The input shapes item size {} is not equal to "
+                                 "dataset strategy item size {}".format(len(shape_), len(dataset_strategy[index])))
+            slice_index = ()
+            for i, item in enumerate(shape_):
+                new_shape += (item * dataset_strategy[index][i],)
+                start = (stage_rank % dataset_strategy[index][i]) * item
+                end = (stage_rank % dataset_strategy[index][i] + 1) * item
+                s = slice(start, end, 1)
+                slice_index += (s,)
+            new_tensor_numpy = np.zeros(new_shape, dtype_to_nptype(type_))
+            new_tensor_numpy[slice_index] = data.asnumpy()
         new_tensor = Tensor(new_tensor_numpy)
         lst.append(new_tensor)
     if scaling_sens:
