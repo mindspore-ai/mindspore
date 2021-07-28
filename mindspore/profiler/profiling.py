@@ -651,7 +651,9 @@ class Profiler:
 
             return select_time
 
-        if "output_path" not in kwargs:
+        if "output_path" not in kwargs or kwargs.get("output_path") is None:
+            if "output_path" in kwargs:
+                kwargs.pop("output_path")
             # Environment variables are mainly set for the convenience of cloud profiler.
             output_path = os.getenv("MS_DIAGNOSTIC_DATA_PATH")
             if output_path:
