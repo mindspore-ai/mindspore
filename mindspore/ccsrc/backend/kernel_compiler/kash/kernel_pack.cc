@@ -41,103 +41,94 @@ bool CheckHash(const std::string &json_file, const std::string &bin_file, const 
 }
 }  // namespace
 
-const std::string KernelPack::Serialize() const {
-  MS_EXCEPTION_IF_NULL(json_);
-  MS_EXCEPTION_IF_NULL(kernel_);
-  std::string buffer;
-  (void)buffer.append((const char *)json_, json_->len + sizeof(json_->len));
-  (void)buffer.append((const char *)kernel_, kernel_->len + sizeof(kernel_->len));
-  return buffer;
-}
-
-bool KernelPack::ReadFromJsonFileHelper(std::ifstream &kernelbin) {
-  size_t binsize = LongToSize(kernelbin.seekg(0, std::ios::end).tellg());
+bool KernelPack::ReadFromJsonFileHelper(std::ifstream &kernel_bin) {
+  size_t bin_size = LongToSize(kernel_bin.seekg(0, std::ios::end).tellg());
   // free old data
   if (kernel_ != nullptr) {
     delete[] kernel_;
     kernel_ = nullptr;
   }
 
-  void *ptr = static_cast<void *>(new (std::nothrow) uint8_t[sizeof(KernelPack) + binsize]);
+  void *ptr = static_cast<void *>(new (std::nothrow) uint8_t[sizeof(KernelPack) + bin_size]);
   if (ptr != nullptr) {
     kernel_ = static_cast<FlexArray *>(ptr);
   }
   if (kernel_ == nullptr) {
-    MS_LOG(ERROR) << "memory malloc failed.";
-    kernelbin.close();
+    MS_LOG(ERROR) << "Memory malloc failed.";
+    kernel_bin.close();
     return false;
   }
-  if (memset_s(kernel_, sizeof(KernelPack) + binsize, 0, sizeof(KernelPack) + binsize) != EOK) {
-    MS_LOG(ERROR) << "memset kernel_ failed.";
+  if (memset_s(kernel_, sizeof(KernelPack) + bin_size, 0, sizeof(KernelPack) + bin_size) != EOK) {
+    MS_LOG(ERROR) << "Memset kernel_ failed.";
     delete[] kernel_;
     kernel_ = nullptr;
-    kernelbin.close();
+    kernel_bin.close();
     return false;
   }
-  kernel_->len = binsize;
-  (void)kernelbin.seekg(0, std::ios::beg);
-  (void)kernelbin.read(kernel_->contents, SizeToLong(kernel_->len));
+  kernel_->len = bin_size;
+  (void)kernel_bin.seekg(0, std::ios::beg);
+  (void)kernel_bin.read(kernel_->contents, SizeToLong(kernel_->len));
   return true;
 }
 
 bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &processor) {
   if (json_f.length() <= strlen(kJsonSuffix)) {
-    MS_LOG(ERROR) << "please check json path.";
+    MS_LOG(ERROR) << "Please check json path, file name: " << json_f;
     return false;
   }
 
-  std::ifstream kerneljson(json_f);
-  if (!kerneljson.is_open()) {
-    MS_LOG(DEBUG) << "read json file error, please check kernelmeta.";
+  std::ifstream kernel_json(json_f);
+  if (!kernel_json.is_open()) {
+    MS_LOG(DEBUG) << "Read json file(" << json_f << ") error, please check kernel_meta.";
     return false;
   }
   nlohmann::json js;
-  kerneljson >> js;
+  kernel_json >> js;
 
-  size_t binsize = LongToSize(kerneljson.seekg(0, std::ios::end).tellg());
-  void *ptr = static_cast<void *>(new (std::nothrow) uint8_t[sizeof(KernelPack) + binsize]);
+  size_t bin_size = LongToSize(kernel_json.seekg(0, std::ios::end).tellg());
+  void *ptr = static_cast<void *>(new (std::nothrow) uint8_t[sizeof(KernelPack) + bin_size]);
   if (ptr != nullptr) {
     json_ = static_cast<FlexArray *>(ptr);
   }
   if (json_ == nullptr) {
     MS_LOG(ERROR) << "memory malloc failed.";
-    kerneljson.close();
+    kernel_json.close();
     return false;
   }
-  json_->len = binsize;
-  (void)kerneljson.seekg(0, std::ios::beg);
-  (void)kerneljson.read(json_->contents, SizeToLong(json_->len));
+  json_->len = bin_size;
+  (void)kernel_json.seekg(0, std::ios::beg);
+  (void)kernel_json.read(json_->contents, SizeToLong(json_->len));
 
   if (processor == kProcessorCuda) {
     std::string bin_f = json_f.substr(0, json_f.length() - 5) + ".ptx";
     std::ifstream kernelbin(bin_f);
     if (!kernelbin.is_open()) {
       MS_LOG(ERROR) << "read kernel ptx file error, please check kernelmeta.";
-      kerneljson.close();
+      kernel_json.close();
       return false;
     }
 
-    if (ReadFromJsonFileHelper(kernelbin) == false) {
+    if (!ReadFromJsonFileHelper(kernelbin)) {
       delete[] json_;
       json_ = nullptr;
-      kerneljson.close();
+      kernel_json.close();
       return false;
     }
-    kerneljson.close();
+    kernel_json.close();
     if (!CheckHash(json_f, bin_f, js)) {
       return false;
     }
     return true;
   }
 
-  std::string binfilesuffix = js["binFileSuffix"];
-  std::string bin_f = json_f.substr(0, json_f.length() - 5) + binfilesuffix;
-  if (binfilesuffix.compare(".so") == 0) {
+  std::string binfile_suffix = js["binFileSuffix"];
+  std::string bin_f = json_f.substr(0, json_f.length() - 5) + binfile_suffix;
+  if (binfile_suffix == ".so") {
     // change "xx/xx.so" -> "xx/libxx.so"
     auto sp = bin_f.rfind('/');
     if (sp == std::string::npos) {
       MS_LOG(ERROR) << "illegal bin file path " << bin_f;
-      kerneljson.close();
+      kernel_json.close();
       return false;
     }
     bin_f = bin_f.substr(0, sp + 1) + "lib" + bin_f.substr(sp + 1, bin_f.length() - sp - 1);
@@ -146,20 +137,20 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   std::ifstream kernelbin(bin_f, std::ios::binary);
   if (!kernelbin.is_open()) {
     MS_LOG(ERROR) << "read kernel binary file error, please check kernelmeta.";
-    kerneljson.close();
+    kernel_json.close();
     delete[] json_;
     json_ = nullptr;
     return false;
   }
 
   MS_LOG(INFO) << "kernelbin_name:" << bin_f;
-  if (ReadFromJsonFileHelper(kernelbin) == false) {
+  if (!ReadFromJsonFileHelper(kernelbin)) {
     delete[] json_;
     json_ = nullptr;
-    kerneljson.close();
+    kernel_json.close();
     return false;
   }
-  kerneljson.close();
+  kernel_json.close();
 
   if (!CheckHash(json_f, bin_f, js)) {
     return false;
@@ -211,7 +202,7 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &pr
     kernel_json >> js;
     kernel_json.close();
   } catch (std::exception &e) {
-    MS_LOG(WARNING) << "Parse json file error: " << json_f << ", sleep 500ms and retry again.";
+    MS_LOG(WARNING) << "Parse json file error: " << json_f << ", sleep 500ms and retry again. error ms: " << e.what();
     kernel_json.close();
     std::this_thread::sleep_for(std::chrono::microseconds(500000));
     std::ifstream retry_tmp(json_f);
