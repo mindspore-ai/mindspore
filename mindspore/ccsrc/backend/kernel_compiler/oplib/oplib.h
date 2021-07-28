@@ -31,7 +31,6 @@ class OpLib {
   OpLib() = default;
   virtual ~OpLib() = default;
   static bool RegOp(const std::string &json_string, const std::string &impl_path);
-  static void RegOpInfo(const std::shared_ptr<OpInfo> &opinfo) { op_info_.emplace(opinfo->op_name(), opinfo); }
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type,
                                         bool is_dynamic_shape = false);
 
