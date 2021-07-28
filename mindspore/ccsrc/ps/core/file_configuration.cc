@@ -49,6 +49,15 @@ std::string FileConfiguration::Get(const std::string &key, const std::string &de
   return res;
 }
 
+std::string FileConfiguration::GetString(const std::string &key, const std::string &defaultvalue) const {
+  if (!js.contains(key)) {
+    MS_LOG(WARNING) << "The key:" << key << " is not exist.";
+    return defaultvalue;
+  }
+  std::string res = js.at(key);
+  return res;
+}
+
 void FileConfiguration::Put(const std::string &key, const std::string &value) {
   std::ofstream output_file(file_path_);
   js[key] = value;

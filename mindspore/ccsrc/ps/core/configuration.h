@@ -45,8 +45,11 @@ class Configuration {
   // Determine whether the initialization has been completed.
   virtual bool IsInitialized() const = 0;
 
-  // Get configuration data from database or config file.
+  // Get configuration data from database or config file.The returned string is quoted
   virtual std::string Get(const std::string &key, const std::string &defaultvalue) const = 0;
+
+  // Get configuration data from database or config file.The returned string is not quoted
+  virtual std::string GetString(const std::string &key, const std::string &defaultvalue) const = 0;
 
   // Put configuration data to database or config file.
   virtual void Put(const std::string &key, const std::string &defaultvalue) = 0;

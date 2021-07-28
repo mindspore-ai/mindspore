@@ -226,7 +226,7 @@ bool TcpClient::EstablishSSL() {
 
   // 2. Parse the client password.
   std::string client_password = CommUtil::ParseConfig(*config_, kClientPassword);
-  if (!client_password.empty()) {
+  if (client_password.empty()) {
     MS_LOG(WARNING) << "The key:" << kClientPassword << "'s value is empty.";
     return false;
   }
