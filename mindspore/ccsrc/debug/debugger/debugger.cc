@@ -76,7 +76,6 @@ Debugger::Debugger()
       training_done_(false),
       is_dataset_graph_(false),
       partial_memory_(false),
-      last_overflow_bin_(0),
       initial_suspend_(true),
       not_dataset_graph_sum_(0),
       version_("") {
@@ -259,9 +258,6 @@ void Debugger::Reset() {
   graph_ptr_ = nullptr;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
-  last_overflow_bin_ = 0;
-  overflow_bin_path_.clear();
-  stream_task_to_opname_.clear();
   graph_proto_list_.clear();
   graph_ptr_list_.clear();
 }
@@ -513,16 +509,6 @@ void Debugger::PostDebugOp() {
     MS_LOG(INFO) << "Debugger suspend at debug_op";
     CommandLoop();
   }
-}
-
-void Debugger::SetStreamTaskToOpnameMap(const std::map<std::pair<uint32_t, uint32_t>, std::string> &mapping) {
-  MS_LOG(INFO) << "SetStreamTaskToOpnameMap start";
-  for (auto const &item : mapping) {
-    MS_LOG(INFO) << "stream = " << item.first.first << ", task =  " << item.first.second
-                 << ", op_name =  " << item.second << std::endl;
-  }
-  MS_LOG(INFO) << "SetStreamTaskToOpnameMap end";
-  stream_task_to_opname_ = mapping;
 }
 
 void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
@@ -932,12 +918,6 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   std::vector<std::string> overflow_ops;
   std::vector<std::vector<DebugServices::parameter_t>> parameters;
   std::vector<int32_t> error_codes;
-#ifdef ENABLE_D
-  overflow_ops = CheckOpOverflow();
-  for (auto const &item : overflow_ops) {
-    MS_LOG(DEBUG) << "overflow_ops item = " << item << std::endl;
-  }
-#endif
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   if (watchnode.empty()) {
     tensor_list = debug_services_->GetTensor();
@@ -1131,66 +1111,6 @@ void Debugger::SetStepNum(int32_t cur_num_step) {
 }
 
 int32_t Debugger::step_num() const { return num_step_; }
-
-uint64_t BytestoUInt64(const std::vector<char> &buffer) {
-  return le64toh(*reinterpret_cast<const uint64_t *>(buffer.data()));
-}
-
-std::vector<std::string> Debugger::CheckOpOverflow() {
-  std::vector<std::string> op_names;
-  std::string overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id());
-  MS_LOG(INFO) << "Processing bin file path " << overflow_bin_path;
-  DIR *d = opendir(overflow_bin_path.c_str());
-  if (d != nullptr) {
-    struct dirent *dir = nullptr;
-    while ((dir = readdir(d)) != nullptr) {
-      if (dir->d_type == DT_REG) {
-        std::string file_path = overflow_bin_path;
-        std::string file_name = dir->d_name;
-        (void)file_path.append(file_name);
-        std::fstream infile;
-        infile.open(file_path.c_str(), std::ios::binary | std::ios::in);
-        if (!infile.is_open()) {
-          MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
-          continue;
-        }
-        // start of op overflow data in bin file
-        const uint32_t offset = 321;
-        (void)infile.seekg(offset, std::ios::beg);
-        std::vector<char> buffer;
-        // size of op overflow info section
-        const size_t buf_size = 256;
-        buffer.resize(buf_size);
-        (void)infile.read(buffer.data(), buf_size);
-        const uint8_t stream_id_offset = 16;
-        const uint8_t task_id_offset = 24;
-        // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
-        // byte values currently.
-        uint64_t stream_id = BytestoUInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
-        uint64_t task_id = BytestoUInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
-        MS_LOG(INFO) << "Overflow bin file " << file_name << ", overflow stream_id " << stream_id << ", task_id "
-                     << task_id << ".";
-        auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
-        if (op != debugger_->stream_task_to_opname_.end()) {
-          MS_LOG(INFO) << "Overflow detected on node " << op->second << std::endl;
-          op_names.push_back(op->second);
-        } else {
-          MS_LOG(INFO) << "No overflow is detected " << std::endl;
-        }
-        infile.close();
-      }
-    }
-  } else {
-    MS_LOG(INFO) << "OverFlow bin directory does not exist!";
-  }
-  closedir(d);
-
-  if (!op_names.empty()) {
-    MS_LOG(INFO) << "These operation overflows are detected " << op_names;
-  }
-
-  return op_names;
-}
 
 void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
 
