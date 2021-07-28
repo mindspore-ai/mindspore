@@ -43,7 +43,7 @@ bool NPUManager::CheckEMUIVersion() {
   char emui[128] = {0x00};
   __system_property_get("ro.build.version.emui", emui);
   std::string emui_str = emui;
-  int pos = emui_str.find('_');
+  size_t pos = emui_str.find('_');
   if (pos != std::string::npos) {
     auto version = emui_str.substr(pos + 1);
     int ret = CompareVersion(version, "10.0.0");

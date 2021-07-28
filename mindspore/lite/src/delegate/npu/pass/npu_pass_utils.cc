@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "src/delegate/npu/op/scale_npu.h"
 #include "src/delegate/npu/op/transpose_npu.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
 std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index{
@@ -217,7 +218,8 @@ bool NPUPassUtils::Scale4dCase(NPUOp *op) {
   auto axis = scale_op->GetAxis();
   auto in_tensor = op->inputs().at(0);
   auto scale_tensor = op->inputs().at(1);
-  return in_tensor.Shape().size() == NPU_SHAPE_SIZE && scale_tensor.Shape().size() == 1 && (axis == 3 || axis == -1);
+  return in_tensor.Shape().size() == NPU_SHAPE_SIZE && scale_tensor.Shape().size() == 1 &&
+         (axis == NHWC_C || axis == -1);
 }
 
 void NPUPassUtils::AssistDataNHWC2NCHW(int *data, size_t unit_size) {

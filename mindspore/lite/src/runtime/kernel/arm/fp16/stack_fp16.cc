@@ -82,12 +82,12 @@ int StackFp16CPUKernel::Init() {
 
 void StackFp16CPUKernel::Execute(int task_id) {
   auto inputs = buffers_.data();
-  char *output_data = reinterpret_cast<char *>(out_buffer_);
+  void *output_data = reinterpret_cast<void *>(out_buffer_);
   auto step = UP_DIV(outer_size_, num_threads_);
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
-  auto output = output_data + input_num * start * copy_size_;
+  void *output = reinterpret_cast<char *>(output_data) + input_num * start * copy_size_;
   Stack(inputs, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
 }
 
