@@ -70,6 +70,7 @@ AbstractBasePtr InferImplMakeKwarg(const AnalysisEnginePtr &, const PrimitivePtr
   AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
 
   ValuePtr keyPtr = key->BuildValue();
+  MS_EXCEPTION_IF_NULL(keyPtr);
   if (!keyPtr->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << keyPtr->ToString();
   }
@@ -86,6 +87,7 @@ AbstractBasePtr InferImplExtractKwarg(const AnalysisEnginePtr &, const Primitive
   AbstractKeywordArgPtr kwarg = CheckArg<AbstractKeywordArg>(op_name, args_spec_list, 1);
 
   ValuePtr key_value = key->BuildValue();
+  MS_EXCEPTION_IF_NULL(key_value);
   if (!key_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
@@ -110,6 +112,7 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
       slice_args.push_back(args_spec_list[index]);
     } else if (args_spec_list[index]->isa<AbstractScalar>()) {
       ValuePtr scalar_value = args_spec_list[index]->cast<AbstractScalarPtr>()->BuildValue();
+      MS_EXCEPTION_IF_NULL(scalar_value);
       if (scalar_value->isa<IntergerImm>()) {
         slice_args.push_back(args_spec_list[index]);
       } else if (scalar_value->isa<BoolImm>()) {
@@ -122,8 +125,9 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
     } else if (args_spec_list[index]->isa<AbstractTensor>()) {
       auto arg = args_spec_list[index]->cast<AbstractTensorPtr>();
       TypePtr tensor_dtype = arg->element()->BuildType();
-
-      auto value = arg->BuildValue()->cast<tensor::TensorPtr>();
+      auto build_value = arg->BuildValue();
+      MS_EXCEPTION_IF_NULL(build_value);
+      auto value = build_value->cast<tensor::TensorPtr>();
       if (value == nullptr) {
         MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor must be a const tensor.";
       }
@@ -159,6 +163,7 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
   ValuePtr index_value = index->BuildValue();
+  MS_EXCEPTION_IF_NULL(index_value);
   if (!index_value->isa<Int64Imm>()) {
     // when index_value is an AnyValue and args_spec_list[0] is a scalar, try to return the type of the first element
     //  and continue
@@ -191,6 +196,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
   ValuePtr index_value = index->BuildValue();
+  MS_EXCEPTION_IF_NULL(index_value);
   if (!index_value->isa<Int64Imm>()) {
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got "
                              << index_value->ToString();
@@ -237,6 +243,7 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
   AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
   ValuePtr key_value = key->BuildValue();
+  MS_EXCEPTION_IF_NULL(key_value);
   if (!key_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
@@ -259,6 +266,7 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
   AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
   ValuePtr key_value = key->BuildValue();
+  MS_EXCEPTION_IF_NULL(key_value);
   if (!key_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
