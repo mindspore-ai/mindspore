@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/ompi/repository/archive/v4.0.3.tar.gz")
-    set(MD5 "f76abc92ae870feff186d790f40ae762")
+    set(MD5 "77865fe49f85c6294416007c5633a448")
 else()
     set(REQ_URL "https://github.com/open-mpi/ompi/archive/v4.0.3.tar.gz")
     set(MD5 "86cb724e8fe71741ad3be4e7927928a2")
