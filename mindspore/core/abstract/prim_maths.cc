@@ -91,6 +91,7 @@ int64_t InferImplReduceFuncCheckAxis(const int64_t &axis, const size_t dim) {
 
 void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape, const ValuePtr &axis,
                                  bool keep_dims_value) {
+  MS_EXCEPTION_IF_NULL(axis);
   if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
     auto axis_ptr_list =
       axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();

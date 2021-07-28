@@ -57,12 +57,12 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
   int64_t h_input = input_shape->shape()[H_INDEX];
   int64_t w_input = input_shape->shape()[W_INDEX];
 
-  int64_t window = primitive->GetAttr("window")->cast<Int64ImmPtr>()->value();
-  int64_t stride = primitive->GetAttr("stride")->cast<Int64ImmPtr>()->value();
-  int64_t padding = primitive->GetAttr("pad")->cast<Int64ImmPtr>()->value();
-  int64_t nan_opt = primitive->GetAttr("nan_opt")->cast<Int64ImmPtr>()->value();
-  int64_t data_mode = primitive->GetAttr("data_mode")->cast<Int64ImmPtr>()->value();
-  int64_t ceil_mode = primitive->GetAttr("ceil_mode")->cast<Int64ImmPtr>()->value();
+  int64_t window = GetValue<int64_t>(primitive->GetAttr("window"));
+  int64_t stride = GetValue<int64_t>(primitive->GetAttr("stride"));
+  int64_t padding = GetValue<int64_t>(primitive->GetAttr("pad"));
+  int64_t nan_opt = GetValue<int64_t>(primitive->GetAttr("nan_opt"));
+  int64_t data_mode = GetValue<int64_t>(primitive->GetAttr("data_mode"));
+  int64_t ceil_mode = GetValue<int64_t>(primitive->GetAttr("ceil_mode"));
 
   if (stride <= 0) {
     MS_LOG(EXCEPTION) << "Invalid stride value: " << stride << ", should greater then 0";
@@ -122,32 +122,6 @@ AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitiveP
 
   ret->set_shape(x_shape);
   return ret;
-}
-
-void FusedBatchNormCheckDim(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
-  // check dimension, x > 1, others equal 1
-  const std::string op_name = primitive->name();
-  for (std::size_t i = 0; i < args_spec_list.size(); ++i) {
-    AbstractTensorPtr arg = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
-    ShapePtr arg_shape = dyn_cast<Shape>(arg->GetShapeTrack());
-    if (arg_shape == nullptr) {
-      MS_LOG(EXCEPTION) << op_name << " type of args[" << i << "] should be Shape, but " << arg->ToString();
-    }
-
-    if (i == 0) {
-      if (arg_shape->shape().size() < 2) {
-        MS_LOG(EXCEPTION) << op_name << " shape of args[" << i
-                          << "] should be TensorShape with dimension greater than 1, but shape: "
-                          << arg_shape->ToString();
-      }
-      continue;
-    }
-
-    if (arg_shape->shape().size() != 1) {
-      MS_LOG(EXCEPTION) << op_name << " shape of args[" << i
-                        << "] should be TensorShape with dimension: 1, but shape: " << arg_shape->ToString();
-    }
-  }
 }
 
 AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

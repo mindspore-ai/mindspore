@@ -100,6 +100,7 @@ AbstractBasePtr InferImplEnvAdd(const AnalysisEnginePtr &, const PrimitivePtr &p
 
 AbstractBasePtr InferImplMakeRefKey(const AnalysisEnginePtr &, const PrimitivePtr &prim, const AbstractBasePtrList &) {
   ValuePtr name_value = prim->GetAttr("tag");
+  MS_EXCEPTION_IF_NULL(name_value);
   auto name = name_value->cast<StringImmPtr>();
   if (name == nullptr) {
     MS_LOG(EXCEPTION) << "MakeRefKey attr tag should be a String " << name_value->ToString() << ".";
@@ -132,7 +133,9 @@ AbstractBasePtr InferImplGetRefKey(const AnalysisEnginePtr &, const PrimitivePtr
   if (type->type_id() != kObjectTypeRef) {
     MS_LOG(EXCEPTION) << "First input of get_ref_key should be a Ref but a " << type->ToString();
   }
-  return args_spec_list[0]->cast<AbstractRefPtr>()->ref();
+  auto abs_ref = args_spec_list[0]->cast<AbstractRefPtr>();
+  MS_EXCEPTION_IF_NULL(abs_ref);
+  return abs_ref->ref();
 }
 
 AbstractBasePtr InferImplGetRefValue(const AnalysisEnginePtr &, const PrimitivePtr &,
@@ -146,7 +149,9 @@ AbstractBasePtr InferImplGetRefValue(const AnalysisEnginePtr &, const PrimitiveP
   if (type->type_id() != kObjectTypeRef) {
     return args_spec_list[0];
   }
-  return args_spec_list[0]->cast<AbstractRefPtr>()->ref();
+  auto abs_ref = args_spec_list[0]->cast<AbstractRefPtr>();
+  MS_EXCEPTION_IF_NULL(abs_ref);
+  return abs_ref->ref();
 }
 
 AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -185,6 +190,7 @@ AbstractBasePtr InferImplUpdateState(const AnalysisEnginePtr &, const PrimitiveP
   if (args_spec_list.empty()) {
     MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at least 1, but got 0";
   }
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   return args_spec_list[0]->Broaden();
 }
 
@@ -213,14 +219,16 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
                             << values_shp[0] << ", but got " << indices_shp[0];
   }
 
-  for (auto elem_type : dense_shape->ElementsType()) {
+  for (const auto &elem_type : dense_shape->ElementsType()) {
     if (!elem_type->isa<Int>()) {
       MS_EXCEPTION(TypeError) << "The element type of dense_shape must be Int, but got " << elem_type->ToString();
     }
   }
-  auto dense_shape_value = dense_shape->BuildValue()->cast<ValueTuplePtr>();
+  auto dense_shape_value = dense_shape->BuildValue();
   MS_EXCEPTION_IF_NULL(dense_shape_value);
-  auto shp = dense_shape_value->value();
+  auto dense_shape_valuetuple = dense_shape_value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(dense_shape_valuetuple);
+  auto shp = dense_shape_valuetuple->value();
   ShapeVector dense_shape_vec;
   (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
                        [](const ValuePtr &e) -> int64_t {
@@ -229,7 +237,7 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
                        });
   if (dense_shape_vec.size() != values_shp.size()) {
     MS_EXCEPTION(TypeError) << "The size of dense_shape must be the same with the dimension of values "
-                            << values_shp.size() << ", but got " << dense_shape_value->size();
+                            << values_shp.size() << ", but got " << dense_shape_valuetuple->size();
   }
   for (size_t i = 0; i < dense_shape_vec.size(); i++) {
     if (dense_shape_vec[i] < 0) {
@@ -321,7 +329,7 @@ AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const Primi
                             << values_shp[0] << ", but got " << indices_shp[0];
   }
 
-  for (auto elem_type : dense_shape->ElementsType()) {
+  for (const auto &elem_type : dense_shape->ElementsType()) {
     if (!elem_type->isa<Int>()) {
       MS_EXCEPTION(TypeError) << "The element type of dense_shape must be Int, but got " << elem_type->ToString();
     }
@@ -502,7 +510,8 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   MS_EXCEPTION_IF_NULL(input_x);
   auto attr = primitive->GetAttr("dst_type");
   if (attr == nullptr) {
-    attr = args_spec_list[1]->BuildValue();
+    auto type_abs = CheckArg<AbstractType>(op_name, args_spec_list, 1);
+    attr = type_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(attr);
     primitive->set_attr("dst_type", attr);
   }

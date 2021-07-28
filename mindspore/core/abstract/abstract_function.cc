@@ -22,7 +22,6 @@ namespace mindspore {
 namespace abstract {
 class Evaluator;
 class AnalysisEngine;
-
 AbstractFunctionPtr AbstractFunction::MakeAbstractFunction(const AbstractFuncAtomPtrList &func_list) {
   if (func_list.size() == 1) {
     return func_list[0];
@@ -102,7 +101,7 @@ AbstractFunctionPtr AbstractFuncUnion::Join(const AbstractFunctionPtr &other) {
     return std::make_shared<AbstractFuncUnion>(this_func, other);
   }
   auto other_union = dyn_cast<AbstractFuncUnion>(other);
-  MS_EXCEPTION_IF_NULL(other);
+  MS_EXCEPTION_IF_NULL(other_union);
   if (other_union->IsSuperSet(this_func)) {
     return other;
   }
@@ -110,7 +109,7 @@ AbstractFunctionPtr AbstractFuncUnion::Join(const AbstractFunctionPtr &other) {
 }
 
 void AbstractFuncUnion::Visit(std::function<void(const AbstractFuncAtomPtr &)> visit_func) const {
-  for (AbstractFuncAtomPtr poss : func_list_) {
+  for (const AbstractFuncAtomPtr &poss : func_list_) {
     visit_func(poss);
   }
 }
@@ -123,15 +122,12 @@ bool AbstractFuncUnion::operator==(const AbstractFunction &other) const {
   if (func_list_.size() != other_union->func_list_.size()) {
     return false;
   }
-  if (func_list_ == other_union->func_list_) {
-    return true;
-  }
-  return false;
+  return func_list_ == other_union->func_list_;
 }
 
 std::size_t AbstractFuncUnion::hash() const {
   std::size_t hash_sum = 0;
-  for (auto f : func_list_) {
+  for (const auto &f : func_list_) {
     MS_EXCEPTION_IF_NULL(f);
     hash_sum = hash_combine(hash_sum, f->hash());
   }
@@ -144,10 +140,7 @@ bool PrimitiveAbstractClosure::operator==(const AbstractFunction &other) const {
   }
   auto other_prim = static_cast<const PrimitiveAbstractClosure *>(&other);
   MS_EXCEPTION_IF_NULL(prim_);
-  if (prim_ == other_prim->prim_ && tracking_id() == other_prim->tracking_id()) {
-    return true;
-  }
-  return false;
+  return (prim_ == other_prim->prim_ && tracking_id() == other_prim->tracking_id());
 }
 
 std::size_t PrimitiveAbstractClosure::hash() const {
@@ -165,11 +158,8 @@ bool FuncGraphAbstractClosure::operator==(const AbstractFunction &other) const {
     return false;
   }
   auto other_fg = static_cast<const FuncGraphAbstractClosure *>(&other);
-  if (func_graph_ == other_fg->func_graph_ && context_ == other_fg->context_ &&
-      tracking_id() == other_fg->tracking_id()) {
-    return true;
-  }
-  return false;
+  return func_graph_ == other_fg->func_graph_ && context_ == other_fg->context_ &&
+         tracking_id() == other_fg->tracking_id();
 }
 
 std::size_t FuncGraphAbstractClosure::hash() const {
@@ -195,10 +185,7 @@ bool MetaFuncGraphAbstractClosure::operator==(const AbstractFunction &other) con
     return false;
   }
   auto other_meta_fg = static_cast<const MetaFuncGraphAbstractClosure *>(&other);
-  if (meta_func_graph_ == other_meta_fg->meta_func_graph_ && tracking_id() == other_meta_fg->tracking_id()) {
-    return true;
-  }
-  return false;
+  return meta_func_graph_ == other_meta_fg->meta_func_graph_ && tracking_id() == other_meta_fg->tracking_id();
 }
 
 std::size_t MetaFuncGraphAbstractClosure::hash() const {
@@ -226,10 +213,7 @@ bool PartialAbstractClosure::operator==(const AbstractFunction &other) const {
   if (args_spec_list_.size() != other_partial->args_spec_list_.size()) {
     return false;
   }
-  if (args_spec_list_ == other_partial->args_spec_list_) {
-    return true;
-  }
-  return false;
+  return args_spec_list_ == other_partial->args_spec_list_;
 }
 
 std::size_t PartialAbstractClosure::hash() const {
@@ -255,10 +239,7 @@ bool JTransformedAbstractClosure::operator==(const AbstractFunction &other) cons
     return false;
   }
   auto other_transformed = static_cast<const JTransformedAbstractClosure *>(&other);
-  if (fn_ == other_transformed->fn_) {
-    return true;
-  }
-  return false;
+  return fn_ == other_transformed->fn_;
 }
 
 std::size_t JTransformedAbstractClosure::hash() const {
@@ -278,10 +259,7 @@ bool VirtualAbstractClosure::operator==(const AbstractFunction &other) const {
   if (args_spec_list_.size() != other_virtual->args_spec_list_.size()) {
     return false;
   }
-  if (args_spec_list_ == other_virtual->args_spec_list_) {
-    return true;
-  }
-  return false;
+  return args_spec_list_ == other_virtual->args_spec_list_;
 }
 
 std::size_t VirtualAbstractClosure::hash() const {
@@ -319,10 +297,7 @@ bool TypedPrimitiveAbstractClosure::operator==(const AbstractFunction &other) co
   if (args_spec_list_.size() != other_typed->args_spec_list_.size()) {
     return false;
   }
-  if (args_spec_list_ == other_typed->args_spec_list_) {
-    return true;
-  }
-  return false;
+  return args_spec_list_ == other_typed->args_spec_list_;
 }
 
 std::size_t TypedPrimitiveAbstractClosure::hash() const {
@@ -346,10 +321,7 @@ std::string TypedPrimitiveAbstractClosure::ToString() const {
 }
 
 bool DummyAbstractClosure::operator==(const AbstractFunction &other) const {
-  if (!other.isa<DummyAbstractClosure>()) {
-    return false;
-  }
-  return true;
+  return !other.isa<DummyAbstractClosure>();
 }
 }  // namespace abstract
 }  // namespace mindspore
