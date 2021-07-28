@@ -80,6 +80,13 @@ class GraphKernelFlags {
   bool enable_parallel_fusion;
 
   /**
+   * Enable low precision in data transferring between graph kernel and computing in graph kernel
+   * in graph kernel.
+   * Experimental feature, enabled by the enable_low_precision flag
+   */
+  bool enable_low_precision;
+
+  /**
    * Optimization level, value from 0 to 3.
    * 0: Disable GraphKernel
    * 1: Enable GraphKernel with basic features only.
