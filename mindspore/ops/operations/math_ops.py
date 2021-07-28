@@ -2083,10 +2083,16 @@ class Minimum(_MathBinaryOp):
     Examples:
         >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> minimum = ops.Minimum()
+        >>> minimum = ops.Minimum
         >>> output = minimum(x, y)
         >>> print(output)
         [1. 2. 3.]
+        >>> # case 2 : different data type
+        >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.int32)
+        >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
+        >>> output = minimum(x, y)
+        >>> print(output.dtype)
+        Float32
     """
 
     def infer_value(self, x, y):
@@ -2336,6 +2342,22 @@ class MulNoNan(_MathBinaryOp):
         >>> print(output)
         [[ 1. 24. 0.]
         [ 0. 21. 4.]]
+        >>> # case 2 : the shape of two inputs is same, there are some 0 in x, y.
+        >>> x = Tensor(np.array([[-1.0, 6.0, 0], [0, np.nan, 4.0]]), mindspore.int32)
+        >>> y = Tensor(np.array([[-1.0, 4.0, np.inf], [np.nan, 0, 1.0]]), mindspore.float32)
+        >>> output = mul_no_nan(x, y)
+        >>> print(output)
+        [[ 1. 24. 0.]
+         [ 0.  0. 4.]]
+        >>> print(output.dtype)
+        Float32
+        >>> # case 3 : the y is a scalar.
+        >>> x = Tensor(np.array([[-1.0, 6.0, 0], [0, np.nan, 4.0]]), mindspore.float32)
+        >>> y = Tensor(0, mindspore.float32)
+        >>> output = mul_no_nan(x, y)
+        >>> print(output)
+        [[ 0. 0. 0.]
+         [ 0. 0. 0.]]
     """
 
     @prim_attr_register
