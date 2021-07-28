@@ -42,10 +42,10 @@ TEST_F(TestMulInt8, Mul_quant0) {
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -115,10 +115,10 @@ TEST_F(TestMulInt8, Mul_quant0_thread0) {
   int8_t output[18];
   std::vector<int> output_shape = {2, 3, 3};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -188,10 +188,10 @@ TEST_F(TestMulInt8, Mul_quant1) {
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 2.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -261,10 +261,10 @@ TEST_F(TestMulInt8, Mul_quant1_thread1) {
   int8_t output[12];
   std::vector<int> output_shape = {2, 3, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 2.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -334,10 +334,10 @@ TEST_F(TestMulInt8, test) {
   int8_t output[12];
   std::vector<int> output_shape = {2, 2, 3};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 

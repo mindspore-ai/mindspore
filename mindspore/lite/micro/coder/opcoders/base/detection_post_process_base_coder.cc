@@ -44,7 +44,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
   Tensor *anchor_tensor = input_tensors_.at(kIndexSecond);
   MS_CHECK_PTR(anchor_tensor);
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
-    QuantArg quant_param = anchor_tensor->quant_params().at(0);
+    LiteQuantParam quant_param = anchor_tensor->quant_params().at(0);
     auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data_c());
     MS_CHECK_PTR(anchor_int8);
     auto anchor_fp32 = static_cast<float *>(
@@ -54,7 +54,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
                            anchor_tensor->ElementsNum());
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
-    QuantArg quant_param = anchor_tensor->quant_params().front();
+    LiteQuantParam quant_param = anchor_tensor->quant_params().front();
     auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data_c());
     MS_CHECK_PTR(anchor_uint8);
     auto anchor_fp32 = static_cast<float *>(

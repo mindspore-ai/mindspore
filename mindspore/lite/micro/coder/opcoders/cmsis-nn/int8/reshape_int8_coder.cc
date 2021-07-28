@@ -25,8 +25,8 @@ namespace mindspore::lite::micro::cmsis {
 int ReshapeInt8Coder::DoCode(CoderContext *const context) {
   int elements_num = input_tensor_->ElementsNum();
 
-  std::vector<QuantArg> input_quant_args = input_tensor_->quant_params();
-  std::vector<QuantArg> output_quant_args = output_tensor_->quant_params();
+  std::vector<LiteQuantParam> input_quant_args = input_tensor_->quant_params();
+  std::vector<LiteQuantParam> output_quant_args = output_tensor_->quant_params();
   MS_CHECK_TRUE(!input_quant_args.empty(), "input quant_params is empty");
   MS_CHECK_TRUE(!output_quant_args.empty(), "output quant_params is empty");
   // in Int8Reshape, the following values are checked. then it will do a memory copy

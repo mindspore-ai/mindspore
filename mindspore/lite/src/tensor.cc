@@ -390,9 +390,11 @@ void Tensor::DecRefCount() {
   }
 }
 
-void Tensor::AddQuantParam(const QuantArg &quant_arg) { this->quant_params_.push_back(quant_arg); }
+void Tensor::AddQuantParam(const LiteQuantParam &quant_param) { this->quant_params_.push_back(quant_param); }
 
-std::vector<QuantArg> Tensor::quant_params() const { return this->quant_params_; }
+std::vector<LiteQuantParam> Tensor::quant_params() const { return this->quant_params_; }
+
+void Tensor::set_quant_params(const std::vector<LiteQuantParam> quant_params) { this->quant_params_ = quant_params; }
 
 std::vector<float> Tensor::quant_clusters() const { return this->quant_clusters_; }
 

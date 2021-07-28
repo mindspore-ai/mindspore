@@ -44,22 +44,22 @@ TEST_F(TestBatchnormInt8, FusedTest) {
 
   std::vector<int> shape = {1, 1, 6, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
-  lite::QuantArg input_quant_arg_1;
+  lite::LiteQuantParam input_quant_arg_1;
   input_quant_arg_1.scale = 0.5;
   input_quant_arg_1.zeroPoint = 2;
-  lite::QuantArg input_quant_arg_2;
+  lite::LiteQuantParam input_quant_arg_2;
   input_quant_arg_2.scale = 0.02;
   input_quant_arg_2.zeroPoint = 3;
-  lite::QuantArg input_quant_arg_3;
+  lite::LiteQuantParam input_quant_arg_3;
   input_quant_arg_3.scale = 0.5;
   input_quant_arg_3.zeroPoint = 15;
-  lite::QuantArg input_quant_arg_4;
+  lite::LiteQuantParam input_quant_arg_4;
   input_quant_arg_4.scale = 0.25;
   input_quant_arg_4.zeroPoint = 1;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 0.8;
   output_quant_arg.zeroPoint = 0;
 
@@ -143,16 +143,16 @@ TEST_F(TestBatchnormInt8, BNTest) {
 
   std::vector<int> shape = {1, 1, 6, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.1;
   input_quant_arg.zeroPoint = 1;
-  lite::QuantArg input_quant_arg_1;
+  lite::LiteQuantParam input_quant_arg_1;
   input_quant_arg_1.scale = 0.05;
   input_quant_arg_1.zeroPoint = 2;
-  lite::QuantArg input_quant_arg_2;
+  lite::LiteQuantParam input_quant_arg_2;
   input_quant_arg_2.scale = 0.1;
   input_quant_arg_2.zeroPoint = -1;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 0.5;
   output_quant_arg.zeroPoint = 0;
 

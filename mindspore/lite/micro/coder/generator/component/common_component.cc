@@ -201,8 +201,8 @@ void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<Coder
   }
   Tensor *out_tensor = graph_outputs.at(kOutputIndex);
   MS_CHECK_PTR_IF_NULL(out_tensor);
-  std::vector<QuantArg> in_quant_args = in_tensor->quant_params();
-  std::vector<QuantArg> out_quant_args = out_tensor->quant_params();
+  std::vector<LiteQuantParam> in_quant_args = in_tensor->quant_params();
+  std::vector<LiteQuantParam> out_quant_args = out_tensor->quant_params();
   if (in_quant_args.empty() || out_quant_args.empty()) {
     MS_LOG(ERROR) << "code model quant args failed";
     return;

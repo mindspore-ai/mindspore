@@ -23,15 +23,15 @@
 #include "nnacl/int8/resize_int8.h"
 
 namespace mindspore {
-using mindspore::lite::QuantArg;
+using mindspore::lite::LiteQuantParam;
 using mindspore::lite::Tensor;
 
 class TestResizeNearestNeighborInt8 : public mindspore::CommonTest {
  public:
   TestResizeNearestNeighborInt8() = default;
   void Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape, int8_t *input_data,
-               int8_t *output_data, const QuantArg quant_in, const QuantArg quant_out, const bool align_corners,
-               const int thread_num);
+               int8_t *output_data, const LiteQuantParam quant_in, const LiteQuantParam quant_out,
+               const bool align_corners, const int thread_num);
   void TearDown() override;
 
   std::vector<lite::Tensor *> inputs;
@@ -48,8 +48,9 @@ class TestResizeNearestNeighborInt8 : public mindspore::CommonTest {
 };
 
 void TestResizeNearestNeighborInt8::Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape,
-                                            int8_t *input_data, int8_t *output_data, const QuantArg quant_in,
-                                            const QuantArg quant_out, const bool align_corners, const int thread_num) {
+                                            int8_t *input_data, int8_t *output_data, const LiteQuantParam quant_in,
+                                            const LiteQuantParam quant_out, const bool align_corners,
+                                            const int thread_num) {
   in_tensor.set_data_type(kNumberTypeInt8);
   in_tensor.set_shape(in_shape);
   in_tensor.set_data(input_data);
@@ -88,8 +89,8 @@ void TestResizeNearestNeighborInt8::TearDown() {
 TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor0) {
   std::vector<int> in_shape = {1, 2, 2, 1};
   std::vector<int> out_shape = {1, 4, 4, 1};
-  QuantArg quant_in = {0.00390625, 2};
-  QuantArg quant_out = {0.015625, 5};
+  LiteQuantParam quant_in = {0.00390625, 2};
+  LiteQuantParam quant_out = {0.015625, 5};
   int8_t input_data[] = {0, 1, 2, 3};
   const int out_element_num = 16;
   int8_t output_data[out_element_num] = {0};
@@ -108,8 +109,8 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor0) {
 TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor1) {
   std::vector<int> in_shape = {2, 2, 2, 5};
   std::vector<int> out_shape = {2, 4, 4, 5};
-  QuantArg quant_in = {0.00390625, 2};
-  QuantArg quant_out = {0.015625, 5};
+  LiteQuantParam quant_in = {0.00390625, 2};
+  LiteQuantParam quant_out = {0.015625, 5};
   int8_t input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                          20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
   const int out_element_num = 160;
@@ -134,8 +135,8 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor1) {
 TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor2) {
   std::vector<int> in_shape = {2, 2, 2, 5};
   std::vector<int> out_shape = {2, 4, 4, 5};
-  QuantArg quant_in = {0.00390625, 2};
-  QuantArg quant_out = {0.015625, 5};
+  LiteQuantParam quant_in = {0.00390625, 2};
+  LiteQuantParam quant_out = {0.015625, 5};
   int8_t input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                          20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
   const int out_element_num = 160;
@@ -161,8 +162,8 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor2) {
 TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor3) {
   std::vector<int> in_shape = {2, 2, 2, 5};
   std::vector<int> out_shape = {2, 4, 4, 5};
-  QuantArg quant_in = {0.00390625, 2};
-  QuantArg quant_out = {0.00390625, 2};
+  LiteQuantParam quant_in = {0.00390625, 2};
+  LiteQuantParam quant_out = {0.00390625, 2};
   int8_t input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                          20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
   const int out_element_num = 160;
@@ -187,8 +188,8 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor3) {
 TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor4) {
   std::vector<int> in_shape = {2, 2, 2, 5};
   std::vector<int> out_shape = {2, 4, 4, 5};
-  QuantArg quant_in = {0.00390625, 2};
-  QuantArg quant_out = {0.00390625, 2};
+  LiteQuantParam quant_in = {0.00390625, 2};
+  LiteQuantParam quant_out = {0.00390625, 2};
   int8_t input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                          20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39};
   const int out_element_num = 160;

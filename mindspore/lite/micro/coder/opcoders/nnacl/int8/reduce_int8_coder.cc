@@ -24,8 +24,8 @@
 using mindspore::schema::PrimitiveType_ReduceFusion;
 namespace mindspore::lite::micro::nnacl {
 int ReduceInt8Coder::CalculateQuantArgs() {
-  QuantArg input_quant = input_tensor_->quant_params().at(0);
-  QuantArg output_quant = output_tensor_->quant_params().at(0);
+  LiteQuantParam input_quant = input_tensor_->quant_params().at(0);
+  LiteQuantParam output_quant = output_tensor_->quant_params().at(0);
   quant_arg_.in_scale_ = input_quant.scale;
   quant_arg_.in_zp_ = input_quant.zeroPoint;
   quant_arg_.out_scale_ = output_quant.scale;

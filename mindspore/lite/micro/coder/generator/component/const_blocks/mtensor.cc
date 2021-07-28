@@ -42,7 +42,7 @@ const char tensor_header[] = R"RAW(
 
 namespace mindspore {
 namespace lite {
-struct QuantArg {
+struct LiteQuantParam {
   double scale;
   int32_t zeroPoint;
   float var_corr{1};
@@ -76,13 +76,15 @@ class MTensor : public mindspore::tensor::MSTensor {
   void *MutableData() override;
   void *data() override { return data_; }
   void set_data(void *data) override { data_ = data; }
+  Vector<LiteQuantParam> quant_params() const override { return this->quant_params_; }
+  void set_quant_params(const Vector<LiteQuantParam> quant_params) override { this->quant_params_ = quant_params; }
 
  private:
   String tensor_name_;
   TypeId data_type_;
   Vector<int> shape_;
   void *data_ = nullptr;
-  Vector<QuantArg> quant_params_;
+  Vector<LiteQuantParam> quant_params_;
 };
 }  // namespace lite
 }  // namespace mindspore

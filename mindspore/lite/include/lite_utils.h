@@ -51,6 +51,7 @@ class MSTensor;
 
 namespace lite {
 struct DeviceContext;
+struct LiteQuantParam;
 }  // namespace lite
 
 #ifdef NOT_USE_STL

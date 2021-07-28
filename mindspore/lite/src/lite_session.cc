@@ -94,7 +94,7 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
   auto quant_params = src_tensor->quantParams();
   if (quant_params != nullptr) {
     for (size_t j = 0; j < quant_params->size(); j++) {
-      QuantArg quant_arg{};
+      LiteQuantParam quant_arg{};
       quant_arg.bitNum = quant_params->Get(j)->numBits();
       quant_arg.scale = quant_params->Get(j)->scale();
       quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
@@ -378,7 +378,7 @@ void LiteSession::IsolateOutputTensor() {
       new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Tensor::GRAPH_OUTPUT);
     new_tensor->set_allocator(src_tensor->allocator()); /* GPU use opencl allocator */
     new_tensor->set_tensor_name(src_tensor->tensor_name() + "_duplicate");
-    for (QuantArg quant : src_tensor->quant_params()) {
+    for (LiteQuantParam quant : src_tensor->quant_params()) {
       new_tensor->AddQuantParam(quant);
     }
     new_tensor->set_init_ref_count(src_tensor->init_ref_count());

@@ -118,8 +118,8 @@ int DWConvInt8Coder::SetParameters() {
   stride_y_ = conv_param_->stride_h_;
   stride_x_ = conv_param_->stride_w_;
 
-  QuantArg input_quant_arg = input_tensor_->quant_params().at(0);
-  QuantArg output_quant_arg = output_tensor_->quant_params().at(0);
+  LiteQuantParam input_quant_arg = input_tensor_->quant_params().at(0);
+  LiteQuantParam output_quant_arg = output_tensor_->quant_params().at(0);
 
   output_x_ = output_tensor_->Width();
   output_y_ = output_tensor_->Height();
