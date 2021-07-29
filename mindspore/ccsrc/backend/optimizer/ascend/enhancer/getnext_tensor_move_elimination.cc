@@ -20,6 +20,9 @@
 #include "frontend/optimizer/opt.h"
 
 namespace mindspore::opt {
+namespace {
+constexpr size_t kTensorMoveNextNodeInputSize = 2;
+}  // namespace
 
 const BaseRef GetnextTensorMoveElimination::DefinePattern() const {
   auto prim_tensor_move = std::make_shared<Primitive>(kTensorMoveOpName);
@@ -74,7 +77,7 @@ const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph
       return nullptr;
     }
 
-    if (next_node->inputs().size() != 2) {
+    if (next_node->inputs().size() != kTensorMoveNextNodeInputSize) {
       MS_LOG(DEBUG) << "next node has more than one input";
       return nullptr;
     }

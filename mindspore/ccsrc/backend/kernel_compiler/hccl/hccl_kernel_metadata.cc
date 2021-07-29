@@ -51,7 +51,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
       return kOpFormat_DEFAULT;
     }
   }
-  if (format == kOpFormat_FRAC_NZ && input_shape.size() <= 2) {
+  if (format == kOpFormat_FRAC_NZ && input_shape.size() <= kShape2dDims) {
     return kOpFormat_DEFAULT;
   }
   if (kReduceNoSupportedSet.find(format) != kReduceNoSupportedSet.end()) {
