@@ -87,7 +87,7 @@ class TensorList : public Tensor {
 
   int CopyTensorData(const TensorList &src);
 
-  int SetTensor(int index, Tensor *src_tensor);
+  int SetTensor(int index, const Tensor *src_tensor);
 
   Tensor *GetTensor(int index);
 

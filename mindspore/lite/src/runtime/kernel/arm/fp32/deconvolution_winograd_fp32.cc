@@ -132,6 +132,10 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
     if (unit.use_winograd_) {
+      if (unit.winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
+        MS_LOG(ERROR) << "unit.winograd_.kh_ is larger than DECONV_WINOGRAD_BUFFER_COUNT, " << unit.winograd_.kh_;
+        return RET_ERROR;
+      }
       if (deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_ == false) {
         deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_ = true;
 

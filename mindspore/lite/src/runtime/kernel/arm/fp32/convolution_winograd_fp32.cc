@@ -38,7 +38,15 @@ int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_da
 int ConvolutionWinogradCPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   int in_channel = filter_tensor->Channel();
+  if (in_channel < 0) {
+    MS_LOG(ERROR) << "get channel from filter tensor failed.";
+    return RET_ERROR;
+  }
   int out_channel = filter_tensor->Batch();
+  if (out_channel < 0) {
+    MS_LOG(ERROR) << "get batch from filter tensor failed.";
+    return RET_ERROR;
+  }
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
 

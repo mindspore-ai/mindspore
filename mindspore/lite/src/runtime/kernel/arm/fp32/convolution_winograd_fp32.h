@@ -71,7 +71,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   }
   int kernel_unit_{0};
   int input_unit_{0};
-  int output_unit_;
+  int output_unit_{0};
   int oc_block_{0};
   int tile_num_{0};
   float *origin_weight_;  // do not free

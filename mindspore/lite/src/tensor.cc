@@ -177,7 +177,7 @@ int32_t Tensor::Height() const {
 int32_t Tensor::Width() const {
   if (this->shape_.size() != 4 && this->shape_.size() != 2) {
     MS_LOG(ERROR) << "Unsupported tensor shape: " << this->shape().size();
-    return -1;
+    return RET_ERROR;
   }
   switch (this->format_) {
     case mindspore::NCHW:

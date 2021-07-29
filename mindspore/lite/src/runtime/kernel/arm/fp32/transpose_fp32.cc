@@ -52,6 +52,10 @@ int TransposeCPUKernel::ReSize() {
     auto perm_tensor = in_tensors_.at(1);
     perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
   }
+  if (param_->num_axes_ > MAX_TRANSPOSE_DIM_SIZE) {
+    MS_LOG(ERROR) << "num_axes_ is large than MAX_TRANSPOSE_DIM_SIZE.";
+    return RET_ERROR;
+  }
   for (int i = 0; i < param_->num_axes_; ++i) {
     param_->perm_[i] = perm_data[i];
   }

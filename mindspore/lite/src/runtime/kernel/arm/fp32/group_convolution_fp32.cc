@@ -17,12 +17,17 @@
 #include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_delegate_fp32.h"
 
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int GroupConvolutionFp32CPUKernel::SeparateInput(int group_id) {
   auto in_tensor = in_tensors_.front();
   int in_plane = in_tensor->Height() * in_tensor->Width() * in_tensor->Batch();
+  if (in_plane < 0) {
+    MS_LOG(ERROR) << "get in_plane from in_tensor failed.";
+    return RET_ERROR;
+  }
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
   auto sub_in_data =
@@ -40,6 +45,10 @@ int GroupConvolutionFp32CPUKernel::SeparateInput(int group_id) {
 int GroupConvolutionFp32CPUKernel::PostConcat(int group_id) {
   auto out_tensor = out_tensors_.front();
   int out_plane = out_tensor->Height() * out_tensor->Width() * out_tensor->Batch();
+  if (out_plane < 0) {
+    MS_LOG(ERROR) << "get out_plane from out_tensor failed.";
+    return RET_ERROR;
+  }
   int sub_out_channel = conv_param_->output_channel_;
   int ori_out_channel = sub_out_channel * group_num_;
   auto sub_out_data =

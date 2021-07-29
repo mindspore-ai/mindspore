@@ -32,12 +32,12 @@ class UnsortedSegmentSumCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);
+
+ private:
   size_t unit_num_ = 0;
   size_t input_dim1_ = 0;
   size_t output_dim0_ = 0;
   size_t output_dim1_ = 0;
-
- private:
 };
 }  // namespace mindspore::kernel
 

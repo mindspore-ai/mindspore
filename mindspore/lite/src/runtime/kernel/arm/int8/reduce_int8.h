@@ -64,9 +64,6 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   int CallReduceUnit(int task_id);
   int ReduceLastAxis(int task_id);
 
- public:
-  bool is_last_axis_ = true;
-
  private:
   int MallocTmpBuffer();
   void FreeTmpBuffer();
@@ -84,6 +81,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   ReduceQuantArg quant_arg_;
   int8_t *nchw_in_data_ = nullptr;
   int32_t bias_ = 0;
+  bool is_last_axis_ = true;
 
  private:
   const lite::InnerContext *ctx_;
