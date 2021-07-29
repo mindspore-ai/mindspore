@@ -30,9 +30,10 @@ Status RedistributionLayoutTransfer::CheckValidTransfer() {
     bool not_all_repeat = std::any_of(from_map.begin(), from_map.end(), [](int64_t i) { return i != -1; }) ||
                           std::any_of(to_map.begin(), to_map.end(), [](int64_t i) { return i != -1; });
     if (from_in_ != to_in_ && not_all_repeat) {
-      MS_LOG(ERROR) << "In dynamic shape scene, the from_tensor_shape should be equal to to_tensor_shape";
-      MS_LOG(ERROR) << "from_in layout" << from_in_.ToString();
-      MS_LOG(ERROR) << "to_in layout" << to_in_.ToString();
+      MS_LOG(ERROR) << "In dynamic shape scene, the layout between the neighboring node should be equal "
+                       "in avoid to insert redistribution operators";
+      MS_LOG(ERROR) << "from layout" << from_in_.ToString();
+      MS_LOG(ERROR) << "to layout" << to_in_.ToString();
       return Status::FAILED;
     }
   }
