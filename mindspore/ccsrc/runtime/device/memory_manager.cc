@@ -30,7 +30,7 @@ size_t MemoryManager::GetCommonAlignSize(size_t input_size) {
   return (input_size + kMemAlignSize + kAlignBytes - 1) / kMemAlignSize * kMemAlignSize;
 }
 
-size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) const {
+size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) {
   return (input_size + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize + 2 * kMemAlignSize;
 }
 

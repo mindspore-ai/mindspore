@@ -63,6 +63,7 @@ class HcclAdapter {
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
+  HcclResult HcclExecAllToAllv(const ::HcomAllToAllVParams &params, const HExecCallBack &callback) const;
 
  private:
   HcclAdapter() = default;
@@ -99,6 +100,7 @@ class HcclAdapter {
   HcomExecInitializeFunObj hccl_exec_initialize_ = nullptr;
   HcomExecFinalizeFunObj hccl_exec_finalize_ = nullptr;
   HcomExecEnqueueOperationFunObj hccl_exec_enqueue_op_ = nullptr;
+  HcomExecEnqueueAllToAllVFunObj hccl_exec_enqueue_all_to_all_v_ = nullptr;
 
   HcclComm hccl_comm_ = nullptr;
 

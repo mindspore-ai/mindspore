@@ -91,6 +91,7 @@ void HcclAdapter::InitPlugin() {
   hccl_exec_initialize_ = DlsymFuncObj(HcomExecInitialize, plugin_handle_);
   hccl_exec_finalize_ = DlsymFuncObj(HcomExecFinalize, plugin_handle_);
   hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation, plugin_handle_);
+  hccl_exec_enqueue_all_to_all_v_ = DlsymFuncObj(HcomExecEnqueueAllToAllV, plugin_handle_);
 }
 
 void HcclAdapter::FinalizePlugin() {
@@ -113,6 +114,7 @@ void HcclAdapter::FinalizePlugin() {
   hccl_exec_initialize_ = nullptr;
   hccl_exec_finalize_ = nullptr;
   hccl_exec_enqueue_op_ = nullptr;
+  hccl_exec_enqueue_all_to_all_v_ = nullptr;
   (void)dlclose(plugin_handle_);
   plugin_handle_ = nullptr;
 }
@@ -402,5 +404,10 @@ bool HcclAdapter::FinalizeHcclExec() {
 HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const {
   MS_EXCEPTION_IF_NULL(hccl_exec_enqueue_op_);
   return hccl_exec_enqueue_op_(op_info, callback);
+}
+
+HcclResult HcclAdapter::HcclExecAllToAllv(const ::HcomAllToAllVParams &params, const HExecCallBack &callback) const {
+  MS_EXCEPTION_IF_NULL(hccl_exec_enqueue_all_to_all_v_);
+  return hccl_exec_enqueue_all_to_all_v_(params, callback);
 }
 }  // namespace mindspore::hccl

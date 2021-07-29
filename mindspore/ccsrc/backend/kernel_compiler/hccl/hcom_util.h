@@ -37,6 +37,7 @@ constexpr auto kBroadcast = "Broadcast";
 constexpr auto kHcomSend = "Send";
 constexpr auto kReceive = "Receive";
 constexpr auto kReduceScatter = "ReduceScatter";
+constexpr auto kAllToAllv = "AllToAllv";
 
 /* Correspondence between data_type and hcom data type in Ascend */
 static map<int64_t, HcclDataType> CONST_OP_HCOM_DATA_TYPE_MAP = {

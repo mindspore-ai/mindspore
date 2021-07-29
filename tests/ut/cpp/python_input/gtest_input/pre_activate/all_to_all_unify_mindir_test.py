@@ -1,0 +1,46 @@
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+import mindspore as ms
+from mindspore.ops.operations._inner_ops import NeighborExchange
+from mindspore.ops.operations.comm_ops import _AlltoAll
+
+class FnDict:
+    def __init__(self):
+        self.fnDict = {}
+
+    def __call__(self, fn):
+        self.fnDict[fn.__name__] = fn
+
+    def __getitem__(self, name):
+        return self.fnDict[name]
+
+def test_neighbor_exchange(tag):
+    fns = FnDict()
+    neighbor = NeighborExchange(send_rank_ids=[0], recv_rank_ids=[1], recv_shapes=([2, 3],), send_shapes=([2, 2],),
+                                recv_type=ms.float32)
+    @fns
+    def before(x):
+        return neighbor(x)
+
+    return fns[tag]
+
+def test_all_to_all(tag):
+    fns = FnDict()
+    altoall = _AlltoAll(split_count=8, split_dim=2, concat_dim=3)
+    @fns
+    def before(x):
+        return altoall(x)
+
+    return fns[tag]

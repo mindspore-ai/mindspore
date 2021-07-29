@@ -22,6 +22,7 @@
 #include <functional>
 #include "external/ge/ge_api_types.h"
 #include "hccl/hccl.h"
+#include "hccl/hcom.h"
 #include "utils/dlopen_macro.h"
 
 constexpr const char *kHcclOpsKernelInfoStore = "ops_kernel_info_hccl";
@@ -55,4 +56,5 @@ ORIGIN_METHOD(HcomGetRankSize, HcclResult, const char *, uint32_t *);
 ORIGIN_METHOD(HcomExecInitialize, HcclResult);
 ORIGIN_METHOD(HcomExecFinalize, HcclResult);
 ORIGIN_METHOD(HcomExecEnqueueOperation, HcclResult, ::HcomOperation, HExecCallBack);
+ORIGIN_METHOD(HcomExecEnqueueAllToAllV, HcclResult, ::HcomAllToAllVParams, HExecCallBack);
 #endif  // MINDSPORE_RUNTIME_HCCL_ADAPTER_PLUGIN_HCCL_PLUGIN_H
