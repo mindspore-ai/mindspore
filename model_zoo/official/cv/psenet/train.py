@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import ast
 import operator
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -35,7 +35,6 @@ from src.model_utils.device_adapter import get_device_id, get_device_num, get_ra
 
 
 set_seed(1)
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
 
 
 binOps = {
@@ -70,16 +69,25 @@ def modelarts_pre_process():
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train():
+    device_target = config.device_target
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target=device_target,
+                        device_id=get_device_id())
+
     rank_id = 0
     config.BASE_LR = arithmeticeval(config.BASE_LR)
     config.WARMUP_RATIO = arithmeticeval(config.WARMUP_RATIO)
 
     device_num = get_device_num()
     if config.run_distribute:
-        context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+        context.set_auto_parallel_context(device_num=device_num,
+                                          parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
         init()
-        rank_id = get_rank_id()
+        if device_target == 'Ascend':
+            rank_id = get_rank_id()
+        else:
+            rank_id = get_rank()
 
     # dataset/network/criterion/optim
     ds = train_dataset_creator(rank_id, device_num)
@@ -89,14 +97,18 @@ def train():
     config.INFERENCE = False
     net = ETSNet(config)
     net = net.set_train()
-    param_dict = load_checkpoint(config.pre_trained)
-    load_param_into_net(net, param_dict)
-    print('Load Pretrained parameters done!')
+
+    if config.pre_trained:
+        param_dict = load_checkpoint(config.pre_trained)
+        load_param_into_net(net, param_dict)
+        print('Load Pretrained parameters done!')
 
     criterion = DiceLoss(batch_size=config.TRAIN_BATCH_SIZE)
 
-    lrs = dynamic_lr(config.BASE_LR, config.TRAIN_TOTAL_ITER, config.WARMUP_STEP, config.WARMUP_RATIO)
-    opt = nn.SGD(params=net.trainable_params(), learning_rate=lrs, momentum=0.99, weight_decay=5e-4)
+    lrs = dynamic_lr(config.BASE_LR, config.TRAIN_TOTAL_ITER,
+                     config.WARMUP_STEP, config.WARMUP_RATIO)
+    opt = nn.SGD(params=net.trainable_params(), learning_rate=lrs,
+                 momentum=0.99, weight_decay=5e-4)
 
     # warp model
     net = WithLossCell(net, criterion)
@@ -109,11 +121,16 @@ def train():
     loss_cb = LossCallBack(per_print_times=10)
     # set and apply parameters of check point config.TRAIN_MODEL_SAVE_PATH
     ckpoint_cf = CheckpointConfig(save_checkpoint_steps=1875, keep_checkpoint_max=3)
-    ckpoint_cb = ModelCheckpoint(prefix="ETSNet", config=ckpoint_cf,
-                                 directory="{}/ckpt_{}".format(config.TRAIN_MODEL_SAVE_PATH, rank_id))
+    ckpoint_cb = ModelCheckpoint(prefix="ETSNet",
+                                 config=ckpoint_cf,
+                                 directory="{}/ckpt_{}".format(config.TRAIN_MODEL_SAVE_PATH,
+                                                               rank_id))
 
     model = Model(net)
-    model.train(config.TRAIN_REPEAT_NUM, ds, dataset_sink_mode=True, callbacks=[time_cb, loss_cb, ckpoint_cb])
+    model.train(config.TRAIN_REPEAT_NUM,
+                ds,
+                dataset_sink_mode=True,
+                callbacks=[time_cb, loss_cb, ckpoint_cb])
 
 
 if __name__ == '__main__':
