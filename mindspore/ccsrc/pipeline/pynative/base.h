@@ -58,7 +58,6 @@ struct OpExecInfo {
   std::string next_op_name = "";
   PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
-
   py::list op_inputs;
   std::vector<int64_t> inputs_mask;
 };

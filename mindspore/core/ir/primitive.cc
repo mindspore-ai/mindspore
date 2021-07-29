@@ -20,10 +20,10 @@
 #include "abstract/abstract_function.h"
 
 namespace mindspore {
-static std::string MakeId() {
+static uint64_t MakeId() {
   // Use atomic to make id generator thread safe.
   static std::atomic<uint64_t> last_id{1};
-  return "P" + std::to_string(last_id.fetch_add(1, std::memory_order_relaxed));
+  return last_id.fetch_add(1, std::memory_order_relaxed);
 }
 
 Primitive::Primitive(const std::string &name, const bool is_base, const PrimType prim_type)

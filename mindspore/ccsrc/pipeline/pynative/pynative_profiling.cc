@@ -34,11 +34,11 @@ void PynativeProfiler::SetEnableProfilingFlag() {
   flag = true;
 }
 
-void PynativeProfiler::SetForwardTimePoint(std::string stage_name, std::string flag) {
+void PynativeProfiler::SetForwardTimePoint(const std::string &stage_name, const std::string &flag) {
   if (!enable_profiler_flag_) {
     return;
   }
-  forward_data_.push_back(std::make_pair(stage_name, std::make_pair(flag, GetTime())));
+  forward_data_.emplace_back(stage_name, std::make_pair(flag, GetTime()));
 }
 
 void PynativeProfiler::SetRealRunOpName(const std::string &name) {
@@ -48,11 +48,11 @@ void PynativeProfiler::SetRealRunOpName(const std::string &name) {
   real_run_op_name_ = name;
 }
 
-void PynativeProfiler::SetBackwardTimePoint(std::string stage_name, std::string flag) {
+void PynativeProfiler::SetBackwardTimePoint(const std::string &stage_name, const std::string &flag) {
   if (!enable_profiler_flag_) {
     return;
   }
-  backward_data_.push_back(std::make_pair(stage_name, std::make_pair(flag, GetTime())));
+  backward_data_.emplace_back(stage_name, std::make_pair(flag, GetTime()));
 }
 
 void PynativeProfiler::SetBackwardRunOpImplOpName(const std::string &name) {
@@ -99,8 +99,8 @@ void PynativeProfiler::SingleOpBackwardHostProfilingData() {
   }
   of_host << std::endl;
   of_host << backward_run_grad_graph_index_;
-  int backward_run_op_impl_op_name_index = 0;
-  int backward_run_op_impl_op_name_size = backward_run_op_impl_op_name_.size();
+  size_t backward_run_op_impl_op_name_index = 0;
+  size_t backward_run_op_impl_op_name_size = backward_run_op_impl_op_name_.size();
   for (const auto &i : backward_data_) {
     if (i.first == "BackwardRunOpImpl" && i.second.first == "Start") {
       if (backward_run_op_impl_op_name_index >= backward_run_op_impl_op_name_size) {

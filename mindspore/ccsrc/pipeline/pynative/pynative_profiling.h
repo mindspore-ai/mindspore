@@ -26,9 +26,11 @@
 namespace mindspore {
 class PynativeProfiler {
  public:
-  static void SetForwardTimePoint(std::string stage_name, std::string flag);
+  PynativeProfiler(const PynativeProfiler &) = delete;
+  PynativeProfiler &operator=(const PynativeProfiler &) = delete;
+  static void SetForwardTimePoint(const std::string &stage_name, const std::string &flag);
   static void SetRealRunOpName(const std::string &name);
-  static void SetBackwardTimePoint(std::string stage_name, std::string flag);
+  static void SetBackwardTimePoint(const std::string &stage_name, const std::string &flag);
   static void SetBackwardRunOpImplOpName(const std::string &name);
   static void SetOpNameAndLaunchTime(const std::pair<std::string, std::pair<double, double>> &name_start_end) {
     op_name_launch_time_vec_.push_back(name_start_end);
@@ -42,8 +44,6 @@ class PynativeProfiler {
  private:
   PynativeProfiler() = default;
   ~PynativeProfiler() = default;
-  PynativeProfiler(const PynativeProfiler &) = delete;
-  PynativeProfiler &operator=(const PynativeProfiler &) = delete;
   inline static bool enable_profiler_flag_ = false;
   inline static int real_run_op_index_ = 0;
   inline static std::string real_run_op_name_;

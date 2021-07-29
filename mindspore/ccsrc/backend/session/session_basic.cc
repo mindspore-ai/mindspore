@@ -1209,7 +1209,7 @@ GraphInfo SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel,
     const auto output_type = AnfAlgo::GetOutputInferDataType(kernel, output_index);
     (void)graph_info.append(std::to_string(output_type) + "_");
   }
-  graph_info.append(prim->id());
+  graph_info.append(std::to_string(prim->id()));
   return graph_info;
 }
 
