@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ std::vector<int64_t> PoolGrad::_grad_check_vector(const std::string &arg_name, s
                                                   const std::string &op_name) {
   std::vector<int64_t> ret;
   std::string error_msg = "For '" + op_name + "'" + " the '" + arg_name +
-                          "' should be a vector of one or two or four "
-                          "positive int number, but got error arg_val";
+                          "' should be a vector of one, two or four "
+                          "positive int number(s), but got error arg_val";
   switch ((int64_t)arg_val.size()) {
     case 1:
       ret = {1, 1, arg_val[0], arg_val[0]};
@@ -76,21 +76,25 @@ void PoolGrad::set_format(const Format &format) {
 
 std::vector<int64_t> PoolGrad::get_kernel_size() const {
   auto value_ptr = GetAttr(kKernelSize);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 std::vector<int64_t> PoolGrad::get_strides() const {
   auto value_ptr = GetAttr(kStrides);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 PadMode PoolGrad::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
 Format PoolGrad::get_format() const {
   auto value_ptr = GetAttr(kFormat);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return Format(GetValue<int64_t>(value_ptr));
 }
 

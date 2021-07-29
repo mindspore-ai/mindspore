@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ void BNGrad::set_eps(const float eps) { (void)this->AddAttr(kEps, MakeValue(eps)
 
 float BNGrad::get_eps() const {
   auto value_ptr = this->GetAttr(kEps);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
@@ -37,6 +38,7 @@ void BNGrad::set_momentum(const float momentum) { (void)this->AddAttr(kMomentum,
 
 float BNGrad::get_momentum() const {
   auto value_ptr = this->GetAttr(kMomentum);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNameBNGrad, BNGrad);

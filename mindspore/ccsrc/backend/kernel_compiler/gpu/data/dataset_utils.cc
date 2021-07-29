@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ int ElementNums(const std::vector<int> &shape) {
 }
 
 void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> *shapes, std::vector<TypePtr> *types) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(shapes);
   MS_EXCEPTION_IF_NULL(types);
   std::vector<std::vector<int64_t>> shapes_me =

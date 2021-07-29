@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,21 @@ namespace ops {
 void PowerGrad::set_power(const float power) { (void)this->AddAttr(kPower, MakeValue(power)); }
 float PowerGrad::get_power() const {
   auto value_ptr = GetAttr(kPower);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
 void PowerGrad::set_scale(const float scale) { (void)this->AddAttr(kScale, MakeValue(scale)); }
 float PowerGrad::get_scale() const {
   auto value_ptr = GetAttr(kScale);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
 void PowerGrad::set_shift(const float shift) { (void)this->AddAttr(kShift, MakeValue(shift)); }
 float PowerGrad::get_shift() const {
   auto value_ptr = GetAttr(kShift);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 

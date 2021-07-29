@@ -172,51 +172,61 @@ void Conv2DBackpropInput::set_pad_list(const std::vector<int64_t> &pad_list) {
 
 int64_t Conv2DBackpropInput::get_out_channel() const {
   auto value_ptr = GetAttr(kOutChannel);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
 std::vector<int64_t> Conv2DBackpropInput::get_kernel_size() const {
   auto value_ptr = GetAttr(kKernelSize);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 std::vector<int64_t> Conv2DBackpropInput::get_stride() const {
   auto value_ptr = GetAttr(kStride);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 std::vector<int64_t> Conv2DBackpropInput::get_dilation() const {
   auto value_ptr = GetAttr(kDilation);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 PadMode Conv2DBackpropInput::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
 std::vector<int64_t> Conv2DBackpropInput::get_pad() const {
   auto value_ptr = GetAttr(kPad);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 int64_t Conv2DBackpropInput::get_mode() const {
   auto value_ptr = GetAttr(kMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
 int64_t Conv2DBackpropInput::get_group() const {
   auto value_ptr = GetAttr(kGroup);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
 Format Conv2DBackpropInput::get_format() const {
   auto value_ptr = GetAttr(kFormat);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return Format(GetValue<int64_t>(value_ptr));
 }
 
 std::vector<int64_t> Conv2DBackpropInput::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput, Conv2DBackpropInputInfer, nullptr,
