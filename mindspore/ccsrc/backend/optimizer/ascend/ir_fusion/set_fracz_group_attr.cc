@@ -120,7 +120,6 @@ void SetAttrForOutputNode(const FuncGraphManagerPtr &manager, const AnfNodePtr &
       auto output_idx = GetValue<int64_t>(GetValueNode(getitem_input2));
       if (output_idx == getitem_idx) {
         SetAttrForOutputNode(manager, output_node, groups);
-        return;
       }
     } else {
       SetAttrForOutputNode(manager, output_node, groups);

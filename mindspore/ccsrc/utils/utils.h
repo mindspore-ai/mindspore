@@ -457,6 +457,7 @@ constexpr auto kValueTargetOther = "target_other";
 
 // some size
 const size_t kShape4dDims = 4;
+const size_t kShape3dDims = 3;
 const size_t kShape2dDims = 2;
 const size_t kShape5dDims = 5;
 const size_t kShape1dDims = 1;

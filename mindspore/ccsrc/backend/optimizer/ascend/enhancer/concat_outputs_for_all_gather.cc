@@ -58,8 +58,8 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat, con
   size_t concat_input_num = AnfAlgo::GetInputTensorNum(concat);
   for (size_t i = 0; i < concat_input_num; ++i) {
     size_t input_index = allgather_input_idx + i * allgather_input_num;
-    inputs_device_format.emplace_back(std::get<2>(allgather_output_info)[input_index]);
-    inputs_device_type.emplace_back(std::get<3>(allgather_output_info)[input_index]);
+    inputs_device_format.emplace_back(std::get<kIndex2>(allgather_output_info)[input_index]);
+    inputs_device_type.emplace_back(std::get<kIndex3>(allgather_output_info)[input_index]);
   }
   // Current only support default format & float16
   auto cmp_format = inputs_device_format.begin();
