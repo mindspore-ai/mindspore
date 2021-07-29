@@ -63,7 +63,9 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
     auto in_shape = input_tensors_.at(i)->shape();
     concat_param_->input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
     MS_CHECK_PTR(concat_param_->input_shapes_[i]);
-    memcpy(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), in_shape.data(), sizeof(int) * in_shape.size());
+    MS_CHECK_RET_CODE(memcpy_s(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), sizeof(int) * in_shape.size(),
+                               in_shape.data(), sizeof(int) * in_shape.size()),
+                      "memcpy_s failed");
   }
 
   before_axis_size = 1;
@@ -75,8 +77,9 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
   int output_dim = static_cast<int>(output_tensor_->shape().size());
   concat_param_->output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
   MS_CHECK_PTR(concat_param_->output_shapes_);
-  memcpy_s(reinterpret_cast<void *>(concat_param_->output_shapes_), output_dim * sizeof(int),
-           output_tensor_->shape().data(), sizeof(int) * output_dim);
+  MS_CHECK_RET_CODE(memcpy_s(reinterpret_cast<void *>(concat_param_->output_shapes_), output_dim * sizeof(int),
+                             output_tensor_->shape().data(), sizeof(int) * output_dim),
+                    "memcpy_s failed");
   for (int i = axis_ + 1; i < output_dim; i++) {
     after_axis_size *= concat_param_->output_shapes_[i];
   }

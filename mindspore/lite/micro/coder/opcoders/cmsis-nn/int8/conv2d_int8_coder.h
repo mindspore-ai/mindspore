@@ -63,7 +63,7 @@ class Conv2DInt8Coder final : public Conv2DBaseCoder {
   uint16_t output_y_{0};
 
   int16_t *buffer_{nullptr};
-  int32_t buffer_size_{0};
+  size_t buffer_size_{0};
 
   ConvOpt opt_{ConvOpt::Basic};
 };
