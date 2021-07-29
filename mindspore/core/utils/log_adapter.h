@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,6 +223,13 @@ class LogWriter {
     if ((ptr) == nullptr) {                                          \
       MS_LOG(EXCEPTION) << ": The pointer[" << #ptr << "] is null."; \
     }                                                                \
+  } while (0)
+
+#define MS_EXCEPTION_IF_ZERO(name, value)                   \
+  do {                                                      \
+    if (value == 0) {                                       \
+      MS_LOG(EXCEPTION) << ": The " << name << " is zero."; \
+    }                                                       \
   } while (0)
 
 #define MS_ERROR_IF_NULL(ptr)                                    \

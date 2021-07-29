@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,14 +48,17 @@ void Conv2DFusion::set_activation_type(const ActivationType &activation_type) {
 }
 int64_t Conv2DFusion::get_in_channel() const {
   auto value_ptr = GetAttr(kInChannel);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 std::vector<int64_t> Conv2DFusion::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 ActivationType Conv2DFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 REGISTER_PRIMITIVE_C(kNameConv2DFusion, Conv2DFusion);

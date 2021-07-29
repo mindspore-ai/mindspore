@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,13 @@ void TopKFusion::set_largest(const int64_t largest) { (void)this->AddAttr(kLarge
 
 int64_t TopKFusion::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
 int64_t TopKFusion::get_largest() const {
   auto value_ptr = GetAttr(kLargest);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNameTopKFusion, TopKFusion);

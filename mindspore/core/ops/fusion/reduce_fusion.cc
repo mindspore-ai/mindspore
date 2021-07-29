@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,21 +41,25 @@ void ReduceFusion::set_coeff(const float coeff) { (void)this->AddAttr(kCoeff, Ma
 
 bool ReduceFusion::get_keep_dims() const {
   auto value_ptr = GetAttr(kKeepDims);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 
 ReduceMode ReduceFusion::get_mode() const {
   auto value_ptr = GetAttr(kMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ReduceMode(GetValue<int64_t>(value_ptr));
 }
 
 bool ReduceFusion::get_reduce_to_end() const {
   auto value_ptr = GetAttr(kReduceToEnd);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 
 float ReduceFusion::get_coeff() const {
   auto value_ptr = GetAttr(kCoeff);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 

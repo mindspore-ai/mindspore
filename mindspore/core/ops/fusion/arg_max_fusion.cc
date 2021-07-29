@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,21 @@ void ArgMaxFusion::set_out_max_value(const bool out_max_value) {
 }
 void ArgMaxFusion::set_top_k(const int64_t top_k) { (void)this->AddAttr(kTopK, MakeValue(top_k)); }
 
-bool ArgMaxFusion::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); }
-bool ArgMaxFusion::get_out_max_value() const { return GetValue<bool>(GetAttr(kOutMaxValue)); }
-int64_t ArgMaxFusion::get_top_k() const { return GetValue<int64_t>(GetAttr(kTopK)); }
+bool ArgMaxFusion::get_keep_dims() const {
+  auto keep_dims = GetAttr(kKeepDims);
+  MS_EXCEPTION_IF_NULL(keep_dims);
+  return GetValue<bool>(keep_dims);
+}
+bool ArgMaxFusion::get_out_max_value() const {
+  auto out_maxv = GetAttr(kOutMaxValue);
+  MS_EXCEPTION_IF_NULL(out_maxv);
+  return GetValue<bool>(out_maxv);
+}
+int64_t ArgMaxFusion::get_top_k() const {
+  auto topk = GetAttr(kTopK);
+  MS_EXCEPTION_IF_NULL(topk);
+  return GetValue<int64_t>(topk);
+}
 
 REGISTER_PRIMITIVE_C(kNameArgMaxFusion, ArgMaxFusion);
 }  // namespace ops

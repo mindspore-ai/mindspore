@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,25 @@ namespace mindspore {
 namespace ops {
 void FullConnection::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, MakeValue(has_bias)); }
 
-bool FullConnection::get_has_bias() const { return GetValue<bool>(GetAttr(kHasBias)); }
+bool FullConnection::get_has_bias() const {
+  auto value_ptr = GetAttr(kHasBias);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<bool>(value_ptr);
+}
 
 void FullConnection::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
-int64_t FullConnection::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
+int64_t FullConnection::get_axis() const {
+  auto value_ptr = GetAttr(kAxis);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<int64_t>(value_ptr);
+}
 
 void FullConnection::set_use_axis(const bool use_axis) { (void)this->AddAttr(kUseAxis, MakeValue(use_axis)); }
-bool FullConnection::get_use_axis() const { return GetValue<bool>(GetAttr(kUseAxis)); }
+bool FullConnection::get_use_axis() const {
+  auto value_ptr = GetAttr(kUseAxis);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<bool>(value_ptr);
+}
 
 void FullConnection::set_activation_type(const ActivationType &activation_type) {
   int64_t swi = activation_type;
@@ -36,6 +48,7 @@ void FullConnection::set_activation_type(const ActivationType &activation_type) 
 }
 ActivationType FullConnection::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 void FullConnection::Init(const bool has_bias, const int64_t axis, const bool use_axis,
@@ -57,14 +70,16 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input1->BuildShape())[kShape];
   auto prim_axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   auto has_bias = GetValue<bool>(primitive->GetAttr(kHasBias));
+  const int64_t input_num_bias = 3;
+  const int64_t input_num = 2;
   if (has_bias) {
-    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 3, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, input_num_bias, prim_name);
   } else {
-    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 2, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, input_num, prim_name);
   }
   auto use_axis = GetValue<bool>(primitive->GetAttr(kUseAxis));
   if (use_axis && (prim_axis < 1 || prim_axis > (int64_t)input0_shape.size())) {
-    MS_EXCEPTION(ValueError) << "Full Connection axis invalid";
+    MS_EXCEPTION(ValueError) << "Full Connection axis is invalid";
   }
   int64_t new_k = 1;
   if (use_axis) {
@@ -72,7 +87,7 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
       new_k *= input0_shape[t];
     }
     if (new_k != input1_shape[1]) {
-      MS_EXCEPTION(ValueError) << "Input1 size invalid";
+      MS_EXCEPTION(ValueError) << "Input1 size is invalid";
     }
   } else {
     new_k = input1_shape[1];
@@ -80,7 +95,7 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   if (has_bias) {
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
     if (input2_shape[0] != input1_shape[0]) {
-      MS_EXCEPTION(ValueError) << "Bias size invalid";
+      MS_EXCEPTION(ValueError) << "Bias size is invalid";
     }
   }
   std::vector<int64_t> out_shape = {(int64_t)input0_shape.size()};

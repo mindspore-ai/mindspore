@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ void DeConv2DGradFilter::set_in_channel(const int64_t in_channel) {
 
 int64_t DeConv2DGradFilter::get_in_channel() const {
   auto value_ptr = GetAttr(kInChannel);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
@@ -54,6 +55,7 @@ void DeConv2DGradFilter::set_out_channel(const int64_t out_channel) {
 
 int64_t DeConv2DGradFilter::get_out_channel() const {
   auto value_ptr = GetAttr(kOutChannel);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
@@ -63,6 +65,7 @@ void DeConv2DGradFilter::set_kernel_size(const std::vector<int64_t> &kernel_size
 
 std::vector<int64_t> DeConv2DGradFilter::get_kernel_size() const {
   auto value_ptr = GetAttr(kKernelSize);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -73,6 +76,7 @@ void DeConv2DGradFilter::set_pad_mode(const PadMode &pad_mode) {
 
 PadMode DeConv2DGradFilter::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
@@ -82,6 +86,7 @@ void DeConv2DGradFilter::set_pad_list(const std::vector<int64_t> &pad_list) {
 
 std::vector<int64_t> DeConv2DGradFilter::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -91,6 +96,7 @@ void DeConv2DGradFilter::set_stride(const std::vector<int64_t> &stride) {
 
 std::vector<int64_t> DeConv2DGradFilter::get_stride() const {
   auto value_ptr = GetAttr(kStride);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -100,6 +106,7 @@ void DeConv2DGradFilter::set_dilation(const std::vector<int64_t> &dilation) {
 
 std::vector<int64_t> DeConv2DGradFilter::get_dilation() const {
   auto value_ptr = GetAttr(kDilation);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
@@ -107,6 +114,7 @@ void DeConv2DGradFilter::set_group(const int64_t group) { (void)this->AddAttr(kG
 
 int64_t DeConv2DGradFilter::get_group() const {
   auto value_ptr = GetAttr(kGroup);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
@@ -117,6 +125,7 @@ void DeConv2DGradFilter::set_format(const Format &format) {
 
 Format DeConv2DGradFilter::get_format() const {
   auto value_ptr = GetAttr(kFormat);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return Format(GetValue<int64_t>(value_ptr));
 }
 
@@ -127,6 +136,7 @@ void DeConv2DGradFilter::set_activation_type(const ActivationType &activation_ty
 
 ActivationType DeConv2DGradFilter::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
@@ -134,6 +144,7 @@ void DeConv2DGradFilter::set_has_bias(const bool has_bias) { (void)this->AddAttr
 
 bool DeConv2DGradFilter::get_has_bias() const {
   auto value_ptr = GetAttr(kHasBias);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNameDeConv2DGradFilter, DeConv2DGradFilter);

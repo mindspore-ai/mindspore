@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ void DropoutGrad::set_keep_prob(const float keep_prob) {
 
 float DropoutGrad::get_keep_prob() const {
   auto value_ptr = GetAttr(kKeepProb);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 
@@ -55,6 +56,13 @@ TypePtr DropoutGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 
 AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInteger("DropoutGrad infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                     primitive->name());
   return std::make_shared<abstract::AbstractTensor>(DropoutGradInferType(primitive, input_args),
                                                     DropoutGradInferShape(primitive, input_args)->shape());
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,12 @@ void PadFusion::set_constant_value(const float constant_value) {
 
 PaddingMode PadFusion::get_padding_mode() const {
   auto value_ptr = GetAttr(kPaddingMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return PaddingMode(GetValue<int64_t>(value_ptr));
 }
 float PadFusion::get_constant_value() const {
   auto value_ptr = GetAttr(kConstantValue);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
 

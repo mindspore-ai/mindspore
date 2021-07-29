@@ -70,6 +70,7 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     uint32_t time_interval = std::chrono::system_clock::now().time_since_epoch().count();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {

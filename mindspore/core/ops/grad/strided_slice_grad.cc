@@ -38,6 +38,7 @@ void StridedSliceGrad::set_begin_mask(int64_t begin_mask) {
 }
 int64_t StridedSliceGrad::get_begin_mask() const {
   auto value_ptr = GetAttr(kBeginMask);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_end_mask(int64_t end_mask) {
@@ -46,6 +47,7 @@ void StridedSliceGrad::set_end_mask(int64_t end_mask) {
 }
 int64_t StridedSliceGrad::get_end_mask() const {
   auto value_ptr = GetAttr(kEndMask);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_ellipsis_mask(int64_t ellipsis_mask) {
@@ -60,6 +62,7 @@ void StridedSliceGrad::set_ellipsis_mask(int64_t ellipsis_mask) {
 }
 int64_t StridedSliceGrad::get_ellipsis_mask() const {
   auto value_ptr = GetAttr(kEllipsisMask);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_new_axis_mask(int64_t new_axis_mask) {
@@ -68,6 +71,7 @@ void StridedSliceGrad::set_new_axis_mask(int64_t new_axis_mask) {
 }
 int64_t StridedSliceGrad::get_new_axis_mask() const {
   auto value_ptr = GetAttr(kNewAxisMask);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 void StridedSliceGrad::set_shrink_axis_mask(int64_t shrink_axis_mask) {
@@ -76,6 +80,7 @@ void StridedSliceGrad::set_shrink_axis_mask(int64_t shrink_axis_mask) {
 }
 int64_t StridedSliceGrad::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);
+  MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 REGISTER_PRIMITIVE_C(kNameStridedSliceGrad, StridedSliceGrad);
