@@ -87,7 +87,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }
 }  // namespace
 
-void Reduce::set_keep_dims(const bool keep_dims) { this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
+void Reduce::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
 
 bool Reduce::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); }
 

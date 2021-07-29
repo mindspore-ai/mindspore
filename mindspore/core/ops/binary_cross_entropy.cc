@@ -71,7 +71,7 @@ TypePtr BinaryCrossEntroyInferType(const PrimitivePtr &prim, const std::vector<A
 
 void BinaryCrossEntropy::set_reduction(const Reduction &reduction) {
   int64_t swi = reduction;
-  this->AddAttr(kReduction, MakeValue(swi));
+  (void)this->AddAttr(kReduction, MakeValue(swi));
 }
 
 Reduction BinaryCrossEntropy::get_reduction() const {
@@ -83,7 +83,7 @@ void BinaryCrossEntropy::Init(const Reduction &reduction) { this->set_reduction(
 AbstractBasePtr BinaryCrossEntropyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(BinaryCrossEntroyInferType(primitive, input_args),
-                                                    BinaryCrossEntroyInferShape(primitive, input_args)->shape());
+                                                    BinaryCrossEntroyInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameBinaryCrossEntropy, BinaryCrossEntropy);
 }  // namespace ops

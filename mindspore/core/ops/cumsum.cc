@@ -27,14 +27,14 @@ void CumSum::Init(const bool exclusive, const bool reverse) {
   this->set_reverse(reverse);
 }
 
-void CumSum::set_exclusive(const bool exclusive) { this->AddAttr(kExclusive, MakeValue(exclusive)); }
+void CumSum::set_exclusive(const bool exclusive) { (void)this->AddAttr(kExclusive, MakeValue(exclusive)); }
 
 bool CumSum::get_exclusive() const {
   auto value_ptr = this->GetAttr(kExclusive);
   return GetValue<bool>(value_ptr);
 }
 
-void CumSum::set_reverse(const bool reverse) { this->AddAttr(kReverse, MakeValue(reverse)); }
+void CumSum::set_reverse(const bool reverse) { (void)this->AddAttr(kReverse, MakeValue(reverse)); }
 
 bool CumSum::get_reverse() const {
   auto value_ptr = this->GetAttr(kReverse);
@@ -44,7 +44,7 @@ AbstractBasePtr CumSumInfer(const abstract::AnalysisEnginePtr &, const Primitive
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

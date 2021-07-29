@@ -47,7 +47,7 @@ std::vector<int64_t> _get_pack_shape(std::vector<BaseShapePtr> x_shapes, std::ve
 }
 }  // namespace
 
-void Pack::set_axis(const int64_t &axis) { AddAttr(kAxis, MakeValue(axis)); }
+void Pack::set_axis(const int64_t &axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t Pack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 

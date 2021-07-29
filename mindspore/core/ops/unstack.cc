@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace ops {
 void Unstack::Init(const int64_t axis) { this->set_axis(axis); }
-void Unstack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
+void Unstack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
 int64_t Unstack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {

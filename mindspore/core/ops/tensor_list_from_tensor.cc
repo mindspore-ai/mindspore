@@ -34,7 +34,7 @@ abstract::ShapePtr TensorListFromTensorInferShape(const PrimitivePtr &primitive,
     MS_LOG(ERROR) << "input[0] dim0:" << dim0 << " must be greater than or equal to 0!";
   }
   auto input1 = &input1_shape[0];
-  MS_ASSERT(input1 != nullptr);
+  MS_EXCEPTION_IF_NULL(input1);
   if (input1 == nullptr) {
     MS_LOG(ERROR) << "input1 is nullptr";
   }
@@ -63,11 +63,11 @@ int64_t TensorListFromTensor::get_shape_type() const {
 }
 
 void TensorListFromTensor::set_element_dtype(const int64_t element_dtype) {
-  this->AddAttr(kElement_dtype, MakeValue(element_dtype));
+  (void)this->AddAttr(kElement_dtype, MakeValue(element_dtype));
 }
 
 void TensorListFromTensor::set_shape_type(const int64_t shape_type) {
-  this->AddAttr(kShapeType, MakeValue(shape_type));
+  (void)this->AddAttr(kShapeType, MakeValue(shape_type));
 }
 
 AbstractBasePtr TensorListFromTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

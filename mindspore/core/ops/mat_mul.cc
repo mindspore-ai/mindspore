@@ -56,8 +56,8 @@ abstract::ShapePtr MatMulInferShape(const PrimitivePtr &primitive, const std::ve
                                << ", x2 shape " << y_shp << "(transpose_b=" << transpose_b << "})";
     }
   }
-  primitive->AddAttr("transpose_x1", transpose_a_ptr);
-  primitive->AddAttr("transpose_x2", transpose_b_ptr);
+  (void)primitive->AddAttr("transpose_x1", transpose_a_ptr);
+  (void)primitive->AddAttr("transpose_x2", transpose_b_ptr);
 
   ShapeVector x_min_shape = x_shape_map[kMinShape];
   ShapeVector x_max_shape = x_shape_map[kMaxShape];
@@ -109,9 +109,9 @@ void MatMul::Init(bool transpose_a, bool transpose_b) {
   set_transpose_b(transpose_b);
 }
 
-void MatMul::set_transpose_a(bool transpose_a) { AddAttr(kTransposeA, MakeValue(transpose_a)); }
+void MatMul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, MakeValue(transpose_a)); }
 
-void MatMul::set_transpose_b(bool transpose_b) { AddAttr(kTransposeB, MakeValue(transpose_b)); }
+void MatMul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, MakeValue(transpose_b)); }
 
 bool MatMul::get_transpose_a() const {
   auto value_ptr = GetAttr(kTransposeA);

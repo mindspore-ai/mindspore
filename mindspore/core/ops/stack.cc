@@ -57,7 +57,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
 }
 }  // namespace
 
-void Stack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
+void Stack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t Stack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 

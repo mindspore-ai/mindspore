@@ -25,12 +25,12 @@
 
 namespace mindspore {
 namespace ops {
-void ResizeBilinear::set_size(const std::vector<int64_t> &size) { this->AddAttr(kSize, MakeValue(size)); }
+void ResizeBilinear::set_size(const std::vector<int64_t> &size) { (void)this->AddAttr(kSize, MakeValue(size)); }
 
 std::vector<int64_t> ResizeBilinear::get_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kSize)); }
 
 void ResizeBilinear::set_align_corners(const bool align_corners) {
-  this->AddAttr(kAlignCorners, MakeValue(align_corners));
+  (void)this->AddAttr(kAlignCorners, MakeValue(align_corners));
 }
 
 bool ResizeBilinear::get_align_corners() const {
@@ -50,7 +50,7 @@ AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const P
 
   // Infer shape
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("input_shape_rank", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_shape_rank", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
   std::vector<int64_t> out_shape = {input_shape[0], input_shape[1]};
   auto size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSize));
   out_shape.insert(out_shape.end(), size.begin(), size.end());

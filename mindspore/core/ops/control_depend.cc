@@ -22,7 +22,7 @@ void ControlDepend::Init(const int64_t depend_mode) { this->set_depend_mode(depe
 
 void ControlDepend::set_depend_mode(const int64_t depend_mode) {
   CheckAndConvertUtils::CheckInRange<int64_t>(kDependMode, depend_mode, kIncludeBoth, {0, 1}, name());
-  AddAttr(kDependMode, MakeValue(depend_mode));
+  (void)AddAttr(kDependMode, MakeValue(depend_mode));
 }
 
 int64_t ControlDepend::get_depend_mode() const {

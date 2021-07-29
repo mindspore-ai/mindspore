@@ -25,14 +25,14 @@ void LpNormalization::Init(const int64_t axis, const int64_t p) {
   this->set_p(p);
 }
 
-void LpNormalization::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void LpNormalization::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t LpNormalization::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
   return GetValue<int64_t>(value_ptr);
 }
 
-void LpNormalization::set_p(const int64_t p) { this->AddAttr(kP, MakeValue(p)); }
+void LpNormalization::set_p(const int64_t p) { (void)this->AddAttr(kP, MakeValue(p)); }
 
 int64_t LpNormalization::get_p() const {
   auto value_ptr = this->GetAttr(kP);

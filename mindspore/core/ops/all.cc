@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 void All::Init(const int64_t keep_dims) { this->set_keep_dims(keep_dims); }
 
-void All::set_keep_dims(const int64_t keep_dims) { this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
+void All::set_keep_dims(const int64_t keep_dims) { (void)this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
 
 int64_t All::get_keep_dims() const {
   auto value_ptr = GetAttr(kKeepDims);

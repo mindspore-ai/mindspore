@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 void Assert::Init(const int64_t summarize) { set_summarize(summarize); }
 
-void Assert::set_summarize(const int64_t summarize) { this->AddAttr(kSummarize, MakeValue(summarize)); }
+void Assert::set_summarize(const int64_t summarize) { (void)this->AddAttr(kSummarize, MakeValue(summarize)); }
 
 int64_t Assert::get_summarize() const {
   auto value_ptr = GetAttr(kSummarize);
@@ -41,9 +41,10 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
   TypePtr condition;
   if (!(input_args[0]->BuildType()->type_id() == kObjectTypeTensorType)) {
     auto condition_values = GetValue<std::vector<bool>>(input_args[0]->BuildValue());
-    CheckAndConvertUtils::CheckInteger("condition's rank", SizeToLong(condition_values.size()), kLessEqual, 1, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("condition's rank", SizeToLong(condition_values.size()), kLessEqual, 1,
+                                             op_name);
     if (condition_values.size() == 1) {
-      CheckAndConvertUtils::CheckInteger("condition[0]", SizeToLong(condition_values[0]), kEqual, 1, op_name);
+      (void)CheckAndConvertUtils::CheckInteger("condition[0]", SizeToLong(condition_values[0]), kEqual, 1, op_name);
     }
     condition = TypeIdToType(kNumberTypeBool);
   } else {

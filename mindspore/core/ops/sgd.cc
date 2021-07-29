@@ -26,12 +26,12 @@ void SGD::Init(const float dampening, const float weight_decay, const bool neste
 
 void SGD::set_dampening(const float dampening) {
   if (get_nesterov()) CheckAndConvertUtils::CheckValue<float>(kDampening, dampening, kEqual, 0.0, name());
-  AddAttr(kDampening, MakeValue(dampening));
+  (void)AddAttr(kDampening, MakeValue(dampening));
 }
 
-void SGD::set_weight_decay(const float weight_decay) { AddAttr(kWeightDecay, MakeValue(weight_decay)); }
+void SGD::set_weight_decay(const float weight_decay) { (void)AddAttr(kWeightDecay, MakeValue(weight_decay)); }
 
-void SGD::set_nesterov(const bool nesterov) { AddAttr(kNesterov, MakeValue(nesterov)); }
+void SGD::set_nesterov(const bool nesterov) { (void)AddAttr(kNesterov, MakeValue(nesterov)); }
 
 float SGD::get_dampening() const {
   auto value_ptr = GetAttr(kDampening);

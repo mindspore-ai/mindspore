@@ -24,8 +24,8 @@ void SpaceToDepth::Init(const int64_t block_size, const Format &format) {
 }
 
 void SpaceToDepth::set_block_size(const int64_t block_size) {
-  CheckAndConvertUtils::Check(kBlockSize, block_size, kGreaterEqual, "", 2, this->name());
-  AddAttr(kBlockSize, MakeValue(block_size));
+  (void)CheckAndConvertUtils::Check(kBlockSize, block_size, kGreaterEqual, "", 2, this->name());
+  (void)AddAttr(kBlockSize, MakeValue(block_size));
 }
 
 int64_t SpaceToDepth::get_block_size() const {
@@ -35,7 +35,7 @@ int64_t SpaceToDepth::get_block_size() const {
 
 void SpaceToDepth::set_format(const Format &format) {
   int64_t f = format;
-  this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, MakeValue(f));
 }
 
 Format SpaceToDepth::get_format() const {

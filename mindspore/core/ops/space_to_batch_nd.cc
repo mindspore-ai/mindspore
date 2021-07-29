@@ -70,7 +70,7 @@ void SpaceToBatchND::set_paddings(std::vector<std::vector<int64_t>> paddings) {
       (void)CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings[i][j]), kGreaterEqual, 0, this->name());
     }
   }
-  this->AddAttr(kPaddings, MakeValue(paddings));
+  (void)this->AddAttr(kPaddings, MakeValue(paddings));
 }
 
 std::vector<std::vector<int64_t>> SpaceToBatchND::get_paddings() const {
@@ -82,7 +82,7 @@ void SpaceToBatchND::set_block_shape(std::vector<int64_t> block_shape) {
   for (size_t i = 0; i < block_shape.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape[i]), kGreaterEqual, 1, this->name());
   }
-  this->AddAttr(kBlockShape, MakeValue(block_shape));
+  (void)this->AddAttr(kBlockShape, MakeValue(block_shape));
 }
 
 std::vector<int64_t> SpaceToBatchND::get_block_shape() const {

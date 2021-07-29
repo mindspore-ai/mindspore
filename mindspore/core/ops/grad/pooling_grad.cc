@@ -35,7 +35,7 @@ void PoolingGrad::Init(const PoolMode &pool_mode, const std::vector<int64_t> &wi
 
 void PoolingGrad::set_pool_mode(const PoolMode &pool_mode) {
   int64_t swi = pool_mode;
-  this->AddAttr(kPoolMode, MakeValue(swi));
+  (void)this->AddAttr(kPoolMode, MakeValue(swi));
 }
 
 PoolMode PoolingGrad::get_pool_mode() const {
@@ -61,7 +61,7 @@ std::vector<int64_t> PoolingGrad::get_stride() const {
 
 void PoolingGrad::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, MakeValue(swi));
 }
 
 PadMode PoolingGrad::get_pad_mode() const {
@@ -70,7 +70,9 @@ PadMode PoolingGrad::get_pad_mode() const {
   return PadMode(GetValue<int64_t>(value_ptr));
 }
 
-void PoolingGrad::set_pad_list(const std::vector<int64_t> &pad_list) { this->AddAttr(kPadList, MakeValue(pad_list)); }
+void PoolingGrad::set_pad_list(const std::vector<int64_t> &pad_list) {
+  (void)this->AddAttr(kPadList, MakeValue(pad_list));
+}
 
 std::vector<int64_t> PoolingGrad::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
@@ -80,7 +82,7 @@ std::vector<int64_t> PoolingGrad::get_pad_list() const {
 
 void PoolingGrad::set_round_mode(const RoundMode &round_mode) {
   int64_t swi = round_mode;
-  this->AddAttr(kRoundMode, MakeValue(swi));
+  (void)this->AddAttr(kRoundMode, MakeValue(swi));
 }
 
 RoundMode PoolingGrad::get_round_mode() const {
@@ -91,7 +93,7 @@ RoundMode PoolingGrad::get_round_mode() const {
 
 void PoolingGrad::set_format(const Format &format) {
   int64_t swi = format;
-  this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, MakeValue(swi));
 }
 
 Format PoolingGrad::get_format() const {

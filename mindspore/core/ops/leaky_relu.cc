@@ -41,7 +41,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 void LeakyRelu::Init(const float negative_slope) { this->set_negative_slope(negative_slope); }
 
 void LeakyRelu::set_negative_slope(const float negative_slope) {
-  this->AddAttr(kNegativeSlope, MakeValue(negative_slope));
+  (void)this->AddAttr(kNegativeSlope, MakeValue(negative_slope));
 }
 float LeakyRelu::get_negative_slope() const { return GetValue<float>(GetAttr(kNegativeSlope)); }
 

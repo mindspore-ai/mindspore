@@ -25,9 +25,9 @@ void L2Normalize::Init(const std::vector<int64_t> &axis, const float epsilon) {
   this->set_epsilon(epsilon);
 }
 
-void L2Normalize::set_axis(const std::vector<int64_t> &axis) { AddAttr(kAxis, MakeValue(axis)); }
+void L2Normalize::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
 
-void L2Normalize::set_epsilon(const float epsilon) { AddAttr(kEpsilon, MakeValue(epsilon)); }
+void L2Normalize::set_epsilon(const float epsilon) { (void)AddAttr(kEpsilon, MakeValue(epsilon)); }
 
 std::vector<int64_t> L2Normalize::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 
@@ -40,7 +40,7 @@ AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const Prim
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

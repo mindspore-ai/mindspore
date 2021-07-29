@@ -31,25 +31,29 @@ void SplitWithOverlap::Init(int64_t number_split, const std::vector<int64_t> &ra
   this->set_trans_format(trans_format);
 }
 
-void SplitWithOverlap::set_ratio(const std::vector<int64_t> &ratio) { this->AddAttr(kRatio, MakeValue(ratio)); }
+void SplitWithOverlap::set_ratio(const std::vector<int64_t> &ratio) { (void)this->AddAttr(kRatio, MakeValue(ratio)); }
 
 void SplitWithOverlap::set_extend_top(const std::vector<int64_t> &extend_top) {
-  this->AddAttr(kExtendTop, MakeValue(extend_top));
+  (void)this->AddAttr(kExtendTop, MakeValue(extend_top));
 }
 
 void SplitWithOverlap::set_extend_bottom(const std::vector<int64_t> &extend_bottom) {
-  this->AddAttr(kExtendBottom, MakeValue(extend_bottom));
+  (void)this->AddAttr(kExtendBottom, MakeValue(extend_bottom));
 }
 
-void SplitWithOverlap::set_number_split(int64_t number_split) { this->AddAttr(kNumberSplit, MakeValue(number_split)); }
+void SplitWithOverlap::set_number_split(int64_t number_split) {
+  (void)this->AddAttr(kNumberSplit, MakeValue(number_split));
+}
 
-void SplitWithOverlap::set_split_dim(int64_t split_dim) { this->AddAttr(kSplitDim, MakeValue(split_dim)); }
+void SplitWithOverlap::set_split_dim(int64_t split_dim) { (void)this->AddAttr(kSplitDim, MakeValue(split_dim)); }
 
-void SplitWithOverlap::set_split_stride(int64_t stride) { this->AddAttr(kSplitStride, MakeValue(stride)); }
+void SplitWithOverlap::set_split_stride(int64_t stride) { (void)this->AddAttr(kSplitStride, MakeValue(stride)); }
 
-void SplitWithOverlap::set_pad_top(int64_t pad_top) { this->AddAttr(kPadTop, MakeValue(pad_top)); }
+void SplitWithOverlap::set_pad_top(int64_t pad_top) { (void)this->AddAttr(kPadTop, MakeValue(pad_top)); }
 
-void SplitWithOverlap::set_trans_format(bool trans_format) { this->AddAttr(kTransFormat, MakeValue(trans_format)); }
+void SplitWithOverlap::set_trans_format(bool trans_format) {
+  (void)this->AddAttr(kTransFormat, MakeValue(trans_format));
+}
 
 std::vector<int64_t> SplitWithOverlap::get_ratio() const {
   auto value_ptr = GetAttr(kRatio);

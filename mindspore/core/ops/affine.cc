@@ -26,16 +26,18 @@ void Affine::Init(const std::vector<int64_t> &contexts, int64_t output_dim, bool
   this->set_transpose_b(transpose_b);
 }
 
-void Affine::set_context(const std::vector<int64_t> &context) { this->AddAttr(kAffineContext, MakeValue(context)); }
+void Affine::set_context(const std::vector<int64_t> &context) {
+  (void)this->AddAttr(kAffineContext, MakeValue(context));
+}
 
-void Affine::set_output_dim(int64_t output_dim) { this->AddAttr(kAffineOutputDim, MakeValue(output_dim)); }
+void Affine::set_output_dim(int64_t output_dim) { (void)this->AddAttr(kAffineOutputDim, MakeValue(output_dim)); }
 
-void Affine::set_transpose_a(bool transpose_a) { AddAttr(kTransposeA, MakeValue(transpose_a)); }
+void Affine::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, MakeValue(transpose_a)); }
 
-void Affine::set_transpose_b(bool transpose_b) { AddAttr(kTransposeB, MakeValue(transpose_b)); }
+void Affine::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, MakeValue(transpose_b)); }
 
 void Affine::set_activation_type(const ActivationType &activation_type) {
-  this->AddAttr(kActivationType, MakeValue(static_cast<int64_t>(activation_type)));
+  (void)this->AddAttr(kActivationType, MakeValue(static_cast<int64_t>(activation_type)));
 }
 
 bool Affine::get_transpose_a() const {

@@ -37,7 +37,11 @@ void DetectionPostProcess::Init(const int64_t inputSize, const std::vector<float
   set_out_quantized(OutQuantized);
   set_format(format);
 }
-void DetectionPostProcess::set_input_size(const int64_t inputSize) { this->AddAttr(kInputSize, MakeValue(inputSize)); }
+
+void DetectionPostProcess::set_input_size(const int64_t inputSize) {
+  (void)this->AddAttr(kInputSize, MakeValue(inputSize));
+}
+
 int64_t DetectionPostProcess::get_input_size() const {
   auto value_ptr = this->GetAttr(kInputSize);
   return GetValue<int64_t>(value_ptr);
@@ -50,7 +54,7 @@ std::vector<float> DetectionPostProcess::get_scale() const {
 }
 
 void DetectionPostProcess::set_nms_iou_threshold(const float NmsIouThreshold) {
-  this->AddAttr(kNmsIouThreshold, MakeValue(NmsIouThreshold));
+  (void)this->AddAttr(kNmsIouThreshold, MakeValue(NmsIouThreshold));
 }
 float DetectionPostProcess::get_nms_iou_threshold() const {
   auto value_ptr = this->GetAttr(kNmsIouThreshold);
@@ -58,7 +62,7 @@ float DetectionPostProcess::get_nms_iou_threshold() const {
 }
 
 void DetectionPostProcess::set_nms_score_threshold(const float NmsScoreThreshold) {
-  this->AddAttr(kNmsScoreThreshold, MakeValue(NmsScoreThreshold));
+  (void)this->AddAttr(kNmsScoreThreshold, MakeValue(NmsScoreThreshold));
 }
 float DetectionPostProcess::get_nms_score_threshold() const {
   auto value_ptr = this->GetAttr(kNmsScoreThreshold);
@@ -66,12 +70,12 @@ float DetectionPostProcess::get_nms_score_threshold() const {
 }
 
 void DetectionPostProcess::set_max_detections(const int64_t MaxDetections) {
-  this->AddAttr(kMaxDetections, MakeValue(MaxDetections));
+  (void)this->AddAttr(kMaxDetections, MakeValue(MaxDetections));
 }
 int64_t DetectionPostProcess::get_max_detections() const { return GetValue<int64_t>(GetAttr(kMaxDetections)); }
 
 void DetectionPostProcess::set_detections_per_class(const int64_t DetectionsPerClass) {
-  this->AddAttr(kDetectionsPerClass, MakeValue(DetectionsPerClass));
+  (void)this->AddAttr(kDetectionsPerClass, MakeValue(DetectionsPerClass));
 }
 int64_t DetectionPostProcess::get_detections_per_class() const {
   auto value_ptr = this->GetAttr(kDetectionsPerClass);
@@ -79,18 +83,18 @@ int64_t DetectionPostProcess::get_detections_per_class() const {
 }
 
 void DetectionPostProcess::set_max_classes_per_detection(const int64_t MaxClassesPerDetection) {
-  this->AddAttr(kMaxClassesPerDetection, MakeValue(MaxClassesPerDetection));
+  (void)this->AddAttr(kMaxClassesPerDetection, MakeValue(MaxClassesPerDetection));
 }
 int64_t DetectionPostProcess::get_max_classes_per_detection() const {
   return GetValue<int64_t>(GetAttr(kMaxClassesPerDetection));
 }
 
 void DetectionPostProcess::set_num_classes(const int64_t NumClasses) {
-  this->AddAttr(kNumClasses, MakeValue(NumClasses));
+  (void)this->AddAttr(kNumClasses, MakeValue(NumClasses));
 }
 int64_t DetectionPostProcess::get_num_classes() const { return GetValue<int64_t>(GetAttr(kNumClasses)); }
 void DetectionPostProcess::set_use_regular_nms(const bool UseRegularNms) {
-  this->AddAttr(kUseRegularNms, MakeValue(UseRegularNms));
+  (void)this->AddAttr(kUseRegularNms, MakeValue(UseRegularNms));
 }
 bool DetectionPostProcess::get_use_regular_nms() const {
   auto value_ptr = this->GetAttr(kUseRegularNms);
@@ -98,7 +102,7 @@ bool DetectionPostProcess::get_use_regular_nms() const {
 }
 
 void DetectionPostProcess::set_out_quantized(const bool OutQuantized) {
-  this->AddAttr(kOutQuantized, MakeValue(OutQuantized));
+  (void)this->AddAttr(kOutQuantized, MakeValue(OutQuantized));
 }
 bool DetectionPostProcess::get_out_quantized() const {
   auto value_ptr = this->GetAttr(kOutQuantized);
@@ -106,7 +110,7 @@ bool DetectionPostProcess::get_out_quantized() const {
 }
 void DetectionPostProcess::set_format(const Format &format) {
   int64_t f = format;
-  this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, MakeValue(f));
 }
 Format DetectionPostProcess::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
 AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -30,9 +30,9 @@ void ResizeNearestNeighbor::Init(const std::vector<int64_t> &size, const bool al
   this->set_size(size);
   this->set_align_corners(align_corners);
 }
-void ResizeNearestNeighbor::set_size(const std::vector<int64_t> &size) { this->AddAttr(kSize, MakeValue(size)); }
+void ResizeNearestNeighbor::set_size(const std::vector<int64_t> &size) { (void)this->AddAttr(kSize, MakeValue(size)); }
 void ResizeNearestNeighbor::set_align_corners(const bool align_corners) {
-  this->AddAttr(kAlignCorners, MakeValue(align_corners));
+  (void)this->AddAttr(kAlignCorners, MakeValue(align_corners));
 }
 std::vector<int64_t> ResizeNearestNeighbor::get_size() const {
   auto value_ptr = GetAttr(kSize);

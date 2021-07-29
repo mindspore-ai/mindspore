@@ -34,9 +34,6 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kBool};
   types.emplace("x", input_args[0]->BuildType());
@@ -47,8 +44,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameLogicalOr, LogicalOr);
 }  // namespace ops

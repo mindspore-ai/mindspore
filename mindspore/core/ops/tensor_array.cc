@@ -40,18 +40,18 @@ void TensorArray::Init(bool dynamic_size, bool identical_element_shapes, const s
 }
 
 void TensorArray::set_dynamic_size(bool dynamic_size) {
-  this->AddAttr(kTensorArrayDynamicSize, MakeValue(dynamic_size));
+  (void)this->AddAttr(kTensorArrayDynamicSize, MakeValue(dynamic_size));
 }
 
 void TensorArray::set_identical_element_shapes(bool identical_element_shapes) {
-  this->AddAttr(kTensorArrayIdenticalElementShapes, MakeValue(identical_element_shapes));
+  (void)this->AddAttr(kTensorArrayIdenticalElementShapes, MakeValue(identical_element_shapes));
 }
 
 void TensorArray::set_element_shape(const std::vector<int> &element_shape) {
-  this->AddAttr(kTensorArrayElementShape, MakeValue(element_shape));
+  (void)this->AddAttr(kTensorArrayElementShape, MakeValue(element_shape));
 }
 
-void TensorArray::set_data_type(int data_type) { this->AddAttr(kTensorArrayDataType, MakeValue(data_type)); }
+void TensorArray::set_data_type(int data_type) { (void)this->AddAttr(kTensorArrayDataType, MakeValue(data_type)); }
 
 bool TensorArray::get_dynamic_size() const {
   auto value_ptr = GetAttr(kTensorArrayDynamicSize);

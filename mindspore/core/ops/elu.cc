@@ -51,7 +51,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 void Elu::Init(const float alpha) { this->set_alpha(alpha); }
 
 void Elu::set_alpha(const float alpha) {
-  AddAttr(kAlpha, MakeValue(CheckAndConvertUtils::CheckValue<float>(kAlpha, alpha, kEqual, 1.0, name())));
+  (void)AddAttr(kAlpha, MakeValue(CheckAndConvertUtils::CheckValue<float>(kAlpha, alpha, kEqual, 1.0, name())));
 }
 
 float Elu::get_alpha() const {

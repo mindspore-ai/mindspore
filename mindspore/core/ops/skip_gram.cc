@@ -41,18 +41,18 @@ TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
 }  // namespace
 
 void SkipGram::set_include_all_grams(const bool include_all_grams) {
-  AddAttr(kIncludeALLGrams, MakeValue(include_all_grams));
+  (void)AddAttr(kIncludeALLGrams, MakeValue(include_all_grams));
 }
 bool SkipGram::get_include_all_grams() const {
   auto value_ptr = this->GetAttr(kIncludeALLGrams);
   return GetValue<bool>(value_ptr);
 }
-void SkipGram::set_max_skip_size(const int64_t max_skip_size) { AddAttr(kMaxSkipSize, MakeValue(max_skip_size)); }
+void SkipGram::set_max_skip_size(const int64_t max_skip_size) { (void)AddAttr(kMaxSkipSize, MakeValue(max_skip_size)); }
 int64_t SkipGram::get_max_skip_size() const {
   auto value_ptr = this->GetAttr(kMaxSkipSize);
   return GetValue<int64_t>(value_ptr);
 }
-void SkipGram::set_ngram_size(const int64_t ngram_size) { AddAttr(kNgramSize, MakeValue(ngram_size)); }
+void SkipGram::set_ngram_size(const int64_t ngram_size) { (void)AddAttr(kNgramSize, MakeValue(ngram_size)); }
 int64_t SkipGram::get_ngram_size() const {
   auto value_ptr = this->GetAttr(kNgramSize);
   return GetValue<int64_t>(value_ptr);

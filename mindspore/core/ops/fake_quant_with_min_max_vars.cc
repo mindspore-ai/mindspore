@@ -63,7 +63,7 @@ void FakeQuantWithMinMaxVars::Init(const bool narrow_range, const int64_t num_bi
 }
 
 void FakeQuantWithMinMaxVars::set_narrow_range(const bool narrow_range) {
-  this->AddAttr(kNarrowRange, MakeValue(narrow_range));
+  (void)this->AddAttr(kNarrowRange, MakeValue(narrow_range));
 }
 
 bool FakeQuantWithMinMaxVars::get_narrow_range() const {
@@ -71,7 +71,9 @@ bool FakeQuantWithMinMaxVars::get_narrow_range() const {
   return GetValue<bool>(value_ptr);
 }
 
-void FakeQuantWithMinMaxVars::set_num_bits(const int64_t num_bits) { this->AddAttr(kNumBits, MakeValue(num_bits)); }
+void FakeQuantWithMinMaxVars::set_num_bits(const int64_t num_bits) {
+  (void)this->AddAttr(kNumBits, MakeValue(num_bits));
+}
 
 int64_t FakeQuantWithMinMaxVars::get_num_bits() const {
   auto value_ptr = this->GetAttr(kNumBits);

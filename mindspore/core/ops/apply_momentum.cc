@@ -31,12 +31,16 @@ void ApplyMomentum::Init(const bool use_nesterov, const bool use_locking, const 
   this->set_gradient_scale(gradient_scale);
 }
 
-void ApplyMomentum::set_use_nesterov(const bool use_nesterov) { this->AddAttr(kUseNesterov, MakeValue(use_nesterov)); }
+void ApplyMomentum::set_use_nesterov(const bool use_nesterov) {
+  (void)this->AddAttr(kUseNesterov, MakeValue(use_nesterov));
+}
 
-void ApplyMomentum::set_use_locking(const bool use_locking) { this->AddAttr(kUseLocking, MakeValue(use_locking)); }
+void ApplyMomentum::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, MakeValue(use_locking));
+}
 
 void ApplyMomentum::set_gradient_scale(const float gradient_scale) {
-  this->AddAttr(kGradientScale, MakeValue(gradient_scale));
+  (void)this->AddAttr(kGradientScale, MakeValue(gradient_scale));
 }
 
 bool ApplyMomentum::get_use_nesterov() const {
@@ -57,7 +61,7 @@ AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const Pr
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("apply_momentum_infer", SizeToLong(input_args.size()), kEqual, 5, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("apply_momentum_infer", SizeToLong(input_args.size()), kEqual, 5, prim_name);
 
   // Infer shape
   auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
