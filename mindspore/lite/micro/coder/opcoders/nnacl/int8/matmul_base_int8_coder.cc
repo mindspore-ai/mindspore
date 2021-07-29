@@ -90,7 +90,7 @@ void MatMulBaseInt8Coder::FreeQuantParam() {
 }
 
 int MatMulBaseInt8Coder::MallocQuantParam() {
-  std::vector<QuantArg> weight_quant_params = filter_tensor_->quant_params();
+  std::vector<LiteQuantParam> weight_quant_params = filter_tensor_->quant_params();
   int col = filter_tensor_->shape().front();
   filter_per_channel_ = (weight_quant_params.size() > 1);
   weight_quant_num_ = filter_per_channel_ ? col : 1;
@@ -108,16 +108,16 @@ int MatMulBaseInt8Coder::MallocQuantParam() {
 }
 
 int MatMulBaseInt8Coder::InitQuantParam() {
-  std::vector<QuantArg> in_quant_params = input_tensor_->quant_params();
+  std::vector<LiteQuantParam> in_quant_params = input_tensor_->quant_params();
   MS_CHECK_TRUE(!in_quant_params.empty(), "in_quant_params is empty");
   quant_.input_.zp_ = in_quant_params.front().zeroPoint;
   quant_.input_.scale_ = static_cast<float>(in_quant_params.front().scale);
 
-  std::vector<QuantArg> out_quant_params = output_tensor_->quant_params();
+  std::vector<LiteQuantParam> out_quant_params = output_tensor_->quant_params();
   MS_CHECK_TRUE(!out_quant_params.empty(), "out_quant_params is empty");
   quant_.output_.zp_ = out_quant_params.front().zeroPoint;
   quant_.output_.scale_ = static_cast<float>(out_quant_params.front().scale);
-  std::vector<QuantArg> weight_quant_params = filter_tensor_->quant_params();
+  std::vector<LiteQuantParam> weight_quant_params = filter_tensor_->quant_params();
   for (int i = 0; i < weight_quant_num_; i++) {
     quant_.filter_zp_[i] = weight_quant_params[i].zeroPoint;
     quant_.filter_scale_[i] = static_cast<float>(weight_quant_params[i].scale);

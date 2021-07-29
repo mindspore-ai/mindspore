@@ -53,7 +53,7 @@ lite::Tensor *MakeQuantTensor(int8_t *data, int len, std::vector<int> *shape, fl
     auto tensor_ptr = reinterpret_cast<int8_t *>(tensor->MutableData());
     memcpy(tensor_ptr, data, len * sizeof(int8_t));
   }
-  auto quant_arg = new mindspore::lite::QuantArg();
+  auto quant_arg = new mindspore::lite::LiteQuantParam();
   quant_arg->zeroPoint = zp;
   quant_arg->scale = scale;
   tensor->AddQuantParam(*quant_arg);

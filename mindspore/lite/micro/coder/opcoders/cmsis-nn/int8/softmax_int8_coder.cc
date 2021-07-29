@@ -25,10 +25,10 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
   SoftmaxBaseCoder::Init();
 
   MS_CHECK_TRUE(!input_tensor_->quant_params().empty(), "input quant_params is empty");
-  QuantArg in_quant_arg = input_tensor_->quant_params().at(0);
+  LiteQuantParam in_quant_arg = input_tensor_->quant_params().at(0);
   quant_params_.in_quant_args_.zp_ = -in_quant_arg.zeroPoint;
 
-  std::vector<QuantArg> out_quant_args = output_tensor_->quant_params();
+  std::vector<LiteQuantParam> out_quant_args = output_tensor_->quant_params();
   MS_CHECK_TRUE(!out_quant_args.empty(), "output quant_params is empty");
   quant_params_.out_quant_arg_.scale_ = static_cast<float>(out_quant_args.at(0).scale);
   quant_params_.out_quant_arg_.zp_ = out_quant_args.at(0).zeroPoint;

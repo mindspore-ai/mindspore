@@ -57,6 +57,12 @@ enum OptimizationLevel : uint32_t {
   kOptimizationType = 0xFFFFFFFF
 };
 
+struct QuantParam {
+  int bit_num;
+  double scale;
+  int32_t zero_point;
+};
+
 class Allocator;
 class MS_API MSTensor {
  public:
@@ -103,6 +109,8 @@ class MS_API MSTensor {
   void SetFormat(mindspore::Format format);
   mindspore::Format format() const;
   void SetData(void *data);
+  std::vector<QuantParam> QuantParams() const;
+  void SetQuantParams(std::vector<QuantParam> quant_args);
   const std::shared_ptr<Impl> impl() const { return impl_; }
 
  private:

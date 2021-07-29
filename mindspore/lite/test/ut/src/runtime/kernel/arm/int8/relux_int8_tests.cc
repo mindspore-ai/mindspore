@@ -37,8 +37,8 @@ TEST_F(TestReluXInt8, Relu) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in = {0.00784314f, 0};  // -1.0--1.0 ->
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in = {0.00784314f, 0};  // -1.0--1.0 ->
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 
@@ -83,8 +83,8 @@ TEST_F(TestReluXInt8, Relu6) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in = {0.0509804f, -69};    // -3.0 -- 10.0
-  const lite::QuantArg quant_out = {0.0392157f, -128};  // 0.0 -- 10.0
+  const lite::LiteQuantParam quant_in = {0.0509804f, -69};    // -3.0 -- 10.0
+  const lite::LiteQuantParam quant_out = {0.0392157f, -128};  // 0.0 -- 10.0
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 

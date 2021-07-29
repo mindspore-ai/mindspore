@@ -42,10 +42,10 @@ TEST_F(TestConcatInt8, Concat1_axis0) {
   int8_t output[12];
   std::vector<int> output_shape = {6, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -116,10 +116,10 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
   int8_t output[16];
   std::vector<int> output_shape = {2, 4, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -191,10 +191,10 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
   int8_t output[16];
   std::vector<int> output_shape = {2, 4, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 2.0;
   output_quant_arg.zeroPoint = 0;
 

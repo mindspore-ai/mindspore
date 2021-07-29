@@ -37,8 +37,8 @@ TEST_F(TestL2NormInt8, norm) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in = {0.0470588244497776f, 0};
-  const lite::QuantArg quant_out = {0.0078125f, 0};
+  const lite::LiteQuantParam quant_in = {0.0470588244497776f, 0};
+  const lite::LiteQuantParam quant_out = {0.0078125f, 0};
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 
@@ -83,8 +83,8 @@ TEST_F(TestL2NormInt8, norm2) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in = {0.0470588244f, 0};
-  const lite::QuantArg quant_out = {0.0078125f, 0};
+  const lite::LiteQuantParam quant_in = {0.0470588244f, 0};
+  const lite::LiteQuantParam quant_out = {0.0078125f, 0};
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 

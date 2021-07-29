@@ -35,7 +35,7 @@ class DetectionPostProcessInt8CPUKernel : public DetectionPostProcessBaseCPUKern
 
   int8_t *data_int8_ = nullptr;
   float *data_fp32_ = nullptr;
-  lite::QuantArg quant_param_;
+  lite::LiteQuantParam quant_param_;
   int quant_size_ = 0;
   int thread_n_stride_ = 0;
   int DequantizeInt8ToFp32(const int task_id);

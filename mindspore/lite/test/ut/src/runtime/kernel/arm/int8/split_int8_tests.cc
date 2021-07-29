@@ -43,10 +43,10 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   std::vector<int> output1_shape = {2, 1, 2};
   std::vector<int> output2_shape = {2, 2, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -130,10 +130,10 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
   std::vector<int> output2_shape = {2, 1, 2};
   std::vector<int> output3_shape = {2, 1, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -226,10 +226,10 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
   std::vector<int> output2_shape = {2, 1, 2};
   std::vector<int> output3_shape = {2, 1, 2};
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 2.0;
   output_quant_arg.zeroPoint = 0;
 

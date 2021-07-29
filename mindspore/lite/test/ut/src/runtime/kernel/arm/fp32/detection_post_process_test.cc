@@ -58,7 +58,7 @@ void DetectionPostProcessTestInit(std::vector<lite::Tensor *> *inputs_, std::vec
   auto input_anchors_data =
     reinterpret_cast<uint8_t *>(mindspore::lite::ReadFile(input_anchors_path.c_str(), &input_anchors_size));
   auto *input_anchors = new lite::Tensor;
-  lite::QuantArg quant_arg;
+  lite::LiteQuantParam quant_arg;
   quant_arg.zeroPoint = 0;
   quant_arg.scale = 0.00645306;
   input_anchors->AddQuantParam(quant_arg);

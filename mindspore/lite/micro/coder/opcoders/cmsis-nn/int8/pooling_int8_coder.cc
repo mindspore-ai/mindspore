@@ -93,7 +93,7 @@ int PoolingInt8Coder::SetParameters() {
   padding_width_ = pooling_parameter_->pad_l_;
 
   MS_CHECK_TRUE(!output_tensor_->quant_params().empty(), "output quant_params is empty");
-  QuantArg output_quant_arg = output_tensor_->quant_params().at(0);
+  LiteQuantParam output_quant_arg = output_tensor_->quant_params().at(0);
   CalculateActivationRangeQuantized(pooling_parameter_->act_type_ == ActType_Relu,
                                     pooling_parameter_->act_type_ == ActType_Relu6, output_quant_arg.zeroPoint,
                                     output_quant_arg.scale, &act_min_, &act_max_);

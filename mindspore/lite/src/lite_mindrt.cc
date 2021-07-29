@@ -107,7 +107,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
       new_tensor->set_allocator(kernel_->Context()->allocator);
     }
     new_tensor->set_tensor_name(kernel_->name() + "_duplicate_" + old_tensor->tensor_name());
-    for (QuantArg quant : old_tensor->quant_params()) {
+    for (LiteQuantParam quant : old_tensor->quant_params()) {
       new_tensor->AddQuantParam(quant);
     }
     isolate_input_map_.insert(std::make_pair(new_tensor, old_tensor));

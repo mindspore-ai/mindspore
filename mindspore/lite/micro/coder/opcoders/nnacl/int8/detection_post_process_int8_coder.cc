@@ -36,10 +36,10 @@ int DetectionPostProcessInt8Coder::MallocInputsBuffer() {
 int DetectionPostProcessInt8Coder::GetInputData(CoderContext *const context, Serializer *const code) {
   Tensor *boxes = input_tensors_.at(0);
   MS_CHECK_PTR(boxes);
-  lite::QuantArg boxes_quant_param = boxes->quant_params().front();
+  lite::LiteQuantParam boxes_quant_param = boxes->quant_params().front();
   Tensor *scores = input_tensors_.at(1);
   MS_CHECK_PTR(scores);
-  lite::QuantArg scores_quant_param = scores->quant_params().front();
+  lite::LiteQuantParam scores_quant_param = scores->quant_params().front();
   MS_CHECK_TRUE(boxes->data_type() == kNumberTypeInt8, "Input data type error");
   MS_CHECK_TRUE(scores->data_type() == kNumberTypeInt8, "Input data type error");
 

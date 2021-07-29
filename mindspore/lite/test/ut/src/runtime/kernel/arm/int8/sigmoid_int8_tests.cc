@@ -36,8 +36,8 @@ TEST_F(TestSigmoidInt8, Sigmoid) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in = {1.0, 0};   // -4.0 -- 7.0
-  const lite::QuantArg quant_out = {1.0, 0};  // -3.0 -- 7.0
+  const lite::LiteQuantParam quant_in = {1.0, 0};   // -4.0 -- 7.0
+  const lite::LiteQuantParam quant_out = {1.0, 0};  // -3.0 -- 7.0
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 

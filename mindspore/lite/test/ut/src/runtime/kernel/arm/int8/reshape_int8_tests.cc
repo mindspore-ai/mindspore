@@ -38,10 +38,10 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
 
   int8_t output[12];
   std::vector<int> output_shape = {2, 6};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 1.0;
   output_quant_arg.zeroPoint = 0;
 
@@ -100,10 +100,10 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
 
   int8_t output[12];
   std::vector<int> output_shape = {2, 6};
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 1.0;
   input_quant_arg.zeroPoint = 0;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 2.0;
   output_quant_arg.zeroPoint = 1;
 
