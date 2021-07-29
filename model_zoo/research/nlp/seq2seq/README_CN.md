@@ -54,15 +54,21 @@ bash wmt14_en_fr.sh
 
   ```python
   # 运行训练示例
-  python train.py > train.log 2>&1 &
+  cd ./scripts
+  bash run_standalone_train_ascend.sh [TRAIN_DATASET]
 
   # 运行分布式训练示例
-  sh scripts/run_train.sh rank_table.json
+  cd ./scripts
+  bash run_distributed_train_ascend [RANK_TABLE] [TRAIN_DATASET]
 
   # 运行评估示例
-  python eval.py > eval.log 2>&1 &
-  或
-  sh run_eval.sh
+  cd ./scripts
+  bash run_standalone_eval_ascend.sh \
+       seq2seq/dataset_menu/newstest2014.en.mindrecord \
+       seq2seq/scripts/device0/text_translation/ckpt_0/seq2seq-8_3437.ckpt \
+       seq2seq/dataset_menu/vocab.bpe.32000  \
+       seq2seq/dataset_menu/bpe.32000   \
+       seq2seq/dataset_menu/newstest2014.fr
   ```
 
   对于分布式训练，需要提前创建JSON格式的hccl配置文件。
@@ -159,7 +165,8 @@ bash wmt14_en_fr.sh
 - Ascend处理器环境运行
 
   ```bash
-  bash scripts/run_standalone_train_ascend.sh
+  cd ./scripts
+  bash run_standalone_train_ascend.sh [TRAIN_DATASET]
   ```
 
   上述python命令将在后台运行，您可以通过scripts/train/log_seq2seq_network.log文件查看结果。loss值保存在scripts/train/loss.log
@@ -171,7 +178,8 @@ bash wmt14_en_fr.sh
 - Ascend处理器环境运行
 
   ```bash
-  bash scripts/run_distributed_train_ascend rank_table.json
+  cd ./scripts
+  bash run_distributed_train_ascend [RANK_TABLE] [TRAIN_DATASET]
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过scripts/device[X]/log_seq2seq_network.log文件查看结果。loss值保存在scripts/device[X]/loss.log
@@ -185,7 +193,8 @@ bash wmt14_en_fr.sh
 - 在Ascend环境运行时评估，脚本示例如下
 
   ```bash
-  sh run_standalone_eval_ascend.sh \
+  cd ./scripts
+  bash run_standalone_eval_ascend.sh \
        seq2seq/dataset_menu/newstest2014.en.mindrecord \
        seq2seq/scripts/device0/text_translation/ckpt_0/seq2seq-8_3437.ckpt \
        seq2seq/dataset_menu/vocab.bpe.32000  \
@@ -208,7 +217,7 @@ bash wmt14_en_fr.sh
 
 | 参数          | Ascend                                                       |
 | ------------- | ------------------------------------------------------------ |
-| 模型版本      | Inception V1                                                 |
+| 模型版本      | Seq2Seq                                                 |
 | 资源          | Ascend 910, CPU 2.60GHz, 56核, 内存：314G                    |
 | 上传日期      | 2021-3-29                                                    |
 | MindSpore版本 | 1.1.1                                                        |
@@ -227,7 +236,7 @@ bash wmt14_en_fr.sh
 
 | 参数          | Ascend         |
 | ------------- | -------------- |
-| 模型版本      | Inception V1   |
+| 模型版本      | Seq2Seq       |
 | 资源          | Ascend 910     |
 | 上传日期      | 2021-03-29     |
 | MindSpore版本 | 1.1.1          |

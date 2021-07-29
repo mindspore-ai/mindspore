@@ -55,7 +55,7 @@
 
 ```python
 # 分布式训练运行示例
-sh scripts/run_distribute_train.sh rank_size /path/dataset
+sh scripts/run_distribute_train.sh /path/dataset /path/rank_table
 
 # 单机训练运行示例
 sh scripts/run_standalone_train.sh /path/dataset
@@ -108,7 +108,7 @@ train.py和val.py中主要参数如下：
 ### 分布式训练
 
 ```shell
-sh scripts/run_distribute_train.sh rank_size /path/dataset
+sh scripts/run_distribute_train.sh /path/dataset /path/rank_table
 ```
 
 上述shell脚本将在后台运行分布训练。可以通过`device[X]/train.log`文件查看结果。
@@ -154,7 +154,7 @@ epoch time: 1104929.793 ms, per step time: 97.162 ms
   同时，情确保传入的评估数据集路径为“IJB_release/IJBB/”或“IJB_release/IJBC/”。
 
   ```bash
-  sh scripts/run_eval_ijbc.sh /path/evalset /path/ckpt
+  sh scripts/run_eval_ijbc.sh /path/evalset /path/ckpt target_name
   ```
 
   上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试数据集的准确性如下：

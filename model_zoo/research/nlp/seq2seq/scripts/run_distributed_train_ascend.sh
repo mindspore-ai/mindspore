@@ -48,6 +48,7 @@ do
     export RANK_ID=$i
     export DEVICE_ID=$i
   python ../../train.py \
+    --is_modelarts=False \
     --config=${current_exec_path}/device${i}/config/config.json \
     --pre_train_dataset=$PRE_TRAIN_DATASET > log_seq2seq_network${i}.log 2>&1 &
     cd ${current_exec_path} || exit

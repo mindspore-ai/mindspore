@@ -25,6 +25,6 @@ echo "==========================================================================
 DATA_PATH=$1
 
 python train.py  \
---data_url DATA_PATH \
+--data_url $DATA_PATH \
 --device_num 1 \
 > train.log 2>&1 &
