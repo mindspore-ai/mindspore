@@ -2038,7 +2038,12 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       if (shape_list[0][i].empty()) {
         MS_LOG(EXCEPTION) << "shape_list[ " << i << " ].size() is zero";
       }
-      Dimensions input_strategy = {dev_num};
+      Dimensions input_strategy;
+      if (!shape_list[0][i].empty() && shape_list[0][i][0] % dev_num == 0) {
+        input_strategy.push_back(dev_num);
+      } else if (!shape_list[0][i].empty()) {
+        input_strategy.push_back(1);
+      }
       for (size_t j = 1; j < shape_list[0][i].size(); j++) {
         input_strategy.push_back(1);
       }
@@ -3222,12 +3227,9 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
   }
 }
 
-Status ParallelInit() {
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+CommInfo GetCommInfo() {
   int64_t device_num = ParallelContext::GetInstance()->device_num();
   int64_t global_rank = ParallelContext::GetInstance()->global_rank();
-  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
-  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -3240,15 +3242,8 @@ Status ParallelInit() {
     world_group = NCCL_WORLD_GROUP;
     communication_backend = NCCL_BACKEND;
   } else {
-    MS_LOG(ERROR) << "Invalid communication backend: " << backend;
-    return FAILED;
+    MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend;
   }
-
-  if (split_stage_num <= 0) {
-    MS_LOG(ERROR) << "Invalid stage num " << split_stage_num << ", expected a positive stage number";
-    return FAILED;
-  }
-
   uint32_t world_rank_size = 0;
   if (!ParallelContext::GetInstance()->device_num_is_set()) {
     if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
@@ -3266,7 +3261,21 @@ Status ParallelInit() {
     global_rank = UintToInt(rank_id);
     MS_LOG(INFO) << "Get global rank from communication model, the global rank is  " << global_rank;
   }
+  CommInfo comm_info{device_num, global_rank, world_group, communication_backend};
+  return comm_info;
+}
 
+Status ParallelInit() {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (split_stage_num <= 0) {
+    MS_LOG(ERROR) << "Invalid stage num " << split_stage_num << ", expected a positive stage number";
+    return FAILED;
+  }
+  auto comm_info = GetCommInfo();
+  int64_t device_num = comm_info.device_num;
+  int64_t global_rank = comm_info.global_rank;
   if ((device_num <= 0) || (device_num > MAX_DEVICE_NUM)) {
     MS_LOG(ERROR) << "Invalid device num " << device_num;
     return FAILED;
@@ -3293,13 +3302,14 @@ Status ParallelInit() {
     return FAILED;
   }
 
-  if (!InitDevice(device_num, global_rank, communication_backend, stages)) {
+  if (!InitDevice(device_num, global_rank, comm_info.communication_backend, stages)) {
     MS_LOG(ERROR) << "Init device failed";
     return FAILED;
   }
 
   MS_LOG(INFO) << "The parallel context: dev num: " << device_num << ", global rank: " << global_rank
-               << ", backend: " << backend << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
+               << ", communication_backend: " << comm_info.communication_backend
+               << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
                << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();
 
   return SUCCESS;
@@ -3714,7 +3724,13 @@ void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr
 
 bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  return (!root->has_flag(TRAINING) && ParallelContext::GetInstance()->dataset_strategy().empty());
+  auto comm_info = GetCommInfo();
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  int32_t per_stage_device_num = comm_info.device_num / split_stage_num;
+  int32_t current_stage = comm_info.global_rank / per_stage_device_num;
+  MS_LOG(INFO) << "The current stage is: " << current_stage;
+  return (!root->has_flag(TRAINING) && ParallelContext::GetInstance()->dataset_strategy().empty() &&
+          current_stage == split_stage_num - 1);
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {

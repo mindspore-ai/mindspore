@@ -274,6 +274,8 @@ class Model:
 
     def _update_metrics(self, outputs):
         """Update metrics local values."""
+        if isinstance(outputs, Tensor):
+            outputs = (outputs,)
         if not isinstance(outputs, tuple):
             raise ValueError("The `outputs` is not tuple.")
 
@@ -365,6 +367,8 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._train_network = train_network
+            if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
+                self._train_network.add_flags_recursive(is_first_iteration=True)
             for inputs in train_dataset_helper:
                 self._train_network.compile(*inputs)
                 break
@@ -378,6 +382,8 @@ class Model:
                                                                        dataset=valid_dataset,
                                                                        dataset_sink_mode=True)
             self._eval_network = eval_network
+            if context.get_auto_parallel_context("pipeline_stages") > 1:
+                self._eval_network.add_flags_recursive(is_first_iteration=False)
             for inputs in valid_dataset_helper:
                 self._eval_network.compile(*inputs)
                 break
