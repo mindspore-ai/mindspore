@@ -641,7 +641,7 @@ def constexpr(fn=None, get_instance=True, name=None):
         >>> def tuple_len_class(x):
         ...     return len(x)
         ...
-        >>>tuple_len_class()(a)
+        >>> tuple_len_class()(a)
         2
     """
 
