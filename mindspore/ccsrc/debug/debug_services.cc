@@ -1126,6 +1126,10 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
             const size_t buf_size = 256;
             buffer.resize(buf_size);
             (void)infile.read(buffer.data(), buf_size);
+            if (infile.gcount() != buf_size) {
+              MS_LOG(ERROR) << "The file: " << file_path << "may be damaged!";
+              continue;
+            }
             const uint8_t stream_id_offset = 16;
             const uint8_t task_id_offset = 24;
             // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
