@@ -24,7 +24,6 @@ import mindspore._c_expression as _c_expression
 from mindspore import ParameterTuple
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import ms_function
 from mindspore.ops.composite import GradOperation
 from .block_util import get_output_cell, gen_net, gen_grad_net, \
     get_uniform_with_shape, set_block_phase, get_output_reduce_cell, set_block_param_with_rand
@@ -36,7 +35,7 @@ class _GradChecker:
 
     Arguments:
         fn: The function under test.
-        gfn: The hight order function to compute the derivative function.
+        gfn: The high order function to compute the derivative function.
         args: The point in the function's domain where we want
             to estimate the gradient.
 
@@ -119,7 +118,6 @@ class _GradChecker:
                 def func_backward_pynative(*inputs):
                     net = gen_grad_net(f, grad_wraper, len(inputs) - 1, inputs[-1])
 
-                    @ms_function
                     def _func_pynative(*inputs):
                         return net(*inputs)
 
@@ -130,7 +128,6 @@ class _GradChecker:
             def func_forward_pynative(*inputs):
                 net = gen_net(f, len(inputs))
 
-                @ms_function
                 def _func_pynative(*inputs):
                     return net(*inputs)
 
