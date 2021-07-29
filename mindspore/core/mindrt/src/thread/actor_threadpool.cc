@@ -18,7 +18,7 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-constexpr size_t MAX_READY_ACTOR_NR = 1024;
+constexpr size_t MAX_READY_ACTOR_NR = 4096;
 void ActorWorker::CreateThread(ActorThreadPool *pool) {
   THREAD_RETURN_IF_NULL(pool);
   pool_ = pool;

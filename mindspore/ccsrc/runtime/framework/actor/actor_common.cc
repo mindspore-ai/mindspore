@@ -32,7 +32,7 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   // The pyNative mode is the step execution strategy, so only need the kActorThreadMinNum.
-  if (context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) == kPynativeMode) {
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     *actor_thread_num = kActorThreadMinNum;
   } else {
     *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
@@ -117,6 +117,10 @@ bool IsGatherActor(const AnfNodePtr &front_node,
 bool Copy(DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
   MS_EXCEPTION_IF_NULL(dst_device_tensor);
   MS_EXCEPTION_IF_NULL(src_device_tensor);
+  if (src_device_tensor->GetSize() != dst_device_tensor->GetSize()) {
+    MS_LOG(WARNING) << " Copy size is not equal, input size:" << src_device_tensor->GetSize()
+                    << ", output size:" << dst_device_tensor->GetSize();
+  }
 
   // Exist the size alignment in some device, so get the min device size.
   size_t copy_size = std::min(src_device_tensor->GetSize(), dst_device_tensor->GetSize());
