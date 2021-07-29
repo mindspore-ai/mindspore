@@ -68,7 +68,7 @@ std::shared_ptr<GraphCell> MsModel::GenerateGraphCell(const std::vector<std::vec
       MS_LOG(ERROR) << "Inputs " << i << " is not supported to resize, debug string: " << param->DebugString();
       return nullptr;
     }
-    shape_ptr->shape() = dims[i];
+    shape_ptr->set_shape(dims[i]);
   }
 
   auto graph = std::make_shared<Graph>(std::make_shared<Graph::GraphData>(func_graph, ModelType::kMindIR));

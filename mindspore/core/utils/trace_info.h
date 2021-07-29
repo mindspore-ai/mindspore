@@ -258,6 +258,8 @@ class TraceSpecialize : public TraceInfo {
   std::string full_name() const override { return full_name_ + counter_ + "_"; }
   ~TraceSpecialize() override = default;
   TraceInfoPtr clone() override { return std::make_shared<TraceSpecialize>(*shared_from_base<TraceSpecialize>()); }
+
+ private:
   std::string counter_;
 };
 
