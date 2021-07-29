@@ -32,6 +32,7 @@ namespace opt {
 namespace {
 constexpr auto kAttrDefaultGroup = "default_group";
 constexpr auto kAttrDefaultOp = "default_op";
+constexpr size_t kAlignSize = 2 << 9;
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &communication_op_info, size_t start_index,
                                                    size_t end_index) {
@@ -139,6 +140,15 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
   size_t communication_op_node_size = communication_op_info.communication_op_nodes.size();
   MS_LOG(INFO) << "graph " << op_name_ << " node size " << communication_op_node_size;
 
+  if (op_name_ == kHcomSendOpName || op_name_ == kReceiveOpName) {
+    *segment_num = 1;
+    if (communication_op_node_size == 0) {
+      return false;
+    }
+    segment_index->emplace_back(communication_op_node_size - 1);
+    return true;
+  }
+
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   std::vector<uint32_t> split_indices;
@@ -155,8 +165,8 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
         MS_LOG(EXCEPTION) << "invalid " << op_name_ << " split index " << i << " " << index;
       }
       if (index >= communication_op_node_size) {
-        MS_LOG(WARNING) << op_name_ << "'s split index " << index << " is large than total gradient's number "
-                        << communication_op_node_size;
+        MS_LOG(WARNING) << op_name_ << "'s split index " << index
+                        << " is Greater than or equal to total gradient's number " << communication_op_node_size;
         continue;
       }
       segment_index->push_back(index);
@@ -329,6 +339,7 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   size_t output_num = node_num * rank_size_t;
   std::vector<TypeId> dtypes(output_num, AnfAlgo::GetOutputInferDataType(final_node, 0));
   std::vector<std::vector<size_t>> shapes;
+  int64_t fusion_total_size = 0;
   for (size_t i = 0; i < rank_size_t; ++i) {
     for (size_t idx = start_index; idx <= end_index; ++idx) {
       auto input_node = communication_op_info.communication_op_nodes[idx];
@@ -338,16 +349,27 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
         shape[0] /= rank_size_t;
       }
       shapes.push_back(shape);
+      size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, 0);
+      TypeId output_type = AnfAlgo::GetOutputDeviceDataType(input_node, 0);
+      size_t type_size = GetTypeByte(TypeIdToType(output_type));
+      tensor_size = (tensor_size / kAlignSize + 1) * kAlignSize / type_size;
+      fusion_total_size += static_cast<int64_t>(tensor_size);
     }
   }
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, fused_node.get());
   auto kernel_build_info = GenerateKernelBuildInfo(communication_op_info, start_index, end_index);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, fused_node.get());
-  AnfAlgo::CopyNodeAttr(kAttrFusion, final_node, fused_node);
-  AnfAlgo::CopyNodeAttr(kAttrOp, final_node, fused_node);
-  AnfAlgo::CopyNodeAttr(kAttrGroup, final_node, fused_node);
-  if (AnfAlgo::HasNodeAttr(kAttrRankSize, final_node)) {
-    AnfAlgo::CopyNodeAttr(kAttrRankSize, final_node, fused_node);
+  const std::vector<std::string> kHcclFusionAttrs = {kAttrFusion, kAttrGroup,    kAttrGroupBack,
+                                                     kAttrSrTag,  kAttrDestRank, kAttrSrcRank,
+                                                     kAttrDType,  kAttrOp,       kAttrRankSize};
+  for (const auto &attr : kHcclFusionAttrs) {
+    if (AnfAlgo::HasNodeAttr(attr, final_node)) {
+      AnfAlgo::CopyNodeAttr(attr, final_node, fused_node);
+    }
+  }
+  if (AnfAlgo::HasNodeAttr(kAttrShape, final_node)) {
+    std::vector<int64_t> fusion_total_shape{fusion_total_size};
+    AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(fusion_total_shape), fused_node);
   }
   return fused_node;
 }
