@@ -1327,6 +1327,7 @@ void ClearResAtexit() {
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  abstract::AnalysisContext::ClearContext();
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif

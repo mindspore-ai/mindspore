@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <list>
 
 #include "abstract/abstract_value.h"
 #include "ir/meta_func_graph.h"
@@ -42,7 +43,6 @@ class AnalysisContext {
       extant_context_cache_ = parent_->extant_context_cache_;
     }
   }
-
   ~AnalysisContext() = default;
 
   // Extend this context with values for another graph.
@@ -59,6 +59,9 @@ class AnalysisContext {
   std::string ToString() const;
   AnalysisContextPtr SpecializeKey() const;
   AbstractBasePtrList args_spec_list() { return args_spec_list_; }
+  static void ClearContext();
+  static AnalysisContextPtr CreateContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg,
+                                          const AbstractBasePtrList &args_spec_list);
 
  private:
   AnalysisContextPtr parent_;
@@ -70,6 +73,11 @@ class AnalysisContext {
   // Record all created child contexts from this context.
   // Like: key: [func_graph & arguments], value: [child_context]
   std::unordered_map<FuncGraphPtr, ArgsSpecToAnalysisContextMap> children_cache_;
+
+  // There may may be shared_ptr loop like:
+  // FuncGraphAbstactClosur->AnalysisContext->children_cache_->ArgsSpec->FuncGraphAbstactClosur.
+  // For break the loop, using all_context_ to clear context_.
+  static std::list<AnalysisContextPtr> all_context_;
 };
 
 struct ContextHasher {
