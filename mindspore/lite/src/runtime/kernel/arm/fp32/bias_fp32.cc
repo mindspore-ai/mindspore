@@ -18,7 +18,6 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/int8/bias_add_int8.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

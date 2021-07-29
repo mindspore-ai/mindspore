@@ -27,7 +27,7 @@
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/cxx_api/tensor_utils.h"
 #include "src/common/log_adapter.h"
-#include "src/train/train_session.h"
+#include "src/lite_session.h"
 #include "src/common/file_utils.h"
 
 namespace mindspore {
