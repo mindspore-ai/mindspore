@@ -257,7 +257,7 @@ class GraphScheduler {
   // In control flow, there are scenarios where there are multi-branch outputs, and the gather actor needs to
   // send the branch id to the loop count actor.
   void LinkBranchArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info);
-  void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
+  void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info);
   void LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
   void PrepareDataForControlNode(HostQueueDataSourceActor *host_data_source_actor,
                                  const ControlNodeParserPtr &control_node_parser,

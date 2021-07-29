@@ -166,7 +166,7 @@ void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters
                 std::vector<tensor::TensorPtr> *input_tensor) {
   const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
   if (iter == parameters.end()) {
-    (*input_tensor).emplace_back(nullptr);
+    (void)((*input_tensor).emplace_back(nullptr));
     return;
   }
   auto position = iter - parameters.begin();
@@ -809,7 +809,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   for (const auto &parameter : control_node_parameters) {
     PushTensor(args, origin_parameters, parameter, &input_tensor);
   }
-  input_tensors.emplace_back(input_tensor);
+  (void)input_tensors.emplace_back(input_tensor);
 
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
