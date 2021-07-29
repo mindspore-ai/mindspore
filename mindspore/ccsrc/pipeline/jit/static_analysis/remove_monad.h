@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_RANDOM_OPT_MONAD_H_
-#define MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_RANDOM_OPT_MONAD_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_MONAD_H_
+#define MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_MONAD_H_
 
 #include "ir/func_graph.h"
 
@@ -24,4 +24,4 @@ namespace mindspore::pipeline {
 void RemoveRandomOpMonad(const FuncGraphPtr &func_graph);
 }  // namespace mindspore::pipeline
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_RANDOM_OPT_MONAD_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_REMOVE_MONAD_H_

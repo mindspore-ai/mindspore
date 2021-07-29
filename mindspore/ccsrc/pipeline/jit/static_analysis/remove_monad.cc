@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/jit/static_analysis/remove_random_op_monad.h"
+#include "pipeline/jit/static_analysis/remove_monad.h"
 #include <algorithm>
 #include <map>
 #include <queue>
