@@ -65,26 +65,38 @@ ResNet系列模型是在2015年提出的，该网络创新性的提出了残差�
 
 ```Shell
 # 分布式训练
-用法：sh run_distribute_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_distribute_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
 
 # 单机训练
-用法：sh run_standalone_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_standalone_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
 
 # 运行评估示例
-用法：sh run_eval.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：
+cd ./scripts
+sh run_eval.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 - GPU处理器环境运行
 
 ```shell
 # 分布式训练
-用法：sh run_distribute_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_distribute_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
 
 # 单机训练
-用法：sh run_standalone_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_standalone_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
 
 # 运行评估示例
-用法：sh run_eval_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：
+cd ./scripts
+sh run_eval_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 # 脚本说明
@@ -168,10 +180,14 @@ ResNet系列模型是在2015年提出的，该网络创新性的提出了残差�
 
 ```Shell
 # 分布式训练
-用法：sh run_distribute_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_distribute_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
 
 # 单机训练
-用法：sh run_standalone_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_standalone_train.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
 ```
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -182,10 +198,14 @@ ResNet系列模型是在2015年提出的，该网络创新性的提出了残差�
 
 ```shell
 # 分布式训练
-用法：sh run_distribute_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_distribute_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH]
 
 # 单机训练
-用法：sh run_standalone_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
+用法：
+cd ./scripts
+sh run_standalone_train_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH]
 ```
 
 ## 结果
@@ -224,14 +244,18 @@ epoch time: 813347.102 ms, per step time: 325.075 ms
 
 ```Shell
 # 评估
-用法：sh run_eval.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：
+cd ./scripts
+sh run_eval.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ### GPU处理器环境运行
 
 ```shell
 # 运行评估示例
-用法：sh run_eval_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+用法：
+cd ./scripts
+sh run_eval_gpu.sh [resnetv2_50|resnetv2_101|resnetv2_152] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ## 结果
@@ -267,6 +291,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ```shell
 # Ascend310 inference
+cd ./scripts
 bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [DEVICE_ID]
 ```
 
