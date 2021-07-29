@@ -42,10 +42,10 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
   op_param.input_shape_[2] = 3;
   op_param.input_shape_[3] = 4;
 
-  lite::QuantArg input_quant_arg;
+  lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.0352941;
   input_quant_arg.zeroPoint = -128;
-  lite::QuantArg output_quant_arg;
+  lite::LiteQuantParam output_quant_arg;
   output_quant_arg.scale = 0.00392157;
   output_quant_arg.zeroPoint = -128;
 

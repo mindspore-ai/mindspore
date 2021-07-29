@@ -116,8 +116,8 @@ int Conv2DInt8Coder::SetParameters() {
 
   MS_CHECK_TRUE(!input_tensor_->quant_params().empty(), "input quant_params is empty");
   MS_CHECK_TRUE(!output_tensor_->quant_params().empty(), "output quant_params is empty");
-  QuantArg input_quant_arg = input_tensor_->quant_params().at(0);
-  QuantArg output_quant_arg = output_tensor_->quant_params().at(0);
+  LiteQuantParam input_quant_arg = input_tensor_->quant_params().at(0);
+  LiteQuantParam output_quant_arg = output_tensor_->quant_params().at(0);
 
   input_offset_ = -input_quant_arg.zeroPoint;
   out_offset_ = output_quant_arg.zeroPoint;

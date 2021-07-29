@@ -31,7 +31,7 @@ class QuantDTypeCastTestFp32 : public mindspore::CommonTest {
 };
 
 TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
-  const lite::QuantArg quant_arg{0.21176, 5};
+  const lite::LiteQuantParam quant_arg{0.21176, 5};
   QuantDTypeCastParameter param;
   param.srcT = kNumberTypeInt8;
   param.dstT = kNumberTypeFloat32;
@@ -83,7 +83,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
 }
 
 TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
-  const lite::QuantArg quant_arg = {0.3515625, -57};
+  const lite::LiteQuantParam quant_arg = {0.3515625, -57};
   QuantDTypeCastParameter param;
   param.op_parameter_.type_ = schema::PrimitiveType_QuantDTypeCast;
   param.dstT = kNumberTypeInt8;

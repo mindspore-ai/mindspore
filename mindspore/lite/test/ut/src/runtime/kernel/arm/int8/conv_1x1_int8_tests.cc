@@ -72,7 +72,7 @@ TEST_F(TestConv1x1Int8, Input1x1PrePack2) {
 int Conv1x1Int8TestInit1_perchannel(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                                     ConvParameter *conv_param, int8_t **correct) {
   Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
-  auto in_quant_arg = new mindspore::lite::QuantArg();
+  auto in_quant_arg = new mindspore::lite::LiteQuantParam();
   in_quant_arg->zeroPoint = -42, in_quant_arg->scale = 0.117647;
   in_t->AddQuantParam(*in_quant_arg);
   in_t->MallocData();
@@ -83,11 +83,11 @@ int Conv1x1Int8TestInit1_perchannel(std::vector<lite::Tensor *> *inputs_, std::v
 
   Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
   weight_t->MallocData();
-  auto weight_quant_arg1 = new mindspore::lite::QuantArg();
+  auto weight_quant_arg1 = new mindspore::lite::LiteQuantParam();
   weight_quant_arg1->zeroPoint = 66, weight_quant_arg1->scale = 0.96439215686275;
-  auto weight_quant_arg2 = new mindspore::lite::QuantArg();
+  auto weight_quant_arg2 = new mindspore::lite::LiteQuantParam();
   weight_quant_arg2->zeroPoint = 33, weight_quant_arg2->scale = 0.76439215686275;
-  auto weight_quant_arg3 = new mindspore::lite::QuantArg();
+  auto weight_quant_arg3 = new mindspore::lite::LiteQuantParam();
   weight_quant_arg3->zeroPoint = -20, weight_quant_arg3->scale = 0.99117647;
   weight_t->AddQuantParam(*weight_quant_arg1);
   weight_t->AddQuantParam(*weight_quant_arg2);
@@ -98,7 +98,7 @@ int Conv1x1Int8TestInit1_perchannel(std::vector<lite::Tensor *> *inputs_, std::v
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
   out_t->MallocData();
-  auto output_quant_arg = new mindspore::lite::QuantArg();
+  auto output_quant_arg = new mindspore::lite::LiteQuantParam();
   output_quant_arg->zeroPoint = 7, output_quant_arg->scale = 0.294321233;
   out_t->AddQuantParam(*output_quant_arg);
   outputs_->push_back(out_t);
@@ -141,7 +141,7 @@ TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
 int Conv1x1Int8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                          ConvParameter *conv_param, int8_t **correct) {
   Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
-  auto in_quant_arg = new mindspore::lite::QuantArg();
+  auto in_quant_arg = new mindspore::lite::LiteQuantParam();
   in_quant_arg->zeroPoint = -42, in_quant_arg->scale = 0.117647;
   in_t->AddQuantParam(*in_quant_arg);
   in_t->MallocData();
@@ -153,7 +153,7 @@ int Conv1x1Int8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite:
   inputs_->push_back(in_t);
 
   Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
-  auto weight_quant_arg = new mindspore::lite::QuantArg();
+  auto weight_quant_arg = new mindspore::lite::LiteQuantParam();
   weight_quant_arg->zeroPoint = 66, weight_quant_arg->scale = 0.036439215686275;
   weight_t->AddQuantParam(*weight_quant_arg);
   weight_t->MallocData();
@@ -165,7 +165,7 @@ int Conv1x1Int8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite:
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
   out_t->MallocData();
-  auto output_quant_arg = new mindspore::lite::QuantArg();
+  auto output_quant_arg = new mindspore::lite::LiteQuantParam();
   output_quant_arg->zeroPoint = 7, output_quant_arg->scale = 0.234321233;
   out_t->AddQuantParam(*output_quant_arg);
   outputs_->push_back(out_t);
@@ -211,7 +211,7 @@ int Conv1x1Int8TestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite:
                          ConvParameter *conv_param, int8_t **correct) {
   size_t buffer_size;
   Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
-  auto in_quant_arg = new mindspore::lite::QuantArg();
+  auto in_quant_arg = new mindspore::lite::LiteQuantParam();
   in_quant_arg->zeroPoint = -42, in_quant_arg->scale = 0.117647;
   in_t->AddQuantParam(*in_quant_arg);
   in_t->MallocData();
@@ -222,7 +222,7 @@ int Conv1x1Int8TestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite:
   delete[] input;
 
   Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 1, 1, 4}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
-  auto weight_quant_arg = new mindspore::lite::QuantArg();
+  auto weight_quant_arg = new mindspore::lite::LiteQuantParam();
   weight_quant_arg->zeroPoint = 66, weight_quant_arg->scale = 0.036439215686275;
   weight_t->AddQuantParam(*weight_quant_arg);
   weight_t->MallocData();
@@ -242,7 +242,7 @@ int Conv1x1Int8TestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite:
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 2, 3, 3}, mindspore::NHWC, lite::Tensor::Category::CONST_TENSOR);
   out_t->MallocData();
-  auto output_quant_arg = new mindspore::lite::QuantArg();
+  auto output_quant_arg = new mindspore::lite::LiteQuantParam();
   output_quant_arg->zeroPoint = 7, output_quant_arg->scale = 0.234321233;
   out_t->AddQuantParam(*output_quant_arg);
   outputs_->push_back(out_t);

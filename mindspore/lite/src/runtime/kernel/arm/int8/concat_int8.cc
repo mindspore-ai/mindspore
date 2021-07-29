@@ -46,9 +46,9 @@ int ConcatInt8CPUKernel::Init() {
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto quant_args = output_tensor->quant_params();
-  concat_param_->quant_arg_.out_args_.scale_ = quant_args.front().scale;
-  concat_param_->quant_arg_.out_args_.zp_ = quant_args.front().zeroPoint;
+  auto quant_params = output_tensor->quant_params();
+  concat_param_->quant_arg_.out_args_.scale_ = quant_params.front().scale;
+  concat_param_->quant_arg_.out_args_.zp_ = quant_params.front().zeroPoint;
 
   concat_param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
   concat_param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();

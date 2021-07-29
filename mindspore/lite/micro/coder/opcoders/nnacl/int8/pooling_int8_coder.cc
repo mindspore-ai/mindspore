@@ -44,8 +44,8 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   pooling_parameter->output_w_ = out_tensor->Width();
 
   // get quant params
-  std::vector<QuantArg> in_quant_args = in_tensor->quant_params();
-  std::vector<QuantArg> out_quant_args = out_tensor->quant_params();
+  std::vector<LiteQuantParam> in_quant_args = in_tensor->quant_params();
+  std::vector<LiteQuantParam> out_quant_args = out_tensor->quant_params();
   Collect(context,
           {
             "nnacl/int8/pooling_int8.h",

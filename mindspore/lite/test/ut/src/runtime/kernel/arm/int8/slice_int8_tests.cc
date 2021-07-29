@@ -43,8 +43,8 @@ TEST_F(TestSliceInt8, SliceInt8) {
   int size_data[4] = {1, 2, 2, 3};
   size_tensor.set_data(size_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 
@@ -95,8 +95,8 @@ TEST_F(TestSliceInt8, Slice5D) {
   int size_data[5] = {1, 1, 2, 2, 3};
   size_tensor.set_data(size_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 
@@ -147,8 +147,8 @@ TEST_F(TestSliceInt8, Slice6D) {
   int size_data[6] = {1, 1, 1, 2, 2, 3};
   size_tensor.set_data(size_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 
@@ -199,8 +199,8 @@ TEST_F(TestSliceInt8, Slice7D) {
   int size_data[7] = {1, 1, 1, 1, 2, 2, 3};
   size_tensor.set_data(size_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 
@@ -252,8 +252,8 @@ TEST_F(TestSliceInt8, Slice8D) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 
@@ -305,8 +305,8 @@ TEST_F(TestSliceInt8, SliceDiffQuantArgs) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.01568628f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.01568628f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 
@@ -358,8 +358,8 @@ TEST_F(TestSliceInt8, SliceSingleThread) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 
@@ -413,8 +413,8 @@ TEST_F(TestSliceInt8, Slice4Thread) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
-  const lite::QuantArg quant_out = {0.00784314f, 0};
+  const lite::LiteQuantParam quant_in0 = {0.00784314f, 0};  // -1.0--1.0 -> 0--255
+  const lite::LiteQuantParam quant_out = {0.00784314f, 0};
   in_tensor.AddQuantParam(quant_in0);
   out_tensor.AddQuantParam(quant_out);
 

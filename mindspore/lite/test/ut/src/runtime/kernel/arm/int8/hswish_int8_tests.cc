@@ -39,8 +39,8 @@ TEST_F(TestHSwishInt8, HSwish) {
   in_tensor.set_data(input_data);
   out_tensor.set_data(output_data);
 
-  const lite::QuantArg quant_in = {0.0431373f, -35};   // -4.0 -- 7.0
-  const lite::QuantArg quant_out = {0.0392157f, -52};  // -3.0 -- 7.0
+  const lite::LiteQuantParam quant_in = {0.0431373f, -35};   // -4.0 -- 7.0
+  const lite::LiteQuantParam quant_out = {0.0392157f, -52};  // -3.0 -- 7.0
   in_tensor.AddQuantParam(quant_in);
   out_tensor.AddQuantParam(quant_out);
 

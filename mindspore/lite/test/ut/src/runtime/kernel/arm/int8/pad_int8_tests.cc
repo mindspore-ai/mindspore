@@ -24,7 +24,7 @@
 #include "src/runtime/kernel/arm/int8/pad_int8.h"
 
 namespace mindspore {
-using mindspore::lite::QuantArg;
+using mindspore::lite::LiteQuantParam;
 using mindspore::lite::Tensor;
 class TestPadInt8 : public mindspore::CommonTest {
  public:
@@ -37,14 +37,14 @@ int PadInt8TestInit1(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_t->MallocData();
   int8_t in[] = {1, 1, 1};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
-  QuantArg *in_quant_arg = new QuantArg();
+  LiteQuantParam *in_quant_arg = new LiteQuantParam();
   in_quant_arg->zeroPoint = 10, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {7}, mindspore::NHWC, lite::Tensor::CONST_TENSOR);
   out_t->MallocData();
-  QuantArg *out_quant_arg = new QuantArg();
+  LiteQuantParam *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 10, out_quant_arg->scale = 0.31228156;
   out_t->AddQuantParam(*out_quant_arg);
   outputs_->push_back(out_t);
@@ -88,14 +88,14 @@ int PadInt8TestInit2(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_t->MallocData();
   int8_t in[] = {18, 71, 99, -6, 5, -119, 86, 13, 15, -85, -41, -77};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
-  QuantArg *in_quant_arg = new QuantArg();
+  LiteQuantParam *in_quant_arg = new LiteQuantParam();
   in_quant_arg->zeroPoint = 10, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {10, 5}, mindspore::NHWC, lite::Tensor::VAR);
   out_t->MallocData();
-  QuantArg *out_quant_arg = new QuantArg();
+  LiteQuantParam *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 10, out_quant_arg->scale = 0.31228156;
   out_t->AddQuantParam(*out_quant_arg);
   outputs_->push_back(out_t);
@@ -141,14 +141,14 @@ int PadInt8TestInit4(std::vector<Tensor *> *inputs_, std::vector<Tensor *> *outp
   in_t->MallocData();
   int8_t in[] = {73, 24, 7, -31, -109, -2, 69, -64, 51, -45, 38, 53};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
-  QuantArg *in_quant_arg = new QuantArg();
+  LiteQuantParam *in_quant_arg = new LiteQuantParam();
   in_quant_arg->zeroPoint = 10, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
   Tensor *out_t = new Tensor(kNumberTypeInt8, {6, 6, 4, 3}, mindspore::NHWC, lite::Tensor::VAR);
   out_t->MallocData();
-  QuantArg *out_quant_arg = new QuantArg();
+  LiteQuantParam *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 10, out_quant_arg->scale = 0.31228156;
   out_t->AddQuantParam(*out_quant_arg);
   outputs_->push_back(out_t);

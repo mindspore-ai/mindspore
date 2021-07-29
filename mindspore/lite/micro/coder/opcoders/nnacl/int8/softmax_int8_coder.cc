@@ -30,11 +30,11 @@ using mindspore::schema::PrimitiveType_Softmax;
 namespace mindspore::lite::micro::nnacl {
 int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
   SoftmaxBaseCoder::Init();
-  std::vector<QuantArg> in_quant_args = input_tensor_->quant_params();
+  std::vector<LiteQuantParam> in_quant_args = input_tensor_->quant_params();
   quant_params_.in_quant_args_.scale_ = in_quant_args.at(0).scale;
   quant_params_.in_quant_args_.zp_ = -in_quant_args.at(0).zeroPoint;
 
-  std::vector<QuantArg> out_quant_args = output_tensor_->quant_params();
+  std::vector<LiteQuantParam> out_quant_args = output_tensor_->quant_params();
   quant_params_.out_quant_arg_.scale_ = out_quant_args.at(0).scale;
   quant_params_.out_quant_arg_.zp_ = out_quant_args.at(0).zeroPoint;
   quant_params_.output_activation_min_ = std::numeric_limits<int8_t>::min();
@@ -82,7 +82,7 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   NNaclInt8Serializer code;
   code.precision(kPrecision);
 
-  code.CodeStruct("quant_args", quant_params_);
+  code.CodeStruct("quant_params", quant_params_);
   code.CodeStruct("softmax_parameter", *softmax_param_);
 
   code.CodeFunction("memset", exp_data_, 0, exp_data_size_);
@@ -91,7 +91,7 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(outter_size, thread_num_);
   int count = MSMIN(stride, outter_size - stride * kDefaultTaskId);
-  code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "&quant_args",
+  code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "&quant_params",
                     "(SoftmaxParameter *)&softmax_parameter");
   context->AppendCode(code.str());
   return RET_OK;

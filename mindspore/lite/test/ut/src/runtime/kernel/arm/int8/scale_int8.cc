@@ -22,7 +22,7 @@
 #include "nnacl/int8/scale_int8.h"
 
 namespace mindspore {
-using mindspore::lite::QuantArg;
+using mindspore::lite::LiteQuantParam;
 using mindspore::lite::Tensor;
 
 class TestScaleInt8 : public mindspore::CommonTest {
@@ -47,10 +47,10 @@ class TestScaleInt8 : public mindspore::CommonTest {
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::InnerKernel *kernel_ = nullptr;
-  const QuantArg quant_in_ = {0.005f, 5};
-  const QuantArg quant_scale_ = {0.1f, 1};
-  const QuantArg quant_bias_ = {0.002f, 2};
-  const QuantArg quant_out_ = {0.01f, 1};
+  const LiteQuantParam quant_in_ = {0.005f, 5};
+  const LiteQuantParam quant_scale_ = {0.1f, 1};
+  const LiteQuantParam quant_bias_ = {0.002f, 2};
+  const LiteQuantParam quant_out_ = {0.01f, 1};
   float err_tol_ = 0.05;
 };
 

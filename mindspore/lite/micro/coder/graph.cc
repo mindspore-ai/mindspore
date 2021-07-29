@@ -96,7 +96,7 @@ int CoderGraph::ConvertTensors() {
     auto quant_params = origin_tensor->quantParams();
     if (quant_params != nullptr) {
       for (int j = 0; j < static_cast<int>(quant_params->size()); j++) {
-        QuantArg quant_arg{};
+        LiteQuantParam quant_arg{};
         quant_arg.bitNum = quant_params->Get(j)->numBits();
         quant_arg.scale = quant_params->Get(j)->scale();
         quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();

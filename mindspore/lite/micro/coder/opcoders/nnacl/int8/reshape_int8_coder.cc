@@ -30,8 +30,8 @@ int ReshapeInt8Coder::DoCode(CoderContext *const context) {
   MS_CHECK_PTR(input);
   MS_CHECK_PTR(output);
   int elements_num = input->ElementsNum();
-  std::vector<QuantArg> input_quant_args = input->quant_params();
-  std::vector<QuantArg> output_quant_args = output->quant_params();
+  std::vector<LiteQuantParam> input_quant_args = input->quant_params();
+  std::vector<LiteQuantParam> output_quant_args = output->quant_params();
 
   Collect(context,
           {
