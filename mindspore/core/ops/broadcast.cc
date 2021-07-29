@@ -27,11 +27,11 @@ void Broadcast::Init(const int64_t root_rank, const std::string &group) {
   this->set_root_rank(root_rank);
   this->set_group(group);
 }
-void Broadcast::set_root_rank(const int64_t root_rank) { this->AddAttr(kKeepProb, MakeValue(root_rank)); }
+void Broadcast::set_root_rank(const int64_t root_rank) { (void)this->AddAttr(kKeepProb, MakeValue(root_rank)); }
 
 void Broadcast::set_group(const std::string &group) {
   CheckAndConvertUtils::CheckString(kGroup, group, {"hccl_world_group", "hccl_world_group"}, this->name());
-  this->AddAttr(kGroup, MakeValue(group));
+  (void)this->AddAttr(kGroup, MakeValue(group));
 }
 int64_t Broadcast::get_root_rank() const {
   auto value_ptr = this->GetAttr(kRootRank);

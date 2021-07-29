@@ -26,8 +26,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = primitive->name();
   auto paddings_attr = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("paddings_size", SizeToLong(paddings_attr.size()), kEqual,
-                                     int64_t(2 * x_shape.size()), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("paddings_size", SizeToLong(paddings_attr.size()), kEqual,
+                                           int64_t(2 * x_shape.size()), prim_name);
   int64_t size = SizeToLong(paddings_attr.size());
   for (int64_t i = 0; i < size; i++) {
     for (int64_t j = 0; j < 2; j++) {
@@ -55,7 +55,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 void Pad::Init(const std::vector<std::vector<int64_t>> &paddings) { this->set_paddings(paddings); }
 void Pad::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
-  this->AddAttr(kPaddings, MakeValue(paddings));
+  (void)this->AddAttr(kPaddings, MakeValue(paddings));
 }
 std::vector<std::vector<int64_t>> Pad::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(GetAttr(kPaddings));

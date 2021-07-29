@@ -27,13 +27,13 @@ namespace mindspore {
 namespace ops {
 void DepthToSpace::set_block_size(const int64_t block_size) {
   CheckAndConvertUtils::Check(kBlockSize, block_size, kGreaterEqual, "", 2, this->name());
-  this->AddAttr(kBlockSize, MakeValue(block_size));
+  (void)this->AddAttr(kBlockSize, MakeValue(block_size));
 }
 
 int64_t DepthToSpace::get_block_size() const { return GetValue<int64_t>(GetAttr(kBlockSize)); }
 void DepthToSpace::set_format(const Format &format) {
   int64_t f = format;
-  this->AddAttr(kFormat, MakeValue(f));
+  (void)this->AddAttr(kFormat, MakeValue(f));
 }
 
 Format DepthToSpace::get_format() const { return Format(GetValue<int64_t>(GetAttr(kFormat))); }
@@ -47,7 +47,7 @@ AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", int64_t(input_args.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", int64_t(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -59,10 +59,10 @@ AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
   if (format == NHWC) {
     x_shape = {x_shape[0], x_shape[3], x_shape[1], x_shape[2]};
   }
-  CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
   int64_t block_size = GetValue<int64_t>(primitive->GetAttr(kBlockSize));
-  CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)", x_shape[1] % (block_size * block_size),
-                                     kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)",
+                                           x_shape[1] % (block_size * block_size), kEqual, 0, prim_name);
   auto out_shape = x_shape;
   out_shape[1] /= block_size * block_size;
   out_shape[2] *= block_size;

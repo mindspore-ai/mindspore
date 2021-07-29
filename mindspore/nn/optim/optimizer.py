@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ class Optimizer(Cell):
         ValueError: If `learning_rate` is a Tensor, but the dimension of tensor is greater than 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0):
@@ -272,10 +272,13 @@ class Optimizer(Cell):
             raise ValueError("The value must be 'CPU', 'Ascend' or 'GPU', but got value {}".format(value))
 
         if self._target == "CPU" and value in ('Ascend', 'GPU'):
-            raise ValueError("In the CPU environment, target cannot be set to 'GPU' and 'Ascend'.")
+            raise ValueError("In the CPU environment, target cannot be set to 'GPU' or 'Ascend'.")
 
         if self._target == "Ascend" and value == 'GPU':
             raise ValueError("In the Ascend environment, target cannot be set to 'GPU'.")
+
+        if self._target == "GPU" and value == 'Ascend':
+            raise ValueError("In the GPU environment, target cannot be set to 'Ascend'.")
 
         self._is_device = (value != 'CPU')
         self._target = value
@@ -380,7 +383,7 @@ class Optimizer(Cell):
                                  f"but got {learning_rate.ndim}.")
             if learning_rate.ndim == 1 and learning_rate.size < 2:
                 logger.warning("If use `Tensor` type dynamic learning rate, please make sure that the number"
-                               "of elements in the tensor passed is greater than 1.")
+                               "of elements in the tensor is greater than 1.")
             return learning_rate
         if isinstance(learning_rate, LearningRateSchedule):
             return learning_rate
@@ -503,7 +506,8 @@ class Optimizer(Cell):
             for param in group_param['params']:
                 validator.check_value_type("parameter", param, [Parameter], self.cls_name)
                 if param.name in params_store:
-                    raise RuntimeError(f"The {param.name} parameter has appeared in parameter groups.")
+                    raise RuntimeError(f"The {param.name} parameter already exists in parameter groups, "
+                                       f"duplicate parameters are not supported.")
 
                 params_store.append(param.name)
                 self.group_lr.append(lr)
@@ -767,7 +771,7 @@ class _IteratorLearningRate(LearningRateSchedule):
         super(_IteratorLearningRate, self).__init__()
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim != 1:
-                raise ValueError("The dim of `Tensor` type dynamic learning rate should be a 1,"
+                raise ValueError("The dim of `Tensor` type dynamic learning rate should be 1, "
                                  f"but got {learning_rate.ndim}.")
         else:
             raise TypeError("Learning rate should be Tensor.")

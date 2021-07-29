@@ -21,16 +21,14 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr CustomNormalizeInferShape(const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[0]->BuildShape());
-  if (input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c() == nullptr) {
-    MS_LOG(ERROR) << "Do infer shape in runtime.";
-  }
+abstract::ShapePtr CustomNormalizeInferShape(const std::vector<AbstractBasePtr> &input_args) {
+  auto base_value = input_args[0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(base_value);
+  auto tensor_value = base_value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor_value);
+  MS_EXCEPTION_IF_NULL(tensor_value->data_c());
   std::vector<int64_t> infer_shape;
-  auto string_num = reinterpret_cast<int64_t *>(input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c());
+  auto string_num = reinterpret_cast<int64_t *>(tensor_value->data_c());
   if (*string_num == 0) {
     infer_shape.push_back(1);
   } else {
@@ -40,10 +38,6 @@ abstract::ShapePtr CustomNormalizeInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr CustomNormalizeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   auto infer_type = input_args[0]->BuildType();
   auto tensor_type = infer_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
@@ -55,8 +49,11 @@ TypePtr CustomNormalizeInferType(const PrimitivePtr &primitive, const std::vecto
 
 AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   return std::make_shared<abstract::AbstractTensor>(CustomNormalizeInferType(primitive, input_args),
-                                                    CustomNormalizeInferShape(primitive, input_args)->shape());
+                                                    CustomNormalizeInferShape(input_args));
 }
 REGISTER_PRIMITIVE_C(kNameCustomNormalize, CustomNormalize);
 }  // namespace ops

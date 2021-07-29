@@ -48,7 +48,7 @@ int64_t Adder::get_out_channel() const {
 }
 
 void Adder::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  this->AddAttr(kKernelSize, MakeValue(kernel_size));
+  (void)this->AddAttr(kKernelSize, MakeValue(kernel_size));
 }
 
 std::vector<int64_t> Adder::get_kernel_size() const {
@@ -58,7 +58,7 @@ std::vector<int64_t> Adder::get_kernel_size() const {
 
 void Adder::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, MakeValue(swi));
 }
 
 PadMode Adder::get_pad_mode() const {
@@ -96,7 +96,7 @@ int64_t Adder::get_group() const {
 
 void Adder::set_format(const Format &format) {
   int64_t swi = format;
-  this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, MakeValue(swi));
 }
 
 Format Adder::get_format() const {

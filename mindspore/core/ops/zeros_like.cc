@@ -29,7 +29,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("infer_shape", SizeToLong(input_args.size()), kGreaterEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("infer_shape", SizeToLong(input_args.size()), kGreaterEqual, 1, op_name);
   return CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
 }
 
@@ -45,6 +45,8 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ZerosLike, prim::kPrimZerosLike, ZerosLikeInfer, nullptr, true);

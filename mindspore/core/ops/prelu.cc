@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,31 +21,25 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x = input_args[0]->BuildShape();
   auto w = input_args[1]->BuildShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x)[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w)[kShape];
 
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kNotEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kGreaterEqual, 2, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("weight rank", SizeToLong(w_shape.size()), kEqual, 1, prim_name);
   if (w_shape[0] != x_shape[1] && w_shape[0] != 1) {
     MS_LOG(EXCEPTION) << "For " << prim_name << ", channel of input_x and weight must be matched, "
                       << "while channel of input_x is " << x_shape[1] << ", weight_shape[0] is " << w_shape[0];
   }
-
+  MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<string, TypePtr> check_map = {{"input_x", input_args[0]->BuildType()},
                                          {"weight", input_args[1]->BuildType()}};
@@ -54,8 +48,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNamePReLU, PReLU);
 }  // namespace ops

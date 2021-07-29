@@ -64,7 +64,7 @@ AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   CheckAndConvertUtils::CheckInteger("DropoutGrad infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                      primitive->name());
   return std::make_shared<abstract::AbstractTensor>(DropoutGradInferType(primitive, input_args),
-                                                    DropoutGradInferShape(primitive, input_args)->shape());
+                                                    DropoutGradInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameDropoutGrad, DropoutGrad);
 }  // namespace ops

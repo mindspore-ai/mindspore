@@ -35,13 +35,17 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   if (!has_ellipsis) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(primitive);
   auto strided_slice_prim = primitive->cast<PrimStridedSlicePtr>();
+  MS_EXCEPTION_IF_NULL(strided_slice_prim);
   size_t x_rank = x_shape.size();
   size_t slice_len = begin_v.size();
   std::vector<int64_t> begin_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_begin_mask());
   std::vector<int64_t> end_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_end_mask());
   std::vector<int64_t> new_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_new_axis_mask());
   std::vector<int64_t> shrink_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_shrink_axis_mask());
+  (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(new_axis_pos.size()), kGreaterEqual,
+                                           SizeToLong(slice_len), primitive->name());
 
   size_t num = 0;
   for (size_t n = j + 1; n < slice_len; n++) {
@@ -115,6 +119,10 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
   std::vector<int64_t> infer_shape;
   size_t slice_len = begin_v.size();
   size_t x_rank = x_shape.size();
+  (void)CheckAndConvertUtils::CheckInteger("end_v size", SizeToLong(end_v.size()), kGreaterEqual, SizeToLong(slice_len),
+                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("strides_v size", SizeToLong(strides_v.size()), kGreaterEqual,
+                                           SizeToLong(slice_len), primitive->name());
   while (i < x_rank || j < slice_len) {
     int64_t x_dim_size = x_shape[i];
     if (j < slice_len) {
@@ -165,9 +173,16 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto strided_slice_prim = primitive->cast<PrimStridedSlicePtr>();
   MS_EXCEPTION_IF_NULL(strided_slice_prim);
-  auto temp_begin_v = input_args[1]->cast<abstract::AbstractTuplePtr>()->BuildValue();
+  auto tuple_begin_v = input_args[1]->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_begin_v);
+  auto temp_begin_v = tuple_begin_v->BuildValue();
+  MS_EXCEPTION_IF_NULL(temp_begin_v);
   auto begin_v = GetValue<std::vector<int64_t>>(temp_begin_v);
-  auto temp_end_v = input_args[2]->cast<abstract::AbstractTuplePtr>()->BuildValue();
+
+  auto tuple_end_v = input_args[2]->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_end_v);
+  auto temp_end_v = tuple_end_v->BuildValue();
+  MS_EXCEPTION_IF_NULL(temp_end_v);
   auto end_v = GetValue<std::vector<int64_t>>(temp_end_v);
   auto strides_v = CheckAndGetValidStrides(input_args[3]);
 
@@ -191,18 +206,15 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(ret_in_shape, ret_min_shape, ret_max_shape);
 }
 
-TypePtr StridedSliceInferType(const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto infer_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  return infer_type;
+TypePtr StridedSliceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  const int64_t x_index = 0;
+  return CheckAndConvertUtils::GetInputTensorType(input_args, x_index, primitive->name());
 }
 }  // namespace
 
 void StridedSlice::set_begin_mask(const int64_t begin_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kBeginMask, MakeValue(begin_mask));
+  (void)this->AddAttr(kBeginMask, MakeValue(begin_mask));
 }
 int64_t StridedSlice::get_begin_mask() const {
   auto value_ptr = GetAttr(kBeginMask);
@@ -210,7 +222,7 @@ int64_t StridedSlice::get_begin_mask() const {
 }
 void StridedSlice::set_end_mask(const int64_t end_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kEndMask, end_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kEndMask, MakeValue(end_mask));
+  (void)this->AddAttr(kEndMask, MakeValue(end_mask));
 }
 int64_t StridedSlice::get_end_mask() const {
   auto value_ptr = GetAttr(kEndMask);
@@ -224,7 +236,7 @@ void StridedSlice::set_ellipsis_mask(const int64_t ellipsis_mask) {
     buffer << "For" << this->name() << ", only support one ellipsis in the index, but got " << this->get_end_mask();
     MS_EXCEPTION(ValueError) << buffer.str();
   }
-  this->AddAttr(kEllipsisMask, MakeValue(ellipsis_mask));
+  (void)this->AddAttr(kEllipsisMask, MakeValue(ellipsis_mask));
 }
 int64_t StridedSlice::get_ellipsis_mask() const {
   auto value_ptr = GetAttr(kEllipsisMask);
@@ -232,7 +244,7 @@ int64_t StridedSlice::get_ellipsis_mask() const {
 }
 void StridedSlice::set_new_axis_mask(const int64_t new_axis_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kNewAxisMask, new_axis_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kNewAxisMask, MakeValue(new_axis_mask));
+  (void)this->AddAttr(kNewAxisMask, MakeValue(new_axis_mask));
 }
 int64_t StridedSlice::get_new_axis_mask() const {
   auto value_ptr = GetAttr(kNewAxisMask);
@@ -240,7 +252,7 @@ int64_t StridedSlice::get_new_axis_mask() const {
 }
 void StridedSlice::set_shrink_axis_mask(const int64_t shrink_axis_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kShrinkAxisMask, shrink_axis_mask, kGreaterEqual, 0, this->name());
-  this->AddAttr(kShrinkAxisMask, MakeValue(shrink_axis_mask));
+  (void)this->AddAttr(kShrinkAxisMask, MakeValue(shrink_axis_mask));
 }
 int64_t StridedSlice::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);
@@ -321,8 +333,11 @@ int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos,
 
 AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(StridedSliceInferType(input_args),
-                                                    StridedSliceInferShape(primitive, input_args)->shape());
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 4;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  return std::make_shared<abstract::AbstractTensor>(StridedSliceInferType(primitive, input_args),
+                                                    StridedSliceInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameStridedSlice, StridedSlice);
 }  // namespace ops

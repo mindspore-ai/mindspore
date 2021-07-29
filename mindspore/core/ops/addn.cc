@@ -35,7 +35,7 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
-  primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
+  (void)primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
   auto shape_0 = elements[0]->BuildShape();
   auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_0);
   for (size_t i = 0; i < elements.size(); ++i) {

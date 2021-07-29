@@ -41,12 +41,18 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   // outputs: y, mean, variance
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 3, op_name);
-  auto input_x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  auto gamma = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  auto beta = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  const int64_t x_index = 0;
+  const int64_t gamma_index = 1;
+  const int64_t beta_index = 2;
+  auto input_x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, x_index);
+  auto gamma = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, gamma_index);
+  auto beta = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, beta_index);
 
   auto input_shape = input_x->shape();
+  MS_EXCEPTION_IF_NULL(input_shape);
   auto const &input_shape_list = input_shape->shape();
   const size_t input_rank = input_shape_list.size();
   if (input_rank == 0) {
@@ -63,9 +69,11 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
 
   // the beta and gama shape should be x_shape[begin_params_axis:]
   auto valid_types = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", input_args[0]->BuildType(), valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("gamma_dtype", input_args[1]->BuildType(), valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("beta_dtype", input_args[2]->BuildType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", input_args[x_index]->BuildType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("gamma_dtype", input_args[gamma_index]->BuildType(), valid_types,
+                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("beta_dtype", input_args[beta_index]->BuildType(), valid_types,
+                                                   op_name);
 
   auto gamma_shape = dyn_cast<abstract::Shape>(gamma->BuildShape());
   auto beta_shape = dyn_cast<abstract::Shape>(beta->BuildShape());
@@ -119,12 +127,12 @@ void LayerNorm::Init(const int64_t begin_norm_axis, const int64_t begin_params_a
   this->set_epsilon(epsilon);
 }
 void LayerNorm::set_begin_norm_axis(const int64_t begin_norm_axis) {
-  this->AddAttr(kBeginNormAxis, MakeValue(begin_norm_axis));
+  (void)this->AddAttr(kBeginNormAxis, MakeValue(begin_norm_axis));
 }
 void LayerNorm::set_begin_params_axis(const int64_t begin_params_axis) {
-  this->AddAttr(kBeginParamsAxis, MakeValue(begin_params_axis));
+  (void)this->AddAttr(kBeginParamsAxis, MakeValue(begin_params_axis));
 }
-void LayerNorm::set_epsilon(const float epsilon) { this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void LayerNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
 
 int64_t LayerNorm::get_begin_norm_axis() const {
   auto value_ptr = this->GetAttr(kBeginNormAxis);

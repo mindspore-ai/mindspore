@@ -32,7 +32,7 @@ namespace {
 abstract::ShapePtr SoftShrinkGradInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, primitive->name());
   auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto prim_name = primitive->name();

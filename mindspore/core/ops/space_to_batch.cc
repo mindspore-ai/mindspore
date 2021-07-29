@@ -53,7 +53,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }
 }  // namespace
 void SpaceToBatch::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
-  this->AddAttr(kPaddings, MakeValue(paddings));
+  (void)this->AddAttr(kPaddings, MakeValue(paddings));
   int64_t h = SizeToLong(paddings.size());
   int64_t w = SizeToLong(paddings[0].size());
   std::vector<int64_t> temp_w = {2, 2};
@@ -70,7 +70,7 @@ std::vector<std::vector<int64_t>> SpaceToBatch::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 void SpaceToBatch::set_block_size(const std::vector<int64_t> block_size) {
-  this->AddAttr(kBlockSize, MakeValue(block_size));
+  (void)this->AddAttr(kBlockSize, MakeValue(block_size));
 }
 
 std::vector<int64_t> SpaceToBatch::get_block_size() const {

@@ -148,8 +148,8 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   auto w_shape = w_shape_map[kShape];
-  CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, 4, primitive->name());
-  CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, 4, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, 4, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, 4, primitive->name());
   auto x_min_shape = x_shape_map[kMinShape];
   auto x_max_shape = x_shape_map[kMaxShape];
   auto w_min_shape = w_shape_map[kMinShape];
@@ -251,20 +251,20 @@ void Conv2D::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, 
 }
 
 void Conv2D::set_out_channel(int64_t out_channel) {
-  AddAttr(kOutChannel,
-          MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
+  (void)AddAttr(kOutChannel,
+                MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
 }
 
 void Conv2D::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  AddAttr(kKernelSize, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, name())));
+  (void)AddAttr(kKernelSize, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, name())));
 }
 
 void Conv2D::set_stride(const std::vector<int64_t> &stride) {
-  AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
+  (void)AddAttr(kStride, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, name())));
 }
 
 void Conv2D::set_dilation(const std::vector<int64_t> &dilation) {
-  AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
+  (void)AddAttr(kDilation, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, name())));
 }
 
 void Conv2D::set_pad_mode(const PadMode &pad_mode) {
@@ -277,25 +277,25 @@ void Conv2D::set_pad_mode(const PadMode &pad_mode) {
     CheckAndConvertUtils::Check(kPad, pad, kEqual, "zeros_list", {0, 0, 0, 0}, name());
   }
   int64_t swi = pad_mode;
-  AddAttr(kPadMode, MakeValue(swi));
+  (void)AddAttr(kPadMode, MakeValue(swi));
 }
 
 void Conv2D::set_pad(const std::vector<int64_t> &pad) {
   (void)CheckAndConvertUtils::CheckInteger("pad_size", pad.size(), kEqual, 4, name());
-  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
+  (void)AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
 void Conv2D::set_mode(int64_t mode) {
-  AddAttr(kMode, MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
+  (void)AddAttr(kMode, MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
 }
 
 void Conv2D::set_group(int64_t group) {
-  AddAttr(kGroup, MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
+  (void)AddAttr(kGroup, MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
 }
 
 void Conv2D::set_format(const Format &format) {
   int64_t f = format;
-  AddAttr(kFormat, MakeValue(f));
+  (void)AddAttr(kFormat, MakeValue(f));
 }
 
 int64_t Conv2D::get_out_channel() const {
@@ -345,8 +345,8 @@ Format Conv2D::get_format() const {
 
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("Conv2d infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
-                                     primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("Conv2d infer", SizeToLong(input_args.size()), kGreaterEqual, 2,
+                                           primitive->name());
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[0]->BuildType());

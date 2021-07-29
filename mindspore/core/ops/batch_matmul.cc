@@ -63,8 +63,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
                                << ", x2 shape " << y_shp << "(transpose_b=" << transpose_b << "})";
     }
   }
-  primitive->AddAttr("transpose_x1", transpose_a_ptr);
-  primitive->AddAttr("transpose_x2", transpose_b_ptr);
+  (void)primitive->AddAttr("transpose_x1", transpose_a_ptr);
+  (void)primitive->AddAttr("transpose_x2", transpose_b_ptr);
   ShapeVector x_min_shape = x_shape_map[kMinShape];
   ShapeVector x_max_shape = x_shape_map[kMaxShape];
   ShapeVector y_min_shape = y_shape_map[kMinShape];
@@ -127,9 +127,9 @@ void BatchMatmul::Init(bool transpose_a, bool transpose_b) {
   set_transpose_b(transpose_b);
 }
 
-void BatchMatmul::set_transpose_a(bool transpose_a) { AddAttr(kTransposeA, MakeValue(transpose_a)); }
+void BatchMatmul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, MakeValue(transpose_a)); }
 
-void BatchMatmul::set_transpose_b(bool transpose_b) { AddAttr(kTransposeB, MakeValue(transpose_b)); }
+void BatchMatmul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, MakeValue(transpose_b)); }
 
 bool BatchMatmul::get_transpose_a() const {
   auto value_ptr = GetAttr(kTransposeA);
@@ -144,7 +144,7 @@ bool BatchMatmul::get_transpose_b() const {
 AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("BatchMatmul infer", input_args.size(), kGreaterEqual, 2, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("BatchMatmul infer", input_args.size(), kGreaterEqual, 2, primitive->name());
   return abstract::MakeAbstract(BatchMatmulInferShape(primitive, input_args),
                                 BatchMatmulInferType(primitive, input_args));
 }
