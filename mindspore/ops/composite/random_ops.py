@@ -34,6 +34,7 @@ def normal(shape, mean, stddev, seed=None):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
+          The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak,
           with data type in [int8, int16, int32, int64, float16, float32].
         stddev (Tensor): The deviation σ distribution parameter. It should be greater than 0,
@@ -50,17 +51,27 @@ def normal(shape, mean, stddev, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
         >>> shape = (3, 1, 2)
-        >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
-        >>> stddev = Tensor(1.0, mstype.float32)
-        >>> output = C.normal(shape, mean, stddev, seed=5)
+        >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> stddev = Tensor(1.0, mindspore.float32)
+        >>> output = ops.normal(shape, mean, stddev, seed=5)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)
+        >>> shape = (3, 1, 3)
+        >>> mean = Tensor(np.array([[3, 4, 3], [3, 5, 6]]), mindspore.float32)
+        >>> stddev = Tensor(1.0, mindspore.float32)
+        >>> output = ops.normal(shape, mean, stddev, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 3)
+        >>> shape = (3, 1, 3)
+        >>> mean = Tensor(np.array([[1, 2, 3], [3, 4, 3], [3, 5, 6]]), mindspore.float32)
+        >>> stddev = Tensor(1.0, mindspore.float32)
+        >>> output = ops.normal(shape, mean, stddev, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 3, 3)
     """
     mean_dtype = F.dtype(mean)
     stddev_dtype = F.dtype(stddev)
@@ -83,6 +94,7 @@ def laplace(shape, mean, lambda_param, seed=None):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
+          The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak.
           With float32 data type.
         lambda_param (Tensor): The parameter used for controlling the variance of this random distribution. The
@@ -91,7 +103,7 @@ def laplace(shape, mean, lambda_param, seed=None):
           Default: None, which will be treated as 0.
 
     Returns:
-        Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean and lambda_param.
+        Tensor. The shape should be the broadcasted shape of input `shape` and shapes of `mean` and `lambda_param`.
         The dtype is float32.
 
     Supported Platforms:
@@ -100,11 +112,11 @@ def laplace(shape, mean, lambda_param, seed=None):
     Examples:
         >>> from mindspore import Tensor
         >>> from mindspore.ops import composite as C
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore.common.dtype as mindspore
         >>> shape = (2, 3)
-        >>> mean = Tensor(1.0, mstype.float32)
-        >>> lambda_param = Tensor(1.0, mstype.float32)
-        >>> output = C.laplace(shape, mean, lambda_param, seed=5)
+        >>> mean = Tensor(1.0, mindspore.float32)
+        >>> lambda_param = Tensor(1.0, mindspore.float32)
+        >>> output = ops.laplace(shape, mean, lambda_param, seed=5)
         >>> print(output.shape)
         (2, 3)
     """
@@ -128,6 +140,8 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
+          The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions
+          and the length of :math:`(N,*)` should be less than 8 in broadcast operation.
         minval (Tensor): The distribution parameter `a`.
           It defines the minimum possible generated value, with int32 or float32 data type.
           If dtype is int32, only one number is allowed.
@@ -138,7 +152,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
           must be non-negative. Default: None, which will be treated as 0.
         dtype (mindspore.dtype): type of the Uniform distribution. If it is int32, it generates numbers from discrete
           uniform distribution; if it is float32, it generates numbers from continuous uniform distribution. It only
-          supports these two data types. Default: mstype.float32.
+          supports these two data types. Default: mindspore.float32.
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
@@ -156,20 +170,17 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
-        >>> from mindspore import Tensor
         >>> # For discrete uniform distribution, only one number is allowed for both minval and maxval:
         >>> shape = (4, 2)
-        >>> minval = Tensor(1, mstype.int32)
-        >>> maxval = Tensor(2, mstype.int32)
-        >>> output = C.uniform(shape, minval, maxval, seed=5, dtype=mstype.int32)
+        >>> minval = Tensor(1, mindspore.int32)
+        >>> maxval = Tensor(2, mindspore.int32)
+        >>> output = ops.uniform(shape, minval, maxval, seed=5, dtype=mindspore.int32)
         >>>
         >>> # For continuous uniform distribution, minval and maxval can be multi-dimentional:
         >>> shape = (3, 1, 2)
-        >>> minval = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
-        >>> maxval = Tensor([8.0, 10.0], mstype.float32)
-        >>> output = C.uniform(shape, minval, maxval, seed=5)
+        >>> minval = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> maxval = Tensor([8.0, 10.0], mindspore.float32)
+        >>> output = ops.uniform(shape, minval, maxval, seed=5)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)
@@ -196,13 +207,14 @@ def gamma(shape, alpha, beta, seed=None):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
+          The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         alpha (Tensor): The alpha α distribution parameter. It should be greater than 0 with float32 data type.
         beta (Tensor): The beta β distribution parameter. It should be greater than 0 with float32 data type.
         seed (int): Seed is used as entropy source for the random number engines to generate
           pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
 
     Returns:
-        Tensor. The shape should be equal to the broadcasted shape between the input "shape" and shapes
+        Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
         of `alpha` and `beta`.
         The dtype is float32.
 
@@ -216,16 +228,48 @@ def gamma(shape, alpha, beta, seed=None):
         ``Ascend``
 
     Examples:
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
+        >>> # case 1: alpha_shape is (2, 2)
         >>> shape = (3, 1, 2)
-        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
-        >>> beta = Tensor(np.array([1.0]), mstype.float32)
-        >>> output = C.gamma(shape, alpha, beta, seed=5)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([1.0]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)
+        >>> # case 2: alpha_shape is (2, 3), so shape is (3, 1, 3)
+        >>> shape = (3, 1, 3)
+        >>> alpha = Tensor(np.array([[1, 3, 4], [2, 5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([1.0]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 3)
+        >>> # case 3: beta_shape is (1, 2), the output is different.
+        >>> shape = (3, 1, 2)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([1.0, 2]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
+        >>> result = output.shape
+        >>> print(output)
+       [[[ 2.2132034  5.8855834]]
+         [ 3.3981476  7.5805717]
+        [[ 3.3981476  7.5805717]]
+         [ 3.7190282 19.941492]
+        [[ 2.9512358  2.5969937]]
+         [ 3.786061   5.160872 ]]]
+        >>> # case 4: beta_shape is (2, 1), the output is different.
+        >>> shape = (3, 1, 2)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([[1.0], [2.0]]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
+        >>> result = output.shape
+        >>> print(output)
+       [[[ 5.6085486  7.8280783]]
+         [ 15.97684  16.116285]
+        [[ 1.8347423  1.713663]]
+         [ 3.2434065 15.667398]
+        [[ 4.2922077  7.3365674]]
+         [ 5.3876944  13.159832 ]]]
     """
     seed1, seed2 = _get_seed(seed, "gamma")
     random_gamma = P.Gamma(seed1, seed2)
@@ -243,6 +287,7 @@ def poisson(shape, mean, seed=None):
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
+          The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         mean (Tensor): The mean μ distribution parameter. It should be greater than 0 with float32 data type.
         seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers
           and must be non-negative. Default: None, which will be treated as 0.
@@ -260,16 +305,20 @@ def poisson(shape, mean, seed=None):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
+        >>> # case 1: It can be broadcast.
         >>> shape = (4, 1)
-        >>> mean = Tensor(np.array([5.0, 10.0]), mstype.float32)
-        >>> output = C.poisson(shape, mean, seed=5)
+        >>> mean = Tensor(np.array([5.0, 10.0]), mindspore.float32)
+        >>> output = ops.poisson(shape, mean, seed=5)
         >>> result = output.shape
         >>> print(result)
         (4, 2)
+        >>> # case 2: It can not be broadcast. It is recommended to use the same shape.
+        >>> shape = (2, 2)
+        >>> mean = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), mindspore.float32)
+        >>> output = ops.poisson(shape, mean, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (2, 2)
     """
     seed1, seed2 = _get_seed(seed, "poisson")
     random_poisson = P.Poisson(seed1, seed2)
@@ -287,7 +336,7 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        inputs (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
+        x (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
           float32 data type.
         num_sample (int): Number of samples to draw.
         replacement (bool, optional): Whether to draw with replacement or not, default True.
@@ -299,7 +348,7 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         The dtype is float32.
 
     Raises:
-        TypeError: If `inputs` is not a Tensor whose dtype is not float32.
+        TypeError: If `x` is not a Tensor whose dtype is not float32.
         TypeError: If `num_sample` is not an int.
         TypeError: If `seed` is neither an int nor a optional.
 
@@ -307,13 +356,27 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         ``GPU``
 
     Examples:
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
-        >>> input = Tensor([0, 9, 4, 0], mstype.float32)
-        >>> output = C.multinomial(input, 2, True)
+        >>> # case 1: The output is random, and the length of the output is the same as num_sample.
+        >>> x = Tensor([0, 9, 4, 0], mindspore.float32)
+        >>> output = ops.multinomial(x, 2)
+        >>> # print(output)
+        >>> # [1 2] or [2 1]
+        >>> # the case where the result is [2 1] in multiple times.
+        >>> # This is because the value corresponding to the index 1 is larger than the value of the index 2.
+        >>> print(len(output))
+        2
+        >>> # case 2: The output is random, and the length of the output is the same as num_sample.
+        >>> # replacement is False(Default).
+        >>> # If the extracted value is 0, the index value of 1 will be returned.
+        >>> x = Tensor([0, 9, 4, 0], mstype.float32)
+        >>> output = ops.multinomial(x, 4)
         >>> print(output)
-        [1 1]
+        [1 1 2 1]
+        >>> # case 3: num_sample == x_length = 4, and replacement is True, Can extract the same elements。
+        >>> x = Tensor([0, 9, 4, 0], mstype.float32)
+        >>> output = ops.multinomial(x, 4, True)
+        >>> print(output)
+        [1 1 2 2]
     """
     shape = P.Shape()
     reshape = P.Reshape()

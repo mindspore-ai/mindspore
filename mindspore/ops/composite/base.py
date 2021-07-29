@@ -480,8 +480,10 @@ class HyperMap(HyperMap_):
 
     Args:
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
-            the operations should be put in the first input of the instance.
-        reverse (bool): `reverse` is the flag to decide if apply the operation reversely. Only supported in graph mode.
+            the operations should be put in the first input of the instance. Default is None.
+        reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
+          general users please ignore. `reverse` is the flag to decide if apply the operation reversely.
+          Only supported in graph mode. Default is False.
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be sequences with the same length.
@@ -503,13 +505,13 @@ class HyperMap(HyperMap_):
     Examples:
         >>> from mindspore import dtype as mstype
         >>> nest_tensor_list = ((Tensor(1, mstype.float32), Tensor(2, mstype.float32)),
-        ... (Tensor(3, mstype.float32), Tensor(4, mstype.float32)))
+        ...                     (Tensor(3, mstype.float32), Tensor(4, mstype.float32)))
         >>> # square all the tensor in the nested list
         >>>
         >>> square = MultitypeFuncGraph('square')
         >>> @square.register("Tensor")
         ... def square_tensor(x):
-        ...     return F.square(x)
+        ...     return ops.square(x)
         >>>
         >>> common_map = HyperMap()
         >>> output = common_map(square, nest_tensor_list)
@@ -554,7 +556,9 @@ class Map(Map_):
     Args:
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
             the operations should be put in the first input of the instance. Default: None
-        reverse (bool): `reverse` is the flag to decide if apply the operation reversely. Only supported in graph mode.
+        reverse (bool): The optimizer needs to be inverted in some scenarios to improve parallel performance,
+          general users please ignore. `reverse` is the flag to decide if apply the operation reversely.
+          Only supported in graph mode. Default is False.
 
     Inputs:
         - **args** (Tuple[sequence]) - If `ops` is not `None`, all the inputs should be the same length sequences,
@@ -574,7 +578,7 @@ class Map(Map_):
         >>> square = MultitypeFuncGraph('square')
         >>> @square.register("Tensor")
         ... def square_tensor(x):
-        ...     return F.square(x)
+        ...     return ops.square(x)
         >>>
         >>> common_map = Map()
         >>> output = common_map(square, tensor_list)

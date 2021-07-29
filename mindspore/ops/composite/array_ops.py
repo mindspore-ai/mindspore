@@ -74,13 +74,20 @@ def repeat_elements(x, rep, axis=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # case 1 : repeat on axis 0
         >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-        >>> output = C.repeat_elements(x, rep = 2, axis = 0)
+        >>> output = ops.repeat_elements(x, rep = 2, axis = 0)
         >>> print(output)
         [[0 1 2]
          [0 1 2]
          [3 4 5]
          [3 4 5]]
+        >>> # case 2 : repeat on axis 1
+        >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
+        >>> output = ops.repeat_elements(x, rep = 2, axis = 1)
+        >>> print(output)
+        [[0 0 1 1 2 2]
+         [3 3 4 4 5 5]]
     """
     const_utils.check_type_valid(F.dtype(x), mstype.number_type, 'input x')
     rep = _check_positive_int(rep, "rep", "repeat_elements")
@@ -131,7 +138,6 @@ def sequence_mask(lengths, maxlen=None):
         - **lengths** (Tensor) - Tensor to calculate the mask for. All values in this tensor should be
           less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
           Must be type int32 or int64.
-
         - **maxlen** (int) - size of the last dimension of returned tensor. Must be positive and same
           type as elements in `lengths`.
 
@@ -147,13 +153,30 @@ def sequence_mask(lengths, maxlen=None):
         ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 3], [2, 0]]))
-        >>> output = C.sequence_mask(x, 3)
+        >>> # case 1: When maxlen is assigned
+        >>> x = Tensor(np.array([1, 2, 3, 4]))
+        >>> output = ops.sequence_mask(x, 5)
         >>> print(output)
-        [[[True False False]
-          [True True True]]
-         [[True True False]
-          [False False False]]]
+        [[ True False False False False]
+         [ True  True False False False]
+         [ True  True  True False False]
+         [ True  True  True  True False]]
+        >>> # case 2: When there is 0 in x
+        >>> x = Tensor(np.array([[1, 3], [2, 0]]))
+        >>> output = ops.sequence_mask(x, 5)
+        >>> print(output)
+        [[[ True False False False False]
+          [ True  True  True False False]]
+         [[ True  True False False False]
+          [False False False False False]]]
+        >>> # case 3: when the maxlen is not assigned
+        >>> x = Tensor(np.array([[1, 3], [2, 4]]))
+        >>> output = ops.sequence_mask(x)
+        >>> print(output)
+        [[[ True False False False ]
+          [ True  True  True False ]]
+         [[ True  True False False ]
+          [ True  True  True  True ]]]
     """
 
     argmax_op = P.ArgMaxWithValue()
