@@ -83,13 +83,13 @@ After installing MindSpore via the official website, you can start training and 
 
   ```bash
   # distributed training
-  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # standalone training
-  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # run evaluation example
-  Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [CHECKPOINT_PATH]
+  Usage: bash scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [CHECKPOINT_PATH]
   ```
 
 - running on CPU
@@ -272,10 +272,10 @@ For more configuration details, please refer the script `config.py`.
 
   ```shell
   # distributed training
-  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # standalone training
-  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
   ```
 
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -342,12 +342,12 @@ epoch: 5 step 5004, loss is 4.888848304748535
 
 ```shell
 # evaluation
-Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [CHECKPOINT_PATH]
+Usage: bash scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [CHECKPOINT_PATH]
 ```
 
 ```shell
 # evaluation example
-sh scripts/run_eval.sh squeezenet cifar10 0 ~/cifar-10-verify-bin train/squeezenet_cifar10-120_1562.ckpt
+bash scripts/run_eval.sh squeezenet cifar10 0 ~/cifar-10-verify-bin train/squeezenet_cifar10-120_1562.ckpt
 ```
 
 checkpoint can be produced in training process.

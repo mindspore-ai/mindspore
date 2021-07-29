@@ -72,9 +72,9 @@ Dataset used: [ImageNet 2012](http://image-net.org/challenges/LSVRC/2012/)
 
 ```bash
 # training on single GPU
-  sh train_1p_gpu.sh
+  bash train_1p_gpu.sh
 # training on multiple GPUs, the number after -n indicates how many GPUs will be used for training
-  sh train_distributed_gpu.sh -n 8
+  bash train_distributed_gpu.sh -n 8
 ```
 
 Inside train.sh, there are hyperparameters that can be adjusted during training, for example:
@@ -115,7 +115,7 @@ or ./device_parallel folder (multiple GPUs)
 ```bash
 # infer example
 
-sh eval.sh
+bash eval.sh
 ```
 
 Inside the eval.sh, there are configs that can be adjusted during inference, for example:

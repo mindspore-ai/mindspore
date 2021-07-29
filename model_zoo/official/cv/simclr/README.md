@@ -61,11 +61,11 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # enter script dir, train SimCLR
-sh run_standalone_train_ascend.sh [cifar10] [TRAIN_DATASET_PATH] [DEVICE_ID]
+bash run_standalone_train_ascend.sh [cifar10] [TRAIN_DATASET_PATH] [DEVICE_ID]
 or
-sh run_distribution_ascend.sh [DEVICENUM] [RANK_TABLE_FILE] [cifar10] [TRAIN_DATASET_PATH]
+bash run_distribution_ascend.sh [DEVICENUM] [RANK_TABLE_FILE] [cifar10] [TRAIN_DATASET_PATH]
 # enter script dir, evaluate SimCLR
-sh run_standalone_eval_ascend.sh [cifar10] [DEVICE_ID] [SIMCLR_MODEL_PATH] [TRAIN_DATASET_PATH] [EVAL_DATASET_PATH]
+bash run_standalone_eval_ascend.sh [cifar10] [DEVICE_ID] [SIMCLR_MODEL_PATH] [TRAIN_DATASET_PATH] [EVAL_DATASET_PATH]
 ```
 
 ## [Script Description](#contents)
@@ -151,7 +151,7 @@ Major parameters in linear_eval.py as follows:
 - running on Ascend
 
   ```bash
-  sh run_distribution_ascend.sh [DEVICENUM] [RANK_TABLE_FILE] [cifar10] [TRAIN_DATASET_PATH]
+  bash run_distribution_ascend.sh [DEVICENUM] [RANK_TABLE_FILE] [cifar10] [TRAIN_DATASET_PATH]
   ```
 
   After training, the loss value will be achieved as follows:
@@ -185,7 +185,7 @@ Before running the command below, please check the checkpoint path used for eval
 - running on Ascend
 
   ```bash
-  sh run_standalone_eval_ascend.sh [cifar10] [DEVICE_ID] [SIMCLR_MODEL_PATH] [TRAIN_DATASET_PATH] [EVAL_DATASET_PATH]
+  bash run_standalone_eval_ascend.sh [cifar10] [DEVICE_ID] [SIMCLR_MODEL_PATH] [TRAIN_DATASET_PATH] [EVAL_DATASET_PATH]
   ```
 
   You can view the results through the file "eval_log". The accuracy of the test dataset will be as follows:

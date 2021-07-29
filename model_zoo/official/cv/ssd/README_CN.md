@@ -107,7 +107,7 @@ SSD方法基于前向卷积网络，该网络产生固定大小的边界框集�
 
 ```shell script
 # Ascend分布式训练
-sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH]
+bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH]
 ```
 
 ```shell script
@@ -117,7 +117,7 @@ bash run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PAT
 
 ```shell script
 # Ascend处理器环境运行eval
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 - GPU处理器环境运行
@@ -129,7 +129,7 @@ bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFI
 
 ```shell script
 # GPU处理器环境运行eval
-sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
+bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
@@ -258,7 +258,7 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 - 分布式
 
 ```shell script
-    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 此脚本需要五或七个参数。
@@ -327,7 +327,7 @@ epoch time: 150753.701, per step time: 329.157
 ### Ascend处理器环境评估
 
 ```shell script
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 此脚本需要四个参数。
@@ -363,7 +363,7 @@ mAP: 0.23808886505483504
 ### GPU处理器环境评估
 
 ```shell script
-sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
+bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 此脚本需要四个参数。

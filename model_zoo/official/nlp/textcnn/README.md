@@ -163,7 +163,7 @@ For more configuration details, please refer the script `*.yaml`.
   # need set config_path in config.py file and set data_path in yaml file
   python train.py > train.log 2>&1 &
   OR
-  sh scripts/run_train.sh dataset
+  bash scripts/run_train.sh dataset
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`.
@@ -189,7 +189,7 @@ For more configuration details, please refer the script `*.yaml`.
   # need set config_path and set data_path in yaml file, checkpoint_file_path in yaml file
   python eval.py > eval.log 2>&1 &
   OR
-  sh scripts/run_eval.sh checkpoint_file_path dataset
+  bash scripts/run_eval.sh checkpoint_file_path dataset
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:

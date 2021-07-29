@@ -141,16 +141,16 @@ ERNIE 是百度自研的基于海量数据和先验知识训练的通用文本�
 数据集下载使用如下命令：
 
 ```bash
-sh script/download_data.sh
+bash script/download_data.sh
 ```
 
 下载数据后，运行数据格式转换脚本, 将数据集转为MindRecord格式:
 
 ```bash
-sh scripts/convert_dataset.sh
+bash scripts/convert_dataset.sh
 # `convert_dataset.sh` depend on ERNIE vocabulary,
 # you should download ERNIE model first by:
-# sh script/download_model.sh
+# bash script/download_model.sh
 ```
 
 #### Ascend处理器或GPU上运行
@@ -158,21 +158,21 @@ sh scripts/convert_dataset.sh
 EmoTect基于海量数据训练好的对话情绪识别模型（基于TextCNN、ERNIE等模型训练），可供用户直接使用，可通过以下方式下载。
 
 ```shell
-sh script/download_model.sh
+bash script/download_model.sh
 ```
 
 预训练模型ERNIE下载后，将其转换为MindSpore可加载权重
 
 ```shell
 #--input_dir ./pretrain_models/ernie
-sh script/paddle_to_midnspore.sh
+bash script/paddle_to_midnspore.sh
 # only support x86 platform since Paddle don't support ARM
 ```
 
 将ERNIE迁移至Mindspore后，执行训练脚本:
 
 ```bash
-sh scripts/run_classifier_finetune_{platform}.sh
+bash scripts/run_classifier_finetune_{platform}.sh
 # platform: gpu or ascend
 ```
 
@@ -187,7 +187,7 @@ sh scripts/run_classifier_finetune_{platform}.sh
 根据训练结果，可选择最优的step进行评估，修改```scripts/run_classifier_eval.sh``` 脚本中```load_finetune_checkpoint_path``` 参数，然后执行
 
 ```shell
-sh scripts/run_classifier_eval_{platform}.sh
+bash scripts/run_classifier_eval_{platform}.sh
 # platform: gpu or ascend
 ```
 

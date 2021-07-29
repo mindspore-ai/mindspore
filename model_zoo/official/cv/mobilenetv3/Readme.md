@@ -81,8 +81,8 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
-- CPU: sh run_trian.sh CPU [DATASET_PATH]
+- GPU: bash run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
+- CPU: bash run_trian.sh CPU [DATASET_PATH]
 
 ### Launch
 
@@ -92,8 +92,8 @@ You can start training using python or shell scripts. The usage of shell scripts
       GPU: python train.py --dataset_path ~/imagenet/train/ --device_targe GPU
       CPU: python train.py --dataset_path ~/cifar10/train/ --device_targe CPU
   shell:
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
-      CPU: sh run_train.sh CPU ~/cifar10/train/
+      GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
+      CPU: bash run_train.sh CPU ~/cifar10/train/
 ```
 
 ### Result
@@ -113,8 +113,8 @@ epoch time: 138331.250, per step time: 221.330, avg loss: 3.917
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
-- CPU: sh run_infer.sh CPU [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: bash run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- CPU: bash run_infer.sh CPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
@@ -125,8 +125,8 @@ You can start training using python or shell scripts. The usage of shell scripts
     CPU: python eval.py --dataset_path ~/cifar10/val/ --checkpoint_path mobilenet_199.ckpt --device_targe CPU
 
   shell:
-    GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
-    CPU: sh run_infer.sh CPU ~/cifar10/val/ ~/train/mobilenet-200_625.ckpt
+    GPU: bash run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
+    CPU: bash run_infer.sh CPU ~/cifar10/val/ ~/train/mobilenet-200_625.ckpt
 ```
 
 > checkpoint can be produced in training process.

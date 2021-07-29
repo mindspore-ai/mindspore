@@ -105,7 +105,7 @@ Before you start your training process, you need to obtain mindspore imagenet pr
     To train the model, run the shell script `scripts/train_standalone.sh` with the format below:
 
     ```shell
-    sh scripts/train_standalone.sh [CKPT_SAVE_DIR] [DEVICE_ID] [BATCH_SIZE]
+    bash scripts/train_standalone.sh [CKPT_SAVE_DIR] [DEVICE_ID] [BATCH_SIZE]
     ```
 
     To validate the model, change the settings in `default_config.yaml` to the path of the model you want to validate or setting that on the terminal. For example:
@@ -119,7 +119,7 @@ Before you start your training process, you need to obtain mindspore imagenet pr
     Then, run the shell script `scripts/eval.sh` with the format below:
 
     ```shell
-    sh scripts/eval.sh [TEST_MODEL_FILE] [COCO_BBOX_FILE] [DEVICE_ID]
+    bash scripts/eval.sh [TEST_MODEL_FILE] [COCO_BBOX_FILE] [DEVICE_ID]
     ```
 
 - running on ModelArts
@@ -279,13 +279,13 @@ TEST:
 Run `scripts/train_standalone.sh` to train the model standalone. The usage of the script is:
 
 ```shell
-sh scripts/train_standalone.sh [CKPT_SAVE_DIR] [DEVICE_ID] [BATCH_SIZE]
+bash scripts/train_standalone.sh [CKPT_SAVE_DIR] [DEVICE_ID] [BATCH_SIZE]
 ```
 
 For example, you can run the shell command below to launch the training procedure.
 
 ```shell
-sh scripts/train_standalone.sh results/standalone/ 0 128
+bash scripts/train_standalone.sh results/standalone/ 0 128
 ```
 
 The script will run training in the background, you can view the results through the file `train_log[X].txt` as follows:
@@ -313,13 +313,13 @@ The model checkpoint will be saved into `[CKPT_SAVE_DIR]`.
 Run `scripts/train_distributed.sh` to train the model distributed. The usage of the script is:
 
 ```shell
-sh scripts/train_distributed.sh [MINDSPORE_HCCL_CONFIG_PATH] [CKPT_SAVE_DIR] [RANK_SIZE]
+bash scripts/train_distributed.sh [MINDSPORE_HCCL_CONFIG_PATH] [CKPT_SAVE_DIR] [RANK_SIZE]
 ```
 
 For example, you can run the shell command below to launch the distributed training procedure.
 
 ```shell
-sh scripts/train_distributed.sh /home/rank_table.json results/distributed/ 4
+bash scripts/train_distributed.sh /home/rank_table.json results/distributed/ 4
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log.txt` as follows:
@@ -347,13 +347,13 @@ The model checkpoint will be saved into `[CKPT_SAVE_DIR]`.
 run `scripts/eval.sh` to evaluate the model with one Ascend processor. The usage of the script is:
 
 ```shell
-sh scripts/eval.sh [TEST_MODEL_FILE] [COCO_BBOX_FILE] [DEVICE_ID]
+bash scripts/eval.sh [TEST_MODEL_FILE] [COCO_BBOX_FILE] [DEVICE_ID]
 ```
 
 For example, you can run the shell command below to launch the validation procedure.
 
 ```shell
-sh scripts/eval.sh results/distributed/sim-140_1170.ckpt
+bash scripts/eval.sh results/distributed/sim-140_1170.ckpt
 ```
 
 The above shell command will run validation procedure in the background. You can view the results through the file `eval_log[X].txt`. The result will be achieved as follows:

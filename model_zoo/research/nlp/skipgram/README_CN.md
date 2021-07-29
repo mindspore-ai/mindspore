@@ -66,7 +66,7 @@ __
 - 下载好数据集后，通过如下命令处理并获得Mindrecord
 
 ```bash
-sh scripts/create_mindrecord.sh [TRAIN_DATA_DIR]
+bash scripts/create_mindrecord.sh [TRAIN_DATA_DIR]
 ```
 
 ## 下游任务数据集
@@ -93,13 +93,13 @@ sh scripts/create_mindrecord.sh [TRAIN_DATA_DIR]
 
   ```Shell
   # 分布式训练
-  用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
+  用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 
   # 单机训练
-  用法：sh run_standalone_train.sh [DEVICE_TARGET] [TRAIN_DATA_DIR]
+  用法：bash run_standalone_train.sh [DEVICE_TARGET] [TRAIN_DATA_DIR]
 
   # 运行评估示例
-  用法：sh run_eval.sh [EVAL_DATA_DIR]
+  用法：bash run_eval.sh [EVAL_DATA_DIR]
   ```
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -165,10 +165,10 @@ eval_data_dir           # directory of evaluating corpus
 
   ```Shell
   # 单机训练
-  用法：sh run_standalone_train.sh [DEVICE_TARGET] [TRAIN_DATA_DIR]
+  用法：bash run_standalone_train.sh [DEVICE_TARGET] [TRAIN_DATA_DIR]
 
   # 运行评估示例
-  用法：sh run_eval.sh [CHECKPOINT_PATH] [ID2WORD_DICTIONARY] [EVAL_DATA_DIR]
+  用法：bash run_eval.sh [CHECKPOINT_PATH] [ID2WORD_DICTIONARY] [EVAL_DATA_DIR]
   ```
 
   训练检查点保存在config.py中指定的文件夹中。训练日志保存在工作区所在的文件夹下的train.log，内容如下所示。
@@ -197,10 +197,10 @@ epoch: 1 step: 3000, loss is 2.7949429
 
   ```Shell
   # 分布式训练
-  用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
+  用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 
   # 运行评估示例
-  用法：sh run_eval.sh [CHECKPOINT_PATH] [ID2WORD_DICTIONARY] [EVAL_DATA_DIR]
+  用法：bash run_eval.sh [CHECKPOINT_PATH] [ID2WORD_DICTIONARY] [EVAL_DATA_DIR]
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过train[X].log文件查看结果。采用以下方式达到损失值：
@@ -223,7 +223,7 @@ epoch: 1 step: 3000, loss is 2.7949429
 
   ```Shell
   # 评估
-  Usage: sh run_eval.sh [EVAL_DATA_DIR]
+  Usage: bash run_eval.sh [EVAL_DATA_DIR]
   ```
 
   评估结果可以在当前工作区下的日志找到，结果如下：

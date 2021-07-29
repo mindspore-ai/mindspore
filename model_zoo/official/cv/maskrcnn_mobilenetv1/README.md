@@ -104,10 +104,10 @@ pip install mmcv=0.2.14
 
     ```
     # distributed training
-    sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
+    bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
 
     # standalone training
-    sh run_standalone_train.sh [PRETRAINED_CKPT]
+    bash run_standalone_train.sh [PRETRAINED_CKPT]
     ```
 
     Note:
@@ -120,7 +120,7 @@ pip install mmcv=0.2.14
 
    ```bash
    # Evaluation
-   sh run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+   bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
    ```
 
    Note:
@@ -324,10 +324,10 @@ pip install mmcv=0.2.14
 
 ```bash
 # distributed training
-Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 # standalone training
-Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
+Usage: bash run_standalone_train.sh [PRETRAINED_MODEL]
 ```
 
 ### [Parameters Configuration](#contents)
@@ -482,7 +482,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 
 ```bash
 # standalone training
-sh run_standalone_train.sh [PRETRAINED_MODEL]
+bash run_standalone_train.sh [PRETRAINED_MODEL]
 ```
 
 ### [Distributed Training](#content)
@@ -490,7 +490,7 @@ sh run_standalone_train.sh [PRETRAINED_MODEL]
 - Run `run_distribute_train.sh` for distributed training of Mask model.
 
 ```bash
-sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
 
 > hccl.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -522,7 +522,7 @@ Training result will be stored in the example path, whose folder name begins wit
 
 ```bash
 # infer
-sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
+bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 ```
 
 > As for the COCO2017 dataset, VALIDATION_ANN_FILE_JSON is refer to the annotations/instances_val2017.json in the dataset directory.  
@@ -583,7 +583,7 @@ Current batch_ Size can only be set to 1. The inference process needs about 600G
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ### [Inference result](#content)

@@ -71,7 +71,7 @@ After installing MindSpore via the official website, you can start training and 
     --checkpoint_path='./checkpoint/autodis.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /test_data_dir /checkpoint_path/autodis.ckpt
+  bash scripts/run_eval.sh 0 Ascend /test_data_dir /checkpoint_path/autodis.ckpt
   ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -221,7 +221,7 @@ Parameters for both training and evaluation can be set in `default_config.yaml`
     --checkpoint_path='./checkpoint/autodis.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /test_data_dir /checkpoint_path/autodis.ckpt
+  bash scripts/run_eval.sh 0 Ascend /test_data_dir /checkpoint_path/autodis.ckpt
   ```
 
   The above python command will run in the background. You can view the results through the file "eval_output.log". The accuracy is saved in auc.log file.

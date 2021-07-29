@@ -50,13 +50,13 @@ ResNet152的总体网络架构如下：[链接](https://arxiv.org/pdf/1512.03385
 
 ```Shell
 # 分布式训练
-用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 运行评估示例
-用法：sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+用法：bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 # 脚本说明
@@ -113,10 +113,10 @@ ResNet152的总体网络架构如下：[链接](https://arxiv.org/pdf/1512.03385
 
 ```Shell
 # 分布式训练
-用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 # 单机训练
-用法：sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
 
 ```
 
@@ -148,12 +148,12 @@ epoch: 5 step: 5004, loss is 3.4899402
 
 ```Shell
 # 评估
-Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ```Shell
 # 评估示例
-sh  run_eval.sh  /data/dataset/ImageNet/imagenet_original  Resnet152-140_5004.ckpt
+bash  run_eval.sh  /data/dataset/ImageNet/imagenet_original  Resnet152-140_5004.ckpt
 ```
 
 训练过程中可以生成检查点。

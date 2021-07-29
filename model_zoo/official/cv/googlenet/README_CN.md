@@ -97,12 +97,12 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   python train.py > train.log 2>&1 &
 
   # 运行分布式训练示例
-  sh scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh rank_table.json
 
   # 运行评估示例
   python eval.py > eval.log 2>&1 &
   或
-  sh run_eval.sh
+  bash run_eval.sh
 
   # 运行推理示例
   bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
@@ -124,12 +124,12 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   python train.py > train.log 2>&1 &
 
   # 运行分布式训练示例
-  sh scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
+  bash scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
 
   # 运行评估示例
   python eval.py --checkpoint_path=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_eval_gpu.sh [CHECKPOINT_PATH]
+  bash run_eval_gpu.sh [CHECKPOINT_PATH]
   ```
 
 - CPU处理器环境运行
@@ -360,7 +360,7 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
 - Ascend处理器环境运行
 
   ```bash
-  sh scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh rank_table.json
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过train_parallel[X]/log文件查看结果。采用以下方式达到损失值：
@@ -379,7 +379,7 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
 - GPU处理器环境运行
 
   ```bash
-  sh scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
+  bash scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过train/train.log文件查看结果。
@@ -430,7 +430,7 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   或者，
 
   ```bash
-  sh scripts/run_eval_gpu.sh [CHECKPOINT_PATH]
+  bash scripts/run_eval_gpu.sh [CHECKPOINT_PATH]
   ```
 
   上述python命令将在后台运行，您可以通过eval/eval.log文件查看结果。测试数据集的准确性如下：
@@ -465,7 +465,7 @@ python export.py --config_path [CONFIG_PATH]
 
   ```shell
   # Ascend310 inference
-  sh run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+  bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
   after allreduce eval: top1_correct=9252, tot=10000, acc=92.52%
   ```
 

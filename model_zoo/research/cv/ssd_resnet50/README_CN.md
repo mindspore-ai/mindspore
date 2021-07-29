@@ -93,17 +93,17 @@ SSD方法基于前向卷积网络，该网络产生固定大小的边界框集�
 
 ```shell script
 # Ascend分布式训练
-sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
+bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
 ```
 
 ```shell script
 # 单卡训练
-sh run_standalone_train.sh
+bash run_standalone_train.sh
 ```
 
 ```shell script
 # Ascend处理器环境运行eval
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 # 脚本说明
@@ -170,7 +170,7 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 - 分布式
 
 ```shell script
-    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 此脚本需要五或七个参数。
@@ -207,7 +207,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
 ### Ascend处理器环境评估
 
 ```shell script
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 此脚本需要两个参数。

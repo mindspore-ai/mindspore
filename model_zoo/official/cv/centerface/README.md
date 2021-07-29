@@ -17,7 +17,7 @@
         - [Testing](#testing)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-    - [Inference Process](#inference-process)
+    - [Inference process](#inference-process)
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
@@ -141,7 +141,7 @@ ls ./dataset/centerface/images/train/images # img_dir
 
     ```python
     # enter script dir, train CenterFace
-    sh train_distribute.sh
+    bash train_distribute.sh
     # after training
     mkdir ./model
     cp device0/output/*/*.ckpt ./model # cp model to [MODEL_PATH]
@@ -151,7 +151,7 @@ ls ./dataset/centerface/images/train/images # img_dir
 
     ```python
     # enter script dir, train CenterFace
-    sh train_distribute_gpu.sh
+    bash train_distribute_gpu.sh
     # after training
     mkdir ./model
     cp train_distribute_gpu/output/*/*.ckpt ./model # cp model to [MODEL_PATH]
@@ -179,7 +179,7 @@ ls ./dataset/centerface/ground_truth/val.mat # annot_path
 
     ```python
     # test CenterFace
-    sh test_distribute.sh
+    bash test_distribute.sh
     ```
 
 - Test on GPU
@@ -196,7 +196,8 @@ step6: eval
 # cd ../dependency/evaluate;
 # python setup.py install;
 # cd -; #cd ../../scripts;
-sh eval_all.sh [ground_truth_path]
+
+bash eval_all.sh [ground_truth_path]
 ```
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
@@ -464,7 +465,7 @@ Major parameters eval.py as follows:
 
     - Single device
 
-    ```python
+    ```bash
     # enter script dir, train CenterFace
     cd scripts
     # you need to change the parameter in train_standalone.sh
@@ -475,9 +476,9 @@ Major parameters eval.py as follows:
     #   DATASET: dataset path
     #   ANNOTATIONS: annotation path
     #   images: img_dir in dataset path
-    sh train_standalone.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    bash train_standalone.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
     # after training
-    cp device0/output/*/*.ckpt [MODEL_PATH]
+    cp device0/outputs/*/*.ckpt [MODEL_PATH]
     ```
 
     - Multi-device (recommended)
@@ -489,35 +490,10 @@ Major parameters eval.py as follows:
     # or use symbolic link as quick start
     # or use the command as follow, most are the same as train_standalone.sh, the different is RANK_TABLE
     #   RANK_TABLE: for multi-device only, from generate_rank_table.py or user writing
-    sh train_distribute.sh [RANK_TABLE] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    bash train_distribute.sh [RANK_TABLE] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
     # after training
-    cp device0/output/*/*.ckpt [MODEL_PATH]
+    cp device0/outputs/*/*.ckpt [MODEL_PATH]
     ```
-
-    After training with 8 device, the loss value will be achieved as follows:
-
-    ```python
-    # grep "loss:" device0/xxx.log
-    #
-    # epoch: 1 step: 1, loss is greater than 500 and less than 5000
-    2020-09-24 19:00:53,550:INFO:epoch:1, iter:0, average_loss:loss:1148.415649, loss:1148.4156494140625, overflow:False, loss_scale:1024.0
-    [WARNING] DEBUG(51499,python):2020-09-24-19:00:53.590.008 [mindspore/ccsrc/debug/dump_proto.cc:218] SetValueToProto] Unsupported type UInt
-    2020-09-24 19:00:53,784:INFO:epoch:1, iter:1, average_loss:loss:798.286713, loss:448.15777587890625, overflow:False, loss_scale:1024.0
-    ...
-    2020-09-24 19:01:58,095:INFO:epoch:2, iter:197, average_loss:loss:1.942609, loss:1.5492267608642578, overflow:False, loss_scale:1024.0
-    2020-09-24 19:01:58,501:INFO:epoch[2], loss:1.942609, 477.97 imgs/sec, lr:0.004000000189989805
-    2020-09-24 19:01:58,502:INFO:==========end epoch===============
-    2020-09-24 19:02:00,780:INFO:epoch:3, iter:0, average_loss:loss:2.107658, loss:2.1076583862304688, overflow:False, loss_scale:1024.0
-    ...
-    # epoch: 140 average loss is greater than 0.3 and less than 1.5:
-    2020-09-24 20:19:16,255:INFO:epoch:140, iter:196, average_loss:loss:0.906300, loss:1.1071504354476929, overflow:False, loss_scale:1024.0
-    2020-09-24 20:19:16,347:INFO:epoch:140, iter:197, average_loss:loss:0.904684, loss:0.586264967918396, overflow:False, loss_scale:1024.0
-    2020-09-24 20:19:16,747:INFO:epoch[140], loss:0.904684, 480.10 imgs/sec, lr:3.9999998989515007e-05
-    2020-09-24 20:19:16,748:INFO:==========end epoch===============
-    2020-09-24 20:19:16,748:INFO:==========end training===============
-    ```
-
-    The model checkpoint will be saved in scripts/device0/output/xxx/xxx.ckpt
 
 - Running on GPU
 
@@ -546,7 +522,7 @@ Major parameters eval.py as follows:
     #   DATASET: dataset path
     #   ANNOTATIONS: annotation path
     #   images: img_dir in dataset path
-    sh train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    bash train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
     # after training
     cp train_standalone_gpu/output/*/*.ckpt [MODEL_PATH]
     ```
@@ -560,7 +536,7 @@ Major parameters eval.py as follows:
     # or use symbolic link as quick start
     # or use the command as follow, most are the same as train_standalone_gpu.sh, the different is DEVICE_NUM
     #   DEVICE_NUM: for multi-device only, number of devices
-    sh train_distribute_gpu.sh [DEVICE_NUM] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
+    bash train_distribute_gpu.sh [DEVICE_NUM] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS] [IMAGES]
     # after training
     cp train_distribute_gpu/output/*/*.ckpt [MODEL_PATH]
     ```
@@ -613,7 +589,7 @@ mkdir [SAVE_PATH]
     #   SAVE_PATH: save_path for evaluate
     #   DEVICE_ID: use device id
     #   CKPT: test model name
-    sh test.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
+    bash test.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
     ```
 
 2. test many out ckpt for user to choose the best one
@@ -627,9 +603,10 @@ mkdir [SAVE_PATH]
     #   STEPS_PER_EPOCH: steps for each epoch
     #   START: start loop number, used to calculate first epoch number
     #   END: end loop number, used to calculate last epoch number
-    sh test_distribute.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START] [END]
+    bash test_distribute.sh [DEVICE_TARGET][MODEL_PATH] [DATASET][GROUND_TRUTH_MAT] [SAVE_PATH][DEVICE_NUM] [STEPS_PER_EPOCH][START] [END]
     ```
 
+=======
 After testing, you can find many txt file save the box information and scores,
 open it you can see:
 
@@ -656,7 +633,8 @@ cd ../../../scripts;
     ```python
     # you need to change the parameter in eval.sh
     # default eval the ckpt saved in ./scripts/output/centerface/999
-    sh eval.sh [ground_truth_path]
+
+    bash eval.sh [ground_truth_path]
     ```
 
 2. eval many testing output for user to choose the best one
@@ -664,7 +642,7 @@ cd ../../../scripts;
     ```python
     # you need to change the parameter in eval_all.sh
     # default eval the ckpt saved in ./scripts/output/centerface/[89-140]
-    sh eval_all.sh [ground_truth_path]
+    bash eval_all.sh [ground_truth_path]
     ```
 
 3. test+eval
@@ -674,7 +652,7 @@ cd ../../../scripts;
     # or use symbolic link as quick start, default eval the ckpt saved in ./scripts/output/centerface/999
     # or use the command as follow, most are the same as test.sh, the different are:
     #   GROUND_TRUTH_PATH: ground truth path
-    sh test_and_eval.sh [DEVICE_TARGET] [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [CKPT] [GROUND_TRUTH_PATH]
+    bash test_and_eval.sh [DEVICE_TARGET][MODEL_PATH] [DATASET][GROUND_TRUTH_MAT] [SAVE_PATH][CKPT] [GROUND_TRUTH_PATH]
     ```
 
 - Running on Ascend

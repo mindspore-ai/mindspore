@@ -86,8 +86,8 @@ pip install gym
       GPU: python train.py --device_target GPU --ckpt_path ckpt > log.txt 2>&1 &  
 
   shell:
-      Ascend: sh run_standalone_train_ascend.sh ckpt
-      GPU: sh run_standalone_train_gpu.sh ckpt
+      Ascend:bash run_standalone_train_ascend.sh ckpt
+      GPU: bash run_standalone_train_gpu.sh ckpt
 ```
 
 ### [Evaluation Process](#content)
@@ -99,8 +99,8 @@ pip install gym
       GPU: python eval.py --device_target GPU --ckpt_path .ckpt/checkpoint_dqn.ckpt
 
   shell:
-      Ascend: sh run_standalone_eval_ascend.sh .ckpt/checkpoint_dqn.ckpt
-      GPU: sh run_standalone_eval_gpu.sh .ckpt/checkpoint_dqn.ckpt
+      Ascend: bash run_standalone_eval_ascend.sh .ckpt/checkpoint_dqn.ckpt
+      GPU: bash run_standalone_eval_gpu.sh .ckpt/checkpoint_dqn.ckpt
 ```
 
 ## [Performance](#content)

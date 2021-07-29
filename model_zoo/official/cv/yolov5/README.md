@@ -99,12 +99,12 @@ python train.py \
 
 ```shell
 # standalone training example(1p) by shell script
-sh run_standalone_train.sh dataset/xxx
+bash run_standalone_train.sh dataset/xxx
 ```
 
 ```shell
 # For Ascend device, distributed training example(8p) by shell script
-sh run_distribute_train.sh dataset/xxx rank_table_8p.json
+bash run_distribute_train.sh dataset/xxx rank_table_8p.json
 ```
 
 ```python
@@ -117,7 +117,7 @@ python eval.py \
 
 ```python
 # run evaluation by shell script
-sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
+bash run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 ```
 
 # [Script Description](#contents)
@@ -256,7 +256,7 @@ After training, you'll get some checkpoint files under the outputs folder by def
 For Ascend device, distributed training example(8p) by shell script
 
 ```shell
-sh run_distribute_train.sh dataset/coco2017 rank_table_8p.json
+bash run_distribute_train.sh dataset/coco2017 rank_table_8p.json
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file train_parallel[X]/log.txt. The loss value will be achieved as follows:
@@ -289,7 +289,7 @@ python eval.py \
     --pretrained=yolov5.ckpt \
     --testing_shape=640 > log.txt 2>&1 &
 OR
-sh run_eval.sh dataset/coco2017 checkpoint/yolov5.ckpt
+bash run_eval.sh dataset/coco2017 checkpoint/yolov5.ckpt
 ```
 
 The above python command will run in the background. You can view the results through the file "log.txt". The mAP of the test dataset will be as follows:

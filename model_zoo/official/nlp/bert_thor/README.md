@@ -68,7 +68,7 @@ After installing MindSpore via the official website, you can start training and 
 
 ```shell
 # run distributed training example
-sh scripts/run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
+bash scripts/run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
 
 # run evaluation example
 python pretrain_eval.py
@@ -135,7 +135,7 @@ Parameters for both training and inference can be set in config.py.
 #### Ascend 910
 
 ```shell
-  sh run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
+  bash run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
 ```
 
 We need five parameters for this scripts.

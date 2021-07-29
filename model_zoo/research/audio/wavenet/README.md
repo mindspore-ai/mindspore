@@ -210,13 +210,13 @@ you can run the following command to train the network:
 ```bash
 Standalone training
 GPU:
-sh ./scripts/run_standalone_train_gpu.sh [CUDA_DEVICE_ID] [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_save_ckpt]
+bash ./scripts/run_standalone_train_gpu.sh [CUDA_DEVICE_ID] [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_save_ckpt]
 
 CPU:
-sh ./scripts/run_standalone_train_cpu.sh [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_save_ckpt]
+bash ./scripts/run_standalone_train_cpu.sh [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_save_ckpt]
 
 Distributed training(8p)
-sh ./scripts/run_distribute_train_gpu.sh [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_save_ckpt]
+bash ./scripts/run_distribute_train_gpu.sh [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_save_ckpt]
 ```
 
 ## [Evaluation Process](#contents)
@@ -227,13 +227,13 @@ this [link](https://bbs.huaweicloud.com/forum/thread-94852-1-1.html)
 ```bash
 Evaluation
 GPU (using numpy):
-sh ./scripts/run_eval_gpu.sh [CUDA_DEVICE_ID] [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_load_ckpt] is_numpy [path_to_save_audio]
+bash ./scripts/run_eval_gpu.sh [CUDA_DEVICE_ID] [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_load_ckpt] is_numpy [path_to_save_audio]
 
 GPU (using mindspore):
-sh ./scripts/run_eval_gpu.sh [CUDA_DEVICE_ID] [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_load_ckpt] [path_to_save_audio]
+bash ./scripts/run_eval_gpu.sh [CUDA_DEVICE_ID] [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_load_ckpt] [path_to_save_audio]
 
 CPU:
-sh ./scripts/run_eval_cpu.sh [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_load_ckpt] [is_numpy] [path_to_save_audio]
+bash ./scripts/run_eval_cpu.sh [/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/] [/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json] [path_to_load_ckpt] [is_numpy] [path_to_save_audio]
 ```
 
 ## [Convert Process](#contents)

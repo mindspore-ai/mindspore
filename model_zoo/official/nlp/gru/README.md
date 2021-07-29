@@ -83,13 +83,13 @@ nltk.download()
     ```bash
     # run training example
     cd ./scripts
-    sh run_standalone_train.sh [TRAIN_DATASET_PATH]
+    bash run_standalone_train.sh [TRAIN_DATASET_PATH]
 
     # run distributed training example
-    sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TRAIN_DATASET_PATH]
+    bash run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TRAIN_DATASET_PATH]
 
     # run evaluation example
-    sh run_eval.sh [CKPT_FILE] [DATASET_PATH]
+    bash run_eval.sh [CKPT_FILE] [DATASET_PATH]
     ```
 
 - Running on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
@@ -250,14 +250,14 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
     ```bash
     cd ./scripts
-    sh run_standalone_train.sh [DATASET_PATH]
+    bash run_standalone_train.sh [DATASET_PATH]
     ```
 
 - Running scripts for distributed training of GRU. Task training on multiple device and run the following command in bash to be executed in `scripts/`:
 
     ``` bash
     cd ./scripts
-    sh run_distributed_train.sh [RANK_TABLE_PATH] [DATASET_PATH]
+    bash run_distributed_train.sh [RANK_TABLE_PATH] [DATASET_PATH]
     ```
 
 ## [Inference Process](#content)
@@ -266,14 +266,14 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
     ``` bash
     cd ./scripts
-    sh run_eval.sh [CKPT_FILE] [DATASET_PATH]
+    bash run_eval.sh [CKPT_FILE] [DATASET_PATH]
     ```
 
 - After evalulation, we will get eval/target.txt and eval/output.txt.Then we can use scripts/parse_output.sh to get the translation.
 
     ``` bash
     cp eval/*.txt ./
-    sh parse_output.sh target.txt output.txt /path/vocab.en
+    bash parse_output.sh target.txt output.txt /path/vocab.en
     ```
 
     Extra: We recommend doing this locally, but you can also do it on modelarts by running a python script with the following command "os.system("sh parse_output.sh target.txt output.txt /path/vocab.en")".
@@ -339,7 +339,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
 we will get target.txt and output.txt.Then we can use scripts/parse_output.sh to get the translation.
 
 ``` bash
-sh parse_output.sh target.txt output.txt /path/vocab.en
+bash parse_output.sh target.txt output.txt /path/vocab.en
 ```
 
 After parse output, we will get target.txt.forbleu and output.txt.forbleu.To calculate BLEU score, you may use this [perl script](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl) and run following command to get the BLEU score.

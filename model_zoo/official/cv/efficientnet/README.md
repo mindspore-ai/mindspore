@@ -150,15 +150,15 @@ Parameters for both training and evaluating can be set in config.py.
 
 ```bash
     # distribute training
-    sh run_distribute_train_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_TYPE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+    bash run_distribute_train_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_TYPE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
     # standalone training
-    sh run_standalone_train_gpu.sh [DATASET_TYPE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+    bash run_standalone_train_gpu.sh [DATASET_TYPE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 2. CPU
 
 ```bash
-    sh run_train_cpu.sh [DATASET_TYPE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+    bash run_train_cpu.sh [DATASET_TYPE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 ### Launch Example
@@ -166,15 +166,15 @@ Parameters for both training and evaluating can be set in config.py.
 ```bash
 # distributed training example(8p) for GPU
 cd scripts
-sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 ImageNet /dataset/train
+bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 ImageNet /dataset/train
 
 # standalone training example for GPU
 cd scripts
-sh run_standalone_train_gpu.sh ImageNet /dataset/train
+bash run_standalone_train_gpu.sh ImageNet /dataset/train
 
 # training example for CPU
 cd scripts
-sh run_train_cpu.sh ImageNet /dataset/train
+bash run_train_cpu.sh ImageNet /dataset/train
 ```
 
 You can find checkpoint file together with result in log.
@@ -186,13 +186,13 @@ You can find checkpoint file together with result in log.
 1. CPU
 
 ```bash
-sh run_eval_cpu.sh [DATASET_TYPE] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_cpu.sh [DATASET_TYPE] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 2. GPU
 
 ```bash
-sh run_eval_gpu.sh [DATASET_TYPE] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_TYPE] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 #### Launch Example
@@ -200,11 +200,11 @@ sh run_eval_gpu.sh [DATASET_TYPE] [DATASET_PATH] [CHECKPOINT_PATH]
 ```bash
 # Evaluation with checkpoint for GPU
 cd scripts
-sh run_eval_gpu.sh ImageNet /dataset/eval ./checkpoint/efficientnet_b0-600_1251.ckpt
+bash run_eval_gpu.sh ImageNet /dataset/eval ./checkpoint/efficientnet_b0-600_1251.ckpt
 
 # Evaluation with checkpoint for CPU
 cd scripts
-sh run_eval_cpu.sh ImageNet /dataset/eval ./checkpoint/efficientnet_b0-600_1251.ckpt
+bash run_eval_cpu.sh ImageNet /dataset/eval ./checkpoint/efficientnet_b0-600_1251.ckpt
 ```
 
 #### Result

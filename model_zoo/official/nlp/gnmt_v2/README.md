@@ -79,15 +79,15 @@ After dataset preparation, you can start training and evaluation as follows:
     ```bash
     # run training example
     cd ./scripts
-    sh run_standalone_train_ascend.sh PRE_TRAIN_DATASET
+    bash run_standalone_train_ascend.sh PRE_TRAIN_DATASET
 
     # run distributed training example
     cd ./scripts
-    sh run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
+    bash run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
 
     # run evaluation example
     cd ./scripts
-    sh run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
+    bash run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
       VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
     ```
 
@@ -273,7 +273,7 @@ Start task training on a single device and run the shell script `scripts/run_sta
 
 ```bash
 cd ./scripts
-sh run_standalone_train_ascend.sh PRE_TRAIN_DATASET
+bash run_standalone_train_ascend.sh PRE_TRAIN_DATASET
 ```
 
 In this script, the `PRE_TRAIN_DATASET` is the dataset address.
@@ -283,7 +283,7 @@ Task training on multiple devices and run the following command in bash to be ex
 
 ```bash
 cd ./scripts
-sh run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
+bash run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
 ```
 
 Note: the `RANK_TABLE_ADDR` is the hccl_json file assigned when distributed training is running.
@@ -298,8 +298,8 @@ Run the shell script `scripts/run_standalone_eval_ascend.sh` to process the outp
 
 ```bash
 cd ./scripts
-sh run_standalone_eval_ascend.sh
-sh run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
+bash run_standalone_eval_ascend.sh
+bash run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
   VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
 ```
 

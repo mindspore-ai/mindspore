@@ -109,18 +109,18 @@ NASNet总体网络架构如下：
 
 ```bash
 # 分布式训练示例（8卡）
-sh run_distribute_train_for_gpu.sh DATA_DIR
+bash run_distribute_train_for_gpu.sh DATA_DIR
 # 单机训练
-sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
+bash run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
 ```
 
 ### 运行
 
 ```bash
 # GPU分布式训练示例（8卡）
-sh scripts/run_distribute_train_for_gpu.sh /dataset/train
+bash scripts/run_distribute_train_for_gpu.sh /dataset/train
 # GPU单机训练示例
-sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
+bash scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 ```
 
 ### 结果
@@ -133,14 +133,14 @@ sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 
 ```bash
 # 评估
-sh run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+bash run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 ### 启动
 
 ```bash
 # 检查点评估
-sh scripts/run_eval_for_gpu.sh 0 /dataset/val ./checkpoint/nasnet-a-mobile-rank0-248_10009.ckpt
+bash scripts/run_eval_for_gpu.sh 0 /dataset/val ./checkpoint/nasnet-a-mobile-rank0-248_10009.ckpt
 ```
 
 > 训练过程中可以生成检查点。

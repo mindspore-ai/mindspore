@@ -198,13 +198,13 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 
 传统量化感知训练（默认）：
 
-- Ascend: sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
-- GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- Ascend: bash run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: bash run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 量化步长可学习的量化感知训练：
 
-- Ascend: sh run_lsq_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
-- GPU: sh run_lsq_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- Ascend: bash run_lsq_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: bash run_lsq_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### 启动
 
@@ -214,8 +214,8 @@ python：
        Ascend:  python eval.py --device_target Ascend --dataset_path [VAL_DATASET_PATH] --checkpoint_path ~/train/mobilenet-60_1601.ckpt
        GPU:  python eval.py --device_target GPU --dataset_path [VAL_DATASET_PATH] --checkpoint_path ~/train/mobilenet-60_1601.ckpt
 shell:
-      Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
-      GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      Ascend: bash run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: bash run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
 
 # 推理示例-量化步长可学习的量化感知训练
 python：
@@ -224,8 +224,8 @@ python：
        GPU:  python eval.py --device_target GPU --dataset_path ~/imagenet/val/ \
              --checkpoint_path ~/train/mobilenet-60_1601.ckpt --optim_option "LEARNED_SCALE"
 shell:
-      Ascend: sh run_lsq_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
-      GPU: sh run_lsq_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      Ascend: bash run_lsq_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: bash run_lsq_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
 ```
 
 > 训练过程中可以生成检查点。

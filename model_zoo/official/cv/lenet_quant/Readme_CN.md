@@ -76,7 +76,7 @@ LeNet非常简单，包含5层，由2个卷积层和3个全连接层组成。
 
 ```python
 # 进入../lenet目录，训练lenet网络，生成'.ckpt'文件。
-sh run_standalone_train_ascend.sh [DATA_PATH]
+bash run_standalone_train_ascend.sh [DATA_PATH]
 # 进入lenet目录，训练LeNet-Quant
 python train.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_PATH] --dataset_sink_mode=True
 # 评估LeNet-Quant

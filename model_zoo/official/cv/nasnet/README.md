@@ -104,18 +104,18 @@ Parameters for both training and evaluating can be set in config.py.
 ```bash
 GPU:
     # distribute training example(8p)
-    sh run_distribute_train_for_gpu.sh DATA_DIR
+    bash run_distribute_train_for_gpu.sh DATA_DIR
     # standalone training
-    sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
+    bash run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
 ```
 
 ### Launch
 
 ```bash
 # distributed training example(8p) for GPU
-sh scripts/run_distribute_train_for_gpu.sh /dataset/train
+bash scripts/run_distribute_train_for_gpu.sh /dataset/train
 # standalone training example for GPU
-sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
+bash scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 ```
 
 You can find checkpoint file together with result in log.
@@ -126,14 +126,14 @@ You can find checkpoint file together with result in log.
 
 ```bash
 # Evaluation
-sh run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+bash run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 ### Launch
 
 ```bash
 # Evaluation with checkpoint
-sh scripts/run_eval_for_gpu.sh 0 /dataset/val ./checkpoint/nasnet-a-mobile-rank0-248_10009.ckpt
+bash scripts/run_eval_for_gpu.sh 0 /dataset/val ./checkpoint/nasnet-a-mobile-rank0-248_10009.ckpt
 ```
 
 ### Result

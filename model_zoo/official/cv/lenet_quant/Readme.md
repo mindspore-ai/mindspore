@@ -72,7 +72,7 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # enter ../lenet directory and train lenet network,then a '.ckpt' file will be generated.
-sh run_standalone_train_ascend.sh [DATA_PATH]
+bash run_standalone_train_ascend.sh [DATA_PATH]
 # enter lenet dir, train LeNet-Quant
 python train.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_PATH] --dataset_sink_mode=True
 #evaluate LeNet-Quant

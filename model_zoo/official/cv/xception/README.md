@@ -166,31 +166,31 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ```shell
 # distribute training example(8p)
-sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training
-sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
 - GPU:
 
 ```shell
 # fp32 distributed training example(8p)
-sh scripts/run_train_gpu_fp32.sh DEVICE_NUM DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+bash scripts/run_train_gpu_fp32.sh DEVICE_NUM DATASET_PATH PRETRAINED_CKPT_PATH(optional)
 
 # fp32 standalone training example
-sh scripts/run_train_gpu_fp32.sh 1 DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+bash scripts/run_train_gpu_fp32.sh 1 DATASET_PATH PRETRAINED_CKPT_PATH(optional)
 
 # fp16 distributed training example(8p)
-sh scripts/run_train_gpu_fp16.sh DEVICE_NUM DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+bash scripts/run_train_gpu_fp16.sh DEVICE_NUM DATASET_PATH PRETRAINED_CKPT_PATH(optional)
 
 # fp16 standalone training example
-sh scripts/run_train_gpu_fp16.sh 1 DATASET_PATH PRETRAINED_CKPT_PATH(optional)
+bash scripts/run_train_gpu_fp16.sh 1 DATASET_PATH PRETRAINED_CKPT_PATH(optional)
 
 # infer example
-sh run_eval_gpu.sh DEVICE_ID DATASET_PATH CHECKPOINT_PATH
+bash run_eval_gpu.sh DEVICE_ID DATASET_PATH CHECKPOINT_PATH
 
 #ascend310 infer example
-sh run_infer_310.sh MINDIR_PATH DATA_PATH LABEL_FILE DEVICE_ID
+bash run_infer_310.sh MINDIR_PATH DATA_PATH LABEL_FILE DEVICE_ID
 ```
 
 > Notes: RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training_ascend.html), and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -208,14 +208,14 @@ sh run_infer_310.sh MINDIR_PATH DATA_PATH LABEL_FILE DEVICE_ID
   shell:
       Ascend:
       # distribute training example(8p)
-      sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+      bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
       # standalone training
-      sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+      bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
       GPU:
       # fp16 training example(8p)
-      sh scripts/run_train_gpu_fp16.sh DEVICE_NUM DATA_PATH
+      bash scripts/run_train_gpu_fp16.sh DEVICE_NUM DATA_PATH
       # fp32 training example(8p)
-      sh scripts/run_train_gpu_fp32.sh DEVICE_NUM DATA_PATH
+      bash scripts/run_train_gpu_fp32.sh DEVICE_NUM DATA_PATH
 ```
 
 ### Result
@@ -276,13 +276,13 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```shell
-sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+bash scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 - GPU:
 
 ```shell
-sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+bash scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 ### Launch
@@ -294,8 +294,8 @@ sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
       GPU: python eval.py --device_target GPU --checkpoint_path PATH_CHECKPOINT --dataset_path DATA_DIR
 
   shell:
-      Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-      GPU: sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      Ascend: bash scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      GPU: bash scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 > checkpoint can be produced in training process.

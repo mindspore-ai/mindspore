@@ -77,9 +77,9 @@ LeNet非常简单，包含5层，由2个卷积层和3个全连接层组成。
 
 ```python
 # 进入脚本目录，训练LeNet
-sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]  
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]  
 # 进入脚本目录，评估LeNet
-sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
@@ -226,7 +226,7 @@ train.py和default_config.yaml中主要参数如下：
 ```bash
 python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-sh run_standalone_train_ascend.sh Data ckpt
+bash run_standalone_train_ascend.sh Data ckpt
 ```
 
 训练结束，损失值如下：
@@ -252,7 +252,7 @@ epoch:1 step:1538, loss is 1.0221305
 ```bash
 python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
+bash run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ```
 
 您可以通过log.txt文件查看结果。测试数据集的准确性如下：

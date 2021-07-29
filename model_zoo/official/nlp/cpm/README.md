@@ -62,11 +62,11 @@ After dataset preparation, you can start zero-shot inference, finetune and evalu
 ```bash
 # run zero-shot inference example
 cd scripts
-sh run_zero-shot_inference_distribute_ascend.sh /path/test.mindrecord /path/true_labels.txt /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_2p.json
+bash run_zero-shot_inference_distribute_ascend.sh /path/test.mindrecord /path/true_labels.txt /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_2p.json
 
 # run distributed finetune example
 cd scripts
-sh run_distribute_train_ascend_single_machine.sh /path/train.mindrecord /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_8p.json
+bash run_distribute_train_ascend_single_machine.sh /path/train.mindrecord /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_8p.json
 
 # run evaluation example
 cd scripts

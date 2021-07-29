@@ -229,8 +229,8 @@ Parameters for both training and evaluation can be set in default_config.yaml.
   for shell script:
 
   ```python
-  # sh scripts/run_train_ascend.sh [device_id] [train data path]
-  sh scripts/run_train_ascend.sh 0 ./dscnn_dataset/feat
+  # bash scripts/run_train_ascend.sh [device_id] [train data path]
+  bash scripts/run_train_ascend.sh 0 ./dscnn_dataset/feat
   ```
 
   for python script:
@@ -257,8 +257,8 @@ Parameters for both training and evaluation can be set in default_config.yaml.
   for shell script:
 
   ```python
-  # sh scripts/run_train_gpu.sh [device_num] [cuda_visible_devices] [amp_level]
-  sh scripts/run_train_gpu.sh 1 0 'O3'
+  # bash scripts/run_train_gpu.sh [device_num] [cuda_visible_devices] [amp_level]
+  bash scripts/run_train_gpu.sh 1 0 'O3'
   ```
 
   The checkpoints and log will be saved in the train_outputs.
@@ -326,10 +326,10 @@ Parameters for both training and evaluation can be set in default_config.yaml.
   for shell scripts:
 
   ```bash
-  # sh scripts/run_eval_ascend.sh eval_feat_dir model_dir
-  sh scripts/run_eval_ascend.sh ./dscnn_dataset/feat train_outputs/*/*.ckpt
+  # bash scripts/run_eval_ascend.sh eval_feat_dir model_dir
+  bash scripts/run_eval_ascend.sh ./dscnn_dataset/feat train_outputs/*/*.ckpt
   or
-  sh scripts/run_eval_ascend.sh ./dscnn_dataset/feat train_outputs/*/
+  bash scripts/run_eval_ascend.sh ./dscnn_dataset/feat train_outputs/*/
   ```
 
   for python scripts:
@@ -346,10 +346,10 @@ Parameters for both training and evaluation can be set in default_config.yaml.
   for shell scripts:
 
   ```bash
-  # sh scripts/run_eval_gpu.sh eval_feat_dir model_dir
-  sh scripts/run_eval_gpu.sh ./dscnn_dataset/feat train_outputs/*/*.ckpt
+  # bash scripts/run_eval_gpu.sh eval_feat_dir model_dir
+  bash scripts/run_eval_gpu.sh ./dscnn_dataset/feat train_outputs/*/*.ckpt
   or
-  sh scripts/run_eval_gpu.sh ./dscnn_dataset/feat train_outputs/*/
+  bash scripts/run_eval_gpu.sh ./dscnn_dataset/feat train_outputs/*/
   ```
 
   You can view the results on the screen or from logs in eval_outputs folder. The accuracy of the test dataset will be as follows:

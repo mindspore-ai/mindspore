@@ -99,12 +99,12 @@ python train.py \
 
 ```shell
 # shell脚本单机训练示例（1卡）
-sh run_standalone_train.sh dataset/xxx
+bash run_standalone_train.sh dataset/xxx
 ```
 
 ```shell
 # 对于Ascend设备，使用shell脚本分布式训练示例（8卡）
-sh run_distribute_train.sh dataset/xxx rank_table_8p.json
+bash run_distribute_train.sh dataset/xxx rank_table_8p.json
 ```
 
 ```python
@@ -117,7 +117,7 @@ python eval.py \
 
 ```python
 # shell脚本执行评估
-sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
+bash run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 ```
 
 # [脚本说明](#目录)
@@ -258,7 +258,7 @@ python train.py \
 对于Ascend设备，使用shell脚本分布式训练示例（8卡）
 
 ```shell
-sh run_distribute_train.sh dataset/coco2017 rank_table_8p.json
+bash run_distribute_train.sh dataset/coco2017 rank_table_8p.json
 ```
 
 上述shell脚本将在后台运行分布式训练。 您可以通过train_parallel[X]/log.txt文件查看结果。 得到如下损失值：
@@ -291,7 +291,7 @@ python eval.py \
     --pretrained=yolov5.ckpt \
     --testing_shape=640 > log.txt 2>&1 &
 OR
-sh run_eval.sh dataset/coco2017 checkpoint/yolov5.ckpt
+bash run_eval.sh dataset/coco2017 checkpoint/yolov5.ckpt
 ```
 
 上述python命令将在后台运行。 您可以通过log.txt文件查看结果。 测试数据集的mAP如下：

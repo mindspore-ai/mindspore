@@ -276,16 +276,16 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ```shell
 # distribute training(8p)
-sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training
-sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
 - CPU:
 
 ```shell
 # standalone training
-sh scripts/run_standalone_train_cpu.sh DATA_PATH
+bash scripts/run_standalone_train_cpu.sh DATA_PATH
 ```
 
 > Notes: RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training_ascend.html), and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). For large models like InceptionV3, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
@@ -303,12 +303,12 @@ sh scripts/run_standalone_train_cpu.sh DATA_PATH
   shell:
       Ascend:
       # distribute training example(8p)
-      sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+      bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
       # standalone training example
-      sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+      bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 
       CPU:
-      sh script/run_standalone_train_cpu.sh DATA_PATH
+      bash script/run_standalone_train_cpu.sh DATA_PATH
 ```
 
 ### Result
@@ -345,13 +345,13 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```python
-    sh scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
+    bash scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
 ```
 
 - CPU:
 
 ```python
-    sh scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
+    bash scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
 ```
 
 ### Launch
@@ -363,8 +363,8 @@ You can start training using python or shell scripts. The usage of shell scripts
       CPU: python eval.py --config_path CONFIG_FILE --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
 
   shell:
-      Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
-      CPU: sh scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
+      Ascend: bash scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
+      CPU: bash scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
 ```
 
 > checkpoint can be produced in training process.
@@ -393,7 +393,7 @@ Before performing inference, the model file must be exported by export script on
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 -NOTE: Ascend310 inference use Imagenet dataset . The label of the image is the number of folder which is started from 0 after sorting.

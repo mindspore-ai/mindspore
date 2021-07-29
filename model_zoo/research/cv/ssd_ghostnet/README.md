@@ -104,7 +104,7 @@ After installing MindSpore via the official website, you can start training and 
 python train.py
 
 # distributed training on Ascend
-sh run_distribute_train_ghostnet.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
+bash run_distribute_train_ghostnet.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
 
 # run eval on Ascend
 python eval.py --device_id 0 --dataset coco --checkpoint_file_path LOG4/ssd-500_458.ckpt
@@ -209,7 +209,7 @@ To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will ge
 - Distribute mode
 
 ```bash
-    sh run_distribute_train_ghostnet.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train_ghostnet.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need five or seven parameters for this scripts.

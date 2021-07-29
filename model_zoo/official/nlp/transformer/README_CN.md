@@ -63,10 +63,10 @@ Transformer具体包括六个编码模块和六个解码模块。每个编码模
 
 ```bash
 # 运行训练示例
-sh scripts/run_standalone_train_ascend.sh 0 52 /path/ende-l128-mindrecord
+bash scripts/run_standalone_train_ascend.sh 0 52 /path/ende-l128-mindrecord
 
 # 运行分布式训练示例
-sh scripts/run_distribute_train_ascend.sh 8 52 /path/ende-l128-mindrecord rank_table.json ./default_config.yaml
+bash scripts/run_distribute_train_ascend.sh 8 52 /path/ende-l128-mindrecord rank_table.json ./default_config.yaml
 
 # 运行评估示例
 python eval.py > eval.log 2>&1 &
@@ -321,13 +321,13 @@ Parameters for learning rate:
 - 运行`run_standalone_train.sh`，进行Transformer模型的非分布式训练。
 
     ``` bash
-    sh scripts/run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE GRADIENT_ACCUMULATE_STEP DATA_PATH
+    bash scripts/run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE GRADIENT_ACCUMULATE_STEP DATA_PATH
     ```
 
 - 运行`run_distribute_train_ascend.sh`，进行Transformer模型的非分布式训练。
 
     ``` bash
-    sh scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH
+    bash scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH
     ```
 
 **注意**：由于网络输入中有不同句长的数据，所以数据下沉模式不可使用。
@@ -345,7 +345,7 @@ Parameters for learning rate:
 - 运行`process_output.sh`，处理输出标记ids，获得真实翻译结果。
 
     ```bash
-    sh scripts/process_output.sh REF_DATA EVAL_OUTPUT VOCAB_FILE
+    bash scripts/process_output.sh REF_DATA EVAL_OUTPUT VOCAB_FILE
     ```
 
     您将会获得REF_DATA.forbleu和EVAL_OUTPUT.forbleu两个文件来进行BLEU分数计算。

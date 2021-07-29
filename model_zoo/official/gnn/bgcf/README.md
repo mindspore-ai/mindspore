@@ -72,7 +72,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 
   cd ./scripts
   # SRC_PATH is the dataset file path you download.
-  sh run_process_data_ascend.sh [SRC_PATH]
+  bash run_process_data_ascend.sh [SRC_PATH]
   ```
 
 ## [Features](#contents)
@@ -98,20 +98,20 @@ After installing MindSpore via the official website and Dataset is correctly gen
 
   ```python
   # run training example with Amazon-Beauty dataset
-  sh run_train_ascend.sh dataset_path
+  bash run_train_ascend.sh dataset_path
 
   # run evaluation example with Amazon-Beauty dataset
-  sh run_eval_ascend.sh dataset_path
+  bash run_eval_ascend.sh dataset_path
   ```  
 
 - Running on GPU
 
   ```python
   # run training example with Amazon-Beauty dataset
-  sh run_train_gpu.sh 0 dataset_path
+  bash run_train_gpu.sh 0 dataset_path
 
   # run evaluation example with Amazon-Beauty dataset
-  sh run_eval_gpu.sh 0 dataset_path
+  bash run_eval_gpu.sh 0 dataset_path
   ```  
 
 - Running on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
@@ -255,7 +255,7 @@ Parameters for both training and evaluation can be set in default_config.yaml.
 - running on Ascend
 
   ```python
-  sh run_train_ascend.sh dataset_path
+  bash run_train_ascend.sh dataset_path
   ```
 
   Training result will be stored in the scripts path, whose folder name begins with "train". You can find the result like the
@@ -278,7 +278,7 @@ Parameters for both training and evaluation can be set in default_config.yaml.
 - running on GPU
 
   ```python
-  sh run_train_gpu.sh 0 dataset_path
+  bash run_train_gpu.sh 0 dataset_path
   ```
 
   Training result will be stored in the scripts path, whose folder name begins with "train". You can find the result like the
@@ -298,7 +298,7 @@ Parameters for both training and evaluation can be set in default_config.yaml.
 - Evaluation on Ascend
 
   ```python
-  sh run_eval_ascend.sh dataset_path
+  bash run_eval_ascend.sh dataset_path
   ```
 
   Evaluation result will be stored in the scripts path, whose folder name begins with "eval". You can find the result like the
@@ -325,7 +325,7 @@ Parameters for both training and evaluation can be set in default_config.yaml.
 - Evaluation on GPU
 
   ```python
-  sh run_eval_gpu.sh 0 dataset_path
+  bash run_eval_gpu.sh 0 dataset_path
   ```
 
   Evaluation result will be stored in the scripts path, whose folder name begins with "eval". You can find the result like the

@@ -64,7 +64,7 @@ After installing MindSpore via the official website, you can start training and 
 python train.py  --device_target="GPU" --dataset="imagenet2012" --data_path=[DATA_PATH] > output.train.log 2>&1 &
 
 # run distributed training example
-sh scripts/run_distribute_train_gpu.sh [DATA_PATH]
+bash scripts/run_distribute_train_gpu.sh [DATA_PATH]
 
 # run evaluation example
 python eval.py --data_path=[DATA_PATH] --pre_trained=[PRE_TRAINED] --dataset="imagenet2012" --device_target="GPU" > output.eval.log 2>&1 &

@@ -226,13 +226,13 @@ After installing MindSpore via the official website and finishing dataset proces
 ```shell
 
 # standalone training gpu
-sh ./scripts/run_standalone_train_gpu.sh [DEVICE_ID]
+bash ./scripts/run_standalone_train_gpu.sh [DEVICE_ID]
 
 # standalone training cpu
-sh ./scripts/run_standalone_train_cpu.sh
+bash ./scripts/run_standalone_train_cpu.sh
 
 # distributed training gpu
-sh ./scripts/run_distribute_train_gpu.sh
+bash ./scripts/run_distribute_train_gpu.sh
 
 ```
 
@@ -243,10 +243,10 @@ deepspeech_pytorch into deepspeech2 directory. After that, the file directory wi
 ```shell
 
 # eval on cpu
-sh ./scripts/run_eval_cpu.sh [PATH_CHECKPOINT]
+bash ./scripts/run_eval_cpu.sh [PATH_CHECKPOINT]
 
 # eval on gpu
-sh ./scripts/run_eval_gpu.sh [DEVICE_ID] [PATH_CHECKPOINT]
+bash ./scripts/run_eval_gpu.sh [DEVICE_ID] [PATH_CHECKPOINT]
 
 ```
 

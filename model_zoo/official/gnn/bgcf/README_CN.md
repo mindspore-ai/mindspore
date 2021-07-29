@@ -71,7 +71,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   cd ./scripts
   # SRC_PATH是您下载的数据集文件路径
-  sh run_process_data_ascend.sh [SRC_PATH]
+  bash run_process_data_ascend.sh [SRC_PATH]
 
   ```
 
@@ -80,7 +80,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
   ```text
 
   # 为Amazon-Beauty生成MindRecord格式的数据集
-  sh ./run_process_data_ascend.sh ./data
+  bash ./run_process_data_ascend.sh ./data
 
   ```
 
@@ -108,10 +108,10 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
   ```text
 
   # 使用Amazon-Beauty数据集运行训练示例
-  sh run_train_ascend.sh dataset_path
+  bash run_train_ascend.sh dataset_path
 
   # 使用Amazon-Beauty数据集运行评估示例
-  sh run_eval_ascend.sh dataset_path
+  bash run_eval_ascend.sh dataset_path
 
   ```
 
@@ -120,10 +120,10 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
   ```text
 
   # 使用Amazon-Beauty数据集运行训练示例
-  sh run_train_gpu.sh 0 dataset_path
+  bash run_train_gpu.sh 0 dataset_path
 
   # 使用Amazon-Beauty数据集运行评估示例
-  sh run_eval_gpu.sh 0 dataset_path
+  bash run_eval_gpu.sh 0 dataset_path
 
   ```
 
@@ -269,7 +269,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```python
 
-  sh run_train_ascend.sh dataset_path
+  bash run_train_ascend.sh dataset_path
 
   ```
 
@@ -294,7 +294,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```python
 
-  sh run_train_gpu.sh 0 dataset_path
+  bash run_train_gpu.sh 0 dataset_path
 
   ```
 
@@ -317,7 +317,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```python
 
-  sh run_eval_ascend.sh dataset_path
+  bash run_eval_ascend.sh dataset_path
 
   ```
 
@@ -346,7 +346,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```python
 
-  sh run_eval_gpu.sh 0 dataset_path
+  bash run_eval_gpu.sh 0 dataset_path
 
   ```
 

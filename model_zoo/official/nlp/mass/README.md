@@ -380,13 +380,13 @@ You may start a task training with single device or multiple devices by assignin
 Ascend:
 
 ```ascend
-sh run_ascend.sh [--options]
+bash run_ascend.sh [--options]
 ```
 
 GPU:
 
 ```gpu
-sh run_gpu.sh [--options]
+bash run_gpu.sh [--options]
 ```
 
 The usage of `run_ascend.sh` is shown as below:
@@ -428,7 +428,7 @@ The command followed shows a example for training with 2 devices.
 Ascend:
 
 ```ascend
-sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json
+bash run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json
 ```
 
 ps. Discontinuous device id is not supported in `run_ascend.sh` at present, device id in `rank_table.json` must start from 0.
@@ -436,20 +436,20 @@ ps. Discontinuous device id is not supported in `run_ascend.sh` at present, devi
 GPU:
 
 ```gpu
-sh run_gpu.sh --task t --device_num 2
+bash run_gpu.sh --task t --device_num 2
 ```
 
 If use a single chip, it would be like this:
 Ascend:
 
 ```ascend
-sh run_ascend.sh --task t --device_num 1 --device_id 0
+bash run_ascend.sh --task t --device_num 1 --device_id 0
 ```
 
 GPU:
 
 ```gpu
-sh run_gpu.sh --task t --device_num 1 --device_id 0
+bash run_gpu.sh --task t --device_num 1 --device_id 0
 ```
 
 ## Weights average
@@ -558,13 +558,13 @@ For pre-training a model, config the options in `default_config.yaml` firstly:
 If you use the ascend chip, run the shell script `run_ascend.sh` as followed:
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1
+bash run_ascend.sh -t t -n 1 -i 1
 ```
 
 You can also run the shell script `run_gpu.sh` on gpu as followed:
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1
+bash run_gpu.sh -t t -n 1 -i 1
 ```
 
 Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `default_config.yaml` file.
@@ -582,13 +582,13 @@ For fine-tuning a model, config the options in `default_config.yaml` firstly:
 If you use the ascend chip, run the shell script `run_ascend.sh` as followed:
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1
+bash run_ascend.sh -t t -n 1 -i 1
 ```
 
 You can also run the shell script `run_gpu.sh` on gpu as followed:
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1
+bash run_gpu.sh -t t -n 1 -i 1
 ```
 
 Get the log and output files under the path `./train_mass_*/`, and the model file under the path assigned in the `default_config.yaml` file.
@@ -607,13 +607,13 @@ For inference, config the options in `default_config.yaml` firstly:
 If you use the ascend chip, run the shell script `run_ascend.sh` as followed:
 
 ```bash
-sh run_ascend.sh -t i -n 1 -i 1 -o {outputfile}
+bash run_ascend.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 You can also run the shell script `run_gpu.sh` on gpu as followed:
 
 ```gpu
-sh run_gpu.sh -t i -n 1 -i 1 -o {outputfile}
+bash run_gpu.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 ## Mindir Inference Process

@@ -76,13 +76,13 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 
   ```python
   # 运行单机训练示例
-  sh run_standalone_train.sh [DATASET_NAME] [DEVICE_ID]
+  bash run_standalone_train.sh [DATASET_NAME] [DEVICE_ID]
 
   # 运行分布式训练示例
-  sh run_distribute_train.sh [DATASET_NAME] [RANK_SIZE]
+  bash run_distribute_train.sh [DATASET_NAME] [RANK_SIZE]
 
   # 运行评估示例
-  sh run_eval.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
+  bash run_eval.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
   ```
 
   对于分布式训练，需要提前创建JSON格式的hccl配置文件。
@@ -97,13 +97,13 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 
   ```python
   # 运行单机训练示例
-  sh run_standalone_train_gpu.sh [DATASET_NAME] [DEVICE_ID]
+  bash run_standalone_train_gpu.sh [DATASET_NAME] [DEVICE_ID]
 
   # 运行分布式训练示例
-  sh run_distribute_train_gpu.sh [DATASET_NAME] [RANK_SIZE]
+  bash run_distribute_train_gpu.sh [DATASET_NAME] [RANK_SIZE]
 
   # 运行评估示例
-  sh run_eval_gpu.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
+  bash run_eval_gpu.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
   ```
 
 默认使用KingsCollege数据集。您也可以将`$dataset_name`传入脚本，以便选择其他数据集。如需查看更多详情，请参考指定脚本。
@@ -173,7 +173,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 - Ascend处理器环境运行
 
   ```bash
-  sh run_standalone_train.sh [DATASET_NAME] [DEVICE_ID]
+  bash run_standalone_train.sh [DATASET_NAME] [DEVICE_ID]
   ```
 
   上述python命令将在后台运行，您可以通过train.log文件查看结果。
@@ -191,7 +191,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 - GPU处理器环境运行
 
   ```bash
-  sh run_standalone_train_gpu.sh [DATASET_NAME] [DEVICE_ID]
+  bash run_standalone_train_gpu.sh [DATASET_NAME] [DEVICE_ID]
   ```
 
   上述python命令将在后台运行，您可以通过train.log文件查看结果。
@@ -211,7 +211,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 - Ascend处理器环境运行
 
   ```bash
-  sh run_distribute_train.sh [DATASET_NAME] [RANK_SIZE]
+  bash run_distribute_train.sh [DATASET_NAME] [RANK_SIZE]
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过device[X]/log文件查看结果。采用以下方式达到损失值：
@@ -228,7 +228,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
 - GPU处理器环境运行
 
   ```bash
-  sh run_distribute_train_gpu.sh [DATASET_NAME] [RANK_SIZE]
+  bash run_distribute_train_gpu.sh [DATASET_NAME] [RANK_SIZE]
   ```
 
   上述shell脚本将在后台运行分布训练。您可以通过device[X]/log文件查看结果。采用以下方式达到损失值：
@@ -252,7 +252,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
   请将检查点路径设置为相对路径，例如“../checkpoint/train_posenet_KingsCollege-790_38.ckpt”。
 
   ```bash
-  sh run_eval.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
+  bash run_eval.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
   ```
 
   上述python命令将在后台运行，您可以通过eval/eval.log文件查看结果。测试数据集的准确性如下：
@@ -267,7 +267,7 @@ PoseNet是剑桥大学提出的一种鲁棒、实时的6DOF（单目六自由度
   请将检查点路径设置为相对路径，例如“../checkpoint/train_posenet_KingsCollege-1875_2.ckpt”。
 
   ```bash
-  sh run_eval_gpu.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
+  bash run_eval_gpu.sh [DEVICE_ID] [DATASET_NAME] [CKPT_PATH]
   ```
 
   上述python命令将在后台运行，您可以通过eval/eval.log文件查看结果。测试数据集的准确性如下：

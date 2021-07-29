@@ -662,7 +662,7 @@ Current batch_ Size can only be set to 1. The inference process needs about 600G
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ### result

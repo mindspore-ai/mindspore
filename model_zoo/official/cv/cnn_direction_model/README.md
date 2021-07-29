@@ -78,9 +78,9 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # enter script dir, train CNNDirectionModel
-sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 # enter script dir, evaluate CNNDirectionModel
-sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]
+bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]
 ```
 
 # [Script Description](#contents)
@@ -137,7 +137,7 @@ Major parameters in default_config.yaml as follows:
 - running on Ascend
 
   ```python
-  sh scripts/run_standalone_train_ascend.sh device_id path-to-train-mindrecords pre-trained-chkpt(optional)
+  bash scripts/run_standalone_train_ascend.sh device_id path-to-train-mindrecords pre-trained-chkpt(optional)
   ```
 
   The model checkpoint will be saved script/train.
@@ -151,7 +151,7 @@ Before running the command below, please check the checkpoint path used for eval
 - running on Ascend
 
   ```python
-  sh scripts/run_standalone_eval_ascend.sh device_id path-to-test-mindrecords trained-chkpt-path
+  bash scripts/run_standalone_eval_ascend.sh device_id path-to-test-mindrecords trained-chkpt-path
   ```
 
 Results of evaluation will be printed after evaluation process is completed.
@@ -169,13 +169,13 @@ Results of evaluation will be printed after evaluation process is completed.
 Run `scripts/run_distribute_train_ascend.sh` to train the model distributed. The usage of the script is:
 
 ```text
-sh scripts/run_distribute_train_ascend.sh [rank_table] [train_dataset_path] [PRETRAINED_CKPT_PATH(optional)]
+bash scripts/run_distribute_train_ascend.sh [rank_table] [train_dataset_path] [PRETRAINED_CKPT_PATH(optional)]
 ```
 
 For example, you can run the shell command below to launch the training procedure.
 
 ```shell
-sh scripts/run_distribute_train_ascend.sh /home/rank_table.json /home/fsns/train/
+bash scripts/run_distribute_train_ascend.sh /home/rank_table.json /home/fsns/train/
 ```
 
 - running on ModelArts

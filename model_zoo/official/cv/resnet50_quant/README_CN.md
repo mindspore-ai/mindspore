@@ -136,7 +136,7 @@ ResNet-50总体网络架构如下：
 
 ### 用法
 
-- 晟腾（Ascend）: sh run_train.sh Ascend [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\（可选）
+- 晟腾（Ascend）: bash run_train.sh Ascend [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\（可选）
 
 ### 启动
 
@@ -170,7 +170,7 @@ epoch: 5 step: 5004, loss is 3.1978393
 ```shell
 # 推理示例
   shell:
-      Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/Resnet50-30_5004.ckpt
+      Ascend: bash run_infer.sh Ascend ~/imagenet/val/ ~/train/Resnet50-30_5004.ckpt
 ```
 
 > 训练过程中可以生成检查点。

@@ -127,10 +127,10 @@ After installing MindSpore via the official website, you can start training and 
 
 ```shell
 # distributed training on Ascend
-sh scripts/run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
+bash scripts/run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
 
 # run eval on Ascend
-sh scripts/run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash scripts/run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 ## [Script Description](#contents)
@@ -197,7 +197,7 @@ To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will ge
 - Distribute mode
 
 ```shell
-    sh scripts/run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash scripts/run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need five or seven parameters for this scripts.
@@ -232,7 +232,7 @@ epoch time: 50429.043 ms, per step time: 110.107 ms
 - single mode
 
 ```shell
-    sh scripts/run_1p_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash scripts/run_1p_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need five or seven parameters for this scripts.
@@ -258,7 +258,7 @@ epoch time: 286335.369 ms, per step time: 78.148 ms
 #### Evaluation on Ascend
 
 ```shell
-sh scripts/run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash scripts/run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 We need two parameters for this scripts.

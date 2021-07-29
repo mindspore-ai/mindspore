@@ -83,10 +83,10 @@ python train.py \
     --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 
 # standalone training example(1p) by shell script
-sh run_standalone_train.sh dataset/coco2014 yolov3_darknet53_noquant.ckpt
+bash run_standalone_train.sh dataset/coco2014 yolov3_darknet53_noquant.ckpt
 
 # distributed training example(8p) by shell script
-sh run_distribute_train.sh dataset/coco2014 yolov3_darknet53_noquant.ckpt rank_table_8p.json
+bash run_distribute_train.sh dataset/coco2014 yolov3_darknet53_noquant.ckpt rank_table_8p.json
 
 # run evaluation by python command
 python eval.py \
@@ -95,7 +95,7 @@ python eval.py \
     --testing_shape=416 > log.txt 2>&1 &
 
 # run evaluation by shell script
-sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
+bash run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
 ```
 
 ## [Script Description](#contents)
@@ -198,7 +198,7 @@ optional arguments:
 ##### Distributed Training
 
 ```bash
-sh run_distribute_train.sh dataset/coco2014 yolov3_darknet53_noquant.ckpt rank_table_8p.json
+bash run_distribute_train.sh dataset/coco2014 yolov3_darknet53_noquant.ckpt rank_table_8p.json
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log.txt`. The loss value will be achieved as follows:
@@ -239,7 +239,7 @@ python eval.py \
     --pretrained=0-130_83330.ckpt \
     --testing_shape=416 > log.txt 2>&1 &
 OR
-sh run_eval.sh dataset/coco2014/ checkpoint/0-130_83330.ckpt 0
+bash run_eval.sh dataset/coco2014/ checkpoint/0-130_83330.ckpt 0
 ```
 
 The above python command will run in the background. You can view the results through the file "log.txt". The mAP of the test dataset will be as follows:
