@@ -43,6 +43,10 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
+  if (channel < 0) {
+    MS_LOG(ERROR) << "get bach from weight_tensor failed.";
+    return RET_ERROR;
+  }
   if (channel % kChannelUnit != 0) {
     MS_LOG(ERROR) << "ConvolutionDepthwise3x3Int8CPUKernel doesn't support channel " << channel;
     return RET_ERROR;
@@ -72,6 +76,11 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
     }
   } else {
     int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_;
+    if (weight_tensor->ElementsNum() > pack_weight_size) {
+      MS_LOG(ERROR) << "weight_tensor->ElementsNum() is larger than pack_weight_size.";
+      free(tmp_weight);
+      return RET_ERROR;
+    }
     for (int i = 0; i < weight_tensor->ElementsNum(); i++) {
       packed_weight_[i] = (int16_t)(tmp_weight[i] - weight_zp);
     }

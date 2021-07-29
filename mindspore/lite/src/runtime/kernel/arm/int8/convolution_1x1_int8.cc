@@ -211,8 +211,15 @@ int Convolution1x1Int8CPUKernel::InitBiasByzp(const void *src_weight, int input_
 int Convolution1x1Int8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
+  if (input_channel < 0) {
+    MS_LOG(ERROR) << "get channel from filter_tensor failed.";
+    return RET_ERROR;
+  }
   auto output_channel = filter_tensor->Batch();
-
+  if (output_channel < 0) {
+    MS_LOG(ERROR) << "get batch from filter_tensor failed.";
+    return RET_ERROR;
+  }
   /* weight */
   size_t size = support_optimize_ ? UP_ROUND(input_channel, C4NUM) * UP_ROUND(output_channel, C16NUM) * sizeof(int8_t)
                                   : UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C4NUM) * sizeof(int8_t);
@@ -248,7 +255,15 @@ int Convolution1x1Int8CPUKernel::InitWeightBias() {
 int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
+  if (input_channel < 0) {
+    MS_LOG(ERROR) << "get channel from filter_tensor failed.";
+    return RET_ERROR;
+  }
   auto output_channel = filter_tensor->Batch();
+  if (output_channel < 0) {
+    MS_LOG(ERROR) << "get batch from filter_tensor failed.";
+    return RET_ERROR;
+  }
 
   /* weight */
   size_t size = UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C2NUM) * sizeof(int8_t);

@@ -36,6 +36,10 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
+  if (pack_weight_size < 0) {
+    MS_LOG(ERROR) << "get pack_weight_size from weight_tensor failed.";
+    return RET_ERROR;
+  }
   auto tmp_weight = reinterpret_cast<int8_t *>(malloc(pack_weight_size * sizeof(int8_t)));
   if (tmp_weight == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -61,6 +65,11 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
     }
   } else {
     int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_;
+    if (weight_tensor->ElementsNum() > pack_weight_size) {
+      MS_LOG(ERROR) << "weight_tensor->ElementsNum() is larger than pack_weight_size.";
+      free(tmp_weight);
+      return RET_ERROR;
+    }
     for (int i = 0; i < weight_tensor->ElementsNum(); i++) {
       packed_weight_[i] = (int16_t)(tmp_weight[i] - weight_zp);
     }

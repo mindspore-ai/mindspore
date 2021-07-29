@@ -176,12 +176,13 @@ class FusionEltwiseOpenCLKernel : public OpenCLKernel {
   static inline bool IsScalar(const std::vector<int> &shape) {
     return shape.empty() || (shape.size() == 1 && shape.front() == 1);
   }
+  const std::vector<LiteKernel *> *in_kernels_;
 
+ private:
   std::map<std::string, std::string> var_names_;  // origin name -> simplified name
   const bool simplify_var_name_{true};
   std::vector<float> scalar_weights_;
   std::vector<void *> buffer_weights_;
-  const std::vector<LiteKernel *> *in_kernels_;
 };
 
 }  // namespace mindspore::kernel

@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 namespace {
 constexpr size_t kUnitBufferMultipler = 4 * 4;
 }  // namespace
-int ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param) {
+int ProcessFilterUint8(const int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param) {
   auto input_channel = conv_param->input_channel_;
   auto output_channel = conv_param->output_channel_;
   auto kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
@@ -78,7 +78,15 @@ Convolution3x3Int8CPUKernel::~Convolution3x3Int8CPUKernel() {
 int Convolution3x3Int8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
+  if (input_channel < 0) {
+    MS_LOG(ERROR) << "get channel from filter_tensor failed.";
+    return RET_ERROR;
+  }
   auto output_channel = filter_tensor->Batch();
+  if (output_channel < 0) {
+    MS_LOG(ERROR) << "get batch from filter_tensor failed.";
+    return RET_ERROR;
+  }
   conv_param_->input_channel_ = input_channel;
   conv_param_->output_channel_ = output_channel;
   int iC8 = UP_DIV(input_channel, C8NUM);

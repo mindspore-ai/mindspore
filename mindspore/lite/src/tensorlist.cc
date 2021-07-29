@@ -171,7 +171,7 @@ int TensorList::FreeTensorListData() {
   return RET_OK;
 }
 
-int TensorList::SetTensor(int index, Tensor *src_tensor) {
+int TensorList::SetTensor(int index, const Tensor *src_tensor) {
   // your can use this fun to modify tensor[index] value
   if (src_tensor->data_type() != this->tensors_data_type_) {
     MS_LOG(ERROR) << "src_tensor->data_type()：" << src_tensor->data_type()
