@@ -41,7 +41,10 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
   int embedding_shape[MAX_SHAPE_SIZE] = {0};
   size_t embedding_shape_size = 0;
   ShapeSet(embedding_shape, &embedding_shape_size, params_->shape_, params_->shape_size_);
-  ShapeErase(embedding_shape, &embedding_shape_size, 0);
+  int erase_ret = ShapeErase(embedding_shape, &embedding_shape_size, 0);
+  if (erase_ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   ShapeSet(output_shape, &output_shape_size, ids->shape_, ids->shape_size_);
@@ -55,7 +58,10 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
     int embedding_shape_t[MAX_SHAPE_SIZE] = {0};
     size_t embedding_shape_t_size = 0;
     ShapeSet(embedding_shape_t, &embedding_shape_t_size, inputs[i]->shape_, inputs[i]->shape_size_);
-    ShapeErase(embedding_shape_t, &embedding_shape_t_size, 0);
+    erase_ret = ShapeErase(embedding_shape_t, &embedding_shape_t_size, 0);
+    if (erase_ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
     bool t_equal = ShapeEqual(embedding_shape_t, embedding_shape_t_size, embedding_shape, embedding_shape_size);
     if (!t_equal) {
       return NNACL_INPUT_TENSOR_ERROR;

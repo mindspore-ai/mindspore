@@ -46,9 +46,15 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   ShapeSet(out_shape, &out_shape_size, input->shape_, input->shape_size_);
   out_shape[2] = hidden_size;
   if (param->bidirectional_) {
-    ShapeInsert(out_shape, &out_shape_size, 1, 2);
+    int ret = ShapeInsert(out_shape, &out_shape_size, 1, 2);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
   } else {
-    ShapeInsert(out_shape, &out_shape_size, 1, 1);
+    int ret = ShapeInsert(out_shape, &out_shape_size, 1, 1);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
   }
   SetShapeArray(output, out_shape, out_shape_size);
   int state_shape[MAX_SHAPE_SIZE];
