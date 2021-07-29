@@ -405,6 +405,10 @@ def get_args(inference=False):
                         required=False,
                         default=None,
                         help='Location of data.')
+    parser.add_argument('--eval_data_url',
+                        required=False,
+                        default=None,
+                        help='Location of eval data.')
     parser.add_argument('--train_url',
                         required=False,
                         default=None,
@@ -448,6 +452,14 @@ def get_args(inference=False):
                         type=int,
                         default=0,
                         help="Enable incremental training. Default 0.")
+    parser.add_argument("--train_and_eval_mode",
+                        type=int,
+                        default=0,
+                        help="Enable evaling while training. Default 0.")
+    parser.add_argument("--eval_steps",
+                        type=int,
+                        default=10,
+                        help="The eval step in train and eval mode. Default 10.")
     add_training_params(parser)
     if inference:
         add_inference_params(parser)
