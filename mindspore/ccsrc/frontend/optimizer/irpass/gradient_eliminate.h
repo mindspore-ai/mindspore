@@ -36,7 +36,11 @@ class ExpandJPrim {
  public:
   ExpandJPrim() = default;
   virtual ~ExpandJPrim() = default;
-  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer);
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
+  void GetJPrim(const FuncGraphPtr &func_graph);
+
+ private:
+  std::vector<CNodePtr> j_nodes_;
 };
 }  // namespace irpass
 }  // namespace opt
