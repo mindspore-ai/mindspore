@@ -83,6 +83,9 @@ std::vector<std::string> GrpcClient::ChunkString(std::string str, int graph_size
       MS_LOG(EXCEPTION) << "memcpy_s failed. errorno is: " << err;
     }
     buf.push_back(buffer);
+    if (size_iter > INT_MAX - l_chunk_size) {
+      MS_EXCEPTION(ValueError) << size_iter << " + " << l_chunk_size << "would lead to integer overflow!";
+    }
     size_iter += l_chunk_size;
   }
   return buf;
