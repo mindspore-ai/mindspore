@@ -66,7 +66,7 @@ int ConvInit(int8_t *origin_weight, const int32_t *ori_bias, const int32_t *filt
   }
   memset(bias_data_, 0, bias_size);
   if (ori_bias != NULL) {
-    memcpy(bias_data_, ori_bias, output_channel * sizeof(int32_t));
+    memcpy(bias_data_, ori_bias, (unsigned int)output_channel * sizeof(int32_t));
   }
 
   for (int oc = 0; oc < output_channel; oc++) {

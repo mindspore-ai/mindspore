@@ -38,6 +38,7 @@ int ConvDelegateCoder::Prepare(CoderContext *const context) {
       PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node_->primitive_), schema_version);
     MS_CHECK_PTR(parameter_gen);
     OpParameter *op_parameter = parameter_gen(node_->primitive_);
+    MS_CHECK_PTR(op_parameter);
     op_parameter->thread_num_ = thread_num_;
     conv_coder_->set_type(primitive_type);
     conv_coder_->set_thread_num(thread_num_);
@@ -70,11 +71,9 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<T
   int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   ParameterGen paramGen =
     PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
-  if (paramGen == nullptr) {
-    MS_LOG(ERROR) << "parameter generator is null";
-    return nullptr;
-  }
+  MS_CHECK_PTR_RET_NULL(paramGen);
   auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
+  MS_CHECK_PTR_RET_NULL(conv_param);
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   conv_param->input_h_ = in_tensors.at(kInputIndex)->Height();
