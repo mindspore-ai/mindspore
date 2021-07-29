@@ -749,11 +749,9 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     case DataType::DE_UINT64:
       Normalize<uint64_t>(input, output, mean, std);
       break;
-#ifndef ENABLE_MD_LITE_X86_64
     case DataType::DE_FLOAT16:
       Normalize<float16>(input, output, mean, std);
       break;
-#endif
     case DataType::DE_FLOAT32:
       Normalize<float>(input, output, mean, std);
       break;

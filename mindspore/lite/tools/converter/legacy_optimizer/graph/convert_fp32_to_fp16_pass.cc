@@ -23,9 +23,8 @@
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
-#include "Eigen/Core"
+#include "base/float16.h"
 
-using float16 = Eigen::half;
 namespace mindspore {
 namespace lite {
 namespace {

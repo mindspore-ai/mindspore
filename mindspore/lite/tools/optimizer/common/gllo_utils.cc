@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <functional>
 #include <string>
-#include "Eigen/Core"
+#include "base/float16.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/transpose.h"
 #include "tools/converter/ops/ops_def.h"
@@ -29,8 +29,6 @@
 #include "frontend/operator/ops.h"
 #include "backend/optimizer/common/helper.h"
 #include "tools/converter/quant_param_holder.h"
-
-using float16 = Eigen::half;
 
 namespace mindspore {
 namespace opt {

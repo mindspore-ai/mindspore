@@ -23,9 +23,7 @@
 #include "debug/debugger/tensor_summary.h"
 
 #ifdef OFFLINE_DBG_MODE
-#include "Eigen/Core"
-#include "Eigen/src/Core/arch/CUDA/Half.h"
-using float16 = Eigen::half;
+#include "base/float16.h"
 #include "offline_debug/offline_logger.h"
 #endif
 
