@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_MINDRT_RUNTIME_ACTOR_THREADPOOL_H_
 
 #include <queue>
+#include <vector>
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
@@ -43,7 +44,10 @@ class ActorWorker : public Worker {
 class ActorThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains actor thread and kernel thread
-  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num);
+  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num, BindMode bind_mode);
+
+  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
+                                           const std::vector<int> &core_list);
   // create ThreadPool that contains only actor thread
   static ActorThreadPool *CreateThreadPool(size_t thread_num);
   ~ActorThreadPool() override;
@@ -53,7 +57,7 @@ class ActorThreadPool : public ThreadPool {
 
  private:
   ActorThreadPool() {}
-  int CreateThreads(size_t actor_thread_num, size_t all_thread_num);
+  int CreateThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list);
   size_t actor_thread_num_{0};
 
   std::mutex actor_mutex_;
