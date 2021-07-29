@@ -181,10 +181,10 @@ int CheckAugmentWithMinSize(const TensorC *const *inputs, size_t inputs_size, Te
                             const OpParameter *parameter, size_t inputs_size_obj, size_t outputs_size_obj);
 void SetDataTypeFormat(TensorC *dst, const TensorC *src);
 
-int SetShapeTensor(TensorC *dst, const TensorC *src);
-int SetShapeArray(TensorC *dst, const int *src, size_t src_size);
-int ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size);
-int ShapePush(int *shape, size_t *shape_size, int value);
+void SetShapeTensor(TensorC *dst, const TensorC *src);
+void SetShapeArray(TensorC *dst, const int *src, size_t src_size);
+void ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size);
+void ShapePush(int *shape, size_t *shape_size, int value);
 int ShapeInsert(int *shape, size_t *shape_size, int index, int value);
 int ShapeErase(int *shape, size_t *shape_size, int index);
 bool ShapeEqual(const int *shape0, size_t shape0_size, const int *shape1, size_t shape1_size);

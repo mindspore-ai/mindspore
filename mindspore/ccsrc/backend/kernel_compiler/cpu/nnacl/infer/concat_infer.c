@@ -48,7 +48,10 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   int input0_shape_without_axis[MAX_SHAPE_SIZE] = {0};
   size_t input0_shape_without_axis_size = 0;
   ShapeSet(input0_shape_without_axis, &input0_shape_without_axis_size, input0_shape, input0_shape_size);
-  ShapeErase(input0_shape_without_axis, &input0_shape_without_axis_size, axis);
+  int erase_ret = ShapeErase(input0_shape_without_axis, &input0_shape_without_axis_size, axis);
+  if (erase_ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
   int output_axis_dim = input0_shape[axis];
   for (size_t i = 1; i < inputs_size; ++i) {
     if (inputs[i]->shape_size_ != input0_shape_size) {
@@ -63,7 +66,10 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
       return NNACL_PARAM_INVALID;
     }
     int axis_tmp = shape_tmp[axis];
-    ShapeErase(shape_tmp, &shape_tmp_size, axis);
+    erase_ret = ShapeErase(shape_tmp, &shape_tmp_size, axis);
+    if (erase_ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
     if (!ShapeEqual(input0_shape_without_axis, input0_shape_without_axis_size, shape_tmp, shape_tmp_size)) {
       return NNACL_ERR;
     }

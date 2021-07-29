@@ -77,7 +77,10 @@ int AffineInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   bool del_start = false;
   bool del_end = false;
   if (a_shape_size == 1) {
-    ShapeInsert(a_shape, &a_shape_size, 0, 1);
+    int ret = ShapeInsert(a_shape, &a_shape_size, 0, 1);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
     SetShapeArray(input0, a_shape, a_shape_size);
     del_start = true;
   }
@@ -105,7 +108,10 @@ int AffineInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   c_shape[c_shape_size - 1] = b_shape[b_shape_size - 1];
   if (del_start) {
-    ShapeErase(c_shape, &c_shape_size, 0);
+    int erase_ret = ShapeErase(c_shape, &c_shape_size, 0);
+    if (erase_ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
   }
   if (del_end) {
     c_shape_size--;

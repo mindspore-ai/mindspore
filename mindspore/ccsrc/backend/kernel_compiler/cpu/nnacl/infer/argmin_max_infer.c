@@ -62,7 +62,10 @@ int ArgMinMaxInferShape(const TensorC *const *inputs, const size_t inputs_size, 
     return NNACL_PARAM_INVALID;
   }
   if (param->topk_ == 1 && !param->keep_dims_) {
-    ShapeErase(output_shape, &output_shape_size, axis);
+    int erase_ret = ShapeErase(output_shape, &output_shape_size, axis);
+    if (erase_ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
   } else {
     output_shape[axis] = param->topk_;
   }

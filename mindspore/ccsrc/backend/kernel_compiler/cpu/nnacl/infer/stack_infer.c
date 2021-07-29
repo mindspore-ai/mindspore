@@ -59,7 +59,10 @@ int StackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
       return NNACL_PARAM_INVALID;
     }
   }
-  ShapeInsert(output_shape, &output_shape_size, axis, inputs_size);
+  int insert_ret = ShapeInsert(output_shape, &output_shape_size, axis, inputs_size);
+  if (insert_ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
   SetShapeArray(outputs[0], output_shape, output_shape_size);
   return NNACL_OK;
 }

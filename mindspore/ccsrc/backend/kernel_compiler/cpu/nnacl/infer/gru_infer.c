@@ -68,9 +68,15 @@ int GruInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
 
   GruParameter *param = (GruParameter *)parameter;
   if (param->bidirectional_) {
-    ShapeInsert(out_shape, &out_shape_size, 1, 2);
+    int ret = ShapeInsert(out_shape, &out_shape_size, 1, 2);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
   } else {
-    ShapeInsert(out_shape, &out_shape_size, 1, 1);
+    int ret = ShapeInsert(out_shape, &out_shape_size, 1, 1);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
   }
   SetShapeArray(output, out_shape, out_shape_size);
   // set hidden state
