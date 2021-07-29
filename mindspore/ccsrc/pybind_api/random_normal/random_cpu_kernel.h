@@ -29,8 +29,6 @@ class NormalDistribution;
 template <class T>
 class NormalDistribution<T, float> {
  public:
-  std::array<float, gResultNum> result;
-
   bool UInt32ToFloat32(uint32_t input, float *output) {
     const uint32_t temp_value = input & 0x7fffffu;
     const uint32_t exp = static_cast<uint32_t>(127);
@@ -55,11 +53,14 @@ class NormalDistribution<T, float> {
       const float threshold = 1.0e-7f;
       temp[0] = temp[0] < threshold ? threshold : temp[0];
       temp[1] = temp[1] < threshold ? threshold : temp[1];
-      result[i] = sqrt(-2.0 * log(temp[0])) * sin(2 * PI * temp[1]);
-      result[i + 1] = sqrt(-2.0 * log(temp[0])) * cos(2 * PI * temp[1]);
+      result_[i] = sqrt(-2.0 * log(temp[0])) * sin(2 * PI * temp[1]);
+      result_[i + 1] = sqrt(-2.0 * log(temp[0])) * cos(2 * PI * temp[1]);
     }
-    return result;
+    return result_;
   }
+
+ private:
+  std::array<float, gResultNum> result_;
 };
 
 template <class T>
