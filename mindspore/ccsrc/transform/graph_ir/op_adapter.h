@@ -175,6 +175,9 @@ class OpAdapter : public BaseOpAdapter {
     } else {
       op = GenerateNormalOp(anf);
     }
+    if (op == nullptr) {
+      MS_LOG(EXCEPTION) << "Can not generate op for " << anf->fullname_with_scope();
+    }
     return op;
   }
 
