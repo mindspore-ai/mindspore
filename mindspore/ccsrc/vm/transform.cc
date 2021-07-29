@@ -505,7 +505,7 @@ void CompileGraphs::Compile(const FuncGraphPtr &graph) {
 }
 
 // Link instructions from multiple function graphs together.
-FinalVMPtr CompileGraphs::Link(const FuncGraphPtr &graph) {
+FinalVMPtr CompileGraphs::Link() {
   MS_LOG(DEBUG) << "Start";
   for (std::size_t i = 0; i < insts_.size(); i++) {
     InstType inst = insts_[i];
@@ -543,7 +543,7 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
     }
   }
 
-  FinalVMPtr rt = Link(graph);
+  FinalVMPtr rt = Link();
   Reset();
   MS_LOG(DEBUG) << "End";
   return rt;
@@ -609,6 +609,5 @@ void SetMindRTEnable() {
   MS_LOG(INFO) << "Enable mindRT.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
 }
-
 }  // namespace compile
 }  // namespace mindspore

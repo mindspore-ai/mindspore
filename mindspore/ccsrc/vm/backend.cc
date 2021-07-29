@@ -79,8 +79,10 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   MS_EXCEPTION_IF_NULL(graph);
   for (auto &pre_segment : segment->pre_segments_) {
     MS_EXCEPTION_IF_NULL(pre_segment);
+    MS_EXCEPTION_IF_NULL(target_sess_);
     auto pre_graph = target_sess_->GetGraph(pre_segment->graph_id_);
     if (pre_graph == nullptr) {
+      MS_EXCEPTION_IF_NULL(other_sess_);
       pre_graph = other_sess_->GetGraph(pre_segment->graph_id_);
     }
     MS_EXCEPTION_IF_NULL(pre_graph);
@@ -97,8 +99,10 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (!pynative_mode || target != "Ascend") {
     if (target != target_device_ && !target.empty()) {
+      MS_EXCEPTION_IF_NULL(other_sess_);
       other_sess_->BuildGraph(graph_id);
     } else if (!is_multi_graph_sink_) {
+      MS_EXCEPTION_IF_NULL(target_sess_);
       target_sess_->BuildGraph(graph_id);
     }
   }
@@ -107,7 +111,7 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   MS_EXCEPTION_IF_NULL(result.run);
 
   result.simu_run = std::make_shared<RunFunc>(
-    [graph_id, this](const VectorRef &args) -> VectorRef { return MsSimuRunGraph(graph_id, args); });
+    [graph_id, this](const VectorRef &args) -> VectorRef { return MsSimuRunGraph(graph_id); });
   MS_EXCEPTION_IF_NULL(result.simu_run);
   result.graph_id = graph_id;
 
@@ -116,7 +120,7 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
 }
 
 // compile set input output
-VectorRef MsBackend::MsSimuRunGraph(const GraphId &g, const VectorRef &args) {
+VectorRef MsBackend::MsSimuRunGraph(const GraphId &g) {
   MS_LOG(DEBUG) << "Set graph input:" << g;
   std::vector<BaseRef> outputs;
   (void)std::transform(graph_id_map_[g].outputs.begin(), graph_id_map_[g].outputs.end(), std::back_inserter(outputs),
@@ -286,6 +290,7 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
 }
 
 void MsBackend::Link(GraphId graph_id) {
+  MS_EXCEPTION_IF_NULL(target_sess_);
   if (graph_id == kInvalidGraphId) {
     graph_id = target_sess_->GetFinalRunGraph();
   }
@@ -330,7 +335,10 @@ void MsBackend::ClearSessionGraphs() {
 }
 
 #ifdef ENABLE_DEBUGGER
-void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
+void MsBackend::SetDebugger() {
+  MS_EXCEPTION_IF_NULL(target_sess_);
+  target_sess_->SetDebugger();
+}
 #endif
 
 MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id)
@@ -414,6 +422,7 @@ void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
       if (segment->nodes_.size() == 0) {
         MS_LOG(EXCEPTION) << "The segments size is 0.";
       }
+      MS_EXCEPTION_IF_NULL(segment->nodes_[0]);
       MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->fullname_with_scope();
 
       // Get the device context.
@@ -495,6 +504,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
                        VectorRef *args) {
   MS_EXCEPTION_IF_NULL(front_cnode);
   MS_EXCEPTION_IF_NULL(backend_cnode);
+  MS_EXCEPTION_IF_NULL(graph_compiler);
   size_t input_index = 0;
   auto inputs = front_cnode->inputs();
   for (size_t i = 1; i < inputs.size(); i++) {
@@ -696,6 +706,7 @@ void PrepareForDebuggr(const GraphCompilerInfo &graph_compiler_info) {
   if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
     DumpJsonParser::GetInstance().ClearGraph();
     for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(graph_compiler_info.device_contexts_[i]);
       if (graph_compiler_info.device_contexts_[i]->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
         DumpJsonParser::GetInstance().SaveGraph(graph_compiler_info.graphs_[i].get());
       }
@@ -803,7 +814,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
 
   // Input tensors of the control node.
   std::vector<tensor::TensorPtr> input_tensor;
-
+  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   // Get inputs of control node which come from the host actor.
   const auto &control_node_parameters = graph_compiler_info.control_node_parser_->GetControlNodeParameter();
   for (const auto &parameter : control_node_parameters) {
@@ -1034,6 +1045,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
   }
 
   for (auto &tensor : tensors_without_value_node) {
+    MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->NeedWaitDevice()) {
       tensor->WaitDevice();
     }
@@ -1047,6 +1059,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
   // Fetch outputs.
   const auto &graph = graph_compiler_info.graphs_.front();
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
   const auto &output_nodes = graph_compiler_->GetGraphOutputNodes(graph->graph_id());
   MS_EXCEPTION_IF_NULL(outputs);
   UpdateOutput(output_nodes, outputs);

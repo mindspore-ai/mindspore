@@ -489,7 +489,7 @@ void FinalVM::SyncData(const py::object &arg) {
   }
   if (py::isinstance<tensor::Tensor>(arg)) {
     auto tensor = py::cast<tensor::TensorPtr>(arg);
-    (void)tensor->data_sync();
+    tensor->data_sync();
   }
 }
 

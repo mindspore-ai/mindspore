@@ -76,6 +76,7 @@ Closure::Closure(const FuncGraphPtr &graph, const AnfNodePtrToBaseRefMap &values
 
 BaseRef Closure::operator()(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start closure";
+  MS_EXCEPTION_IF_NULL(vm_);
   return vm_->Evaluate(func_graph_, args, values_);
 }
 
@@ -85,6 +86,7 @@ BaseRef Partial::operator()(const VectorRef &nodes) {
   VectorRef arglist;
   (void)arglist.insert(arglist.end(), args_.begin(), args_.end());
   (void)arglist.insert(arglist.end(), nodes.begin(), nodes.end());
+  MS_EXCEPTION_IF_NULL(vm_);
   return vm_->Call(fn_, arglist);
 }
 
@@ -115,8 +117,10 @@ void VM::AcquireGraph(const FuncGraphPtr &graph) {
   if (vars_.find(graph) != vars_.end()) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(manager_);
   // Add g to manager
   manager_->AddFuncGraph(graph);
+  MS_EXCEPTION_IF_NULL(graph->manager());
   // Compute fvs for all acquired graph
   auto graphs = graph->manager()->func_graphs();
   for (auto g = graphs.begin(); g != graphs.end(); ++g) {
@@ -178,6 +182,7 @@ BaseRef VM::Export(const BaseRef &value) {
 // Run a graph.
 // This will evaluate the passed-in graph and return the resulting value.
 BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const AnfNodePtrToBaseRefMap &closure) {
+  MS_EXCEPTION_IF_NULL(graph);
   AcquireGraph(graph);
   MS_LOG(DEBUG) << "Evalue arg size: " << args.size();
   if (args.size() != graph->parameters().size()) {
@@ -197,6 +202,7 @@ BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const Anf
   // execute frames starting from top frame
   while (!frames.empty()) {
     auto frame = frames[frames.size() - 1];
+    MS_EXCEPTION_IF_NULL(frame);
     auto todo = frame->todo();
     while (!todo.empty()) {
       auto except = HandleNode(todo[todo.size() - 1], frame);
@@ -213,6 +219,7 @@ BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const Anf
         (void)frames.erase(frames.begin() + (static_cast<ssize_t>(frames.size()) - 1));
         if (frames.size() > 0) {
           auto top = frames[frames.size() - 1];
+          MS_EXCEPTION_IF_NULL(top);
           auto td = top->todo();
           // set value for top frame's last evaluated node
           if (td.empty()) {
@@ -336,7 +343,7 @@ BaseRef VM::DispatchCall(const AnfNodePtr &node, const VMFramePtr &frame, const 
       MS_LOG(DEBUG) << "Return args:" << args.size();
       return std::make_shared<ReturnWrap>(args[0]);
     }
-
+    MS_EXCEPTION_IF_NULL(frame);
     if (fnval == prim::kPrimMakeTuple) {
       frame->values()[node] = args;
       return BaseRef();
@@ -391,7 +398,7 @@ BaseRef VM::HandleNode(const AnfNodePtr &node, const VMFramePtr &frame) {
       MS_LOG(EXCEPTION) << "We only visit valuenode graphs ";
     }
     auto g = GetValueNode<FuncGraphPtr>(node);
-
+    MS_EXCEPTION_IF_NULL(frame);
     // if g is a graph with fvs, we need to make a closure for it
     auto iterG = vars_.find(g);
     if (iterG != vars_.end() && utils::cast<SetRef>(iterG->second).size() != 0) {
