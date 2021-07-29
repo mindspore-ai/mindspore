@@ -32,6 +32,10 @@
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
 namespace opt {
+constexpr auto kConvWithBias = 4;
+constexpr auto kAnfConvInput = 1;
+constexpr auto kAnfConvWeight = 2;
+constexpr auto kAnfConvBias = 3;
 int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   int split_count = 0;
   Strategys strategys = strategy.strategys;
@@ -239,7 +243,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
   // construct parallel Conv2D nodes
   for (size_t i = 0; i < dev_num; ++i) {
     std::vector<AnfNodePtr> tmp_outputs;
-    bool has_bias = cnode_->size() >= 4;
+    bool has_bias = cnode_->size() >= kConvWithBias;
     // if split cin, only one parallel operator has bias
     if ((i != 0) && split_mode_ == SplitCIN) {
       has_bias = false;
@@ -292,7 +296,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     std::vector<AnfNodePtr> conv_inputs = {NewValueNode(prim)};
     // if split Cout, feature will not be splited
     if (split_mode_ == SplitCOUT) {
-      conv_inputs.push_back(cnode_->input(1));
+      conv_inputs.push_back(cnode_->input(kAnfConvInput));
     } else {
       conv_inputs.push_back(feature_split_outputs[i]);
     }
@@ -300,13 +304,13 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     if (split_mode_ == SplitCIN || split_mode_ == SplitCOUT) {
       conv_inputs.push_back(kernel_split_outputs[i]);
     } else {
-      conv_inputs.push_back(cnode_->input(2));
+      conv_inputs.push_back(cnode_->input(kAnfConvWeight));
     }
     if (has_bias) {
       if (split_mode_ == SplitCOUT) {
         conv_inputs.push_back(bias_split_outputs[i]);
       } else {
-        conv_inputs.push_back(cnode_->input(3));
+        conv_inputs.push_back(cnode_->input(kAnfConvBias));
       }
     }
     auto conv_cnode = func_graph_->NewCNode(conv_inputs);

@@ -250,7 +250,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
 
   full_input_ = new lite::Tensor(kNumberTypeFloat32, splice_output_shape);
 
-  if (in_tensors_.size() < 3) {
+  if (in_tensors_.size() < kAffineMinInputNum) {
     MS_LOG(ERROR) << "wrong affine input size";
     return nullptr;
   }
