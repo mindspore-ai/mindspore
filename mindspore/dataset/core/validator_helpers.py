@@ -167,6 +167,12 @@ def check_positive(value, arg_name=""):
         raise ValueError("Input {0}must be greater than 0.".format(arg_name))
 
 
+def check_not_zero(value, arg_name=""):
+    arg_name = pad_arg_name(arg_name)
+    if value == 0:
+        raise ValueError("Input {0}can not be 0.".format(arg_name))
+
+
 def check_odd(value, arg_name=""):
     arg_name = pad_arg_name(arg_name)
     if value % 2 != 1:
@@ -213,6 +219,11 @@ def check_uint32(value, arg_name=""):
 def check_pos_uint32(value, arg_name=""):
     type_check(value, (int,), arg_name)
     check_value(value, [POS_INT_MIN, UINT32_MAX])
+
+
+def check_int32(value, arg_name=""):
+    type_check(value, (int,), arg_name)
+    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
 
 
 def check_pos_int32(value, arg_name=""):

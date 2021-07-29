@@ -13,12 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "pybind11/pybind11.h"
 
+#include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
-#include "minddata/dataset/audio/ir/kernels/audio_ir.h"
+#include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 
 namespace mindspore {
-namespace dataset {}  // namespace dataset
+namespace dataset {
+
+PYBIND_REGISTER(
+  BandBiquadOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::BandBiquadOperation, TensorOperation, std::shared_ptr<audio::BandBiquadOperation>>(
+      *m, "BandBiquadOperation")
+      .def(py::init([](int32_t sample_rate, float central_freq, float Q, bool noise) {
+        auto band_biquad = std::make_shared<audio::BandBiquadOperation>(sample_rate, central_freq, Q, noise);
+        THROW_IF_ERROR(band_biquad->ValidateParams());
+        return band_biquad;
+      }));
+  }));
+
+}  // namespace dataset
 }  // namespace mindspore
