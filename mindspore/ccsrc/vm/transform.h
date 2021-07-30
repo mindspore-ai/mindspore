@@ -122,7 +122,7 @@ class CompileGraphs {
   }
 
   void Compile(const FuncGraphPtr &func_graph);
-  FinalVMPtr Link(const FuncGraphPtr &func_graph);
+  FinalVMPtr Link();
   FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
 
  private:

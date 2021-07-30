@@ -81,7 +81,7 @@ class MsBackend : public Backend {
   LinConvertResult MsConvert(const GraphSegmentPtr &segment, const std::string &target = "");
   VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
 
-  VectorRef MsSimuRunGraph(const GraphId &g, const VectorRef &args);
+  VectorRef MsSimuRunGraph(const GraphId &g);
   void Link(GraphId) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
