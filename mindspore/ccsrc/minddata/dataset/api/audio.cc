@@ -16,11 +16,28 @@
 
 #include "minddata/dataset/include/dataset/audio.h"
 
-#include "minddata/dataset/audio/ir/kernels/audio_ir.h"
+#include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 
 namespace mindspore {
 namespace dataset {
 
-namespace audio {}  // namespace audio
+namespace audio {
+// BandBiquad Transform Operation.
+struct BandBiquad::Data {
+  Data(int32_t sample_rate, float central_freq, float Q, bool noise)
+      : sample_rate_(sample_rate), central_freq_(central_freq), Q_(Q), noise_(noise) {}
+  int32_t sample_rate_;
+  float central_freq_;
+  float Q_;
+  bool noise_;
+};
+
+BandBiquad::BandBiquad(int32_t sample_rate, float central_freq, float Q, bool noise)
+    : data_(std::make_shared<Data>(sample_rate, central_freq, Q, noise)) {}
+
+std::shared_ptr<TensorOperation> BandBiquad::Parse() {
+  return std::make_shared<BandBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_, data_->noise_);
+}
+}  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
