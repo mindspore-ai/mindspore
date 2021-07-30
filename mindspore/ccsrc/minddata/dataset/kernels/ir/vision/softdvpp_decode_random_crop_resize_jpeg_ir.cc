@@ -45,7 +45,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorSize("SoftDvppDecodeRandomCropResizeJpeg", size_));
   constexpr int32_t value_one = 1;
   constexpr int32_t value_two = 2;
-  for (int32_t i = 0; i < size_.size(); i++) {
+  for (size_t i = 0; i < size_.size(); i++) {
     if (size_[i] % value_two == value_one) {
       std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: size[" + std::to_string(i) +
                             "] must be even values, got: " + std::to_string(size_[i]);
