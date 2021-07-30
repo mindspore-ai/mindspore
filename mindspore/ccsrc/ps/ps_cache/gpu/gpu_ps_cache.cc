@@ -43,6 +43,7 @@ void *GPUPsCache::MallocMemory(size_t size) {
 
 bool GPUPsCache::RecordEvent() {
   event_.reset(new cudaEvent_t());
+  MS_ERROR_IF_NULL_W_RET_VAL(event_, false);
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventCreate(&(*event_)), "Cuda create event failed");
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventRecord(*event_, reinterpret_cast<cudaStream_t>(stream_)),
                                            "Cuda record event failed");
@@ -50,12 +51,14 @@ bool GPUPsCache::RecordEvent() {
 }
 
 bool GPUPsCache::SynchronizeEvent() {
+  MS_ERROR_IF_NULL_W_RET_VAL(event_, false);
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventSynchronize(*event_), "Cuda sync event failed");
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventDestroy(*event_), "Cuda destroy event failed");
   return true;
 }
 
 bool GPUPsCache::SynchronizeStream() {
+  MS_ERROR_IF_NULL_W_RET_VAL(stream_, false);
   CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_)),
                                            "Cuda sync stream failed");
   return true;

@@ -148,6 +148,7 @@ bool AscendPsCache::MallocConstantMemory(size_t cache_vocab_size) {
 
 bool AscendPsCache::RecordEvent() {
   event_.reset(new rtEvent_t());
+  MS_ERROR_IF_NULL_W_RET_VAL(event_, false);
   auto ret = rtEventCreate(&(*event_));
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Create event failed";
@@ -162,6 +163,7 @@ bool AscendPsCache::RecordEvent() {
 }
 
 bool AscendPsCache::SynchronizeEvent() {
+  MS_ERROR_IF_NULL_W_RET_VAL(event_, false);
   auto ret = rtEventSynchronize(*event_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "tEventSynchronize failed";
@@ -176,6 +178,7 @@ bool AscendPsCache::SynchronizeEvent() {
 }
 
 bool AscendPsCache::SynchronizeStream() {
+  MS_ERROR_IF_NULL_W_RET_VAL(stream_, false);
   auto ret = rtStreamSynchronize(stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "rtStreamSynchronize failed";
@@ -227,6 +230,7 @@ bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   std::vector<TypeId> output_type = {TypeId::kNumberTypeFloat32};
   auto op_info =
     std::make_shared<KernelNodeInfo>(kEmbeddingLookupOpName, input_shape, input_type, output_shape, output_type);
+  MS_ERROR_IF_NULL_W_RET_VAL(op_info, false);
   RETURN_IF_FALSE(SetNodedefProto(op_info, hash_swap_out_mod));
 
   AddressPtrList kernel_inputs;
@@ -267,6 +271,7 @@ bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, 
   std::vector<TypeId> output_type = {TypeId::kNumberTypeInt32};
   auto op_info =
     std::make_shared<KernelNodeInfo>(kernel::kUpdateCache, input_shape, input_type, output_shape, output_type);
+  MS_ERROR_IF_NULL_W_RET_VAL(op_info, false);
   SetNodedefProto(op_info, hash_swap_in_mod);
 
   AddressPtrList kernel_inputs;
