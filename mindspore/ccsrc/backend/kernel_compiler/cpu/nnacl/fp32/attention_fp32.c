@@ -195,6 +195,9 @@ int PackAttentionBias(Matrix *matrix, int tile) {
   int size = matrix->col_;
   float *src = matrix->data_;
   int size_align = UP_ROUND(size, tile);
+  if (size_align <= 0) {
+    return NNACL_ERR;
+  }
   matrix->packed_data_ = (float *)malloc(size_align * sizeof(float));
   if (matrix->packed_data_ == NULL) {
     return NNACL_NULL_PTR;
@@ -287,21 +290,28 @@ static void ElementOptAddDiv(const float *input0, const float *input1, const flo
   }
 }
 
-static void GetTransposeParameter(TransposeParameter *param, const int in_shape[], const int out_shape[],
-                                  const int perm[]) {
-  param->num_axes_ = 4;
+static bool GetTransposeParameter(TransposeParameter *param, const int in_shape[], int in_shape_len,
+                                  const int out_shape[], int out_shape_len, const int perm[], int perm_len) {
+  param->num_axes_ = perm_len;
   size_t shape_size = 1;
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < perm_len; i++) {
     param->perm_[i] = perm[i];
     shape_size *= perm[i];  // check overflow
   }
   param->data_num_ = (int)shape_size;  // check overflow
   param->strides_[param->num_axes_ - 1] = 1;
   param->out_strides_[param->num_axes_ - 1] = 1;
+  if (param->num_axes_ - 1 >= in_shape_len) {
+    return false;
+  }
+  if (param->num_axes_ - 1 >= out_shape_len) {
+    return false;
+  }
   for (int i = param->num_axes_ - 2; i >= 0; i--) {
     param->strides_[i] = in_shape[i + 1] * param->strides_[i + 1];
     param->out_strides_[i] = out_shape[i + 1] * param->out_strides_[i + 1];
   }
+  return true;
 }
 
 void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Matrix *wq_mat, Matrix *bq_mat,
@@ -329,8 +339,8 @@ void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Mat
   int q_with_pos_trans_in_shape[] = {batch, param->q_seq_, num_heads, depth};
   int q_with_pos_trans_out_shape[] = {batch, num_heads, param->q_seq_, depth};
   int q_with_pos_perm[] = {0, 2, 1, 3};
-  GetTransposeParameter(&q_with_pos_trans_param, q_with_pos_trans_in_shape, q_with_pos_trans_out_shape,
-                        q_with_pos_perm);
+  (void)GetTransposeParameter(&q_with_pos_trans_param, q_with_pos_trans_in_shape, 4, q_with_pos_trans_out_shape, 4,
+                              q_with_pos_perm, 4);
   int q2wq_reshaped_area = q2wq_mat->row_ * q2wq_mat->col_;
   // Q_WQ + POS_U
   {
@@ -396,7 +406,7 @@ void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, Matri
   int k2wk_in_shape[] = {batch, param->k_seq_, num_heads, depth};
   int k2wk_out_shape[] = {batch, num_heads, depth, param->k_seq_};
   int k2wk_perm[] = {0, 2, 3, 1};
-  GetTransposeParameter(&k2wk_trans_param, k2wk_in_shape, k2wk_out_shape, k2wk_perm);
+  (void)GetTransposeParameter(&k2wk_trans_param, k2wk_in_shape, 4, k2wk_out_shape, 4, k2wk_perm, 4);
   TransposeDimsFp32(k2wk, k2wk_trans_data, k2wk_out_shape, &k2wk_trans_param, 0, 1);
 }
 
@@ -427,7 +437,7 @@ void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, Matri
   int v2wv_in_shape[] = {batch, param->v_seq_, num_heads, depth};
   int v2wv_out_shape[] = {batch, num_heads, param->v_seq_, depth};
   int v2wv_perm[] = {0, 2, 1, 3};
-  GetTransposeParameter(&v2wv_trans_param, v2wv_in_shape, v2wv_out_shape, v2wv_perm);
+  (void)GetTransposeParameter(&v2wv_trans_param, v2wv_in_shape, 4, v2wv_out_shape, 4, v2wv_perm, 4);
   TransposeDimsFp32(v2wv, v2wv_trans_data, v2wv_out_shape, &v2wv_trans_param, 0, 1);
 }
 
@@ -459,7 +469,7 @@ void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, Matri
   int p2wp_in_shape[] = {batch, param->p_seq_, num_heads, depth};
   int p2wp_out_shape[] = {batch, num_heads, depth, param->p_seq_};
   int p2wp_perm[] = {0, 2, 3, 1};
-  GetTransposeParameter(&p2wp_trans_param, p2wp_in_shape, p2wp_out_shape, p2wp_perm);
+  (void)GetTransposeParameter(&p2wp_trans_param, p2wp_in_shape, 4, p2wp_out_shape, 4, p2wp_perm, 4);
   TransposeDimsFp32(p2wp_data, p2wp_trans_data, p2wp_out_shape, &p2wp_trans_param, 0, 1);
 }
 
@@ -534,7 +544,8 @@ void RelPosAttention(RelativePositionAttentionParameter *param, Matrix *logits_m
   int logits2v_trans_in_shape[] = {batch, num_heads, param->q_seq_, depth};
   int logits2v_trans_out_shape[] = {batch, param->q_seq_, num_heads, depth};
   int logits2v_trans_perm[] = {0, 2, 1, 3};
-  GetTransposeParameter(&logits2v_trans_param, logits2v_trans_in_shape, logits2v_trans_out_shape, logits2v_trans_perm);
+  (void)GetTransposeParameter(&logits2v_trans_param, logits2v_trans_in_shape, 4, logits2v_trans_out_shape, 4,
+                              logits2v_trans_perm, 4);
   TransposeDimsFp32(logits2v_data, logits2v_trans_data, logits2v_trans_out_shape, &logits2v_trans_param, 0, 1);
   // concat = reshape [batch, -1, d_model]
   logits2v_trans_mat->batch_ = batch;
