@@ -32,22 +32,6 @@ static constexpr const char *kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const char *kHcclDeployModeEnv = "DEPLOY_MODE";
 static constexpr const char *kHcclAlgoEnv = "HCCL_ALGO";
 
-inline static std::string GetDlErrorMsg() {
-  const char *result = dlerror();
-  return (result == nullptr) ? "Unknown" : result;
-}
-
-template <class T>
-static T DlsymWithCast(void *handle, const char *symbol_name) {
-  T symbol = reinterpret_cast<T>(dlsym(handle, symbol_name));
-  if (symbol == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlsym symbol " << symbol_name << " failed, result = " << GetDlErrorMsg();
-  }
-  return symbol;
-}
-
-#define DlsymFuncObj(func_name) DlsymWithCast<func_name##FunPtr>(plugin_handle_, k##func_name##Name);
-
 static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std::string_view rank_id,
                                                          std::string_view rank_file) {
   auto env_deploy_mode = mindspore::common::GetEnv(kHcclDeployModeEnv);
@@ -92,21 +76,21 @@ void HcclAdapter::InitPlugin() {
     MS_LOG(EXCEPTION) << "Dlopen " << kHcclPluginFileName << " failed, result = " << GetDlErrorMsg();
   }
 
-  init_hcom_graph_adapter_ = DlsymFuncObj(InitHcomGraphAdapter);
-  finalize_hcom_graph_adapter_ = DlsymFuncObj(FinalizeHcomGraphAdapter);
-  get_hccl_kernel_info_store_ = DlsymFuncObj(GetHcclKernelInfoStore);
-  get_all_kernel_builder_ = DlsymFuncObj(GetAllKernelBuilder);
-  init_hccl_comm_ = DlsymFuncObj(HcclCommInitClusterInfo);
-  finalize_hccl_comm_ = DlsymFuncObj(HcclCommDestroy);
-  launch_hccl_broadcast_ = DlsymFuncObj(HcclBroadcast);
-  launch_hccl_all_reduce_ = DlsymFuncObj(HcclAllReduce);
-  hccl_create_group_ = DlsymFuncObj(HcomCreateGroup);
-  hccl_destroy_group_ = DlsymFuncObj(HcomDestroyGroup);
-  hccl_get_rank_id_ = DlsymFuncObj(HcomGetRankId);
-  hccl_get_rank_size_ = DlsymFuncObj(HcomGetRankSize);
-  hccl_exec_initialize_ = DlsymFuncObj(HcomExecInitialize);
-  hccl_exec_finalize_ = DlsymFuncObj(HcomExecFinalize);
-  hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation);
+  init_hcom_graph_adapter_ = DlsymFuncObj(InitHcomGraphAdapter, plugin_handle_);
+  finalize_hcom_graph_adapter_ = DlsymFuncObj(FinalizeHcomGraphAdapter, plugin_handle_);
+  get_hccl_kernel_info_store_ = DlsymFuncObj(GetHcclKernelInfoStore, plugin_handle_);
+  get_all_kernel_builder_ = DlsymFuncObj(GetAllKernelBuilder, plugin_handle_);
+  init_hccl_comm_ = DlsymFuncObj(HcclCommInitClusterInfo, plugin_handle_);
+  finalize_hccl_comm_ = DlsymFuncObj(HcclCommDestroy, plugin_handle_);
+  launch_hccl_broadcast_ = DlsymFuncObj(HcclBroadcast, plugin_handle_);
+  launch_hccl_all_reduce_ = DlsymFuncObj(HcclAllReduce, plugin_handle_);
+  hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
+  hccl_destroy_group_ = DlsymFuncObj(HcomDestroyGroup, plugin_handle_);
+  hccl_get_rank_id_ = DlsymFuncObj(HcomGetRankId, plugin_handle_);
+  hccl_get_rank_size_ = DlsymFuncObj(HcomGetRankSize, plugin_handle_);
+  hccl_exec_initialize_ = DlsymFuncObj(HcomExecInitialize, plugin_handle_);
+  hccl_exec_finalize_ = DlsymFuncObj(HcomExecFinalize, plugin_handle_);
+  hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation, plugin_handle_);
 }
 
 void HcclAdapter::FinalizePlugin() {
