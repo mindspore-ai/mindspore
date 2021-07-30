@@ -40,6 +40,7 @@ constexpr char kIterEndNode[] = "PROFILING_ITER_END";
 constexpr uint64_t kProfilingFpStartLogId = 1;
 constexpr uint64_t kProfilingBpEndLogId = 2;
 constexpr uint64_t kProfilingIterEndLogId = 65535;
+constexpr auto kDouble = 2;
 
 nlohmann::json GetContextProfilingOption() {
   auto context = MsContext::GetInstance();
@@ -88,8 +89,8 @@ void ProfilingUtils::GetTraceCustomNode(ProfilingTraceInfo *trace_info) {
   MS_EXCEPTION_IF_NULL(trace_info);
   for (uint32_t i = 1; i <= kMaxProfilingNodeNum; ++i) {
     std::string env_str = std::string(kCustomNode) + std::to_string(i);
-    const char *node_full_name = std::getenv(env_str.c_str());
-    if (node_full_name == nullptr) {
+    auto node_full_name = common::GetEnv(env_str);
+    if (node_full_name.empty()) {
       break;
     }
     MS_LOG(INFO) << "Get custom profiling node:" << node_full_name;
@@ -334,7 +335,7 @@ void ProfilingUtils::InsertProfilingCustomOp(const AnfNodePtr &anf_node, const P
   }
   MS_LOG(INFO) << "Profiling graph:" << graph_ptr->graph_id() << " Match CustomOp:" << anf_node->fullname_with_scope();
   // custom op profiling job start from 3.
-  auto custom_point_id = 2 * custom_node_index_ + 1;
+  auto custom_point_id = kDouble * custom_node_index_ + 1;
   ProfilingContent front_profiling_content = {false, custom_point_id, 0};
   CNodePtr front_node = CreateProfilingCNodeWithStream(anf_node, front_profiling_content, graph_ptr);
   kernel_list->insert(kernel_list->end() - 1, front_node);

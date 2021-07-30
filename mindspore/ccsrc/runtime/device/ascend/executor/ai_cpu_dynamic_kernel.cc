@@ -53,7 +53,7 @@ void AiCpuDynamicKernel::Execute() {
   MS_LOG(INFO) << "Execute AiCpuDynamicKerenl Start";
   auto ret = rtCpuKernelLaunchWithFlag(
     reinterpret_cast<const void *>(so_name_.c_str()), reinterpret_cast<const void *>(kernel_name_.c_str()), 1,
-    reinterpret_cast<const void *>(args_.data()), args_.size(), nullptr, stream_, RT_KERNEL_DEFAULT);
+    reinterpret_cast<const void *>(args_.data()), SizeToUint(args_.size()), nullptr, stream_, RT_KERNEL_DEFAULT);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtCpuKernelLaunchWithFlag Failed";
   }
@@ -101,7 +101,7 @@ void AiCpuDynamicKernel::Initialize() {
   }
 
   auto aicpu_param_head = reinterpret_cast<kernel::AicpuParamHead *>(args_.data());
-  aicpu_param_head->extInfoLength = ext_info_size_;
+  aicpu_param_head->extInfoLength = SizeToUint(ext_info_size_);
   aicpu_param_head->extInfoAddr = reinterpret_cast<uint64_t>(ext_info_addr_dev_);
 }
 
@@ -182,7 +182,7 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
     MS_LOG(INFO) << "Get output:" << output_num_ << " Shape";
     std::vector<int64_t> shape;
     TypeId type_id;
-    ext_info_handler_->GetOutputShapeAndType(i, NOT_NULL(&shape), NOT_NULL(&type_id));
+    ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
 
     for (auto x : shape) {
       MS_LOG(INFO) << "Update output:" << i << " shape:" << x;
