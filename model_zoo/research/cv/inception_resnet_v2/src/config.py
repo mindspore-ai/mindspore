@@ -42,7 +42,4 @@ config_ascend = edict({
     'warmup_epochs': 1,
     'start_epoch': 1,
 
-    # 'lr_init': 0.4,
-    # # 'lr_end': 0.0001,
-    # 'gamma':0.96,
 })
