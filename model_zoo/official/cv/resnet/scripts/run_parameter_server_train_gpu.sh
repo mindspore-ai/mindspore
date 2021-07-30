@@ -29,7 +29,7 @@ get_real_path(){
 }
 
 PATH1=$(get_real_path $1)
-CONFIG_FILE=$2
+CONFIG_FILE=$(get_real_path $2)
 if [ $# == 3 ]
 then 
     PATH2=$(get_real_path $3)
@@ -60,7 +60,7 @@ export MS_SCHED_PORT=8081
 export MS_ROLE=MS_SCHED
 rm -rf ./sched
 mkdir ./sched
-cp ../*.yaml ./sched 
+cp ../config/*.yaml ./sched 
 cp ../*.py ./sched
 cp *.sh ./sched
 cp -r ../src ./sched
@@ -85,7 +85,7 @@ for((i=0;i<$MS_SERVER_NUM;i++));
 do
     rm -rf ./server_$i
     mkdir ./server_$i
-    cp ../*.yaml ./server_$i
+    cp ../config/*.yaml ./server_$i
     cp ../*.py ./server_$i
     cp *.sh ./server_$i
     cp -r ../src ./server_$i
@@ -110,7 +110,7 @@ done
 export MS_ROLE=MS_WORKER
 rm -rf ./worker
 mkdir ./worker
-cp ../*.yaml ./worker 
+cp ../config/*.yaml ./worker 
 cp ../*.py ./worker
 cp *.sh ./worker
 cp -r ../src ./worker
