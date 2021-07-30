@@ -73,7 +73,7 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   float alpha_{0.0f};
 
   // for opencl fusion
-  bool use_winograd_ = false;
+  bool use_winograd_{false};
 
  protected:
   void InitAttrs();

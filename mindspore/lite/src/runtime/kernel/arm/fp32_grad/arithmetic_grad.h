@@ -66,9 +66,9 @@ class ArithmeticGradCPUKernel : public InnerKernel {
     arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~ArithmeticGradCPUKernel() override {
-    if (tile_data0) delete[] tile_data0;
-    if (tile_data1) delete[] tile_data1;
-    if (tile_data2) delete[] tile_data2;
+    if (tile_data0 != nullptr) delete[] tile_data0;
+    if (tile_data1 != nullptr) delete[] tile_data1;
+    if (tile_data2 != nullptr) delete[] tile_data2;
   }
 
   int Init() override;

@@ -70,7 +70,15 @@ void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
 int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
+  if (input_channel < 0) {
+    MS_LOG(ERROR) << "get channel failed from filter_tensor";
+    return RET_ERROR;
+  }
   auto output_channel = filter_tensor->Batch();
+  if (output_channel < 0) {
+    MS_LOG(ERROR) << "get batch failed from filter_tensor";
+    return RET_ERROR;
+  }
 
   if (in_tensors_.size() == 3) {
     int size = UP_ROUND(output_channel, col_tile_) * sizeof(float);
@@ -273,7 +281,15 @@ int Convolution1x1CPUKernel::Run() {
 void Convolution1x1CPUKernel::PackWeight() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
+  if (input_channel < 0) {
+    MS_LOG(ERROR) << "get channel failed from filter_tensor.";
+    return;
+  }
   auto output_channel = filter_tensor->Batch();
+  if (input_channel < 0) {
+    MS_LOG(ERROR) << "get channel failed from filter_tensor.";
+    return;
+  }
 
   int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
   int down_size = input_channel * DOWN_DIV(output_channel, col_tile_) * col_tile_ * sizeof(float);

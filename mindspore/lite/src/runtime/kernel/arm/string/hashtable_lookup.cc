@@ -46,6 +46,10 @@ int HashtableLookupCPUKernel::Run() {
   auto hits_tensor = out_tensors_.at(1);
 
   int rows = GetStringCount(values_tensor);
+  if (rows < 0) {
+    MS_LOG(ERROR) << "get string cnt fail!";
+    return RET_ERROR;
+  }
   int32_t *input_data = reinterpret_cast<int32_t *>(input_tensor->MutableData());
   uint8_t *hits_data = reinterpret_cast<uint8_t *>(hits_tensor->MutableData());
   std::vector<lite::StringPack> output_string_pack(input_tensor->ElementsNum());

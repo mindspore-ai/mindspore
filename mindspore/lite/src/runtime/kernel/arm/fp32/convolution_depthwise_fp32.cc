@@ -35,7 +35,7 @@ int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->data_c());
   MS_ASSERT(origin_weight != nullptr);
   int channel = weight_tensor->Batch();
-  int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
+  int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
   if (pack_weight_size >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(float))) {
     MS_LOG(ERROR) << "pack_weight_size is invalid, pack_weight_size: " << pack_weight_size;
     return RET_ERROR;
