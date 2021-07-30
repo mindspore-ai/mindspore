@@ -28,10 +28,9 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // SoftDvppDecodeRandomCropResizeJpegOperation
-SoftDvppDecodeRandomCropResizeJpegOperation::SoftDvppDecodeRandomCropResizeJpegOperation(std::vector<int32_t> size,
-                                                                                         std::vector<float> scale,
-                                                                                         std::vector<float> ratio,
-                                                                                         int32_t max_attempts)
+SoftDvppDecodeRandomCropResizeJpegOperation::SoftDvppDecodeRandomCropResizeJpegOperation(
+  const std::vector<int32_t> &size, const std::vector<float> &scale, const std::vector<float> &ratio,
+  int32_t max_attempts)
     : size_(size), scale_(scale), ratio_(ratio), max_attempts_(max_attempts) {}
 
 SoftDvppDecodeRandomCropResizeJpegOperation::~SoftDvppDecodeRandomCropResizeJpegOperation() = default;

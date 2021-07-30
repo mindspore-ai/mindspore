@@ -71,7 +71,7 @@ PYBIND_REGISTER(
   AutoContrastOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AutoContrastOperation, TensorOperation, std::shared_ptr<vision::AutoContrastOperation>>(
       *m, "AutoContrastOperation")
-      .def(py::init([](float cutoff, std::vector<uint32_t> ignore) {
+      .def(py::init([](float cutoff, const std::vector<uint32_t> &ignore) {
         auto auto_contrast = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore);
         THROW_IF_ERROR(auto_contrast->ValidateParams());
         return auto_contrast;
@@ -82,7 +82,7 @@ PYBIND_REGISTER(BoundingBoxAugmentOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::BoundingBoxAugmentOperation, TensorOperation,
                                    std::shared_ptr<vision::BoundingBoxAugmentOperation>>(*m,
                                                                                          "BoundingBoxAugmentOperation")
-                    .def(py::init([](py::object transform, float ratio) {
+                    .def(py::init([](const py::object transform, float ratio) {
                       auto bounding_box_augment = std::make_shared<vision::BoundingBoxAugmentOperation>(
                         std::move(toTensorOperation(transform)), ratio);
                       THROW_IF_ERROR(bounding_box_augment->ValidateParams());
@@ -94,7 +94,7 @@ PYBIND_REGISTER(
   CenterCropOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::CenterCropOperation, TensorOperation, std::shared_ptr<vision::CenterCropOperation>>(
       *m, "CenterCropOperation", "Tensor operation to crop and image in the middle. Takes height and width (optional)")
-      .def(py::init([](std::vector<int32_t> size) {
+      .def(py::init([](const std::vector<int32_t> &size) {
         auto center_crop = std::make_shared<vision::CenterCropOperation>(size);
         THROW_IF_ERROR(center_crop->ValidateParams());
         return center_crop;
@@ -104,7 +104,7 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(CropOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::CropOperation, TensorOperation, std::shared_ptr<vision::CropOperation>>(
                     *m, "CropOperation", "Tensor operation to crop images")
-                    .def(py::init([](std::vector<int32_t> coordinates, std::vector<int32_t> size) {
+                    .def(py::init([](std::vector<int32_t> coordinates, const std::vector<int32_t> &size) {
                       // In Python API, the order of coordinates is first top then left, which is different from
                       // those in CropOperation. So we need to swap the coordinates.
                       std::swap(coordinates[0], coordinates[1]);
@@ -219,7 +219,7 @@ PYBIND_REGISTER(
   NormalizeOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::NormalizeOperation, TensorOperation, std::shared_ptr<vision::NormalizeOperation>>(
       *m, "NormalizeOperation")
-      .def(py::init([](std::vector<float> mean, std::vector<float> std) {
+      .def(py::init([](const std::vector<float> &mean, const std::vector<float> &std) {
         auto normalize = std::make_shared<vision::NormalizeOperation>(mean, std);
         THROW_IF_ERROR(normalize->ValidateParams());
         return normalize;
@@ -240,12 +240,12 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(PadOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::PadOperation, TensorOperation, std::shared_ptr<vision::PadOperation>>(
                     *m, "PadOperation")
-                    .def(py::init(
-                      [](std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode) {
-                        auto pad = std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode);
-                        THROW_IF_ERROR(pad->ValidateParams());
-                        return pad;
-                      }));
+                    .def(py::init([](const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value,
+                                     BorderType padding_mode) {
+                      auto pad = std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode);
+                      THROW_IF_ERROR(pad->ValidateParams());
+                      return pad;
+                    }));
                 }));
 
 PYBIND_REGISTER(
@@ -266,8 +266,8 @@ PYBIND_REGISTER(RandomColorAdjustOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomColorAdjustOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomColorAdjustOperation>>(*m,
                                                                                         "RandomColorAdjustOperation")
-                    .def(py::init([](std::vector<float> brightness, std::vector<float> contrast,
-                                     std::vector<float> saturation, std::vector<float> hue) {
+                    .def(py::init([](const std::vector<float> &brightness, const std::vector<float> &contrast,
+                                     const std::vector<float> &saturation, const std::vector<float> &hue) {
                       auto random_color_adjust =
                         std::make_shared<vision::RandomColorAdjustOperation>(brightness, contrast, saturation, hue);
                       THROW_IF_ERROR(random_color_adjust->ValidateParams());
@@ -286,25 +286,25 @@ PYBIND_REGISTER(
       }));
   }));
 
-PYBIND_REGISTER(RandomCropDecodeResizeOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RandomCropDecodeResizeOperation, TensorOperation,
-                                   std::shared_ptr<vision::RandomCropDecodeResizeOperation>>(
-                    *m, "RandomCropDecodeResizeOperation")
-                    .def(py::init([](std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
-                                     InterpolationMode interpolation, int32_t max_attempts) {
-                      auto random_crop_decode_resize = std::make_shared<vision::RandomCropDecodeResizeOperation>(
-                        size, scale, ratio, interpolation, max_attempts);
-                      THROW_IF_ERROR(random_crop_decode_resize->ValidateParams());
-                      return random_crop_decode_resize;
-                    }));
-                }));
+PYBIND_REGISTER(
+  RandomCropDecodeResizeOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::RandomCropDecodeResizeOperation, TensorOperation,
+                     std::shared_ptr<vision::RandomCropDecodeResizeOperation>>(*m, "RandomCropDecodeResizeOperation")
+      .def(py::init([](const std::vector<int32_t> &size, const std::vector<float> &scale,
+                       const std::vector<float> &ratio, InterpolationMode interpolation, int32_t max_attempts) {
+        auto random_crop_decode_resize =
+          std::make_shared<vision::RandomCropDecodeResizeOperation>(size, scale, ratio, interpolation, max_attempts);
+        THROW_IF_ERROR(random_crop_decode_resize->ValidateParams());
+        return random_crop_decode_resize;
+      }));
+  }));
 
 PYBIND_REGISTER(
   RandomCropOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::RandomCropOperation, TensorOperation, std::shared_ptr<vision::RandomCropOperation>>(
       *m, "RandomCropOperation")
-      .def(py::init([](std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                       std::vector<uint8_t> fill_value, BorderType padding_mode) {
+      .def(py::init([](const std::vector<int32_t> &size, const std::vector<int32_t> &padding, bool pad_if_needed,
+                       const std::vector<uint8_t> &fill_value, BorderType padding_mode) {
         auto random_crop =
           std::make_shared<vision::RandomCropOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
         THROW_IF_ERROR(random_crop->ValidateParams());
@@ -316,13 +316,14 @@ PYBIND_REGISTER(RandomCropWithBBoxOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomCropWithBBoxOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomCropWithBBoxOperation>>(*m,
                                                                                          "RandomCropWithBBoxOperation")
-                    .def(py::init([](std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                                     std::vector<uint8_t> fill_value, BorderType padding_mode) {
-                      auto random_crop_with_bbox = std::make_shared<vision::RandomCropWithBBoxOperation>(
-                        size, padding, pad_if_needed, fill_value, padding_mode);
-                      THROW_IF_ERROR(random_crop_with_bbox->ValidateParams());
-                      return random_crop_with_bbox;
-                    }));
+                    .def(
+                      py::init([](const std::vector<int32_t> &size, const std::vector<int32_t> &padding,
+                                  bool pad_if_needed, const std::vector<uint8_t> &fill_value, BorderType padding_mode) {
+                        auto random_crop_with_bbox = std::make_shared<vision::RandomCropWithBBoxOperation>(
+                          size, padding, pad_if_needed, fill_value, padding_mode);
+                        THROW_IF_ERROR(random_crop_with_bbox->ValidateParams());
+                        return random_crop_with_bbox;
+                      }));
                 }));
 
 PYBIND_REGISTER(RandomHorizontalFlipOperation, 1, ([](const py::module *m) {
@@ -358,25 +359,26 @@ PYBIND_REGISTER(RandomPosterizeOperation, 1, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(RandomResizedCropOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RandomResizedCropOperation, TensorOperation,
-                                   std::shared_ptr<vision::RandomResizedCropOperation>>(*m,
-                                                                                        "RandomResizedCropOperation")
-                    .def(py::init([](std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
-                                     InterpolationMode interpolation, int32_t max_attempts) {
-                      auto random_resized_crop = std::make_shared<vision::RandomResizedCropOperation>(
-                        size, scale, ratio, interpolation, max_attempts);
-                      THROW_IF_ERROR(random_resized_crop->ValidateParams());
-                      return random_resized_crop;
-                    }));
-                }));
+PYBIND_REGISTER(
+  RandomResizedCropOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::RandomResizedCropOperation, TensorOperation,
+                     std::shared_ptr<vision::RandomResizedCropOperation>>(*m, "RandomResizedCropOperation")
+      .def(py::init([](const std::vector<int32_t> &size, const std::vector<float> &scale,
+                       const std::vector<float> &ratio, InterpolationMode interpolation, int32_t max_attempts) {
+        auto random_resized_crop =
+          std::make_shared<vision::RandomResizedCropOperation>(size, scale, ratio, interpolation, max_attempts);
+        THROW_IF_ERROR(random_resized_crop->ValidateParams());
+        return random_resized_crop;
+      }));
+  }));
 
 PYBIND_REGISTER(RandomResizedCropWithBBoxOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomResizedCropWithBBoxOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomResizedCropWithBBoxOperation>>(
                     *m, "RandomResizedCropWithBBoxOperation")
-                    .def(py::init([](std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
-                                     InterpolationMode interpolation, int32_t max_attempts) {
+                    .def(py::init([](const std::vector<int32_t> &size, const std::vector<float> &scale,
+                                     const std::vector<float> &ratio, InterpolationMode interpolation,
+                                     int32_t max_attempts) {
                       auto random_resized_crop_with_bbox = std::make_shared<vision::RandomResizedCropWithBBoxOperation>(
                         size, scale, ratio, interpolation, max_attempts);
                       THROW_IF_ERROR(random_resized_crop_with_bbox->ValidateParams());
@@ -388,7 +390,7 @@ PYBIND_REGISTER(
   RandomResizeOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::RandomResizeOperation, TensorOperation, std::shared_ptr<vision::RandomResizeOperation>>(
       *m, "RandomResizeOperation")
-      .def(py::init([](std::vector<int32_t> size) {
+      .def(py::init([](const std::vector<int32_t> &size) {
         auto random_resize = std::make_shared<vision::RandomResizeOperation>(size);
         THROW_IF_ERROR(random_resize->ValidateParams());
         return random_resize;
@@ -399,7 +401,7 @@ PYBIND_REGISTER(RandomResizeWithBBoxOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomResizeWithBBoxOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomResizeWithBBoxOperation>>(
                     *m, "RandomResizeWithBBoxOperation")
-                    .def(py::init([](std::vector<int32_t> size) {
+                    .def(py::init([](const std::vector<int32_t> &size) {
                       auto random_resize_with_bbox = std::make_shared<vision::RandomResizeWithBBoxOperation>(size);
                       THROW_IF_ERROR(random_resize_with_bbox->ValidateParams());
                       return random_resize_with_bbox;
@@ -422,7 +424,7 @@ PYBIND_REGISTER(
   RandomSelectSubpolicyOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::RandomSelectSubpolicyOperation, TensorOperation,
                      std::shared_ptr<vision::RandomSelectSubpolicyOperation>>(*m, "RandomSelectSubpolicyOperation")
-      .def(py::init([](const py::list &py_policy) {
+      .def(py::init([](const py::list py_policy) {
         std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> cpp_policy;
         for (auto &py_sub : py_policy) {
           cpp_policy.push_back({});
@@ -459,7 +461,7 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(RandomSharpnessOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomSharpnessOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomSharpnessOperation>>(*m, "RandomSharpnessOperation")
-                    .def(py::init([](std::vector<float> degrees) {
+                    .def(py::init([](const std::vector<float> &degrees) {
                       auto random_sharpness = std::make_shared<vision::RandomSharpnessOperation>(degrees);
                       THROW_IF_ERROR(random_sharpness->ValidateParams());
                       return random_sharpness;
@@ -469,7 +471,7 @@ PYBIND_REGISTER(RandomSharpnessOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(RandomSolarizeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomSolarizeOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomSolarizeOperation>>(*m, "RandomSolarizeOperation")
-                    .def(py::init([](std::vector<uint8_t> threshold) {
+                    .def(py::init([](const std::vector<uint8_t> &threshold) {
                       auto random_solarize = std::make_shared<vision::RandomSolarizeOperation>(threshold);
                       THROW_IF_ERROR(random_solarize->ValidateParams());
                       return random_solarize;
@@ -513,7 +515,7 @@ PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(ResizeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::ResizeOperation, TensorOperation, std::shared_ptr<vision::ResizeOperation>>(
                     *m, "ResizeOperation")
-                    .def(py::init([](std::vector<int32_t> size, InterpolationMode interpolation_mode) {
+                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode) {
                       auto resize = std::make_shared<vision::ResizeOperation>(size, interpolation_mode);
                       THROW_IF_ERROR(resize->ValidateParams());
                       return resize;
@@ -523,7 +525,7 @@ PYBIND_REGISTER(ResizeOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(ResizeWithBBoxOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::ResizeWithBBoxOperation, TensorOperation,
                                    std::shared_ptr<vision::ResizeWithBBoxOperation>>(*m, "ResizeWithBBoxOperation")
-                    .def(py::init([](std::vector<int32_t> size, InterpolationMode interpolation_mode) {
+                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode) {
                       auto resize_with_bbox =
                         std::make_shared<vision::ResizeWithBBoxOperation>(size, interpolation_mode);
                       THROW_IF_ERROR(resize_with_bbox->ValidateParams());
@@ -570,8 +572,8 @@ PYBIND_REGISTER(SoftDvppDecodeRandomCropResizeJpegOperation, 1, ([](const py::mo
                   (void)py::class_<vision::SoftDvppDecodeRandomCropResizeJpegOperation, TensorOperation,
                                    std::shared_ptr<vision::SoftDvppDecodeRandomCropResizeJpegOperation>>(
                     *m, "SoftDvppDecodeRandomCropResizeJpegOperation")
-                    .def(py::init([](std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
-                                     int32_t max_attempts) {
+                    .def(py::init([](const std::vector<int32_t> &size, const std::vector<float> &scale,
+                                     const std::vector<float> &ratio, int32_t max_attempts) {
                       auto soft_dvpp_decode_random_crop_resize_jpeg =
                         std::make_shared<vision::SoftDvppDecodeRandomCropResizeJpegOperation>(size, scale, ratio,
                                                                                               max_attempts);
@@ -584,7 +586,7 @@ PYBIND_REGISTER(SoftDvppDecodeResizeJpegOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::SoftDvppDecodeResizeJpegOperation, TensorOperation,
                                    std::shared_ptr<vision::SoftDvppDecodeResizeJpegOperation>>(
                     *m, "SoftDvppDecodeResizeJpegOperation")
-                    .def(py::init([](std::vector<int32_t> size) {
+                    .def(py::init([](const std::vector<int32_t> &size) {
                       auto soft_dvpp_decode_resize_jpeg =
                         std::make_shared<vision::SoftDvppDecodeResizeJpegOperation>(size);
                       THROW_IF_ERROR(soft_dvpp_decode_resize_jpeg->ValidateParams());
@@ -596,7 +598,7 @@ PYBIND_REGISTER(
   UniformAugOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::UniformAugOperation, TensorOperation, std::shared_ptr<vision::UniformAugOperation>>(
       *m, "UniformAugOperation")
-      .def(py::init([](py::list transforms, int32_t num_ops) {
+      .def(py::init([](const py::list transforms, int32_t num_ops) {
         auto uniform_aug =
           std::make_shared<vision::UniformAugOperation>(std::move(toTensorOperations(transforms)), num_ops);
         THROW_IF_ERROR(uniform_aug->ValidateParams());

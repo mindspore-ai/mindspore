@@ -28,7 +28,7 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // RandomResizeOperation
-RandomResizeOperation::RandomResizeOperation(std::vector<int32_t> size) : TensorOperation(true), size_(size) {}
+RandomResizeOperation::RandomResizeOperation(const std::vector<int32_t> &size) : TensorOperation(true), size_(size) {}
 
 RandomResizeOperation::~RandomResizeOperation() = default;
 

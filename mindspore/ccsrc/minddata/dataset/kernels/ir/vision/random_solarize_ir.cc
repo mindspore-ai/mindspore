@@ -28,7 +28,7 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // RandomSolarizeOperation.
-RandomSolarizeOperation::RandomSolarizeOperation(std::vector<uint8_t> threshold)
+RandomSolarizeOperation::RandomSolarizeOperation(const std::vector<uint8_t> &threshold)
     : TensorOperation(true), threshold_(threshold) {}
 
 RandomSolarizeOperation::~RandomSolarizeOperation() = default;

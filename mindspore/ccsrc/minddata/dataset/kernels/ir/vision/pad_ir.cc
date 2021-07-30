@@ -28,7 +28,8 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // PadOperation
-PadOperation::PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)
+PadOperation::PadOperation(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value,
+                           BorderType padding_mode)
     : padding_(padding), fill_value_(fill_value), padding_mode_(padding_mode) {}
 
 PadOperation::~PadOperation() = default;

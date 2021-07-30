@@ -37,8 +37,8 @@ constexpr char kRandomCropWithBBoxOperation[] = "RandomCropWithBBox";
 
 class RandomCropWithBBoxOperation : public TensorOperation {
  public:
-  RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
-                              std::vector<uint8_t> fill_value, BorderType padding_mode);
+  RandomCropWithBBoxOperation(const std::vector<int32_t> &size, const std::vector<int32_t> &padding, bool pad_if_needed,
+                              const std::vector<uint8_t> &fill_value, BorderType padding_mode);
 
   ~RandomCropWithBBoxOperation();
 

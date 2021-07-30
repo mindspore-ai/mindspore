@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace dataset {
 namespace vision {
-CenterCropOperation::CenterCropOperation(std::vector<int32_t> size) : size_(size) {}
+CenterCropOperation::CenterCropOperation(const std::vector<int32_t> &size) : size_(size) {}
 
 CenterCropOperation::~CenterCropOperation() = default;
 

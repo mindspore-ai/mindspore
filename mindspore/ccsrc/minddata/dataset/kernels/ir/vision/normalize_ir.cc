@@ -25,7 +25,8 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 // NormalizeOperation
-NormalizeOperation::NormalizeOperation(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
+NormalizeOperation::NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std)
+    : mean_(mean), std_(std) {}
 
 NormalizeOperation::~NormalizeOperation() = default;
 

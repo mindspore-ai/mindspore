@@ -37,8 +37,8 @@ constexpr char kRandomColorAdjustOperation[] = "RandomColorAdjust";
 
 class RandomColorAdjustOperation : public TensorOperation {
  public:
-  RandomColorAdjustOperation(std::vector<float> brightness, std::vector<float> contrast, std::vector<float> saturation,
-                             std::vector<float> hue);
+  RandomColorAdjustOperation(const std::vector<float> &brightness, const std::vector<float> &contrast,
+                             const std::vector<float> &saturation, const std::vector<float> &hue);
 
   ~RandomColorAdjustOperation();
 

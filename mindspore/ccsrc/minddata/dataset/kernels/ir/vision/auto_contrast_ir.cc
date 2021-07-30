@@ -28,7 +28,7 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // AutoContrastOperation
-AutoContrastOperation::AutoContrastOperation(float cutoff, std::vector<uint32_t> ignore)
+AutoContrastOperation::AutoContrastOperation(float cutoff, const std::vector<uint32_t> &ignore)
     : cutoff_(cutoff), ignore_(ignore) {}
 
 AutoContrastOperation::~AutoContrastOperation() = default;

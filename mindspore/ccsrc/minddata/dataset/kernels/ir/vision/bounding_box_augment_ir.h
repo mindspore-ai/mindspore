@@ -37,7 +37,7 @@ constexpr char kBoundingBoxAugmentOperation[] = "BoundingBoxAugment";
 
 class BoundingBoxAugmentOperation : public TensorOperation {
  public:
-  explicit BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio);
+  explicit BoundingBoxAugmentOperation(const std::shared_ptr<TensorOperation> &transform, float ratio);
 
   ~BoundingBoxAugmentOperation();
 
