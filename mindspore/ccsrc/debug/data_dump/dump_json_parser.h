@@ -65,7 +65,7 @@ class DumpJsonParser {
 
   void ClearGraph() { graphs_.clear(); }
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
-  std::vector<session::KernelGraph *> &graphs() { return graphs_; }
+  const std::vector<session::KernelGraph *> &graphs() const { return graphs_; }
 
  private:
   DumpJsonParser() = default;

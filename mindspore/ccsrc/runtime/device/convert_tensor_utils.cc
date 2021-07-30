@@ -106,7 +106,7 @@ void IntToLong(void *dst, const void *src, size_t elem_num) {
   }
 }
 
-void ConvertSameType(void *dst, const void *src, size_t size, TypeId type) {
+void ConvertSameType(void *const dst, const void *src, size_t size, TypeId type) {
   if (dst == nullptr || src == nullptr) {
     return;
   }

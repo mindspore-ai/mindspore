@@ -49,7 +49,7 @@ void OutputActor::Init() {
   }
 }
 
-void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *context) {
+void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
 
   current_count_ = loop_count;
@@ -106,7 +106,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
 }
 
 void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
-                                OpContext<DeviceTensor> *context) {
+                                OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(context);
   // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".

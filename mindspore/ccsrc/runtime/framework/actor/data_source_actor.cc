@@ -35,7 +35,7 @@ void DataSourceActor::Init() {
   }
 }
 
-void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
+void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
   // Pop the data of last time.
@@ -53,7 +53,7 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
   SendMemoryAllocReq(context);
 }
 
-void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
+void DataSourceActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // No output.
   if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
@@ -124,17 +124,17 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
   buffers_.push(device_tensors);
 }
 
-void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
   Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_context_, context, GetAID());
 }
 
-void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_context_, context);
 }
 
-void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_context_);
   if (buffers_.size() == 0) {
@@ -177,16 +177,16 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   SendOutput(context);
 }
 
-void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   Async(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_context_, context, &GetAID());
 }
 
-void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
   SendMemoryFreeReq(context);
   SendOutput(context);
 }
 
-void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context) {
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_kernel_, result_arrow->from_output_index_,
@@ -194,7 +194,7 @@ void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
   }
 }
 
-void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) {
   if (recorder_aid_ != nullptr) {
     Async(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &launch_info_,
           device_context_, context);
@@ -213,7 +213,7 @@ void HostQueueDataSourceActor::FillDataBuffer() {
   buffers_.push(device_tensors);
 }
 
-void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
+void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
   if (IsSameDeviceType()) {
     Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0], context,
@@ -224,7 +224,7 @@ void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *conte
   }
 }
 
-void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
+void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
   if (IsSameDeviceType()) {
     Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0], context);
@@ -233,7 +233,7 @@ void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *contex
   }
 }
 
-void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
+void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
@@ -283,7 +283,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
   SendOutput(context);
 }
 
-void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
+void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context) {
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     if (IntToSize(result_arrow->from_output_index_) >= data_nodes_.size()) {

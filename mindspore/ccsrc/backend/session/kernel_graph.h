@@ -319,10 +319,10 @@ class KernelGraph : public FuncGraph {
   void InsertToSendRecvPair(const CNodePtr &allreduce, const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
     allreduce_to_send_recv_pairs_[allreduce] = send_recv_pair;
   }
-  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_from_send_recv_pairs() {
+  const std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_from_send_recv_pairs() const {
     return allreduce_from_send_recv_pairs_;
   }
-  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_to_send_recv_pairs() {
+  const std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_to_send_recv_pairs() const {
     return allreduce_to_send_recv_pairs_;
   }
 

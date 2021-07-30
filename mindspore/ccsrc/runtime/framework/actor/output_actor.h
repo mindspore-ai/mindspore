@@ -57,11 +57,11 @@ class OutputActor : public OpActor<DeviceTensor> {
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
   // The output actor collects loop count when receive the input control of loop count actor.
-  void CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *context);
+  void CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *const context);
 
   // The output actor collects output result when receive the data of actor.
   void CollectOutput(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
-                     OpContext<DeviceTensor> *context);
+                     OpContext<DeviceTensor> *const context);
 
   // The graph output need be set new device address every step or loop, to avoid that the device address
   // context of tensor be rewritten in the next step or next loop.

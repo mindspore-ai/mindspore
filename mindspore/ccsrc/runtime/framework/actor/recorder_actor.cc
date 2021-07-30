@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace runtime {
 void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchInfo *launch_info_,
-                               const DeviceContext *device_context, OpContext<DeviceTensor> *op_context) {
+                               const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context) {
   MS_EXCEPTION_IF_NULL(launch_info_);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -62,7 +62,7 @@ void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchInfo
 #endif
 }
 
-void RecorderActor::RecordOnStepEnd(OpContext<DeviceTensor> *op_context) {
+void RecorderActor::RecordOnStepEnd(OpContext<DeviceTensor> *const op_context) {
   MS_EXCEPTION_IF_NULL(op_context);
   // todo clear
   // Record iter_start, fp_start and iter_end op name and timestamp at the step end. (GPU)

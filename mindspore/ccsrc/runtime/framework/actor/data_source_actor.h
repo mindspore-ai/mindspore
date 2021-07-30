@@ -53,13 +53,13 @@ class DataSourceActor : public DebugAwareActor {
   void Init() override;
 
   // The process entry of data processing.
-  void FetchData(OpContext<DeviceTensor> *context);
+  void FetchData(OpContext<DeviceTensor> *const context);
 
   // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override{};
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override{};
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override{};
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override{};
   // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override{};
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override{};
 
  protected:
   friend class GraphScheduler;
@@ -68,13 +68,13 @@ class DataSourceActor : public DebugAwareActor {
   virtual void FillDataBuffer() = 0;
 
   // Send output result of graph output to output actor.
-  virtual void SendResult(OpContext<DeviceTensor> *context) = 0;
+  virtual void SendResult(OpContext<DeviceTensor> *const context) = 0;
 
   // Send recorder info to recorder actor, only the device queue data source actor need.
-  virtual void SendRecorderInfo(OpContext<DeviceTensor> *context) {}
+  virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) {}
 
   // Send output to downstream actors to trigger computing after fetching data finished.
-  void SendOutput(OpContext<DeviceTensor> *context);
+  void SendOutput(OpContext<DeviceTensor> *const context);
 
   // The output result arrows of graph output.
   std::vector<DataArrowPtr> output_result_arrows_;
@@ -105,17 +105,17 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
   void Init() override;
 
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
-  void SendDebugReq(OpContext<DeviceTensor> *context) override;
-  void OnDebugFinish(OpContext<DeviceTensor> *context) override;
+  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
+  void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
  protected:
   void FillDataBuffer() override;
-  void SendResult(OpContext<DeviceTensor> *context) override;
-  void SendRecorderInfo(OpContext<DeviceTensor> *context) override;
+  void SendResult(OpContext<DeviceTensor> *const context) override;
+  void SendRecorderInfo(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;
@@ -138,15 +138,15 @@ class HostQueueDataSourceActor : public DataSourceActor {
       : DataSourceActor(name, buffer_capacity, memory_manager_aid, debug_aid, recorder_aid), host_queue_(host_queue) {}
   ~HostQueueDataSourceActor() override = default;
 
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   size_t FetchDataNodePosition(const AnfNodePtr &data_node) const;
 
  protected:
   void FillDataBuffer() override;
-  void SendResult(OpContext<DeviceTensor> *context) override;
+  void SendResult(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;
