@@ -31,6 +31,9 @@ bool TcpCommunicator::Start() {
   tcp_msg_callback_ = std::bind(
     [&](std::shared_ptr<core::TcpConnection> conn, std::shared_ptr<core::MessageMeta> meta, DataPtr data,
         size_t size) -> void {
+      MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+      MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+      MS_ERROR_IF_NULL_WO_RET_VAL(data);
       TcpUserCommand user_command = static_cast<TcpUserCommand>(meta->user_cmd());
       const std::string &msg_type = kUserCommandToMsgType.at(user_command);
       if (msg_type == "" || !msg_callbacks_[msg_type]) {
@@ -41,7 +44,7 @@ bool TcpCommunicator::Start() {
       MS_LOG(DEBUG) << "TcpCommunicator receives message for " << msg_type;
       std::shared_ptr<MessageHandler> tcp_msg_handler =
         std::make_shared<TcpMsgHandler>(server_node_, conn, meta, data, size);
-      MS_EXCEPTION_IF_NULL(tcp_msg_handler);
+      MS_ERROR_IF_NULL_WO_RET_VAL(tcp_msg_handler);
       // The Submit function timed out for 30s, if it returns false, it will retry 60 times.
       bool res = CommUtil::Retry([&] { return task_executor_->Submit(msg_callbacks_[msg_type], tcp_msg_handler); },
                                  kRetryCount, kRetryIntervalInMs);
