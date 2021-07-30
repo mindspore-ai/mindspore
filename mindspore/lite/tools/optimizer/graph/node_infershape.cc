@@ -30,6 +30,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr int kInputChannal = 3;
 constexpr size_t INITIAL_SIZE = 1024;
 void FreeTensors(std::vector<lite::Tensor *> *tensors) {
   if (tensors == nullptr) {
@@ -63,7 +64,7 @@ void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inp
   }
   for (auto &input : inputs) {
     auto shape = input->shape();
-    if (shape.size() == kInputSizeFour && shape[3] == 3 && shape[1] == -1) {
+    if (shape.size() == kInputSizeFour && shape[kInputIndexThree] == kInputChannal && shape[1] == -1) {
       input->set_format(mindspore::NHWC);
     }
   }

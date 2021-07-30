@@ -53,7 +53,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   auto split_sizes_vector_ = split_prim->sizeSplits();
   if (split_sizes_vector_ != nullptr) {
     int i = 0;
-    for (auto iter = split_sizes_vector_->begin(); iter != split_sizes_vector_->end(); iter++) {
+    for (auto iter = split_sizes_vector_->begin(); iter != split_sizes_vector_->end(); ++iter) {
       split_param->split_sizes_[i++] = *iter;
     }
     split_param->split_count_ = split_param->num_split_;

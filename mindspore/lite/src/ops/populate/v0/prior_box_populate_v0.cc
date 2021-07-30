@@ -48,7 +48,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
     free(prior_box_param);
     return nullptr;
   }
-  prior_box_param->min_sizes_size = min_sizes->size();
+  prior_box_param->min_sizes_size = static_cast<int32_t>(min_sizes->size());
   memcpy(prior_box_param->min_sizes, min_sizes->data(), min_sizes->size() * sizeof(int32_t));
 
   auto max_sizes = prior_box_prim->max_sizes();
@@ -62,7 +62,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
     free(prior_box_param);
     return nullptr;
   }
-  prior_box_param->max_sizes_size = max_sizes->size();
+  prior_box_param->max_sizes_size = static_cast<int32_t>(max_sizes->size());
   memcpy(prior_box_param->max_sizes, max_sizes->data(), max_sizes->size() * sizeof(int32_t));
 
   auto aspect_ratios = prior_box_prim->aspect_ratios();
@@ -76,7 +76,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
     free(prior_box_param);
     return nullptr;
   }
-  prior_box_param->aspect_ratios_size = aspect_ratios->size();
+  prior_box_param->aspect_ratios_size = static_cast<int32_t>(aspect_ratios->size());
   memcpy(prior_box_param->aspect_ratios, aspect_ratios->data(), aspect_ratios->size() * sizeof(float));
 
   auto variances = prior_box_prim->variances();

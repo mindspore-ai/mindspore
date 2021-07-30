@@ -29,6 +29,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kSecondInput = 2;
+}
 GatherFp16CPUKernel::~GatherFp16CPUKernel() {
   if (input_data_) {
     ms_context_->allocator->Free(input_data_);
@@ -44,7 +47,8 @@ int GatherFp16CPUKernel::Init() {
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
   }
-  (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_ = *(reinterpret_cast<int *>(in_tensors_.at(2)->data_c()));
+  (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_ =
+    *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data_c()));
   if (!InferShapeDone()) {
     return RET_OK;
   }

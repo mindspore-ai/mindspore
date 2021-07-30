@@ -42,7 +42,7 @@ OpParameter *PopulateReverseParameter(const void *prim) {
     free(reverse_param);
     return nullptr;
   }
-  reverse_param->num_axis_ = flatAxis->size();
+  reverse_param->num_axis_ = static_cast<int>(flatAxis->size());
   int i = 0;
   for (int flatAxi : *flatAxis) {
     reverse_param->axis_[i++] = flatAxi;

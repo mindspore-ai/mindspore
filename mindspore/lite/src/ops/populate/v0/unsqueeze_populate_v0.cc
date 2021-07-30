@@ -47,9 +47,9 @@ OpParameter *PopulateUnsqueezeParameter(const void *prim) {
     free(unsqueeze_param);
     return nullptr;
   }
-  unsqueeze_param->num_dim_ = flat_axis->size();
+  unsqueeze_param->num_dim_ = static_cast<int>(flat_axis->size());
   int i = 0;
-  for (auto iter = flat_axis->begin(); iter != flat_axis->end(); iter++) {
+  for (auto iter = flat_axis->begin(); iter != flat_axis->end(); ++iter) {
     unsqueeze_param->dims_[i++] = *iter;
   }
   return reinterpret_cast<OpParameter *>(unsqueeze_param);
