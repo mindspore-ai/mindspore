@@ -72,3 +72,6 @@ template void CalTile<int>(const size_t output_size, const size_t input_size, co
 template void CalTile<int64_t>(const size_t output_size, const size_t input_size, const size_t shape_size,
                                const size_t *input_shape, const size_t *output_shape, const int64_t *input,
                                int64_t *output, cudaStream_t cuda_stream);
+template void CalTile<bool>(const size_t output_size, const size_t input_size, const size_t shape_size,
+                               const size_t *input_shape, const size_t *output_shape, const bool *input,
+                               bool *output, cudaStream_t cuda_stream);

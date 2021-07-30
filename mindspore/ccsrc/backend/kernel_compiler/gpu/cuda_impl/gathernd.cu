@@ -69,6 +69,10 @@ template void GatherNd<int, int>(int *input, int *indices, int *output, const si
 template void GatherNd<short, int>(short *input, int *indices, short *output, const size_t &output_dim0,  // NOLINT
                                    const size_t &output_dim1, const size_t &indices_dim1, int *batch_indices,
                                    int *batch_strides, cudaStream_t stream);
+template void GatherNd<unsigned int, int>(unsigned int *input, int *indices, unsigned int *output,
+                                    const size_t &output_dim0, const size_t &output_dim1,
+                                    const size_t &indices_dim1, int *batch_indices, int *batch_strides,
+                                    cudaStream_t stream);
 template void GatherNd<unsigned char, int>(unsigned char *input, int *indices, unsigned char *output,
                                            const size_t &output_dim0, const size_t &output_dim1,
                                            const size_t &indices_dim1, int *batch_indices, int *batch_strides,
@@ -91,6 +95,10 @@ template void GatherNd<int, int64_t>(int *input, int64_t *indices, int *output, 
 template void GatherNd<short, int64_t>(short *input, int64_t *indices, short *output,  // NOLINT
                                        const size_t &output_dim0, const size_t &output_dim1, const size_t &indices_dim1,
                                        int64_t *batch_indices, int64_t *batch_strides, cudaStream_t stream);
+template void GatherNd<unsigned int, int64_t>(unsigned int *input, int64_t *indices, unsigned int *output,
+                                        const size_t &output_dim0, const size_t &output_dim1,
+                                        const size_t &indices_dim1, int64_t *batch_indices,
+                                        int64_t *batch_strides, cudaStream_t stream);
 template void GatherNd<unsigned char, int64_t>(unsigned char *input, int64_t *indices, unsigned char *output,
                                                const size_t &output_dim0, const size_t &output_dim1,
                                                const size_t &indices_dim1, int64_t *batch_indices,
