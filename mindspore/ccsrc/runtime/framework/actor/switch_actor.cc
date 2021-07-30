@@ -440,7 +440,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     auto &data = output_data[i];
     MS_EXCEPTION_IF_NULL(data_arrow);
     MS_EXCEPTION_IF_NULL(data);
-    data->data_ = input_device_tensors_[data_arrow->from_output_index_];
+    data->data_ = input_device_tensors_[IntToSize(data_arrow->from_output_index_)];
     Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
   }
 
