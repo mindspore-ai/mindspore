@@ -997,6 +997,17 @@ bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_
   return ret;
 }
 
+void KernelRuntime::DebugStreamSync(const CNodePtr &kernel) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_sync_run = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+  if (enable_sync_run) {
+    if (!SyncStream()) {
+      MS_LOG(EXCEPTION) << "Op " << kernel->fullname_with_scope() << " run failed!";
+    }
+  }
+}
+
 bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
@@ -1070,6 +1081,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
         return false;
       }
       KernelLaunchProfiling(kernel->fullname_with_scope());
+      DebugStreamSync(kernel);
     }
     LaunchKernelEvent(kernel_post_run_events, i);
   }

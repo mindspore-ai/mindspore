@@ -1600,7 +1600,7 @@ py::tuple ForwardExecutor::RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_ex
 }
 
 MsBackendPolicy ForwardExecutor::InitEnv(const OpExecInfoPtr &op_exec_info) {
-  MS_LOG(INFO) << "RunOp start, op name is: " << op_exec_info->op_name;
+  MS_LOG(DEBUG) << "RunOp start, op name is: " << op_exec_info->op_name;
   parse::python_adapter::set_python_env_flag(true);
   MsBackendPolicy backend_policy;
 #if (!defined ENABLE_GE)
