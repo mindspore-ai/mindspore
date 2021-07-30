@@ -77,13 +77,15 @@ class Shape : public BaseShape {
   bool operator==(const BaseShape &other) const override;
   BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_, min_shape_, max_shape_); }
   void Broaden() override;
-  ShapeVector &shape() { return shape_; }
-  ShapeVector &min_shape() { return min_shape_; }
-  ShapeVector &max_shape() { return max_shape_; }
+  void set_shape(const ShapeVector &shape) { shape_ = shape; }
+  const ShapeVector &shape() { return shape_; }
+  const ShapeVector &min_shape() { return min_shape_; }
+  const ShapeVector &max_shape() { return max_shape_; }
   bool IsDynamic() const override {
     return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < 0; });
   }
 
+ private:
   ShapeVector shape_;      // use SHP_ANY to implement the any shape in python
   ShapeVector min_shape_;  // record minimum length for each dynamic dimension
   ShapeVector max_shape_;  // record maximum length for each dynamic dimension

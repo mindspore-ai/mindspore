@@ -98,14 +98,6 @@ class TraceGuard {
 
 class TraceContext {
  public:
-  LocationPtr location_;
-  TraceInfoPtr trace_info_;
-  std::string func_name_;
-
- protected:
-  void ProcessAttributeFromContext();
-
- public:
   ~TraceContext() = default;
   explicit TraceContext(const LocationPtr &loc) {
     ProcessAttributeFromContext();
@@ -125,6 +117,14 @@ class TraceContext {
   TraceInfoPtr trace_info() const { return trace_info_; }
   void set_func_name(const std::string &func_name) { func_name_ = func_name; }
   std::string func_name() { return func_name_; }
+
+ protected:
+  void ProcessAttributeFromContext();
+
+ private:
+  LocationPtr location_;
+  TraceInfoPtr trace_info_;
+  std::string func_name_;
 };
 
 class DebugInfo : public Base {
@@ -200,6 +200,8 @@ class NodeDebugInfo : public DebugInfo {
   std::shared_ptr<AnfNode> get_node() const { return node_.lock(); }
   void set_py_func_belonged(const std::string &name) { py_func_belonged_ = name; }
   std::string get_python_func_belonged() override { return py_func_belonged_; }
+
+ private:
   AnfNodeWeakPtr node_;
   std::string py_func_belonged_;
 };
@@ -232,6 +234,8 @@ class GraphDebugInfo : public DebugInfo {
   std::string get_full_name() { return full_name_; }
   void set_deco_location(const LocationPtr &deco_list_loc);
   std::string get_python_func_belonged() override { return py_func_name_; }
+
+ private:
   FuncGraphWeakPtr func_graph_;
   LocationPtr deco_loc_;
   std::string py_func_name_;
