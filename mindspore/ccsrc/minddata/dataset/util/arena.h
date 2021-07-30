@@ -110,7 +110,7 @@ class Arena : public MemoryPool {
   ~Arena() override {
 #ifdef ENABLE_GPUQUE
     if (is_cuda_malloc_) {
-      if (ptr_) {
+      if (ptr_ != nullptr) {
         (void)cudaFreeHost(ptr_);
       }
     }

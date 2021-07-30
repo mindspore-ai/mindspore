@@ -34,7 +34,7 @@ def preprocess_imagenet_validation_dataset(train_dataset_path, validation_datase
         validate_sub_dir = os.path.join(validation_dataset_path, sub_dir_name)
         validate_sub_dir = os.path.realpath(validate_sub_dir)
         if not os.path.exists(validate_sub_dir):
-            os.makedirs(validate_sub_dir)
+            os.makedirs(validate_sub_dir, mode=0o750)
 
     real_file_path = os.path.realpath(image_label_mapping_file)
     mappings = [mapping.strip() for mapping in open(real_file_path).readlines()]

@@ -77,7 +77,7 @@ class Treap {
   // @return
   //    Return the root of the heap. It has the highest priority. But not necessarily the first key.
   std::pair<NodeValue, bool> Top() const {
-    if (root_) {
+    if (root_ != nullptr) {
       return std::make_pair(root_->nv, true);
     } else {
       return std::make_pair(NodeValue{key_type(), priority_type()}, false);
@@ -86,7 +86,7 @@ class Treap {
 
   // Remove the root of the heap.
   void Pop() {
-    if (root_) {
+    if (root_ != nullptr) {
       DeleteKey(root_->nv.key);
     }
   }
@@ -116,9 +116,9 @@ class Treap {
   class iterator : public std::iterator<std::forward_iterator_tag, TreapNode> {
    public:
     explicit iterator(Treap *tr) : tr_(tr), cur_(nullptr) {
-      if (tr_) {
+      if (tr_ != nullptr) {
         cur_ = tr_->root_;
-        while (cur_) {
+        while (cur_ != nullptr) {
           stack_.push(cur_);
           cur_ = cur_->left;
         }
@@ -196,9 +196,9 @@ class Treap {
   class const_iterator : public std::iterator<std::forward_iterator_tag, TreapNode> {
    public:
     explicit const_iterator(const Treap *tr) : tr_(tr), cur_(nullptr) {
-      if (tr_) {
+      if (tr_ != nullptr) {
         cur_ = tr_->root_;
-        while (cur_) {
+        while (cur_ != nullptr) {
           stack_.push(cur_);
           cur_ = cur_->left;
         }
@@ -226,7 +226,7 @@ class Treap {
     const_iterator &operator++() {
       if (cur_) {
         stack_.pop();
-        if (cur_->right) {
+        if (cur_->right != nullptr) {
           TreapNode *n = cur_->right;
           while (n) {
             stack_.push(n);
@@ -247,7 +247,7 @@ class Treap {
       iterator tmp(*this);
       if (cur_) {
         stack_.pop();
-        if (cur_->right) {
+        if ((cur_->right) != nullptr) {
           TreapNode *n = cur_->right;
           while (n) {
             stack_.push(n);

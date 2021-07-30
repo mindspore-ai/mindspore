@@ -155,8 +155,6 @@ std::shared_ptr<Iterator> Dataset::CreateIteratorCharIF(std::vector<std::vector<
       MS_LOG(ERROR) << "CreateIterator failed." << rc;
       return nullptr;
     }
-
-    return iter;
   } catch (const std::exception &err) {
     MS_LOG(ERROR) << "CreateIterator: Iterator exception caught: " << err.what();
     return nullptr;
