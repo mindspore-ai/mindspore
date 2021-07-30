@@ -36,27 +36,30 @@ class MemoryManagerActor : public ActorBase {
   ~MemoryManagerActor() override = default;
 
   // The process entry of memory alloc.
-  void AllocateMemory(std::vector<DeviceTensor *> *alloc_list, const DeviceContext *device_context,
-                      OpContext<DeviceTensor> *op_context, const AID from_aid);
+  void AllocateMemory(const std::vector<DeviceTensor *> *alloc_list, const DeviceContext *device_context,
+                      OpContext<DeviceTensor> *const op_context, const AID from_aid);
   // The process entry of continuous memory alloc, the size of alloc_list_list, size_list_list, total_size_list and
   // device_contexts must be equal.
-  void AllocateContinuousMemory(std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
-                                std::vector<std::vector<size_t>> *size_list_list, std::vector<size_t> *total_size_list,
-                                std::vector<const DeviceContext *> *device_contexts,
-                                OpContext<DeviceTensor> *op_context, const AID from_aid);
+  void AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
+                                const std::vector<std::vector<size_t>> *size_list_list,
+                                const std::vector<size_t> *total_size_list,
+                                const std::vector<const DeviceContext *> *device_contexts,
+                                OpContext<DeviceTensor> *const op_context, const AID from_aid);
   // device_contexts is from different device, the size of device_contexts must be equal to the alloc_list.
-  void AllocateBatchMemory(std::vector<DeviceTensor *> *alloc_list, std::vector<const DeviceContext *> *device_contexts,
-                           OpContext<DeviceTensor> *op_context, const AID from_aid);
+  void AllocateBatchMemory(const std::vector<DeviceTensor *> *alloc_list,
+                           const std::vector<const DeviceContext *> *device_contexts,
+                           OpContext<DeviceTensor> *const op_context, const AID from_aid);
 
   // The process entry of memory free.
-  void FreeMemory(std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
-                  OpContext<DeviceTensor> *op_context);
+  void FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
+                  OpContext<DeviceTensor> *const op_context);
   // device_contexts is from different device, the size of device_contexts must be equal to the free_list.
-  void FreeBatchMemory(std::vector<DeviceTensor *> *free_list, std::vector<const DeviceContext *> *device_contexts,
-                       OpContext<DeviceTensor> *op_context);
+  void FreeBatchMemory(const std::vector<DeviceTensor *> *free_list,
+                       const std::vector<const DeviceContext *> *device_contexts,
+                       OpContext<DeviceTensor> *const op_context);
 
   // Wait the MemoryManagerActor to finish running all current messages.
-  void Wait(OpContext<DeviceTensor> *op_context, const AID from_aid);
+  void Wait(OpContext<DeviceTensor> *const op_context, const AID from_aid);
 };
 }  // namespace runtime
 }  // namespace mindspore

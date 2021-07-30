@@ -38,7 +38,7 @@ void SwitchActor::Init() {
   }
 }
 
-void SwitchActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
+void SwitchActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   const auto &sequential_num = context->sequential_num_;
   auto &input_datas = input_data_[sequential_num];
@@ -477,7 +477,7 @@ void SwitchActor::EraseInput(OpContext<DeviceTensor> *context) {
   }
 }
 
-void SwitchActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
+void SwitchActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensors_, device_context_, context);
 }
 

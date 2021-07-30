@@ -27,8 +27,8 @@ class DebugAwareActor : public MemoryAwareActor {
  public:
   explicit DebugAwareActor(const std::string &name) : MemoryAwareActor(name) {}
   virtual ~DebugAwareActor() = default;
-  virtual void SendDebugReq(OpContext<DeviceTensor> *context) {}
-  virtual void OnDebugFinish(OpContext<DeviceTensor> *context) {}
+  virtual void SendDebugReq(OpContext<DeviceTensor> *const context) {}
+  virtual void OnDebugFinish(OpContext<DeviceTensor> *const context) {}
 };
 }  // namespace runtime
 }  // namespace mindspore

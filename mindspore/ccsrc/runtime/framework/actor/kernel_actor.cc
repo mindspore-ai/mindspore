@@ -74,7 +74,7 @@ void KernelActor::Init() {
   }
 }
 
-void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
+void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   input_op_datas_[sequential_num].emplace_back(input_data);
@@ -100,7 +100,7 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
   }
 }
 
-void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
+void KernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
@@ -178,7 +178,7 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 }
 }  // namespace
 
-void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
+void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_context_, context,
@@ -188,7 +188,7 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
   }
 }
 
-void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
+void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_context_, context);
   } else {
@@ -196,7 +196,7 @@ void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
   }
 }
 
-void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
+void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_);
   MS_EXCEPTION_IF_NULL(device_context_);
@@ -224,7 +224,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   PostLaunchKernel(context);
 }
 
-void KernelActor::SendDebugReq(OpContext<DeviceTensor> *context) {
+void KernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
   Async(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_context_, context, &GetAID());
 }
@@ -234,7 +234,7 @@ void KernelActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
   PostLaunchKernel(context);
 }
 
-bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
+bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     const auto &data_iter = input_op_datas_.find(context->sequential_num_);
@@ -276,7 +276,8 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
   }
 }
 
-void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
+void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
+                                        OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
   if ((input_data->data_ == nullptr) || (input_data->data_->DeviceType() == device_context_->GetDeviceAddressType())) {
     return;
@@ -312,7 +313,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, 
   memory_free_list_[input_data->index_] = copy_input_device_tensors_[input_data->index_].get();
 }
 
-void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
+void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_context_);
 
@@ -392,7 +393,7 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   }
 }
 
-void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *context) {
+void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
 
   // The input is invalid and needs to be erased when finish kernel launch.
@@ -408,7 +409,7 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *context) {
   SendOutput(context);
 }
 
-void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
+void KernelActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (strategy_ == GraphExecutionStrategy::kStep) {
     return;
@@ -449,7 +450,7 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
   }
 }
 
-void KernelActor::EraseInput(OpContext<DeviceTensor> *context) {
+void KernelActor::EraseInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     auto ret = input_op_datas_.erase(context->sequential_num_);

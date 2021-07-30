@@ -51,7 +51,7 @@ bool IsNeedInsertCopyActor(const DeviceContext *from_devcie_context, const Devic
   }
 }
 
-void UpdateRefCount(DeviceTensor *device_tensor, bool is_max_ref_count = false) {
+void UpdateRefCount(DeviceTensor *const device_tensor, bool is_max_ref_count = false) {
   MS_EXCEPTION_IF_NULL(device_tensor);
   if (is_max_ref_count) {
     device_tensor->set_original_ref_count(SIZE_MAX);
@@ -1420,14 +1420,17 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
 
   if (IsDeviceQueueDSActor(front_output_node)) {
     auto from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(actor_pair.first);
+    MS_EXCEPTION_IF_NULL(from_actor);
     auto from_kernel_with_output_idx = KernelWithIndex(from_actor->data_kernel_, actor_pair.second);
     LinkDataArrowForDeviceDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else if (IsKernelActor(front_output_node)) {
     auto from_actor = dynamic_cast<KernelActor *>(actor_pair.first);
+    MS_EXCEPTION_IF_NULL(from_actor);
     auto from_kernel_with_output_idx = KernelWithIndex(from_actor->kernel_, actor_pair.second);
     LinkDataArrowForKernelActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else if (IsHostQueueDSActor(front_output_node, graph, nullptr, host_parameters)) {
     auto from_actor = dynamic_cast<HostQueueDataSourceActor *>(actor_pair.first);
+    MS_EXCEPTION_IF_NULL(from_actor);
     auto from_kernel_with_output_idx = KernelWithIndex(from_actor->data_nodes_[actor_pair.second], 0);
     LinkDataArrowForHostDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
@@ -1435,7 +1438,8 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
   }
 }
 
-void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *from_actor, KernelActor *to_actor,
+void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *const from_actor,
+                                                   KernelActor *const to_actor,
                                                    KernelWithIndex from_kernel_with_output_idx,
                                                    KernelWithIndex to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
@@ -1460,7 +1464,8 @@ void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *f
   }
 }
 
-void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *from_actor, KernelActor *to_actor,
+void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const from_actor,
+                                                 KernelActor *const to_actor,
                                                  KernelWithIndex from_kernel_with_output_idx,
                                                  KernelWithIndex to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
@@ -1488,7 +1493,7 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *from_
   }
 }
 
-void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *to_actor,
+void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *const to_actor,
                                                  KernelWithIndex from_kernel_with_output_idx,
                                                  KernelWithIndex to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(to_actor);
@@ -1528,7 +1533,7 @@ void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, Kernel
   }
 }
 
-void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *from_actor, KernelActor *to_actor,
+void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from_actor, KernelActor *const to_actor,
                                                KernelWithIndex from_kernel_with_output_idx,
                                                KernelWithIndex to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
@@ -1558,14 +1563,17 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *from_actor
     auto op_arrow_to_copy = std::make_shared<DataArrow>(from_output_index, copy_actor->GetAID(), 0);
     if (IsDeviceQueueDSActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(from_actor);
+      MS_EXCEPTION_IF_NULL(real_from_actor);
       from_devcie_context = real_from_actor->device_context_;
       real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     } else if (IsKernelActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<KernelActor *>(from_actor);
+      MS_EXCEPTION_IF_NULL(real_from_actor);
       from_devcie_context = real_from_actor->device_context_;
       real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     } else if (IsHostQueueDSActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<HostQueueDataSourceActor *>(from_actor);
+      MS_EXCEPTION_IF_NULL(real_from_actor);
       auto position = real_from_actor->FetchDataNodePosition(from_kernel);
       from_devcie_context = real_from_actor->device_contexts_[position];
       op_arrow_to_copy->from_output_index_ = position;

@@ -35,10 +35,10 @@ class DebugActor : public ActorBase {
 
   // The debug of each node.
   void Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_, const DeviceContext *device_context,
-             OpContext<DeviceTensor> *op_context, const AID *from_aid);
+             OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
   // The debug on step end.
-  void DebugOnStepEnd(OpContext<DeviceTensor> *op_context, const AID *from_aid);
+  void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
  private:
   // class members

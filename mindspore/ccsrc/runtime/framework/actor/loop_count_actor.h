@@ -50,25 +50,25 @@ class LoopCountActor : public DebugAwareActor {
   void Init() override;
 
   // The loop count actor run when receive the input control.
-  void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
   // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   // The callback after memory alloc finished.
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   // The debug related operation interface.
-  void SendDebugReq(OpContext<DeviceTensor> *context) override;
+  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
   // The callback after debug finished.
-  void OnDebugFinish(OpContext<DeviceTensor> *context) override;
+  void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;
 
-  void IncreaseLoopCount(OpContext<DeviceTensor> *context);
-  void SendOutput(OpContext<DeviceTensor> *context);
+  void IncreaseLoopCount(OpContext<DeviceTensor> *const context);
+  void SendOutput(OpContext<DeviceTensor> *const context);
 
-  bool CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *context);
+  bool CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *const context);
   // The loop count is constant, the current count is increased after each step running finished.
   size_t loop_count_;
   size_t current_count_;

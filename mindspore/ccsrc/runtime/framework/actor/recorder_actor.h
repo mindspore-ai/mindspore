@@ -37,11 +37,11 @@ class RecorderActor : public ActorBase {
 
   // The memory recorder of each node.
   void RecordInfo(const std::string op_name, const KernelLaunchInfo *launch_info_, const DeviceContext *device_context,
-                  OpContext<DeviceTensor> *op_context);
+                  OpContext<DeviceTensor> *const op_context);
 
   // Clear memory recorder at the step end.
   // Record fp_start and iter_end op name and timestamp at the step end. (GPU)
-  void RecordOnStepEnd(OpContext<DeviceTensor> *op_context);
+  void RecordOnStepEnd(OpContext<DeviceTensor> *const op_context);
 };
 }  // namespace runtime
 }  // namespace mindspore

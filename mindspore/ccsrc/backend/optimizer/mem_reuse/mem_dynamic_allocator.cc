@@ -277,6 +277,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
       if (!FreeDeviceMem(device_addr)) {
         MS_LOG(EXCEPTION) << "Free device memory[" << device_addr << "] error.";
       }
+      device_addr = nullptr;
     }
   }
 
