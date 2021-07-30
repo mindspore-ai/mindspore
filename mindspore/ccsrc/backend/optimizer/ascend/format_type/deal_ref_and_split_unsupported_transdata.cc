@@ -104,8 +104,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::AddAdditionalToRefOutput(const Fun
   bool need_refresh_ref_addr = false;
   size_t final_index = output_index;
   AnfNodePtr input_node = AnfAlgo::GetInputNode(cnode, input_index);
-  session::KernelWithIndex origin_pair;
-  origin_pair = FindRefOriginNode(input_node);
+  session::KernelWithIndex origin_pair = FindRefOriginNode(input_node);
   MS_EXCEPTION_IF_NULL(origin_pair.first);
   if (!origin_pair.first->isa<Parameter>()) {
     MS_LOG(WARNING) << "ref op origin node is not parameter";
