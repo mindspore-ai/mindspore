@@ -37,7 +37,7 @@ class FileWriter:
 
     Note:
         After the MindRecord file is generated, if the file name is changed,
-            the file may fail to be read.
+        the file may fail to be read.
 
     Args:
         file_name (str): File name of MindRecord file.
