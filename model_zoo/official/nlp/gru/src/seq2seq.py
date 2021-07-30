@@ -18,8 +18,8 @@ from mindspore import Tensor
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 import mindspore.common.dtype as mstype
-from src.gru import BidirectionGRU, GRU
 from src.weight_init import dense_default_state
+from src.rnns import GRU
 
 class Attention(nn.Cell):
     '''
@@ -29,8 +29,8 @@ class Attention(nn.Cell):
         super(Attention, self).__init__()
         self.text_len = config.max_length
         self.attn = nn.Dense(in_channels=config.hidden_size * 3,
-                             out_channels=config.hidden_size).to_float(mstype.float16)
-        self.fc = nn.Dense(config.hidden_size, 1, has_bias=False).to_float(mstype.float16)
+                             out_channels=config.hidden_size).to_float(config.compute_type)
+        self.fc = nn.Dense(config.hidden_size, 1, has_bias=False).to_float(config.compute_type)
         self.expandims = P.ExpandDims()
         self.tanh = P.Tanh()
         self.softmax = P.Softmax()
@@ -39,6 +39,9 @@ class Attention(nn.Cell):
         self.concat = P.Concat(axis=2)
         self.squeeze = P.Squeeze(axis=2)
         self.cast = P.Cast()
+        self.dtype = config.dtype
+        self.compute_type = config.compute_type
+
     def construct(self, hidden, encoder_outputs):
         '''
         Attention construction
@@ -58,9 +61,9 @@ class Attention(nn.Cell):
         energy = self.tanh(out)
         attention = self.fc(energy)
         attention = self.squeeze(attention)
-        attention = self.cast(attention, mstype.float32)
+        attention = self.cast(attention, self.dtype)
         attention = self.softmax(attention)
-        attention = self.cast(attention, mstype.float16)
+        attention = self.cast(attention, self.compute_type)
         return attention
 
 class Encoder(nn.Cell):
@@ -76,8 +79,9 @@ class Encoder(nn.Cell):
         self.vocab_size = config.src_vocab_size
         self.embedding_size = config.encoder_embedding_size
         self.embedding = nn.Embedding(self.vocab_size, self.embedding_size)
-        self.rnn = BidirectionGRU(config, is_training=is_training).to_float(mstype.float16)
-        self.fc = nn.Dense(2*self.hidden_size, self.hidden_size).to_float(mstype.float16)
+        self.rnn = GRU(input_size=self.embedding_size, \
+            hidden_size=self.hidden_size, bidirectional=True).to_float(config.compute_type)
+        self.fc = nn.Dense(2*self.hidden_size, self.hidden_size).to_float(config.compute_type)
         self.shape = P.Shape()
         self.transpose = P.Transpose()
         self.p = P.Print()
@@ -85,6 +89,8 @@ class Encoder(nn.Cell):
         self.text_len = config.max_length
         self.squeeze = P.Squeeze(axis=0)
         self.tanh = P.Tanh()
+        self.concat = P.Concat(2)
+        self.dtype = config.dtype
 
     def construct(self, src):
         '''
@@ -99,8 +105,10 @@ class Encoder(nn.Cell):
         '''
         embedded = self.embedding(src)
         embedded = self.transpose(embedded, (1, 0, 2))
-        embedded = self.cast(embedded, mstype.float16)
+        embedded = self.cast(embedded, self.dtype)
         output, hidden = self.rnn(embedded)
+        hidden = self.transpose(hidden, (1, 0, 2))
+        hidden = hidden.view(hidden.shape[0], -1)
         hidden = self.fc(hidden)
         hidden = self.tanh(hidden)
         return output, hidden
@@ -118,7 +126,8 @@ class Decoder(nn.Cell):
         self.vocab_size = config.trg_vocab_size
         self.embedding_size = config.decoder_embedding_size
         self.embedding = nn.Embedding(self.vocab_size, self.embedding_size)
-        self.rnn = GRU(config, is_training=is_training).to_float(mstype.float16)
+        self.rnn = GRU(input_size=self.embedding_size + self.hidden_size*2, \
+            hidden_size=self.hidden_size).to_float(config.compute_type)
         self.text_len = config.max_length
         self.shape = P.Shape()
         self.transpose = P.Transpose()
@@ -130,11 +139,13 @@ class Decoder(nn.Cell):
         self.log_softmax = P.LogSoftmax(axis=1)
         weight, bias = dense_default_state(self.embedding_size+self.hidden_size*3, self.vocab_size)
         self.fc = nn.Dense(self.embedding_size+self.hidden_size*3, self.vocab_size,
-                           weight_init=weight, bias_init=bias).to_float(mstype.float16)
+                           weight_init=weight, bias_init=bias).to_float(config.compute_type)
         self.attention = Attention(config)
         self.bmm = P.BatchMatMul()
         self.dropout = nn.Dropout(0.7)
         self.expandims = P.ExpandDims()
+        self.dtype = config.dtype
+
     def construct(self, inputs, hidden, encoder_outputs):
         '''
         Decoder construction
@@ -150,21 +161,22 @@ class Decoder(nn.Cell):
         '''
         embedded = self.embedding(inputs)
         embedded = self.transpose(embedded, (1, 0, 2))
-        embedded = self.cast(embedded, mstype.float16)
+        embedded = self.cast(embedded, self.dtype)
         attn = self.attention(hidden, encoder_outputs)
         attn = self.expandims(attn, 1)
         encoder_outputs = self.transpose(encoder_outputs, (1, 0, 2))
         weight = self.bmm(attn, encoder_outputs)
         weight = self.transpose(weight, (1, 0, 2))
+        weight = self.cast(weight, self.dtype)
         emd_con = self.concat((embedded, weight))
         output, hidden = self.rnn(emd_con)
+        output = self.cast(output, self.dtype)
         out = self.concat((embedded, output, weight))
         out = self.squeeze(out)
         hidden = self.squeeze(hidden)
         prediction = self.fc(out)
         prediction = self.dropout(prediction)
-        prediction = self.cast(prediction, mstype.float32)
-        prediction = self.cast(prediction, mstype.float32)
+        prediction = self.cast(prediction, self.dtype)
         pred_prob = self.log_softmax(prediction)
         pred_prob = self.expandims(pred_prob, 0)
         return pred_prob, hidden
