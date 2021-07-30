@@ -21,6 +21,7 @@ import glob
 import numpy as np
 
 import mindspore.dataset as ds
+import mindspore.dataset.engine.iterators as it
 import mindspore.dataset.transforms.py_transforms
 import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
@@ -310,6 +311,10 @@ def test_deterministic_python_seed_multi_thread():
     Test deterministic execution with seed in python, this fails with multi-thread pyfunc run
     """
     logger.info("test_deterministic_python_seed_multi_thread")
+
+    # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
+    # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
+    it._cleanup()  # pylint: disable=W0212
 
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
