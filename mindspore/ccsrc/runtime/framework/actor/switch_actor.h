@@ -71,7 +71,7 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   void Init() override;
 
   // The switch actor run when receive the input data.
-  void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context);
+  void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
   // The switch actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context);
   // The switch actor run when receive the input branch id.
@@ -108,7 +108,7 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   void SendOutput(OpContext<DeviceTensor> *context);
   // Erase input data and input controls when finish switch launch.
   void EraseInput(OpContext<DeviceTensor> *context);
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *context);
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context);
 
   // Collect all the backend inputs of switch actor.
   void FetchInputNode(const ControlNodeParserPtr &parser);

@@ -295,7 +295,7 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(DEBUG) << "Finish!";
 }
 
-bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
+bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   SyncStream();
   SyncMemory(host_ptr, ptr_, size, RT_MEMCPY_DEVICE_TO_HOST);

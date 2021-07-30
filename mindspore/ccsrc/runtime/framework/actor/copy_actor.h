@@ -41,34 +41,36 @@ class CopyActor : public MemoryAwareActor {
         memory_manager_aid_(memory_manager_aid),
         input_datas_num_(0),
         input_controls_num_(0),
+        input_device_context_(nullptr),
+        output_device_context_(nullptr),
         output_(nullptr) {}
   ~CopyActor() override = default;
 
   void Init() override;
 
   // The copy actor run when receive the input data.
-  void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   // The copy actor run when receive the input control.
-  void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
   // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   // The copy processing after memory alloc finished.
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;
 
   // Check whether satisfy the condition for copy.
-  bool CheckCopyCondition(OpContext<DeviceTensor> *context) const;
+  bool CheckCopyCondition(OpContext<DeviceTensor> *const context) const;
   // Fetch the device tensor for copy.
-  void FetchDeviceTensor(OpContext<DeviceTensor> *context);
+  void FetchDeviceTensor(OpContext<DeviceTensor> *const context);
 
   // Send output data and output controls when finish copy.
-  void SendOutput(OpContext<DeviceTensor> *context) const;
+  void SendOutput(OpContext<DeviceTensor> *const context) const;
   // Erase input data and input controls when finish copy.
-  void EraseInput(OpContext<DeviceTensor> *context);
+  void EraseInput(OpContext<DeviceTensor> *const context);
 
   // The id of memory manager actor. Send message to it for alloc and free memory during the copy.
   const AID memory_manager_aid_;

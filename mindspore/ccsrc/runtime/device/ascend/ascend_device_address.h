@@ -42,7 +42,7 @@ class AscendDeviceAddress : public DeviceAddress {
                                const KernelWithIndex &node_index)
       : DeviceAddress(ptr, size, format, type_id, node_index) {}
   ~AscendDeviceAddress() override;
-  bool SyncDeviceToHost(size_t size, void *host_ptr) const override;
+  bool SyncDeviceToHost(size_t size, void *const host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,

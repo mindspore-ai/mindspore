@@ -38,7 +38,7 @@ void CopyActor::Init() {
   }
 }
 
-void CopyActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
+void CopyActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   input_op_datas_[sequential_num].emplace_back(input_data);
@@ -49,7 +49,7 @@ void CopyActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTens
   }
 }
 
-void CopyActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
+void CopyActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
@@ -60,17 +60,17 @@ void CopyActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *contex
   }
 }
 
-void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
+void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_, output_device_context_,
         context, GetAID());
 }
 
-void CopyActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
+void CopyActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_, input_device_context_, context);
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_, output_device_context_, context);
 }
 
-void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
+void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
 
   if (!Copy(output_device_tensor_[0], input_device_tensor_[0])) {
@@ -89,7 +89,7 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   SendOutput(context);
 }
 
-bool CopyActor::CheckCopyCondition(OpContext<DeviceTensor> *context) const {
+bool CopyActor::CheckCopyCondition(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     const auto &data_iter = input_op_datas_.find(context->sequential_num_);
@@ -113,7 +113,7 @@ bool CopyActor::CheckCopyCondition(OpContext<DeviceTensor> *context) const {
   return true;
 }
 
-void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *context) {
+void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(input_device_context_);
 
@@ -149,7 +149,7 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *context) {
   }
 }
 
-void CopyActor::SendOutput(OpContext<DeviceTensor> *context) const {
+void CopyActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
   // No output.
   if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0)) {
@@ -172,7 +172,7 @@ void CopyActor::SendOutput(OpContext<DeviceTensor> *context) const {
   }
 }
 
-void CopyActor::EraseInput(OpContext<DeviceTensor> *context) {
+void CopyActor::EraseInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     auto ret = input_op_datas_.erase(context->sequential_num_);

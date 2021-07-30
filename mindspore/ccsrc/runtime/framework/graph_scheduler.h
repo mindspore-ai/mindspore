@@ -203,15 +203,15 @@ class GraphScheduler {
                                          const std::vector<AnfNodePtr> &host_parameters, const KernelGraphPtr &graph,
                                          KernelActor *to_actor, KernelWithIndex to_kernel_with_input_idx);
   // Link data arrows in the copy actor scene, insert the copy actor between from_actor and to_actor.
-  void LinkDataArrowForCopyActor(OpActor<DeviceTensor> *from_actor, KernelActor *to_actor,
+  void LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from_actor, KernelActor *const to_actor,
                                  KernelWithIndex from_kernel_with_output_idx, KernelWithIndex to_kernel_with_input_idx);
-  void LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *from_actor, KernelActor *to_actor,
+  void LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *const from_actor, KernelActor *const to_actor,
                                      KernelWithIndex from_kernel_with_output_idx,
                                      KernelWithIndex to_to_kernel_with_input_idx);
-  void LinkDataArrowForHostDSActor(HostQueueDataSourceActor *from_actor, KernelActor *to_actor,
+  void LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const from_actor, KernelActor *const to_actor,
                                    KernelWithIndex from_kernel_with_output_idx,
                                    KernelWithIndex to_kernel_with_input_idx);
-  void LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *to_actor,
+  void LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *const to_actor,
                                    KernelWithIndex from_kernel_with_output_idx,
                                    KernelWithIndex to_kernel_with_input_idx);
 

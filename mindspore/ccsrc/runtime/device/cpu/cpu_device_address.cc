@@ -76,6 +76,8 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
     } else if (ret_code != EOK) {
       MS_LOG(ERROR) << "Failed to copy tensor!";
       return false;
+    } else {
+      return true;
     }
   } else if (type == kNumberTypeFloat16 && type_id_ == kNumberTypeFloat32) {
     FloatToHalf(host_ptr, ptr_, size >> 1);

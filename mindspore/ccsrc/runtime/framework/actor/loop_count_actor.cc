@@ -27,8 +27,8 @@
 namespace mindspore {
 namespace runtime {
 namespace {
-void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr> *addr_list,
-                               std::vector<size_t> *size_list, size_t *total_size, bool is_input) {
+void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr> *const addr_list,
+                               std::vector<size_t> *const size_list, size_t *const total_size, bool is_input) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -82,7 +82,7 @@ void LoopCountActor::Init() {
   }
 }
 
-void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
+void LoopCountActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
@@ -91,16 +91,16 @@ void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *c
   }
 }
 
-void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *context) {
+void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   Async(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
 }
 
-void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
+void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   SendOutput(context);
 }
 
-void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *context) {
+void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   auto ret = input_op_controls_.erase(sequential_num);
@@ -123,7 +123,7 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *context) {
   SendOutput(context);
 }
 
-void LoopCountActor::SendOutput(OpContext<DeviceTensor> *context) {
+void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
     Async(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);
@@ -131,7 +131,7 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *context) {
   SendMemoryAllocReq(context);
 }
 
-void LoopCountActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
+void LoopCountActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   if (current_count_ == loop_count_) {
     // Need wait MemoryManagerActor running finished to avoid the illegal memory timing problem before
     // LoopCountActor exits, because other processors which are not in actor also will allocate or free memory.
@@ -145,7 +145,7 @@ void LoopCountActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
   }
 }
 
-void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
+void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // Send loop count to output actor.
   Async(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
@@ -166,7 +166,7 @@ void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   }
 }
 
-bool LoopCountActor::CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *context) {
+bool LoopCountActor::CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
 

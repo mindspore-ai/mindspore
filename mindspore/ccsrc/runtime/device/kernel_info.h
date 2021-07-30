@@ -70,8 +70,8 @@ class KernelInfo : public KernelInfoDevice {
   uint32_t graph_id() const { return graph_id_; }
   bool operator==(const KernelInfo &other) const;
   bool is_feature_map() const { return is_feature_map_; }
-  std::vector<std::shared_ptr<DeviceAddress>> &output_address_list() { return output_address_list_; }
-  std::vector<std::shared_ptr<DeviceAddress>> &workspace_address_list() { return workspace_address_list_; }
+  const std::vector<std::shared_ptr<DeviceAddress>> &output_address_list() const { return output_address_list_; }
+  const std::vector<std::shared_ptr<DeviceAddress>> &workspace_address_list() const { return workspace_address_list_; }
 
  private:
   bool is_feature_map_;
