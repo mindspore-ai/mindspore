@@ -1216,7 +1216,6 @@ void KernelGraph::UpdateGraphOutputMap(const std::vector<AnfWithOutIndex> &old_o
     if (old_output == new_output) {
       continue;
     }
-
     // Update the graph output map.
     if (graph_output_to_front_node_map_.count(old_output) > 0) {
       MS_LOG(INFO) << "Replace backend output node " << old_output.first->fullname_with_scope() << " with index "
@@ -1224,11 +1223,6 @@ void KernelGraph::UpdateGraphOutputMap(const std::vector<AnfWithOutIndex> &old_o
                    << new_output.second;
       graph_output_to_front_node_map_[new_output] = graph_output_to_front_node_map_[old_output];
       graph_output_to_front_node_map_.erase(old_output);
-    }
-
-    // Update the internal output map.
-    if (IsInternalOutput(old_output.first, old_output.second)) {
-      ReplaceInternalOutput(old_output.first, new_output.first, old_output.second, new_output.second);
     }
 
     if (old_output.first == new_output.first) {

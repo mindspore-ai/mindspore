@@ -72,6 +72,13 @@ void CopyActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
 
 void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(output_device_tensor_[0]);
+  MS_EXCEPTION_IF_NULL(input_device_tensor_[0]);
+
+  if (input_device_tensor_[0]->GetSize() != output_device_tensor_[0]->GetSize()) {
+    MS_LOG(WARNING) << GetAID().Name() << " copy size is not equal, input size:" << input_device_tensor_[0]->GetSize()
+                    << ", output size:" << output_device_tensor_[0]->GetSize();
+  }
 
   if (!Copy(output_device_tensor_[0], input_device_tensor_[0])) {
     std::string error_info = "Copy device tensor failed: " + GetAID().Name();
