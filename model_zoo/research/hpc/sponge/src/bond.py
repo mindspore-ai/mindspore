@@ -13,15 +13,45 @@
 # limitations under the License.
 # ============================================================================
 '''Bond'''
+
+
 class Bond:
     '''Bond'''
-    def __init__(self, controller, md_info):
 
-        self.atom_numbers = md_info.atom_numbers
-
+    def __init__(self, controller):
+        self.module_name = "bond"
+        self.h_atom_a = []
+        self.h_atom_b = []
+        self.h_k = []
+        self.h_r0 = []
+        self.bond_numbers = 0
+        self.is_initialized = 0
         if controller.amber_parm is not None:
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
+            self.is_initialized = 1
+        else:
+            self.read_in_file(controller)
+
+    def read_in_file(self, controller):
+        """read_in_file"""
+        print("START INITIALIZING BOND:")
+        name = self.module_name + "_in_file"
+        if name in controller.Command_Set:
+            path = controller.Command_Set[name]
+            file = open(path, 'r')
+            context = file.readlines()
+            self.bond_numbers = int(context[0].strip())
+            print("    bond_numbers is ", self.bond_numbers)
+            for i in range(self.bond_numbers):
+                val = list(map(float, context[i + 1].strip().split()))
+                self.h_atom_a.append(int(val[0]))
+                self.h_atom_b.append(int(val[1]))
+                self.h_k.append(val[2])
+                self.h_r0.append(val[3])
+            self.is_initialized = 1
+            file.close()
+        print("END INITIALIZING BOND")
 
     def read_information_from_amberfile(self, file_path):
         '''read amber file'''
@@ -103,8 +133,8 @@ class Bond:
                         count += len(value)
 
                 for i in range(self.bond_with_hydrogen):
-                    self.h_atom_a[i] = information[3 * i + 0] / 3
-                    self.h_atom_b[i] = information[3 * i + 1] / 3
+                    self.h_atom_a[i] = int(information[3 * i + 0] / 3)
+                    self.h_atom_b[i] = int(information[3 * i + 1] / 3)
                     tmpi = information[3 * i + 2] - 1
                     self.h_k[i] = self.bond_type_k[tmpi]
                     self.h_r0[i] = self.bond_type_r[tmpi]
@@ -126,8 +156,8 @@ class Bond:
                         count += len(value)
 
                 for i in range(self.bond_with_hydrogen, self.bond_numbers):
-                    self.h_atom_a[i] = information[3 * (i - self.bond_with_hydrogen) + 0] / 3
-                    self.h_atom_b[i] = information[3 * (i - self.bond_with_hydrogen) + 1] / 3
+                    self.h_atom_a[i] = int(information[3 * (i - self.bond_with_hydrogen) + 0] / 3)
+                    self.h_atom_b[i] = int(information[3 * (i - self.bond_with_hydrogen) + 1] / 3)
                     tmpi = information[3 * (i - self.bond_with_hydrogen) + 2] - 1
                     self.h_k[i] = self.bond_type_k[tmpi]
                     self.h_r0[i] = self.bond_type_r[tmpi]
