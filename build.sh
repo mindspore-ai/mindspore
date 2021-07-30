@@ -27,7 +27,7 @@ usage()
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 10.1|11.1|310|910] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-H on|off] \\"
   echo "              [-A on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|avx512|off] \\"
-  echo "              [-L Tensor-RT path]  \\"
+  echo "              [-L Tensor-RT path] [-y on|off]  \\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -64,6 +64,7 @@ usage()
   echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|neon|avx|avx512|off], default off for lite and avx for CPU"
   echo "    -H Enable hidden"
   echo "    -L Link and specify Tensor-RT library path, default disable Tensor-RT lib linking"
+  echo "    -y Compile the symbol table switch and save the symbol table to the directory output"
 }
 
 # check value of input is 'on' or 'off'
@@ -122,8 +123,9 @@ checkopts()
   TENSORRT_HOME=""
   USER_ENABLE_DUMP_IR=false
   USER_ENABLE_DEBUGGER=false
+  ENABLE_SYM_FILE="off"
   # Process the options
-  while getopts 'drvj:c:t:hb:s:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:A:S:k:W:H:L:' opt
+  while getopts 'drvj:c:t:hb:s:a:g:p:ie:m:l:I:RP:D:zM:V:K:B:En:A:S:k:W:H:L:y' opt
   do
     CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
@@ -139,6 +141,9 @@ checkopts()
           usage
           exit 1
         fi
+        ;;
+      y)
+        ENABLE_SYM_FILE="on"
         ;;
       r)
         DEBUG_MODE="off"
@@ -441,6 +446,9 @@ build_mindspore()
     fi
     if [[ -n "$TRAIN_MODE" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_${TRAIN_MODE}=ON"
+    fi
+    if [[ "X$ENABLE_SYM_FILE" = "Xon" ]]; then
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SYM_FILE=ON"
     fi
     if [[ "X$ENABLE_ASAN" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ASAN=ON"

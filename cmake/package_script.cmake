@@ -77,6 +77,48 @@ set(ENV{BACKEND_TARGET} ${CPACK_MS_TARGET})
 set(ENV{MS_PACKAGE_NAME} ${CPACK_MS_PACKAGE_NAME})
 set(ENV{COMMIT_ID} ${GIT_COMMIT_ID})
 
+file(GLOB DEBUG_SYM
+    ${MS_PACK_ROOT_DIR}/mindspore/*.so
+    ${MS_PACK_ROOT_DIR}/mindspore/lib/*.so
+)
+
+file(GLOB DEBUG_STRIP_SYM
+    ${MS_PACK_ROOT_DIR}/mindspore/*.so
+    ${MS_PACK_ROOT_DIR}/mindspore/lib/*.so*
+)
+
+set(CMAKE_OBJCOPY $ENV{CROSS_COMPILE}objcopy)
+set(CMAKE_STRIP $ENV{CROSS_COMPILE}strip)
+
+if(CPACK_ENABLE_SYM_FILE)
+    foreach(schema ${DEBUG_SYM})
+        execute_process(
+            COMMAND ${CMAKE_OBJCOPY} "--only-keep-debug" ${schema} ${schema}.sym
+            WORKING_DIRECTORY ${MS_PACK_ROOT_DIR}
+    )
+    endforeach()
+endif()
+
+if("${CPACK_CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    foreach(schema ${DEBUG_STRIP_SYM})
+    execute_process(
+        COMMAND ${CMAKE_STRIP} ${schema}
+        WORKING_DIRECTORY ${MS_PACK_ROOT_DIR}
+    )
+    endforeach()
+endif()
+
+file(GLOB DEBUG_SYM_FILE
+    ${MS_PACK_ROOT_DIR}/mindspore/*.sym
+    ${MS_PACK_ROOT_DIR}/mindspore/lib/*.sym
+)
+
+if(CPACK_ENABLE_SYM_FILE)
+    file(MAKE_DIRECTORY ${MS_ROOT_DIR}/debug_info)
+    file(COPY ${DEBUG_SYM_FILE} DESTINATION ${MS_ROOT_DIR}/debug_info/)
+    file(REMOVE_RECURSE ${DEBUG_SYM_FILE})
+endif()
+
 execute_process(
     COMMAND ${PYTHON} ${MS_ROOT_DIR}/setup.py "bdist_wheel"
     WORKING_DIRECTORY ${MS_PACK_ROOT_DIR}
@@ -104,3 +146,16 @@ file(COPY ${MS_PACK_ROOT_DIR}/${NEW_FILE_NAME} DESTINATION ${MS_ROOT_DIR}/output
 
 file(SHA256 ${MS_ROOT_DIR}/output/${NEW_FILE_NAME} SHA256_VAR)
 file(WRITE ${MS_ROOT_DIR}/output/${NEW_FILE_NAME}.sha256 ${SHA256_VAR} " " ${NEW_FILE_NAME})
+set(CMAKE_TAR $ENV{CROSS_COMPILE}tar)
+if(CPACK_ENABLE_SYM_FILE)
+    file(MAKE_DIRECTORY ${MS_ROOT_DIR}/output/${PACKAGE_NAME}-${VERSION}-${PY_TAGS}-${PLATFORM_TAG})
+    file(COPY ${MS_ROOT_DIR}/debug_info/ DESTINATION
+        ${MS_ROOT_DIR}/output/${PACKAGE_NAME}-${VERSION}-${PY_TAGS}-${PLATFORM_TAG}/)
+    execute_process(COMMAND
+        ${CMAKE_COMMAND} -E ${CMAKE_TAR} cfv
+        ${MS_ROOT_DIR}/output/${PACKAGE_NAME}-${VERSION}-${PY_TAGS}-${PLATFORM_TAG}.zip
+        ${MS_ROOT_DIR}/output/${PACKAGE_NAME}-${VERSION}-${PY_TAGS}-${PLATFORM_TAG}/ --format=zip
+        WORKING_DIRECTORY ${MS_ROOT_DIR})
+    file(REMOVE_RECURSE ${MS_ROOT_DIR}/debug_info)
+    file(REMOVE_RECURSE ${MS_ROOT_DIR}/output/${PACKAGE_NAME}-${VERSION}-${PY_TAGS}-${PLATFORM_TAG})
+endif()
