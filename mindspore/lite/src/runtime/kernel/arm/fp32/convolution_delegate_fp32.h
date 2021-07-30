@@ -67,7 +67,7 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime
   // via Resize() API. However,data of const tensor(weight and bias) doesn't exist anymore in runtime stage.Thus,
   // copying data of const tensor is necessary. Otherwise, just pass origin raw pointer of data.
-  static float *CopyData(lite::Tensor *tensor);
+  static float *CopyData(const lite::Tensor *tensor);
   void FreeCopiedData() {
     if (origin_weight_ != nullptr && need_free_weight_) {
       free(origin_weight_);

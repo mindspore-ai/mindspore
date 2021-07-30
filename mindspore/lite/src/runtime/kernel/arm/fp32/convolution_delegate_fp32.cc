@@ -47,7 +47,7 @@ namespace {
 constexpr int kMaxDwConvSWSize = 32;
 }  // namespace
 
-float *ConvolutionDelegateCPUKernel::CopyData(lite::Tensor *tensor) {
+float *ConvolutionDelegateCPUKernel::CopyData(const lite::Tensor *tensor) {
   auto data = reinterpret_cast<float *>(malloc(tensor->Size()));
   if (data == nullptr) {
     MS_LOG(ERROR) << "Malloc data failed.";

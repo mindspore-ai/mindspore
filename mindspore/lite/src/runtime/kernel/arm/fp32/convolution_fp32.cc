@@ -37,11 +37,23 @@ namespace mindspore::kernel {
 
 int ConvolutionCPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  size_t in_channel = filter_tensor->Channel();
-  size_t out_channel = filter_tensor->Batch();
+  int32_t in_channel = filter_tensor->Channel();
+  if (in_channel < 0) {
+    MS_LOG(ERROR) << "get channel from filter_tensor failed.";
+    return RET_ERROR;
+  }
+  int32_t out_channel = filter_tensor->Batch();
+  if (out_channel < 0) {
+    MS_LOG(ERROR) << "get batch from filter_tensor failed.";
+    return RET_ERROR;
+  }
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-  size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  int32_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  if (kernel_plane < 0) {
+    MS_LOG(ERROR) << "get height and width from filter_tensor failed.";
+    return RET_ERROR;
+  }
   size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
   size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
 
@@ -161,9 +173,21 @@ int ConvolutionCPUKernel::Run() {
 
 void ConvolutionCPUKernel::PackWeight() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  size_t in_channel = filter_tensor->Channel();
-  size_t out_channel = filter_tensor->Batch();
-  size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  int32_t in_channel = filter_tensor->Channel();
+  if (in_channel < 0) {
+    MS_LOG(ERROR) << "get channel from filter_tensor failed.";
+    return;
+  }
+  int32_t out_channel = filter_tensor->Batch();
+  if (out_channel < 0) {
+    MS_LOG(ERROR) << "get batch from filter_tensor failed.";
+    return;
+  }
+  int32_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  if (kernel_plane < 0) {
+    MS_LOG(ERROR) << "get height and width from filter_tensor failed.";
+    return;
+  }
   size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
   size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
 

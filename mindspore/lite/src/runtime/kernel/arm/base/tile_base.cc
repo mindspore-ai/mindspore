@@ -48,7 +48,7 @@ int TileCPUKernel::ReSize() {
   if (in_tensors_.size() == kDoubleInputsSize) {
     if (in_tensors_[1]->ElementsNum() > static_cast<int>(in_tensors_[0]->shape().size())) {
       MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
-      return false;
+      return RET_ERROR;
     }
     if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
       MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type()
