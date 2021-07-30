@@ -202,7 +202,11 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
             auto vaild_w = GetInterSection(start_w, start_w + kw, pad_list[kDim4], pad_list[kDim4] + fw);
             auto vaild_data = vaild_d * vaild_h * vaild_w;
             auto vaild_kernel = v_kd * v_kh * v_kw;
-            float val = count_include_pad ? 1.0 / vaild_kernel : 1.0 / vaild_data;
+            auto valid_dividend = count_include_pad ? vaild_kernel : vaild_data;
+            if (valid_dividend == 0) {
+              MS_LOG(EXCEPTION) << "Dividend 'valid_dividend' should not be 0.";
+            }
+            float val = 1.0 / valid_dividend;
             *tensor_data = float16(val);
             ++tensor_data;
             start_w += sw;
