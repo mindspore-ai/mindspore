@@ -149,20 +149,18 @@ int CheckAugmentWithMinSize(const TensorC *const *inputs, size_t inputs_size, Te
   return NNACL_OK;
 }
 
-int SetShapeTensor(TensorC *dst, const TensorC *src) {
+void SetShapeTensor(TensorC *dst, const TensorC *src) {
   for (size_t i = 0; i < src->shape_size_; i++) {
     dst->shape_[i] = src->shape_[i];
   }
   dst->shape_size_ = src->shape_size_;
-  return NNACL_OK;
 }
 
-int SetShapeArray(TensorC *dst, const int *src, size_t src_size) {
+void SetShapeArray(TensorC *dst, const int *src, size_t src_size) {
   for (size_t i = 0; i < src_size; i++) {
     dst->shape_[i] = src[i];
   }
   dst->shape_size_ = src_size;
-  return NNACL_OK;
 }
 
 void SetDataTypeFormat(TensorC *dst, const TensorC *src) {
@@ -287,18 +285,16 @@ int GetDimensionSize(const TensorC *tensor, const size_t index) {
   return dim_size;
 }
 
-int ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size) {
+void ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size) {
   for (size_t i = 0; i < src_shape_size; i++) {
     dst_shape[i] = src_shape[i];
   }
   *dst_shape_size = src_shape_size;
-  return NNACL_OK;
 }
 
-int ShapePush(int *shape, size_t *shape_size, int value) {
+void ShapePush(int *shape, size_t *shape_size, int value) {
   shape[*shape_size] = value;
   *shape_size = *shape_size + 1;
-  return NNACL_OK;
 }
 
 int ShapeInsert(int *shape, size_t *shape_size, int index, int value) {

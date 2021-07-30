@@ -73,7 +73,10 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
     tmp_shape.shape_size_[i] = 0;
     tmp_shape.shape_[i] = NULL;
   }
-  MallocTensorListData(output, kTypeUnknown, &tmp_shape);
+  int ret = MallocTensorListData(output, kTypeUnknown, &tmp_shape);
+  if (ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
   free(tmp_shape.shape_size_);
   free(tmp_shape.shape_);
   return NNACL_OK;

@@ -32,6 +32,25 @@ bool StridedSliceCheckInputs(const TensorC *const *inputs, size_t inputs_size) {
   return true;  // note: the original code is ndim_ <= in_shape_size
 }
 
+void ApplyBeginEndEllipsisMask(size_t ndim, int *begins, uint32_t *begins_mask, int *ends, uint32_t *ends_mask,
+                               uint32_t *ellipsis_mask, int *in_shape) {
+  for (size_t i = 0; i < ndim; i++) {
+    if (begins_mask[i]) {
+      begins[i] = 0;
+    }
+    if (ends_mask[i]) {
+      ends[i] = in_shape[i];
+    }
+  }
+  for (size_t i = 0; i < ndim; i++) {
+    if (ellipsis_mask[i]) {
+      begins[i] = 0;
+      ends[i] = in_shape[i];
+      break;
+    }
+  }
+}
+
 int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                                OpParameter *parameter) {
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 5, 1);
@@ -97,7 +116,10 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   for (size_t i = 0; i < ndim_; i++) {
     if (new_axis_mask_[i]) {
       ndim_ += 1;
-      ShapeInsert(in_shape_, &in_shape_size, i, 1);
+      int ret = ShapeInsert(in_shape_, &in_shape_size, i, 1);
+      if (ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
       begins_[i] = 0;
       ends_[i] = 1;
       strides_[i] = 1;
@@ -111,27 +133,7 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
       ellipsis_mask_[i] = false;
     }
   }
-  // ApplyBeginMask;
-  for (size_t i = 0; i < ndim_; i++) {
-    if (begins_mask_[i]) {
-      begins_[i] = 0;
-    }
-  }
-  // ApplyEndMask;
-  for (size_t i = 0; i < ndim_; i++) {
-    if (ends_mask_[i]) {
-      ends_[i] = in_shape_[i];
-    }
-  }
-  // ApplyEllipsisMask;
-  for (size_t i = 0; i < ndim_; i++) {
-    if (ellipsis_mask_[i]) {
-      begins_[i] = 0;
-      ends_[i] = in_shape_[i];
-      break;
-    }
-  }
-
+  ApplyBeginEndEllipsisMask(ndim_, begins_, begins_mask_, ends_, ends_mask_, ellipsis_mask_, in_shape_);
   if (!inferflag) {
     return NNACL_OK;
   }
