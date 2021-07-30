@@ -37,8 +37,8 @@ void GatherActor::Init() {
     }
 
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    output_data_.emplace_back(data.get());
-    output_data_by_output_index_[IntToSize(data_arrow->from_output_index_)].emplace_back(std::move(data));
+    (void)output_data_.emplace_back(data.get());
+    (void)output_data_by_output_index_[IntToSize(data_arrow->from_output_index_)].emplace_back(std::move(data));
   }
 }
 
@@ -66,7 +66,7 @@ void GatherActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
 void GatherActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_controls_[sequential_num].emplace_back(input_control);
+  (void)input_op_controls_[sequential_num].emplace_back(input_control);
 
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);

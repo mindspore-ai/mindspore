@@ -208,7 +208,7 @@ void SwitchActor::AddInput(const KernelWithIndex node_with_index, const size_t b
       branch_inputs_pos_[branch].push_back(iter - input_nodes_.begin());
       return;
     }
-    device_tensor_store_keys_.emplace_back(input_nodes_.size(), node.get());
+    (void)device_tensor_store_keys_.emplace_back(input_nodes_.size(), node.get());
     branch_inputs_pos_[branch].push_back(input_nodes_.size());
     input_nodes_.push_back(node_with_index);
     return;
@@ -371,8 +371,8 @@ void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
 
   auto control_iter = input_controls_.find(context->sequential_num_);
   if (control_iter != input_controls_.end()) {
-    for_each(control_iter->second.begin(), control_iter->second.end(),
-             [](auto &input_control) { input_control.second--; });
+    (void)for_each(control_iter->second.begin(), control_iter->second.end(),
+                   [](auto &input_control) { input_control.second--; });
   }
 }
 
@@ -426,7 +426,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
       std::string error_info = "Failed to get backend node of switch actor output, actor:" + GetAID().Name() +
                                " branch:" + std::to_string(index) +
                                " index:" + std::to_string(result_arrow->from_output_index_) + " output pos" +
-                               std::to_string(branch_inputs_pos_[index][result_arrow->from_output_index_]) +
+                               std::to_string(branch_inputs_pos_[index][IntToSize(result_arrow->from_output_index_)]) +
                                " output index" + std::to_string(result_arrow->to_input_index_);
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
@@ -493,7 +493,7 @@ void SwitchActor::FetchInputNode(const ControlNodeParserPtr &parser) {
     if (backend_weight == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for weight node:" << AnfAlgo::GetNodeDebugString(input_node);
     }
-    backend_parameters_[i].insert({backend_weight, 0});
+    (void)backend_parameters_[i].emplace(backend_weight, 0);
   }
 }
 }  // namespace runtime
