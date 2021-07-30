@@ -109,7 +109,7 @@ bool SetNodedefProto(const std::shared_ptr<KernelNodeInfo> &op_info,
 
 bool AscendPsCache::InitDevice(uint32_t device_id, const void *context) {
   MS_ERROR_IF_NULL(context);
-  auto ret = rtSetDevice(device_id);
+  auto ret = rtSetDevice(UintToInt(device_id));
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtSetDevice, ret[" << ret << "]";
     return false;
@@ -233,10 +233,10 @@ bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   AddressPtrList kernel_outputs = {
     std::make_shared<Address>(swap_out_value_addr, swap_out_size * embedding_size * sizeof(float))};
   AddressPtrList kernel_workspaces;
-  kernel_inputs.emplace_back(
+  (void)kernel_inputs.emplace_back(
     std::make_shared<Address>(hash_table_addr, cache_vocab_size * embedding_size * sizeof(float)));
-  kernel_inputs.emplace_back(std::make_shared<Address>(swap_out_index_addr, swap_out_size * sizeof(int)));
-  kernel_inputs.emplace_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
+  (void)kernel_inputs.emplace_back(std::make_shared<Address>(swap_out_index_addr, swap_out_size * sizeof(int)));
+  (void)kernel_inputs.emplace_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
   auto ret = hash_swap_out_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
   if (!ret) {
     MS_LOG(ERROR) << "Hash swap out launch failed.";
@@ -272,14 +272,14 @@ bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, 
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_outputs;
   AddressPtrList kernel_workspaces;
-  kernel_inputs.emplace_back(
+  (void)kernel_inputs.emplace_back(
     std::make_shared<Address>(hash_table_addr, cache_vocab_size * embedding_size * sizeof(float)));
-  kernel_inputs.emplace_back(std::make_shared<Address>(swap_in_index_addr, swap_in_size * sizeof(int)));
-  kernel_inputs.emplace_back(
+  (void)kernel_inputs.emplace_back(std::make_shared<Address>(swap_in_index_addr, swap_in_size * sizeof(int)));
+  (void)kernel_inputs.emplace_back(
     std::make_shared<Address>(swap_in_value_addr, swap_in_size * embedding_size * sizeof(float)));
-  kernel_inputs.emplace_back(std::make_shared<Address>(cache_vocab_size_addr_, sizeof(int)));
+  (void)kernel_inputs.emplace_back(std::make_shared<Address>(cache_vocab_size_addr_, sizeof(int)));
   // The output of updateCache kernel is required but not useful, so any address can be assigned.
-  kernel_outputs.emplace_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
+  (void)kernel_outputs.emplace_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
   auto ret = hash_swap_in_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
   if (!ret) {
     MS_LOG(ERROR) << "Hash swap in launch failed.";

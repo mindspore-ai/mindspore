@@ -1644,8 +1644,8 @@ void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
         if (AnfAlgo::IsDynamicShape(node)) {
           const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
           ShapeVector int_shape;
-          std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-          tensor->set_shape(int_shape);
+          (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+          (void)tensor->set_shape(int_shape);
         }
       }
       if (tensor->NeedSyncDeviceToHostImmediately()) {

@@ -37,26 +37,26 @@ void KernelActor::Init() {
   copy_input_device_tensors_.resize(real_input_num_);
   input_device_tensors_.resize(real_input_num_);
   for (auto &input_address : input_device_tensors_) {
-    memory_free_list_.emplace_back(input_address);
-    launch_info_.inputs_.emplace_back(std::make_shared<Address>());
+    (void)memory_free_list_.emplace_back(input_address);
+    (void)launch_info_.inputs_.emplace_back(std::make_shared<Address>());
   }
   MS_EXCEPTION_IF_NULL(kernel_info_);
   for (auto &output_address : kernel_info_->output_address_list()) {
     MS_EXCEPTION_IF_NULL(output_address);
-    output_device_tensors_.emplace_back(output_address.get());
-    memory_alloc_list_.emplace_back(output_address.get());
-    memory_free_list_.emplace_back(output_address.get());
-    launch_info_.outputs_.emplace_back(std::make_shared<Address>());
+    (void)output_device_tensors_.emplace_back(output_address.get());
+    (void)memory_alloc_list_.emplace_back(output_address.get());
+    (void)memory_free_list_.emplace_back(output_address.get());
+    (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
   }
   for (auto &workspace_address : kernel_info_->workspace_address_list()) {
     MS_EXCEPTION_IF_NULL(workspace_address);
-    workspace_device_tensors_.emplace_back(workspace_address.get());
-    memory_alloc_list_.emplace_back(workspace_address.get());
-    memory_free_list_.emplace_back(workspace_address.get());
-    launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
+    (void)workspace_device_tensors_.emplace_back(workspace_address.get());
+    (void)memory_alloc_list_.emplace_back(workspace_address.get());
+    (void)memory_free_list_.emplace_back(workspace_address.get());
+    (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
   }
   for (auto &external_reference_tensor : external_reference_tensors_) {
-    memory_free_list_.emplace_back(external_reference_tensor);
+    (void)memory_free_list_.emplace_back(external_reference_tensor);
   }
 
   // Init the output data.
@@ -69,15 +69,15 @@ void KernelActor::Init() {
     auto device_address = output_device_tensors_[data_arrow->from_output_index_];
     auto data =
       std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address, data_arrow->to_input_index_);
-    output_data_.emplace_back(data.get());
-    output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(std::move(data));
+    (void)output_data_.emplace_back(data.get());
+    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(std::move(data));
   }
 }
 
 void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_datas_[sequential_num].emplace_back(input_data);
+  (void)input_op_datas_[sequential_num].emplace_back(input_data);
   if (input_data->data_ == nullptr) {
     std::string error_info =
       "Input data of actor:" + GetAID().Name() + " num:" + std::to_string(input_data->index_) + " is empty";
@@ -103,7 +103,7 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 void KernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_controls_[sequential_num].emplace_back(input_control);
+  (void)input_op_controls_[sequential_num].emplace_back(input_control);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     // Infer kernel shape and update abstract info for dynamic shape kernel.

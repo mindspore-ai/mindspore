@@ -1222,7 +1222,7 @@ void KernelGraph::UpdateGraphOutputMap(const std::vector<AnfWithOutIndex> &old_o
                    << old_output.second << " to " << new_output.first->fullname_with_scope() << " with index "
                    << new_output.second;
       graph_output_to_front_node_map_[new_output] = graph_output_to_front_node_map_[old_output];
-      graph_output_to_front_node_map_.erase(old_output);
+      (void)graph_output_to_front_node_map_.erase(old_output);
     }
 
     if (old_output.first == new_output.first) {
