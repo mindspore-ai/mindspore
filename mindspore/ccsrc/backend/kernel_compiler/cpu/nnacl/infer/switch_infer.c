@@ -44,7 +44,7 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
         free(mirror_tensorlist);
         return NNACL_ERR;
       }
-      memcpy(tensor_buffer, input->tensors_, input->element_num_ * sizeof(TensorC));
+      memcpy(tensor_buffer, input->tensors_, (size_t)(input->element_num_) * sizeof(TensorC));
       mirror_tensorlist->tensors_ = tensor_buffer;
       outputs[i + outputs_size / 2] = (TensorC *)(mirror_tensorlist);
     } else {

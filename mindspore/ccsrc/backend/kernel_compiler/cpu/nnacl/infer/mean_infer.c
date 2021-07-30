@@ -52,7 +52,7 @@ int MeanInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   // reduce on selected axes
   for (size_t i = 0; i < input->shape_size_; i++) {
     bool reduce_axis = false;
-    for (size_t idx = 0; idx < num_axes; ++idx) {
+    for (int idx = 0; idx < num_axes; ++idx) {
       if (((size_t)(axes[idx])) == i) {
         reduce_axis = true;
         break;

@@ -54,7 +54,7 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_INPUT_TENSOR_ERROR;
   }
   SliceParameter *param = (SliceParameter *)parameter;
-  param->param_length_ = input->shape_size_;
+  param->param_length_ = (int)(input->shape_size_);
   output->shape_size_ = input->shape_size_;
 
   /* init begin parameter */
@@ -63,7 +63,7 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   if (slice_begin_size != param->param_length_ || begin_ptr == NULL) {
     return NNACL_INFER_INVALID;
   }
-  for (int i = 0; i < slice_begin_size; i++) {
+  for (size_t i = 0; i < slice_begin_size; i++) {
     param->begin_[i] = begin_ptr[i];
   }
 
@@ -73,7 +73,7 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   if (slice_size_size != param->param_length_ || size_ptr == NULL) {
     return NNACL_INFER_INVALID;
   }
-  for (int i = 0; i < slice_size_size; i++) {
+  for (size_t i = 0; i < slice_size_size; i++) {
     param->size_[i] = size_ptr[i];
   }
 
@@ -85,7 +85,7 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     size[param->axis_[i]] = param->size_[i];
   }
 
-  for (size_t i = 0; i < param->param_length_; ++i) {
+  for (int32_t i = 0; i < param->param_length_; ++i) {
     if (size[i] < 0 && size[i] != -1) {
       return NNACL_PARAM_INVALID;
     }

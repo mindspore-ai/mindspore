@@ -55,7 +55,7 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
   }
   int num_elements = ((int *)(input1->data_))[0];
   ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, GetElementNum(input0));
-  output->element_num_ = num_elements;
+  output->element_num_ = (size_t)(num_elements);
 
   vvector tmp_shape;
   tmp_shape.size_ = num_elements;

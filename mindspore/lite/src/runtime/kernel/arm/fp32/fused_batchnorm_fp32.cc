@@ -24,6 +24,8 @@ using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
 int FusedBatchnormCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   FreeMeanAndVariance();
   FreeScaleAndOffset();
   FillParam();

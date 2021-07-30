@@ -35,7 +35,7 @@ int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector 
     return NNACL_NULL_PTR;
   }
   memset(tensor_list->tensors_, 0, tensor_list->element_num_ * sizeof(TensorC));
-  for (int i = 0; i < tensor_list->element_num_; ++i) {
+  for (size_t i = 0; i < tensor_list->element_num_; ++i) {
     tensor_list->tensors_[i].format_ = Format_NHWC;
     tensor_list->tensors_[i].data_type_ = dtype;
     ShapeSet(tensor_list->tensors_[i].shape_, &(tensor_list->tensors_[i].shape_size_), tensor_shape->shape_[i],
@@ -325,7 +325,7 @@ bool ShapeEqual(const int *shape0, size_t shape0_size, const int *shape1, size_t
   if (shape0_size != shape1_size) {
     return false;
   }
-  for (int i = 0; i < shape0_size; i++) {
+  for (size_t i = 0; i < shape0_size; i++) {
     if (shape0[i] != shape1[i]) {
       return false;
     }
@@ -447,14 +447,14 @@ int VectorCInsert(VectorC *vc, int index, int value) {
     vc->data_ = tmp;
     vc->max_size_ = vc->max_size_ + vc->per_malloc_size_;
   }
-  memmove(vc->data_ + index + 1, vc->data_ + index, (vc->size_ - index) * sizeof(int));
+  memmove(vc->data_ + index + 1, vc->data_ + index, (size_t)(vc->size_ - index) * sizeof(int));
   vc->data_[index] = value;
   vc->size_++;
   return NNACL_OK;
 }
 
 void VectorCErase(VectorC *vc, int index) {
-  memmove(vc->data_ + index, vc->data_ + index + 1, (vc->size_ - index - 1) * sizeof(int));
+  memmove(vc->data_ + index, vc->data_ + index + 1, (size_t)(vc->size_ - index - 1) * sizeof(int));
   vc->size_--;
 }
 

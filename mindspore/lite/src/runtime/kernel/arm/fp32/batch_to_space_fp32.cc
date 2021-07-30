@@ -45,6 +45,8 @@ int BatchToSpaceCPUKernel::Processinput() {
 }
 
 int BatchToSpaceCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   MS_ASSERT(in_tensors_.at(0)->format() == mindspore::NHWC);
   if (!InferShapeDone()) {
     return RET_OK;

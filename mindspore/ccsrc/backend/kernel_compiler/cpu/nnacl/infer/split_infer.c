@@ -31,7 +31,7 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
 
   SplitParameter *param = (SplitParameter *)parameter;
 
-  size_t num_split_ = param->num_split_ == 0 ? (int)(outputs_size) : param->num_split_;
+  size_t num_split_ = param->num_split_ == 0 ? outputs_size : (size_t)(param->num_split_);
   if (num_split_ == 0) {
     return NNACL_ERR;
   }
@@ -51,7 +51,7 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_ERR;
   }
   if (param->split_count_ == 0) {
-    if (input->shape_[split_dim] % num_split_ != 0) {
+    if (input->shape_[split_dim] % (int)(num_split_) != 0) {
       return NNACL_ERR;
     }
     for (int i = 0; i < num_split_; ++i) {
@@ -64,7 +64,7 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     ShapeSet(output_shape, &output_shape_size, input->shape_, input->shape_size_);
     int split_dim_i = input->shape_[split_dim];
     if (i == num_split_ - 1 && param->split_sizes_[i] == -1) {
-      for (size_t j = 0; j < param->num_split_ - 1; ++j) {
+      for (int j = 0; j < param->num_split_ - 1; ++j) {
         split_dim_i -= param->split_sizes_[j];
       }
       param->split_sizes_[i] = split_dim_i;

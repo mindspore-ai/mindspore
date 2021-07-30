@@ -20,7 +20,7 @@
 static size_t CalcIndex(const int *shape, size_t size, int i, size_t pos) {
   size_t res = 1;
   for (size_t j = 0; j < size; j++) {
-    res *= shape[(i + 1) + j];
+    res *= shape[((size_t)(i) + 1) + j];
   }
   return (pos / res % shape[i]);
 }
@@ -37,7 +37,7 @@ int DoStridedSliceGrad(const float *inputs, float *output, const int *dx_shape, 
   const int *s = param->strides_;
   const int *b = param->begins_;
   for (int i = 0; i < DIMENSION_8D; i++) {
-    size *= param->in_shape_[i];
+    size *= (size_t)(param->in_shape_[i]);
   }
 
   for (size_t pos = 0; pos < size; pos++) {
