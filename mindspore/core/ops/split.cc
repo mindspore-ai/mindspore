@@ -27,10 +27,10 @@ void Split::Init(const std::vector<int64_t> &size_splits, const int64_t axis, co
 }
 
 void Split::set_size_splits(const std::vector<int64_t> &size_splits) {
-  this->AddAttr(kSizeSplits, MakeValue(size_splits));
+  (void)this->AddAttr(kSizeSplits, MakeValue(size_splits));
 }
-void Split::set_axis(const int64_t axis) { this->AddAttr(kAxis, MakeValue(axis)); }
-void Split::set_output_num(const int64_t output_num) { this->AddAttr(kOutputNum, MakeValue(output_num)); }
+void Split::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
+void Split::set_output_num(const int64_t output_num) { (void)this->AddAttr(kOutputNum, MakeValue(output_num)); }
 
 std::vector<int64_t> Split::get_size_splits() const {
   auto value_ptr = GetAttr(kSizeSplits);

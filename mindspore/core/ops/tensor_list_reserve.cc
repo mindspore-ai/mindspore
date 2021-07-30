@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@ void TensorListReserve::Init(const int64_t element_dtype, const int64_t shape_ty
 }
 
 void TensorListReserve::set_element_dtype(const int64_t element_dtype) {
-  this->AddAttr(kElement_dtype, MakeValue(element_dtype));
+  (void)this->AddAttr(kElement_dtype, MakeValue(element_dtype));
 }
 
-void TensorListReserve::set_shape_type(const int64_t shape_type) { this->AddAttr(kShapeType, MakeValue(shape_type)); }
+void TensorListReserve::set_shape_type(const int64_t shape_type) {
+  (void)this->AddAttr(kShapeType, MakeValue(shape_type));
+}
 
 int64_t TensorListReserve::get_element_dtype() const {
   auto value_ptr = GetAttr(kElement_dtype);

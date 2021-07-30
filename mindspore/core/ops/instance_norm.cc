@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 void InstanceNorm::Init(const float epsilon) { this->set_epsilon(epsilon); }
 
-void InstanceNorm::set_epsilon(const float epsilon) { this->AddAttr(kEpsilon, MakeValue(epsilon)); }
+void InstanceNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, MakeValue(epsilon)); }
 float InstanceNorm::get_epsilon() const {
   auto value_ptr = GetAttr(kEpsilon);
   return GetValue<float>(value_ptr);

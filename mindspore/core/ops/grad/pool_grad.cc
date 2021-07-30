@@ -56,22 +56,22 @@ void PoolGrad::Init(const std::vector<int64_t> &kernel_size, const std::vector<i
 
 void PoolGrad::set_kernel_size(const std::vector<int64_t> &kernel_size) {
   std::vector<int64_t> k_size = _grad_check_vector(kKernelSize, kernel_size, this->name());
-  this->AddAttr(kKernelSize, MakeValue(k_size));
+  (void)this->AddAttr(kKernelSize, MakeValue(k_size));
 }
 
 void PoolGrad::set_strides(const std::vector<int64_t> &strides) {
   std::vector<int64_t> strides_ = _grad_check_vector(kStrides, strides, this->name());
-  this->AddAttr(kStrides, MakeValue(strides_));
+  (void)this->AddAttr(kStrides, MakeValue(strides_));
 }
 
 void PoolGrad::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
-  this->AddAttr(kPadMode, MakeValue(swi));
+  (void)this->AddAttr(kPadMode, MakeValue(swi));
 }
 
 void PoolGrad::set_format(const Format &format) {
   int64_t swi = format;
-  this->AddAttr(kFormat, MakeValue(swi));
+  (void)this->AddAttr(kFormat, MakeValue(swi));
 }
 
 std::vector<int64_t> PoolGrad::get_kernel_size() const {

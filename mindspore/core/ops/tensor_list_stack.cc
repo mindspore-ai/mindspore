@@ -29,11 +29,11 @@ void TensorListStack::Init(const int64_t num_elements, const int64_t element_dty
 }
 
 void TensorListStack::set_num_elements(const int64_t num_elements) {
-  this->AddAttr(kNumElements, MakeValue(num_elements));
+  (void)this->AddAttr(kNumElements, MakeValue(num_elements));
 }
 
 void TensorListStack::set_element_dtype(const int64_t element_dtype) {
-  this->AddAttr(kElement_dtype, MakeValue(element_dtype));
+  (void)this->AddAttr(kElement_dtype, MakeValue(element_dtype));
 }
 
 int64_t TensorListStack::get_num_elements() const {

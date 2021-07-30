@@ -43,33 +43,34 @@ void Conv2DTranspose::Init(int64_t in_channel, int64_t out_channel, const std::v
 }
 
 void Conv2DTranspose::set_in_channel(int64_t in_channel) {
-  AddAttr(kInChannel, MakeValue(CheckAndConvertUtils::CheckInteger(kInChannel, in_channel, kGreaterThan, 0, name())));
+  (void)AddAttr(kInChannel,
+                MakeValue(CheckAndConvertUtils::CheckInteger(kInChannel, in_channel, kGreaterThan, 0, name())));
 }
 
 void Conv2DTranspose::set_out_channel(int64_t out_channel) {
-  AddAttr(kOutChannel,
-          MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
+  (void)AddAttr(kOutChannel,
+                MakeValue(CheckAndConvertUtils::CheckInteger(kOutChannel, out_channel, kGreaterThan, 0, name())));
 }
 
 void Conv2DTranspose::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, 2, name());
+  (void)CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, 2, name());
   for (int64_t item : kernel_size) {
     (void)CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
   }
-  AddAttr(kKernelSize, MakeValue(kernel_size));
+  (void)AddAttr(kKernelSize, MakeValue(kernel_size));
 }
 
 void Conv2DTranspose::set_stride(const std::vector<int64_t> &stride) {
-  CheckAndConvertUtils::CheckInteger(kStride, SizeToLong(stride.size()), kEqual, 2, name());
+  (void)CheckAndConvertUtils::CheckInteger(kStride, SizeToLong(stride.size()), kEqual, 2, name());
   for (int64_t item : stride) {
     (void)CheckAndConvertUtils::CheckInteger(kStride, item, kGreaterEqual, 1, name());
   }
-  AddAttr(kStride, MakeValue(stride));
+  (void)AddAttr(kStride, MakeValue(stride));
 }
 
 void Conv2DTranspose::set_dilation(const std::vector<int64_t> &dilation) {
-  CheckAndConvertUtils::CheckInteger(kDilation, SizeToLong(dilation.size()), kGreaterEqual, 2, name());
-  AddAttr(kDilation, MakeValue(dilation));
+  (void)CheckAndConvertUtils::CheckInteger(kDilation, SizeToLong(dilation.size()), kGreaterEqual, 2, name());
+  (void)AddAttr(kDilation, MakeValue(dilation));
 }
 
 void Conv2DTranspose::set_pad_mode(const PadMode &pad_mode) {
@@ -82,30 +83,30 @@ void Conv2DTranspose::set_pad_mode(const PadMode &pad_mode) {
     CheckAndConvertUtils::Check(kPad, pad, kEqual, "zeros_list", {0, 0, 0, 0}, name());
   }
   int64_t swi = pad_mode;
-  AddAttr(kPadMode, MakeValue(swi));
+  (void)AddAttr(kPadMode, MakeValue(swi));
 }
 
 void Conv2DTranspose::set_pad(const std::vector<int64_t> &pad) {
-  CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, 4, name());
-  AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
+  (void)CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, 4, name());
+  (void)AddAttr(kPad, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad, name())));
 }
 
 void Conv2DTranspose::set_mode(int64_t mode) {
-  AddAttr(kMode, MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
+  (void)AddAttr(kMode, MakeValue(CheckAndConvertUtils::CheckInteger(kMode, mode, kEqual, 1, name())));
 }
 
 void Conv2DTranspose::set_group(int64_t group) {
-  AddAttr(kGroup, MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
+  (void)AddAttr(kGroup, MakeValue(CheckAndConvertUtils::CheckInteger(kGroup, group, kGreaterThan, 0, name())));
 }
 
 void Conv2DTranspose::set_format(const Format &format) {
   int64_t f = format;
-  AddAttr(kFormat, MakeValue(f));
+  (void)AddAttr(kFormat, MakeValue(f));
 }
 
 void Conv2DTranspose::set_pad_list(const std::vector<int64_t> &pad_list) {
-  CheckAndConvertUtils::CheckInteger(kPadList, SizeToLong(pad_list.size()), kEqual, 4, name());
-  this->AddAttr(kPadList, MakeValue(pad_list));
+  (void)CheckAndConvertUtils::CheckInteger(kPadList, SizeToLong(pad_list.size()), kEqual, 4, name());
+  (void)this->AddAttr(kPadList, MakeValue(pad_list));
 }
 
 int64_t Conv2DTranspose::get_in_channel() const {

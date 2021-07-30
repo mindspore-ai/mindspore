@@ -21,7 +21,7 @@ namespace mindspore {
 namespace ops {
 void GLU::Init(int64_t axis) { set_axis(axis); }
 
-void GLU::set_axis(int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
+void GLU::set_axis(int64_t axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
 
 int64_t GLU::get_axis() const {
   auto value_ptr = GetAttr(kAxis);

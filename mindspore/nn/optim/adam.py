@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -632,8 +632,6 @@ class AdamOffload(Optimizer):
         self.beta1_power = Parameter(initializer(1, [1], mstype.float32), name="beta1_power")
         self.beta2_power = Parameter(initializer(1, [1], mstype.float32), name="beta2_power")
         self.eps = Tensor(eps, mstype.float32)
-        self.use_nesterov = use_nesterov
-        self.use_locking = use_locking
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
         self.opt = P.AdamNoUpdateParam(use_locking, use_nesterov)

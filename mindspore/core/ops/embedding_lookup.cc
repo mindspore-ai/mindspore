@@ -25,7 +25,7 @@ namespace ops {
 void EmbeddingLookup::Init(const bool setattr_flag) { this->set_setattr_flag(setattr_flag); }
 
 void EmbeddingLookup::set_setattr_flag(const bool setattr_flag) {
-  this->AddAttr(kSetattrFlag, MakeValue(setattr_flag));
+  (void)this->AddAttr(kSetattrFlag, MakeValue(setattr_flag));
 }
 
 bool EmbeddingLookup::get_setattr_flag() const {
@@ -37,7 +37,7 @@ AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const 
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 3, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

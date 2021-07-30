@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ void BatchToSpace::Init(const std::vector<int64_t> &block_size, const std::vecto
 }
 
 void BatchToSpace::set_block_size(const std::vector<int64_t> &block_size) {
-  this->AddAttr(kBlockSize, MakeValue(block_size));
+  (void)this->AddAttr(kBlockSize, MakeValue(block_size));
 }
 
 std::vector<int64_t> BatchToSpace::get_block_size() const {
@@ -36,7 +36,7 @@ std::vector<int64_t> BatchToSpace::get_block_size() const {
 }
 
 void BatchToSpace::set_crops(const std::vector<std::vector<int64_t>> &crops) {
-  this->AddAttr(kCrops, MakeValue(crops));
+  (void)this->AddAttr(kCrops, MakeValue(crops));
 }
 
 std::vector<std::vector<int64_t>> BatchToSpace::get_crops() const {
@@ -56,10 +56,14 @@ AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
                                                    prim_name);
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
   auto block_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
   auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
   auto out_shape = x_shape;
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("block_size size", SizeToLong(block_size.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("crops size", SizeToLong(crops.size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("crops[0] size", SizeToLong(crops[0].size()), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("crops[1] size", SizeToLong(crops[1].size()), kEqual, 4, prim_name);
   for (size_t i = 0; i < 2; ++i) {
     auto x_block_prod = out_shape[i + 2] * block_size[i];
     auto crops_sum = crops[i][0] + crops[i][1];

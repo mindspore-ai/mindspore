@@ -24,11 +24,11 @@ void FakeQuantWithMinMaxVarsPerChannel::Init(const int64_t num_bits, const bool 
   this->set_narrow_range(narrow_range);
 }
 void FakeQuantWithMinMaxVarsPerChannel::set_num_bits(const int64_t num_bits) {
-  CheckAndConvertUtils::CheckInteger(kNumBits, num_bits, kGreaterThan, 0, this->name());
-  this->AddAttr(kNumBits, MakeValue(num_bits));
+  (void)CheckAndConvertUtils::CheckInteger(kNumBits, num_bits, kGreaterThan, 0, this->name());
+  (void)this->AddAttr(kNumBits, MakeValue(num_bits));
 }
 void FakeQuantWithMinMaxVarsPerChannel::set_narrow_range(const bool narrow_range) {
-  this->AddAttr(kNarrowRange, MakeValue(narrow_range));
+  (void)this->AddAttr(kNarrowRange, MakeValue(narrow_range));
 }
 int64_t FakeQuantWithMinMaxVarsPerChannel::get_num_bits() const {
   auto value_ptr = GetAttr(kNumBits);
@@ -47,9 +47,9 @@ AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisE
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("x rank", (int64_t)x_shape.size(), kGreaterThan, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", (int64_t)x_shape.size(), kGreaterThan, 1, op_name);
   CheckAndConvertUtils::Check("min shape", min_shape, kEqual, "max shape", max_shape, op_name);
-  CheckAndConvertUtils::CheckInteger("min shape", (int64_t)min_shape.size(), kEqual, 1, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("min shape", (int64_t)min_shape.size(), kEqual, 1, op_name);
   CheckAndConvertUtils::Check("min shape", min_shape[0], kEqual, "x shape", x_shape[x_shape.size() - 1], op_name);
 
   auto x_type = input_args[0]->BuildType();

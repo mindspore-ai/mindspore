@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace ops {
 void Squeeze::Init(const std::vector<int64_t> &axis) { set_axis(axis); }
-void Squeeze::set_axis(const std::vector<int64_t> &axis) { AddAttr(kAxis, MakeValue(axis)); }
+void Squeeze::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, MakeValue(axis)); }
 std::vector<int64_t> Squeeze::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 
 namespace {
