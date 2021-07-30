@@ -26,6 +26,10 @@ constexpr int POWER_INDEX = 3;
 
 int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (!IsShapeKnown()) {
+    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
+    return RET_ERROR;
+  }
   if (in_tensors.size() != 2 && in_tensors.size() != 3 && in_tensors.size() != 4) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is: " << in_tensors.size();
     return RET_ERROR;

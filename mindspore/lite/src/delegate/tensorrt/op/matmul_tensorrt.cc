@@ -22,6 +22,10 @@ constexpr int BIAS_INDEX = 2;
 int MatMulTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
                               const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (!IsShapeKnown()) {
+    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
+    return RET_ERROR;
+  }
   if (in_tensors.size() != 2 && in_tensors.size() != 3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -41,16 +45,18 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   auto matmul_layer = network->addMatrixMultiply(*tensorrt_in_tensors_[0], transpose_a_, *weight, transpose_b_);
   matmul_layer->setName(op_name_.c_str());
+  nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
 
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == BIAS_INDEX + 1) {
     auto bias = ConvertTensorWithExpandDims(network, in_tensors_[BIAS_INDEX], in_tensors_[0].Shape().size());
     auto bias_layer = network->addElementWise(*matmul_layer->getOutput(0), *bias, nvinfer1::ElementWiseOperation::kSUM);
     auto bias_layer_name = op_name_ + "_bias";
     bias_layer->setName(bias_layer_name.c_str());
-    this->AddInnerOutTensors(bias_layer->getOutput(0));
-  } else {
-    this->AddInnerOutTensors(matmul_layer->getOutput(0));
+    out_tensor = bias_layer->getOutput(0);
   }
+
+  out_tensor->setName(out_tensors_[0].Name().c_str());
+  this->AddInnerOutTensors(out_tensor);
   return RET_OK;
 }
 }  // namespace mindspore::lite
