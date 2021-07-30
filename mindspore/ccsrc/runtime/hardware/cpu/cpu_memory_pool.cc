@@ -54,7 +54,7 @@ size_t GetSystemMemorySize(const std::string &key) {
     }
   }
 
-  fclose(file);
+  (void)fclose(file);
   return mem_size * kKBToByte;
 #endif
 }

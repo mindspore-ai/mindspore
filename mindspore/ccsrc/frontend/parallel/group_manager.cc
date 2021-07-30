@@ -78,7 +78,7 @@ bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const s
       (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
     return CommManager::GetInstance().CreateGroupSync(group_name, ranks);
   } else {
-    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, IntToUint(device_id));
     MS_EXCEPTION_IF_NULL(executor);
     return executor->CreateCommGroup(group_name, ranks);
   }
@@ -91,7 +91,7 @@ bool GroupManager::DestroyGroupByExecutor(const std::string &device_name, const 
       (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
     return CommManager::GetInstance().DestroyGroup(group_name);
   } else {
-    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, IntToUint(device_id));
     MS_EXCEPTION_IF_NULL(executor);
     return executor->DestroyCommGroup(group_name);
   }

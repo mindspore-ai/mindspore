@@ -227,7 +227,7 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
     auto inplace_group_attr = primitive->GetAttr("inplace_group");
     MS_EXCEPTION_IF_NULL(inplace_group_attr);
     auto group_id = GetValue<uint32_t>(inplace_group_attr);
-    inplace_groups[group_id].emplace_back(kernel);
+    (void)inplace_groups[group_id].emplace_back(kernel);
   }
 
   const size_t kMinInplaceGroupSize = 2;

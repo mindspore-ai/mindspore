@@ -809,7 +809,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
       const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
       PushTensor(args, origin_parameters, front_node, &input_tensor);
     }
-    input_tensors.emplace_back(input_tensor);
+    (void)input_tensors.emplace_back(input_tensor);
   }
 
   // Input tensors of the control node.

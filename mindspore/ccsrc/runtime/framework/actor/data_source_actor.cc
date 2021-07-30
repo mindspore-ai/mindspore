@@ -31,7 +31,7 @@ void DataSourceActor::Init() {
   for (auto &data_arrow : output_data_arrows_) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    output_data_.emplace_back(std::move(data));
+    (void)output_data_.emplace_back(std::move(data));
   }
 }
 
@@ -102,13 +102,13 @@ void DeviceQueueDataSourceActor::Init() {
   for (auto &data_arrow : output_data_arrows_) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    output_data_.emplace_back(std::move(data));
+    (void)output_data_.emplace_back(std::move(data));
   }
 
   // Init kernel launch info.
   MS_EXCEPTION_IF_NULL(kernel_info_);
   for (size_t i = 0; i < kernel_info_->output_address_list().size(); ++i) {
-    launch_info_.outputs_.emplace_back(std::make_shared<Address>());
+    (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
   }
 }
 
@@ -118,7 +118,7 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
   std::vector<DeviceTensor *> device_tensors;
   for (auto &device_tensor : kernel_info_->output_address_list()) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    device_tensors.emplace_back(device_tensor.get());
+    (void)device_tensors.emplace_back(device_tensor.get());
   }
 
   buffers_.push(device_tensors);
@@ -207,7 +207,7 @@ void HostQueueDataSourceActor::FillDataBuffer() {
   for (auto &data_node : data_nodes_) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(data_node, 0, false);
     MS_EXCEPTION_IF_NULL(device_address);
-    device_tensors.emplace_back(device_address.get());
+    (void)device_tensors.emplace_back(device_address.get());
   }
 
   buffers_.push(device_tensors);
