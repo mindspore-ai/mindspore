@@ -14,7 +14,7 @@ NPU_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_npu.cfg
 [ -n "${GPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${GPU_MAPPING_OUTPUT_FILE}
 [ -n "${NPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${NPU_MAPPING_OUTPUT_FILE}
 ops_list=()
-DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID"
+DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16"
 # get the flatbuffers path
 if [ ${MSLIBS_CACHE_PATH} ]; then
   FLATBUFFERS_LIST=()
@@ -115,7 +115,6 @@ getCommonFile() {
   runtime_files_h=()
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/runtime/*.h)
   others_files_h=(
-    mindspore/lite/src/populate/populate_register.h
     mindspore/lite/src/runtime/infer_manager.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.h
@@ -185,9 +184,29 @@ getCommonFile() {
     for array_runtime_file in "${array_runtime[@]}"; do
       if [[ -e ${array_runtime_file%h*}cc && ! ${all_files[*]} =~ ${array_runtime_file%h*}cc ]]; then
         all_files=("${all_files[@]}" "${array_runtime_file%h*}cc")
+        getDeep "CommonFile" ${array_runtime_file%h*}cc "common" &
       fi
       if [[ -e ${array_runtime_file%h*}c && ! ${all_files[*]} =~ ${array_runtime_file%h*}c ]]; then
         all_files=("${all_files[@]}" "${array_runtime_file%h*}c")
+        getDeep "CommonFile" ${array_runtime_file%h*}c "common" &
+      fi
+    done
+  done
+  # shellcheck disable=SC2068
+  for file in ${all_files_h[@]}; do
+    map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
+    # first is *.o second is *.cc
+    # shellcheck disable=SC2207
+    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -v "flatbuffers" | egrep -v ${REMOVE_LISTS_STR}))
+    # only add existing files
+    for array_runtime_file in "${array_runtime[@]}"; do
+      if [[ -e ${array_runtime_file%h*}cc && ! ${all_files[*]} =~ ${array_runtime_file%h*}cc ]]; then
+        all_files=("${all_files[@]}" "${array_runtime_file%h*}cc")
+        getDeep "CommonFile" ${array_runtime_file%h*}cc "common" &
+      fi
+      if [[ -e ${array_runtime_file%h*}c && ! ${all_files[*]} =~ ${array_runtime_file%h*}c ]]; then
+        all_files=("${all_files[@]}" "${array_runtime_file%h*}c")
+        getDeep "CommonFile" ${array_runtime_file%h*}c "common" &
       fi
     done
   done
@@ -243,6 +262,7 @@ generateOpsList() {
 echo "Start getting all file associations."
 generateOpsList
 getCommonFile
+wait
 # get src/ops
 getOpsFile "REG_POPULATE\(PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops/populate" "prototype" &
 getOpsFile "REG_INFER\(.*?, PrimType_" "${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer" "prototype" &
