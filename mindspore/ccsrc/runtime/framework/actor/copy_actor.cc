@@ -34,14 +34,14 @@ void CopyActor::Init() {
       MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
     }
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    output_data_.emplace_back(std::move(data));
+    (void)output_data_.emplace_back(std::move(data));
   }
 }
 
 void CopyActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_datas_[sequential_num].emplace_back(input_data);
+  (void)input_op_datas_[sequential_num].emplace_back(input_data);
   // When all the inputs are collected, then allocate memory and callback copy.
   if (CheckCopyCondition(context)) {
     FetchDeviceTensor(context);
@@ -52,7 +52,7 @@ void CopyActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTens
 void CopyActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  input_op_controls_[sequential_num].emplace_back(input_control);
+  (void)input_op_controls_[sequential_num].emplace_back(input_control);
   // When all the inputs are collected, then allocate memory and callback copy.
   if (CheckCopyCondition(context)) {
     FetchDeviceTensor(context);

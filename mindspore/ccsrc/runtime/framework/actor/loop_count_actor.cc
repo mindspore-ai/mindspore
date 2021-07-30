@@ -42,8 +42,8 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
       const auto &device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       *total_size += intput_sizes[i];
-      size_list->emplace_back(intput_sizes[i]);
-      addr_list->emplace_back(device_tensor);
+      (void)size_list->emplace_back(intput_sizes[i]);
+      (void)addr_list->emplace_back(device_tensor);
     }
   } else {
     const auto &output_sizes = kernel_mod->GetOutputSizeList();
@@ -51,8 +51,8 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       *total_size += output_sizes[i];
-      size_list->emplace_back(output_sizes[i]);
-      addr_list->emplace_back(device_tensor);
+      (void)size_list->emplace_back(output_sizes[i]);
+      (void)addr_list->emplace_back(device_tensor);
     }
   }
 }
@@ -65,19 +65,19 @@ void LoopCountActor::Init() {
     // Inputs need continuous memory.
     if (iter.second.first == true) {
       FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, true);
-      continuous_memory_alloc_list_list_.emplace_back(addr_list);
-      size_list_list_.emplace_back(size_list);
-      total_size_list_.emplace_back(total_size);
-      device_contexts_.emplace_back(iter.first.second);
+      (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
+      (void)size_list_list_.emplace_back(size_list);
+      (void)total_size_list_.emplace_back(total_size);
+      (void)device_contexts_.emplace_back(iter.first.second);
     }
 
     // Outputs need continuous memory.
     if (iter.second.second == true) {
       FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, false);
-      continuous_memory_alloc_list_list_.emplace_back(addr_list);
-      size_list_list_.emplace_back(size_list);
-      total_size_list_.emplace_back(total_size);
-      device_contexts_.emplace_back(iter.first.second);
+      (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
+      (void)size_list_list_.emplace_back(size_list);
+      (void)total_size_list_.emplace_back(total_size);
+      (void)device_contexts_.emplace_back(iter.first.second);
     }
   }
 }
@@ -85,7 +85,7 @@ void LoopCountActor::Init() {
 void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
-  input_op_controls_[sequential_num].emplace_back(input_control);
+  (void)input_op_controls_[sequential_num].emplace_back(input_control);
   if (CheckLoopCountIncreaseCondition(context)) {
     IncreaseLoopCount(context);
   }
