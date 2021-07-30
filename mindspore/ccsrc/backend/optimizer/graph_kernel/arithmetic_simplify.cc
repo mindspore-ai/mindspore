@@ -620,6 +620,23 @@ bool ArithmeticSimplify::DoConstantFold(const graphkernel::LiteGraphPtr &litegra
   return changed;
 }
 
+void ReorganizeEmptyGraph(const graphkernel::LiteGraphPtr &litegraph) {
+  auto &outputs = litegraph->GetOutputs();
+  for (size_t i = 0; i < outputs.size(); i++) {
+    if (outputs[i]->NodeType() == graphkernel::NType::Value) {
+      graphkernel::PrimOpPtr op_ptr = std::make_shared<graphkernel::BroadcastToOp>("BroadcastTo", "");
+      std::vector<int64_t> new_shape = {1};
+      op_ptr->Infer({outputs[i]}, {{"shape", MakeValue(new_shape)}});
+      litegraph->output()->SetInput(i, op_ptr);
+    } else if (outputs[i]->NodeType() == graphkernel::NType::Parameter) {
+      graphkernel::PrimOpPtr op_ptr = std::make_shared<graphkernel::ReshapeOp>("Reshape", "");
+      op_ptr->Infer({outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
+      litegraph->output()->SetInput(i, op_ptr);
+    }
+  }
+  return;
+}
+
 bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   bool do_simplify = false;
@@ -637,11 +654,13 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
         change_anf_graph = change_anf_graph || find_pattern;
       }
       if (!change_anf_graph) continue;
+      ReorganizeEmptyGraph(lg);
       AnfNodePtrList outputs;
       auto new_funcgraph = LiteGraph2AnfGraph(lg, &outputs);
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
+      EliminateRedundantParameters(new_funcgraph, &inputs);
       auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs, outputs);
       SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
       mng->Replace(node, new_node);

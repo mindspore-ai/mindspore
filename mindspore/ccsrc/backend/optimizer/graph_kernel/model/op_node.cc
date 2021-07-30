@@ -24,6 +24,7 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <numeric>
 
 #include "backend/optimizer/graph_kernel/model/node.h"
 
@@ -157,6 +158,24 @@ void ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
     return false;
   };
   compute_type_ = IsBroadcast(inputs) ? BROADCAST : ELEMWISE;
+}
+
+DShape BroadcastToOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  return GetValue<std::vector<int64_t>>(attrs.find("shape")->second);
+}
+
+DShape ReshapeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  auto new_shape = GetValue<std::vector<int64_t>>(attrs.find("shape")->second);
+  auto origin_shape = inputs[0]->shape;
+  for (size_t i = 0; i < new_shape.size(); i++) {
+    if (new_shape[i] == -1) {
+      auto origin_product = std::accumulate(origin_shape.begin(), origin_shape.end(), 1, std::multiplies<int64_t>());
+      auto new_product = std::accumulate(new_shape.begin(), new_shape.end(), 1, std::multiplies<int64_t>());
+      new_shape[i] = origin_product / new_product * (-1);
+      break;
+    }
+  }
+  return new_shape;
 }
 
 DShape ReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {

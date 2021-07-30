@@ -50,6 +50,19 @@ class Net(Cell):
         return self.reducemin(self.reducemin(red_res, 1), 1)
 
 
+class EmptyNet(Cell):
+    def __init__(self):
+        super(EmptyNet, self).__init__()
+        self.add = P.Add()
+        self.neg = P.Neg()
+
+    def construct(self, x, y):
+        add_res1 = self.add(x, y)
+        neg_res1 = self.neg(x)
+        add_res2 = self.add(add_res1, neg_res1)
+        return add_res2
+
+
 def test_basic():
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
@@ -73,18 +86,33 @@ def test_basic():
     assert res
 
 
+def test_empty_graph():
+    input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
+    input_y = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
+    expect = input_y
+
+    net = EmptyNet()
+    result = net(Tensor(input_x), Tensor(input_y))
+
+    res = np.allclose(expect, result.asnumpy(), rtol=1.e-4,
+                      atol=1.e-7, equal_nan=True)
+    assert res
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_basic_gpu():
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
     test_basic()
+    test_empty_graph()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_basic_ascend():
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_basic()
+    test_empty_graph()

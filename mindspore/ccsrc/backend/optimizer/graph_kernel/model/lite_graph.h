@@ -84,6 +84,15 @@ class LiteGraph::GraphBuilder {
   static PrimOpPtr Elemwise(const std::string &op, const std::string &name) {
     return std::make_shared<ElemwiseOp>(op, name);
   }
+
+  static PrimOpPtr BroadcastTo(const std::string &op, const std::string &name) {
+    return std::make_shared<BroadcastToOp>(op, name);
+  }
+
+  static PrimOpPtr Reshape(const std::string &op, const std::string &name) {
+    return std::make_shared<ReshapeOp>(op, name);
+  }
+
   static PrimOpPtr Reduce(const std::string &op, const std::string &name) {
     return std::make_shared<ReduceOp>(op, name);
   }
