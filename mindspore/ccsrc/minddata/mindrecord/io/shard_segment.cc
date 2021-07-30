@@ -97,6 +97,11 @@ std::pair<MSRStatus, std::string> ShardSegment::ReadCategoryInfo() {
 std::pair<MSRStatus, std::vector<std::tuple<int, std::string, int>>> ShardSegment::WrapCategoryInfo() {
   std::map<std::string, int> counter;
 
+  if (!ValidateFieldName(current_category_field_)) {
+    MS_LOG(ERROR) << "category field error from index, it is: " << current_category_field_;
+    return {FAILED, std::vector<std::tuple<int, std::string, int>>()};
+  }
+
   std::string sql = "SELECT " + current_category_field_ + ", COUNT(" + current_category_field_ +
                     ") AS `value_occurrence` FROM indexes GROUP BY " + current_category_field_ + ";";
 
