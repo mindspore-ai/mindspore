@@ -34,6 +34,8 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 int ActivationCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (type_ != schema::ActivationType_RELU && type_ != schema::ActivationType_RELU6 &&
       type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
       type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&

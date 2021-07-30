@@ -25,6 +25,8 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 int ArithmeticCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto primitive_type = param_->op_parameter_.type_;
   if (primitive_type == schema::PrimitiveType_Eltwise) {
     switch (param_->eltwise_mode_) {

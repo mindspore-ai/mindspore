@@ -33,6 +33,8 @@ constexpr size_t kBoxIndex = 1;
 constexpr size_t kBoxIdIndex = 2;
 }  // namespace
 int CropAndResizeCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }

@@ -158,6 +158,8 @@ int ConvolutionWinogradCPUKernel::ConfigInputOutput() {
 }
 
 int ConvolutionWinogradCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   tile_num_ = C12NUM;
 #ifdef ENABLE_AVX
   oc_block_ = C16NUM;

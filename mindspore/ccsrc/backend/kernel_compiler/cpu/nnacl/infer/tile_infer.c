@@ -71,7 +71,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (input1_data == NULL) {
     return NNACL_INFER_INVALID;
   }
-  for (size_t i = 0; i < data_num; i++) {
+  for (int i = 0; i < data_num; i++) {
     param->multiples_[i] = input1_data[i];
   }
 

@@ -35,7 +35,7 @@ int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector 
     return NNACL_NULL_PTR;
   }
   memset(tensor_list->tensors_, 0, tensor_list->element_num_ * sizeof(TensorC));
-  for (int i = 0; i < tensor_list->element_num_; ++i) {
+  for (size_t i = 0; i < tensor_list->element_num_; ++i) {
     tensor_list->tensors_[i].format_ = Format_NHWC;
     tensor_list->tensors_[i].data_type_ = dtype;
     ShapeSet(tensor_list->tensors_[i].shape_, &(tensor_list->tensors_[i].shape_size_), tensor_shape->shape_[i],
@@ -328,7 +328,7 @@ bool ShapeEqual(const int *shape0, size_t shape0_size, const int *shape1, size_t
   if (shape0_size != shape1_size) {
     return false;
   }
-  for (int i = 0; i < shape0_size; i++) {
+  for (size_t i = 0; i < shape0_size; i++) {
     if (shape0[i] != shape1[i]) {
       return false;
     }

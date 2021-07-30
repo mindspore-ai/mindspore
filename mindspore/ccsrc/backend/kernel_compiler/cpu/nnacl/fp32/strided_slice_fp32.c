@@ -70,7 +70,7 @@ int DoStridedSliceIntFp64Bool(const void *in_data, void *out_data, StridedSliceP
   if (param->num_axes_ < DIMENSION_8D) {
     PadStridedSliceParameterTo8D(param);
   }
-  size_t dim_offset[DIMENSION_8D - 1];
+  int dim_offset[DIMENSION_8D - 1];
   dim_offset[6] = in_shape[7];
   dim_offset[5] = in_shape[6] * dim_offset[6];
   dim_offset[4] = in_shape[5] * dim_offset[5];
@@ -132,7 +132,7 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
   if (param->num_axes_ < DIMENSION_8D) {
     PadStridedSliceParameterTo8D(param);
   }
-  size_t dim_offset[DIMENSION_8D - 1];
+  int dim_offset[DIMENSION_8D - 1];
   dim_offset[6] = in_shape[7];
   dim_offset[5] = in_shape[6] * dim_offset[6];
   dim_offset[4] = in_shape[5] * dim_offset[5];
