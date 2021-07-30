@@ -615,9 +615,13 @@ class Cell(Cell_):
         self._construct_inputs_num = fn.__code__.co_argcount
         self._construct_inputs_names = fn.__code__.co_varnames
 
-        assert self._construct_inputs_num > 0
-        assert self._construct_inputs_names[0] == 'self'
-        assert self._construct_inputs_num - 1 <= len(self._construct_inputs_names)
+        if self._construct_inputs_num <= 0:
+            raise ValueError(f"Num of inputs must be greater than 0, but got {self._construct_inputs_num}")
+        if self._construct_inputs_names[0] != 'self':
+            raise ValueError(f"First member of fn function must be self, but got {self._construct_inputs_names[0]}")
+        if self._construct_inputs_num - 1 > len(self._construct_inputs_names):
+            raise ValueError(f"Num of inputs must be greater than num of fn function members, num of inputs is \
+                {self._construct_inputs_names - 1}, num of fn function members is {len(self._construct_inputs_names)}")
         self._construct_inputs_names = self._construct_inputs_names[1:self._construct_inputs_num]
         self._construct_inputs_num = self._construct_inputs_num - 1
 
