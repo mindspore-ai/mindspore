@@ -30,6 +30,7 @@
 using mindspore::ge::model_runner::MemcpyAsyncTaskInfo;
 namespace mindspore {
 namespace kernel {
+constexpr auto kTensorCopySlicesInputSize = 2;
 TensorCopySlices::TensorCopySlices() {}
 
 TensorCopySlices::~TensorCopySlices() {}
@@ -102,19 +103,19 @@ void TensorCopySlices::GetInputOutputInfo(const AnfNodePtr &anf_node) {
   CastShapeSizeToLong(output_shape, &output_shape_);
 }
 
-void *TensorCopySlices::VoidPointerOffset(void *ptr, size_t offset) {
+void *TensorCopySlices::VoidPointerOffset(void *ptr, size_t offset) const {
   return reinterpret_cast<uint8_t *>(ptr) + offset;
 }
 
 void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
-  if (input_size != 2) {
+  if (input_size != kTensorCopySlicesInputSize) {
     MS_LOG(EXCEPTION) << "TensorCopySlices input size is not 2";
   }
 
   auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, 0);
-  size_t total_size = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<>());
+  size_t total_size = std::accumulate(input_shape.begin(), input_shape.end(), (size_t)1, std::multiplies<>());
   total_size *= abstract::TypeIdSize(input_type_id_);
   MS_LOG(INFO) << "TensorCopySlices size[" << total_size << "]";
   // Shape and DType of input0 and output0 are same.
@@ -122,7 +123,7 @@ void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   output_size_list_.emplace_back(total_size);
 
   auto update_shape = AnfAlgo::GetInputDeviceShape(anf_node, 1);
-  size_t update_size = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<>());
+  size_t update_size = std::accumulate(update_shape.begin(), update_shape.end(), (size_t)1, std::multiplies<>());
   update_size *= abstract::TypeIdSize(update_type_id_);
   input_size_list_.emplace_back(update_size);
 }

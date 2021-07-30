@@ -97,7 +97,7 @@ void HcclDynamicKernel::Execute() {
   op_info.outputPtr = output_ptr_;
   op_info.dataType = static_cast<HcclDataType>(data_type_);
   op_info.opType = static_cast<HcclReduceOp>(op_type_);
-  op_info.root = root_;
+  op_info.root = IntToUint(root_);
   op_info.count = count_;
 
   auto callback = [this](HcclResult status) {

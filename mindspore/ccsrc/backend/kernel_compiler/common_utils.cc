@@ -585,7 +585,6 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
     auto const &input = input_list[i];
     MS_EXCEPTION_IF_NULL(input);
     bool found = false;
-    // using NodeUsersMap = std::unordered_map<AnfNodePtr, std::set<std::pair<AnfNodePtr, int>>>;
     auto mng = input->func_graph()->manager();
     MS_EXCEPTION_IF_NULL(mng);
     const NodeUsersMap &users = mng->node_users();
@@ -617,7 +616,7 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
           int accum_idx = 0;
           size_t dyn_i = 0;
           for (; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
-            accum_idx += dyn_input_sizes[dyn_i];
+            accum_idx += LongToInt(dyn_input_sizes[dyn_i]);
             if (used_as_idx < accum_idx) {
               input_index.push_back(std::make_pair(
                 anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
@@ -960,10 +959,10 @@ size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int
                    const std::vector<int64_t> &stop) {
   for (size_t i = 0; i < start.size(); ++i) {
     if (stop[i] - start[i] != 1) {
-      return (stop[i] - start[i]) * dim_offset[i];
+      return SizetMulWithOverflowCheck(LongToSize(stop[i] - start[i]), LongToSize(dim_offset[i]));
     }
   }
-  return dim_offset[start.size() - 1];
+  return LongToSize(dim_offset[start.size() - 1]);
 }
 
 std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape) {
@@ -982,7 +981,7 @@ size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &
   size_t size = start.size();
   size_t offset = 0;
   for (size_t i = 0; i < size; ++i) {
-    offset += dim_offset[i] * start[i];
+    offset += SizetMulWithOverflowCheck(LongToSize(dim_offset[i]), start[i]);
     if (stop[i] - start[i] != 1) {
       break;
     }

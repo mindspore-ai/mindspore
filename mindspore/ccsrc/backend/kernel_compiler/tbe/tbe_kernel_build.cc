@@ -682,10 +682,6 @@ bool TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
   } else if (type == kVTypeListFloat) {
     std::vector<float> attr_value;
     auto value_type = value->type();
-    if (!attr_obj) {
-      MS_LOG(ERROR) << "attr_obj ptr is null.";
-      return false;
-    }
     auto value_type_str = value_type->ToString();
     if (value_type_str == kVTypeFloat) {
       auto data = GetValue<float>(value);
