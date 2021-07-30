@@ -36,6 +36,8 @@ label_smooth_factor: 0.1
 lr_init: 0
 lr_end: 0.0001
 lr_max: 0.3
+lars_epsilon: 0.0
+lars_coefficient: 0.001
 
 net_name: "se-resnet50"
 dataset: "imagenet2012"
@@ -52,6 +54,8 @@ enable_cache: False
 cache_session_id: ""
 mode_name: "GRAPH"
 acc_mode: "O0"
+conv_init: "XavierUniform"
+dense_init: "TruncatedNormal"
 all_reduce_fusion_config:
     - 1
     - 100
