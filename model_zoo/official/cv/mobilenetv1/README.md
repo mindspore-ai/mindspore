@@ -222,10 +222,10 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: sh run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
-- CPU: sh run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
-- GPU(single device)：sh run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
-- GPU(distribute training): sh run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+- Ascend: bash run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
+- CPU: bash run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH] (optional)
+- GPU(single device)：bash run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+- GPU(distribute training): bash run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 For distributed training with Ascend, a hccl configuration file with JSON format needs to be created in advance.
 
@@ -245,10 +245,10 @@ Please follow the instructions in the link [hccn_tools](https://gitee.com/mindsp
         --device_num=$DEVICE_NUM --dataset_path=$PATH1 &> log.txt &
 
   shell:
-     Ascend: sh run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
-     CPU: sh run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
-     GPU(single device): sh run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
-     GPU(distribute training): sh run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     Ascend: bash run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     CPU: bash run_train_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     GPU(single device): bash run_standalone_train_gpu.sh [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+     GPU(distribute training): bash run_distribute_train_gpu.sh [cifar10|imagenet2012] [CONFIG_PATH] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 ### Result
@@ -277,8 +277,8 @@ Epoch time: 320744.265, per step time: 256.390
 
 You can start training using python or shell scripts.If the train method is train or fine tune, should not input the `[CHECKPOINT_PATH]` The usage of shell scripts as follows:
 
-- Ascend: sh run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
-- CPU: sh run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+- Ascend: bash run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+- CPU: bash run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
@@ -290,8 +290,8 @@ You can start training using python or shell scripts.If the train method is trai
       GPU: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH] --config_path [CONFIG_PATH] --device_target GPU
 
   shell:
-      Ascend: sh run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
-      CPU: sh run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+      Ascend: bash run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+      CPU: bash run_eval_CPU.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 > checkpoint can be produced in training process.

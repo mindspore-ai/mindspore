@@ -85,8 +85,8 @@ MobileNetV3总体网络架构如下：
 
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
-- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
-- CPU: sh run_trian.sh CPU [DATASET_PATH]
+- GPU: bash run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
+- CPU: bash run_trian.sh CPU [DATASET_PATH]
 
 ### 启动
 
@@ -96,8 +96,8 @@ MobileNetV3总体网络架构如下：
       GPU: python train.py --dataset_path ~/imagenet/train/ --device_targe GPU
       CPU: python train.py --dataset_path ~/cifar10/train/ --device_targe CPU
   shell:
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
-      CPU: sh run_train.sh CPU ~/cifar10/train/
+      GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
+      CPU: bash run_train.sh CPU ~/cifar10/train/
 ```
 
 ### 结果
@@ -117,8 +117,8 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
-- GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
-- CPU: sh run_infer.sh CPU [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: bash run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- CPU: bash run_infer.sh CPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### 启动
 
@@ -129,8 +129,8 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
     CPU: python eval.py --dataset_path ~/cifar10/val/ --checkpoint_path mobilenet_199.ckpt --device_targe CPU
 
   shell:
-    GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
-    CPU: sh run_infer.sh CPU ~/cifar10/val/ ~/train/mobilenet-200_625.ckpt
+    GPU: bash run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
+    CPU: bash run_infer.sh CPU ~/cifar10/val/ ~/train/mobilenet-200_625.ckpt
 ```
 
 > 训练过程中可以生成检查点。

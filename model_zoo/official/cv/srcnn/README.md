@@ -104,16 +104,16 @@ To create dataset, download the training dataset firstly and then convert them t
 
 ```bash
 GPU:
-    sh run_distribute_train_gpu.sh DEVICE_NUM VISIABLE_DEVICES(0,1,2,3,4,5,6,7) DATASET_PATH
+    bash run_distribute_train_gpu.sh DEVICE_NUM VISIABLE_DEVICES(0,1,2,3,4,5,6,7) DATASET_PATH
 ```
 
 ### Launch
 
 ```bash
 # distributed training example(8p) for GPU
-sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 /dataset/train
+bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 /dataset/train
 # standalone training example for GPU
-sh run_distribute_train_gpu.sh 1 0 /dataset/train
+bash run_distribute_train_gpu.sh 1 0 /dataset/train
 ```
 
 You can find checkpoint file together with result in log.
@@ -124,14 +124,14 @@ You can find checkpoint file together with result in log.
 
 ```bash
 # Evaluation
-sh run_eval_gpu.sh DEVICE_ID DATASET_PATH CHECKPOINT_PATH
+bash run_eval_gpu.sh DEVICE_ID DATASET_PATH CHECKPOINT_PATH
 ```
 
 ### Launch
 
 ```bash
 # Evaluation with checkpoint
-sh run_eval_gpu.sh 1 /dataset/val /ckpt_dir/srcnn-20_*.ckpt
+bash run_eval_gpu.sh 1 /dataset/val /ckpt_dir/srcnn-20_*.ckpt
 ```
 
 ### Result

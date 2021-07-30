@@ -98,10 +98,10 @@ bash scripts/run_download_dataset.sh
 bash scripts/run_train.sh
 
 # run distributed training example
-sh scripts/run_train.sh rank_table.json
+bash scripts/run_train.sh rank_table.json
 
 # run evaluation example
-sh run_eval.sh
+bash run_eval.sh
 ```
 
 If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
@@ -230,7 +230,7 @@ Parameters for both training and evaluation can be set in config.py.
   Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "checkpoint/ncf-125_390.ckpt".
 
   ```python
-  sh scripts/run_eval.sh
+  bash scripts/run_eval.sh
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:

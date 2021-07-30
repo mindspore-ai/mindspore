@@ -89,7 +89,7 @@ After installing MindSpore via the official website, you can start training and 
 ```bash
 # distributed training
 Usage:
-sh run_distribute_train.sh se-resnet50 imagenet2012 [RANK_TABLE_FILE] [DATASET_PATH]
+bash run_distribute_train.sh se-resnet50 imagenet2012 [RANK_TABLE_FILE] [DATASET_PATH]
 
 # standalone training
 Usage:

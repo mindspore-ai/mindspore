@@ -68,13 +68,13 @@ After dataset preparation, you can start training and evaluation as follows:
     ```bash
     # run training example
     cd ./scripts
-    sh run_standalone_train.sh [TRAIN_DATASET] [DEVICEID]
+    bash run_standalone_train.sh [TRAIN_DATASET] [DEVICEID]
 
     # run distributed training example
-    sh run_distribute_train.sh [TRAIN_DATASET] [RANK_TABLE_PATH]
+    bash run_distribute_train.sh [TRAIN_DATASET] [RANK_TABLE_PATH]
 
     # run evaluation example
-    sh run_eval.sh [EVAL_DATASET_PATH] [DATASET_NAME] [MODEL_CKPT] [DEVICEID]
+    bash run_eval.sh [EVAL_DATASET_PATH] [DATASET_NAME] [MODEL_CKPT] [DEVICEID]
     ```
 
 - ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
@@ -186,7 +186,7 @@ The FastText network script and code result are as follows:
 
     ``` bash
     cd scripts
-    sh creat_dataset.sh [SOURCE_DATASET_PATH] [DATASET_NAME]
+    bash creat_dataset.sh [SOURCE_DATASET_PATH] [DATASET_NAME]
     ```
 
 ### [Configuration File](#content)
@@ -219,14 +219,14 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
         ```bash
         cd ./scripts
-        sh run_standalone_train.sh [DATASET_PATH]
+        bash run_standalone_train.sh [DATASET_PATH]
         ```
 
     - Running scripts for distributed training of FastText. Task training on multiple device and run the following command in bash to be executed in `scripts/`:
 
         ```bash
         cd ./scripts
-        sh run_distributed_train.sh [DATASET_PATH] [RANK_TABLE_PATH]
+        bash run_distributed_train.sh [DATASET_PATH] [RANK_TABLE_PATH]
         ```
 
 - Running on GPU
@@ -235,14 +235,14 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
         ```bash
         cd ./scripts
-        sh run_standalone_train_gpu.sh [DATASET_PATH]
+        bash run_standalone_train_gpu.sh [DATASET_PATH]
         ```
 
     - Running scripts for distributed training of FastText. Task training on multiple device and run the following command in bash to be executed in `scripts/`:
 
         ```bash
         cd ./scripts
-        sh run_distributed_train_gpu.sh [DATASET_PATH] [NUM_OF_DEVICES]
+        bash run_distributed_train_gpu.sh [DATASET_PATH] [NUM_OF_DEVICES]
         ```
 
 ### [Inference Process](#content)
@@ -253,7 +253,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
         ```bash
         cd ./scripts
-        sh run_eval.sh [DATASET_PATH] [DATASET_NAME] [MODEL_CKPT]
+        bash run_eval.sh [DATASET_PATH] [DATASET_NAME] [MODEL_CKPT]
         ```
 
   Note: The `DATASET_PATH` is path to mindrecord. eg. `/dataset_path/*.mindrecord`
@@ -264,7 +264,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
         ```bash
         cd ./scripts
-        sh run_eval_gpu.sh [DATASET_PATH] [DATASET_NAME] [MODEL_CKPT]
+        bash run_eval_gpu.sh [DATASET_PATH] [DATASET_NAME] [MODEL_CKPT]
         ```
 
   Note: The `DATASET_PATH` is path to mindrecord. eg. `/dataset_path/*.mindrecord`

@@ -50,7 +50,7 @@ After installing MindSpore via the official website, you can start training as f
 
 ```shell
 # run distributed training example
-sh run_distribute_train.sh [im] [jm] [kb] [step] [DATASET_PATH]
+bash run_distribute_train.sh [im] [jm] [kb] [step] [DATASET_PATH]
  ```
 
 ## Script Description
@@ -74,7 +74,7 @@ sh run_distribute_train.sh [im] [jm] [kb] [step] [DATASET_PATH]
 ### Training Process
 
 ```shell
-sh run_distribute_train.sh [im] [jm] [kb] [step] [DATASET_PATH]
+bash run_distribute_train.sh [im] [jm] [kb] [step] [DATASET_PATH]
 ```
 
 Training result will be stored in the current path, whose folder name begins with "train".

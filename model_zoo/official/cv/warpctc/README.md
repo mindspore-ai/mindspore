@@ -59,7 +59,7 @@ The dataset is self-generated using a third-party library called [captcha](https
 
     ```bash
      $ cd scripts
-     $ sh run_process_data.sh
+     $ bash run_process_data.sh
 
      # after execution, you will find the dataset like the follows:
      .  

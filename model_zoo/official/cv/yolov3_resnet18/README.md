@@ -86,13 +86,13 @@ After installing MindSpore via the official website, you can start training and 
 
     ```shell script
     #run standalone training example
-    sh run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
+    bash run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
 
     #run distributed training example
-    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH] [RANK_TABLE_FILE]
+    bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH] [RANK_TABLE_FILE]
 
     #run evaluation example
-    sh run_eval.sh [DEVICE_ID] [CKPT_PATH] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
+    bash run_eval.sh [DEVICE_ID] [CKPT_PATH] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
     ```
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
@@ -271,7 +271,7 @@ To train the model, run `train.py` with the dataset `image_dir`, `anno_path` and
 - Stand alone mode
 
     ```bash
-    sh run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt
+    bash run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt
     ```
 
     The input variables are device id, epoch size, mindrecord directory path, dataset directory path and train TXT file path.
@@ -279,7 +279,7 @@ To train the model, run `train.py` with the dataset `image_dir`, `anno_path` and
 - Distributed mode
 
     ```bash
-    sh run_distribute_train.sh 8 150 /data/Mindrecord_train /data /data/train.txt /data/hccl.json
+    bash run_distribute_train.sh 8 150 /data/Mindrecord_train /data /data/train.txt /data/hccl.json
     ```
 
     The input variables are device numbers, epoch size, mindrecord directory path, dataset directory path, train TXT file path and [hccl json configuration file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). **It is better to use absolute path.**
@@ -310,7 +310,7 @@ Note the results is two-classification(person and face) used our own annotations
 To eval, run `eval.py` with the dataset `image_dir`, `anno_path`(eval txt), `mindrecord_dir` and `ckpt_path`. `ckpt_path` is the path of [checkpoint](https://www.mindspore.cn/docs/programming_guide/en/master/save_model.html) file.
 
   ```bash
-  sh run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt
+  bash run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt
   ```
 
 The input variables are device id, checkpoint path, mindrecord directory path, dataset directory path and train TXT file path.

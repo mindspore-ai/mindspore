@@ -77,10 +77,10 @@ ResNet-50的总体网络架构如下：[链接](https://arxiv.org/pdf/1512.03385
 
 ```python
 # 分布式训练运行示例
-sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
 
 # 推理运行示例
-sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 > 对于分布式训练，需要提前创建JSON格式的HCCL配置文件。关于配置文件，可以参考[HCCL_TOOL](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
@@ -90,10 +90,10 @@ sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 
 ```python
 # 分布式训练运行示例
-sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
+bash run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
 
 # 推理运行示例
-sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
  ```
 
 ## 脚本描述
@@ -181,7 +181,7 @@ sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
 #### Ascend 910
 
 ```shell
-  sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
+  bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
 ```
 
 此脚本需设置三个参数：
@@ -209,7 +209,7 @@ epoch：42 step: 5004，loss is 1.6453942
 #### GPU
 
 ```shell
-sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
+bash run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
 ```
 
 训练结果保存在当前路径下，文件夹名称以“train_parallel”开头。您可在日志中找到checkpoint文件以及结果，如下所示。
@@ -233,7 +233,7 @@ epoch： 36 step: 5004，loss is 1.645802
 #### Ascend 910
 
 ```shell
-  sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 此脚本需设置两个参数：
@@ -252,7 +252,7 @@ epoch： 36 step: 5004，loss is 1.645802
 #### GPU
 
 ```shell
-  sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 推理结果保存在示例路径，文件夹名为`eval`。您可在日志中找到如下结果。

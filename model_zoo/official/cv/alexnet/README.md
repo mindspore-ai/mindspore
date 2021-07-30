@@ -68,9 +68,9 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # enter script dir, train AlexNet
-sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
 # enter script dir, evaluate AlexNet
-sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
@@ -228,7 +228,7 @@ Major parameters in train.py and config.py as follows:
   ```bash
   python train.py --config_path default_config.yaml --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # or enter script dir, and run the script
-  sh run_standalone_train_ascend.sh cifar-10-batches-bin ckpt
+  bash run_standalone_train_ascend.sh cifar-10-batches-bin ckpt
   ```
 
   After training, the loss value will be achieved as follows:
@@ -250,7 +250,7 @@ Major parameters in train.py and config.py as follows:
   ```bash
   python train.py --config_path default_config.yaml --device_target "GPU" --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # or enter script dir, and run the script
-  sh run_standalone_train_for_gpu.sh cifar-10-batches-bin ckpt
+  bash run_standalone_train_for_gpu.sh cifar-10-batches-bin ckpt
   ```
 
   After training, the loss value will be achieved as follows:
@@ -275,7 +275,7 @@ Before running the command below, please check the checkpoint path used for eval
   ```bash
   python eval.py --config_path default_config.yaml --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > eval_log.txt 2>&1 &
   # or enter script dir, and run the script
-  sh run_standalone_eval_ascend.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-1_1562.ckpt
+  bash run_standalone_eval_ascend.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-1_1562.ckpt
   ```
 
   You can view the results through the file "eval_log". The accuracy of the test dataset will be as follows:
@@ -290,7 +290,7 @@ Before running the command below, please check the checkpoint path used for eval
   ```bash
   python eval.py --config_path default_config.yaml --device_target "GPU" --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-30_1562.ckpt > eval_log 2>&1 &
   # or enter script dir, and run the script
-  sh run_standalone_eval_for_gpu.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-30_1562.ckpt
+  bash run_standalone_eval_for_gpu.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-30_1562.ckpt
   ```
 
   You can view the results through the file "eval_log". The accuracy of the test dataset will be as follows:

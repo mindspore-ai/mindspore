@@ -127,7 +127,7 @@ Based on original DeepLabV3 paper, we reproduce two training experiments on voca
 For single device training, please config parameters, training script is:
 
 ```shell
-run_standalone_train.sh
+bash run_standalone_train.sh
 ```
 
 - For 8 devices training, training steps are as follows:
@@ -135,19 +135,19 @@ run_standalone_train.sh
 1. Train s16 with vocaug dataset, finetuning from resnet101 pretrained model, script is:
 
     ```shell
-    run_distribute_train_s16_r1.sh
+    bash run_distribute_train_s16_r1.sh
     ```
 
 2. Train s8 with vocaug dataset, finetuning from model in previous step, training script is:
 
     ```shell
-    run_distribute_train_s8_r1.sh
+    bash run_distribute_train_s8_r1.sh
     ```
 
 3. Train s8 with voctrain dataset, finetuning from model in previous step, training script is:
 
     ```shell
-    run_distribute_train_s8_r2.sh
+    bash run_distribute_train_s8_r2.sh
     ```
 
 - For evaluation, evaluating steps are as follows:
@@ -155,25 +155,25 @@ run_standalone_train.sh
 1. Eval s16 with voc val dataset, eval script is:
 
     ```shell
-    run_eval_s16.sh
+    bash run_eval_s16.sh
     ```
 
 2. Eval s8 with voc val dataset, eval script is:
 
     ```shell
-    run_eval_s8.sh
+    bash run_eval_s8.sh
     ```
 
 3. Eval s8 multiscale with voc val dataset, eval script is:
 
     ```shell
-    run_eval_s8_multiscale.sh
+    bash run_eval_s8_multiscale.sh
     ```
 
 4. Eval s8 multiscale and flip with voc val dataset, eval script is:
 
     ```shell
-    run_eval_s8_multiscale_flip.sh
+    bash run_eval_s8_multiscale_flip.sh
     ```
 
 - Train on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)

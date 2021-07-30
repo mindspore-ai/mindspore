@@ -189,28 +189,28 @@ python train.py --data_path ~/imagenet/train/ --device_target Ascend --run_distr
 ```shell
 Ascend:
     # 分布式训练示例（8卡）
-    sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+    bash run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
     # 单机训练
-    sh run_standalone_train.sh DEVICE_ID DATA_PATH
+    bash run_standalone_train.sh DEVICE_ID DATA_PATH
 GPU:
     # 分布式训练示例（8卡）
-    sh run_distribute_train_for_gpu.sh DATA_PATH
+    bash run_distribute_train_for_gpu.sh DATA_PATH
     # 单机训练
-    sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_PATH
+    bash run_standalone_train_for_gpu.sh DEVICE_ID DATA_PATH
 ```
 
 ### 样例
 
 ```shell
 # Ascend分布式训练示例（8卡）
-sh scripts/run_distribute_train.sh RANK_TABLE_FILE /dataset/train
+bash scripts/run_distribute_train.sh RANK_TABLE_FILE /dataset/train
 # Ascend单机训练示例
-sh scripts/run_standalone_train.sh 0 /dataset/train
+bash scripts/run_standalone_train.sh 0 /dataset/train
 
 # GPU分布式训练示例（8卡）
-sh scripts/run_distribute_train_for_gpu.sh /dataset/train
+bash scripts/run_distribute_train_for_gpu.sh /dataset/train
 # GPU单机训练示例
-sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
+bash scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 ```
 
 您可以在日志中找到检查点文件和结果。
@@ -229,7 +229,8 @@ python eval.py --data_path ~/imagenet/val/ --device_target Ascend --checkpoint_f
 
 ```shell
 # 评估
-sh scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH PLATFORM
+bash scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH PLATFORM
+
 ```
 
 DEVICE_TARGET is Ascend or GPU, default is Ascend.
@@ -238,7 +239,7 @@ DEVICE_TARGET is Ascend or GPU, default is Ascend.
 
 ```shell
 # 检查点评估
-sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /ResNeXt_100.ckpt Ascend
+bash scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /ResNeXt_100.ckpt Ascend
 ```
 
 #### 结果

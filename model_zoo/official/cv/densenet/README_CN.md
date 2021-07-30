@@ -104,12 +104,12 @@ DenseNet-100使用的数据集： Cifar-10
   python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
 
   # 分布式训练示例
-  sh scripts/run_distribute_train.sh 8 /PATH/TO/RANK_TABLE.JSON [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  bash scripts/run_distribute_train.sh 8 /PATH/TO/RANK_TABLE.JSON [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
 
   # 单卡评估示例
   python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
 
-  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  bash scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
   分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -177,12 +177,12 @@ DenseNet-100使用的数据集： Cifar-10
   python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
 
   # 分布式训练示例
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
+  bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
 
   # 评估示例
   python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
 # 脚本说明
@@ -305,7 +305,7 @@ DenseNet-100使用的数据集： Cifar-10
 - Ascend处理器环境运行
 
   ```shell
-  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  bash scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
   ```
 
   上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。在ImageNet数据集上训练DenseNet-121的损失值的实现如下：
@@ -325,7 +325,7 @@ DenseNet-100使用的数据集： Cifar-10
 
   ```bash
   cd scripts
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
+  bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
   ```
 
   上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。
@@ -341,7 +341,7 @@ DenseNet-100使用的数据集： Cifar-10
   ```eval
   python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  bash scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
   上述python命令在后台运行。可以通过“output/202x-xx-xx_time_xx_xx_xx/202x_xxxx.log”文件查看结果。DenseNet-121在ImageNet的测试数据集的准确率如下：
@@ -358,7 +358,7 @@ DenseNet-100使用的数据集： Cifar-10
   ```eval
   python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
   上述python命令在后台运行。可以通过“eval/eval.log”文件查看结果。DenseNet-121在ImageNet的测试数据集的准确率如下：

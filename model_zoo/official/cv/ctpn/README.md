@@ -163,11 +163,11 @@ python src/create_dataset.py
 
 ```bash
 # distribute training example(8p)
-sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TASK_TYPE] [PRETRAINED_PATH]
+bash run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TASK_TYPE] [PRETRAINED_PATH]
 # standalone training
-sh run_standalone_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH]
+bash run_standalone_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH]
 # evaluation:
-sh run_eval_ascend.sh [IMAGE_PATH] [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_ascend.sh [IMAGE_PATH] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 The `pretrained_path` should be a checkpoint of vgg16 trained on Imagenet2012. The name of weight in dict should be totally the same, also the batch_norm should be enabled in the trainig of vgg16, otherwise fails in further steps.COCO_TEXT_PARSER_PATH coco_text.py can refer to [Link](https://github.com/andreasveit/coco-text).To get the vgg16 backbone, you can use the network structure defined in src/CTPN/vgg16.py.To train the backbone, copy the src/CTPN/vgg16.py under modelzoo/official/cv/vgg16/src/, and modify the vgg16/train.py to suit the new construction.You can fix it as below:
@@ -211,9 +211,9 @@ ICDAR2013, SCUT-FORU to improve precision and recall, and when doing Finetune, w
   shell:
     Ascend:
       # distribute training example(8p)
-      sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TASK_TYPE] [PRETRAINED_PATH]
+      bash run_distribute_train_ascend.sh [RANK_TABLE_FILE] [TASK_TYPE] [PRETRAINED_PATH]
       # standalone training
-      sh run_standalone_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH]
+      bash run_standalone_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH]
 ```
 
 ### Result
@@ -294,7 +294,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```bash
-  sh run_eval_ascend.sh [IMAGE_PATH] [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_eval_ascend.sh [IMAGE_PATH] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 After eval, you can get serval archive file named submit_ctpn-xx_xxxx.zip, which contains the name of your checkpoint file.To evalulate it, you can use the scripts provided by the ICDAR2013 network, you can download the Deteval scripts from the [link](https://rrc.cvc.uab.es/?com=downloads&action=download&ch=2&f=aHR0cHM6Ly9ycmMuY3ZjLnVhYi5lcy9zdGFuZGFsb25lcy9zY3JpcHRfdGVzdF9jaDJfdDFfZTItMTU3Nzk4MzA2Ny56aXA=)

@@ -63,7 +63,7 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 
     ```text
      $ cd scripts
-     $ sh run_process_data.sh
+     $ bash run_process_data.sh
 
      # 执行后，数据集如下：
      .  

@@ -107,10 +107,10 @@ pip install mmcv=0.2.14
 
     ```text
     # 分布式训练
-    sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
+    bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
 
     # 单机训练
-    sh run_standalone_train.sh [PRETRAINED_CKPT]
+    bash run_standalone_train.sh [PRETRAINED_CKPT]
     ```
 
     注：
@@ -123,7 +123,7 @@ pip install mmcv=0.2.14
 
    ```bash
    # 评估
-   sh run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+   bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
    ```
 
    注：
@@ -134,7 +134,7 @@ pip install mmcv=0.2.14
 
    ```bash
    # 评估
-   sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+   bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
    ```
 
    注：
@@ -364,10 +364,10 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ```bash
 # 分布式训练
-用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 # 单机训练
-用法：sh run_standalone_train.sh [PRETRAINED_MODEL]
+用法：bash run_standalone_train.sh [PRETRAINED_MODEL]
 ```
 
 ### 参数配置
@@ -530,7 +530,7 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ```bash
 # 单机训练
-sh run_standalone_train.sh [PRETRAINED_MODEL]
+bash run_standalone_train.sh [PRETRAINED_MODEL]
 ```
 
 ### 分布式训练
@@ -538,7 +538,7 @@ sh run_standalone_train.sh [PRETRAINED_MODEL]
 - 运行`run_distribute_train.sh`开始Mask模型的分布式训练。
 
 ```bash
-sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
 
 - Notes
@@ -597,7 +597,7 @@ epoch:12 step:7393 ,rpn_loss:0.06482, rcnn_loss:0.47681, rpn_cls_loss:0.04770, r
 
 ```bash
 # 推理
-sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
+bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 ```
 
 > 关于COCO2017数据集，VALIDATION_ANN_FILE_JSON参考数据集目录下的annotations/instances_val2017.json文件。  
@@ -657,7 +657,7 @@ python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --device_ta
 
 ```shell
 # Ascend310 推理
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 ### 结果

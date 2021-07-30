@@ -247,9 +247,9 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ```bash
 # distribute training example(8p)
-sh scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
+bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
 # standalone training
-sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
+bash scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
 ```
 
 > Notes:
@@ -261,14 +261,14 @@ sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
 
 ```bash
 # distribute training example(8p)
-sh scripts/run_distribute_train_gpu.sh DATA_PATH
+bash scripts/run_distribute_train_gpu.sh DATA_PATH
 ```
 
 - CPU:
 
 ```bash
 # standalone training example with shell
-sh scripts/run_standalone_train_cpu.sh DATA_PATH
+bash scripts/run_standalone_train_cpu.sh DATA_PATH
 ```
 
 ### Launch
@@ -278,15 +278,15 @@ sh scripts/run_standalone_train_cpu.sh DATA_PATH
   shell:
       Ascend:
       # distribute training example(8p)
-      sh scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
+      bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
       # standalone training
-      sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
+      bash scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
       GPU:
       # distribute training example(8p)
-      sh scripts/run_distribute_train_gpu.sh DATA_PATH
+      bash scripts/run_distribute_train_gpu.sh DATA_PATH
       CPU:
       # standalone training example with shell
-      sh scripts/run_standalone_train_cpu.sh DATA_PATH
+      bash scripts/run_standalone_train_cpu.sh DATA_PATH
 ```
 
 ### Result
@@ -324,13 +324,13 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```bash
-  sh scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
+  bash scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
 ```
 
 - GPU
 
 ```bash
-  sh scripts/run_eval_gpu.sh DATA_DIR CHECKPOINT_PATH
+  bash scripts/run_eval_gpu.sh DATA_DIR CHECKPOINT_PATH
 ```
 
 ### Launch
@@ -339,9 +339,9 @@ You can start training using python or shell scripts. The usage of shell scripts
 # eval example
   shell:
       Ascend:
-            sh scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
+            bash scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
       GPU:
-            sh scripts/run_eval_gpu.sh DATA_DIR CHECKPOINT_PATH
+            bash scripts/run_eval_gpu.sh DATA_DIR CHECKPOINT_PATH
 ```
 
 > checkpoint can be produced in training process.
@@ -378,7 +378,7 @@ Before performing inference, the model file must be exported by export script on
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 -NOTE:Ascend310 inference use Imagenet dataset . The label of the image is the number of folder which is started from 0 after sorting.

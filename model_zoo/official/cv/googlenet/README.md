@@ -95,12 +95,12 @@ After installing MindSpore via the official website, you can start training and 
   python train.py > train.log 2>&1 &
 
   # run distributed training example
-  sh scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh rank_table.json
 
   # run evaluation example
   python eval.py > eval.log 2>&1 &
   OR
-  sh run_eval.sh
+  bash run_eval.sh
 
   # run inferenct example
   bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
@@ -122,12 +122,12 @@ After installing MindSpore via the official website, you can start training and 
   python train.py > train.log 2>&1 &
 
   # run distributed training example
-  sh scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
+  bash scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
 
   # run evaluation example
   python eval.py --checkpoint_path=[CHECKPOINT_PATH] > eval.log 2>&1 &  
   OR
-  sh run_eval_gpu.sh [CHECKPOINT_PATH]
+  bash run_eval_gpu.sh [CHECKPOINT_PATH]
   ```
 
 - running on CPU
@@ -390,7 +390,7 @@ For more configuration details, please refer the script `config.py`.
 - running on Ascend
 
   ```bash
-  sh scripts/run_train.sh rank_table.json
+  bash scripts/run_train.sh rank_table.json
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log`. The loss value will be achieved as follows:
@@ -409,7 +409,7 @@ For more configuration details, please refer the script `config.py`.
 - running on GPU
 
   ```bash
-  sh scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
+  bash scripts/run_train_gpu.sh 8 0,1,2,3,4,5,6,7
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file `train/train.log`.
@@ -425,7 +425,7 @@ For more configuration details, please refer the script `config.py`.
   ```python
   python eval.py > eval.log 2>&1 &  
   OR
-  sh scripts/run_eval.sh
+  bash scripts/run_eval.sh
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
@@ -460,7 +460,7 @@ For more configuration details, please refer the script `config.py`.
   OR,
 
   ```bash
-  sh scripts/run_eval_gpu.sh [CHECKPOINT_PATH]
+  bash scripts/run_eval_gpu.sh [CHECKPOINT_PATH]
   ```
 
   The above python command will run in the background. You can view the results through the file "eval/eval.log". The accuracy of the test dataset will be as follows:
@@ -496,7 +496,7 @@ Current batch_ Size can only be set to 1.
 
   ```shell
   # Ascend310 inference
-  sh run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+  bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
   after allreduce eval: top1_correct=9252, tot=10000, acc=92.52%
   ```
 

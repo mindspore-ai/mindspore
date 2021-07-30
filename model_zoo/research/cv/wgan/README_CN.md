@@ -69,17 +69,17 @@ WGAN网络包含两部分，生成器网络和判别器网络。判别器网络�
 
   ```python
   # 运行单机训练示例（包括以下两种情况）：
-  sh run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] [NOBN]
+  bash run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] [NOBN]
 
   # 第一种情况（选用标准卷积DCGAN的生成器结构）：
-  sh run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] False
+  bash run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] False
 
   # 第二种情况（选用没有BatchNorm的卷积DCGAN的生成器结构）：
-  sh run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] True
+  bash run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] True
 
 
   # 运行评估示例
-  sh run_eval.sh [DEVICE_ID] [CONFIG_PATH] [CKPT_FILE_PATH] [OUTPUT_DIR] [NIMAGES]
+  bash run_eval.sh [DEVICE_ID] [CONFIG_PATH] [CKPT_FILE_PATH] [OUTPUT_DIR] [NIMAGES]
   ```
 
 # 脚本说明
@@ -161,19 +161,19 @@ WGAN网络包含两部分，生成器网络和判别器网络。判别器网络�
 - Ascend处理器环境运行
 
   ```bash
-  sh run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] [NOBN]
+  bash run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] [NOBN]
   ```
 
   第一种情况（选用标准卷积DCGAN的生成器结构）：
 
   ```bash
-  sh run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] False
+  bash run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] False
   ```
 
   第二种情况（选用没有BatchNorm的卷积DCGAN的生成器结构）：
 
   ```bash
-  sh run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] True
+  bash run_train.sh [DATASET] [DATAROOT] [DEVICE_ID] True
   ```
 
   上述python命令将在后台运行，您可以通过train.log文件查看结果。
@@ -195,7 +195,7 @@ WGAN网络包含两部分，生成器网络和判别器网络。判别器网络�
   在运行以下命令之前，请检查用于推理的检查点和json文件路径，并设置输出图片的路径。
 
   ```bash
-  sh run_eval.sh [DEVICE_ID] [CONFIG_PATH] [CKPT_FILE_PATH] [OUTPUT_DIR] [NIMAGES]
+  bash run_eval.sh [DEVICE_ID] [CONFIG_PATH] [CKPT_FILE_PATH] [OUTPUT_DIR] [NIMAGES]
   ```
 
   上述python命令将在后台运行，您可以通过eval/eval.log文件查看日志信息，在输出图片的路径下查看生成的图片。

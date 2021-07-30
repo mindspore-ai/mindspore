@@ -119,7 +119,7 @@ After installing MindSpore via the official website, you can start training and 
 bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
 
 # training on single NPU
-sh run_standalone_train.sh
+bash run_standalone_train.sh
 
 # run eval on Ascend
 bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]

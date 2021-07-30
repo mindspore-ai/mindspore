@@ -183,7 +183,7 @@ Dataset used:
 - build mindrecord training data
 
   ```python
-  sh build_data.sh
+  bash build_data.sh
   or
   python src/data/build_seg_data.py  --data_root=/home/sun/data/Mindspore/benchmark_RELEASE/dataset  \
                                      --data_lst=/home/sun/data/Mindspore/benchmark_RELEASE/dataset/trainaug.txt  \
@@ -205,10 +205,10 @@ Dataset used:
   # Ascend单卡训练示例
   python train.py --device_id device_id
   or
-  sh scripts/run_standalone_train.sh [DEVICE_ID]
+  bash scripts/run_standalone_train.sh [DEVICE_ID]
 
   #Ascend八卡并行训练
-  sh scripts/run_train.sh [DEVICE_NUM] rank_table.json
+  bash scripts/run_train.sh [DEVICE_NUM] rank_table.json
   ```
 
 - running on GPU with gpu default parameters
@@ -219,7 +219,7 @@ Dataset used:
   --config_path=gpu_default_config.yaml  \
   --device_target=GPU
   or
-  sh scripts/run_standalone_train_gpu.sh DEVICE_ID
+  bash scripts/run_standalone_train_gpu.sh DEVICE_ID
 
   # GPU八卡训练示例
   export RANK_SIZE=8
@@ -228,7 +228,7 @@ Dataset used:
   --config_path=gpu_default_config.yaml \
   --device_target=GPU
   or
-  sh run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
+  bash run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
 
   # GPU评估示例
   python eval.py  \
@@ -333,7 +333,7 @@ Dataset used:
   ```
 
   ```shell 评估
-  sh scripts/run_eval.sh DATA_ROOT DATA_LST CKPT_PATH
+  bash scripts/run_eval.sh DATA_ROOT DATA_LST CKPT_PATH
   ```
 
   以上的python命令会在终端上运行，你可以在终端上查看此次评估的结果。测试集的精确度会以类似如下方式呈现：

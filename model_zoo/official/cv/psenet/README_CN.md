@@ -68,7 +68,7 @@
 
 ```python
 # 分布式训练运行示例
-sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 
 # 下载opencv库
 download pyblind11, opencv3.4
@@ -89,7 +89,7 @@ python test.py --ckpt pretrained_model.ckpt --TEST_ROOT_DIR [test root path]
 
 download script.py
 # 运行评估示例
-sh scripts/run_eval_ascend.sh
+bash scripts/run_eval_ascend.sh
 ```
 
 ## 脚本说明
@@ -153,7 +153,7 @@ sh scripts/run_eval_ascend.sh
   请遵循链接中的说明：[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
 
 ```shell
-sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 ```
 
 上述shell脚本将在后台运行分布训练。可以通过`device[X]/test_*.log`文件查看结果。
@@ -244,7 +244,7 @@ python test.py --ckpt [CKPK PATH] --TEST_ROOT_DIR [TEST DATA DIR]
 第三步：建议将评估方法根符号链接到$MINDSPORE/model_zoo/psenet/eval_ic15/。如果您的文件夹结构不同，您可能需要更改评估脚本文件中的相应路径。  
 
 ```shell
-sh ./script/run_eval_ascend.sh.sh  
+bash ./script/run_eval_ascend.sh.sh  
 ```
 
 #### 结果

@@ -80,7 +80,7 @@ After installing MindSpore via the official website, you can start training and 
     --do_eval=True > ms_log/output.log 2>&1 &
 
   # run distributed training example
-  sh scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
+  bash scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
 
   # run evaluation example
   python eval.py \
@@ -88,7 +88,7 @@ After installing MindSpore via the official website, you can start training and 
     --checkpoint_path='./checkpoint/deepfm.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
+  bash scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
   ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -112,7 +112,7 @@ After installing MindSpore via the official website, you can start training and 
     --do_eval=True > ms_log/output.log 2>&1 &
 
   # run distributed training example
-  sh scripts/run_distribute_train.sh 8 /dataset_path
+  bash scripts/run_distribute_train.sh 8 /dataset_path
 
   # run evaluation example
   python eval.py \
@@ -120,7 +120,7 @@ After installing MindSpore via the official website, you can start training and 
     --checkpoint_path='./checkpoint/deepfm.ckpt' \
     --device_target='GPU' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 GPU /dataset_path /checkpoint_path/deepfm.ckpt
+  bash scripts/run_eval.sh 0 GPU /dataset_path /checkpoint_path/deepfm.ckpt
   ```
 
 - running on CPU
@@ -341,7 +341,7 @@ Parameters for both training and evaluation can be set in config.py
 - running on Ascend
 
   ```shell
-  sh scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
+  bash scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file `log[X]/output.log`. The loss value are saved in loss.log file.
@@ -364,7 +364,7 @@ Parameters for both training and evaluation can be set in config.py
     --checkpoint_path='./checkpoint/deepfm.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
+  bash scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
   ```
 
   The above python command will run in the background. You can view the results through the file "eval_output.log". The accuracy is saved in auc.log file.

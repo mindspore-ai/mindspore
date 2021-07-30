@@ -100,12 +100,12 @@ After installing MindSpore via the official website, you can start training and 
   python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
 
   # run distributed training example
-  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  bash scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
 
   # run evaluation example
   python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  bash scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -176,12 +176,12 @@ After installing MindSpore via the official website, you can start training and 
   python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
 
   # run distributed training example
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7  [NET_NAME] [DATASET_NAME] [DATASET_PATH]
+  bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7  [NET_NAME] [DATASET_NAME] [DATASET_PATH]
 
   # run evaluation example
   python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0  [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_distribute_eval_gpu.sh 1 0  [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
 # [Script Description](#contents)
@@ -306,7 +306,7 @@ You can modify the training behaviour through the various flags in the `densenet
 - running on Ascend
 
   ```bash
-  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME]  [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  bash scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME]  [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
   ```
 
   The above shell script will run distribute training in the background. You can view the results log and model checkpoint through the file `train[X]/output/202x-xx-xx_time_xx_xx_xx/`. The loss value of training DenseNet121 on ImageNet will be achieved as follows:
@@ -326,7 +326,7 @@ You can modify the training behaviour through the various flags in the `densenet
 
   ```bash
   cd scripts
-  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
+  bash run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file `train/train.log`.
@@ -342,7 +342,7 @@ You can modify the training behaviour through the various flags in the `densenet
   ```python
   python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
-  sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+  bash scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
 
   The above python command will run in the background. You can view the results through the file "output/202x-xx-xx_time_xx_xx_xx/202x_xxxx.log". The accuracy of evaluating DenseNet121 on the test dataset of ImageNet will be as follows:
@@ -359,7 +359,7 @@ You can modify the training behaviour through the various flags in the `densenet
   ```python
   python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
-  sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
   The above python command will run in the background. You can view the results through the file "eval/eval.log". The accuracy of evaluating DenseNet121 on the test dataset of ImageNet will be as follows:

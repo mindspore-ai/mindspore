@@ -119,7 +119,7 @@ VGG 16网络主要由几个基本模块（包括卷积层和池化层）和三�
 python train.py  --config_path=[YAML_CONFIG_PATH] --data_dir=[DATA_PATH] --dataset=[DATASET_TYPE] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh scripts/run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
+bash scripts/run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # 评估示例
 python eval.py --config_path=[YAML_CONFIG_PATH] --data_dir=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[DATASET_TYPE] > output.eval.log 2>&1 &
@@ -136,7 +136,7 @@ python eval.py --config_path=[YAML_CONFIG_PATH] --data_dir=[DATA_PATH]  --pre_tr
 python train.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=[DATASET_TYPE] --data_dir=[DATA_PATH] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh scripts/run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
+bash scripts/run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # 评估示例
 python eval.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=[DATASET_TYPE] --data_dir=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
@@ -437,7 +437,7 @@ epcoh: 2 step: 781, loss is 1.827582
 - 分布式训练
 
 ```bash
-sh scripts/run_distribute_train.sh rank_table.json your_data_path
+bash scripts/run_distribute_train.sh rank_table.json your_data_path
 ```
 
 上述shell脚本会在后台进行分布式训练，可通过`train_parallel[X]/log`文件查看结果。

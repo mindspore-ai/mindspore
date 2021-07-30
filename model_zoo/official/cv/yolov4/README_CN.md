@@ -131,10 +131,10 @@ YOLOv4需要CSPDarknet53主干来提取图像特征进行检测。 您可以从�
       --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 
   # 使用shell脚本执行单尺度单机训练示例（1卡）
-  sh run_standalone_train.sh dataset/xxx cspdarknet53_backbone.ckpt
+  bash run_standalone_train.sh dataset/xxx cspdarknet53_backbone.ckpt
 
   # 在Ascend设备上，使用shell脚本执行多尺度分布式训练示例（8卡）
-  sh run_distribute_train.sh dataset/xxx cspdarknet53_backbone.ckpt rank_table_8p.json
+  bash run_distribute_train.sh dataset/xxx cspdarknet53_backbone.ckpt rank_table_8p.json
 
   # 使用python命令评估
   python eval.py \
@@ -143,7 +143,7 @@ YOLOv4需要CSPDarknet53主干来提取图像特征进行检测。 您可以从�
       --testing_shape=608 > log.txt 2>&1 &
 
   # 使用shell脚本评估
-  sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
+  bash run_eval.sh dataset/xxx checkpoint/xxx.ckpt
   ```
 
 - [ModelArts](https://support.huaweicloud.com/modelarts/)上训练
@@ -352,7 +352,7 @@ Cspdarknet53是一个分类器，可以在ImageNet(ILSVRC2012)等数据集上训
 在Ascend设备上，使用shell脚本执行单机训练示例（1卡）
 
 ```bash
-sh run_standalone_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt
+bash run_standalone_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt
 ```
 
 ```text
@@ -392,7 +392,7 @@ python train.py \
 在Ascend设备上，使用shell脚本执行分布式训练示例（8卡）
 
 ```bash
-sh run_distribute_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt rank_table_8p.json
+bash run_distribute_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt rank_table_8p.json
 ```
 
 上述shell脚本将在后台运行分布式训练。 您可以通过train_parallel[X]/log.txt文件查看结果。 得到如下损失值：
@@ -435,7 +435,7 @@ python eval.py \
     --pretrained=yolov4.ckpt \
     --testing_shape=608 > log.txt 2>&1 &
 OR
-sh run_eval.sh dataset/coco2017 checkpoint/yolov4.ckpt
+bash run_eval.sh dataset/coco2017 checkpoint/yolov4.ckpt
 ```
 
 上述python命令将在后台运行。 您可以通过log.txt文件查看结果。 测试数据集的mAP如下：
@@ -465,7 +465,7 @@ python test.py \
     --pretrained=yolov4.ckpt \
     --testing_shape=608 > log.txt 2>&1 &
 OR
-sh run_test.sh dataset/coco2017 checkpoint/yolov4.ckpt
+bash run_test.sh dataset/coco2017 checkpoint/yolov4.ckpt
 ```
 
 predict_xxx.json文件位于test/outputs/%Y-%m-%d_time_%H_%M_%S/。
@@ -511,7 +511,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ```shell
 # Ascend 310推理
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [ANN_FILE]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [ANN_FILE]
 ```
 
 `DEVICE_ID`是可选参数，默认值为0。

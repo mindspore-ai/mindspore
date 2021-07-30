@@ -180,11 +180,11 @@ MSCOCO2017
 # 八卡并行训练示例：
 
 创建 RANK_TABLE_FILE
-sh scripts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE MINDRECORD_DIR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+bash scripts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE MINDRECORD_DIR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 # 单卡训练示例：
 
-sh scripts/run_single_train.sh DEVICE_ID MINDRECORD_DIR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+bash scripts/run_single_train.sh DEVICE_ID MINDRECORD_DIR PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 ```
 
@@ -200,12 +200,12 @@ python create_data.py --dataset coco
 
 Ascend:
 # 八卡并行训练示例(在retinanet目录下运行)：
-sh scripts/run_distribute_train.sh 8 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) MINDRECORD_DIR(mindrecord数据集文件夹路径) PRE_TRAINED(预训练checkpoint地址，可选) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小，可选）
+bash scripts/run_distribute_train.sh 8 RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) MINDRECORD_DIR(mindrecord数据集文件夹路径) PRE_TRAINED(预训练checkpoint地址，可选) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小，可选）
 
 例如：sh scripts/run_distribute_train.sh 8 scripts/rank_table_8pcs.json ./cache/mindrecord_coco
 
 # 单卡训练示例(在retinanet目录下运行)：
-sh scripts/run_single_train.sh 0 ./cache/mindrecord_coco
+bash scripts/run_single_train.sh 0 ./cache/mindrecord_coco
 ```
 
 #### 结果
@@ -288,13 +288,13 @@ Epoch time: 164531.610, per step time: 359.239
 使用shell脚本进行评估。shell脚本的用法如下:
 
 ```eval
-sh scripts/run_eval.sh [DEVICE_ID] [DATASET] [MINDRECORD_DIR] [CHECKPOINT_PATH] [ANN_FILE PATH]
+bash scripts/run_eval.sh [DEVICE_ID] [DATASET] [MINDRECORD_DIR] [CHECKPOINT_PATH] [ANN_FILE PATH]
 ```
 
 #### <span id="running">运行</span>
 
 ```eval运行
-sh scripts/run_eval.sh 0 coco /cache/mindrecord_dir/ /cache/checkpoint/retinanet_500-458.ckpt /cache/anno_path/instances_{}.json
+bash scripts/run_eval.sh 0 coco /cache/mindrecord_dir/ /cache/checkpoint/retinanet_500-458.ckpt /cache/anno_path/instances_{}.json
 ```
 
 > checkpoint 可以在训练过程中产生.
@@ -369,7 +369,7 @@ python export.py  --file_name retinanet --file_format MINDIR --checkpoint_path /
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
 ```
 
 #### <span id="running">运行</span>

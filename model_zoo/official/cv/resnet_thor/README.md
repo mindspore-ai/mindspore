@@ -73,10 +73,10 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # run distributed training example
-sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
 
 # run evaluation example
-sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 > For distributed training, a hccl configuration file with JSON format needs to be created in advance. About the configuration file, you can refer to the [HCCL_TOOL](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -85,10 +85,10 @@ sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 
 ```python
 # run distributed training example
-sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
+bash run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
 
 # run evaluation example
-sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
  ```
 
 ## Script Description
@@ -176,7 +176,7 @@ Parameters for both training and inference can be set in config.py.
 #### Ascend 910
 
 ```shell
-  sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
+  bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [DEVICE_NUM]
 ```
 
 We need three parameters for this scripts.
@@ -204,7 +204,7 @@ epoch: 42 step: 5004, loss is 1.6453942
 #### GPU
 
 ```shell
-sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
+bash run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]
 ```
 
 Training result will be stored in the current path, whose folder name begins with "train_parallel".  Under this, you can find checkpoint file together with result like the following in log.
@@ -228,7 +228,7 @@ Before running the command below, please check the checkpoint path used for eval
 #### Ascend 910
 
 ```shell
-  sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 We need two parameters for this scripts.
@@ -247,7 +247,7 @@ Inference result will be stored in the example path, whose folder name is "eval"
 #### GPU
 
 ```shell
-  sh run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
+  bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the following in log.

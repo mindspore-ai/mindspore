@@ -188,28 +188,28 @@ or shell script:
 ```script
 Ascend:
     # distribute training example(8p)
-    sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+    bash run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
     # standalone training
-    sh run_standalone_train.sh DEVICE_ID DATA_PATH
+    bash run_standalone_train.sh DEVICE_ID DATA_PATH
 GPU:
     # distribute training example(8p)
-    sh run_distribute_train_for_gpu.sh DATA_PATH
+    bash run_distribute_train_for_gpu.sh DATA_PATH
     # standalone training
-    sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_PATH
+    bash run_standalone_train_for_gpu.sh DEVICE_ID DATA_PATH
 ```
 
 #### Launch
 
 ```bash
 # distributed training example(8p) for Ascend
-sh scripts/run_distribute_train.sh RANK_TABLE_FILE /dataset/train
+bash scripts/run_distribute_train.sh RANK_TABLE_FILE /dataset/train
 # standalone training example for Ascend
-sh scripts/run_standalone_train.sh 0 /dataset/train
+bash scripts/run_standalone_train.sh 0 /dataset/train
 
 # distributed training example(8p) for GPU
-sh scripts/run_distribute_train_for_gpu.sh /dataset/train
+bash scripts/run_distribute_train_for_gpu.sh /dataset/train
 # standalone training example for GPU
-sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
+bash scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 ```
 
 You can find checkpoint file together with result in log.
@@ -228,7 +228,8 @@ or shell script:
 
 ```script
 # Evaluation
-sh scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH DEVICE_TARGET
+
+bash scripts/run_eval.sh DEVICE_ID DATA_PATH CHECKPOINT_FILE_PATH DEVICE_TARGET
 ```
 
 PLATFORM is Ascend or GPU, default is Ascend.
@@ -237,7 +238,7 @@ PLATFORM is Ascend or GPU, default is Ascend.
 
 ```bash
 # Evaluation with checkpoint
-sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext_100.ckpt Ascend
+bash scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext_100.ckpt Ascend
 ```
 
 #### Result

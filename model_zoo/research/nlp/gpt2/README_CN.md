@@ -375,7 +375,7 @@ python create_lm_data.py --input_file /{path}/wmt14.fr_en.txt --output_file /{pa
 而后执行`scripts/run_language_model.sh`这个shell脚本：
 
 ```bash
-sh scripts/run_language_model.sh   --device_target="Ascend"
+bash scripts/run_language_model.sh   --device_target="Ascend"
                                    --do_train="true"
                                    --do_eval="false"
                                    --epoch_num=1
@@ -396,7 +396,7 @@ sh scripts/run_language_model.sh   --device_target="Ascend"
 日志和输出文件可以在`./ms_log/`路径下获取。
 
 ```bash
-sh scripts/run_language_model.sh [--options]
+bash scripts/run_language_model.sh [--options]
 ```
 
 `run_language_model.sh`的用法如下：
@@ -448,7 +448,7 @@ GPT-2模型可以在`WikiText2/WikiText103/PTB/1BW`测试集上进行对应的�
 评估模型时，首先配置`src/finetune_eval_config.py`，而后执行`scripts/run_language_model.sh`这个shell脚本，若该模型在某个数据集上被微调了，则使用该模型进行对应测试集的评估时需要设置`--eval_type="finetuned"`，否则设置`eval_type="zero-shot"`，除此之外`--load_finetune_ckpt_path`是微调好后的checkpoint文件位置
 
 ```bash
-sh scripts/run_language_model.sh   --device_target="Ascend"
+bash scripts/run_language_model.sh   --device_target="Ascend"
                                    --metric_method="PPL"
                                    --do_train="false"
                                    --do_eval="true"
@@ -489,7 +489,7 @@ GPT-2模型可以在`CBT-CN/CBT-NE`验证集上进行对应的评估，针对以
 评估模型时，首先配置`src/finetune_eval_config.py`，而后执行`scripts/run_cbt.sh`这个shell脚本，且设置`eval_type="zero-shot"`，除此之外`--load_finetune_ckpt_path`是只需加载预训练好的checkpoint文件
 
 ```bash
-sh scripts/run_cbt.sh   --device_target="Ascend"
+bash scripts/run_cbt.sh   --device_target="Ascend"
                         --num_choice=10
                         --metric_method="Accuarcy"
                         --do_train="false"
@@ -515,7 +515,7 @@ sh scripts/run_cbt.sh   --device_target="Ascend"
 日志和输出文件可以在`./ms_log/`路径下获取。
 
 ```bash
-sh scripts/run_cbt.sh [--options]
+bash scripts/run_cbt.sh [--options]
 ```
 
 `run_cbt.sh`的用法如下：
@@ -564,7 +564,7 @@ GPT-2模型可以在`LAMBADA`测试集上进行对应的评估，针对以上数
 评估Accuracy
 
 ```bash
-sh scripts/run_lambada.sh   --device_target="Ascend"
+bash scripts/run_lambada.sh   --device_target="Ascend"
                             --metric_method="Accuarcy"
                             --do_train="false"
                             --do_eval="true"
@@ -581,7 +581,7 @@ sh scripts/run_lambada.sh   --device_target="Ascend"
 评估PPL
 
 ```bash
-sh scripts/run_lambada.sh   --device_target="Ascend"
+bash scripts/run_lambada.sh   --device_target="Ascend"
                             --metric_method="PPL"
                             --do_train="false"
                             --do_eval="true"
@@ -606,7 +606,7 @@ sh scripts/run_lambada.sh   --device_target="Ascend"
 日志和输出文件可以在`./ms_log/`路径下获取。
 
 ```bash
-sh scripts/run_lambada.sh [--options]
+bash scripts/run_lambada.sh [--options]
 ```
 
 ```text
@@ -655,7 +655,7 @@ GPT-2模型可以在`CoQA`开发集上进行对应的评估，针对以上数据
 评估模型时，首先配置`src/finetune_eval_config.py`，而后执行`scripts/run_read_comprehension.sh`这个shell脚本，且设置`eval_type="zero-shot"`，除此之外`--load_finetune_ckpt_path`是只需加载预训练好的checkpoint文件
 
 ```bash
-sh scripts/run_read_comprehension.sh   --device_target="Ascend"
+bash scripts/run_read_comprehension.sh   --device_target="Ascend"
                                        --metric_method="F1"
                                        --do_train="false"
                                        --do_eval="true"
@@ -686,7 +686,7 @@ sh scripts/run_read_comprehension.sh   --device_target="Ascend"
 日志和输出文件可以在`./ms_log/`路径下获取。
 
 ```bash
-sh scripts/run_read_comprehension.sh [--options]
+bash scripts/run_read_comprehension.sh [--options]
 ```
 
 ```text
@@ -743,7 +743,7 @@ options:
 而后执行`scripts/run_summarization.sh`这个shell脚本：
 
 ```bash
-sh scripts/run_summarization.sh   --device_target="Ascend"
+bash scripts/run_summarization.sh   --device_target="Ascend"
                                   --do_train="true"
                                   --do_eval="false"
                                   --metric_method="Rouge"
@@ -778,7 +778,7 @@ GPT-2模型可以在`CNN_Dailymail`开发集上进行对应的评估，针对以
 评估模型时，首先配置`src/finetune_eval_config.py`，而后执行`scripts/run_summarization.sh`这个shell脚本，且对于`TL;DR:`的情况设置`eval_type="finetuned"`，`--load_finetune_ckpt_path`是需要加载微调好的checkpoint文件；而对于`no hint`的情况设置`eval_type="zero-shot"`除此之外`--load_finetune_ckpt_path`是只需加载预训练好的checkpoint文件
 
 ```bash
-sh scripts/run_summarization.sh   --device_target="Ascend"
+bash scripts/run_summarization.sh   --device_target="Ascend"
                                   --do_train="false"
                                   --do_eval="true"
                                   --metric_method="Rouge"
@@ -809,7 +809,7 @@ sh scripts/run_summarization.sh   --device_target="Ascend"
 日志和输出文件可以在`./ms_log/`路径下获取。
 
 ```bash
-sh scripts/run_summarization.sh [--options]
+bash scripts/run_summarization.sh [--options]
 ```
 
 `run_summarization.sh`的用法如下：
@@ -861,7 +861,7 @@ GPT-2模型可以在`WMT14 En-Fr`和`WMT14 Fr-En`测试集上进行对应的评�
 评估模型时，首先配置`src/finetune_eval_config.py`，而后执行`scripts/run_translation.sh`这个shell脚本，且设置`eval_type="zero-shot"`，除此之外`--load_finetune_ckpt_path`是只需加载预训练好的checkpoint文件
 
 ```bash
-sh scripts/run_translation.sh   --device_target="Ascend"
+bash scripts/run_translation.sh   --device_target="Ascend"
                                 --metric_method="BLEU"
                                 --do_train="false"
                                 --do_eval="true"
@@ -891,7 +891,7 @@ sh scripts/run_translation.sh   --device_target="Ascend"
 日志和输出文件可以在`./ms_log/`路径下获取。
 
 ```bash
-sh scripts/run_translation.sh [--options]
+bash scripts/run_translation.sh [--options]
 ```
 
 ```text

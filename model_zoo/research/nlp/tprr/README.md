@@ -67,8 +67,8 @@ After installing MindSpore via the official website and Dataset is correctly gen
   ```python
   # run evaluation example with HotPotQA dev dataset
   pip install transformers
-  sh run_eval_ascend.sh
-  sh run_eval_ascend_reranker_reader.sh
+  bash run_eval_ascend.sh
+  bash run_eval_ascend_reranker_reader.sh
   ```
 
 # [Script Description](#contents)
@@ -145,7 +145,7 @@ Parameters for re-ranker and reader evaluation can be passed directly at executi
 - Retriever evaluation on Ascend
 
   ```python
-  sh run_eval_ascend.sh
+  bash run_eval_ascend.sh
   ```
 
   Evaluation result will be stored in the scripts path, whose folder name begins with "eval_tr". You can find the result like the
@@ -173,7 +173,7 @@ Parameters for re-ranker and reader evaluation can be passed directly at executi
   Use the output of retriever as input of re-ranker
 
   ```python
-  sh run_eval_ascend_reranker_reader.sh
+  bash run_eval_ascend_reranker_reader.sh
   ```
 
   Evaluation result will be stored in the scripts path, whose folder name begins with "eval". You can find the result like the

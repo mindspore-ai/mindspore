@@ -83,7 +83,7 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
     --do_eval=True > ms_log/output.log 2>&1 &
 
   # 运行分布式训练示例
-  sh scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
+  bash scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
 
   # 运行评估示例
   python eval.py \
@@ -91,7 +91,7 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
     --checkpoint_path='./checkpoint/deepfm.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
+  bash scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
   ```
 
   在分布式训练中，JSON格式的HCCL配置文件需要提前创建。
@@ -115,7 +115,7 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
     --do_eval=True > ms_log/output.log 2>&1 &
 
   # 运行分布式训练示例
-  sh scripts/run_distribute_train.sh 8 /dataset_path
+  bash scripts/run_distribute_train.sh 8 /dataset_path
 
   # 运行评估示例
   python eval.py \
@@ -123,7 +123,7 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
     --checkpoint_path='./checkpoint/deepfm.ckpt' \
     --device_target='GPU' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 GPU /dataset_path /checkpoint_path/deepfm.ckpt
+  bash scripts/run_eval.sh 0 GPU /dataset_path /checkpoint_path/deepfm.ckpt
   ```
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
@@ -324,7 +324,7 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
 - Ascend处理器上运行
 
   ```运行命令
-  sh scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
+  bash scripts/run_distribute_train.sh 8 /dataset_path /rank_table_8p.json
   ```
 
   上述shell脚本将在后台运行分布式训练。请在`log[X]/output.log`文件中查看结果。损失值保存在loss.log文件中。
@@ -346,7 +346,7 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
     --checkpoint_path='./checkpoint/deepfm.ckpt' \
     --device_target='Ascend' > ms_log/eval_output.log 2>&1 &
   OR
-  sh scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
+  bash scripts/run_eval.sh 0 Ascend /dataset_path /checkpoint_path/deepfm.ckpt
   ```
 
   上述python命令将在后台运行，请在eval_output.log路径下查看结果。准确率保存在auc.log文件中。

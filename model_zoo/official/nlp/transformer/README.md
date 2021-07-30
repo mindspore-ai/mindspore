@@ -61,10 +61,10 @@ After dataset preparation, you can start training and evaluation as follows:
 
 ```bash
 # run training example
-sh scripts/run_standalone_train_ascend.sh 0 52 /path/ende-l128-mindrecord
+bash scripts/run_standalone_train_ascend.sh 0 52 /path/ende-l128-mindrecord
 
 # run distributed training example
-sh scripts/run_distribute_train_ascend.sh 8 52 /path/ende-l128-mindrecord rank_table.json ./default_config.yaml
+bash scripts/run_distribute_train_ascend.sh 8 52 /path/ende-l128-mindrecord rank_table.json ./default_config.yaml
 
 # run evaluation example
 python eval.py > eval.log 2>&1 &
@@ -318,13 +318,13 @@ Parameters for learning rate:
 - Run `run_standalone_train.sh` for non-distributed training of Transformer model.
 
     ``` bash
-    sh scripts/run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE GRADIENT_ACCUMULATE_STEP DATA_PATH
+    bash scripts/run_standalone_train.sh DEVICE_TARGET DEVICE_ID EPOCH_SIZE GRADIENT_ACCUMULATE_STEP DATA_PATH
     ```
 
 - Run `run_distribute_train_ascend.sh` for distributed training of Transformer model.
 
     ``` bash
-    sh scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH
+    bash scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE CONFIG_PATH
     ```
 
 **Attention**: data sink mode can not be used in transformer since the input data have different sequence lengths.
@@ -342,7 +342,7 @@ Parameters for learning rate:
 - Run `process_output.sh` to process the output token ids to get the real translation results.
 
     ```bash
-    sh scripts/process_output.sh REF_DATA EVAL_OUTPUT VOCAB_FILE
+    bash scripts/process_output.sh REF_DATA EVAL_OUTPUT VOCAB_FILE
     ```
 
     You will get two files, REF_DATA.forbleu and EVAL_OUTPUT.forbleu, for BLEU score calculation.

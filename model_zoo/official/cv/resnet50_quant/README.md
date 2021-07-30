@@ -135,7 +135,7 @@ Parameters for both training and evaluation can be set in config.py
 
 ### Usage
 
-- Ascend: sh run_train.sh Ascend [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
+- Ascend: bash run_train.sh Ascend [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
 
 ### Launch
 
@@ -162,7 +162,7 @@ epoch: 5 step: 5004, loss is 3.1978393
 
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- Ascend: bash run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 

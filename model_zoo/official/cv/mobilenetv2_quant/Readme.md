@@ -194,13 +194,13 @@ You can start evaluating using python or shell scripts. The usage of shell scrip
 
 For quantization aware training (default):
 
-- Ascend: sh run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
-- GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- Ascend: bash run_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: bash run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 For Learned Step Size Quantization:
 
-- Ascend: sh run_lsq_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
-- GPU: sh run_lsq_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- Ascend: bash run_lsq_infer.sh Ascend [DATASET_PATH] [CHECKPOINT_PATH]
+- GPU: bash run_lsq_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### Launch
 
@@ -211,8 +211,8 @@ python：
        GPU:  python eval.py --device_target GPU --dataset_path [VAL_DATASET_PATH] --checkpoint_path ~/train/mobilenet-60_1601.ckpt
 
 shell:
-      Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
-      GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      Ascend: bash run_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: bash run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
 
 # training example for Learned Step Size Quantization
 python：
@@ -222,8 +222,8 @@ python：
              --checkpoint_path ~/train/mobilenet-60_1601.ckpt --optim_option "LEARNED_SCALE"
 
 shell:
-      Ascend: sh run_lsq_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
-      GPU: sh run_lsq_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      Ascend: bash run_lsq_infer.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
+      GPU: bash run_lsq_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
 ```
 
 > checkpoint can be produced in training process.

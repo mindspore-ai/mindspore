@@ -36,12 +36,12 @@ argparse
 # 训练示例
 python train.py --dataset_path=/path/to/training/data --model_type DnCNN-S --ckpt-prefix=DnCNN-S_25noise  --noise_level=25
 # 或者
-sh ./scripts/run_train_gpu.sh /path/to/training/data DnCNN-S DnCNN-S_25noise 25
+bash ./scripts/run_train_gpu.sh /path/to/training/data DnCNN-S DnCNN-S_25noise 25
 
 # 评估示例
 python eval.py --dataset_path=/path/to/test/data --ckpt_path=./ckpt/DnCNN-S-50_1800.ckpt --model_type=DnCNN-S --noise_level=25 --noise_type=denoise
 # 或者
-sh ./scripts/run_eval_gpu.sh /path/to/test/data ./ckpt/DnCNN-S-50_1800.ckpt DnCNN-S 25 denoise
+bash ./scripts/run_eval_gpu.sh /path/to/test/data ./ckpt/DnCNN-S-50_1800.ckpt DnCNN-S 25 denoise
 ```
 
 ### 脚本说明

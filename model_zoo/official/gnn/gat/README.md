@@ -75,7 +75,7 @@ Note that you can run the scripts based on the dataset mentioned in original pap
     ```buildoutcfg
     cd ./scripts
     # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
-    sh run_process_data_ascend.sh [SRC_PATH] [DATASET_NAME]
+    bash run_process_data_ascend.sh [SRC_PATH] [DATASET_NAME]
     ```
 
 - Launch
@@ -110,7 +110,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
 
   ```bash
   # run training example with cora dataset, DATASET_NAME is cora
-  sh run_train_ascend.sh [DATASET_NAME]
+  bash run_train_ascend.sh [DATASET_NAME]
   ```
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
@@ -211,7 +211,7 @@ Parameters for both training and evaluation can be set in default_config.yaml.
 - running on Ascend
 
   ```python
-  sh run_train_ascend.sh [DATASET_NAME]
+  bash run_train_ascend.sh [DATASET_NAME]
   ```
 
   Training result will be stored in the scripts path, whose folder name begins with "train". You can find the result like the

@@ -63,11 +63,11 @@ CPM网络由GPT实现，GPT包括多层解码器模块。
 ```bash
 # zero-shot推理示例
 cd scripts
-sh run_zero-shot_inference_distribute_ascend.sh /path/test.mindrecord /path/true_labels.txt /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_2p.json
+bash run_zero-shot_inference_distribute_ascend.sh /path/test.mindrecord /path/true_labels.txt /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_2p.json
 
 # 运行分布式训练Finetune示例
 cd scripts
-sh run_distribute_train_ascend_single_machine.sh /path/train.mindrecord /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_8p.json
+bash run_distribute_train_ascend_single_machine.sh /path/train.mindrecord /path/cpm_mindspore_1p_fp32.ckpt /path/rank_table_8p.json
 
 # Finetune模型评估示例
 cd scripts

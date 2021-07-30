@@ -75,9 +75,9 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # enter script dir, train LeNet
-sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]  
+bash run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]  
 # enter script dir, evaluate LeNet
-sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
+bash run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
@@ -228,7 +228,7 @@ Major parameters in train.py and default_config.yaml as follows:
 ```bash
 python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-sh run_standalone_train_ascend.sh Data ckpt
+bash run_standalone_train_ascend.sh Data ckpt
 ```
 
 After training, the loss value will be achieved as follows:
@@ -254,7 +254,7 @@ Before running the command below, please check the checkpoint path used for eval
 ```bash
 python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
-sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
+bash run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ```
 
 You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:

@@ -168,11 +168,11 @@ MSCOCO2017
 # 八卡并行训练示例：
 
 创建 RANK_TABLE_FILE
-sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+bash run_distribute_train.sh DEVICE_NUM EPOCH_SIZE LR DATASET RANK_TABLE_FILE PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 # 单卡训练示例：
 
-sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
+bash run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional) PRE_TRAINED_EPOCH_SIZE(optional)
 
 ```
 
@@ -196,12 +196,12 @@ sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional)
 
       # 八卡并行训练示例(在retinanet目录下运行)：
 
-      sh scripts/run_distribute_train.sh 8 500 0.1 coco RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小）
-      例如：sh scripts/run_distribute_train.sh 8 500 0.1 coco scripts/rank_table_8pcs.json /dataset/retinanet-322_458.ckpt 322
+      bash scripts/run_distribute_train.sh 8 500 0.1 coco RANK_TABLE_FILE(创建的RANK_TABLE_FILE的地址) PRE_TRAINED(预训练checkpoint地址) PRE_TRAINED_EPOCH_SIZE（预训练EPOCH大小）
+      例如：bash scripts/run_distribute_train.sh 8 500 0.1 coco scripts/rank_table_8pcs.json /dataset/retinanet-322_458.ckpt 322
 
       # 单卡训练示例(在retinanet目录下运行)：
 
-      sh scripts/run_single_train.sh 0 500 0.1 coco /dataset/retinanet-322_458.ckpt 322
+      bash scripts/run_single_train.sh 0 500 0.1 coco /dataset/retinanet-322_458.ckpt 322
 
 ```
 
@@ -231,7 +231,7 @@ epoch time: 444237.851 ms, per step time: 484.976 ms
 您可以使用python或shell脚本进行训练。shell脚本的用法如下:
 
 ```eval
-sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
+bash scripts/run_eval.sh [DATASET] [DEVICE_ID]
 ```
 
 #### <span id="running">运行</span>
@@ -243,7 +243,7 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
       Ascend: python eval.py
   checkpoint 的路径在config里设置
   shell:
-      Ascend: sh scripts/run_eval.sh coco 0
+      Ascend: bash scripts/run_eval.sh coco 0
 ```
 
 > checkpoint 可以在训练过程中产生.

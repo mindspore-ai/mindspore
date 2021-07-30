@@ -88,11 +88,11 @@ YOLOv3整体网络架构如下：
 
     ```shell script
     # 运行单机训练示例
-    sh run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
+    bash run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
     # 运行分布式训练示例
-    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH] [RANK_TABLE_FILE]
+    bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH] [RANK_TABLE_FILE]
     # 运行评估示例
-    sh run_eval.sh [DEVICE_ID] [CKPT_PATH] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
+    bash run_eval.sh [DEVICE_ID] [CKPT_PATH] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
     ```
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
@@ -271,7 +271,7 @@ YOLOv3整体网络架构如下：
 - 单机模式
 
     ```shell script
-    sh run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt
+    bash run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt
     ```
 
     输入变量为设备编号、轮次大小、MindRecord目录路径、数据集目录路径、训练TXT文件路径。
@@ -279,7 +279,7 @@ YOLOv3整体网络架构如下：
 - 分布式模式
 
     ```shell script
-    sh run_distribute_train.sh 8 150 /data/Mindrecord_train /data /data/train.txt /data/hccl.json
+    bash run_distribute_train.sh 8 150 /data/Mindrecord_train /data /data/train.txt /data/hccl.json
     ```
 
     输入变量为设备编号、轮次大小、MindRecord目录路径、数据集目录路径、训练TXT文件路径和[hccl_tools配置文件](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)。**最好使用绝对路径。**
@@ -310,7 +310,7 @@ YOLOv3整体网络架构如下：
 运行`eval.py`，数据集为`image_dir`、`anno_path`(评估TXT)、`mindrecord_dir`和`ckpt_path`。`ckpt_path`是[检查点](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/save_model.html)文件的路径。
 
   ```shell script
-  sh run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt
+  bash run_eval.sh 0 yolo.ckpt ./Mindrecord_eval ./dataset ./dataset/eval.txt
   ```
 
 输入变量为设备编号、检查点路径、MindRecord目录路径、数据集目录路径、训练TXT文件路径。

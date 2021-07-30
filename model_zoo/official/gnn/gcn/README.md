@@ -81,23 +81,23 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 ```buildoutcfg
 cd ./scripts
 # SRC_PATH is the dataset file path you downloaded, DATASET_NAME is cora or citeseer
-sh run_process_data.sh [SRC_PATH] [DATASET_NAME]
+bash run_process_data.sh [SRC_PATH] [DATASET_NAME]
 ```
 
 ### Launch
 
 ```bash
 #Generate dataset in mindrecord format for cora
-sh run_process_data.sh ./data cora
+bash run_process_data.sh ./data cora
 #Generate dataset in mindrecord format for citeseer
-sh run_process_data.sh ./data citeseer
+bash run_process_data.sh ./data citeseer
 ```
 
 - Running on local with Ascend
 
 ```bash
 # run train with cora or citeseer dataset, DATASET_NAME is cora or citeseer
-sh run_train.sh [DATASET_NAME]
+bash run_train.sh [DATASET_NAME]
 ```
 
 - Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
@@ -190,13 +190,13 @@ Parameters for training can be set in config.py.
 
 ```bash
 # run train with cora or citeseer dataset, DATASET_NAME is cora or citeseer
-sh run_train.sh [DATASET_NAME]
+bash run_train.sh [DATASET_NAME]
 ```
 
 #### Launch
 
 ```bash
-sh run_train.sh cora
+bash run_train.sh cora
 ```
 
 #### Result

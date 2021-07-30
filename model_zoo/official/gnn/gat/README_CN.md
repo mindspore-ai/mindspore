@@ -74,7 +74,7 @@
   ```buildoutcfg
   cd ./scripts
   # SRC_PATH为下载的数据集文件路径，DATASET_NAME为Cora或Citeseer
-  sh run_process_data_ascend.sh [SRC_PATH] [DATASET_NAME]
+  bash run_process_data_ascend.sh [SRC_PATH] [DATASET_NAME]
   ```
 
     - 启动
@@ -109,7 +109,7 @@
 
   ```text
   # 使用Cora数据集运行训练示例，DATASET_NAME为cora
-  sh run_train_ascend.sh [DATASET_NAME]
+  bash run_train_ascend.sh [DATASET_NAME]
   ```
 
 - 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
@@ -208,7 +208,7 @@
 - Ascend处理器环境运行
 
   ```python
-  sh run_train_ascend.sh [DATASET_NAME]
+  bash run_train_ascend.sh [DATASET_NAME]
   ```
 
   训练结果将保存在脚本路径下，文件夹名称以“train”开头。您可在日志中找到结果

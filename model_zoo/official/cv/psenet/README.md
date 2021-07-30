@@ -67,7 +67,7 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # run distributed training example
-sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 
 #download opencv library
 download pyblind11, opencv3.4
@@ -86,7 +86,7 @@ python test.py --ckpt pretrained_model.ckpt --TEST_ROOT_DIR [test root path]
 #click "My Methods" button,then download Evaluation Scripts
 download script.py
 # run evaluation example
-sh scripts/run_eval_ascend.sh
+bash scripts/run_eval_ascend.sh
 ```
 
 # [Script Description](#contents)
@@ -156,7 +156,7 @@ Major parameters in default_config.yaml are:
   Please follow the instructions in the link below: <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
 
 ```shell
-sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 ```
 
 rank_table_file which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -176,7 +176,7 @@ device_1/log:epcoh: 2, step: 40, loss is 0.76629
 ### Distributed GPU Training
 
 ```shell
-sh scripts/run_distribute_train_gpu.sh [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
+bash scripts/run_distribute_train_gpu.sh [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 ```
 
 After training begins, log and loss.log file will be in train_parallel directory.
@@ -267,7 +267,7 @@ step 2: click "My Methods" button,then download Evaluation Scripts.
 step 3: it is recommended to symlink the eval method root to $MINDSPORE/model_zoo/psenet/eval_ic15/. if your folder structure is different,you may need to change the corresponding paths in eval script files.  
 
 ```shell
-sh ./script/run_eval_ascend.sh
+bash ./script/run_eval_ascend.sh
 ```
 
 The two scripts ./script/run_eval_ascend.sh and ./script/run_eval_gpu.sh are the same, you may run either for evaluating on ICDAR2015.

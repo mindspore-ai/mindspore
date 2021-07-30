@@ -1,7 +1,7 @@
 # 目录
 
 - [目录](#目录)
-- [ShuffleNetV1 描述](#ShuffleNetV1-描述)
+- [ShuffleNetV1 描述](#shufflenetv1-描述)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
 - [环境要求](#环境要求)
@@ -21,7 +21,7 @@
 - [模型说明](#模型说明)
     - [训练性能](#训练性能)
 - [随机情况的描述](#随机情况的描述)
-- [ModelZoo 主页](#modelzoo-主页)
+- [ModelZoo](#modelzoo)
 
 # ShuffleNetV1 描述
 
@@ -127,6 +127,7 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
       Ascend单卡训练示例：python train.py --train_dataset_path [DATA_DIR]
 
   shell:
+<<<<<<< HEAD
       Ascend八卡并行训练: sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_DIR]
       Ascend单卡训练示例: sh scripts/run_standalone_train.sh [DEVICE_ID] [DATA_DIR]
 
@@ -145,6 +146,10 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
   shell:
       GPU单卡训练示例: sh scripts/run_standalone_train_gpu.sh [DEVICE_ID] [DATA_DIR]
       GPU八卡并行训练: sh scripts/run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
+=======
+      Ascend八卡并行训练: bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_DIR]
+      Ascend单卡训练示例: bash scripts/run_standalone_train.sh [DEVICE_ID] [DATA_DIR]
+>>>>>>> fe806b7430... update bash
 ```
 
   分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -177,7 +182,7 @@ epoch time: 99864.092, per step time: 79.827, avg loss: 3.442
       python eval.py --eval_dataset_path [DATA_DIR] --ckpt_path [PATH_CHECKPOINT]
 
   shell:
-      sh scripts/run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
+      bash scripts/run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
 
 # GPU评估示例
   python:

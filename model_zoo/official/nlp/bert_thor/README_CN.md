@@ -71,7 +71,7 @@ BERT的总体架构包含3个嵌入层，用于查找令牌嵌入、位置嵌入
 
 ```shell
 # 分布式运行训练示例
-sh scripts/run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
+bash scripts/run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
 
 # 运行评估示例
 python pretrain_eval.py
@@ -139,7 +139,7 @@ python pretrain_eval.py
 #### Ascend 910
 
 ```shell
-  sh run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
+  bash run_distribute_pretrain.sh [DEVICE_NUM] [EPOCH_SIZE] [DATA_DIR] [SCHEMA_DIR] [RANK_TABLE_FILE]
 ```
 
 此脚本需设置如下参数：

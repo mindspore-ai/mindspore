@@ -383,13 +383,13 @@ python cornell_dialog.py --src_folder /{path}/cornell_dialog \
 Ascend处理器：
 
 ```ascend
-sh run_ascend.sh [--options]
+bash run_ascend.sh [--options]
 ```
 
 GPU处理器：
 
 ```gpu
-sh run_gpu.sh [--options]
+bash run_gpu.sh [--options]
 ```
 
 `run_ascend.sh`的用法如下：
@@ -432,7 +432,7 @@ options:
 Ascend处理器：
 
 ```ascend
-sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json
+bash run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json
 ```
 
 注：`run_ascend.sh`暂不支持不连续设备ID，`rank_table.json`中的设备ID必须从0开始。
@@ -440,20 +440,20 @@ sh run_ascend.sh --task t --device_num 2 --hccl_json /{path}/rank_table.json
 GPU处理器：
 
 ```gpu
-sh run_gpu.sh --task t --device_num 2
+bash run_gpu.sh --task t --device_num 2
 ```
 
 运行如下命令进行单卡训练：
 Ascend处理器：
 
 ```ascend
-sh run_ascend.sh --task t --device_num 1 --device_id 0
+bash run_ascend.sh --task t --device_num 1 --device_id 0
 ```
 
 GPU处理器：
 
 ```gpu
-sh run_gpu.sh --task t --device_num 1 --device_id 0
+bash run_gpu.sh --task t --device_num 1 --device_id 0
 ```
 
 ## 权重平均值
@@ -562,13 +562,13 @@ MASS通过预测输入序列中被屏蔽的片段来预训练序列到序列模�
 如使用Ascend芯片，执行`run_ascend.sh`这个shell脚本：
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1
+bash run_ascend.sh -t t -n 1 -i 1
 ```
 
 如使用GPU处理器，执行`run_gpu.sh`这个shell脚本：
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1
+bash run_gpu.sh -t t -n 1 -i 1
 ```
 
 日志和输出文件可以在`./train_mass_*/`路径下获取，模型文件可以在`default_config.yaml`配置文件中指定的路径下获取。
@@ -586,13 +586,13 @@ sh run_gpu.sh -t t -n 1 -i 1
 如使用Ascend芯片，执行`run_ascend.sh`这个shell脚本：
 
 ```ascend
-sh run_ascend.sh -t t -n 1 -i 1
+bash run_ascend.sh -t t -n 1 -i 1
 ```
 
 如使用GPU处理器，执行`run_gpu.sh`这个shell脚本：
 
 ```gpu
-sh run_gpu.sh -t t -n 1 -i 1
+bash run_gpu.sh -t t -n 1 -i 1
 ```
 
 日志和输出文件可以在`./train_mass_*/`路径下获取，模型文件可以在`default_config.yaml`配置文件中指定的路径下获取。
@@ -610,13 +610,13 @@ sh run_gpu.sh -t t -n 1 -i 1
 如使用Ascend芯片，执行`run_ascend.sh`这个shell脚本：
 
 ```bash
-sh run_ascend.sh -t i -n 1 -i 1 -o {outputfile}
+bash run_ascend.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 如使用GPU处理器，执行`run_gpu.sh`这个shell脚本：
 
 ```gpu
-sh run_gpu.sh -t i -n 1 -i 1 -o {outputfile}
+bash run_gpu.sh -t i -n 1 -i 1 -o {outputfile}
 ```
 
 ## Mindir推理

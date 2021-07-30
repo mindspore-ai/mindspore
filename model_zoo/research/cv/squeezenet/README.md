@@ -78,26 +78,26 @@ After installing MindSpore via the official website, you can start training and 
 
   ```bash
   # distributed training
-  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # standalone training
-  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # run evaluation example
-  Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+  Usage: bash scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
 - running on GPU
 
   ```bash
   # distributed training example
-  sh scripts/run_distribute_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  bash scripts/run_distribute_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # standalone training example
-  sh scripts/run_standalone_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  bash scripts/run_standalone_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # run evaluation example
-  sh scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+  bash scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
 # [Script Description](#contents)
@@ -228,10 +228,10 @@ For more configuration details, please refer the script `config.py`.
 
   ```bash
   # distributed training
-  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # standalone training
-  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
   ```
 
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -244,10 +244,10 @@ Training result will be stored in the example path, whose folder name begins wit
 
 ```bash
 # distributed training example
-sh scripts/run_distribute_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash scripts/run_distribute_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
 # standalone training example
-sh scripts/run_standalone_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+bash scripts/run_standalone_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 ### Result
@@ -308,12 +308,12 @@ epoch: 5 step 5004, loss is 4.888848304748535
 
 ```shell
 # evaluation
-Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ```shell
 # evaluation example
-sh scripts/run_eval.sh squeezenet cifar10 0 ~/cifar-10-verify-bin train/squeezenet_cifar10-120_1562.ckpt
+bash scripts/run_eval.sh squeezenet cifar10 0 ~/cifar-10-verify-bin train/squeezenet_cifar10-120_1562.ckpt
 ```
 
 checkpoint can be produced in training process.
@@ -321,7 +321,7 @@ checkpoint can be produced in training process.
 #### Running on GPU
 
 ```shell
-sh scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+bash scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
 ### Result

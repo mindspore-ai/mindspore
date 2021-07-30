@@ -60,13 +60,13 @@ After installing MindSpore via the official website, you can start training and 
 
 # run training example
 
-sh scripts/run_train.sh
+bash scripts/run_train.sh
 
 Before running the shell script, please set the `task_name`, `teacher_model_dir`, `student_model_dir` and `data_dir` in the run_train.sh file first.
 
 # run evaluation example
 
-sh scripts/run_eval.sh
+bash scripts/run_eval.sh
 
 Before running the shell script, please set the `task_name`, `model_dir` and `data_dir` in the run_eval.sh file first.
 ```
@@ -238,7 +238,7 @@ Before running the command below, please check `teacher_model_dir`, `student_mod
 python
     python train.py --task_name='sts-b' --device_target="Ascend" --teacher_model_dir='/home/xxx/model_dir/' --student_model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
 shell
-    sh scripts/run_train.sh [TASK_NAME] [DEVICE_TARGET] [TEACHER_MODEL_DIR] [STUDENT_MODEL_DIR] [DATA_DIR]
+    bash scripts/run_train.sh [TASK_NAME] [DEVICE_TARGET] [TEACHER_MODEL_DIR] [STUDENT_MODEL_DIR] [DATA_DIR]
 
 ```
 
@@ -268,7 +268,7 @@ If you want to after running and continue to eval.
 python
     python eval.py --task_name='sts-b' --device_target="Ascend" --model_dir='/home/xxx/model_dir/' --data_dir='/home/xxx/data_dir/'
 shell
-    sh scripts/run_eval.sh [TASK_NAME] [DEVICE_TARGET] [MODEL_DIR] [DATA_DIR]
+    bash scripts/run_eval.sh [TASK_NAME] [DEVICE_TARGET] [MODEL_DIR] [DATA_DIR]
 
 
 ```

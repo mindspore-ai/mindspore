@@ -93,7 +93,7 @@ VGG 19网络主要由几个基本模块（包括卷积层和池化层）和三�
 python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH]
+bash run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH]
 
 # 评估示例
 python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
@@ -110,7 +110,7 @@ python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eva
 python train.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train_gpu.sh [DATA_PATH]
+bash run_distribute_train_gpu.sh [DATA_PATH]
 
 # 评估示例
 python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
