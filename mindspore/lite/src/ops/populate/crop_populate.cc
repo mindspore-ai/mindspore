@@ -49,7 +49,7 @@ OpParameter *PopulateCropParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->axis_ = value->axis();
-  param->offset_size_ = param_offset->size();
+  param->offset_size_ = static_cast<int>(param_offset->size());
   for (size_t i = 0; i < param_offset->size(); ++i) {
     param->offset_[i] = *(param_offset->begin() + i);
   }

@@ -45,7 +45,7 @@ OpParameter *PopulateSliceParameter(const void *prim) {
       return nullptr;
     }
     for (size_t i = 0; i < param_axis->size(); ++i) {
-      slice_param->axis_[i] = param_axis->Get(i);
+      slice_param->axis_[i] = static_cast<int32_t>(param_axis->Get(i));
     }
   } else {
     // use default axes

@@ -59,10 +59,13 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
     free(param);
     return nullptr;
   }
-  if (fb_paddings->size() == 0 ||
-      ((*(fb_paddings->begin())) != nullptr && (*(fb_paddings->begin()))->data() != nullptr &&
-       static_cast<uint64_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size()) >
-         std::numeric_limits<size_t>::max() / sizeof(int64_t))) {
+  if (fb_paddings->size() == 0 || *(fb_paddings->begin()) == nullptr || (*(fb_paddings->begin()))->data() == nullptr) {
+    MS_LOG(ERROR) << "exit attr is nullptr.";
+    free(param);
+    return nullptr;
+  }
+  size_t num = static_cast<size_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size());
+  if (num > std::numeric_limits<size_t>::max() / sizeof(int64_t)) {
     MS_LOG(ERROR) << "The value of paddings.size() is zero or too big";
     free(param);
     return nullptr;

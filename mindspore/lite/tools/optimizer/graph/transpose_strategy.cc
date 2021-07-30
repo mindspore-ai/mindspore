@@ -31,6 +31,7 @@ namespace opt {
 namespace {
 constexpr size_t kFirstInput = 1;
 constexpr size_t kTransposePerm = 2;
+constexpr size_t kHalfDivisor = 2;
 constexpr size_t kOnnxStridedSlice = 6;
 const std::vector<int> NH2NC = {0, 3, 1, 2};
 const std::vector<int> NC2NH = {0, 2, 3, 1};
@@ -120,16 +121,16 @@ bool TransposeStrategy::CanFusionIfInsert(const FuncGraphPtr &func_graph, const 
     return false;
   }
   auto total_node_count = in_nodes.size() + out_nodes.size();
-  bool can_insert = trans_count > total_node_count / 2;
+  bool can_insert = trans_count > total_node_count / kHalfDivisor;
   if (CheckPrimitiveType(cnode, prim::kPrimActivation)) {
     auto prim_act = GetValueNode<std::shared_ptr<ops::Activation>>(cnode->input(0));
     MS_ASSERT(prim_act != nullptr);
     if (prim_act->get_activation_type() == mindspore::ActivationType::LEAKY_RELU) {
-      can_insert = trans_count >= total_node_count / 2;
+      can_insert = trans_count >= total_node_count / kHalfDivisor;
     }
   }
   if (CheckPrimitiveType(cnode, prim::kPrimSplit) || CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
-    can_insert = trans_count >= total_node_count / 2;
+    can_insert = trans_count >= total_node_count / kHalfDivisor;
   }
   if (!can_insert) {
     return can_insert;
@@ -203,7 +204,7 @@ STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNo
     auto new_axis = axis_map[axis < 0 ? axis + kInputSizeFour : axis];
     if (new_axis == 0) {
       offsets = {offsets[0], offsets[kInputIndexTwo], offsets[kInputIndexThree], offsets[1]};
-    } else if (new_axis == 3) {
+    } else if (new_axis == kInputIndexThree) {
       offsets = {offsets[1], offsets[kInputIndexTwo], offsets[0]};
     } else {
       offsets.push_back(0);

@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace lite {
 schema::Tensor *AttrToTensor(void *data, int data_size, bool is_array, TypeId type_id,
-                             std::vector<char *> *tensor_bufs) {
+                             std::vector<char *> *const tensor_bufs) {
   if (data == nullptr || tensor_bufs == nullptr) {
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";
     return nullptr;
@@ -50,7 +50,8 @@ schema::Tensor *AttrToTensor(void *data, int data_size, bool is_array, TypeId ty
     fbb.Clear();
     return nullptr;
   }
-  auto tensor_buf = reinterpret_cast<char *>(malloc(fbb.GetSize()));
+  size_t byte_num = fbb.GetSize();
+  auto tensor_buf = reinterpret_cast<char *>(malloc(byte_num));
   if (tensor_buf == nullptr) {
     MS_LOG(ERROR) << "malloc primitive_buf_ failed";
     fbb.Clear();

@@ -20,8 +20,10 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore {
 namespace lite {
-constexpr auto kMinShapeSize = 2;
-constexpr auto kMinPadSize = 4;
+constexpr size_t kMinShapeSize = 2;
+constexpr size_t kMinPadSize = 4;
+constexpr int kOffsetTwo = 2;
+constexpr int kOffsetThree = 3;
 OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   auto pooling_prim = static_cast<const schema::Primitive *>(primitive);
   MS_ASSERT(pooling_prim != nullptr);
@@ -53,8 +55,8 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   if (pad != nullptr && pad->size() >= kMinPadSize) {
     param->pad_u_ = static_cast<int>(*(pad->begin()));
     param->pad_d_ = static_cast<int>(*(pad->begin() + 1));
-    param->pad_l_ = static_cast<int>(*(pad->begin() + 2));
-    param->pad_r_ = static_cast<int>(*(pad->begin() + 3));
+    param->pad_l_ = static_cast<int>(*(pad->begin() + kOffsetTwo));
+    param->pad_r_ = static_cast<int>(*(pad->begin() + kOffsetThree));
   }
   if (!param->global_) {
     auto kernel_size = value->kernel_size();
@@ -138,8 +140,8 @@ OpParameter *PopulateMaxPoolParameter(const void *primitive) {
     if (pad != nullptr && pad->size() >= kMinPadSize) {
       param->pad_u_ = static_cast<int>(*(pad->begin()));
       param->pad_d_ = static_cast<int>(*(pad->begin() + 1));
-      param->pad_l_ = static_cast<int>(*(pad->begin() + 2));
-      param->pad_r_ = static_cast<int>(*(pad->begin() + 3));
+      param->pad_l_ = static_cast<int>(*(pad->begin() + kOffsetTwo));
+      param->pad_r_ = static_cast<int>(*(pad->begin() + kOffsetThree));
     }
   }
 
