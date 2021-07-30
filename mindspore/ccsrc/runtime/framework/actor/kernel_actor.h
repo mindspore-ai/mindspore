@@ -65,45 +65,45 @@ class KernelActor : public DebugAwareActor {
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
   // The kernel actor run when receive the input data.
-  void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   // The kernel actor run when receive the input control.
-  void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
   // The kernel actor run when receive the input control and input tensors, used in step mode.
   void RunOpControlWithInputTensor(AID *const input_control, OpContext<DeviceTensor> *const context,
                                    const std::vector<TensorPtr> *input_tensors);
 
   // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   // The callback after memory alloc finished.
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   // The debug related operation interface.
-  void SendDebugReq(OpContext<DeviceTensor> *context) override;
+  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
   // The callback after debug finished.
-  void OnDebugFinish(OpContext<DeviceTensor> *context) override;
+  void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;
 
   // Check whether satisfy the condition for launch.
-  bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
+  bool CheckLaunchCondition(OpContext<DeviceTensor> *const context) const;
   // Fetch the device tensor for launch.
-  void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
+  void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
   void FetchOutputDeviceTensor();
-  void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context);
+  void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
   // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
   void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
   // The processing before kernel launch: update the info of kernel launch.
-  void PreLaunchKernel(OpContext<DeviceTensor> *context);
+  void PreLaunchKernel(OpContext<DeviceTensor> *const context);
   // The processing after kernel launch: 1.erase input, 2.free memory, 3.send output.
-  void PostLaunchKernel(OpContext<DeviceTensor> *context);
+  void PostLaunchKernel(OpContext<DeviceTensor> *const context);
 
   // Send output data and output controls when finish kernel launch.
-  void SendOutput(OpContext<DeviceTensor> *context) const;
+  void SendOutput(OpContext<DeviceTensor> *const context) const;
   // Erase input data and input controls when finish kernel launch.
-  void EraseInput(OpContext<DeviceTensor> *context);
+  void EraseInput(OpContext<DeviceTensor> *const context);
 
   // The info of kernel.
   CNodePtr kernel_;

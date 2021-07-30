@@ -31,7 +31,8 @@ namespace mindspore {
 namespace runtime {
 
 void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_,
-                       const DeviceContext *device_context, OpContext<DeviceTensor> *op_context, const AID *from_aid) {
+                       const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
+                       const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -69,7 +70,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
-void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *op_context, const AID *from_aid) {
+void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
 
