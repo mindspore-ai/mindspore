@@ -290,6 +290,8 @@ class LiteMat {
   /// \param[in] c2 The number used to set teh value of step[2].
   void setSteps(int c0, int c1, int c2);
 
+  bool CheckLiteMat();
+
  public:
   void *data_ptr_ = nullptr;
   int elem_size_;

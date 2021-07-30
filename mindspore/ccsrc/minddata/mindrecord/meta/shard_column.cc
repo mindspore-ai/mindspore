@@ -424,6 +424,7 @@ MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<
   int ret_code = memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes);
   if (ret_code != 0) {
     MS_LOG(ERROR) << "Failed to copy data!";
+    return FAILED;
   }
 
   return SUCCESS;

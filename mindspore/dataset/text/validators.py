@@ -318,7 +318,7 @@ def check_from_dataset(method):
             type_check(freq_range, (tuple,), "freq_range")
 
             if len(freq_range) != 2:
-                raise ValueError("freq_range needs to be a tuple of 2 integers or an int and a None.")
+                raise ValueError("freq_range needs to be a tuple of 2 element.")
 
             for num in freq_range:
                 if num is not None and (not isinstance(num, int)):

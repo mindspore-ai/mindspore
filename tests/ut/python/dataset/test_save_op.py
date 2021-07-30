@@ -381,7 +381,7 @@ def test_case_05(add_remove_file):
 
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
 
-    with pytest.raises(Exception, match="num_files should between 1 and 1000."):
+    with pytest.raises(Exception, match="num_files should between 0 and 1000."):
         d1.save(AUTO_FILE, 0)
 
 
