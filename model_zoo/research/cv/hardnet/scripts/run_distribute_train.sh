@@ -16,39 +16,27 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_distribute_train.sh DATA_PATH pretrain_path RANK_SIZE"
-echo "For example: bash run_distribute_train.sh /path/dataset /path/pretrain_path 8"
+echo "bash run_distribute_train.sh DATA_PATH pretrain_path RANK_TABLE"
+echo "For example: bash run_distribute_train.sh /path/dataset /path/pretrain_path /path/rank_table"
 echo "It is better to use the absolute path."
 echo "=============================================================================================================="
 set -e
-DATA_PATH=$1
-PRETRAINED_PATH=$2
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+DATA_PATH=$(get_real_path $1)
+PRETRAINED_PATH=$(get_real_path $2)
+RANK_TABLE=$(get_real_path $3)
 export DATA_PATH=${DATA_PATH}
-RANK_SIZE=$3
-
+export RANK_SIZE=8
+export RANK_TABLE_FILE=$RANK_TABLE
 EXEC_PATH=$(pwd)
 
 echo "$EXEC_PATH"
-
-test_dist_8pcs()
-{
-    export RANK_TABLE_FILE=${EXEC_PATH}/rank_table_8pcs.json
-    export RANK_SIZE=8
-}
-
-test_dist_4pcs()
-{
-    export RANK_TABLE_FILE=${EXEC_PATH}/rank_table_4pcs.json
-    export RANK_SIZE=4
-}
-
-test_dist_2pcs()
-{
-    export RANK_TABLE_FILE=${EXEC_PATH}/rank_table_2pcs.json
-    export RANK_SIZE=2
-}
-
-test_dist_${RANK_SIZE}pcs
 
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
@@ -82,7 +70,7 @@ export DEVICE_ID=0
 export RANK_ID=0
 echo "start training for device 0"
 env > env0.log
-nohup python3 -u train.py --dataset_path ${DATA_PATH} --isModelArts False  --distribute True --pre_ckpt_path ${PRETRAINED_PATH} > train0.log 2>&1
+nohup python3 -u train.py --dataset_path ${DATA_PATH} --isModelArts False  --distribute True --pre_ckpt_path ${PRETRAINED_PATH} > train0.log 2>&1 &
 
 if [ $? -eq 0 ];then
     echo "training success"

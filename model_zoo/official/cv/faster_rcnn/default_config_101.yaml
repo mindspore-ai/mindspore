@@ -122,7 +122,7 @@ batch_size: 2
 loss_scale: 256
 momentum: 0.91
 weight_decay: 0.00001
-epoch_size: 20
+epoch_size: 5
 save_checkpoint: True
 save_checkpoint_epochs: 1
 keep_checkpoint_max: 20

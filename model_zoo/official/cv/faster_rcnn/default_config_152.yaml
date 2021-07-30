@@ -125,7 +125,7 @@ weight_decay: 0.00001
 epoch_size: 20
 save_checkpoint: True
 save_checkpoint_epochs: 1
-keep_checkpoint_max: 20
+keep_checkpoint_max: 5
 save_checkpoint_path: "./"
 
 # Number of threads used to process the dataset in parallel
