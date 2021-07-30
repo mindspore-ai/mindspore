@@ -243,6 +243,7 @@ class GradientFreeze:
 
         return network, optimizer
 
+
 def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None,
                 max_accumulation_step=1):
     """Provide freeze network cell."""

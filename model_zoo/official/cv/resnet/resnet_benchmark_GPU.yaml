@@ -26,6 +26,8 @@ save_ckpt: False
 mode_name: "GRAPH"
 dtype: "fp16"
 acc_mode: "O0"
+conv_init: "XavierUniform"
+dense_init: "TruncatedNormal"
 
 # Export options
 device_id: 0

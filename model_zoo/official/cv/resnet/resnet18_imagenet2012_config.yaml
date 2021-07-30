@@ -35,6 +35,8 @@ label_smooth_factor: 0.1
 lr_init: 0
 lr_max: 0.8
 lr_end: 0.0
+lars_epsilon: 0.0
+lars_coefficient: 0.001
 
 net_name: "resnet18"
 dataset: "imagenet2012"
@@ -51,6 +53,8 @@ enable_cache: False
 cache_session_id: ""
 mode_name: "GRAPH"
 acc_mode: "O0"
+conv_init: "XavierUniform"
+dense_init: "TruncatedNormal"
 
 # Export options
 device_id: 0
