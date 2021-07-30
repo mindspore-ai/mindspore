@@ -99,6 +99,8 @@ class GraphTupleParamTransform {
     mng->AddFuncGraph(new_fg);
     return new_fg;
   }
+
+ private:
   std::unordered_map<FuncGraphPtr, FuncGraphPtr> cache_;
 };
 }  // namespace opt

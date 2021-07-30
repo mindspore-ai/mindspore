@@ -88,9 +88,9 @@ void TraceContext::ProcessAttributeFromContext() {
   // if there is trace context, get info from previous context
   if (!TraceManager::trace_context_stack_.empty()) {
     TraceContextPtr top = TraceManager::trace_context_stack_.top();
-    trace_info_ = top->trace_info_;
-    location_ = top->location_;
-    func_name_ = top->func_name_;
+    trace_info_ = top->trace_info();
+    location_ = top->location();
+    func_name_ = top->func_name();
   }
 }
 
