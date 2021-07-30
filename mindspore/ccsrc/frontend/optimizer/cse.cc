@@ -67,53 +67,55 @@ BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id) {
   return node_abs;
 }
 
+bool CSE::BuildOrderGroupAndDoReplaceForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) const {
+  MS_EXCEPTION_IF_NULL(fg);
+  std::vector<std::size_t> order_group;
+  std::unordered_map<std::size_t, std::vector<AnfNodePtr>> groups;
+  std::unordered_map<AnfNodePtr, std::size_t> hashes;
+
+  std::vector<AnfNodePtr> toposet = TopoSort(fg->get_return());
+  for (auto node : toposet) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (hashes.find(node) != hashes.end()) {
+      continue;
+    }
+
+    std::size_t h = 0;
+    if (node->isa<ValueNode>()) {
+      ValueNodePtr value_node = node->cast<ValueNodePtr>();
+      auto value = value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      h = hash_combine(value->hash(), (AbsOf(value_node, true)->hash()));
+    } else if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      auto &inputs = cnode->inputs();
+      size_t init = 0;
+      h = std::accumulate(inputs.begin(), inputs.end(), init, [&hashes](std::size_t hash, const AnfNodePtr &node_in) {
+        return hash_combine(hash, hashes[node_in]);
+      });
+    } else if (node->isa<Parameter>()) {
+      h = node->hash();
+    } else {
+      MS_LOG(ERROR) << "Unknown node type";
+    }
+
+    hashes[node] = h;
+    if (groups.find(h) == groups.end()) {
+      std::vector<AnfNodePtr> innervec({node});
+      groups[h] = innervec;
+      order_group.emplace_back(h);
+    } else {
+      groups[h].push_back(node);
+    }
+  }
+  return DoReplace(manager, order_group, &groups);
+}
+
 bool CSE::BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const {
   bool changed = false;
   for (FuncGraphPtr fg : manager->func_graphs()) {
-    MS_EXCEPTION_IF_NULL(fg);
-    std::vector<std::size_t> order_group;
-    std::unordered_map<std::size_t, std::vector<AnfNodePtr>> groups;
-    std::unordered_map<AnfNodePtr, std::size_t> hashes;
-
-    std::vector<AnfNodePtr> toposet = TopoSort(fg->get_return());
-    for (auto node : toposet) {
-      MS_EXCEPTION_IF_NULL(node);
-      if (hashes.find(node) != hashes.end()) {
-        continue;
-      }
-
-      std::size_t h = 0;
-      if (node->isa<ValueNode>()) {
-        ValueNodePtr value_node = node->cast<ValueNodePtr>();
-        auto value = value_node->value();
-        MS_EXCEPTION_IF_NULL(value);
-        h = hash_combine(value->hash(), (AbsOf(value_node, true)->hash()));
-      } else if (node->isa<CNode>()) {
-        auto cnode = node->cast<CNodePtr>();
-        auto &inputs = cnode->inputs();
-        size_t init = 0;
-        h = std::accumulate(inputs.begin(), inputs.end(), init, [&hashes](std::size_t hash, const AnfNodePtr &node_in) {
-          return hash_combine(hash, hashes[node_in]);
-        });
-      } else if (node->isa<Parameter>()) {
-        h = node->hash();
-      } else {
-        MS_LOG(ERROR) << "Unknown node type";
-      }
-
-      hashes[node] = h;
-      if (groups.find(h) == groups.end()) {
-        std::vector<AnfNodePtr> innervec({node});
-        groups[h] = innervec;
-        order_group.emplace_back(h);
-      } else {
-        groups[h].push_back(node);
-      }
-    }
-
-    changed = DoReplace(manager, order_group, &groups) || changed;
+    changed = BuildOrderGroupAndDoReplaceForOneGraph(fg, manager) || changed;
   }
-
   return changed;
 }
 

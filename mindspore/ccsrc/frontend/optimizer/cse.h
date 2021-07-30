@@ -38,7 +38,10 @@ class CSE {
 
   virtual bool CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const;
 
-  bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
+  virtual bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
+
+ protected:
+  bool BuildOrderGroupAndDoReplaceForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) const;
 
  private:
   bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const;

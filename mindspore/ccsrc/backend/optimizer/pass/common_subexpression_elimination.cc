@@ -102,6 +102,11 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bo
   return false;
 }
 
+bool BackendCSE::Cse(const FuncGraphPtr graph, const FuncGraphManagerPtr manager) const {
+  MS_EXCEPTION_IF_NULL(manager);
+  return BuildOrderGroupAndDoReplaceForOneGraph(graph, manager);
+}
+
 bool CommonSubexpressionElimination::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto backend_cse = std::make_shared<BackendCSE>();
