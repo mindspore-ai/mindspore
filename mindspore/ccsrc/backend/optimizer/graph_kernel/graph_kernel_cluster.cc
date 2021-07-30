@@ -68,6 +68,8 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
 #elif ENABLE_GPU
     prim::kPrimACos,
     prim::kPrimAcosh,
+    prim::kPrimArgMax,
+    prim::kPrimArgMin,
     prim::kPrimAsin,
     prim::kPrimAsinh,
     prim::kPrimAssign,
