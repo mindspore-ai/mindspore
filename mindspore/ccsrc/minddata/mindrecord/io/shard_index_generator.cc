@@ -214,14 +214,36 @@ MSRStatus ShardIndexGenerator::CreateShardNameTable(sqlite3 *db, const std::stri
   if (ExecuteSQL(sql, db, "drop table successfully.") != SUCCESS) {
     return FAILED;
   }
+
   sql = "CREATE TABLE SHARD_NAME(NAME TEXT NOT NULL);";
   if (ExecuteSQL(sql, db, "create table successfully.") != SUCCESS) {
     return FAILED;
   }
-  sql = "INSERT INTO SHARD_NAME (NAME) VALUES ('" + shard_name + "');";
-  if (ExecuteSQL(sql, db, "insert name successfully.") != SUCCESS) {
+
+  sql = "INSERT INTO SHARD_NAME (NAME) VALUES (:SHARD_NAME);";
+  sqlite3_stmt *stmt = nullptr;
+  if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
+    if (stmt) {
+      (void)sqlite3_finalize(stmt);
+    }
+    MS_LOG(ERROR) << "SQL error: could not prepare statement, sql: " << sql;
     return FAILED;
   }
+
+  int index = sqlite3_bind_parameter_index(stmt, ":SHARD_NAME");
+  if (sqlite3_bind_text(stmt, index, shard_name.data(), -1, SQLITE_STATIC) != SQLITE_OK) {
+    (void)sqlite3_finalize(stmt);
+    MS_LOG(ERROR) << "SQL error: could not bind parameter, index: " << index << ", field value: " << shard_name;
+    return FAILED;
+  }
+
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    (void)sqlite3_finalize(stmt);
+    MS_LOG(ERROR) << "SQL error: Could not step (execute) stmt.";
+    return FAILED;
+  }
+
+  (void)sqlite3_finalize(stmt);
   return SUCCESS;
 }
 
