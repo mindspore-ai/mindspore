@@ -36,7 +36,6 @@
 
 namespace mindspore {
 namespace compile {
-
 namespace {
 // Return the list of nodes whose values are required beyond this segment.
 // Arguments:

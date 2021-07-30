@@ -486,6 +486,8 @@ struct SplitDynamicNodesHelper {
   }
 
   void AddSegments(std::vector<GraphSegmentPtr> *segments, std::map<AnfNodePtr, GraphSegmentPtr> *node_to_segment) {
+    MS_EXCEPTION_IF_NULL(segments);
+    MS_EXCEPTION_IF_NULL(node_to_segment);
     if (pre_nodes.size() < merge_node_threshold) {
       AddSegment(pre_nodes, segments, node_to_segment);
     } else {
