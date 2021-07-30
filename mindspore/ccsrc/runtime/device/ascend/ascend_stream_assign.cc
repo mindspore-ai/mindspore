@@ -1641,11 +1641,11 @@ void AscendStreamAssign::InsertEventForIndependentParallel(const NotNull<KernelG
       MS_LOG(DEBUG) << "Deal independent op[" << (*it)->DebugString() << "]";
       CNodePtr send_cnode_ptr = CreateSendApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId(*it));
 
-      auto target = FindTargetOp(it, cnodes.end(), *(it - 1), false);
+      auto target = FindTargetOp(it + 1, cnodes.end(), *it, false);
       if (target == cnodes.end()) {
-        it++;
-        MS_LOG(DEBUG) << "Independent node[" << (*(it - 1))->fullname_with_scope()
+        MS_LOG(DEBUG) << "Independent node[" << (*it)->fullname_with_scope()
                       << "] can't find target for insert recv op, no insert send/recv";
+        it++;
         continue;
       }
 
