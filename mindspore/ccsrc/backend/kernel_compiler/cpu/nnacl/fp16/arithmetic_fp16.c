@@ -801,8 +801,8 @@ int ElementLogicalAndFp16(const float16_t *input0, const float16_t *input1, floa
   uint16x8_t mask = vmovq_n_u16(((uint16_t)(1u << 15) - 1));
   uint16x8_t zeros = vdupq_n_u16(0);
   for (; index <= element_size - 8; index += C8NUM) {
-    uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input0 + index)), mask);
-    uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input1 + index)), mask);
+    uint16x8_t vin0 = vandq_u16(vreinterpretq_u16_f16(vld1q_f16(input0 + index)), mask);
+    uint16x8_t vin1 = vandq_u16(vreinterpretq_u16_f16(vld1q_f16(input1 + index)), mask);
     float16x8_t vout = vbslq_f16(vceqq_u16(vandq_u16(vin0, vin1), zeros), vfalse, vtrue);
     vst1q_f16(output + index, vout);
   }
@@ -828,8 +828,8 @@ int ElementOptLogicalAndFp16(const float16_t *input0, const float16_t *input1, f
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1_ = vld1q_f16(input1 + index);
-      uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vin0_opt), mask);
-      uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vin1_), mask);
+      uint16x8_t vin0 = vandq_u16(vreinterpretq_u16_f16(vin0_opt), mask);
+      uint16x8_t vin1 = vandq_u16(vreinterpretq_u16_f16(vin1_), mask);
       float16x8_t vout = vbslq_f16(vceqq_u16(vandq_u16(vin0, vin1), zeros), vfalse, vtrue);
       vst1q_f16(output + index, vout);
     }
@@ -841,8 +841,8 @@ int ElementOptLogicalAndFp16(const float16_t *input0, const float16_t *input1, f
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0_ = vld1q_f16(input0 + index);
-      uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vin0_), mask);
-      uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vin1_opt), mask);
+      uint16x8_t vin0 = vandq_u16(vreinterpretq_u16_f16(vin0_), mask);
+      uint16x8_t vin1 = vandq_u16(vreinterpretq_u16_f16(vin1_opt), mask);
       float16x8_t vout = vbslq_f16(vceqq_u16(vandq_u16(vin0, vin1), zeros), vfalse, vtrue);
       vst1q_f16(output + index, vout);
     }
@@ -862,8 +862,8 @@ int ElementLogicalOrFp16(const float16_t *input0, const float16_t *input1, float
   uint16x8_t mask = vmovq_n_u16(((uint16_t)(1u << 15) - 1));
   uint16x8_t zeros = vdupq_n_u16(0);
   for (; index <= element_size - 8; index += C8NUM) {
-    uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input0 + index)), mask);
-    uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vld1q_f16(input1 + index)), mask);
+    uint16x8_t vin0 = vandq_u16(vreinterpretq_u16_f16(vld1q_f16(input0 + index)), mask);
+    uint16x8_t vin1 = vandq_u16(vreinterpretq_u16_f16(vld1q_f16(input1 + index)), mask);
     float16x8_t vout = vbslq_f16(vceqq_u16(vorrq_u16(vin0, vin1), zeros), vfalse, vtrue);
     vst1q_f16(output + index, vout);
   }
@@ -889,8 +889,8 @@ int ElementOptLogicalOrFp16(const float16_t *input0, const float16_t *input1, fl
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin1_ = vld1q_f16(input1 + index);
-      uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vin0_opt), mask);
-      uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vin1_), mask);
+      uint16x8_t vin0 = vandq_u16(vreinterpretq_u16_f16(vin0_opt), mask);
+      uint16x8_t vin1 = vandq_u16(vreinterpretq_u16_f16(vin1_), mask);
       float16x8_t vout = vbslq_f16(vceqq_u16(vorrq_u16(vin0, vin1), zeros), vfalse, vtrue);
       vst1q_f16(output + index, vout);
     }
@@ -902,8 +902,8 @@ int ElementOptLogicalOrFp16(const float16_t *input0, const float16_t *input1, fl
 #ifdef ENABLE_NEON
     for (; index <= element_size - 8; index += C8NUM) {
       float16x8_t vin0_ = vld1q_f16(input0 + index);
-      uint16x8_t vin0 = vandq_u16(vreinterpretq_s16_f16(vin0_), mask);
-      uint16x8_t vin1 = vandq_u16(vreinterpretq_s16_f16(vin1_opt), mask);
+      uint16x8_t vin0 = vandq_u16(vreinterpretq_u16_f16(vin0_), mask);
+      uint16x8_t vin1 = vandq_u16(vreinterpretq_u16_f16(vin1_opt), mask);
       float16x8_t vout = vbslq_f16(vceqq_u16(vorrq_u16(vin0, vin1), zeros), vfalse, vtrue);
       vst1q_f16(output + index, vout);
     }

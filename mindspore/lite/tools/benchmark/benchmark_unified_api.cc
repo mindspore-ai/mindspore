@@ -652,7 +652,10 @@ int BenchmarkUnifiedApi::InitPerfProfilingCallbackParameter() {
                             const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
     struct PerfResult res;
     ioctl(perf_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
-    read(perf_fd, &res, sizeof(struct PerfResult));
+    if (read(perf_fd, &res, sizeof(struct PerfResult)) == -1) {
+      MS_LOG(ERROR) << "Failed to read perf_fd";
+      return false;
+    }
 
     if (after_inputs.empty()) {
       MS_LOG(INFO) << "The num of after inputs is empty";
