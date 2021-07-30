@@ -169,6 +169,26 @@ def check_bass_biquad(method):
     return new_method
 
 
+def check_biquad_cutoff_freq(cutoff_freq):
+    """Wrapper method to check the parameters of cutoff_freq."""
+    type_check(cutoff_freq, (float, int), "cutoff_freq")
+    check_float32(cutoff_freq, "cutoff_freq")
+
+
+def check_lowpass_biquad(method):
+    """Wrapper method to check the parameters of LowpassBiquad."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, cutoff_freq, Q], _ = parse_user_args(method, *args, **kwargs)
+        check_biquad_sample_rate(sample_rate)
+        check_biquad_cutoff_freq(cutoff_freq)
+        check_biquad_Q(Q)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_time_stretch(method):
     """Wrapper method to check the parameters of TimeStretch."""
 

@@ -642,6 +642,55 @@ TEST_F(MindDataTestExecute, TestRGB2BGREager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+TEST_F(MindDataTestExecute, TestLowpassBiquadEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestLowpassBiquadEager.";
+  int sample_rate = 44100;
+  float cutoff_freq = 2000.0;
+  float Q = 0.6;
+  std::vector<mindspore::MSTensor> output;
+  std::shared_ptr<Tensor> test;
+  std::vector<double> test_vector = {23.5, 13.2, 62.5, 27.1, 15.5, 30.3, 44.9, 25.0,
+                                     11.3, 37.4, 67.1, 33.8, 73.4, 53.3, 93.7, 31.1};
+  Tensor::CreateFromVector(test_vector, TensorShape({4,4}), &test);
+  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
+  std::shared_ptr<TensorTransform> lowpass_biquad(new audio::LowpassBiquad({sample_rate, cutoff_freq, Q}));
+  auto transform = Execute({lowpass_biquad});
+  Status rc = transform({input}, &output);
+  ASSERT_TRUE(rc.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestLowpassBiuqadParamCheckQ) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestLowpassBiuqadParamCheckQ.";
+
+  std::vector<mindspore::MSTensor> output;
+  std::shared_ptr<Tensor> test;
+  std::vector<double> test_vector = {0.8236, 0.2049, 0.3335, 0.5933, 0.9911, 0.2482,
+                                     0.3007, 0.9054, 0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288};
+  Tensor::CreateFromVector(test_vector, TensorShape({5,3}), &test);
+  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
+  // Check Q
+  std::shared_ptr<TensorTransform> lowpass_biquad_op = std::make_shared<audio::LowpassBiquad>(44100, 3000.5, 0);
+  mindspore::dataset::Execute transform({lowpass_biquad_op});
+  Status rc = transform({input}, &output);
+  ASSERT_FALSE(rc.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestLowpassBiuqadParamCheckSampleRate) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestLowpassBiuqadParamCheckSampleRate.";
+
+  std::vector<mindspore::MSTensor> output;
+  std::shared_ptr<Tensor> test;
+  std::vector<double> test_vector = {0.5, 4.6, 2.2, 0.6, 1.9, 4.7,
+                                     2.3, 4.9, 4.7, 0.5, 0.8, 0.9};
+  Tensor::CreateFromVector(test_vector, TensorShape({6,2}), &test);
+  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
+  // Check sample_rate
+  std::shared_ptr<TensorTransform> lowpass_biquad_op = std::make_shared<audio::LowpassBiquad>(0, 2000.5, 0.7);
+  mindspore::dataset::Execute transform({lowpass_biquad_op});
+  Status rc = transform({input}, &output);
+  ASSERT_FALSE(rc.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestComplexNormEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestComplexNormEager.";
   // testing
