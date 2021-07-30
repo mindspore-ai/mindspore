@@ -176,7 +176,6 @@ graphkernel::NType PatternNodeType(const std::string &n) {
     return graphkernel::NType::Primitive;
   }
 }
-bool IsEqual(double a, double b) { return (abs(a - b) < 0.0000001); }
 
 std::string CleanStr(const std::string &s) {
   std::string res = "";
@@ -213,13 +212,13 @@ bool CheckCurNode(const graphkernel::NodePtr &tmp_node, const std::string &tmp_p
           auto pattern_value_str =
             std::static_pointer_cast<graphkernel::ConstTensorNode>((*const_to_ref)[tmp_pattern_op])->ToString();
           double pattern_value = std::stod(CleanStr(pattern_value_str));
-          if (!IsEqual(pattern_value, node_value)) return false;
+          if (pattern_value != node_value) return false;
         } else {
           (*const_to_ref)[tmp_pattern_op] = tmp_node;
         }
       } else {
         double pattern_value = std::stod(tmp_pattern_op);
-        if (!IsEqual(pattern_value, node_value)) {
+        if (pattern_value != node_value) {
           return false;
         }
       }
