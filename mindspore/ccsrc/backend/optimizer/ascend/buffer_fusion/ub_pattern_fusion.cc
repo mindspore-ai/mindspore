@@ -71,11 +71,11 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
 
   std::vector<std::string> input_names;
   for (uint8_t i = 0; i < inputs_list.size(); i++) {
-    input_names.emplace_back("input" + std::to_string(i));
+    (void)input_names.emplace_back("input" + std::to_string(i));
   }
   std::vector<std::string> output_names;
   for (uint8_t i = 0; i < outputs_list.size(); i++) {
-    output_names.emplace_back("output" + std::to_string(i));
+    (void)output_names.emplace_back("output" + std::to_string(i));
   }
 
   ValuePtr input_names_v = MakeValue(input_names);
@@ -111,8 +111,8 @@ kernel::KernelBuildInfoPtr CreateFusionOpKernelInfo(const std::vector<AnfNodePtr
   std::vector<TypeId> inputs_data_type;
   for (const auto &input : inputs_list) {
     auto real_input = AnfAlgo::VisitKernel(input, 0);
-    inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input.first, real_input.second));
-    inputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(real_input.first, real_input.second));
+    (void)inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input.first, real_input.second));
+    (void)inputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(real_input.first, real_input.second));
   }
   // outputs format and data type
   std::vector<std::string> outputs_format;
@@ -121,13 +121,13 @@ kernel::KernelBuildInfoPtr CreateFusionOpKernelInfo(const std::vector<AnfNodePtr
     if (AnfAlgo::GetCNodeName(output) == prim::kPrimTupleGetItem->name()) {
       auto tuple_getitem = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(tuple_getitem);
-      outputs_format.emplace_back(AnfAlgo::GetOutputFormat(
+      (void)outputs_format.emplace_back(AnfAlgo::GetOutputFormat(
         tuple_getitem->input(kIndex1), LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(kIndex2))))));
-      outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(
+      (void)outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(
         tuple_getitem->input(kIndex1), LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(kIndex2))))));
     } else {
-      outputs_format.emplace_back(AnfAlgo::GetOutputFormat(output, 0));
-      outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(output, 0));
+      (void)outputs_format.emplace_back(AnfAlgo::GetOutputFormat(output, 0));
+      (void)outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(output, 0));
     }
   }
   builder.SetInputsFormat(inputs_format);
@@ -292,7 +292,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
         std::vector<AnfNodePtr> tuple_getitem_nodes;
         for (auto &user : manager->node_users()[node]) {
           if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimTupleGetItem)) {
-            tuple_getitem_nodes.emplace_back(user.first);
+            (void)tuple_getitem_nodes.emplace_back(user.first);
           }
         }
         std::sort(tuple_getitem_nodes.begin(), tuple_getitem_nodes.end(), TupleGetitemNodeCompare);
@@ -386,7 +386,7 @@ void RemoveCircle(const session::KernelGraph &kernel_graph,
   for (auto &[fusion_id, fusion_info] : *buffer_fusion_infos) {
     bool has_circle = CheckCircle(kernel_graph, fusion_info);
     if (has_circle) {
-      fusion_ids.emplace_back(fusion_id);
+      (void)fusion_ids.emplace_back(fusion_id);
     }
   }
 
@@ -475,8 +475,8 @@ bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionIn
   for (const auto &out_node : buffer_fusion_info.outputs_list) {
     size_t out_num = AnfAlgo::GetOutputTensorNum(out_node);
     for (size_t idx = 0; idx < out_num; ++idx) {
-      types.emplace_back(AnfAlgo::GetOutputInferDataType(out_node, idx));
-      shapes.emplace_back(AnfAlgo::GetOutputInferShape(out_node, idx));
+      (void)types.emplace_back(AnfAlgo::GetOutputInferDataType(out_node, idx));
+      (void)shapes.emplace_back(AnfAlgo::GetOutputInferShape(out_node, idx));
     }
   }
   if (types.empty() || shapes.empty()) {

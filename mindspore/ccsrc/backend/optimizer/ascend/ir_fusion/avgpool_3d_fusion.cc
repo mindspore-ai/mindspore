@@ -29,7 +29,7 @@ namespace opt {
 namespace {
 constexpr size_t kAvgPool3DInputNum = 1;
 constexpr size_t k5DInferDims = 5;
-constexpr size_t kC0 = 16;
+constexpr int64_t kC0 = 16;
 constexpr size_t kDHWDimNum = 3;
 constexpr size_t kNCDHWDimNum = 5;
 
@@ -153,8 +153,8 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   auto tensor_data = reinterpret_cast<float16 *>(assist_tensor->data_c());
   int64_t cnt = c1 * kd * kh * kw;
   for (int64_t i = 0; i < cnt; ++i) {
-    for (size_t j = 0; j < kC0; ++j) {
-      for (size_t k = 0; k < kC0; ++k) {
+    for (int64_t j = 0; j < kC0; ++j) {
+      for (int64_t k = 0; k < kC0; ++k) {
         float t = j == k ? val : 0;
         *tensor_data = float16(t);
         ++tensor_data;
@@ -172,7 +172,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
 
 AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64_t fc, int64_t fd, int64_t fh,
                                int64_t fw, int64_t dd, int64_t dh, int64_t dw, int64_t kd, int64_t kh, int64_t kw,
-                               int64_t sd, int64_t sh, int64_t sw, const std::vector<int64_t> &pad_list, bool ceil_mode,
+                               int64_t sd, int64_t sh, int64_t sw, const std::vector<int64_t> &pad_list,
                                bool count_include_pad) {
   MS_EXCEPTION_IF_NULL(func_graph);
   //  assist tensor 2
@@ -288,7 +288,7 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   // assist node 2
   if ((!IsZeroPads(pad_list) || ceil_mode) && !divisor_override) {
     auto multiplier = ConstructMultiplier(func_graph, fn, fc, fd, fh, fw, dout, dh, dw, kd, kh, kw, sd, sh, sw,
-                                          pad_list, ceil_mode, count_include_pad);
+                                          pad_list, count_include_pad);
     new_inputs.push_back(multiplier);
   }
   auto new_3d = func_graph->NewCNode(new_inputs);

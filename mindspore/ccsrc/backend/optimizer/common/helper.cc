@@ -997,7 +997,7 @@ std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_gra
       auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(out_getitem_ptr);
       auto getitem_input2 = out_getitem_ptr->input(kInputNodeOutputIndexInTupleGetItem);
-      auto output_idx = GetValue<int64_t>(GetValueNode(getitem_input2));
+      auto output_idx = LongToSize(GetValue<int64_t>(GetValueNode(getitem_input2)));
       output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
     }
   }

@@ -117,8 +117,8 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
         auto cast = trans_road[kIndex1];
         if (param_format == format && param_dtype != dtype) {
           AnfAlgo::SetSelectKernelBuildInfo(GetKernelBuildInfo(cast, format, param_dtype, dtype), cast.get());
-          manager->Replace(trans_road[kIndex2], final_node);
-          manager->Replace(cur_transop, cast);
+          (void)manager->Replace(trans_road[kIndex2], final_node);
+          (void)manager->Replace(cur_transop, cast);
         }
         changed = true;
       }
