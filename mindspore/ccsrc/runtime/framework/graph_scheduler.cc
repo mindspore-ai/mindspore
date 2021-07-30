@@ -557,7 +557,7 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   }
   for (auto &gather_actor : actor_set->gather_actors_) {
     MS_EXCEPTION_IF_NULL(gather_actor);
-    actors.emplace_back(static_cast<ActorReference>(gather_actor));
+    (void)actors.emplace_back(static_cast<ActorReference>(gather_actor));
   }
   for (auto &copy_actor : actor_set->copy_actors_) {
     MS_EXCEPTION_IF_NULL(copy_actor);
@@ -1020,18 +1020,19 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       host_queue_ds_actor =
         std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, nullptr, nullptr, host_queue);
       InsertActor(host_queue_ds_actor.get());
-      data_source_actors.emplace_back(host_queue_ds_actor);
+      (void)data_source_actors.emplace_back(host_queue_ds_actor);
     }
 
     const auto &backend_node = backend_iter->second.first;
     auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
 
     if (iter != host_queue_ds_actor->data_nodes_.end()) {
-      host_queue_ds_actor->data_node_position_map_.emplace(parameter, iter - host_queue_ds_actor->data_nodes_.begin());
+      (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter,
+                                                                 iter - host_queue_ds_actor->data_nodes_.begin());
     } else {
-      host_queue_ds_actor->data_node_position_map_.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
-      host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.first);
-      host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.second);
+      (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
+      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.first);
+      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.second);
     }
   }
 
@@ -1182,7 +1183,7 @@ std::vector<SwitchActorPtr> GraphScheduler::BuildSwitchActor(const GraphCompiler
       // Fetch all the input nodes of switch actor.
       switch_actor->FetchInputNode(graph_compiler_info.control_node_parser_);
       InsertActor(switch_actor.get());
-      switch_actors.emplace_back(switch_actor);
+      (void)switch_actors.emplace_back(switch_actor);
     }
   }
 
@@ -1199,7 +1200,7 @@ std::vector<SwitchActorPtr> GraphScheduler::BuildSwitchActor(const GraphCompiler
     // Fetch all the input nodes of switch actor.
     switch_actor->FetchInputNode(graph_compiler_info.control_node_parser_);
     InsertActor(switch_actor.get());
-    switch_actors.emplace_back(switch_actor);
+    (void)switch_actors.emplace_back(switch_actor);
   }
 
   return switch_actors;
@@ -1249,7 +1250,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
         if (HasAbstractMonad(parameter) || HasAbstractRef(parameter)) {
           continue;
         }
-        parameters.emplace_back(parameter, 0);
+        (void)parameters.emplace_back(parameter, 0);
       }
 
       const auto branch_id = parser->GetBranchIDByFuncGraph(func_graph);
@@ -1262,7 +1263,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
         std::make_shared<GatherActor>(actor_name, parameters, true, output_switch_aid, AID(), branch_id);
       gather_actor->FetchBackendInputNode(func_graph, graph_compiler_info.control_node_parser_);
       InsertActor(gather_actor.get());
-      gather_actors.emplace_back(gather_actor);
+      (void)gather_actors.emplace_back(gather_actor);
     }
   }
 
@@ -1278,7 +1279,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
         if (HasAbstractMonad(inputs[i]) || (inputs[i]->isa<Parameter>() && HasAbstractRef(inputs[i]))) {
           continue;
         }
-        parameters.emplace_back(inputs[i], 0);
+        (void)parameters.emplace_back(inputs[i], 0);
       }
 
       auto func_graph = control_node->func_graph();
@@ -1291,7 +1292,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
       gather_actor->FetchBackendInputNode(func_graph, graph_compiler_info.control_node_parser_);
 
       InsertActor(gather_actor.get());
-      gather_actors.emplace_back(gather_actor);
+      (void)gather_actors.emplace_back(gather_actor);
     }
   }
 
@@ -1304,7 +1305,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
     auto actor_name = graph->ToString();
     auto gather_actor = std::make_shared<GatherActor>(actor_name, parameters, false, AID(), AID(), kInvalidBranchID);
     InsertActor(gather_actor.get());
-    gather_actors.emplace_back(gather_actor);
+    (void)gather_actors.emplace_back(gather_actor);
   }
 
   return gather_actors;
@@ -1324,8 +1325,8 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
     const auto &real_front_node_with_index =
       AnfAlgo::VisitKernelWithReturnType(kernel_with_index.first, SizeToInt(kernel_with_index.second));
     if (HasAbstractRef(real_front_node_with_index.first)) {
-      to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second,
-                                                       real_front_node_with_index.first.get());
+      (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second,
+                                                             real_front_node_with_index.first.get());
       return;
     }
 
@@ -1352,7 +1353,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
     auto actor_name = func_graph->ToString();
     const auto &from_actor = dynamic_cast<GatherActor *>(FetchActor(actor_name));
     if (HasAbstractRef(from_kernel)) {
-      to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_node.get());
+      (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_node.get());
       return;
     }
     LinkDataArrowForGatherActor(from_actor, to_actor, {front_node, 0}, to_kernel_with_input_idx);
@@ -1888,7 +1889,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
 
         // The graph output is from device tensor store.
         if (IsPersistentDeviceTensor(output_with_index.first)) {
-          to_actor->device_tensor_store_keys_.emplace_back(output_position, output_with_index.first);
+          (void)to_actor->device_tensor_store_keys_.emplace_back(output_position, output_with_index.first);
           continue;
         }
 
@@ -1973,7 +1974,7 @@ void GraphScheduler::LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo
         for (const auto output_pos : output_poses) {
           auto op_arrow = std::make_shared<DataArrow>(output_index, to_actor->GetAID(), output_pos);
           to_actor->device_contexts_[output_pos] = switch_actor->device_context_;
-          switch_actor->output_branch_result_arrows_[branch_index].emplace_back(op_arrow);
+          (void)switch_actor->output_branch_result_arrows_[branch_index].emplace_back(op_arrow);
         }
       }
     }
@@ -2002,10 +2003,10 @@ void GraphScheduler::LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo
 
       for (const auto pos : iter->second) {
         auto op_arrow = std::make_shared<DataArrow>(0, to_actor->GetAID(), pos);
-        from_actor->output_branch_result_arrows_[i].emplace_back(op_arrow);
+        (void)from_actor->output_branch_result_arrows_[i].emplace_back(op_arrow);
       }
 
-      from_actor->output_branch_control_arrows_[i].emplace_back(loop_count_actor->GetAID());
+      (void)from_actor->output_branch_control_arrows_[i].emplace_back(loop_count_actor->GetAID());
     }
     loop_count_actor->input_controls_num_++;
   }
@@ -2119,8 +2120,8 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
             continue;
           }
 
-          gather_actor->device_tensor_store_keys_.emplace_back(i - kCallInputStartPos - persist_input_num,
-                                                               inputs[i].get());
+          (void)gather_actor->device_tensor_store_keys_.emplace_back(i - kCallInputStartPos - persist_input_num,
+                                                                     inputs[i].get());
           gather_actor->device_contexts_[i - kCallInputStartPos - persist_input_num] =
             graph_compiler_info.control_node_parser_->GetFrontValueNodeDeviceContext(inputs[i]);
         } else if ((inputs[i]->isa<Parameter>() && HasAbstractRef(inputs[i]->cast<ParameterPtr>())) ||
@@ -2135,7 +2136,7 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
 
         auto op_arrow = std::make_shared<DataArrow>(i - kCallInputStartPos - persist_input_num, to_actor->GetAID(),
                                                     i - kCallInputStartPos - persist_input_num);
-        gather_actor->output_data_arrows_.emplace_back(op_arrow);
+        (void)gather_actor->output_data_arrows_.emplace_back(op_arrow);
       }
     }
   }
@@ -2168,7 +2169,7 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
   }
   LinkBranchArrowForSwitchActor(graph_compiler_info);
 
-  LinkBranchArrowForGatherActor(graph_compiler_info, actor_set);
+  LinkBranchArrowForGatherActor(graph_compiler_info);
 
   LinkControlArrowForGatherActor(&(actor_set->kernel_actors_), graph_compiler_info.graphs_,
                                  graph_compiler_info.control_node_parser_);
@@ -2189,7 +2190,7 @@ void GraphScheduler::LinkDataArrowForGatherActor(GatherActor *from_actor, Kernel
   auto position = from_actor->FetchDataNodePosition(front_node_with_index);
 
   auto op_arrow = std::make_shared<DataArrow>(position, to_actor->GetAID(), to_node_with_index.second);
-  from_actor->output_data_arrows_.emplace_back(op_arrow);
+  (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
   to_actor->input_datas_num_++;
 }
 
@@ -2245,7 +2246,7 @@ void GraphScheduler::LinkDataArrowForSwitchActor(SwitchActor *from_actor, const 
     }
     auto op_arrow =
       std::make_shared<DataArrow>(from_actor->branch_inputs_pos_[i][from_index], to_actor->GetAID(), to_index);
-    from_actor->output_branch_arrows_[i].emplace_back(op_arrow);
+    (void)from_actor->output_branch_arrows_[i].emplace_back(op_arrow);
   }
 }
 
@@ -2266,7 +2267,7 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
     auto from_actor = dynamic_cast<GatherActor *>(actor_name_to_actor_[input_node->func_graph()->ToString()]);
     auto position = from_actor->FetchDataNodePosition({input_node, 0});
     auto op_arrow = std::make_shared<DataArrow>(position, to_actor->GetAID(), to_index);
-    from_actor->output_data_arrows_.emplace_back(op_arrow);
+    (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
   } else if (IsSwitchActor(input_node)) {
     const auto &actor_name = input_node->DebugString();
     auto actor = FetchActor(actor_name);
@@ -2289,7 +2290,7 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
       MS_EXCEPTION_IF_NULL(from_actor);
 
       auto op_arrow = std::make_shared<DataArrow>(backend_node.second, to_actor->GetAID(), to_index);
-      from_actor->output_data_arrows_.emplace_back(op_arrow);
+      (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_actor->kernel_, backend_node.second, false);
       UpdateRefCount(device_tensor.get(), true);
       return;
@@ -2297,7 +2298,7 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
 
     auto op_arrow = std::make_shared<DataArrow>(input_with_index.second, to_actor->GetAID(), to_index);
     auto from_actor = front_node_to_actor_[input_node];
-    from_actor->output_data_arrows_.emplace_back(op_arrow);
+    (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
     auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_actor->kernel_, input_with_index.second, false);
     UpdateRefCount(device_tensor.get(), true);
   } else if (find(parameters.begin(), parameters.end(), input_node) != parameters.end()) {
@@ -2323,7 +2324,7 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
     }
 
     auto op_arrow = std::make_shared<DataArrow>(iter->second, to_actor->GetAID(), to_index);
-    from_actor->output_data_arrows_.emplace_back(op_arrow);
+    (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
     auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_actor->data_nodes_[iter->second], 0, false);
     UpdateRefCount(device_tensor.get(), true);
   } else {
@@ -2361,7 +2362,7 @@ void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_
     for (size_t j = 0; j < actor->branch_inputs_pos_[i].size(); ++j) {
       auto pos = actor->branch_inputs_pos_[i][j];
       auto op_arrow = std::make_shared<DataArrow>(pos, to_actor->GetAID(), j);
-      actor->output_branch_arrows_[i].emplace_back(op_arrow);
+      (void)actor->output_branch_arrows_[i].emplace_back(op_arrow);
     }
   }
 }
@@ -2391,7 +2392,7 @@ void GraphScheduler::LinkControlArrowForGatherActor(std::vector<KernelActorPtr> 
         MS_EXCEPTION_IF_NULL(kernel_actor);
 
         if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0)) {
-          gather_actor->output_control_arrows_.emplace_back(kernel_actor->GetAID());
+          (void)gather_actor->output_control_arrows_.emplace_back(kernel_actor->GetAID());
           kernel_actor->input_controls_num_ = 1;
         }
       }
@@ -2419,7 +2420,7 @@ void GraphScheduler::LinkControlArrowForGatherActor(std::vector<KernelActorPtr> 
             auto switch_actor = dynamic_cast<SwitchActor *>(actor);
             MS_EXCEPTION_IF_NULL(switch_actor);
 
-            kernel_actor->output_control_arrows_.emplace_back(switch_actor->GetAID());
+            (void)kernel_actor->output_control_arrows_.emplace_back(switch_actor->GetAID());
             switch_actor->input_controls_num_++;
           }
         }
@@ -2439,7 +2440,7 @@ void GraphScheduler::LinkControlArrowForGatherActor(std::vector<KernelActorPtr> 
     }
     auto kernel_actor = dynamic_cast<KernelActor *>(kernel_op_actor);
     auto gather_actor = dynamic_cast<GatherActor *>(gather_op_actor);
-    kernel_actor->output_control_arrows_.emplace_back(gather_actor->GetAID());
+    (void)kernel_actor->output_control_arrows_.emplace_back(gather_actor->GetAID());
     gather_actor->input_controls_num_++;
   }
 }
@@ -2462,7 +2463,7 @@ void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> 
         MS_EXCEPTION_IF_NULL(actor);
         auto gather_actor = dynamic_cast<GatherActor *>(actor);
         MS_EXCEPTION_IF_NULL(gather_actor);
-        gather_actor->output_control_arrows_.emplace_back(switch_actor->GetAID());
+        (void)gather_actor->output_control_arrows_.emplace_back(switch_actor->GetAID());
         switch_actor->input_controls_num_++;
       }
     }
@@ -2486,7 +2487,7 @@ void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> 
   std::set<AnfNodePtr> call_nodes;
   for (const auto &output : origin_outputs_order) {
     if (IsCallNode(output.first.first)) {
-      call_nodes.insert(output.first.first);
+      (void)call_nodes.insert(output.first.first);
     }
   }
   to_actor->input_controls_num_ += call_nodes.size();
@@ -2532,14 +2533,13 @@ void GraphScheduler::LinkBranchArrowForSwitchActor(const GraphCompilerInfo &grap
 
         const auto &gather_actor = FetchActor(func_graph->ToString());
         MS_EXCEPTION_IF_NULL(gather_actor);
-        switch_actor->output_branch_branch_arrows_[i].emplace_back(gather_actor->GetAID());
+        (void)switch_actor->output_branch_branch_arrows_[i].emplace_back(gather_actor->GetAID());
       }
     }
   }
 }
 
-void GraphScheduler::LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info,
-                                                   const ActorSet *actor_set) {
+void GraphScheduler::LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info) {
   if (graph_compiler_info.control_nodes_.empty()) {
     return;
   }
@@ -2553,7 +2553,7 @@ void GraphScheduler::LinkBranchArrowForGatherActor(const GraphCompilerInfo &grap
       auto actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(actor);
       auto gather_actor = dynamic_cast<GatherActor *>(actor);
-      gather_actor->output_branch_arrows_.emplace_back(gather_actor->gather_aid_);
+      (void)gather_actor->output_branch_arrows_.emplace_back(gather_actor->gather_aid_);
     }
   }
 
@@ -2564,7 +2564,7 @@ void GraphScheduler::LinkBranchArrowForGatherActor(const GraphCompilerInfo &grap
     MS_EXCEPTION_IF_NULL(actor);
     auto gather_actor = dynamic_cast<GatherActor *>(actor);
     MS_EXCEPTION_IF_NULL(gather_actor);
-    gather_actor->output_branch_arrows_.emplace_back(gather_actor->switch_aid_);
+    (void)gather_actor->output_branch_arrows_.emplace_back(gather_actor->switch_aid_);
   }
 }
 
