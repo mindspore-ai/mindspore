@@ -61,9 +61,15 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   int out_shape[MAX_SHAPE_SIZE] = {0};
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, in_shape, in_shape_size);
-  ShapeErase(out_shape, &out_shape_size, axis);
+  int erase_ret = ShapeErase(out_shape, &out_shape_size, axis);
+  if (erase_ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
   for (int i = indices_rank - 1; i >= 0; --i) {
-    ShapeInsert(out_shape, &out_shape_size, axis, indices_shape[i]);
+    ret = ShapeInsert(out_shape, &out_shape_size, axis, indices_shape[i]);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
   }
   SetShapeArray(output, out_shape, out_shape_size);
   return NNACL_OK;

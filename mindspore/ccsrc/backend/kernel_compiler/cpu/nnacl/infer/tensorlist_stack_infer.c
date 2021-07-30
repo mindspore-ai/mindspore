@@ -83,7 +83,10 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (output_shape_size >= MAX_SHAPE_SIZE) {
     return NNACL_ERR;
   }
-  ShapeInsert(output_shape, &output_shape_size, 0, input0->element_num_);
+  int ret = ShapeInsert(output_shape, &output_shape_size, 0, input0->element_num_);
+  if (ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;
 }

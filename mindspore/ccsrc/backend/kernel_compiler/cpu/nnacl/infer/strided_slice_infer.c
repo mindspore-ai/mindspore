@@ -206,7 +206,10 @@ int ApplyNewAxisMask(StridedSliceTransferBuffer *transfer_buffer, StridedSlicePa
       if (*out_shape_size >= MAX_SHAPE_SIZE) {
         return NNACL_ERR;
       }
-      ShapeInsert(in_shape, out_shape_size, i, 1);
+      int ret = ShapeInsert(in_shape, out_shape_size, i, 1);
+      if (ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
       transfer_buffer->begins_[i] = 0;
       transfer_buffer->ends_[i] = 1;
       transfer_buffer->strides_[i] = 1;

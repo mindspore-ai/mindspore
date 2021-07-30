@@ -43,7 +43,10 @@ int ExpandDimsInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   }
 
   ShapeSet(output->shape_, &(output->shape_size_), input->shape_, input->shape_size_);
-  ShapeInsert(output->shape_, &(output->shape_size_), dim, 1);
+  int ret = ShapeInsert(output->shape_, &(output->shape_size_), dim, 1);
+  if (ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
   return NNACL_OK;
 }
 
