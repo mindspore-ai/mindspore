@@ -21,7 +21,7 @@
 void MD_Iteration_Setup_Random_State(int float4_numbers, curandStatePhilox4_32_10_t *rand_state, int seed,
                                      cudaStream_t stream) {
   Setup_Rand_Normal_Kernel<<<ceilf(static_cast<float>(float4_numbers) / 32.), 32, 0, stream>>>(float4_numbers,
-                                                                                              rand_state, seed);
+                                                                                               rand_state, seed);
 }
 
 void MD_Iteration_Setup_Random_State(int float4_numbers, curandStatePhilox4_32_10_t *rand_state, int seed,

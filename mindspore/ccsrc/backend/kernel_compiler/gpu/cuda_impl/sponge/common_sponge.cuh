@@ -29,26 +29,37 @@
 #include <cufft.h>
 #include "runtime/device/gpu/cuda_common.h"
 
-#define CONSTANT_Pi 3.1415926535897932
 #define TWO_DIVIDED_BY_SQRT_PI 1.1283791670218446
 #define CONSTANT_kB 0.00198716
+#define CONSTANT_Pi 3.1415926535897932f
 static dim3 thread_LJ(8, 32);
+
+__constant__ float XRD3D_Ma[4] = {1.0 / 6.0, -0.5, 0.5, -1.0 / 6.0};
+__constant__ float XRD3D_Mb[4] = {0, 0.5, -1, 0.5};
+__constant__ float XRD3D_Mc[4] = {0, 0.5, 0, -0.5};
+__constant__ float XRD3D_Md[4] = {0, 1.0 / 6.0, 4.0 / 6.0, 1.0 / 6.0};
+__constant__ float XRD3D_dMa[4] = {0.5, -1.5, 1.5, -0.5};
+__constant__ float XRD3D_dMb[4] = {0, 1, -2, 1};
+__constant__ float XRD3D_dMc[4] = {0, 0.5, 0, -0.5};
 
 struct VECTOR {
   float x;
   float y;
   float z;
 };
+
 struct INT_VECTOR {
   int int_x;
   int int_y;
   int int_z;
 };
+
 struct UNSIGNED_INT_VECTOR {
   unsigned int uint_x;
   unsigned int uint_y;
   unsigned int uint_z;
 };
+
 struct NEIGHBOR_LIST {
   int atom_numbers;
   int *atom_serial;
@@ -61,12 +72,64 @@ struct UINT_VECTOR_LJ_TYPE {
   float charge;
 };
 
+struct ATOM_NEAR {
+  int *atom_serial;
+};
+
 struct GRID_BUCKET {
   int *atom_serial;
 };
+
 struct GRID_POINTER {
   int *grid_serial;
 };
+
+struct VIRTUAL_TYPE_0 {
+  float virtual_atom;
+  float from_1;
+  float h_double;
+};
+
+struct VIRTUAL_TYPE_1 {
+  float virtual_atom;
+  float from_1;
+  float from_2;
+  float a;
+};
+
+struct VIRTUAL_TYPE_2 {
+  float virtual_atom;
+  float from_1;
+  float from_2;
+  float from_3;
+  float a;
+  float b;
+};
+
+struct VIRTUAL_TYPE_3 {
+  float virtual_atom;
+  float from_1;
+  float from_2;
+  float from_3;
+  float d;
+  float k;
+};
+
+struct CONSTRAIN_PAIR {
+  int atom_i_serial;
+  int atom_j_serial;
+  float constant_r;
+  float constrain_k;
+};
+
+__device__ __host__ static inline VECTOR operator-(const VECTOR &veca, const VECTOR &vecb) {
+  VECTOR vec;
+  vec.x = veca.x - vecb.x;
+  vec.y = veca.y - vecb.y;
+  vec.z = veca.z - vecb.z;
+  return vec;
+}
+
 __device__ __host__ static inline VECTOR Get_Periodic_Displacement(const UNSIGNED_INT_VECTOR uvec_a,
                                                                    const UNSIGNED_INT_VECTOR uvec_b,
                                                                    const VECTOR scaler) {
@@ -76,6 +139,7 @@ __device__ __host__ static inline VECTOR Get_Periodic_Displacement(const UNSIGNE
   dr.z = (static_cast<int>(uvec_a.uint_z - uvec_b.uint_z)) * scaler.z;
   return dr;
 }
+
 __device__ __host__ static inline VECTOR Get_Periodic_Displacement(const UINT_VECTOR_LJ_TYPE uvec_a,
                                                                    const UINT_VECTOR_LJ_TYPE uvec_b,
                                                                    const VECTOR scaler) {
@@ -86,6 +150,27 @@ __device__ __host__ static inline VECTOR Get_Periodic_Displacement(const UINT_VE
   return dr;
 }
 
+__device__ __host__ static inline VECTOR Get_Periodic_Displacement(const VECTOR vec_a, const VECTOR vec_b,
+                                                                   const VECTOR box_length) {
+  VECTOR dr;
+  dr = vec_a - vec_b;
+  dr.x = dr.x - floorf(dr.x / box_length.x + 0.5) * box_length.x;
+  dr.y = dr.y - floorf(dr.y / box_length.y + 0.5) * box_length.y;
+  dr.z = dr.z - floorf(dr.z / box_length.z + 0.5) * box_length.z;
+  return dr;
+}
+
+__device__ __host__ static inline VECTOR Get_Periodic_Displacement(const VECTOR vec_a, const VECTOR vec_b,
+                                                                   const VECTOR box_length,
+                                                                   const VECTOR box_length_inverse) {
+  VECTOR dr;
+  dr = vec_a - vec_b;
+  dr.x = dr.x - floorf(dr.x * box_length_inverse.x + 0.5) * box_length.x;
+  dr.y = dr.y - floorf(dr.y * box_length_inverse.y + 0.5) * box_length.y;
+  dr.z = dr.z - floorf(dr.z * box_length_inverse.z + 0.5) * box_length.z;
+  return dr;
+}
+
 __device__ __host__ static inline VECTOR operator+(const VECTOR &veca, const VECTOR &vecb) {
   VECTOR vec;
   vec.x = veca.x + vecb.x;
@@ -93,6 +178,7 @@ __device__ __host__ static inline VECTOR operator+(const VECTOR &veca, const VEC
   vec.z = veca.z + vecb.z;
   return vec;
 }
+
 __device__ __host__ static inline float operator*(const VECTOR &veca, const VECTOR &vecb) {
   return veca.x * vecb.x + veca.y * vecb.y + veca.z * vecb.z;
 }
@@ -101,14 +187,6 @@ __device__ __host__ static inline VECTOR operator*(const float &a, const VECTOR 
   vec.x = a * vecb.x;
   vec.y = a * vecb.y;
   vec.z = a * vecb.z;
-  return vec;
-}
-
-__device__ __host__ static inline VECTOR operator-(const VECTOR &veca, const VECTOR &vecb) {
-  VECTOR vec;
-  vec.x = veca.x - vecb.x;
-  vec.y = veca.y - vecb.y;
-  vec.z = veca.z - vecb.z;
   return vec;
 }
 
@@ -144,6 +222,12 @@ __global__ static void construct_neighbor_list_kernel(int atom_numbers, int max_
   }
 }
 
+__global__ static void construct_atom_near(int atom_numbers, int near_numbers, int *atom_serial, ATOM_NEAR *an) {
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < atom_numbers; i += gridDim.x * blockDim.x) {
+    an[i].atom_serial = atom_serial + i * near_numbers;
+  }
+}
+
 static inline bool Malloc_Safely(void **address, size_t size) {
   address[0] = NULL;
   address[0] = reinterpret_cast<void *>(malloc(size));
@@ -155,6 +239,7 @@ static inline bool Malloc_Safely(void **address, size_t size) {
     return false;
   }
 }
+
 static inline bool Cuda_Malloc_Safely(void **address, size_t size) {
   cudaError_t cuda_error = cudaMalloc(&address[0], size);
   if (cuda_error == 0) {
@@ -163,6 +248,18 @@ static inline bool Cuda_Malloc_Safely(void **address, size_t size) {
     printf("cudaMalloc failed! error %d\n", cuda_error);
     getchar();
     return false;
+  }
+}
+
+__global__ static void construct_constrain_pair(int constrain_pair_numbers, const int *atom_i_serials,
+                                                const int *atom_j_serials, const float *constant_rs,
+                                                const float *constrain_ks, CONSTRAIN_PAIR *constrain_pair) {
+  int atom_i = blockDim.x * blockIdx.x + threadIdx.x;
+  if (atom_i < constrain_pair_numbers) {
+    constrain_pair[atom_i].atom_i_serial = atom_i_serials[atom_i];
+    constrain_pair[atom_i].atom_j_serial = atom_j_serials[atom_i];
+    constrain_pair[atom_i].constant_r = constant_rs[atom_i];
+    constrain_pair[atom_i].constrain_k = constrain_ks[atom_i];
   }
 }
 
@@ -178,6 +275,12 @@ __global__ static void Copy_Crd_To_New_Crd_Start(const int atom_numbers, const U
     new_crd[atom_i].charge = charge[atom_i];
   }
 }
+
+// void Constrain_Force_Cycle_With_Virial(int atom_numbers, int constrain_pair_numbers, const unsigned int *uint_crd_f,
+//                                        const float *scaler_f, float *constrain_pair_f, const float *pair_dr_f,
+//                                        const int *atom_i_serials, const int *atom_j_serials, const float
+//                                        *constant_rs, const float *constrain_ks, float *test_frc_f, float
+//                                        *d_atom_virial, cudaStream_t stream);
 
 __global__ static void Rand_Normal(const int float4_numbers, curandStatePhilox4_32_10_t *rand_state,
                                    float4 *rand_float4) {
@@ -254,6 +357,10 @@ __global__ static void Print(const size_t size, const int *input_x) {
     printf("%d\n", input_x[i]);
   }
   return;
+}
+
+__device__ static VECTOR Make_Vector_Not_Exceed_Value(VECTOR vector, const float value) {
+  return fminf(1.0, value * rnorm3df(vector.x, vector.y, vector.z)) * vector;
 }
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_SPONGE_H_
