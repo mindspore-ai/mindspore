@@ -60,6 +60,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 DataDumper::~DataDumper() {
+  kernel_graph_ = nullptr;
   ReleaseDevMem(&dev_load_mem_);
   ReleaseDevMem(&dev_unload_mem_);
   ReleaseDevMem(&op_debug_buffer_addr_);
@@ -221,7 +222,7 @@ void DataDumper::UnloadDumpInfo() {
   RtLoadDumpData(op_mapping_info, &dev_unload_mem_);
 }
 
-void DataDumper::ReleaseDevMem(void **ptr) const {
+void DataDumper::ReleaseDevMem(void **ptr) const noexcept {
   if (ptr == nullptr) {
     return;
   }
@@ -357,7 +358,7 @@ void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, voi
   }
 
   MS_LOG(INFO) << "[DataDump] rtDatadumpInfoLoad start";
-  rt_ret = rtDatadumpInfoLoad(*ptr, proto_size);
+  rt_ret = rtDatadumpInfoLoad(*ptr, SizeToUint(proto_size));
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DataDump] Call rtDatadumpInfoLoad failed";
   }
