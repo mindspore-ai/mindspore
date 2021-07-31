@@ -202,8 +202,11 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::glog
         mindspore::protobuf
         mindspore::flatbuffers
-        pthread
         )
+
+if(NOT MSVC)
+    target_link_libraries(converter_lite PRIVATE pthread)
+endif()
 
 if(NOT WIN32)
     target_link_libraries(converter_lite PRIVATE dl)

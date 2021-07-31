@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "coder/coder.h"
-#include <getopt.h>
 #include <iomanip>
 #include <string>
 #include <vector>
