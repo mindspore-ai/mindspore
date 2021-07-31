@@ -2888,22 +2888,6 @@ void PynativeExecutor::Sync() {
   }
 }
 
-void PynativeExecutor::EnterConstruct(const py::object &cell) {
-  if (py_top_cell_ != nullptr) {
-    return;
-  }
-  py_top_cell_ = cell.ptr();
-  MS_LOG(DEBUG) << "Enter construct process.";
-}
-
-void PynativeExecutor::LeaveConstruct(const py::object &cell) {
-  if (py_top_cell_ != cell.ptr()) {
-    return;
-  }
-  py_top_cell_ = nullptr;
-  MS_LOG(DEBUG) << "Leave construct process.";
-}
-
 REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                          (void)py::class_<PynativeExecutor, std::shared_ptr<PynativeExecutor>>(*m, "PynativeExecutor_")
                            .def_static("get_instance", &PynativeExecutor::GetInstance, "PynativeExecutor get_instance.")
@@ -2919,10 +2903,6 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
-                                "Executor set grad flag.")
-                           .def("enter_construct", &PynativeExecutor::EnterConstruct,
-                                "Do something before enter construct function.")
-                           .def("leave_construct", &PynativeExecutor::LeaveConstruct,
-                                "Do something after leave construct function.");
+                                "Executor set grad flag.");
                        }));
 }  // namespace mindspore::pynative
