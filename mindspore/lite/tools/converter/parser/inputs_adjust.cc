@@ -19,6 +19,11 @@
 #include "ops/primitive_c.h"
 
 namespace mindspore::lite {
+namespace {
+constexpr int kBuildInputFlagTwo = 2;
+constexpr int kBuildInputFlagThree = 3;
+constexpr int kBuildInputFlagFour = 4;
+}  // namespace
 STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                                    const std::string &attr_name, int flag) {
   MS_ASSERT(cnode != nullptr);
@@ -96,10 +101,10 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimTranspose)) {
       MS_LOG(INFO) << "Adjust Transpose";
-      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "perm", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "perm", kBuildInputFlagTwo);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimReshape)) {
       MS_LOG(INFO) << "Adjust Reshape";
-      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "shape", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "shape", kBuildInputFlagTwo);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimGather)) {
       MS_LOG(INFO) << "Adjust Gather";
       status = AddAttrToInput(func_graph, cnode, opt::kInputIndexThree, "axis", 1);
@@ -111,16 +116,16 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
       status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "k", 1);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimTileFusion)) {
       MS_LOG(INFO) << "Adjust TileFusion";
-      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "multiples", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "multiples", kBuildInputFlagTwo);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimReduceFusion)) {
       MS_LOG(INFO) << "Adjust ReduceFusion";
-      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "axes", 2);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "axes", kBuildInputFlagTwo);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimPadFusion)) {
       MS_LOG(INFO) << "Adjust PadFusion";
-      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "paddings", 3);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "paddings", kBuildInputFlagThree);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimPowFusion)) {
       MS_LOG(INFO) << "Adjust PowFuison";
-      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "power", 4);
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "power", kBuildInputFlagFour);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
       status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "zoom_factor", 1);
     }

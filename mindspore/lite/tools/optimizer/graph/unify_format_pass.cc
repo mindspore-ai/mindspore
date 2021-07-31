@@ -28,6 +28,7 @@ using mindspore::lite::NCHW_SHAPE;
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr int kInputChannel = 3;
 const std::vector<int> NH2NC = {0, 3, 1, 2};
 const std::vector<int> NC2NH = {0, 2, 3, 1};
 bool IsSpecialType(const CNodePtr &cnode) {
@@ -170,7 +171,7 @@ void ConvertNcTensor2Nh(const FuncGraphPtr &func_graph, const CNodePtr &cnode, s
   } else if (data_info.shape_.size() == kInputSizeTwo) {
     new_shape = {1, 1, data_info.shape_[0], data_info.shape_[1]};
   } else if (data_info.shape_.size() == kInputSizeThree) {
-    new_shape = {1, data_info.shape_[0], data_info.shape_[1], data_info.shape_[2]};
+    new_shape = {1, data_info.shape_[0], data_info.shape_[1], data_info.shape_[kInputIndexTwo]};
   }
   auto size = data_info.data_.size() / sizeof(float);
   std::vector<float> new_data(size);
@@ -193,7 +194,7 @@ void ConvertNcTensor2Nh(const FuncGraphPtr &func_graph, const CNodePtr &cnode, s
   }
   auto param_node = func_graph->add_parameter();
   param_node->set_name(cnode->input(index)->fullname_with_scope());
-  std::vector<int64_t> shape_vec{new_shape[0], new_shape[2], new_shape[3], new_shape[1]};
+  std::vector<int64_t> shape_vec{new_shape[0], new_shape[kInputIndexTwo], new_shape[kInputIndexThree], new_shape[1]};
   auto tensor_info = lite::CreateTensorInfo(new_data.data(), size * sizeof(float), shape_vec, kNumberTypeFloat32);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "Create tensor info failed";
@@ -505,8 +506,8 @@ STATUS UnifyFormatPass::HandleGraphInput(const FuncGraphPtr &func_graph, const C
     if (shape_vector.size() != kInputSizeFour) {
       continue;
     }
-    if (func_graph->get_inputs().size() == 1 && fmk_type_ == lite::converter::FmkType_ONNX && shape_vector[3] == 3 &&
-        shape_vector[1] == -1) {
+    if (func_graph->get_inputs().size() == 1 && fmk_type_ == lite::converter::FmkType_ONNX &&
+        shape_vector[kInputIndexThree] == kInputChannel && shape_vector[1] == -1) {
       continue;
     }
     std::vector<int64_t> new_dims = {shape_vector[NCHW_SHAPE::NCHW_N], shape_vector[NCHW_SHAPE::NCHW_H],

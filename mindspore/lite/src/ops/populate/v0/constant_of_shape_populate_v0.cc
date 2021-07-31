@@ -52,7 +52,7 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
         param->value_.f32_value_ = value->data()[0];
         break;
       case kNumberTypeInt32:
-        param->value_.int32_value_ = value->data()[0];
+        param->value_.int32_value_ = static_cast<int32_t>(value->data()[0]);
         break;
       default:
         MS_LOG(ERROR) << "The value of constant of shape is invalid";

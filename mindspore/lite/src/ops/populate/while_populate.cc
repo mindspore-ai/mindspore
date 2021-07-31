@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/while_parameter.h"
 using mindspore::schema::PrimitiveType_While;
 
 namespace mindspore {
 namespace lite {
-struct WhileParemeter {
-  OpParameter op_parameter_;
-  int body_subgraph_index = 0;
-  int cond_subgraph_index = 0;
-};
-using WhileParemeter = WhileParemeter;
 OpParameter *PopulateWhileParemeter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);

@@ -37,7 +37,7 @@ OpParameter *PopulateReduceParameter(const void *prim) {
   memset(reduce_param, 0, sizeof(ReduceParameter));
   reduce_param->op_parameter_.type_ = schema::PrimitiveType_ReduceFusion;
 
-  reduce_param->keep_dims_ = reduce_prim->keepDims();
+  reduce_param->keep_dims_ = static_cast<bool>(reduce_prim->keepDims());
   reduce_param->reduce_to_end_ = reduce_prim->reduceToEnd();
   reduce_param->coeff = reduce_prim->coeff();
   auto axisVector = reduce_prim->axes();
