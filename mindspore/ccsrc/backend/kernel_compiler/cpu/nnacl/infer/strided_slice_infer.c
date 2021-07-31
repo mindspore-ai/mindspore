@@ -70,7 +70,7 @@ int HandleAxesInputNotExist(const TensorC *const *inputs, struct StridedSliceTra
     return NNACL_ERR;
   }
   transfer_buffer->ndim_ = GetElementNum(begin_tensor);
-  for (int i = 0; i < transfer_buffer->ndim_; ++i) {
+  for (int i = 0; i < (size_t)(transfer_buffer->ndim_); ++i) {
     ShapePush(transfer_buffer->begins_, &transfer_buffer->begins_size_, begin_data[i]);
     ShapePush(transfer_buffer->ends_, &transfer_buffer->ends_size_, end_data[i]);
     ShapePush(transfer_buffer->strides_, &transfer_buffer->strides_size_, stride_data[i]);
@@ -94,7 +94,7 @@ int GenerateAxes(const TensorC *axes_tensor, int *axes, int num, int ndim) {
       axes[i] = i;
     }
   } else {
-    for (size_t i = 0; i < num; i++) {
+    for (int i = 0; i < num; i++) {
       axes[i] = axes_data[i];
     }
     for (int i = 0; i < num; ++i) {
@@ -138,17 +138,17 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
     return ret;
   }
 
-  for (size_t i = 0; i < *ndim; i++) {
+  for (int i = 0; i < *ndim; i++) {
     in_shape[i] = 0;
     begins[i] = 0;
     strides[i] = 0;
   }
-  for (size_t i = 0; i < *ndim; ++i) {
+  for (int i = 0; i < *ndim; ++i) {
     in_shape[i] = input_tensor->shape_[i];
   }
-  for (size_t i = 0; i < *ndim; ++i) {
+  for (int i = 0; i < *ndim; ++i) {
     int axes_it = 0;
-    for (size_t j = 0; j < begin_ndim; j++) {
+    for (int j = 0; j < begin_ndim; j++) {
       if (axes[j] == i) {
         axes_it = j;
         break;
@@ -190,7 +190,7 @@ int StrideSlicePreCheck(const TensorC *const *inputs, size_t inputs_size, Tensor
 }
 
 void Bit2Vector(StridedSliceTransferBuffer *transfer_buffer, const StridedSliceParameter *param) {
-  for (unsigned i = 0; i < (unsigned)transfer_buffer->ndim_; i++) {
+  for (unsigned i = 0; i < (unsigned)(size_t)(transfer_buffer->ndim_); i++) {
     transfer_buffer->begins_mask_[i] = (unsigned)(param->begins_mask_) & (1 << i);
     transfer_buffer->ends_mask_[i] = (unsigned)(param->ends_mask_) & (1 << i);
     transfer_buffer->ellipsis_mask_[i] = (unsigned)(param->ellipsisMask_) & (1 << i);
@@ -215,7 +215,7 @@ int ApplyNewAxisMask(StridedSliceTransferBuffer *transfer_buffer, StridedSlicePa
       transfer_buffer->strides_[i] = 1;
 
       ShapePush(transfer_buffer->begins_, &transfer_buffer->begins_size_, 0);
-      ShapePush(transfer_buffer->ends_, &transfer_buffer->ends_size_, in_shape[transfer_buffer->ndim_ - 1]);
+      ShapePush(transfer_buffer->ends_, &transfer_buffer->ends_size_, in_shape[(size_t)(transfer_buffer->ndim_) - 1]);
       ShapePush(transfer_buffer->strides_, &transfer_buffer->strides_size_, 1);
 
       transfer_buffer->begins_mask_[i] = false;
@@ -228,7 +228,7 @@ int ApplyNewAxisMask(StridedSliceTransferBuffer *transfer_buffer, StridedSlicePa
 }
 
 void ApplyBeginMask(StridedSliceTransferBuffer *transfer_buffer) {
-  for (int i = 0; i < transfer_buffer->ndim_; i++) {
+  for (int i = 0; i < (size_t)(transfer_buffer->ndim_); i++) {
     if (transfer_buffer->begins_mask_[i]) {
       transfer_buffer->begins_[i] = 0;
     }
@@ -236,7 +236,7 @@ void ApplyBeginMask(StridedSliceTransferBuffer *transfer_buffer) {
 }
 
 int ApplyEndMask(StridedSliceTransferBuffer *transfer_buffer, const int *in_shape, size_t in_shape_size) {
-  for (int i = 0; i < transfer_buffer->ndim_; i++) {
+  for (int i = 0; i < (size_t)(transfer_buffer->ndim_); i++) {
     if (transfer_buffer->ends_mask_[i]) {
       if (i >= in_shape_size) {
         return NNACL_ERR;
@@ -296,17 +296,18 @@ void ApplyShrinkMask(StridedSliceTransferBuffer *transfer_buffer, int *output_sh
 
 int TransferBuffer2Param(const StridedSliceTransferBuffer *transfer_buffer, StridedSliceParameter *param,
                          const int *in_shape, size_t in_shape_size) {
-  if (transfer_buffer->ndim_ >= in_shape_size || param->in_shape_length_ >= in_shape_size) {
+  if ((size_t)(transfer_buffer->ndim_) >= (size_t)(in_shape_size) ||
+      param->in_shape_length_ >= (size_t)(in_shape_size)) {
     return NNACL_ERR;
   }
-  for (int i = 0; i < transfer_buffer->ndim_; i++) {
+  for (int i = 0; i < (size_t)(transfer_buffer->ndim_); i++) {
     param->begins_[i] = transfer_buffer->begins_[i];
     param->ends_[i] = transfer_buffer->ends_[i];
     param->in_shape_[i] = in_shape[i];
     param->strides_[i] = transfer_buffer->strides_[i];
   }
 
-  for (int i = transfer_buffer->ndim_; i < param->in_shape_length_; i++) {
+  for (int i = (size_t)(transfer_buffer->ndim_); i < param->in_shape_length_; i++) {
     param->begins_[i] = 0;
     param->ends_[i] = in_shape[i];
     param->in_shape_[i] = in_shape[i];
@@ -325,12 +326,12 @@ void InitStridedSliceTransferBuffer(StridedSliceTransferBuffer *transfer_buffer)
 }
 
 void SetMaskSize(StridedSliceTransferBuffer *transfer_buffer) {
-  transfer_buffer->ellipsis_mask_size_ = transfer_buffer->ndim_;
-  transfer_buffer->new_axis_mask_size_ = transfer_buffer->ndim_;
-  transfer_buffer->shrink_axis_mask_size_ = transfer_buffer->ndim_;
-  transfer_buffer->begins_size_ = transfer_buffer->ndim_;
-  transfer_buffer->ends_size_ = transfer_buffer->ndim_;
-  transfer_buffer->strides_size_ = transfer_buffer->ndim_;
+  transfer_buffer->ellipsis_mask_size_ = (size_t)(transfer_buffer->ndim_);
+  transfer_buffer->new_axis_mask_size_ = (size_t)(transfer_buffer->ndim_);
+  transfer_buffer->shrink_axis_mask_size_ = (size_t)(transfer_buffer->ndim_);
+  transfer_buffer->begins_size_ = (size_t)(transfer_buffer->ndim_);
+  transfer_buffer->ends_size_ = (size_t)(transfer_buffer->ndim_);
+  transfer_buffer->strides_size_ = (size_t)(transfer_buffer->ndim_);
 }
 
 // note: begin, end, stride length are equal, but may less than rank of input
@@ -359,8 +360,8 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   InitStridedSliceTransferBuffer(&transfer_buffer);
 
   StridedSliceParameter *param = (StridedSliceParameter *)parameter;
-  param->num_axes_ = in_shape_size;
-  param->in_shape_length_ = in_shape_size;
+  param->num_axes_ = (int)(in_shape_size);
+  param->in_shape_length_ = (int)(in_shape_size);
 
   transfer_buffer.ndim_ = 0;
   if (inputs_size == kStridedSliceInputNum) {

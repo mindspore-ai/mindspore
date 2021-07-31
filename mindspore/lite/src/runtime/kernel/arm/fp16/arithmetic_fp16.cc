@@ -21,6 +21,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 using mindspore::schema::PrimitiveType_AddFusion;
@@ -154,11 +155,11 @@ void ArithmeticFP16CPUKernel::TileConstTensor(const void *in_data, void *out_dat
 int ArithmeticFP16CPUKernel::Execute(const void *input0, const void *input1, void *output, int size, bool is_opt) {
   int ret = RET_OK;
   if (is_opt) {
-    CHECK_NULL_RETURN(arithmetic_opt_func_, RET_ERROR);
+    CHECK_NULL_RETURN(arithmetic_opt_func_);
     ret = arithmetic_opt_func_(reinterpret_cast<const float16_t *>(input0), reinterpret_cast<const float16_t *>(input1),
                                reinterpret_cast<float16_t *>(output), size, param_);
   } else {
-    CHECK_NULL_RETURN(arithmetic_func_, RET_ERROR);
+    CHECK_NULL_RETURN(arithmetic_func_);
     ret = arithmetic_func_(reinterpret_cast<const float16_t *>(input0), reinterpret_cast<const float16_t *>(input1),
                            reinterpret_cast<float16_t *>(output), size);
   }

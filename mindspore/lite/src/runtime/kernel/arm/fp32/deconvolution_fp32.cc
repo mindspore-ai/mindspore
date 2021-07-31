@@ -153,6 +153,8 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvolutionCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #if defined(ENABLE_ARM32) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
   row_tile_ = C4NUM;
 #else

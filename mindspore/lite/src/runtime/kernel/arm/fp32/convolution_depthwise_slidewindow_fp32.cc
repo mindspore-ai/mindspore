@@ -94,6 +94,8 @@ int ConvolutionDepthwiseSWCPUKernel::InitPackedInputOutput() {
 }
 
 int ConvolutionDepthwiseSWCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new sliding window param failed.";

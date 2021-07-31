@@ -27,6 +27,8 @@ using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
 int GatherCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   axis_ = *(reinterpret_cast<int *>(in_tensors_.at(2)->data_c()));
   if (!InferShapeDone()) {
     return RET_OK;

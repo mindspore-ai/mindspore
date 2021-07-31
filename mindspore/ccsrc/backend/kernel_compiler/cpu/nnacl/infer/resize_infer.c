@@ -23,7 +23,7 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
   if (shape_tensor->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
-  size_t shape_size = GetElementNum(shape_tensor);
+  int shape_size = GetElementNum(shape_tensor);
   switch (shape_size) {
     case 4: {
       if (shape_tensor->data_type_ == kNumberTypeInt32) {

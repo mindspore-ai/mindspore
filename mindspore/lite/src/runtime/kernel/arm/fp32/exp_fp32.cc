@@ -26,6 +26,8 @@ using mindspore::schema::PrimitiveType_ExpFusion;
 
 namespace mindspore::kernel {
 int ExpCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   exp_parameter_ = reinterpret_cast<ExpParameter *>(op_parameter_);
   exp_parameter_->thread_num_ = thread_count_;
 
