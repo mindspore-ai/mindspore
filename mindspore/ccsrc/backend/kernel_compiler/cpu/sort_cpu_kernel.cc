@@ -24,12 +24,12 @@ template <typename T>
 void SortCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_count != 1) {
-    MS_LOG(EXCEPTION) << input_count << " inputs were provided, but SortCpuKernel expects 1.";
+    MS_LOG(EXCEPTION) << input_count << " inputs were provided, but Sort expects 1.";
   }
 
   size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_count != 2) {
-    MS_LOG(EXCEPTION) << "Number of outputs is " << output_count << ", but should be 2 for SortCpuKernel.";
+    MS_LOG(EXCEPTION) << "Number of outputs is " << output_count << ", but should be 2 for Sort.";
   }
 
   auto x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -64,7 +64,7 @@ template <typename T>
 bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                               const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1 || outputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "TopK needs 1 input and 2 outputs, but get inputs: " << inputs.size()
+    MS_LOG(EXCEPTION) << "Sort needs 1 input and 2 outputs, but get inputs: " << inputs.size()
                       << "outputs: " << outputs.size();
   }
   if (inputs[0]->size != outer_size_ * axis_size_ * inner_size_ * sizeof(T)) {
