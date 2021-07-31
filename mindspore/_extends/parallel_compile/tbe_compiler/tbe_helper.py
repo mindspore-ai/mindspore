@@ -232,3 +232,11 @@ def adjust_custom_op_info(compute_op_info):
         module_name, _ = os.path.splitext(file_name)
         compute_op_info["py_module_path"] = py_module_path
         compute_op_info["module_name"] = module_name
+
+
+def pack_op_args(inputs, outputs, attrs):
+    """
+    flatten inputs outputs attrs
+    """
+    op_args = (inputs, outputs, attrs)
+    return [item for arg in op_args for item in arg]
