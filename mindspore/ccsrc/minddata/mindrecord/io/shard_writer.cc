@@ -558,6 +558,7 @@ int ShardWriter::LockWriter(bool parallel_writer) {
     flock(fd, LOCK_EX);
   } else {
     MS_LOG(ERROR) << "Shard writer failed when locking file";
+    close(fd);
     return -1;
   }
 #endif

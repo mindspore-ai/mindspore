@@ -992,13 +992,21 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
 }
 
 std::vector<std::vector<float>> GetDefaultBoxes(BoxesConfig config) {
+  size_t size = config.num_default.size();
+  if (size <= 1 || config.feature_size.size() != size || config.steps.size() != size ||
+      config.aspect_rations.size() != size) {
+    return {};
+  }
+  if (config.max_scale < config.min_scale) {
+    return {};
+  }
   std::vector<float> fk;
   float num = static_cast<float>(config.img_shape[0]);
   for (int i = 0; i < config.steps.size(); i++) {
+    if (config.steps[i] == 0) {
+      return {};
+    }
     fk.push_back(num / config.steps[i]);
-  }
-  if (config.num_default.size() < 2) {
-    return {};
   }
   float scale_rate = (config.max_scale - config.min_scale) / (config.num_default.size() - 1);
   std::vector<float> scales(config.num_default.size());
@@ -1043,7 +1051,15 @@ std::vector<std::vector<float>> GetDefaultBoxes(BoxesConfig config) {
 
 void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std::vector<float>> &default_boxes,
                   const BoxesConfig config) {
+  if (boxes.size() != default_boxes.size() || config.prior_scaling.size() != 2) {
+    boxes = {};
+    return;
+  }
   for (int i = 0; i < default_boxes.size(); i++) {
+    if (boxes[i].size() != 4 || default_boxes[i].size() != 4) {
+      boxes = {};
+      return;
+    }
     boxes[i][0] = boxes[i][0] * config.prior_scaling[0] * default_boxes[i][2] + default_boxes[i][0];
     boxes[i][1] = boxes[i][1] * config.prior_scaling[0] * default_boxes[i][3] + default_boxes[i][1];
     boxes[i][2] = exp(boxes[i][2] * config.prior_scaling[1]) * default_boxes[i][2];
@@ -1057,6 +1073,9 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
   std::vector<float> areas(boxes_num);
   std::vector<int> order(boxes_num);
   for (int i = 0; i < boxes_num; i++) {
+    if (all_boxes[i].size() < 4) {
+      return {};
+    }
     areas[i] = (all_boxes[i][3] - all_boxes[i][1] + 1) * (all_boxes[i][2] - all_boxes[i][0] + 1);
     order[i] = i;
   }

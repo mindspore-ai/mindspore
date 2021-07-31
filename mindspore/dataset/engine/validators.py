@@ -284,7 +284,7 @@ def check_save(method):
         nreq_param_str = ['file_name', 'file_type']
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         if (param_dict.get('num_files') <= 0 or param_dict.get('num_files') > 1000):
-            raise ValueError("num_files should between {} and {}.".format(1, 1000))
+            raise ValueError("num_files should between 0 and 1000.")
         validate_dataset_param_value(nreq_param_str, param_dict, str)
         if param_dict.get('file_type') != 'mindrecord':
             raise ValueError("{} dataset format is not supported.".format(param_dict.get('file_type')))

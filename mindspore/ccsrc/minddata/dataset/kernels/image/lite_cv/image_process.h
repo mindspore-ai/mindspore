@@ -215,7 +215,7 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
 /// \brief Matrix transpose.
 /// \param[in] src Input matrix.
 /// \param[in] dst Output matrix.
-bool Transpose(LiteMat &src, LiteMat &dst);
+bool Transpose(const LiteMat &src, LiteMat &dst);
 
 /// \brief Filter the image by a Gaussian kernel
 /// \param[in] src LiteMat image to be processed. Only LiteMat of type UINT8 is supported now.

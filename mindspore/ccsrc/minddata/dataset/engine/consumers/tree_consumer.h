@@ -36,6 +36,9 @@ class TreeConsumer {
  public:
   /// Constructor that prepares an empty tree_adapter
   TreeConsumer();
+
+  /// \brief Destructor
+  ~TreeConsumer() = default;
   /// Initializes the consumer, this involves constructing and preparing the tree.
   /// \param d The dataset node that represent the root of the IR tree.
   /// \return Status error code.
