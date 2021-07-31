@@ -108,7 +108,7 @@ class TrainSession : virtual public lite::LiteSession {
   virtual std::vector<CreatorOp> ReplaceOps();
   virtual void RestoreOps(const std::vector<CreatorOp> &restore);
   virtual void CompileTrainKernels();
-  virtual void CompileInferenceKernels();
+  virtual int CompileInferenceKernels();
   virtual void CompileOptimizedKernels();
   virtual void CompileTrainOutputs();
   virtual void CompileEvalOutputs();
