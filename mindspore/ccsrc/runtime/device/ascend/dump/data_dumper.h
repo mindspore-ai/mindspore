@@ -59,7 +59,7 @@ class DataDumper {
   void OpDebugUnregister();
 
  private:
-  void ReleaseDevMem(void **ptr) const;
+  void ReleaseDevMem(void **ptr) const noexcept;
   bool KernelNeedDump(const CNodePtr &kernel) const;
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;

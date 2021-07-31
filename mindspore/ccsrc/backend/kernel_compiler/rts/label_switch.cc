@@ -32,7 +32,7 @@ LabelSwitchKernel::LabelSwitchKernel() {
   label_size_ = 0;
 }
 
-LabelSwitchKernel::~LabelSwitchKernel() {}
+LabelSwitchKernel::~LabelSwitchKernel() { cond_ = nullptr; }
 
 bool LabelSwitchKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);

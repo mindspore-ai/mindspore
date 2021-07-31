@@ -164,7 +164,7 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
   for (size_t i = 0; i < shape.size(); ++i) {
     if (i < max_shape.size() && shape[i] == SIZE_MAX) {
       MS_LOG(INFO) << "Node:" << node_name_ << " update shape from SIZE_MAX to " << max_shape[i];
-      shape[i] = max_shape[i];
+      shape[i] = LongToSize(max_shape[i]);
     }
   }
 

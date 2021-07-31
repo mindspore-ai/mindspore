@@ -272,7 +272,6 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
 #ifdef ENABLE_DUMP_IR
 void TaskGenerator::DumpTaskInfo(const string &real_filename,
                                  const std::vector<TaskDebugInfoPtr> &task_debug_info_list) {
-  OrderedMap<AnfNodePtr, int32_t> para_map;
   ChangeFileMode(real_filename, S_IRWXU);
   SaveTaskDebugInfoToFile(real_filename, task_debug_info_list);
   // set file mode to read only by user
@@ -295,7 +294,6 @@ void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
   }
 #endif
 
-  OrderedMap<AnfNodePtr, int32_t> para_map;
   std::string path_string = real_path;
   ChangeFileMode(path_string, S_IRWXU);
   SaveTaskDebugInfoToFile(path_string, task_debug_info_list_);

@@ -132,9 +132,9 @@ void FeedTeOpConstTensor(const NotNull<CNodePtr> &cnode, const std::map<uint32_t
     }
     auto input_name = input_names_attr[index];
     MS_LOG(INFO) << "input_name is " << input_name;
-    auto type_id = AnfAlgo::GetPrevNodeOutputDeviceDataType(cnode.get(), index);
-    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode.get(), index);
-    auto format = AnfAlgo::GetPrevNodeOutputFormat(cnode.get(), index);
+    auto type_id = AnfAlgo::GetPrevNodeOutputDeviceDataType(cnode.get(), IntToSize(index));
+    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode.get(), IntToSize(index));
+    auto format = AnfAlgo::GetPrevNodeOutputFormat(cnode.get(), IntToSize(index));
     const_inputs->try_emplace(
       input_name,
       optiling::TeConstTensorData{static_cast<const uint8_t *>(const_tensor->data_c()),

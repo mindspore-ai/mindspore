@@ -38,7 +38,7 @@ class TensorCopySlices : public RtKernel {
  private:
   void GetInputOutputInfo(const AnfNodePtr &anf_node);
   void GetInputOutputTotalCount(const AnfNodePtr &anf_node);
-  void *VoidPointerOffset(void *ptr, size_t offset);
+  void *VoidPointerOffset(void *ptr, size_t offset) const;
 
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> update_shape_;
