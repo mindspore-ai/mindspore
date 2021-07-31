@@ -21,12 +21,17 @@
 #endif
 #include <string>
 #include <fstream>
+#include <array>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore::lite::micro {
 #if defined(_WIN32) || defined(_WIN64)
+#ifdef _MSC_VER
+constexpr unsigned int kMicroDirMode = 511;
+#else
 constexpr _mode_t kMicroDirMode = 0777;
+#endif
 #else
 constexpr __mode_t kMicroDirMode = 0777;
 #endif

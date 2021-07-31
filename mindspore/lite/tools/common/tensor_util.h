@@ -38,8 +38,6 @@ using schema::FusedBatchNormT;
 using schema::MetaGraphT;
 using schema::QuantParamT;
 using schema::TensorT;
-using schema::Format::Format_NCHW;
-using schema::Format::Format_NHWC;
 
 std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor);
 
@@ -77,7 +75,7 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
 std::unique_ptr<schema::QuantParamT> CopyQuantParamArrayT(
   const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
 
-enum Category { CONST = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };
+enum Category { CONSTANT = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };
 
 class TensorCache {
  public:
@@ -87,7 +85,7 @@ class TensorCache {
 
   int AddTensor(const std::string &name, TensorT *tensor, int Category) {
     index++;
-    if (Category == CONST || Category == TF_CONST || Category == GRAPH_INPUT) {
+    if (Category == CONSTANT || Category == TF_CONST || Category == GRAPH_INPUT) {
       tensor->refCount = 1;
       tensor->nodeType = NodeType_ValueNode;
     } else {

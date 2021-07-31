@@ -1,5 +1,11 @@
-set(nlohmann_json_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
-set(nlohmann_json_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+if(MSVC)
+    set(flatbuffers_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+    set(flatbuffers_CFLAGS "${CMAKE_CXX_FLAGS}")
+    set(flatbuffers_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+else()
+    set(nlohmann_json_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+    set(nlohmann_json_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/JSON-for-Modern-CPP/repository/archive/v3.6.1.zip")

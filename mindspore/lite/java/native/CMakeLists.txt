@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(Lite-java)
 
 set(BUILD_LITE "on")
+set(CMAKE_SKIP_RPATH TURE)
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(PLATFORM_ARM "on")

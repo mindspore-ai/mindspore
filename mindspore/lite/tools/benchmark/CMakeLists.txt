@@ -20,6 +20,8 @@ if((PLATFORM_ARM32 OR PLATFORM_ARM64) AND NOT TARGET_HIMIX200 AND NOT TARGET_OHO
     else()
         target_link_libraries(benchmark mindspore-lite mindspore::json)
     endif()
+elseif(MSVC)
+    target_link_libraries(benchmark mindspore-lite mindspore::json)
 else()
     target_link_libraries(benchmark mindspore-lite mindspore::json pthread)
 endif()
