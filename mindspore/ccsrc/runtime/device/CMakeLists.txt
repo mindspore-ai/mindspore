@@ -17,6 +17,8 @@ endif()
 
 if(ENABLE_D)
     file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc" "kernel_adjust.cc")
+    list(REMOVE_ITEM D_SRC_LIST "ascend/distribute/mpi_collective_group.cc"
+            "ascend/distribute/collective_group_wrapper.cc" "ascend/distribute/mpi_pycc.cc")
 endif()
 if(ENABLE_TDTQUE)
     file(GLOB_RECURSE TDT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -42,6 +44,13 @@ if(ENABLE_MPI)
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
         pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
         target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
+    endif()
+
+    if(ENABLE_D)
+        set_property(SOURCE "ascend/distribute/mpi_pycc.cc"
+                PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+        pybind11_add_module(_ascend_mpi "ascend/distribute/mpi_pycc.cc")
+        target_link_libraries(_ascend_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
     endif()
 endif()
 
@@ -84,4 +93,17 @@ if(ENABLE_D)
     set_property(SOURCE ${GE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_GE)
     target_include_directories(_mindspore_runtime_device_obj PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
     add_dependencies(_mindspore_runtime_device_obj graph)
+    if(ENABLE_MPI)
+        set(ASCEND_PATH /usr/local/Ascend)
+        set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/fwkacllib/lib64)
+        set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
+        find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+        file(GLOB_RECURSE ASCEND_COLLECTIVE_LIST "ascend/distribute/mpi_collective_group.cc"
+                "ascend/distribute/collective_group_wrapper.cc")
+        set_property(SOURCE ${ASCEND_COLLECTIVE_LIST}
+                PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+        add_library(ascend_collective SHARED ${ASCEND_COLLECTIVE_LIST})
+        target_link_libraries(ascend_collective PRIVATE ${HCCL} mindspore::ompi)
+        target_link_libraries(_ascend_mpi PRIVATE ascend_collective)
+    endif()
 endif()

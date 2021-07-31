@@ -22,6 +22,7 @@
 #include <functional>
 #include "external/ge/ge_api_types.h"
 #include "hccl/hccl.h"
+#include "utils/dlopen_macro.h"
 
 constexpr const char *kHcclOpsKernelInfoStore = "ops_kernel_info_hccl";
 
@@ -37,22 +38,6 @@ struct HcomOperation;
 using OptionsType = std::map<std::string, std::string>;
 using OpsKernelBuilderMap = std::map<std::string, std::shared_ptr<ge::OpsKernelBuilder>>;
 using HExecCallBack = std::function<void(HcclResult)>;
-
-#define PLUGIN_METHOD(name, return_type, params...)                        \
-  extern "C" {                                                             \
-  __attribute__((visibility("default"))) return_type Plugin##name(params); \
-  }                                                                        \
-  constexpr const char *k##name##Name = "Plugin" #name;                    \
-  using name##FunObj = std::function<return_type(params)>;                 \
-  using name##FunPtr = return_type (*)(params);
-
-#define ORIGIN_METHOD(name, return_type, params...)        \
-  extern "C" {                                             \
-  return_type name(params);                                \
-  }                                                        \
-  constexpr const char *k##name##Name = #name;             \
-  using name##FunObj = std::function<return_type(params)>; \
-  using name##FunPtr = return_type (*)(params);
 
 PLUGIN_METHOD(InitHcomGraphAdapter, ge::Status, const OptionsType &);
 PLUGIN_METHOD(FinalizeHcomGraphAdapter, ge::Status);
