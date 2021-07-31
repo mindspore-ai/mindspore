@@ -67,6 +67,12 @@ MS_REG_GPU_KERNEL_TWO(
   GatherD, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
   GatherGpuFwdKernel, int64_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(
+  GatherD, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+  GatherGpuFwdKernel, uint, int)
+MS_REG_GPU_KERNEL_TWO(
+  GatherD, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
+  GatherGpuFwdKernel, uint, int64_t)
+MS_REG_GPU_KERNEL_TWO(
   GatherD, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
   GatherGpuFwdKernel, uchar, int)
 MS_REG_GPU_KERNEL_TWO(

@@ -67,5 +67,19 @@ MS_REG_GPU_KERNEL_TWO(TensorScatterUpdate,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
                       TensorScatterUpdateGpuFwdKernel, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(TensorScatterUpdate,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeBool),
+                      TensorScatterUpdateGpuFwdKernel, bool, int)
+MS_REG_GPU_KERNEL_TWO(TensorScatterUpdate,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeBool),
+                      TensorScatterUpdateGpuFwdKernel, bool, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

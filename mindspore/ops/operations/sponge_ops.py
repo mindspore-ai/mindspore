@@ -3279,3 +3279,71 @@ class TransferCrd(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('old_crd', old_crd_dtype, [mstype.float32], self.name)
         validator.check_tensor_dtype_valid('box', box_dtype, [mstype.float32], self.name)
         return mstype.float32, mstype.float32, mstype.float32, mstype.int32
+
+
+class FFT3D(PrimitiveWithInfer):
+    """
+    Forward FFT with Three-Dimensional Input.
+
+    Inputs:
+        - **input_tensor** (Tensor, float32) - [fftx, ffty, fftz]
+
+    Outputs:
+        - **output_real** (float32)
+        - **output_imag** (float32)
+
+    Supported Platforms:
+        ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(
+            inputs=['input_tensor'],
+            outputs=['output_real', 'output_imag'])
+
+    def infer_shape(self, input_shape):
+        self.add_prim_attr('fftx', input_shape[0])
+        self.add_prim_attr('ffty', input_shape[1])
+        self.add_prim_attr('fftz', input_shape[2])
+        return [input_shape[0], input_shape[1], int(input_shape[2]/2)+1],\
+               [input_shape[0], input_shape[1], int(input_shape[2]/2)+1]
+
+    def infer_dtype(self, input_dtype):
+        validator.check_tensor_dtype_valid('input_tensor', input_dtype, mstype.number_type, self.name)
+        return input_dtype, input_dtype
+
+
+class IFFT3D(PrimitiveWithInfer):
+    """
+    Inverse FFT with Three-Dimensional Input.
+
+    Inputs:
+        - **input_real** (Tensor, float32) - [fftx, ffty, fftz]
+        - **input_imag** (Tensor, float32) - [fftx, ffty, fftz]
+
+    Outputs:
+        - **output_tensor** (float32)
+
+    Supported Platforms:
+        ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(
+            inputs=['input_real', 'input_imag'],
+            outputs=['output_tensor'])
+
+    def infer_shape(self, input_shape1, input_shape2):
+        for i in range(len(input_shape1)):
+            validator.check_int(input_shape1[i], input_shape2[i], Rel.EQ, "input_shape", self.name)
+        self.add_prim_attr('fftx', input_shape1[0])
+        self.add_prim_attr('ffty', input_shape1[1])
+        self.add_prim_attr('fftz', input_shape1[2])
+        return [input_shape1[0], input_shape1[1], (input_shape1[2]-1)*2]
+
+    def infer_dtype(self, input_real_dtype, input_imag_dtype):
+        validator.check_tensor_dtype_valid('input_real', input_real_dtype, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('input_imag', input_imag_dtype, mstype.number_type, self.name)
+        return input_real_dtype

@@ -81,6 +81,14 @@ MS_REG_GPU_KERNEL_TWO(
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
   GatherGradGpuKernel, int64_t, uchar)
 MS_REG_GPU_KERNEL_TWO(
+  GatherDGrad,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+  GatherGradGpuKernel, int, uint)
+MS_REG_GPU_KERNEL_TWO(
+  GatherDGrad,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+  GatherGradGpuKernel, int64_t, uint)
+MS_REG_GPU_KERNEL_TWO(
   GatherDGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
   GatherGradGpuKernel, int, bool)
 MS_REG_GPU_KERNEL_TWO(

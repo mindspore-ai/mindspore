@@ -72,6 +72,11 @@ template void GatherV2<int8_t, int>(int8_t *input, int *indices, int8_t *output,
                                     size_t output_dim2, size_t input_dim1, cudaStream_t stream);
 template void GatherV2<int8_t, int64_t>(int8_t *input, int64_t *indices, int8_t *output, size_t output_dim0,
                                         size_t output_dim1, size_t output_dim2, size_t input_dim1, cudaStream_t stream);
+template void GatherV2<uint32_t, int>(uint32_t *input, int *indices, uint32_t *output, size_t output_dim0,
+                                      size_t output_dim1, size_t output_dim2, size_t input_dim1, cudaStream_t stream);
+template void GatherV2<uint32_t, int64_t>(uint32_t *input, int64_t *indices, uint32_t *output, size_t output_dim0,
+                                          size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                          cudaStream_t stream);
 template void GatherV2<uint8_t, int>(uint8_t *input, int *indices, uint8_t *output, size_t output_dim0,
                                      size_t output_dim1, size_t output_dim2, size_t input_dim1, cudaStream_t stream);
 template void GatherV2<uint8_t, int64_t>(uint8_t *input, int64_t *indices, uint8_t *output, size_t output_dim0,
