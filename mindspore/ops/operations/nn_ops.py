@@ -2024,15 +2024,14 @@ class Conv2DBackpropInput(Primitive):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> import mindspore.ops.functional as F
         >>> import mindspore.ops as ops
-        >>> dout = Tensor(np.ones([10, 32, 30, 30]), mstype.float32)
-        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mstype.float32)
+        >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
+        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> input_x = Tensor(np.ones([10, 32, 32, 32]))
         >>> conv2d_backprop_input = ops.Conv2DBackpropInput(out_channel=32, kernel_size=3)
-        >>> output = conv2d_backprop_input(dout, weight, F.shape(input_x))
+        >>> output = conv2d_backprop_input(dout, weight, ops.shape(input_x))
         >>> print(output.shape)
         (10, 32, 32, 32)
     """
@@ -2142,7 +2141,7 @@ class Conv2DTranspose(Conv2DBackpropInput):
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> x = Tensor(np.ones([10, 32, 32, 32]))
         >>> conv2d_transpose_input = ops.Conv2DTranspose(out_channel=32, kernel_size=3)
-        >>> output = conv2d_transpose_input(dout, weight, F.shape(x))
+        >>> output = conv2d_transpose_input(dout, weight, ops.shape(x))
         >>> print(output.shape)
         (10, 32, 32, 32)
     """
@@ -2182,11 +2181,11 @@ class BiasAdd(Primitive):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> import mindspore.ops as ops
-        >>> from mindspore.common import dtype as mstype
-        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mstype.float32)
-        >>> bias = Tensor(np.random.random(3).reshape((3,)), mstype.float32)
+        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
+        >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
         >>> bias_add = ops.BiasAdd()
         >>> output = bias_add(input_x, bias)
         >>> print(output.shape)
@@ -3936,11 +3935,11 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         >>> import numpy as np
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mstype.float32)
-        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mstype.float32)
-        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mstype.float32)
-        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mstype.float32)
+        >>> import mindspore
+        >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
+        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
+        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
+        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
         >>> loss = ops.BCEWithLogitsLoss()
         >>> output = loss(predict, target, weight, pos_weight)
         >>> print(output)
@@ -4581,10 +4580,8 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -4598,14 +4595,14 @@ class FusedSparseAdam(PrimitiveWithInfer):
         ...         return out
         ...
         >>> net = Net()
-        >>> beta1_power = Tensor(0.9, mstype.float32)
-        >>> beta2_power = Tensor(0.999, mstype.float32)
-        >>> lr = Tensor(0.001, mstype.float32)
-        >>> beta1 = Tensor(0.9, mstype.float32)
-        >>> beta2 = Tensor(0.999, mstype.float32)
-        >>> epsilon = Tensor(1e-8, mstype.float32)
-        >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
-        >>> indices = Tensor([0, 1], mstype.int32)
+        >>> beta1_power = Tensor(0.9, mindspore.float32)
+        >>> beta2_power = Tensor(0.999, mindspore.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
+        >>> beta1 = Tensor(0.9, mindspore.float32)
+        >>> beta2 = Tensor(0.999, mindspore.float32)
+        >>> epsilon = Tensor(1e-8, mindspore.float32)
+        >>> gradient = Tensor(np.random.rand(2, 1, 2), mindspore.float32)
+        >>> indices = Tensor([0, 1], mindspore.int32)
         >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
         >>> print(net.var.asnumpy())
         [[[0.9996963  0.9996977 ]]
@@ -4730,10 +4727,8 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -4747,14 +4742,14 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         ...         return out
         ...
         >>> net = Net()
-        >>> beta1_power = Tensor(0.9, mstype.float32)
-        >>> beta2_power = Tensor(0.999, mstype.float32)
-        >>> lr = Tensor(0.001, mstype.float32)
-        >>> beta1 = Tensor(0.9, mstype.float32)
-        >>> beta2 = Tensor(0.999, mstype.float32)
-        >>> epsilon = Tensor(1e-8, mstype.float32)
-        >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
-        >>> indices = Tensor([0, 1], mstype.int32)
+        >>> beta1_power = Tensor(0.9, mindspore.float32)
+        >>> beta2_power = Tensor(0.999, mindspore.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
+        >>> beta1 = Tensor(0.9, mindspore.float32)
+        >>> beta2 = Tensor(0.999, mindspore.float32)
+        >>> epsilon = Tensor(1e-8, mindspore.float32)
+        >>> gradient = Tensor(np.random.rand(2, 1, 2), mindspore.float32)
+        >>> indices = Tensor([0, 1], mindspore.int32)
         >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
         >>> print(net.var.asnumpy())
         [[[0.9996866 0.9997078]]
@@ -4970,19 +4965,17 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> import mindspore.common.dtype as mstype
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.sparse_apply_proximal_adagrad = ops.FusedSparseProximalAdagrad()
         ...         self.var = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="var")
         ...         self.accum = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="accum")
-        ...         self.lr = Tensor(0.01, mstype.float32)
-        ...         self.l1 = Tensor(0.0, mstype.float32)
-        ...         self.l2 = Tensor(0.0, mstype.float32)
+        ...         self.lr = Tensor(0.01, mindspore.float32)
+        ...         self.l1 = Tensor(0.0, mindspore.float32)
+        ...         self.l2 = Tensor(0.0, mindspore.float32)
         ...     def construct(self, grad, indices):
         ...         out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1,
         ...                                                  self.l2, grad, indices)
@@ -5273,11 +5266,8 @@ class ApplyAdaMax(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5293,11 +5283,11 @@ class ApplyAdaMax(PrimitiveWithInfer):
         ...         return out
         ...
         >>> net = Net()
-        >>> beta1_power =Tensor(0.9, mstype.float32)
-        >>> lr = Tensor(0.001, mstype.float32)
-        >>> beta1 = Tensor(0.9, mstype.float32)
-        >>> beta2 = Tensor(0.99, mstype.float32)
-        >>> epsilon = Tensor(1e-10, mstype.float32)
+        >>> beta1_power =Tensor(0.9, mindspore.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
+        >>> beta1 = Tensor(0.9, mindspore.float32)
+        >>> beta2 = Tensor(0.99, mindspore.float32)
+        >>> epsilon = Tensor(1e-10, mindspore.float32)
         >>> grad = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
         >>> output = net(beta1_power, lr, beta1, beta2, epsilon, grad)
         >>> print(output)
@@ -5415,11 +5405,8 @@ class ApplyAdadelta(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5436,9 +5423,9 @@ class ApplyAdadelta(PrimitiveWithInfer):
         ...         return out
         ...
         >>> net = Net()
-        >>> lr = Tensor(0.001, mstype.float32)
-        >>> rho = Tensor(0.0, mstype.float32)
-        >>> epsilon = Tensor(1e-6, mstype.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
+        >>> rho = Tensor(0.0, mindspore.float32)
+        >>> epsilon = Tensor(1e-6, mindspore.float32)
         >>> grad = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
         >>> output = net(lr, rho, epsilon, grad)
         >>> print(output)
@@ -5537,11 +5524,8 @@ class ApplyAdagrad(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5555,7 +5539,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
         ...         return out
         ...
         >>> net = Net()
-        >>> lr = Tensor(0.001, mstype.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
         >>> grad = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
         >>> output = net(lr, grad)
         >>> print(output)
@@ -5639,11 +5623,8 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5657,7 +5638,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         ...         return out
         ...
         >>> net = Net()
-        >>> lr = Tensor(0.001, mstype.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
         >>> grad = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
         >>> output = net(lr, grad)
         >>> print(output)
@@ -5745,11 +5726,8 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5762,7 +5740,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         ...
         >>> net = Net()
         >>> grad = Tensor(np.array([[[0.7]]]).astype(np.float32))
-        >>> indices = Tensor([0], mstype.int32)
+        >>> indices = Tensor([0], mindspore.int32)
         >>> output = net(grad, indices)
         >>> print(output)
         (Tensor(shape=[1, 1, 1], dtype=Float32, value=
@@ -5849,11 +5827,8 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore import Parameter
-        >>> from mindspore.ops import operations as ops
-        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5867,7 +5842,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         ...
         >>> net = Net()
         >>> grad = Tensor(np.array([[0.7]]).astype(np.float32))
-        >>> indices = Tensor(np.ones([1]), mstype.int32)
+        >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
         >>> print(output)
         (Tensor(shape=[1, 1], dtype=Float32, value=
@@ -8026,11 +8001,10 @@ class Conv3D(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> import mindspore.ops as ops
-        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]), mstype.float16)
-        >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mstype.float16)
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
         >>> conv3d = ops.Conv3D(out_channel=32, kernel_size=(4, 3, 3))
         >>> output = conv3d(input_tensor, weight)
         >>> print(output.shape)
@@ -8214,15 +8188,13 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> import mindspore.ops.functional as F
-        >>> import mindspore.ops as ops
-        >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mstype.float16)
-        >>> weight = Tensor(np.ones([32, 32, 4, 6, 2]), mstype.float16)
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([32, 32, 4, 6, 2]), mindspore.float16)
         >>> x = Tensor(np.ones([16, 32, 13, 37, 33]))
         >>> conv3d_backprop_input = ops.Conv3DBackpropInput(out_channel=4, kernel_size=(4, 6, 2))
-        >>> output = conv3d_backprop_input(dout, weight, F.shape(x))
+        >>> output = conv3d_backprop_input(dout, weight, ops.shape(x))
         >>> print(output.shape)
         (16, 32, 13, 37, 33)
     """
@@ -8511,11 +8483,10 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
-        >>> import mindspore.ops as ops
-        >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mstype.float16)
-        >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mstype.float16)
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
         >>> conv3d_transpose = ops.Conv3DTranspose(in_channel=16, out_channel=3, kernel_size=(4, 6, 2))
         >>> output = conv3d_transpose(input_x, weight)
         >>> print(output.shape)

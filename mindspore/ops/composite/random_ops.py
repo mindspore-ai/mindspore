@@ -52,12 +52,12 @@ def normal(shape, mean, stddev, seed=None):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> import mindspore
         >>> shape = (3, 1, 2)
-        >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
-        >>> stddev = Tensor(1.0, mstype.float32)
-        >>> output = C.normal(shape, mean, stddev, seed=5)
+        >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> stddev = Tensor(1.0, mindspore.float32)
+        >>> output = ops.normal(shape, mean, stddev, seed=5)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)
@@ -98,13 +98,13 @@ def laplace(shape, mean, lambda_param, seed=None):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor
-        >>> from mindspore.ops import composite as C
-        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import ops as ops
         >>> shape = (2, 3)
-        >>> mean = Tensor(1.0, mstype.float32)
-        >>> lambda_param = Tensor(1.0, mstype.float32)
-        >>> output = C.laplace(shape, mean, lambda_param, seed=5)
+        >>> mean = Tensor(1.0, mindspore.float32)
+        >>> lambda_param = Tensor(1.0, mindspore.float32)
+        >>> output = ops.laplace(shape, mean, lambda_param, seed=5)
         >>> print(output.shape)
         (2, 3)
     """
@@ -138,7 +138,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
           must be non-negative. Default: None, which will be treated as 0.
         dtype (mindspore.dtype): type of the Uniform distribution. If it is int32, it generates numbers from discrete
           uniform distribution; if it is float32, it generates numbers from continuous uniform distribution. It only
-          supports these two data types. Default: mstype.float32.
+          supports these two data types. Default: mindspore.float32.
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
@@ -156,20 +156,20 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> # For discrete uniform distribution, only one number is allowed for both minval and maxval:
         >>> shape = (4, 2)
-        >>> minval = Tensor(1, mstype.int32)
-        >>> maxval = Tensor(2, mstype.int32)
-        >>> output = C.uniform(shape, minval, maxval, seed=5, dtype=mstype.int32)
+        >>> minval = Tensor(1, mindspore.int32)
+        >>> maxval = Tensor(2, mindspore.int32)
+        >>> output = ops.uniform(shape, minval, maxval, seed=5, dtype=mindspore.int32)
         >>>
         >>> # For continuous uniform distribution, minval and maxval can be multi-dimentional:
         >>> shape = (3, 1, 2)
-        >>> minval = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
-        >>> maxval = Tensor([8.0, 10.0], mstype.float32)
-        >>> output = C.uniform(shape, minval, maxval, seed=5)
+        >>> minval = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> maxval = Tensor([8.0, 10.0], mindspore.float32)
+        >>> output = ops.uniform(shape, minval, maxval, seed=5)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)
@@ -217,12 +217,12 @@ def gamma(shape, alpha, beta, seed=None):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> import mindspore
         >>> shape = (3, 1, 2)
-        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
-        >>> beta = Tensor(np.array([1.0]), mstype.float32)
-        >>> output = C.gamma(shape, alpha, beta, seed=5)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([1.0]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)
@@ -262,11 +262,11 @@ def poisson(shape, mean, seed=None):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> import mindspore
         >>> shape = (4, 1)
-        >>> mean = Tensor(np.array([5.0, 10.0]), mstype.float32)
-        >>> output = C.poisson(shape, mean, seed=5)
+        >>> mean = Tensor(np.array([5.0, 10.0]), mindspore.float32)
+        >>> output = ops.poisson(shape, mean, seed=5)
         >>> result = output.shape
         >>> print(result)
         (4, 2)
@@ -308,10 +308,10 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> import mindspore.ops.composite as C
-        >>> from mindspore.common import dtype as mstype
-        >>> input = Tensor([0, 9, 4, 0], mstype.float32)
-        >>> output = C.multinomial(input, 2, True)
+        >>> import mindspore.ops as ops
+        >>> import mindspore
+        >>> input = Tensor([0, 9, 4, 0], mindspore.float32)
+        >>> output = ops.multinomial(input, 2, True)
         >>> print(output)
         [1 1]
     """

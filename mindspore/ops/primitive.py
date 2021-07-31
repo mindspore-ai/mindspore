@@ -303,17 +303,14 @@ class Primitive(Primitive_):
         Args:
             mode (bool): Specifies whether the primitive is recomputed. Default: True.
         Examples:
-            >>> import mindspore as ms
-            >>> from mindspore.common.tensor import Tensor
-            >>> import mindspore.ops as ops
-            >>> import mindspore.ops.operator as P
-            >>> import mindspore.nn as nn
             >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, ops, nn
             >>> class NetRecompute(nn.Cell):
             ...     def __init__(self):
             ...         super(NetRecompute,self).__init__()
-            ...         self.relu = P.ReLU().recompute()
-            ...         self.sqrt = P.Sqrt()
+            ...         self.relu = ops.ReLU().recompute()
+            ...         self.sqrt = ops.Sqrt()
             ...     def construct(self, x):
             ...         out = self.relu(x)
             ...         return self.sqrt(out)

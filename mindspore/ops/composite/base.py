@@ -208,7 +208,7 @@ class GradOperation(GradOperation_):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.common import ParameterTuple
+        >>> from mindspore import ParameterTuple
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
