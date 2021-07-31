@@ -278,22 +278,6 @@ std::string Tensor::ToString() const {
   return oss.str();
 }
 
-void Tensor::set_root_tensor(Tensor *tensor) {
-  this->root_tensor_ = tensor;
-  if (this->root_tensor_ == this) {
-    return;
-  }
-  if (this->root_tensor_ == nullptr) {
-    return;
-  }
-  this->shape_ = this->root_tensor_->shape_;
-  this->format_ = this->root_tensor_->format_;
-  this->data_type_ = this->root_tensor_->data_type_;
-  this->category_ = this->root_tensor_->category_;
-  this->quant_params_ = this->root_tensor_->quant_params_;
-  this->quant_clusters_ = this->root_tensor_->quant_clusters_;
-}
-
 int Tensor::MallocData(const AllocatorPtr allocator) {
   if (this->data_ != nullptr) {
     return RET_OK;
@@ -344,16 +328,6 @@ void *Tensor::ReallocData() {
 }
 
 void *Tensor::MutableData() {
-  if (this->root_tensor_ != nullptr) {
-    if (this->root_tensor_ != this && this->root_tensor_->data_ == nullptr) {
-      MS_LOG(ERROR) << "root tensor has not been malloced";
-      return nullptr;
-    } else if (this->root_tensor_ != this && this->root_tensor_->data_ != nullptr) {
-      return this->root_tensor_->data_;
-    } else {
-      // malloc self
-    }
-  }
   if (this->data_ == nullptr) {
     auto ret = this->MallocData();
     if (ret != 0) {

@@ -109,8 +109,6 @@ class TensorList : public Tensor {
 
   bool IsConst() const override;
 
-  void set_root_tensor(Tensor *tensor) override;
-
   void set_ref_count(int ref_count) override {
     ref_count_ = ref_count;
     for (auto tensor : tensors_) {

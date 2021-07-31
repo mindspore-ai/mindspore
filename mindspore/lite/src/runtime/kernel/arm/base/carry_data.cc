@@ -37,12 +37,20 @@ int CarryDataKernel::MoveData(std::vector<lite::Tensor *>::iterator dst_begin,
       MS_LOG(ERROR) << "input tensor or output tensor of merge is nullptr";
       return RET_ERROR;
     }
-    lite::STATUS ret;
-    if (src_tensor->data_type() == kObjectTypeTensorType && dst_tensor->data_type() == kObjectTypeTensorType) {
-      ret = MoveTensorListData(reinterpret_cast<lite::TensorList *>(dst_tensor),
-                               reinterpret_cast<lite::TensorList *>(src_tensor));
+    lite::STATUS ret = RET_OK;
+    if (src_tensor->IsConst() || src_tensor->IsGraphInput()) {
+      dst_tensor->set_data(src_tensor->data());
+      dst_tensor->set_own_data(false);
+      MS_LOG(ERROR) << "Carry const data and graph inputs.";
     } else {
-      ret = MoveTensorData(dst_tensor, src_tensor);
+      if (src_tensor->data_type() == kObjectTypeTensorType && dst_tensor->data_type() == kObjectTypeTensorType) {
+        MS_LOG(ERROR) << "Carry MoveTensorListData";
+        ret = MoveTensorListData(reinterpret_cast<lite::TensorList *>(dst_tensor),
+                                 reinterpret_cast<lite::TensorList *>(src_tensor));
+      } else {
+        MS_LOG(ERROR) << "Carry MoveTensorData";
+        ret = MoveTensorData(dst_tensor, src_tensor);
+      }
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Move data failed : " << ret;
@@ -64,45 +72,33 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
                   << "output tensor shape: " << dst_tensor->shape();
     return RET_ERROR;
   }
-  if (src_tensor->root_tensor() == nullptr) {
-    if (src_tensor->IsConst() || src_tensor->IsGraphInput() || src_tensor->ref_count() > 1) {
-      auto dst_data = dst_tensor->MutableData();
-      if (dst_data == nullptr) {
-        MS_LOG(ERROR) << "data of dst tensor is nullptr";
-        return RET_ERROR;
-      }
-      auto src_data = src_tensor->data_c();
-      MS_ASSERT(src_data != nullptr);
-      memcpy(dst_data, src_data, dst_tensor->Size());
-    } else {
-      dst_tensor->FreeData();
-      dst_tensor->set_data(src_tensor->data_c());
-      dst_tensor->set_own_data(true);
-      src_tensor->set_data(nullptr);
-      src_tensor->set_own_data(true);
-    }
-  } else {
-    dst_tensor->set_root_tensor(src_tensor->root_tensor());
+  if (src_tensor->allocator() == nullptr) {
+    MS_LOG(ERROR) << "src_tensor allocator is nullptr.";
+    return RET_ERROR;
   }
+
+  // need replace with increase data ref count
+  memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
   return RET_OK;
 }
 
-int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensor, lite::TensorList *src_tensor) {
+int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_tensorlist) {
   // shape may change, because tensors.size() can be change in RunGraph
-  if (dst_tensor->data_type() != src_tensor->data_type() || dst_tensor->format() != src_tensor->format()) {
+  if (dst_tensorlist->data_type() != src_tensorlist->data_type() ||
+      dst_tensorlist->format() != src_tensorlist->format()) {
     MS_LOG(ERROR) << "input tensorlist and output tensorlist data_type or format is incompatible";
-    MS_LOG(ERROR) << "input tensor data_type: " << src_tensor->data_type() << " vs "
-                  << "output tensor data_type: " << dst_tensor->data_type()
-                  << "input tensor format: " << src_tensor->format() << " vs "
-                  << "output tensor format: " << dst_tensor->format();
+    MS_LOG(ERROR) << "input tensor data_type: " << src_tensorlist->data_type() << " vs "
+                  << "output tensor data_type: " << dst_tensorlist->data_type()
+                  << "input tensor format: " << src_tensorlist->format() << " vs "
+                  << "output tensor format: " << dst_tensorlist->format();
     return RET_ERROR;
   }
   // when tensorlist malloc is done. this need to check element_shape compatibility
-  dst_tensor->set_element_shape(src_tensor->element_shape());
+  dst_tensorlist->set_element_shape(src_tensorlist->element_shape());
 
   auto update_data_type = kTypeUnknown;
-  auto dst_tensor_data_type = dst_tensor->tensors_data_type();
-  auto src_tensor_data_type = src_tensor->tensors_data_type();
+  auto dst_tensor_data_type = dst_tensorlist->tensors_data_type();
+  auto src_tensor_data_type = src_tensorlist->tensors_data_type();
   if (dst_tensor_data_type != src_tensor_data_type) {
     if (src_tensor_data_type != kTypeUnknown && dst_tensor_data_type != kTypeUnknown) {
       MS_LOG(ERROR) << "input tensorlist and output tensorlist is incompatible";
@@ -111,15 +107,22 @@ int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensor, lite::Tens
     update_data_type = dst_tensor_data_type != kTypeUnknown ? dst_tensor_data_type : src_tensor_data_type;
   }
   if (update_data_type != kTypeUnknown) {
-    src_tensor->set_tensors_data_type(update_data_type);
-    dst_tensor->set_tensors_data_type(update_data_type);
+    src_tensorlist->set_tensors_data_type(update_data_type);
+    dst_tensorlist->set_tensors_data_type(update_data_type);
   }
-  if (src_tensor->root_tensor() == nullptr) {
-    dst_tensor->CopyTensorList(*src_tensor, false);
-    src_tensor->set_tensors({});
-  } else {
+  size_t src_tensorlist_tensors_size = src_tensorlist->tensors().size();
+  for (size_t i = 0; i < src_tensorlist_tensors_size; ++i) {
+    auto &src_tensor = src_tensorlist->tensors()[i];
+    auto &dst_tensor = dst_tensorlist->tensors()[i];
+
+    if (src_tensor->allocator() != nullptr) {
+      src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
+    }
+    dst_tensor->set_own_data(src_tensor->own_data());
+    if (src_tensor->data() != nullptr) {
+      dst_tensor->set_data(src_tensor->data());
+    }
     dst_tensor->set_shape(src_tensor->shape());
-    dst_tensor->set_root_tensor(src_tensor->root_tensor());
   }
   return RET_OK;
 }
