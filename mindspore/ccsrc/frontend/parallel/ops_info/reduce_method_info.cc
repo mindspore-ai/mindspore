@@ -539,5 +539,24 @@ std::vector<StrategyPtr> ArgMaxWithValueInfo::GenerateOpStrategies(int64_t stage
 
   return sp_vector;
 }
+
+Status ReduceAnyInfo::CheckStrategy(const StrategyPtr &strategy) {
+  if (ReduceMethod::CheckStrategy(strategy) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": checking strategy failed.";
+    return FAILED;
+  }
+  auto dim_list = ReduceMethod::reduce_dim();
+  Dimensions stra = strategy->GetInputDim().at(0);
+  for (size_t index = 0; index < stra.size(); ++index) {
+    auto pos =
+      std::find_if(dim_list.begin(), dim_list.end(), [index](const int64_t &dim) { return SizeToLong(index) == dim; });
+    if (pos != dim_list.end() && stra[index] != 1) {
+      MS_LOG(ERROR) << name_
+                    << ": checking strategy failed. ReduceAny operator does not support reduced dimension split.";
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
 }  // namespace parallel
 }  // namespace mindspore

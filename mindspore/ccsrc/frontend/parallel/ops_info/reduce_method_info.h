@@ -124,6 +124,19 @@ class ReduceSumInfo : public ReduceMethod {
   ~ReduceSumInfo() override = default;
 };
 
+class ReduceAnyInfo : public ReduceMethod {
+ public:
+  ReduceAnyInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceSumCost>()) {
+    reduce_method_ = REDUCE_OP_ANY;
+  }
+  ~ReduceAnyInfo() override = default;
+
+ protected:
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+};
+
 class ReduceMinInfo : public ReduceMethod {
  public:
   ReduceMinInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
