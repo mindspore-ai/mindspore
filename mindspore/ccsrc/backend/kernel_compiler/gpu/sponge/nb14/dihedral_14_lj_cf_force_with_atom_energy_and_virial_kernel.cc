@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/sponge/neighbor_list/neighbor_list_update_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/nb14/dihedral_14_lj_cf_force_with_atom_energy_and_virial_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
+MS_REG_GPU_KERNEL_TWO(Dihedral14LJCFForceWithAtomEnergyAndVirial,
                       KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeUInt32)
                         .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NeighborListUpdateGpuKernel, int, float)
+                      Dihedral14LJCFForceWithAtomEnergyAndVirialGpuKernel, float, int)
+
 }  // namespace kernel
 }  // namespace mindspore
