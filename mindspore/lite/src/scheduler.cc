@@ -213,9 +213,14 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
         MS_LOG(ERROR) << "New LiteKernel for delegate subgraph failed.";
         return RET_NULL_PTR;
       }
-      kernel::KernelKey delegate_desc{
-        kernel::kDelegate, static_cast<TypeId>(kernel->inputs()[0].DataType()), schema::PrimitiveType_NONE, "", "",
-        delegate_};
+      auto delegate_type = kNumberTypeFloat32;
+      for (auto &input : kernel->inputs()) {
+        if (static_cast<TypeId>(input.DataType()) == kNumberTypeFloat16) {
+          delegate_type = kNumberTypeFloat16;
+          break;
+        }
+      }
+      kernel::KernelKey delegate_desc{kernel::kDelegate, delegate_type, schema::PrimitiveType_NONE, "", "", delegate_};
       lite_kernel->set_desc(delegate_desc);
       dst_kernels->push_back(lite_kernel);
     }
