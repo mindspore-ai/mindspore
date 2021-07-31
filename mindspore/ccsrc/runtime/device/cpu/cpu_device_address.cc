@@ -23,7 +23,6 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-
 CPUDeviceAddress::~CPUDeviceAddress() { ClearDeviceMemory(); }
 
 void CPUDeviceAddress::ClearDeviceMemory() {

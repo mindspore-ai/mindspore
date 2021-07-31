@@ -197,6 +197,5 @@ void CopyActor::EraseInput(OpContext<DeviceTensor> *const context) {
     }
   }
 }
-
 }  // namespace runtime
 }  // namespace mindspore
