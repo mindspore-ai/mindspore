@@ -56,22 +56,23 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
     MS_LOG(WARNING) << "SparseTensorDenseMatmul output memory size should be greater than 0, but got 0.";
     return true;
   }
-  auto a_indices = reinterpret_cast<I *>(inputs[0]->addr);
-  auto a_values = reinterpret_cast<T *>(inputs[1]->addr);
-  auto b = reinterpret_cast<T *>(inputs[3]->addr);
-  auto out = reinterpret_cast<T *>(outputs[0]->addr);
+  if (memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul memset output failed!";
+  }
+
+  const auto *a_indices = reinterpret_cast<I *>(inputs[0]->addr);
+  const auto *a_values = reinterpret_cast<T *>(inputs[1]->addr);
+  const auto *b = reinterpret_cast<T *>(inputs[3]->addr);
+  auto *out = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t indices_length = inputs[0]->size / sizeof(I);
   const size_t values_length = inputs[1]->size / sizeof(T);
   const size_t b_length = inputs[3]->size / sizeof(T);
-  if (memset_s(out, outputs[0]->size, 0, outputs[0]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "Memset Failed!";
-  }
-
   const size_t out_dim_0 = output_shape_[0];
   const size_t out_dim_1 = output_shape_[1];
   const size_t b_dim_0 = b_shape_[0];
   const size_t b_dim_1 = b_shape_[1];
   const size_t same_dim = adj_dt_ ? b_dim_1 : b_dim_0;
+
   for (size_t i = 0; i < values_size_; ++i) {
     if (i * 2 + 1 >= indices_length) {
       MS_LOG(EXCEPTION) << "The index of a_indices out of bounds.";
