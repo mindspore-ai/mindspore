@@ -196,8 +196,7 @@ class GraphScheduler {
   // 1. The processing of linking data arrows.
   // The gather of linking data arrows of kernel, it will call following functions by the different from actor type.
   void LinkDataArrow(KernelActor *to_actor, const GraphCompilerInfo &graph_compiler_info, const KernelGraphPtr &graph,
-                     KernelWithIndex from_kernel_with_output_idx, KernelWithIndex to_kernel_with_input_idx,
-                     const TensorPtr &tensor);
+                     KernelWithIndex from_kernel_with_output_idx, KernelWithIndex to_kernel_with_input_idx);
   // Link data arrows for internal parameter, convert internal parameter to actor by internal parameter cache to link.
   void LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter,
                                          const std::vector<AnfNodePtr> &host_parameters, const KernelGraphPtr &graph,
@@ -293,7 +292,7 @@ class GraphScheduler {
   // Host parameters are parameters of root funcgraph, in control flow, only the parameters of the root funcgraph are
   // in the host data source.
   bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr,
-                          const TensorPtr &tensor = nullptr, const std::vector<AnfNodePtr> &host_parameters = {},
+                          const std::vector<AnfNodePtr> &host_parameters = {},
                           GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
   // Display the actor information of corresponding kernel graph.
