@@ -136,6 +136,8 @@ def _can_broadcast(*shapes):
         _infer_out_shape(*shapes)
     except ValueError:
         return False
+    finally:
+        pass
     return True
 
 
