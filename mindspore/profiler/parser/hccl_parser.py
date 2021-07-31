@@ -157,7 +157,7 @@ class HcclParser:
             csv_reader = csv.reader(src_file)
             # index_0:step_num, index_1:start_point, index_2:end_point
             # The unit of time stamp is 10ns. To convert it to μs, you need to divide it by 100.
-            step_timestamps_info = [[info[0], float(info[1])/100, float(info[2])/100]
+            step_timestamps_info = [[info[0], float(info[1]) / 100, float(info[2]) / 100]
                                     for info in csv_reader if info[0].isdigit()]
 
         return step_timestamps_info
@@ -219,6 +219,7 @@ class HcclParser:
 
     def _calculate_communication_operator_iter_cost(self, file_path):
         """Calculate the time-consuming of communication operator in one execution round."""
+
         def _inner_calculate_communication_operator_iter_cost(events):
             total_notify_wait = self._calculate_notify_wait_time(events)
             # Divide information by src dst rank_id.
@@ -362,7 +363,7 @@ class HcclParser:
         rdma_communication_size = 0
         rdma_communication_wait_time = 0
         start_index = 0
-        end_index = len(trace_event)-1
+        end_index = len(trace_event) - 1
         while start_index < end_index:
             first_task_type = trace_event[start_index].get("args").get("task type")
             if first_task_type == CommunicationInfo.RDMASEND.value and start_index < end_index - 1:
@@ -386,10 +387,10 @@ class HcclParser:
         # The unit of rdma_communication_wait_time is ms.
         # The unit of rdma_bandwidth is KB/s.
         # The unit of rdma_communication_size is k_byte and The unit of rdma_communication_time is ms.
-        rdma_communication_wait_time = rdma_communication_wait_time/1e3
-        rdma_communication_size = rdma_communication_size/1e3
-        rdma_communication_time = rdma_communication_time/1e3
-        rdma_bandwidth = rdma_communication_size/(rdma_communication_time/1e3) \
+        rdma_communication_wait_time = rdma_communication_wait_time / 1e3
+        rdma_communication_size = rdma_communication_size / 1e3
+        rdma_communication_time = rdma_communication_time / 1e3
+        rdma_bandwidth = rdma_communication_size / (rdma_communication_time / 1e3) \
             if rdma_communication_size else 0
 
         return [rdma_communication_time, rdma_communication_size, rdma_bandwidth, rdma_communication_wait_time]
@@ -413,9 +414,9 @@ class HcclParser:
 
         # The unit of sdma_bandwidth is KB/s.
         # The unit of sdma_communication_size is k_byte and The unit of sdma_communication_time is ms.
-        sdma_communication_time = sdma_communication_time/1e3
-        sdma_communication_size = sdma_communication_size/1e3
-        sdma_bandwidth = sdma_communication_size/(sdma_communication_time/1e3) \
+        sdma_communication_time = sdma_communication_time / 1e3
+        sdma_communication_size = sdma_communication_size / 1e3
+        sdma_bandwidth = sdma_communication_size / (sdma_communication_time / 1e3) \
             if sdma_communication_size else 0
         return [sdma_communication_time, sdma_communication_size, sdma_bandwidth]
 
@@ -427,7 +428,7 @@ class HcclParser:
             if task_type == CommunicationInfo.NOTIFY_WAIT.value:
                 total_notify_wait_time += item.get("dur", 0)
         # The unit of total_notify_wait_time is ms.
-        total_notify_wait_time = total_notify_wait_time/1e3
+        total_notify_wait_time = total_notify_wait_time / 1e3
         return total_notify_wait_time
 
     def _calculate_communication_average_value(self, communication_info: list):
@@ -436,8 +437,8 @@ class HcclParser:
         if communication_info_size == 0:
             return []
         # index1: communication_cost,index2:wait_cost,index3:link_info
-        communication_cost_average = sum([i[1] for i in communication_info])/communication_info_size
-        wait_cost_average = sum([i[2] for i in communication_info])/communication_info_size
+        communication_cost_average = sum([i[1] for i in communication_info]) / communication_info_size
+        wait_cost_average = sum([i[2] for i in communication_info]) / communication_info_size
         link_info = [i[3] for i in communication_info]
         calculate_type = 'average'
         link_average_info = self._calculate_link_value(link_info, calculate_type)

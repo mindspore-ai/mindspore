@@ -24,6 +24,7 @@ from mindspore.profiler.parser.container import HWTSContainer
 
 TIMELINE_FILE_COLUMN_TITLE = 'op_name, stream_id, start_time(ms), duration(ms)'
 
+
 class OPComputeTimeParser:
     """
     Join hwts info and framework info, get op time info, and output to the result file.
@@ -102,10 +103,12 @@ class OPComputeTimeParser:
         for op_name, time in op_name_time_dict.items():
             if op_name in op_name_stream_dict.keys():
                 stream_id = op_name_stream_dict[op_name]
+                if op_name_count_dict[op_name] == 0:
+                    raise ValueError("The number of operations can not be 0.")
                 avg_time = time / op_name_count_dict[op_name]
                 total_time += avg_time
-                result_data += ("%s %s  %s\n" %(op_name, str(avg_time), stream_id))
-        result_data += ("total op  %s 0" %(str(total_time)))
+                result_data += ("%s %s  %s\n" % (op_name, str(avg_time), stream_id))
+        result_data += ("total op  %s 0" % (str(total_time)))
 
         timeline_data = []
         for op_name, time in op_name_time_dict.items():
@@ -146,8 +149,8 @@ class OPComputeTimeParser:
         Args:
             timeline_data (list): The metadata to be written into the file.
                 [
-                    ['op_name_1', 'stream_id_1', 'start_time_1', 'durarion_1'],
-                    ['op_name_2', 'stream_id_2', 'start_time_2', 'durarion_2'],
+                    ['op_name_1', 'stream_id_1', 'start_time_1', 'duration_1'],
+                    ['op_name_2', 'stream_id_2', 'start_time_2', 'duration_2'],
                     [...]
                 ]
         """

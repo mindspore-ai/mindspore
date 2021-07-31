@@ -348,12 +348,12 @@ class BaseStepTraceParser:
                 csv_writer = csv.writer(file_handle)
                 if not self._is_training_mode:
                     self._header[FP_DURATION] = 'fp'
-                    self._header = self._header[:BP_POINT] + self._header[BP_POINT+1:TAIL]
+                    self._header = self._header[:BP_POINT] + self._header[BP_POINT + 1:TAIL]
                 csv_writer.writerow(self._header)
                 for row_data in self._result:
                     if not self._is_training_mode:
                         row_data[FP_DURATION] += row_data[TAIL]
-                        row_data = row_data[:BP_POINT] + row_data[BP_POINT+1:TAIL]
+                        row_data = row_data[:BP_POINT] + row_data[BP_POINT + 1:TAIL]
                     csv_writer.writerow(row_data)
             os.chmod(self._output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
