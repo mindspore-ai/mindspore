@@ -19,9 +19,7 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-std::shared_ptr<Allocator> Allocator::Create() {
-  return std::shared_ptr<Allocator>(new (std::nothrow) DefaultAllocator());
-}
+std::shared_ptr<Allocator> Allocator::Create() { return std::make_shared<DefaultAllocator>(); }
 
 DefaultAllocator::DefaultAllocator(size_t aligned_size) { aligned_size_ = aligned_size; }
 

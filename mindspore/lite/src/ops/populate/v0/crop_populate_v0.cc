@@ -46,7 +46,7 @@ OpParameter *PopulateCropParameter(const void *prim) {
   memset(crop_param, 0, sizeof(CropParameter));
   crop_param->op_parameter_.type_ = schema::PrimitiveType_Crop;
   crop_param->axis_ = crop_prim->axis();
-  crop_param->offset_size_ = param_offset->size();
+  crop_param->offset_size_ = static_cast<int>(param_offset->size());
   for (size_t i = 0; i < param_offset->size(); ++i) {
     crop_param->offset_[i] = *(param_offset->begin() + i);
   }

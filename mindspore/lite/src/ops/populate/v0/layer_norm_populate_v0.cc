@@ -41,8 +41,8 @@ OpParameter *PopulateLayerNormParameterV0(const void *prim) {
   }
   memset(layer_norm_parameter, 0, sizeof(LayerNormParameter));
   layer_norm_parameter->op_parameter_.type_ = schema::PrimitiveType_LayerNormFusion;
-  layer_norm_parameter->begin_norm_axis_ = -normalized_shape->size();
-  layer_norm_parameter->begin_params_axis_ = -normalized_shape->size();
+  layer_norm_parameter->begin_norm_axis_ = -static_cast<int>(normalized_shape->size());
+  layer_norm_parameter->begin_params_axis_ = -static_cast<int>(normalized_shape->size());
   layer_norm_parameter->epsilon_ = layer_norm_prim->epsilon();
   layer_norm_parameter->elementwise_affine_ = layer_norm_prim->elementwiseAffine();
 

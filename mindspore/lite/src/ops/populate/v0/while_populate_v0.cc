@@ -16,15 +16,11 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/while_parameter.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
-struct WhileParemeter {
-  OpParameter op_parameter_;
-  int body_subgraph_index = 0;
-  int cond_subgraph_index = 0;
-};
 using WhileParemeter = WhileParemeter;
 OpParameter *PopulateWhileParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
