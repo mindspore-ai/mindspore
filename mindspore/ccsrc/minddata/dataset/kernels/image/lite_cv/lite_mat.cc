@@ -177,6 +177,10 @@ void LiteMat::Init(int width, LDataType data_type) {
   dims_ = 1;
   height_ = 1;
   channel_ = 1;
+  if (!CheckLiteMat()) {
+    Release();
+    return;
+  }
   c_step_ = width;
   size_ = c_step_ * elem_size_;
   data_ptr_ = AlignMalloc(size_);
@@ -193,6 +197,10 @@ void LiteMat::Init(int width, int height, LDataType data_type) {
   height_ = height;
   dims_ = 2;
   channel_ = 1;
+  if (!CheckLiteMat()) {
+    Release();
+    return;
+  }
   c_step_ = width_ * height_;
   size_ = c_step_ * elem_size_;
   data_ptr_ = AlignMalloc(size_);
@@ -209,6 +217,10 @@ void LiteMat::Init(int width, int height, void *p_data, LDataType data_type) {
   height_ = height;
   dims_ = 2;
   channel_ = 1;
+  if (!CheckLiteMat()) {
+    Release();
+    return;
+  }
   c_step_ = height_ * width_;
   size_ = c_step_ * channel_ * elem_size_;
   data_ptr_ = p_data;
@@ -225,6 +237,10 @@ void LiteMat::Init(int width, int height, int channel, LDataType data_type, bool
   height_ = height;
   dims_ = 3;
   channel_ = channel;
+  if (!CheckLiteMat()) {
+    Release();
+    return;
+  }
   if (align_memory) {
     c_step_ = ((height_ * width_ * elem_size_ + ALIGN - 1) & (-ALIGN)) / elem_size_;
   } else {
@@ -247,6 +263,10 @@ void LiteMat::Init(int width, int height, int channel, void *p_data, LDataType d
   height_ = height;
   dims_ = 3;
   channel_ = channel;
+  if (!CheckLiteMat()) {
+    Release();
+    return;
+  }
   c_step_ = height_ * width_;
   size_ = c_step_ * channel_ * elem_size_;
   data_ptr_ = p_data;
@@ -298,6 +318,24 @@ void LiteMat::AlignFree(void *ptr) {
 }
 
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
+
+bool LiteMat::CheckLiteMat() {
+  if (width_ <= 0 || height_ <= 0 || channel_ <= 0 || elem_size_ <= 0) {
+    return false;
+  }
+  if (height_ != 1 && height_ > std::numeric_limits<int>::max() / width_) {
+    return false;
+  }
+  int area = height_ * width_;
+  if (channel_ != 1 && channel_ > std::numeric_limits<int>::max() / area) {
+    return false;
+  }
+  int size = area * channel_;
+  if (elem_size_ > std::numeric_limits<int>::max() / size) {
+    return false;
+  }
+  return true;
+}
 
 bool LiteMat::GetROI(int x, int y, int w, int h, LiteMat &m) {
   if (x < 0 || y < 0 || x > width_ - w || h > height_ - y || w <= 0 || h <= 0) {

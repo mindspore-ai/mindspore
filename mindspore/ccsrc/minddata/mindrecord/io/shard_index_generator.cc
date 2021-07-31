@@ -357,7 +357,7 @@ MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
   const std::vector<std::vector<std::tuple<std::string, std::string, std::string>>> &data) {
   sqlite3_stmt *stmt = nullptr;
   if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
-    if (stmt) {
+    if (stmt != nullptr) {
       (void)sqlite3_finalize(stmt);
     }
     MS_LOG(ERROR) << "SQL error: could not prepare statement, sql: " << sql;

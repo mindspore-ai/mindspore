@@ -92,7 +92,7 @@ class Iterator {
 
     // Destructor
     ~_Iterator() {
-      if (cur_row_) {
+      if (cur_row_ != nullptr) {
         delete cur_row_;
         cur_row_ = nullptr;
       }

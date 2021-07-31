@@ -131,7 +131,7 @@ def test_from_dataset_exceptions():
         except (TypeError, ValueError) as e:
             assert s in str(e), str(e)
 
-    test_config("text", (), 1, "freq_range needs to be a tuple of 2 integers or an int and a None.")
+    test_config("text", (), 1, "freq_range needs to be a tuple of 2 element.")
     test_config("text", (2, 3), 1.2345,
                 "Argument top_k with value 1.2345 is not of type [<class 'int'>, <class 'NoneType'>]")
     test_config(23, (2, 3), 1.2345, "Argument col[0] with value 23 is not of type [<class 'str'>]")
