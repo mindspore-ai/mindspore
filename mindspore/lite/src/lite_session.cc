@@ -689,12 +689,6 @@ int LiteSession::Init(const Context *context) {
       return RET_ERROR;
     }
   }
-  ret = KernelRegistry::GetInstance()->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "KernelRegistry Init Failed.";
-    is_running_.store(false);
-    return ret;
-  }
   ret = InitGPURuntime();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
