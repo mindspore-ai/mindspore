@@ -955,6 +955,77 @@ TEST_F(MindDataTestPipeline, TestMuLawDecodingWrongArgs) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: Overdrive
+/// Description: test basic usage of Overdrive
+/// Expectation: get correct number of data
+TEST_F(MindDataTestPipeline, TestOverdriveBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOverdriveBasic.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto OverdriveOp = audio::Overdrive();
+
+  ds = ds->Map({OverdriveOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Apply a phasing effect to the audio
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+  auto col = row["waveform"];
+  ASSERT_EQ(col.Shape(), expected);
+  ASSERT_EQ(col.Shape().size(), 2);
+  ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+  ASSERT_OK(iter->GetNextRow(&row));
+  i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+/// Feature: Overdrive
+/// Description: test invalid parameter of Overdrive
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestPipeline, TestOverdriveWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOverdriveWrongArg.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  EXPECT_NE(ds, nullptr);
+
+  // Check gain out of range [0,100]
+  MS_LOG(INFO) << "gain is less than 0.";
+  auto overdrive_op_01 = audio::Overdrive(-0.2, 20.0);
+  ds01 = ds->Map({overdrive_op_01});
+  EXPECT_NE(ds01, nullptr);
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  // Check color out of range [0,100]
+  MS_LOG(INFO) << "color is greater than 100.";
+  auto overdrive_op_02 = audio::Overdrive(20.0, 102.3);
+  ds02 = ds->Map({overdrive_op_02});
+  EXPECT_NE(ds02, nullptr);
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestLfilterPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLfilterPipeline.";
   // Original waveform

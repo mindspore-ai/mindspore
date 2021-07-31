@@ -42,6 +42,7 @@
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
+#include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -324,6 +325,17 @@ PYBIND_REGISTER(
         return mu_law_decoding;
       }));
   }));
+
+PYBIND_REGISTER(OverdriveOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<audio::OverdriveOperation, TensorOperation, std::shared_ptr<audio::OverdriveOperation>>(
+                      *m, "OverdriveOperation")
+                      .def(py::init([](float gain, float color) {
+                        auto overdrive = std::make_shared<audio::OverdriveOperation>(gain, color);
+                        THROW_IF_ERROR(overdrive->ValidateParams());
+                        return overdrive;
+                      }));
+                }));
 
 PYBIND_REGISTER(
   RiaaBiquadOperation, 1, ([](const py::module *m) {

@@ -292,6 +292,21 @@ def check_mu_law_decoding(method):
     return new_method
 
 
+def check_overdrive(method):
+    """Wrapper method to check the parameters of Overdrive."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [gain, color], _ = parse_user_args(method, *args, **kwargs)
+        type_check(gain, (float, int), "gain")
+        check_value(gain, [0, 100], "gain")
+        type_check(color, (float, int), "color")
+        check_value(color, [0, 100], "color")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_riaa_biquad(method):
     """Wrapper method to check the parameters of RiaaBiquad."""
 

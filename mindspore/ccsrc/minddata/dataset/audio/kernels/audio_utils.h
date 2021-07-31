@@ -318,6 +318,80 @@ Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 /// \return Status code.
 Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int quantization_channels);
 
+/// \brief Apply a overdrive effect to the audio.
+/// \param input Tensor of shape <..., time>.
+/// \param output Tensor of shape <..., time>.
+/// \param gain Coefficient of overload in dB.
+/// \param color Coefficient of translation.
+/// \return Status code.
+template <typename T>
+Status Overdrive(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float gain, float color) {
+  TensorShape input_shape = input->shape();
+  // input->2D.
+  auto rows = input->Size() / input_shape[-1];
+  auto cols = input_shape[-1];
+  TensorShape to_shape({rows, cols});
+  RETURN_IF_NOT_OK(input->Reshape(to_shape));
+  // apply dB2Linear on gain, 20dB is expect to gain.
+  float gain_ex = exp(gain * log(10) / 20.0);
+  color = color / 200;
+  // declare the array used to store the input.
+  std::vector<T> input_vec;
+  // out_vec is used to save the result of applying overdrive.
+  std::vector<T> out_vec;
+  // store intermediate results of input.
+  std::vector<T> temp;
+  // scale and pan the input two-dimensional sound wave array to a certain extent.
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    // store the value of traverse the input.
+    T temp_fp = *itr;
+    input_vec.push_back(temp_fp);
+    // use 0 to initialize out_vec.
+    out_vec.push_back(0);
+    T temp_fp2 = temp_fp * gain_ex + color;
+    // 0.5 + 2/3 * 0.75 = 1, zoom and shift the sound.
+    if (temp_fp2 < -1) {
+      temp.push_back(-2.0 / 3.0);
+    } else if (temp_fp2 > 1) {
+      temp.push_back(2.0 / 3.0);
+    } else {
+      temp.push_back(temp_fp2 - temp_fp2 * temp_fp2 * temp_fp2 / 3.0);
+    }
+  }
+  // last_in and last_out are the intermediate values for processing each moment.
+  std::vector<T> last_in;
+  std::vector<T> last_out;
+  for (size_t i = 0; i < cols; i++) {
+    last_in.push_back(0.0);
+    last_out.push_back(0.0);
+  }
+  // overdrive core loop.
+  for (size_t i = 0; i < cols; i++) {
+    size_t index = 0;
+    // calculate the value of each moment according to the rules of overdrive.
+    for (size_t j = i; j < rows * cols; j += cols, index++) {
+      // 0.995 is the preservation ratio of sound waves.
+      last_out[index] = temp[j] - last_in[index] + last_out[index] * 0.995;
+      last_in[index] = temp[j];
+      // 0.5 + 2/3 * 0.75 = 1, zoom and shift the sound.
+      T temp_fp = input_vec[j] * 0.5 + last_out[index] * 0.75;
+      // clamp min=-1, max=1.
+      if (temp_fp < -1) {
+        out_vec[j] = -1.0;
+      } else if (temp_fp > 1) {
+        out_vec[j] = 1.0;
+      } else {
+        out_vec[j] = temp_fp;
+      }
+    }
+  }
+  // move data to output tensor.
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_vec, input_shape, &out));
+  *output = out;
+  return Status::OK();
+}
+
 /// \brief Add a fade in and/or fade out to an input.
 /// \param[in] input: The input tensor.
 /// \param[out] output: Added fade in and/or fade out audio with the same shape.
