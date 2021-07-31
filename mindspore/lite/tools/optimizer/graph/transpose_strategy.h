@@ -39,23 +39,25 @@ class TransposeStrategy {
   }
   AnfNodePtr TransposePairFuseWhenInsert(const FuncGraphPtr &func_graph, const CNodePtr &code,
                                          const std::vector<int> &perm, bool before, size_t index);
-  AnfNodePtr TransposeDependOnShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm,
-                                    bool before, size_t index);
   bool CanFusionIfInsert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_info,
                          TransTypePair *trans_insert_info);
-  STATUS ChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS ChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type);
   bool CanChangeOpAxis(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
  private:
+  AnfNodePtr TransposeDependOnShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm,
+                                    bool before, size_t index);
   STATUS TransposeInsertDependOnShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool before, size_t index);
   bool IsInOutCanFuison(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes, size_t *trans_count,
                         FormatTransNodeType *trans_type);
   void DecidePreAndPostTransType(TransTypePair *trans_info, TransTypePair *trans_insert_info);
-  STATUS ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS ChangeCommonOp(const CNodePtr &cnode, FormatTransNodeType trans_type);
+  STATUS ChangeOpCrop(const CNodePtr &cnode, FormatTransNodeType trans_type);
+  STATUS ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type);
+  STATUS ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type);
   void TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                           const std::vector<int> &axes);
-  std::vector<int> TransformOpAxesAttr(const std::vector<int> &origin_axes);
+                           const std::vector<int> &axes, FormatTransNodeType trans_type);
+  std::vector<int> TransformOpAxesAttr(const std::vector<int> &origin_axes, FormatTransNodeType trans_type);
   FmkType fmk_type_{lite::converter::FmkType_MS};
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;

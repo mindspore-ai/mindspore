@@ -31,7 +31,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/converter/parser/insert_transpose.h"
+#include "tools/converter/parser/unify_format.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
 namespace mindspore::lite {
@@ -104,8 +104,8 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto insert_transpose = std::make_shared<InsertTranspose>(lite::converter::FmkType_CAFFE, false);
-  if (!insert_transpose->Run(res_graph_)) {
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_CAFFE, false);
+  if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }

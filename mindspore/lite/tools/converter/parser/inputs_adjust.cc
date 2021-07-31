@@ -54,21 +54,21 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
       inputs.push_back(param_node);
       break;
     }
-    case 2: {
+    case kBuildInputFlagTwo: {
       auto value_data = opt::CastToInt(value_ptr);
       auto param_node =
         opt::BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }
-    case 3: {
+    case kBuildInputFlagThree: {
       auto value_data = opt::CastToVec2DInt(value_ptr);
       auto param_node =
         opt::BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }
-    case 4: {
+    case kBuildInputFlagFour: {
       auto value_data = GetValue<float>(value_ptr);
       auto param_node =
         opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);

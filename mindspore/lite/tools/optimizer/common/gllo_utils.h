@@ -43,6 +43,8 @@ inline constexpr size_t kInputSizeTwo = 2;
 inline constexpr size_t kInputSizeThree = 3;
 inline constexpr size_t kInputSizeFour = 4;
 inline constexpr size_t kInputSizeFive = 5;
+inline const std::vector<int> kNH2NC = {0, 3, 1, 2};
+inline const std::vector<int> kNC2NH = {0, 2, 3, 1};
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
 inline const PrimitivePtr kPrimConv2DBackpropInputFusion =
@@ -177,6 +179,8 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
                           const std::string &cnode_name);
 
 CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input, size_t index);
+
+STATUS FetchShapeFromAbstract(const abstract::AbstractBasePtr &abstract, ShapeVector *shape);
 
 template <const PrimitivePtr *prim = nullptr>
 inline bool IsSpecifiedNode(const BaseRef &n) {

@@ -19,9 +19,7 @@
 
 #include <string>
 #include <unordered_map>
-#include "tools/optimizer/graph/unify_format_pass.h"
 #include "backend/optimizer/common/optimizer.h"
-#include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
 
 namespace mindspore {

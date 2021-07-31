@@ -201,12 +201,18 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/converter.cc
             ${LITE_DIR}/tools/converter/export_model.cc
             ${LITE_DIR}/tools/converter/dump_graph.cc
+            ${LITE_DIR}/tools/converter/optimizer_manager.cc
             ${LITE_DIR}/tools/converter/parser/parser_utils.cc
             ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc
             ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/common/format_utils.cc
             ${LITE_DIR}/tools/optimizer/common/multiple_pattern_process_pass.cc
+            ${LITE_DIR}/tools/optimizer/format/conv_weight_format.cc
+            ${LITE_DIR}/tools/optimizer/format/delete_redundant_transpose.cc
+            ${LITE_DIR}/tools/optimizer/format/to_format_base.cc
+            ${LITE_DIR}/tools/optimizer/format/to_nchw_format.cc
+            ${LITE_DIR}/tools/optimizer/format/to_nhwc_format.cc
             ${LITE_DIR}/tools/optimizer/fusion/affine_activation_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/affine_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_biasadd_fusion.cc
@@ -247,7 +253,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/control_flow_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/unify_format_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/decrease_transpose_algo.cc
             ${LITE_DIR}/tools/optimizer/graph/node_infershape.cc
             ${LITE_DIR}/tools/optimizer/graph/transpose_strategy.cc
             ${LITE_DIR}/tools/optimizer/graph/reduce_same_act_pass.cc
@@ -271,7 +277,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/common/node_util.cc
             ${LITE_DIR}/tools/common/storage.cc
             ${LITE_DIR}/tools/converter/parser/inputs_adjust.cc
-            ${LITE_DIR}/tools/converter/parser/insert_transpose.cc
+            ${LITE_DIR}/tools/converter/parser/unify_format.cc
             ${LITE_DIR}/tools/converter/parser/unused_node_remove_pass.cc
             ${LITE_DIR}/tools/converter/parser/conv1d_inout_adjust.cc
             ${LITE_DIR}/tools/converter/parser/tf_bidirection_gru_cf_fusion.cc

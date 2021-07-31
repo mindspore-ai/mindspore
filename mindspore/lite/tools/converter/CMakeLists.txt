@@ -19,6 +19,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/graphdef_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/export_model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/optimizer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
@@ -36,7 +37,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unused_node_remove_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/parser/insert_transpose.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/unify_format.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindspore_importer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
@@ -46,6 +47,11 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/common/gllo_utils.cc
         ../optimizer/common/format_utils.cc
         ../optimizer/common/multiple_pattern_process_pass.cc
+        ../optimizer/format/conv_weight_format.cc
+        ../optimizer/format/delete_redundant_transpose.cc
+        ../optimizer/format/to_format_base.cc
+        ../optimizer/format/to_nchw_format.cc
+        ../optimizer/format/to_nhwc_format.cc
         ../optimizer/fusion/affine_activation_fusion.cc
         ../optimizer/fusion/affine_fusion.cc
         ../optimizer/fusion/conv_biasadd_fusion.cc
@@ -102,7 +108,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/mindir_adjust_pass.cc
         ../optimizer/graph/control_flow_pass.cc
         ../optimizer/graph/primitive_adjust_pass.cc
-        ../optimizer/graph/unify_format_pass.cc
+        ../optimizer/graph/decrease_transpose_algo.cc
         ../optimizer/graph/node_infershape.cc
         ../optimizer/graph/transpose_strategy.cc
         ../optimizer/graph/reduce_same_act_pass.cc

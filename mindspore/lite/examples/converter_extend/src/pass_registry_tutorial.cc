@@ -96,6 +96,7 @@ bool PassTutorial::Run(const FuncGraphPtr &func_graph) {
 }
 
 // register customed Pass
-REG_PASS(POSITION_BEGIN, PassTutorial)
+REG_PASS(PassTutorial, PassTutorial)
+REG_SCHEDULED_PASS(POSITION_BEGIN, {"PassTutorial"})
 }  // namespace opt
 }  // namespace mindspore

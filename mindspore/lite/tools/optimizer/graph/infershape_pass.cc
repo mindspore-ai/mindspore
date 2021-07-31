@@ -29,12 +29,57 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "create NodeInferShape object failed.";
     return false;
   }
+  if (!JudgeAllOpsCanInfer(func_graph)) {
+    MS_LOG(ERROR) << "exist op cannot support infer shape.";
+    return false;
+  }
   if (InferProcess(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "infer shape failed.";
     return false;
   }
   ResetSubGraphInput();
   return true;
+}
+
+bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto node_list = TopoSort(func_graph->get_return());
+  bool all_op_can_infer = true;
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (IsSpecialType(cnode)) {
+      continue;
+    }
+    if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        all_op_can_infer = false;
+      } else {
+        all_op_can_infer = all_op_can_infer && JudgeAllOpsCanInfer(sub_func_graph);
+      }
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        all_op_can_infer = false;
+      } else {
+        all_op_can_infer = all_op_can_infer && JudgeAllOpsCanInfer(sub_func_graph);
+      }
+      continue;
+    }
+    auto cur_op_can_infer = node_infer_shape_->JudgeOpSupportInfer(cnode);
+    if (!cur_op_can_infer) {
+      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+      MS_ASSERT(prim != nullptr);
+      lite::NotSupportOp::GetInstance()->InsertOp(prim->name());
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NOT_SUPPORT);
+      all_op_can_infer = false;
+    }
+  }
+  return all_op_can_infer;
 }
 
 STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
@@ -55,7 +100,10 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         return false;
       }
       SetSubGraphInput(cnode, sub_func_graph);
-      (void)InferProcess(sub_func_graph);
+      if (InferProcess(sub_func_graph) != lite::RET_OK) {
+        MS_LOG(ERROR) << "subgraph infer shape failed.";
+        return false;
+      }
       SetSubGraphOutput(cnode, sub_func_graph);
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
       if (sub_func_graph == nullptr) {
@@ -63,7 +111,10 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         return false;
       }
       SetSubGraphInput(cnode, sub_func_graph);
-      (void)InferProcess(sub_func_graph);
+      if (InferProcess(sub_func_graph) != lite::RET_OK) {
+        MS_LOG(ERROR) << "subgraph infer shape failed.";
+        return false;
+      }
       SetSubGraphOutput(cnode, sub_func_graph);
       SetSubGraphAbstract(cnode, sub_func_graph);
       continue;
@@ -132,7 +183,7 @@ void InferShapePass::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr
       continue;
     }
     auto node_name = return_node->input(i)->fullname_with_scope();
-    if (node_name.substr(node_name.size() - 5) != "_post") {
+    if (node_name.size() < kInputSizeFive || node_name.substr(node_name.size() - kInputSizeFive) != "_post") {
       continue;
     }
     auto trans_cnode = return_node->input(i)->cast<CNodePtr>();

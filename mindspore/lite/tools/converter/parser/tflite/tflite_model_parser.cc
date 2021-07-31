@@ -30,7 +30,7 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
-#include "tools/converter/parser/insert_transpose.h"
+#include "tools/converter/parser/unify_format.h"
 
 using mindspore::lite::converter::FmkType_TFLITE;
 namespace mindspore::lite {
@@ -105,8 +105,8 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto insert_transpose = std::make_shared<InsertTranspose>(lite::converter::FmkType_TFLITE, false);
-  if (!insert_transpose->Run(res_graph_)) {
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_TFLITE, false);
+  if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }

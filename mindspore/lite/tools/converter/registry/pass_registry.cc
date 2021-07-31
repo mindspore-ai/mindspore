@@ -15,31 +15,38 @@
  */
 
 #include "include/registry/pass_registry.h"
-#include <unordered_map>
+#include <map>
+#include <mutex>
+#include <string>
+#include <vector>
+#include "tools/converter/registry/pass_content.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace opt {
-PassRegistry *PassRegistry::GetInstance() {
-  static PassRegistry instance;
-  return &instance;
-}
-
-void PassRegistry::RegPass(int position, const PassPtr &pass) {
+namespace {
+std::map<std::string, PassPtr> pass_store_room;
+std::map<PassPosition, std::vector<std::string>> external_assigned_passes;
+std::mutex pass_mutex;
+void RegPass(const std::string &pass_name, const PassPtr &pass) {
   if (pass == nullptr) {
     MS_LOG(ERROR) << "pass is nullptr.";
     return;
   }
-  auto instance = PassRegistry::GetInstance();
-  std::unique_lock<std::mutex> lock(instance->mutex_);
-  instance->passes_[position] = pass;
+  std::unique_lock<std::mutex> lock(pass_mutex);
+  pass_store_room[pass_name] = pass;
+}
+}  // namespace
+
+PassRegistry::PassRegistry(const std::string &pass_name, const PassPtr &pass) { RegPass(pass_name, pass); }
+
+PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &assigned) {
+  std::unique_lock<std::mutex> lock(pass_mutex);
+  external_assigned_passes[position] = assigned;
 }
 
-const std::unordered_map<int, PassPtr> &PassRegistry::GetPasses() const {
-  auto instance = PassRegistry::GetInstance();
-  std::unique_lock<std::mutex> lock(instance->mutex_);
-  return instance->passes_;
-}
+std::map<std::string, PassPtr> &PassStoreRoomInfo() { return pass_store_room; }
 
+std::map<PassPosition, std::vector<std::string>> &ExternalAssignedPassesInfo() { return external_assigned_passes; }
 }  // namespace opt
 }  // namespace mindspore

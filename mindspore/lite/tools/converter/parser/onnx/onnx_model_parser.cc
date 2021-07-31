@@ -35,7 +35,7 @@
 #include "tools/converter/parser/onnx/onnx_pad_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "ops/transpose.h"
-#include "tools/converter/parser/insert_transpose.h"
+#include "tools/converter/parser/unify_format.h"
 
 using mindspore::lite::converter::FmkType_ONNX;
 namespace mindspore {
@@ -95,8 +95,8 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto insert_transpose = std::make_shared<InsertTranspose>(lite::converter::FmkType_ONNX, false);
-  if (!insert_transpose->Run(res_graph_)) {
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_ONNX, false);
+  if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }

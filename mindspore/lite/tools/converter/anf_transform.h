@@ -51,13 +51,13 @@ class AnfTransform {
 
   static int RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
-  static STATUS RunPluginPass(const FuncGraphPtr &old_graph, int position);
-
   int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   static void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 
   int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
+
+  void AppendPassToStoreRoom(const converter::Flags *config);
 };
 }  // namespace lite
 }  // namespace mindspore

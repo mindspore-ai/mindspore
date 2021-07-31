@@ -20,9 +20,7 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include <mutex>
 #include <memory>
-#include <unordered_map>
 #include "include/lite_utils.h"
 
 namespace mindspore {
@@ -39,53 +37,33 @@ using PassPtr = std::shared_ptr<Pass>;
 /// \brief PassRegistry defined registration of Pass.
 class MS_API PassRegistry {
  public:
-  /// \brief Destructor of PassRegistry.
-  virtual ~PassRegistry() = default;
-
-  /// \brief Static method to get a single instance of PassRegistry.
-  ///
-  /// \return Pointer of PassRegistry.
-  static PassRegistry *GetInstance();
-
-  /// \brief Method to register Pass.
-  ///
-  /// \param[in] position Define where to replace the pass.
-  /// \param[in] pass Define user's defined pass.
-  void RegPass(int position, const PassPtr &pass);
-
-  /// \brief Method to get all passes user write.
-  ///
-  /// \return A map include all pass.
-  const std::unordered_map<int, PassPtr> &GetPasses() const;
-
- private:
-  /// \brief Constructor of PassRegistry.
-  PassRegistry() = default;
-
- private:
-  std::unordered_map<int, PassPtr> passes_;
-  std::mutex mutex_;
-};
-
-/// \brief PassRegistrar defined registration class of Pass.
-class MS_API PassRegistrar {
- public:
-  /// \brief Constructor of PassRegistrar to register pass.
+  /// \brief Constructor of PassRegistry to register pass.
   ///
   /// \param[in] pos Define where to replace the pass.
   /// \param[in] pass Define user's defined pass.
-  PassRegistrar(int pos, const PassPtr &pass) { PassRegistry::GetInstance()->RegPass(pos, pass); }
+  PassRegistry(const std::string &pass_name, const PassPtr &pass);
+
+  /// \brief Constructor of PassRegistry to assign which passes are required for external extension.
+  ///
+  /// \param[in position Define the place where assigned passes will run.
+  /// \param[in] assigned Define the name of passes assigned by user.
+  PassRegistry(PassPosition position, const std::vector<std::string> &assigned);
 
   /// \brief Destructor of PassRegistrar.
-  ~PassRegistrar() = default;
+  ~PassRegistry() = default;
 };
 
 /// \brief Defined registering macro to register Pass, which called by user directly.
 ///
-/// \param[in] position Define where to replace the pass.
+/// \param[in] name Define name of user's pass, which is a string.
 /// \param[in] pass Define user's defined pass.
-#define REG_PASS(position, pass) static PassRegistrar g_##position##PassReg(position, std::make_shared<pass>());
+#define REG_PASS(name, pass) static PassRegistry g_##name##PassReg(#name, std::make_shared<pass>());
 
+/// \brief Defined assigning macro to assign Passes, which called by user directly.
+///
+/// \param[in] position Define the place where assigned passes will run.
+/// \param[in] assigned Define the name of passes assigned by user.
+#define REG_SCHEDULED_PASS(position, assigned) static PassRegistry g_##position(position, assigned);
 }  // namespace opt
 }  // namespace mindspore
 

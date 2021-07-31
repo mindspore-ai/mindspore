@@ -20,13 +20,9 @@
 #include <vector>
 #include "tools/converter/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
-#include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/format_utils.h"
 
 namespace mindspore::opt {
-namespace {
-const std::vector<int> NH2NC = {0, 3, 1, 2};
-const std::vector<int> NC2NH = {0, 2, 3, 1};
-}  // namespace
 bool IsBNCNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
@@ -142,7 +138,7 @@ AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::FuncGraphPtr &func
     MS_LOG(ERROR) << "get tanspose perm failed.";
     return nullptr;
   }
-  if ((pre_perm == NH2NC && post_perm == NC2NH) || (pre_perm == NC2NH && post_perm == NH2NC)) {
+  if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
     return pre_cnode->input(1);
   }
   return nullptr;
@@ -166,8 +162,10 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
     return nullptr;
   }
   const CNodePtr &transpose_cnode = transpose_node->cast<CNodePtr>();
-  auto perm_node = transpose_cnode->input(2);
+  auto perm_node = transpose_cnode->input(kInputIndexTwo);
   auto trans_post_node = GenTransposeNode(func_graph, any_cnode, perm_node, any_cnode->fullname_with_scope() + "_post");
+  trans_post_node->set_abstract(any_cnode->abstract()->Clone());
+  any_cnode->set_abstract(transpose_cnode->input(1)->abstract()->Clone());
   auto tr = func_graph->manager()->Transact();
   tr.SetEdge(any_cnode, 1, transpose_cnode->input(1));
   tr.Commit();

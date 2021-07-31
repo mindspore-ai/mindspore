@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_WHILE_PARAMETER_H_
-#define MINDSPORE_NNACL_WHILE_PARAMETER_H_
 
-#include "nnacl/op_base.h"
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
 
-typedef struct WhileParemeter {
-  OpParameter op_parameter_;
-  int body_subgraph_index = 0;
-  int cond_subgraph_index = 0;
-} WhileParemeter;
+#include <string>
+#include <vector>
+#include "include/registry/pass_registry.h"
+#include "ir/func_graph.h"
 
-#endif  // MINDSPORE_NNACL_WHILE_PARAMETER_H_
+namespace mindspore {
+namespace opt {
+bool RunOptimizerPass(const FuncGraphPtr &func_graph, std::vector<std::string> pass_names);
+bool RunExternalPass(const FuncGraphPtr &func_graph, PassPosition position);
+}  // namespace opt
+}  // namespace mindspore
+
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
