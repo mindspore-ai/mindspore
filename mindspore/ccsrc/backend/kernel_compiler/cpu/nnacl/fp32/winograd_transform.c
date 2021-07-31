@@ -29,9 +29,7 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
   int pad_w = conv_param->pad_l_;
   int input_h = conv_param->input_h_;
   int input_w = conv_param->input_w_;
-  if (out_w_block_num == 0) {
-    return;
-  }
+  NNACL_CHECK_ZERO_RETURN(out_w_block_num);
 
   for (int c = 0; c < cal_num; c++) {  // actual tiled number
     int src_x_s = (out_tile_index % out_w_block_num) * output_unit - pad_w;
@@ -107,9 +105,8 @@ void WinogradOutputTransform(const float *gemm_out, float *out_data, const float
   int oc4 = UP_DIV(output_channel, C4NUM);
   int oc8 = UP_DIV(output_channel, C8NUM);
   int input_unit = conv_param->input_unit_;
-  if (output_unit_num == 0) {
-    return;
-  }
+  NNACL_CHECK_ZERO_RETURN(output_unit_num);
+
   for (int i = 0; i < cal_num; i++) {
     int dst_x_s = out_tile_index % output_unit_num;
     int dst_y_s = out_tile_index / output_unit_num;

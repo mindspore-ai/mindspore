@@ -62,7 +62,7 @@ int ThreadTrailingAxis(const float *input_ptr, float *output_ptr, const L2NormPa
       const float val = input_ptr[i * c + j];
       square_sum += val * val;
     }
-    float sqrt_sum = sqrt(square_sum > param->epsilon_ ? square_sum : param->epsilon_);
+    float sqrt_sum = sqrtf(square_sum > param->epsilon_ ? square_sum : param->epsilon_);
     for (j = 0; j < c; ++j) {
       float tmp = input_ptr[i * c + j] / sqrt_sum;
       if (is_relu) {

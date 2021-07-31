@@ -40,22 +40,6 @@ using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
 using mindspore::schema::PrimitiveType_SubFusion;
 
-#define CHECK_NULL_RETURN(ptr, errcode)         \
-  do {                                          \
-    if (ptr == nullptr) {                       \
-      MS_LOG(ERROR) << "ptr must not be null."; \
-      return errcode;                           \
-    }                                           \
-  } while (0);
-
-#define CHECK_NULL_RETURN(ptr, errcode)         \
-  do {                                          \
-    if (ptr == nullptr) {                       \
-      MS_LOG(ERROR) << "ptr must not be null."; \
-      return errcode;                           \
-    }                                           \
-  } while (0);
-
 namespace mindspore::kernel {
 class ArithmeticCPUKernel : public InnerKernel {
   typedef int (*ArithmeticRun)(const float *input0, const float *input1, float *output, const int element_size);
