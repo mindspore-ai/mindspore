@@ -444,13 +444,13 @@ class Depend(Primitive):
         >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.softmax = P.Softmax()
-        ...         self.depend = P.Depend()
+        ...         self.softmax = ops.Softmax()
+        ...         self.depend = ops.Depend()
         ...
         ...     def construct(self, x, y):
         ...         mul = x * y

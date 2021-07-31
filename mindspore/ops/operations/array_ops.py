@@ -5518,7 +5518,7 @@ class EditDistance(PrimitiveWithInfer):
         >>> from mindspore import context
         >>> from mindspore import Tensor
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.ops as ops
         >>> class EditDistance(nn.Cell):
         ...     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
         ...         super(EditDistance, self).__init__()
