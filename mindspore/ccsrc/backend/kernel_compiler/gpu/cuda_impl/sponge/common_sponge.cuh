@@ -359,4 +359,8 @@ __global__ static void Print(const size_t size, const int *input_x) {
   return;
 }
 
+__device__ static VECTOR Make_Vector_Not_Exceed_Value(VECTOR vector, const float value) {
+  return fminf(1.0, value * rnorm3df(vector.x, vector.y, vector.z)) * vector;
+}
+
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_SPONGE_H_

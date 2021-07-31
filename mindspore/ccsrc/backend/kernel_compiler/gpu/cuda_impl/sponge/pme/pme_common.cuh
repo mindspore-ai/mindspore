@@ -108,16 +108,16 @@ __global__ static void PME_Atom_Near(const UNSIGNED_INT_VECTOR *uint_crd, int *P
     UNSIGNED_INT_VECTOR *temp_uxyz = &PME_uxyz[atom];
     int k, tempux, tempuy, tempuz;
     float tempf;
-    tempf = static_cast<float> (uint_crd[atom].uint_x) * periodic_factor_inverse_x;
-    tempux = static_cast<int> (tempf);
+    tempf = static_cast<float>(uint_crd[atom].uint_x) * periodic_factor_inverse_x;
+    tempux = static_cast<int>(tempf);
     PME_frxyz[atom].x = tempf - tempux;
 
-    tempf = static_cast<float> (uint_crd[atom].uint_y) * periodic_factor_inverse_y;
-    tempuy = static_cast<int> (tempf);
+    tempf = static_cast<float>(uint_crd[atom].uint_y) * periodic_factor_inverse_y;
+    tempuy = static_cast<int>(tempf);
     PME_frxyz[atom].y = tempf - tempuy;
 
-    tempf = static_cast<float> (uint_crd[atom].uint_z) * periodic_factor_inverse_z;
-    tempuz = static_cast<int> (tempf);
+    tempf = static_cast<float>(uint_crd[atom].uint_z) * periodic_factor_inverse_z;
+    tempuz = static_cast<int>(tempf);
     PME_frxyz[atom].z = tempf - tempuz;
 
     if (tempux != (*temp_uxyz).uint_x || tempuy != (*temp_uxyz).uint_y || tempuz != (*temp_uxyz).uint_z) {

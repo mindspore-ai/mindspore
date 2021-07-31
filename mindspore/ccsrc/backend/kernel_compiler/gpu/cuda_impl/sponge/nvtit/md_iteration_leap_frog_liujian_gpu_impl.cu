@@ -54,7 +54,7 @@ void MD_Iteration_Leap_Frog_With_LiuJian(const int atom_numbers, const float hal
                                          curandStatePhilox4_32_10_t *rand_state, float *rand_frc, float *output,
                                          cudaStream_t stream) {
   Rand_Normal<<<ceilf(static_cast<float>(float4_numbers) / 32.), 32, 0, stream>>>(float4_numbers, rand_state,
-                                                                                 reinterpret_cast<float4 *>(rand_frc));
+                                                                                  reinterpret_cast<float4 *>(rand_frc));
   VECTOR *d_vel = reinterpret_cast<VECTOR *>(vel);
   VECTOR *d_crd = reinterpret_cast<VECTOR *>(crd);
   VECTOR *d_frc = reinterpret_cast<VECTOR *>(frc);
