@@ -445,7 +445,7 @@ void GraphScheduler::Initialize() {
   thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num);
   MS_EXCEPTION_IF_NULL(thread_pool_);
   std::string OMP_env = std::to_string(OMP_thread_num);
-  common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
+  (void)common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the computed OMP thread number : " << OMP_thread_num
@@ -509,7 +509,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   // The copy actors are built in the link, so need push into the actor set after link.
   actor_set->copy_actors_ = copy_actors_;
 
-  actors_.emplace(actor_set->name_, actor_set);
+  (void)actors_.emplace(actor_set->name_, actor_set);
 
   DumpActor(actor_set.get(), graph_compiler_info);
   if (!CheckActorValid(actor_set.get(), strategy)) {
@@ -788,7 +788,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   MS_EXCEPTION_IF_NULL(actor_set);
 
   auto host_queue = std::make_shared<HostTensorQueue>();
-  actor_to_host_queue_.emplace(actor_set->name_, host_queue);
+  (void)actor_to_host_queue_.emplace(actor_set->name_, host_queue);
   actor_set->data_source_actors_ = BuildDataSourceActor(graph_compiler_info, host_queue);
   actor_set->kernel_actors_ = BuildKernelActor(graph_compiler_info);
   actor_set->loop_count_actor_ = BuildLoopCountActor(graph_compiler_info);
@@ -838,7 +838,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       MS_LOG(INFO) << "Cache the graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
                    << " with index: " << output_with_index.second << " to actor:" << actor->GetAID().Name()
                    << " with index:" << actor_output_index;
-      graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(actor, actor_output_index));
+      (void)graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(actor, actor_output_index));
     }
   }
 }
@@ -941,13 +941,14 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         // In the scenario where multiple backend nodes correspond to the same front node, only the first backend node
         // is saved in the host queue data source actor.
         if (front_node_position_temp_map.count(front_node) > 0) {
-          host_queue_ds_actor->data_node_position_map_.emplace(input_node, front_node_position_temp_map[front_node]);
+          (void)host_queue_ds_actor->data_node_position_map_.emplace(input_node,
+                                                                     front_node_position_temp_map[front_node]);
           continue;
         }
         (void)host_queue_ds_actor->data_nodes_.emplace_back(input_node);
         (void)host_queue_ds_actor->device_contexts_.emplace_back(device_context);
-        host_queue_ds_actor->data_node_position_map_.emplace(input_node, data_node_position);
-        front_node_position_temp_map.emplace(front_node, data_node_position);
+        (void)host_queue_ds_actor->data_node_position_map_.emplace(input_node, data_node_position);
+        (void)front_node_position_temp_map.emplace(front_node, data_node_position);
         data_node_position++;
       }
     }
@@ -1355,7 +1356,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
 void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter,
                                                        const std::vector<AnfNodePtr> &host_parameters,
                                                        const KernelGraphPtr &graph, KernelActor *to_actor,
-                                                       KernelWithIndex to_kernel_with_input_idx) {
+                                                       const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(internal_parameter);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(to_actor);
@@ -1411,8 +1412,8 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
 
 void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *const from_actor,
                                                    KernelActor *const to_actor,
-                                                   KernelWithIndex from_kernel_with_output_idx,
-                                                   KernelWithIndex to_kernel_with_input_idx) {
+                                                   const KernelWithIndex &from_kernel_with_output_idx,
+                                                   const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
@@ -1437,8 +1438,8 @@ void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *c
 
 void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const from_actor,
                                                  KernelActor *const to_actor,
-                                                 KernelWithIndex from_kernel_with_output_idx,
-                                                 KernelWithIndex to_kernel_with_input_idx) {
+                                                 const KernelWithIndex &from_kernel_with_output_idx,
+                                                 const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
@@ -1449,7 +1450,6 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const
 
   // Get the position of from kernel in the data source actor.
   auto position = from_actor->FetchDataNodePosition(from_kernel);
-
   if (IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_context_)) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
@@ -1466,7 +1466,7 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const
 
 void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *const to_actor,
                                                  KernelWithIndex from_kernel_with_output_idx,
-                                                 KernelWithIndex to_kernel_with_input_idx) {
+                                                 const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(to_actor);
   if (IsSkippedKernelActor(from_kernel_with_output_idx.first)) {
     auto real_kernel_with_index = AnfAlgo::GetPrevNodeOutput(from_kernel_with_output_idx.first, 0);
@@ -1505,8 +1505,8 @@ void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, Kernel
 }
 
 void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from_actor, KernelActor *const to_actor,
-                                               KernelWithIndex from_kernel_with_output_idx,
-                                               KernelWithIndex to_kernel_with_input_idx) {
+                                               const KernelWithIndex &from_kernel_with_output_idx,
+                                               const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   auto from_kernel = from_kernel_with_output_idx.first;
@@ -1846,7 +1846,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         MS_LOG(INFO) << "Ignore the internal parameter node:" << output.first->DebugString();
         continue;
       }
-      unique_outputs.insert(output);
+      (void)unique_outputs.insert(output);
     }
     for (const auto &output_with_index : unique_outputs) {
       MS_EXCEPTION_IF_NULL(output_with_index.first);
@@ -1860,7 +1860,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
       if (unique_output_positions.count(iter->second) > 0) {
         continue;
       }
-      unique_output_positions.insert(iter->second);
+      (void)unique_output_positions.insert(iter->second);
       for (auto &output_position : iter->second) {
         to_actor->device_contexts_[output_position] = graph_compiler_info.device_contexts_[number - 1];
         // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
@@ -2578,7 +2578,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
     auto input_num = AnfAlgo::GetInputTensorNum(kernel_actor->kernel_);
     auto input_data_num = kernel_actor->input_datas_num_;
     auto device_tensor_store_num = kernel_actor->device_tensor_store_keys_.size();
-    if (input_data_num + IntToSize(device_tensor_store_num) != input_num) {
+    if (input_data_num + device_tensor_store_num != input_num) {
       MS_LOG(ERROR) << "The input building of " << AnfAlgo::GetNodeDebugString(kernel_actor->kernel_)
                     << " is wrong, input data num: " << input_data_num
                     << ", device tensor store num: " << device_tensor_store_num << ", total input num: " << input_num;
@@ -2596,7 +2596,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
 
     const size_t kCopyActorInputDataNum = 1;
     auto input_data_num = copy_actor->input_datas_num_;
-    auto device_tensor_store_num = (copy_actor->device_tensor_store_key_.second == nullptr) ? 0 : 1;
+    size_t device_tensor_store_num = (copy_actor->device_tensor_store_key_.second == nullptr) ? 0 : 1;
     if (input_data_num + device_tensor_store_num != kCopyActorInputDataNum) {
       MS_LOG(ERROR) << "The input building of " << copy_actor->GetAID().Name()
                     << " is wrong, input data num: " << input_data_num

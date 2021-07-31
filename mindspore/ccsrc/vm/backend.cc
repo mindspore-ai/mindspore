@@ -587,7 +587,7 @@ void ConvertMultiPyObjectToTensor(const py::object &input_object, std::vector<te
   }
 }
 
-void RunControlOperator(const std::shared_ptr<GraphCompiler> graph_compiler, const KernelGraphPtr &graph,
+void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, const KernelGraphPtr &graph,
                         const CNodePtr &kernel, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                         const std::map<AnfNodePtr, size_t> &parameter_index,
                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
@@ -945,9 +945,9 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   std::vector<DeviceContext *> device_contexts;
   std::string name = "kernel_graph";
   for (const auto &graph_id_to_context : graph_id_to_device_context_) {
-    graphs.emplace_back(graph_compiler_->Fetch(graph_id_to_context.first));
-    device_contexts.emplace_back(graph_id_to_context.second);
-    name.append("_").append(std::to_string(graph_id_to_context.first));
+    (void)graphs.emplace_back(graph_compiler_->Fetch(graph_id_to_context.first));
+    (void)device_contexts.emplace_back(graph_id_to_context.second);
+    (void)name.append("_").append(std::to_string(graph_id_to_context.first));
   }
 
   auto parser = std::make_shared<ControlNodeParser>();

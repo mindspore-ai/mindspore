@@ -93,6 +93,5 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   // Call back to the from actor to process after debug finished.
   Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
-
 }  // namespace runtime
 }  // namespace mindspore

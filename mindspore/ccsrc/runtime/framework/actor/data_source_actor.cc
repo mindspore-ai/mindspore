@@ -310,6 +310,5 @@ bool HostQueueDataSourceActor::IsSameDeviceType() const {
   }
   return true;
 }
-
 }  // namespace runtime
 }  // namespace mindspore
