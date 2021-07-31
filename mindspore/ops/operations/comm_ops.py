@@ -88,9 +88,9 @@ class AllReduce(PrimitiveWithInfer):
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.comm_ops import ReduceOp
+        >>> from mindspore.ops import ReduceOp
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.ops as ops
         >>>
         >>> init()
         >>> class Net(nn.Cell):
@@ -158,7 +158,7 @@ class AllGather(PrimitiveWithInfer):
     Examples:
         >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> import numpy as np
-        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor, context
@@ -348,9 +348,9 @@ class ReduceScatter(PrimitiveWithInfer):
         >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> from mindspore import Tensor, context
         >>> from mindspore.communication import init
-        >>> from mindspore.ops.operations.comm_ops import ReduceOp
+        >>> from mindspore.ops import ReduceOp
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.ops as ops
         >>> import numpy as np
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)
@@ -482,7 +482,7 @@ class Broadcast(PrimitiveWithInfer):
         >>> from mindspore import context
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.ops as ops
         >>> import numpy as np
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)

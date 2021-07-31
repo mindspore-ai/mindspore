@@ -395,7 +395,7 @@ class Send(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -452,7 +452,7 @@ class Receive(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
