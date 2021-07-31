@@ -280,30 +280,6 @@ void PrepareDataForControlWeightNode(
   }
 }
 
-void EraseValueNodeTensor(const std::vector<int64_t> *tensors_mask, const std::vector<TensorPtr> *input_tensors,
-                          std::vector<TensorPtr> *const input_tensors_without_value_node) {
-  MS_EXCEPTION_IF_NULL(input_tensors);
-  if (input_tensors->size() != tensors_mask->size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
-                      << tensors_mask->size();
-  }
-  for (size_t index = 0; index < tensors_mask->size(); ++index) {
-    if (tensors_mask->at(index) != kValueNodeTensorMask) {
-      (void)input_tensors_without_value_node->emplace_back(input_tensors->at(index));
-    }
-  }
-}
-
-TensorPtr FetchInputTensor(const GraphCompilerInfo &graph_compiler_info, size_t graph_index, size_t input_index) {
-  if (graph_index < graph_compiler_info.input_tensors_.size()) {
-    const std::vector<TensorPtr> *input_tensors = graph_compiler_info.input_tensors_[graph_index];
-    if (input_index < input_tensors->size()) {
-      return input_tensors->at(input_index);
-    }
-  }
-  return nullptr;
-}
-
 void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
                                        const AnfNodePtr &node, const TensorPtr &tensor,
                                        std::vector<TensorPtr> *host_tensors) {
@@ -622,7 +598,7 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
         // Prepare the device data for weights.
         const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
         PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context);
-      } else if (IsHostQueueDSActor(input_node, graph, input_tensor, graph_compiler_info.origin_parameters_order_,
+      } else if (IsHostQueueDSActor(input_node, graph, graph_compiler_info.origin_parameters_order_,
                                     graph_compiler_info.strategy_)) {
         MS_EXCEPTION_IF_NULL(host_data_source_actor);
         PrepareDataForHostDataSourceActor(host_data_source_actor->data_node_position_map_, input_node, input_tensor,
@@ -842,7 +818,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       } else if (IsDeviceQueueDSActor(output_kernel, graph_compiler_info.strategy_)) {
         std::string actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
         actor = FetchActor(actor_name);
-      } else if (IsHostQueueDSActor(output_kernel, graph, nullptr, graph_compiler_info.origin_parameters_order_,
+      } else if (IsHostQueueDSActor(output_kernel, graph, graph_compiler_info.origin_parameters_order_,
                                     graph_compiler_info.strategy_)) {
         actor = FetchActor(graph_compiler_info.name_ + "_HostDSActor");
         const auto &host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
@@ -902,10 +878,8 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
 
         KernelWithIndex from_kernel_with_output_idx = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
         KernelWithIndex to_kernel_with_input_idx = std::make_pair(kernel, i);
-        TensorPtr tensor = IsSingleOpActorSet(actor_set) ? FetchInputTensor(graph_compiler_info, index, i) : nullptr;
         // The gather of linking data arrows of kernel by the different from kernel type.
-        LinkDataArrow(kernel_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx,
-                      tensor);
+        LinkDataArrow(kernel_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx);
       }
     }
     // Link the control arrows for allreduce kernel by the send/recv nodes in the kernel graph.
@@ -947,28 +921,12 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     MS_EXCEPTION_IF_NULL(graph);
     // Build host queue data source actor.
     const std::vector<AnfNodePtr> &input_nodes = graph->input_nodes();
-    const std::vector<TensorPtr> *input_tensors = nullptr;
-    TensorPtr tensor = nullptr;
-    std::vector<TensorPtr> tensors_without_value_node;
-
-    if (graph_compiler_info.input_tensors_.size() != 0) {
-      // Erase value node tensor.
-      EraseValueNodeTensor(graph_compiler_info.tensors_mask_[i], graph_compiler_info.input_tensors_[i],
-                           &tensors_without_value_node);
-      if (tensors_without_value_node.size() != input_nodes.size()) {
-        MS_LOG(EXCEPTION) << "Tensor input:" << tensors_without_value_node.size()
-                          << " is not equal graph inputs:" << input_nodes.size();
-      }
-      input_tensors = &tensors_without_value_node;
-    }
 
     for (size_t j = 0; j < input_nodes.size(); j++) {
       const auto &input_node = input_nodes[j];
       MS_EXCEPTION_IF_NULL(input_node);
-      if (input_tensors != nullptr && j < input_tensors->size()) {
-        tensor = input_tensors->at(j);
-      }
-      if (IsHostQueueDSActor(input_node, graph, tensor, graph_compiler_info.origin_parameters_order_,
+
+      if (IsHostQueueDSActor(input_node, graph, graph_compiler_info.origin_parameters_order_,
                              graph_compiler_info.strategy_)) {
         if (host_queue_ds_actor == nullptr) {
           auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
@@ -1326,7 +1284,7 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
 
 void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInfo &graph_compiler_info,
                                    const KernelGraphPtr &graph, KernelWithIndex from_kernel_with_output_idx,
-                                   KernelWithIndex to_kernel_with_input_idx, const TensorPtr &tensor) {
+                                   KernelWithIndex to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -1370,7 +1328,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInf
       return;
     }
     LinkDataArrowForGatherActor(from_actor, to_actor, {front_node, 0}, to_kernel_with_input_idx);
-  } else if (IsHostQueueDSActor(from_kernel, graph, tensor, graph_compiler_info.origin_parameters_order_,
+  } else if (IsHostQueueDSActor(from_kernel, graph, graph_compiler_info.origin_parameters_order_,
                                 graph_compiler_info.strategy_)) {
     // Link the data arrows of host queue data source actor.
     std::string actor_name = graph_compiler_info.name_ + "_HostDSActor";
@@ -1442,7 +1400,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
     MS_EXCEPTION_IF_NULL(from_actor);
     auto from_kernel_with_output_idx = KernelWithIndex(from_actor->kernel_, actor_pair.second);
     LinkDataArrowForKernelActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsHostQueueDSActor(front_output_node, graph, nullptr, host_parameters)) {
+  } else if (IsHostQueueDSActor(front_output_node, graph, host_parameters)) {
     auto from_actor = dynamic_cast<HostQueueDataSourceActor *>(actor_pair.first);
     MS_EXCEPTION_IF_NULL(from_actor);
     auto from_kernel_with_output_idx = KernelWithIndex(from_actor->data_nodes_[actor_pair.second], 0);
@@ -1929,7 +1887,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         std::string actor_name;
         DataSourceActor *from_actor = nullptr;
         size_t from_actor_output_index = 0;
-        if (IsHostQueueDSActor(output_with_index.first, graph, nullptr, graph_compiler_info.origin_parameters_order_,
+        if (IsHostQueueDSActor(output_with_index.first, graph, graph_compiler_info.origin_parameters_order_,
                                graph_compiler_info.strategy_)) {
           actor_name = graph_compiler_info.name_ + "_HostDSActor";
           const auto &host_queue_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
@@ -2756,7 +2714,7 @@ OpActor<DeviceTensor> *GraphScheduler::FetchActor(const std::string &actor_name)
   return iter->second;
 }
 
-bool GraphScheduler::IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor,
+bool GraphScheduler::IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
                                         const std::vector<AnfNodePtr> &host_parameters,
                                         GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
