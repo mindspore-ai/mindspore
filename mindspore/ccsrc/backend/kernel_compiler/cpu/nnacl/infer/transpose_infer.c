@@ -95,6 +95,9 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   int perm[MAX_TRANSPOSE_DIM_SIZE] = {0};
   size_t perm_size = 0;
   for (size_t i = 0; i < perms_num; i++) {
+    if (perm_data[i] >= perms_num) {
+      return NNACL_ERR;
+    }
     ShapePush(perm, &perm_size, perm_data[i]);
   }
   // set output shape
