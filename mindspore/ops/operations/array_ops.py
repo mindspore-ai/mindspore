@@ -1657,7 +1657,12 @@ class Argmax(PrimitiveWithInfer):
             Default: `mindspore.dtype.int32`.
 
     Inputs:
-        - **input_x** (Tensor) - Input tensor.
+        - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        Support data type list as follows:
+
+          - Ascend: Float16, Float32.
+          - GPU: Float16, Float32.
+          - CPU: Float16, Float32, Float64.
 
     Outputs:
         Tensor, indices of the max value of input tensor across the axis.

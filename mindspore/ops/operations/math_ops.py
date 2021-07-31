@@ -2391,7 +2391,7 @@ class FloorDiv(_MathBinaryOp):
 
         out_{i} = \\text{floor}( \\frac{x_i}{y_i})
 
-    where the :math:`floor` indicates the operator that converts the input data into the floor data type.
+    where the :math:`floor` indicates the Floor operator, for more details, please refer to the Floor operator.
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2597,7 +2597,7 @@ class FloorMod(_MathBinaryOp):
 
         out_{i} =\text{floor}(x_{i} // y_{i})
 
-    where the :math:`floor` indicates the operator that converts the input data into the floor data type.
+    where the :math:`floor` indicates the Floor operator, for more details, please refer to the Floor operator.
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
