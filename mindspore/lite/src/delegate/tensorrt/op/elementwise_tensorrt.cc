@@ -26,6 +26,7 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
     {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
     {schema::PrimitiveType_SubFusion, nvinfer1::ElementWiseOperation::kSUB},
+    {schema::PrimitiveType_MulFusion, nvinfer1::ElementWiseOperation::kPROD},
   };
   auto iter_op = element_wise_ops.find(this->type_);
   if (iter_op != element_wise_ops.end()) {
@@ -149,6 +150,15 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
         return nullptr;
       }
       activation = sub_op->activation_type();
+      break;
+    }
+    case schema::PrimitiveType_MulFusion: {
+      auto mul_op = op_primitive_->value_as_MulFusion();
+      if (mul_op == nullptr) {
+        MS_LOG(ERROR) << "MulFusion convert failed.";
+        return nullptr;
+      }
+      activation = mul_op->activation_type();
       break;
     }
     default:

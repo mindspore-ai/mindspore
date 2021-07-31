@@ -37,11 +37,11 @@ nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   return dims;
 }
 
-nvinfer1::Dims ConvertCudaDims(void *data, size_t size) {
+nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
   nvinfer1::Dims dims{};
   dims.nbDims = size;
-  int *dims_data = reinterpret_cast<int *>(data);
-  for (size_t i = 0; i < size; i++) {
+  const int *dims_data = reinterpret_cast<const int *>(data);
+  for (int i = 0; i < size; i++) {
     dims.d[i] = *(dims_data + i);
   }
   return dims;
