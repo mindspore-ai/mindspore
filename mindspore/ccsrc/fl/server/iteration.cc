@@ -66,9 +66,7 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
   (void)std::for_each(communicators.begin(), communicators.end(),
                       [&](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
                         for (auto &round : rounds_) {
-                          if (round == nullptr) {
-                            continue;
-                          }
+                          MS_EXCEPTION_IF_NULL(round);
                           round->Initialize(communicator, timeout_cb, finish_iteration_cb);
                         }
                       });
@@ -76,6 +74,7 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
   // The time window for one iteration, which will be used in some round kernels.
   size_t iteration_time_window = std::accumulate(rounds_.begin(), rounds_.end(), IntToSize(0),
                                                  [](size_t total, const std::shared_ptr<Round> &round) {
+                                                   MS_EXCEPTION_IF_NULL(round);
                                                    return round->check_timeout() ? total + round->time_window() : total;
                                                  });
   LocalMetaStore::GetInstance().put_value(kCtxTotalTimeoutDuration, iteration_time_window);
@@ -172,11 +171,8 @@ bool Iteration::SyncIteration(uint32_t rank) {
     MS_LOG(ERROR) << "Sending synchronizing iteration message to leader server failed.";
     return false;
   }
-  if (sync_iter_rsp_msg == nullptr) {
-    MS_LOG(ERROR) << "Response from server 0 is empty.";
-    return false;
-  }
 
+  MS_ERROR_IF_NULL_W_RET_VAL(sync_iter_rsp_msg, false);
   SyncIterationResponse sync_iter_rsp;
   (void)sync_iter_rsp.ParseFromArray(sync_iter_rsp_msg->data(), SizeToInt(sync_iter_rsp_msg->size()));
   iteration_num_ = sync_iter_rsp.iteration();
@@ -372,16 +368,17 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
   if (is_iteration_valid) {
     // Store the model which is successfully aggregated for this iteration.
     const auto &model = Executor::GetInstance().GetModel();
-    (void)ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
     MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
   } else {
     // Store last iteration's model because this iteration is considered as invalid.
     const auto &model = ModelStore::GetInstance().GetModelByIterNum(iteration_num_ - 1);
-    (void)ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
     MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid. Reason: " << reason;
   }
 
   for (auto &round : rounds_) {
+    MS_ERROR_IF_NULL_WO_RET_VAL(round);
     round->Reset();
   }
 }

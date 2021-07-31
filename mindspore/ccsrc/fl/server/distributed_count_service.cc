@@ -121,7 +121,7 @@ bool DistributedCountService::CountReachThreshold(const std::string &name) {
   MS_LOG(INFO) << "Rank " << local_rank_ << " query whether count reaches threshold for " << name;
   if (local_rank_ == counting_server_rank_) {
     if (global_threshold_count_.count(name) == 0) {
-      MS_LOG(ERROR) << "Counter for " << name << " is not set.";
+      MS_LOG(ERROR) << "Counter for " << name << " is not registered.";
       return false;
     }
 
@@ -138,6 +138,7 @@ bool DistributedCountService::CountReachThreshold(const std::string &name) {
       return false;
     }
 
+    MS_ERROR_IF_NULL_W_RET_VAL(query_cnt_enough_rsp_msg, false);
     CountReachThresholdResponse count_reach_threshold_rsp;
     (void)count_reach_threshold_rsp.ParseFromArray(query_cnt_enough_rsp_msg->data(),
                                                    SizeToInt(query_cnt_enough_rsp_msg->size()));
@@ -173,11 +174,7 @@ bool DistributedCountService::ReInitForScaling() {
 }
 
 void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    MS_LOG(ERROR) << "Message is nullptr.";
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   CountRequest report_count_req;
   (void)report_count_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = report_count_req.name();
@@ -235,11 +232,7 @@ void DistributedCountService::HandleCountRequest(const std::shared_ptr<ps::core:
 
 void DistributedCountService::HandleCountReachThresholdRequest(
   const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    MS_LOG(ERROR) << "Message is nullptr.";
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   CountReachThresholdRequest count_reach_threshold_req;
   (void)count_reach_threshold_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = count_reach_threshold_req.name();
@@ -261,11 +254,7 @@ void DistributedCountService::HandleCountReachThresholdRequest(
 }
 
 void DistributedCountService::HandleCounterEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    MS_LOG(ERROR) << "Message is nullptr.";
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   // Respond as soon as possible so the leader server won't wait for each follower servers to finish calling the
   // callbacks.
   std::string couter_event_rsp_msg = "success";
@@ -279,6 +268,10 @@ void DistributedCountService::HandleCounterEvent(const std::shared_ptr<ps::core:
   const auto &type = counter_event.type();
   const auto &name = counter_event.name();
 
+  if (counter_handlers_.count(name) == 0) {
+    MS_LOG(ERROR) << "The counter handler of " << name << " is not registered.";
+    return;
+  }
   MS_LOG(DEBUG) << "Rank " << local_rank_ << " do counter event " << type << " for " << name;
   if (type == CounterEventType::FIRST_CNT) {
     counter_handlers_[name].first_count_handler(message);
@@ -292,6 +285,11 @@ void DistributedCountService::HandleCounterEvent(const std::shared_ptr<ps::core:
 }
 
 bool DistributedCountService::TriggerCounterEvent(const std::string &name, std::string *reason) {
+  if (global_current_count_.count(name) == 0 || global_threshold_count_.count(name) == 0) {
+    MS_LOG(ERROR) << "The counter of " << name << " is not registered.";
+    return false;
+  }
+
   MS_LOG(INFO) << "Current count for " << name << " is " << global_current_count_[name].size()
                << ", threshold count is " << global_threshold_count_[name];
   // The threshold count may be 1 so the first and last count event should be both activated.
@@ -324,6 +322,11 @@ bool DistributedCountService::TriggerFirstCountEvent(const std::string &name, st
       return false;
     }
   }
+
+  if (counter_handlers_.count(name) == 0) {
+    MS_LOG(ERROR) << "The counter handler of " << name << " is not registered.";
+    return false;
+  }
   // Leader server directly calls the callback.
   counter_handlers_[name].first_count_handler(nullptr);
   return true;
@@ -344,6 +347,11 @@ bool DistributedCountService::TriggerLastCountEvent(const std::string &name, std
       }
       return false;
     }
+  }
+
+  if (counter_handlers_.count(name) == 0) {
+    MS_LOG(ERROR) << "The counter handler of " << name << " is not registered.";
+    return false;
   }
   // Leader server directly calls the callback.
   counter_handlers_[name].last_count_handler(nullptr);

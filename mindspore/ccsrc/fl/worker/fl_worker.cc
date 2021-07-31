@@ -86,6 +86,7 @@ void FLWorker::Finalize() {
 
 bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size, ps::core::TcpUserCommand command,
                             std::shared_ptr<std::vector<unsigned char>> *output) {
+  MS_EXCEPTION_IF_NULL(data);
   // If the worker is in safemode, do not communicate with server.
   while (safemode_.load()) {
     std::this_thread::yield();
@@ -150,6 +151,7 @@ void FLWorker::SetIterationCompleted() {
 }
 
 void FLWorker::InitializeFollowerScaler() {
+  MS_EXCEPTION_IF_NULL(worker_node_);
   if (!worker_node_->InitFollowerScaler()) {
     MS_LOG(EXCEPTION) << "Initializing follower elastic scaler failed.";
     return;
@@ -206,10 +208,7 @@ void FLWorker::ProcessBeforeScalingIn() {
 }
 
 void FLWorker::ProcessAfterScalingOut() {
-  if (worker_node_ == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(worker_node_);
   MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize for worker.";
   server_num_ = IntToUint(worker_node_->server_num());
   worker_num_ = IntToUint(worker_node_->worker_num());
@@ -220,10 +219,7 @@ void FLWorker::ProcessAfterScalingOut() {
 }
 
 void FLWorker::ProcessAfterScalingIn() {
-  if (worker_node_ == nullptr) {
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(worker_node_);
   MS_LOG(INFO) << "Cluster scaling in completed. Reinitialize for worker.";
   server_num_ = IntToUint(worker_node_->server_num());
   worker_num_ = IntToUint(worker_node_->worker_num());

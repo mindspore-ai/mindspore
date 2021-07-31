@@ -40,8 +40,10 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
   communicator_ = communicator;
 
   // Register callback for round kernel.
-  communicator_->RegisterMsgCallBack(
-    name_, [&](std::shared_ptr<ps::core::MessageHandler> message) { LaunchRoundKernel(message); });
+  communicator_->RegisterMsgCallBack(name_, [&](std::shared_ptr<ps::core::MessageHandler> message) {
+    MS_ERROR_IF_NULL_WO_RET_VAL(message);
+    LaunchRoundKernel(message);
+  });
 
   // Callback when the iteration is finished.
   finish_iteration_cb_ = [this, finish_iteration_cb](bool is_iteration_valid, const std::string &) -> void {
@@ -50,10 +52,14 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
   };
 
   // Callback for finalizing the server. This can only be called once.
-  finalize_cb_ = [&](void) -> void { (void)communicator_->Stop(); };
+  finalize_cb_ = [&](void) -> void {
+    MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
+    (void)communicator_->Stop();
+  };
 
   if (check_timeout_) {
     iter_timer_ = std::make_shared<IterationTimer>();
+    MS_EXCEPTION_IF_NULL(iter_timer_);
 
     // 1.Set the timeout callback for the timer.
     iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool is_iteration_valid, const std::string &) -> void {
@@ -63,6 +69,7 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
 
     // 2.Stopping timer callback which will be set to the round kernel.
     stop_timer_cb_ = [&](void) -> void {
+      MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
       MS_LOG(INFO) << "Round " << name_ << " kernel stops its timer.";
       iter_timer_->Stop();
     };
@@ -90,10 +97,7 @@ bool Round::ReInitForScaling(uint32_t server_num) {
                                                            {first_count_handler, last_count_handler});
   }
 
-  if (kernel_ == nullptr) {
-    MS_LOG(WARNING) << "Reinitializing for round " << name_ << " failed: round kernel is nullptr.";
-    return false;
-  }
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_, false);
   kernel_->InitKernel(threshold_count_);
   return true;
 }
@@ -108,6 +112,8 @@ void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) 
 
 void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
   // If the server is still in the process of scaling, refuse the request.
   if (Server::GetInstance().IsSafeMode()) {
     MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
@@ -149,7 +155,10 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   return;
 }
 
-void Round::Reset() { (void)kernel_->Reset(); }
+void Round::Reset() {
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  (void)kernel_->Reset();
+}
 
 const std::string &Round::name() const { return name_; }
 
@@ -160,6 +169,9 @@ bool Round::check_timeout() const { return check_timeout_; }
 size_t Round::time_window() const { return time_window_; }
 
 void Round::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
   MS_LOG(INFO) << "Round " << name_ << " first count event is triggered.";
   // The timer starts only after the first count event is triggered by DistributedCountService.
   if (check_timeout_) {
@@ -172,6 +184,9 @@ void Round::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &m
 }
 
 void Round::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
   MS_LOG(INFO) << "Round " << name_ << " last count event is triggered.";
   // Same as the first count event, the timer must be stopped by DistributedCountService.
   if (check_timeout_) {

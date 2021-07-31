@@ -181,11 +181,7 @@ void DistributedMetadataStore::InitHashRing() {
 }
 
 void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    MS_LOG(ERROR) << "Message is nullptr.";
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   PBMetadataWithName meta_with_name;
   (void)meta_with_name.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = meta_with_name.name();
@@ -206,17 +202,17 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
 }
 
 void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  if (message == nullptr) {
-    MS_LOG(ERROR) << "Message is nullptr.";
-    return;
-  }
-
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   GetMetadataRequest get_metadata_req;
   (void)get_metadata_req.ParseFromArray(message->data(), message->len());
   const std::string &name = get_metadata_req.name();
   MS_LOG(INFO) << "Getting metadata for " << name;
 
   std::unique_lock<std::mutex> lock(mutex_[name]);
+  if (metadata_.count(name) == 0) {
+    MS_LOG(ERROR) << "The metadata of " << name << " is not registered.";
+    return;
+  }
   PBMetadata stored_meta = metadata_[name];
   std::string getting_meta_rsp_msg = stored_meta.SerializeAsString();
   if (!communicator_->SendResponse(getting_meta_rsp_msg.data(), getting_meta_rsp_msg.size(), message)) {
@@ -228,6 +224,10 @@ void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps
 
 bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const PBMetadata &meta) {
   std::unique_lock<std::mutex> lock(mutex_[name]);
+  if (metadata_.count(name) == 0) {
+    MS_LOG(ERROR) << "The metadata of " << name << " is not registered.";
+    return false;
+  }
   if (meta.has_device_meta()) {
     auto &fl_id_to_meta_map = *metadata_[name].mutable_device_metas()->mutable_fl_id_to_meta();
     auto &device_meta_fl_id = meta.device_meta().fl_id();
