@@ -136,6 +136,9 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
 // functions to graphkernel model
 graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
 FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs = nullptr);
+
+// remove parameter which is not used
+void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

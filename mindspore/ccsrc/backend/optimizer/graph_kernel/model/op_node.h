@@ -63,6 +63,22 @@ class ElemwiseOp : public PrimOp {
   // TODO(dayschan) rewrite InferShape/InferFormat
 };
 
+class ReshapeOp : public PrimOp {
+ public:
+  ReshapeOp(const std::string &op, const std::string &node_name) : PrimOp(op, node_name, RESHAPE) {}
+
+ protected:
+  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+};
+
+class BroadcastToOp : public PrimOp {
+ public:
+  BroadcastToOp(const std::string &op, const std::string &node_name) : PrimOp(op, node_name, BROADCAST) {}
+
+ protected:
+  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+};
+
 class ReduceOp : public PrimOp {
  public:
   ReduceOp(const std::string &op, const std::string &node_name) : PrimOp(op, node_name, REDUCE) {}

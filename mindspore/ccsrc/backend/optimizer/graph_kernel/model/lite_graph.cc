@@ -115,10 +115,24 @@ NodePtr LiteGraph::GraphBuilder::Op(const std::string &op, const NodeBase &basei
 PrimOpPtr LiteGraph::GraphBuilder::CreateOp(const std::string &op, const std::string &node_name) {
   static std::map<std::string, std::function<PrimOpPtr(const std::string &, const std::string &)>> creators;
   if (creators.empty()) {
-    creators = {{"Add", Elemwise},     {"Sub", Elemwise},     {"RealDiv", Elemwise},    {"Mul", Elemwise},
-                {"Log", Elemwise},     {"Pow", Elemwise},     {"Sqrt", Elemwise},       {"Rsqrt", Elemwise},
-                {"Rsqrt", Elemwise},   {"Neg", Elemwise},     {"Reciprocal", Elemwise}, {"Abs", Elemwise},
-                {"ReduceSum", Reduce}, {"ReduceMax", Reduce}, {"ReduceMin", Reduce},    {"Conv2D", Conv2d}};
+    creators = {{"Add", Elemwise},
+                {"Sub", Elemwise},
+                {"RealDiv", Elemwise},
+                {"Mul", Elemwise},
+                {"Log", Elemwise},
+                {"Exp", Elemwise},
+                {"Pow", Elemwise},
+                {"Sqrt", Elemwise},
+                {"Rsqrt", Elemwise},
+                {"Neg", Elemwise},
+                {"Reciprocal", Elemwise},
+                {"Abs", Elemwise},
+                {"BroadcastTo", BroadcastTo},
+                {"Reshape", Reshape},
+                {"ReduceSum", Reduce},
+                {"ReduceMax", Reduce},
+                {"ReduceMin", Reduce},
+                {"Conv2D", Conv2d}};
   }
   auto iter = creators.find(op);
   auto creator = (iter == creators.end() ? Opaque : iter->second);

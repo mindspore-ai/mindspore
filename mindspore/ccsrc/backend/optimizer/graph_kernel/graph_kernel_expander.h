@@ -36,7 +36,6 @@ class DefaultExpander : public Expander {
 
  protected:
   virtual bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
-  virtual void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
   virtual AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node);
   virtual FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node);
 };

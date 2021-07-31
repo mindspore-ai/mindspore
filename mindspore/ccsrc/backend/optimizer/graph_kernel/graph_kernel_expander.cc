@@ -130,29 +130,6 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   return JsonDescToAnf(kernel_desc_str);
 }
 
-void DefaultExpander::EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs) {
-  const auto &ori_parameter = func_graph->parameters();
-  auto todos = TopoSort(func_graph->get_return());
-  std::set<AnfNodePtr> used_param;
-  for (auto node : todos) {
-    if (node->isa<Parameter>()) {
-      used_param.insert(node);
-    }
-  }
-  if (used_param.size() == ori_parameter.size()) {
-    return;
-  }
-  AnfNodePtrList new_parameter, new_inputs;
-  for (size_t i = 0; i < ori_parameter.size(); ++i) {
-    if (used_param.count(ori_parameter[i])) {
-      new_parameter.push_back(ori_parameter[i]);
-      new_inputs.push_back((*inputs)[i]);
-    }
-  }
-  func_graph->set_parameters(new_parameter);
-  *inputs = std::move(new_inputs);
-}
-
 AnfNodePtr DefaultExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node) {
   auto func_graph = old_node->func_graph();
   std::vector<AnfNodePtr> inputs(old_node->inputs().begin() + 1, old_node->inputs().end());
