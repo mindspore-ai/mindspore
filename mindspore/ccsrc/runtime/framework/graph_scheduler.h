@@ -201,19 +201,20 @@ class GraphScheduler {
   // Link data arrows for internal parameter, convert internal parameter to actor by internal parameter cache to link.
   void LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter,
                                          const std::vector<AnfNodePtr> &host_parameters, const KernelGraphPtr &graph,
-                                         KernelActor *to_actor, KernelWithIndex to_kernel_with_input_idx);
+                                         KernelActor *to_actor, const KernelWithIndex &to_kernel_with_input_idx);
   // Link data arrows in the copy actor scene, insert the copy actor between from_actor and to_actor.
   void LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from_actor, KernelActor *const to_actor,
-                                 KernelWithIndex from_kernel_with_output_idx, KernelWithIndex to_kernel_with_input_idx);
+                                 const KernelWithIndex &from_kernel_with_output_idx,
+                                 const KernelWithIndex &to_kernel_with_input_idx);
   void LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *const from_actor, KernelActor *const to_actor,
-                                     KernelWithIndex from_kernel_with_output_idx,
-                                     KernelWithIndex to_to_kernel_with_input_idx);
+                                     const KernelWithIndex &from_kernel_with_output_idx,
+                                     const KernelWithIndex &to_to_kernel_with_input_idx);
   void LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const from_actor, KernelActor *const to_actor,
-                                   KernelWithIndex from_kernel_with_output_idx,
-                                   KernelWithIndex to_kernel_with_input_idx);
+                                   const KernelWithIndex &from_kernel_with_output_idx,
+                                   const KernelWithIndex &to_kernel_with_input_idx);
   void LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *const to_actor,
                                    KernelWithIndex from_kernel_with_output_idx,
-                                   KernelWithIndex to_kernel_with_input_idx);
+                                   const KernelWithIndex &to_kernel_with_input_idx);
 
   // 2. The processing of linking control arrows.
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
