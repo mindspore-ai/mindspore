@@ -739,6 +739,7 @@ class Unique(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tuple, containing Tensor objects `(y, idx), `y` is a tensor with the
@@ -1369,6 +1370,7 @@ class OnesLike(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x` but filled with ones.
@@ -1401,6 +1403,7 @@ class ZerosLike(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. The data type is int32, int64, float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.
@@ -1711,6 +1714,7 @@ class Argmin(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, indices of the min value of input tensor across the axis.
@@ -2653,6 +2657,7 @@ class Slice(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor): The target tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
         - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
@@ -2728,6 +2733,7 @@ class ReverseV2(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The data type is Number except float64.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -2790,7 +2796,7 @@ class Rint(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor, which must be one of the following types:
-          float16, float32.
+          float16, float32. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
