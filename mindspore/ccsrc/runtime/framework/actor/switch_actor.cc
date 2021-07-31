@@ -291,8 +291,8 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
   char buf[kMaxSwitchCondSize] = {0};
   ShapeVector host_shape;
   if (!device_tensor->SyncDeviceToHost(host_shape, size, type_id, static_cast<void *>(buf))) {
-    MS_LOG(ERROR) << GetAID().Name() + " get index from device address failed, type id:" + std::to_string(type_id) +
-                       ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
+    MS_LOG(ERROR) << GetAID().Name() << " get index from device address failed, type id:" << std::to_string(type_id)
+                  << ", device type:" << std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
   }
 
   if (type_id == TypeId::kNumberTypeInt32) {
@@ -413,7 +413,8 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
       for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(backend_node.first); ++j) {
         if (backend_node.first->kernel_info() != nullptr && AnfAlgo::OutputAddrExist(backend_node.first, j, false) &&
             AnfAlgo::GetMutableOutputAddr(backend_node.first, j, false).get() == input_device_tensors_[from_index]) {
-          Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, j,
+          auto output_index = j;
+          Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, output_index,
                 result_arrow->to_input_index_, context);
           is_send = true;
           MS_LOG(DEBUG) << "Switch actor:" << GetAID() << " send result addr:" << input_device_tensors_[from_index]

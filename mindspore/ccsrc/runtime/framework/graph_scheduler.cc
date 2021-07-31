@@ -1025,7 +1025,6 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
 
     const auto &backend_node = backend_iter->second.first;
     auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
-
     if (iter != host_queue_ds_actor->data_nodes_.end()) {
       (void)host_queue_ds_actor->data_node_position_map_.emplace(parameter,
                                                                  iter - host_queue_ds_actor->data_nodes_.begin());
@@ -2067,7 +2066,6 @@ void GraphScheduler::PrepareInputNodeForSwitchActor(const std::vector<AnfNodePtr
   for (const auto &node : control_nodes) {
     CNodePtr cnode = node->cast<CNodePtr>();
     auto inputs = cnode->inputs();
-
     // Before link data arrow, parameters of the call node in switch-call need to be add to the switch actor.
     if (inputs[0]->isa<CNode>()) {
       auto actor = FetchActor(inputs[0]->DebugString());
@@ -2096,7 +2094,10 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitchLayer)) {
       auto actor = actor_name_to_actor_[node->DebugString()];
-      LinkDataArrowForSwitchActor(graph_compiler_info, dynamic_cast<SwitchActor *>(actor));
+      MS_EXCEPTION_IF_NULL(actor);
+      auto switch_actor = dynamic_cast<SwitchActor *>(actor);
+      MS_EXCEPTION_IF_NULL(switch_actor);
+      LinkDataArrowForSwitchActor(graph_compiler_info, switch_actor);
     } else if (inputs[0]->isa<ValueNode>() && IsValueNode<FuncGraph>(inputs[0])) {
       // Link the data arrow for the input of the call node.
       const auto &actor_name = node->DebugString();
@@ -2553,6 +2554,7 @@ void GraphScheduler::LinkBranchArrowForGatherActor(const GraphCompilerInfo &grap
       auto actor = FetchActor(actor_name);
       MS_EXCEPTION_IF_NULL(actor);
       auto gather_actor = dynamic_cast<GatherActor *>(actor);
+      MS_EXCEPTION_IF_NULL(gather_actor);
       (void)gather_actor->output_branch_arrows_.emplace_back(gather_actor->gather_aid_);
     }
   }
