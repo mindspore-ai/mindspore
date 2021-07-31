@@ -33,7 +33,7 @@ void SwitchActor::Init() {
     for (auto &data_arrow : output_branch_arrow) {
       MS_EXCEPTION_IF_NULL(data_arrow);
       auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-      output_data.emplace_back(std::move(data));
+      (void)output_data.emplace_back(std::move(data));
     }
   }
 }

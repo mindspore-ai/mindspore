@@ -472,6 +472,5 @@ void KernelActor::EraseInput(OpContext<DeviceTensor> *const context) {
     }
   }
 }
-
 }  // namespace runtime
 }  // namespace mindspore

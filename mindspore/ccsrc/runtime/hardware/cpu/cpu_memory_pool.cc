@@ -31,30 +31,37 @@ size_t GetSystemMemorySize(const std::string &key) {
 #else
   FILE *file = fopen("/proc/meminfo", "r");
   if (file == nullptr) {
-    MS_LOG(EXCEPTION) << "Get system meminfo failed.";
+    MS_LOG(ERROR) << "Get system meminfo failed.";
+    return 0;
   }
 
   size_t mem_size = 0;
-  std::string format = key + ": %zu kB\n";
-  while (true) {
-    auto ret = fscanf(file, format.c_str(), &mem_size);
-    if (feof(file)) {
-      MS_LOG(ERROR) << "Get system memory failed.";
+  char buf[kLineMaxSize] = {0};
+  while (fgets(buf, kLineMaxSize, file)) {
+    // Get mem title.
+    std::string line(buf);
+    auto title_end_pos = line.find(":");
+    auto title = line.substr(0, title_end_pos);
+
+    // Get mem size.
+    if (title == key) {
+      auto mem_size_end_pos = line.find_last_of(" ");
+      auto mem_size_begin_pos = line.find_last_of(" ", mem_size_end_pos - 1);
+      if ((mem_size_end_pos != std::string::npos) && (mem_size_begin_pos != std::string::npos)) {
+        auto mem_size_string = line.substr(mem_size_begin_pos, mem_size_end_pos - mem_size_begin_pos);
+        mem_size = std::atol(mem_size_string.c_str());
+      }
       break;
     }
 
-    if (ret == 1) {
-      MS_LOG(INFO) << "Get system memory(" << key << "): " << mem_size << " kB";
-      break;
-    } else {
-      // Need skip current line if fscanf does not capture the result.
-      char temp[kLineMaxSize];
-      auto temp_ret = fgets(temp, kLineMaxSize, file);
-      (void)temp_ret;
-    }
+    (void)memset_s(buf, kLineMaxSize, 0, kLineMaxSize);
   }
-
   (void)fclose(file);
+
+  if (mem_size == 0) {
+    MS_LOG(EXCEPTION) << "Get system meminfo failed: " << key;
+  }
+  MS_LOG(INFO) << "Get system memory(" << key << "): " << mem_size << " kB";
   return mem_size * kKBToByte;
 #endif
 }

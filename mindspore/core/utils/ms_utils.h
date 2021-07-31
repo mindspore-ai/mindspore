@@ -60,7 +60,7 @@ static inline void SetOMPThreadNum() {
   OMP_thread_num = OMP_thread_num > kOMPThreadMaxNum ? kOMPThreadMaxNum : OMP_thread_num;
 
   std::string OMP_env = std::to_string(OMP_thread_num);
-  SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
+  (void)SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
 }
 }  // namespace common
 }  // namespace mindspore
