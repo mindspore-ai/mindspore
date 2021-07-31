@@ -93,7 +93,6 @@ void TrainSession::RestoreOps(const std::vector<CreatorOp> &restore) {
 
 int TrainSession::AllocWorkSpace() {
   size_t workspace_size = 0;
-
   for (auto kernel : this->train_kernels_) {
     if (workspace_size < static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size()) {
       workspace_size = static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size();
@@ -184,7 +183,11 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
   CompileOptimizedKernels();  // Prepare a list of kernels which are optimized (weight update step)
   CompileTrainOutputs();      // prepare outputs in train mode
   CompileEvalOutputs();       // prepare outputs in eval mode
-  CompileInferenceKernels();  // Prepare a list of eval kernels
+  // Prepare a list of eval kernels
+  if (CompileInferenceKernels() != RET_OK) {
+    MS_LOG(ERROR) << "CompileInferenceKernels failed.";
+    return RET_ERROR;
+  }
   ret = AllocWorkSpace();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "failed to allocate space";
@@ -495,6 +498,8 @@ void TrainSession::CompileTrainOutputs() {
 }
 
 void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *v) {
+  MS_ASSERT(kernel != nullptr);
+  MS_ASSERT(v != nullptr);
   if (std::find(v->begin(), v->end(), kernel) == v->end()) {  // kernel is not already in vector
     for (auto in_node : kernel->in_kernels()) {
       BuildInferenceKernelsRecursive(in_node, v);
@@ -517,16 +522,21 @@ void TrainSession::CompileTrainKernels() {
   }
 }
 
-void TrainSession::CompileInferenceKernels() {
+int TrainSession::CompileInferenceKernels() {
   inference_kernels_.clear();
   for (auto item : eval_output_node_map_) {
     std::string kernel_name = item.first;
     auto kernel = TSFindKernel(train_kernels_, kernel_name);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "kernel is nullptr";
+      return RET_ERROR;
+    }
     BuildInferenceKernelsRecursive(kernel, &inference_kernels_);
   }
   if (inference_kernels_.size() == 0) {
     inference_kernels_ = this->train_kernels_;
   }
+  return RET_OK;
 }
 
 void TrainSession::CompileOptimizedKernels() {
