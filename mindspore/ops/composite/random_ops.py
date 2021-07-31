@@ -110,9 +110,9 @@ def laplace(shape, mean, lambda_param, seed=None):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor
-        >>> from mindspore.ops import composite as C
-        >>> import mindspore.common.dtype as mindspore
+        >>> from mindspore import ops as ops
         >>> shape = (2, 3)
         >>> mean = Tensor(1.0, mindspore.float32)
         >>> lambda_param = Tensor(1.0, mindspore.float32)
