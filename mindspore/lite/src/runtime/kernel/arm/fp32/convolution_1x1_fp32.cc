@@ -172,7 +172,7 @@ int Convolution1x1CPUKernel::Init() {
   return RET_OK;
 }
 
-void Convolution1x1CPUKernel::PackMatmulInput(const float *src_ptr, float *dst_ptr, int row, int col) {
+void Convolution1x1CPUKernel::PackMatmulInput(const float *src_ptr, float *dst_ptr, int row, int col) const {
 #ifdef ENABLE_AVX
   RowMajor2Col6Major(src_ptr, dst_ptr, row, col);
 #elif defined(ENABLE_SSE)

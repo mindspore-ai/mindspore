@@ -33,9 +33,9 @@ class ReverseSequenceCPUKernel : public InnerKernel {
   int Run() override;
 
  private:
-  void ConvertAxisToPositive(const std::vector<int> shape, int *axis);
-  int CalcCountPreAxis(const std::vector<int> shape, int axis);
-  int CalcCountAfterAxis(const std::vector<int> shape, int axis);
+  void ConvertAxisToPositive(const std::vector<int> shape, int *axis) const;
+  int CalcCountPreAxis(const std::vector<int> shape, int axis) const;
+  int CalcCountAfterAxis(const std::vector<int> shape, int axis) const;
 };
 }  // namespace mindspore::kernel
 

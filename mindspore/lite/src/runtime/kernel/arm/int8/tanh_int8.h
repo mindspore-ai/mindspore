@@ -38,7 +38,7 @@ class TanhInt8CPUKernel : public InnerKernel {
   int Run() override;
 
  public:
-  int DoActivation(int task_id);
+  int DoActivation(int task_id) const;
 
  private:
   int8_t *in_ptr_{nullptr};

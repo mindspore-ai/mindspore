@@ -30,8 +30,10 @@ class CarryDataKernel : public InnerKernel {
   ~CarryDataKernel() override = default;
 
  protected:
-  int MoveData(std::vector<lite::Tensor *>::iterator dst_begin, std::vector<lite::Tensor *>::iterator dst_end,
-               std::vector<lite::Tensor *>::iterator src_begin, std::vector<lite::Tensor *>::iterator src_limit);
+  int MoveData(const std::vector<lite::Tensor *>::iterator &dst_begin,
+               const std::vector<lite::Tensor *>::iterator &dst_end,
+               const std::vector<lite::Tensor *>::iterator &src_begin,
+               const std::vector<lite::Tensor *>::iterator &src_limit);
   static int MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_tensor);
   static int MoveTensorListData(lite::TensorList *dst_tensor, lite::TensorList *src_tensor);
 };

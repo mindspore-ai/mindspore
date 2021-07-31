@@ -34,7 +34,7 @@ typedef struct TanhQuantParameter {
 extern "C" {
 #endif
 
-void TanhInt8(const int8_t *input_ptr, int8_t *output_ptr, int size, TanhQuantParameter *quant);
+void TanhInt8(const int8_t *input_ptr, int8_t *output_ptr, int size, const TanhQuantParameter *quant);
 
 #ifdef __cplusplus
 }

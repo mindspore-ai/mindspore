@@ -27,10 +27,9 @@ struct TYPE_FUNC_INFO {
   int primitive_type_ = 0;
   ArithmeticSelfFunc func_ = nullptr;
 };
-using TYPE_FUNC_INFO = TYPE_FUNC_INFO;
 }  // namespace
 
-ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_type) {
+ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_type) const {
   TYPE_FUNC_INFO type_func_table[] = {{mindspore::schema::PrimitiveType_Abs, ElementAbs},
                                       {mindspore::schema::PrimitiveType_Cos, ElementCos},
                                       {mindspore::schema::PrimitiveType_Log, ElementLog},
@@ -53,7 +52,7 @@ ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_t
   return nullptr;
 }
 
-ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int primitive_type) {
+ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int primitive_type) const {
   if (primitive_type == mindspore::schema::PrimitiveType_LogicalNot) {
     return ElementLogicalNotBool;
   }

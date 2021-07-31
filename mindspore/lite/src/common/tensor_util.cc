@@ -123,7 +123,9 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
   dst->format_ = src->format();
   dst->shape_value_ = src->shape().empty() ? 0 : src->shape().front();
   dst->element_num_ = src->shape().empty() ? 0 : src->tensors().size();
-  if (dst->element_num_ * sizeof(TensorC) < 0 || dst->element_num_ * sizeof(TensorC) > MAX_MALLOC_SIZE) {
+
+  if ((dst->element_num_ != 0 && SIZE_MAX / dst->element_num_ < sizeof(TensorC)) ||
+      dst->element_num_ * sizeof(TensorC) > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "data size error.";
     return RET_ERROR;
   }

@@ -53,8 +53,8 @@ class ArithmeticSelfCPUKernel : public InnerKernel {
   virtual int DoExecute(int task_id);
 
  private:
-  ArithmeticSelfFunc GetArithmeticSelfFun(int primitive_type);
-  ArithmeticSelfBoolFunc GetArithmeticSelfBoolFun(int primitive_type);
+  ArithmeticSelfFunc GetArithmeticSelfFun(int primitive_type) const;
+  ArithmeticSelfBoolFunc GetArithmeticSelfBoolFun(int primitive_type) const;
   ArithmeticSelfFunc func_;
   ArithmeticSelfBoolFunc func_bool_;
 };

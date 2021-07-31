@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/int8/depth_to_space_int8.h"
+#include <cfloat>
+#include <cmath>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 
@@ -72,7 +74,8 @@ int DepthToSpaceInt8CPUKernel::Run() {
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->data_c());
   int8_t *output_data = reinterpret_cast<int8_t *>(output->data_c());
   auto in_shape = input->shape();
-  if (in_quant_arg_->scale_ == out_quant_arg_->scale_ && in_quant_arg_->zp_ == out_quant_arg_->zp_) {
+  if (std::abs(in_quant_arg_->scale_ - out_quant_arg_->scale_) < FLT_EPSILON &&
+      in_quant_arg_->zp_ == out_quant_arg_->zp_) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param_);
   } else {
     DepthToSpaceForNHWCInt8(input_data, output_data, in_shape.data(), param_, in_quant_arg_, out_quant_arg_);

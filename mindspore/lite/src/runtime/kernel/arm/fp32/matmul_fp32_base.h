@@ -42,7 +42,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int Run() override;
 
  public:
-  int FloatRun(int task_id);
+  int FloatRun(int task_id) const;
 
  protected:
   int InitBufferA();
