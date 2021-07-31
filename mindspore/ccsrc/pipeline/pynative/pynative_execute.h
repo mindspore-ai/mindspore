@@ -347,9 +347,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   ~PynativeExecutor() = default;
   PynativeExecutor(const PynativeExecutor &) = delete;
   PynativeExecutor &operator=(const PynativeExecutor &) = delete;
-
-  void EnterConstruct(const py::object &cell);
-  void LeaveConstruct(const py::object &cell);
   GradExecutorPtr grad_executor() const;
   ForwardExecutorPtr forward_executor() const;
 
@@ -380,12 +377,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::mutex instance_lock_;
   static ForwardExecutorPtr forward_executor_;
   static GradExecutorPtr grad_executor_;
-  // The pointer of top python Cell object, which is always the network(inherit class Cell) ran in python test script,
-  // such as Resnet50(Cell),LeNet(Cell).This pointer is used to distinguish temporary primitives from global
-  // primitives to control memory release. Global primitives are always created in top cell's '__init__' function and
-  // temporary primitives are always created in other place.Temporary primitives will be released after executing top
-  // cell's 'construct' function but global primitives will not.
-  PyObject *py_top_cell_{nullptr};
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;

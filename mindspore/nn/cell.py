@@ -337,13 +337,9 @@ class Cell(Cell_):
 
     def run_construct(self, cast_inputs, kwargs):
         if self.enable_hook:
-            _pynative_exec.enter_construct(self)
             output = self._hook_construct(*cast_inputs, **kwargs)
-            _pynative_exec.leave_construct(self)
         else:
-            _pynative_exec.enter_construct(self)
             output = self.construct(*cast_inputs, **kwargs)
-            _pynative_exec.leave_construct(self)
         return output
 
     def _check_construct_args(self, *inputs, **kwargs):
