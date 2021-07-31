@@ -18,10 +18,10 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PROFILING_CALLBACK_REGISTER_H_
 
 #include "toolchain/prof_callback.h"
+#include "toolchain/prof_acl_api.h"
 
 #define MAX_DEV_NUM (64)
 
-using Status = uint32_t;
 enum ProfCommandHandleType {
   kProfCommandhandleInit = 0,
   kProfCommandhandleStart,
