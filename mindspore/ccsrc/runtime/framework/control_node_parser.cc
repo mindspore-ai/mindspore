@@ -528,7 +528,6 @@ bool IsSubCallNode(const AnfNodePtr &node) {
   }
 
   const auto inputs = node->cast<CNodePtr>()->inputs();
-
   if (!AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer)) {
     return false;
   }
@@ -670,7 +669,6 @@ size_t FetchOutputSizebyCallNode(const AnfNodePtr &node, std::vector<AnfNodePtr>
 
 FuncGraphPtr FetchFuncGraphByNode(const AnfNodePtr &node) {
   auto front_node = GetFrontNodeByBackendNode(node);
-
   // If the front node is nullptr, we can check its inputs.
   if (front_node == nullptr) {
     if (node->isa<CNode>()) {
@@ -839,7 +837,6 @@ DeviceContext *ControlNodeParser::GetFrontValueNodeDeviceContext(const AnfNodePt
   auto iter = std::find_if(
     front_value_nodes_.begin(), front_value_nodes_.end(),
     [value_node](const auto &front_node_with_context) { return front_node_with_context.first == value_node; });
-
   if (iter != front_value_nodes_.end()) {
     return iter->second;
   }
@@ -1224,7 +1221,6 @@ void ControlNodeParser::FetchFrontToBackendParameter(const std::vector<KernelGra
     auto device_context = device_contexts[i];
     for (const auto &parameter : graph->input_nodes()) {
       auto front_node = graph->GetFrontAnfByBackendAnf(parameter);
-
       if (front_node != nullptr && front_node->isa<Parameter>() &&
           front_to_backend_parameters_.find(front_node) == front_to_backend_parameters_.end()) {
         front_to_backend_parameters_[front_node] = {parameter, device_context};
@@ -1363,7 +1359,6 @@ void ControlNodeParser::FetchBackendOutputByFrontOutput(const AnfNodePtr &front_
   } else if (front_output->isa<Parameter>()) {
     // Output is a parameter.
     const auto iter = formal_to_real_parameters_.find(front_output);
-
     if (iter != formal_to_real_parameters_.end()) {
       for (const auto &node : iter->second) {
         (void)(*results).emplace(node);
@@ -1396,7 +1391,6 @@ void ControlNodeParser::FetchBackendOutputByFrontOutput(const AnfNodePtr &front_
   } else if (front_output->isa<CNode>()) {
     // Output is a kernel.
     const auto iter = front_to_backend_kernels_.find(AnfAlgo::VisitKernelWithReturnType(front_output, 0));
-
     if (iter != front_to_backend_kernels_.end()) {
       (void)(*results).emplace(iter->second.first);
     } else {
@@ -1418,7 +1412,6 @@ void ControlNodeParser::FetchBackendInputNodebyFrontNode(
 
     for (const auto &front_input : front_inputs) {
       const auto node_with_index = AnfAlgo::VisitKernelWithReturnType(front_input, 0);
-
       if (node_with_index.first->isa<Parameter>()) {
         const auto &iter = front_to_backend_parameters.find(real_parameter);
         if (iter == front_to_backend_parameters.end()) {
@@ -1465,7 +1458,6 @@ void ControlNodeParser::FetchBackendParameterNode(const std::vector<KernelGraphP
     }
     for (const auto &parameter : graph->input_nodes()) {
       auto front_node = graph->GetFrontAnfByBackendAnf(parameter);
-
       if (front_node != nullptr && front_node->isa<Parameter>() &&
           (*front_to_backend_parameters).find(front_node) == (*front_to_backend_parameters).end()) {
         (*front_to_backend_parameters)[front_node] = {parameter, device_context};
@@ -1506,7 +1498,6 @@ void ControlNodeParser::FetchBackendInputNode(const std::vector<KernelGraphPtr> 
     const auto &graph = graphs[i];
     for (const auto &value_node : graph->graph_value_nodes()) {
       auto front_node = graph->GetFrontAnfByBackendAnf(value_node);
-
       if (front_node != nullptr) {
         (void)formal_to_real_parameters_[front_node].emplace_back(value_node, 0);
       }
