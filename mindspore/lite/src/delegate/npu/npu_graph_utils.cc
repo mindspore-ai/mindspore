@@ -63,7 +63,8 @@ std::vector<mindspore::MSTensor> NPUGraphUtils::GetGraphOutTensors(std::vector<N
       if (find(ops.begin(), ops.end(), out_op) == ops.end()) {
         // visit the out op that is not in the subgraph
         for (auto tensor : op->outputs()) {
-          if (find(out_op->inputs().begin(), out_op->inputs().end(), tensor) != out_op->inputs().end()) {
+          if (find(out_op->inputs().begin(), out_op->inputs().end(), tensor) != out_op->inputs().end() &&
+              find(outputs.begin(), outputs.end(), tensor) == outputs.end()) {
             // find the connected tensor
             outputs.push_back(tensor);
             break;

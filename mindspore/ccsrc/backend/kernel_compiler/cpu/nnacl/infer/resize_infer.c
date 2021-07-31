@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/resize_infer.h"
+#include <math.h>
 #include "nnacl/infer/infer_register.h"
 
 int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
@@ -50,12 +51,12 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
         }
         switch (shape_tensor->format_) {
           case Format_NCHW:
-            param->new_height_ = data[2] * GetHeight(input);
-            param->new_width_ = data[3] * GetWidth(input);
+            param->new_height_ = round(data[2] * GetHeight(input));
+            param->new_width_ = round(data[3] * GetWidth(input));
             break;
           case Format_NHWC:
-            param->new_height_ = data[1] * GetHeight(input);
-            param->new_width_ = data[2] * GetWidth(input);
+            param->new_height_ = round(data[1] * GetHeight(input));
+            param->new_width_ = round(data[2] * GetWidth(input));
             break;
           default:
             return NNACL_INFER_INVALID;

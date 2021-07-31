@@ -34,6 +34,11 @@ int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::
       }
     }
   }
+  auto input_x = in_tensors.at(0);
+  if (input_x.DataType() != DataType::kNumberTypeFloat32 || input_x.DataType() != DataType::kNumberTypeFloat16) {
+    need_cast_ = true;
+    MS_LOG(INFO) << "StridedSlice does not support input datatype other than FLOAT. Cast op will be inserted.";
+  }
   return RET_OK;
 }
 
@@ -66,7 +71,15 @@ int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
   strided_slice_->set_attr_shrink_axis_mask(shrink_axis_mask_);
   strided_slice_->set_attr_new_axis_mask(new_axis_mask_);
   // StridedSliceV2 supports setting axes, but it will cause an endless loop.
-  strided_slice_->set_input_x(*npu_inputs[0]);
+  if (need_cast_) {
+    auto ret = SetCast(npu_inputs[0], strided_slice_, in_tensors[0], out_tensors[0]);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert Cast operator for op " << name_ << " failed.";
+      return ret;
+    }
+  } else {
+    strided_slice_->set_input_x(*npu_inputs[0]);
+  }
   strided_slice_->set_input_begin(*npu_inputs[BEGIN_INDEX]);
   strided_slice_->set_input_end(*npu_inputs[END_INDEX]);
 
@@ -79,7 +92,13 @@ int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
   return RET_OK;
 }
 
-ge::Operator *StridedSliceNPUOp::GetNPUOp() { return this->strided_slice_; }
+ge::Operator *StridedSliceNPUOp::GetNPUOp() {
+  if (need_cast_) {
+    return this->out_cast_;
+  } else {
+    return this->strided_slice_;
+  }
+}
 
 int StridedSliceNPUOp::HandleAxis() {
   begins_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(begins_mask_);
@@ -90,10 +109,36 @@ int StridedSliceNPUOp::HandleAxis() {
   return RET_OK;
 }
 
+int StridedSliceNPUOp::SetCast(const ge::Operator *input, const ge::Operator *cur_op,
+                               const mindspore::MSTensor in_tensor, const mindspore::MSTensor out_tensor) {
+  in_cast_ = new (std::nothrow) hiai::op::CastT(name_ + "_in_cast");
+  out_cast_ = new (std::nothrow) hiai::op::CastT(name_ + "_out_cast");
+  if (in_cast_ == nullptr || out_cast_ == nullptr) {
+    MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
+    return RET_ERROR;
+  }
+  in_cast_->set_input_x(*input);
+  in_cast_->set_attr_src_dtype(ConverterToNPUDataType(static_cast<DataType>(in_tensor.DataType())));
+  in_cast_->set_attr_dst_dtype(ge::DT_FLOAT);
+  strided_slice_->set_input_x(*in_cast_);
+  out_cast_->set_input_x(*cur_op);
+  out_cast_->set_attr_src_dtype(ge::DT_FLOAT);
+  out_cast_->set_attr_dst_dtype(ConverterToNPUDataType(static_cast<DataType>(out_tensor.DataType())));
+  return RET_OK;
+}
+
 StridedSliceNPUOp::~StridedSliceNPUOp() {
   if (strided_slice_ != nullptr) {
     delete strided_slice_;
     strided_slice_ = nullptr;
+  }
+  if (in_cast_ != nullptr) {
+    delete in_cast_;
+    in_cast_ = nullptr;
+  }
+  if (out_cast_ != nullptr) {
+    delete out_cast_;
+    out_cast_ = nullptr;
   }
 }
 }  // namespace mindspore
