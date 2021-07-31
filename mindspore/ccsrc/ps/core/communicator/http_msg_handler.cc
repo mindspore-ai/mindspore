@@ -22,19 +22,20 @@ namespace ps {
 namespace core {
 HttpMsgHandler::HttpMsgHandler(std::shared_ptr<HttpMessageHandler> http_msg)
     : http_msg_(http_msg), data_(nullptr), len_(0) {
-  len_ = http_msg_->GetPostMsg(&data_);
+  if (http_msg != nullptr) {
+    len_ = http_msg_->GetPostMsg(&data_);
+  }
 }
 
 void *HttpMsgHandler::data() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "HttpMsgHandler data is nullptr.";
-  }
+  MS_ERROR_IF_NULL_W_RET_VAL(data_, nullptr);
   return data_;
 }
 
 size_t HttpMsgHandler::len() const { return len_; }
 
 bool HttpMsgHandler::SendResponse(const void *data, const size_t &len) {
+  MS_ERROR_IF_NULL_W_RET_VAL(data, false);
   http_msg_->QuickResponse(200, reinterpret_cast<unsigned char *>(const_cast<void *>(data)), len);
   return true;
 }

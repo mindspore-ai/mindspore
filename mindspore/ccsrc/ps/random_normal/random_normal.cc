@@ -24,6 +24,7 @@ namespace mindspore {
 namespace ps {
 bool InitRandomNormal(float mean, float stddev, std::vector<size_t> out_shape, size_t global_seed, size_t op_seed,
                       float *output_data) {
+  MS_ERROR_IF_NULL_W_RET_VAL(output_data, false);
   if (out_shape.size() == 0) {
     std::cout << "output data shape is error" << std::endl;
   }
