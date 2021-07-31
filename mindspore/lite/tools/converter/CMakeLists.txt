@@ -47,7 +47,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/common/gllo_utils.cc
         ../optimizer/common/format_utils.cc
         ../optimizer/common/multiple_pattern_process_pass.cc
-        ../optimizer/format/conv_weight_format.cc
         ../optimizer/format/delete_redundant_transpose.cc
         ../optimizer/format/to_format_base.cc
         ../optimizer/format/to_nchw_format.cc

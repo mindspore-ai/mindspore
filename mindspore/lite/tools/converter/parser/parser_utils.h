@@ -30,14 +30,15 @@ void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all
 int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
 int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
-int TransposeInsertForWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,
-                                  std::vector<int> perm);
-int HandleWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,
-                      schema::Format src_format, schema::Format dst_format);
-int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t dst_format, int64_t format,
-                                    const ParameterPtr &weight_node, std::vector<int> perm);
-int HandleWeightSharing(const FuncGraphPtr &graph, int64_t format, const ParameterPtr &weight_node,
-                        schema::Format src_format, schema::Format dst_format);
+AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode);
+int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, schema::Format src_format,
+                          schema::Format dst_format, std::set<AnfNodePtr> *has_visited);
+int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
+                            schema::Format dst_format, std::set<AnfNodePtr> *has_visited);
+int UnifyConstConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
+                         schema::Format dst_format, std::set<AnfNodePtr> *has_visited);
+int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
+                                schema::Format dst_format, std::set<AnfNodePtr> *has_visited);
 }  // namespace lite
 }  // namespace mindspore
 
