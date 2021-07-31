@@ -994,8 +994,8 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   for (const auto &graph_info_to_context : graph_info_to_device_context_) {
     const auto &graph = graph_compiler_->Fetch(graph_info_to_context.first);
     MS_EXCEPTION_IF_NULL(graph);
-    graphs.emplace_back(graph);
-    device_contexts.emplace_back(graph_info_to_context.second);
+    (void)graphs.emplace_back(graph);
+    (void)device_contexts.emplace_back(graph_info_to_context.second);
 
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
     for (const auto &output : outputs) {
