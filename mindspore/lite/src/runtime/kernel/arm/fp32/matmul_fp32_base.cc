@@ -234,7 +234,7 @@ void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
   }
 }
 
-int MatmulFp32BaseCPUKernel::FloatRun(int task_id) {
+int MatmulFp32BaseCPUKernel::FloatRun(int task_id) const {
   int current_start_oc = task_id * thread_stride_ * col_tile_;
   int current_rest_oc = 0;
 #if defined(ENABLE_AVX)

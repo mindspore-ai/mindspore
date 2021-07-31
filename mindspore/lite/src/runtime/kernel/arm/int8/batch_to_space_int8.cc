@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/int8/batch_to_space_int8.h"
+#include <cfloat>
+#include <cmath>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 
@@ -76,7 +78,8 @@ int BatchToSpaceInt8CPUKernel::Run() {
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
 
-  if (in_quant_arg_->scale_ == out_quant_arg_->scale_ && in_quant_arg_->zp_ == out_quant_arg_->zp_) {
+  if (std::abs(in_quant_arg_->scale_ - out_quant_arg_->scale_) < FLT_EPSILON &&
+      in_quant_arg_->zp_ == out_quant_arg_->zp_) {
     if (param->no_crop_) {
       BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
                                 sizeof(int8_t));

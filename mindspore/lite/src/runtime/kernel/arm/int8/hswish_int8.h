@@ -38,7 +38,7 @@ class HswishInt8CPUKernel : public InnerKernel {
  private:
   int thread_count_;
   HswishQuantArg quant_arg_;
-  void MultiplierInt32ToInt16(int32_t input, int16_t *output);
+  void MultiplierInt32ToInt16(int32_t input, int16_t *output) const;
 };
 }  // namespace mindspore::kernel
 

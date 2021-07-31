@@ -19,7 +19,7 @@
 #include <arm_neon.h>
 #endif
 
-void TanhInt8(const int8_t *input_ptr, int8_t *output_ptr, int size, TanhQuantParameter *quant) {
+void TanhInt8(const int8_t *input_ptr, int8_t *output_ptr, int size, const TanhQuantParameter *quant) {
   for (int i = 0; i < size; ++i) {
     float fp32_src = (input_ptr[i] - quant->in_zp_) * quant->in_scale_;
     float fp32_dst = TanhOpt(fp32_src);

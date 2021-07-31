@@ -50,8 +50,8 @@ int StrToInt(const char *env) {
 }
 
 bool IsPrint(int level) {
-  static const char *env = std::getenv("GLOG_v");
-  static int ms_level = StrToInt(env);
+  static const char *const env = std::getenv("GLOG_v");
+  static const int ms_level = StrToInt(env);
   if (level < 0) {
     level = 2;
   }

@@ -102,7 +102,6 @@ void DefaultAllocator::Free(void *buf) {
   }
   UnLock();
   free(buf);
-  buf = nullptr;
 }
 
 int DefaultAllocator::RefCount(void *buf) {

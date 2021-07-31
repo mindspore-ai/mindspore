@@ -71,7 +71,7 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
   virtual int RunImpl(int task_id);
   int SelectCalculatorFunc();
   int ResizePrepare();
-  void CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len, int *y_weight_len);
+  void CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len, int *y_weight_len) const;
   int MallocTmpBuffer();
   void FreeTmpBuffer();
 

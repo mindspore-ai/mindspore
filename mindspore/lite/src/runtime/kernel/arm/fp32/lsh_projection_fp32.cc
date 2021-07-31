@@ -116,43 +116,43 @@ int LshProjectionCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int LshProjectionCPUKernel::GetSignBit(int32_t *feature_, float *weight_, float seed, LshProjectionParameter *para,
+int LshProjectionCPUKernel::GetSignBit(int32_t *feature, float *weight, float seed, LshProjectionParameter *para,
                                        char *hash_buff) {
   double score = 0.0;
   for (int i = 0; i < para->feature_num_; i++) {
     memcpy(hash_buff, &seed, sizeof(float));
-    memcpy(hash_buff + sizeof(float), &(feature_[i]), sizeof(int32_t));
+    memcpy(hash_buff + sizeof(float), &(feature[i]), sizeof(int32_t));
     int64_t hash_i = static_cast<int64_t>(lite::StringHash64(hash_buff, para->hash_buff_size_));
     double hash_d = static_cast<double>(hash_i);
-    if (weight_ == nullptr) {
+    if (weight == nullptr) {
       score += hash_d;
     } else {
-      score += weight_[i] * hash_d;
+      score += weight[i] * hash_d;
     }
   }
   return (score > 0) ? 1 : 0;
 }
 
-void LshProjectionCPUKernel::LshProjectionSparse(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+void LshProjectionCPUKernel::LshProjectionSparse(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
                                                  LshProjectionParameter *para, int32_t start, int32_t end,
                                                  char *hash_buff) {
   for (int i = start; i < end; i++) {
     int32_t hash_sign = 0;
     for (int j = 0; j < para->hash_shape_[1]; j++) {
-      int bit = GetSignBit(feature_, weight_, hash_seed_[i * para->hash_shape_[1] + j], para, hash_buff);
+      int bit = GetSignBit(feature, weight, hashSeed[i * para->hash_shape_[1] + j], para, hash_buff);
       hash_sign = (hash_sign << 1) | bit;
     }
-    output_[i] = hash_sign + i * (1 << para->hash_shape_[1]);
+    output[i] = hash_sign + i * (1 << para->hash_shape_[1]);
   }
 }
 
-void LshProjectionCPUKernel::LshProjectionDense(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+void LshProjectionCPUKernel::LshProjectionDense(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
                                                 LshProjectionParameter *para, int32_t start, int32_t end,
                                                 char *hash_buff) {
   for (int i = start; i < end; i++) {
     for (int j = 0; j < para->hash_shape_[1]; j++) {
-      output_[i * para->hash_shape_[1] + j] =
-        GetSignBit(feature_, weight_, hash_seed_[i * para->hash_shape_[1] + j], para, hash_buff);
+      output[i * para->hash_shape_[1] + j] =
+        GetSignBit(feature, weight, hashSeed[i * para->hash_shape_[1] + j], para, hash_buff);
     }
   }
 }
