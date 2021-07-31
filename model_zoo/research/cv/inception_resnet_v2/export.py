@@ -16,7 +16,6 @@
 import argparse
 import numpy as np
 
-# import mindspore as ms
 from mindspore import Tensor, dtype
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export, context
 
