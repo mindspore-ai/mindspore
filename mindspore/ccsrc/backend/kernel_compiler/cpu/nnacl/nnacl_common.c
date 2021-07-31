@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/nnacl_common.h"
+#include "backend/kernel_compiler/cpu/nnacl/nnacl_common.h"
 
 typedef union float32_bits {
   unsigned int u;

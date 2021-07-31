@@ -698,16 +698,21 @@ std::vector<int> GetTransposePerm(MetaGraphT *graph, const std::unique_ptr<CNode
   }
   return perm;
 }
+
+namespace {
+constexpr size_t kBitNumPerByte = 8;
+}
+
 std::string BoolVectorToString(const std::vector<bool> &bool_vec) {
-  size_t size_in_byte = ceil(bool_vec.size() / 8.0);
+  size_t size_in_byte = ceil(bool_vec.size() / kBitNumPerByte);
   std::string str(size_in_byte, '\0');
   auto iter = str.begin();
-  size_t shift = 8;
+  size_t shift = kBitNumPerByte;
   for (bool bit : bool_vec) {
     *iter |= bit << (shift - 1);
     if (--shift == 0) {
       iter++;
-      shift = 8;
+      shift = kBitNumPerByte;
     }
   }
   return str;

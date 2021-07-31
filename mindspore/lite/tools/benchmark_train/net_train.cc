@@ -665,6 +665,10 @@ int NetTrain::Init() {
   return RET_OK;
 }
 
+namespace {
+constexpr int kNumToPrint = 5;
+}
+
 int NetTrain::PrintResult(const std::vector<std::string> &title,
                           const std::map<std::string, std::pair<int, float>> &result) {
   std::vector<size_t> columnLenMax(kFieldsToPrint);
@@ -713,7 +717,7 @@ int NetTrain::PrintResult(const std::vector<std::string> &title,
   }
 
   printf("-------------------------------------------------------------------------\n");
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < kNumToPrint; i++) {
     auto printBuf = title[i];
     if (printBuf.size() > columnLenMax.at(i)) {
       columnLenMax.at(i) = printBuf.size();
@@ -723,7 +727,7 @@ int NetTrain::PrintResult(const std::vector<std::string> &title,
   }
   printf("\n");
   for (size_t i = 0; i < rows.size(); i++) {
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < kNumToPrint; j++) {
       auto printBuf = rows[i][j];
       printBuf.resize(columnLenMax.at(j), ' ');
       printf("%s\t", printBuf.c_str());

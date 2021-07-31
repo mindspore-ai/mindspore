@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_NNACL_NNACL_COMMON_H_
 #define MINDSPORE_NNACL_NNACL_COMMON_H_
 
-#include "nnacl/op_base.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
