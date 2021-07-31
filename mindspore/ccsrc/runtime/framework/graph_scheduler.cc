@@ -787,6 +787,10 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
 }
 
 void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_compiler_info) {
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
+    return;
+  }
+
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
@@ -795,6 +799,8 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       MS_EXCEPTION_IF_NULL(output_kernel);
       auto origin_output_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
       if (origin_output_with_index.first == nullptr) {
+        MS_LOG(WARNING) << "The graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
+                        << " with index: " << output_with_index.second << " has no actor.";
         continue;
       }
 
@@ -824,7 +830,9 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       MS_EXCEPTION_IF_NULL(actor);
       MS_LOG(INFO) << "Cache the graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
                    << " with index: " << output_with_index.second << " to actor:" << actor->GetAID().Name()
-                   << " with index:" << actor_output_index;
+                   << " with index:" << actor_output_index
+                   << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
+                   << " with index: " << origin_output_with_index.second;
       (void)graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(actor, actor_output_index));
     }
   }
