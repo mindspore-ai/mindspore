@@ -81,7 +81,7 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
   if (!flag->pluginsPath.empty()) {
     for (auto &path : flag->pluginsPath) {
       auto dl_loader = std::make_shared<DynamicLibraryLoader>();
-      auto status = dl_loader->Open(path.c_str());
+      auto status = dl_loader->Open(path);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "open dynamic library failed. " << path;
         return nullptr;
