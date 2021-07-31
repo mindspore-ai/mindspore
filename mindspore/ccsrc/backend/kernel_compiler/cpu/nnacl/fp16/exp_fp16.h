@@ -35,7 +35,8 @@ static inline void single_exp_fp16(float16_t src, float16_t *dst) {
   int int_exp = (integer + 127) << 23;
   const float decimal_exp =
     1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
-  *dst = (float16_t)(*((float *)&int_exp) * decimal_exp);
+  float *tmp = (float *)(&int_exp);
+  *dst = (float16_t)(*(tmp)*decimal_exp);
 }
 
 #ifdef __cplusplus

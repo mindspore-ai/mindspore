@@ -51,21 +51,21 @@ LoopRow16:
         mov x19, x5 // reload depth
 
         ld1 {v16.8h}, [x12], #16
-        mov v17.8h, v16.8h
-        mov v18.8h, v16.8h
-        mov v19.8h, v16.8h
-        mov v20.8h, v16.8h
-        mov v21.8h, v16.8h
-        mov v22.8h, v16.8h
-        mov v23.8h, v16.8h
-        mov v24.8h, v16.8h
-        mov v25.8h, v16.8h
-        mov v26.8h, v16.8h
-        mov v27.8h, v16.8h
-        mov v28.8h, v16.8h
-        mov v29.8h, v16.8h
-        mov v30.8h, v16.8h
-        mov v31.8h, v16.8h
+        mov v17.16b, v16.16b
+        mov v18.16b, v16.16b
+        mov v19.16b, v16.16b
+        mov v20.16b, v16.16b
+        mov v21.16b, v16.16b
+        mov v22.16b, v16.16b
+        mov v23.16b, v16.16b
+        mov v24.16b, v16.16b
+        mov v25.16b, v16.16b
+        mov v26.16b, v16.16b
+        mov v27.16b, v16.16b
+        mov v28.16b, v16.16b
+        mov v29.16b, v16.16b
+        mov v30.16b, v16.16b
+        mov v31.16b, v16.16b
 
         cmp x19, #4
         blt LoopDepth16One
@@ -242,13 +242,13 @@ LoopRow8:
         mov x19, x5 // reload depth
 
         ld1 {v16.8h}, [x12], #16
-        mov v17.8h, v16.8h
-        mov v18.8h, v16.8h
-        mov v19.8h, v16.8h
-        mov v20.8h, v16.8h
-        mov v21.8h, v16.8h
-        mov v22.8h, v16.8h
-        mov v23.8h, v16.8h
+        mov v17.16b, v16.16b
+        mov v18.16b, v16.16b
+        mov v19.16b, v16.16b
+        mov v20.16b, v16.16b
+        mov v21.16b, v16.16b
+        mov v22.16b, v16.16b
+        mov v23.16b, v16.16b
 
         cmp x19, #4
         blt LoopDepth8One
@@ -356,9 +356,9 @@ LoopRow4:
         mov x10, x0 // reload lhs ptr
         mov x19, x5 // reload depth
         ld1 {v16.8h}, [x12], #16
-        mov v17.8h, v16.8h
-        mov v18.8h, v16.8h
-        mov v19.8h, v16.8h
+        mov v17.16b, v16.16b
+        mov v18.16b, v16.16b
+        mov v19.16b, v16.16b
         cmp x19, #4
         blt LoopDepth4One
     LoopDepth4:
