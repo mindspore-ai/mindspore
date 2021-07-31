@@ -82,6 +82,10 @@ class FedAvgKernel : public AggregationKernel {
       }
     };
     last_cnt_handler_ = [&](std::shared_ptr<ps::core::MessageHandler>) {
+      MS_ERROR_IF_NULL_WO_RET_VAL(weight_addr_);
+      MS_ERROR_IF_NULL_WO_RET_VAL(data_size_addr_);
+      MS_ERROR_IF_NULL_WO_RET_VAL(weight_addr_->addr);
+      MS_ERROR_IF_NULL_WO_RET_VAL(data_size_addr_->addr);
       T *weight_addr = reinterpret_cast<T *>(weight_addr_->addr);
       size_t weight_size = weight_addr_->size;
       S *data_size_addr = reinterpret_cast<S *>(data_size_addr_->addr);

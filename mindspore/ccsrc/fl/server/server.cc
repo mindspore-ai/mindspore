@@ -86,7 +86,11 @@ void Server::Run() {
 
   // Wait communicators to stop so the main thread is blocked.
   (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { communicator->Join(); });
+                      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                        MS_EXCEPTION_IF_NULL(communicator);
+                        communicator->Join();
+                      });
+  MS_EXCEPTION_IF_NULL(communicator_with_server_);
   communicator_with_server_->Join();
   MsException::Instance().CheckException();
   return;
@@ -151,6 +155,7 @@ bool Server::InitCommunicatorWithWorker() {
     return false;
   }
   if (use_tcp_) {
+    MS_EXCEPTION_IF_NULL(communicator_with_server_);
     auto tcp_comm = communicator_with_server_;
     MS_EXCEPTION_IF_NULL(tcp_comm);
     communicators_with_worker_.push_back(tcp_comm);
@@ -201,21 +206,32 @@ void Server::InitIteration() {
 
     std::shared_ptr<Round> exchange_keys_round =
       std::make_shared<Round>("exchangeKeys", true, cipher_time_window_, true, cipher_exchange_secrets_cnt_);
+    MS_EXCEPTION_IF_NULL(exchange_keys_round);
     iteration_->AddRound(exchange_keys_round);
+
     std::shared_ptr<Round> get_keys_round =
       std::make_shared<Round>("getKeys", true, cipher_time_window_, true, cipher_exchange_secrets_cnt_);
+    MS_EXCEPTION_IF_NULL(get_keys_round);
     iteration_->AddRound(get_keys_round);
+
     std::shared_ptr<Round> share_secrets_round =
       std::make_shared<Round>("shareSecrets", true, cipher_time_window_, true, cipher_share_secrets_cnt_);
+    MS_EXCEPTION_IF_NULL(share_secrets_round);
     iteration_->AddRound(share_secrets_round);
+
     std::shared_ptr<Round> get_secrets_round =
       std::make_shared<Round>("getSecrets", true, cipher_time_window_, true, cipher_share_secrets_cnt_);
+    MS_EXCEPTION_IF_NULL(get_secrets_round);
     iteration_->AddRound(get_secrets_round);
+
     std::shared_ptr<Round> get_clientlist_round =
       std::make_shared<Round>("getClientList", true, cipher_time_window_, true, cipher_get_clientlist_cnt_);
+    MS_EXCEPTION_IF_NULL(get_clientlist_round);
     iteration_->AddRound(get_clientlist_round);
+
     std::shared_ptr<Round> reconstruct_secrets_round = std::make_shared<Round>(
       "reconstructSecrets", true, cipher_time_window_, true, cipher_reconstruct_secrets_up_cnt_);
+    MS_EXCEPTION_IF_NULL(reconstruct_secrets_round);
     iteration_->AddRound(reconstruct_secrets_round);
     MS_LOG(INFO) << "Cipher rounds has been added.";
   }
@@ -253,8 +269,16 @@ void Server::InitCipher() {
   mindspore::armour::CipherPublicPara param;
   param.g = cipher_g;
   param.t = cipher_t;
-  memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, SECRET_MAX_LEN);
-  memcpy_s(param.prime, PRIME_MAX_LEN, cipher_prime, PRIME_MAX_LEN);
+  int ret = memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, SECRET_MAX_LEN);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    return;
+  }
+  ret = memcpy_s(param.prime, PRIME_MAX_LEN, cipher_prime, PRIME_MAX_LEN);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    return;
+  }
   param.dp_delta = dp_delta;
   param.dp_eps = dp_eps;
   param.dp_norm_clip = dp_norm_clip;
@@ -268,6 +292,8 @@ void Server::InitCipher() {
 void Server::RegisterCommCallbacks() {
   // The message callbacks of round kernels are already set in method InitIteration, so here we don't need to register
   // rounds' callbacks.
+  MS_EXCEPTION_IF_NULL(server_node_);
+  MS_EXCEPTION_IF_NULL(iteration_);
 
   auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
   MS_EXCEPTION_IF_NULL(tcp_comm);
@@ -302,9 +328,13 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpC
   communicator->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
     MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
     safemode_ = true;
-    (void)std::for_each(
-      communicators_with_worker_.begin(), communicators_with_worker_.end(),
-      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                        [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                          MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
+                          (void)communicator->Stop();
+                        });
+
+    MS_ERROR_IF_NULL_WO_RET_VAL(communicator_with_server_);
     (void)communicator_with_server_->Stop();
   });
 
@@ -313,14 +343,19 @@ void Server::RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpC
       << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
          "network building phase.";
     safemode_ = true;
-    (void)std::for_each(
-      communicators_with_worker_.begin(), communicators_with_worker_.end(),
-      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                        [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                          MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
+                          (void)communicator->Stop();
+                        });
+
+    MS_ERROR_IF_NULL_WO_RET_VAL(communicator_with_server_);
     (void)communicator_with_server_->Stop();
   });
 }
 
 void Server::InitExecutor() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
   if (executor_threshold_ == 0) {
     MS_LOG(EXCEPTION) << "The executor's threshold should greater than 0.";
     return;
@@ -342,6 +377,7 @@ void Server::RegisterRoundKernel() {
   }
 
   for (auto &round : rounds) {
+    MS_EXCEPTION_IF_NULL(round);
     const std::string &name = round->name();
     std::shared_ptr<kernel::RoundKernel> round_kernel = kernel::RoundKernelFactory::GetInstance().Create(name);
     if (round_kernel == nullptr) {
@@ -357,12 +393,13 @@ void Server::RegisterRoundKernel() {
 }
 
 void Server::StartCommunicator() {
-  MS_EXCEPTION_IF_NULL(communicator_with_server_);
   if (communicators_with_worker_.empty()) {
     MS_LOG(EXCEPTION) << "Communicators for communication with worker is empty.";
     return;
   }
 
+  MS_EXCEPTION_IF_NULL(server_node_);
+  MS_EXCEPTION_IF_NULL(communicator_with_server_);
   MS_LOG(INFO) << "Start communicator with server.";
   if (!communicator_with_server_->Start()) {
     MS_LOG(EXCEPTION) << "Starting communicator with server failed.";
@@ -376,6 +413,7 @@ void Server::StartCommunicator() {
   MS_LOG(INFO) << "Start communicator with worker.";
   (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
                       [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                        MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
                         if (!communicator->Start()) {
                           MS_LOG(EXCEPTION) << "Starting communicator with worker failed.";
                         }
@@ -383,11 +421,13 @@ void Server::StartCommunicator() {
 }
 
 void Server::ProcessBeforeScalingOut() {
+  MS_ERROR_IF_NULL_WO_RET_VAL(iteration_);
   iteration_->ScalingBarrier();
   safemode_ = true;
 }
 
 void Server::ProcessBeforeScalingIn() {
+  MS_ERROR_IF_NULL_WO_RET_VAL(iteration_);
   iteration_->ScalingBarrier();
   safemode_ = true;
 }
@@ -419,9 +459,13 @@ void Server::ProcessAfterScalingIn() {
   MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == UINT32_MAX) {
     MS_LOG(WARNING) << "This server the one to be scaled in. Server exiting.";
-    (void)std::for_each(
-      communicators_with_worker_.begin(), communicators_with_worker_.end(),
-      [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) { (void)communicator->Stop(); });
+    (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
+                        [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
+                          MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
+                          (void)communicator->Stop();
+                        });
+
+    MS_ERROR_IF_NULL_WO_RET_VAL(communicator_with_server_);
     (void)communicator_with_server_->Stop();
     return;
   }

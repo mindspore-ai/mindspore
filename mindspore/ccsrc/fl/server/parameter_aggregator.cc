@@ -49,7 +49,10 @@ bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
 
 bool ParameterAggregator::ReInitForScaling() {
   auto result = std::find_if(aggregation_kernel_parameters_.begin(), aggregation_kernel_parameters_.end(),
-                             [](auto aggregation_kernel) { return !aggregation_kernel.first->ReInitForScaling(); });
+                             [](auto aggregation_kernel) {
+                               MS_ERROR_IF_NULL_W_RET_VAL(aggregation_kernel.first, true);
+                               return !aggregation_kernel.first->ReInitForScaling();
+                             });
   if (result != aggregation_kernel_parameters_.end()) {
     MS_LOG(ERROR) << "Reinitializing aggregation kernel after scaling failed";
     return false;
@@ -65,6 +68,9 @@ bool ParameterAggregator::UpdateData(const std::map<std::string, Address> &new_d
       continue;
     }
 
+    MS_ERROR_IF_NULL_W_RET_VAL(name_to_addr[name], false);
+    MS_ERROR_IF_NULL_W_RET_VAL(name_to_addr[name]->addr, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(data.second.addr, false);
     MS_LOG(DEBUG) << "Update data for " << name << ". Destination size: " << name_to_addr[name]->size
                   << ". Source size: " << data.second.size;
     int ret = memcpy_s(name_to_addr[name]->addr, name_to_addr[name]->size, data.second.addr, data.second.size);
@@ -228,9 +234,10 @@ bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &cnode) {
 template <typename K>
 bool ParameterAggregator::AssignMemory(K server_kernel, const CNodePtr &cnode,
                                        const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
-                                       std::shared_ptr<MemoryRegister> memory_register) {
+                                       const std::shared_ptr<MemoryRegister> &memory_register) {
   MS_EXCEPTION_IF_NULL(server_kernel);
   MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(memory_register);
 
   const std::vector<std::string> &input_names = server_kernel->input_names();
   const std::vector<size_t> &input_size_list = server_kernel->GetInputSizeList();
@@ -272,8 +279,8 @@ bool ParameterAggregator::AssignMemory(K server_kernel, const CNodePtr &cnode,
   return true;
 }
 
-bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernel> aggr_kernel,
-                                                          const std::shared_ptr<MemoryRegister> memory_register) {
+bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernel> &aggr_kernel,
+                                                          const std::shared_ptr<MemoryRegister> &memory_register) {
   MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
   MS_ERROR_IF_NULL_W_RET_VAL(memory_register, false);
   KernelParams aggr_params = {};
@@ -295,8 +302,9 @@ bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<
   return true;
 }
 
-bool ParameterAggregator::GenerateOptimizerKernelParams(const std::shared_ptr<kernel::OptimizerKernel> optimizer_kernel,
-                                                        const std::shared_ptr<MemoryRegister> memory_register) {
+bool ParameterAggregator::GenerateOptimizerKernelParams(
+  const std::shared_ptr<kernel::OptimizerKernel> &optimizer_kernel,
+  const std::shared_ptr<MemoryRegister> &memory_register) {
   MS_ERROR_IF_NULL_W_RET_VAL(optimizer_kernel, false);
   MS_ERROR_IF_NULL_W_RET_VAL(memory_register, false);
   KernelParams optimizer_params = {};
@@ -335,12 +343,12 @@ std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const C
 template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::OptimizerKernel> server_kernel,
                                                 const CNodePtr &cnode,
                                                 const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
-                                                std::shared_ptr<MemoryRegister> memory_register);
+                                                const std::shared_ptr<MemoryRegister> &memory_register);
 
 template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::AggregationKernel> server_kernel,
                                                 const CNodePtr &cnode,
                                                 const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
-                                                std::shared_ptr<MemoryRegister> memory_register);
+                                                const std::shared_ptr<MemoryRegister> &memory_register);
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore
