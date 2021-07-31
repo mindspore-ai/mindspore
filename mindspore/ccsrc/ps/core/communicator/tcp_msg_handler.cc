@@ -29,15 +29,16 @@ TcpMsgHandler::TcpMsgHandler(ServerNode *server_node, std::shared_ptr<core::TcpC
 }
 
 void *TcpMsgHandler::data() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "TcpMsgHandler data is nullptr.";
-  }
+  MS_ERROR_IF_NULL_W_RET_VAL(data_, nullptr);
   return data_;
 }
 
 size_t TcpMsgHandler::len() const { return len_; }
 
 bool TcpMsgHandler::SendResponse(const void *data, const size_t &len) {
+  MS_ERROR_IF_NULL_W_RET_VAL(tcp_conn_, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(meta_, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(data, false);
   server_node_->Response(tcp_conn_, meta_, const_cast<void *>(data), len);
   return true;
 }
