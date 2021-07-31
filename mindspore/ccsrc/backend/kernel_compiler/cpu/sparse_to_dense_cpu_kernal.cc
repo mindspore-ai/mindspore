@@ -52,16 +52,17 @@ bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> 
     MS_LOG(WARNING) << "SparseToDense output memory size should be greater than 0, but got 0.";
     return true;
   }
-  auto indices_addr = reinterpret_cast<I *>(inputs[0]->addr);
-  auto values_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  const size_t indices_length = inputs[0]->size / sizeof(I);
-  const size_t values_length = inputs[1]->size / sizeof(T);
-  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
-    MS_LOG(EXCEPTION) << "Memset Failed!";
+  if (memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "SparseToDense memset output failed!";
   }
 
+  const auto *indices_addr = reinterpret_cast<I *>(inputs[0]->addr);
+  const auto *values_addr = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const size_t indices_length = inputs[0]->size / sizeof(I);
+  const size_t values_length = inputs[1]->size / sizeof(T);
   size_t rank = output_shape_.size();
+
   for (size_t i = 0; i < values_size_; ++i) {
     if (i >= values_length) {
       MS_LOG(EXCEPTION) << "The index of values out of bounds.";
@@ -80,7 +81,7 @@ bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> 
       for (size_t k = j + 1; k < rank; k++) {
         count *= output_shape_[k];
       }
-      out_index += SizeToInt(index) * count;
+      out_index += IntToSize(index) * count;
     }
     output_addr[out_index] = values_addr[i];
   }
