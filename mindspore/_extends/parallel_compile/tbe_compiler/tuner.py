@@ -312,9 +312,10 @@ class TbeTuner:
         else:
             job_type = RL_ONLINE
         graph_id = 0
-        l1size = 0  # todo need to verify
+        l1size = 0
+        pack_op_args = [item for arg in op_args for item in arg]
         ret = dispatch_single_tune_task(graph_id, task_id, l1size, base_kernel, kernel_name, full_name,
-                                        op_module_name + "@" + op_module_name, op_type, op_type, op_args)
+                                        op_module_name + "@" + op_module_name, op_type, op_type, pack_op_args)
 
         self.module_list[op_module_name] = 1
         self.fusion_need_sync += 1
