@@ -773,12 +773,12 @@ def atleast_1d(*arys):
         >>> output = np.atleast_1d(a, b, c)
         >>> print(output)
             [Tensor(shape=[2, 3], dtype=Float32, value=
-            [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
-            [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]),
-            Tensor(shape=[1], dtype=Float32, value= [1.00000000e+000]),
+            [[1.00000000e+00, 1.00000000e+00, 1.00000000e+00],
+            [1.00000000e+00, 1.00000000e+00, 1.00000000e+00]]),
+            Tensor(shape=[1], dtype=Float32, value= [1.00000000e+00]),
             Tensor(shape=[5], dtype=Float32,
-            value= [1.00000000e+000, 1.00000000e+000, 1.00000000e+000,
-            1.00000000e+000, 1.00000000e+000])]
+            value= [1.00000000e+00, 1.00000000e+00, 1.00000000e+00,
+            1.00000000e+00, 1.00000000e+00])]
     """
     return _atleast_xd(1, arys)
 
@@ -810,12 +810,12 @@ def atleast_2d(*arys):
         >>> output = np.atleast_2d(a, b, c)
         >>> print(output)
             [Tensor(shape=[2, 3], dtype=Float32, value=
-            [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
-            [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]),
-            Tensor(shape=[1, 1], dtype=Float32, value= [[1.00000000e+000]]),
+            [[1.00000000e+00, 1.00000000e+00, 1.00000000e+00],
+            [1.00000000e+00, 1.00000000e+00, 1.00000000e+00]]),
+            Tensor(shape=[1, 1], dtype=Float32, value= [[1.00000000e+00]]),
             Tensor(shape=[1, 5], dtype=Float32,
-            value= [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000,
-            1.00000000e+000, 1.00000000e+000]])]
+            value= [[1.00000000e+00, 1.00000000e+00, 1.00000000e+00,
+            1.00000000e+00, 1.00000000e+00]])]
     """
     return _atleast_xd(2, arys)
 
@@ -850,12 +850,12 @@ def atleast_3d(*arys):
         >>> output = np.atleast_3d(a, b, c)
         >>> print(output)
             [Tensor(shape=[2, 3, 1], dtype=Float32, value=
-            [[[1.00000000e+000], [1.00000000e+000], [1.00000000e+000]],
-            [[1.00000000e+000], [1.00000000e+000], [1.00000000e+000]]]),
-            Tensor(shape=[1, 1, 1], dtype=Float32, value= [[[1.00000000e+000]]]),
+            [[[1.00000000e+00], [1.00000000e+00], [1.00000000e+00]],
+            [[1.00000000e+00], [1.00000000e+00], [1.00000000e+00]]]),
+            Tensor(shape=[1, 1, 1], dtype=Float32, value= [[[1.00000000e+00]]]),
             Tensor(shape=[1, 5, 1], dtype=Float32,
-            value= [[[1.00000000e+000], [1.00000000e+000], [1.00000000e+000],
-            [1.00000000e+000], [1.00000000e+000]]])]
+            value= [[[1.00000000e+00], [1.00000000e+00], [1.00000000e+00],
+            [1.00000000e+00], [1.00000000e+00]]])]
     """
     res = []
     for arr in arys:
@@ -1444,6 +1444,7 @@ def _split(x, indices_or_sections, opname, axis=0):
             should be integer, tuple(int) or list(int), but got", indices_or_sections)
     return res
 
+
 @constexpr
 def convert_neg_indices(indices, ndim):
     """converts negative values in tuple/list indices"""
@@ -1451,6 +1452,7 @@ def convert_neg_indices(indices, ndim):
         return ax + ndim if ax < 0 else ax
     indices = tuple([canonicalizer(axis) for axis in indices])
     return indices
+
 
 def _split_sub_tensors(x, indices, axis):
     """
