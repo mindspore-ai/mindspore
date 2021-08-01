@@ -112,6 +112,12 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   if (IsPrimitiveCNode(kernel_node, kPrimProdForceSeA)) {
     kernel_type = KernelType::AKG_KERNEL;
   }
+
+  const PrimitivePtr kPrimLoadIm2Col = std::make_shared<Primitive>("LoadIm2Col");
+  if (IsPrimitiveCNode(kernel_node, kPrimLoadIm2Col)) {
+    kernel_type = KernelType::AKG_KERNEL;
+  }  // use LoadIm2Col only for THOR optimizer
+
   switch (kernel_type) {
     case KernelType::AKG_KERNEL:
       AkgMetadataInfo(kernel_node, kernel_info_list);
