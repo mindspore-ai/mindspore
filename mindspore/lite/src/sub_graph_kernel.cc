@@ -144,9 +144,9 @@ void SubGraphKernel::InitInputTensorInitRefCount() {
   }
 }
 
-void SubGraphKernel::InitOutTensorInitRefCount() {
+void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
   for (auto *node : nodes_) {
-    node->InitOutTensorInitRefCount();
+    node->InitOutTensorInitRefCount(mask_kernels);
   }
 }
 

@@ -190,7 +190,7 @@ int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *ke
 
 void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
-    kernel->InitOutTensorInitRefCount();
+    kernel->InitOutTensorInitRefCount(&kernels);
   }
 }
 
