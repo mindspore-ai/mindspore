@@ -47,7 +47,7 @@ class ModelStore {
 
   // Store the model of the given iteration. The model is acquired from Executor. If the current model count is already
   // max_model_count_, the earliest model will be replaced.
-  bool StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &model);
+  void StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &model);
 
   // Get model of the given iteration.
   std::map<std::string, AddressPtr> GetModelByIterNum(size_t iteration);

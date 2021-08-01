@@ -158,17 +158,10 @@ bool Executor::HandlePushWeight(const std::map<std::string, Address> &feature_ma
     auto &param_aggr = param_aggrs_[param_name];
     MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
     AddressPtr old_weight = param_aggr->GetWeight();
-    if (old_weight == nullptr) {
-      MS_LOG(ERROR) << "Get weight of " << param_name << " failed: the AddressPtr is nullptr.";
-      return false;
-    }
-
     const Address &new_weight = trainable_param.second;
-    if (new_weight.addr == nullptr) {
-      MS_LOG(ERROR) << "The new weight is nullptr.";
-      return false;
-    }
-
+    MS_ERROR_IF_NULL_W_RET_VAL(old_weight, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(old_weight->addr, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(new_weight.addr, false);
     int ret = memcpy_s(old_weight->addr, old_weight->size, new_weight.addr, new_weight.size);
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
@@ -295,6 +288,7 @@ std::string Executor::GetTrainableParamName(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(weight_node);
   if (!weight_node->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << weight_idx << " input of " << cnode_name << " is not a Parameter.";
+    return "";
   }
   return weight_node->fullname_with_scope();
 }
@@ -309,7 +303,7 @@ bool Executor::InitParamAggregator(const FuncGraphPtr &func_graph) {
       continue;
     }
     if (param_aggrs_.count(param_name) != 0) {
-      MS_LOG(WARNING) << param_name << " already has its control flow.";
+      MS_LOG(WARNING) << param_name << " already has parameter aggregator registered.";
       continue;
     }
 

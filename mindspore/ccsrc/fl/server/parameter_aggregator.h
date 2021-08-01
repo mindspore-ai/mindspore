@@ -105,14 +105,14 @@ class ParameterAggregator {
   // momentum, etc.
   template <typename K>
   bool AssignMemory(K server_kernel, const CNodePtr &cnode, const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
-                    std::shared_ptr<MemoryRegister> memory_register);
+                    const std::shared_ptr<MemoryRegister> &memory_register);
 
   // Generate kernel parameters for aggregation/optimizer kernels. All the parameters is registered and stored in
   // memory_register.
-  bool GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernel> aggr_kernel,
-                                       const std::shared_ptr<MemoryRegister> memory_register);
-  bool GenerateOptimizerKernelParams(const std::shared_ptr<kernel::OptimizerKernel> optim_kernel,
-                                     const std::shared_ptr<MemoryRegister> memory_register);
+  bool GenerateAggregationKernelParams(const std::shared_ptr<kernel::AggregationKernel> &aggr_kernel,
+                                       const std::shared_ptr<MemoryRegister> &memory_register);
+  bool GenerateOptimizerKernelParams(const std::shared_ptr<kernel::OptimizerKernel> &optim_kernel,
+                                     const std::shared_ptr<MemoryRegister> &memory_register);
 
   // The selection of the aggregation algorithm depends on multiple factors. For example, server mode, user
   // configuration, etc.

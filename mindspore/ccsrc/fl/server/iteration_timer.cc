@@ -36,10 +36,12 @@ void IterationTimer::Start(const std::chrono::milliseconds &duration) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   });
-  monitor_thread_.detach();
 }
 
-void IterationTimer::Stop() { running_ = false; }
+void IterationTimer::Stop() {
+  running_ = false;
+  monitor_thread_.join();
+}
 
 void IterationTimer::SetTimeOutCallBack(const TimeOutCb &timeout_cb) {
   timeout_callback_ = timeout_cb;
