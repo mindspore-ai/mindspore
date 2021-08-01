@@ -18,17 +18,21 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/populate/default_populate.h"
 #include "src/ops/populate/strided_slice_populate.h"
-#include "nnacl/pooling_parameter.h"
-#include "nnacl/fp32_grad/softmax_grad.h"
-#include "nnacl/fp32/activation_fp32.h"
-#include "nnacl/conv_parameter.h"
-#include "nnacl/power_parameter.h"
 #include "nnacl/arithmetic.h"
+#include "nnacl/conv_parameter.h"
+#include "nnacl/lstm_parameter.h"
+#include "nnacl/pooling_parameter.h"
+#include "nnacl/power_parameter.h"
+#include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/fp32_grad/softmax_grad.h"
 #include "nnacl/fp32_grad/optimizer.h"
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "nnacl/fp32_grad/dropout_parameter.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
 #include "nnacl/fp32_grad/resize_grad.h"
+
+using mindspore::lite::Registry;
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -471,6 +475,29 @@ OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(strided_slice_param);
 }
 
+OpParameter *PopulateLstmGradParameter(const void *prim) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_LSTMGrad();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr.";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(LstmParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->bidirectional_ = value->bidirectional();
+  param->zoneout_cell_ = value->zoneout_cell();
+  param->zoneout_hidden_ = value->zoneout_hidden();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 void PopulateTrainParameters() {
   lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter,
                                                 lite::SCHEMA_CUR);
@@ -534,10 +561,9 @@ void PopulateTrainParameters() {
                                            lite::SCHEMA_CUR);
   lite::Registry RsqrtGradParameterRegistry(schema::PrimitiveType_RsqrtGrad, lite::DefaultPopulateParameter,
                                             lite::SCHEMA_CUR);
-  lite::Registry ResizeGradParameterRegistry(schema::PrimitiveType_ResizeGrad, PopulateResizeGradParameter,
-                                             lite::SCHEMA_CUR);
-  lite::Registry AbsGradParameterRegistry(schema::PrimitiveType_AbsGrad, lite::DefaultPopulateParameter,
-                                          lite::SCHEMA_CUR);
+  Registry ResizeGradParameterRegistry(schema::PrimitiveType_ResizeGrad, PopulateResizeGradParameter, lite::SCHEMA_CUR);
+  Registry AbsGradParameterRegistry(schema::PrimitiveType_AbsGrad, lite::DefaultPopulateParameter, lite::SCHEMA_CUR);
+  Registry LSTMGradParameterRegistry(schema::PrimitiveType_LSTMGrad, PopulateLstmGradParameter, lite::SCHEMA_CUR);
 }
 }  // namespace kernel
 }  // namespace mindspore

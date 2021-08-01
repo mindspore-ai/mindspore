@@ -219,6 +219,7 @@ union PrimitiveType {
     TensorArrayWrite,
     Affine,
     Attention,
+    LSTMGrad,
 }
 
 table Abs {
@@ -654,6 +655,18 @@ table LshProjection {
 }
 
 table LSTM {
+    bidirectional: bool;
+    has_bias: bool;
+    input_size: long;
+    hidden_size: long;
+    num_layers: long;
+    num_directions: long;
+    dropout: float;
+    zoneout_cell: float = 0;
+    zoneout_hidden: float = 0;
+}
+
+table LSTMGrad {
     bidirectional: bool;
     has_bias: bool;
     input_size: long;

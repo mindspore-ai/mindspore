@@ -183,6 +183,7 @@
 #include "ops/grad/group_conv2d_grad_input.h"
 #include "ops/grad/layer_norm_grad.h"
 #include "ops/grad/log_grad.h"
+#include "ops/grad/lstm_grad.h"
 #include "ops/grad/max_pool_grad.h"
 #include "ops/grad/maximum_grad.h"
 #include "ops/grad/minimum_grad.h"
@@ -344,6 +345,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(LpNormalization)
 FUNC_MSOP2SCHEMAOP_DECLARE(LRN)
 FUNC_MSOP2SCHEMAOP_DECLARE(LshProjection)
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTM)
+FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(L2NormalizeFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(MatMul)
 FUNC_MSOP2SCHEMAOP_DECLARE(Maximum)
