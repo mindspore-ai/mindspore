@@ -35,33 +35,27 @@ void ModelStore::Initialize(uint32_t max_count) {
   model_size_ = ComputeModelSize();
 }
 
-bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &new_model) {
+void ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &new_model) {
   std::unique_lock<std::mutex> lock(model_mtx_);
   if (iteration_to_model_.count(iteration) != 0) {
     MS_LOG(WARNING) << "Model for iteration " << iteration << " is already stored";
-    return false;
+    return;
   }
   if (new_model.empty()) {
     MS_LOG(ERROR) << "Model feature map is empty.";
-    return false;
+    return;
   }
 
   std::shared_ptr<MemoryRegister> memory_register = nullptr;
   if (iteration_to_model_.size() < max_model_count_) {
     // If iteration_to_model_.size() is not max_model_count_, need to assign new memory for the model.
     memory_register = AssignNewModelMemory();
-    if (memory_register == nullptr) {
-      MS_LOG(ERROR) << "Memory for the new model is nullptr.";
-      return false;
-    }
+    MS_ERROR_IF_NULL_WO_RET_VAL(memory_register);
     iteration_to_model_[iteration] = memory_register;
   } else {
     // If iteration_to_model_ size is already max_model_count_, we need to replace earliest model with the newest model.
     memory_register = iteration_to_model_.begin()->second;
-    if (memory_register == nullptr) {
-      MS_LOG(ERROR) << "Earliest model is nullptr.";
-      return false;
-    }
+    MS_ERROR_IF_NULL_WO_RET_VAL(memory_register);
     (void)iteration_to_model_.erase(iteration_to_model_.begin());
   }
 
@@ -74,6 +68,10 @@ bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
       continue;
     }
 
+    MS_ERROR_IF_NULL_WO_RET_VAL(stored_model[weight_name]);
+    MS_ERROR_IF_NULL_WO_RET_VAL(stored_model[weight_name]->addr);
+    MS_ERROR_IF_NULL_WO_RET_VAL(weight.second);
+    MS_ERROR_IF_NULL_WO_RET_VAL(weight.second->addr);
     void *dst_addr = stored_model[weight_name]->addr;
     size_t dst_size = stored_model[weight_name]->size;
     void *src_addr = weight.second->addr;
@@ -81,11 +79,11 @@ bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
     int ret = memcpy_s(dst_addr, dst_size, src_addr, src_size);
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-      return false;
+      return;
     }
   }
   iteration_to_model_[iteration] = memory_register;
-  return true;
+  return;
 }
 
 std::map<std::string, AddressPtr> ModelStore::GetModelByIterNum(size_t iteration) {
