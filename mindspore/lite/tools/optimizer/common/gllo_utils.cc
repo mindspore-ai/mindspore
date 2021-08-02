@@ -1494,9 +1494,7 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   auto cnode = func_graph->NewCNode(trans_prim, {input_node, perm_node});
   MS_ASSERT(cnode != nullptr);
   cnode->set_fullname_with_scope(cnode_name);
-  size_t input_size = 2;
-  size_t output_size = 1;
-  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(input_size, output_size);
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeTwo, 1);
   auto trans_insert_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   trans_insert_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;

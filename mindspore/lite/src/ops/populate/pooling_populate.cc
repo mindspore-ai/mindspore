@@ -20,10 +20,6 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore {
 namespace lite {
-constexpr size_t kMinShapeSize = 2;
-constexpr size_t kMinPadSize = 4;
-constexpr int kOffsetTwo = 2;
-constexpr int kOffsetThree = 3;
 OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   auto pooling_prim = static_cast<const schema::Primitive *>(primitive);
   MS_ASSERT(pooling_prim != nullptr);
@@ -44,7 +40,7 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   param->pool_mode_ = PoolMode_AvgPool;
   param->global_ = value->global();
   auto strides = value->strides();
-  if (strides == nullptr || strides->size() < kMinShapeSize) {
+  if (strides == nullptr || strides->size() < kMinShapeSizeTwo) {
     MS_LOG(ERROR) << "strides is invalid!";
     free(param);
     return nullptr;
@@ -52,7 +48,7 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   param->stride_w_ = static_cast<int>(*(strides->begin() + 1));
   param->stride_h_ = static_cast<int>(*(strides->begin()));
   auto pad = value->pad();
-  if (pad != nullptr && pad->size() >= kMinPadSize) {
+  if (pad != nullptr && pad->size() >= kMinShapeSizeFour) {
     param->pad_u_ = static_cast<int>(*(pad->begin()));
     param->pad_d_ = static_cast<int>(*(pad->begin() + 1));
     param->pad_l_ = static_cast<int>(*(pad->begin() + kOffsetTwo));
@@ -60,7 +56,7 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   }
   if (!param->global_) {
     auto kernel_size = value->kernel_size();
-    if (kernel_size == nullptr || kernel_size->size() < kMinShapeSize) {
+    if (kernel_size == nullptr || kernel_size->size() < kMinShapeSizeTwo) {
       MS_LOG(ERROR) << "kernel_size is invalid";
       free(param);
       return nullptr;
@@ -126,8 +122,8 @@ OpParameter *PopulateMaxPoolParameter(const void *primitive) {
   if (!param->global_) {
     auto kernel_size = value->kernel_size();
     auto strides = value->strides();
-    if (kernel_size == nullptr || strides == nullptr || kernel_size->size() < kMinShapeSize ||
-        strides->size() < kMinShapeSize) {
+    if (kernel_size == nullptr || strides == nullptr || kernel_size->size() < kMinShapeSizeTwo ||
+        strides->size() < kMinShapeSizeTwo) {
       MS_LOG(ERROR) << "kernel_size or strides is invalid";
       free(param);
       return nullptr;
@@ -137,7 +133,7 @@ OpParameter *PopulateMaxPoolParameter(const void *primitive) {
     param->stride_w_ = static_cast<int>(*(strides->begin() + 1));
     param->stride_h_ = static_cast<int>(*(strides->begin()));
     auto pad = value->pad();
-    if (pad != nullptr && pad->size() >= kMinPadSize) {
+    if (pad != nullptr && pad->size() >= kMinShapeSizeFour) {
       param->pad_u_ = static_cast<int>(*(pad->begin()));
       param->pad_d_ = static_cast<int>(*(pad->begin() + 1));
       param->pad_l_ = static_cast<int>(*(pad->begin() + kOffsetTwo));

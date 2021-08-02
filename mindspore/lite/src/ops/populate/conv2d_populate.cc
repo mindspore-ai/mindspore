@@ -20,7 +20,6 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore {
 namespace lite {
-constexpr auto kMinShapeSize = 2;
 OpParameter *PopulateConvParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
@@ -47,7 +46,8 @@ OpParameter *PopulateConvParameter(const void *prim) {
     free(param);
     return nullptr;
   }
-  if (kernel_size->size() < kMinShapeSize || stride->size() < kMinShapeSize || dilation->size() < kMinShapeSize) {
+  if (kernel_size->size() < kMinShapeSizeTwo || stride->size() < kMinShapeSizeTwo ||
+      dilation->size() < kMinShapeSizeTwo) {
     MS_LOG(ERROR) << "Invalid shape size!kernel_size size: " << kernel_size->size()
                   << ", stride size: " << stride->size() << ", dilation size: " << dilation->size();
     free(param);
@@ -68,7 +68,7 @@ OpParameter *PopulateConvParameter(const void *prim) {
     default:
       param->pad_mode_ = Pad_pad;
   }
-  if (pad_list == nullptr || pad_list->size() < 4) {
+  if (pad_list == nullptr || pad_list->size() < kMinShapeSizeFour) {
     param->pad_u_ = 0;
     param->pad_d_ = 0;
     param->pad_l_ = 0;
@@ -76,8 +76,8 @@ OpParameter *PopulateConvParameter(const void *prim) {
   } else {
     param->pad_u_ = static_cast<int>(*(pad_list->begin()));
     param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
-    param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
-    param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
+    param->pad_l_ = static_cast<int>(*(pad_list->begin() + kOffsetTwo));
+    param->pad_r_ = static_cast<int>(*(pad_list->begin() + kOffsetThree));
   }
   param->dilation_h_ = static_cast<int>(*(dilation->begin()));
   param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
