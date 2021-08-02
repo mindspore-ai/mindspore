@@ -73,6 +73,7 @@ int TensorListStackCPUKernel::MergeElementShape() {
     return RET_ERROR;
   }
   auto ele_shape_data = reinterpret_cast<int *>(in_tensors_[1]->data_c());
+  MS_ASSERT(ele_shape_data != nullptr);
   output_shape_.clear();
   for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
     output_shape_.push_back(ele_shape_data[i]);
@@ -140,8 +141,8 @@ int TensorListStackCPUKernel::Run() {
     MS_LOG(ERROR) << "CheckParam failed!";
     return RET_ERROR;
   }
-  dtype_ = input0_->tensors_data_type();
-  if (output0_->ElementsNum() == 0) {
+  size_t out_ele_num = output0_->ElementsNum();
+  if (out_ele_num == 0) {
     return RET_OK;
   }
   auto ret = MergeElementShape();
@@ -150,14 +151,15 @@ int TensorListStackCPUKernel::Run() {
     return RET_ERROR;
   }
   size_t in_ele_num = num_element_ * TypeUnknownSize;
-  size_t out_ele_num = output0_->ElementsNum();
   if (in_ele_num != out_ele_num) {
     MS_LOG(ERROR) << "out_tensors_[0]->ElementsNum():" << out_ele_num << "must be equal to in_ele_num:" << in_ele_num;
     return RET_ERROR;
   }
-  auto out_data = reinterpret_cast<char *>(output0_->MutableData());
-  auto unknown_type_offset = TypeUnknownSize * lite::DataTypeSize(dtype_);
+  auto out_data = reinterpret_cast<char *>(output0_->data_c());
   MS_ASSERT(out_data != nullptr);
+  dtype_ = input0_->tensors_data_type();
+  auto unknown_type_offset = TypeUnknownSize * lite::DataTypeSize(dtype_);
+
   for (int i = 0; i < num_element_; ++i) {
     auto in_ptr = input0_->GetTensor(i);
     if (in_ptr == nullptr) {

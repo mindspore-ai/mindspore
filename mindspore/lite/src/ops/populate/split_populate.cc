@@ -37,8 +37,8 @@ OpParameter *PopulateSplitParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   param->num_split_ = value->output_num();
-  if (param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int)) || param->num_split_ < 0) {
-    MS_LOG(ERROR) << "The value of param->num_split_ is too big";
+  if (param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int)) || param->num_split_ <= 0) {
+    MS_LOG(ERROR) << "The value of param->num_split_ is not correct";
     free(param);
     return nullptr;
   }

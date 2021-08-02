@@ -240,11 +240,15 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(void *src_ptr, TypeId src_data_type) {
 }
 
 int MatmulBaseFP16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   ResizeParameter();
   if (params_->a_const_ == true) {
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
+    MS_ASSERT(in_tensors_[0] != nullptr);
+    MS_ASSERT(in_tensors_[0]->data_c() != nullptr);
     InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()));
   }
 
@@ -252,6 +256,8 @@ int MatmulBaseFP16CPUKernel::Init() {
     /* copy origin b data, pack in resize
      * pack after a infershape done */
     auto b_tensor = in_tensors_[1];
+    MS_ASSERT(b_tensor != nullptr);
+    MS_ASSERT(b_tensor->data_c() != nullptr);
     src_b_ = reinterpret_cast<float16_t *>(malloc(params_->batch * params_->col_ * params_->deep_ * sizeof(float16_t)));
     if (src_b_ == nullptr) {
       MS_LOG(ERROR) << "Matmul fp16 malloc src_b_ failed";
@@ -305,6 +311,7 @@ int MatmulBaseFP16CPUKernel::Run() {
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
+    MS_ASSERT(in_tensors_.at(0)->data_c() != nullptr);
     InitMatrixA(in_tensors_.at(0)->data_c());
   }
   if ((params_->b_const_ == false) || IsRepack()) {
@@ -312,6 +319,7 @@ int MatmulBaseFP16CPUKernel::Run() {
       FreeResizeBufA();
       return RET_ERROR;
     }
+    MS_ASSERT(in_tensors_.at(1)->data_c() != nullptr);
     InitMatrixB(in_tensors_.at(1)->data_c(), in_tensors_.at(1)->data_type());
     InitBias();
   }
