@@ -260,7 +260,6 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   }
   res.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
-    inputs[i]->MutableData();  // prepare data
     auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
     if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
