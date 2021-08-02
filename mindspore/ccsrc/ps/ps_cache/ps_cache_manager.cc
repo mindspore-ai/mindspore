@@ -237,9 +237,6 @@ void PsCacheManager::AllocMemForHashTable() {
   embedding_device_cache_->hash_swap_value_addr_ = reinterpret_cast<float *>(
     embedding_device_cache_->cache_->MallocMemory(max_embedding_size * batch_elements_ * sizeof(float)));
   MS_EXCEPTION_IF_NULL(embedding_device_cache_->hash_swap_value_addr_);
-  if (!(embedding_device_cache_->cache_->MallocConstantMemory(vocab_cache_size_))) {
-    MS_LOG(EXCEPTION) << "MallocConstantMemory failed.";
-  }
 }
 
 void PsCacheManager::SetLocalIdRank() {
@@ -328,6 +325,14 @@ void PsCacheManager::ProcessDataTask(uint32_t device_id, const void *context) {
   MS_ERROR_IF_NULL_WO_RET_VAL(embedding_device_cache_);
   MS_ERROR_IF_NULL_WO_RET_VAL(embedding_device_cache_->cache_);
   embedding_device_cache_->cache_->InitDevice(device_id, context);
+
+  // MallocConstantMemory need stream on device Ascend, should be called after InitDevice.
+  if (!(embedding_device_cache_->cache_->MallocConstantMemory(vocab_cache_size_))) {
+    MS_LOG(ERROR) << "MallocConstantMemory failed.";
+    running_ = false;
+    return;
+  }
+
   InitParameterServer();
   InitDataChannel();
   while (running_) {
