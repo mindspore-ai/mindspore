@@ -30,7 +30,9 @@ namespace {
 constexpr size_t N_nchw = 0;
 constexpr size_t C_nchw = 1;
 std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
-  const std::set<std::string> kReduceNoSupportedSet = {kOpFormat_FRAC_Z, kOpFormat_FRACTAL_Z_C04, kOpFormat_C1HWNCoC0};
+  static const std::set<std::string> kReduceNoSupportedSet = {kOpFormat_FRAC_Z, kOpFormat_FRACTAL_Z_C04,
+                                                              kOpFormat_C1HWNCoC0};
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto op_name = AnfAlgo::GetCNodeName(kernel_node);
   auto parallel_context_instance = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context_instance);
@@ -61,8 +63,8 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
 }
 }  // namespace
 void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
-  const std::vector<TypeId> kHcclSupportTypes = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat16,
-                                                 kNumberTypeFloat32, kNumberTypeInt16};
+  static const std::vector<TypeId> kHcclSupportTypes = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat16,
+                                                        kNumberTypeFloat32, kNumberTypeInt16};
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -76,7 +78,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
     if (!HcomUtil::GetHcomReceiveType(kernel_node, &recv_type)) {
       MS_LOG(EXCEPTION) << "GetHcomReceiveType fail!";
     }
-    auto res = find(kHcclSupportTypes.begin(), kHcclSupportTypes.end(), recv_type);
+    auto res = std::find(kHcclSupportTypes.begin(), kHcclSupportTypes.end(), recv_type);
     if (res == kHcclSupportTypes.end()) {
       MS_LOG(EXCEPTION) << "HcclReceive cannot support data type: " << TypeIdToType(recv_type);
     }
