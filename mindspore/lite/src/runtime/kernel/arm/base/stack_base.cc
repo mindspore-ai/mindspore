@@ -78,7 +78,7 @@ int StackBaseCPUKernel::Init() {
 }
 
 int StackBaseCPUKernel::Execute(int task_id) {
-  auto output_data = reinterpret_cast<char *>(out_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<void *>(out_tensors_.at(0)->data_c());
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }
@@ -86,7 +86,7 @@ int StackBaseCPUKernel::Execute(int task_id) {
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
-  auto output = output_data + input_num * start * copy_size_;
+  auto output = reinterpret_cast<char *>(output_data) + input_num * start * copy_size_;
   Stack(all_inputs_, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
   return RET_OK;
 }
@@ -106,7 +106,7 @@ int StackBaseCPUKernel::Run() {
     return RET_ERROR;
   }
   for (size_t j = 0; j < inputs_num; ++j) {
-    auto input_data = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
+    auto input_data = reinterpret_cast<void *>(in_tensors_.at(j)->data_c());
     if (input_data == nullptr) {
       return RET_NULL_PTR;
     }
