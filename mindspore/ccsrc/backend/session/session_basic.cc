@@ -435,6 +435,17 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
     }
   }
 }
+
+void UpdateGraphAquireGilAttr(const NotNull<KernelGraphPtr> &root_graph) {
+  for (const auto &cnode : root_graph->execution_order()) {
+    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPyFunc)) {
+      MS_LOG(INFO) << "The Graph require GIL. Graph id: " << root_graph->graph_id();
+      root_graph->set_is_need_gil(true);
+      return;
+    }
+  }
+  return;
+}
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
@@ -1103,6 +1114,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   UnifyMindIR(graph);
   // Update Graph Dynamic Shape Attr
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+  UpdateGraphAquireGilAttr(NOT_NULL(graph));
   opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
   SetInputNodeUsage(graph, manager);
