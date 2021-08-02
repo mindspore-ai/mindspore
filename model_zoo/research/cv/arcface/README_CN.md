@@ -55,13 +55,13 @@
 
 ```python
 # 分布式训练运行示例
-sh scripts/run_distribute_train.sh rank_size /path/dataset
+bash scripts/run_distribute_train.sh /path/dataset /path/rank_table
 
 # 单机训练运行示例
-sh scripts/run_standalone_train.sh /path/dataset
+bash scripts/run_standalone_train.sh /path/dataset
 
 # 运行评估示例
-sh scripts/run_eval.sh /path/evalset /path/ckpt
+bash scripts/run_eval.sh /path/evalset /path/ckpt
 ```
 
 ## 脚本说明
@@ -108,7 +108,7 @@ train.py和val.py中主要参数如下：
 ### 分布式训练
 
 ```shell
-sh scripts/run_distribute_train.sh rank_size /path/dataset
+bash scripts/run_distribute_train.sh /path/dataset /path/rank_table
 ```
 
 上述shell脚本将在后台运行分布训练。可以通过`device[X]/train.log`文件查看结果。
@@ -134,7 +134,7 @@ epoch time: 1104929.793 ms, per step time: 97.162 ms
   在运行以下命令之前，请检查用于评估的检查点路径。请将检查点路径设置为绝对全路径，例如“username/arcface/arcface-11372-1.ckpt”。
 
   ```bash
-  sh scripts/run_eval.sh /path/evalset /path/ckpt
+  bash scripts/run_eval.sh /path/evalset /path/ckpt
   ```
 
   上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试数据集的准确性如下：
@@ -154,7 +154,7 @@ epoch time: 1104929.793 ms, per step time: 97.162 ms
   同时，情确保传入的评估数据集路径为“IJB_release/IJBB/”或“IJB_release/IJBC/”。
 
   ```bash
-  sh scripts/run_eval_ijbc.sh /path/evalset /path/ckpt
+  sh scripts/run_eval_ijbc.sh /path/evalset /path/ckpt target_name
   ```
 
   上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试数据集的准确性如下：
@@ -213,7 +213,7 @@ epoch time: 1104929.793 ms, per step time: 97.162 ms
 
 ### 推理
 
-如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.3/multi_platform_inference.html)。
+如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/multi_platform_inference.html)。
 
 ### 迁移学习
 
