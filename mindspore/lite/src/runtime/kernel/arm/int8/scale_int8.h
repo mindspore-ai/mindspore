@@ -40,7 +40,7 @@ class ScaleInt8CPUKernel : public InnerKernel {
   int Run() override;
   int InitParameter();
   int InitScaleOffset();
-  int Scale(int task_id);
+  int Scale(int task_id) const;
 
  private:
   int8_t *input0_data_ = nullptr;

@@ -43,7 +43,7 @@ int CropBaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) {
+void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) const {
   auto axis = crop_para->axis_;
   auto offsets_size = crop_para->offset_size_;
   MS_ASSERT(axis <= input_dim);

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/pooling_base.h"
+#include <cfloat>
+#include <cmath>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
@@ -59,7 +61,7 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   pooling_quant_arg_[1][0].scale_ = out_quant_arg.front().scale;
   pooling_quant_arg_[1][0].zp_ = out_quant_arg.front().zeroPoint;
   pooling_param_->quant_args_ = pooling_quant_arg_;
-  if (pooling_quant_arg_[0][0].scale_ == pooling_quant_arg_[1][0].scale_ &&
+  if (std::abs(pooling_quant_arg_[0][0].scale_ - pooling_quant_arg_[1][0].scale_) < FLT_EPSILON &&
       pooling_quant_arg_[0][0].zp_ == pooling_quant_arg_[1][0].zp_) {
     pooling_param_->quantize_ = false;
   } else {

@@ -40,10 +40,10 @@ class LshProjectionCPUKernel : public InnerKernel {
  private:
   int MallocKeys();
   void FreeKeys();
-  int GetSignBit(int32_t *feature_, float *weight_, float seed, LshProjectionParameter *para, char *hash_buff);
-  void LshProjectionSparse(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+  int GetSignBit(int32_t *feature, float *weight, float seed, LshProjectionParameter *para, char *hash_buff);
+  void LshProjectionSparse(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
                            LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
-  void LshProjectionDense(float *hash_seed_, int32_t *feature_, float *weight_, int32_t *output_,
+  void LshProjectionDense(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
                           LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
   LshProjectionParameter *param_ = nullptr;
   float *hash_seed_ = nullptr;

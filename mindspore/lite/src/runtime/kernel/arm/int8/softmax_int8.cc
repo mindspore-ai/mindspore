@@ -64,7 +64,7 @@ int SoftmaxInt8CPUKernel::Init() {
   quant_param_->output_activation_max_ = std::numeric_limits<int8_t>::max();
 
   const double input_real_multiplier =
-    MSMIN(quant_param_->in_quant_args_.scale_ * (1 << (unsigned int)(31 - 5)), (1ll << 31) - 1.0);
+    MSMIN(quant_param_->in_quant_args_.scale_ * (1 << (unsigned int)(31 - 5)), (1LL << 31) - 1.0);
   int right_shift = 0;
   QuantizeMultiplierSmallerThanOne(input_real_multiplier, &quant_param_->output_multiplier_, &right_shift);
   quant_param_->shift_left_ = right_shift < 0 ? -right_shift : 0;

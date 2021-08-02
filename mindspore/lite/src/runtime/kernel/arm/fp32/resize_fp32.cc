@@ -85,7 +85,7 @@ int ResizeCPUKernel::ReSize() {
 // Bicubic goes one step beyond bilinear by considering the closest 4x4 neighborhood of known pixels --- for a total of
 // 16 pixels. Since these are at various distances from the unknown pixel, closer pixels are given a higher weighting in
 // the calculation.
-void ResizeCPUKernel::CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len, int *y_weight_len) {
+void ResizeCPUKernel::CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len, int *y_weight_len) const {
   if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
     *x_len = new_width_;
     *y_len = new_height_;

@@ -41,7 +41,7 @@ class SparseToDenseCPUKernel : public InnerKernel {
   int Run() override;
   int DoExcute(int task_id);
   int GenerateIndices();
-  int IndicesValidCheck();
+  int IndicesValidCheck() const;
 
  protected:
   const InnerContext *ctx_;

@@ -53,7 +53,7 @@ int ArithmeticCPUKernel::ReSize() {
   CalcMultiplesAndStrides(param_);
   if (param_->broadcasting_) {
     outside_ = 1;
-    for (auto i = param_->ndim_ - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0; --i) {
       if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
         break_pos_ = i;
         break;
@@ -113,7 +113,7 @@ bool ArithmeticCPUKernel::IsBatchScalarCalc() {  // 2 32 240 240,  2 32 1 1
   return true;
 }
 
-bool ArithmeticCPUKernel::IsBiasCalc() {  // 2 240 240 32,    1 1 1 32
+bool ArithmeticCPUKernel::IsBiasCalc() const {  // 2 240 240 32,    1 1 1 32
   int last_shape0 = param_->in_shape0_[param_->ndim_ - 1];
   int last_shape1 = param_->in_shape1_[param_->ndim_ - 1];
   if (param_->in_elements_num0_ > param_->in_elements_num1_) {
@@ -129,9 +129,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
   if (!param_->broadcasting_) {
     return RET_OK;
   }
-  if (out_tensors_[0]->Size() < 0) {
-    return RET_OK;
-  }
+
   /* [1, 1, 2] + [1, 2, 1] -> [1, 2, 2], need broadcast both input */
   if (param_->in_elements_num0_ != param_->out_elements_num_ &&
       param_->in_elements_num1_ != param_->out_elements_num_) {

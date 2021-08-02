@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_NON_MAX_SUPPRESSION_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_NON_MAX_SUPPRESSION_H_
 
+#include <cfloat>
+#include <cmath>
 #include <vector>
 #include <algorithm>
 #include "src/inner_kernel.h"
@@ -78,7 +80,7 @@ class NMSBox {
     area_ = (y2_ - y1_) * (x2_ - x1_);
   }
   inline bool operator<(const NMSBox &box) const {
-    return score_ < box.score_ || (score_ == box.score_ && index_ > box.index_);
+    return score_ < box.score_ || (std::abs(score_ - box.score_) < FLT_EPSILON && index_ > box.index_);
   }
 
  public:

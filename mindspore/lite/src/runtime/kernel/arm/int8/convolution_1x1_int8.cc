@@ -513,7 +513,7 @@ int Convolution1x1Int8CPUKernel::RunArmOc(int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Int8CPUKernel::OcOptPre(int task_id) {
+int Convolution1x1Int8CPUKernel::OcOptPre(int task_id) const {
   int cur_stride = thread_stride_hw_ * C4NUM;
   int res_stride = matmul_param_->row_ - task_id * thread_stride_hw_ * C4NUM;
   int cur_hw = MSMIN(cur_stride, res_stride);

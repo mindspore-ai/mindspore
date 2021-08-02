@@ -52,7 +52,7 @@ class PadInt8CPUKernel : public InnerKernel {
   int CheckPaddings(const int *paddings, int length, const int *input_shape, int mode);
   int CopyPaddingFromInput();
   void CalculateStrides();
-  int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length);
+  int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) const;
 
   PadParameter *pad_param_ = nullptr;
   int8_t *in_data_ = nullptr;

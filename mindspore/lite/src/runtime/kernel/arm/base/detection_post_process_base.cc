@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/detection_post_process_base.h"
+#include <cfloat>
+#include <cmath>
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -29,7 +31,7 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 namespace mindspore::kernel {
 void PartialArgSort(const float *scores, int *indexes, int num_to_sort, int num_values) {
   std::partial_sort(indexes, indexes + num_to_sort, indexes + num_values, [&scores](const int i, const int j) {
-    if (scores[i] == scores[j]) {
+    if (std::abs(scores[i] - scores[j]) < FLT_EPSILON) {
       return i < j;
     }
     return scores[i] > scores[j];
