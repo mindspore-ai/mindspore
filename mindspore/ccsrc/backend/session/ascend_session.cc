@@ -44,6 +44,7 @@
 #include "backend/optimizer/ascend/mindir/slice_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/avg_pool_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
+#include "backend/optimizer/ascend/mindir/all_to_all_unify_mindir.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -316,6 +317,8 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
   unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);

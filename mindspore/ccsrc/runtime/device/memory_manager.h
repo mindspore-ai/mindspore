@@ -58,7 +58,7 @@ class MemoryManager {
   virtual std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list);
 
   static size_t GetCommonAlignSize(size_t input_size);
-  size_t GetCommunicationAlignSize(size_t input_size) const;
+  static size_t GetCommunicationAlignSize(size_t input_size);
 
  protected:
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) = 0;

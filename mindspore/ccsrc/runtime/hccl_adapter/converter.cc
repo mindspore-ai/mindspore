@@ -24,9 +24,9 @@
 #undef google
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 #include "mindspore/core/base/core_ops.h"
 #include "transform/graph_ir/util.h"
+#include "runtime/hccl_adapter/all_to_all_v_calc_param.h"
 
 static constexpr char kGeOpNameHcclSend[] = "HcomSend";
 static constexpr char kGeOpNameHcclReceive[] = "HcomReceive";
@@ -34,7 +34,12 @@ static constexpr char kGeOpNameHcclAllRudece[] = "HcomAllReduce";
 static constexpr char kGeOpNameHcclAllGather[] = "HcomAllGather";
 static constexpr char kGeOpNameHcclBroadcast[] = "HcomBroadcast";
 static constexpr char kGeOpNameHcclReduceScatter[] = "HcomReduceScatter";
+static constexpr char kGeOpNameHcclAllToAllV[] = "HcomAllToAllV";
 static constexpr char kGeNodeAttrUsedStreamNum[] = "used_stream_num";
+static constexpr char kGeNodeAttrSendCounts[] = "send_counts";
+static constexpr char kGeNodeAttrSendDispls[] = "send_displacements";
+static constexpr char kGeNodeAttrRecvCounts[] = "recv_counts";
+static constexpr char kGeNodeAttrRecvDispls[] = "recv_displacements";
 static constexpr char kStubDataStructureName[] = "any_name_can_work";
 
 static ge::DataType ConvertHcclDTypeToGeDType(HcclDataType datatype) {
@@ -105,6 +110,37 @@ static T ConvertAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, const st
   return attr;
 }
 
+static void SetGeNodeInt64VecAttr(const ge::OpDescPtr &ge_op, const std::string &ge_attr_name,
+                                  const std::vector<int64_t> &attr_value) {
+  MS_EXCEPTION_IF_NULL(ge_op);
+  for (size_t i = 0; i < attr_value.size(); ++i) {
+    MS_LOG(INFO) << ge_attr_name << " " << i << " = " << attr_value[i];
+  }
+  auto ret = ge::AttrUtils::SetListInt(*ge_op, ge_attr_name, attr_value);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Set attr " << ge_attr_name << " for ge node failed.";
+  }
+}
+
+static void SetAllToAllvAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, const std::string &group) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(ge_op);
+  if (!IsPrimitiveCNode(cnode, prim::kPrimAllToAllv)) {
+    return;
+  }
+  uint32_t rank_size = 0;
+  ::HcclResult hccl_ret = hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, &rank_size);
+  if (hccl_ret != ::HcclResult::HCCL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group << " failed, ret = " << hccl_ret;
+  }
+  mindspore::hccl::AllToAllvCalcParam calc(cnode, rank_size);
+  calc.CalcOpParam();
+  SetGeNodeInt64VecAttr(ge_op, kGeNodeAttrSendCounts, calc.GetSendCounts());
+  SetGeNodeInt64VecAttr(ge_op, kGeNodeAttrSendDispls, calc.GetSendDispls());
+  SetGeNodeInt64VecAttr(ge_op, kGeNodeAttrRecvCounts, calc.GetRecvCounts());
+  SetGeNodeInt64VecAttr(ge_op, kGeNodeAttrRecvDispls, calc.GetRecvDispls());
+}
+
 std::string GetGeNodeName(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce)) {
@@ -119,6 +155,8 @@ std::string GetGeNodeName(const CNodePtr &cnode) {
     return kGeOpNameHcclSend;
   } else if (IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
     return kGeOpNameHcclReceive;
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimAllToAllv)) {
+    return kGeOpNameHcclAllToAllV;
   }
 
   MS_LOG(EXCEPTION) << "Unknown hccl node type " << cnode->DebugString();
@@ -132,14 +170,25 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
 
   ge::OpDescPtr op_desc = std::make_shared<ge::OpDesc>(kStubDataStructureName, ge_node_name);
   MS_EXCEPTION_IF_NULL(op_desc);
-  for (size_t i = 1; i < cnode->size(); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  for (size_t i = 0; i < input_num; ++i) {
     std::vector<int64_t> ge_shape;
-    auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i - 1);
+    auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
     std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
                    [](size_t in) { return static_cast<int64_t>(in); });
     op_desc->AddInputDesc(
       ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
-                       transform::TransformUtil::ConvertDataType(AnfAlgo::GetInputDeviceDataType(cnode, i - 1))));
+                       transform::TransformUtil::ConvertDataType(AnfAlgo::GetInputDeviceDataType(cnode, i))));
+  }
+  for (size_t i = 0; i < output_num; ++i) {
+    std::vector<int64_t> ge_shape;
+    auto ms_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
+    std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
+                   [](size_t in) { return static_cast<int64_t>(in); });
+    op_desc->AddOutputDesc(
+      ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
+                       transform::TransformUtil::ConvertDataType(AnfAlgo::GetOutputDeviceDataType(cnode, i))));
   }
 
   // set node data type
@@ -151,11 +200,12 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
 
   // set node attr
   (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrRankSize, ge::HCOM_ATTR_RANK_SIZE);
-  (void)ConvertAttr<std::string>(cnode, op_desc, kAttrGroup, ge::HCOM_ATTR_GROUP);
+  auto group = ConvertAttr<std::string>(cnode, op_desc, kAttrGroup, ge::HCOM_ATTR_GROUP);
   (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrSrcRank, ge::HCOM_ATTR_SRC_RANK);
   (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrDestRank, ge::HCOM_ATTR_DEST_RANK);
   (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrSrTag, ge::HCOM_ATTR_SR_TAG);
   (void)ConvertAttr<std::vector<int64_t>>(cnode, op_desc, kAttrShape, ge::HCOM_ATTR_SHAPE);
+  SetAllToAllvAttr(cnode, op_desc, group);
 
   ge::ComputeGraphPtr ge_graph = std::make_shared<ge::ComputeGraph>(kStubDataStructureName);
   MS_EXCEPTION_IF_NULL(ge_graph);
