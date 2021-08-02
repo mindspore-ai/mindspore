@@ -15,6 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/int8/pad_int8.h"
+#include <cfloat>
+#include <cmath>
 #include "src/kernel_registry.h"
 
 using mindspore::lite::RET_ERROR;
@@ -69,7 +71,7 @@ int PadInt8CPUKernel::SetQuantParam() {
   pad_quant_args->out_quanr_args_->zp_ = out_quant_arg.front().zeroPoint;
   pad_quant_args->out_quanr_args_->scale_ = out_quant_arg.front().scale;
 
-  if (pad_quant_args->in_quant_args_->scale_ != pad_quant_args->out_quanr_args_->scale_ ||
+  if (std::abs(pad_quant_args->in_quant_args_->scale_ - pad_quant_args->out_quanr_args_->scale_) > FLT_EPSILON ||
       pad_quant_args->in_quant_args_->zp_ != pad_quant_args->out_quanr_args_->zp_) {
     MS_LOG(ERROR) << "Pad int8 op : scale & zp of output and input must be equal.";
     return RET_ERROR;
@@ -168,7 +170,7 @@ void PadInt8CPUKernel::CalculateStrides() {
   }
 }
 
-int PadInt8CPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) {
+int PadInt8CPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) const {
   if (paddings == nullptr || ori_paddings == nullptr) {
     return RET_NULL_PTR;
   }

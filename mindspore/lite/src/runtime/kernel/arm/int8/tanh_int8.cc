@@ -42,7 +42,7 @@ int TanhInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int TanhInt8CPUKernel::DoActivation(int task_id) {
+int TanhInt8CPUKernel::DoActivation(int task_id) const {
   int current_size = element_size_ - task_id * thread_stride_;
   current_size = MSMIN(thread_stride_, current_size);
   if (current_size <= 0) {

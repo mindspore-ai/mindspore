@@ -22,10 +22,10 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int CarryDataKernel::MoveData(std::vector<lite::Tensor *>::iterator dst_begin,
-                              std::vector<lite::Tensor *>::iterator dst_end,
-                              std::vector<lite::Tensor *>::iterator src_begin,
-                              std::vector<lite::Tensor *>::iterator src_limit) {
+int CarryDataKernel::MoveData(const std::vector<lite::Tensor *>::iterator &dst_begin,
+                              const std::vector<lite::Tensor *>::iterator &dst_end,
+                              const std::vector<lite::Tensor *>::iterator &src_begin,
+                              const std::vector<lite::Tensor *>::iterator &src_limit) {
   for (auto dst_iter = dst_begin, src_iter = src_begin; dst_iter != dst_end; dst_iter++, src_iter++) {
     if (src_iter == src_limit) {
       MS_LOG(ERROR) << "out of range of input tensor";

@@ -252,7 +252,7 @@ int ScaleInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ScaleInt8CPUKernel::Scale(int task_id) {
+int ScaleInt8CPUKernel::Scale(int task_id) const {
   int real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
   if (real_dst_count <= 0) {
     return lite::RET_OK;

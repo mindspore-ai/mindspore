@@ -47,7 +47,7 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   int OcRun(int task_id);
   int HwRun(int task_id);
-  int OcOptPre(int task_id);
+  int OcOptPre(int task_id) const;
 
  private:
   int RunArmOc(int task_id);

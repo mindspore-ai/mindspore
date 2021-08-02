@@ -143,7 +143,7 @@ int SparseToDenseCPUKernel::GenerateIndices() {
   return RET_OK;
 }
 
-int SparseToDenseCPUKernel::IndicesValidCheck() {
+int SparseToDenseCPUKernel::IndicesValidCheck() const {
   int d1 = output_shape[1] * output_shape[2] * output_shape[3];
   int d2 = output_shape[2] * output_shape[3];
   int d3 = output_shape[3];

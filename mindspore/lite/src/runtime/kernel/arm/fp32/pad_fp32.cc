@@ -185,7 +185,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
   return;
 }
 
-int PadCPUKernel::ExtendShape(int *shape, int length, const int *ori_shape, int rank) {
+int PadCPUKernel::ExtendShape(int *shape, int length, const int *ori_shape, int rank) const {
   if (shape == nullptr || ori_shape == nullptr) {
     return RET_NULL_PTR;
   }
@@ -198,7 +198,7 @@ int PadCPUKernel::ExtendShape(int *shape, int length, const int *ori_shape, int 
   return RET_OK;
 }
 
-int PadCPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) {
+int PadCPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) const {
   if (paddings == nullptr || ori_paddings == nullptr) {
     return RET_NULL_PTR;
   }

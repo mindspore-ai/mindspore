@@ -160,9 +160,9 @@ std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
 
 // Some primes between 2^63 and 2^64
 namespace {
-static uint64_t k0 = 0xc3a5c85c97cb3127ULL;
-static uint64_t k1 = 0xb492b66fbe98f273ULL;
-static uint64_t k2 = 0x9ae16a3b2f90404fULL;
+static const uint64_t k0 = 0xc3a5c85c97cb3127ULL;
+static const uint64_t k1 = 0xb492b66fbe98f273ULL;
+static const uint64_t k2 = 0x9ae16a3b2f90404fULL;
 
 uint64_t Fetch64Bit(const char *p) {
   uint64_t result = 0;

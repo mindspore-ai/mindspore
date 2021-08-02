@@ -30,20 +30,20 @@ int ReverseSequenceCPUKernel::Init() {
   return ReSize();
 }
 
-void ReverseSequenceCPUKernel::ConvertAxisToPositive(const std::vector<int> shape, int *axis) {
+void ReverseSequenceCPUKernel::ConvertAxisToPositive(const std::vector<int> shape, int *axis) const {
   if (axis != nullptr && *axis < 0) {
     *axis += static_cast<int>(shape.size());
   }
 }
 
-int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int axis) {
+int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int axis) const {
   int count = 1;
   for (int i = 0; i < axis; ++i) {
     count *= shape.at(i);
   }
   return count;
 }
-int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) {
+int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) const {
   int count = 1;
   for (size_t i = axis + 1; i < shape.size(); ++i) {
     count *= shape.at(i);

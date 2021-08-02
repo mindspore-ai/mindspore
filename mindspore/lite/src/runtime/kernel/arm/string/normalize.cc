@@ -75,7 +75,7 @@ std::string NormalizeCPUKernel::Normalize(const std::string &str) {
   result = GlobalReplace(result, "\\s('t|'nt|n't|'d|'ll|'s|'m|'ve|'re)$", "$1");
   // transform shortening to full
   MS_ASSERT(kRegexTransforms != nullptr);
-  for (auto iter = kRegexTransforms->begin(); iter != kRegexTransforms->end(); iter++) {
+  for (auto iter = kRegexTransforms->begin(); iter != kRegexTransforms->end(); ++iter) {
     result = GlobalReplace(result, iter->first, iter->second);
   }
   result = GlobalReplace(result, "([?])+", "$1");

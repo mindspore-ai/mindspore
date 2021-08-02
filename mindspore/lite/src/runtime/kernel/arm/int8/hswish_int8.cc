@@ -54,7 +54,7 @@ int HswishInt8CPUKernel::Init() {
   return RET_OK;
 }
 
-void HswishInt8CPUKernel::MultiplierInt32ToInt16(int32_t input, int16_t *output) {
+void HswishInt8CPUKernel::MultiplierInt32ToInt16(int32_t input, int16_t *output) const {
   MS_ASSERT(input >= 0);
   if (input >= std::numeric_limits<int32_t>::max() - (1 << 15)) {
     *output = std::numeric_limits<int16_t>::max();
