@@ -217,7 +217,7 @@ def _build_training_pipeline(config: Seq2seqConfig,
         scale_update_cell=scale_manager.get_update_cell()
     )
     net_with_grads.set_train(True)
-    model = Model(net_with_grads, amp_level="O2")
+    model = Model(net_with_grads)
     loss_monitor = LossCallBack(config)
     dataset_size = dataset.get_dataset_size()
     time_cb = TimeMonitor(data_size=dataset_size)

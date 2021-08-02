@@ -27,13 +27,13 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-RANK_SIZE=8
 DATA_PATH=$(get_real_path $1)
 RANK_TABLE=$(get_real_path $2)
 
 EXEC_PATH=$(pwd)
 echo "$EXEC_PATH"
 export RANK_TABLE_FILE=$RANK_TABLE
+export RANK_SIZE=8
 
 for((i=0;i<RANK_SIZE;i++))
 do
