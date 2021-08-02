@@ -31,7 +31,7 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
 
   SplitParameter *param = (SplitParameter *)parameter;
 
-  size_t num_split_ = param->num_split_ == 0 ? (int)(outputs_size) : param->num_split_;
+  int num_split_ = param->num_split_ == 0 ? (int)(outputs_size) : param->num_split_;
   if (num_split_ == 0) {
     return NNACL_ERR;
   }

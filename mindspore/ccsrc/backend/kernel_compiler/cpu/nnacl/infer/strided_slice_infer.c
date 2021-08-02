@@ -236,7 +236,7 @@ void ApplyBeginMask(StridedSliceTransferBuffer *transfer_buffer) {
 }
 
 int ApplyEndMask(StridedSliceTransferBuffer *transfer_buffer, const int *in_shape, size_t in_shape_size) {
-  for (int i = 0; i < transfer_buffer->ndim_; i++) {
+  for (size_t i = 0; i < (size_t)(transfer_buffer->ndim_); i++) {
     if (transfer_buffer->ends_mask_[i]) {
       if (i >= in_shape_size) {
         return NNACL_ERR;
@@ -296,7 +296,7 @@ void ApplyShrinkMask(StridedSliceTransferBuffer *transfer_buffer, int *output_sh
 
 int TransferBuffer2Param(const StridedSliceTransferBuffer *transfer_buffer, StridedSliceParameter *param,
                          const int *in_shape, size_t in_shape_size) {
-  if (transfer_buffer->ndim_ >= in_shape_size || param->in_shape_length_ >= in_shape_size) {
+  if (transfer_buffer->ndim_ >= (int)(in_shape_size) || param->in_shape_length_ >= (int)(in_shape_size)) {
     return NNACL_ERR;
   }
   for (int i = 0; i < transfer_buffer->ndim_; i++) {
