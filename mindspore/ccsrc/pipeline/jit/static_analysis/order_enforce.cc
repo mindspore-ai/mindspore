@@ -207,7 +207,7 @@ class OrderEnforcer {
     if (!IsPrimitiveCNode(last_input, prim::kPrimUpdateState)) {
       return;
     }
-    const std::set<PrimitivePtr> special_operators = {prim::kPrimExpandDims};
+    const std::set<PrimitivePtr> special_operators = {prim::kPrimExpandDims, prim::kPrimBatchNormGrad};
     for (size_t i = 1; i < inputs.size(); ++i) {
       auto &input = inputs.at(i);
       if (!IsRef(input)) {
