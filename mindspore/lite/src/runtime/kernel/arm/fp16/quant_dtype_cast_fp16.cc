@@ -30,14 +30,8 @@ using mindspore::schema::PrimitiveType_QuantDTypeCast;
 
 namespace mindspore::kernel {
 int QuantDTypeCastFp16CPUKernel::Init() {
-  if (in_tensors_.size() != 1) {
-    MS_LOG(ERROR) << "inputs number should be 1, but " << in_tensors_.size() << " is given.";
-    return RET_PARAM_INVALID;
-  }
-  if (out_tensors_.size() != 1) {
-    MS_LOG(ERROR) << "outputs number should be 1, but " << out_tensors_.size() << " is given.";
-    return RET_PARAM_INVALID;
-  }
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
   auto param = reinterpret_cast<QuantDTypeCastParameter *>(op_parameter_);
@@ -102,9 +96,9 @@ int QuantDTypeCastFp16CPUKernel::QuantDTypeCast(int task_id) {
   auto quant_arg = !out_tensors_.front()->quant_params().empty() ? out_tensors_.front()->quant_params().front()
                                                                  : in_tensors_.front()->quant_params().front();
   int ret;
-  MS_ASSERT(float16_ptr_);
+  MS_ASSERT(float16_ptr_ != nullptr);
   if (!is_uint8_) {
-    MS_ASSERT(int8_ptr_);
+    MS_ASSERT(int8_ptr_ != nullptr);
     if (int_to_float_) {
       ret = DoDequantizeInt8ToFp16(int8_ptr_ + thread_offset, float16_ptr_ + thread_offset, quant_arg.scale,
                                    quant_arg.zeroPoint, num_unit_thread);
@@ -114,7 +108,7 @@ int QuantDTypeCastFp16CPUKernel::QuantDTypeCast(int task_id) {
     }
   } else {
     // uint8
-    MS_ASSERT(uint8_ptr_);
+    MS_ASSERT(uint8_ptr_ != nullptr);
     if (int_to_float_) {
       ret = DoDequantizeUInt8ToFp16(uint8_ptr_ + thread_offset, float16_ptr_ + thread_offset, quant_arg.scale,
                                     quant_arg.zeroPoint, num_unit_thread);

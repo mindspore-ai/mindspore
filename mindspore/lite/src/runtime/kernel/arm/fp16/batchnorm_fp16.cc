@@ -38,9 +38,9 @@ int BatchnormFp16CPUKernel::InitConstTensor() {
       FreeMeanAndVariance();
       return RET_ERROR;
     }
-    Float32ToFloat16(reinterpret_cast<float *>(mean_fp32->MutableData()), reinterpret_cast<float16_t *>(mean_),
+    Float32ToFloat16(reinterpret_cast<float *>(mean_fp32->data_c()), reinterpret_cast<float16_t *>(mean_),
                      mean_fp32->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(variance_fp32->MutableData()), reinterpret_cast<float16_t *>(variance_),
+    Float32ToFloat16(reinterpret_cast<float *>(variance_fp32->data_c()), reinterpret_cast<float16_t *>(variance_),
                      variance_fp32->ElementsNum());
   } else {
     auto ret = BatchnormCPUKernel::InitConstTensor();
@@ -68,7 +68,7 @@ int BatchnormFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
   if (is_output_fp32_) {
-    Float16ToFloat32(output_, reinterpret_cast<float *>(output_tensor->MutableData()), output_tensor->ElementsNum());
+    Float16ToFloat32(output_, reinterpret_cast<float *>(output_tensor->data_c()), output_tensor->ElementsNum());
   }
   FreeInputAndOutput();
   return ret;

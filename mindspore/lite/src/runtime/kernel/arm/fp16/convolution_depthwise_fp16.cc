@@ -64,6 +64,8 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = InitWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitWeightBias failed.";
