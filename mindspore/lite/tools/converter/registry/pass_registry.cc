@@ -40,6 +40,5 @@ const std::unordered_map<int, PassPtr> &PassRegistry::GetPasses() const {
   std::unique_lock<std::mutex> lock(instance->mutex_);
   return instance->passes_;
 }
-
 }  // namespace opt
 }  // namespace mindspore
