@@ -26,7 +26,7 @@
 #include "schema/model_generated.h"
 #include "src/common/common.h"
 #include "src/tensor.h"
-#include "backend/kernel_compiler/cpu/nnacl/nnacl_common.h"
+#include "nnacl/nnacl_common.h"
 #ifdef ENABLE_ARM64
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
