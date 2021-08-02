@@ -30,6 +30,16 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LayerNormGrad;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kNumInputDim_0 = 0;
+constexpr int kNumInputDim_1 = 1;
+constexpr int kNumInputDim_2 = 2;
+constexpr int kNumInputDim_3 = 3;
+constexpr int kNumInputDim_4 = 4;
+constexpr int kNumOutputDim_0 = 0;
+constexpr int kNumOutputDim_1 = 1;
+constexpr int kNumOutputDim_2 = 2;
+}  // namespace
 int LayerNormGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int LayerNormGradCPUKernelFp16::Init() {
@@ -63,14 +73,14 @@ int LayerNormGradCPUKernelFp16::Init() {
 }
 
 int LayerNormGradCPUKernelFp16::Execute(int task_id) {
-  auto input_x = in_tensors_.at(0);
-  auto input_dy = in_tensors_.at(1);
-  auto input_var = in_tensors_.at(2);
-  auto input_mean = in_tensors_.at(3);
-  auto input_gamma = in_tensors_.at(4);
-  auto output_dx = out_tensors_.at(0);
-  auto output_dg = out_tensors_.at(1);
-  auto output_db = out_tensors_.at(2);
+  auto input_x = in_tensors_.at(kNumInputDim_0);
+  auto input_dy = in_tensors_.at(kNumInputDim_1);
+  auto input_var = in_tensors_.at(kNumInputDim_2);
+  auto input_mean = in_tensors_.at(kNumInputDim_3);
+  auto input_gamma = in_tensors_.at(kNumInputDim_4);
+  auto output_dx = out_tensors_.at(kNumOutputDim_0);
+  auto output_dg = out_tensors_.at(kNumOutputDim_1);
+  auto output_db = out_tensors_.at(kNumOutputDim_2);
 
   float16_t *x = reinterpret_cast<float16_t *>(input_x->data_c());
   float16_t *dy = reinterpret_cast<float16_t *>(input_dy->data_c());
