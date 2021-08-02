@@ -4,4 +4,5 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_library(audio-ir-kernels OBJECT
         allpass_biquad_ir.cc
         band_biquad_ir.cc
+        bandpass_biquad_ir.cc
         )

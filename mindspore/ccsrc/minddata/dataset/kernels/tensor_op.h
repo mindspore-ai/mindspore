@@ -139,6 +139,7 @@ constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 // audio
 constexpr char kAllpassBiquadOp[] = "AllpassBiquadOp";
 constexpr char kBandBiquadOp[] = "BandBiquadOp";
+constexpr char kBandpassBiquadOp[] = "BandpassBiquadOp";
 
 // data
 constexpr char kConcatenateOp[] = "ConcatenateOp";

@@ -18,6 +18,7 @@
 
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 
 namespace mindspore {
 namespace dataset {
@@ -54,6 +55,24 @@ BandBiquad::BandBiquad(int32_t sample_rate, float central_freq, float Q, bool no
 
 std::shared_ptr<TensorOperation> BandBiquad::Parse() {
   return std::make_shared<BandBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_, data_->noise_);
+}
+
+// BandpassBiquad Transform Operation.
+struct BandpassBiquad::Data {
+  Data(int32_t sample_rate, float central_freq, float Q, bool const_skirt_gain)
+      : sample_rate_(sample_rate), central_freq_(central_freq), Q_(Q), const_skirt_gain_(const_skirt_gain) {}
+  int32_t sample_rate_;
+  float central_freq_;
+  float Q_;
+  bool const_skirt_gain_;
+};
+
+BandpassBiquad::BandpassBiquad(int32_t sample_rate, float central_freq, float Q, bool const_skirt_gain)
+    : data_(std::make_shared<Data>(sample_rate, central_freq, Q, const_skirt_gain)) {}
+
+std::shared_ptr<TensorOperation> BandpassBiquad::Parse() {
+  return std::make_shared<BandpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_,
+                                                   data_->const_skirt_gain_);
 }
 }  // namespace audio
 }  // namespace dataset
