@@ -52,10 +52,10 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
     MS_LOG(ERROR) << "tensor is nullptr.";
     return RET_ERROR;
   }
-  int32_t num = string_buffer.size();
+  size_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
   offset[0] = 4 * (num + 2);
-  for (int i = 0; i < num; i++) {
+  for (size_t i = 0; i < num; i++) {
     offset[i + 1] = offset[i] + string_buffer[i].len;
   }
   std::vector<int> shape = {offset[num]};
@@ -71,10 +71,10 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
   char *string_data = reinterpret_cast<char *>(data);
 
   string_info[0] = num;
-  for (int i = 0; i <= num; i++) {
+  for (size_t i = 0; i <= num; i++) {
     string_info[i + 1] = offset[i];
   }
-  for (int i = 0; i < num; i++) {
+  for (size_t i = 0; i < num; i++) {
     memcpy(string_data + offset[i], string_buffer[i].data, string_buffer[i].len);
   }
   return RET_OK;
@@ -85,11 +85,11 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
     MS_LOG(ERROR) << "tensor is nullptr.";
     return RET_ERROR;
   }
-  int32_t num = string_buffer.size();
+  size_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
   offset[0] = 4 * (num + 2);
   std::vector<int> len(num);
-  for (int i = 0; i < num; i++) {
+  for (size_t i = 0; i < num; i++) {
     len[i] = 0;
     for (int j = 0; j < static_cast<int>(string_buffer[i].size()); j++) {
       len[i] += string_buffer[i][j].len;
@@ -109,10 +109,10 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
   auto *string_data = reinterpret_cast<char *>(data);
 
   string_info[0] = num;
-  for (int i = 0; i <= num; i++) {
+  for (size_t i = 0; i <= num; i++) {
     string_info[i + 1] = offset[i];
   }
-  for (int i = 0; i < num; i++) {
+  for (size_t i = 0; i < num; i++) {
     auto *dst = string_data + offset[i];
     for (auto string_part : string_buffer[i]) {
       memcpy(dst, string_part.data, string_part.len);

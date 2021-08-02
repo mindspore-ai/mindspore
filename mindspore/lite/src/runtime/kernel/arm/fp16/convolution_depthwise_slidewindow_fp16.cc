@@ -51,6 +51,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitPackedInputOutput() {
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       ms_context_->allocator->Free(packed_input_);
+      packed_input_ = nullptr;
       return RET_ERROR;
     }
   }
@@ -94,6 +95,8 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
 }  // namespace mindspore::kernel
 
 int ConvolutionDepthwiseSWFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new sliding window param failed.";
@@ -151,6 +154,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {
     MS_LOG(ERROR) << "Convolution depthwise Fp16 get null tensor data!";
+    FreePackedInputOutput();
     return RET_ERROR;
   }
 
@@ -166,6 +170,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     ret = InitWeightBias();
     if (ret != 0) {
       MS_LOG(ERROR) << "Convolution depthwise fp16 repack weight failure";
+      FreePackedInputOutput();
       return RET_ERROR;
     }
     is_repack_ = false;

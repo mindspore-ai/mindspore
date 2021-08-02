@@ -102,6 +102,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
 }
 
 int DeconvolutionDepthwiseFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new SlidingWindowParam fail!";

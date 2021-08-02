@@ -123,6 +123,8 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
 }
 
 int Convolution1x1FP16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   row_tile_ = C12NUM;
   col_tile_ = C16NUM;

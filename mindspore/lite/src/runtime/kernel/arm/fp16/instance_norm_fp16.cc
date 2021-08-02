@@ -43,7 +43,11 @@ void InstanceNormFp16CPUKernel::FreeTmpBuffer() {
 }
 
 int InstanceNormFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto gamma = in_tensors_[1];
+  MS_ASSERT(gamma != nullptr);
+  MS_ASSERT(gamma->data_c() != nullptr);
   if (gamma->data_type() == kNumberTypeFloat32) {
     gamma_data_ = reinterpret_cast<float16_t *>(malloc(gamma->ElementsNum() * sizeof(float16_t)));
     if (gamma_data_ == nullptr) {
@@ -59,6 +63,8 @@ int InstanceNormFp16CPUKernel::Init() {
   }
 
   auto beta = in_tensors_[2];
+  MS_ASSERT(beta != nullptr);
+  MS_ASSERT(beta->data_c() != nullptr);
   if (beta->data_type() == kNumberTypeFloat32) {
     beta_data_ = reinterpret_cast<float16_t *>(malloc(beta->ElementsNum() * sizeof(float16_t)));
     if (beta_data_ == nullptr) {
@@ -108,6 +114,8 @@ int InstanceNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 int InstanceNormFp16CPUKernel::Run() {
   src_data_ = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
   dst_data_ = reinterpret_cast<float16_t *>(out_tensors_[0]->data_c());
+  MS_ASSERT(src_data_ != nullptr);
+  MS_ASSERT(dst_data_ != nullptr);
   auto ret = ParallelLaunch(this->ms_context_, InstanceNormFp16Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormFp16Run error error_code[" << ret << "]";

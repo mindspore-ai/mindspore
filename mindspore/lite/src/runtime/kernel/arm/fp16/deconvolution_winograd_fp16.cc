@@ -358,6 +358,8 @@ int DeConvWinogradFp16CPUKernel::ReSize() {
 }
 
 int DeConvWinogradFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   deconv_param_ = new (std::nothrow) DeConvParam();
   if (deconv_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
