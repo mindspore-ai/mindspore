@@ -24,11 +24,11 @@
 #include "utils/contract.h"
 #include "utils/ms_context.h"
 #include "toolchain/prof_callback.h"
+#include "toolchain/prof_acl_api.h"
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
 
 using std::map;
 using std::string;
-using Status = uint32_t;
 namespace mindspore {
 namespace device {
 namespace ascend {
