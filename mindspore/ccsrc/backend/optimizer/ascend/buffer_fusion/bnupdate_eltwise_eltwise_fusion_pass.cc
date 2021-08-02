@@ -29,12 +29,10 @@
 namespace mindspore {
 namespace opt {
 void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnode, const AnfNodePtr &relu_input,
-                                                            const session::KernelGraph &kernel_graph,
+                                                            const session::KernelGraph & /*kernel_graph*/,
                                                             FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(relu_input);
   auto add = relu_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add);

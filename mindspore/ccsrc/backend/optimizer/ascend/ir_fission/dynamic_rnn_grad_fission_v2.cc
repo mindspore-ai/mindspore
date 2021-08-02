@@ -196,23 +196,23 @@ AnfNodePtr AddLSTMInputGradNode(const FuncGraphPtr &func_graph, const CNodePtr &
                                 AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode->input(kIndex6), 0)[0],
                                 AnfAlgo::GetOutputInferShape(dynamic_rnn_grad_cnode->input(kIndex6), 0)[1]};
       AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {reshape_out_shape}, reshape.get());
-      basic_lstm_cell_c_state_grad_inputs.emplace_back(reshape);
+      (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(reshape);
     } else {
-      basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_c_outputs[idx - 1]);
+      (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_c_outputs[idx - 1]);
     }
-    basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_dy_outputs[idx]);
+    (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_dy_outputs[idx]);
     if (i == 0) {
-      basic_lstm_cell_c_state_grad_inputs.emplace_back(dynamic_rnn_grad_cnode->input(kIndex10));
-      basic_lstm_cell_c_state_grad_inputs.emplace_back(dynamic_rnn_grad_cnode->input(kIndex11));
+      (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(dynamic_rnn_grad_cnode->input(kIndex10));
+      (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(dynamic_rnn_grad_cnode->input(kIndex11));
     } else {
-      basic_lstm_cell_c_state_grad_inputs.emplace_back(pre_split_outputs[1]);
-      basic_lstm_cell_c_state_grad_inputs.emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
+      (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(pre_split_outputs[1]);
+      (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(pre_basic_lstm_cell_c_state_grad_outputs[1]);
     }
-    basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_i_outputs[idx]);
-    basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_j_outputs[idx]);
-    basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_f_outputs[idx]);
-    basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_o_outputs[idx]);
-    basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_tanh_outputs[idx]);
+    (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_i_outputs[idx]);
+    (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_j_outputs[idx]);
+    (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_f_outputs[idx]);
+    (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_o_outputs[idx]);
+    (void)basic_lstm_cell_c_state_grad_inputs.emplace_back(lstm_split_tanh_outputs[idx]);
     auto basic_lstm_cell_c_state_grad = func_graph->NewCNode(basic_lstm_cell_c_state_grad_inputs);
     MS_EXCEPTION_IF_NULL(basic_lstm_cell_c_state_grad);
     basic_lstm_cell_c_state_grad->set_abstract(basic_lstm_cell_c_state_grad_nodes[i]->abstract());
@@ -225,8 +225,8 @@ AnfNodePtr AddLSTMInputGradNode(const FuncGraphPtr &func_graph, const CNodePtr &
 
     // Create MatMul
     std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimMatMul->name()))};
-    matmul_inputs.emplace_back(basic_lstm_cell_c_state_grad_outputs[0]);
-    matmul_inputs.emplace_back(dynamic_rnn_grad_cnode->input(kIndex2));
+    (void)matmul_inputs.emplace_back(basic_lstm_cell_c_state_grad_outputs[0]);
+    (void)matmul_inputs.emplace_back(dynamic_rnn_grad_cnode->input(kIndex2));
     auto matmul = func_graph->NewCNode(matmul_inputs);
     MS_EXCEPTION_IF_NULL(matmul);
     matmul->set_abstract(matmul_nodes[i]->abstract());
@@ -483,8 +483,8 @@ AnfNodePtr CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &dynam
   return value_node;
 }
 
-AnfNodePtr CreateDbReduceSum(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                             const AnfNodePtr &lstm_input_grad, const AnfNodePtr &value_node) {
+AnfNodePtr CreateDbReduceSum(const FuncGraphPtr &func_graph, const CNodePtr &, const AnfNodePtr &lstm_input_grad,
+                             const AnfNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   // Create node
   auto batch_matmul = CreateBatchMatMul2(func_graph, lstm_input_grad, value_node);

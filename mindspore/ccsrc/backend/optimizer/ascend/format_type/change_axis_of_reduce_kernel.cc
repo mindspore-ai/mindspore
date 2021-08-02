@@ -65,10 +65,10 @@ void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
   for (auto elem : axis) {
     switch (elem) {
       case kAxis_H:
-        convert_axis.emplace_back(kAxis_6HD_H);
+        (void)convert_axis.emplace_back(kAxis_6HD_H);
         break;
       case kAxis_W:
-        convert_axis.emplace_back(kAxis_6HD_W);
+        (void)convert_axis.emplace_back(kAxis_6HD_W);
         break;
       default:
         MS_LOG(INFO) << "reduce axis is axis : [" << elem << "]"
