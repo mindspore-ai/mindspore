@@ -226,8 +226,9 @@ enum PrimType {
   PrimType_TensorArrayWrite = 199,
   PrimType_Affine = 200,
   PrimType_Attention = 201,
+  PrimType_LSTMGrad = 202,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_Attention + 1
+  PrimType_MAX = PrimType_LSTMGrad + 1
 };
 
 void RegInfer(int prim_type, InferShape func);

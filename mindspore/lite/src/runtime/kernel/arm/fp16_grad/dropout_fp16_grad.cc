@@ -30,7 +30,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DropoutGrad;
 
 namespace mindspore::kernel {
-
 int DropoutGradCPUKernelFp16::Init() {
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
   if (param == nullptr) {
@@ -63,7 +62,6 @@ int DropoutGradCPUKernelFp16::Execute(int task_id) {
   auto length = in_tensors_.at(kInputIndex)->ElementsNum();
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
-
   if (count > 0) {
     int start = stride * task_id;
     DropoutFp16Grad(&(yt_ptr[start]), &(mask_ptr[start]), &(output_ptr[start]), count, (float16_t)scale_);

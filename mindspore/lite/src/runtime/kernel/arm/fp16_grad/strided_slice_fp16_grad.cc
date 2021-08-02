@@ -30,7 +30,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_StridedSliceGrad;
 
 namespace mindspore::kernel {
-
 int StridedSliceGradCPUKernelFp16::Init() {
   if (!InferShapeDone()) {
     return RET_OK;

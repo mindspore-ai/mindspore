@@ -30,6 +30,8 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore::kernel {
+constexpr static int kWorkspaceOutIdx = 4;
+
 void LstmCPUKernel::FreeTmpBuffer() {
   if (weight_i_ptr_ != nullptr) {
     free(weight_i_ptr_);
@@ -361,8 +363,16 @@ int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, cons
     float *output_ptr = output + real_t * lstm_param_->output_step_;
     LstmStepUnit(output_ptr, input_gate_t, forget_gate_t, cell_gate_t, output_gate_t, weight_h, state_bias,
                  hidden_state, cell_state, buffer_, lstm_param_);
+    if (IsTrain() && IsTrainable()) {
+      RecordStates(cell_state, real_t);
+    }
   }
   return RET_OK;
+}
+
+void LstmCPUKernel::RecordStates(float *cell_state, int step) {
+  float *workspace = reinterpret_cast<float *>(out_tensors_[kWorkspaceOutIdx]->MutableData());
+  workspace[step] = *cell_state;
 }
 
 int LstmCPUKernel::InnerExecute(float *output, const float *input, float *hidden_state, float *cell_state) {

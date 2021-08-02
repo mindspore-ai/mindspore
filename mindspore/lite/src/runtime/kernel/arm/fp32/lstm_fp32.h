@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_FP32_H_
 
 #include <vector>
 #include "src/inner_kernel.h"
@@ -49,6 +49,7 @@ class LstmCPUKernel : public InnerKernel {
   int LstmUnidirectional(float *output, const float *weight_i, const float *weight_h, const float *input_bias,
                          const float *state_bias, float *hidden_state, float *cell_state, bool is_backward);
   int InnerExecute(float *output, const float *input, float *hidden_state, float *cell_state);
+  void RecordStates(float *cell_state, int step);
   const float *weight_loop_;
   const float *bias_loop_;
   float *gate_loop_;
@@ -84,4 +85,4 @@ class LstmCPUKernel : public InnerKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_FP32_H_
