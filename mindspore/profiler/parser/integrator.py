@@ -113,6 +113,8 @@ class Integrator:
                 op_type_time_cache[op_type][0] += op_time
                 op_type_time_cache[op_type][1] += 1
 
+        if self._total_time == 0:
+            raise ValueError("The total time of operations can not be 0.")
         op_type_file_name = 'aicore_intermediate_' + self._device_id + '_type.csv'
         op_type_file_path = os.path.join(self._profiling_dir, op_type_file_name)
         with open(op_type_file_path, 'w') as type_file:
@@ -1059,6 +1061,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             framework_info (dict): The framework metadata.
             aicpu_info (dict): The metadata of AI CPU operator.
             min_cycle_counter (float): The minimum cycle counter of the timeline.
+            source_path (str): The source of file.
         """
         if min_cycle_counter == float('inf'):
             min_cycle_counter = 0

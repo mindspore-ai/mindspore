@@ -23,6 +23,7 @@ class HWTSContainer:
     Args:
         split_list (list): The split list of metadata in HWTS output file.
     """
+
     def __init__(self, split_list):
         self._op_name = ''
         self._duration = None
@@ -79,6 +80,7 @@ class TimelineContainer:
     Args:
         split_list (list): The split list of metadata in op_compute output file.
     """
+
     def __init__(self, split_list):
         self._op_name = split_list[0]
         self._stream_id = str(split_list[1])
@@ -121,6 +123,7 @@ class MemoryGraph:
     Args:
         graph_proto (proto): Graph proto, defined in profiler module.
     """
+
     def __init__(self, graph_proto):
         self._graph_proto = graph_proto
         self.graph_id = graph_proto.graph_id
@@ -153,6 +156,7 @@ class MemoryNode:
     Args:
         node_proto (proto): Node proto.
     """
+
     def __init__(self, node_proto):
         self._node_proto = node_proto
         self.node_id = node_proto.node_id
@@ -192,6 +196,7 @@ class MemoryTensor:
     Args:
         tensor_proto (proto): Tensor proto.
     """
+
     def __init__(self, tensor_proto):
         self._tensor_proto = tensor_proto
         self.tensor_id = tensor_proto.tensor_id

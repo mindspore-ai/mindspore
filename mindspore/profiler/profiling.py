@@ -47,11 +47,13 @@ from mindspore.nn.cell import Cell
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
+
 class ProfileOption(Enum):
     """
     Profile Option Enum which be used in Profiler.profile.
     """
     trainable_parameters = 0
+
 
 class Profiler:
     """
@@ -211,7 +213,7 @@ class Profiler:
             "aic_metrics": "PipeUtilization",
             "aicpu": "on",
             "profile_memory": profile_memory
-            }
+        }
 
         return profiling_options
 
@@ -539,7 +541,7 @@ class Profiler:
             for line in f.readlines():
                 if "clock_realtime" in line:
                     # 16 means the first digit of the timestamp, len(line)-3 means the last.
-                    job_start_time = line[16:len(line)-3]
+                    job_start_time = line[16:len(line) - 3]
 
         return job_start_time
 
@@ -688,7 +690,7 @@ class Profiler:
         hccl_parse.parse()
 
     @staticmethod
-    def profile(network=None, profile_option=None):
+    def profile(network, profile_option):
         """
         Get the number of trainable parameters in the training network.
 

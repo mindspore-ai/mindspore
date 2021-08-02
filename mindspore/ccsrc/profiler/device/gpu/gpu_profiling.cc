@@ -339,6 +339,10 @@ void GPUProfiler::OpsParser() {
   std::sort(order_vec.begin(), order_vec.end(), cmp_func);
 
   for (auto iter = order_vec.begin(); iter != order_vec.end(); iter++) {
+    if (iter->second.op_count == 0) {
+      MS_LOG(ERROR) << "The num of operations can not be 0.";
+      return;
+    }
     MS_LOG(DEBUG) << "GPU_profiler"
                   << "," << iter->first << "," << iter->second.op_count << "," << iter->second.op_kernel_count << ","
                   << iter->second.op_kernel_api_count << ","
