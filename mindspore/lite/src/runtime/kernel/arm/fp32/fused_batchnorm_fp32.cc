@@ -23,6 +23,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kNumInputSize = 5;
+}  // namespace
 int FusedBatchnormCPUKernel::ReSize() {
   FreeMeanAndVariance();
   FreeScaleAndOffset();
@@ -66,7 +69,7 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
 
 int FusedBatchnormCPUKernel::Run() {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  if (IsTrain() && IsTrainable() && in_tensors_.size() >= 5) {
+  if (IsTrain() && IsTrainable() && in_tensors_.size() >= kNumInputSize) {
     float *in = static_cast<float *>(in_tensors_[0]->MutableData());
     float *scale = static_cast<float *>(in_tensors_[1]->MutableData());
     float *offset = static_cast<float *>(in_tensors_[2]->MutableData());

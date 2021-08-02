@@ -165,6 +165,5 @@ bool IsSupportSDot() {
 #endif
   return status;
 }
-
 }  // namespace lite
 }  // namespace mindspore
