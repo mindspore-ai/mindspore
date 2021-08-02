@@ -35,6 +35,7 @@ constexpr int kActivationTensorBatch = 1;
 constexpr int kTensorShapeBatchIndex = 0;
 constexpr int k3DimsLeftMatrixDeepIndex = 2;
 constexpr int kRightMatrixDeepIndex = 0;
+constexpr int kRelativePositionHasBiasInputSize = 15;
 
 bool AttentionActivationTensorCheck(lite::Tensor *tensor) {
   if (tensor == nullptr || tensor->data_type() != kNumberTypeFloat32 ||
@@ -161,7 +162,7 @@ bool AttentionBiasTensorCheck(lite::Tensor *tensor) {
 }  // namespace
 
 int RelativePositionAttentionCPUKernel::CheckBiases() {
-  if (this->in_tensors_.size() == 15) {
+  if (this->in_tensors_.size() == kRelativePositionHasBiasInputSize) {
     param_->use_bias_ = true;
   }
   if (!param_->use_bias_) {
@@ -252,6 +253,9 @@ int RelativePositionAttentionCPUKernel::PrepareParam() {
 }
 
 namespace {
+constexpr int kLeftMatrixBatchDimIndex = 0;
+constexpr int kLeftMatrixRowDimIndex = 1;
+constexpr int kLeftMatrixColDimIndex = 2;
 inline int PackLeftTensor(const lite::Tensor &tensor, Matrix *matrix, int row_tile, const AllocatorPtr &allocator) {
   MS_ASSERT(matrix != nullptr);
   MS_ASSERT(allocator != nullptr);
@@ -259,9 +263,9 @@ inline int PackLeftTensor(const lite::Tensor &tensor, Matrix *matrix, int row_ti
   matrix->data_ = reinterpret_cast<float *>(tensor.data_c());
   matrix->is_transpose_ = false;
   // Left tensor is in [batch, row, col] shape
-  matrix->batch_ = tensor.shape().at(0);
-  matrix->row_ = tensor.shape().at(1);
-  matrix->col_ = tensor.shape().at(2);
+  matrix->batch_ = tensor.shape().at(kLeftMatrixBatchDimIndex);
+  matrix->row_ = tensor.shape().at(kLeftMatrixRowDimIndex);
+  matrix->col_ = tensor.shape().at(kLeftMatrixColDimIndex);
   auto size = LeftMatrixPackElementSize(matrix, row_tile) * sizeof(float);
   MS_ASSERT(size != 0);
   matrix->packed_data_ = reinterpret_cast<float *>(allocator->Malloc(size));

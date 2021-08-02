@@ -18,7 +18,6 @@
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 #undef __STDC_FORMAT_MACROS
-#include <algorithm>
 #include <utility>
 #include <functional>
 #include "include/context.h"
@@ -27,6 +26,7 @@
 #include "schema/model_generated.h"
 #include "src/common/common.h"
 #include "src/tensor.h"
+#include "nnacl/nnacl_common.h"
 #ifdef ENABLE_ARM64
 #include <linux/perf_event.h>
 #include <sys/ioctl.h>
@@ -450,6 +450,10 @@ int Benchmark::PrintInputData() {
   return RET_OK;
 }
 
+namespace {
+constexpr float kNumUsPerMs = 1000.;
+}
+
 int Benchmark::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
   // Load graph
@@ -506,8 +510,9 @@ int Benchmark::RunBenchmark() {
 
   ms_inputs_ = session_->GetInputs();
   auto end_prepare_time = GetTimeUs();
-  MS_LOG(INFO) << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
-  std::cout << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms" << std::endl;
+  MS_LOG(INFO) << "PrepareTime = " << static_cast<float>(end_prepare_time - start_prepare_time) / kNumUsPerMs << " ms";
+  std::cout << "PrepareTime = " << static_cast<float>(end_prepare_time - start_prepare_time) / kNumUsPerMs << " ms"
+            << std::endl;
 
   // Load input
   MS_LOG(INFO) << "start generate input data";
@@ -580,7 +585,7 @@ int Benchmark::InitTimeProfilingCallbackParameter() {
       MS_LOG(INFO) << "The num of after outputs is empty";
     }
 
-    float cost = static_cast<float>(opEnd - op_begin_) / 1000.0f;
+    float cost = static_cast<float>(opEnd - op_begin_) / kNumUsPerMs;
     if (flags_->device_ == "GPU") {
       auto gpu_param = reinterpret_cast<const GPUCallBackParam &>(call_param);
       cost = static_cast<float>(gpu_param.execute_time);
