@@ -146,6 +146,11 @@ Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
 bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   auto is_profiling = IsProfiling();
   if (!is_profiling) {
+    int32_t cb_ret = MsprofInit(0XFF, nullptr, 0);
+    if (cb_ret != UintToInt(PROF_SUCCESS)) {
+      MS_LOG(ERROR) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
+      return false;
+    }
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
     return true;
   }
@@ -181,15 +186,14 @@ uint32_t GetCurrentDeviceId() {
 bool ProfilingManager::ProfStartUp(const NotNull<MsprofGeOptions *> prof_conf) const {
   MS_LOG(INFO) << "Prof start up. ";
 
-  if (prof_cb_.msprofCtrlCallback == nullptr) {
-    MS_LOG(ERROR) << "MsprofCtrlCallback callback is nullptr.";
-    return false;
+  bool ret = ProfRegisterCtrlCallback();
+  if (ret == false) {
+    return ret;
   }
 
   // call profiling start up api
-  int32_t cb_ret =
-    prof_cb_.msprofCtrlCallback(static_cast<uint32_t>(MsprofCtrlCallbackType::MSPROF_CTRL_INIT_GE_OPTIONS),
-                                static_cast<void *>(prof_conf.get()), sizeof(MsprofGeOptions));
+  int32_t cb_ret = MsprofInit(static_cast<uint32_t>(MsprofCtrlCallbackType::MSPROF_CTRL_INIT_GE_OPTIONS),
+                              static_cast<void *>(prof_conf.get()), sizeof(MsprofGeOptions));
   if (cb_ret != UintToInt(PROF_SUCCESS)) {
     MS_LOG(ERROR) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
     return false;
@@ -197,6 +201,30 @@ bool ProfilingManager::ProfStartUp(const NotNull<MsprofGeOptions *> prof_conf) c
 
   MS_LOG(INFO) << "Start up profiling success.";
   return true;
+}
+
+bool ProfilingManager::ProfRegisterCtrlCallback() const {
+  rtError_t rt_ret = rtProfRegisterCtrlCallback(GE, CtrlCallbackHandle);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rtProfRegisterCtrlCallback failed.";
+    return false;
+  }
+
+  return true;
+}
+
+rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t len) {
+  if (rt_type == RT_PROF_CTRL_REPORTER) {
+    ProfilingManager::GetInstance().SetMsprofReporterCallback(reinterpret_cast<MsprofReporterCallback>(data));
+    MS_LOG(INFO) << "Set MsprofReporterCallback success.";
+  } else if (rt_type == RT_PROF_CTRL_SWITCH) {
+    Status ret = ProfCtrlSwitchHandle(data);
+    if (ret != PROF_SUCCESS) {
+      MS_LOG(ERROR) << "Start runtime profiler failed.";
+    }
+  }
+
+  return RT_ERROR_NONE;
 }
 
 bool ProfilingManager::StopProfiling() {
@@ -208,26 +236,11 @@ bool ProfilingManager::StopProfiling() {
 
   // plugin unregister
   PluginUnInit();
-  // stop runtime profiler
-  auto module = GetProfilingModule();
-  uint32_t device_ids[kProfilingDeviceNum] = {GetCurrentDeviceId()};
-
-  auto rt_ret = rtProfilerStop(module, kProfilingDeviceNum, device_ids);
-  if (rt_ret != UintToInt(RT_ERROR_NONE)) {
-    MS_LOG(ERROR) << "Call rtProfilerStop failed";
-    return false;
-  }
 
   // stop profiling
-  if (prof_cb_.msprofCtrlCallback == nullptr) {
-    MS_LOG(ERROR) << "MsprofCtrlCallback callback is nullptr.";
-    return false;
-  }
-
-  int32_t cb_ret =
-    prof_cb_.msprofCtrlCallback(static_cast<uint32_t>(MsprofCtrlCallbackType::MSPROF_CTRL_FINALIZE), nullptr, 0);
+  int32_t cb_ret = MsprofFinalize();
   if (cb_ret != 0) {
-    MS_LOG(WARNING) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
+    MS_LOG(WARNING) << "Call MsprofFinalize failed, ret: " << cb_ret;
     return false;
   }
   return true;
@@ -273,28 +286,18 @@ Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func) {
   return PROF_SUCCESS;
 }
 
-Status RegProfReporterCallback(MsprofReporterCallback func) {
-  if (func == nullptr) {
-    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
+Status ProfCtrlSwitchHandle(void *data) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "Ctrl switch handl data is nullptr.";
     return PROF_FAILED;
   }
-  if (ProfilingManager::GetInstance().GetMsprofCallback().msprofReporterCallback != nullptr) {
-    MS_LOG(WARNING) << "Msprof reporter callback is exist, just ignore it.";
-  } else {
-    MS_LOG(INFO) << "GE register Msprof reporter callback.";
-    ProfilingManager::GetInstance().SetMsprofReporterCallback(func);
-    // Pass MsprofReporterCallback to runtime
-    rtError_t rt_ret = rtSetMsprofReporterCallback(func);
-    if (rt_ret != UintToInt(PROF_SUCCESS)) {
-      MS_LOG(WARNING) << "Pass MsprofReporterCallback to runtime failed, ret: " << rt_ret;
-      return IntToUint(rt_ret);
-    }
-    // Pass MsprofReporterCallback to hccl
-  }
-  return PROF_SUCCESS;
+
+  rtProfCommandHandle_t *prof_config_param = reinterpret_cast<rtProfCommandHandle_t *>(data);
+  auto type = static_cast<ProfCommandHandleType>(prof_config_param->type);
+  return ProfCommandHandle(type);
 }
 
-Status ProfCommandHandle(ProfCommandHandleType type, void *, uint32_t) {
+Status ProfCommandHandle(ProfCommandHandleType type) {
   MS_LOG(INFO) << "ProfCommandHandle start, type:" << type;
   if (type == kProfCommandhandleInit) {
     auto cb_ret = ProfilingManager::GetInstance().PluginInit();
@@ -302,25 +305,10 @@ Status ProfCommandHandle(ProfCommandHandleType type, void *, uint32_t) {
       MS_LOG(ERROR) << "Profiling plugin int failed.";
       return PROF_FAILED;
     }
-
-    // call runtime profiler API
-    auto module = GetProfilingModule();
-    auto device_id = GetCurrentDeviceId();
-    auto ret = rtProfilerStart(module, kProfilingDeviceNum, &device_id);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rtProfilerStart failed, ret:" << ret;
-      return PROF_FAILED;
-    }
   }
+
   return PROF_SUCCESS;
 }
-
-bool DoRegiste() noexcept {
-  MS_LOG(INFO) << "VM profiling register start";
-  return VMCallbackRegister::GetInstance().Register(RegProfCtrlCallback, RegProfSetDeviceCallback,
-                                                    RegProfReporterCallback, ProfCommandHandle);
-}
-static bool doRegiste = DoRegiste();
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

@@ -27,31 +27,43 @@ namespace mindspore {
 namespace kernel {
 namespace tbe {
 const std::unordered_map<std::string, TypeId> type_str_id_maps = {
-  {"float", TypeId::kNumberTypeFloat32},   {"float16", TypeId::kNumberTypeFloat16},
-  {"float32", TypeId::kNumberTypeFloat32}, {"float64", TypeId::kNumberTypeFloat64},
-  {"int", TypeId::kNumberTypeInt},         {"int8", TypeId::kNumberTypeInt8},
-  {"int16", TypeId::kNumberTypeInt16},     {"int32", TypeId::kNumberTypeInt32},
-  {"int64", TypeId::kNumberTypeInt64},     {"uint", TypeId::kNumberTypeUInt},
-  {"uint8", TypeId::kNumberTypeUInt8},     {"uint16", TypeId::kNumberTypeUInt16},
-  {"uint32", TypeId::kNumberTypeUInt32},   {"uint64", TypeId::kNumberTypeUInt64},
-  {"bool", TypeId::kNumberTypeBool},       {"", TypeId::kMetaTypeNone},
+  {"float", TypeId::kNumberTypeFloat32},
+  {"float16", TypeId::kNumberTypeFloat16},
+  {"float32", TypeId::kNumberTypeFloat32},
+  {"float64", TypeId::kNumberTypeFloat64},
+  {"int", TypeId::kNumberTypeInt},
+  {"int8", TypeId::kNumberTypeInt8},
+  {"int16", TypeId::kNumberTypeInt16},
+  {"int32", TypeId::kNumberTypeInt32},
+  {"int64", TypeId::kNumberTypeInt64},
+  {"uint", TypeId::kNumberTypeUInt},
+  {"uint8", TypeId::kNumberTypeUInt8},
+  {"uint16", TypeId::kNumberTypeUInt16},
+  {"uint32", TypeId::kNumberTypeUInt32},
+  {"uint64", TypeId::kNumberTypeUInt64},
+  {"bool", TypeId::kNumberTypeBool},
+  {"int4", TypeId::kNumberTypeInt4},
+  {"", TypeId::kMetaTypeNone},
 };
 
 const std::map<TypeId, std::string> type_id_str_maps = {
-  {TypeId::kNumberTypeFloat32, "float32"}, {TypeId::kNumberTypeFloat16, "float16"},
-  {TypeId::kNumberTypeFloat, "float"},     {TypeId::kNumberTypeFloat64, "float64"},
-  {TypeId::kNumberTypeInt, "int"},         {TypeId::kNumberTypeInt8, "int8"},
-  {TypeId::kNumberTypeInt16, "int16"},     {TypeId::kNumberTypeInt32, "int32"},
-  {TypeId::kNumberTypeInt64, "int64"},     {TypeId::kNumberTypeUInt, "uint"},
-  {TypeId::kNumberTypeUInt8, "uint8"},     {TypeId::kNumberTypeUInt16, "uint16"},
-  {TypeId::kNumberTypeUInt32, "uint32"},   {TypeId::kNumberTypeUInt64, "uint64"},
-  {TypeId::kNumberTypeBool, "int8"},       {TypeId::kMetaTypeNone, ""},
-};
-
-const std::map<std::string, std::string> type_str_maps = {
-  {"Float32", "float32"}, {"Float16", "float16"}, {"Int8", "int8"},   {"Int16", "int16"},
-  {"UInt16", "uint16"},   {"UInt8", "uint8"},     {"Int32", "int32"}, {"UInt32", "uint32"},
-  {"Int64", "int64"},     {"UInt64", "uint64"},   {"Bool", "int8"},   {"Float64", "float64"},
+  {TypeId::kNumberTypeFloat32, "float32"},
+  {TypeId::kNumberTypeFloat16, "float16"},
+  {TypeId::kNumberTypeFloat, "float"},
+  {TypeId::kNumberTypeFloat64, "float64"},
+  {TypeId::kNumberTypeInt, "int"},
+  {TypeId::kNumberTypeInt8, "int8"},
+  {TypeId::kNumberTypeInt16, "int16"},
+  {TypeId::kNumberTypeInt32, "int32"},
+  {TypeId::kNumberTypeInt64, "int64"},
+  {TypeId::kNumberTypeUInt, "uint"},
+  {TypeId::kNumberTypeUInt8, "uint8"},
+  {TypeId::kNumberTypeUInt16, "uint16"},
+  {TypeId::kNumberTypeUInt32, "uint32"},
+  {TypeId::kNumberTypeUInt64, "uint64"},
+  {TypeId::kNumberTypeBool, "int8"},
+  {TypeId::kNumberTypeInt4, "int4"},
+  {TypeId::kMetaTypeNone, ""},
 };
 
 const std::unordered_map<std::string, size_t> type_nbyte_maps = {
@@ -59,6 +71,7 @@ const std::unordered_map<std::string, size_t> type_nbyte_maps = {
   {"int8", sizeof(int) / 4},      {"int16", sizeof(int) / 2},  {"int32", sizeof(int)},
   {"int64", sizeof(int) * 2},     {"uint8", sizeof(int) / 4},  {"uint16", sizeof(int) / 2},
   {"uint32", sizeof(int)},        {"uint64", sizeof(int) * 2}, {"bool", sizeof(char)},
+  {"int4", sizeof(int) / 4},
 };
 
 TypeId DtypeToTypeId(const std::string &dtypes) {
