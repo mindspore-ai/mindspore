@@ -15,7 +15,6 @@
  */
 
 #include "src/common/dynamic_library_loader.h"
-#include <string.h>
 #include <climits>
 #ifndef _WIN32
 #include <dlfcn.h>
@@ -29,11 +28,11 @@
 
 namespace mindspore {
 namespace lite {
-int DynamicLibraryLoader::Open(const char *lib_path) {
+int DynamicLibraryLoader::Open(std::string lib_path) {
   if (handler_ != nullptr) {
     return RET_ERROR;
   }
-  std::string real_path = RealPath(lib_path);
+  std::string real_path = RealPath(lib_path.c_str());
 
 #ifndef _WIN32
   handler_ = dlopen(real_path.c_str(), RTLD_LAZY);
@@ -47,11 +46,11 @@ int DynamicLibraryLoader::Open(const char *lib_path) {
   return RET_OK;
 }
 
-void *DynamicLibraryLoader::GetFunc(const char *func_name) {
+void *DynamicLibraryLoader::GetFunc(std::string func_name) {
 #ifndef _WIN32
-  return dlsym(handler_, func_name);
+  return dlsym(handler_, func_name.c_str());
 #else
-  auto func = GetProcAddress(reinterpret_cast<HINSTANCE__ *>(handler_), func_name);
+  auto func = GetProcAddress(reinterpret_cast<HINSTANCE__ *>(handler_), func_name.c_str());
   return reinterpret_cast<void *>(func);
 #endif
 }

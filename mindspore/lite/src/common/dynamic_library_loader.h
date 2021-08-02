@@ -17,14 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_DYNAMIC_LIBRARY_LOADER_H_
 #define MINDSPORE_LITE_SRC_COMMON_DYNAMIC_LIBRARY_LOADER_H_
 
+#include <string>
+
 namespace mindspore {
 namespace lite {
 class DynamicLibraryLoader {
  public:
   DynamicLibraryLoader() = default;
   ~DynamicLibraryLoader();
-  int Open(const char *lib_path);
-  void *GetFunc(const char *func_name);
+  int Open(std::string lib_path);
+  void *GetFunc(std::string func_name);
   int Close();
 
  private:

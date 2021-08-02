@@ -38,6 +38,7 @@ namespace mindspore::lite {
 namespace {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
+constexpr size_t kConvWeightShapeSize = 4;
 }  // namespace
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   if (layer.type() == "Input" || layer.type() == "Dropout" || layer.type() == "Split") {
@@ -49,12 +50,12 @@ bool IsSkipedLayer(const caffe::LayerParameter &layer) {
 void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int blob_index, std::vector<int32_t> *shape) {
   if (layer.type() == "InnerProduct") {
     if (blob_index == 0) {
-      if (shape->size() == 4 && shape->at(0) == 1 && shape->at(1) == 1) {
+      if (shape->size() == kConvWeightShapeSize && shape->at(0) == 1 && shape->at(1) == 1) {
         shape->erase(shape->begin());
         shape->erase(shape->begin());
       }
     } else if (blob_index == 1) {
-      if (shape->size() == 4 && shape->at(0) == 1 && shape->at(1) == 1 && shape->at(2) == 1) {
+      if (shape->size() == kConvWeightShapeSize && shape->at(0) == 1 && shape->at(1) == 1 && shape->at(2) == 1) {
         shape->erase(shape->begin());
         shape->erase(shape->begin());
         shape->erase(shape->begin());

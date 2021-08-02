@@ -26,31 +26,49 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_UniformReal;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t kFirstKeyIndex = 0;
+constexpr size_t kSecondKeyIndex = 1;
+constexpr size_t kFirstCounterIndex = 0;
+constexpr size_t kSecondCounterIndex = 1;
+constexpr size_t kThirdCounterIndex = 2;
+constexpr size_t kFourthCounterIndex = 3;
+constexpr size_t kFirstResultIndex = 0;
+constexpr size_t kSecondResultIndex = 1;
+constexpr size_t kThirdResultIndex = 2;
+constexpr size_t kFourthResultIndex = 3;
+constexpr size_t kFirstDataIndex = 0;
+constexpr size_t kSecondDataIndex = 1;
+constexpr size_t kThirdDataIndex = 2;
+constexpr size_t kFourthDataIndex = 3;
+constexpr size_t kBitWidth = 32;
+constexpr size_t kPerSegNum = 4;
+}  // namespace
 
 class PhiloxRandom {
  public:
   explicit PhiloxRandom(uint64_t seed_lo, uint64_t seed_hi) {
-    key_[0] = static_cast<uint32_t>(seed_lo);
-    key_[1] = static_cast<uint32_t>(seed_lo >> 32);
-    counter_[2] = static_cast<uint32_t>(seed_hi);
-    counter_[3] = static_cast<uint32_t>(seed_hi >> 32);
+    key_[kFirstKeyIndex] = static_cast<uint32_t>(seed_lo);
+    key_[kSecondKeyIndex] = static_cast<uint32_t>(seed_lo >> kBitWidth);
+    counter_[kThirdCounterIndex] = static_cast<uint32_t>(seed_hi);
+    counter_[kFourthCounterIndex] = static_cast<uint32_t>(seed_hi >> kBitWidth);
   }
   ~PhiloxRandom() = default;
 
   // Skip the specified number of samples of 128-bits in the current stream.
   void Skip(uint64_t count) {
     const uint32_t count_lo = static_cast<uint32_t>(count);
-    uint32_t count_hi = static_cast<uint32_t>(count >> 32);
+    uint32_t count_hi = static_cast<uint32_t>(count >> kBitWidth);
 
-    counter_[0] += count_lo;
-    if (counter_[0] < count_lo) {
+    counter_[kFirstCounterIndex] += count_lo;
+    if (counter_[kFirstCounterIndex] < count_lo) {
       ++count_hi;
     }
 
-    counter_[1] += count_hi;
-    if (counter_[1] < count_hi) {
-      if (++counter_[2] == 0) {
-        ++counter_[3];
+    counter_[kSecondCounterIndex] += count_hi;
+    if (counter_[kSecondCounterIndex] < count_hi) {
+      if (++counter_[kThirdCounterIndex] == 0) {
+        ++counter_[kFourthCounterIndex];
       }
     }
   }
@@ -95,10 +113,10 @@ class PhiloxRandom {
 
   // Helper function to skip the next sample of 128-bits in the current stream.
   void SkipOne() {
-    if (++counter_[0] == 0) {
-      if (++counter_[1] == 0) {
-        if (++counter_[2] == 0) {
-          ++counter_[3];
+    if (++counter_[kFirstCounterIndex] == 0) {
+      if (++counter_[kSecondCounterIndex] == 0) {
+        if (++counter_[kThirdCounterIndex] == 0) {
+          ++counter_[kFourthCounterIndex];
         }
       }
     }
@@ -107,7 +125,7 @@ class PhiloxRandom {
   static void MultiplyHighLow(uint32_t a, uint32_t b, uint32_t *result_low, uint32_t *result_high) {
     const uint64_t product = static_cast<uint64_t>(a) * b;
     *result_low = static_cast<uint32_t>(product);
-    *result_high = static_cast<uint32_t>(product >> 32);
+    *result_high = static_cast<uint32_t>(product >> kBitWidth);
   }
 
   // Helper function for a single round of the underlying Philox algorithm.
@@ -115,17 +133,17 @@ class PhiloxRandom {
                                                   const std::vector<uint32_t> &key) {
     uint32_t lo0;
     uint32_t hi0;
-    MultiplyHighLow(kPhiloxM4x32A, counter[0], &lo0, &hi0);
+    MultiplyHighLow(kPhiloxM4x32A, counter[kFirstCounterIndex], &lo0, &hi0);
 
     uint32_t lo1;
     uint32_t hi1;
-    MultiplyHighLow(kPhiloxM4x32B, counter[2], &lo1, &hi1);
+    MultiplyHighLow(kPhiloxM4x32B, counter[kThirdCounterIndex], &lo1, &hi1);
 
     std::vector<uint32_t> result = {0, 0, 0, 0};
-    result[0] = hi1 ^ counter[1] ^ key[0];
-    result[1] = lo1;
-    result[2] = hi0 ^ counter[3] ^ key[1];
-    result[3] = lo0;
+    result[kFirstResultIndex] = hi1 ^ counter[kSecondCounterIndex] ^ key[0];
+    result[kSecondResultIndex] = lo1;
+    result[kThirdResultIndex] = hi0 ^ counter[kFourthCounterIndex] ^ key[1];
+    result[kFourthResultIndex] = lo0;
     return result;
   }
 
@@ -152,29 +170,29 @@ float uint32ToFloat(uint32_t x) {
 
 void GetPhiloxRandomFloat(float *data, size_t length, int seed, int seed2) {
   PhiloxRandom philoxRandom(seed, seed2);
-  if (length < 4) {
+  if (length < kPerSegNum) {
     auto randNum = philoxRandom.operator()();
     for (size_t i = 0; i < length; i++) {
       data[i] = uint32ToFloat(randNum[i]);
     }
   } else {
     auto randNum = philoxRandom.operator()();
-    data[0] = uint32ToFloat(randNum[0]);
-    data[1] = uint32ToFloat(randNum[1]);
-    data[2] = uint32ToFloat(randNum[2]);
-    data[3] = uint32ToFloat(randNum[3]);
-    for (size_t i = 1; i < length / 4; i++) {
+    data[kFirstDataIndex] = uint32ToFloat(randNum[kFirstDataIndex]);
+    data[kSecondDataIndex] = uint32ToFloat(randNum[kSecondDataIndex]);
+    data[kThirdDataIndex] = uint32ToFloat(randNum[kThirdDataIndex]);
+    data[kFourthDataIndex] = uint32ToFloat(randNum[kFourthDataIndex]);
+    for (size_t i = 1; i < length / kPerSegNum; i++) {
       philoxRandom.Skip(0);
       randNum = philoxRandom.operator()();
-      data[4 * i] = uint32ToFloat(randNum[0]);
-      data[4 * i + 1] = uint32ToFloat(randNum[1]);
-      data[4 * i + 2] = uint32ToFloat(randNum[2]);
-      data[4 * i + 3] = uint32ToFloat(randNum[3]);
+      data[kPerSegNum * i] = uint32ToFloat(randNum[0]);
+      data[kPerSegNum * i + 1] = uint32ToFloat(randNum[1]);
+      data[kPerSegNum * i + 2] = uint32ToFloat(randNum[2]);
+      data[kPerSegNum * i + 3] = uint32ToFloat(randNum[3]);
     }
     philoxRandom.Skip(0);
     randNum = philoxRandom.operator()();
-    for (size_t i = 0; i < length % 4; i++) {
-      data[4 * (length / 4) + i] = uint32ToFloat(randNum[i]);
+    for (size_t i = 0; i < length % kPerSegNum; i++) {
+      data[kPerSegNum * (length / kPerSegNum) + i] = uint32ToFloat(randNum[i]);
     }
   }
 }
