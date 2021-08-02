@@ -39,6 +39,7 @@ constexpr size_t kMakeTupleSize = 3;
 constexpr size_t kMinDependSize = 3;
 constexpr size_t kUpdateStateSize = 3;
 constexpr size_t kAssignSize = 4;
+constexpr size_t kAssignRefInputIndex = 1;
 constexpr size_t kAssignMonadInputIndex = 3;
 
 FuncGraphManagerPtr GetManager(const AnfNodePtr &node) {
@@ -424,6 +425,38 @@ AnfNodePtr EliminateUpdateStateBetweenAssigns(const CNodePtr &update_state, cons
   return nullptr;
 }
 
+// Eliminate Load before Assign nodes.
+// Covert:
+// load = Load(parameter)
+// a = Assign(load, value, u)
+// To:
+// a = Assign(parameter, value, u)
+bool EliminateLoadBeforeAssigns(const FuncGraphManagerPtr &manager, const CNodePtr &update_state) {
+  auto &attach = update_state->input(kAttachIndex);
+  // UpdateState(u, Assign(para, value, u))
+  if (IsPrimitiveCNode(attach, prim::kPrimAssign)) {
+    auto assign = attach->cast<CNodePtr>();
+    if (assign->size() != kAssignSize) {
+      return false;
+    }
+    // If assign's first input is load, eliminate load.
+    auto &ref_node = assign->input(kAssignRefInputIndex);
+    if (IsPrimitiveCNode(ref_node, prim::kPrimLoad)) {
+      auto load = ref_node->cast<CNodePtr>();
+      auto &parameter = load->input(kInputIndex);
+      // If Load used by other nodes, keep load node.
+      auto assign_cnode = assign->cast<CNodePtr>();
+      if (OnlyUsedByOneNode(ref_node, assign_cnode)) {
+        manager->Replace(ref_node, parameter);
+      } else {
+        manager->SetEdge(assign, kInputIndex, parameter);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 // Eliminate UpdateStates between MakeTuple and Assign.
 // Covert:
 // a1 = Assign(para1, value1, u1)
@@ -722,6 +755,8 @@ bool UpdatestateAssignEliminater::operator()(const FuncGraphPtr &func_graph, con
       manager->Replace(node, new_node);
       change = true;
     }
+    bool load_eliminate = EliminateLoadBeforeAssigns(manager, node->cast<CNodePtr>());
+    change = change || load_eliminate;
   }
   return change;
 }
