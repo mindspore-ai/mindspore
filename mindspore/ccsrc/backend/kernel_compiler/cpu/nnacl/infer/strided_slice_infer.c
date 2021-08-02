@@ -158,8 +158,12 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
     }
     if (axes_it != begin_ndim) {
       int axis = axes_it;
-      // begins or ends exceed limit will be set to limit
-      begins[i] = imax(imin(begin_data[axis], input_tensor->shape_[i] - 1), -input_tensor->shape_[i]);
+      if (begin_data[axis] > input_tensor->shape_[i] - 1) {
+        begins[i] = begin_data[axis];
+      } else {
+        begins[i] = imax(imin(begin_data[axis], input_tensor->shape_[i] - 1), -input_tensor->shape_[i]);
+      }
+      // ends exceed limit will be set to limit
       ends[i] = imax(imin(end_data[axis], input_tensor->shape_[i]), -input_tensor->shape_[i] - 1);
       if (stride_data == NULL) {
         return NNACL_ERR;

@@ -38,14 +38,14 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_INPUT_TENSOR_ERROR;
   }
 
-  SetDataTypeFormat(output, input);
+  const TensorC *input0 = inputs[0];
+  const TensorC *input1 = inputs[1];
+  const TensorC *input2 = inputs[2];
+  SetDataTypeFormat(output, input1);
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 
-  const TensorC *input0 = inputs[0];
-  const TensorC *input1 = inputs[1];
-  const TensorC *input2 = inputs[2];
   int num = GetElementNum(input0);
   int num1 = GetElementNum(input1);
   int num2 = GetElementNum(input2);
