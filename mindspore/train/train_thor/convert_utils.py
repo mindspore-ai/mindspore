@@ -195,7 +195,7 @@ class ConvertModelUtils():
         Examples:
             >>> from mindspore.nn.optim import thor
             >>> from mindspore.train.model import Model
-            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
+            >>> from mindspore import FixedLossScaleManager
             >>>
             >>> net = Net()
             >>> loss_manager = FixedLossScaleManager(128, drop_overflow_update=False)

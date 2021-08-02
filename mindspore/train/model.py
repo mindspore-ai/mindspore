@@ -615,8 +615,7 @@ class Model:
                              Default: -1.
 
         Examples:
-            >>> from mindspore import Model, nn
-            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
+            >>> from mindspore import Model, nn, FixedLossScaleManager
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
@@ -872,10 +871,9 @@ class Model:
             >>> # mindspore.cn.
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import Model, context, Tensor, nn
+            >>> from mindspore import Model, context, Tensor, nn, FixedLossScaleManager
             >>> from mindspore.context import ParallelMode
             >>> from mindspore.communication import init
-            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
             >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
             >>> init()
