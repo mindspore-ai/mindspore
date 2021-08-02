@@ -65,6 +65,8 @@ void *ConvolutionDelegateFP16CPUKernel::CopyData(lite::Tensor *tensor) {
 }
 
 int ConvolutionDelegateFP16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     origin_weight_ = CopyData(in_tensors_.at(kWeightIndex));
     need_free_ = need_free_ | WEIGHT_NEED_FREE;

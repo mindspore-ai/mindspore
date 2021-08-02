@@ -86,6 +86,11 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
       ms_context_->allocator->Free(output_fp16);
       return RET_ERROR;
     }
+    MS_ASSERT(input->data_c() != nullptr);
+    MS_ASSERT(scale->data_c() != nullptr);
+    MS_ASSERT(offset->data_c() != nullptr);
+    MS_ASSERT(mean->data_c() != nullptr);
+    MS_ASSERT(variance->data_c() != nullptr);
     Float32ToFloat16(reinterpret_cast<float *>(input->data_c()), reinterpret_cast<float16_t *>(input_fp16),
                      input->ElementsNum());
     Float32ToFloat16(reinterpret_cast<float *>(scale->data_c()), reinterpret_cast<float16_t *>(scale_fp16),
@@ -116,7 +121,8 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     ms_context_->allocator->Free(output_fp16);
     return RET_OK;
   }
-
+  MS_ASSERT(in_tensors_.at(0)->data_c() != nullptr);
+  MS_ASSERT(out_tensors_.at(0)->data_c() != nullptr);
   if (IsTrain() && IsTrainable() && in_tensors_.size() >= kMaxInIdx) {
     CalcMeanVar(static_cast<float16_t *>(in_tensors_.at(0)->data_c()),
                 static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data_c()),
