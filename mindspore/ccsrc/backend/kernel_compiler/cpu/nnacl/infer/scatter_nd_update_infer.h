@@ -22,8 +22,8 @@
 extern "C" {
 #endif
 
-int ScatterNdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                        OpParameter *parameter);
+int ScatterNdUpdateInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                              OpParameter *parameter);
 
 #ifdef __cplusplus
 }
