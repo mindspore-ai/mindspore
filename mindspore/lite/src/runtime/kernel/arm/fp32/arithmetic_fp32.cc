@@ -19,6 +19,7 @@
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Eltwise;
 
@@ -249,25 +250,25 @@ int ArithmeticCPUKernel::Execute(const void *input0, const void *input1, void *o
   int ret = RET_OK;
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
     if (is_opt) {
-      CHECK_NULL_RETURN(arithmetic_opt_run_, RET_ERROR);
+      CHECK_NULL_RETURN(arithmetic_opt_run_);
       ret = arithmetic_opt_run_(reinterpret_cast<const float *>(input0), reinterpret_cast<const float *>(input1),
                                 reinterpret_cast<float *>(output), size, param_);
     } else {
-      CHECK_NULL_RETURN(arithmetic_run_, RET_ERROR);
+      CHECK_NULL_RETURN(arithmetic_run_);
       ret = arithmetic_run_(reinterpret_cast<const float *>(input0), reinterpret_cast<const float *>(input1),
                             reinterpret_cast<float *>(output), size);
     }
   } else if (in_tensors_[0]->data_type() == kNumberTypeBool) {
-    CHECK_NULL_RETURN(arithmetic_run_bool_, RET_ERROR);
+    CHECK_NULL_RETURN(arithmetic_run_bool_);
     ret = arithmetic_run_bool_(reinterpret_cast<const bool *>(input0), reinterpret_cast<const bool *>(input1),
                                reinterpret_cast<bool *>(output), size);
   } else {
     if (is_opt) {
-      CHECK_NULL_RETURN(arithmetic_opt_run_int_, RET_ERROR);
+      CHECK_NULL_RETURN(arithmetic_opt_run_int_);
       ret = arithmetic_opt_run_int_(reinterpret_cast<const int *>(input0), reinterpret_cast<const int *>(input1),
                                     reinterpret_cast<int *>(output), size, param_);
     } else {
-      CHECK_NULL_RETURN(arithmetic_run_int_, RET_ERROR);
+      CHECK_NULL_RETURN(arithmetic_run_int_);
       ret = arithmetic_run_int_(reinterpret_cast<const int *>(input0), reinterpret_cast<const int *>(input1),
                                 reinterpret_cast<int *>(output), size);
     }

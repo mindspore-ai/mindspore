@@ -30,9 +30,7 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
   int output_h = pooling_param->output_h_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  if (output_w == 0) {
-    return NNACL_ERR;
-  }
+  NNACL_CHECK_ZERO_RETURN_ERR(output_w);
 #ifdef ENABLE_AVX
   int c8 = channel / C8NUM * C8NUM;
   MS_FLOAT32X8 min_value_8 = MS_MOV256_F32(minf);
@@ -147,9 +145,7 @@ int MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
   int output_batch = pooling_param->output_batch_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  if (output_w == 0) {
-    return NNACL_ERR;
-  }
+  NNACL_CHECK_ZERO_RETURN_ERR(output_w);
 #ifdef ENABLE_AVX
   int c8 = channel / C8NUM * C8NUM;
   MS_FLOAT32X8 min_value_8 = MS_MOV256_F32(minf);

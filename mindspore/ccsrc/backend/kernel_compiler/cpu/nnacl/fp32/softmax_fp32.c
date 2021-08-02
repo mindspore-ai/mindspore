@@ -128,7 +128,7 @@ void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, const S
       }
       for (int j = 0; j < input_shape[axis]; j++) {
         int axis_offset = inner_offset + j * inner_size;
-        output_ptr[axis_offset] = exp(input_ptr[axis_offset] - max_data);
+        output_ptr[axis_offset] = expf(input_ptr[axis_offset] - max_data);
         sum_data[k + sum_outter_offset] += output_ptr[axis_offset];
       }
     }
