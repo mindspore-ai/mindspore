@@ -147,11 +147,9 @@ class PanguAlphaTrainOneStepWithLossScaleCell(TrainOneStepWithLossScaleCell):
         overflow = self.process_loss_scale(cond)
         # If overflow, surpass weights update
         # if not, update weights
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        return F.depend(loss, succ), cond, scaling_sens
+        if not overflow:
+            self.optimizer(grads)
+        return loss, cond, scaling_sens
 
 class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
     """
@@ -255,9 +253,6 @@ class PanguAlphaTrainPipelineWithLossScaleCell(nn.Cell):
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        ret = (loss, overflow, scaling_sens)
-        return F.depend(ret, succ)
+        if not overflow:
+            self.optimizer(grads)
+        return (loss, overflow, scaling_sens)

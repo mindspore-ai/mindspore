@@ -311,8 +311,8 @@ class BertTrainOneStepCell(nn.TrainOneStepCell):
         if self.enable_clip_grad:
             grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         grads = self.grad_reducer(grads)
-        succ = self.optimizer(grads)
-        return F.depend(loss, succ)
+        self.optimizer(grads)
+        return loss
 
 
 grad_scale = C.MultitypeFuncGraph("grad_scale")
@@ -400,12 +400,9 @@ class BertTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        ret = (loss, cond, scaling_sens)
-        return F.depend(ret, succ)
+        if not overflow:
+            self.optimizer(grads)
+        return (loss, cond, scaling_sens)
 
 
 class BertTrainOneStepWithLossScaleCellForAdam(nn.TrainOneStepWithLossScaleCell):
@@ -475,9 +472,8 @@ class BertTrainOneStepWithLossScaleCellForAdam(nn.TrainOneStepWithLossScaleCell)
         overflow = cond
         if self.loss_scaling_manager is not None:
             overflow = self.loss_scaling_manager(scaling_sens, cond)
-        succ = self.optimizer(grads, overflow)
-        ret = (loss, cond, scaling_sens)
-        return F.depend(ret, succ)
+        self.optimizer(grads, overflow)
+        return (loss, cond, scaling_sens)
 
 cast = P.Cast()
 add_grads = C.MultitypeFuncGraph("add_grads")
@@ -634,9 +630,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         accu_overflow = self.select(overflow, self.one, self.zero)
         self.accu_overflow = self.select(is_accu_step, accu_overflow, self.zero)
 
-        if is_accu_step:
-            succ = False
-        else:
+        if not is_accu_step:
             # apply grad reducer on grads
             grads = self.grad_reducer(self.accu_grads)
             scaling = scaling_sens * self.degree * self.accumulation_steps
@@ -653,13 +647,10 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
             overflow = self.reshape(overflow, (()))
             if sens is None:
                 overflow = self.loss_scaling_manager(self.loss_scale, overflow)
-            if overflow:
-                succ = False
-            else:
-                succ = self.optimizer(grads)
+            if not overflow:
+                self.optimizer(grads)
 
-        ret = (mean_loss, overflow, scaling_sens)
-        return F.depend(ret, succ)
+        return (mean_loss, overflow, scaling_sens)
 
 
 class BertTrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):

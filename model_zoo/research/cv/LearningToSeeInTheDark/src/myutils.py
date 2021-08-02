@@ -225,11 +225,7 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
 
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
+        if not overflow:
+            self.optimizer(grads)
         self.loss_scalar("loss", loss)
-        ret = (loss, cond, scaling_sens)
-
-        return F.depend(ret, succ)
+        return (loss, cond, scaling_sens)

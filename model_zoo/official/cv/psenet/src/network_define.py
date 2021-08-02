@@ -23,7 +23,6 @@ from mindspore import ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.train.callback import Callback
 
 __all__ = ['LossCallBack', 'WithLossCell', 'TrainOneStepCell']
@@ -144,4 +143,5 @@ class TrainOneStepCell(nn.Cell):
         grads = self.grad(self.network, weights)(img, gt_text, gt_kernels, training_mask, self.sens)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss

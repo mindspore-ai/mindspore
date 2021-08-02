@@ -14,7 +14,6 @@
 # ============================================================================
 """define pretrain network"""
 import mindspore.nn as nn
-from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore import ParameterTuple
@@ -85,4 +84,5 @@ class TrainOneStepCell(nn.Cell):
         grads = self.grad(self.net_with_loss, weights)(data1, data2, data3, label)
         if self.reduce_flag:
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss

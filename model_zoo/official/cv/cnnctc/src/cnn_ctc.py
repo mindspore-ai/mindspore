@@ -135,10 +135,8 @@ class CNNCTCTrainOneStepWithLossScaleCell(nn.Cell):
             #apply grad reducer on grads
             grads = self.grad_reducer(grads)
 
-        success = self.optimizer(grads)
-
-        ret = (loss, scaling_sens)
-        return F.depend(ret, success)
+        self.optimizer(grads)
+        return (loss, scaling_sens)
 
 class CNNCTC_Model(nn.Cell):
 
