@@ -25,7 +25,6 @@ from src.CrossEntropySmooth import CrossEntropySmooth
 from src.squeezenet import SqueezeNet as squeezenet
 from src.dataset import create_dataset_imagenet as create_dataset
 from src.config import config
-import moxing as mox
 
 local_data_url = '/cache/data'
 local_ckpt_url = '/cache/ckpt.ckpt'
@@ -33,7 +32,7 @@ local_ckpt_url = '/cache/ckpt.ckpt'
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset', type=str, default='imagenet', help='Dataset.')
 parser.add_argument('--net', type=str, default='squeezenet', help='Model.')
-parser.add_argument('--run_cloudbrain', type=ast.literal_eval, default=True,
+parser.add_argument('--run_cloudbrain', type=ast.literal_eval, default=False,
                     help='Whether it is running on CloudBrain platform.')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
@@ -60,6 +59,7 @@ if __name__ == '__main__':
 
     # create dataset
     if args_opt.run_cloudbrain:
+        import moxing as mox
         mox.file.copy_parallel(args_opt.checkpoint_path, local_ckpt_url)
         mox.file.copy_parallel(args_opt.data_url, local_data_url)
         dataset = create_dataset(dataset_path=local_data_url,
@@ -81,7 +81,10 @@ if __name__ == '__main__':
     net = squeezenet(num_classes=config.class_num)
 
     # load checkpoint
-    param_dict = load_checkpoint(local_ckpt_url)
+    if args_opt.run_cloudbrain:
+        param_dict = load_checkpoint(local_ckpt_url)
+    else:
+        param_dict = load_checkpoint(args_opt.checkpoint_path)
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
