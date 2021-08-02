@@ -66,10 +66,15 @@ class Generator {
   int CodeSessionImplement();
 
   std::string cmake_file_name_{"net.cmake"};
+#ifdef _MSC_VER
+  unsigned int user_umask_ = 18;
+  unsigned int origin_umask_ = 0;
+#else
   // the user's generated file's permission
   mode_t user_umask_ = 0022;
   // the origin file's permission
   mode_t origin_umask_ = 0000;
+#endif
 };
 
 }  // namespace mindspore::lite::micro

@@ -15,17 +15,21 @@ endif()
 #include 3rd
 include_directories(${3RD_DIR})
 include_directories(${3RD_DIR}/flatbuffers/include)
+
 #include ms
 include_directories(${TOP_DIR}/)
 include_directories(${TOP_DIR}/mindspore/core/)
 include_directories(${NNACL_DIR}/../)
 include_directories(${LITE_DIR})
 include_directories(${MICRO_DIR})
+
 #include coder
-include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
-include(${MICRO_DIR}/cmake/file_list.cmake)
-include(${MICRO_DIR}/cmake/package_wrapper.cmake)
-add_subdirectory(wrapper)
+if(NOT MSVC)
+    include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
+    include(${MICRO_DIR}/cmake/file_list.cmake)
+    include(${MICRO_DIR}/cmake/package_wrapper.cmake)
+    add_subdirectory(wrapper)
+endif()
 
 if(MSLITE_ENABLE_CONVERTER)
     add_executable(codegen main.cc ${FILE_SET})

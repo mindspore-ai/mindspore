@@ -19,6 +19,10 @@
 #include <asm/hwcap.h>
 #endif
 #include "src/common/utils.h"
+#ifdef _MSC_VER
+#include <windows.h>
+#undef ERROR
+#endif
 
 namespace mindspore {
 namespace lite {

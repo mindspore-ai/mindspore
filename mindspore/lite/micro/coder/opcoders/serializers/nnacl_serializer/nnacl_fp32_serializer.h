@@ -35,6 +35,7 @@
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 #include "wrapper/fp32/arithmetic_fp32_wrapper.h"
+
 namespace mindspore::lite::micro::nnacl {
 
 class NNaclFp32Serializer : public Serializer {
