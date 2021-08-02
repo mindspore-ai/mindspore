@@ -29,6 +29,10 @@ using mindspore::schema::PrimitiveType_AvgPoolGrad;
 using mindspore::schema::PrimitiveType_MaxPoolGrad;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kNumInputDim_2 = 2;
+constexpr int kNumShapeDim_2 = 2;
+}  // namespace
 int PoolingGradCPUKernelFp16::ReSize() {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
 
@@ -36,11 +40,11 @@ int PoolingGradCPUKernelFp16::ReSize() {
   auto out_shape = in_tensors_.at(1)->shape();
 
   if (pool_param->pool_mode_ == PoolMode_AvgPool) {
-    out_shape = in_tensors_.at(2)->shape();
+    out_shape = in_tensors_.at(kNumInputDim_2)->shape();
   }
 
   int input_h = in_shape.at(1);
-  int input_w = in_shape.at(2);
+  int input_w = in_shape.at(kNumShapeDim_2);
 
   if (pool_param->global_) {
     pool_param->window_w_ = input_w;
@@ -67,18 +71,17 @@ int PoolingGradCPUKernelFp16::Execute(int task_id) {
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
   int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
-
   if (count > 0) {
     int in_batch_size = pool_param->input_h_ * pool_param->input_w_ * pool_param->input_channel_;
     int out_batch_size = pool_param->output_h_ * pool_param->output_w_ * pool_param->input_channel_;
     std::fill(output_ptr + task_id * stride * in_batch_size, output_ptr + ((task_id * stride) + count) * in_batch_size,
               0.f);
     if (pool_param->pool_mode_ == PoolMode_MaxPool) {
-      auto dy_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data_c());
+      auto dy_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInputDim_2)->data_c());
       MaxPoolingFp16Grad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
                          output_ptr + task_id * stride * in_batch_size, count, pool_param);
     } else {
-      input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data_c());
+      input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInputDim_2)->data_c());
       AvgPoolingFp16Grad(input_ptr + task_id * stride * out_batch_size, output_ptr + task_id * stride * in_batch_size,
                          count, pool_param);
     }
