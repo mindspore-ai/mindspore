@@ -32,6 +32,5 @@ tensor::MSTensor *tensor::MSTensor::CreateTensor(const std::string &name, TypeId
   tensor->set_data_type(type);
   return tensor;
 }
-
 }  // namespace tensor
 }  // namespace mindspore
