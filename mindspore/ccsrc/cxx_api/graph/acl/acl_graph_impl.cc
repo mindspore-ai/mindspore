@@ -17,6 +17,7 @@
 #include "include/api/context.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "utils/log_adapter.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, Ascend310, AclGraphImpl);
@@ -33,7 +34,7 @@ AclGraphImpl::~AclGraphImpl() { (void)FinalizeEnv(); }
 
 Status AclGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
-  Status ret = Load(device_id_);
+  Status ret = Load(IntToUint(device_id_));
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
     return ret;
@@ -43,7 +44,7 @@ Status AclGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTens
 }
 
 std::vector<MSTensor> AclGraphImpl::GetInputs() {
-  Status ret = Load(device_id_);
+  Status ret = Load(IntToUint(device_id_));
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
     return {};
@@ -53,7 +54,7 @@ std::vector<MSTensor> AclGraphImpl::GetInputs() {
 }
 
 std::vector<MSTensor> AclGraphImpl::GetOutputs() {
-  Status ret = Load(device_id_);
+  Status ret = Load(IntToUint(device_id_));
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
     return {};
@@ -176,7 +177,7 @@ Status AclGraphImpl::Load(uint32_t device_id) {
   auto om_data = graph_data->GetOMData();
 
   // init
-  device_id_ = device_id;
+  device_id_ = UintToInt(device_id);
   Status ret = InitEnv();
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitEnv failed.";
