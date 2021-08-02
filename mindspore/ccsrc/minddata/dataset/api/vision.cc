@@ -21,6 +21,7 @@
 #endif
 
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
@@ -118,6 +119,19 @@ std::shared_ptr<TensorOperation> Affine::Parse() {
 }
 
 #ifndef ENABLE_ANDROID
+// AdjustGamma Transform Operation.
+struct AdjustGamma::Data {
+  Data(float gamma, float gain) : gamma_(gamma), gain_(gain) {}
+  float gamma_;
+  float gain_;
+};
+
+AdjustGamma::AdjustGamma(float gamma, float gain) : data_(std::make_shared<Data>(gamma, gain)) {}
+
+std::shared_ptr<TensorOperation> AdjustGamma::Parse() {
+  return std::make_shared<AdjustGammaOperation>(data_->gamma_, data_->gain_);
+}
+
 // AutoContrast Transform Operation.
 struct AutoContrast::Data {
   Data(float cutoff, const std::vector<uint32_t> &ignore) : cutoff_(cutoff), ignore_(ignore) {}

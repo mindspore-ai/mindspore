@@ -53,6 +53,7 @@ namespace dataset {
 constexpr char kTensorOp[] = "TensorOp";
 
 // image
+constexpr char kAdjustGammaOp[] = "AdjustGammaOp";
 constexpr char kAffineOp[] = "AffineOp";
 constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";

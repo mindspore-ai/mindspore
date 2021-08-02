@@ -134,6 +134,10 @@ void CVOpCommon::CheckImageShapeAndData(const std::shared_ptr<Tensor> &output_te
       expect_image_path = dir_path + "imagefolder/apple_expect_randomaffine.jpg";
       actual_image_path = dir_path + "imagefolder/apple_actual_randomaffine.jpg";
       break;
+    case kAdjustGamma:
+      expect_image_path = dir_path + "imagefolder/apple_expect_adjustgamma.png";
+      actual_image_path = dir_path + "imagefolder/apple_actual_adjustgamma.png";
+      break;
     case kAutoContrast:
       expect_image_path = dir_path + "imagefolder/apple_expect_autocontrast.jpg";
       actual_image_path = dir_path + "imagefolder/apple_actual_autocontrast.jpg";
