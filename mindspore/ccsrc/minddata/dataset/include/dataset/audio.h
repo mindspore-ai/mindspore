@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
@@ -45,6 +46,27 @@ class BandBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~BandBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Design two-pole allpass filter. Similar to SoX implementation.
+class AllpassBiquad final : public TensorTransform {
+ public:
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] central_freq Central frequency (in Hz).
+  /// \param[in] Q https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
+  explicit AllpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707);
+
+  /// \brief Destructor.
+  ~AllpassBiquad() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.

@@ -222,6 +222,11 @@ def check_uint8(value, arg_name=""):
     check_value(value, [UINT8_MIN, UINT8_MAX])
 
 
+def check_int32(value, arg_name=""):
+    type_check(value, (int,), arg_name)
+    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
+
+
 def check_uint32(value, arg_name=""):
     """
     Validates the value of a variable is within the range of uint32.
@@ -244,11 +249,6 @@ def check_pos_uint32(value, arg_name=""):
     """
     type_check(value, (int,), arg_name)
     check_value(value, [POS_INT_MIN, UINT32_MAX])
-
-
-def check_int32(value, arg_name=""):
-    type_check(value, (int,), arg_name)
-    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
 
 
 def check_pos_int32(value, arg_name=""):

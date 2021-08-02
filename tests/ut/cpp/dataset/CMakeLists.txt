@@ -12,6 +12,7 @@ SET(DE_UT_SRCS
         btree_test.cc
         buddy_test.cc
         build_vocab_test.cc
+        c_api_audio_a_to_q_test.cc
         c_api_cache_test.cc
         c_api_dataset_album_test.cc
         c_api_audio_a_to_q_test.cc

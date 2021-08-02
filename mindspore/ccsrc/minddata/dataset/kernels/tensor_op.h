@@ -137,6 +137,7 @@ constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
 constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 
 // audio
+constexpr char kAllpassBiquadOp[] = "AllpassBiquadOp";
 constexpr char kBandBiquadOp[] = "BandBiquadOp";
 
 // data
