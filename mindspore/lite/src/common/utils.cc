@@ -19,8 +19,9 @@
 #include <asm/hwcap.h>
 #endif
 #include "src/common/utils.h"
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 #include <windows.h>
+#undef ERROR
 #endif
 
 namespace mindspore {

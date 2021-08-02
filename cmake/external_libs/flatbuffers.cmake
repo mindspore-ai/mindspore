@@ -1,5 +1,12 @@
-set(flatbuffers_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
-set(flatbuffers_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+if(MSVC)
+    set(flatbuffers_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+    set(flatbuffers_CFLAGS "${CMAKE_CXX_FLAGS}")
+    set(flatbuffers_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+else()
+    set(flatbuffers_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+    set(flatbuffers_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+endif()
+
 if(WIN32)
     set(flatbuffers_USE_STATIC_LIBS ON)
 endif()
@@ -30,7 +37,7 @@ else()
             URL ${REQ_URL}
             MD5 ${MD5}
             CMAKE_OPTION -DCMAKE_C_COMPILER=${FLATC_GCC_COMPILER} -DCMAKE_CXX_COMPILER=${FLATC_GXX_COMPILER}
-            -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
+            -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release)
 endif()
 
 include_directories(${flatbuffers_INC})
