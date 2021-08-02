@@ -311,7 +311,7 @@ std::vector<size_t> Fracz3DDeviceShape(const std::vector<size_t> &shape) {
   std::vector<size_t> device_shape;
   const size_t C1 = (shape[1] + kCubeSize - 1) / kCubeSize;
   const size_t N1 = (shape[0] + kCubeSize - 1) / kCubeSize;
-  device_shape.push_back(shape[2] * C1 * shape[3] * shape[4]);
+  device_shape.push_back(shape[D_ncdhw] * C1 * shape[H_ncdhw] * shape[W_ncdhw]);
   device_shape.push_back(N1);
   device_shape.push_back(kCubeSize);
   device_shape.push_back(kCubeSize);
@@ -818,7 +818,7 @@ bool NchwTo4D(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto src_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          auto dst_idx = 0;
+          size_t dst_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             dst_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -850,7 +850,7 @@ bool ToNchw(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto dst_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          auto src_idx = 0;
+          size_t src_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             src_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -938,9 +938,12 @@ bool FracZToNchw(const FormatArgs &args, void *result) {
     return false;
   }
 
-  auto n0 = args.device_shape.at(1);
-  auto ni = args.device_shape.at(2);
-  auto c0 = args.device_shape.at(3);
+  const size_t kFz_n0 = 1;
+  const size_t kFz_ni = 2;
+  const size_t kFz_no = 3;
+  auto n0 = args.device_shape.at(kFz_n0);
+  auto ni = args.device_shape.at(kFz_ni);
+  auto c0 = args.device_shape.at(kFz_no);
   auto n = args.host_shape[kN];
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
@@ -1204,9 +1207,9 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
-  size_t c0 = 16;
+  size_t c0 = kCubeSize;
   if (args.device_format == kOpFormat_NC1HWC0_C04) {
-    c0 = 4;
+    c0 = kC04Size;
   }
   auto c1 = DivCeil(c, c0);
   auto hw = h * w;
@@ -1259,7 +1262,8 @@ bool Nc1hwc0ToNchw(const FormatArgs &args, void *result) {
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
   auto c1 = args.device_shape[1];
-  auto c0 = args.device_shape[4];
+  const size_t kC0_nc1hwc0 = 4;
+  auto c0 = args.device_shape[kC0_nc1hwc0];
 
   auto hw = h * w;
   auto chw = c * hw;

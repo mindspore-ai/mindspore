@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kInvalidFormat = "InvalidFormat";
 class KernelBuildInfo {
  public:
   class KernelBuildInfoBuilder;
@@ -96,8 +97,6 @@ class KernelBuildInfo {
   bool operator==(const KernelBuildInfo &other) const;
 
   bool operator!=(const KernelBuildInfo &other) const;
-
-  static auto constexpr kInvalidFormat = "InvalidFormat";
 
  private:
   KernelType kernel_type_;

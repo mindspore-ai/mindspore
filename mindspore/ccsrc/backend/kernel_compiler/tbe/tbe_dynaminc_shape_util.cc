@@ -30,7 +30,8 @@ namespace {
 constexpr int64_t k16 = 16;
 constexpr int64_t k4 = 4;
 constexpr int kDims2 = 2;
-enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims, N_ncdhw = 0, C_ncdhw, D_ncdhw, H_ncdhw, W_ncdhw, kNcdhwDims };
+enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims };
+enum k3DAxis : int { N_ncdhw = 0, C_ncdhw, D_ncdhw, H_ncdhw, W_ncdhw, kNcdhwDims };
 RangePair PaddingRangeTo5D(const RangePair &ori_range) {
   RangePair dst_range(kNcdhwDims, std::pair<int64_t, int64_t>(1, 1));
   switch (ori_range.size()) {

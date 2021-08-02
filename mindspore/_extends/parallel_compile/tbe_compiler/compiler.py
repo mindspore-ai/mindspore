@@ -100,7 +100,6 @@ def build_op(build_type, json_str, tune_mode=None):
             _replace_range(outputs_args)
 
         if custom_flag:
-            # op_module = __import__(op_name)
             op_module_name = op_name
         else:
             if is_dynamic_shape:
