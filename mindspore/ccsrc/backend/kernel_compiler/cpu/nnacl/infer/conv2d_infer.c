@@ -62,6 +62,9 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 
   const TensorC *input_tensor = inputs[0];
+  if (input_tensor->format_ != Format_NHWC && input_tensor->format_ != Format_KHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   const TensorC *weight_tensor = inputs[1];
   TensorC *out_tensor = outputs[0];
 

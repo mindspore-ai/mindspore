@@ -67,6 +67,10 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "No input!";
+    return RET_ERROR;
+  }
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
   if (parameter->type_ == schema::PrimitiveType_PartialFusion || parameter->type_ == schema::PrimitiveType_Switch ||
@@ -119,6 +123,9 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   if (ret == NNACL_INFER_INVALID) {
     return RET_INFER_INVALID;
   } else if (ret != NNACL_OK) {
+    if (ret == NNACL_FORMAT_ERROR) {
+      MS_LOG(ERROR) << "Unexpected input format " << inputs[0]->format();
+    }
     return RET_INFER_ERR;
   }
   return RET_OK;

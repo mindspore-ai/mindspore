@@ -123,6 +123,9 @@ int ResizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 
   const TensorC *input = inputs[0];
+  if (input->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
   if (!InferFlag(inputs, inputs_size)) {

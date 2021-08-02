@@ -26,6 +26,9 @@ int Conv2dGradFilterInferShape(const TensorC *const *inputs, size_t inputs_size,
   if (inputs_size < 3 || outputs_size != 1) {
     return NNACL_ERR;
   }
+  if (inputs[0]->format_ != Format_NHWC || inputs[1]->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   SetDataTypeFormat(outputs[0], inputs[0]);
 
   if (inputs[2]->shape_size_ < 1 || inputs[2]->data_ == NULL) {

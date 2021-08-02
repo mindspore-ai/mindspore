@@ -32,6 +32,9 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (in0 == NULL || out == NULL) {
     return NNACL_NULL_PTR;
   }
+  if (in0->format_ != Format_NHWC) {
+    return NNACL_FORMAT_ERROR;
+  }
   SetDataTypeFormat(out, in0);
 
   if (inputs[2]->shape_size_ < 1 || inputs[2]->data_ == NULL) {
