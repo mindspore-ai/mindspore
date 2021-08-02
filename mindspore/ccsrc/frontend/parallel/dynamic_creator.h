@@ -203,6 +203,7 @@ REGISTER(BatchNormInfo);
 REGISTER(MaxPoolInfo);
 REGISTER(AvgPoolInfo);
 REGISTER(GatherDInfo);
+REGISTER(ReduceAnyInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

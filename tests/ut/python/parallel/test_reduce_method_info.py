@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import numpy as np
-
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -585,3 +585,54 @@ def test_max_empty_tuple():
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
 
     compile_net(net, x, y, b)
+
+
+def test_any_mul():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.mul1 = P.Mul().shard(strategy1)
+            self.reduce_any = P.ReduceAny(keep_dims=False).shard(strategy2)
+            self.cast = P.Cast()
+
+        def construct(self, x, y):
+            out = self.mul1(x, y)
+            out = self.cast(out, ms.bool_)
+            out = self.reduce_any(out, 1)
+            return out
+
+    context.set_auto_parallel_context(device_num=64, global_rank=0)
+    strategy1 = ((1, 8, 1), (1, 8, 1))
+    strategy2 = ((1, 8, 1),)
+    net = GradWrapNoBias(NetWithLossNoBias(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        compile_net_no_bias(net, x, y)
+
+
+def test_any_mul2():
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.mul1 = P.Mul().shard(strategy1)
+            self.reduce_any = P.ReduceAny(keep_dims=False).shard(strategy2)
+            self.cast = P.Cast()
+
+        def construct(self, x, y):
+            out = self.mul1(x, y)
+            out = self.cast(out, ms.bool_)
+            out = self.reduce_any(out, -1)
+            return out
+
+    context.set_auto_parallel_context(device_num=64, global_rank=0)
+    strategy1 = ((8, 1, 1), (8, 1, 1))
+    strategy2 = ((8, 1, 1),)
+    net = GradWrapNoBias(NetWithLossNoBias(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    compile_net_no_bias(net, x, y)

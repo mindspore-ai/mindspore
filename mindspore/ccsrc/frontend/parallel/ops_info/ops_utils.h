@@ -87,6 +87,7 @@ constexpr char GEN_STRATEGY[] = "gen_strategy";
 constexpr char REDUCE_OP_SUM[] = "sum";
 constexpr char REDUCE_OP_MAX[] = "max";
 constexpr char REDUCE_OP_MIN[] = "min";
+constexpr char REDUCE_OP_ANY[] = "any";
 constexpr char OP_PATH[] = "mindspore.ops.operations";
 constexpr char INNER_OP_PATH[] = "mindspore.ops.operations._inner_ops";
 constexpr char FUNCTIONAL_OP_PATH[] = "mindspore.ops.functional";

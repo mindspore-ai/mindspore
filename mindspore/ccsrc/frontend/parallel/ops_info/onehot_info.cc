@@ -42,11 +42,6 @@ Status OneHotInfo::GetAttrs() {
     }
   }
 
-  if (inputs_shape_[0].size() != 1) {
-    MS_LOG(ERROR) << name_ << ": Input's shape only support 1-D now.";
-    return FAILED;
-  }
-
   if ((axis_ > 1) || (axis_ < -1)) {
     MS_LOG(ERROR) << name_ << ": Axis " << axis_ << " is out of range[-1, 1].";
     return FAILED;
@@ -55,23 +50,38 @@ Status OneHotInfo::GetAttrs() {
 }
 
 Status OneHotInfo::CheckStrategy(const StrategyPtr &strategy) {
-  return CheckStrategyValue(strategy, {outputs_shape_.at(0), inputs_shape_.at(1), inputs_shape_.at(2)});
+  if (CheckStrategyValue(strategy, {outputs_shape_.at(0), inputs_shape_.at(1), inputs_shape_.at(2)}) != SUCCESS) {
+    return FAILED;
+  }
+  auto stra = strategy->GetInputDim().at(0);
+  bool invalid = false;
+  for (size_t i = 1; i < stra.size(); ++i) {
+    if (stra.at(i) != 1) {
+      invalid = true;
+      break;
+    }
+  }
+  if ((inputs_shape_.at(0).size() > 1) && ((axis_ != -1) || invalid)) {
+    MS_LOG(ERROR) << "When input dimension is > 1, axis must be -1, and strategy must be data parallel.";
+    return FAILED;
+  }
+  return SUCCESS;
 }
 
 Status OneHotInfo::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
-  // Now input only support 1-D tensor, so the output is a 2-D tensor
-  // If input is a vector of length features, the output shape will be:
-  // [features, depth] if axis == -1 (or axis == 1)
-  // [depth, features] if axis == 0
   if (axis_ == 0) {
+    // Here, only support 1-D input tensor, so the output is a 2-D tensor
+    // If input is a vector of length features, the output shape will be:
+    // [depth, features] if axis == 0
     dev_matrix_shape_.push_back(input_strategy[1]);  // the depth is un-splittable
     dev_matrix_shape_.push_back(input_strategy[0]);  // the features is splittable
   } else {
-    dev_matrix_shape_.push_back(input_strategy[0]);  // the features is splittable
-    dev_matrix_shape_.push_back(input_strategy[1]);  // the depth is un-splittable
+    for (const auto &input_stra : input_strategy) {
+      dev_matrix_shape_.push_back(input_stra);
+    }
   }
   old_dev_matrix_back_ = dev_matrix_shape_.back();
   repeated_num_in_dev_matrix_right_ = false;
@@ -81,20 +91,20 @@ Status OneHotInfo::InferDevMatrixShape() {
 Status OneHotInfo::InferTensorMap() {
   Shape input_tensor_map_index, output_tensor_map_index;
   size_t size = outputs_shape_[0].size();
-  // such as 2: tensor_map_index [1,0]
   if (axis_ == 0) {
     for (size_t i = 0; i < size; ++i) {
       output_tensor_map_index.push_back((int64_t)(i));
     }
+    input_tensor_map_index.push_back(1);
   } else {
     for (size_t i = 0; i < size; ++i) {
       output_tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
     }
+    for (size_t i = 0; i < size - 1; ++i) {
+      input_tensor_map_index.push_back((int64_t)(LAST_INDEX(size) - i));
+    }
   }
   outputs_tensor_map_.push_back(output_tensor_map_index);
-
-  // Now input only support 1-D tensor
-  input_tensor_map_index.push_back(1);
 
   inputs_tensor_map_.push_back(input_tensor_map_index);
   return SUCCESS;
