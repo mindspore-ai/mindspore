@@ -554,6 +554,7 @@ inline const PrimitivePtr kPrimPriorBox = std::make_shared<Primitive>("PriorBox"
 inline const PrimitivePtr kPrimQuantDTypeCast = std::make_shared<Primitive>("QuantDTypeCast");
 inline const PrimitivePtr kPrimWhile = std::make_shared<Primitive>("While");
 inline const PrimitivePtr kPrimPull = std::make_shared<Primitive>("Pull");
+inline const PrimitivePtr kPrimPush = std::make_shared<Primitive>("Push");
 inline const PrimitivePtr kPrimNPUAllocFloatStatus = std::make_shared<Primitive>("NPUAllocFloatStatus");
 
 // Structures

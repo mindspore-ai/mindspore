@@ -2098,9 +2098,6 @@ KernelGraphPtr SessionBasic::NewKernelGraph() {
 AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) {
   MS_EXCEPTION_IF_NULL(push_node);
   for (auto &node : node_list) {
-    if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
-      continue;
-    }
     if (node != nullptr && node->isa<CNode>()) {
       for (auto input : node->cast<CNodePtr>()->inputs()) {
         if (push_node == AnfAlgo::VisitKernel(input, 0).first) {
