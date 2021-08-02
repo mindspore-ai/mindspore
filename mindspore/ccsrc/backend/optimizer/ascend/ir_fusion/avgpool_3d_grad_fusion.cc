@@ -34,7 +34,7 @@ constexpr size_t kStridesDims = 3;
 constexpr size_t kOrigShapeDims = 5;
 constexpr size_t kShapeDims = 6;
 constexpr size_t kPadDims = 6;
-constexpr size_t kC0 = 16;
+constexpr int64_t kC0 = 16;
 
 void GetAttrs(const AnfNodePtr &node, std::vector<int64_t> *kernel_size, std::vector<int64_t> *strides,
               std::vector<int64_t> *pad_list, std::vector<int64_t> *origin_input_shape, bool *ceil_mode,
@@ -120,8 +120,8 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   auto tensor_data = reinterpret_cast<float16 *>(assist_tensor->data_c());
   int64_t cnt = c1 * kd * kh * kw;
   for (int64_t i = 0; i < cnt; ++i) {
-    for (size_t j = 0; j < kC0; ++j) {
-      for (size_t k = 0; k < kC0; ++k) {
+    for (int64_t j = 0; j < kC0; ++j) {
+      for (int64_t k = 0; k < kC0; ++k) {
         float t = j == k ? val : 0;
         *tensor_data = float16(t);
         ++tensor_data;
@@ -140,7 +140,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
 AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const std::vector<size_t> &ori_shape,
                                const std::vector<int64_t> &ori_input_shape, const std::vector<int64_t> &kernel_size,
                                const std::vector<int64_t> &strides, const std::vector<int64_t> &pad_list,
-                               bool ceil_mode, bool count_include_pad) {
+                               bool count_include_pad) {
   MS_EXCEPTION_IF_NULL(func_graph);
   //  assist tensor 2
   std::vector<int64_t> grad_shape;
@@ -246,8 +246,8 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
 
   // assist node 2
   if (divisor_override == 0 && (!IsZeroPads(pad_list) || ceil_mode)) {
-    auto multiplier = ConstructMultiplier(func_graph, dims_in, origin_input_shape, kernel_size, strides, pad_list,
-                                          ceil_mode, count_include_pad);
+    auto multiplier =
+      ConstructMultiplier(func_graph, dims_in, origin_input_shape, kernel_size, strides, pad_list, count_include_pad);
     new_inputs.push_back(multiplier);
   }
   auto new_3d_grad = func_graph->NewCNode(new_inputs);
