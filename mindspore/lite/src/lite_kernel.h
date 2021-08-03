@@ -327,7 +327,7 @@ class LiteKernel {
 
   virtual bool IsReady(const std::vector<lite::Tensor *> &in_tensor);
 
-  virtual void InitOutTensorInitRefCount();
+  virtual void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels = nullptr);
 
   KernelKey desc() const { return desc_; }
 
@@ -378,4 +378,4 @@ kernel::InnerKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs
 }
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_INNER_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_H_

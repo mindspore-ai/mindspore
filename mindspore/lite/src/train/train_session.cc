@@ -24,22 +24,23 @@
 #include <memory>
 #include <map>
 #include "include/errorcode.h"
-#include "src/common/utils.h"
-#include "src/tensor.h"
-#include "src/lite_model.h"
-#include "src/train/loss_kernel.h"
-#include "src/train/optimizer_kernel.h"
-#include "src/sub_graph_kernel.h"
-#include "src/train/train_populate_parameter.h"
-#include "src/train/train_populate_parameter_v0.h"
 #include "src/executor.h"
+#include "src/lite_model.h"
+#include "src/lite_kernel_util.h"
+#include "src/sub_graph_kernel.h"
+#include "src/tensor.h"
 #include "src/kernel_registry.h"
+#include "src/common/prim_util.h"
+#include "src/common/tensor_util.h"
+#include "src/common/utils.h"
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 #include "src/runtime/kernel/arm/fp32/batchnorm_fp32.h"
-#include "src/common/tensor_util.h"
+#include "src/train/loss_kernel.h"
+#include "src/train/optimizer_kernel.h"
 #include "src/train/train_utils.h"
 #include "src/train/train_export.h"
-#include "src/common/prim_util.h"
+#include "src/train/train_populate_parameter.h"
+#include "src/train/train_populate_parameter_v0.h"
 
 namespace mindspore {
 namespace lite {
@@ -412,6 +413,13 @@ int TrainSession::Train() {
   output_node_map_ = train_output_node_map_;
   output_tensor_map_ = train_output_tensor_map_;
   output_tensor_names_ = train_output_tensor_names_;
+  kernel::LiteKernelUtil::InitTensorInitRefCount(train_kernels_);
+  for (auto &ms_tensors : eval_output_node_map_) {  // Allow to look at prediction also during training
+    for (auto &ms_tensor : ms_tensors.second) {
+      lite::Tensor *lite_tensor = static_cast<lite::Tensor *>(ms_tensor);
+      lite_tensor->set_init_ref_count(lite_tensor->init_ref_count() + 1);
+    }
+  }
   return RET_OK;
 }
 
@@ -431,6 +439,13 @@ int TrainSession::Eval() {
   output_node_map_ = eval_output_node_map_;
   output_tensor_map_ = eval_output_tensor_map_;
   output_tensor_names_ = eval_output_tensor_names_;
+  kernel::LiteKernelUtil::InitTensorInitRefCount(inference_kernels_);
+  for (auto &ms_tensors : eval_output_node_map_) {
+    for (auto &ms_tensor : ms_tensors.second) {
+      lite::Tensor *lite_tensor = static_cast<lite::Tensor *>(ms_tensor);
+      lite_tensor->set_init_ref_count(lite_tensor->init_ref_count() + 1);
+    }
+  }
   return RET_OK;
 }
 
