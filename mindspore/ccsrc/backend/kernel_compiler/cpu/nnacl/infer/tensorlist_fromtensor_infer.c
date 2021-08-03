@@ -59,6 +59,11 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
     return NNACL_NULL_PTR;
   }
 
+  if (dim0 < 0) {
+    free(tensor_shape.shape_);
+    free(tensor_shape.shape_size_);
+    return NNACL_ERR;
+  }
   for (int i = 0; i < dim0; i++) {
     tensor_shape.shape_[i] = (int *)(input0->shape_ + 1);
     tensor_shape.shape_size_[i] = (int)(input0->shape_size_) - 1;
@@ -68,6 +73,8 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
   output->element_num_ = dim0;
   int ret = MallocTensorListData(output, input0->data_type_, &tensor_shape);
   if (ret != NNACL_OK) {
+    free(tensor_shape.shape_);
+    free(tensor_shape.shape_size_);
     return NNACL_ERR;
   }
   free(tensor_shape.shape_);

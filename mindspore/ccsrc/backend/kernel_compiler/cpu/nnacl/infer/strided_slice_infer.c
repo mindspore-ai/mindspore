@@ -138,6 +138,9 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
     return ret;
   }
 
+  if (*ndim > MAX_SHAPE_SIZE || *ndim < 0) {
+    return NNACL_ERR;
+  }
   for (int i = 0; i < *ndim; i++) {
     in_shape[i] = 0;
     begins[i] = 0;

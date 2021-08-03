@@ -48,6 +48,9 @@ int UnsqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
     }
   } else {
     int sz = in_rank + dim_rank;
+    if (sz < 0) {
+      return NNACL_ERR;
+    }
     size_t in_itr = 0;
     size_t ax_itr = 0;
     for (int i = 0; i < sz; i++) {
