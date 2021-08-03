@@ -21,6 +21,7 @@
 namespace mindspore::opt {
 namespace {
 const auto &p1 = std::placeholders::_1;
+const size_t kWeightShapeSize = 2;
 }  // namespace
 
 MultiHeadAttentionFusion::MultiHeadAttentionFusion(const string &name, bool multigraph)
@@ -244,7 +245,8 @@ std::shared_ptr<ops::Attention> MultiHeadAttentionFusion::BuildAttentionPrim(con
     MS_LOG(ERROR) << "Get reshape k data failed";
     return nullptr;
   }
-  if (shape_k.size() < 2 || shape_v.size() < 2 || shape_k.at(shape_k.size() - 2) != shape_v.at(shape_v.size() - 2)) {
+  if (shape_k.size() < kWeightShapeSize || shape_v.size() < kWeightShapeSize ||
+      shape_k.at(shape_k.size() - kWeightShapeSize) != shape_v.at(shape_v.size() - kWeightShapeSize)) {
     MS_LOG(ERROR) << "Shape k or shape v is invalid.";
     return nullptr;
   }

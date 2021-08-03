@@ -83,5 +83,4 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::nnacl
