@@ -23,6 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
+
 def test_for_in_for_01():
     class ForInForNet(nn.Cell):
         def __init__(self):
@@ -87,10 +88,10 @@ def test_for_in_for_02():
             self.param_b = Parameter(Tensor(11, mstype.int32), name='b')
 
         def construct(self, x):
-            for _ in range(0, 10):
+            for _ in range(0, 3):
                 x = x * 2
                 self.assign(self.param_a, x + self.param_a)
-                for _ in range(0, 5):
+                for _ in range(0, 2):
                     x = self.add(x, x)
                     self.param_b += 1
             y = self.sub(x, self.param_b + self.param_a)
