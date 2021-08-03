@@ -248,7 +248,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::WriteResult(const std::vector<std::vector<M
         for (uint32_t j = 0; j < objInfos[i].size(); j++) {
             tfile << "#Obj: " << j << ", box: " << objInfos[i][j].x0 << " " << objInfos[i][j].y0 << " "
                 << objInfos[i][j].x1 << " " << objInfos[i][j].y1
-                << ", confidence: " << objInfos[i][j].confidence << ", lable: " << labelMap_[objInfos[i][j].classId]
+                << ", confidence: " << objInfos[i][j].confidence << ", label: " << labelMap_[objInfos[i][j].classId]
                 << ", id: " << objInfos[i][j].classId << std::endl;
         }
     }
