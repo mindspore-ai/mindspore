@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
@@ -52,6 +53,7 @@ class BackwardNet(nn.Cell):
         return grads
 
 
+@pytest.mark.skip(reason="not supported side effect")
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -66,6 +68,7 @@ def test_forward():
     assert graph_mode_out == pynative_mode_out
 
 
+@pytest.mark.skip(reason="not supported side effect")
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
