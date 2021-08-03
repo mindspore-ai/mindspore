@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_CUSTOM_EXTRACT_FEATURES_INFER_H
-#define MINDSPORE_NNACL_CUSTOM_EXTRACT_FEATURES_INFER_H
+#ifndef MINDSPORE_NNACL_INFER_STRING_CUSTOM_EXTRACT_FEATURES_INFER_H
+#define MINDSPORE_NNACL_INFER_STRING_CUSTOM_EXTRACT_FEATURES_INFER_H
 
 #include "nnacl/infer/common_infer.h"
 
@@ -28,4 +28,4 @@ int CustomExtractFeaturesInferShape(const TensorC *const *inputs, size_t inputs_
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_CUSTOM_EXTRACT_FEATURES_INFER_H
+#endif  // MINDSPORE_NNACL_INFER_STRING_CUSTOM_EXTRACT_FEATURES_INFER_H

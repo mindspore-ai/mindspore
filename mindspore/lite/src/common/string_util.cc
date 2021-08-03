@@ -20,6 +20,7 @@
 
 namespace mindspore {
 namespace lite {
+#ifdef ENABLE_STRING_KERNEL
 std::vector<StringPack> ParseTensorBuffer(Tensor *tensor) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is nullptr.";
@@ -130,32 +131,6 @@ int GetStringCount(Tensor *tensor) {
     return RET_ERROR;
   }
   return GetStringCount(tensor->MutableData());
-}
-
-int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
-  if (tensor == nullptr) {
-    return RET_PARAM_INVALID;
-  }
-  std::vector<StringPack> all_pack;
-  for (auto &input : inputs) {
-    StringPack pack = {static_cast<int>(input.length()), input.data()};
-    all_pack.push_back(pack);
-  }
-  return WriteStringsToTensor(static_cast<Tensor *>(tensor), all_pack);
-}
-
-std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
-  if (tensor == nullptr) {
-    return {""};
-  }
-  const void *ptr = static_cast<const Tensor *>(tensor)->data_c();
-  std::vector<StringPack> all_pack = ParseStringBuffer(ptr);
-  std::vector<std::string> result(all_pack.size());
-  std::transform(all_pack.begin(), all_pack.end(), result.begin(), [](StringPack &pack) {
-    std::string str(pack.data, pack.len);
-    return str;
-  });
-  return result;
 }
 
 // Some primes between 2^63 and 2^64
@@ -301,6 +276,42 @@ uint64_t StringHash64(const char *s, size_t len) {
   std::swap(z, x);
   return HashLen16(HashLen16(v.first, w.first, mul) + ShiftMix(y) * k0 + z, HashLen16(v.second, w.second, mul) + x,
                    mul);
+}
+#endif
+int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
+#ifdef ENABLE_STRING_KERNEL
+  if (tensor == nullptr) {
+    return RET_PARAM_INVALID;
+  }
+  std::vector<StringPack> all_pack;
+  for (auto &input : inputs) {
+    StringPack pack = {static_cast<int>(input.length()), input.data()};
+    all_pack.push_back(pack);
+  }
+  return WriteStringsToTensor(static_cast<Tensor *>(tensor), all_pack);
+#else
+  MS_LOG(ERROR) << "This library does not support string tensors";
+  return RET_ERROR;
+#endif
+}
+
+std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
+#ifdef ENABLE_STRING_KERNEL
+  if (tensor == nullptr) {
+    return {""};
+  }
+  const void *ptr = static_cast<const Tensor *>(tensor)->data_c();
+  std::vector<StringPack> all_pack = ParseStringBuffer(ptr);
+  std::vector<std::string> result(all_pack.size());
+  std::transform(all_pack.begin(), all_pack.end(), result.begin(), [](StringPack &pack) {
+    std::string str(pack.data, pack.len);
+    return str;
+  });
+  return result;
+#else
+  MS_LOG(ERROR) << "This library does not support string tensors";
+  return {""};
+#endif
 }
 }  // namespace lite
 }  // namespace mindspore

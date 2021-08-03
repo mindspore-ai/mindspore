@@ -14,29 +14,32 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/custom_normalize_infer.h"
+#include "nnacl/infer/string/hashtable_lookup_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int CustomNormalizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int HashtableLoopupInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
-  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
+  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 2);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
 
   const TensorC *input = inputs[0];
+  const TensorC *values = inputs[2];
   TensorC *output = outputs[0];
+  TensorC *hits = outputs[1];
 
-  SetDataTypeFormat(output, input);
+  output->data_type_ = values->data_type_;
+  output->format_ = input->format_;
+  hits->shape_size_ = 1;
+  hits->shape_[0] = GetDimensionSize(input, 0);
+  hits->data_type_ = kNumberTypeUInt8;
+  hits->format_ = input->format_;
 
   if (input->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
-  int string_num = *((const int32_t *)(input->data_));  // also look custom_extract_features
-
-  output->shape_size_ = 1;
-  output->shape_[0] = (string_num == 0 ? 1 : string_num);
   return NNACL_OK;
 }
 
-REG_INFER(CustomNormalize, PrimType_CustomNormalize, CustomNormalizeInferShape)
+REG_INFER(HashtableLookup, PrimType_HashtableLookup, HashtableLoopupInferShape)

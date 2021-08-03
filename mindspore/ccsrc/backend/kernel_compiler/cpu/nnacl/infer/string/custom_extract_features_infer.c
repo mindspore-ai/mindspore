@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/custom_extract_features_infer.h"
+#include "nnacl/infer/string/custom_extract_features_infer.h"
 #include "nnacl/infer/infer_register.h"
 
 int CustomExtractFeaturesInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,

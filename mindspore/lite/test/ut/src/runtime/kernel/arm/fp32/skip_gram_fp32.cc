@@ -15,7 +15,7 @@
  */
 
 #include <iostream>
-#include "src/runtime/kernel/arm/fp32/skip_gram_fp32.h"
+#include "src/runtime/kernel/arm/string/skip_gram.h"
 #include "nnacl/skip_gram_parameter.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"

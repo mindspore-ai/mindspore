@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/lsh_projection_fp32.h"
+#include "src/runtime/kernel/arm/string/lsh_projection.h"
 
 #include "include/errorcode.h"
 #include "src/common/string_util.h"

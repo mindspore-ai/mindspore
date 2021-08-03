@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_HASHTABLE_LOOKUP_INFER_H
-#define MINDSPORE_NNACL_HASHTABLE_LOOKUP_INFER_H
+#ifndef MINDSPORE_NNACL_INFER_STRING_CUSTOM_NORMALIZE_INFER_H
+#define MINDSPORE_NNACL_INFER_STRING_CUSTOM_NORMALIZE_INFER_H
 
 #include "nnacl/infer/common_infer.h"
+#include "nnacl/softmax_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int HashtableLoopupInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int CustomNormalizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_HASHTABLE_LOOKUP_INFER_H
+#endif  // MINDSPORE_NNACL_INFER_STRING_CUSTOM_NORMALIZE_INFER_H

@@ -33,6 +33,7 @@ option(MSLITE_ENABLE_TESTCASES "enable testcase" off)
 option(MSLITE_ENABLE_NNIE "enable NNIE" off)
 option(MSLITE_COMPILE_NNIE "compile NNIE" off)
 option(MSLITE_ENABLE_HIGH_PERFORMANCE "enable high performance" on)
+option(MSLITE_STRING_KERNEL "enable string kernel" on)
 
 # Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -81,6 +82,13 @@ if(DEFINED ENV{MSLITE_COMPILE_NNIE})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_HIGH_PERFORMANCE})
     set(MSLITE_ENABLE_HIGH_PERFORMANCE $ENV{MSLITE_ENABLE_HIGH_PERFORMANCE})
+endif()
+if(DEFINED ENV{MSLITE_STRING_KERNEL})
+    set(MSLITE_STRING_KERNEL $ENV{MSLITE_STRING_KERNEL})
+endif()
+
+if(MSLITE_STRING_KERNEL)
+    add_compile_definitions(ENABLE_STRING_KERNEL)
 endif()
 
 if(PLATFORM_ARM64)

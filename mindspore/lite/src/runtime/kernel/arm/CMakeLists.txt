@@ -4,8 +4,16 @@ file(GLOB KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/base/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/string/*.cc
     )
+if(MSLITE_STRING_KERNEL)
+    file(GLOB KERNEL_STRING_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/string/*.cc
+        )
+    set(KERNEL_SRC
+        ${KERNEL_SRC}
+        ${KERNEL_STRING_SRC}
+        )
+endif()
 list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
 
 if(SUPPORT_TRAIN)
