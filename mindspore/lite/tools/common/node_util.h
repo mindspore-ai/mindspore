@@ -31,6 +31,8 @@
 
 namespace mindspore {
 namespace lite {
+std::vector<CNodePtr> GetInputCNode(const CNodePtr &cnode);
+
 template <typename T>
 int CreateOperator(const std::unique_ptr<schema::PrimitiveT> &primitive, schema::PrimitiveType type) {
   auto attr = std::make_unique<T>();

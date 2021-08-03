@@ -26,6 +26,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/protobuf_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/func_graph_subgraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/primitive_t_value.cc
@@ -105,6 +106,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/transpose_strategy.cc
         ../optimizer/graph/reduce_same_act_pass.cc
         ../optimizer/graph/split_one_pass.cc
+        ../optimizer/graph/find_const_subgraph_pass.cc
         )
 
 add_subdirectory(../anf_exporter anf_exporter)
