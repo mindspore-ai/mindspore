@@ -39,6 +39,8 @@
 #include "src/train/optimizer_kernel.h"
 #include "src/train/train_utils.h"
 #include "src/train/train_export.h"
+#include "src/train/opt_allocator.h"
+#include "src/train/static_allocator.h"
 #include "src/train/train_populate_parameter.h"
 #include "src/train/train_populate_parameter_v0.h"
 
@@ -68,6 +70,7 @@ int TrainSession::Init(const Context *context, const TrainCfg *train_cfg) {
     }
     cfg_ = *train_cfg;
   }
+  allocator_ = context->allocator;
   return lite::LiteSession::Init(context);
 }
 
@@ -159,6 +162,51 @@ int TrainSession::InitCallBack() {
   return RET_OK;
 }
 
+int TrainSession::AllocTensors(const std::vector<kernel::LiteKernel *> &kernels) {
+  if (!IS_STATIC_ALLOCATOR(allocator_)) return RET_OK;
+  OptAllocator allocator;
+  std::unordered_map<lite::Tensor *, int> ref_count;
+  std::unordered_map<lite::Tensor *, size_t> offset_map;
+  for (auto kernel : kernels) {
+    for (auto tensor : kernel->out_tensors()) {
+      size_t size = tensor->Size();
+      size_t offset = allocator.Malloc(size);
+      offset_map[tensor] = offset;
+      ref_count[tensor] = tensor->init_ref_count();
+    }
+    for (auto tensor : kernel->in_tensors()) {
+      if (tensor->category() == lite::Tensor::VAR) {
+        int count = ref_count[tensor] - 1;
+        ref_count[tensor] = count;
+        if (count == 0) {
+          allocator.Free(offset_map[tensor]);
+        }
+      }
+    }
+  }
+  // Set Tensor data
+  if (tensors_data_ == nullptr) {
+    auto size = allocator.total_size();
+    auto buf = malloc(size);
+    if (buf == nullptr) {
+      MS_LOG(ERROR) << "cannot allocate buffer size" << size;
+      return RET_ERROR;
+    }
+    StaticAllocator *alloc = reinterpret_cast<StaticAllocator *>(allocator_.get());
+    alloc->SetContex(buf, size);
+    tensors_data_ = buf;
+  }
+  for (auto kernel : train_kernels_) {
+    for (auto tensor : kernel->out_tensors()) {
+      auto it = offset_map.find(tensor);
+      if (it != offset_map.end()) {
+        tensor->set_data(reinterpret_cast<void *>(reinterpret_cast<char *>(tensors_data_) + it->second));
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int TrainSession::CompileGraph(lite::Model *model) { return lite::RET_ERROR; }
 
 int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
@@ -194,10 +242,21 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
     MS_LOG(ERROR) << "failed to allocate space";
     return RET_ERROR;
   }
+  ret = AllocTensors(train_kernels_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "failed to allocate space";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-TrainSession::~TrainSession() { FreeWorkSpace(); }
+TrainSession::~TrainSession() {
+  FreeWorkSpace();
+  if (tensors_data_ != nullptr) {
+    free(tensors_data_);
+    tensors_data_ = nullptr;
+  }
+}
 
 int TrainSession::ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
                               const std::vector<kernel::LiteKernel *> &run_kernels) {
@@ -420,6 +479,12 @@ int TrainSession::Train() {
       lite_tensor->set_init_ref_count(lite_tensor->init_ref_count() + 1);
     }
   }
+  // allocate tensors
+  auto ret = AllocTensors(train_kernels_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "failed to allocate tensor space";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -445,6 +510,11 @@ int TrainSession::Eval() {
       lite::Tensor *lite_tensor = static_cast<lite::Tensor *>(ms_tensor);
       lite_tensor->set_init_ref_count(lite_tensor->init_ref_count() + 1);
     }
+  }
+  auto ret = AllocTensors(inference_kernels_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "failed to allocate space";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -781,7 +851,12 @@ session::LiteSession *session::TrainSession::CreateTrainSession(const std::strin
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
-
+  if (context->allocator == nullptr) {
+    const_cast<lite::Context *>(context)->allocator = std::shared_ptr<Allocator>(new (std::nothrow) StaticAllocator());
+    if (context->allocator == nullptr) {
+      MS_LOG(ERROR) << " cannot convert to static allocation";
+    }
+  }
   auto ret = session->Init(context, cfg);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
