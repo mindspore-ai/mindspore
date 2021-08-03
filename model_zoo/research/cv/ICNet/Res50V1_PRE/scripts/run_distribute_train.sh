@@ -14,10 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ]
+if [ $# != 2 ]
 then
-    echo "Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PROJECT_PATH] [DEVICE_ID]"
-exit 1
+  echo "Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]"
+  exit 1
 fi
 
 get_real_path(){
@@ -30,44 +30,42 @@ get_real_path(){
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
-PATH3=$(get_real_path $3)
 
 
-if [ ! -d $PATH1 ]
+if [ ! -f $PATH1 ]
 then
-    echo "error: DATASET_PATH=$PATH1 is not a directory"
+    echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
 exit 1
 fi
 
-if [ ! -f $PATH2 ]
+if [ ! -d $PATH2 ]
 then
-    echo "error: CHECKPOINT_PATH=$PATH2 is not a file"
+    echo "error: DATASET_PATH=$PATH2 is not a directory"
 exit 1
 fi
 
-if [ ! -d $PATH3 ]
-then
-    echo "error: PROJECT_PATH=$PATH3 is not a directory"
-exit 1
-fi
 
+export SERVER_ID=0
 ulimit -u unlimited
-export DEVICE_NUM=1
-export DEVICE_ID=$4
-export RANK_SIZE=1
-export RANK_ID=0
+export DEVICE_NUM=8
+export RANK_SIZE=8
+rank_start=$((DEVICE_NUM * SERVER_ID))
+first_device=0
+export RANK_TABLE_FILE=$PATH1
 
-if [ -d "eval" ];
-then
-    rm -rf ./eval
-fi
-mkdir ./eval
-cp ../eval.py ./eval
-cp *.sh ./eval
-cp -r ../src ./eval
-cd ./eval || exit
-env > env.log
-echo "start evaluation for device $DEVICE_ID"
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 --project_path=$PATH3 --device=$4 &> log &
+for((i=0; i<${DEVICE_NUM}; i++))
+do
+    export DEVICE_ID=$((first_device+i))
+    export RANK_ID=$((rank_start + i))
+    rm -rf ./train_parallel$i
+    mkdir ./train_parallel$i
+    cp ../*.py ./train_parallel$i
+    cp *.sh ./train_parallel$i
+    cp -r ../src ./train_parallel$i
+    cd ./train_parallel$i || exit
+    echo "start training for rank $RANK_ID, device $DEVICE_ID"
+    env > env.log
+    python train.py --data_url=$PATH2 &> log &
 
-cd ..
+    cd ..
+done
