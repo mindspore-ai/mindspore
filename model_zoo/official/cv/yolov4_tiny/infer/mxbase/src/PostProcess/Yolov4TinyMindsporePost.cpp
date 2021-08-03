@@ -154,7 +154,7 @@ void Yolov4TinyPostProcess::ObjectDetectionOutput(const std::vector<TensorBase>&
         //LogInfo << "objectInfo.size after nms::::::::::" <<objectInfo.size();
         objectInfos.push_back(objectInfo);
     }
-    LogDebug << "Yolov4TinyPostProcess write results successed.";
+    LogDebug << "Yolov4TinyPostProcess write results success.";
 }
 
 APP_ERROR Yolov4TinyPostProcess::Process(const std::vector<TensorBase> &tensors,
