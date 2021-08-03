@@ -48,7 +48,7 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
   int *ele_shape_ptr = (int *)(input1->data_);
 
   vvector tensor_shape;
-  tensor_shape.size_ = dim0;
+  tensor_shape.size_ = (size_t)(dim0);
   tensor_shape.shape_ = (int **)malloc(tensor_shape.size_ * sizeof(int *));
   if (tensor_shape.shape_ == NULL) {
     return NNACL_NULL_PTR;
