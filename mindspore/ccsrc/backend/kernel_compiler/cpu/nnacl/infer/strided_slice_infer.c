@@ -236,7 +236,7 @@ void ApplyBeginMask(StridedSliceTransferBuffer *transfer_buffer) {
 }
 
 int ApplyEndMask(StridedSliceTransferBuffer *transfer_buffer, const int *in_shape, size_t in_shape_size) {
-  for (int i = 0; i < (size_t)(transfer_buffer->ndim_); i++) {
+  for (size_t i = 0; i < (size_t)(transfer_buffer->ndim_); i++) {
     if (transfer_buffer->ends_mask_[i]) {
       if (i >= in_shape_size) {
         return NNACL_ERR;
