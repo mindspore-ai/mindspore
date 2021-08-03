@@ -70,38 +70,35 @@ void NPUGraph::set_output(mindspore::MSTensor out_tensor, int index) {
 int NPUGraph::Init() {
   all_kernels_.clear();
   std::map<const NPUOp *, bool> is_visited;
+  std::map<const NPUOp *, bool> is_searched;
+  std::queue<NPUOp *> candidate_in_ops;
+  std::queue<NPUOp *> valid_in_ops;
+  // Initialization
   for (auto op : npu_ops_) {
     is_visited[op] = false;
+    is_searched[op] = false;
+    if (op->in_ops().empty()) {
+      candidate_in_ops.push(op);
+    }
   }
-
-  while (npu_ops_.size() > 0) {
-    auto head_op_iter = std::find_if(npu_ops_.begin(), npu_ops_.end(), [&](const NPUOp *op) {
-      if (is_visited[op]) {
-        return false;
-      }
-      return true;
-    });
-    if (head_op_iter == npu_ops_.end()) {
+  while (!candidate_in_ops.empty()) {
+    // 1. Find out all input ops except transpose, and handle transpose ops independently.
+    auto ret = FindValidSubgraphInOps(&valid_in_ops, &candidate_in_ops, &is_visited);
+    if (ret != RET_OK) {
+      MS_LOG(DEBUG) << "Fail to find valid input ops or handle transpose ops.";
+      return RET_ERROR;
+    }
+    if (valid_in_ops.empty()) {
+      MS_LOG(INFO) << "Can not find input ops except transpose.";
       break;
     }
-    auto head_op = *head_op_iter;
-    if (head_op->type() != schema::PrimitiveType_Transpose) {
-      // If npu_kernel does not equal nullptr, this kernel can be supported by delegate
-      auto npu_ops = FindSubgraphOps(head_op, &is_visited);
-      auto subgraph_kernel = CreateNPUSubgraphKernel(npu_ops);
-      if (subgraph_kernel == nullptr) {
-        MS_LOG(DEBUG) << "Create NPU subgraph kernel failed.";
-        return RET_ERROR;
-      }
-      all_kernels_.push_back(subgraph_kernel);
-    } else {
-      auto transpose_kernel = CreateNPUTransposeKernel(head_op);
-      if (transpose_kernel == nullptr) {
-        MS_LOG(DEBUG) << "New NPU transpose kernel failed.";
-        return RET_ERROR;
-      }
-      all_kernels_.push_back(transpose_kernel);
-      is_visited[head_op] = true;
+    // 2. Find out all ready ops based on valid input ops, but these ops maybe not belong to the same subgraph.
+    auto ready_ops = FindReadySubgraphOps(valid_in_ops, &candidate_in_ops, &is_visited);
+    // 3. Create subgraph(s). Input ops with connection will be built into a same subgraph.
+    ret = CreateSubgraphFromReadyOps(&valid_in_ops, ready_ops, &is_searched);
+    if (ret != RET_OK) {
+      MS_LOG(DEBUG) << "Fail to create subgraph(s) from ready ops.";
+      return RET_ERROR;
     }
   }
   return RET_OK;
@@ -112,7 +109,7 @@ std::vector<NPUOp *> NPUGraph::FindPreOps(NPUOp *cur_op) {
   for (auto in_tensor : cur_op->inputs()) {
     for (auto op : npu_ops_) {
       if (find(op->outputs().begin(), op->outputs().end(), in_tensor) != op->outputs().end()) {
-        in_ops.push_back(op);
+        in_ops.emplace_back(op);
       }
     }
   }
@@ -124,7 +121,7 @@ std::vector<NPUOp *> NPUGraph::FindNextOps(NPUOp *cur_op) {
   for (auto out_tensor : cur_op->outputs()) {
     for (auto op : npu_ops_) {
       if (find(op->inputs().begin(), op->inputs().end(), out_tensor) != op->inputs().end()) {
-        out_ops.push_back(op);
+        out_ops.emplace_back(op);
       }
     }
   }
@@ -141,30 +138,126 @@ int NPUGraph::FindPreNextOps() {
   return RET_OK;
 }
 
-std::vector<NPUOp *> NPUGraph::FindSubgraphOps(NPUOp *head_op, std::map<const NPUOp *, bool> *is_visited) {
+int NPUGraph::FindValidSubgraphInOps(std::queue<NPUOp *> *valid_in_ops, std::queue<NPUOp *> *candidate_in_ops,
+                                     std::map<const NPUOp *, bool> *is_visited) {
+  while (!candidate_in_ops->empty()) {
+    auto cur_op = candidate_in_ops->front();
+    candidate_in_ops->pop();
+    if ((*is_visited)[cur_op]) {
+      continue;
+    }
+    if (cur_op->type() == schema::PrimitiveType_Transpose) {
+      auto transpose_kernel = CreateNPUTransposeKernel(cur_op);
+      if (transpose_kernel == nullptr) {
+        MS_LOG(DEBUG) << "New NPU transpose kernel failed.";
+        return RET_ERROR;
+      }
+      all_kernels_.emplace_back(transpose_kernel);
+      (*is_visited)[cur_op] = true;
+      for (auto out_op : cur_op->out_ops()) {
+        if (out_op->type() == schema::PrimitiveType_Transpose) {
+          candidate_in_ops->push(out_op);
+        } else {
+          auto input_ready = std::all_of(out_op->in_ops().begin(), out_op->in_ops().end(),
+                                         [&](NPUOp *in_op) { return (*is_visited)[in_op] == true; });
+          if (input_ready) {
+            valid_in_ops->push(out_op);
+          }
+        }
+      }
+    } else {
+      valid_in_ops->push(cur_op);
+    }
+  }
+  return RET_OK;
+}
+
+std::vector<NPUOp *> NPUGraph::FindReadySubgraphOps(std::queue<NPUOp *> op_queue,
+                                                    std::queue<NPUOp *> *next_candidate_ops,
+                                                    std::map<const NPUOp *, bool> *is_visited) {
   std::vector<NPUOp *> subgraph_ops;
-  subgraph_ops.push_back(head_op);
-  (*is_visited)[head_op] = true;
-  std::queue<NPUOp *> op_queue;
-  op_queue.emplace(head_op);
   while (!op_queue.empty()) {
     auto cur_op = op_queue.front();
     op_queue.pop();
+    if ((*is_visited)[cur_op]) {
+      continue;
+    }
+    subgraph_ops.emplace_back(cur_op);
+    (*is_visited)[cur_op] = true;
     auto out_ops = cur_op->out_ops();
     for (auto out_op : out_ops) {
-      if ((*is_visited)[out_op] == true) {
+      if ((*is_visited)[out_op]) {
         continue;
       }
       auto input_ready = std::all_of(out_op->in_ops().begin(), out_op->in_ops().end(),
                                      [&](NPUOp *in_op) { return (*is_visited)[in_op] == true; });
       if (input_ready && out_op->type() != schema::PrimitiveType_Transpose) {
-        subgraph_ops.push_back(out_op);
-        (*is_visited)[out_op] = true;
         op_queue.push(out_op);
+      } else {
+        next_candidate_ops->push(out_op);
       }
     }
   }
   return subgraph_ops;
+}
+
+void FindConnectedOps(NPUOp *head_op, std::vector<NPUOp *> ready_ops, std::vector<NPUOp *> *connected_ops,
+                      std::map<const NPUOp *, bool> *is_searched) {
+  std::queue<NPUOp *> bfs_ops;
+  bfs_ops.push(head_op);
+  while (!bfs_ops.empty()) {
+    auto cur_op = bfs_ops.front();
+    bfs_ops.pop();
+    if ((*is_searched)[cur_op]) {
+      continue;
+    }
+    for (auto in_op : cur_op->in_ops()) {
+      if (std::find(ready_ops.begin(), ready_ops.end(), in_op) == ready_ops.end() || (*is_searched)[in_op]) {
+        continue;
+      }
+      bfs_ops.push(in_op);
+    }
+    for (auto out_op : cur_op->out_ops()) {
+      if (std::find(ready_ops.begin(), ready_ops.end(), out_op) == ready_ops.end() || (*is_searched)[out_op]) {
+        continue;
+      }
+      bfs_ops.push(out_op);
+    }
+    (*is_searched)[cur_op] = true;
+    connected_ops->emplace_back(cur_op);
+  }
+  return;
+}
+
+int NPUGraph::CreateSubgraphFromReadyOps(std::queue<NPUOp *> *valid_in_ops, std::vector<NPUOp *> ready_ops,
+                                         std::map<const NPUOp *, bool> *is_searched) {
+  while (!valid_in_ops->empty()) {
+    std::vector<NPUOp *> connected_ops;
+    auto op = valid_in_ops->front();
+    valid_in_ops->pop();
+    if ((*is_searched)[op]) {
+      continue;
+    }
+    if (valid_in_ops->empty()) {
+      // use BFS to find out connected input ops
+      FindConnectedOps(op, ready_ops, &connected_ops, is_searched);
+    } else {
+      // if current input op is the only input op, there is no need to confirm the connectivity
+      for (auto ready_op : ready_ops) {
+        if (!(*is_searched)[ready_op]) {
+          connected_ops.emplace_back(ready_op);
+          (*is_searched)[ready_op] = true;
+        }
+      }
+    }
+    auto subgraph_kernel = CreateNPUSubgraphKernel(connected_ops);
+    if (subgraph_kernel == nullptr) {
+      MS_LOG(DEBUG) << "Create NPU subgraph kernel failed.";
+      return RET_ERROR;
+    }
+    all_kernels_.emplace_back(subgraph_kernel);
+  }
+  return RET_OK;
 }
 
 kernel::Kernel *NPUGraph::CreateNPUSubgraphKernel(std::vector<NPUOp *> npu_ops) {
@@ -174,7 +267,19 @@ kernel::Kernel *NPUGraph::CreateNPUSubgraphKernel(std::vector<NPUOp *> npu_ops) 
     return nullptr;
   }
   subgraph->set_inputs(NPUGraphUtils::GetGraphInTensors(npu_ops));
-  subgraph->set_outputs(NPUGraphUtils::GetGraphOutTensors(npu_ops));
+  // The output of NPUGraph should be assigned to the corresponding NPUSubgraph
+  auto subgraph_outputs = NPUGraphUtils::GetGraphOutTensors(npu_ops);
+  for (auto graph_output : this->outputs()) {
+    for (auto subgraph_op : npu_ops) {
+      auto subgraph_op_outputs = subgraph_op->outputs();
+      if (find(subgraph_op_outputs.begin(), subgraph_op_outputs.end(), graph_output) != subgraph_op_outputs.end() &&
+          find(subgraph_outputs.begin(), subgraph_outputs.end(), graph_output) == subgraph_outputs.end()) {
+        subgraph_outputs.emplace_back(graph_output);
+        break;
+      }
+    }
+  }
+  subgraph->set_outputs(subgraph_outputs);
   auto ret = subgraph->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NPU Subgraph Init failed.";

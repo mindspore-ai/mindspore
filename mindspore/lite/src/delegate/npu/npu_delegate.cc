@@ -235,32 +235,6 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
   return npu_op;
 }
 
-std::vector<mindspore::MSTensor> GraphInTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
-                                                KernelIter end) {
-  auto in_tensors = NPUGraphUtils::GetGraphInTensors(ops);
-  std::vector<mindspore::MSTensor> all_in_tensors;
-  for (auto op : ops) {
-    for (auto in_tensor : op->inputs()) {
-      if (in_tensor.Data() != nullptr && find(in_tensors.begin(), in_tensors.end(), in_tensor) == in_tensors.end()) {
-        all_in_tensors.push_back(in_tensor);
-      }
-    }
-  }
-
-  for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
-    if (iter >= from && iter <= end) {
-      continue;
-    }
-    // The output of other kernels is the input of the current subgraph kernel.
-    for (auto out_tensor : (*iter)->outputs()) {
-      if (find(all_in_tensors.begin(), all_in_tensors.end(), out_tensor) != all_in_tensors.end()) {
-        in_tensors.push_back(out_tensor);
-      }
-    }
-  }
-  return in_tensors;
-}
-
 std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
                                                  KernelIter end) {
   auto out_tensors = NPUGraphUtils::GetGraphOutTensors(ops);
@@ -279,7 +253,8 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops
     }
     // The input of other kernels is the output of the current subgraph kernel.
     for (auto in_tensor : (*iter)->inputs()) {
-      if (find(all_out_tensors.begin(), all_out_tensors.end(), in_tensor) != all_out_tensors.end()) {
+      if (find(all_out_tensors.begin(), all_out_tensors.end(), in_tensor) != all_out_tensors.end() &&
+          find(out_tensors.begin(), out_tensors.end(), in_tensor) == out_tensors.end()) {
         out_tensors.push_back(in_tensor);
       }
     }
@@ -289,7 +264,7 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops
 
 kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
                                             KernelIter end) {
-  auto in_tensors = GraphInTensors(ops, model, from, end);
+  auto in_tensors = NPUGraphUtils::GetGraphInTensors(ops);
   auto out_tensors = GraphOutTensors(ops, model, from, end);
   auto graph_kernel = new (std::nothrow) NPUGraph(ops, npu_manager_, in_tensors, out_tensors);
   if (graph_kernel == nullptr) {

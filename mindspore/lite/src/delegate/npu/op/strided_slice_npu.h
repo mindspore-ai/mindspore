@@ -50,8 +50,14 @@ class StridedSliceNPUOp : public NPUOp {
 
   int HandleAxis();
 
+  int SetCast(const ge::Operator *input, const ge::Operator *cur_op, const mindspore::MSTensor in_tensor,
+              const mindspore::MSTensor out_tensor);
+
  private:
   hiai::op::StridedSlice *strided_slice_ = nullptr;
+  hiai::op::CastT *in_cast_ = nullptr;
+  hiai::op::CastT *out_cast_ = nullptr;
+  bool need_cast_ = false;
   int begins_mask_ = 0;
   int ends_mask_ = 0;
   int ellipsis_mask_ = 0;

@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_GRAPH_H_
 
 #include <vector>
+#include <queue>
 #include <map>
 #include <utility>
 #include "include/api/kernel.h"
@@ -59,7 +60,14 @@ class NPUGraph : public kernel::Kernel {
 
   std::vector<NPUOp *> FindNextOps(NPUOp *cur_op);
 
-  std::vector<NPUOp *> FindSubgraphOps(NPUOp *head_op, std::map<const NPUOp *, bool> *is_visited);
+  int FindValidSubgraphInOps(std::queue<NPUOp *> *valid_in_ops, std::queue<NPUOp *> *candidate_in_ops,
+                             std::map<const NPUOp *, bool> *is_visited);
+
+  std::vector<NPUOp *> FindReadySubgraphOps(std::queue<NPUOp *> op_queue, std::queue<NPUOp *> *next_candidate_ops,
+                                            std::map<const NPUOp *, bool> *is_visited);
+
+  int CreateSubgraphFromReadyOps(std::queue<NPUOp *> *valid_in_ops, std::vector<NPUOp *> ready_ops,
+                                 std::map<const NPUOp *, bool> *is_searched);
 
   kernel::Kernel *CreateNPUSubgraphKernel(std::vector<NPUOp *> ops);
 
