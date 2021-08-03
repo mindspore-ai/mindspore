@@ -271,6 +271,15 @@ bool GPUDeviceInfo::GetGpuTrtInferMode() const {
   return false;
 }
 
+void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+}
+std::vector<char> GPUDeviceInfo::GetPrecisionModeChar() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  std::vector<char> ret;
+  return ret;
+}
+
 void Ascend910DeviceInfo::SetDeviceID(uint32_t device_id) { MS_LOG(ERROR) << "Unsupported Feature."; }
 uint32_t Ascend910DeviceInfo::GetDeviceID() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
@@ -366,4 +375,12 @@ enum DataType Ascend310DeviceInfo::GetOutputType() const {
   return DataType::kTypeUnknown;
 }
 
+void Ascend310DeviceInfo::SetBufferOptimizeMode(const std::vector<char> &buffer_optimize_mode) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+}
+std::vector<char> Ascend310DeviceInfo::GetBufferOptimizeModeChar() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  std::vector<char> ret;
+  return ret;
+}
 }  // namespace mindspore

@@ -17,7 +17,6 @@
 #ifndef MINNIE_BENCHMARK_BENCHMARK_BASE_H_
 #define MINNIE_BENCHMARK_BENCHMARK_BASE_H_
 
-#include <getopt.h>
 #include <signal.h>
 #include <random>
 #include <unordered_map>
@@ -217,8 +216,8 @@ class MS_API BenchmarkBase {
     if (iter != this->benchmark_data_.end()) {
       std::vector<size_t> castedMSShape;
       size_t shapeSize = 1;
-      for (int64_t dim : msShape) {
-        castedMSShape.push_back(size_t(dim));
+      for (ST dim : msShape) {
+        castedMSShape.push_back(dim);
         shapeSize *= dim;
       }
 
@@ -246,7 +245,7 @@ class MS_API BenchmarkBase {
           std::cout << static_cast<float>(msTensorData[j]) << " ";
         }
 
-        if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
+        if (std::is_same<T, float>::value && (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j]))) {
           std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
           MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
           return RET_ERROR;
@@ -287,9 +286,9 @@ class MS_API BenchmarkBase {
   }
 
   template <typename T, typename Distribution>
-  void FillInputData(int size, void *data, Distribution distribution) {
+  void FillInputData(size_t size, void *data, Distribution distribution) {
     MS_ASSERT(data != nullptr);
-    int elements_num = size / sizeof(T);
+    size_t elements_num = size / sizeof(T);
     (void)std::generate_n(static_cast<T *>(data), elements_num,
                           [&]() { return static_cast<T>(distribution(random_engine_)); });
   }

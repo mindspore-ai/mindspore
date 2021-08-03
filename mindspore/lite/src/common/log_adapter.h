@@ -82,9 +82,9 @@ class LogWriter {
   ~LogWriter() = default;
 
 #ifdef _WIN32
-  void operator<(const LogStream &stream) const noexcept __declspec(dllexport);
+  __declspec(dllexport) void operator<(const LogStream &stream) const noexcept;
 #else
-  void operator<(const LogStream &stream) const noexcept __attribute__((visibility("default")));
+  __attribute__((visibility("default"))) void operator<(const LogStream &stream) const noexcept;
 #endif
 
  private:
@@ -112,5 +112,5 @@ class LogWriter {
 #else
 #define MS_ASSERT(f) ((void)0)
 #endif
-#endif
+#endif  // USE_GLOG
 #endif  // MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_

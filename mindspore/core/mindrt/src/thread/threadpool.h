@@ -72,7 +72,9 @@ class Worker {
   float rhs_scale() const { return rhs_scale_; }
 
   std::thread::id thread_id() const { return thread_.get_id(); }
+#ifdef BIND_CORE
   pthread_t handle() { return thread_.native_handle(); }
+#endif
 
  protected:
   void Run();

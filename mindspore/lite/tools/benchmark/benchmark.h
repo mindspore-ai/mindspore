@@ -17,7 +17,6 @@
 #ifndef MINNIE_BENCHMARK_BENCHMARK_H_
 #define MINNIE_BENCHMARK_BENCHMARK_H_
 
-#include <getopt.h>
 #include <signal.h>
 #include <random>
 #include <unordered_map>
