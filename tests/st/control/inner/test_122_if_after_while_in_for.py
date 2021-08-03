@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
@@ -21,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore import context
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="GPU")
 
 
 class ForwardNet(nn.Cell):
@@ -69,6 +70,7 @@ def test_forward():
     assert graph_mode_out == pynative_mode_out
 
 
+@pytest.mark.skip(reason="not supported side effect")
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -81,5 +83,54 @@ def test_backward():
     context.set_context(mode=context.PYNATIVE_MODE)
     pynative_forward_net = ForwardNet(max_cycles=3)
     pynative_backward_net = BackwardNet(pynative_forward_net)
+    pynative_mode_grads = pynative_backward_net(x, y)
+    assert graph_mode_grads == pynative_mode_grads
+
+
+class ForwardNetNoAssign(nn.Cell):
+    def __init__(self, max_cycles=10):
+        super(ForwardNetNoAssign, self).__init__()
+        self.max_cycles = max_cycles
+        self.zero = Tensor(np.array(0), mstype.int32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
+
+    def construct(self, x, y):
+        out = self.zero
+        for _ in range(0, self.max_cycles):
+            while x < y:
+                out = x * y + out
+                x = x + 1
+                #self.weight = x
+        if out > 20:
+            self.weight = out
+            out = out - 20
+        return out, self.weight
+
+class BackwardNetNoAssign(nn.Cell):
+    def __init__(self, net):
+        super(BackwardNetNoAssign, self).__init__(auto_prefix=False)
+        self.forward_net = net
+        self.grad = C.GradOperation(get_all=True)
+
+    def construct(self, *inputs):
+        grads = self.grad(self.forward_net)(*inputs)
+        return grads
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_backward_no_assign():
+    x = Tensor(np.array(1), mstype.int32)
+    y = Tensor(np.array(3), mstype.int32)
+    # Graph Mode
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_forward_net = ForwardNetNoAssign(max_cycles=3)
+    graph_backward_net = BackwardNetNoAssign(graph_forward_net)
+    graph_mode_grads = graph_backward_net(x, y)
+    # Pynative Mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_forward_net = ForwardNetNoAssign(max_cycles=3)
+    pynative_backward_net = BackwardNetNoAssign(pynative_forward_net)
     pynative_mode_grads = pynative_backward_net(x, y)
     assert graph_mode_grads == pynative_mode_grads
