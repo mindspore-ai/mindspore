@@ -86,8 +86,7 @@ static void RowMajor2Row12MajorStride(const float *src_ptr, float *dst_ptr, int 
   return;
 }
 
-static void RowMajor2Col12MajorStride(const float *restrict src_ptr, float *restrict dst_ptr, size_t row, size_t col,
-                                      int lead) {
+static void RowMajor2Col12MajorStride(const float *src_ptr, float *dst_ptr, size_t row, size_t col, int lead) {
   size_t row_up_12 = UP_ROUND(row, C12NUM);
   size_t row12 = row / C12NUM * C12NUM;
   size_t col4 = col / C4NUM * C4NUM;

@@ -185,10 +185,10 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
 
 static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;
-  dst[0] = erff(src[0]);
-  dst[1] = erff(src[1]);
-  dst[2] = erff(src[2]);
-  dst[3] = erff(src[3]);
+  MS_F32X4_GETI(dst, 0) = erff(MS_F32X4_GETI(src, 0));
+  MS_F32X4_GETI(dst, 1) = erff(MS_F32X4_GETI(src, 1));
+  MS_F32X4_GETI(dst, 2) = erff(MS_F32X4_GETI(src, 2));
+  MS_F32X4_GETI(dst, 3) = erff(MS_F32X4_GETI(src, 3));
   return dst;
 }
 #endif

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
-#include <x86intrin.h>
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/fp32/common_func_fp32.h"
 
 static inline void TiledC4MatmulFp32_Transfer(__m128 *dst1, __m128 *dst2, __m128 *dst3, __m128 *dst4,
@@ -51,21 +51,23 @@ void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t
     weight_data[2] = _mm_loadu_ps(weight + 8);
     weight_data[3] = _mm_loadu_ps(weight + 12);
     weight += 16;
-    __m128 dst1 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src1[0]));
-    __m128 dst2 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src2[0]));
-    __m128 dst3 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src3[0]));
-    __m128 dst4 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src4[0]));
+    __m128 dst1 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src1, 0)));
+    __m128 dst2 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src2, 0)));
+    __m128 dst3 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src3, 0)));
+    __m128 dst4 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src4, 0)));
     for (int j = 1; j < 4; ++j) {
-      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[j], src1[j], src2[j], src3[j], src4[j]);
+      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[j], MS_F32X4_GETI(src1, j),
+                                 MS_F32X4_GETI(src2, j), MS_F32X4_GETI(src3, j), MS_F32X4_GETI(src4, j));
     }
     TiledC4MatmulFp32_LoadData(&src1, &src2, &src3, &src4, src);
     src += 16;
-    __m128 dst5 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src1[0]));
-    __m128 dst6 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src2[0]));
-    __m128 dst7 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src3[0]));
-    __m128 dst8 = _mm_mul_ps(weight_data[0], _mm_set_ps1(src4[0]));
+    __m128 dst5 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src1, 0)));
+    __m128 dst6 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src2, 0)));
+    __m128 dst7 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src3, 0)));
+    __m128 dst8 = _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src4, 0)));
     for (int j = 1; j < 4; ++j) {
-      TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[j], src1[j], src2[j], src3[j], src4[j]);
+      TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[j], MS_F32X4_GETI(src1, j),
+                                 MS_F32X4_GETI(src2, j), MS_F32X4_GETI(src3, j), MS_F32X4_GETI(src4, j));
     }
     if (ic4_tmp != 0) {
       ic4_tmp -= 1;
@@ -75,64 +77,74 @@ void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t
       weight_data[1] = _mm_loadu_ps(weight + 4);
       weight += 8;
 
-      dst1 = _mm_add_ps(dst1, _mm_mul_ps(weight_data[0], _mm_set_ps1(src1[0])));
-      dst2 = _mm_add_ps(dst2, _mm_mul_ps(weight_data[0], _mm_set_ps1(src2[0])));
+      dst1 = _mm_add_ps(dst1, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src1, 0))));
+      dst2 = _mm_add_ps(dst2, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src2, 0))));
       for (; ic4_tmp != 0; ic4_tmp -= 1) {
-        dst3 = _mm_add_ps(dst3, _mm_mul_ps(weight_data[0], _mm_set_ps1(src3[0])));
-        dst4 = _mm_add_ps(dst4, _mm_mul_ps(weight_data[0], _mm_set_ps1(src4[0])));
+        dst3 = _mm_add_ps(dst3, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src3, 0))));
+        dst4 = _mm_add_ps(dst4, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src4, 0))));
 
-        TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[1], src1[1], src2[1], src3[1], src4[1]);
+        TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[1], MS_F32X4_GETI(src1, 1),
+                                   MS_F32X4_GETI(src2, 1), MS_F32X4_GETI(src3, 1), MS_F32X4_GETI(src4, 1));
 
         weight_data[2] = _mm_loadu_ps(weight);
         weight_data[3] = _mm_loadu_ps(weight + 4);
         weight += 8;
 
-        TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[2], src1[2], src2[2], src3[2], src4[2]);
+        TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[2], MS_F32X4_GETI(src1, 2),
+                                   MS_F32X4_GETI(src2, 2), MS_F32X4_GETI(src3, 2), MS_F32X4_GETI(src4, 2));
 
-        dst1 = _mm_add_ps(dst1, _mm_mul_ps(weight_data[3], _mm_set_ps1(src1[3])));
-        dst2 = _mm_add_ps(dst2, _mm_mul_ps(weight_data[3], _mm_set_ps1(src2[3])));
+        dst1 = _mm_add_ps(dst1, _mm_mul_ps(weight_data[3], _mm_set_ps1(MS_F32X4_GETI(src1, 3))));
+        dst2 = _mm_add_ps(dst2, _mm_mul_ps(weight_data[3], _mm_set_ps1(MS_F32X4_GETI(src2, 3))));
         src1 = _mm_loadu_ps(src);
         src2 = _mm_loadu_ps(src + 4);
-        dst3 = _mm_add_ps(dst3, _mm_mul_ps(weight_data[3], _mm_set_ps1(src3[3])));
-        dst4 = _mm_add_ps(dst4, _mm_mul_ps(weight_data[3], _mm_set_ps1(src4[3])));
+        dst3 = _mm_add_ps(dst3, _mm_mul_ps(weight_data[3], _mm_set_ps1(MS_F32X4_GETI(src3, 3))));
+        dst4 = _mm_add_ps(dst4, _mm_mul_ps(weight_data[3], _mm_set_ps1(MS_F32X4_GETI(src4, 3))));
         src3 = _mm_loadu_ps(src + 8);
         src4 = _mm_loadu_ps(src + 12);
         src += 16;
 
-        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[0], src1[0], src2[0], src3[0], src4[0]);
+        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[0], MS_F32X4_GETI(src1, 0),
+                                   MS_F32X4_GETI(src2, 0), MS_F32X4_GETI(src3, 0), MS_F32X4_GETI(src4, 0));
 
-        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[1], src1[1], src2[1], src3[1], src4[1]);
+        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[1], MS_F32X4_GETI(src1, 1),
+                                   MS_F32X4_GETI(src2, 1), MS_F32X4_GETI(src3, 1), MS_F32X4_GETI(src4, 1));
 
-        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[2], src1[2], src2[2], src3[2], src4[2]);
+        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[2], MS_F32X4_GETI(src1, 2),
+                                   MS_F32X4_GETI(src2, 2), MS_F32X4_GETI(src3, 2), MS_F32X4_GETI(src4, 2));
 
         weight_data[0] = _mm_loadu_ps(weight);
         weight_data[1] = _mm_loadu_ps(weight + 4);
         weight += 8;
 
-        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[3], src1[3], src2[3], src3[3], src4[3]);
+        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[3], MS_F32X4_GETI(src1, 3),
+                                   MS_F32X4_GETI(src2, 3), MS_F32X4_GETI(src3, 3), MS_F32X4_GETI(src4, 3));
         TiledC4MatmulFp32_LoadData(&src1, &src2, &src3, &src4, src);
         src += 16;
 
-        dst1 = _mm_add_ps(dst1, _mm_mul_ps(weight_data[0], _mm_set_ps1(src1[0])));
-        dst2 = _mm_add_ps(dst2, _mm_mul_ps(weight_data[0], _mm_set_ps1(src2[0])));
+        dst1 = _mm_add_ps(dst1, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src1, 0))));
+        dst2 = _mm_add_ps(dst2, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src2, 0))));
       }
-      dst3 = _mm_add_ps(dst3, _mm_mul_ps(weight_data[0], _mm_set_ps1(src3[0])));
-      dst4 = _mm_add_ps(dst4, _mm_mul_ps(weight_data[0], _mm_set_ps1(src4[0])));
+      dst3 = _mm_add_ps(dst3, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src3, 0))));
+      dst4 = _mm_add_ps(dst4, _mm_mul_ps(weight_data[0], _mm_set_ps1(MS_F32X4_GETI(src4, 0))));
 
-      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[1], src1[1], src2[1], src3[1], src4[1]);
+      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[1], MS_F32X4_GETI(src1, 1),
+                                 MS_F32X4_GETI(src2, 1), MS_F32X4_GETI(src3, 1), MS_F32X4_GETI(src4, 1));
 
       weight_data[2] = _mm_loadu_ps(weight);
       weight_data[3] = _mm_loadu_ps(weight + 4);
       weight += 8;
 
-      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[2], src1[2], src2[2], src3[2], src4[2]);
+      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[2], MS_F32X4_GETI(src1, 2),
+                                 MS_F32X4_GETI(src2, 2), MS_F32X4_GETI(src3, 2), MS_F32X4_GETI(src4, 2));
 
-      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[3], src1[3], src2[3], src3[3], src4[3]);
+      TiledC4MatmulFp32_Transfer(&dst1, &dst2, &dst3, &dst4, weight_data[3], MS_F32X4_GETI(src1, 3),
+                                 MS_F32X4_GETI(src2, 3), MS_F32X4_GETI(src3, 3), MS_F32X4_GETI(src4, 3));
 
       TiledC4MatmulFp32_LoadData(&src1, &src2, &src3, &src4, src);
       src += 16;
       for (int j = 0; j < 4; ++j) {
-        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[j], src1[j], src2[j], src3[j], src4[j]);
+        TiledC4MatmulFp32_Transfer(&dst5, &dst6, &dst7, &dst8, weight_data[j], MS_F32X4_GETI(src1, j),
+                                   MS_F32X4_GETI(src2, j), MS_F32X4_GETI(src3, j), MS_F32X4_GETI(src4, j));
       }
     }
     _mm_storeu_ps(dst, dst1);

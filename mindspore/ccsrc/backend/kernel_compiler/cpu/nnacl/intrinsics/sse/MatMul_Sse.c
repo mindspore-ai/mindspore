@@ -15,7 +15,7 @@
  */
 
 #ifdef ENABLE_SSE
-#include <x86intrin.h>
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
