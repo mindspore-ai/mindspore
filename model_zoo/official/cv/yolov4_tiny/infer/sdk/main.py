@@ -42,7 +42,7 @@ def save_infer_result(result_dir, result):
     """
     save infer result to the file, Write format:
         Object detected num is 5
-        #Obj: 1, box: 453 369 473 391, confidence: 0.3, lable: person, id: 0
+        #Obj: 1, box: 453 369 473 391, confidence: 0.3, label: person, id: 0
         ...
     :param result_dir is the dir of save result
     :param result content bbox and class_id of all object
@@ -63,7 +63,7 @@ def save_infer_result(result_dir, result):
                               str(object_item.get('y0')) + ' ' + \
                               str(object_item.get('x1')) + ' ' + \
                               str(object_item.get('y1')) + ', confidence: ' + \
-                              str(class_info.get('confidence')) + ', lable: ' + \
+                              str(class_info.get('confidence')) + ', label: ' + \
                               class_info.get('className') + ', id: ' + \
                               str(class_info.get('classId')) + '\n'
                 f_write.writelines(object_info)
