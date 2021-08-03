@@ -360,25 +360,25 @@ bool MSTensor::IsDevice() const {
   return impl_->IsDevice();
 }
 
-void MSTensor::SetShape(const std::vector<int64_t> &shape) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetShape(const std::vector<int64_t> &) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
-void MSTensor::SetDataType(enum DataType data_type) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetDataType(enum DataType) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
-void MSTensor::SetTensorName(const std::string &name) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetTensorName(const std::string &) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
-void MSTensor::SetAllocator(std::shared_ptr<Allocator> allocator) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetAllocator(std::shared_ptr<Allocator>) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
 std::shared_ptr<Allocator> MSTensor::allocator() const { MS_LOG_EXCEPTION << "Invalid implement."; }
 
-void MSTensor::SetFormat(mindspore::Format format) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetFormat(mindspore::Format) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
 mindspore::Format MSTensor::format() const { MS_LOG_EXCEPTION << "Invalid implement."; }
 
-void MSTensor::SetData(void *data) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetData(void *) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
 std::vector<QuantParam> MSTensor::QuantParams() const { MS_LOG_EXCEPTION << "Invalid implement."; }
 
-void MSTensor::SetQuantParams(std::vector<QuantParam> quant_params) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetQuantParams(std::vector<QuantParam>) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
 Buffer::Buffer() : impl_(std::make_shared<Impl>()) {}
 Buffer::Buffer(const void *data, size_t data_len) : impl_(std::make_shared<Impl>(data, data_len)) {}
