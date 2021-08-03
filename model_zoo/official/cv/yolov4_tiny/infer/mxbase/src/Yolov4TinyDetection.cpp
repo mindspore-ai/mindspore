@@ -42,7 +42,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::LoadLabels(const std::string &labelPath, st
     // construct label map
     int count = 0;
     while (std::getline(infile, s)) {
-        if (s.find('#') <= 1) {
+        if (s[0] == '#') {
             continue;
         }
         size_t eraseIndex = s.find_last_not_of("\r\n\t");
