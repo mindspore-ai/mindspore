@@ -2076,6 +2076,7 @@ class Conv2DBackpropInput(Primitive):
         self.init_prim_io_names(inputs=['out_backprop', 'filter', 'input_sizes'], outputs=['output'])
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.add_prim_attr('kernel_size', self.kernel_size)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
