@@ -32,6 +32,7 @@ namespace converter {
 namespace {
 constexpr int kBase = 10;
 constexpr int kQuantBitNumInt16 = 16;
+constexpr int kPathLengthUpperLimit = 1024;
 }  // namespace
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
@@ -428,7 +429,7 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
   }
 
 #ifdef _WIN32
-  char *real_path = _fullpath(resolved_path.get(), file.c_str(), 1024);
+  char *real_path = _fullpath(resolved_path.get(), file.c_str(), kPathLengthUpperLimit);
 #else
   char *real_path = realpath(file.c_str(), resolved_path.get());
 #endif
@@ -486,7 +487,6 @@ std::vector<std::string> SplitStringToVector(const std::string &raw_str, const c
   }
   return res;
 }
-
 }  // namespace converter
 }  // namespace lite
 }  // namespace mindspore
