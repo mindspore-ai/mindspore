@@ -51,7 +51,7 @@ int SpaceToDepthOpenCLKernel::Prepare() {
     kernel_name += "Align";
   }
   std::string source = space_to_depth_source;
-  std::string program_name = "SpaceToDepth";
+  const std::string program_name = "SpaceToDepth";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -63,28 +63,47 @@ int SpaceToDepthOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
-void SpaceToDepthOpenCLKernel::SetConstArgs() {
+int SpaceToDepthOpenCLKernel::SetConstArgs() {
   cl_int4 cl_in_shape = {static_cast<cl_int>(in_shape_.N), static_cast<cl_int>(in_shape_.H),
                          static_cast<cl_int>(in_shape_.W), static_cast<cl_int>(in_shape_.Slice)};
   cl_int4 cl_out_shape = {static_cast<cl_int>(out_shape_.N), static_cast<cl_int>(out_shape_.H),
                           static_cast<cl_int>(out_shape_.W), static_cast<cl_int>(out_shape_.Slice)};
   auto param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
   int arg_idx = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_in_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_out_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->block_size_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_in_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_out_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->block_size_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   if (type() == PrimitiveType_DepthToSpace) {
     int co_size = out_shape_.C;
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, co_size);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, co_size) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
     int ci_size = in_shape_.C;
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, ci_size);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, ci_size) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
+  return RET_OK;
 }
 void SpaceToDepthOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
@@ -95,9 +114,18 @@ void SpaceToDepthOpenCLKernel::SetGlobalLocal() {
 int SpaceToDepthOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

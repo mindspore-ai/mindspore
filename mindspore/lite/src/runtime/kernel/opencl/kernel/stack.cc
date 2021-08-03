@@ -36,7 +36,10 @@ int StackOpenCLKernel::RunAxis0() {
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
   for (int i = 0; i < in_tensors_.size(); i++) {
     auto src_data = in_tensors_[i]->data_c();
-    allocator_->GetImageSize(src_data, &img_size);
+    if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
+      MS_LOG(ERROR) << "GetImageSize failed.";
+      return RET_ERROR;
+    }
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
     cl::Image2D *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
@@ -95,7 +98,7 @@ int StackOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void StackOpenCLKernel::SetConstArgs() {
+int StackOpenCLKernel::SetConstArgs() {
   int arg_cn = in_tensors_.size() + 1;
   cl_int4 inshape_tmp = {}, outshape_tmp = {};
   for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
@@ -108,8 +111,14 @@ void StackOpenCLKernel::SetConstArgs() {
   Broadcast2GpuShape(out_shape_.s, outshape_tmp.s, out_tensors_[0]->shape().size(), 1);
   in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
   out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   if (buffer_button_) {
     GpuTensorInfo img_info_out(out_tensors_[0]);
     GpuTensorInfo img_info_in(in_tensors_[0]);
@@ -117,8 +126,12 @@ void StackOpenCLKernel::SetConstArgs() {
     stride_w_out = img_info_out.RowPitch() / dtype;
     stride_w_in = img_info_in.RowPitch() / dtype;
     cl_int2 stride_w = {stride_w_out, stride_w_in};
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
+  return RET_OK;
 }
 
 void StackOpenCLKernel::SetGlobalLocal() {
@@ -162,7 +175,7 @@ int StackOpenCLKernel::Prepare() {
 
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
   std::string source = stack_source;
-  std::string program_name = "stack";
+  const std::string program_name = "stack";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -174,7 +187,10 @@ int StackOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
 
   return RET_OK;
@@ -188,16 +204,33 @@ int StackOpenCLKernel::Run() {
   int arg_cn = 0;
   if (buffer_button_) {
     for (int i = 0; i < in_tensors_.size(); ++i) {
-      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c(), lite::opencl::MemType::BUF);
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c(), lite::opencl::MemType::BUF) !=
+          CL_SUCCESS) {
+        MS_LOG(ERROR) << "SetKernelArg failed.";
+        return RET_ERROR;
+      }
     }
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF) !=
+        CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
     for (int i = 0; i < in_tensors_.size(); ++i) {
-      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c());
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c()) != CL_SUCCESS) {
+        MS_LOG(ERROR) << "SetKernelArg failed.";
+        return RET_ERROR;
+      }
     }
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Stack, OpenCLKernelCreator<StackOpenCLKernel>);

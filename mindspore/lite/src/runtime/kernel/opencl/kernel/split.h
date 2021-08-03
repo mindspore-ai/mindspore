@@ -31,12 +31,12 @@ class SplitOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
   int Run() override;
 
  private:
-  void AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape);
+  int AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape);
   int RunAxis0();
 
  private:

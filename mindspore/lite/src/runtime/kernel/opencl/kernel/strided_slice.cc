@@ -85,7 +85,7 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
 }
 
 int StridedSliceOpenCLKernel::Prepare() {
-  std::string program_name = "strided_slice";
+  const std::string program_name = "strided_slice";
   if (!ocl_runtime_->LoadSource(program_name, strided_slice_source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -96,7 +96,10 @@ int StridedSliceOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   return RET_OK;
 }
@@ -187,14 +190,33 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
   return RET_OK;
 }
 
-void StridedSliceOpenCLKernel::SetConstArgs() {
+int StridedSliceOpenCLKernel::SetConstArgs() {
   int arg_cn = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, begin_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn, size_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, begin_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn, size_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void StridedSliceOpenCLKernel::SetGlobalLocal() {
@@ -214,9 +236,18 @@ void StridedSliceOpenCLKernel::SetGlobalLocal() {
 
 int StridedSliceOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
