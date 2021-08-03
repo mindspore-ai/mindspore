@@ -823,8 +823,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     inputs.push_back(anfnode_build_map_[input_name]);
   }
   prim->set_attr("is_load", MakeValue(true));
-  CNodePtr cnode_ptr;
-  cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
+  CNodePtr cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
 
   if (kv.size() == 0) {
