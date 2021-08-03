@@ -361,3 +361,258 @@ def test_same_primal_used_by_multi_j_with_monad2():
     net = AdamNet(var, m, v)
     grad_net = AdamGradNet(net)
     grad_net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+
+
+def test_grad_args_type_error1():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+        def construct(self, x, y):
+            out = self.matmul(x, y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(get_all=2)
+        def construct(self, x, y):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, y)
+
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        GradNetWrtX(Net())(x, y)
+    except TypeError as e:
+        assert "For 'GradOperation', the arg 'get_all' should be bool, but got" in str(e)
+
+
+def test_grad_args_type_error2():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+        def construct(self, x, y):
+            out = self.matmul(x, y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(get_by_list=2)
+        def construct(self, x, y):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, y)
+
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        GradNetWrtX(Net())(x, y)
+    except TypeError as e:
+        assert "For 'GradOperation', the arg 'get_by_list' should be bool, but got" in str(e)
+
+
+def test_grad_args_type_error3():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+        def construct(self, x, y):
+            out = self.matmul(x, y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(sens_param=2)
+        def construct(self, x, y):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, y)
+
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        GradNetWrtX(Net())(x, y)
+    except TypeError as e:
+        assert "For 'GradOperation', the arg 'sens_param' should be bool, but got" in str(e)
+
+
+def test_grad_net_is_none():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.add = P.Add()
+        def construct(self, x, y):
+            out = self.add(x, y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = P.Add()
+            self.grad_op = ops.GradOperation()
+        def construct(self, x, y):
+            gradient_function = self.grad_op(None)
+            return gradient_function(x, y)
+
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        GradNetWrtX(Net())(x, y)
+    except Exception as e:
+        assert "'GradOperation' arg0 must be a 'Function' or 'Cell', but got" in str(e)
+
+
+def test_grad_missing_net():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.add = P.Add()
+        def construct(self, x, y):
+            out = self.add(x, y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation()
+        def construct(self, x, y):
+            gradient_function = self.grad_op()
+            return gradient_function(x, y)
+
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        GradNetWrtX(Net())(x, y)
+    except Exception as e:
+        assert "'GradOperation' requires a forward network or function as an input, while the input is empty." in str(e)
+
+
+def test_user_defined_bprop_inputs_size_error():
+    class BpropUserDefinedNet(nn.Cell):
+        def __init__(self):
+            super(BpropUserDefinedNet, self).__init__()
+            self.zeros_like = P.ZerosLike()
+
+        def construct(self, x, y):
+            return x + y
+
+        def bprop(self, out):
+            return self.zeros_like(out), self.zeros_like(out)
+
+    class BpropUserDefinedGradNet(nn.Cell):
+        def __init__(self, net):
+            super(BpropUserDefinedGradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            return grad_all(self.net)(x, y)
+
+    net = BpropUserDefinedNet()
+    grad_net = BpropUserDefinedGradNet(net)
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        grad_net(x, y)
+    except Exception as e:
+        assert "The function 'bprop' of Primitive or Cell requires at least 2 params 'out' and 'dout', but got only"\
+               in str(e)
+
+
+def test_user_defined_bprop_net_has_parameter():
+    class BpropUserDefinedNet(nn.Cell):
+        def __init__(self):
+            super(BpropUserDefinedNet, self).__init__()
+            self.zeros_like = P.ZerosLike()
+            self.x = Parameter(Tensor(np.array([2.0], dtype=np.float32)), name="x")
+
+        def construct(self, y):
+            return self.x + y
+
+        def bprop(self, y, out, dout):
+            return (self.zeros_like(out),)
+
+    class BpropUserDefinedGradNet(nn.Cell):
+        def __init__(self, net):
+            super(BpropUserDefinedGradNet, self).__init__()
+            self.net = net
+
+        def construct(self, y):
+            return grad_all(self.net)(y)
+
+    net = BpropUserDefinedNet()
+    grad_net = BpropUserDefinedGradNet(net)
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        grad_net(y)
+    except Exception as e:
+        assert "The Cell with user defined 'bprop' function in scope" in str(e)
+        assert "does not support Parameter data type." in str(e)
+
+
+def test_user_defined_bprop_inputs_size_error1():
+    class BpropUserDefinedNet(nn.Cell):
+        def __init__(self):
+            super(BpropUserDefinedNet, self).__init__()
+            self.zeros_like = P.ZerosLike()
+
+        def construct(self, x, y):
+            return x + y
+
+        def bprop(self, x, y, out):
+            return self.zeros_like(out), self.zeros_like(out)
+
+    class BpropUserDefinedGradNet(nn.Cell):
+        def __init__(self, net):
+            super(BpropUserDefinedGradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            return grad_all(self.net)(x, y)
+
+    net = BpropUserDefinedNet()
+    grad_net = BpropUserDefinedGradNet(net)
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        grad_net(x, y)
+    except TypeError as e:
+        assert "The params of function 'bprop' of Primitive or Cell requires the forward inputs as well as the 'out' " \
+               "and 'dout'." in str(e)
+
+
+def test_grad_hook():
+    def var_hook_function(grad_out):
+        assert grad_out[0].asnumpy().shape == (32, 120)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.add = P.Add()
+            self.hook = P.HookBackward(var_hook_function)
+        def construct(self, x, y):
+            x = self.hook(x)
+            out = self.add(x, y)
+            return out
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation()
+        def construct(self, x, y):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, y)
+
+    x = Tensor(np.array([2.0], dtype=np.float32))
+    y = Tensor(np.array([2.0], dtype=np.float32))
+    try:
+        GradNetWrtX(Net())(x, y)
+    except Exception as e:
+        assert "The Primitive 'HookBackward' is not supported in graph mode, which is only supported in pynative " \
+               "mode." in str(e)

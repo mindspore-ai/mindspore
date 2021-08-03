@@ -464,8 +464,9 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
     resources_->manager()->AddFuncGraph(bprop_graph);
 
     if (!bprop_graph->free_variables_nodes().empty() || !primal->free_variables_nodes().empty()) {
-      MS_LOG(EXCEPTION) << "User defined Cell bprop " << primal->ToString() << " in scope "
-                        << primal->output()->scope()->name() << " does not support Parameter data type.";
+      MS_LOG(EXCEPTION) << "The Cell with user defined 'bprop' function in scope " << primal->output()->scope()->name()
+                        << " does not support Parameter data type.\n"
+                        << trace::GetDebugInfo(bprop_graph->debug_info());
     }
     bprop_graph->set_flag(mindspore::kFuncGraphFlagBackPropEntry, true);
     bprop_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);

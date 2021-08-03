@@ -407,7 +407,9 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   FuncGraphPtr bprop_fg = nullptr;
   if (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) {
     if (MsContext::GetInstance()->get_param<int>(MsCtxParam::MS_CTX_EXECUTION_MODE) == kGraphMode) {
-      MS_LOG(EXCEPTION) << "HookBackward is not supported in graph mode.";
+      MS_LOG(EXCEPTION)
+        << "The Primitive 'HookBackward' is not supported in graph mode, which is only supported in pynative mode.\n"
+        << trace::GetDebugInfo(cnode->debug_info());
     }
     bprop_fg = BpropCut(value_node, resources);
   } else {
@@ -478,9 +480,10 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
       } else if (HasAbstractIOMonad(primal_node)) {
         extra_node = NewValueNode(kIOMonad);
       } else {
-        MS_EXCEPTION(TypeError) << "Function: " << current_primal_fg->ToString()
-                                << ", has extra parameter which is not UMoand or IOMonad, but: "
-                                << primal_node->DebugString();
+        MS_EXCEPTION(TypeError)
+          << "The params of function 'bprop' of Primitive or Cell requires the forward inputs as well "
+             "as the 'out' and 'dout'.\n"
+          << trace::GetDebugInfo(bprop_fg->debug_info());
       }
       extra_args.push_back(extra_node);
       MS_LOG(DEBUG) << "Insert to bprop_fg for node: " << primal_node->DebugString();
