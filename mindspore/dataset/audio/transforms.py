@@ -20,7 +20,7 @@ to improve their training models.
 import mindspore._c_dataengine as cde
 import numpy as np
 from ..transforms.c_transforms import TensorOperation
-from .validators import check_allpass_biquad, check_band_biquad, check_bandpass_biquad
+from .validators import check_allpass_biquad, check_band_biquad, check_bandpass_biquad, check_bandreject_biquad
 
 
 class AudioTensorOperation(TensorOperation):
@@ -132,3 +132,34 @@ class BandpassBiquad(TensorOperation):
 
     def parse(self):
         return cde.BandpassBiquadOperation(self.sample_rate, self.central_freq, self.Q, self.const_skirt_gain)
+
+
+class BandrejectBiquad(AudioTensorOperation):
+    """
+    Design two-pole band filter for audio waveform of dimension of `(..., time)`
+
+    Args:
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
+            the value must be greater than 0 .
+        central_freq (float): central frequency (in Hz),
+            the value must be greater than 0 .
+        Q(float, optional): Quality factor,https://en.wikipedia.org/wiki/Q_factor,
+            Range: (0, 1] (Default=0.707).
+
+    Examples:
+        >>> import mindspore.dataset.audio.transforms as audio
+        >>> import numpy as np
+
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
+        >>> band_biquad_op = audio.BandBiquad(44100, 200.0)
+        >>> waveform_filtered = band_biquad_op(waveform)
+    """
+
+    @check_bandreject_biquad
+    def __init__(self, sample_rate, central_freq, Q=0.707):
+        self.sample_rate = sample_rate
+        self.central_freq = central_freq
+        self.Q = Q
+
+    def parse(self):
+        return cde.BandrejectBiquadOperation(self.sample_rate, self.central_freq, self.Q)

@@ -210,6 +210,11 @@ def check_2tuple(value, arg_name=""):
         raise ValueError("Value {0} needs to be a 2-tuple.".format(arg_name))
 
 
+def check_int32(value, arg_name=""):
+    type_check(value, (int,), arg_name)
+    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
+
+
 def check_uint8(value, arg_name=""):
     """
     Validates the value of a variable is within the range of uint8.
@@ -220,11 +225,6 @@ def check_uint8(value, arg_name=""):
     """
     type_check(value, (int,), arg_name)
     check_value(value, [UINT8_MIN, UINT8_MAX])
-
-
-def check_int32(value, arg_name=""):
-    type_check(value, (int,), arg_name)
-    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
 
 
 def check_uint32(value, arg_name=""):
