@@ -17,7 +17,6 @@ include_directories($ENV{MX_SDK_HOME}/opensource/lib/glib-2.0/include)
 
 link_directories($ENV{MX_SDK_HOME}/lib)
 link_directories($ENV{MX_SDK_HOME}/opensource/lib/)
-        
 
 add_compile_options(-std=c++11 -fPIC -fstack-protector-all -pie -Wno-deprecated-declarations)
 add_compile_options("-DPLUGIN_NAME=${PLUGIN_NAME}")
@@ -29,11 +28,11 @@ add_definitions(-DENABLE_DVPP_INTERFACE)
 #include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${ACL_LIB_PATH}/include)
 
-add_library(${TARGET_LIBRARY} SHARED ../../mxbase/src/PostProcess/Yolov4TinyMindsporePost.cpp ../../mxbase/src/PostProcess/Yolov4TinyMindsporePost.h)
+add_library(${TARGET_LIBRARY} SHARED ../../mxbase/src/PostProcess/Yolov4TinyMindsporePost.cpp \
+../../mxbase/src/PostProcess/Yolov4TinyMindsporePost.h)
 
 target_link_libraries(${TARGET_LIBRARY} glib-2.0 gstreamer-1.0 gobject-2.0 gstbase-1.0 gmodule-2.0)
 target_link_libraries(${TARGET_LIBRARY} plugintoolkit mxpidatatype mxbase)
 target_link_libraries(${TARGET_LIBRARY} -Wl,-z,relro,-z,now,-z,noexecstack -s)
 
 install(TARGETS ${TARGET_LIBRARY} LIBRARY DESTINATION $ENV{MX_SDK_HOME}/lib/modelpostprocessors/)
-
