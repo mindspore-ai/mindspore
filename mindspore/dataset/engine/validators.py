@@ -696,7 +696,7 @@ def check_skip(method):
         [count], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(count, (int,), "count")
-        check_value(count, (-1, INT32_MAX), "count")
+        check_value(count, (0, INT32_MAX), "count")
 
         return method(self, *args, **kwargs)
 
@@ -711,7 +711,8 @@ def check_take(method):
         [count], _ = parse_user_args(method, *args, **kwargs)
         type_check(count, (int,), "count")
         if (count <= 0 and count != -1) or count > INT32_MAX:
-            raise ValueError("count should be either -1 or positive integer.")
+            raise ValueError("count should be either -1 or within the required interval of ({}, {}], got {}."
+                             .format(0, INT32_MAX, count))
 
         return method(self, *args, **kwargs)
 
