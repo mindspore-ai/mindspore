@@ -41,7 +41,10 @@ int SplitOpenCLKernel::RunAxis0() {
   for (int i = 0; i < out_tensors_.size(); i++) {
     auto dst_data = out_tensors_[i]->data_c();
     ImageSize img_size;
-    allocator_->GetImageSize(dst_data, &img_size);
+    if (allocator_->GetImageSize(dst_data, &img_size) != RET_OK) {
+      MS_LOG(ERROR) << "GetImageSize failed.";
+      return RET_ERROR;
+    }
     auto dst_area = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
     cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
@@ -93,23 +96,32 @@ int SplitOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void SplitOpenCLKernel::AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape) {
+int SplitOpenCLKernel::AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape) {
   auto allocator = ocl_runtime_->GetAllocator();
   int shape_dim = in_shape.at(param->split_dim_);
   if (num_split_ == 1) {
     size_t num_split = UP_DIV(shape_dim, param->split_sizes_[0]);
     split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split * sizeof(int), lite::opencl::MemType::BUF));
+    if (split_sizes_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
     for (int i = 0; i < num_split - 1; ++i) {
       split_sizes_[i] = (i + 1) * param->split_sizes_[0];
     }
   } else {
     int sum = 0;
     split_sizes_ = reinterpret_cast<int *>(allocator->Malloc(num_split_ * sizeof(int), lite::opencl::MemType::BUF));
+    if (split_sizes_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
     for (int i = 0; i < num_split_ - 1; ++i) {
       sum += param->split_sizes_[i];
       split_sizes_[i] = sum;
     }
   }
+  return RET_OK;
 }
 
 int SplitOpenCLKernel::Prepare() {
@@ -129,7 +141,10 @@ int SplitOpenCLKernel::Prepare() {
       }
     }
   }
-  AlignSplitSizes(param, in_shape);
+  if (AlignSplitSizes(param, in_shape) != RET_OK) {
+    MS_LOG(ERROR) << "AlignSplitSizes failed.";
+    return RET_ERROR;
+  }
   std::string kernel_name = "split_out";
   kernel_name += std::to_string(num_split_);
   kernel_name += "_axis" + std::to_string(split_dim_);
@@ -138,7 +153,7 @@ int SplitOpenCLKernel::Prepare() {
   }
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
   std::string source = split_source;
-  std::string program_name = "split";
+  const std::string program_name = "split";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -151,12 +166,15 @@ int SplitOpenCLKernel::Prepare() {
     return ret;
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   return RET_OK;
 }
 
-void SplitOpenCLKernel::SetConstArgs() {
+int SplitOpenCLKernel::SetConstArgs() {
   int arg_cn = out_tensors_.size() + 2;
   cl_int4 shape = {};
   for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
@@ -166,7 +184,10 @@ void SplitOpenCLKernel::SetConstArgs() {
   if (Align_) {
     in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
   }
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
 
   for (int i = 0; i < out_tensors_.size(); ++i) {
     cl_int4 temp = {};
@@ -177,13 +198,21 @@ void SplitOpenCLKernel::SetConstArgs() {
     if (Align_) {
       out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
     }
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
-  GpuTensorInfo img_info(in_tensors_.at(0));
-  size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
-  stride_w = img_info.RowPitch() / dtype;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w);
-  return;
+  if (!Align_) {
+    GpuTensorInfo img_info(in_tensors_.at(0));
+    size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
+    stride_w = img_info.RowPitch() / dtype;
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 void SplitOpenCLKernel::SetGlobalLocal() {
@@ -205,15 +234,31 @@ int SplitOpenCLKernel::Run() {
   }
   int arg_cn = 0;
   if (Align_) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c(), lite::opencl::MemType::BUF);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c(), lite::opencl::MemType::BUF) !=
+        CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
   for (int i = 0; i < out_tensors_.size(); ++i) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(i)->data_c());
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(i)->data_c()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, split_sizes_, lite::opencl::MemType::BUF);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, split_sizes_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

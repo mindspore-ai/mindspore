@@ -73,7 +73,7 @@ int PoolingOpenCLKernel::Prepare() {
   kernel_name += "_NHWC4";
   kernel_name += "_IMG";
   std::string source = pooling2d_source;
-  std::string program_name = "Pooling2d";
+  const std::string program_name = "Pooling2d";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -84,7 +84,10 @@ int PoolingOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 
@@ -100,7 +103,7 @@ void PoolingOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, local_size_);
 }
 
-void PoolingOpenCLKernel::SetConstArgs() {
+int PoolingOpenCLKernel::SetConstArgs() {
   int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
   cl_int4 input_shape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], slices};
   cl_int4 output_shape = {out_tensors_[0]->shape()[0], out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2],
@@ -109,19 +112,44 @@ void PoolingOpenCLKernel::SetConstArgs() {
   cl_int2 kernel_size = {parameter_->window_h_, parameter_->window_w_};
   cl_int2 padding = {parameter_->pad_u_, parameter_->pad_l_};
   int arg_idx = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, stride);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, kernel_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, padding);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, stride) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, kernel_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, padding) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int PoolingOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

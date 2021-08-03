@@ -59,15 +59,25 @@ void BatchNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t
   local->push_back(z);
 }
 
-void BatchNormOpenCLKernel::SetConstArgs() {
+int BatchNormOpenCLKernel::SetConstArgs() {
   int arg_cn = 6;
   auto param = reinterpret_cast<BatchNormParameter *>(this->op_parameter_);
   auto input0_shape = in_tensors_.at(0)->shape();
   cl_int4 input_shape_ = {input0_shape.at(0), input0_shape.at(1), input0_shape.at(2),
                           UP_DIV(input0_shape.at(3), C4NUM)};
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->epsilon_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input0_shape.at(3));
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->epsilon_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input0_shape.at(3)) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void BatchNormOpenCLKernel::SetGlobalLocal() {
@@ -83,6 +93,41 @@ void BatchNormOpenCLKernel::SetGlobalLocal() {
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
+int BatchNormOpenCLKernel::UnmapBuffer() {
+  auto allocator = ocl_runtime_->GetAllocator();
+  if (allocator->UnmapBuffer(scale_) != RET_OK) {
+    return RET_ERROR;
+  }
+  if (allocator->UnmapBuffer(offset_) != RET_OK) {
+    return RET_ERROR;
+  }
+  if (allocator->UnmapBuffer(mean_) != RET_OK) {
+    return RET_ERROR;
+  }
+  if (allocator->UnmapBuffer(variance_) != RET_OK) {
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int BatchNormOpenCLKernel::MapBuffer() {
+  auto allocator = ocl_runtime_->GetAllocator();
+  if (allocator->MapBuffer(scale_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    return RET_ERROR;
+  }
+  if (allocator->MapBuffer(offset_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    return RET_ERROR;
+  }
+  if (allocator->MapBuffer(mean_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    return RET_ERROR;
+  }
+  if (allocator->MapBuffer(variance_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
 int BatchNormOpenCLKernel::Initweight() {
   auto allocator = ocl_runtime_->GetAllocator();
   GpuTensorInfo img_info(in_tensors_.at(1));
@@ -90,15 +135,30 @@ int BatchNormOpenCLKernel::Initweight() {
   size_t weight_size = img_info.OriginSize;
   // allocated memory for weight and init value
   scale_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  if (scale_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   offset_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  if (offset_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   mean_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  if (mean_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   variance_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  if (variance_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
 
-  allocator->MapBuffer(scale_, CL_MAP_WRITE, nullptr, true);
-  allocator->MapBuffer(offset_, CL_MAP_WRITE, nullptr, true);
-  allocator->MapBuffer(mean_, CL_MAP_WRITE, nullptr, true);
-  allocator->MapBuffer(variance_, CL_MAP_WRITE, nullptr, true);
-
+  if (MapBuffer() != RET_OK) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
   memset(scale_, 1, weight_size);
   memset(offset_, 0x00, weight_size);
   memset(mean_, 0x00, weight_size);
@@ -153,18 +213,18 @@ int BatchNormOpenCLKernel::Initweight() {
       memcpy(variance_, in_tensors_.at(4)->data_c(), weight_size);
     }
   }
-  allocator->UnmapBuffer(scale_);
-  allocator->UnmapBuffer(offset_);
-  allocator->UnmapBuffer(mean_);
-  allocator->UnmapBuffer(variance_);
+  if (UnmapBuffer() != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int BatchNormOpenCLKernel::Prepare() {
   use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
-  std::string kernel_name = "Batch_normalization_NHWC4";
+  const std::string kernel_name = "Batch_normalization_NHWC4";
   std::string source = batchnorm_source;
-  std::string program_name = "Batch_normalization";
+  const std::string program_name = "Batch_normalization";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -181,7 +241,10 @@ int BatchNormOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Initweight failed ";
     return RET_ERROR;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
 
   return RET_OK;
@@ -190,13 +253,34 @@ int BatchNormOpenCLKernel::Prepare() {
 int BatchNormOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg_cn = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());            // input tensor
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, scale_, lite::opencl::MemType::BUF);     // scale
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, offset_, lite::opencl::MemType::BUF);    // offset
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, mean_, lite::opencl::MemType::BUF);      // mean
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, variance_, lite::opencl::MemType::BUF);  // variance
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c());           // out tensor
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // input tensor
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, scale_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // scale
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, offset_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // offset
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, mean_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // mean
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, variance_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // variance
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // out tensor
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

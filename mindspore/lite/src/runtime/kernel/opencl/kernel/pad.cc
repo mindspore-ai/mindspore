@@ -81,11 +81,14 @@ int PadOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-void PadOpenCLKernel::SetConstArgs() {
+int PadOpenCLKernel::SetConstArgs() {
   auto input = GpuTensorInfo(in_tensors_.front());
   auto output = GpuTensorInfo(out_tensors_.front());
   cl_int4 input_shape = {static_cast<cl_int>(input.N), static_cast<cl_int>(input.H), static_cast<cl_int>(input.W),
@@ -105,20 +108,45 @@ void PadOpenCLKernel::SetConstArgs() {
   Broadcast2GpuShape(pad_before.s, pad_before_ori.data(), ndim, 0);
 
   int arg_cn = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad_before);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn, param_->constant_value_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad_before) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn, param_->constant_value_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   local_size_ = {8, 4, 1};
   global_size_ = {output.N * output.H, output.W, output.Slice};
   AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int PadOpenCLKernel::Run() {
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

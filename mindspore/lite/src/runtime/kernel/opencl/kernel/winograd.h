@@ -32,7 +32,7 @@ class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
 
   ~WinogradOpenCLKernel() override = default;
 
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
   int Run() override;
 
@@ -42,8 +42,8 @@ class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
 
  private:
   int BuildKernel() override;
-  void InitFilter() override;
-  void AllocateMemory();
+  int InitFilter() override;
+  int AllocateMemory();
 
   cl::Kernel kernel_4x4to36_;
   cl::Kernel kernel_36to4x4_;

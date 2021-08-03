@@ -108,7 +108,10 @@ int Conv2DOpenCLKernel::Prepare() {
     return ret;
   }
   SetGlobalLocal();
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -142,7 +145,7 @@ void Conv2DOpenCLKernel::InitAttrs() {
 
 int Conv2DOpenCLKernel::BuildKernel() {
   SetBlockSize();
-  std::string program_name = "conv2d";
+  const std::string program_name = "conv2d";
   std::stringstream kernel_name;
   kernel_name << "Conv2D_H" << block_size_.H << "W" << block_size_.W << "C" << block_size_.C;
   if (filter_type_ == MemType::IMG) {
@@ -245,9 +248,11 @@ void Conv2DOpenCLKernel::SetMaliFp16BlockSize(int task_size_per_cu, bool w_kerne
 }
 
 int Conv2DOpenCLKernel::InitWeights() {
-  InitFilter();
+  if (InitFilter() != RET_OK) {
+    return RET_ERROR;
+  }
   if (has_bias_) {
-    InitBias();
+    return InitBias();
   }
   return RET_OK;
 }
@@ -300,7 +305,7 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
   }
 }
 
-void Conv2DOpenCLKernel::InitFilter() {
+int Conv2DOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
 
   // allocate opencl memory: buffer or image2d
@@ -312,9 +317,17 @@ void Conv2DOpenCLKernel::InitFilter() {
     size_t dtype = use_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
     size = width * height * CO_TILE * sizeof_FLT_;
     packed_filter_ = allocator->Malloc({width, height, dtype});
+    if (packed_filter_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
   } else {
     size = UP_DIV(CO_SLICES_, Ogroup) * KH_ * KW_ * CI_SLICES_ * Ogroup * CI_TILE * CO_TILE * sizeof_FLT_;
     packed_filter_ = allocator->Malloc(size, lite::opencl::MemType::BUF);
+    if (packed_filter_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
   }
 
   // rearrange filter
@@ -333,15 +346,22 @@ void Conv2DOpenCLKernel::InitFilter() {
   if (filter_type_ == MemType::IMG) {
     ocl_runtime_->WriteImage(packed_filter_, tmp.data());
   } else {
-    allocator->MapBuffer(packed_filter_, CL_MAP_WRITE, nullptr, true);
+    if (allocator->MapBuffer(packed_filter_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+      MS_LOG(ERROR) << "Map Buffer failed.";
+      return RET_ERROR;
+    }
     memcpy(packed_filter_, tmp.data(), size);
-    allocator->UnmapBuffer(packed_filter_);
+    if (allocator->UnmapBuffer(packed_filter_) != RET_OK) {
+      MS_LOG(ERROR) << "UnmapBuffer failed.";
+      return RET_ERROR;
+    }
   }
 
   FreeStoredData(stored_filter_);
+  return RET_OK;
 }
 
-void Conv2DOpenCLKernel::InitBias() {
+int Conv2DOpenCLKernel::InitBias() {
   auto allocator = ocl_runtime_->GetAllocator();
 
   // align bias from C to C4
@@ -349,8 +369,15 @@ void Conv2DOpenCLKernel::InitBias() {
   void *src_data = stored_bias_ == nullptr ? bias_tensor->data_c() : stored_bias_;
   size_t packed_bias_size = UP_ROUND(CO_SLICES_, block_size_.C) * CO_TILE * sizeof_FLT_;
   packed_bias_ = allocator->Malloc(packed_bias_size, lite::opencl::MemType::BUF);
+  if (packed_bias_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
 
-  allocator->MapBuffer(packed_bias_, CL_MAP_WRITE, nullptr, true);
+  if (allocator->MapBuffer(packed_bias_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
   memset(packed_bias_, 0x00, packed_bias_size);
   if (bias_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_) {
@@ -375,11 +402,15 @@ void Conv2DOpenCLKernel::InitBias() {
       memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
     }
   }
-  allocator->UnmapBuffer(packed_bias_);
+  if (allocator->UnmapBuffer(packed_bias_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
   FreeStoredData(stored_bias_);
+  return RET_OK;
 }
 
-void Conv2DOpenCLKernel::SetConstArgs() {
+int Conv2DOpenCLKernel::SetConstArgs() {
   cl_int4 input_shape = {batch_size_, IH_, IW_, CI_SLICES_};
   cl_int4 output_shape = {batch_size_, OH_, OW_, CO_SLICES_};
   cl_int4 kernel_stride = {KH_, KW_, param_->stride_h_, param_->stride_w_};
@@ -387,15 +418,43 @@ void Conv2DOpenCLKernel::SetConstArgs() {
   cl_int2 dilation = {param_->dilation_h_, param_->dilation_w_};
 
   int arg_cn = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_filter_, filter_type_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_bias_, MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, kernel_stride);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, dilation);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param_->act_type_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn, alpha_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_filter_, filter_type_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_bias_, MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, kernel_stride) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, dilation) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param_->act_type_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn, alpha_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void Conv2DOpenCLKernel::SetGlobalLocal() {
@@ -429,9 +488,18 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
 
 int Conv2DOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
