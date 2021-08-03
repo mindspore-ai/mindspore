@@ -40,6 +40,7 @@ __all__ = ['Softmax',
            'ELU',
            'LogSigmoid',
            'SoftShrink',
+           'HShrink',
            ]
 
 
@@ -803,6 +804,51 @@ class SoftShrink(Cell):
         output = self.softshrink(input_x)
         return output
 
+class HShrink(Cell):
+    r"""
+    Applies the hard shrinkage function element-wise, each element complies the follow function:
+
+    .. math::
+        \text{HardShrink}(x) =
+        \begin{cases}
+        x, & \text{ if } x > \lambda \\
+        x, & \text{ if } x < -\lambda \\
+        0, & \text{ otherwise }
+        \end{cases}
+
+    Args:
+        lambd (float): The value for the HardShrink formulation. Default: 0.5
+
+    Inputs:
+        - **input_x** (Tensor) - The input of HardShrink with data type of float16 or float32.
+
+    Outputs:
+        Tensor, the same shape and data type as the input.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Raises:
+        TypeError: If `lambd` is not a float.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mstype.float32)
+        >>> hshrink = nn.HShrink()
+        >>> output = hshrink(input_x)
+        >>> print(output)
+        [[ 0.      1.      2.    ]
+        [ 0.      0.     -2.1233]]
+    """
+
+    def __init__(self, lambd=0.5):
+        super(HShrink, self).__init__()
+        self.hshrink = P.HShrink(lambd)
+
+    def construct(self, input_x):
+        return self.hshrink(input_x)
+
+
 _activation = {
     'softmax': Softmax,
     'logsoftmax': LogSoftmax,
@@ -819,6 +865,7 @@ _activation = {
     'hsigmoid': HSigmoid,
     'logsigmoid': LogSigmoid,
     'softshrink': SoftShrink,
+    'hshrink': HShrink,
 }
 
 
