@@ -48,7 +48,6 @@ Yolov4TinyPostProcess& Yolov4TinyPostProcess::operator=(const Yolov4TinyPostProc
     biasesNum_ = other.biasesNum_;
     yoloType_ = other.yoloType_;
     modelType_ = other.modelType_;
-    yoloType_ = other.yoloType_;
     inputType_ = other.inputType_;
     biases_ = other.biases_;
     return *this;
@@ -104,8 +103,8 @@ bool Yolov4TinyPostProcess::IsValidTensors(const std::vector<TensorBase> &tensor
             uint32_t channelNumber = 1;
             int startIndex = modelType_ ? VECTOR_SECOND_INDEX : VECTOR_FOURTH_INDEX;
             int endIndex = modelType_ ? (shape.size() - VECTOR_THIRD_INDEX) : shape.size();
-            for (int i = startIndex; i < endIndex; i++) {
-                channelNumber *= shape[i];
+            for (int j = startIndex; j < endIndex; j++) {
+                channelNumber *= shape[j];
             }
             if (channelNumber != anchorDim_ * (classNum_ + YOLO_INFO_DIM)) {
                 LogError << "channelNumber(" << channelNumber << ") != anchorDim_ * (classNum_ + 5).";
@@ -291,7 +290,7 @@ APP_ERROR Yolov4TinyPostProcess::GetBiases(std::string& strBiases)
         i++;
         num = strBiases.find(",");
     }
-    if (i != biasesNum_ - 1 || strBiases.size() <= 0) {
+    if (i != biasesNum_ - 1 || strBiases.size() == 0) {
         LogError << GetError(APP_ERR_COMM_INVALID_PARAM) << "biasesNum (" << biasesNum_
                  << ") is not equal to total number of biases (" << strBiases <<").";
         return APP_ERR_COMM_INVALID_PARAM;
