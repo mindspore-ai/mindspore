@@ -158,6 +158,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
             return RET_ERROR;
           }
           trt_tensor = lite::ConvertConstantTensor(this->network_, in_tensor);
+          MS_LOG(INFO) << "auto convert constant tensor for: " << cur_op->GetOpName();
           cur_op->AddInnerInTensors(trt_tensor);
         }
       } else {
@@ -178,6 +179,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {
           out_op->GetInnerOutTensor()[index]->setName(out_tensor.Name().c_str());
+          MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
           this->network_->markOutput(*out_op->GetInnerOutTensor()[index]);
         }
       }
