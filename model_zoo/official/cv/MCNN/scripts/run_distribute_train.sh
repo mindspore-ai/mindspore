@@ -15,10 +15,9 @@
 # ============================================================================
 
 ulimit -u unlimited
-export DEVICE_NUM=8
 export RANK_SIZE=8
-export RANK_TABLE_FILE=/home/wks/hccl_8p_01234567_127.0.0.1.json
-export RUN_OFFLINE=$1
+export DEVICE_NUM=8
+export RANK_TABLE_FILE=$1
 export TRAIN_PATH=$2
 export TRAIN_GT_PATH=$3
 export VAL_PATH=$4
@@ -40,7 +39,7 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --run_offline=$RUN_OFFLINE --train_path=$TRAIN_PATH --train_gt_path=$TRAIN_GT_PATH \
-                    --val_path=$VAL_PATH --val_gt_path=$VAL_GT_PATH --ckpt_path=$CKPT_PATH &> log &
+    python -u train.py --device_id=$DEVICE_ID --train_path=$TRAIN_PATH --train_gt_path=$TRAIN_GT_PATH \
+                       --val_path=$VAL_PATH --val_gt_path=$VAL_GT_PATH --ckpt_path=$CKPT_PATH &> log &
     cd ..
 done

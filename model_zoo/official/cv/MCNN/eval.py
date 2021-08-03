@@ -36,17 +36,18 @@ ckptpath = "obs://lhb1234/MCNN/ckpt"
 
 parser = argparse.ArgumentParser(description='MindSpore MCNN Example')
 parser.add_argument('--run_offline', type=ast.literal_eval,
-                    default=False, help='run in offline is False or True')
-parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
+                    default=True, help='run in offline is False or True')
+parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend'],
                     help='device where the code will be implemented (default: Ascend)')
+parser.add_argument('--device_id', type=int, default=0, help='device id of Ascend. (Default: 0)')
 parser.add_argument('--ckpt_path', type=str, default="/cache/train_output", help='Location of ckpt.')
 parser.add_argument('--data_url', default=None, help='Location of data.')
 parser.add_argument('--train_url', default=None, help='Location of training outputs.')
 parser.add_argument('--val_path', required=True,
-                    default='obs://lhb1234/mcnn-pure/data/formatted_trainval/shanghaitech_part_A_patches_9/val',
+                    default='/data/mcnn/original/shanghaitech/part_A_final/test_data/images',
                     help='Location of data.')
 parser.add_argument('--val_gt_path', required=True,
-                    default='obs://lhb1234/mcnn-pure/data/formatted_trainval/shanghaitech_part_A_patches_9/val_den',
+                    default='/data/mcnn/original/shanghaitech/part_A_final/test_data/ground_truth_csv',
                     help='Location of data.')
 args = parser.parse_args()
 set_seed(64678)
@@ -54,14 +55,13 @@ set_seed(64678)
 
 if __name__ == "__main__":
     device_num = int(os.getenv("RANK_SIZE"))
-    device_id = int(os.getenv("DEVICE_ID"))
 
     device_target = args.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     context.set_context(save_graphs=False)
 
     if device_target == "Ascend":
-        context.set_context(device_id=device_id)
+        context.set_context(device_id=args.device_id)
     else:
         raise ValueError("Unsupported platform.")
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     ds_val = ds_val.batch(1)
     network = MCNN()
 
-    model_name = os.path.join(local_ckpt_url, 'best.ckpt')
+    model_name = local_ckpt_url
     print(model_name)
     mae = 0.0
     mse = 0.0

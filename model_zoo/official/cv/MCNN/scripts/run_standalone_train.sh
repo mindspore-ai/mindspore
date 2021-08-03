@@ -14,9 +14,8 @@
 # limitations under the License.
 # ============================================================================
 ulimit -u unlimited
-export DEVICE_ID=1
 export RANK_SIZE=1
-export RUN_OFFLINE=$1
+export DEVICE_ID=$1
 export TRAIN_PATH=$2
 export TRAIN_GT_PATH=$3
 export VAL_PATH=$4
@@ -37,8 +36,8 @@ env > env.
 
 if [ $# == 6 ]
 then
-    python train.py --run_offline=$RUN_OFFLINE --train_path=$TRAIN_PATH --train_gt_path=$TRAIN_GT_PATH \
-                    --val_path=$VAL_PATH --val_gt_path=$VAL_GT_PATH --ckpt_path=$CKPT_PATH &> log &
+    python -u train.py --device_id=$DEVICE_ID --train_path=$TRAIN_PATH --train_gt_path=$TRAIN_GT_PATH \
+                       --val_path=$VAL_PATH --val_gt_path=$VAL_GT_PATH --ckpt_path=$CKPT_PATH &> log &
 fi
 cd ..
 
