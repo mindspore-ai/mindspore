@@ -238,7 +238,7 @@ int NPUGraph::CreateSubgraphFromReadyOps(std::queue<NPUOp *> *valid_in_ops, std:
     if ((*is_searched)[op]) {
       continue;
     }
-    if (valid_in_ops->empty()) {
+    if (!valid_in_ops->empty()) {
       // use BFS to find out connected input ops
       FindConnectedOps(op, ready_ops, &connected_ops, is_searched);
     } else {
