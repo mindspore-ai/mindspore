@@ -199,29 +199,5 @@ bool AscendKernelBuildClient::CheckSupported(const std::string &json) {
   }
   return true;
 }
-
-int GpuKernelBuildClient::AkgGetPid() {
-  auto res = SendRequest(kAkgPid);
-  if (res == kErr) {
-    MS_LOG(ERROR) << "AKG/PID failed, res: " << res;
-    return -1;
-  }
-  return std::stoi(res);
-}
-
-bool GpuKernelBuildClient::AkgCompileSingle(const std::string json) {
-  auto res = SendRequest(kAkgCompileOp);
-  if (res != kAck) {
-    MS_LOG(ERROR) << "AKG/COMPILE failed, res: " << res;
-    return false;
-  }
-  // Send single json data.
-  res = SendRequest(json);
-  if (res != kAck) {
-    MS_LOG(ERROR) << "AKG/COMPILE responds failed, res: " << res;
-    return false;
-  }
-  return true;
-}
 }  // namespace kernel
 }  // namespace mindspore

@@ -16,7 +16,6 @@
 import os
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process
-from mindspore._extends.parallel_compile.akg_compiler.compiler import run_compiler as akg_compile_single
 
 
 class Messager:
@@ -146,9 +145,7 @@ class AkgBuilder():
 
     def handle(self, messager, arg):
         """Handle message about akg"""
-        if arg == 'AKG/PID':
-            messager.send_res(os.getpid())
-        elif arg == 'AKG/START':
+        if arg == 'AKG/START':
             messager.send_ack()
             process_num_str = messager.get_message()
             messager.send_ack()
@@ -173,17 +170,8 @@ class AkgBuilder():
                 else:
                     messager.send_ack(False)
                     break
-        elif arg == 'AKG/COMPILE':
-            messager.send_ack()
-            json = messager.get_message()
-            try:
-                akg_compile_single(json, self.attrs)
-            except ValueError:
-                messager.send_ack(False)
-                messager.exit()
-            finally:
-                pass
-            messager.send_ack()
+        else:
+            raise RuntimeError("Unknown message type: %s" % arg)
 
 
 def get_logger():
