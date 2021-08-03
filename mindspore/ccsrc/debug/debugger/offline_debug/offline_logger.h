@@ -28,8 +28,7 @@
 
 #define MS_LOG_WARNING MS_LOG_INFO
 
-#define MS_LOG_EXCEPTION \
-  static_cast<void>(0), !(DbgLogger::verbose) ? void(0) : DbgLogger(DbgLoggerLvl::EXCEPTION) < std::cout
+#define MS_LOG_EXCEPTION static_cast<void>(0), DbgLogger(DbgLoggerLvl::EXCEPTION) < std::cout
 
 enum DbgLoggerLvl : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
 

@@ -59,12 +59,14 @@ using debugger::WatchpointHit;
 namespace mindspore {
 
 static constexpr auto g_chunk_size = 1024 * 1024 * 3;
+static constexpr int32_t heartbeat_period_second = 30;
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
 
 Debugger::Debugger()
     : grpc_client_(nullptr),
       debug_services_(nullptr),
+      heartbeat_thread_(nullptr),
       device_id_(0),
       device_target_(""),
       num_step_(0),
@@ -132,6 +134,7 @@ void Debugger::EnableDebugger() {
   partial_memory_ = false;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
+  heartbeat_thread_ = nullptr;
 
   // see if dump using debugger backend is enabled
   bool dump_enabled = CheckDebuggerDumpEnabled();
@@ -170,6 +173,8 @@ void Debugger::EnableDebugger() {
     }
     // initialize grpc client
     grpc_client_ = std::make_unique<GrpcClient>(host, port);
+    // initialize sending heartbeat
+    heartbeat_thread_ = std::make_unique<std::thread>([&]() { SendHeartbeat(heartbeat_period_second); });
   }
   debug_services_ = std::make_unique<DebugServices>();
 }
@@ -561,6 +566,38 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
   return model.graph();
 }
+
+void Debugger::SendHeartbeat(int32_t period) {
+  bool heartbeat_enabled_ = true;
+  int num_heartbeat_fail = 0;
+  const int max_num_heartbeat_fail = 5;
+  const int retry_period = 500;
+
+  Heartbeat heartbeat;
+  heartbeat.set_message("Debugger is alive");
+  heartbeat.set_period(heartbeat_period_second);
+
+  bool run_ = CheckDebuggerEnabled() && heartbeat_enabled_;
+  while (run_) {
+    EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
+
+    if (reply.status() != reply.OK) {
+      MS_LOG(ERROR) << "Error: SendHeartbeat failed";
+      num_heartbeat_fail++;
+      if (num_heartbeat_fail >= max_num_heartbeat_fail) {
+        MS_LOG(ERROR) << "Maximum number of failure for SendHeartbeat reached : exiting training session.";
+        Exit();
+        run_ = false;
+      } else {
+        MS_LOG(ERROR) << "Number of consecutive SendHeartbeat fail:" << num_heartbeat_fail;
+        std::this_thread::sleep_for(std::chrono::milliseconds(retry_period));
+      }
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(period * 1000));
+    }
+  }
+}
+
 void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   if (SendMetadata(true)) {
     // send graph to Mindinsight server
