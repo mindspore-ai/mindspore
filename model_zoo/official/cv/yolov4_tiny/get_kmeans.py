@@ -151,7 +151,7 @@ def get_kmeans(anno, cluster_num=9):
 
 if __name__ == '__main__':
     # target resize format: [width, height]
-    # if target_resize is speficied, the anchors are on the resized image scale
+    # if target_resize is specified, the anchors are on the resized image scale
     # if target_resize is set to None, the anchors are on the original image scale
     target_size = [416, 416]
     annotation_path = "train.txt"
