@@ -41,7 +41,7 @@ AnfNodePtr CreatTypeInt(int64_t value);
 AnfNodePtr CreatInt64Imm(int64_t value);
 AnfNodePtr CreateInt32Tensor(int64_t value);
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);
-AnfNodePtr CreatTuple(const std::vector<int64_t> &tuple);
+AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple);
 std::string HashInstanceName(const std::string &name);
 
 class GenerateGraph {

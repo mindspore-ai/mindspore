@@ -39,6 +39,8 @@ class Net(Cell):
 
 _x = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
 _w1 = Tensor(np.ones([8, 16, 2, 2]), dtype=ms.float32)
+_w2 = Tensor(np.ones([8, 16, 3, 3]), dtype=ms.float32)
+_w3 = Tensor(np.ones([8, 16, 5, 5]), dtype=ms.float32)
 _b = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
 
 
@@ -73,6 +75,31 @@ def test_conv2d_model_parallel2():
     strategy2 = ((32, 1, 1, 1),)
     net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=2, strategy1=strategy1, strategy2=strategy2)
     compile_net(net)
+
+
+def test_conv2d_model_parallel3():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 1, 1, 4), (1, 1, 1, 1))
+    strategy2 = ((2, 1, 1, 4),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
+    compile_net(net)
+
+
+def test_conv2d_model_parallel4():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((2, 2, 1, 4), (2, 2, 1, 1))
+    strategy2 = ((2, 2, 1, 4),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
+    compile_net(net)
+
+
+def test_conv2d_left_and_right_no_need_to_send():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 1, 1, 4), (1, 1, 1, 1))
+    strategy2 = ((2, 1, 1, 4),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=2, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
 
 
 def test_conv2d_output_can_not_divisible_by_strategy():
