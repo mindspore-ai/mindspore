@@ -33,7 +33,7 @@ bool StridedSliceCheckInputs(const TensorC *const *inputs, size_t inputs_size) {
 }
 
 void ApplyBeginEndEllipsisMask(size_t ndim, int *begins, uint32_t *begins_mask, int *ends, uint32_t *ends_mask,
-                               uint32_t *ellipsis_mask, int *in_shape) {
+                               uint32_t *ellipsis_mask, const int *const in_shape) {
   for (size_t i = 0; i < ndim; i++) {
     if (begins_mask[i]) {
       begins[i] = 0;
@@ -145,6 +145,9 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
     return NNACL_ERR;
   }
 
+  if (output_size > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
   for (int i = 0; i < output_size; i++) {
     ShapePush(output_shape, &output_shape_size, ((int *)(inputs[1]->data_))[i]);
   }

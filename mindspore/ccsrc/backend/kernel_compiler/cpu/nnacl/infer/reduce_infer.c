@@ -102,6 +102,9 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
     int begin_axis;
     begin_axis = axes[0] < 0 ? axes[0] + rank : axes[0];
+    if (rank > MAX_SHAPE_SIZE || rank < 0) {
+      return NNACL_ERR;
+    }
     for (size_t i = begin_axis + 1; i < rank; ++i) {
       ShapePush(actual_axes, &actual_axes_size, i);
     }
