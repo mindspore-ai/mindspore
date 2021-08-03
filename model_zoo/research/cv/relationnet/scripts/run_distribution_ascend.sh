@@ -44,11 +44,12 @@ do
     export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
-    cp -r ./src ./train_parallel$i
-    cp ./train.py ./train_parallel$i
+    cp -r ../src ./train_parallel$i
+    cp ../train.py ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     cd ./train_parallel$i ||exit
     env > env.log
-    python train.py --device_id=$i --ckpts_dir=$CKPTS_DIR --data_path=$DATA_PATH > log 2>&1 &
+    python -u train.py --device_id=$i --ckpt_dir=$CKPTS_DIR --data_path=$DATA_PATH &> log &
     cd ..
 done
+

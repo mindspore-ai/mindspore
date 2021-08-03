@@ -67,9 +67,11 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # enter script dir, train RelationNet
-sh run_train_ascend.sh  
+sh run_standalone_train_ascend.sh ./ckpt /data/omniglot_resized 0
 # enter script dir, evaluate RelationNet
-sh run_eval_ascend.sh
+sh run_standalone_eval_ascend.sh ./ckpt /data/omniglot_resized 0
+# enter script dir, train RelationNet on 8 divices
+sh run_distribution_ascend.sh ./hccl_8p_01234567_127.0.0.1.json  ./ckpt /data/omniglot_resized
 ```
 
 # [Script Description](#contents)
@@ -117,10 +119,9 @@ Major parameters in train.py and config.py as follows:
 ### Training
 
 ```bash
-python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &
+python train.py --data_path /data/omniglot_resized --ckpt_path ./ckpt --device_id 0 &> train.log &
 # or enter script dir, and run the script
-sh run_train_ascend.sh
-python train.py
+sh run_standalone_train_ascend.sh ./ckpt /data/omniglot_resized 0
 ```
 
 After training, the loss value will be achieved as follows:
@@ -151,18 +152,27 @@ The model checkpoint will be saved in the current directory.
 Before running the command below, please check the checkpoint path used for evaluation.
 
 ```bash
-python eval.py --data_path Data > log.txt 2>&1 &  
+python eval.py --ckpt_dir ./ckpt/omniglot_encoder_relation_network5way_1shot.ckpt --data_path /data/omniglot_resized --device_id 0 &> log &
 # or enter script dir, and run the script
-sh run_eval_ascend.sh
-python train.py
+sh run_standalone_eval_ascend.sh ./ckpt /data/omniglot_resized 0
 ```
 
-You can view the results through the file "log.txt". The accuracy of the test dataset will be as follows:
+You can view the results through the file "log". The accuracy of the test dataset will be as follows:
 
 ```shell
-# grep "Accuracy: " log.txt
+# grep "Accuracy: " log
 'Accuracy': 0.9842
 ```
+
+### [Export MindIR](#contents)
+
+```shell
+# export model
+python export.py --ckpt_file ./scripts/ckpt/omniglot_encoder_relation_network5way_1shot.ckpt
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 # [Model Description](#contents)
 

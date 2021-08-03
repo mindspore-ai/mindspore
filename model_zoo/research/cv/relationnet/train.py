@@ -36,8 +36,8 @@ parser.add_argument("-u", "--hidden_unit", type=int, default=10)
 parser.add_argument("-dt", "--device_target", type=str, default='Ascend', choices=("Ascend", "GPU", "CPU"),
                     help="Device target, support Ascend, GPU and CPU.")
 parser.add_argument("-di", "--device_id", type=int, default=6, help='device id of GPU or Ascend. (Default: 0)')
-parser.add_argument("--ckpts_dir", default='./output/', help='the path of output')
-parser.add_argument("--data_path", default='/home/jialing/FSL/data/omniglot_resized/',
+parser.add_argument("--ckpt_dir", default='./ckpt/', help='the path of output')
+parser.add_argument("--data_path", default='/data/omniglot_resized/',
                     help="Path where the dataset is saved")
 parser.add_argument("--data_url", default=None)
 parser.add_argument("--train_url", default=None)
@@ -51,7 +51,7 @@ concat0dim = ops.Concat(axis=0)
 
 def main():
     local_data_url = args.data_path
-    local_train_url = args.ckpts_dir
+    local_train_url = args.ckpt_dir
     # if run on the cloud
     if args.cloud:
         import moxing as mox

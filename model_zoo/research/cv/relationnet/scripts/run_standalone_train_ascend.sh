@@ -17,13 +17,14 @@
 
 if [ $# != 3 ]
 then
-    echo "Usage: sh run_standalone_train_ascend.sh [CKPTS_DIR] [DATA_PATH] [DEVICE_ID]"
+    echo "Usage: sh run_standalone_train_ascend.sh [CKPT_DIR] [DATA_PATH] [DEVICE_ID]"
 exit 1
 fi
 
-export CKPTS_DIR=$1
+export CKPT_DIR=$1
 export DATA_PATH=$2
 export DEVICE_ID=$3
 
-python train.py --ckpts_dir=$CKPTS_DIR --data_path=$DATA_PATH \
-               --device_id=$DEVICE_ID --device_target="Ascend" > log 2>&1 &
+python -u ../train.py --ckpt_dir=$CKPT_DIR --data_path=$DATA_PATH \
+                      --device_id=$DEVICE_ID --device_target="Ascend" &> train.log &
+
