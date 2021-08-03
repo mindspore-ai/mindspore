@@ -41,6 +41,8 @@ import weakref
 import platform
 import psutil
 import numpy as np
+from scipy.io import loadmat
+from PIL import Image
 
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
@@ -61,7 +63,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_celebadataset, check_minddataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
-    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
+    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_sb_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -5668,3 +5670,190 @@ class PaddedDataset(GeneratorDataset):
         super().__init__(dataset, column_names=dataset.column_names, num_shards=None, shard_id=None, shuffle=False)
         self._dataset_size = len(dataset.padded_samples)
         self.padded_samples = padded_samples
+
+
+class SBDataset(GeneratorDataset):
+    """
+    A source dataset for reading and parsing Semantic Boundaries Dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, task]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is `Boundaries` otherwise
+    contains 1 image of the uint8 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str, optional): Acceptable tasks include `Boundaries` or `Segmentation` (default=`Boundaries`).
+        usage (str, optional): Acceptable usages include `train`, `val`, `train_noval` and `all` (default=`all`).
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+
+    Raises:
+        RuntimeError: If dataset_dir is not valid or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If task is not in [`Boundaries`, `Segmentation`].
+        ValueError: If usage is not in [`train`, `val`, `train_noval`, `all`].
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> sb_dataset_dir = "/path/to/sb_dataset_directory"
+        >>>
+        >>> # 1) Get all samples from Semantic Boundaries Dataset in sequence
+        >>> dataset = ds.SBDataset(dataset_dir=sb_dataset_dir, shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from Semantic Boundaries Dataset
+        >>> dataset = ds.SBDataset(dataset_dir=sb_dataset_dir, num_samples=350, shuffle=True)
+        >>>
+        >>> # 3) Get samples from Semantic Boundaries Dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.SBDataset(dataset_dir=sb_dataset_dir, num_shards=2, shard_id=0)
+        >>>
+        >>> # In Semantic Boundaries Dataset, each dictionary has keys "image" and "task"
+
+    About Semantic Boundaries Dataset.
+        | The Semantic Boundaries Dataset consists of 11355 colour images. There are 8498 images' name in the train.txt,
+          2857 images' name in the val.txt and 5623 images' name in the train_noval.txt. The category cls/
+          contains the Segmentation and Boundaries results of category-level, the category inst/ catains the
+          Segmentation and Boundaries results of instance-level.
+
+        | You can unzip the dataset files into the following structure and read by MindSpore's API,
+        | .
+        | └── benchmark_RELEASE
+        |      └── dataset
+        |           ├── img
+        |           |    ├── 2008_000002.jpg
+        |           |    ├── 2008_000003.jpg
+        |           |    ├── ...
+        |           ├── cls
+        |           |    ├── 2008_000002.mat
+        |           |    ├── 2008_000003.mat
+        |           |    ├── ...
+        |           ├── inst
+        |           |    ├── 2008_000002.mat
+        |           |    ├── 2008_000003.mat
+        |           |    ├── ...
+        |           ├── train.txt
+        |           └── val.txt
+
+        .. code-block::
+
+            @InProceedings{BharathICCV2011,
+                author       = "Bharath Hariharan and Pablo Arbelaez and Lubomir Bourdev and
+                                Subhransu Maji and Jitendra Malik",
+                title        = "Semantic Contours from Inverse Detectors",
+                booktitle    = "International Conference on Computer Vision (ICCV)",
+                year         = "2011",
+    """
+
+    @check_sb_dataset
+    def __init__(self, dataset_dir, task='Boundaries', usage='all', num_samples=None, num_parallel_workers=1,
+                 shuffle=None, decode=None, sampler=None, num_shards=None, shard_id=None):
+        dataset = _SBDataset(dataset_dir, task, usage, decode)
+        super().__init__(dataset, column_names=dataset.column_list, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
+                         num_shards=num_shards, shard_id=shard_id)
+
+
+class _SBDataset():
+    """
+    Dealing with the data file with .mat extension, and return one row in tuple (image, task) each time.
+    """
+
+    def __init__(self, dataset_dir, task, usage, decode):
+        self.column_list = ['image', 'task']
+        self.task = task
+        self.images_path = os.path.join(dataset_dir, 'img')
+        self.cls_path = os.path.join(dataset_dir, 'cls')
+        self._loadmat = loadmat
+        self.categories = 20
+        self.decode = replace_none(decode, False)
+
+        if usage == "all":
+            image_names = []
+            for item in ["train", "val"]:
+                usage_path = os.path.join(dataset_dir, item + '.txt')
+                if not os.path.exists(usage_path):
+                    raise FileNotFoundError("SBDataset: {0} not found".format(usage_path))
+                with open(usage_path, 'r') as f:
+                    image_names += [x.strip() for x in f.readlines()]
+        else:
+            usage_path = os.path.join(dataset_dir, usage + '.txt')
+            if not os.path.exists(usage_path):
+                raise FileNotFoundError("SBDataset: {0} not found".format(usage_path))
+            with open(usage_path, 'r') as f:
+                image_names = [x.strip() for x in f.readlines()]
+
+        self.images = [os.path.join(self.images_path, i + ".jpg") for i in image_names]
+        self.clss = [os.path.join(self.cls_path, i + ".mat") for i in image_names]
+
+        if len(self.images) != len(self.clss):
+            raise ValueError("SBDataset: images count not equal to cls count")
+
+        self._get_data = self._get_boundaries_data if self.task == "Boundaries" else self._get_segmentation_data
+        self._get_item = self._get_decode_item if self.decode else self._get_undecode_item
+
+    def _get_boundaries_data(self, mat_path):
+        mat_data = self._loadmat(mat_path)
+        return np.concatenate([np.expand_dims(mat_data['GTcls'][0][self.task][0][i][0].toarray(), axis=0)
+                               for i in range(self.categories)], axis=0)
+
+    def _get_segmentation_data(self, mat_path):
+        mat_data = self._loadmat(mat_path)
+        return Image.fromarray(mat_data['GTcls'][0][self.task][0])
+
+    def _get_decode_item(self, idx):
+        return Image.open(self.images[idx]).convert('RGB'), self._get_data(self.clss[idx])
+
+    def _get_undecode_item(self, idx):
+        return np.fromfile(self.images[idx], dtype=np.uint8), self._get_data(self.clss[idx])
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        return self._get_item(idx)

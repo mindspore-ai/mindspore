@@ -1329,3 +1329,34 @@ def check_to_device_send(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_sb_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Semantic Boundaries Dataset."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "val", "train_noval", "all"], "usage")
+
+        task = param_dict.get('task')
+        if task is not None:
+            check_valid_str(task, ["Boundaries", "Segmentation"], "task")
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
