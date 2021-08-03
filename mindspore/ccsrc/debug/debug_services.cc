@@ -399,7 +399,8 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
   MS_LOG(INFO) << "Reading in file: " << file_path;
   infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
   if (!infile.is_open()) {
-    MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path;
+    MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path << " Errno:" << errno
+                  << " ErrInfo:" << strerror(errno);
     return;
   }
   uint64_t file_size = infile.tellg();
@@ -1108,8 +1109,8 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
           std::ifstream infile;
           infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
           if (!infile.is_open()) {
-            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
-            MS_LOG(ERROR) << "Error: " << strerror(errno);
+            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name << " Errno:" << errno
+                          << " ErrInfo:" << strerror(errno);
             continue;
           }
 

@@ -92,7 +92,8 @@ void DumpJsonParser::Parse() {
 
   std::ifstream json_file(dump_config_file.value());
   if (!json_file.is_open()) {
-    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed.";
+    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed."
+                      << " Errno:" << errno << " ErrInfo:" << strerror(errno);
   }
 
   nlohmann::json j;
@@ -204,7 +205,8 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   ChangeFileMode(file_path, S_IWUSR);
   std::ofstream fd(file_path, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {
-    MS_LOG(ERROR) << "Open file " << file_path << " failed.";
+    MS_LOG(ERROR) << "Open file " << file_path << " failed."
+                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
     return false;
   }
   std::string npy_header = GenerateNpyHeader(shape, type);
