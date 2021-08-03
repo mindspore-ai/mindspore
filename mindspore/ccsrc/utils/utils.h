@@ -203,6 +203,7 @@ constexpr auto kSoftmaxGradExtOpName = "SoftmaxGradExt";
 constexpr auto kStridedReadOpName = "StridedRead";
 constexpr auto kStridedWriteOpName = "StridedWrite";
 constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
+constexpr auto kAdamWeightDecayName = "AdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
 constexpr auto kFusedSparseAdamName = "FusedSparseAdam";
 constexpr auto kFusedMatMulBiasAddName = "FusedMatMulBiasAdd";
@@ -322,6 +323,7 @@ constexpr auto kAttrInputNames = "input_names";
 constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
+constexpr auto kAttrAsync = "async";
 constexpr auto kAttrVisited = "visited";
 constexpr auto kAttrShape = "shape";
 constexpr auto kAttrMomentum = "momentum";
@@ -589,6 +591,7 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kAdamApplyOneWithDecayOpName,
                                                kAdamApplyOneWithDecayAssignOpName,
                                                kFusedAdamWeightDecayName,
+                                               kAdamWeightDecayName,
                                                kFusedAdamName,
                                                kFusedSparseAdamName,
                                                kFusedMulApplyMomentumOpName,

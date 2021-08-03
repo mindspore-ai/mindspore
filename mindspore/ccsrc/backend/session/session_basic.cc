@@ -1608,8 +1608,17 @@ std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(const Graph
   if (!graph->has_optimizer()) {
     return {};
   }
+  auto input_nodes = graph->inputs();
+  bool check_monad = false;
+  if (input_nodes.size() == inputs.size()) {
+    check_monad = true;
+  }
   std::vector<tensor::TensorPtr> result;
-  for (auto &tensor : inputs) {
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (check_monad && HasAbstractMonad(input_nodes[i])) {
+      continue;
+    }
+    auto &tensor = inputs[i];
     if (!tensor->IsGraphOutput()) {
       result.emplace_back(tensor);
     }
