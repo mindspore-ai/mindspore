@@ -207,7 +207,10 @@ if(SUPPORT_NPU)
 endif()
 
 add_compile_definitions(NO_DLIB)
-add_compile_options(-fPIC)
+
+if(NOT MSVC)
+    add_compile_options(-fPIC)
+endif()
 
 if(PLATFORM_ARM64)
     set(RUNTIME_COMPONENT_NAME "android-aarch64")
