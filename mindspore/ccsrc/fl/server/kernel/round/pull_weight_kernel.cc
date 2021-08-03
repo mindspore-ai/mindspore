@@ -90,7 +90,7 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
   for (size_t i = 0; i < weights_names_fbs->size(); i++) {
     weight_names.push_back(weights_names_fbs->Get(i)->str());
   }
-  if (!executor_->IsWeightAggrDone(weight_names)) {
+  if (!executor_->IsWeightAggrDone(weight_names) || !executor_->unmasked()) {
     ++retry_count_;
     std::string reason = "The aggregation for the weights is not done yet.";
     BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
