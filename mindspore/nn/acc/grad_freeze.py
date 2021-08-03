@@ -24,9 +24,11 @@ from mindspore.nn.optim import LARS
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.ops import functional as F
 
-from .base import GradientAccumulation, ParameterProcess
+from .base import ParameterProcess
+from .grad_accumulation import GradientAccumulation
 
 __all__ = ['GradientFreeze', 'FreezeOpt', 'freeze_cell']
+
 
 CONTINUOUS_STRATEGY = 0
 INTERVAL_STRATEGY = 1

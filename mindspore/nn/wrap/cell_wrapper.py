@@ -17,18 +17,16 @@ from types import FunctionType, MethodType
 
 from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
                                        _get_parallel_mode, _get_enable_parallel_optimizer)
-from mindspore.context import ParallelMode, get_auto_parallel_context
+from mindspore.context import ParallelMode
 from mindspore._checkparam import Validator as validator
 from mindspore import ops, nn
 from ...common import dtype as mstype
 from ...common.parameter import Parameter, ParameterTuple
-from ...common.tensor import Tensor
 from ...ops import composite as C
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.operations.comm_ops import _VirtualDataset
 from ..cell import Cell
-from ...nn import acc
 from .grad_reducer import DistributedGradReducer
 
 _get_datatype = C.MultitypeFuncGraph("_get_datatype")
@@ -338,63 +336,25 @@ class TrainOneStepCell(Cell):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
-        self.freeze = isinstance(optimizer, acc.FreezeOpt)
         self.optimizer = optimizer
-        if not self.freeze:
-            self.weights = self.optimizer.parameters
-        self.train_strategy = getattr(self.optimizer, 'train_strategy', None)
+        self.weights = self.optimizer.parameters
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
         self.grad_reducer = F.identity
         self.parallel_mode = _get_parallel_mode()
         self.reducer_flag = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL)
-        self.use_grad_accumulation = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.STAND_ALONE)
-        if self.use_grad_accumulation:
-            self.max_accumulation_step = get_auto_parallel_context("grad_accumulation_step")
-            if self.max_accumulation_step <= 1:
-                self.max_accumulation_step = 1
-                self.use_grad_accumulation = False
-        self.grad_accumulation = None
-        if self.use_grad_accumulation:
-            self.grad_accumulation = acc.GradientAccumulation(self.max_accumulation_step, self.optimizer)
         if self.reducer_flag:
             self.mean = _get_gradients_mean()
             self.degree = _get_device_num()
-            if self.freeze:
-                self.freeze_nets = acc.freeze_cell(self.reducer_flag, self.network, self.optimizer, self.sens,
-                                                   self.grad, self.use_grad_accumulation, self.mean, self.degree,
-                                                   self.max_accumulation_step)
-            else:
-                self.grad_reducer = DistributedGradReducer(self.optimizer.parameters, self.mean, self.degree)
-        else:
-            if self.freeze:
-                self.freeze_nets = acc.freeze_cell(self.reducer_flag, self.network, self.optimizer, self.sens,
-                                                   self.grad, self.use_grad_accumulation, self.max_accumulation_step)
-        self.step = Parameter(Tensor(0, dtype=mstype.int32))
+            self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree)
 
     def construct(self, *inputs):
-        if self.freeze:
-            if self.train_strategy is None:
-                step = self.step
-                max_index = len(self.freeze_nets)
-            else:
-                step = self.train_strategy[self.step]
-                max_index = len(self.train_strategy)
-            loss = self.freeze_nets[step](*inputs)
-            if self.step + 1 >= max_index:
-                self.step = 0
-            else:
-                self.step += 1
-        else:
-            loss = self.network(*inputs)
-            sens = F.fill(loss.dtype, loss.shape, self.sens)
-            grads = self.grad(self.network, self.weights)(*inputs, sens)
-            grads = self.grad_reducer(grads)
-            if self.use_grad_accumulation:
-                loss = self.grad_accumulation(loss, grads)
-            else:
-                loss = F.depend(loss, self.optimizer(grads))
+        loss = self.network(*inputs)
+        sens = F.fill(loss.dtype, loss.shape, self.sens)
+        grads = self.grad(self.network, self.weights)(*inputs, sens)
+        grads = self.grad_reducer(grads)
+        loss = F.depend(loss, self.optimizer(grads))
         return loss
 
 

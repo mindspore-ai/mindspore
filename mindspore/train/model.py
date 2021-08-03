@@ -88,6 +88,14 @@ class Model:
 
             O2 is recommended on GPU, O3 is recommended on Ascend.The more detailed explanation of `amp_level` setting
             can be found at `mindspore.amp.build_train_network` .
+        acc_level (str): Option for argument `level` in `mindspore.acc` , level for acc mode
+            training. Supports ["O0", "O1", "O2"]. Default: "O0".
+
+            - O0: Do not change.
+            - O1: Enable the acc mode, the performance is improved by about 20%, and
+              the accuracy is the same as the original accuracy.
+            - O2: Enable the acc mode, the performance is improved by about 30%, and
+              the accuracy is reduced by less than 3%.
     Examples:
         >>> from mindspore import Model, nn
         >>>
@@ -213,6 +221,7 @@ class Model:
                                                   self._optimizer,
                                                   self._loss_fn,
                                                   level=self._amp_level,
+                                                  acc_level=self._acc_level,
                                                   loss_scale_manager=self._loss_scale_manager,
                                                   keep_batchnorm_fp32=self._keep_bn_fp32)
             else:
@@ -220,6 +229,7 @@ class Model:
                                                   self._optimizer,
                                                   self._loss_fn,
                                                   level=self._amp_level,
+                                                  acc_level=self._acc_level,
                                                   keep_batchnorm_fp32=self._keep_bn_fp32)
         elif self._loss_fn:
             network = nn.WithLossCell(network, self._loss_fn)

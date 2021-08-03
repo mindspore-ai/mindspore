@@ -111,7 +111,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
     return network
 
 
-def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
+def build_train_network(network, optimizer, loss_fn=None, level='O0', acc_level='O0', **kwargs):
     """
     Build the mixed precision training cell automatically.
 
@@ -149,6 +149,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
     validator.check_value_type('network', network, nn.Cell)
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, acc.FreezeOpt))
     validator.check('level', level, "", ['O0', 'O2', 'O3', "auto"], Rel.IN)
+    validator.check('acc_level', acc_level, "", ['O0', 'O1', 'O2'], Rel.IN)
 
     if level == "auto":
         device_target = context.get_context('device_target')
@@ -174,6 +175,10 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
     if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
         network = _VirtualDatasetCell(network)
 
+    enable_acc = False
+    if acc_level in ["O1", "O2"]:
+        enable_acc = True
+
     loss_scale = 1.0
     if config["loss_scale_manager"] is not None:
         loss_scale_manager = config["loss_scale_manager"]
@@ -188,12 +193,17 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             if _get_pipeline_stages() > 1:
                 network = _TrainPipelineWithLossScaleCell(network, optimizer,
                                                           scale_sense=update_cell).set_train()
+            elif enable_acc:
+                network = acc.AccTrainOneStepWithLossScaleCell(network, optimizer,
+                                                               scale_sense=update_cell).set_train()
             else:
                 network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
                                                            scale_sense=update_cell).set_train()
             return network
     if _get_pipeline_stages() > 1:
         network = _TrainPipelineAccuStepCell(network, optimizer).set_train()
+    elif enable_acc:
+        network = acc.AccTrainOneStepCell(network, optimizer, loss_scale).set_train()
     else:
         network = nn.TrainOneStepCell(network, optimizer, loss_scale).set_train()
     return network
