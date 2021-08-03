@@ -70,7 +70,7 @@ APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imag
     std::string splitStr = " ";
     // construct label map
     while (std::getline(inFile, line)) {
-        if (line.find('#') <= 1) {
+        if (line[0] == '#') {
             continue;
         }
         vectorStr.clear();
