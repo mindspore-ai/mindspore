@@ -193,6 +193,7 @@ void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_
     int output_idx = 0;
     int input_idx = 0;
     for (int i = 0; i < num_axes; ++i) {
+      NNACL_CHECK_ZERO_RETURN(*(out_strides + i));
       int position = pos / *(out_strides + i);
       int out_stride = i < num_axes - 1 ? out_strides[i] : 1;
       output_idx += (position * out_stride);
@@ -211,7 +212,7 @@ int DoTransposeFp32(const float *in_data, float *out_data, const int *output_sha
   int *perm = (int *)(transpose_param->perm_);
   int *strides = (int *)(transpose_param->strides_);
   int *out_strides = (int *)(transpose_param->out_strides_);
-  int data_size = transpose_param->data_num_ * sizeof(float);
+  int data_size = transpose_param->data_num_ * (int)(sizeof(float));
   int num_axes = transpose_param->num_axes_;
 
   // check if transpose is needed

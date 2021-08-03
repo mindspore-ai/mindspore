@@ -28,7 +28,7 @@ int ElementFloorMod(const float *in0, const float *in1, float *out, int size) {
 
 int ElementFloorModInt(const int *in0, const int *in1, int *out, int size) {
   for (int i = 0; i < size; i++) {
-    NNACL_ASSERT(in1[i] != 0);
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
     int remainder = in0[i] - (in0[i] / in1[i]) * in1[i];
     out[i] = (remainder != 0) && ((in0[i] > 0) != (in1[i] > 0)) ? remainder + in1[i] : remainder;
   }
@@ -37,14 +37,15 @@ int ElementFloorModInt(const int *in0, const int *in1, int *out, int size) {
 
 int ElementMod(const float *in0, const float *in1, float *out, int size) {
   for (int i = 0; i < size; i++) {
-    out[i] = fmod(in0[i], in1[i]);
+    out[i] = fmodf(in0[i], in1[i]);
   }
   return NNACL_OK;
 }
 
 int ElementModInt(const int *in0, const int *in1, int *out, int size) {
   for (int i = 0; i < size; i++) {
-    out[i] = fmod(in0[i], in1[i]);
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
+    out[i] = in0[i] % in1[i];
   }
   return NNACL_OK;
 }
@@ -52,11 +53,11 @@ int ElementModInt(const int *in0, const int *in1, int *out, int size) {
 int ElementOptMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < size; index++) {
-      out[index] = fmod(in0[0], in1[index]);
+      out[index] = fmodf(in0[0], in1[index]);
     }
   } else {
     for (int index = 0; index < size; index++) {
-      out[index] = fmod(in0[index], in1[0]);
+      out[index] = fmodf(in0[index], in1[0]);
     }
   }
   return NNACL_OK;
@@ -65,11 +66,13 @@ int ElementOptMod(const float *in0, const float *in1, float *out, int size, cons
 int ElementOptModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < size; index++) {
-      out[index] = fmod(in0[0], in1[index]);
+      NNACL_CHECK_ZERO_RETURN_ERR(in1[index]);
+      out[index] = in0[0] % in1[index];
     }
   } else {
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[0]);
     for (int index = 0; index < size; index++) {
-      out[index] = fmod(in0[index], in1[0]);
+      out[index] = in0[index] % in1[0];
     }
   }
   return NNACL_OK;
@@ -84,6 +87,7 @@ int ElementFloorDiv(const float *in0, const float *in1, float *out, int size) {
 
 int ElementFloorDivInt(const int *in0, const int *in1, int *out, int size) {
   for (int i = 0; i < size; i++) {
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
     out[i] = in0[i] / in1[i];
   }
   return NNACL_OK;

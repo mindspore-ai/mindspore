@@ -37,7 +37,7 @@ void LogSoftmaxLastAxis(const float *src, float *dst, float *exp_data, int batch
       sum += exp_data[cur_batch_offset + j];
     }
     for (int k = 0; k < channel; k++) {
-      dst[cur_batch_offset + k] = dst[cur_batch_offset + k] - log(sum);
+      dst[cur_batch_offset + k] = dst[cur_batch_offset + k] - logf(sum);
     }
   }
 }
@@ -70,7 +70,7 @@ void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, cons
       for (int j = 0; j < input_shape[axis]; j++) {
         int axis_offset = inner_offset + j * inner_size;
         output_ptr[axis_offset] = input_ptr[axis_offset] - max_data;
-        sum_data[k + sum_outter_offset] += exp(output_ptr[axis_offset]);
+        sum_data[k + sum_outter_offset] += expf(output_ptr[axis_offset]);
       }
     }
   }
@@ -81,7 +81,7 @@ void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, cons
       int axis_offset = outter_offset + j * inner_size;
       for (int k = 0; k < inner_size; k++) {
         int inner_offset = axis_offset + k;
-        output_ptr[inner_offset] = output_ptr[inner_offset] - log(sum_data[k + sum_outter_offset]);
+        output_ptr[inner_offset] = output_ptr[inner_offset] - logf(sum_data[k + sum_outter_offset]);
       }
     }
   }

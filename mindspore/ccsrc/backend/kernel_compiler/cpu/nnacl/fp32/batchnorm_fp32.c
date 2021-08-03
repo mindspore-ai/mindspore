@@ -31,7 +31,7 @@ void BatchNormFp32(const void *input, const void *mean, const void *variance, co
 
   for (int i = 0; i < cur_unit; i++) {
     for (int c = 0; c < param->channel_; c++) {
-      float variance_sqrt = sqrt(((const float *)variance)[c] + param->epsilon_);
+      float variance_sqrt = sqrtf(((const float *)variance)[c] + param->epsilon_);
       ((float *)output)[cur_offset + c] =
         (((const float *)input)[cur_offset + c] - ((const float *)mean)[c]) / variance_sqrt;
     }
@@ -51,7 +51,7 @@ void FusedBatchNormFp32(const void *input, const void *scale, const void *offset
 
   for (int i = 0; i < cur_unit; i++) {
     for (int c = 0; c < param->channel_; c++) {
-      float variance_sqrt = sqrt(((const float *)variance)[c] + param->epsilon_);
+      float variance_sqrt = sqrtf(((const float *)variance)[c] + param->epsilon_);
       float norm_val = (((const float *)input)[cur_offset + c] - ((const float *)mean)[c]) / variance_sqrt;
       ((float *)output)[cur_offset + c] = norm_val * ((const float *)scale)[c] + ((const float *)offset)[c];
     }
