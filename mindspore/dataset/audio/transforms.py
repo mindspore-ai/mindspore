@@ -20,7 +20,7 @@ to improve their training models.
 import mindspore._c_dataengine as cde
 import numpy as np
 from ..transforms.c_transforms import TensorOperation
-from .validators import check_allpass_biquad, check_band_biquad
+from .validators import check_allpass_biquad, check_band_biquad, check_bandpass_biquad
 
 
 class AudioTensorOperation(TensorOperation):
@@ -102,3 +102,33 @@ class BandBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.BandBiquadOperation(self.sample_rate, self.central_freq, self.Q, self.noise)
+
+
+class BandpassBiquad(TensorOperation):
+    """
+    Design two-pole band-pass filter.  Similar to SoX implementation.
+
+    Args:
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz)
+        central_freq (float): central frequency (in Hz)
+        Q (float, optional): https://en.wikipedia.org/wiki/Q_factor Range: (0,1] (Default=0.707).
+        const_skirt_gain (bool, optional) : If ``True``, uses a constant skirt gain (peak gain = Q).
+            If ``False``, uses a constant 0dB peak gain. (Default: ``False``)
+
+    Examples:
+        >>> import mindspore.dataset.audio.transforms as audio
+        >>> import numpy as np
+
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
+        >>> bandpass_biquad_op = audio.BandpassBiquad(44100, 200.0)
+        >>> waveform_filtered = bandpass_biquad_op(waveform)
+    """
+    @check_bandpass_biquad
+    def __init__(self, sample_rate, central_freq, Q=0.707, const_skirt_gain=False):
+        self.sample_rate = sample_rate
+        self.central_freq = central_freq
+        self.Q = Q
+        self.const_skirt_gain = const_skirt_gain
+
+    def parse(self):
+        return cde.BandpassBiquadOperation(self.sample_rate, self.central_freq, self.Q, self.const_skirt_gain)

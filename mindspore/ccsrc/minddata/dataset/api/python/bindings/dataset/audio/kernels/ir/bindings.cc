@@ -19,6 +19,7 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 
 namespace mindspore {
@@ -42,6 +43,17 @@ PYBIND_REGISTER(
         auto band_biquad = std::make_shared<audio::BandBiquadOperation>(sample_rate, central_freq, Q, noise);
         THROW_IF_ERROR(band_biquad->ValidateParams());
         return band_biquad;
+      }));
+  }));
+PYBIND_REGISTER(
+  BandpassBiquadOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::BandpassBiquadOperation, TensorOperation, std::shared_ptr<audio::BandpassBiquadOperation>>(
+      *m, "BandpassBiquadOperation")
+      .def(py::init([](int32_t sample_rate, float central_freq, float Q, bool const_skirt_gain) {
+        auto bandpass_biquad =
+          std::make_shared<audio::BandpassBiquadOperation>(sample_rate, central_freq, Q, const_skirt_gain);
+        THROW_IF_ERROR(bandpass_biquad->ValidateParams());
+        return bandpass_biquad;
       }));
   }));
 }  // namespace dataset
