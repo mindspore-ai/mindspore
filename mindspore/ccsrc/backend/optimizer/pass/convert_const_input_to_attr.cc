@@ -46,17 +46,26 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
       return nullptr;
     }
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
+    if (device != kGPUDevice) {
       return nullptr;
     }
   }
-  if (AnfAlgo::IsDynamicShape(cnode) &&
-      DynamicShapeConstInputToAttr.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttr.end()) {
-    MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
-    return nullptr;
+  if (AnfAlgo::IsDynamicShape(cnode)) {
+    if (device == kGPUDevice) {
+      if (DynamicShapeConstInputToAttrGPU.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttrGPU.end()) {
+        MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
+        return nullptr;
+      }
+    } else {
+      if (DynamicShapeConstInputToAttr.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttr.end()) {
+        MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
+        return nullptr;
+      }
+    }
   }
   ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
 
