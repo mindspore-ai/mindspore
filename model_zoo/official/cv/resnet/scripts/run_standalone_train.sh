@@ -34,7 +34,7 @@ get_real_path(){
 }
 
 PATH1=$(get_real_path $1)
-CONFIG_FILE=$2
+CONFIG_FILE=$(get_real_path $2)
 if [ $# == 3 ]
 then
     PATH2=$(get_real_path $3)
@@ -80,7 +80,7 @@ then
     rm -rf ./train
 fi
 mkdir ./train
-cp ../*.yaml ./train
+cp ../config/*.yaml ./train
 cp ../*.py ./train
 cp *.sh ./train
 cp -r ../src ./train
