@@ -32,9 +32,9 @@ class LearningRateScheduler(Callback):
         learning_rate_function (Function): The function about how to change the learning rate during training.
 
     Examples:
+        >>> from mindspore import Model
         >>> from mindspore.train.callback import LearningRateScheduler
         >>> import mindspore.nn as nn
-        >>> from mindspore.train import Model
         ...
         >>> def learning_rate_function(lr, cur_step_num):
         ...     if cur_step_num%1000 == 0:
