@@ -118,6 +118,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
   }
   while (!q.empty()) {
     auto cur_node = q.front();
+    MS_ASSERT(cur_node != nullptr);
     q.pop();
     this->nodes_.insert(cur_node);
     // check output-cnode of cur-node only depend on cur-node
@@ -263,7 +264,7 @@ bool SubGraph::MergeSubGraph(const SubGraphPtr &subgraph) {
 
 // iterate node from in_nodes of current subgraph up to input of belong_anf
 SubGraphPtr SubGraph::FindBeforeSubGraphInBelongAnf() const {
-  MS_ASSERT(belong_anf_ == nullptr);
+  MS_ASSERT(belong_anf_ != nullptr);
   // find before subgraph's nodes
   std::queue<CNodePtr> q;
   std::set<CNodePtr> before_nodes;
@@ -288,7 +289,7 @@ SubGraphPtr SubGraph::FindBeforeSubGraphInBelongAnf() const {
 
 // iterate node from output of belong_anf up to out_nodes of current subgraph and before subgraph
 SubGraphPtr SubGraph::FindAfterSubGraphInBelongAnf() const {
-  MS_ASSERT(belong_anf_ == nullptr);
+  MS_ASSERT(belong_anf_ != nullptr);
   // find before subgraph
   auto before_subgraph = this->FindBeforeSubGraphInBelongAnf();
   if (before_subgraph == nullptr) {
@@ -378,6 +379,9 @@ int SubGraph::CreatePartialInBelongAnf() {
 }
 
 int SubGraph::SetFuncGraphOutput(const FuncGraphPtr &graph, const std::set<CNodePtr> &outputs) {
+  if (graph == nullptr) {
+    return RET_INPUT_PARAM_INVALID;
+  }
   std::vector<AnfNodePtr> output_nodes;
   output_nodes.insert(output_nodes.end(), outputs.begin(), outputs.end());
   return lite::SetFuncGraphOutput(graph, output_nodes);

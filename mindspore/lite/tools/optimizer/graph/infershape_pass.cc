@@ -196,9 +196,13 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
             MS_LOG(ERROR) << "Malloc tensor data failed";
             return RET_ERROR;
           }
+          if (tensor->Size() == 0) {
+            MS_LOG(ERROR) << "Tensor size is invalid, maybe shape is not inferred";
+            return RET_ERROR;
+          }
           ret =
             memcpy_s(tensor->MutableData(), tensor->Size(), default_tensor_info->data_c(), default_tensor_info->Size());
-          if (tensor->Size() != 0 && ret != EOK) {
+          if (ret != EOK) {
             MS_LOG(ERROR) << "memcpy error: " << ret;
             return RET_ERROR;
           }
