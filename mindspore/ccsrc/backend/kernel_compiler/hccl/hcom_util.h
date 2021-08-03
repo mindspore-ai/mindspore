@@ -39,7 +39,7 @@ constexpr auto kReceive = "Receive";
 constexpr auto kReduceScatter = "ReduceScatter";
 
 /* Correspondence between data_type and hcom data type in Ascend */
-static map<int64_t, HcclDataType> CONST_OP_HCOM_DATA_TYPE_MAP = {
+static map<int64_t, HcclDataType> kConstOpHcomDataTypeMap = {
   {TypeId::kNumberTypeFloat32, HCCL_DATA_TYPE_FP32},
   {TypeId::kNumberTypeFloat16, HCCL_DATA_TYPE_FP16},
   {TypeId::kNumberTypeInt8, HCCL_DATA_TYPE_INT8},
@@ -47,7 +47,7 @@ static map<int64_t, HcclDataType> CONST_OP_HCOM_DATA_TYPE_MAP = {
 };
 
 /* Correspondence between data_type and occupied byte size in hcom */
-static map<HcclDataType, uint32_t> CONST_OP_HCOM_DATA_TYPE_SIZE_MAP = {
+static map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
   {HCCL_DATA_TYPE_FP32, sizeof(float)},
   {HCCL_DATA_TYPE_FP16, sizeof(float) / 2},
   {HCCL_DATA_TYPE_INT8, sizeof(int8_t)},

@@ -71,7 +71,7 @@ class HcclKernelFactory {
   static std::shared_ptr<HcclKernel> Get(const string &name);
 
  private:
-  std::map<string, HcclKernelCreater> hcclKernelMap_;
+  std::map<string, HcclKernelCreater> hccl_kernel_map_;
 };
 
 class _HcclKernelRegister {
