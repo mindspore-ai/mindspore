@@ -18,8 +18,8 @@
 
 #include "nnacl/op_base.h"
 
-#define MAX_PAD_SIZE 8
-#define DEFAULT_PAD_NDIMS 4
+#define MAX_PAD_SIZE 12
+#define DEFAULT_PAD_NDIMS 6
 
 typedef struct PadQuantArg {
   QuantArg *in_quant_args_;
@@ -30,13 +30,13 @@ typedef struct PadQuantArg {
 typedef struct PadParameter {
   // Primitive parameter
   OpParameter op_parameter_;
-  int paddings_[MAX_SHAPE_SIZE];
+  int paddings_[MAX_PAD_SIZE];
   int pad_mode_;
   float constant_value_;
   // shape correlative
   int padding_length;
   // other parameter
-  int in_strides[COMM_SHAPE_SIZE];
+  int in_strides[DEFAULT_PAD_NDIMS];
   int out_strides[DEFAULT_PAD_NDIMS];
   int mirror_offset_;
   PadQuantArg pad_quant_arg_;

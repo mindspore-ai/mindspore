@@ -510,8 +510,8 @@ int ResizeNearestNeighbor(const float *input_data, float *output_data, const int
         } else {
           input_x = (int)(floorf(actual_x));
         }
-        int in_offset = offset(input_shape, batch, input_y, input_x, 0);
-        int out_offset = offset(output_shape, batch, y, x, 0);
+        int in_offset = Offset(input_shape, batch, input_y, input_x, 0);
+        int out_offset = Offset(output_shape, batch, y, x, 0);
         memcpy(output_data + out_offset, input_data + in_offset, c * sizeof(float));
       }
     }

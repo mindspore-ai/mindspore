@@ -55,8 +55,8 @@ class PadCPUKernel : public InnerKernel {
   int HandleMirrorPad();
   int CopyPaddingFromInput();
   PadParameter *pad_param_ = nullptr;
-  int in_[4] = {0};
-  int out_[4] = {0};
+  int in_[DEFAULT_PAD_NDIMS] = {0};
+  int out_[DEFAULT_PAD_NDIMS] = {0};
   std::vector<MirrorPadBlock> mirror_pad_block_;
 };
 
