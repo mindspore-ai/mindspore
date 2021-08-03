@@ -45,18 +45,18 @@ class SubGraph {
   int ApplySubGraph();
 
  private:
-  [[nodiscard]] std::set<CNodePtr> GetInputCNodes() const;
-  [[nodiscard]] std::set<CNodePtr> GetOutputCNodes() const;
+  std::set<CNodePtr> GetInputCNodes() const;
+  std::set<CNodePtr> GetOutputCNodes() const;
   // init subgraph methods
   void InitSubGraphNode(const std::set<CNodePtr> &head_nodes);
   void InitSubGraphInNode();
   void InitSubGraphOutNode();
   // merge subgraph methods
-  [[nodiscard]] std::set<CNodePtr> FindCommonOutputs(const SubGraphPtr &subgraph) const;
-  [[nodiscard]] bool IfDependOnSameNode(const SubGraphPtr &subgraph) const;
+  std::set<CNodePtr> FindCommonOutputs(const SubGraphPtr &subgraph) const;
+  bool IfDependOnSameNode(const SubGraphPtr &subgraph) const;
   // apply subgraph methods
-  [[nodiscard]] SubGraphPtr FindBeforeSubGraphInBelongAnf() const;
-  [[nodiscard]] SubGraphPtr FindAfterSubGraphInBelongAnf() const;
+  SubGraphPtr FindBeforeSubGraphInBelongAnf() const;
+  SubGraphPtr FindAfterSubGraphInBelongAnf() const;
   void CreateParameterForPartialSubGraph(const FuncGraphPtr &sub_graph, std::vector<AnfNodePtr> *partial_inputs,
                                          std::map<AnfNodePtr, AnfNodePtr> *partial_inputs_and_subgraph_input_map);
   void CreateCNodeForPartialSubGraph(const FuncGraphPtr &sub_graph,

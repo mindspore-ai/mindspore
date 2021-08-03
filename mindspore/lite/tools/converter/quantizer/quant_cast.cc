@@ -41,14 +41,13 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
-    auto primitive_quant_param_holder = GetCNodeQuantHolder(primitive_c);
-    MS_ASSERT(primitive_quant_param_holder != nullptr);
-    auto curnode_quant_type = schema::QuantType_QUANT_NONE;
     if (primitive_c == nullptr) {
       MS_LOG(WARNING) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
-    } else {
-      curnode_quant_type = primitive_quant_param_holder->quant_type();
+      continue;
     }
+    auto primitive_quant_param_holder = GetCNodeQuantHolder(primitive_c);
+    MS_ASSERT(primitive_quant_param_holder != nullptr);
+    auto curnode_quant_type = primitive_quant_param_holder->quant_type();
     if (primitive_c->name() == ops::kNameGather) {
       continue;
     }
