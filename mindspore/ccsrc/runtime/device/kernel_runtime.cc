@@ -709,7 +709,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
                              value_node.get());
       continue;
     }
-    size_t tensor_size = tensor->data().nbytes();
+    size_t tensor_size = LongToSize(tensor->data().nbytes());
     auto node_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
     if (output_type_id == kTypeUnknown) {

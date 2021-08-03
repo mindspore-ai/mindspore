@@ -26,46 +26,26 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kSizeFloat16 = sizeof(float16);
 constexpr size_t kSizeFloat32 = sizeof(float);
+constexpr size_t kScalarIndex = 0;
 constexpr size_t kAdamWeightDecayInputSize = 9;
 constexpr size_t kAdamWeightDecayOutputSize = 3;
 
-void AdamWeightDecayCPUKernel::ParallelForAdam(const CTask &task, size_t count) {
-  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  const float block_size = 128.0;
-  const float align_size = 16.0;
-  size_t thread_num = count < block_size * max_thread_num ? std::ceil(count / block_size) : max_thread_num;
-  std::vector<common::Task> tasks;
-  size_t start = 0;
-  size_t once_compute_size = align_size * std::ceil(count / (align_size * thread_num));
-  while (start < count) {
-    size_t end = (start + once_compute_size) > count ? count : (start + once_compute_size);
-    auto block = [&, start, end]() {
-      task(start, end);
-      return common::SUCCESS;
-    };
-    tasks.emplace_back(block);
-    start += once_compute_size;
-  }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
-}
-
 template <typename T, typename S>
-void AdamWeightDecayCPUKernel::LaunchFusedAdam(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto m = reinterpret_cast<T *>(inputs[1]->addr);
-  auto v = reinterpret_cast<T *>(inputs[2]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[3]->addr)[0];
-  auto beta1 = reinterpret_cast<T *>(inputs[4]->addr)[0];
-  auto beta2 = reinterpret_cast<T *>(inputs[5]->addr)[0];
-  auto epsilon = reinterpret_cast<T *>(inputs[6]->addr)[0];
-  auto decay = reinterpret_cast<T *>(inputs[7]->addr)[0];
-  auto gradient16 = reinterpret_cast<S *>(inputs[8]->addr);
+void AdamWeightDecayCPUKernel::LaunchFusedAdam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &) {
+  auto var = reinterpret_cast<T *>(inputs[VAR]->addr);
+  auto m = reinterpret_cast<T *>(inputs[M]->addr);
+  auto v = reinterpret_cast<T *>(inputs[V]->addr);
+  auto lr = reinterpret_cast<T *>(inputs[LR]->addr)[kScalarIndex];
+  auto beta1 = reinterpret_cast<T *>(inputs[BETA1]->addr)[kScalarIndex];
+  auto beta2 = reinterpret_cast<T *>(inputs[BETA2]->addr)[kScalarIndex];
+  auto epsilon = reinterpret_cast<T *>(inputs[EPSILON]->addr)[kScalarIndex];
+  auto decay = reinterpret_cast<T *>(inputs[DECAY]->addr)[kScalarIndex];
+  auto gradient16 = reinterpret_cast<S *>(inputs[GRAD]->addr);
   const auto beta1_minus = 1 - beta1;
   const auto beta2_minus = 1 - beta2;
 
   // multithreading
-  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
+  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(float)) : 1;
   std::function<void(size_t, size_t)> task;
 
   task = [&](size_t start, size_t end) {
@@ -81,28 +61,27 @@ void AdamWeightDecayCPUKernel::LaunchFusedAdam(const std::vector<AddressPtr> &in
       var[i] -= lr * update;
     }
   };
-  ParallelForAdam(task, lens);
+  CPUKernelUtils::ParallelFor(task, lens);
 }
 
 template <typename T>
 void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto var = reinterpret_cast<T *>(inputs[0]->addr);
-  auto m = reinterpret_cast<T *>(inputs[1]->addr);
-  auto v = reinterpret_cast<T *>(inputs[2]->addr);
-  auto lr = reinterpret_cast<T *>(inputs[3]->addr)[0];
-  auto beta1 = reinterpret_cast<T *>(inputs[4]->addr)[0];
-  auto beta2 = reinterpret_cast<T *>(inputs[5]->addr)[0];
-  auto epsilon = reinterpret_cast<T *>(inputs[6]->addr)[0];
-  auto decay = reinterpret_cast<T *>(inputs[7]->addr)[0];
-  auto gradient = reinterpret_cast<T *>(inputs[8]->addr);
+                                                     const std::vector<AddressPtr> &) {
+  auto var = reinterpret_cast<T *>(inputs[VAR]->addr);
+  auto m = reinterpret_cast<T *>(inputs[M]->addr);
+  auto v = reinterpret_cast<T *>(inputs[V]->addr);
+  auto lr = reinterpret_cast<T *>(inputs[LR]->addr)[kScalarIndex];
+  auto beta1 = reinterpret_cast<T *>(inputs[BETA1]->addr)[kScalarIndex];
+  auto beta2 = reinterpret_cast<T *>(inputs[BETA2]->addr)[kScalarIndex];
+  auto epsilon = reinterpret_cast<T *>(inputs[EPSILON]->addr)[kScalarIndex];
+  auto decay = reinterpret_cast<T *>(inputs[DECAY]->addr)[kScalarIndex];
+  auto gradient = reinterpret_cast<T *>(inputs[GRAD]->addr);
   const auto beta1_minus = 1 - beta1;
   const auto beta2_minus = 1 - beta2;
 
   // multithreading
-  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
+  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(float)) : 1;
   std::function<void(size_t, size_t)> task;
-
   task = [&](size_t start, size_t end) {
     size_t i = AdamWeightDecayFp32(var, m, v, lr, beta1, beta2, epsilon, decay, gradient, start, end);
     // remaining
@@ -114,14 +93,14 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPt
       var[i] -= lr * update;
     }
   };
-  ParallelForAdam(task, lens);
+  CPUKernelUtils::ParallelFor(task, lens);
 }
 
 void AdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<size_t> var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 8);
+  std::vector<size_t> var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, VAR);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, VAR);
+  gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, GRAD);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kAdamWeightDecayInputSize) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but AdamWeightDecay needs 9 inputs.";
@@ -155,12 +134,12 @@ void AdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> 
   }
   size_t elem1_size = elem_num_ * kSizeFloat32;
   size_t elem2_size = gradient_dtype_ == kNumberTypeFloat16 ? elem_num_ * kSizeFloat16 : elem1_size;
-  if (inputs[0]->size != elem1_size || inputs[1]->size != elem1_size || inputs[2]->size != elem1_size ||
-      inputs[8]->size != elem2_size) {
+  if (inputs[VAR]->size != elem1_size || inputs[M]->size != elem1_size || inputs[V]->size != elem1_size ||
+      inputs[GRAD]->size != elem2_size) {
     MS_LOG(EXCEPTION) << "Error input data size!";
   }
-  if (inputs[3]->size != kSizeFloat32 || inputs[4]->size != kSizeFloat32 || inputs[5]->size != kSizeFloat32 ||
-      inputs[6]->size != kSizeFloat32 || inputs[7]->size != kSizeFloat32) {
+  if (inputs[LR]->size != kSizeFloat32 || inputs[BETA1]->size != kSizeFloat32 || inputs[BETA2]->size != kSizeFloat32 ||
+      inputs[EPSILON]->size != kSizeFloat32 || inputs[DECAY]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "The attribute beta, lr, epsilon and weight decay must be float!";
   }
 }

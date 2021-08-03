@@ -191,6 +191,9 @@ const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> new_inputs = cnode->inputs();
   bool inputs_changed = false;
   for (auto index : candidate_inputs) {
+    if (index >= new_inputs.size()) {
+      MS_LOG(EXCEPTION) << "Index is out of the size of cnode inputs.";
+    }
     auto replace_node = GetConvertNode(func_graph, cnode, index);
     if (replace_node != nullptr) {
       new_inputs[index] = replace_node;
