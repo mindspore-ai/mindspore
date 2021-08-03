@@ -1013,7 +1013,7 @@ bool NchwTo4D(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto src_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          auto dst_idx = 0;
+          size_t dst_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             dst_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -1045,7 +1045,7 @@ bool ToNchw(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto dst_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          auto src_idx = 0;
+          size_t src_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             src_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -1801,7 +1801,7 @@ bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_devi
   auto c_dim = args.host_shape[kC];
   auto h_dim = args.host_shape[kH];
   auto w_dim = args.host_shape[kW];
-  size_t d_dim = 1;
+  const size_t d_dim = 1;
   size_t group_size = LongToSize(groups);
   auto cin_ori = c_dim;
   auto cout_ori = n_dim / group_size;
