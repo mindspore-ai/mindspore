@@ -13,7 +13,6 @@
 # limitations under the License.
 # ===========================================================================
 """Cost model splitter"""
-import os
 from functools import reduce as prod_reduce
 from mindspore import log as logger
 from .model import PrimLib, Graph, Tensor, Operator
@@ -39,20 +38,24 @@ class GraphSplitByPattern:
         def sync(self, x, y):
             """sync from y to x"""
             for i in self.alive:
-                if self.map[y][i] and not self.map[x][i]:
-                    self.map[x][i] = True
+                self._link(self.map[y][i], x, i)
+
+        def _link(self, cond, f, t):
+            """link from `f` to `t`"""
+            if cond:
+                self.map[f][t] = True
 
         def fuse(self, x, y):
             """fuse y to x"""
             for i in self.alive:
+                # i is the succeeding node of y, links the x's previous nodes to i
                 if self.map[y][i] and not self.map[x][i]:
                     for pre in self.alive:
-                        if self.map[pre][x] and not self.map[pre][i]:
-                            self.map[pre][i] = True
+                        self._link(self.map[pre][x], pre, i)
+                # i is the previous node of y, link i to x's succeeding nodes
                 if self.map[i][y] and not self.map[i][x]:
                     for suc in self.alive:
-                        if self.map[x][suc] and not self.map[i][suc]:
-                            self.map[i][suc] = True
+                        self._link(self.map[x][suc], i, suc)
             self.alive.remove(y)
 
     class Area:
@@ -66,6 +69,10 @@ class GraphSplitByPattern:
             def __init__(self):
                 self.stitch_ops = set()
                 self.stitch_atomic_ops = set()
+
+            def has_stitch_op(self):
+                """check stitch_op exists"""
+                return self.stitch_ops or self.stitch_atomic_ops
 
         def __init__(self, init_op, is_output, unique_id, reach_tab, recompute_ops=None):
             self.pattern = PrimLib.iter_type(init_op) if init_op is not None else PrimLib.UNKNOWN
@@ -286,31 +293,35 @@ class GraphSplitByPattern:
 
     def fuse(self, selector):
         """Fuse areas"""
-        changed = False
-        while True:
+        def _fuse_area():
             for dominant in self.areas:
                 result = selector(dominant)
-                if result is not None and result[0]:
-                    fuse_areas, is_forward = result
-                    fuse_areas = self.limit_area_size(dominant, fuse_areas)
-                    if not fuse_areas:
-                        continue
-                    if is_forward:
-                        for area in fuse_areas:
-                            dominant.fuse(area)
-                            self.set_area_map(area.ops, dominant)
-                            self.areas.remove(area)
-                    else:
-                        forward_area = dominant
-                        for area in fuse_areas:
-                            area.fuse(forward_area)
-                            self.set_area_map(forward_area.ops, area)
-                            self.areas.remove(forward_area)
-                            forward_area = area
-                    changed = True
-                    break
-            else:
-                return changed
+                if result is None or not result[0]:
+                    continue
+                fuse_areas, is_forward = result
+                fuse_areas = self.limit_area_size(dominant, fuse_areas)
+                if not fuse_areas:
+                    continue
+                if is_forward:
+                    for area in fuse_areas:
+                        dominant.fuse(area)
+                        self.set_area_map(area.ops, dominant)
+                        self.areas.remove(area)
+                else:
+                    forward_area = dominant
+                    for area in fuse_areas:
+                        area.fuse(forward_area)
+                        self.set_area_map(forward_area.ops, area)
+                        self.areas.remove(forward_area)
+                        forward_area = area
+                return True
+            return False
+
+        changed, do_again = False, True
+        while do_again:
+            do_again = _fuse_area()
+            changed = changed or do_again
+        return changed
 
     def fuse_recom(self, selector):
         """Fuse recompute area to its user"""
@@ -348,21 +359,6 @@ class GraphSplitByPattern:
             graphmodes.append("basic" if area.mode == self.Area.MODE_BASIC else "composite")
         return subgraphs, graphmodes
 
-    def dump_subgraphs(self, subgraphs):
-        """Dump subgraphs"""
-        if os.environ.get("ENABLE_SUBGRAPHS", "off") == "on":
-            subgraphs_str = "subgraphs:\nlen: " + str(len(subgraphs)) + "\n"
-            for i, sub in enumerate(subgraphs):
-                subgraphs_str += str("============") + str(i) + "\n"
-                subgraphs_str += str(sub)
-            dirname = 'subgraphs'
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
-            graphname = self.graph.name
-            filename = dirname + '/' + graphname + '.log'
-            with os.fdopen(os.open(filename, os.O_RDWR | os.O_CREAT), 'w+') as f:
-                f.write(subgraphs_str)
-
     def pattern_fuse(self, fuse_func=None):
         """fuse Areas by pattern repeatedly"""
         del fuse_func
@@ -376,34 +372,38 @@ class GraphSplitByPattern:
         # Note: after this function, the input output relation is not maintained.
         self.split_output_reshapes()
         subgraphs, graphmodes = self.to_subgraphs()
-        self.dump_subgraphs(subgraphs)
         return subgraphs, graphmodes
 
     def split_output_reshapes(self):
-        """Force split the output reshapes into other new """
+        """Force split the output Reshapes into other new area"""
+        def _remove_output_reshape(reshape_ops, other_ops):
+            def _run():
+                for op in reshape_ops:
+                    if any([to_op in other_ops for to_op in op.output.to_ops]):
+                        reshape_ops.remove(op)
+                        other_ops.append(op)
+                        return True
+                return False
+            while _run():
+                pass
+
         new_areas = []
         for area in self.areas:
-            out_reshape_ops = [op for op in area.ops if PrimLib.iter_type(op) == PrimLib.RESHAPE]
-            remain_ops = [op for op in area.ops if op not in out_reshape_ops]
-            if not remain_ops or not out_reshape_ops:
+            reshape_ops = [op for op in area.ops if PrimLib.iter_type(op) == PrimLib.RESHAPE]
+            other_ops = [op for op in area.ops if op not in reshape_ops]
+            if not other_ops or not reshape_ops:
                 continue
-            changed = True
-            while changed:
-                changed = False
-                for op in out_reshape_ops:
-                    if any([to_op in remain_ops for to_op in op.output.to_ops]):
-                        out_reshape_ops.remove(op)
-                        remain_ops.append(op)
-                        changed = True
-                        break
-            if out_reshape_ops:
-                for op in out_reshape_ops:
-                    a = self.Area(op, False, 0, self.reach_tab)
-                    self.set_default_mode(a)
-                    new_areas.append(a)
-                area.ops = remain_ops
-                if len(remain_ops) == 1:
-                    self.set_default_mode(area)
+            # remove the output reshape from "reshape_ops" and add it into "other_ops"
+            _remove_output_reshape(reshape_ops, other_ops)
+            if not reshape_ops:
+                continue
+            for op in reshape_ops:
+                a = self.Area(op, False, 0, self.reach_tab)
+                self.set_default_mode(a)
+                new_areas.append(a)
+            area.ops = other_ops
+            if len(other_ops) == 1:
+                self.set_default_mode(area)
         if new_areas:
             self.areas += new_areas
 
@@ -533,14 +533,7 @@ class GraphSplitByPattern:
         """find recompute regions and copy them out to new Areas"""
         def do_recompute_fuse():
             """split the unfusing pattern by add recompute area"""
-            recompute_suc = False
-            orig_areas = []
-            orig_areas.extend(self.areas)
-            for dom in orig_areas:
-                if dom not in self.areas or not dom.out_relations:
-                    continue
-                cheap_regions = self.find_cheap_regions(dom)
-                dom_changed = False
+            def recompute_cheap_region(dom):
                 for cheap_region in cheap_regions:
                     user_areas = self.select_user_area(cheap_region[-1].output)
                     if not user_areas:
@@ -550,20 +543,22 @@ class GraphSplitByPattern:
                         self.pattern_fuse(self.fuse_recom)
                         self.clear_recompute()
                         if self.recom_res:
-                            recompute_suc = True
-                            # Copy region at most once for this dom
-                            dom_changed = True
-                            break
-                    if dom_changed:
-                        break
+                            return True
+                return False
+            recompute_suc = False
+            orig_areas = []
+            orig_areas.extend(self.areas)
+            for dom in orig_areas:
+                if dom not in self.areas or not dom.out_relations:
+                    continue
+                cheap_regions = self.find_cheap_regions(dom)
+                if recompute_cheap_region(dom):
+                    recompute_suc = True
             return recompute_suc
 
         if self.enable_recompute:
             while do_recompute_fuse():
                 self.pattern_fuse()
-
-
-use_poly_reduce = True
 
 
 class GraphSplitGpu(GraphSplitByPattern):
@@ -616,7 +611,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             return fused, True
 
         def _broadcast_pat_exclude(dom, a, r):
-            if use_poly_reduce and a.pattern == PrimLib.REDUCE:
+            if a.pattern == PrimLib.REDUCE:
                 return dom.pattern > PrimLib.ELEMWISE or r > PrimLib.ELEMWISE
             return a.pattern > PrimLib.REDUCE or r > PrimLib.BROADCAST
 
@@ -641,33 +636,13 @@ class GraphSplitGpu(GraphSplitByPattern):
                 fused.append(a)
             return fused, False
 
-        def _check_reduce_exclude(dom):
-            if use_poly_reduce:
-                return False
-            # exclude large all-reduce
-            if len(dom.ops[0].inputs[0].shape) == len(dom.ops[0].attrs["reduce_axis"]) and \
-                    dom.ops[0].inputs[0].get_size() > 10000:
-                return True
-
-            # exclude multi output
-            for a in dom.in_relations.keys():
-                if len(a.out_relations) > 1:
-                    return True
-                if any([op.output.para_type == Tensor.PARA_OUTPUT for op in a.ops]):
-                    return True
-            return False
-
         def _reduce_pat_exclude(_, a, r):
             if len(a.ops) > self.REDUCE_FUSE_DEPTH:
                 return True
-            if use_poly_reduce:
-                return a.pattern > PrimLib.ELEMWISE or r > PrimLib.REDUCE or r == PrimLib.BROADCAST
-            return a.pattern > PrimLib.BROADCAST or r > PrimLib.REDUCE
+            return a.pattern > PrimLib.ELEMWISE or r > PrimLib.REDUCE or r == PrimLib.BROADCAST
 
         def _reduce_depth(dom):
             if dom.pattern != PrimLib.REDUCE or len(dom.in_relations) != 1:
-                return None
-            if _check_reduce_exclude(dom):
                 return None
             a, r = list(dom.in_relations.items())[0]
             if dom.ops[0].inputs[0].dtype == "float16" and a.is_output and len(a.ops) >= 10 and \
@@ -680,8 +655,6 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _reduce_width(dom):
             if dom.pattern != PrimLib.REDUCE:
-                return None
-            if _check_reduce_exclude(dom):
                 return None
             fused = []
             for a, r in dom.in_relations.items():
@@ -763,16 +736,16 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _may_stitch(dom, a, r):
             if a.pattern <= PrimLib.REDUCE and r <= PrimLib.BROADCAST and dom.check_acyclic(a):
-                if _reduce_nums(a.ops) < 2:
-                    dom_outs = [op.output for op in dom.ops]
-                    a_ins = [op_input for op in a.ops for op_input in op.inputs]
-                    a_outs = [op.output for op in a.ops]
-                    a_final_outs = [tensor for tensor in a_outs if tensor not in a_ins]
-                    stitch_tensors = [tensor for tensor in dom_outs if tensor in a_ins]
-                    if _same_stitch_axis(stitch_tensors, a_final_outs):
-                        for tensor in stitch_tensors:
-                            if _tensor_size(tensor) >= 1024 * 1024:
-                                return True
+                if _reduce_nums(a.ops) >= 2:
+                    return False
+                dom_outs = [op.output for op in dom.ops]
+                a_ins = [op_input for op in a.ops for op_input in op.inputs]
+                a_outs = [op.output for op in a.ops]
+                a_final_outs = [tensor for tensor in a_outs if tensor not in a_ins]
+                stitch_tensors = [tensor for tensor in dom_outs if tensor in a_ins]
+                if not _same_stitch_axis(stitch_tensors, a_final_outs):
+                    return False
+                return any([_tensor_size(tensor) >= 1024 * 1024 for tensor in stitch_tensors])
             return False
 
         def _reduce_stitch(dom):
@@ -785,14 +758,15 @@ class GraphSplitGpu(GraphSplitByPattern):
 
             fused = []
             for a, r in dom.out_relations.items():
-                if _may_stitch(dom, a, r):
-                    if a.pattern == PrimLib.REDUCE:
-                        if a.ops[0].attrs['reduce_axis'] == dom.ops[0].attrs['reduce_axis']:
-                            dom.stitch_info.stitch_ops.add(dom.ops[0].output.name)
-                            fused.append(a)
-                    elif a.pattern == PrimLib.BROADCAST:
+                if not _may_stitch(dom, a, r):
+                    continue
+                if a.pattern == PrimLib.REDUCE:
+                    if a.ops[0].attrs['reduce_axis'] == dom.ops[0].attrs['reduce_axis']:
                         dom.stitch_info.stitch_ops.add(dom.ops[0].output.name)
                         fused.append(a)
+                elif a.pattern == PrimLib.BROADCAST:
+                    dom.stitch_info.stitch_ops.add(dom.ops[0].output.name)
+                    fused.append(a)
             return fused, False
 
         def _transpose(dom):
@@ -825,10 +799,9 @@ class GraphSplitGpu(GraphSplitByPattern):
                 changed = self.fuse(_broadcast_depth) or changed
                 changed = self.fuse(_broadcast_width) or changed
                 changed = self.fuse(_strided_slice) or changed
-                if use_poly_reduce:
-                    changed = self.fuse(_reduce_output) or changed
-                    if enable_stitch_fusion:
-                        changed = self.fuse(_reduce_stitch) or changed
+                changed = self.fuse(_reduce_output) or changed
+                if enable_stitch_fusion:
+                    changed = self.fuse(_reduce_stitch) or changed
             self.fuse(_transpose)
 
         def _fuse_once(fuse_func):
@@ -836,9 +809,8 @@ class GraphSplitGpu(GraphSplitByPattern):
                     fuse_func(_reduce_depth) or fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or \
                     fuse_func(_broadcast_width):
                 return
-            if use_poly_reduce:
-                if fuse_func(_reduce_output) or (enable_stitch_fusion and fuse_func(_reduce_stitch)):
-                    return
+            if fuse_func(_reduce_output) or (enable_stitch_fusion and fuse_func(_reduce_stitch)):
+                return
             fuse_func(_transpose)
             return
 

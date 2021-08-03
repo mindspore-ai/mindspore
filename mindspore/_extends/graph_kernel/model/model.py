@@ -422,14 +422,13 @@ class Graph:
             for t in op.inputs:
                 if t not in inputs and t.op not in self.ops:
                     inputs.append(t)
-            if op.output not in outputs:
-                if op.output.para_type == Tensor.PARA_OUTPUT or not op.output.to_ops:
-                    outputs.append(op.output)
-                else:
-                    for d in op.output.to_ops:
-                        if d not in self.ops:
-                            outputs.append(op.output)
-                            break
+            if op.output in outputs:
+                continue
+            if op.output.para_type == Tensor.PARA_OUTPUT or not op.output.to_ops:
+                outputs.append(op.output)
+                continue
+            if any([succ not in self.ops for succ in op.output.to_ops]):
+                outputs.append(op.output)
         if self.inputs:
             inputs = self.inputs
 
