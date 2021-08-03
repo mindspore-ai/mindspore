@@ -32,7 +32,6 @@ class AdamWeightDecayCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void ParallelForAdam(const CTask &task, size_t count);
   void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T, typename S>
   void LaunchFusedAdam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -41,6 +40,7 @@ class AdamWeightDecayCPUKernel : public CPUKernel {
   size_t elem_num_{0};
   TypeId dtype_{kTypeUnknown};
   TypeId gradient_dtype_{kTypeUnknown};
+  enum input_list_ { VAR, M, V, LR, BETA1, BETA2, EPSILON, DECAY, GRAD };
 };
 
 MS_REG_CPU_KERNEL(AdamWeightDecay,
