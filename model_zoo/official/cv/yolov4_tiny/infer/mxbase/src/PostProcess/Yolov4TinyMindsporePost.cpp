@@ -17,6 +17,7 @@
 #include "Yolov4TinyMindsporePost.h"
 #include "MxBase/Log/Log.h"
 #include "MxBase/CV/ObjectDetection/Nms/Nms.h"
+#include <algorithm>
 
 namespace {
 const int SCALE = 32;
@@ -140,17 +141,13 @@ void Yolov4TinyPostProcess::ObjectDetectionOutput(const std::vector<TensorBase>&
             featLayerData.push_back(tmpPointer);
             shape = tensors[j].GetShape();
             std::vector<size_t> featLayerShape = {};
-            for (auto s : shape) {
-                featLayerShape.push_back((size_t)s);
-            }
+            transform(shape.begin(), shape.end(), featLayerShape.begin(), [](uint32_t s) { return (size_t)s; });
             featLayerShapes.push_back(featLayerShape);
         }
         std::vector<ObjectInfo> objectInfo;
         GenerateBbox(featLayerData, objectInfo, featLayerShapes, resizedImageInfos[i].widthResize,
             resizedImageInfos[i].heightResize);
-        //LogInfo << "objectInfo.size before nms::::::::::" <<objectInfo.size() << ", iouThresh_:" << iouThresh_;
         MxBase::NmsSort(objectInfo, iouThresh_);
-        //LogInfo << "objectInfo.size after nms::::::::::" <<objectInfo.size();
         objectInfos.push_back(objectInfo);
     }
     LogDebug << "Yolov4TinyPostProcess write results success.";
