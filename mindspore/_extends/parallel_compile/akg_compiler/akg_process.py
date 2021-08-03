@@ -50,11 +50,6 @@ def _compile_akg_task_gpu(json_strs, attrs):
         if not res:
             raise ValueError("Compile error, args: {}! build attrs: {}".format(json_str, attrs))
 
-    pid_path = os.path.realpath("./cuda_meta_" + str(os.getpid()))
-    if os.path.exists(pid_path):
-        copy_json(pid_path, os.path.realpath("./cuda_meta_" + str(os.getppid())))
-        shutil.rmtree(pid_path)
-
 
 def _compile_akg_task_ascend(json_strs, attrs):
     """

@@ -41,8 +41,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
 
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
       if (!bin_map->initialized()) {
-        auto pid = mindspore::kernel::GpuKernelBuildClient::Instance().AkgGetPid();
-        bin_map->Initialize(pid);
+        bin_map->Initialize();
       }
       if (!already_check_nvcc) {
         already_check_nvcc = true;
