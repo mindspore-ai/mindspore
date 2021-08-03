@@ -37,8 +37,6 @@ enum NodeType {
 
 const int USEC = 1000000;
 const int MSEC = 1000;
-std::vector<std::string> StringSplit(std::string str, const std::string &pattern);
-
 uint64_t GetTimeUs();
 
 bool IsSupportSDot();
@@ -119,7 +117,7 @@ inline std::string GetFileName(const std::string &path) {
   char delim = '/';
 
   size_t i = path.rfind(delim, path.length());
-  if (i != std::string::npos) {
+  if (i != std::string::npos && i + 1 < path.length()) {
     return (path.substr(i + 1, path.length() - i));
   }
 
