@@ -17,10 +17,10 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_PME_FFT_3D_IMPL_H_
 
 #include <cufft.h>
+#include "utils/complex.h"
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
-void FFT3D(int Nfft, T *input_tensor, T *complex_fq, T *output_real, T *output_imag,
-           const cufftHandle &FFT_plan_r2c, cudaStream_t stream);
+void FFT3D(int Nfft, T *input_tensor, Complex<T> *output_tensor, const cufftHandle &FFT_plan_r2c, cudaStream_t stream);
 
 #endif

@@ -17,9 +17,7 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
-  IFFT3D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  IFFT3DGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(IFFT3D, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
+                      IFFT3DGpuKernel, float)
 }  // namespace kernel
 }  // namespace mindspore

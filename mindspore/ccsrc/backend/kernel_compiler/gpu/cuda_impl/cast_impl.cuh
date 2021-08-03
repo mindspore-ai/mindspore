@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "runtime/device/gpu/cuda_common.h"
+#include "utils/complex.h"
 
 template <typename S, typename T>
 void Cast(const int input_size, const S *input_addr, T *output_addr, cudaStream_t stream);

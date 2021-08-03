@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+template <typename T>
 class IFFT3DGpuKernel : public GpuKernel {
  public:
   IFFT3DGpuKernel() = default;
@@ -51,22 +53,17 @@ class IFFT3DGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    auto input_real = GetDeviceAddress<T>(inputs, 0);
-    auto input_imag = GetDeviceAddress<T>(inputs, 1);
-    auto complex_fq = GetDeviceAddress<T>(workspace, 0);
+    auto input_tensor = GetDeviceAddress<Complex<T>>(inputs, 0);
     auto output_tensor = GetDeviceAddress<T>(outputs, 0);
 
     cufftSetStream(FFT_plan_c2r, reinterpret_cast<cudaStream_t>(stream_ptr));
-    IFFT3D<T>(Nfft, input_real, input_imag, complex_fq, output_tensor, FFT_plan_c2r,
-              reinterpret_cast<cudaStream_t>(stream_ptr));
+    IFFT3D<T>(Nfft, input_tensor, output_tensor, FFT_plan_c2r, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(Nfft * sizeof(T));
-    input_size_list_.push_back(Nfft * sizeof(T));
-    workspace_size_list_.push_back(Nfft * 2 * sizeof(T));
+    input_size_list_.push_back(Nfft * sizeof(Complex<T>));
     output_size_list_.push_back(Nall * sizeof(T));
   }
 

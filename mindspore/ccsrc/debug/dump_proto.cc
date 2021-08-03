@@ -99,6 +99,10 @@ static irpb::DataType GetNumberDataType(const TypePtr &type) {
       return irpb::DT_BASE_UINT;
     case kNumberTypeFloat:
       return irpb::DT_BASE_FLOAT;
+    case kNumberTypeComplex64:
+      return irpb::DT_COMPLEX64;
+    case kNumberTypeComplex128:
+      return irpb::DT_COMPLEX128;
     default:
       MS_LOG(EXCEPTION) << "Unexpected type " << type->type_name();
   }

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "runtime/device/gpu/cuda_common.h"
+#include "utils/complex.h"
 
 const float kFloatEplison = 1e-37;
 
@@ -57,6 +58,10 @@ void ElewiseCmp(const int &nums, enum BroadcastOpType op, const T *x0, const T *
 template <typename T>
 void ElewiseArith(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, T *y, cudaStream_t stream);
 
+template <typename T1, typename T2, typename T3>
+void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const T1 *x0, const T2 *x1,
+                         Complex<T3> *y, cudaStream_t stream);
+
 template <typename T>
 void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                   const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1, bool *y,
@@ -66,6 +71,11 @@ template <typename T>
 void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                     const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1, T *y,
                     cudaStream_t stream);
+
+template <typename T1, typename T2, typename T3>
+void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T1 *x0, const T2 *x1,
+                           Complex<T3> *y, cudaStream_t stream);
 
 template <typename T>
 void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,

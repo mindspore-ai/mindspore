@@ -17,23 +17,10 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/pme/pme_common.cuh"
 
 template <typename T>
-__global__ static void Split_Complex(const int element_numbers, T *real_part, T *imag_part,
-                                     const cufftComplex *complex_element) {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
-  if (i < element_numbers) {
-    real_part[i] = complex_element[i].x;
-    imag_part[i] = complex_element[i].y;
-  }
-}
-
-template <typename T>
-void FFT3D(int Nfft, T *input_tensor, T *complex_fq, T *output_real, T *output_imag,
-           const cufftHandle &FFT_plan_r2c, cudaStream_t stream) {
-  cufftComplex *COMPLEX_FQ = reinterpret_cast<cufftComplex *>(complex_fq);
-  cufftExecR2C(FFT_plan_r2c, input_tensor, COMPLEX_FQ);
-  Split_Complex<T><<<Nfft / 1024 + 1, 1024, 0, stream>>>(Nfft, output_real, output_imag, COMPLEX_FQ);
+void FFT3D(int Nfft, T *input_tensor, Complex<T> *output_tensor, const cufftHandle &FFT_plan_r2c, cudaStream_t stream) {
+  cufftExecR2C(FFT_plan_r2c, input_tensor, reinterpret_cast<cufftComplex *>(output_tensor));
   return;
 }
 
-template void FFT3D<float>(int Nfft, float *input_tensor, float *complex_fq, float *output_real,
-                           float *output_imag, const cufftHandle &FFT_plan_r2c, cudaStream_t stream);
+template void FFT3D<float>(int Nfft, float *input_tensor, Complex<float> *output_tensor,
+                           const cufftHandle &FFT_plan_r2c, cudaStream_t stream);

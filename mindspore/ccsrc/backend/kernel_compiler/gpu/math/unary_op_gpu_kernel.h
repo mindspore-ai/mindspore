@@ -51,6 +51,9 @@ enum UnaryOptype {
   UNARY_OP_RINT,
   UNARY_OP_ROUND,
   UNARY_OP_SIGN,
+  UNARY_OP_REAL,
+  UNARY_OP_IMAG,
+  UNARY_OP_CONJ,
   UNARY_OP_INVALID_TYPE = 255
 };
 
@@ -66,7 +69,8 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
   {"Asinh", UNARY_OP_ASINH},   {"Acosh", UNARY_OP_ACOSH},
   {"Abs", UNARY_OP_ABS},       {"Floor", UNARY_OP_FLOOR},
   {"Rint", UNARY_OP_RINT},     {"Round", UNARY_OP_ROUND},
-  {"Sign", UNARY_OP_SIGN}};
+  {"Real", UNARY_OP_REAL},     {"Imag", UNARY_OP_IMAG},
+  {"Sign", UNARY_OP_SIGN},     {"Conj", UNARY_OP_CONJ}};
 
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {

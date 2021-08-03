@@ -20,6 +20,7 @@
 #include <limits>
 #ifdef ENABLE_GPU
 #include <thrust/complex.h>
+#include <cublas_v2.h>
 #endif
 #include "base/float16.h"
 #if defined(__CUDACC__)
@@ -80,7 +81,11 @@ struct alignas(sizeof(T) * 2) Complex {
   HOST_DEVICE inline explicit operator uint32_t() const { return static_cast<uint32_t>(real_); }
   HOST_DEVICE inline explicit operator int64_t() const { return static_cast<int64_t>(real_); }
   HOST_DEVICE inline explicit operator uint64_t() const { return static_cast<uint64_t>(real_); }
-  HOST_DEVICE inline explicit operator float16() const { return static_cast<float16>(real_); }
+#if defined(__CUDACC__)
+  HOST_DEVICE inline explicit operator half() const { return static_cast<half>(real_); }
+#else
+  inline explicit operator float16() const { return static_cast<float16>(real_); }
+#endif
 
   HOST_DEVICE inline constexpr Complex<T> &operator=(const T &real) {
     real_ = real;
@@ -100,12 +105,14 @@ struct alignas(sizeof(T) * 2) Complex {
 
   HOST_DEVICE inline Complex<T> &operator*=(const T &real) {
     real_ *= real;
+    imag_ *= real;
     return *this;
   }
 
   // Note: check division by zero before use it.
   HOST_DEVICE inline Complex<T> &operator/=(const T &real) {
     real_ /= real;
+    imag_ /= real;
     return *this;
   }
 

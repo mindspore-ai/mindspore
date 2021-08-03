@@ -144,13 +144,13 @@ TEST_F(TestComplex, test_arithmetic) {
   test_arithmetic_mul<Complex<float>, Complex<float>, Complex<float>>(
     Complex<float>(1.11, 2.22), Complex<float>(1.11, 2.22), Complex<float>(-3.6963, 4.9284));
   test_arithmetic_mul<Complex<float>, float, Complex<float>>(Complex<float>(1.11, 2.22), 1.11,
-                                                             Complex<float>(1.2321, 2.22));
+                                                             Complex<float>(1.2321, 2.4642));
   test_arithmetic_mul<float, Complex<float>, Complex<float>>(1.11, Complex<float>(1.11, 2.22),
-                                                             Complex<float>(1.2321, 2.22));
+                                                             Complex<float>(1.2321, 2.4642));
 
   test_arithmetic_div<Complex<float>, Complex<float>, Complex<float>>(Complex<float>(1.11, 2.22),
                                                                       Complex<float>(1.11, 2.22), Complex<float>(1, 0));
-  test_arithmetic_div<Complex<float>, float, Complex<float>>(Complex<float>(1.11, 2.22), 1.11, Complex<float>(1, 2.22));
+  test_arithmetic_div<Complex<float>, float, Complex<float>>(Complex<float>(1.11, 2.22), 1.11, Complex<float>(1, 2));
   test_arithmetic_div<float, Complex<float>, Complex<float>>(1.11, Complex<float>(1.11, 2.22),
                                                              Complex<float>(0.2, -0.4));
 }

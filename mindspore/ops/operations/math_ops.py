@@ -86,6 +86,23 @@ class _MathBinaryOp(_BinaryOp):
     def do_infer_dtype(x_dtype, y_dtype, valid_dtype=mstype.number_type, prim_name=None):
         """Staticmethod of infer dtype for _MathBinaryOp."""
         args_type = {"x": x_dtype, "y": y_dtype}
+        complex_types = [mstype.tensor_type(mstype.complex64), mstype.tensor_type(mstype.complex128)]
+        if x_dtype in complex_types or y_dtype in complex_types:
+            tpye_infer_dict = {
+                (mstype.complex64, mstype.complex64): mstype.tensor_type(mstype.complex64),
+                (mstype.complex64, mstype.float32): mstype.tensor_type(mstype.complex64),
+                (mstype.float32, mstype.complex64): mstype.tensor_type(mstype.complex64),
+                (mstype.complex128, mstype.complex128): mstype.tensor_type(mstype.complex128),
+                (mstype.complex128, mstype.float64): mstype.tensor_type(mstype.complex128),
+                (mstype.float64, mstype.complex128): mstype.tensor_type(mstype.complex128),
+            }
+            if (x_dtype.element_type(), y_dtype.element_type()) not in tpye_infer_dict.keys():
+                raise TypeError('Complex math binary op expecting Tensor [complex64, complex64],'
+                                + '[complex64, float32], [float32, complex64], [complex128, complex128],'
+                                + '[complex128, float64], [float64, complex128],'
+                                + f'but got : [{format(x_dtype)},{format(y_dtype)}].')
+            return tpye_infer_dict.get((x_dtype.element_type(), y_dtype.element_type()))
+
         validator.check_tensors_dtypes_same_and_valid(args_type, valid_dtype, prim_name)
         return x_dtype
 
@@ -4439,7 +4456,6 @@ class Abs(Primitive):
         """Initialize Abs"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
-
 class Sign(PrimitiveWithInfer):
     r"""
     Performs sign on the tensor element-wise.
@@ -5257,3 +5273,125 @@ class Erfinv(Primitive):
     def __init__(self):
         """Initialize Erfinv"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+
+class Conj(PrimitiveWithInfer):
+    """
+    Returns a Tensor that is the real part of the input.
+
+    Inputs:
+        - **input** (Tensor, complex) - The input tensor. types: complex64, complex128.
+
+    Outputs:
+        Tensor, has the float type.
+
+    Raises:
+       TypeError: If the dtype of input is not one of: complex64, complex128.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
+        >>> conj = ops.Conj()
+        >>> output = conj(x)
+        >>> print(output)
+        1.3-0.4j
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(
+            inputs=['input_tensor'],
+            outputs=['output_tensor'])
+
+    def infer_shape(self, input_shape):
+        return input_shape
+
+    def infer_dtype(self, input_dtype):
+        validator.check_tensor_dtype_valid('input_tensor', input_dtype,
+                                           [mstype.complex64, mstype.complex128], self.name)
+        return input_dtype
+
+class Real(PrimitiveWithInfer):
+    """
+    Returns a Tensor that is the real part of the input.
+
+    Inputs:
+        - **input** (Tensor, complex) - The input tensor. types: complex64, complex128.
+
+    Outputs:
+        Tensor, has the float type.
+
+    Raises:
+       TypeError: If the dtype of input is not one of: complex64, complex128.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
+        >>> conj = ops.Real()
+        >>> output = conj(x)
+        >>> print(output)
+        1.3
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(
+            inputs=['input_tensor'],
+            outputs=['output_tensor'])
+
+    def infer_shape(self, input_shape):
+        return input_shape
+
+    def infer_dtype(self, input_dtype):
+        validator.check_tensor_dtype_valid('input_tensor', input_dtype,
+                                           [mstype.complex64, mstype.complex128], self.name)
+        if input_dtype == mstype.tensor_type(mstype.complex64):
+            output_dtype = mstype.float32
+        elif input_dtype == mstype.tensor_type(mstype.complex128):
+            output_dtype = mstype.float64
+        return output_dtype
+
+class Imag(PrimitiveWithInfer):
+    """
+    Returns a new tensor containing imaginary value of the input.
+
+    Inputs:
+        - **input** (Tensor, complex) - The input tensor. types: complex64, complex128.
+
+    Outputs:
+        Tensor, has the float type.
+
+    Raises:
+       TypeError: If the dtype of input is not one of: complex64, complex128.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
+        >>> conj = ops.Imag()
+        >>> output = conj(x)
+        >>> print(output)
+        0.4
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(
+            inputs=['input_tensor'],
+            outputs=['output_tensor'])
+
+    def infer_shape(self, input_shape):
+        return input_shape
+
+    def infer_dtype(self, input_dtype):
+        validator.check_tensor_dtype_valid('input_tensor', input_dtype,
+                                           [mstype.complex64, mstype.complex128], self.name)
+        if input_dtype == mstype.tensor_type(mstype.complex64):
+            output_dtype = mstype.float32
+        elif input_dtype == mstype.tensor_type(mstype.complex128):
+            output_dtype = mstype.float64
+        return output_dtype
