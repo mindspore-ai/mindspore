@@ -26,7 +26,10 @@
 #include "hccl/hcom.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "utils/ms_context.h"
 #include "runtime/hccl_adapter/converter.h"
+#include "runtime/device/ascend/distribute/ascend_collective.h"
+using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 static constexpr const char *kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const char *kHcclDeployModeEnv = "DEPLOY_MODE";
@@ -75,7 +78,6 @@ void HcclAdapter::InitPlugin() {
   if (plugin_handle_ == nullptr) {
     MS_LOG(EXCEPTION) << "Dlopen " << kHcclPluginFileName << " failed, result = " << GetDlErrorMsg();
   }
-
   init_hcom_graph_adapter_ = DlsymFuncObj(InitHcomGraphAdapter, plugin_handle_);
   finalize_hcom_graph_adapter_ = DlsymFuncObj(FinalizeHcomGraphAdapter, plugin_handle_);
   get_hccl_kernel_info_store_ = DlsymFuncObj(GetHcclKernelInfoStore, plugin_handle_);
@@ -98,7 +100,6 @@ void HcclAdapter::FinalizePlugin() {
   if (plugin_handle_ == nullptr) {
     return;
   }
-
   init_hcom_graph_adapter_ = nullptr;
   finalize_hcom_graph_adapter_ = nullptr;
   get_hccl_kernel_info_store_ = nullptr;
@@ -107,6 +108,10 @@ void HcclAdapter::FinalizePlugin() {
   finalize_hccl_comm_ = nullptr;
   launch_hccl_broadcast_ = nullptr;
   launch_hccl_all_reduce_ = nullptr;
+  launch_hccl_reduce_scatter_ = nullptr;
+  launch_hccl_all_gather_ = nullptr;
+  launch_hccl_send_ = nullptr;
+  launch_hccl_recv_ = nullptr;
   hccl_create_group_ = nullptr;
   hccl_destroy_group_ = nullptr;
   hccl_get_rank_id_ = nullptr;
@@ -117,6 +122,19 @@ void HcclAdapter::FinalizePlugin() {
   hccl_exec_enqueue_all_to_all_v_ = nullptr;
   (void)dlclose(plugin_handle_);
   plugin_handle_ = nullptr;
+}
+
+bool HcclAdapter::InitHccl() {
+  MS_LOG(INFO) << "Start init hccl adapter.";
+  std::lock_guard<std::mutex> lock(init_mutex_);
+  if (init_flag_) {
+    MS_LOG(INFO) << "Hccl has been inited, skip.";
+    return true;
+  }
+  InitPlugin();
+  init_flag_ = true;
+  MS_LOG(INFO) << "Init hccl adapter success.";
+  return true;
 }
 
 bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
@@ -136,12 +154,10 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::st
   if (!ret) {
     return false;
   }
-
   ret = InitHcclExec();
   if (!ret) {
     return false;
   }
-
   init_flag_ = true;
   MS_LOG(INFO) << "Init hccl adapter success.";
   return true;
@@ -238,10 +254,69 @@ HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType da
   return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm_, stream);
 }
 
-HcclResult HcclAdapter::HcclAllReduce(void *sendBuf, void *recvBuf, uint64_t count, HcclDataType dataType,
-                                      HcclReduceOp op, aclrtStream stream) const {
+HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
+                                      HcclReduceOp op, aclrtStream stream, const std::string &group) const {
   MS_EXCEPTION_IF_NULL(launch_hccl_all_reduce_);
-  return launch_hccl_all_reduce_(sendBuf, recvBuf, count, dataType, op, hccl_comm_, stream);
+  HcclComm hccl_comm;
+  if (hccl_comm_ != nullptr) {
+    hccl_comm = hccl_comm_;
+  } else {
+    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
+    MS_EXCEPTION_IF_NULL(hccl_comm);
+  }
+  return launch_hccl_all_reduce_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
+                                          HcclReduceOp op, aclrtStream stream, const std::string &group) const {
+  MS_EXCEPTION_IF_NULL(launch_hccl_reduce_scatter_);
+  HcclComm hccl_comm;
+  if (hccl_comm_ != nullptr) {
+    hccl_comm = hccl_comm_;
+  } else {
+    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
+    MS_EXCEPTION_IF_NULL(hccl_comm);
+  }
+  return launch_hccl_reduce_scatter_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
+                                      aclrtStream stream, const std::string &group) const {
+  MS_EXCEPTION_IF_NULL(launch_hccl_all_gather_);
+  HcclComm hccl_comm;
+  if (hccl_comm_ != nullptr) {
+    hccl_comm = hccl_comm_;
+  } else {
+    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
+    MS_EXCEPTION_IF_NULL(hccl_comm);
+  }
+  return launch_hccl_all_gather_(send_buf, recv_buf, count, dataType, hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
+                                 aclrtStream stream, const std::string &group) const {
+  MS_EXCEPTION_IF_NULL(launch_hccl_send_);
+  HcclComm hccl_comm;
+  if (hccl_comm_ != nullptr) {
+    hccl_comm = hccl_comm_;
+  } else {
+    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
+    MS_EXCEPTION_IF_NULL(hccl_comm);
+  }
+  return launch_hccl_send_(send_buf, count, dataType, destRank, hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
+                                 aclrtStream stream, const std::string &group) const {
+  MS_EXCEPTION_IF_NULL(launch_hccl_recv_);
+  HcclComm hccl_comm;
+  if (hccl_comm_ != nullptr) {
+    hccl_comm = hccl_comm_;
+  } else {
+    hccl_comm = HcclCollectiveGroup::instance().GetGroupComm(group);
+    MS_EXCEPTION_IF_NULL(hccl_comm);
+  }
+  return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
 }
 
 bool HcclAdapter::InitKernelInfoStore(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
@@ -338,6 +413,12 @@ bool HcclAdapter::InitHcclComm(std::string_view rank_id, std::string_view rank_f
 
 bool HcclAdapter::FinalizeHcclComm() {
   MS_LOG(INFO) << "Start finalize hccl comm.";
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  if (!task_sink) {
+    HcclCollectiveGroup::instance().DestroyCommGroup();
+  }
   if (hccl_comm_ == nullptr) {
     return true;
   }

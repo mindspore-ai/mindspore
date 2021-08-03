@@ -66,6 +66,8 @@ class HcomUtil {
                            const vector<vector<size_t>> &shape_list, uint64_t *total_count);
   static bool GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op_type);
   static bool GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id);
+  static bool GetHcomSrcRank(const AnfNodePtr &anf_node, uint32_t *src_rank);
+  static bool GetHcomDestRank(const AnfNodePtr &anf_node, uint32_t *dest_rank);
   static void GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group);
   static bool GetHcomReceiveType(const AnfNodePtr &anf_node, TypeId *receive_type);
 };

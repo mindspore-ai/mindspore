@@ -64,7 +64,8 @@ HcclKernelFactory &HcclKernelFactory::Get() {
   return _this;
 }
 
-HcclKernel::HcclKernel() : hccl_count_(0), op_type_(::HcclReduceOp::HCCL_REDUCE_SUM), root_id_(0) {}
+HcclKernel::HcclKernel()
+    : hccl_count_(0), op_type_(::HcclReduceOp::HCCL_REDUCE_SUM), root_id_(0), src_rank_(0), dest_rank_(0) {}
 
 HcclKernel::~HcclKernel() {
   hccl_kernel_input_shape_list_.clear();
@@ -81,6 +82,18 @@ HcclKernel::~HcclKernel() {
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   op_name_ = AnfAlgo::GetCNodeName(anf_node);
+  if (op_name_ == kHcomSend) {
+    if (!HcomUtil::GetHcomDestRank(anf_node, &dest_rank_)) {
+      MS_LOG(ERROR) << "GetHcomDestRank fail!";
+      return false;
+    }
+  }
+  if (op_name_ == kReceive) {
+    if (!HcomUtil::GetHcomSrcRank(anf_node, &src_rank_)) {
+      MS_LOG(ERROR) << "GetHcomSrcRank fail!";
+      return false;
+    }
+  }
   if (!HcomUtil::GetKernelInputShape(anf_node, &hccl_kernel_input_shape_list_)) {
     MS_LOG(ERROR) << "GetKernelInputShape fail!";
     return false;
@@ -180,10 +193,13 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
 }
 
 const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
-  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty()) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode)) {
     return workspace_size_list_;
   }
-
   workspace_size_list_.emplace_back(
     hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node_.lock(), hccl_data_type_list_[0]));
   return workspace_size_list_;

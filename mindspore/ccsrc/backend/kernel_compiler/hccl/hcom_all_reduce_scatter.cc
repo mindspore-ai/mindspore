@@ -16,13 +16,27 @@
 
 #include "backend/kernel_compiler/hccl/hcom_all_reduce_scatter.h"
 #include <memory>
-#include "utils/ms_context.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &, void *) {
-  MS_LOG(INFO) << "HcomAllReduceScatter launch";
+bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  MS_LOG(DEBUG) << "HcomAllReduceScatter launch";
+  if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
+    MS_LOG(ERROR) << "Invalid AllReduceScatter input, output or data type size(" << inputs.size() << ", "
+                  << outputs.size() << ", " << hccl_data_type_list_.size() << ").";
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclReduceScatter(
+    inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0], op_type_, stream_ptr, group_);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcclReduceScatter faled, ret:" << hccl_result;
+    return false;
+  }
   return true;
 }
 }  // namespace kernel

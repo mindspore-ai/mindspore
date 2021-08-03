@@ -22,6 +22,7 @@ HcclAdapter &HcclAdapter::GetInstance() {
   static HcclAdapter instance;
   return instance;
 }
+bool HcclAdapter::InitHccl() { return true; }
 bool HcclAdapter::InitHccl(uint32_t, std::string_view, std::string_view) { return true; }
 bool HcclAdapter::FinalizeHccl() { return true; }
 HcclResult HcclAdapter::HcclCreateGroup(const std::string &, uint32_t, uint32_t *) const { return HCCL_SUCCESS; }
@@ -35,7 +36,21 @@ std::string HcclAdapter::GetHcclType(const AnfNodePtr &) { return ""; }
 HcclResult HcclAdapter::HcclBroadcast(void *, uint64_t, HcclDataType, uint32_t, aclrtStream) const {
   return HCCL_SUCCESS;
 }
-HcclResult HcclAdapter::HcclAllReduce(void *, void *, uint64_t, HcclDataType, HcclReduceOp, aclrtStream) const {
+HcclResult HcclAdapter::HcclAllReduce(void *, void *, uint64_t, HcclDataType, HcclReduceOp, aclrtStream,
+                                      const std::string &) const {
+  return HCCL_SUCCESS;
+}
+HcclResult HcclAdapter::HcclAllGather(void *, void *, uint64_t, HcclDataType, aclrtStream, const std::string &) const {
+  return HCCL_SUCCESS;
+}
+HcclResult HcclAdapter::HcclReduceScatter(void *, void *, uint64_t, HcclDataType, HcclReduceOp, aclrtStream,
+                                          const std::string &) const {
+  return HCCL_SUCCESS;
+}
+HcclResult HcclAdapter::HcclSend(void *, uint64_t, HcclDataType, uint32_t, aclrtStream, const std::string &) const {
+  return HCCL_SUCCESS;
+}
+HcclResult HcclAdapter::HcclRecv(void *, uint64_t, HcclDataType, uint32_t, aclrtStream, const std::string &) const {
   return HCCL_SUCCESS;
 }
 HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const {
