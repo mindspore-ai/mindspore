@@ -93,6 +93,7 @@ int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
     resize_nearest->set_attr_align_corners(resize_prim->coordinate_transform_mode() ==
                                            schema::CoordinateTransformMode_ALIGN_CORNERS);
     resize_nearest->set_input_size(*out_size_);
+    resize_ = resize_nearest;
   } else {
     MS_LOG(WARNING) << "Unsupported resize method type:" << resize_method_;
     return RET_ERROR;
