@@ -63,7 +63,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_celebadataset, check_minddataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
-    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_sb_dataset
+    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
+    check_sb_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -5673,6 +5674,154 @@ class PaddedDataset(GeneratorDataset):
         super().__init__(dataset, column_names=dataset.column_names, num_shards=None, shard_id=None, shuffle=False)
         self._dataset_size = len(dataset.padded_samples)
         self.padded_samples = padded_samples
+
+
+class FlickrDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing Flickr8k and Flickr30k dataset.
+
+    The generated dataset has two columns :py:obj:`[image, annotation]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`annotation` is a tensor which contains 5 annotations string,
+    such as ["a", "b", "c", "d", "e"].
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        annotation_file (str): Path to the root directory that contains the annotation.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
+            order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir is not valid or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If annotation_file is not exist.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> flickr_dataset_dir = "/path/to/flickr_dataset_directory"
+        >>> annotation_file = "/path/to/flickr_annotation_file"
+        >>>
+        >>> # 1) Get all samples from FLICKR dataset in sequence
+        >>> dataset = ds.FlickrDataset(dataset_dir=flickr_dataset_dir,
+        ...                            annotation_file=annotation_file,
+        ...                            shuffle=False)
+        >>>
+        >>> # 2) Randomly select 350 samples from FLICKR dataset
+        >>> dataset = ds.FlickrDataset(dataset_dir=flickr_dataset_dir,
+        ...                            annotation_file=annotation_file,
+        ...                            num_samples=350,
+        ...                            shuffle=True)
+        >>>
+        >>> # 3) Get samples from FLICKR dataset for shard 0 in a 2-way distributed training
+        >>> dataset = ds.FlickrDataset(dataset_dir=flickr_dataset_dir,
+        ...                            annotation_file=annotation_file,
+        ...                            num_shards=2,
+        ...                            shard_id=0)
+        >>>
+        >>> # In FLICKR dataset, each dictionary has keys "image" and "annotation"
+
+    About Flickr8k dataset:
+        | The Flickr8k dataset consists of 8092 colour images. There are 40460 annotations in the Flickr8k.token.txt,
+          each image has 5 annotations.
+
+        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+        | .
+        | └── Flickr8k
+        |      ├── Flickr8k_Dataset
+        |      |    ├── 1000268201_693b08cb0e.jpg
+        |      |    ├── 1001773457_577c3a7d70.jpg
+        |      |    ├── ...
+        |      └── Flickr8k.token.txt
+
+        .. code-block::
+
+            M. Hodosh, P. Young and J. Hockenmaier (2013)
+            "Framing Image Description as a Ranking Task: Data, Models and Evaluation Metrics"
+            Journal of Artificial Intellegence Research, Volume 47, pages 853-899
+            http://www.jair.org/papers/paper3994.html
+
+    About Flickr30k dataset:
+        | The Flickr30k dataset consists of 31783 colour images. There are 158915 annotations in
+          the results_20130124.token, each image has 5 annotations.
+
+        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+        | .
+        | └── Flickr30k
+        |      ├── flickr30k-images
+        |      |    ├── 1000092795.jpg
+        |      |    ├── 10002456.jpg
+        |      |    ├── ...
+        |      └── results_20130124.token
+
+        .. code-block::
+
+            P. Young, A. Lai, M. Hodosh, and J. Hockenmaier.
+            From image description to visual denotations:
+            New similarity metrics for semantic inference over event descriptions.
+            Transactions of the Association for Computational Linguistics (to appear).
+    """
+
+    @check_flickr_dataset
+    def __init__(self, dataset_dir, annotation_file, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 decode=None, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.annotation_file = annotation_file
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.FlickrNode(self.dataset_dir, self.annotation_file, self.decode, self.sampler)
 
 
 class SBDataset(GeneratorDataset):

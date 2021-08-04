@@ -10,6 +10,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         clue_node.cc
         coco_node.cc
         csv_node.cc
+        flickr_node.cc
         image_folder_node.cc
         manifest_node.cc
         minddata_node.cc
