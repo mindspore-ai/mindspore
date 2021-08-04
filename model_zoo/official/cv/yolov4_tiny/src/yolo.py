@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """YOLOv4 based on DarkNet."""
-import mindspore as ms
 import math
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore import context
@@ -26,7 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 import mindspore.common.dtype as mstype
 
-from src.cspdarknet53 import CspDarkNet53, CspDarkNet53Tiny, ResidualBlock, CspBlock, basic_conv, Upsample
+from src.cspdarknet53 import CspDarkNet53Tiny, basic_conv, Upsample
 from src.loss import XYLoss, WHLoss, ConfidenceLoss, ClassLoss
 
 from model_utils.config import config as default_config
