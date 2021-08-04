@@ -301,6 +301,9 @@ int ShapeInsert(int *shape, size_t *shape_size, int index, int value) {
   if (index < 0 || index > *shape_size) {
     return NNACL_ERR;
   }
+  if (*shape_size >= MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
   for (int i = *shape_size; i > index; i--) {
     shape[i] = shape[i - 1];
   }

@@ -117,6 +117,9 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   }
 
   for (int i = (int)(dst_shape_size)-1; i >= 0; --i) {
+    if (i >= MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     if (dst_shape[i] < 0) {
       return NNACL_ERR;
     }

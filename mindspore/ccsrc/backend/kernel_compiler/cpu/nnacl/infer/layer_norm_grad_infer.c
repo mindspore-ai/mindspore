@@ -42,6 +42,9 @@ int LayerNormGradInferShape(const TensorC *const *inputs, size_t inputs_size, Te
     return NNACL_INPUT_TENSOR_ERROR;
   }
   for (size_t i = begin_params_axis; i < input_x->shape_size_; i++) {
+    if (size >= MAX_SHAPE_SIZE || i >= MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     output_dg->shape_[size] = input_x->shape_[i];
     output_db->shape_[size] = input_x->shape_[i];
     size++;
