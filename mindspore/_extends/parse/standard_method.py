@@ -1312,7 +1312,8 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None): # pylint: disab
         >>> print(input_x.sum(axis=1))
         [10. 35.]
     """
-    dtype = x.dtype if dtype is None else dtype
+    input_x = x.astype(mstype.int32) if x.dtype == mstype.bool_ else x
+    dtype = input_x.dtype if dtype is None else dtype
     if not isinstance(keepdims, int):
         const_utils.raise_type_error("integer argument expected")
     if initial is not None and not isinstance(initial, (int, float, bool)):
@@ -1322,14 +1323,14 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None): # pylint: disab
     else:
         axis = check_and_canonicalize_axes(axis, x.ndim)
 
-    if x.dtype == mstype.bool_:
-        x = x.astype("int32")
+    if not check_type_support(input_x.dtype, 'GPU', (mstype.float64, mstype.float32, mstype.float16)):
+        input_x = input_x.astype(mstype.float32)
     if 0 in x.shape:
         x = const_utils.make_tensor([0], x.dtype)
     if keepdims:
-        res = _reduce_sum_keepdims(x, axis)
+        res = _reduce_sum_keepdims(input_x, axis)
     else:
-        res = _reduce_sum_default(x, axis)
+        res = _reduce_sum_default(input_x, axis)
     if initial is not None:
         res += initial
     return res.astype(dtype)
@@ -1648,6 +1649,7 @@ get_log2_size = constexpr(validator.get_log2_size)
 check_axis_type = constexpr(validator.check_axis_type)
 check_and_canonicalize_axes = constexpr(validator.check_and_canonicalize_axes)
 empty_compile = constexpr(validator.empty_compile)
+check_type_support = constexpr(validator.check_type_support)
 
 
 def tensor_bool(x):
