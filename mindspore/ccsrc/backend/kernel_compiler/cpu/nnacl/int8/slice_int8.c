@@ -87,6 +87,5 @@ int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param, int th
       }
     }
   }
-
   return 0;
 }

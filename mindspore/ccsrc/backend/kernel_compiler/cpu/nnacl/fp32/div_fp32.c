@@ -65,12 +65,11 @@ int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size,
 int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
   if (param->in_elements_num0_ == 1) {
     for (int index = 0; index < size; index++) {
+      NNACL_CHECK_ZERO_RETURN_ERR(in1[index] != 0);
       out[index] = in0[0] / in1[index];
     }
   } else {
-    if (in1[0] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[0] != 0);
     for (int index = 0; index < size; index++) {
       out[index] = in0[index] / in1[0];
     }

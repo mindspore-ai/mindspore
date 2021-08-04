@@ -56,6 +56,7 @@ int IntReduceMean(int outer_size, int inner_size, int axis_size, const int *src_
   if (thread_num == 0) {
     return NNACL_PARAM_INVALID;
   }
+  NNACL_CHECK_ZERO_RETURN_ERR(axis_size);
   int i, j;
 #ifdef ENABLE_NEON
   int block_mod = inner_size % C4NUM;

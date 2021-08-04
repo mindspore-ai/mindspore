@@ -215,7 +215,7 @@ int DetectionPostProcessRegular(const int num_boxes, const int num_classes_with_
   }
   for (int i = 0; i < param->max_detections_ * param->max_classes_per_detection_; ++i) {
     if (i < all_classes_output_num) {
-      NNACL_ASSERT(num_classes_with_bg != 0);
+      NNACL_CHECK_ZERO_RETURN_ERR(num_classes_with_bg);
       const int box_index = all_indexes[i] / num_classes_with_bg;
       const int class_index = all_indexes[i] % num_classes_with_bg - first_class_index;
       *((BboxCorner *)(output_boxes) + i) = *((BboxCorner *)(decoded_boxes) + box_index);
