@@ -15,11 +15,11 @@
  */
 
 #include "Yolov4TinyMindsporePost.h"
-#include "MxBase/Log/Log.h"
-#include "MxBase/CV/ObjectDetection/Nms/Nms.h"
 #include <algorithm>
 #include <string>
 #include <memory>
+#include "MxBase/Log/Log.h"
+#include "MxBase/CV/ObjectDetection/Nms/Nms.h"
 
 const int YOLOV4_VERSION = 4;
 
@@ -52,10 +52,10 @@ const int NCHW_WIDTHINDEX = 3;
 const int YOLO_INFO_DIM = 5;
 
 auto uint8Deleter = [] (uint8_t* p) { };
-} // namespace
+}  // namespace
 
 namespace MxBase {
-Yolov4TinyPostProcess& Yolov4TinyPostProcess::operator=(const Yolov4TinyPostProcess &other){
+Yolov4TinyPostProcess& Yolov4TinyPostProcess::operator=(const Yolov4TinyPostProcess &other) {
     if (this == &other) {
         return *this;
     }
@@ -71,7 +71,7 @@ Yolov4TinyPostProcess& Yolov4TinyPostProcess::operator=(const Yolov4TinyPostProc
     return *this;
 }
 
-APP_ERROR Yolov4TinyPostProcess::Init(const std::map<std::string, std::shared_ptr<void>>& postConfig){
+APP_ERROR Yolov4TinyPostProcess::Init(const std::map<std::string, std::shared_ptr<void>>& postConfig) {
     LogDebug << "Start to Init Yolov4TinyPostProcess.";
     APP_ERROR ret = ObjectPostProcessBase::Init(postConfig);
     if (ret != APP_ERR_OK) {
@@ -98,13 +98,12 @@ APP_ERROR Yolov4TinyPostProcess::Init(const std::map<std::string, std::shared_pt
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyPostProcess::DeInit()
-{
+APP_ERROR Yolov4TinyPostProcess::DeInit() {
     return APP_ERR_OK;
 }
 
-bool Yolov4TinyPostProcess::IsValidTensors(const std::vector<TensorBase> &tensors) const{   
-    if (tensors.size() != (size_t)yoloType_){
+bool Yolov4TinyPostProcess::IsValidTensors(const std::vector<TensorBase> &tensors) const {
+    if (tensors.size() != (size_t)yoloType_) {
         LogError << "number of tensors (" << tensors.size() << ") " << "is unequal to yoloType_("
                  << yoloType_ << ")";
         return false;
@@ -135,7 +134,7 @@ bool Yolov4TinyPostProcess::IsValidTensors(const std::vector<TensorBase> &tensor
 
 void Yolov4TinyPostProcess::ObjectDetectionOutput(const std::vector<TensorBase>& tensors,
                                               std::vector<std::vector<ObjectInfo>>& objectInfos,
-                                              const std::vector<ResizedImageInfo>& resizedImageInfos){
+                                              const std::vector<ResizedImageInfo>& resizedImageInfos) {
     LogDebug << "Yolov4TinyPostProcess start to write results.";
     if (tensors.size() == 0) {
         return;
@@ -149,7 +148,8 @@ void Yolov4TinyPostProcess::ObjectDetectionOutput(const std::vector<TensorBase>&
         std::vector<std::shared_ptr<void>> featLayerData = {};
         std::vector<std::vector<size_t>> featLayerShapes = {};
         for (uint32_t j = 0; j < tensors.size(); j++) {
-            auto dataPtr = reinterpret_cast<uint8_t> (tensors[j].GetBuffer()) + i * tensors[j].GetByteSize() / batchSize;
+            auto dataPtr = reinterpret_cast<uint8_t> (tensors[j].GetBuffer()) +
+            i * tensors[j].GetByteSize() / batchSize;
             std::shared_ptr<void> tmpPointer;
             tmpPointer.reset(dataPtr, uint8Deleter);
             featLayerData.push_back(tmpPointer);
@@ -170,7 +170,7 @@ void Yolov4TinyPostProcess::ObjectDetectionOutput(const std::vector<TensorBase>&
 APP_ERROR Yolov4TinyPostProcess::Process(const std::vector<TensorBase> &tensors,
                                      std::vector<std::vector<ObjectInfo>> &objectInfos,
                                      const std::vector<ResizedImageInfo> &resizedImageInfos,
-                                     const std::map<std::string, std::shared_ptr<void>> &configParamMap){
+                                     const std::map<std::string, std::shared_ptr<void>> &configParamMap) {
     LogDebug << "Start to Process Yolov4TinyPostProcess.";
     APP_ERROR ret = APP_ERR_OK;
     auto inputs = tensors;
@@ -190,7 +190,7 @@ APP_ERROR Yolov4TinyPostProcess::Process(const std::vector<TensorBase> &tensors,
     return APP_ERR_OK;
 }
 
-void Yolov4TinyPostProcess::CompareProb(int& classID, float& maxProb, float classProb, int classNum){
+void Yolov4TinyPostProcess::CompareProb(int& classID, float& maxProb, float classProb, int classNum) {
     if (classProb > maxProb) {
         maxProb = classProb;
         classID = classNum;
@@ -198,13 +198,13 @@ void Yolov4TinyPostProcess::CompareProb(int& classID, float& maxProb, float clas
 }
 
 void Yolov4TinyPostProcess::SelectClassNHWC(std::shared_ptr<void> netout, NetInfo info,
-                                          std::vector<MxBase::ObjectInfo>& detBoxes, int stride, OutputLayer layer){
+                                          std::vector<MxBase::ObjectInfo>& detBoxes, int stride, OutputLayer layer) {
     const int offsetY = 1;
     for (int j = 0; j < stride; ++j) {
         for (int k = 0; k < info.anchorDim; ++k) {
             int bIdx = (info.bboxDim + 1 + info.classNum) * info.anchorDim * j +
                        k * (info.bboxDim + 1 + info.classNum);
-            int oIdx = bIdx + info.bboxDim; // objectness index
+            int oIdx = bIdx + info.bboxDim;  // objectness index
             float objectness = static_cast<float *>(netout.get())[oIdx];
             if (objectness <= objectnessThresh_) {
                 continue;
@@ -240,7 +240,7 @@ void Yolov4TinyPostProcess::SelectClassNHWC(std::shared_ptr<void> netout, NetInf
 void Yolov4TinyPostProcess::GenerateBbox(std::vector<std::shared_ptr<void>> featLayerData,
                                      std::vector<MxBase::ObjectInfo> &detBoxes,
                                      const std::vector<std::vector<size_t>>& featLayerShapes, const int netWidth,
-                                     const int netHeight){
+                                     const int netHeight) {
     NetInfo netInfo;
     netInfo.anchorDim = anchorDim_;
     netInfo.bboxDim = BOX_DIM;
@@ -264,7 +264,7 @@ void Yolov4TinyPostProcess::GenerateBbox(std::vector<std::shared_ptr<void>> feat
     }
 }
 
-APP_ERROR Yolov4TinyPostProcess::GetBiases(std::string& strBiases){
+APP_ERROR Yolov4TinyPostProcess::GetBiases(std::string& strBiases) {
     if (biasesNum_ <= 0) {
         LogError << GetError(APP_ERR_COMM_INVALID_PARAM) << "Failed to get biasesNum (" << biasesNum_ << ").";
         return APP_ERR_COMM_INVALID_PARAM;
@@ -291,7 +291,7 @@ APP_ERROR Yolov4TinyPostProcess::GetBiases(std::string& strBiases){
 
 #ifndef ENABLE_POST_PROCESS_INSTANCE
 extern "C" {
-std::shared_ptr<MxBase::Yolov4TinyPostProcess> GetObjectInstance(){
+std::shared_ptr<MxBase::Yolov4TinyPostProcess> GetObjectInstance() {
     LogInfo << "Begin to get Yolov4TinyPostProcess instance.";
     auto instance = std::make_shared<Yolov4TinyPostProcess>();
     LogInfo << "End to get Yolov4TinyPostProcess instance.";
@@ -300,4 +300,3 @@ std::shared_ptr<MxBase::Yolov4TinyPostProcess> GetObjectInstance(){
 }
 #endif
 }
-
