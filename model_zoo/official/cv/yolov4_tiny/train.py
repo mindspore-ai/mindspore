@@ -201,7 +201,7 @@ def run_train():
         network_eval = network
     # default is kaiming-normal
     default_recurisive_init(network)
-    config.logger.info('resume_yolov4_tiny:{}'.format(config.resume_yolov4))
+    config.logger.info('resume_yolov4_tiny: %s', config.resume_yolov4)
     load_yolov4_params(config, network)
     network = YoloWithLossCell(network)
     config.logger.info('finish get network')
