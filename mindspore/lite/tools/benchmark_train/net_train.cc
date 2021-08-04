@@ -603,7 +603,7 @@ int NetTrain::InitCallbackParameter() {
     }
     op_call_times_total_++;
     op_begin_ = GetTimeUs();
-    if ((callParam.node_type == "Adam") || (callParam.node_type == "Assign")) {
+    if ((callParam.node_type == "Adam") || (callParam.node_type == "Assign") || callParam.node_type == "SGD") {
       for (auto tensor : before_outputs) {
         std::fill(reinterpret_cast<int8_t *>(tensor->MutableData()),
                   reinterpret_cast<int8_t *>(tensor->MutableData()) + tensor->Size(), 0);

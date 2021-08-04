@@ -133,6 +133,7 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/opt_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
         )
 if(ENABLE_V0)
