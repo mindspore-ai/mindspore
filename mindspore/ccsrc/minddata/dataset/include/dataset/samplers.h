@@ -37,6 +37,7 @@ class Sampler : std::enable_shared_from_this<Sampler> {
   friend class CLUEDataset;
   friend class CocoDataset;
   friend class CSVDataset;
+  friend class FlickrDataset;
   friend class ImageFolderDataset;
   friend class ManifestDataset;
   friend class MindDataDataset;

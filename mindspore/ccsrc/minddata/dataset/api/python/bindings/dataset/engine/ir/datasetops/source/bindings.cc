@@ -31,6 +31,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
@@ -121,6 +122,17 @@ PYBIND_REGISTER(CSVNode, 2, ([](const py::module *m) {
                       return csv;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  FlickrNode, 2, ([](const py::module *m) {
+    (void)py::class_<FlickrNode, DatasetNode, std::shared_ptr<FlickrNode>>(*m, "FlickrNode", "to create a FlickrNode")
+      .def(py::init([](std::string dataset_dir, std::string annotation_file, bool decode, py::handle sampler) {
+        auto flickr =
+          std::make_shared<FlickrNode>(dataset_dir, annotation_file, decode, toSamplerObj(sampler), nullptr);
+        THROW_IF_ERROR(flickr->ValidateParams());
+        return flickr;
+      }));
+  }));
 
 PYBIND_REGISTER(GeneratorNode, 2, ([](const py::module *m) {
                   (void)py::class_<GeneratorNode, DatasetNode, std::shared_ptr<GeneratorNode>>(
