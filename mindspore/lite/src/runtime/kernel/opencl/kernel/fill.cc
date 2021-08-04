@@ -35,7 +35,10 @@ int FillOpenCLKernel::RunFill() {
   cl_int4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
   auto src_data = out_tensors_[0]->data_c();
-  allocator_->GetImageSize(src_data, &img_size);
+  if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
+    MS_LOG(ERROR) << "GetImageSize failed.";
+    return RET_ERROR;
+  }
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
@@ -59,7 +62,7 @@ int FillOpenCLKernel::RunShape() {
   return RET_OK;
 }
 
-void FillOpenCLKernel::SetConstArgs() {}
+int FillOpenCLKernel::SetConstArgs() { return RET_OK; }
 
 void FillOpenCLKernel::SetGlobalLocal() {}
 

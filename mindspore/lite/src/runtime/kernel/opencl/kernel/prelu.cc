@@ -46,7 +46,14 @@ int PReluOpenCLKernel::InitWeights() {
     auto sizeof_FLT = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
     size_t weight_size = UP_ROUND(C_, C4NUM) * sizeof_FLT;
     weight_vector_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
-    allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true);
+    if (weight_vector_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
+    if (allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+      MS_LOG(ERROR) << "Map Buffer failed.";
+      return RET_ERROR;
+    }
     memset(weight_vector_, 0x00, weight_size);
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       if (enable_fp16_) {
@@ -69,7 +76,10 @@ int PReluOpenCLKernel::InitWeights() {
         memcpy(weight_vector_, weight_tensor->data_c(), C_ * sizeof_FLT);
       }
     }
-    allocator->UnmapBuffer(weight_vector_);
+    if (allocator->UnmapBuffer(weight_vector_) != RET_OK) {
+      MS_LOG(ERROR) << "UnmapBuffer failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -95,11 +105,18 @@ int PReluOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void PReluOpenCLKernel::SetConstArgs() {
+int PReluOpenCLKernel::SetConstArgs() {
   int arg_idx = 3;
   out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 2);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 2) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void PReluOpenCLKernel::SetGlobalLocal() {
@@ -126,8 +143,8 @@ int PReluOpenCLKernel::Prepare() {
   weight_is_scalar = param->channelShared;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   std::string source = prelu_source;
-  std::string program_name = "PRelu";
-  std::string kernel_name = "PRelu_" + std::string(weight_is_scalar ? "scalar" : "vector");
+  const std::string program_name = "PRelu";
+  const std::string kernel_name = "PRelu_" + std::string(weight_is_scalar ? "scalar" : "vector");
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -141,7 +158,10 @@ int PReluOpenCLKernel::Prepare() {
   InitWeights();
   MS_LOG(DEBUG) << program_name << " init Done!";
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name << " init Done!";
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   return RET_OK;
 }
@@ -149,12 +169,24 @@ int PReluOpenCLKernel::Prepare() {
 int PReluOpenCLKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   if (weight_is_scalar) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_scalar_);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_scalar_) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_, lite::opencl::MemType::BUF);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
   auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   if (ret != mindspore::lite::RET_OK) {
