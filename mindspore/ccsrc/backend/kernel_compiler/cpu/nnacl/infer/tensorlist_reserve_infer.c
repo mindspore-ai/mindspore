@@ -58,7 +58,7 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
   output->element_num_ = (size_t)(num_elements);
 
   vvector tmp_shape;
-  tmp_shape.size_ = num_elements;
+  tmp_shape.size_ = (size_t)(num_elements);
   tmp_shape.shape_ = (int **)malloc(tmp_shape.size_ * sizeof(int *));
   if (tmp_shape.shape_ == NULL) {
     return NNACL_NULL_PTR;

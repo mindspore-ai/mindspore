@@ -151,6 +151,9 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
   }
   for (int i = 0; i < *ndim; ++i) {
     int axes_it = 0;
+    if (begin_ndim > MAX_SHAPE_SIZE || begin_ndim < 0) {
+      return NNACL_ERR;
+    }
     for (int j = 0; j < begin_ndim; j++) {
       if (axes[j] == i) {
         axes_it = j;
