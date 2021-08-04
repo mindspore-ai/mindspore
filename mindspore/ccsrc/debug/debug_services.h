@@ -186,6 +186,45 @@ class DebugServices {
     }
   };
 
+  struct TensorStat {
+    TensorStat(uint64_t data_size, int dtype, const std::vector<int64_t> &shape, bool is_bool, double max_value,
+               double min_value, double avg_value, int count, int neg_zero_count, int pos_zero_count, int nan_count,
+               int neg_inf_count, int pos_inf_count, int zero_count)
+        : data_size(data_size),
+          dtype(dtype),
+          shape(shape),
+          is_bool(is_bool),
+          max_value(max_value),
+          min_value(min_value),
+          avg_value(avg_value),
+          count(count),
+          neg_zero_count(neg_zero_count),
+          pos_zero_count(pos_zero_count),
+          nan_count(nan_count),
+          neg_inf_count(neg_inf_count),
+          pos_inf_count(pos_inf_count),
+          zero_count(zero_count) {}
+
+    TensorStat() = default;
+
+    uint64_t data_size = 0;
+    int dtype = 0;
+    std::vector<int64_t> shape = {0};
+    bool is_bool = false;
+    double max_value = std::numeric_limits<double>::lowest();
+    double min_value = std::numeric_limits<double>::max();
+    double avg_value = 0.0;
+    int count = 0;
+    int neg_zero_count = 0;
+    int pos_zero_count = 0;
+    int nan_count = 0;
+    int neg_inf_count = 0;
+    int pos_inf_count = 0;
+    int zero_count = 0;
+  };
+
+  TensorStat GetTensorStatistics(const std::shared_ptr<TensorData> &tensor);
+
   void AddWatchpoint(
     unsigned int id, unsigned int watch_condition, float parameter,
     const std::vector<std::tuple<std::string, bool>> &check_node_list, const std::vector<parameter_t> &parameter_list,
@@ -232,6 +271,17 @@ class DebugServices {
                         std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
                         const std::vector<std::string> &async_file_pool,
                         std::vector<std::shared_ptr<TensorData>> *result_list);
+
+  void ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
+                            const std::string &backend_name, size_t slot, unsigned int device_id,
+                            unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
+                            std::vector<std::shared_ptr<TensorData>> *result_list);
+
+  void ReadDumpedTensorAsync(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
+                             const std::string &slot_string_to_check, const std::string &backend_name, size_t slot,
+                             unsigned int device_id, unsigned int iteration, unsigned int root_graph_id,
+                             const bool &is_output, const std::vector<std::string> &async_file_pool,
+                             std::vector<std::shared_ptr<TensorData>> *result_list);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
                                                                    std::vector<std::string> *async_file_pool);

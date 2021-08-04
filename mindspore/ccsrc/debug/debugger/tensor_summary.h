@@ -92,6 +92,18 @@ class ITensorSummary {
   virtual void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) = 0;
   virtual std::tuple<bool, int32_t, std::vector<DebugServices::parameter_t>> IsWatchpointHit(
     DebugServices::watchpoint_t) = 0;
+  virtual void TensorStatistics(DbgDataType) = 0;
+  virtual const bool is_bool() const = 0;
+  virtual const double max_value() const = 0;
+  virtual const double min_value() const = 0;
+  virtual const double avg_value() const = 0;
+  virtual const int count() const = 0;
+  virtual const int neg_zero_count() const = 0;
+  virtual const int pos_zero_count() const = 0;
+  virtual const int nan_count() const = 0;
+  virtual const int neg_inf_count() const = 0;
+  virtual const int pos_inf_count() const = 0;
+  virtual const int zero_count() const = 0;
 };
 
 template <typename T>
@@ -103,22 +115,40 @@ class TensorSummary : public ITensorSummary {
   void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) override;
   // returns hit, error_code, parameter_list
   std::tuple<bool, int, std::vector<DebugServices::parameter_t>> IsWatchpointHit(DebugServices::watchpoint_t) override;
+  void TensorStatistics(DbgDataType) override;
+  const bool is_bool() const override { return is_bool_; }
+  const double max_value() const override { return max_; }
+  const double min_value() const override { return min_; }
+  const double avg_value() const override { return avg_; }
+  const int count() const override { return num_elements_; }
+  const int neg_zero_count() const override { return neg_zero_count_; }
+  const int pos_zero_count() const override { return pos_zero_count_; }
+  const int nan_count() const override { return nan_count_; }
+  const int neg_inf_count() const override { return neg_inf_count_; }
+  const int pos_inf_count() const override { return pos_inf_count_; }
+  const int zero_count() const override { return zero_count_; }
 
  private:
-  T *current_tensor_ptr;
-  T *prev_tensor_ptr;
-  uint32_t num_elements;
-  double min;
-  double max;
-  uint32_t inf_count;
-  uint32_t nan_count;
-  uint32_t zero_count;
-  double epsilon;
-  bool mean_sd_cal_enabled;
-  VarianceAndMeanCalculator current_mean_variance;
-  std::unordered_map<std::string, std::unique_ptr<MeanCalculator>> means;
-  std::unordered_map<uint32_t, std::unique_ptr<AllCloseCalculator>> all_close;
-  std::unordered_map<uint32_t, std::unique_ptr<RangeCountCalculator>> range_counts;
+  T *current_tensor_ptr_;
+  T *prev_tensor_ptr_;
+  uint32_t num_elements_;
+  double min_;
+  double max_;
+  double avg_;
+  bool is_bool_;
+  uint32_t neg_zero_count_;
+  uint32_t pos_zero_count_;
+  uint32_t pos_inf_count_;
+  uint32_t neg_inf_count_;
+  uint32_t inf_count_;
+  uint32_t nan_count_;
+  uint32_t zero_count_;
+  double epsilon_;
+  bool mean_sd_cal_enabled_;
+  VarianceAndMeanCalculator current_mean_variance_;
+  std::unordered_map<std::string, std::unique_ptr<MeanCalculator>> means_;
+  std::unordered_map<uint32_t, std::unique_ptr<AllCloseCalculator>> all_close_;
+  std::unordered_map<uint32_t, std::unique_ptr<RangeCountCalculator>> range_counts_;
   double_t StatLookup(const DebugServices::watchpoint_t &);
   double_t StatLookup(const std::string &, const DebugServices::watchpoint_t &);
   double_t GetZeroValPercent();

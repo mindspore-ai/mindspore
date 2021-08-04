@@ -27,6 +27,8 @@ PYBIND11_MODULE(_mindspore_offline_debug, m) {
     .def("RemoveWatchpoint", &DbgServices::RemoveWatchpoint)
     .def("CheckWatchpoints", &DbgServices::CheckWatchpoints)
     .def("ReadTensors", &DbgServices::ReadTensors)
+    .def("ReadTensorsBase", &DbgServices::ReadTensorsBase)
+    .def("ReadTensorsStat", &DbgServices::ReadTensorsStat)
     .def("GetVersion", &DbgServices::GetVersion);
 
   py::class_<parameter_t>(m, "parameter")
@@ -63,4 +65,28 @@ PYBIND11_MODULE(_mindspore_offline_debug, m) {
     .def("get_data_size", &tensor_data_t::get_data_size)
     .def("get_dtype", &tensor_data_t::get_dtype)
     .def("get_shape", &tensor_data_t::get_shape);
+
+  py::class_<TensorBaseData>(m, "TensorBaseData")
+    .def(py::init<uint64_t, int, std::vector<int64_t>>())
+    .def("data_size", &TensorBaseData::data_size)
+    .def("dtype", &TensorBaseData::dtype)
+    .def("shape", &TensorBaseData::shape);
+
+  py::class_<TensorStatData>(m, "TensorStatData")
+    .def(
+      py::init<uint64_t, int, std::vector<int64_t>, bool, double, double, double, int, int, int, int, int, int, int>())
+    .def("data_size", &TensorStatData::data_size)
+    .def("dtype", &TensorStatData::dtype)
+    .def("shape", &TensorStatData::shape)
+    .def("is_bool", &TensorStatData::is_bool)
+    .def("max_value", &TensorStatData::max_value)
+    .def("min_value", &TensorStatData::min_value)
+    .def("avg_value", &TensorStatData::avg_value)
+    .def("count", &TensorStatData::count)
+    .def("neg_zero_count", &TensorStatData::neg_zero_count)
+    .def("pos_zero_count", &TensorStatData::pos_zero_count)
+    .def("nan_count", &TensorStatData::nan_count)
+    .def("neg_inf_count", &TensorStatData::neg_inf_count)
+    .def("pos_inf_count", &TensorStatData::pos_inf_count)
+    .def("zero_count", &TensorStatData::zero_count);
 }

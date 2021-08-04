@@ -131,6 +131,30 @@ std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> 
   }
 }
 
+DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_ptr<TensorData> &tensor) {
+  if (tensor == nullptr) {
+    MS_LOG(WARNING) << "Tensor is nullptr, returning empty tensor statistics.";
+    TensorStat empty_tensor_stat_data;
+    return empty_tensor_stat_data;
+  }
+  std::unique_ptr<ITensorSummary> base_summary_ptr;
+  void *previous_tensor_ptr = nullptr;
+  base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, tensor->GetNumElements(), tensor->GetType());
+  if (base_summary_ptr == nullptr) {
+    MS_LOG(WARNING) << "base_summary_ptr is nullptr, returning empty tensor statistics.";
+    TensorStat empty_tensor_stat_data;
+    return empty_tensor_stat_data;
+  }
+  base_summary_ptr->TensorStatistics(tensor->GetType());
+  TensorStat tensor_stat_data(tensor->GetByteSize(), tensor->GetType(), tensor->GetShape(), base_summary_ptr->is_bool(),
+                              base_summary_ptr->max_value(), base_summary_ptr->min_value(),
+                              base_summary_ptr->avg_value(), base_summary_ptr->count(),
+                              base_summary_ptr->neg_zero_count(), base_summary_ptr->pos_zero_count(),
+                              base_summary_ptr->nan_count(), base_summary_ptr->neg_inf_count(),
+                              base_summary_ptr->pos_inf_count(), base_summary_ptr->zero_count());
+
+  return tensor_stat_data;
+}
 #ifdef OFFLINE_DBG_MODE
 void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed) {
   void *previous_tensor_ptr = nullptr;
@@ -317,7 +341,11 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   MS_LOG(INFO) << "tensor list size: " << tensor_list_size;
   if (tensor_list_size == 0) return;
   // default value for number of threads
-  const int max_thread_num = 32;
+  const int default_thread_num = 32;
+  int max_thread_num = default_thread_num;
+  if (max_thread_num > tensor_list_size) {
+    max_thread_num = tensor_list_size;
+  }
   MS_LOG(INFO) << "Number of threads used for checkwatchpoint: " << max_thread_num;
   int chunk_size = tensor_list_size / max_thread_num;
   int remainder = tensor_list_size % max_thread_num;
@@ -757,75 +785,97 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
-    std::vector<char> *buffer = NULL;
-    std::string type_name = "";
-    std::vector<int64_t> shape;
-    uint64_t data_size = 0;
     if (is_sync_mode_) {
-      std::string abspath = RealPath(specific_dump_dir);
-      DIR *d = opendir(abspath.c_str());
-      bool found_file = false;
-      std::vector<std::string> matched_paths;
-      if (d == nullptr) {
-        MS_LOG(ERROR) << "Directory " << specific_dump_dir << " does not exist!";
-      } else {
-        struct dirent *dir = nullptr;
-        while ((dir = readdir(d)) != NULL) {
-          if (dir->d_type == DT_REG) {
-            std::string file_name = dir->d_name;
-            std::string stripped_file_name = GetStrippedFilename(file_name);
-            if (stripped_file_name.empty()) {
-              continue;
-            }
-            std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
-            if (found != 0) {
-              continue;
-            }
-
-            std::string full_path = specific_dump_dir + "/" + file_name;
-            matched_paths.push_back(full_path);
-            found_file = true;
-          }
-        }
-        (void)closedir(d);
-      }
-
-      if (found_file) {
-        shape.clear();
-        std::string result_path = GetNewestFilePath(matched_paths);
-        ReadTensorFromNpy(result_path, &type_name, &data_size, &shape, &buffer);
-        AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i], data_size,
-                        type_name, shape, buffer, result_list);
-      } else {
-        AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i], 0,
-                        type_name, shape, buffer, result_list);
-        MS_LOG(INFO) << "Target tensor has not been found.";
-      }
+      ReadDumpedTensorSync(prefix_dump_file_name, specific_dump_dir, backend_name[i], slot[i], device_id[i],
+                           iteration[i], root_graph_id[i], is_output[i], result_list);
     } else {
-      bool found = false;
-      std::vector<std::string> matched_paths;
-      // if async mode
-      for (const std::string &file_path : async_file_pool) {
-        if (file_path.find(specific_dump_dir) != std::string::npos &&
-            file_path.find(prefix_dump_to_check) != std::string::npos &&
-            file_path.find(slot_string_to_check) != std::string::npos) {
-          matched_paths.push_back(file_path);
-          found = true;
-        }
-      }
-      if (found) {
-        shape.clear();
-        std::string result_path = GetNewestFilePath(matched_paths);
-        ReadTensorFromNpy(result_path, &type_name, &data_size, &shape, &buffer);
-        AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i], data_size,
-                        type_name, shape, buffer, result_list);
-      } else {
-        // If no npy file is found, add empty tensor data.
-        AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], is_output[i], 0,
-                        type_name, shape, buffer, result_list);
-        MS_LOG(INFO) << "Target tensor has not been found.";
-      }
+      ReadDumpedTensorAsync(specific_dump_dir, prefix_dump_to_check, slot_string_to_check, backend_name[i], slot[i],
+                            device_id[i], iteration[i], root_graph_id[i], is_output[i], async_file_pool, result_list);
     }
+  }
+}
+
+void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
+                                         const std::string &backend_name, size_t slot, unsigned int device_id,
+                                         unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
+                                         std::vector<std::shared_ptr<TensorData>> *result_list) {
+  std::vector<char> *buffer = NULL;
+  std::string type_name = "";
+  std::vector<int64_t> shape;
+  uint64_t data_size = 0;
+  std::string abspath = RealPath(specific_dump_dir);
+  DIR *d = opendir(abspath.c_str());
+  bool found_file = false;
+  std::vector<std::string> matched_paths;
+  if (d == nullptr) {
+    MS_LOG(ERROR) << "Directory " << specific_dump_dir << " does not exist!";
+    return;
+  }
+  struct dirent *dir = nullptr;
+  while ((dir = readdir(d)) != NULL) {
+    if (dir->d_type == DT_REG) {
+      std::string file_name = dir->d_name;
+      std::string stripped_file_name = GetStrippedFilename(file_name);
+      if (stripped_file_name.empty()) {
+        continue;
+      }
+      std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
+      if (found != 0) {
+        continue;
+      }
+
+      std::string full_path = specific_dump_dir + "/" + file_name;
+      matched_paths.push_back(full_path);
+      found_file = true;
+    }
+  }
+
+  if (found_file) {
+    shape.clear();
+    std::string result_path = GetNewestFilePath(matched_paths);
+    ReadTensorFromNpy(result_path, &type_name, &data_size, &shape, &buffer);
+    AddToTensorData(backend_name, slot, iteration, device_id, root_graph_id, is_output, data_size, type_name, shape,
+                    buffer, result_list);
+  } else {
+    AddToTensorData(backend_name, slot, iteration, device_id, root_graph_id, is_output, 0, type_name, shape, buffer,
+                    result_list);
+    MS_LOG(INFO) << "Target tensor has not been found.";
+  }
+  (void)closedir(d);
+}
+
+void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
+                                          const std::string &slot_string_to_check, const std::string &backend_name,
+                                          size_t slot, unsigned int device_id, unsigned int iteration,
+                                          unsigned int root_graph_id, const bool &is_output,
+                                          const std::vector<std::string> &async_file_pool,
+                                          std::vector<std::shared_ptr<TensorData>> *result_list) {
+  std::vector<char> *buffer = NULL;
+  std::string type_name = "";
+  std::vector<int64_t> shape;
+  uint64_t data_size = 0;
+  bool found = false;
+  std::vector<std::string> matched_paths;
+  // if async mode
+  for (const std::string &file_path : async_file_pool) {
+    if (file_path.find(specific_dump_dir) != std::string::npos &&
+        file_path.find(prefix_dump_to_check) != std::string::npos &&
+        file_path.find(slot_string_to_check) != std::string::npos) {
+      matched_paths.push_back(file_path);
+      found = true;
+    }
+  }
+  if (found) {
+    shape.clear();
+    std::string result_path = GetNewestFilePath(matched_paths);
+    ReadTensorFromNpy(result_path, &type_name, &data_size, &shape, &buffer);
+    AddToTensorData(backend_name, slot, iteration, device_id, root_graph_id, is_output, data_size, type_name, shape,
+                    buffer, result_list);
+  } else {
+    // If no npy file is found, add empty tensor data.
+    AddToTensorData(backend_name, slot, iteration, device_id, root_graph_id, is_output, 0, type_name, shape, buffer,
+                    result_list);
+    MS_LOG(INFO) << "Target tensor has not been found.";
   }
 }
 
