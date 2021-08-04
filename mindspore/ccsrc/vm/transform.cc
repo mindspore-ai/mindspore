@@ -127,11 +127,6 @@ void CompileGraph::AddInput(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Input node is null " << node->DebugString(true);
     (void)Ref(node);
     return;
-  } else if (node->isa<ValueNode>()) {
-    // Value node maybe reused in different graph or by different nodes,copy the value node to ensure stack correct.
-    auto copy_value_node = NewValueNode(node->cast<ValueNodePtr>()->value());
-    (void)Ref(copy_value_node);
-    return;
   }
   AddInst(Instruction::kInput, Ref(node));
   set_height(height_ + 1);
@@ -393,6 +388,13 @@ int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   MS_LOG(DEBUG) << "Call:" << Ref(fn) << ", " << height_ << ", " << (size - 1);
   AddInst(Instruction::kCall, Ref(fn));
   Ret(static_cast<int64_t>(size - 1));
+
+  for (size_t i = size - 1; i > 0; i--) {
+    const auto iter = slots_.find(inputs[i]);
+    if (iter != slots_.end() && iter->second >= height_) {
+      slots_.erase(inputs[i]);
+    }
+  }
   return RET_SUCCESS;
 }
 
