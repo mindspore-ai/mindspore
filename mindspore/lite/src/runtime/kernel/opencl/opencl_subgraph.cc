@@ -420,6 +420,7 @@ int OpenCLSubGraph::Execute() {
     return ret;
   }
   if (!ocl_runtime_->SyncCommandQueue()) {
+    MS_LOG(ERROR) << "SyncCommandQueue failed.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -449,6 +450,7 @@ int OpenCLSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &
     return ret;
   }
   if (!ocl_runtime_->SyncCommandQueue()) {
+    MS_LOG(ERROR) << "SyncCommandQueue failed.";
     return RET_ERROR;
   }
   return RET_OK;

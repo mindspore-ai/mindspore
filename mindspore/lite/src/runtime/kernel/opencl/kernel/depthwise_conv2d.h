@@ -41,7 +41,7 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   int InitWeights() override;
   int InitBias();
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
   int StoreConstData() override;
 

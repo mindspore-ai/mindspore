@@ -35,7 +35,7 @@ class ToFormatOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
   int InferShape() override;
 
