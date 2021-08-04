@@ -547,7 +547,7 @@ class _Executor:
             self._build_data_graph(obj, phase)
 
             if "export" not in phase:
-                init_phase = "init_subgraph" + "." + str(obj.create_time)
+                init_phase = "init_subgraph." + str(obj.create_time) + "." + str(id(obj))
                 _exec_init_graph(obj, init_phase)
         elif "export" in phase:
             self._build_data_graph(obj, phase)
