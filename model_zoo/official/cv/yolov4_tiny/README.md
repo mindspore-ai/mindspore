@@ -265,7 +265,7 @@ For Ascend device, distributed training example(8p) by shell script
 sh run_distribute_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt rank_table_8p.json
 ```
 
-The above shell script will run distribute training in the background. 
+The above shell script will run distribute training in the background.
 
 ### Transfer Training
 
@@ -289,7 +289,7 @@ OR
 sh run_eval.sh dataset/coco2017 checkpoint/yolov4.ckpt
 ```
 
-The above python command will run in the background. You can view the results through the file "log.txt". 
+The above python command will run in the background. You can view the results through the file "log.txt".
 
 ### Test-dev
 
@@ -306,7 +306,6 @@ The predict_xxx.json will be found in test/outputs/%Y-%m-%d_time_%H_%M_%S/.
 Rename the file predict_xxx.json to detections_test-dev2017_yolov4_results.json and compress it to detections_test-dev2017_yolov4_results.zip
 Submit file detections_test-dev2017_yolov4_results.zip to the MS COCO evaluation server for the test-dev2019 (bbox) <https://competitions.codalab.org/competitions/20794#participate>
 You will get such results in the end of file View scoring output log.
-
 
 ## [Inference Process](#contents)
 
