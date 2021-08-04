@@ -162,7 +162,7 @@ def test_class_member_not_defined():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     with pytest.raises(TypeError) as ex:
         net(x, y)
-    assert "'self.x' was not defined in the class '__init__' function." in str(ex.value)
+    assert "'self.x' should be initialized as a 'Parameter' in the '__init__' function" in str(ex.value)
 
 
 def test_change_list_element():

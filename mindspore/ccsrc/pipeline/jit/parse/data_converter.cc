@@ -302,7 +302,8 @@ ValuePtr ConvertSlice(const py::object &obj) {
       auto value = py::cast<int64_t>(py_attr);
       return MakeValue(value);
     }
-    MS_LOG(EXCEPTION) << "Slice should contain only int64_t or none";
+    MS_LOG(EXCEPTION) << "Attribute '" << attr << "' of " << py::str(obj) << " should be int but got "
+                      << py::str(py_attr);
   };
   ValuePtr start = convert_func("start");
   ValuePtr stop = convert_func("stop");

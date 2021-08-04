@@ -253,8 +253,9 @@ bool InnerScalarGe(T x, U y) {
         int64_t sum = InnerScalar##op_t(IntToLong(GetValue<int>(x)), GetValue<int64_t>(y));                    \
         return MakeValue(sum);                                                                                 \
       }                                                                                                        \
-      MS_LOG(EXCEPTION) << "Unsupported Value for Scalar" << #op_t << ", x: " << x->ToString()                 \
-                        << ", y: " << y->ToString();                                                           \
+      MS_LOG(EXCEPTION) << "Unsupported input type for Scalar" << #op_t << ", type of x:" << x->type_name()    \
+                        << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()                \
+                        << ", value of y:" << y->ToString();                                                   \
     } while (0);                                                                                               \
   }
 

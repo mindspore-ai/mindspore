@@ -98,7 +98,7 @@ def test_net_inputs_including_str():
     assert "The inputs types of the outermost network support bool, int, float, tensor, " \
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but got 1th arg is ok" in str(err.value)
+           "but the 1th arg type is <class 'str'>, value is 'ok'" in str(err.value)
 
 
 def test_outermost_net_pass_parameter():
@@ -107,7 +107,8 @@ def test_outermost_net_pass_parameter():
     assert "The inputs types of the outermost network support bool, int, float, tensor, " \
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but got 1th arg is Parameter (name=weight, shape=(2, 2), dtype=Float32, requires_grad=True)" \
+           "but the 1th arg type is <class 'mindspore.common.parameter.ParameterTensor'>, "           \
+           "value is 'Parameter (name=weight, shape=(2, 2), dtype=Float32, requires_grad=True)'"     \
            in str(err.value)
 
 
@@ -117,7 +118,7 @@ def test_outermost_net_pass_tuple_including_parameter():
     assert "The inputs types of the outermost network support bool, int, float, tensor, " \
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but got 6th arg is (" in str(err.value)
+           "but the 6th arg type is <class 'tuple'>, value is '(" in str(err.value)
 
 
 def test_outermost_net_pass_list_including_parameter():
@@ -126,7 +127,7 @@ def test_outermost_net_pass_list_including_parameter():
     assert "The inputs types of the outermost network support bool, int, float, tensor, " \
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but got 4th arg is [" in str(err.value)
+           "but the 4th arg type is <class 'list'>, value is '[" in str(err.value)
 
 
 def test_grad_net_pass_dict_including_parameter():
@@ -135,4 +136,4 @@ def test_grad_net_pass_dict_including_parameter():
     assert "The inputs types of the outermost network support bool, int, float, tensor, " \
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but got 3th arg is {" in str(err.value)
+           "but the 3th arg type is <class 'dict'>, value is '{" in str(err.value)

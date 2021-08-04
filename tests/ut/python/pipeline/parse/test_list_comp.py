@@ -62,6 +62,6 @@ def test_list_comp():
     assert get_list_comp_4() == (36, 64, 100)
     with pytest.raises(TypeError) as ex:
         get_list_comp_5()
-    assert "The `generators` supports one `comprehension` in ListComp/GeneratorExp" in str(ex.value)
+    assert "The 'generators' supports 1 'comprehension' in ListComp/GeneratorExp" in str(ex.value)
     assert get_generator_exp_1() == (1, 2, 3, 4, 5)
     assert get_generator_exp_2() == (36, 64, 100)

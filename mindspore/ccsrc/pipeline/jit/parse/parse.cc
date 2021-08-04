@@ -166,8 +166,8 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunction
     }
     py::str desc =
       python_adapter::CallPyModFn(ast->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast->function(), ret[0], ret[1]);
-    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ". "
-                            << "FuncGraph: " << func_graph->ToString();
+    MS_EXCEPTION(TypeError) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
+                            << ". FuncGraph: " << func_graph->ToString();
   }
 }
 
@@ -315,7 +315,8 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
   if (current_fg->get_return() == nullptr) {
     py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, node, ret[0], ret[1]);
-    MS_EXCEPTION(TypeError) << "Missing return statement in " << desc.cast<std::string>() << ".";
+    MS_EXCEPTION(TypeError) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
+                            << ".";
   }
   GenerateArgsDefaultValueForFunction(func_block, node);
   return func_block;
@@ -363,7 +364,8 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
     return stmt_block;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
-    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "'.";
+    MS_LOG(EXCEPTION) << "Unsupported statement '" << node_name
+                      << "'.\nMore details please refer to syntax support at https://www.mindspore.cn";
   }
 }
 
@@ -386,7 +388,8 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
     return expr_node;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
-    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "'.";
+    MS_LOG(EXCEPTION) << "Unsupported expression '" << node_name
+                      << "'.\nMore details please refer to syntax support at https://www.mindspore.cn";
   }
 }
 
@@ -540,7 +543,8 @@ AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {
   } else {
     // no else actually
     errcode_ = PARSE_NODE_TYPE_UNKNOWN;
-    MS_LOG(EXCEPTION) << "Unsupported Num type : " << (std::string)py::str(obj);
+    MS_EXCEPTION(TypeError) << "Only support 'Number' type of 'int` and 'float', but got type: " << obj.get_type()
+                            << " Value:" << py::str(obj);
   }
 }
 
@@ -613,10 +617,11 @@ AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &arg
     father_class = args[0];
     auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, args[1])));
     if (arg_type != AST_SUB_TYPE_NAME || py::cast<std::string>(python_adapter::GetPyObjAttr(args[1], "id")) != "self") {
-      MS_EXCEPTION(ArgumentError) << "When call 'super', the second arg should be 'self'.";
+      MS_EXCEPTION(ArgumentError) << "Argument 2 of 'super()' must be 'self', but got '"
+                                  << py::cast<std::string>(python_adapter::GetPyObjAttr(args[1], "id")) << "'.";
     }
   } else {
-    MS_EXCEPTION(ArgumentError) << "When call 'super', the args number should be 0 or 2, but got" << args.size() << ".";
+    MS_EXCEPTION(ArgumentError) << "Arguments number of 'super()' should be 0 or 2, but got " << args.size() << ".";
   }
   py::object target_class_instance = ast_->CallParserObjMethod(PYTHON_PARSE_ANALYZE_SUPER, father_class, ast_->obj());
   py::object namespace_var = ast_->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, target_class_instance);
@@ -733,9 +738,9 @@ bool Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
       } else {
         auto kw_key_c = kw_key.cast<std::string>();
         keys.push_back(NewValueNode(kw_key_c));
-        auto node = ParseExprNode(block, kw_value);
-        node = HandleInterpret(block, node, kw_value);
-        values.push_back(node);
+        auto ret_node = ParseExprNode(block, kw_value);
+        ret_node = HandleInterpret(block, ret_node, kw_value);
+        values.push_back(ret_node);
       }
     }
     auto keys_tuple = GenerateMakeTuple(block, keys);
@@ -811,8 +816,8 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   // Which there is two ops , but we only support one now
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
   if (ops.size() != MAX_COMPARISON_OPS_SUPPORTED) {
-    MS_EXCEPTION(NotSupportError) << "MindSpore only support comparison with operators with one now, ops size ="
-                                  << ops.size();
+    MS_EXCEPTION(NotSupportError) << "Only support comparison with 1 operator, but got " << ops.size() << ", which is "
+                                  << py::str(ops);
   }
 
   py::object left = python_adapter::GetPyObjAttr(node, "left");
@@ -1087,9 +1092,18 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
     target_node = ParseSubscript(block, target_object);
   } else if (ast_->IsClassMember(target_object)) {
     target_node = ParseAttribute(block, target_object);
+  } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
+    TraceGuard(GetLocation(target_object));
+    MS_EXCEPTION(TypeError) << "Only support augassign to attribute of self, but got attribute of "
+                            << py::str(target_object.attr("value").attr("id")) << ".\n"
+                            << "More details please refer to syntax support at https://www.mindspore.cn";
   } else {
-    MS_LOG(EXCEPTION) << "Not supported augassign";
+    TraceGuard(GetLocation(target_object));
+    MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
+                            << target_object.get_type()
+                            << ".\nMore details please refer to syntax support at https://www.mindspore.cn";
   }
+
   if (target_node == nullptr) {
     MS_LOG(EXCEPTION) << "Can not get target node ";
   }
@@ -1648,7 +1662,7 @@ AnfNodePtr Parser::ParseListComp(const FunctionBlockPtr &block, const py::object
   // Handle generators attribute.
   py::list generators_node = python_adapter::GetPyObjAttr(node, "generators");
   if (generators_node.size() != 1) {
-    MS_EXCEPTION(TypeError) << "The `generators` supports one `comprehension` in ListComp/GeneratorExp, but got "
+    MS_EXCEPTION(TypeError) << "The 'generators' supports 1 'comprehension' in ListComp/GeneratorExp, but got "
                             << generators_node.size() << " comprehensions.";
   }
   py::object generator_node = generators_node[0];
@@ -1717,14 +1731,15 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
 
   // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
   if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
-    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be defined in the class '__init__' function. \n\n"
-                            << trace::GetDebugInfo(target_node->debug_info());
+    MS_EXCEPTION(TypeError)
+      << "'" << var_name << "' should be initialized as a 'Parameter' in the '__init__' function before assigning.\n\n"
+      << trace::GetDebugInfo(target_node->debug_info());
   }
   auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
   auto obj_type = obj.attr("__class__").attr("__name__");
   if (!py::hasattr(obj, "__parameter__")) {
     MS_EXCEPTION(TypeError) << "'" << var_name
-                            << "' should be defined with a Parameter type in the class '__init__' function, but got '"
+                            << "' should be initialized as a 'Parameter' type in the '__init__' function, but got '"
                             << py::str(obj).cast<std::string>() << "' with type '"
                             << py::str(obj_type).cast<std::string>() << ".\n\n"
                             << trace::GetDebugInfo(target_node->debug_info());
@@ -1750,14 +1765,16 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     auto attr_name = value_obj.attr("attr").cast<std::string>();
     var_name = "self." + attr_name;
     if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
-      MS_EXCEPTION(TypeError) << "'" << var_name << "' was not defined in the class '__init__' function.\n\n"
-                              << trace::GetDebugInfo(value_node->debug_info());
+      MS_EXCEPTION(TypeError)
+        << "'" << var_name
+        << "' should be initialized as a 'Parameter' in the '__init__' function before assigning.\n\n"
+        << trace::GetDebugInfo(value_node->debug_info());
     }
     auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
     auto obj_type = obj.attr("__class__").attr("__name__");
     if (!py::hasattr(obj, "__parameter__")) {
       MS_EXCEPTION(TypeError) << "'" << var_name
-                              << "' should be defined with a Parameter in the class '__init__' function, but got '"
+                              << "' should be initialized as a 'Parameter' in the '__init__' function, but got '"
                               << py::str(obj).cast<std::string>() << "' with type '"
                               << py::str(obj_type).cast<std::string>() << "'.\n\n"
                               << trace::GetDebugInfo(value_node->debug_info());
@@ -1792,11 +1809,15 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
   } else if (ast_->IsClassMember(target_object)) {
     HandleAssignClassMember(block, target_object, value_node);
   } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
-    MS_LOG(EXCEPTION) << "The subnet attributes cannot be changed in the network. \n\n"
-                      << trace::GetDebugInfo(value_node->debug_info());
+    TraceGuard(GetLocation(target_object));
+    MS_EXCEPTION(TypeError) << "Only support assign to attribute of self, but got attribute of "
+                            << py::str(target_object.attr("value").attr("id")) << ".\n"
+                            << "More details please refer to syntax support at https://www.mindspore.cn";
   } else {
-    MS_LOG(EXCEPTION) << "Not support this assign type: " << ast_type << "\n\n"
-                      << trace::GetDebugInfo(value_node->debug_info());
+    TraceGuard(GetLocation(target_object));
+    MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
+                            << target_object.get_type()
+                            << ".\nMore details please refer to syntax support at https://www.mindspore.cn";
   }
 }
 
