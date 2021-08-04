@@ -102,12 +102,12 @@ UNet++是U-Net的增强版本，使用了新的跨层链接方式和深层监督
 
 我们提供了一个脚本来将 COCO 和 Cell_Nuclei 数据集（[Unet++ 原论文](https://arxiv.org/abs/1912.05074) 中使用）转换为multi-class格式。
 
-1. 在`src/model_utils/`下选择对应的yaml文件。
+1. 在unet下选择*.yaml文件，根据需要修改参数。
 
 2. 运行转换脚本:
 
 ```shell
-python preprocess_dataset.py -d /data/save_data_path
+python preprocess_dataset.py --config_path path/unet/*.yaml  --data_path /data/save_data_path
 ```
 
 ## 环境要求
@@ -480,7 +480,7 @@ python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkp
 本地导出mindir
 
 ```shell
-python export.py --config_path=[CONFIG_PATH]
+python export.py --config_path=[CONFIG_PATH] --checkpoint_file_path=[model_ckpt_path] --file_name=[air_model_name] --file_format=AIR
 ```
 
 ModelArts导出mindir
