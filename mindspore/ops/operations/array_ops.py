@@ -1285,7 +1285,6 @@ class Ones(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import operations as ops
         >>> ones = ops.Ones()
         >>> output = ones((2, 2), mindspore.float32)
         >>> print(output)
@@ -1347,7 +1346,6 @@ class Zeros(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import operations as ops
         >>> zeros = ops.Zeros()
         >>> output = zeros((2, 2), mindspore.float32)
         >>> print(output)
@@ -2299,13 +2297,14 @@ class Concat(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (tuple, list) - A tuple or a list of input tensors.
-          `input_x`, `input_y` should has same data type.
-        - **input_y** (tuple, list) - A tuple or a list of input tensors.
-          `input_x`, `input_y` should has same data type.
+          Suppose there are two tensors in this tuple or list, namely x1 and x2.
+          To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
+          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]',
+          where the :math:`R' indicates the last axis.
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-          The data type is the same with `input_X` and `input_y`.
+          The data type is the same with `input_x`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -2314,17 +2313,17 @@ class Concat(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> input_y = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> op = ops.Concat()
-        >>> output = op((input_x, input_y))
+        >>> output = op((input_x1, input_x2))
         >>> print(output)
         [[0. 1.]
          [2. 1.]
          [0. 1.]
          [2. 1.]]
         >>> op = ops.Concat(1)
-        >>> output = op((input_x, input_y))
+        >>> output = op((input_x1, input_x2))
         >>> print(output)
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
