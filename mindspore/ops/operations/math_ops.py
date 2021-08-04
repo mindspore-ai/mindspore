@@ -742,7 +742,7 @@ class ReduceMax(_Reduce):
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -28,6 +28,20 @@
 namespace mindspore {
 namespace ops {
 namespace {
+std::vector<int64_t> TenToTwo(int64_t num) {
+  std::vector<int64_t> output;
+  if (num == 0) {
+    output.push_back(0);
+    return output;
+  }
+  while (num) {
+    output.push_back(num % 2);
+    num /= 2;
+  }
+
+  return output;
+}
+
 void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t> &x_shape,
                         const std::vector<int64_t> &begin_v, const std::vector<int64_t> &end_v,
                         const std::vector<int64_t> &strides_v, std::vector<int64_t> *infer_shape, size_t i, size_t j,
@@ -40,10 +54,11 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   MS_EXCEPTION_IF_NULL(strided_slice_prim);
   size_t x_rank = x_shape.size();
   size_t slice_len = begin_v.size();
-  std::vector<int64_t> begin_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_begin_mask());
-  std::vector<int64_t> end_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_end_mask());
-  std::vector<int64_t> new_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_new_axis_mask());
-  std::vector<int64_t> shrink_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_shrink_axis_mask());
+  std::vector<int64_t> begin_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kBeginMask)));
+  std::vector<int64_t> end_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kEndMask)));
+  std::vector<int64_t> ellipsis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kEllipsisMask)));
+  std::vector<int64_t> new_axis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kNewAxisMask)));
+  std::vector<int64_t> shrink_axis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kShrinkAxisMask)));
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(new_axis_pos.size()), kGreaterEqual,
                                            SizeToLong(slice_len), primitive->name());
 
@@ -105,10 +120,12 @@ const std::vector<int64_t> CheckAndGetValidStrides(const AbstractBasePtr &stride
 
 std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std::vector<int64_t> &begin_v,
                                        const std::vector<int64_t> &end_v, const std::vector<int64_t> &x_shape,
-                                       const std::vector<int64_t> &strides_v, const std::vector<int64_t> &begin_pos,
-                                       const std::vector<int64_t> &shrink_axis_pos, const std::vector<int64_t> &end_pos,
-                                       const std::vector<int64_t> &new_axis_pos,
-                                       const std::vector<int64_t> &ellipsis_pos) {
+                                       const std::vector<int64_t> &strides_v) {
+  std::vector<int64_t> begin_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kBeginMask)));
+  std::vector<int64_t> end_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kEndMask)));
+  std::vector<int64_t> ellipsis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kEllipsisMask)));
+  std::vector<int64_t> new_axis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kNewAxisMask)));
+  std::vector<int64_t> shrink_axis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kShrinkAxisMask)));
   size_t i = 0;
   size_t j = 0;
   int64_t start;
@@ -171,8 +188,6 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
 abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto strided_slice_prim = primitive->cast<PrimStridedSlicePtr>();
-  MS_EXCEPTION_IF_NULL(strided_slice_prim);
   auto tuple_begin_v = input_args[1]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(tuple_begin_v);
   auto temp_begin_v = tuple_begin_v->BuildValue();
@@ -189,20 +204,12 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
   auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
-  std::vector<int64_t> begin_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_begin_mask());
-  std::vector<int64_t> end_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_end_mask());
-  std::vector<int64_t> ellipsis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_ellipsis_mask());
-  std::vector<int64_t> new_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_new_axis_mask());
-  std::vector<int64_t> shrink_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_shrink_axis_mask());
-  auto ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, x_shape, strides_v, begin_pos, shrink_axis_pos,
-                                        end_pos, new_axis_pos, ellipsis_pos);
+  auto ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, x_shape, strides_v);
   if (min_shape.empty() || max_shape.empty()) {
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
-  auto ret_min_shape = ComputeInferShape(primitive, begin_v, end_v, min_shape, strides_v, begin_pos, shrink_axis_pos,
-                                         end_pos, new_axis_pos, ellipsis_pos);
-  auto ret_max_shape = ComputeInferShape(primitive, begin_v, end_v, max_shape, strides_v, begin_pos, shrink_axis_pos,
-                                         end_pos, new_axis_pos, ellipsis_pos);
+  auto ret_min_shape = ComputeInferShape(primitive, begin_v, end_v, min_shape, strides_v);
+  auto ret_max_shape = ComputeInferShape(primitive, begin_v, end_v, max_shape, strides_v);
   return std::make_shared<abstract::Shape>(ret_in_shape, ret_min_shape, ret_max_shape);
 }
 
@@ -265,20 +272,6 @@ void StridedSlice::Init(const int64_t begin_mask, const int64_t end_mask, const 
   this->set_ellipsis_mask(ellipsis_mask);
   this->set_new_axis_mask(new_axis_mask);
   this->set_shrink_axis_mask(shrink_axis_mask);
-}
-
-std::vector<int64_t> StridedSlice::TenToTwo(int64_t num) {
-  std::vector<int64_t> output;
-  if (num == 0) {
-    output.push_back(0);
-    return output;
-  }
-  while (num) {
-    output.push_back(num % 2);
-    num /= 2;
-  }
-
-  return output;
 }
 
 int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) const {
