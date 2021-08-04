@@ -129,10 +129,6 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
     MS_ERROR_IF_NULL_W_RET_VAL(weight_data, nullptr);
     MS_ERROR_IF_NULL_W_RET_VAL(weight.second, nullptr);
     MS_ERROR_IF_NULL_W_RET_VAL(weight.second->addr, nullptr);
-    if (weight_data == nullptr) {
-      MS_LOG(EXCEPTION) << "Assign memory for weight failed.";
-      return nullptr;
-    }
 
     auto src_data_size = weight_size;
     auto dst_data_size = weight_size;
