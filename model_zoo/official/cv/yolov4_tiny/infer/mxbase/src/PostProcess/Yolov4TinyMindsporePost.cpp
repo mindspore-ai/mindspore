@@ -299,4 +299,4 @@ std::shared_ptr<MxBase::Yolov4TinyPostProcess> GetObjectInstance() {
 }
 }
 #endif
-}
+}  // namespace MxBase
