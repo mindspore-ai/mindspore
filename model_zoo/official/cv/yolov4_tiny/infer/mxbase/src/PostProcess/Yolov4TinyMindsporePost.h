@@ -80,7 +80,8 @@ class Yolov4TinyPostProcess : public ObjectPostProcessBase {
      void SelectClassNHWC(std::shared_ptr<void> netout, NetInfo info, std::vector<MxBase::ObjectInfo>& detBoxes,
                          int stride, OutputLayer layer);
      void GenerateBbox(std::vector<std::shared_ptr<void>> featLayerData,
-                      std::vector<MxBase::ObjectInfo> &detBoxes, const std::vector<std::vector<size_t>>& featLayerShapes,
+                      std::vector<MxBase::ObjectInfo> &detBoxes,
+                      const std::vector<std::vector<size_t>>& featLayerShapes,
                       const int netWidth, const int netHeight);
      APP_ERROR GetBiases(std::string& strBiases);
 
@@ -100,5 +101,5 @@ extern "C" {
 std::shared_ptr<MxBase::Yolov4TinyPostProcess> GetObjectInstance();
 }
 #endif
-} // namespace MxBase
+}  // namespace MxBase
 #endif
