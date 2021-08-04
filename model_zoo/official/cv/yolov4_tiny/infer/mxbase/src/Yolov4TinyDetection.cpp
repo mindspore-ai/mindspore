@@ -25,12 +25,11 @@
 #include "MxBase/DeviceManager/DeviceManager.h"
 #include "MxBase/Log/Log.h"
 
-using namespace MxBase;
 namespace {
 const uint32_t YUV_BYTE_NU = 3;
 const uint32_t YUV_BYTE_DE = 2;
 const uint32_t VPC_H_ALIGN = 2;
-}
+}  // namespace
 
 APP_ERROR Yolov4TinyDetectionOpencv::LoadLabels(const std::string &labelPath, std::map<int, std::string> &labelMap) {
     std::ifstream infile;
