@@ -100,7 +100,7 @@ def train():
 
     if config.pre_trained:
         param_dict = load_checkpoint(config.pre_trained)
-        load_param_into_net(net, param_dict)
+        load_param_into_net(net, param_dict, strict_load=True)
         print('Load Pretrained parameters done!')
 
     criterion = DiceLoss(batch_size=config.TRAIN_BATCH_SIZE)
