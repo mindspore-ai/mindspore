@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <memory>
-#include "hccl/hcom.h"
 #include "backend/kernel_compiler/hccl/hccl_kernel.h"
 
 namespace mindspore {

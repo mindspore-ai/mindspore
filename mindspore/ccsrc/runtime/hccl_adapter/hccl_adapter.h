@@ -43,6 +43,7 @@ class HcclAdapter {
 
   // common
   bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
+  bool InitHccl();
   bool FinalizeHccl();
 
   HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
@@ -58,8 +59,16 @@ class HcclAdapter {
 
   // for single op
   HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream) const;
-  HcclResult HcclAllReduce(void *sendBuf, void *recvBuf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
-                           aclrtStream stream) const;
+  HcclResult HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
+                           aclrtStream stream, const std::string &group = "") const;
+  HcclResult HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, aclrtStream stream,
+                           const std::string &group = "") const;
+  HcclResult HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
+                               aclrtStream stream, const std::string &group = "") const;
+  HcclResult HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank, aclrtStream stream,
+                      const std::string &group = "") const;
+  HcclResult HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank, aclrtStream stream,
+                      const std::string &group = "") const;
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
@@ -91,6 +100,10 @@ class HcclAdapter {
   HcclCommDestroyFunObj finalize_hccl_comm_ = nullptr;
   HcclBroadcastFunObj launch_hccl_broadcast_ = nullptr;
   HcclAllReduceFunObj launch_hccl_all_reduce_ = nullptr;
+  HcclReduceScatterFunObj launch_hccl_reduce_scatter_ = nullptr;
+  HcclAllGatherFunObj launch_hccl_all_gather_ = nullptr;
+  HcclSendFunObj launch_hccl_send_ = nullptr;
+  HcclRecvFunObj launch_hccl_recv_ = nullptr;
 
   HcomCreateGroupFunObj hccl_create_group_ = nullptr;
   HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;
