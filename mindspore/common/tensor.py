@@ -1798,7 +1798,8 @@ class Tensor(Tensor_):
             >>> print(input_x.sum(axis=1))
             [10. 35.]
         """
-        dtype = self.dtype if dtype is None else dtype
+        input_x = self.astype(mstype.int32) if self.dtype == mstype.bool_ else self
+        dtype = input_x.dtype if dtype is None else dtype
         if not isinstance(keepdims, int):
             raise TypeError(f"integer argument expected, but got {type(keepdims)}")
         if initial is not None and not isinstance(initial, (int, float, bool)):
@@ -1808,7 +1809,9 @@ class Tensor(Tensor_):
         else:
             axis = validator.check_and_canonicalize_axes(axis, self.ndim)
 
-        input_x = self.astype(mstype.int32) if self.dtype == mstype.bool_ else self
+        if not validator.check_type_support(input_x.dtype, 'GPU',
+                                            (mstype.float64, mstype.float32, mstype.float16)):
+            input_x = input_x.astype(mstype.float32)
         if 0 in self.shape:
             input_x = tensor_operator_registry.get('make_tensor')([0], self.dtype)
         res = tensor_operator_registry.get('sum')(bool(keepdims))(input_x, axis)

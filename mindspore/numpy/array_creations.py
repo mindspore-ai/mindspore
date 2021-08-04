@@ -90,7 +90,7 @@ def array(obj, dtype=None, copy=True, ndmin=0):
             _raise_value_error("Empty tensor cannot be expanded beyond the current dimension.")
         res = _expand(res, ndmin)
 
-    if copy:
+    if copy and isinstance(obj, Tensor):
         res = copy_(res)
     elif dtype is not None and dtype != res.dtype:
         res = res.astype(dtype)
