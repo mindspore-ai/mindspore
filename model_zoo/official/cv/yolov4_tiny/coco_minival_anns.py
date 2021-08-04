@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import json
-import cv2
 from collections import defaultdict
+import cv2
 
 
 def name_box_parse(json_path):
@@ -48,8 +48,8 @@ def name_box_parse(json_path):
 
 
 ban_path = '/opt/npu/dataset/coco/coco2014/5k.txt'
-with open(ban_path, 'r')as f:
-    ban_list = f.read().split('\n')[:-1]
+with open(ban_path, 'r') as file:
+    ban_list = file.read().split('\n')[:-1]
     ban_list = [i.split('/')[-1] for i in ban_list]
 
 name_box_id = defaultdict(list)
