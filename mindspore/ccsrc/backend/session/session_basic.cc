@@ -182,7 +182,7 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
                                const std::vector<tensor::TensorPtr> &input_tensors,
                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   auto &node = node_output_pair.first;
-  int output_index = SizeToInt(node_output_pair.second);
+  size_t output_index = node_output_pair.second;
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   auto tensor_from_input = GetNodeOutputTensorFromInputs(node_output_pair, graph, input_tensors);
@@ -1578,8 +1578,8 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     if (AnfAlgo::IsDynamicShape(node)) {
       const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
       ShapeVector int_shape;
-      std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-      tensor->set_shape(int_shape);
+      (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+      (void)tensor->set_shape(int_shape);
     }
     if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       tensor->data_sync(false);
@@ -1619,6 +1619,7 @@ std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(const Graph
       continue;
     }
     auto &tensor = inputs[i];
+    MS_EXCEPTION_IF_NULL(tensor);
     if (!tensor->IsGraphOutput()) {
       result.emplace_back(tensor);
     }
@@ -1889,8 +1890,7 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
 
 constexpr auto kMixTarget = "MixTarget";
 constexpr auto kNoTarget = "NoTarget";
-std::string SessionBasic::AddPartialParametersMap(const FuncGraphManagerPtr &front_func_graph_manager,
-                                                  const AnfNodePtr &partial_node) {
+std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node) {
   MS_EXCEPTION_IF_NULL(partial_node);
   auto iter = partial_target_map_.find(partial_node);
   if (iter != partial_target_map_.end()) {
@@ -1902,11 +1902,12 @@ std::string SessionBasic::AddPartialParametersMap(const FuncGraphManagerPtr &fro
   MS_EXCEPTION_IF_NULL(partial_graph);
   auto parameters = partial_graph->parameters();
   auto partial_inputs = partial_cnode->inputs();
-  if (parameters.size() + 2 != partial_inputs.size()) {
+  const size_t kNonParameterNum = 2;
+  if (parameters.size() + kNonParameterNum != partial_inputs.size()) {
     return kMixTarget;
   }
   for (size_t i = 0; i < parameters.size(); ++i) {
-    partial_parameters_map_[parameters[i]] = partial_inputs[2 + i];
+    partial_parameters_map_[parameters[i]] = partial_inputs[kNonParameterNum + i];
   }
   auto graph_nodes = TopoSort(partial_graph->get_return());
   std::string graph_target = kNoTarget;
@@ -1926,7 +1927,7 @@ std::string SessionBasic::AddPartialParametersMap(const FuncGraphManagerPtr &fro
       break;
     }
   }
-  (void)partial_target_map_.insert({partial_node, graph_target});
+  (void)partial_target_map_.emplace(std::pair<AnfNodePtr, std::string>(partial_node, graph_target));
   return graph_target;
 }
 
@@ -1958,7 +1959,7 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
     auto users = ExtendNodeUsers(front_func_graph_manager, front_node);
     for (auto &user : users) {
       if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice) {
-        auto partial_target = AddPartialParametersMap(front_func_graph_manager, user);
+        auto partial_target = AddPartialParametersMap(user);
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;
         }
