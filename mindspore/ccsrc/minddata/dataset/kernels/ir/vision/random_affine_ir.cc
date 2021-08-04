@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace dataset {
 namespace vision {
-
 constexpr size_t dimension_zero = 0;
 constexpr size_t dimension_one = 1;
 constexpr size_t dimension_two = 2;
