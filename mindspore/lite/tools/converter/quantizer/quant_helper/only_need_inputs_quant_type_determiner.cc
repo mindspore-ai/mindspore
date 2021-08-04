@@ -16,7 +16,6 @@
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
 
 namespace mindspore::lite {
-
 bool OnlyNeedInputsQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   UpdateQuantParamsNum(graph, *node);
   if (input_inited_quant_params_ == node->inputIndex.size()) {

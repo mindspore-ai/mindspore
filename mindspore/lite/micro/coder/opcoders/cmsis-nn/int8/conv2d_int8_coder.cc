@@ -25,6 +25,9 @@
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::lite::micro::cmsis {
+namespace {
+const int kPartial = 2;
+}
 int Conv2DInt8Coder::Prepare(CoderContext *const context) {
   Conv2DBaseCoder::Init();
   MS_CHECK_RET_CODE(micro::Conv2DBaseCoder::CheckLayout(input_tensor_), "CheckLayout failed");
@@ -150,12 +153,12 @@ int Conv2DInt8Coder::InitTmpBuffer() {
   switch (opt_) {
     case Basic:
       buffer_size_ =
-        static_cast<size_t>(2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
+        static_cast<size_t>(kPartial * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
         sizeof(int16_t);
       break;
     case Convolve_1_x_n:
       buffer_size_ =
-        static_cast<size_t>(2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
+        static_cast<size_t>(kPartial * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
         sizeof(int16_t);
       break;
     case Convolve_1x1_fast:
