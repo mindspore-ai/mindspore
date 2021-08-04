@@ -17,7 +17,7 @@
 #include "nnacl/infer/reshape_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-void CalShape(const int *data, const TensorC *const *inputs, int *out_shape, size_t *out_shape_size, int shape_size) {
+int CalShape(const int *data, const TensorC *const *inputs, int *out_shape, size_t *out_shape_size, int shape_size) {
   int input_count = GetElementNum(inputs[0]);
   int index = 0;
   int size = 1;
@@ -32,11 +32,15 @@ void CalShape(const int *data, const TensorC *const *inputs, int *out_shape, siz
     ShapePush(out_shape, out_shape_size, data[i]);
   }
   if (size == 0) {
-    return;
+    return NNACL_ERR;
   }
   if ((int)(data[index]) == -1) {
+    if (index >= MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     out_shape[index] = input_count / size;
   }
+  return NNACL_OK;
 }
 
 int CalNewShape(const TensorC *in_tensor, int *out_shape, size_t out_shape_size) {
@@ -74,6 +78,9 @@ int CalNewShape(const TensorC *in_tensor, int *out_shape, size_t out_shape_size)
     if (out_shape_size_new == 0) {
       return NNACL_ERR;
     }
+    if (infer_index >= MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     out_shape[infer_index] = in_shape_size / out_shape_size_new;
   }
   return NNACL_OK;
@@ -94,35 +101,50 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
-      CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      if (cal_ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
     } break;
     case kNumberTypeInt32: {
       int32_t *data = (int32_t *)(shape_tensor->data_);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
-      CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      if (cal_ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
     } break;
     case kNumberTypeInt64: {
       int64_t *data = (int64_t *)(shape_tensor->data_);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
-      CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      if (cal_ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
     } break;
     case kNumberTypeFloat: {
       float *data = (float *)(shape_tensor->data_);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
-      CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      if (cal_ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
     } break;
     case kNumberTypeUInt32: {
       uint32_t *data = (uint32_t *)(shape_tensor->data_);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
-      CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
+      if (cal_ret != NNACL_OK) {
+        return NNACL_ERR;
+      }
     } break;
     default: {
       free(data_int);
