@@ -19,6 +19,7 @@
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 
 namespace mindspore {
 namespace dataset {
@@ -73,6 +74,22 @@ BandpassBiquad::BandpassBiquad(int32_t sample_rate, float central_freq, float Q,
 std::shared_ptr<TensorOperation> BandpassBiquad::Parse() {
   return std::make_shared<BandpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_,
                                                    data_->const_skirt_gain_);
+}
+
+// BandrejectBiquad Transform Operation.
+struct BandrejectBiquad::Data {
+  Data(int32_t sample_rate, float central_freq, float Q)
+      : sample_rate_(sample_rate), central_freq_(central_freq), Q_(Q) {}
+  int32_t sample_rate_;
+  float central_freq_;
+  float Q_;
+};
+
+BandrejectBiquad::BandrejectBiquad(int32_t sample_rate, float central_freq, float Q)
+    : data_(std::make_shared<Data>(sample_rate, central_freq, Q)) {}
+
+std::shared_ptr<TensorOperation> BandrejectBiquad::Parse() {
+  return std::make_shared<BandrejectBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
 }
 }  // namespace audio
 }  // namespace dataset

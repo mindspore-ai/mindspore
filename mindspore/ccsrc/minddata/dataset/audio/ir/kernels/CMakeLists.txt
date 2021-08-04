@@ -5,4 +5,5 @@ add_library(audio-ir-kernels OBJECT
         allpass_biquad_ir.cc
         band_biquad_ir.cc
         bandpass_biquad_ir.cc
+        bandreject_biquad_ir.cc
         )

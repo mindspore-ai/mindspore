@@ -233,3 +233,71 @@ TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad002) {
   std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
   EXPECT_EQ(iter02, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad001) {
+  MS_LOG(INFO) << "Basic Function Test";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto BandrejectBiquadOp = audio::BandrejectBiquad(44100, 200.0);
+
+  ds = ds->Map({BandrejectBiquadOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by bandrejectbiquad
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad002) {
+  MS_LOG(INFO) << "Wrong Arg.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  EXPECT_NE(ds, nullptr);
+
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  auto bandreject_biquad_op_01 = audio::BandrejectBiquad(0, 200);
+  ds01 = ds->Map({bandreject_biquad_op_01});
+  EXPECT_NE(ds01, nullptr);
+
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  // Check Q_
+  MS_LOG(INFO) << "Q_ is zero.";
+  auto bandreject_biquad_op_02 = audio::BandrejectBiquad(44100, 200, 0);
+  ds02 = ds->Map({bandreject_biquad_op_02});
+  EXPECT_NE(ds02, nullptr);
+
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+}

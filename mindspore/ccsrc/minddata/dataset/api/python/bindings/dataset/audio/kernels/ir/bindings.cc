@@ -20,6 +20,7 @@
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 
 namespace mindspore {
@@ -56,5 +57,17 @@ PYBIND_REGISTER(
         return bandpass_biquad;
       }));
   }));
+
+PYBIND_REGISTER(BandrejectBiquadOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::BandrejectBiquadOperation, TensorOperation,
+                                   std::shared_ptr<audio::BandrejectBiquadOperation>>(*m, "BandrejectBiquadOperation")
+                    .def(py::init([](int32_t sample_rate, float central_freq, float Q) {
+                      auto bandreject_biquad =
+                        std::make_shared<audio::BandrejectBiquadOperation>(sample_rate, central_freq, Q);
+                      THROW_IF_ERROR(bandreject_biquad->ValidateParams());
+                      return bandreject_biquad;
+                    }));
+                }));
+
 }  // namespace dataset
 }  // namespace mindspore
