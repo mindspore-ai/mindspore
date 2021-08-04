@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import json
+import cv2
 from collections import defaultdict
 
 
