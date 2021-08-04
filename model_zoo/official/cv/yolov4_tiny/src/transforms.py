@@ -64,7 +64,7 @@ def statistic_normalize_img(img, statistic_norm):
     # img: RGB
     if isinstance(img, Image.Image):
         img = np.array(img)
-    img = img/255.
+    img = img / 255.
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
     if statistic_norm:
@@ -385,7 +385,8 @@ def _correct_bbox_by_candidates(candidates, input_w, input_h, image_w,
         if allow_outside_center:
             pass
         else:
-            t_box = t_box[np.logical_and((t_box[:, 0] + t_box[:, 2])/2. >= 0., (t_box[:, 1] + t_box[:, 3])/2. >= 0.)]
+            t_box = t_box[
+                np.logical_and((t_box[:, 0] + t_box[:, 2]) / 2. >= 0., (t_box[:, 1] + t_box[:, 3]) / 2. >= 0.)]
             t_box = t_box[np.logical_and((t_box[:, 0] + t_box[:, 2]) / 2. <= input_w,
                                          (t_box[:, 1] + t_box[:, 3]) / 2. <= input_h)]
 
@@ -488,6 +489,7 @@ def reshape_fn(image, img_id, config):
 
 class MultiScaleTrans:
     """Multi scale transform."""
+
     def __init__(self, config, device_num):
         self.config = config
         self.seed = 0
@@ -547,7 +549,8 @@ class MultiScaleTrans:
         return np.array(ret_imgs), np.array(ret_annos), np.array(bbox1), np.array(bbox2), np.array(gt1), np.array(gt2)
 
 
-def thread_batch_preprocess_true_box(annos, config, input_shape, result_index, batch_bbox_true_1, batch_bbox_true_2, batch_gt_box1, batch_gt_box2):
+def thread_batch_preprocess_true_box(annos, config, input_shape, result_index, batch_bbox_true_1, batch_bbox_true_2,
+                                     batch_gt_box1, batch_gt_box2):
     """Preprocess true box for multi-thread."""
     i = 0
     for anno in annos:
@@ -579,7 +582,9 @@ def batch_preprocess_true_box(annos, config, input_shape):
             batch_gt_box2.append(None)
         step_anno = annos[index: index + step]
         t = threading.Thread(target=thread_batch_preprocess_true_box,
-                             args=(step_anno, config, input_shape, index, batch_bbox_true_1, batch_bbox_true_2, batch_gt_box1, batch_gt_box2))
+                             args=(
+                             step_anno, config, input_shape, index, batch_bbox_true_1, batch_bbox_true_2, batch_gt_box1,
+                             batch_gt_box2))
         t.start()
         threads.append(t)
 
