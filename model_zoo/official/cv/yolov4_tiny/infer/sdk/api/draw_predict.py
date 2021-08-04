@@ -130,8 +130,8 @@ def draw_box(boxes, img_path, label_img_dir):
     fig.savefig(label_path)
 
 
-def draw_label(res_tmp_file, img_path, label_img_dir):
-    with open(res_tmp_file, "r") as fp:
+def draw_label(res_file, img_path, label_img_dir):
+    with open(res_file, "r") as fp:
         result = json.loads(fp.read())
     if not result:
         logging.error("The result data is error, img_path(%s).", img_path)
