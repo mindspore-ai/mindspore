@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import json,cv2
+import json, cv2
 from collections import defaultdict
 
 ban_path = '/opt/npu/dataset/coco/coco2014/5k.txt'
@@ -87,11 +87,6 @@ for ant in annotations:
         cat = cat - 11
 
     name_box_id[name].append([ant['bbox'], cat])
-    
-
-
-
-
 
 f = open('data/coco2014_minival.txt', 'w')
 ii = 0
