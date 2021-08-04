@@ -14,7 +14,6 @@
 #limitations under the License.
 
 import json
-import pylab
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
@@ -40,23 +39,23 @@ def get_category_id(class_id):
     :param: class id which corresponding coco.names
     :return: category id is used in instances_val2014.json
     """
-    if class_id >= 0 and class_id <= 10:
+    if 0 <= class_id <= 10:
         class_id = class_id + 1
-    elif class_id >= 11 and class_id <= 23:
+    elif 11 <= class_id <= 23:
         class_id = class_id + 2
-    elif class_id >= 24 and class_id <= 25:
+    elif 24 <= class_id <= 25:
         class_id = class_id + 3
-    elif class_id >= 26 and class_id <= 39:
+    elif 26 <= class_id <= 39:
         class_id = class_id + 5
-    elif class_id >= 40 and class_id <= 59:
+    elif 40 <= class_id <= 59:
         class_id = class_id + 6
     elif class_id == 60:
         class_id = class_id + 7
     elif class_id == 61:
         class_id = class_id + 9
-    elif class_id >= 62 and class_id <= 72:
+    elif 62 <= class_id <= 72:
         class_id = class_id + 10
-    elif class_id >= 73 and class_id <= 79:
+    elif 73 <= class_id <= 79:
         class_id = class_id + 11
     return class_id
 
