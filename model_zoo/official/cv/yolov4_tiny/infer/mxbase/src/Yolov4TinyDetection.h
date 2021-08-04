@@ -17,6 +17,10 @@
 #ifndef MXBASE_YOLOV4TINYDETECTIONOPENCV_H
 #define MXBASE_YOLOV4TINYDETECTIONOPENCV_H
 
+#include <vector>
+#include <memory>
+#include <map>
+#include <string>
 #include <opencv2/opencv.hpp>
 #include "MxBase/DvppWrapper/DvppWrapper.h"
 #include "MxBase/ModelInfer/ModelInferenceProcessor.h"
@@ -43,26 +47,26 @@ struct InitParam {
 };
 
 class Yolov4TinyDetectionOpencv {
-public:
-    APP_ERROR Init(const InitParam &initParam);
-    APP_ERROR DeInit();
-    APP_ERROR ReadImage(const std::string &imgPath, cv::Mat &imageMat);
-    APP_ERROR Resize(cv::Mat &srcImageMat, cv::Mat &dstImageMat);
-    APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
-    APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
-    APP_ERROR PostProcess(const std::vector<MxBase::TensorBase> &outputs,
+ public:
+     APP_ERROR Init(const InitParam &initParam);
+     APP_ERROR DeInit();
+     APP_ERROR ReadImage(const std::string &imgPath, cv::Mat &imageMat);
+     APP_ERROR Resize(cv::Mat &srcImageMat, cv::Mat &dstImageMat);
+     APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
+     APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
+     APP_ERROR PostProcess(const std::vector<MxBase::TensorBase> &outputs,
                           std::vector<std::vector<MxBase::ObjectInfo>> &objInfos);
-    APP_ERROR Process(const std::string &imgPath);
-    APP_ERROR LoadLabels(const std::string &labelPath, std::map<int, std::string> &labelMap);
-    APP_ERROR WriteResult(const std::vector<std::vector<MxBase::ObjectInfo>> &objInfos);
-private:
-    std::shared_ptr<MxBase::DvppWrapper> dvppWrapper_;
-    std::shared_ptr<MxBase::ModelInferenceProcessor> model_;
-    std::shared_ptr<MxBase::Yolov4TinyPostProcess> post_;
-    MxBase::ModelDesc modelDesc_;
-    std::map<int, std::string> labelMap_;
-    uint32_t deviceId_ = 0;
-    uint32_t imageWidth_ = 0;
-    uint32_t imageHeight_ = 0;
+     APP_ERROR Process(const std::string &imgPath);
+     APP_ERROR LoadLabels(const std::string &labelPath, std::map<int, std::string> &labelMap);
+     APP_ERROR WriteResult(const std::vector<std::vector<MxBase::ObjectInfo>> &objInfos);
+ private:
+     std::shared_ptr<MxBase::DvppWrapper> dvppWrapper_;
+     std::shared_ptr<MxBase::ModelInferenceProcessor> model_;
+     std::shared_ptr<MxBase::Yolov4TinyPostProcess> post_;
+     MxBase::ModelDesc modelDesc_;
+     std::map<int, std::string> labelMap_;
+     uint32_t deviceId_ = 0;
+     uint32_t imageWidth_ = 0;
+     uint32_t imageHeight_ = 0;
 };
 #endif
