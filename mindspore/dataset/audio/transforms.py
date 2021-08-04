@@ -20,7 +20,8 @@ to improve their training models.
 import mindspore._c_dataengine as cde
 import numpy as np
 from ..transforms.c_transforms import TensorOperation
-from .validators import check_allpass_biquad, check_band_biquad, check_bandpass_biquad, check_bandreject_biquad
+from .validators import check_allpass_biquad, check_band_biquad, check_bandpass_biquad, check_bandreject_biquad, \
+    check_bass_biquad
 
 
 class AudioTensorOperation(TensorOperation):
@@ -163,3 +164,32 @@ class BandrejectBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.BandrejectBiquadOperation(self.sample_rate, self.central_freq, self.Q)
+
+
+class BassBiquad(AudioTensorOperation):
+    """
+    Design a bass tone-control effect for audio waveform of dimension of `(..., time)`
+
+    Args:
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz)
+        gain (float): desired gain at the boost (or attenuation) in dB.
+        central_freq (float): central frequency (in Hz)(Default=100.0).
+        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, Range: (0, 1] (Default=0.707).
+
+    Examples:
+        >>> import mindspore.dataset.audio.transforms as audio
+        >>> import numpy as np
+
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
+        >>> bass_biquad_op = audio.BassBiquad(44100, 100.0)
+        >>> waveform_filtered = bass_biquad_op(waveform)
+    """
+    @check_bass_biquad
+    def __init__(self, sample_rate, gain, central_freq=100.0, Q=0.707):
+        self.sample_rate = sample_rate
+        self.gain = gain
+        self.central_freq = central_freq
+        self.Q = Q
+
+    def parse(self):
+        return cde.BassBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)

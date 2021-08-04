@@ -124,6 +124,28 @@ class BandrejectBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Design a bass tone-control effect.
+class BassBiquad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] gain Desired gain at the boost (or attenuation) in dB.
+  /// \param[in] central_freq Central frequency (in Hz).
+  /// \param[in] Q https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
+  explicit BassBiquad(int32_t sample_rate, float gain, float central_freq = 100, float Q = 0.707);
+
+  /// \brief Destructor.
+  ~BassBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

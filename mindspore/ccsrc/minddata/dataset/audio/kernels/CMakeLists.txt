@@ -6,4 +6,5 @@ add_library(audio-kernels OBJECT
         band_biquad_op.cc
         bandpass_biquad_op.cc
         bandreject_biquad_op.cc
+        bass_biquad_op.cc
         )

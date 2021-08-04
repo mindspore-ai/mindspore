@@ -49,6 +49,12 @@ def check_biquad_const_skirt_gain(const_skirt_gain):
     type_check(const_skirt_gain, (bool,), "const_skirt_gain")
 
 
+def check_biquad_gain(gain):
+    """Wrapper method to check the parameters of gain."""
+    type_check(gain, (float, int), "gain")
+    check_float32(gain, "gain")
+
+
 def check_band_biquad(method):
     """Wrapper method to check the parameters of BandBiquad."""
 
@@ -104,6 +110,22 @@ def check_bandreject_biquad(method):
         [sample_rate, central_freq, Q], _ = parse_user_args(
             method, *args, **kwargs)
         check_biquad_sample_rate(sample_rate)
+        check_biquad_central_freq(central_freq)
+        check_biquad_Q(Q)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_bass_biquad(method):
+    """Wrapper method to check the parameters of CutMixBatch."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, gain, central_freq, Q], _ = parse_user_args(
+            method, *args, **kwargs)
+        check_biquad_sample_rate(sample_rate)
+        check_biquad_gain(gain)
         check_biquad_central_freq(central_freq)
         check_biquad_Q(Q)
         return method(self, *args, **kwargs)
