@@ -47,7 +47,7 @@
             },
             "factory": "mxpi_objectpostprocessor",
             "next": "mxpi_dataserialize0"
-       	},
+        },
         "mxpi_dataserialize0": {
             "props": {
                 "outputDataKeys": "mxpi_objectpostprocessor0"
