@@ -47,7 +47,7 @@ Status RandomSolarizeOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  for (int32_t i = 0; i < threshold_.size(); ++i) {
+  for (size_t i = 0; i < threshold_.size(); ++i) {
     if (threshold_[i] < 0 || threshold_[i] > kThresholdMax) {
       std::string err_msg =
         "RandomSolarize: threshold has to be between 0 and 255, got:" + std::to_string(threshold_[i]);
