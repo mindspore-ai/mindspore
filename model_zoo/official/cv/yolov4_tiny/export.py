@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 import argparse
+import numpy as np
 import mindspore
 from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
@@ -49,4 +49,3 @@ if __name__ == "__main__":
 
     export(network, input_data, file_name=args.file_name, file_format=config.file_format)
     print('export sucess')
-
