@@ -1,0 +1,12 @@
+{
+  "num_item": 3005,
+  "num_relation": 5,
+  "num_entity": 5138,
+  "per_item_num_paths": 39,
+  "embedding_dim": 26,
+  "batch_size": 1024,
+  "lr": 0.001,
+  "kge_weight": 0.05,
+  "node_weight": 0.002,
+  "l2_weight": 1e-6
+}

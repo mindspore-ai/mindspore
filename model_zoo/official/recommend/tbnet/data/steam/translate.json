@@ -1,0 +1,14 @@
+{
+  "item": {
+    "0": "Star Wars",
+    "1": "Battlefield 1"
+  },
+  "relation": {
+    "0": "Developer",
+    "1": "Genre"
+  },
+  "entity": {
+    "425": "EA Games",
+    "426": "Shooting"
+  }
+}
