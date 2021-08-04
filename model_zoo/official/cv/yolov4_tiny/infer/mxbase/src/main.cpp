@@ -21,7 +21,7 @@
 
 std::vector<double> g_inferCost;
 
-void SplitString(const std::string &s, std::vector<std::string> &v, const std::string &c){
+void SplitString(const std::string &s, std::vector<std::string> &v, const std::string &c) {
     std::string::size_type pos1, pos2;
     pos2 = s.find(c);
     pos1 = 0;
@@ -37,7 +37,7 @@ void SplitString(const std::string &s, std::vector<std::string> &v, const std::s
     }
 }
 
-void InitYolov4TinyParam(InitParam &initParam){
+void InitYolov4TinyParam(InitParam &initParam) {
     initParam.deviceId = 0;
     initParam.labelPath = "../data/models/coco2014.names";
     initParam.checkTensor = true;
@@ -54,7 +54,7 @@ void InitYolov4TinyParam(InitParam &initParam){
     initParam.anchorDim = 3;
 }
 
-APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imagesPath){
+APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imagesPath) {
     std::ifstream inFile;
     inFile.open(path, std::ios_base::in);
     std::string line;
@@ -79,7 +79,7 @@ APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imag
     return APP_ERR_OK;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     if (argc <= 1) {
         LogWarn << "Please input image path, such as './yolov4tiny infer.txt'.";
         return APP_ERR_OK;
