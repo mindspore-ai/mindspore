@@ -26,7 +26,6 @@
 #include "MxBase/CV/Core/DataType.h"
 #include "MxBase/PostProcessBases/ObjectPostProcessBase.h"
 
-namespace {
 const float DEFAULT_OBJECTNESS_THRESH = 0.3;
 const float DEFAULT_IOU_THRESH = 0.45;
 const int DEFAULT_ANCHOR_DIM = 3;
@@ -50,7 +49,6 @@ struct NetInfo {
     int netWidth;
     int netHeight;
 };
-} // namespace
 
 namespace MxBase {
 class Yolov4TinyPostProcess : public ObjectPostProcessBase {
