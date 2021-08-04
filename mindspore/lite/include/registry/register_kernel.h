@@ -29,26 +29,6 @@
 
 namespace mindspore {
 namespace kernel {
-/// \brief KernelDesc defined kernel's basic attribute.
-struct MS_API KernelDesc {
-  TypeId data_type;     /**< kernel data type argument */
-  int type;             /**< op type argument */
-  std::string arch;     /**< deviceType argument */
-  std::string provider; /**< user identification argument */
-
-  bool operator<(const KernelDesc &dst) const {
-    if (provider != dst.provider) {
-      return provider < dst.provider;
-    } else if (arch != dst.arch) {
-      return arch < dst.arch;
-    } else if (data_type != dst.data_type) {
-      return data_type < dst.data_type;
-    } else {
-      return type < dst.type;
-    }
-  }
-};
-
 /// \brief CreateKernel Defined a functor to create a kernel.
 ///
 /// \param[in] inputs Define input tensors of kernel.
@@ -87,14 +67,6 @@ class MS_API RegisterKernel {
   /// \return STATUS as an error code of registering, STATUS is defined in errorcode.h.
   static int RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
                              const std::string &type, CreateKernel creator);
-
-  /// \brief Static methon to get a kernel's create function.
-  ///
-  /// \param[in] desc Define kernel's basic attribute.
-  /// \param[in] primitive Define the attributes of op.
-  ///
-  /// \return Function pointer to create a kernel.
-  static CreateKernel GetCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
 };
 
 /// \brief KernelReg Defined registration class of kernel.

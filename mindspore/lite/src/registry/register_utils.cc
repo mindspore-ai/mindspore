@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "include/registry/register_kernel.h"
-#include <set>
+#include "src/registry/register_utils.h"
 #include "src/registry/register_kernel_impl.h"
 
 namespace mindspore {
 namespace kernel {
-int RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
-                                    const std::string &type, CreateKernel creator) {
-  return lite::RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
-}
-
-int RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int op_type,
-                              CreateKernel creator) {
-  return lite::RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
+CreateKernel RegisterUtils::GetCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc) {
+  return lite::RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
 }
 }  // namespace kernel
 }  // namespace mindspore

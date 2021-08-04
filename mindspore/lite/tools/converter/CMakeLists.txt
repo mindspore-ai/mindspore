@@ -141,6 +141,8 @@ set(LITE_SRC
         ${SRC_DIR}/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
         ${SRC_DIR}/registry/kernel_interface_registry.cc
+        ${SRC_DIR}/registry/register_utils.cc
+        ${SRC_DIR}/registry/register_kernel_impl.cc
         ${SRC_DIR}/registry/kernel_interface.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/inner_kernel.cc
