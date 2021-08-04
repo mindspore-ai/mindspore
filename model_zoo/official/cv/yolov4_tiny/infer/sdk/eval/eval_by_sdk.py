@@ -60,7 +60,7 @@ def parse_result(result_file, num_classes):
     return [np.asarray(box) for box in all_box]
 
 
-def get_eval_result(ann_file, result_path):
+def get_eval_result(ann_file, result_file_path):
     outputs = []
 
     dataset_coco = COCO(ann_file)
@@ -68,7 +68,7 @@ def get_eval_result(ann_file, result_path):
 
     for img_id in img_ids:
         file_id = str(img_id).zfill(12)
-        result_json = os.path.join(result_path, f"{file_id}.json")
+        result_json = os.path.join(result_file_path, f"{file_id}.json")
         bbox_results = parse_result(result_json, cfg.NUM_CLASSES)
         outputs.append(bbox_results)
 
