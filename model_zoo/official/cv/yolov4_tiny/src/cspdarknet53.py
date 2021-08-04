@@ -17,8 +17,10 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 import mindspore.ops as ops
 
+
 class Mish(nn.Cell):
     """Mish activation method"""
+
     def __init__(self):
         super(Mish, self).__init__()
         self.mul = P.Mul()
@@ -31,6 +33,7 @@ class Mish(nn.Cell):
         output = self.mul(input_x, tanh)
 
         return output
+
 
 def conv_block(in_channels,
                out_channels,
@@ -54,6 +57,7 @@ def conv_block(in_channels,
          ]
     )
 
+
 def basic_conv(in_channels,
                out_channels,
                kernel_size,
@@ -63,15 +67,16 @@ def basic_conv(in_channels,
     # padding = kernel_size // 2
     padding = 0
     return nn.SequentialCell([nn.Conv2d(in_channels,
-                   out_channels,
-                   kernel_size=kernel_size,
-                   stride=stride,
-                   padding=padding,
-                   has_bias=False, pad_mode=pad_mode),
-         nn.BatchNorm2d(out_channels, momentum=0.9, eps=1e-5), nn.LeakyReLU(0.1)])
+                                        out_channels,
+                                        kernel_size=kernel_size,
+                                        stride=stride,
+                                        padding=padding,
+                                        has_bias=False, pad_mode=pad_mode),
+                              nn.BatchNorm2d(out_channels, momentum=0.9, eps=1e-5), nn.LeakyReLU(0.1)])
+
 
 class Upsample(nn.Cell):
-    def __init__(self,in_channels, out_channels):
+    def __init__(self, in_channels, out_channels):
         super(Upsample, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -79,20 +84,22 @@ class Upsample(nn.Cell):
 
     def construct(self, x):
         height, width = x.shape[2], x.shape[3]
-        x= self.conv(x)
-        out = ops.ResizeNearestNeighbor((height*2, width*2))(x)
+        x = self.conv(x)
+        out = ops.ResizeNearestNeighbor((height * 2, width * 2))(x)
 
         return out
 
+
 class CspBlock(nn.Cell):
     """The CSPBlock module"""
+
     def __init__(self, in_channels, out_channels):
         super(CspBlock, self).__init__()
         self.conv1 = basic_conv(in_channels, out_channels, 3)
         self.conv2 = basic_conv(in_channels // 2, out_channels // 2, 3)
         self.conv3 = basic_conv(in_channels // 2, out_channels // 2, 3)
         self.conv4 = basic_conv(in_channels, out_channels, 1)
-        #split on channel axis
+        # split on channel axis
         self.split = ops.Split(axis=1, output_num=2)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.cat1 = P.Concat(axis=1)
@@ -110,6 +117,7 @@ class CspBlock(nn.Cell):
 
         return c8, c6
 
+
 class ResidualBlock(nn.Cell):
     """
     DarkNet V1 residual block definition.
@@ -123,10 +131,10 @@ class ResidualBlock(nn.Cell):
     Examples:
         ResidualBlock(3, 208)
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
-
         super(ResidualBlock, self).__init__()
         out_chls = out_channels
         self.conv1 = conv_block(in_channels, out_chls, kernel_size=1, stride=1)
@@ -140,6 +148,7 @@ class ResidualBlock(nn.Cell):
         out = self.add(out, identity)
 
         return out
+
 
 class CspDarkNet53(nn.Cell):
     """
@@ -158,6 +167,7 @@ class CspDarkNet53(nn.Cell):
     Examples:
         DarkNet(ResidualBlock)
     """
+
     def __init__(self,
                  block,
                  detect=False):
@@ -228,7 +238,7 @@ class CspDarkNet53(nn.Cell):
     def construct(self, x):
         """construct method"""
         c1 = self.conv0(x)
-        c2 = self.conv1(c1)  #route
+        c2 = self.conv1(c1)  # route
         c3 = self.conv2(c2)
         c4 = self.conv3(c3)
         c5 = self.conv4(c4)
@@ -237,34 +247,34 @@ class CspDarkNet53(nn.Cell):
         c8 = self.conv6(c2)
         c9 = self.concat((c7, c8))
         c10 = self.conv7(c9)
-        c11 = self.conv8(c10)   #route
+        c11 = self.conv8(c10)  # route
         c12 = self.conv9(c11)
         c13 = self.layer2(c12)
         c14 = self.conv10(c13)
         c15 = self.conv11(c11)
         c16 = self.concat((c14, c15))
         c17 = self.conv12(c16)
-        c18 = self.conv13(c17)  #route
+        c18 = self.conv13(c17)  # route
         c19 = self.conv14(c18)
         c20 = self.layer3(c19)
         c21 = self.conv15(c20)
         c22 = self.conv16(c18)
         c23 = self.concat((c21, c22))
-        c24 = self.conv17(c23)  #output1
-        c25 = self.conv18(c24)  #route
+        c24 = self.conv17(c23)  # output1
+        c25 = self.conv18(c24)  # route
         c26 = self.conv19(c25)
         c27 = self.layer4(c26)
         c28 = self.conv20(c27)
         c29 = self.conv21(c25)
         c30 = self.concat((c28, c29))
-        c31 = self.conv22(c30)  #output2
-        c32 = self.conv23(c31)  #route
+        c31 = self.conv22(c30)  # output2
+        c32 = self.conv23(c31)  # route
         c33 = self.conv24(c32)
         c34 = self.layer5(c33)
         c35 = self.conv25(c34)
         c36 = self.conv26(c32)
         c37 = self.concat((c35, c36))
-        c38 = self.conv27(c37)  #output3
+        c38 = self.conv27(c37)  # output3
 
         if self.detect:
             return c24, c31, c38
@@ -273,6 +283,7 @@ class CspDarkNet53(nn.Cell):
 
     def get_out_channels(self):
         return self.outchannel
+
 
 class CspDarkNet53Tiny(nn.Cell):
     """
@@ -291,6 +302,7 @@ class CspDarkNet53Tiny(nn.Cell):
     Examples:
         DarkNet(ResidualBlock)
     """
+
     def __init__(self):
         super(CspDarkNet53Tiny, self).__init__()
         self.conv0 = basic_conv(3, 32, kernel_size=3, stride=2)
