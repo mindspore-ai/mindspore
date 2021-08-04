@@ -32,6 +32,7 @@
 #include "utils/utils.h"
 #include "frontend/parallel/context.h"
 #include "debug/env_config_parser.h"
+#include "runtime/device/pynative_profiling.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -966,6 +967,36 @@ void KernelRuntime::LaunchKernelEvent(const std::vector<std::vector<std::functio
   }
 }
 
+bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
+                                                      const std::vector<AddressPtr> &inputs,
+                                                      const std::vector<AddressPtr> &workspace,
+                                                      const std::vector<AddressPtr> &outputs, void *stream) {
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  MS_EXCEPTION_IF_NULL(stream);
+  float cost_time = 0;
+  auto start = CreateDeviceTimeEvent();
+  auto end = CreateDeviceTimeEvent();
+  MS_EXCEPTION_IF_NULL(start);
+  MS_EXCEPTION_IF_NULL(end);
+  start->set_record_stream(stream);
+  end->set_record_stream(stream);
+  start->RecordEvent();
+  bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
+  end->RecordEvent();
+  start->SyncEvent();
+  end->SyncEvent();
+  start->ElapsedTime(&cost_time, end.get());
+  auto launch_end_time = GetTime();
+  auto &profiler_inst = PynativeProfiler::GetInstance();
+  double launch_start_time = launch_end_time - cost_time / kBasicTimeTransferUnit;
+  auto op_launch_start_time_end_time = std::make_pair(launch_start_time, launch_end_time);
+  profiler_inst.SetOpNameAndLaunchTime(std::make_pair(op_name, op_launch_start_time_end_time));
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
+  }
+  return ret;
+}
+
 bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
@@ -1020,9 +1051,19 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
       bool ret;
       if (AnfAlgo::IsCommunicationOp(kernel)) {
-        ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
+        if (pynative_mode_profiling_flag_) {
+          ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
+                                                  kernel_workspaces, kernel_outputs, communication_stream_);
+        } else {
+          ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
+        }
       } else {
-        ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+        if (pynative_mode_profiling_flag_) {
+          ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
+                                                  kernel_workspaces, kernel_outputs, stream_);
+        } else {
+          ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+        }
       }
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed.";

@@ -60,6 +60,7 @@ class AscendKernelRuntime : public KernelRuntime {
   uint64_t GetAvailableMemMaxSize() const override;
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kAscend; };
   std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
+  std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() override;
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
 

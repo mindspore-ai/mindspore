@@ -103,6 +103,7 @@ class KernelRuntime {
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
   void GenKernelEvents(const session::KernelGraph *graph);
   virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }
+  virtual std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() { return nullptr; }
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
@@ -139,6 +140,10 @@ class KernelRuntime {
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
   DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index);
+  bool LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
+                                         const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs, void *stream);
 #if (ENABLE_CPU && !_WIN32)
   void GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *const first_cache_input_index,
                                 size_t *const first_cache_size);
@@ -148,6 +153,7 @@ class KernelRuntime {
 
  protected:
   uint32_t device_id_{0};
+  bool pynative_mode_profiling_flag_{false};
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif

@@ -284,6 +284,13 @@ void AscendKernelRuntime::PreInit() {
 }
 
 bool AscendKernelRuntime::Init() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto profiling_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
+  if (execution_mode == kPynativeMode && profiling_flag) {
+    pynative_mode_profiling_flag_ = true;
+  }
   if (initialized_) {
     SetCurrentContext();
     return true;
@@ -946,6 +953,12 @@ std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {
   auto ascend_event = std::make_shared<AscendEvent>();
   MS_EXCEPTION_IF_NULL(ascend_event);
   return ascend_event;
+}
+
+std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceTimeEvent() {
+  auto ascend_time_event = std::make_shared<AscendTimeEvent>();
+  MS_EXCEPTION_IF_NULL(ascend_time_event);
+  return ascend_time_event;
 }
 
 uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
