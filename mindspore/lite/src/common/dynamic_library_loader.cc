@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace lite {
-int DynamicLibraryLoader::Open(std::string lib_path) {
+int DynamicLibraryLoader::Open(const std::string &lib_path) {
   if (handler_ != nullptr) {
     return RET_ERROR;
   }
@@ -46,7 +46,7 @@ int DynamicLibraryLoader::Open(std::string lib_path) {
   return RET_OK;
 }
 
-void *DynamicLibraryLoader::GetFunc(std::string func_name) {
+void *DynamicLibraryLoader::GetFunc(const std::string &func_name) {
 #ifndef _WIN32
   return dlsym(handler_, func_name.c_str());
 #else

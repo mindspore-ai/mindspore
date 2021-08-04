@@ -103,6 +103,7 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
       }
       int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
       if (cal_ret != NNACL_OK) {
+        free(data_int);
         return NNACL_ERR;
       }
     } break;
@@ -113,6 +114,7 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
       }
       int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
       if (cal_ret != NNACL_OK) {
+        free(data_int);
         return NNACL_ERR;
       }
     } break;
@@ -123,6 +125,7 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
       }
       int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
       if (cal_ret != NNACL_OK) {
+        free(data_int);
         return NNACL_ERR;
       }
     } break;
@@ -133,6 +136,7 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
       }
       int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
       if (cal_ret != NNACL_OK) {
+        free(data_int);
         return NNACL_ERR;
       }
     } break;
@@ -143,6 +147,7 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
       }
       int cal_ret = CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
       if (cal_ret != NNACL_OK) {
+        free(data_int);
         return NNACL_ERR;
       }
     } break;
