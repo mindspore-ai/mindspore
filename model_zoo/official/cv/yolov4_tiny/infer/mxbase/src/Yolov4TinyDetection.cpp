@@ -140,18 +140,6 @@ APP_ERROR Yolov4TinyDetectionOpencv::Resize(cv::Mat &srcImageMat, cv::Mat &dstIm
     static constexpr uint32_t resizeWidth = 608;
     cv::Mat tmpImg;
     cv::resize(srcImageMat, dstImageMat, cv::Size(resizeWidth, resizeHeight));
-    /*
-    std::vector<float> mean_value{0.485, 0.456, 0.406};
-    std::vector<float> std_value{0.229, 0.224, 0.225};
-    std::vector<cv::Mat> bgrChannels(3);
-    cv::split(tmpImg, bgrChannels);
-    for (auto i = 0; i < bgrChannels.size(); i++)
-     {
-        bgrChannels[i].convertTo(bgrChannels[i], CV_32FC1, 1.0 / std_value[i], (0.0 - mean_value[i]) / std_value[i]);
-    }
-    cv::merge(bgrChannels, dstImageMat);
-    */
-
     return APP_ERR_OK;
 }
 
