@@ -124,7 +124,7 @@ def _export_air(args, ckpt_dir):
            f"--batch_size={args.per_batch_size}",
            f"--checkpoint={ckpt_file}",
            f"--num_classes={args.num_classes}",
-           f"--file_name={os.path.join(_CACHE_TRAIN_URL,args.file_name)}"]
+           f"--file_name={os.path.join(_CACHE_TRAIN_URL, args.file_name)}"]
     print(f"Start exporting AIR, cmd = {' '.join(cmd)}.")
     process = subprocess.Popen(cmd, shell=False)
     process.wait()
@@ -139,8 +139,8 @@ def main():
         mox.file.copy_parallel(args.data_url, _CACHE_DATA_URL)
         train_url = _CACHE_TRAIN_URL
         data_url = _CACHE_DATA_URL
-        pretrained_checkpoint = os.path.join(_CACHE_DATA_URL, args.pretrained_checkpoint) if args.pretrained_checkpoint else ""
-         
+        pretrained_checkpoint = os.path.join(_CACHE_DATA_URL,
+                                             args.pretrained_checkpoint) if args.pretrained_checkpoint else ""
         ret = _train(args, train_url, data_url, pretrained_checkpoint)
         _export_air(args, train_url)
         mox.file.copy_parallel(_CACHE_TRAIN_URL, args.train_url)
