@@ -21,7 +21,7 @@ from . import model
 
 
 def estimate_ops(json_str: str):
-    """Call costmodel to estimate ops."""
+    """Call cost model to estimate ops."""
     try:
         json_obj = json.loads(json_str)
         graph_descs = json_obj["graph_desc"]
@@ -38,7 +38,7 @@ def estimate_ops(json_str: str):
 
 
 def estimate_calulation_amount(json_str: str):
-    """Call costmodel to estimate calculation amount of op."""
+    """Call cost model to estimate calculation amount of op."""
     try:
         graph_desc = json.loads(json_str)
         comp = model.load_composite(graph_desc)
