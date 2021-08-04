@@ -153,9 +153,9 @@ if __name__ == '__main__':
     # target resize format: [width, height]
     # if target_resize is specified, the anchors are on the resized image scale
     # if target_resize is set to None, the anchors are on the original image scale
-    target_size = [416, 416]
-    annotation_path = "train.txt"
-    anno_result = parse_anno(annotation_path, target_size=target_size)
+    img_size = [416, 416]
+    annotation_file = "train.txt"
+    anno_result = parse_anno(annotation_file, target_size=img_size)
     anchors, ave_iou = get_kmeans(anno_result, 9)
 
     anchor_string = ''
@@ -167,4 +167,3 @@ if __name__ == '__main__':
     print(anchor_string)
     print('the average iou is:')
     print(ave_iou)
-
