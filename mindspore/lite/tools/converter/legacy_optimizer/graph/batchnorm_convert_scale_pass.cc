@@ -230,15 +230,8 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
   return RET_OK;
 }
 
-// BatchNorm weight Tensor definition:
-// caffe
-//   estimated_mean  --0
-//   estimated_variance  --1
-// tensorflow
-//   scale    -- 0
-//   bias        --1
-//   estimated_mean  --2
-//   estimated_variance  --3
+// caffe:estimated_mean:0 estimated_variance:1
+// tensorflow scale:0,bias:1,estimated_mean:2,estimated_variance:3
 STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeightTensors *bnWeightTensors,
                                                      const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);
