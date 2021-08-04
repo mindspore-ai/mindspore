@@ -583,7 +583,8 @@ def batch_preprocess_true_box(annos, config, input_shape):
         step_anno = annos[index: index + step]
         t = threading.Thread(target=thread_batch_preprocess_true_box,
                              args=(
-                                 step_anno, config, input_shape, index, batch_bbox_true_1, batch_bbox_true_2, batch_gt_box1,
+                                 step_anno, config, input_shape, index, batch_bbox_true_1, batch_bbox_true_2,
+                                 batch_gt_box1,
                                  batch_gt_box2))
         t.start()
         threads.append(t)
