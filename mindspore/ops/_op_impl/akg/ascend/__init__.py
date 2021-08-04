@@ -44,5 +44,6 @@ from .sqrt import _sqrt_akg
 from .square import _square_akg
 from .sub import _sub_akg
 from .prod_force_se_a import _prod_force_se_a_akg
+from .load_im2col import _load_im2col_akg
 
 # Please insert op register in lexicographical order of the filename.

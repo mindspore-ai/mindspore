@@ -96,7 +96,8 @@ from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingB
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
                         CusMatMulCubeDenseRight,
-                        CusMatMulCubeFraczLeftCast, Im2Col, UpdateThorGradient, Cholesky, CholeskyTrsm, DetTriangle,
+                        CusMatMulCubeFraczLeftCast, Im2Col, LoadIm2Col, UpdateThorGradient, Cholesky, CholeskyTrsm,
+                        DetTriangle,
                         ProdForceSeA)
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul)
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
