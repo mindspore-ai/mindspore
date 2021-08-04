@@ -28,4 +28,6 @@ relationnet_cfg = edict({
     'eval_episode': 10,
     'learning_rate': 0.0005,
     'hidden_unit': 10,
+    'image_height': 28,
+    'image_width': 28,
 })

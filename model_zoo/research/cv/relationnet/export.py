@@ -14,9 +14,9 @@
 # ============================================================================
 """export checkpoint file into air, onnx, mindir models"""
 
+import os
 import argparse
 import numpy as np
-
 from mindspore.common import dtype as mstype
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
@@ -42,9 +42,14 @@ if __name__ == "__main__":
     # define fusion network
     network = Encoder_Relation(cfg.feature_dim, cfg.relation_dim)
     # load network checkpoint
-    param_dict = load_checkpoint(args.ckpt_file)
-    load_param_into_net(network, param_dict)
+    if os.path.exists(args.ckpt_file):
+        param_dict = load_checkpoint(args.ckpt_file)
+        load_param_into_net(network, param_dict)
+        print('successfully load parameters')
+    else:
+        print('Load params Error')
 
     # export network
-    inputs = Tensor(np.ones([args.batch_size, 1, cfg.image_height, cfg.image_width]), mstype.float32)
+    inputs = Tensor(np.ones([100, 1, cfg.image_height, cfg.image_width]), mstype.float32)
     export(network, inputs, file_name=args.file_name, file_format=args.file_format)
+    print('model is exported')

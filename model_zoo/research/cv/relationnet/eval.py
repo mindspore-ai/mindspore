@@ -36,8 +36,8 @@ parser.add_argument("-u", "--hidden_unit", type=int, default=10)
 parser.add_argument("-dt", "--device_target", type=str, default='Ascend', choices=("Ascend", "GPU", "CPU"),
                     help="Device target, support Ascend, GPU and CPU.")
 parser.add_argument("-di", "--device_id", type=int, default=6, help='device id of GPU or Ascend. (Default: 0)')
-parser.add_argument("--ckpt_dir", default='./output/', help='the path of output')
-parser.add_argument("--data_path", default='/home/jialing/FSL/data/omniglot_resized/',
+parser.add_argument("--ckpt_dir", default='./ckpt/', help='the path of output')
+parser.add_argument("--data_path", default='/data/omniglot_resized/',
                     help="Path where the dataset is saved")
 parser.add_argument("--data_url", default=None)
 parser.add_argument("--train_url", default=None)
@@ -109,12 +109,8 @@ def main():
     weight_init(encoder_relation)
 
     #load parameters
-    if os.path.exists(os.path.join(local_train_url,
-                                   str("omniglot_encoder_relation_network" + str(cfg.class_num) + "way_" +
-                                       str(cfg.sample_num_per_class) + "shot.ckpt"))):
-        param_dict = load_checkpoint(os.path.join(local_train_url,
-                                                  str("omniglot_encoder_relation_network" + str(cfg.class_num)
-                                                      + "way_" + str(cfg.sample_num_per_class) + "shot.ckpt")))
+    if os.path.exists(local_train_url):
+        param_dict = load_checkpoint(local_train_url)
         load_param_into_net(encoder_relation, param_dict)
         print("successfully load parameters")
     else:
@@ -149,7 +145,7 @@ def main():
 
             predict_labels = ops.Argmax(axis=1, output_type=mstype.int32)(test_relations).asnumpy()
             test_batch_labels = test_batch_labels.asnumpy().astype(np.int32)
-            rewards = [1 if predict_labels[j] == test_batch_labels[j] else 0 for j in range(cfg.class_num)]     #报错
+            rewards = [1 if predict_labels[j] == test_batch_labels[j] else 0 for j in range(cfg.class_num)]
             total_rewards += np.sum(rewards)
             accuracy = np.sum(rewards) / 1.0 / cfg.class_num / cfg.sample_num_per_class
             accuracies.append(accuracy)
