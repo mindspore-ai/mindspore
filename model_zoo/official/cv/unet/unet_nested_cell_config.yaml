@@ -18,6 +18,9 @@ include_background: True
 run_eval: False
 run_distribute: False
 dataset: "Cell_nuclei"
+multiclass: True
+patch_size: [96, 96]
+patch_stride: 32
 crop: None
 image_size : [96, 96]
 lr: 0.0003

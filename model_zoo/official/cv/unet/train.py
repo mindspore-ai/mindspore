@@ -74,7 +74,7 @@ def train_net(cross_valid_ind=1,
         criterion = MultiCrossEntropyWithLogits()
     else:
         criterion = CrossEntropyWithLogits()
-    if hasattr(config, "dataset") and config.dataset != "ISBI":
+    if hasattr(config, "multiclass") and config.multiclass or hasattr(config, "dataset") and config.dataset != "ISBI":
         dataset_sink_mode = True
         per_print_times = 0
         repeat = config.repeat if hasattr(config, "repeat") else 1
