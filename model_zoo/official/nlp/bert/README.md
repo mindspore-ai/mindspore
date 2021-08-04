@@ -786,3 +786,15 @@ In run_pretrain.py, we set a random seed to make sure that each node has the sam
 # [ModelZoo Homepage](#contents)
 
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+
+# FAQ
+
+- **Q: How to resolve the continually overflow?**
+
+  **A**: Continually overflow is usually caused by using too high learning rate.
+  You could try lower `learning_rate` to use lower base learning rate or higher `power` to make learning rate decrease faster in config yaml.
+
+- **Q: Why the training process failed with error for the shape can not match?**
+  **A**: This is usually caused by the config `seq_length` of model can't match the dataset. You could check and modified the `seq_length` in yaml config according to the dataset you used.
+  The parameter of model won't change with `seq_length`, the shapes of parameter only depends on model config `max_position_embeddings`.
+
