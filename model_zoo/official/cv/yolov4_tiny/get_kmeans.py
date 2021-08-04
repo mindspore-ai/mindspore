@@ -139,14 +139,14 @@ def parse_anno(annotation_path, target_size=None):
 
 def get_kmeans(anno, cluster_num=9):
 
-    anchors = kmeans(anno, cluster_num)
-    ave_iou = avg_iou(anno, anchors)
+    anchor_boxes = kmeans(anno, cluster_num)
+    mean_iou = avg_iou(anno, anchor_boxes)
 
-    anchors = anchors.astype('int').tolist()
+    anchor_boxes = anchor_boxes.astype('int').tolist()
 
-    anchors = sorted(anchors, key=lambda x: x[0] * x[1])
+    anchor_boxes = sorted(anchor_boxes, key=lambda x: x[0] * x[1])
 
-    return anchors, ave_iou
+    return anchor_boxes, mean_iou
 
 
 if __name__ == '__main__':
