@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""weight init"""
-import math
-import numpy as np
-from mindspore import Tensor
+CUR_PATH=`pwd`
+DATA_PATH=${CUR_PATH}/../data
+TRAIN_URL=http://www.quest.dcs.shef.ac.uk/wmt16_files_mmt/training.tar.gz
+VALID_URL=http://www.quest.dcs.shef.ac.uk/wmt16_files_mmt/validation.tar.gz
+TEST_URL=http://www.quest.dcs.shef.ac.uk/wmt16_files_mmt/mmt16_task1_test.tar.gz
 
-def dense_default_state(in_channel, out_channel):
-    '''Weight init for dense cell'''
-    stdv = 1 / math.sqrt(in_channel)
-    weight = Tensor(np.random.uniform(-stdv, stdv, (out_channel, in_channel)).astype(np.float32))
-    bias = Tensor(np.random.uniform(-stdv, stdv, (out_channel)).astype(np.float32))
-    return weight, bias
+mkdir ${DATA_PATH}
+cd ${DATA_PATH}
+wget --no-check-certificate ${TRAIN_URL} 
+wget --no-check-certificate ${VALID_URL}
+wget --no-check-certificate ${TEST_URL}
+tar xvf training.tar.gz
+tar xvf validation.tar.gz
+tar xvf mmt16_task1_test.tar.gz
+/bin/rm training.tar.gz
+/bin/rm validation.tar.gz
+/bin/rm mmt16_task1_test.tar.gz
+

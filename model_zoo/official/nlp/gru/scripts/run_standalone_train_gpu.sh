@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# -ne 2 ]
+if [ $# -ne 1 ]
 then
-    echo "Usage: sh run_eval.sh [CKPT_FILE] [DATASET_PATH]"
+    echo "Usage: sh run_standalone_train_gpu.sh [DATASET_PATH]"
 exit 1
 fi
 ulimit -u unlimited
@@ -23,6 +23,7 @@ export DEVICE_NUM=1
 export DEVICE_ID=0
 export RANK_ID=0
 export RANK_SIZE=1
+export DEVICE_TARGET="GPU"
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
     echo "$1"
@@ -31,30 +32,22 @@ get_real_path(){
   fi
 }
 
-CKPT_FILE=$(get_real_path $1)
-echo $CKPT_FILE
-if [ ! -f $CKPT_FILE ]
-then
-    echo "error: CKPT_FILE=$CKPT_FILE is not a file"
-exit 1
-fi
-
-DATASET_PATH=$(get_real_path $2)
+DATASET_PATH=$(get_real_path $1)
 echo $DATASET_PATH
 if [ ! -f $DATASET_PATH ]
 then
     echo "error: DATASET_PATH=$DATASET_PATH is not a file"
 exit 1
 fi
-rm -rf ./eval
-mkdir ./eval
-cp ../*.py ./eval
-cp ../*.yaml ./eval
-cp *.sh ./eval
-cp -r ../src ./eval
-cp -r ../model_utils ./eval
-cd ./eval || exit
-echo "start eval for device $DEVICE_ID"
+rm -rf ./train
+mkdir ./train
+cp ../*.py ./train
+cp ../*.yaml ./train
+cp *.sh ./train
+cp -r ../src ./train
+cp -r ../model_utils ./train
+cd ./train || exit
+echo "start training for device $DEVICE_ID"
 env > env.log
-python eval.py --ckpt_file=$CKPT_FILE --dataset_path=$DATASET_PATH &> log &
+python train.py --device_target=$DEVICE_TARGET --dataset_path=$DATASET_PATH &> log &
 cd ..

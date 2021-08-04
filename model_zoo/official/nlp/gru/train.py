@@ -15,17 +15,19 @@
 """train script"""
 import os
 import time
+import mindspore.common.dtype as mstype
 from mindspore.context import ParallelMode
 from mindspore import context
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank
 from mindspore.train.callback import Callback, CheckpointConfig, ModelCheckpoint, TimeMonitor
 from mindspore.train import Model
 from mindspore.common import set_seed
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.nn.optim import Adam
+from mindspore import log as logger
 
 from src.seq2seq import Seq2Seq
-from src.gru_for_train import GRUWithLossCell, GRUTrainOneStepWithLossScaleCell
+from src.gru_for_train import GRUWithLossCell, GRUTrainOneStepWithLossScaleCell, GRUTrainOneStepCell
 from src.dataset import create_gru_dataset
 from src.lr_schedule import dynamic_lr
 
@@ -72,13 +74,20 @@ class LossCallBack(Callback):
                                                                      cb_params.cur_step_num,
                                                                      str(cb_params.net_outputs)))
         with open("./loss_{}.log".format(self.rank_id), "a+") as f:
-            f.write("time: {}, epoch: {}, step: {}, loss: {}, overflow: {}, loss_scale: {}".format(
-                time_stamp_current - time_stamp_first,
-                cb_params.cur_epoch_num,
-                cb_params.cur_step_num,
-                str(cb_params.net_outputs[0].asnumpy()),
-                str(cb_params.net_outputs[1].asnumpy()),
-                str(cb_params.net_outputs[2].asnumpy())))
+            if context.get_context("device_target") == "Ascend":
+                f.write("time: {}, epoch: {}, step: {}, loss: {}, overflow: {}, loss_scale: {}".format(
+                    time_stamp_current - time_stamp_first,
+                    cb_params.cur_epoch_num,
+                    cb_params.cur_step_num,
+                    str(cb_params.net_outputs[0].asnumpy()),
+                    str(cb_params.net_outputs[1].asnumpy()),
+                    str(cb_params.net_outputs[2].asnumpy())))
+            else:
+                f.write("time: {}, epoch: {}, step: {}, loss: {}".format(
+                    time_stamp_current - time_stamp_first,
+                    cb_params.cur_epoch_num,
+                    cb_params.cur_step_num,
+                    str(cb_params.net_outputs.asnumpy())))
             f.write('\n')
 
 
@@ -139,13 +148,32 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     """run train."""
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id(), save_graphs=False)
-    rank = get_rank_id()
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target,
+                        device_id=get_device_id(), save_graphs=False)
+    if config.device_target == "GPU":
+        if config.compute_type != mstype.float32:
+            logger.warning('GPU only support fp32 temporarily, run with fp32.')
+            config.compute_type = mstype.float32
+
     device_num = get_device_num()
     if config.run_distribute:
-        context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True)
-        init()
+        if config.device_target == "Ascend":
+            rank = get_rank_id()
+            context.set_auto_parallel_context(device_num=device_num,
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+            init()
+        elif config.device_target == "GPU":
+            rank = get_rank()
+            init("nccl")
+            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+        else:
+            raise ValueError(config.device_target)
+    else:
+        rank = 0
+        device_num = 1
+
     mindrecord_file = config.dataset_path
     if not os.path.exists(mindrecord_file):
         print("dataset file {} not exists, please check!".format(mindrecord_file))
@@ -162,8 +190,10 @@ def run_train():
                                             scale_factor=config.scale_factor,
                                             scale_window=config.scale_window)
     update_cell = scale_manager.get_update_cell()
-    netwithgrads = GRUTrainOneStepWithLossScaleCell(network, opt, update_cell)
-
+    if config.device_target == "Ascend":
+        netwithgrads = GRUTrainOneStepWithLossScaleCell(network, opt, update_cell)
+    else:
+        netwithgrads = GRUTrainOneStepCell(network, opt)
     time_cb = TimeMonitor(data_size=dataset_size)
     loss_cb = LossCallBack(rank_id=rank)
     cb = [time_cb, loss_cb]
@@ -171,10 +201,10 @@ def run_train():
     if config.save_checkpoint:
         ckpt_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_epoch * dataset_size,
                                        keep_checkpoint_max=config.keep_checkpoint_max)
-        save_ckpt_path = os.path.join(config.outputs_dir, 'ckpt_' + str(get_rank_id()) + '/')
+        save_ckpt_path = os.path.join(config.outputs_dir, 'ckpt_' + str(rank) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=save_ckpt_path,
-                                  prefix='{}'.format(get_rank_id()))
+                                  prefix='{}'.format(rank))
         cb += [ckpt_cb]
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
