@@ -384,6 +384,7 @@ inline const PrimitivePtr kPrimSoftShrink = std::make_shared<Primitive>("SoftShr
 inline const PrimitivePtr kPrimSoftShrinkGrad = std::make_shared<Primitive>("SoftShrinkGrad");
 inline const PrimitivePtr kPrimHShrink = std::make_shared<Primitive>("HShrink");
 inline const PrimitivePtr kPrimHShrinkGrad = std::make_shared<Primitive>("HShrinkGrad");
+inline const PrimitivePtr kPrimApplyAdagradDA = std::make_shared<Primitive>("ApplyAdagradDA");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");
