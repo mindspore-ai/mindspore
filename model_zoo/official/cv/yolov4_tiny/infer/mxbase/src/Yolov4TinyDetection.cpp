@@ -15,20 +15,24 @@
  */
 
 #include "Yolov4TinyDetection.h"
-#include "MxBase/DeviceManager/DeviceManager.h"
-#include "MxBase/Log/Log.h"
 #include <unistd.h>
 #include <sys/stat.h>
+#include <utility>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+#include "MxBase/DeviceManager/DeviceManager.h"
+#include "MxBase/Log/Log.h"
 
-using namespace MxBase;
+using namespace::MxBase;
 namespace {
 const uint32_t YUV_BYTE_NU = 3;
 const uint32_t YUV_BYTE_DE = 2;
 const uint32_t VPC_H_ALIGN = 2;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::LoadLabels(const std::string &labelPath, std::map<int, std::string> &labelMap)
-{
+APP_ERROR Yolov4TinyDetectionOpencv::LoadLabels(const std::string &labelPath, std::map<int, std::string> &labelMap){
     std::ifstream infile;
     // open label file
     infile.open(labelPath, std::ios_base::in);
@@ -56,8 +60,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::LoadLabels(const std::string &labelPath, st
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::Init(const InitParam &initParam)
-{
+APP_ERROR Yolov4TinyDetectionOpencv::Init(const InitParam &initParam){
     deviceId_ = initParam.deviceId;
     APP_ERROR ret = MxBase::DeviceManager::GetInstance()->InitDevices();
     if (ret != APP_ERR_OK) {
@@ -116,8 +119,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::Init(const InitParam &initParam)
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::DeInit()
-{
+APP_ERROR Yolov4TinyDetectionOpencv::DeInit(){
     dvppWrapper_->DeInit();
     model_->DeInit();
     post_->DeInit();
@@ -125,8 +127,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::DeInit()
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::ReadImage(const std::string &imgPath, cv::Mat &imageMat)
-{   
+APP_ERROR Yolov4TinyDetectionOpencv::ReadImage(const std::string &imgPath, cv::Mat &imageMat){
     imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
     imageWidth_ = imageMat.cols;
     imageHeight_ = imageMat.rows;
@@ -135,8 +136,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::ReadImage(const std::string &imgPath, cv::M
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::Resize(cv::Mat &srcImageMat, cv::Mat &dstImageMat)
-{
+APP_ERROR Yolov4TinyDetectionOpencv::Resize(cv::Mat &srcImageMat, cv::Mat &dstImageMat){
     static constexpr uint32_t resizeHeight = 608;
     static constexpr uint32_t resizeWidth = 608;
     cv::Mat tmpImg;
@@ -156,8 +156,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::Resize(cv::Mat &srcImageMat, cv::Mat &dstIm
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase)
-{
+APP_ERROR Yolov4TinyDetectionOpencv::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase){
     const uint32_t dataSize = imageMat.cols * imageMat.rows * YUV444_RGB_WIDTH_NU;
     MemoryData memoryDataDst(dataSize, MemoryData::MEMORY_DEVICE, deviceId_);
     MemoryData memoryDataSrc(imageMat.data, dataSize, MemoryData::MEMORY_HOST_MALLOC);
@@ -173,8 +172,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::CVMatToTensorBase(const cv::Mat &imageMat, 
 }
 
 APP_ERROR Yolov4TinyDetectionOpencv::Inference(const std::vector<MxBase::TensorBase> &inputs,
-    std::vector<MxBase::TensorBase> &outputs)
-{
+    std::vector<MxBase::TensorBase> &outputs){
     auto dtypes = model_->GetOutputDataType();
     for (size_t i = 0; i < modelDesc_.outputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
@@ -205,8 +203,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::Inference(const std::vector<MxBase::TensorB
 }
 
 APP_ERROR Yolov4TinyDetectionOpencv::PostProcess(const std::vector<MxBase::TensorBase> &outputs,
-                                             std::vector<std::vector<MxBase::ObjectInfo>> &objInfos)
-{
+                                             std::vector<std::vector<MxBase::ObjectInfo>> &objInfos){
     ResizedImageInfo imgInfo;
     imgInfo.widthOriginal = imageWidth_;
     imgInfo.heightOriginal = imageHeight_;
@@ -223,8 +220,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::PostProcess(const std::vector<MxBase::Tenso
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::WriteResult(const std::vector<std::vector<MxBase::ObjectInfo>> &objInfos)
-{
+APP_ERROR Yolov4TinyDetectionOpencv::WriteResult(const std::vector<std::vector<MxBase::ObjectInfo>> &objInfos){
     std::string resultPathName = "result";
     uint32_t batchSize = objInfos.size();
     // create result directory when it does not exit
@@ -257,8 +253,7 @@ APP_ERROR Yolov4TinyDetectionOpencv::WriteResult(const std::vector<std::vector<M
     return APP_ERR_OK;
 }
 
-APP_ERROR Yolov4TinyDetectionOpencv::Process(const std::string &imgPath)
-{
+APP_ERROR Yolov4TinyDetectionOpencv::Process(const std::string &imgPath){
     // process image
     cv::Mat imageMat;
     APP_ERROR ret = ReadImage(imgPath, imageMat);
