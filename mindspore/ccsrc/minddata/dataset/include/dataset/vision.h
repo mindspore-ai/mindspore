@@ -57,7 +57,31 @@ class AutoContrast final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Apply a given image transform on a random selection of bounding box regions of a given image.
+/// \brief AdjustGamma TensorTransform.
+/// \notes Apply gamma correction on input image.
+class AdjustGamma final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] gamma Non negative real number, which makes the output image pixel value
+  ///     exponential in relation to the input image pixel value.
+  /// \param[in] gain The constant multiplier.
+  explicit AdjustGamma(float gamma, float gain = 1);
+
+  /// \brief Destructor.
+  ~AdjustGamma() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief BoundingBoxAugment TensorTransform.
+/// \note  Apply a given image transform on a random selection of bounding box regions of a given image.
 class BoundingBoxAugment final : public TensorTransform {
  public:
   /// \brief Constructor.

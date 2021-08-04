@@ -872,6 +872,64 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
   return Status::OK();
 }
 
+Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &gamma,
+                   const float &gain) {
+  try {
+    int num_channels = 1;
+    if (input->Rank() < 2) {
+      RETURN_STATUS_UNEXPECTED("AdjustGamma: image shape is not <...,H,W,C> or <H,W>.");
+    }
+    if (input->Rank() > 2) {
+      num_channels = input->shape()[-1];
+    }
+    if (num_channels != 1 && num_channels != 3) {
+      RETURN_STATUS_UNEXPECTED("AdjustGamma: channel of input image should be 1 or 3.");
+    }
+    if (input->type().IsFloat()) {
+      for (auto itr = input->begin<float>(); itr != input->end<float>(); itr++) {
+        *itr = pow((*itr) * gain, gamma);
+        *itr = std::min(std::max((*itr), 0.0f), 1.0f);
+      }
+      *output = input;
+
+    } else {
+      std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+      if (!input_cv->mat().data) {
+        RETURN_STATUS_UNEXPECTED("AdjustGamma: load image failed.");
+      }
+      cv::Mat input_img = input_cv->mat();
+      std::shared_ptr<CVTensor> output_cv;
+      RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
+      uchar LUT[256] = {};
+      for (int i = 0; i < 256; i++) {
+        float f = i / 255.0;
+        f = pow(f, gamma);
+        LUT[i] = static_cast<uchar>(floor(std::min(f * (255.0 + 1 - 1e-3) * gain, 255.0)));
+      }
+      if (input_img.channels() == 1) {
+        cv::MatIterator_<uchar> it = input_img.begin<uchar>();
+        cv::MatIterator_<uchar> it_end = input_img.end<uchar>();
+        for (; it != it_end; ++it) {
+          *it = LUT[(*it)];
+        }
+      } else {
+        cv::MatIterator_<cv::Vec3b> it = input_img.begin<cv::Vec3b>();
+        cv::MatIterator_<cv::Vec3b> it_end = input_img.end<cv::Vec3b>();
+        for (; it != it_end; ++it) {
+          (*it)[0] = LUT[(*it)[0]];
+          (*it)[1] = LUT[(*it)[1]];
+          (*it)[2] = LUT[(*it)[2]];
+        }
+      }
+      output_cv->mat() = input_img * 1;
+      *output = std::static_pointer_cast<Tensor>(output_cv);
+    }
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("AdjustGamma: " + std::string(e.what()));
+  }
+  return Status::OK();
+}
+
 Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &cutoff,
                     const std::vector<uint32_t> &ignore) {
   try {

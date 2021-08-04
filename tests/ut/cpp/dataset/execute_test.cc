@@ -70,6 +70,35 @@ TEST_F(MindDataTestExecute, TestAllpassBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+TEST_F(MindDataTestExecute, TestAdjustGammaEager1) {
+  // 3-channel eager
+  MS_LOG(INFO) << "3-channel image test";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto adjust_gamma_op = vision::AdjustGamma(0.1, 1.0);
+
+  auto transform = Execute({decode, adjust_gamma_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}
+
+TEST_F(MindDataTestExecute, TestAdjustGammaEager2) {
+  // 1-channel eager
+  MS_LOG(INFO) << "1-channel image test";
+  auto m1 = ReadFileToTensor("data/dataset/apple.jpg");
+  // Transform params
+  auto decode = vision::Decode();
+  auto rgb2gray = vision::RGB2GRAY();
+  auto adjust_gamma_op = vision::AdjustGamma(0.1, 1.0);
+
+  auto transform = Execute({decode, rgb2gray, adjust_gamma_op});
+  Status rc = transform(m1, &m1);
+  EXPECT_EQ(rc, Status::OK());
+}
+
 TEST_F(MindDataTestExecute, TestComposeTransforms) {
   MS_LOG(INFO) << "Doing TestComposeTransforms.";
 
