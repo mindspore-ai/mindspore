@@ -147,15 +147,16 @@ void Conv2DInt8Coder::CheckSupportOptimize() {
 }
 
 int Conv2DInt8Coder::InitTmpBuffer() {
+  const size_t kPartial = 2;
   switch (opt_) {
     case Basic:
       buffer_size_ =
-        static_cast<size_t>(2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
+        static_cast<size_t>(kPartial * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
         sizeof(int16_t);
       break;
     case Convolve_1_x_n:
       buffer_size_ =
-        static_cast<size_t>(2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
+        static_cast<size_t>(kPartial * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
         sizeof(int16_t);
       break;
     case Convolve_1x1_fast:

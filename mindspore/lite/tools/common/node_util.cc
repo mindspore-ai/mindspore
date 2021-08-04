@@ -463,6 +463,5 @@ size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_
     return 1;
   }
 }
-
 }  // namespace lite
 }  // namespace mindspore
