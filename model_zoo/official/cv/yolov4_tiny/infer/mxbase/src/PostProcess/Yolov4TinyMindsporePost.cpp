@@ -195,11 +195,10 @@ void Yolov4TinyPostProcess::SelectClassNHWC(std::shared_ptr<void> netout, NetInf
             }
             int classID = -1;
             float maxProb = scoreThresh_;
-            float classProb;
             for (int c = 0; c < info.classNum; ++c) {
-                classProb = static_cast<float *>(netout.get())[bIdx +
+                float clsProb = static_cast<float *>(netout.get())[bIdx +
                     (info.bboxDim + OFFSETOBJECTNESS + c)] * objectness;
-                CompareProb(classID, maxProb, classProb, c);
+                CompareProb(classID, maxProb, clsProb, c);
             }
             if (classID < 0) continue;
             MxBase::ObjectInfo det;
