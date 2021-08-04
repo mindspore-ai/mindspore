@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import json
-import cv2
 from collections import defaultdict
+import cv2
 
 ban_path = '/opt/npu/dataset/coco/coco2014/5k.txt'
 with open(ban_path, 'r')as f:
