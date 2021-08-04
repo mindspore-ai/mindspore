@@ -127,6 +127,11 @@ void CompileGraph::AddInput(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Input node is null " << node->DebugString(true);
     (void)Ref(node);
     return;
+  } else if (node->isa<ValueNode>()) {
+    // Value node maybe reused in different graph or by different nodes,copy the value node to ensure stack correct.
+    auto copy_value_node = NewValueNode(node->cast<ValueNodePtr>()->value());
+    (void)Ref(copy_value_node);
+    return;
   }
   AddInst(Instruction::kInput, Ref(node));
   set_height(height_ + 1);
