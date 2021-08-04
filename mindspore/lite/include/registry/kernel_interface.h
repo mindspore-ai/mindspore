@@ -27,12 +27,6 @@
 
 namespace mindspore {
 namespace kernel {
-/// \brief CapabilityParam defined performance of op when running.
-struct MS_API CapabilityParam {
-  float exec_time_;   /**< op running time argument */
-  float power_usage_; /**< op power waste argument */
-};
-
 /// \brief KernelInterface defined customized op's interface, such as infershape, and so on.
 class MS_API KernelInterface {
  public:
@@ -48,18 +42,6 @@ class MS_API KernelInterface {
   /// \return  STATUS as an error code of inferring, STATUS is defined in errorcode.h..
   virtual int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
                     const schema::Primitive *primitive) {
-    return 0;
-  }
-
-  /// \brief Method to get performance of an op when running.
-  ///
-  /// \param[in] tensor_in Define the input tensors of op.
-  /// \param[in] primitive Define the attributes of op.
-  /// \param[in] param Define the contr of performance.
-  ///
-  /// \return STATUS as an error code of inferring, STATUS is defined in errorcode.h.
-  virtual int GetCapability(const std::vector<mindspore::MSTensor> &tensor_in, const schema::Primitive *primitive,
-                            CapabilityParam *param) {
     return 0;
   }
 };

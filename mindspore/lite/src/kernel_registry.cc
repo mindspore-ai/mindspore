@@ -18,6 +18,7 @@
 #include <memory>
 #include "include/errorcode.h"
 #include "include/registry/register_kernel.h"
+#include "src/registry/register_utils.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "nnacl/pooling_parameter.h"
@@ -138,7 +139,7 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   MS_ASSERT(kernel != nullptr);
   kernel::KernelDesc desc;
   KernelKeyToKernelDesc(key, &desc);
-  CreateKernel creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
+  CreateKernel creator = kernel::RegisterUtils::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
   }
