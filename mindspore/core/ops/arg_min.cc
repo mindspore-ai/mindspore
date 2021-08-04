@@ -42,6 +42,7 @@ AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const Primitive
 
   // Infer shape
   auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);

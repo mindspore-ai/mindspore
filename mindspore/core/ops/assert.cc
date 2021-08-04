@@ -38,6 +38,9 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   TypePtr condition;
   if (!(input_args[0]->BuildType()->type_id() == kObjectTypeTensorType)) {
     auto condition_values = GetValue<std::vector<bool>>(input_args[0]->BuildValue());

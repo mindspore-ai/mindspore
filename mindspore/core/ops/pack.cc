@@ -58,6 +58,7 @@ AbstractBasePtr PackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_shapes = input_args[0]->BuildShape()->cast<abstract::TupleShapePtr>()->shape();
   auto x_types = input_args[0]->BuildType()->cast<TuplePtr>()->elements();
   auto all_shape = _get_pack_shape(x_shapes, x_types, GetValue<int64_t>(primitive->GetAttr(kAxis)), prim_name);
