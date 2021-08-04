@@ -14,7 +14,37 @@
 # ============================================================================
 import json
 from collections import defaultdict
-import cv2
+
+
+def name_box_parse(json_path):
+    with open(json_path, encoding='utf-8') as f:
+        data = json.load(f)
+        annotations = data['annotations']
+        for ant in annotations:
+            image_id = ant['image_id']
+            name = '/opt/npu/dataset/coco/coco2014/train2014/COCO_train2014_%012d.jpg' % image_id
+            cat = ant['category_id']
+
+            if 1 <= cat <= 11:
+                cat = cat - 1
+            elif 13 <= cat <= 25:
+                cat = cat - 2
+            elif 27 <= cat <= 28:
+                cat = cat - 3
+            elif 31 <= cat <= 44:
+                cat = cat - 5
+            elif 46 <= cat <= 65:
+                cat = cat - 6
+            elif cat == 67:
+                cat = cat - 7
+            elif cat == 70:
+                cat = cat - 9
+            elif 72 <= cat <= 82:
+                cat = cat - 10
+            elif 84 <= cat <= 90:
+                cat = cat - 11
+            name_box_id[name].append([ant['bbox'], cat])
+
 
 ban_path = '/opt/npu/dataset/coco/coco2014/5k.txt'
 with open(ban_path, 'r')as f:
@@ -23,96 +53,35 @@ with open(ban_path, 'r')as f:
 
 name_box_id = defaultdict(list)
 id_name = dict()
+name_box_parse("/opt/npu/dataset/coco/coco2014/annotations/instances_train2014.json")
+name_box_parse("/opt/npu/dataset/coco/coco2014/annotations/instances_val2014.json")
 
-f = open(
-    "/opt/npu/dataset/coco/coco2014/annotations/instances_train2014.json",
-    encoding='utf-8')
-data = json.load(f)
-annotations = data['annotations']
-for ant in annotations:
-    train_image_id = ant['image_id']
-    name = '/opt/npu/dataset/coco/coco2014/train2014/COCO_train2014_%012d.jpg' % train_image_id
-    cat = ant['category_id']
+with open('data/coco2014_minival.txt', 'w') as f:
+    ii = 0
+    for idx, key in enumerate(name_box_id.keys()):
+        if key.split('/')[-1] not in ban_list:
+            continue
 
-    if 1 <= cat <= 11:
-        cat = cat - 1
-    elif 13 <= cat <= 25:
-        cat = cat - 2
-    elif 27 <= cat <= 28:
-        cat = cat - 3
-    elif 31 <= cat <= 44:
-        cat = cat - 5
-    elif 46 <= cat <= 65:
-        cat = cat - 6
-    elif cat == 67:
-        cat = cat - 7
-    elif cat == 70:
-        cat = cat - 9
-    elif 72 <= cat <= 82:
-        cat = cat - 10
-    elif 84 <= cat <= 90:
-        cat = cat - 11
+        print('5k', key.split('/')[-1])
 
-    name_box_id[name].append([ant['bbox'], cat])
+        f.write('%d ' % ii)
+        ii += 1
+        f.write(key)
 
-f = open(
-    "/opt/npu/dataset/coco/coco2014/annotations/instances_val2014.json",
-    encoding='utf-8')
-data = json.load(f)
-annotations = data['annotations']
-for ant in annotations:
-    val_image_id = ant['image_id']
-    name = '/opt/npu/dataset/coco/coco2014/val2014/COCO_val2014_%012d.jpg' % val_image_id
-    cat = ant['category_id']
+        img = cv2.imread(key)
+        h, w, c = img.shape
 
-    if 1 <= cat <= 11:
-        cat = cat - 1
-    elif 13 <= cat <= 25:
-        cat = cat - 2
-    elif 27 <= cat <= 28:
-        cat = cat - 3
-    elif 31 <= cat <= 44:
-        cat = cat - 5
-    elif 46 <= cat <= 65:
-        cat = cat - 6
-    elif cat == 67:
-        cat = cat - 7
-    elif cat == 70:
-        cat = cat - 9
-    elif 72 <= cat <= 82:
-        cat = cat - 10
-    elif 84 <= cat <= 90:
-        cat = cat - 11
+        f.write(' %d %d' % (w, h))
 
-    name_box_id[name].append([ant['bbox'], cat])
+        box_infos = name_box_id[key]
+        for info in box_infos:
+            x_min = int(info[0][0])
+            y_min = int(info[0][1])
+            x_max = x_min + int(info[0][2])
+            y_max = y_min + int(info[0][3])
 
-f = open('data/coco2014_minival.txt', 'w')
-ii = 0
-for idx, key in enumerate(name_box_id.keys()):
-    if key.split('/')[-1] not in ban_list:
-        continue
-
-    print('5k', key.split('/')[-1])
-
-    f.write('%d '%ii)
-    ii += 1
-    f.write(key)
-
-    img = cv2.imread(key)
-    h, w, c = img.shape
-
-    f.write(' %d %d'%(w, h))
-
-    box_infos = name_box_id[key]
-    for info in box_infos:
-        x_min = int(info[0][0])
-        y_min = int(info[0][1])
-        x_max = x_min + int(info[0][2])
-        y_max = y_min + int(info[0][3])
-
-        box_info = " %d %d %d %d %d" % (
-            int(info[1]), x_min, y_min, x_max, y_max
-        )
-        f.write(box_info)
-    f.write('\n')
-f.close()
+            box_info = " %d %d %d %d %d" % (
+                int(info[1]), x_min, y_min, x_max, y_max
+            )
+            f.write(box_info)
+        f.write('\n')
