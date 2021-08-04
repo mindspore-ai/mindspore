@@ -39,12 +39,12 @@ struct LiteQuantParam {
   int32_t zeroPoint;
   float var_corr{1};
   float mean_corr{0};
-  bool inited;
+  bool inited{false};
   std::vector<float> clusters{};
-  int bitNum;
-  int roundType;
-  int multiplier;
-  int dstDtype;
+  int bitNum{8};
+  int roundType{1};
+  int multiplier{1};
+  int dstDtype{32};
 };
 
 class Tensor : public mindspore::tensor::MSTensor {
