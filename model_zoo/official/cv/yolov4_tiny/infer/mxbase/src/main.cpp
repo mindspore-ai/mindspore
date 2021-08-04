@@ -21,8 +21,7 @@
 
 std::vector<double> g_inferCost;
 
-void SplitString(const std::string &s, std::vector<std::string> &v, const std::string &c)
-{
+void SplitString(const std::string &s, std::vector<std::string> &v, const std::string &c){
     std::string::size_type pos1, pos2;
     pos2 = s.find(c);
     pos1 = 0;
@@ -38,8 +37,7 @@ void SplitString(const std::string &s, std::vector<std::string> &v, const std::s
     }
 }
 
-void InitYolov4TinyParam(InitParam &initParam)
-{
+void InitYolov4TinyParam(InitParam &initParam){
     initParam.deviceId = 0;
     initParam.labelPath = "../data/models/coco2014.names";
     initParam.checkTensor = true;
@@ -56,8 +54,7 @@ void InitYolov4TinyParam(InitParam &initParam)
     initParam.anchorDim = 3;
 }
 
-APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imagesPath)
-{
+APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imagesPath){
     std::ifstream inFile;
     inFile.open(path, std::ios_base::in);
     std::string line;
@@ -82,13 +79,11 @@ APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imag
     return APP_ERR_OK;
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]){
     if (argc <= 1) {
         LogWarn << "Please input image path, such as './yolov4tiny infer.txt'.";
         return APP_ERR_OK;
     }
-
     InitParam initParam;
     InitYolov4TinyParam(initParam);
     auto yolov4tiny = std::make_shared<Yolov4TinyDetectionOpencv>();
@@ -98,10 +93,8 @@ int main(int argc, char* argv[])
         return ret;
     }
     LogInfo << "End to Init yolov4tiny.";
-    
     std::string inferText = argv[1];
     std::vector<std::string> imagesPath;
-    
     ret = ReadImagesPath(inferText, imagesPath);
     if (ret != APP_ERR_OK) {
         LogError << "ReadImagesPath failed, ret=" << ret << ".";
@@ -116,7 +109,6 @@ int main(int argc, char* argv[])
             return ret;
         }
     }
-
     yolov4tiny->DeInit();
     double costSum = 0;
     for (uint32_t i = 0; i < g_inferCost.size(); i++) {
