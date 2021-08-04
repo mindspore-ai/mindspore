@@ -57,7 +57,7 @@ id_name = dict()
 name_box_parse("/opt/npu/dataset/coco/coco2014/annotations/instances_train2014.json")
 name_box_parse("/opt/npu/dataset/coco/coco2014/annotations/instances_val2014.json")
 
-with open('data/coco2014_minival.txt', 'w') as f:
+with open('data/coco2014_minival.txt', 'w') as g:
     ii = 0
     for idx, key in enumerate(name_box_id.keys()):
         if key.split('/')[-1] not in ban_list:
@@ -65,14 +65,14 @@ with open('data/coco2014_minival.txt', 'w') as f:
 
         print('5k', key.split('/')[-1])
 
-        f.write('%d ' % ii)
+        g.write('%d ' % ii)
         ii += 1
-        f.write(key)
+        g.write(key)
 
         img = cv2.imread(key)
         h, w, c = img.shape
 
-        f.write(' %d %d' % (w, h))
+        g.write(' %d %d' % (w, h))
 
         box_infos = name_box_id[key]
         for info in box_infos:
@@ -84,5 +84,5 @@ with open('data/coco2014_minival.txt', 'w') as f:
             box_info = " %d %d %d %d %d" % (
                 int(info[1]), x_min, y_min, x_max, y_max
             )
-            f.write(box_info)
-        f.write('\n')
+            g.write(box_info)
+        g.write('\n')
