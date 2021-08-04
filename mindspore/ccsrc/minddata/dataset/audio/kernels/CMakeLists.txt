@@ -27,6 +27,7 @@ add_library(audio-kernels OBJECT
         mu_law_decoding_op.cc
         mu_law_encoding_op.cc
         overdrive_op.cc
+        phaser_op.cc
         riaa_biquad_op.cc
         time_masking_op.cc
         time_stretch_op.cc
