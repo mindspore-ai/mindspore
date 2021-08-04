@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <string>
+#include <memory>
 #include <opencv4/opencv2/opencv.hpp>
 #include "MxBase/ErrorCode/ErrorCode.h"
 #include "MxBase/CV/Core/DataType.h"
@@ -48,56 +50,57 @@ struct NetInfo {
     int netWidth;
     int netHeight;
 };
-}
+} // namespace
 
 namespace MxBase {
 class Yolov4TinyPostProcess : public ObjectPostProcessBase {
-public:
-    Yolov4TinyPostProcess() = default;
+ public:
+     Yolov4TinyPostProcess() = default;
 
-    ~Yolov4TinyPostProcess() = default;
+     ~Yolov4TinyPostProcess() = default;
 
-    Yolov4TinyPostProcess(const Yolov4TinyPostProcess &other) = default;
+     Yolov4TinyPostProcess(const Yolov4TinyPostProcess &other) = default;
 
-    Yolov4TinyPostProcess &operator=(const Yolov4TinyPostProcess &other);
+     Yolov4TinyPostProcess &operator=(const Yolov4TinyPostProcess &other);
 
-    APP_ERROR Init(const std::map<std::string, std::shared_ptr<void>> &postConfig) override;
+     APP_ERROR Init(const std::map<std::string, std::shared_ptr<void>> &postConfig) override;
 
-    APP_ERROR DeInit() override;
+     APP_ERROR DeInit() override;
 
-    APP_ERROR Process(const std::vector<TensorBase> &tensors, std::vector<std::vector<ObjectInfo>> &objectInfos,
+     APP_ERROR Process(const std::vector<TensorBase> &tensors, std::vector<std::vector<ObjectInfo>> &objectInfos,
                       const std::vector<ResizedImageInfo> &resizedImageInfos = {},
                       const std::map<std::string, std::shared_ptr<void>> &configParamMap = {}) override;
-protected:
-    bool IsValidTensors(const std::vector<TensorBase> &tensors) const override;
 
-    void ObjectDetectionOutput(const std::vector<TensorBase> &tensors,
+ protected:
+     bool IsValidTensors(const std::vector<TensorBase> &tensors) const override;
+
+     void ObjectDetectionOutput(const std::vector<TensorBase> &tensors,
                                std::vector<std::vector<ObjectInfo>> &objectInfos,
                                const std::vector<ResizedImageInfo> &resizedImageInfos = {});
 
-    void CompareProb(int& classID, float& maxProb, float classProb, int classNum);
-    void SelectClassNHWC(std::shared_ptr<void> netout, NetInfo info, std::vector<MxBase::ObjectInfo>& detBoxes,
+     void CompareProb(int& classID, float& maxProb, float classProb, int classNum);
+     void SelectClassNHWC(std::shared_ptr<void> netout, NetInfo info, std::vector<MxBase::ObjectInfo>& detBoxes,
                          int stride, OutputLayer layer);
-    void GenerateBbox(std::vector<std::shared_ptr<void>> featLayerData,
+     void GenerateBbox(std::vector<std::shared_ptr<void>> featLayerData,
                       std::vector<MxBase::ObjectInfo> &detBoxes, const std::vector<std::vector<size_t>>& featLayerShapes,
                       const int netWidth, const int netHeight);
-    APP_ERROR GetBiases(std::string& strBiases);
+     APP_ERROR GetBiases(std::string& strBiases);
 
-protected:
-    float objectnessThresh_ = DEFAULT_OBJECTNESS_THRESH; // Threshold of objectness value
-    float iouThresh_ = DEFAULT_IOU_THRESH; // Non-Maximum Suppression threshold
-    int anchorDim_ = DEFAULT_ANCHOR_DIM;
-    int biasesNum_ = DEFAULT_BIASES_NUM; // Yolov3 anchors, generate from train data, coco dataset
-    int yoloType_ = DEFAULT_YOLO_TYPE;
-    int modelType_ = 0;
-    int yoloVersion_ = DEFAULT_YOLO_VERSION;
-    int inputType_ = 0;
-    std::vector<float> biases_ = {};
+ protected:
+     float objectnessThresh_ = DEFAULT_OBJECTNESS_THRESH;  // Threshold of objectness value
+     float iouThresh_ = DEFAULT_IOU_THRESH;  // Non-Maximum Suppression threshold
+     int anchorDim_ = DEFAULT_ANCHOR_DIM;
+     int biasesNum_ = DEFAULT_BIASES_NUM;  // anchors, generate from train data, coco dataset
+     int yoloType_ = DEFAULT_YOLO_TYPE;
+     int modelType_ = 0;
+     int yoloVersion_ = DEFAULT_YOLO_VERSION;
+     int inputType_ = 0;
+     std::vector<float> biases_ = {};
 };
 #ifndef ENABLE_POST_PROCESS_INSTANCE
 extern "C" {
 std::shared_ptr<MxBase::Yolov4TinyPostProcess> GetObjectInstance();
 }
 #endif
-}
+} // namespace MxBase
 #endif
