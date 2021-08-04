@@ -223,7 +223,9 @@ int TransposeInsertForWeightConst(const FuncGraphPtr &graph, const CNodePtr &con
   prim->AddAttr("quant_params", std::make_shared<QuantParamHolder>(1, 1));
   auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
   transpose_node->set_fullname_with_scope(weight_node->fullname_with_scope() + "_const_post");
-  conv_node->set_input(kNumWeightIndex, transpose_node);
+  auto tr = manager->Transact();
+  tr.SetEdge(conv_node, kNumWeightIndex, transpose_node);
+  tr.Commit();
   return lite::RET_OK;
 }
 

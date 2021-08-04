@@ -164,7 +164,7 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
   prim->set_pad({0, 0, 0, 0});
   mindspore::Format format = mindspore::Format::NCHW;
   mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
-  int64_t channel_out = 1, channel_in = 1, group = 1;
+  int64_t channel_out = -1, channel_in = -1, group = 1;
   std::vector<int64_t> kernels, strides, dilation, pads;
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
