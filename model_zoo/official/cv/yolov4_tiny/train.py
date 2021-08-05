@@ -185,7 +185,6 @@ def get_network(net, cfg, learning_rate):
     return net
 
 
-@moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     profiler = set_default()
     loss_meter = AverageMeter('loss')
