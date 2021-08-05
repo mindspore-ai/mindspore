@@ -704,7 +704,7 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
   auto format = build_info->GetOutputFormat(output_idx);
-  if (format == kernel::KernelBuildInfo::kInvalidFormat) {
+  if (format == kernel::kInvalidFormat) {
     MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
                       << " has a invalid output format"
                       << " trace: " << trace::DumpSourceLines(node);
@@ -728,7 +728,7 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
   auto format = build_info->GetInputFormat(input_idx);
-  if (format == kernel::KernelBuildInfo::kInvalidFormat) {
+  if (format == kernel::kInvalidFormat) {
     MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
                       << " has a invalid input format"
                       << " trace: " << trace::DumpSourceLines(node);
@@ -2000,7 +2000,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetInputFormat(anf_node, index);
     auto input_node_index = GetPrevNodeOutput(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format, input_node_index.first, input_node_index.second);
+    (void)trans::TransShapeToDevice(device_shape, format, input_node_index.first, input_node_index.second);
   }
   return device_shape;
 }
@@ -2012,7 +2012,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
     auto max_shape = GetOutputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetOutputFormat(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format, anf_node, index);
+    (void)trans::TransShapeToDevice(device_shape, format, anf_node, index);
   }
   return device_shape;
 }
@@ -2122,7 +2122,7 @@ AnfNodeIndexSet AnfRuntimeAlgorithm::GetUpdateStateUsers(const FuncGraphManagerP
   AnfNodeIndexSet update_states;
   for (auto &user : manager->node_users()[node]) {
     if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimUpdateState)) {
-      update_states.insert(user);
+      (void)update_states.insert(user);
     }
   }
   return update_states;
