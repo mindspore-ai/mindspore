@@ -42,6 +42,8 @@
 #include "backend/optimizer/graph_kernel/reorder_ops.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"
+#include "backend/optimizer/graph_kernel/decrease_compute_precision.h"
+#include "backend/optimizer/graph_kernel/decrease_transfer_precision.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
 
@@ -152,6 +154,10 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_stitch_fusion);
   pm->AddPass(std::make_shared<StitchAtomicCleanInsertter>(), level, is_gpu);
 
+  // Enable low precision
+  auto level_low_precision = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_low_precision);
+  pm->AddPass(std::make_shared<DecreaseTransferPrecision>(), level_low_precision);
+  pm->AddPass(std::make_shared<DecreaseComputePrecision>(), level_low_precision, is_ascend);
   return pm;
 }
 
