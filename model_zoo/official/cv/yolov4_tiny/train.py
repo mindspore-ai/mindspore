@@ -29,7 +29,6 @@ import mindspore as ms
 from mindspore import amp
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common import set_seed
-from mindspore.profiler.profiling import Profiler
 
 from src.yolo import YOLOV4TinyCspDarkNet53, YoloWithLossCell, TrainingWrapper
 from src.logger import get_logger
@@ -60,11 +59,6 @@ def set_default():
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
                         device_target=config.device_target, save_graphs=False, device_id=device_id)
 
-    if config.need_profiler:
-        profiler = Profiler(output_path=config.outputs_dir, is_detail=True, is_show_op_path=True)
-    else:
-        profiler = None
-
     # init distributed
     if config.is_distributed:
         if config.device_target == "Ascend":
@@ -87,8 +81,6 @@ def set_default():
                                       datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
     config.logger = get_logger(config.outputs_dir, config.rank)
     config.logger.save_args(config)
-
-    return profiler
 
 
 def convert_training_shape(args_training_shape):
@@ -129,7 +121,7 @@ def get_network(net, cfg, learning_rate):
 
 
 def run_train():
-    profiler = set_default()
+    set_default()
     loss_meter = AverageMeter('loss')
     context.reset_auto_parallel_context()
     parallel_mode = ParallelMode.STAND_ALONE
