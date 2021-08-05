@@ -86,18 +86,20 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 # 分布式训练
 用法：
 cd scripts
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
 
 # 单机训练
 用法：
 cd scripts
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
+bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
 
 # 运行评估示例
 用法：
 cd scripts
 bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
 ```
+
+若没有[PRETRAINED_CKPT_PATH]，使用 “” 作为参数运行脚本。
 
 # 脚本说明
 
@@ -159,14 +161,16 @@ bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
 # 分布式训练
 用法：
 cd scripts
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
 
 # 单机训练
 用法：
 cd scripts
-bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
+bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH] [MODELART]
 
 ```
+
+若没有[PRETRAINED_CKPT_PATH]，使用 “” 作为参数运行脚本。
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
 
