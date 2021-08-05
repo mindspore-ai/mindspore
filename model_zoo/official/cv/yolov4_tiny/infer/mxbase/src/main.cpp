@@ -21,40 +21,40 @@
 
 std::vector<double> g_inferCost;
 
-void SplitString(const std::string &s, std::vector<std::string> &v, const std::string &c) {
+void SplitString(const std::string *s, std::vector<std::string> *v, const std::string *c) {
     std::string::size_type pos1, pos2;
-    pos2 = s.find(c);
+    pos2 = s->find(c);
     pos1 = 0;
     while (std::string::npos != pos2) {
-        v.push_back(s.substr(pos1, pos2 - pos1));
+        v->push_back(s->substr(pos1, pos2 - pos1));
 
-        pos1 = pos2 + c.size();
-        pos2 = s.find(c, pos1);
+        pos1 = pos2 + c->size();
+        pos2 = s->find(c, pos1);
     }
 
-    if (pos1 != s.length()) {
-        v.push_back(s.substr(pos1));
+    if (pos1 != s->length()) {
+        v->push_back(s->substr(pos1));
     }
 }
 
-void InitYolov4TinyParam(InitParam &initParam) {
-    initParam.deviceId = 0;
-    initParam.labelPath = "../data/models/coco2014.names";
-    initParam.checkTensor = true;
-    initParam.modelPath = "../data/models/yolov4_tiny.om";
-    initParam.classNum = 80;
-    initParam.biasesNum = 12;
-    initParam.biases = "10,14,23,27,37,58,81,82,135,169,344,319";
-    initParam.objectnessThresh = "0.001";
-    initParam.iouThresh = "0.45";
-    initParam.scoreThresh = "0.001";
-    initParam.yoloType = 2;
-    initParam.modelType = 0;
-    initParam.inputType = 0;
-    initParam.anchorDim = 3;
+void InitYolov4TinyParam(InitParam *initParam) {
+    initParam->deviceId = 0;
+    initParam->labelPath = "../data/models/coco2014.names";
+    initParam->checkTensor = true;
+    initParam->modelPath = "../data/models/yolov4_tiny.om";
+    initParam->classNum = 80;
+    initParam->biasesNum = 12;
+    initParam->biases = "10,14,23,27,37,58,81,82,135,169,344,319";
+    initParam->objectnessThresh = "0.001";
+    initParam->iouThresh = "0.45";
+    initParam->scoreThresh = "0.001";
+    initParam->yoloType = 2;
+    initParam->modelType = 0;
+    initParam->inputType = 0;
+    initParam->anchorDim = 3;
 }
 
-APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imagesPath) {
+APP_ERROR ReadImagesPath(const std::string *path, std::vector<std::string> *imagesPath) {
     std::ifstream inFile;
     inFile.open(path, std::ios_base::in);
     std::string line;
@@ -72,7 +72,7 @@ APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> &imag
         }
         vectorStr.clear();
         SplitString(line, vectorStr, splitStr);
-        imagesPath.push_back(vectorStr[1]);
+        imagesPath->push_back(vectorStr[1]);
     }
     LogInfo << imagesPath[0];
     inFile.close();
