@@ -14,32 +14,24 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/hashtable_lookup_infer.h"
+#include "nnacl/infer/string/skip_gram_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int HashtableLoopupInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                              OpParameter *parameter) {
-  int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 2);
+int SkipGramInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                       OpParameter *parameter) {
+  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
 
   const TensorC *input = inputs[0];
-  const TensorC *values = inputs[2];
   TensorC *output = outputs[0];
-  TensorC *hits = outputs[1];
 
-  output->data_type_ = values->data_type_;
-  output->format_ = input->format_;
-  hits->shape_size_ = 1;
-  hits->shape_[0] = GetDimensionSize(input, 0);
-  hits->data_type_ = kNumberTypeUInt8;
-  hits->format_ = input->format_;
-
+  SetDataTypeFormat(output, input);
   if (input->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
   return NNACL_OK;
 }
 
-REG_INFER(HashtableLookup, PrimType_HashtableLookup, HashtableLoopupInferShape)
+REG_INFER(SkipGram, PrimType_SkipGram, SkipGramInferShape)

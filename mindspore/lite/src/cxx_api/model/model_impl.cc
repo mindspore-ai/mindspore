@@ -210,6 +210,7 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
     old_data.push_back(input->data());
     if (input->data_type() == kObjectTypeString) {
+#ifdef ENABLE_STRING_KERNEL
       std::vector<int32_t> shape = TruncateShape(user_input.Shape(), input->data_type(), user_input.DataSize(), false);
       if (shape.empty() && !(user_input.Shape().empty())) {
         ResetTensorData(old_data, input_tensors);
@@ -218,6 +219,10 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       }
       input->set_shape(shape);
       input->set_data(user_input.MutableData());
+#else
+      MS_LOG(ERROR) << "If you use String tensor, you need to turn on the \"MSLITE_STRING_KERNEL\" compilation option "
+                       "to recompile the mindpole-lite library";
+#endif
     } else {
       if (user_input.MutableData() != input->data()) {
         if (input->Size() != user_input.DataSize()) {

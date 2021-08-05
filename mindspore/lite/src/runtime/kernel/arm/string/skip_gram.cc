@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/skip_gram_fp32.h"
+#include "src/runtime/kernel/arm/string/skip_gram.h"
 
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"

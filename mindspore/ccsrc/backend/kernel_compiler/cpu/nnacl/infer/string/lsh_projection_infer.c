@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/lsh_projection_infer.h"
+#include "nnacl/infer/string/lsh_projection_infer.h"
 #include "nnacl/infer/infer_register.h"
 
 int LshProjectionInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,

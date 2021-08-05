@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SKIP_GRAM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SKIP_GRAM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_SKIP_GRAM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_SKIP_GRAM_H_
 
 #include <vector>
 #include "src/inner_kernel.h"
@@ -44,4 +44,4 @@ class SkipGramCPUKernel : public InnerKernel {
 
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SKIP_GRAM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_SKIP_GRAM_H_
