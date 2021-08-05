@@ -186,4 +186,3 @@ def preprocess_dataset(data_dir):
 
 if __name__ == '__main__':
     preprocess_dataset(config.data_path)
->>>>>>> 7c3b74dc90 (训练前处理适配minspore1.3版本)
