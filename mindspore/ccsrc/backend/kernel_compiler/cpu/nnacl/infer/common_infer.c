@@ -157,7 +157,7 @@ void SetShapeTensor(TensorC *dst, const TensorC *src) {
 }
 
 void SetShapeArray(TensorC *dst, const int *src, size_t src_size) {
-  for (size_t i = 0; i < src_size; i++) {
+  for (size_t i = 0; i < src_size && i < MAX_SHAPE_SIZE; i++) {
     dst->shape_[i] = src[i];
   }
   dst->shape_size_ = src_size;
@@ -286,13 +286,16 @@ int GetDimensionSize(const TensorC *tensor, const size_t index) {
 }
 
 void ShapeSet(int *dst_shape, size_t *dst_shape_size, const int *src_shape, size_t src_shape_size) {
-  for (size_t i = 0; i < src_shape_size; i++) {
+  for (size_t i = 0; i < src_shape_size && i < MAX_SHAPE_SIZE; i++) {
     dst_shape[i] = src_shape[i];
   }
   *dst_shape_size = src_shape_size;
 }
 
 void ShapePush(int *shape, size_t *shape_size, int value) {
+  if (*shape_size >= MAX_SHAPE_SIZE) {
+    return;
+  }
   shape[*shape_size] = value;
   *shape_size = *shape_size + 1;
 }
