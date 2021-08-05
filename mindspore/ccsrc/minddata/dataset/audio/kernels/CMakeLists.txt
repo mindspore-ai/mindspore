@@ -3,6 +3,7 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 
 add_library(audio-kernels OBJECT
         allpass_biquad_op.cc
+        angle_op.cc
         band_biquad_op.cc
         bandpass_biquad_op.cc
         bandreject_biquad_op.cc

@@ -18,6 +18,7 @@
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/angle_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
@@ -37,6 +38,17 @@ PYBIND_REGISTER(
         return allpass_biquad;
       }));
   }));
+
+PYBIND_REGISTER(AngleOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::AngleOperation, TensorOperation, std::shared_ptr<audio::AngleOperation>>(
+                    *m, "AngleOperation")
+                    .def(py::init([]() {
+                      auto angle = std::make_shared<audio::AngleOperation>();
+                      THROW_IF_ERROR(angle->ValidateParams());
+                      return angle;
+                    }));
+                }));
+
 PYBIND_REGISTER(
   BandBiquadOperation, 1, ([](const py::module *m) {
     (void)py::class_<audio::BandBiquadOperation, TensorOperation, std::shared_ptr<audio::BandBiquadOperation>>(
@@ -47,6 +59,7 @@ PYBIND_REGISTER(
         return band_biquad;
       }));
   }));
+
 PYBIND_REGISTER(
   BandpassBiquadOperation, 1, ([](const py::module *m) {
     (void)py::class_<audio::BandpassBiquadOperation, TensorOperation, std::shared_ptr<audio::BandpassBiquadOperation>>(

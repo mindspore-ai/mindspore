@@ -17,6 +17,7 @@
 #include "minddata/dataset/include/dataset/audio.h"
 
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/angle_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
@@ -41,6 +42,11 @@ AllpassBiquad::AllpassBiquad(int32_t sample_rate, float central_freq, float Q)
 std::shared_ptr<TensorOperation> AllpassBiquad::Parse() {
   return std::make_shared<AllpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
 }
+
+// Angle Transform Operation.
+Angle::Angle() {}
+
+std::shared_ptr<TensorOperation> Angle::Parse() { return std::make_shared<AngleOperation>(); }
 
 // BandBiquad Transform Operation.
 struct BandBiquad::Data {
