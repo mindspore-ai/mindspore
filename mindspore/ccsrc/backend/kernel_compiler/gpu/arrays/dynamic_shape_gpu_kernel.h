@@ -75,8 +75,8 @@ class DynamicShapeGpuKernel : public GpuKernel {
   }
 
   void ResetResource() noexcept override {
-    input_size_ = -1;
-    output_size_ = -1;
+    input_size_ = 0;
+    output_size_ = 0;
     prev_node_output_shape_.clear();
     input_size_list_.clear();
     output_size_list_.clear();
