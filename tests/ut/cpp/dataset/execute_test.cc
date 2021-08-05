@@ -477,3 +477,18 @@ TEST_F(MindDataTestExecute, TestBandrejectBiquadWithWrongArg) {
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_FALSE(s01.IsOk());
 }
+
+TEST_F(MindDataTestExecute, TestAngleEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAngleEager";
+  std::vector<double> origin = {1.143, 1.3123, 2.632, 2.554, -1.213, 1.3, 0.456, 3.563};
+  TensorShape input_shape({4, 2});
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateFromVector(origin, input_shape, &de_tensor);
+
+  std::shared_ptr<TensorTransform> angle = std::make_shared<audio::Angle>();
+  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  mindspore::dataset::Execute Transform({angle});
+  Status s = Transform(input, &input);
+
+  ASSERT_TRUE(s.IsOk());
+}

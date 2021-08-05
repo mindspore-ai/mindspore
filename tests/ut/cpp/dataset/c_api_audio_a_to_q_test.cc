@@ -369,3 +369,62 @@ TEST_F(MindDataTestPipeline, Level0_TestBassBiquad002) {
   std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
   EXPECT_EQ(iter02, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestAnglePipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipeline";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("complex", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto angle_op = audio::Angle();
+
+  ds = ds->Map({angle_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["complex"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 1);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipelineError";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("complex", mindspore::DataType::kNumberTypeFloat32, {3, 2, 1}));
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto angle_op = audio::Angle();
+
+  ds = ds->Map({angle_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  EXPECT_ERROR(iter->GetNextRow(&row));
+}

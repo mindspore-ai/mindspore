@@ -28,6 +28,31 @@
 constexpr double PI = 3.141592653589793;
 namespace mindspore {
 namespace dataset {
+/// \brief Calculate the angles of the complex numbers
+/// \param input/output: Tensor of shape <...,time>
+template <typename T>
+Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  TensorShape shape = input->shape();
+  std::vector output_shape = shape.AsVector();
+  output_shape.pop_back();
+  std::shared_ptr<Tensor> output_tensor;
+  std::vector<T> out;
+  T o;
+  T x;
+  T y;
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    x = static_cast<T>(*itr);
+    itr++;
+    y = static_cast<T>(*itr);
+    o = std::atan2(y, x);
+    out.emplace_back(o);
+  }
+  // Generate multidimensional results corresponding to input
+  Tensor::CreateFromVector(out, TensorShape{output_shape}, &output_tensor);
+  *output = output_tensor;
+  return Status::OK();
+}
+
 /// \brief Perform a biquad filter of input tensor.
 /// \param input/output: Tensor of shape <...,time>
 /// \param a0: denominator coefficient of current output y[n], typically 1

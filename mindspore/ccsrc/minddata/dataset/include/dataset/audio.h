@@ -34,6 +34,20 @@ class TensorOperation;
 
 // Transform operations for performing computer audio.
 namespace audio {
+/// \brief Compute the angle of complex tensor input.
+class Angle final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  Angle();
+  /// \brief Destructor.
+  ~Angle() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+};
+
 /// \brief Design two-pole band filter.
 class BandBiquad final : public TensorTransform {
  public:

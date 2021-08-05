@@ -74,6 +74,25 @@ class AllpassBiquad(AudioTensorOperation):
         return cde.AllpassBiquadOperation(self.sample_rate, self.central_freq, self.Q)
 
 
+class Angle(AudioTensorOperation):
+    """
+    Calculate the angle of the complex number sequence of shape (..., 2).
+    The first dimension represents the real part while the second represents the imaginary.
+    Args:
+
+    Examples:
+        >>> import mindspore.dataset.audio.transforms as audio
+        >>> import numpy as np
+
+        >>> input_complex = np.array([[1.43, 5.434], [23.54, 89.38]])
+        >>> angle_op = audio.Angle()
+        >>> angles = angle_op(input_complex)
+    """
+
+    def parse(self):
+        return cde.AngleOperation()
+
+
 class BandBiquad(AudioTensorOperation):
     """
     Design two-pole band filter for audio waveform of dimension of `(..., time)`
