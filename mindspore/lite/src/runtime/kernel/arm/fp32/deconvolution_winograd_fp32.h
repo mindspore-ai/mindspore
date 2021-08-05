@@ -32,7 +32,8 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeConvolutionWinogradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
+                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
   ~DeConvolutionWinogradCPUKernel() override;
   int Init() override;
   int Run() override;
@@ -61,6 +62,7 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   std::mutex lock_;
   int thread_num_hw_ = 0;
   int thread_stride_hw_ = 0;
+  bool valid_weight_shape_ = true;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DECONVOLUTION_WINOGRAD_H_

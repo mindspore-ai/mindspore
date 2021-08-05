@@ -27,7 +27,7 @@ class ConvolutionDepthwise3x3Int8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwise3x3Int8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, nullptr, nullptr) {}
   ~ConvolutionDepthwise3x3Int8CPUKernel() override;
 
   int Init() override;
