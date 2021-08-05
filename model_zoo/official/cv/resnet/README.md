@@ -202,18 +202,19 @@ If you want to run in modelarts, please check the official documentation of [mod
 .
 └──resnet
   ├── README.md
-  ├── config
-    ├── resnet18_cifar10_config.yaml         # parameter configuration
-    ├── resnet18_cifar10_config_gpu.yaml         # parameter configuration
-    ├── resnet18_imagenet2012_config.yaml    # parameter configuration
-    ├── resnet18_imagenet2012_config_gpu.yaml    # parameter configuration
-    ├── resnet34_imagenet2012_config.yaml    # parameter configuration
-    ├── resnet50_cifar10_config.yaml         # parameter configuration
-    ├── resnet50_imagenet2012_Ascend_config.yaml # parameter configuration
-    ├── resnet50_imagenet2012_config.yaml    # parameter configuration
-    ├── resnet50_imagenet2012_GPU_config.yaml # parameter configuration
-    ├── resnet101_imagenet2012_config.yaml   # parameter configuration
-    └── se-resnet50_imagenet2012_config.yaml # parameter configuration  
+  ├── config                               # parameter configuration
+    ├── resnet18_cifar10_config.yaml
+    ├── resnet18_cifar10_config_gpu.yaml
+    ├── resnet18_imagenet2012_config.yaml
+    ├── resnet18_imagenet2012_config_gpu.yaml
+    ├── resnet34_imagenet2012_config.yaml
+    ├── resnet50_cifar10_config.yaml
+    ├── resnet50_imagenet2012_Acc_config.yaml     # High performance version: The performance is improved by more than 10% and the precision decrease less than 1%
+    ├── resnet50_imagenet2012_Ascend_Thor_config.yaml
+    ├── resnet50_imagenet2012_config.yaml
+    ├── resnet50_imagenet2012_GPU_Thor_config.yaml
+    ├── resnet101_imagenet2012_config.yaml
+    └── se-resnet50_imagenet2012_config.yaml
   ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
     ├── run_parameter_server_train.sh      # launch ascend parameter server training(8 pcs)
