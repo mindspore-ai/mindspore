@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef _MSC_VER
 #include <sched.h>
 #include <unistd.h>
+#endif
 #include "thread/threadpool.h"
 #include "thread/core_affinity.h"
 
