@@ -84,8 +84,8 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
   int *end_data = (int *)(inputs[3]->data_);
   int *stride_data = (int *)(inputs[4]->data_);
 
-  size_t ndim_ = GetElementNum(begin_tensor);
-  for (int i = 0; i < ndim_; ++i) {
+  size_t ndim_ = (size_t)GetElementNum(begin_tensor);
+  for (size_t i = 0; i < ndim_; ++i) {
     ShapePush(begins_, &begins_size, begin_data[i]);
     ShapePush(ends_, &ends_size, end_data[i]);
     ShapePush(strides_, &strides_size, stride_data[i]);

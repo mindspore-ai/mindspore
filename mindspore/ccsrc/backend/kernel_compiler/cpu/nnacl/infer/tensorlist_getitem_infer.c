@@ -37,7 +37,7 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     return NNACL_INFER_INVALID;
   }
   int index = ((int *)(get_index->data_))[0];
-  if (index < 0 || index > (input0->element_num_ - 1)) {
+  if (index < 0 || index > ((int)(input0->element_num_ - 1))) {
     return NNACL_ERR;
   }
   TensorC *tensor_index = &input0->tensors_[index];
