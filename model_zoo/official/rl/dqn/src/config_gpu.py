@@ -19,20 +19,19 @@ network config setting, will be used in train.py and eval.py
 from easydict import EasyDict as edict
 
 config_dqn = edict({
-    'dev': 'Ascend',
-    'gamma': 0.8,
+    'dev': 'GPU',
+    'gamma': 0.9,
     'epsi_high': 0.9,
-    'epsi_low': 0.05,
-    'lr': 0.001,
-    'capacity': 100000,
-    'batch_size': 512,
+    'epsi_low': 0.9,
+    'lr': 0.01,
+    'batch_size': 32,
     'target_replace_iter': 100,
     'memory_capacity': 2000,
-    'game': 'CartPole-v1',
+    'game': 'CartPole-v0',
     'state_space_dim': 4,
     'action_space_dim': 2,
     'env_a_shape': 0,
-    'hidden_size': 256,
+    'hidden_size': 50,
     'decay': 200,
-    'EPOCH': 50
+    'EPOCH': 400
 })
