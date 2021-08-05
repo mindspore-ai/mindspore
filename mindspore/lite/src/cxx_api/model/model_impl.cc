@@ -220,8 +220,8 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       input->set_shape(shape);
       input->set_data(user_input.MutableData());
 #else
-      MS_LOG(ERROR) << "If you use String tensor, you need to turn on the \"MSLITE_STRING_KERNEL\" compilation option "
-                       "to recompile the mindpole-lite library";
+      MS_LOG(ERROR) << unsupport_string_tensor_log;
+      return kLiteError;
 #endif
     } else {
       if (user_input.MutableData() != input->data()) {

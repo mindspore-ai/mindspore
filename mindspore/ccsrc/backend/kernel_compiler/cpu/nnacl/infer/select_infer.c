@@ -34,6 +34,7 @@ int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     TensorC *output = outputs[i];
     SetDataTypeFormat(output, input);
     if (input->data_type_ == kObjectTypeTensorType) {
+#ifdef ENABLE_CONTROL_TENSORLIST
       TensorListC *input_tensorlist = (TensorListC *)(input);
       TensorListC *output_tensorlist = (TensorListC *)(output);
       output_tensorlist->element_shape_size_ = input_tensorlist->element_shape_size_;
@@ -47,6 +48,9 @@ int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
       for (size_t j = 0; j < output_tensorlist->element_num_; j++) {
         memcpy(&output_tensorlist->tensors_[j], &input_tensorlist->tensors_[j], sizeof(TensorC));
       }
+#else
+      return NNACL_ERR;
+#endif
     } else {
       SetShapeTensor(output, input);
     }

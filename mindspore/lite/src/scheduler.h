@@ -56,8 +56,6 @@ class Scheduler {
   void FindNodeInoutTensors(const Model::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);
   Model::Node *NodeInputIsPartial(const Model::Node *node);
   int InferPartialShape(const Model::Node *node);
-  Model::Node *NodeInputIsSwitch(const Model::Node *node);
-  int InferSwitchShape(const Model::Node *node);
   int InferCallShape(const Model::Node *node);
   int InferNodeShape(const Model::Node *node);
   int InferSubGraphShape(size_t subgraph_index);
@@ -95,19 +93,24 @@ class Scheduler {
   std::vector<kernel::LiteKernel *> ScheduleMainSubGraphToKernels();
   kernel::LiteKernel *SchedulePartialToSubGraphKernel(const int &subgraph_index);
   kernel::SubGraphType PartialSubGraphType(const std::vector<kernel::LiteKernel *> &kernels);
-  bool IsControlFlowParttern(const std::vector<kernel::LiteKernel *> &kernels);
-  int ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels);
 
   // other methods
   static TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
   static void SetKernelTensorDataType(kernel::LiteKernel *kernel);
   int CopyPartialShapeToSubGraph(const lite::Model::Node *partial_node);
   int RestoreSubGraphInput(const lite::Model::Node *partial_node);
+
+  bool IsControlFlowPattern(const lite::Model::Node &partial_node);
+  int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
+#ifdef ENABLE_CONTROL_TENSORLIST
+  int InferSwitchShape(const Model::Node *node);
+  Model::Node *NodeInputIsSwitch(const Model::Node *node);
   bool SubGraphHasScheduled(const int &index);
   void SubGraphMarkScheduled(const int &index);
   void SetSubgraphForPartialNode();
-  bool IsControlFlowPattern(const lite::Model::Node &partial_node);
-  int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
+  bool IsControlFlowParttern(const std::vector<kernel::LiteKernel *> &kernels);
+  int ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels);
+#endif
 
  protected:
   const InnerContext *context_ = nullptr;
@@ -124,11 +127,13 @@ class Scheduler {
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
-  std::set<int> scheduled_subgraph_index_{};
   std::deque<int> subgraphs_to_schedule_{};
-  std::unordered_map<kernel::LiteKernel *, size_t> partial_kernel_subgraph_index_map_{};
   std::unordered_map<size_t, kernel::LiteKernel *> subgraph_index_subgraph_kernel_map_{};
+#ifdef ENABLE_CONTROL_TENSORLIST
+  std::set<int> scheduled_subgraph_index_{};
+  std::unordered_map<kernel::LiteKernel *, size_t> partial_kernel_subgraph_index_map_{};
   std::set<lite::Model::Node *> partial_cnode_inferred_{};
+#endif
 };
 }  // namespace mindspore::lite
 

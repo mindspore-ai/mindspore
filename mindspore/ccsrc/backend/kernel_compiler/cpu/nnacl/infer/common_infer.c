@@ -18,6 +18,7 @@
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
 
+#ifdef ENABLE_CONTROL_TENSORLIST
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape) {
   // This function will create a new tensors_
   // Your must to set shape(param2: tensor_shape) and data_type_(tensors_data_type_ = param1: dtype) of each tensor in
@@ -69,6 +70,7 @@ bool TensorListIsFullyDefined(const int *shape, size_t shape_size) {
   }
   return true;
 }
+#endif
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      const OpParameter *parameter) {
@@ -416,18 +418,22 @@ bool InferFlag(const TensorC *const *inputs, size_t inputs_size) {
     if (inputs[i] == NULL) {
       return false;
     }
+#ifdef ENABLE_CONTROL_TENSORLIST
     if (inputs[i]->data_type_ == kObjectTypeTensorType) {
       TensorListC *input_tensor_list = (TensorListC *)inputs[i];
       if (input_tensor_list->shape_value_ == -1) {
         return false;
       }
     } else {
+#endif
       for (size_t j = 0; j < inputs[i]->shape_size_; ++j) {
         if (inputs[i]->shape_[j] == -1) {
           return false;
         }
       }
+#ifdef ENABLE_CONTROL_TENSORLIST
     }
+#endif
   }
   return true;
 }

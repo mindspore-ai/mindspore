@@ -128,7 +128,9 @@ class WeightDecoder {
 
   static int UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
 
+#ifdef ENABLE_HUFFMAN_DECODE
   static int DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor);
+#endif
 
   static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type);
 

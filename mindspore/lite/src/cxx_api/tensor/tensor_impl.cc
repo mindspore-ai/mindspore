@@ -80,7 +80,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::s
   impl->set_from_session(false);
   return impl;
 #else
-  MS_LOG(ERROR) << "This library does not support string tensors";
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
   return nullptr;
 #endif
 }
@@ -95,7 +95,7 @@ std::vector<std::string> MSTensor::Impl::TensorImplToStrings(const std::shared_p
   }
   return lite::MSTensorToStrings(lite_tensor);
 #else
-  MS_LOG(ERROR) << "This library does not support string tensors";
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
   return empty;
 #endif
 }

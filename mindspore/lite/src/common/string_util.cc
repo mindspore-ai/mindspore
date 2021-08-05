@@ -290,7 +290,7 @@ int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *
   }
   return WriteStringsToTensor(static_cast<Tensor *>(tensor), all_pack);
 #else
-  MS_LOG(ERROR) << "This library does not support string tensors";
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
   return RET_ERROR;
 #endif
 }
@@ -309,7 +309,7 @@ std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
   });
   return result;
 #else
-  MS_LOG(ERROR) << "This library does not support string tensors";
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
   return {""};
 #endif
 }

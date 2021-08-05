@@ -78,7 +78,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ms_tensor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_model.cc
@@ -87,14 +86,30 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_split.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
+if(MSLITE_CONTROL_TENSORLIST)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
+            )
+endif()
+if(MSLITE_HUFFMAN_DECODE)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
+        )
+endif()
+if(MSLITE_AUTO_PARALLEL)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_split.cc
+            )
+endif()
 
 file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
 set(LITE_SRC ${LITE_SRC} ${KERNEL_REG_SRC})
