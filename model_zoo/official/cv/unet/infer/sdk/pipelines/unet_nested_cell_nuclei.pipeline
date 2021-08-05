@@ -1,0 +1,35 @@
+{
+    "unet_mindspore": {
+        "stream_config": {
+            "deviceId": "0"
+        },
+        "appsrc0": {
+            "props": {
+                "blocksize": "4096000"
+            },
+            "factory": "appsrc",
+            "next": "mxpi_tensorinfer0"
+        },
+        "mxpi_tensorinfer0": {
+            "props": {
+                "dataSource": "appsrc0",
+                "modelPath": "./models/unet_nested_cell_nuclei.om"
+            },
+            "factory": "mxpi_tensorinfer",
+            "next": "mxpi_dumpdata0"
+        },
+        "mxpi_dumpdata0": {
+            "props": {
+                "requiredMetaDataKeys": "mxpi_tensorinfer0"
+            },
+            "factory": "mxpi_dumpdata",
+            "next": "appsink0"
+        },
+        "appsink0": {
+            "props": {
+                "blocksize": "4096000"
+            },
+            "factory": "appsink"
+        }
+    }
+}
