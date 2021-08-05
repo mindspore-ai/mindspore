@@ -292,6 +292,21 @@ def check_mu_law_decoding(method):
     return new_method
 
 
+def check_riaa_biquad(method):
+    """Wrapper method to check the parameters of RiaaBiquad."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate], _ = parse_user_args(method, *args, **kwargs)
+        type_check(sample_rate, (int,), "sample_rate")
+        if sample_rate not in (44100, 48000, 88200, 96000):
+            raise ValueError("sample_rate should be one of [44100, 48000, 88200, 96000], but got {0}.".format(
+                sample_rate))
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_time_stretch(method):
     """Wrapper method to check the parameters of TimeStretch."""
 

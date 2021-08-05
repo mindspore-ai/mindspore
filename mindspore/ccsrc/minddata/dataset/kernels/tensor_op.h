@@ -159,6 +159,7 @@ constexpr char kLFilterOp[] = "LFilterOp";
 constexpr char kLowpassBiquadOp[] = "LowpassBiquadOp";
 constexpr char kMagphaseOp[] = "MagphaseOp";
 constexpr char kMuLawDecodingOp[] = "MuLawDecodingOp";
+constexpr char kRiaaBiquadOp[] = "RiaaBiquadOp";
 constexpr char kTimeMaskingOp[] = "TimeMaskingOp";
 constexpr char kTimeStretchOp[] = "TimeStretchOp";
 constexpr char kVolOp[] = "VolOp";
