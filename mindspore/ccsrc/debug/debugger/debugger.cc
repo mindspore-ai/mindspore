@@ -113,7 +113,7 @@ void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   device_id_ = device_id;
   MS_LOG(INFO) << "Debugger got device_target: " << device_target;
   device_target_ = device_target;
-  version_ = "1.3.0";
+  version_ = "1.4.0";
 }
 
 bool IsTypeDebuggerSupported(TypeId type) {
@@ -147,8 +147,22 @@ void Debugger::EnableDebugger() {
   }
 
   if (debugger_enabled_) {
-    std::string host = "localhost";
-
+    // configure grpc host
+    std::string env_host_str = common::GetEnv("MS_DEBUGGER_HOST");
+    std::string host;
+    if (!env_host_str.empty()) {
+      if (CheckIp(env_host_str)) {
+        MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
+        host = env_host_str;
+      } else {
+        debugger_enabled_ = false;
+        MS_EXCEPTION(ValueError) << "Environment variable MS_DEBUGGER_HOST isn't a valid IP address. "
+                                    "Please set environment variable MS_DEBUGGER_HOST=x.x.x.x to a valid IP";
+      }
+    } else {
+      MS_LOG(INFO) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
+      host = "localhost";
+    }
     // configure grpc port
     std::string env_port_str = common::GetEnv("MS_DEBUGGER_PORT");
     std::string port;
@@ -1118,6 +1132,17 @@ bool Debugger::CheckPort(const std::string &port) const {
   }
   if (num < min_port_num) return false;
   return true;
+}
+
+bool Debugger::CheckIp(const std::string &host) const {
+  std::regex reg_ip(
+    "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
+  std::smatch smat;
+  std::string host_str = host;
+  return std::regex_match(host_str, smat, reg_ip);
 }
 
 uint32_t Debugger::GetFirstRunGraphId() const { return rungraph_id_list_.front(); }
