@@ -132,7 +132,7 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim, int *in_shape,
   }
 
   const TensorC *axes_tensor = inputs[3];
-  int axes[MAX_SHAPE_SIZE];
+  int axes[MAX_SHAPE_SIZE] = {0};
   int ret = GenerateAxes(axes_tensor, axes, begin_ndim, *ndim);
   if (ret != NNACL_OK) {
     return ret;
