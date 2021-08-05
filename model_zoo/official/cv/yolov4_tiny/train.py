@@ -235,11 +235,6 @@ def run_train():
                 network.set_train()
             cb_params.cur_epoch_num += 1
 
-        if config.need_profiler and profiler is not None:
-            if i == 10:
-                profiler.analyse()
-                break
-
     config.logger.info('==========end training===============')
 
 
