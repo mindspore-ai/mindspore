@@ -330,8 +330,6 @@ class GraphScheduler {
   const AID *recorder_aid_{nullptr};
   const AID *debug_aid_{nullptr};
 
-  ActorThreadPool *thread_pool_{nullptr};
-
   bool init_{false};
 };
 }  // namespace runtime
