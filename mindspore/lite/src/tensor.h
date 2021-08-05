@@ -44,10 +44,10 @@ struct LiteQuantParam {
   float mean_corr{0};
   bool inited{false};
   std::vector<float> clusters{};
-  int bitNum;
-  int roundType;
-  int multiplier;
-  int dstDtype;
+  int bitNum{8};
+  int roundType{1};
+  int multiplier{1};
+  int dstDtype{32};
 };
 
 class Tensor : public mindspore::tensor::MSTensor {
