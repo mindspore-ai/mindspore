@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
@@ -21,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore import context
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="GPU")
 
 
 class ForwardNet(nn.Cell):
@@ -73,6 +74,7 @@ def test_forward():
     assert graph_mode_out == pynative_mode_out
 
 
+@pytest.mark.skip(reason="not supported side effect")
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -122,6 +124,9 @@ class BackwardNetNoAssign(nn.Cell):
 
 
 # This test case has a problem of evaluator endless loop.
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_backward_no_assign():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
@@ -21,7 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
-context.set_context(device_target="Ascend")
+context.set_context(device_target="GPU")
 
 
 def test_for_in_for_01():
@@ -76,7 +77,9 @@ def test_for_in_for_01():
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_for_in_for_02():
     class ForInForNet(nn.Cell):
         def __init__(self):
