@@ -33,7 +33,7 @@ OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
   auto type_ptr = node->Type();
   auto shape_ptr = node->Shape();
   size_t output_num = AnfAlgo::GetOutputTensorNum(node);
-  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);

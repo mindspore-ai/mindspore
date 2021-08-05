@@ -1288,7 +1288,7 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
   }
 
   session::KernelWithIndex prev_node_with_index = addr_iter->second[i];
-  auto kernel_info = static_cast<device::KernelInfo *>(prev_node_with_index.first->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(prev_node_with_index.first->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetMutableOutputAddr(prev_node_with_index.second);
 
