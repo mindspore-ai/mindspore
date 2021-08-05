@@ -30,13 +30,14 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name, const PrimitivePtr &prim,
-                                 const RenormAction &renorm_action) {
+                                 const RenormAction &renorm_action, bool has_priority_pattern) {
   auto fn = [prim](const AnfNodePtr &node) -> bool { return IsPrimitiveCNode(node, prim); };
-  return std::make_shared<Substitution>(transform, name, fn, renorm_action);
+  return std::make_shared<Substitution>(transform, name, fn, renorm_action, has_priority_pattern);
 }
 
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
-                                 const std::vector<PrimitivePtr> &prims, const RenormAction &renorm_action) {
+                                 const std::vector<PrimitivePtr> &prims, const RenormAction &renorm_action,
+                                 bool has_priority_pattern) {
   auto fn = [prims](const AnfNodePtr &node) -> bool {
     if (!node->isa<CNode>()) {
       return false;
@@ -59,12 +60,13 @@ SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std:
     return false;
   };
 
-  return std::make_shared<Substitution>(transform, name, fn, renorm_action);
+  return std::make_shared<Substitution>(transform, name, fn, renorm_action, has_priority_pattern);
 }
 
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
-                                 const PredicateFuncType &predicate, const RenormAction &renorm_action) {
-  return std::make_shared<Substitution>(transform, name, predicate, renorm_action);
+                                 const PredicateFuncType &predicate, const RenormAction &renorm_action,
+                                 bool has_priority_pattern) {
+  return std::make_shared<Substitution>(transform, name, predicate, renorm_action, has_priority_pattern);
 }
 
 AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
@@ -126,16 +128,41 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
   return nullptr;
 }
 
-static void UpdateTransformingList(const OptimizerPtr &optimizer, const AnfNodePtr &node, std::deque<AnfNodePtr> *todo,
-                                   bool change, size_t seen) {
+static void UpdateTransformingListForSubstitutions(const AnfNodePtr &node, std::deque<AnfNodePtr> *todo, bool change) {
   if (IsValueNode<FuncGraph>(node)) {
     (*todo).emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
   }
-  if (node->isa<CNode>()) {
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(*todo));
+
+  if (change) {
+    (*todo).emplace_back(node);
+  } else {
+    if (node->isa<CNode>()) {
+      auto &inputs = node->cast<CNodePtr>()->inputs();
+      (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(*todo));
+    }
+  }
+}
+
+static void UpdateTransformingListForIR(const AnfNodePtr &node, std::deque<AnfNodePtr> *todo, bool change,
+                                        const SubstitutionPtr &substitution) {
+  if (IsValueNode<FuncGraph>(node)) {
+    (*todo).emplace_back(GetValueNode<FuncGraphPtr>(node)->output());
   }
 
+  // If there is a priority pattern in substitution, don't transform the new node,
+  // otherwise some nodes may match the wrong patterns.
+  if (change && substitution != nullptr && !substitution->has_priority_pattern_) {
+    (*todo).emplace_back(node);
+  } else {
+    if (node->isa<CNode>()) {
+      auto &inputs = node->cast<CNodePtr>()->inputs();
+      (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(*todo));
+    }
+  }
+}
+
+static void UpdateTransformingListWithUserNodes(const OptimizerPtr &optimizer, const AnfNodePtr &node,
+                                                std::deque<AnfNodePtr> *todo, bool change, size_t seen) {
   if (!change) {
     return;
   }
@@ -185,11 +212,11 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
         change = true;
         changes = true;
         node = res;
-        todo.emplace_back(res);
         break;
       }
     }
-    UpdateTransformingList(optimizer, node, &todo, change, seen);
+    UpdateTransformingListForSubstitutions(node, &todo, change);
+    UpdateTransformingListWithUserNodes(optimizer, node, &todo, change, seen);
   }
 #ifdef ENABLE_PROFILE
   MsProfile::StatTime("opt.transforms." + optimizer->name(), GetTime() - start);
@@ -197,7 +224,7 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
   return changes;
 }
 
-bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, const AnfNodePtr &root_node,
+bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph,
                                              const SubstitutionPtr &substitution) const {
 #ifdef ENABLE_PROFILE
   double start = GetTime();
@@ -205,7 +232,7 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
-  todo.emplace_back(root_node);
+  todo.emplace_back(func_graph->output());
   bool changes = false;
 
   auto &all_nodes = manager->all_nodes();
@@ -225,7 +252,8 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
       changes = true;
       node = res;
     }
-    UpdateTransformingList(optimizer, node, &todo, change, seen);
+    UpdateTransformingListForIR(node, &todo, change, substitution);
+    UpdateTransformingListWithUserNodes(optimizer, node, &todo, change, seen);
   }
 
 #ifdef ENABLE_PROFILE
@@ -268,7 +296,7 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
     loop = false;
     for (size_t i = 0; i < list_.size(); i++) {
       const auto &substitution = list_[i];
-      bool change = ApplySubstitutionToIR(optimizer, func_graph->output(), substitution);
+      bool change = ApplySubstitutionToIR(optimizer, func_graph, substitution);
       changes = changes || change;
       loop = loop || change;
 
