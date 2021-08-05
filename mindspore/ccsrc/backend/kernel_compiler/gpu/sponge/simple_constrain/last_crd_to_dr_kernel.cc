@@ -14,32 +14,21 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/sponge/neighbor_list/neighbor_list_update_new_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/simple_constrain/last_crd_to_dr_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
+MS_REG_GPU_KERNEL_TWO(lastcrdtodr,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeUInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NeighborListUpdateNewGpuKernel, int, float)
+                      LastCrdToDrGpuKernel, float, int)
+
 }  // namespace kernel
 }  // namespace mindspore

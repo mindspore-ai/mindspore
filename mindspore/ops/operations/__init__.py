@@ -108,9 +108,18 @@ from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAto
                          AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy, PMEReciprocalForce,
                          LJForce, LJEnergy, LJForceWithPMEDirectForce, PMEExcludedForce, PMEEnergy, Dihedral14LJForce,
                          Dihedral14LJForceWithDirectCF, Dihedral14LJEnergy, Dihedral14LJCFForceWithAtomEnergy,
-                         Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy, MDIterationLeapFrog,
-                         GetCenterOfGeometry, MDTemperature, NeighborListUpdate, MDIterationLeapFrogLiujian,
+                         Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy,
+                         GetCenterOfGeometry, MDTemperature, MDIterationLeapFrogLiujian,
                          CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D)
+from .sponge_update_ops import (v0coordinaterefresh, v1coordinaterefresh, v2coordinaterefresh, v3coordinaterefresh,
+                                v0forceredistribute, v1forceredistribute, v2forceredistribute, v3forceredistribute,
+                                restrainenergy, restrainforcewithatomenergyandvirial, constrainforcecyclewithvirial,
+                                refreshuintcrd, lastcrdtodr, refreshcrdvel, calculatenowrapcrd, refreshboxmaptimes,
+                                totalc6get, copyfrctosystemgrad, CrdToUintCrdQuarter,
+                                MDIterationLeapFrogLiujianWithMaxVel, GetCenterOfMass, MapCenterOfMass,
+                                NeighborListUpdate, MDIterationLeapFrog,
+                                MDIterationLeapFrogWithMaxVel, MDIterationGradientDescent,
+                                BondForceWithAtomEnergyAndVirial, ConstrainForceCycle)
 
 __all__ = [
     'Unique',
@@ -487,8 +496,33 @@ __all__ = [
     "SoftShrink",
     "FFT3D",
     "IFFT3D",
-    "HShrink"
-
+    "HShrink",
+    "v0coordinaterefresh",
+    "v1coordinaterefresh",
+    "v2coordinaterefresh",
+    "v3coordinaterefresh",
+    "v0forceredistribute",
+    "v1forceredistribute",
+    "v2forceredistribute",
+    "v3forceredistribute",
+    "restrainenergy",
+    "restrainforcewithatomenergyandvirial",
+    "constrainforcecyclewithvirial",
+    "refreshuintcrd",
+    "lastcrdtodr",
+    "refreshcrdvel",
+    "calculatenowrapcrd",
+    "refreshboxmaptimes",
+    "totalc6get",
+    "copyfrctosystemgrad",
+    "CrdToUintCrdQuarter",
+    "MDIterationLeapFrogLiujianWithMaxVel",
+    "GetCenterOfMass",
+    "MapCenterOfMass",
+    "MDIterationLeapFrogWithMaxVel",
+    "MDIterationGradientDescent",
+    "BondForceWithAtomEnergyAndVirial",
+    "ConstrainForceCycle",
 ]
 
 __all__.sort()
