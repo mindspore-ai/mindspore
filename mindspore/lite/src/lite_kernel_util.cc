@@ -198,9 +198,11 @@ int LiteKernelUtil::SetInput(const LiteKernel &kernelMod, const std::vector<lite
 
 #ifdef ENABLE_CONTROL_TENSORLIST
 bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
+#ifdef ENABLE_DELEGATE_USE
   if (kernel->desc().delegate != nullptr) {
     return false;
   }
+#endif
   auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;

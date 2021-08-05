@@ -27,9 +27,6 @@ bool IsPartialNode(const void *primitive);
 bool IsCallNode(const void *node);
 bool IsSwitchNode(const void *node);
 int GetPartialGraphIndex(const void *primitive);
-bool IsWhileNode(const void *primitive);
-int GetWhileBodySubgraphIndex(const void *primitive);
-int GetWhileCondSubgraphIndex(const void *primitive);
 }  // namespace lite
 }  // namespace mindspore
 

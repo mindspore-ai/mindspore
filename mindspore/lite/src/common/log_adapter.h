@@ -33,6 +33,10 @@ const char *const unsuppor_custom_kernel_register_log =
   "The mindspore-lite library does not support custom kernel register. Set environment variable "
   "MSLITE_CUSTOM_KERNEL_REGISTRY to on to "
   "recompile it.";
+const char *const unsuppor_delegate_log =
+  "The mindspore-lite library does not support delegate. Set environment variable "
+  "MSLITE_DELEGATE_USE to on to "
+  "recompile it.";
 }  // namespace mindspore
 #ifdef USE_GLOG
 #include "utils/log_adapter.h"

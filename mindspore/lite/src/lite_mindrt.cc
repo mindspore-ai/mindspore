@@ -74,6 +74,28 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
   return true;
 }
 
+void LiteOpActor::ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_tensor, Tensor *new_tensor) {
+  int ref_count = 0;
+#ifdef ENABLE_DELEGATE_USE
+  /* set op input for calculate */
+  if (kernel->desc().delegate != nullptr) {
+    ref_count++;
+  } else {
+#endif
+    for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel)->in_nodes()) {
+      for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
+        if (old_tensor == in_node->in_tensors()[node_in_index]) {
+          in_node->set_in_tensor(new_tensor, node_in_index);
+          ref_count++;
+        }
+      }
+    }
+#ifdef ENABLE_DELEGATE_USE
+  }
+#endif
+  new_tensor->set_init_ref_count(ref_count);
+}
+
 void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
   std::vector<kernel::LiteKernel *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
@@ -116,22 +138,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
       new_tensor->AddQuantParam(quant);
     }
     isolate_input_map_.insert(std::make_pair(new_tensor, old_tensor));
-
-    int ref_count = 0;
-    /* set op input for calculate */
-    if (kernel_->desc().delegate != nullptr) {
-      ref_count++;
-    } else {
-      for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel_)->in_nodes()) {
-        for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
-          if (old_tensor == in_node->in_tensors()[node_in_index]) {
-            in_node->set_in_tensor(new_tensor, node_in_index);
-            ref_count++;
-          }
-        }
-      }
-    }
-    new_tensor->set_init_ref_count(ref_count);
+    ReplaceNodeInTensor(kernel_, old_tensor, new_tensor);
     /* set subgraph input for copy data */
     kernel_->set_in_tensor(new_tensor, i);
   }
@@ -194,10 +201,12 @@ int LiteOpActor::CompileArrowThroughOutputKernels() {
 
 #ifdef ENABLE_CONTROL_TENSORLIST
 int LiteOpActor::CompileArrowThroughPartialCall() {
+#ifdef ENABLE_DELEGATE_USE
   if (kernel_->desc().delegate != nullptr) {
     MS_LOG(INFO) << "kernel is delegate subgraph kernel.";
     return RET_OK;
   }
+#endif
   auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(INFO) << "kernel is not subgraph kernel, no partial call.";

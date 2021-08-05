@@ -37,9 +37,10 @@ option(MSLITE_ENABLE_HIGH_PERFORMANCE "enable high performance" on)
 option(MSLITE_STRING_KERNEL "enable string kernel" on)
 option(MSLITE_CONTROL_TENSORLIST "enable control and tensorlist" on)
 option(MSLITE_AUTO_PARALLEL "enable automatic parallelism" on)
-option(MSLITE_WEIGHT_DECODE "enable huffman decode" on)
+option(MSLITE_WEIGHT_DECODE "enable weight decode" on)
 option(MSLITE_CUSTOM_KERNEL_REGISTRY "enable extend kernel registry" on)
 option(MSLITE_MINDRT_USE "enable mindrt use" on)
+option(MSLITE_DELEGATE_USE "enable delegate use" on)
 
 # Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -110,6 +111,9 @@ endif()
 if(DEFINED ENV{MSLITE_MINDRT_USE})
     set(MSLITE_MINDRT_USE $ENV{MSLITE_MINDRT_USE})
 endif()
+if(DEFINED ENV{MSLITE_DELEGATE_USE})
+    set(MSLITE_DELEGATE_USE $ENV{MSLITE_DELEGATE_USE})
+endif()
 
 set(ENABLE_MINDRT $ENV{MSLITE_MINDRT_USE})
 
@@ -130,6 +134,9 @@ if(MSLITE_CUSTOM_KERNEL_REGISTRY)
 endif()
 if(MSLITE_ENABLE_RUNTIME_PASS)
     add_compile_definitions(ENABLE_RUNTIME_PASS)
+endif()
+if(MSLITE_DELEGATE_USE)
+    add_compile_definitions(ENABLE_DELEGATE_USE)
 endif()
 
 if(PLATFORM_ARM64)
@@ -215,6 +222,8 @@ message(STATUS "\tMSLITE_CUSTOM_KERNEL_REGISTRY = \t${MSLITE_CUSTOM_KERNEL_REGIS
 message(STATUS "\tENABLE_MINDRT = \t${ENABLE_MINDRT}")
 message(STATUS "\tENABLE_V0 = \t${ENABLE_V0}")
 message(STATUS "\tBUILD_MINDDATA = \t${BUILD_MINDDATA}")
+message(STATUS "\tMSLITE_DELEGATE_USE = \t${MSLITE_DELEGATE_USE}")
+
 
 if(MSLITE_ENABLE_HIGH_PERFORMANCE)
     add_compile_definitions(ENABLE_HIGH_PERFORMANCE)

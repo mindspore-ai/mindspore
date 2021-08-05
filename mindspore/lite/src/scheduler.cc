@@ -69,10 +69,12 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
     return RET_OK;
   }
   for (auto kernel : dst_kernels) {
+#ifdef ENABLE_DELEGATE_USE
     // delegate graph kernel
     if (kernel->desc().delegate != nullptr) {
       continue;
     }
+#endif
     if (kernel->subgraph_type() == kernel::kNotSubGraph) {
       MS_LOG(ERROR) << "construct subgraph failed.";
       return RET_ERROR;
@@ -89,13 +91,7 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
   return RET_OK;
 }
 
-int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
-  int check_input_ret = CheckInputParam(dst_kernels);
-  if (check_input_ret != RET_OK) {
-    MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
-    return check_input_ret;
-  }
-
+int Scheduler::SchedulePreProcess() {
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
 
   int infershape_ret = InferSubGraphShape(kMainSubGraphIndex);
@@ -114,8 +110,22 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return RET_NOT_SUPPORT;
 #endif
   }
+  return RET_OK;
+}
 
-  int ret = ScheduleGraphToKernels(dst_kernels);
+int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  int check_input_ret = CheckInputParam(dst_kernels);
+  if (check_input_ret != RET_OK) {
+    MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
+    return check_input_ret;
+  }
+
+  int ret = SchedulePreProcess();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  ret = ScheduleGraphToKernels(dst_kernels);
   FreeOpParameters();
   op_parameters_.clear();
   if (ret != RET_OK) {
@@ -126,12 +136,18 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 #ifdef ENABLE_CONTROL_TENSORLIST
   SetSubgraphForPartialNode();
 #endif
+
   if (delegate_ != nullptr) {
+#ifdef ENABLE_DELEGATE_USE
     ret = ReplaceDelegateKernels(dst_kernels);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Repalce delegate kernels failed.";
       return ret;
     }
+#else
+    MS_LOG(ERROR) << unsuppor_delegate_log;
+    return RET_ERROR;
+#endif
   }
 
 #ifdef ENABLE_RUNTIME_PASS
@@ -187,6 +203,7 @@ int Scheduler::CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels) {
   return RET_OK;
 }
 
+#ifdef ENABLE_DELEGATE_USE
 int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels) {
   std::vector<kernel::Kernel *> kernels;
   for (size_t i = 0; i < dst_kernels->size(); i++) {
@@ -255,6 +272,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
   delete model;
   return RET_OK;
 }
+#endif
 
 void Scheduler::FindNodeInoutTensors(const lite::Model::Node &node, std::vector<Tensor *> *inputs,
                                      std::vector<Tensor *> *outputs) {
@@ -1214,11 +1232,14 @@ kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel 
     auto cur_kernel = sorted_kernels[*cur_index];
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, context) != kernel::kApuSubGraph);
     // already a subgraph or a delegate
-    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph || cur_kernel->desc().delegate != nullptr) {
+#ifdef ENABLE_DELEGATE_USE
+    if (cur_kernel->desc().delegate != nullptr) {
       --(*cur_index);
       break;
     }
-    if (!KernelFitCurrentSubGraph(cur_sub_graph_type, *cur_kernel)) {
+#endif
+    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph ||
+        !KernelFitCurrentSubGraph(cur_sub_graph_type, *cur_kernel)) {
       --(*cur_index);
       break;
     }
@@ -1241,8 +1262,14 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     MS_ASSERT(cur_kernel != nullptr);
     // Not support APU now
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, *context_) != kernel::kApuSubGraph);
+#ifdef ENABLE_DELEGATE_USE
+    if (cur_kernel->desc().delegate != nullptr) {
+      dst_kernel->emplace_back(cur_kernel);
+      continue;
+    }
+#endif
     // already a subgraph or a delegate
-    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph || cur_kernel->desc().delegate != nullptr) {
+    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph) {
       dst_kernel->emplace_back(cur_kernel);
       continue;
     }
@@ -1254,14 +1281,18 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     dst_kernel->emplace_back(subgraph);
   }
   for (auto *subgraph : *dst_kernel) {
+#ifdef ENABLE_DELEGATE_USE
     auto subgraph_delegate = subgraph->desc().delegate;
     if (subgraph_delegate == nullptr) {
+#endif
       auto ret = subgraph->Init();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
         return ret;
       }
+#ifdef ENABLE_DELEGATE_USE
     }
+#endif
   }
   return RET_OK;
 }

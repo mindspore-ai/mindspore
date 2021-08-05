@@ -28,7 +28,9 @@
 #include "src/inner_context.h"
 #include "include/model.h"
 #include "src/scheduler_cb.h"
+#ifdef ENABLE_DELEGATE_USE
 #include "include/api/delegate.h"
+#endif
 
 namespace mindspore::lite {
 const constexpr int kSwitchTrueBranch = 1;
@@ -52,6 +54,7 @@ class Scheduler {
   void SetupSchedulerCb(std::unique_ptr<SchedulerCb> cb) { sched_cb_ = std::move(cb); }
 
  private:
+  int SchedulePreProcess();
   int CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels);
   void FindNodeInoutTensors(const Model::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);
   Model::Node *NodeInputIsPartial(const Model::Node *node);

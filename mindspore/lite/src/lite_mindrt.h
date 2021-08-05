@@ -93,6 +93,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_{}; /* <calculate-tensor,  src-input-tensor> */
 
  private:
+  void ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_tensor, Tensor *new_tensor);
   void IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors);
   void MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
