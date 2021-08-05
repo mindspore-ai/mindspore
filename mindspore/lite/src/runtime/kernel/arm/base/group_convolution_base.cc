@@ -130,6 +130,7 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
       MS_LOG(ERROR) << "group conv out tensor malloc data failed.";
       return ret;
     }
+    output->ResetRefCount();
   }
   return RET_OK;
 }

@@ -102,10 +102,11 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
     }
 
     Tensor *new_tensor = new Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
-    new_tensor->set_allocator(old_tensor->allocator()); /* GPU use opencl allocator */
-    if (new_tensor->allocator() == nullptr && kernel_->subgraph_type() == kernel::kCpuFP16SubGraph) {
+    new_tensor->set_allocator(old_tensor->allocator());
+    if (new_tensor->allocator() == nullptr && kernel_->Context() != nullptr) {
       new_tensor->set_allocator(kernel_->Context()->allocator);
     }
+
     new_tensor->set_tensor_name(kernel_->name() + "_duplicate_" + old_tensor->tensor_name());
     for (LiteQuantParam quant : old_tensor->quant_params()) {
       new_tensor->AddQuantParam(quant);
@@ -730,7 +731,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
   }
   for (auto &kernel : kernels) {
     /* make subgraph name (actor name) unique */
-    kernel->set_name(kernel->name() + to_string(actor_count++));
+    kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
 
     if ((kernel::LiteKernelUtil::IsSwitchCall(kernel))) {
       auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel);

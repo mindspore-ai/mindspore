@@ -52,39 +52,7 @@ class InnerKernel : public Kernel {
     }
   }
 
-  int Execute() override {
-    auto ret = PreProcess();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
-      return ret;
-    }
-
-    // Support ZeroShape
-    size_t zero_shape_num = 0;
-    for (auto tensor : this->out_tensors()) {
-      for (size_t i = 0; i < tensor->shape().size(); i++) {
-        if (tensor->shape()[i] == 0) {
-          zero_shape_num++;
-          break;
-        }
-      }
-    }
-
-    if (zero_shape_num != this->out_tensors().size()) {
-      auto ret = Run();
-      if (lite::RET_OK != ret) {
-        MS_LOG(ERROR) << "run kernel failed, name: " << this->name();
-        return ret;
-      }
-    }
-
-    ret = PostProcess();
-    if (lite::RET_OK != ret) {
-      MS_LOG(ERROR) << "run kernel PostProcess failed, name: " << this->name();
-      return ret;
-    }
-    return lite::RET_OK;
-  }
+  int Execute() override;
 
   // called while compiling graph
   int Prepare() override { return mindspore::lite::RET_OK; }
@@ -94,14 +62,7 @@ class InnerKernel : public Kernel {
   // called before Run
   virtual int PreProcess();
   // called after Run
-  virtual int PostProcess() {
-    for (auto *output : this->out_tensors()) {
-      MS_ASSERT(output != nullptr);
-      output->ResetRefCount();
-    }
-
-    return FreeInWorkTensor();
-  }
+  virtual int PostProcess() { return FreeInWorkTensor(); }
 
   virtual int FreeInWorkTensor() const {
     for (auto &in_tensor : this->in_tensors()) {

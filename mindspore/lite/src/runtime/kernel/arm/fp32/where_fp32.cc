@@ -159,6 +159,9 @@ int WhereCPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Where op run failed.";
   }
+  for (auto *output : this->out_tensors()) {
+    output->ResetRefCount();
+  }
   return ret;
 }
 
