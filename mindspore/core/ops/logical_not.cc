@@ -32,6 +32,7 @@ abstract::ShapePtr LogicalNotInferShape(const PrimitivePtr &primitive, const std
 TypePtr LogicalNotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_dtype = input_args[0]->BuildType();
   std::set<TypePtr> local_bool = {kBool};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, local_bool, op_name);

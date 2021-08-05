@@ -33,6 +33,7 @@ AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto infer_shape = std::make_shared<abstract::Shape>(x_shape);
 
   // Infer Type
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto dtype = input_args[0]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32};
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", dtype, valid_types, prim_name);
