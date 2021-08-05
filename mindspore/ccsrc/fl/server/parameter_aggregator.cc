@@ -333,7 +333,8 @@ std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const C
   } else if (ps::PSContext::instance()->server_mode() == ps::kServerModePS) {
     (void)aggregation_algorithm.emplace_back("DenseGradAccum");
   } else {
-    MS_LOG(ERROR) << "Server doesn't support mode " << ps::PSContext::instance()->server_mode();
+    MS_LOG(EXCEPTION) << "Server doesn't support mode " << ps::PSContext::instance()->server_mode();
+    return aggregation_algorithm;
   }
 
   MS_LOG(INFO) << "Aggregation algorithm selection result: " << aggregation_algorithm;
