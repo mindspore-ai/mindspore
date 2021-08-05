@@ -55,12 +55,14 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 - 下载数据集，目录结构如下：
 
 ```text
-└─cifar-10-batches-bin
+└─train
     ├─data_batch_1.bin                  # 训练数据集
     ├─data_batch_2.bin                  # 训练数据集
     ├─data_batch_3.bin                  # 训练数据集
     ├─data_batch_4.bin                  # 训练数据集
     ├─data_batch_5.bin                  # 训练数据集
+    └─test_batch.bin                    # 评估数据集
+└─eval
     └─test_batch.bin                    # 评估数据集
 ```
 
@@ -82,13 +84,19 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 
 ```Shell
 # 分布式训练
-用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：
+cd scripts
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
 
 # 单机训练
-用法：sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：
+cd scripts
+bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
 
 # 运行评估示例
-用法：sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+用法：
+cd scripts
+bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
 ```
 
 # 脚本说明
@@ -149,10 +157,14 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 
 ```Shell
 # 分布式训练
-用法：sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：
+cd scripts
+bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
 
 # 单机训练
-用法：sh run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：
+cd scripts
+bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选） [MODELART]
 
 ```
 
@@ -203,12 +215,16 @@ epoch: 4 step: 195, loss is 1.221174
 
 ```Shell
 # 评估
-Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+用法：
+cd scripts
+bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [MODELART]
 ```
 
 ```Shell
 # 评估示例
-sh  run_eval.sh  /cifar10  WideResNet_best.ckpt
+用法：
+cd scripts
+bash run_eval.sh  /cifar10  WideResNet_best.ckpt
 ```
 
 训练过程中可以生成检查点。
