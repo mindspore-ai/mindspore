@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "backend/kernel_compiler/cpu/arithmetic_logic_cpu_kernel.h"
 #include <cmath>
 #include <string>
 #include <map>
-#include "backend/kernel_compiler/cpu/arithmetic_logic_cpu_kernel.h"
+#include <functional>
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -29,7 +31,9 @@ void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *o
       auto iter = base_iter;
       iter.SetPos(start);
       for (size_t i = start; i < end; i++) {
-        out[i] = input1[iter.GetInputPosA()] < input2[iter.GetInputPosB()];
+        auto x = input1[iter.GetInputPosA()];
+        auto y = input2[iter.GetInputPosB()];
+        out[i] = std::less<T>()(x, y);
         iter.GenNextPos();
       }
     };
@@ -37,7 +41,9 @@ void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *o
   } else {
     base_iter.SetPos(0);
     for (size_t i = 0; i < output_size_; i++) {
-      out[i] = input1[base_iter.GetInputPosA()] < input2[base_iter.GetInputPosB()];
+      auto x = input1[base_iter.GetInputPosA()];
+      auto y = input2[base_iter.GetInputPosB()];
+      out[i] = std::less<T>()(x, y);
       base_iter.GenNextPos();
     }
   }
@@ -50,7 +56,9 @@ void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] == input2[iter.GetInputPosB()];
+      auto x = input1[iter.GetInputPosA()];
+      auto y = input2[iter.GetInputPosB()];
+      out[i] = std::equal_to<T>()(x, y);
       iter.GenNextPos();
     }
   };
@@ -64,7 +72,9 @@ void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, boo
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] != input2[iter.GetInputPosB()];
+      auto x = input1[iter.GetInputPosA()];
+      auto y = input2[iter.GetInputPosB()];
+      out[i] = std::not_equal_to<T>()(x, y);
       iter.GenNextPos();
     }
   };
@@ -106,7 +116,9 @@ void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] > input2[iter.GetInputPosB()];
+      auto x = input1[iter.GetInputPosA()];
+      auto y = input2[iter.GetInputPosB()];
+      out[i] = std::greater<T>()(x, y);
       iter.GenNextPos();
     }
   };
@@ -120,7 +132,9 @@ void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2,
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] >= input2[iter.GetInputPosB()];
+      auto x = input1[iter.GetInputPosA()];
+      auto y = input2[iter.GetInputPosB()];
+      out[i] = std::greater_equal<T>()(x, y);
       iter.GenNextPos();
     }
   };
@@ -134,7 +148,9 @@ void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bo
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] <= input2[iter.GetInputPosB()];
+      auto x = input1[iter.GetInputPosA()];
+      auto y = input2[iter.GetInputPosB()];
+      out[i] = std::less_equal<T>()(x, y);
       iter.GenNextPos();
     }
   };
