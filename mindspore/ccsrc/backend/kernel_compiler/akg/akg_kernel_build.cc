@@ -53,20 +53,6 @@ namespace kernel {
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;
 
-static inline size_t NameToHashID(const std::string &name) {
-  auto idx = name.find_last_of("_");
-  auto hash_id_str = name.substr(idx + 1);
-  size_t hash_id = 0;
-  size_t carry = 1;
-
-  for (int i = static_cast<int>(hash_id_str.size() - 1); i >= 0; i--) {
-    hash_id += static_cast<size_t>(std::stoi(hash_id_str.substr(static_cast<size_t>(i), 1))) * carry;
-    carry *= 10;
-  }
-
-  return hash_id;
-}
-
 bool AkgKernelPool::LockMng::TryLock() {
   // Try to lock 100 times. Return errno if lock unsuccessfully
   uint32_t trial = 100;
@@ -246,7 +232,7 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
     MS_EXCEPTION_IF_NULL(anf_node);
     auto kernel_name = json_generator.kernel_name();
 
-    auto hash_id = NameToHashID(kernel_name);
+    auto hash_id = std::hash<std::string>()(kernel_name);
     if (self_kernel_ids_.count(hash_id) != 0) {
       MS_LOG(ERROR) << "Duplicated hash_id in list.";
       return -1;
@@ -460,7 +446,7 @@ std::vector<std::string> AkgKernelBuilder::GetKernelJsonsByHashId(const std::vec
     MS_EXCEPTION_IF_NULL(anf_node);
     auto kernel_name = json_generator.kernel_name();
 
-    auto hash_id = NameToHashID(kernel_name);
+    auto hash_id = std::hash<std::string>()(kernel_name);
 
     if (fetched_ids.count(hash_id) == 0) {
       continue;
