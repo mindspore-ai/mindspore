@@ -26,6 +26,7 @@ add_library(audio-kernels OBJECT
         riaa_biquad_op.cc
         time_masking_op.cc
         time_stretch_op.cc
+        treble_biquad_op.cc
         vol_op.cc
         )
 

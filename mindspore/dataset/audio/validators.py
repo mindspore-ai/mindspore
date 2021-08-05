@@ -329,6 +329,22 @@ def check_time_stretch(method):
     return new_method
 
 
+def check_treble_biquad(method):
+    """Wrapper method to check the parameters of TrebleBiquad."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, gain, central_freq, Q], _ = parse_user_args(
+            method, *args, **kwargs)
+        check_biquad_sample_rate(sample_rate)
+        check_biquad_gain(gain)
+        check_biquad_central_freq(central_freq)
+        check_biquad_Q(Q)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_masking(method):
     """Wrapper method to check the parameters of time_masking and FrequencyMasking"""
 
