@@ -235,7 +235,6 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first,
   return RET_OK;
 }
 
-#ifdef ENABLE_HUFFMAN_DECODE
 int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
   if (!dst_tensor->IsConst() || !src_tensor.enableHuffmanCode()) {
@@ -265,7 +264,6 @@ int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Ten
   }
   return RET_OK;
 }
-#endif
 
 int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
@@ -299,6 +297,22 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
     MS_LOG(ERROR) << "Unsupported bit number: " << origin_bit;
     return RET_NOT_SUPPORT;
   }
+}
+
+int WeightDecoder::UnPack(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
+  STATUS ret = RET_OK;
+  if (src_tensor.enableHuffmanCode()) {
+    ret = WeightDecoder::DecodeHuffmanCode(src_tensor, dst_tensor);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
+    }
+  } else {
+    ret = WeightDecoder::UnPackToInt(src_tensor, dst_tensor);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Unpack to int8 failed: " << ret;
+    }
+  }
+  return ret;
 }
 
 int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors,

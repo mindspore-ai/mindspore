@@ -204,9 +204,6 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
     }
     memset(tensor_list_c, 0, sizeof(TensorListC));
     out_tensor_c->push_back(reinterpret_cast<TensorC *const>(tensor_list_c));
-  } else if (parameter->type_ == mindspore::schema::PrimitiveType_Merge ||
-             parameter->type_ == mindspore::schema::PrimitiveType_Switch) {
-    ret = GenerateMergeSwitchOutTensorC(inputs, static_cast<int>(outputs.size()), out_tensor_c);
   } else {
     ret = OutputTensor2TensorC(outputs, out_tensor_c);
   }

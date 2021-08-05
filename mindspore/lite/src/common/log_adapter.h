@@ -26,8 +26,12 @@ const char *const unsupport_control_tensorlist_log =
 const char *const unsupport_auto_parallel_log =
   "The mindspore-lite library does not support auto parallel. Set environment variable MSLITE_AUTO_PARALLEL to on to "
   "recompile it.";
-const char *const unsupport_huffman_decode_log =
-  "The mindspore-lite library does not support huffman decode. Set environment variable MSLITE_HUFFMAN_DECODE to on to "
+const char *const unsupport_weight_decode_log =
+  "The mindspore-lite library does not support weight decode. Set environment variable MSLITE_WEIGHT_DECODE to on to "
+  "recompile it.";
+const char *const unsuppor_custom_kernel_register_log =
+  "The mindspore-lite library does not support custom kernel register. Set environment variable "
+  "MSLITE_CUSTOM_KERNEL_REGISTRY to on to "
   "recompile it.";
 }  // namespace mindspore
 #ifdef USE_GLOG

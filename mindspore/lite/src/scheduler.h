@@ -28,7 +28,6 @@
 #include "src/inner_context.h"
 #include "include/model.h"
 #include "src/scheduler_cb.h"
-
 #include "include/api/delegate.h"
 
 namespace mindspore::lite {

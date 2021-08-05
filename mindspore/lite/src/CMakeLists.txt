@@ -90,21 +90,24 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
+
 if(MSLITE_CONTROL_TENSORLIST)
     set(LITE_SRC
-            ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
-            )
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
+        )
 endif()
-if(MSLITE_HUFFMAN_DECODE)
+
+if(MSLITE_WEIGHT_DECODE)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
         )
 endif()
+
 if(MSLITE_AUTO_PARALLEL)
     set(LITE_SRC
             ${LITE_SRC}
@@ -112,8 +115,19 @@ if(MSLITE_AUTO_PARALLEL)
             )
 endif()
 
-file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
-set(LITE_SRC ${LITE_SRC} ${KERNEL_REG_SRC})
+if(MSLITE_CUSTOM_KERNEL_REGISTRY)
+    file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
+else()
+    set(KERNEL_REG_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/registry/kernel_interface.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/registry/register_kernel.cc
+            )
+endif()
+
+set(LITE_SRC
+    ${LITE_SRC}
+    ${KERNEL_REG_SRC}
+    )
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
@@ -166,7 +180,7 @@ if(ENABLE_MINDRT)
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
-elseif(TARGET_HIMIX200 OR TARGET_OHOS_LITE)
+else()
     file(GLOB MINDRT_ACTOR ${CORE_DIR}/mindrt/src/actor/*.cc)
     set(LITE_SRC
         ${LITE_SRC}

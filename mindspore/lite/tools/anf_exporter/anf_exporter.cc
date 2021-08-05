@@ -38,6 +38,7 @@
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "src/ops/ops_utils.h"
+#include "src/weight_decoder.h"
 #include "tools/common/node_util.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
@@ -46,8 +47,6 @@ using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
 namespace {
-constexpr int kBitNum8 = 8;
-constexpr int kBitNum16 = 16;
 constexpr int kIndexOfValueInputOfGetTupleItem = 2;
 
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {

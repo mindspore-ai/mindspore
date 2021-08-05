@@ -36,7 +36,9 @@
 #include "src/runtime/infer_manager.h"
 #include "src/runtime/runtime_pass.h"
 #include "src/sub_graph_split.h"
+#ifdef ENABLE_WEIGHT_DECODE
 #include "src/weight_decoder.h"
+#endif
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #include "nnacl/nnacl_common.h"
 #if GPU_OPENCL
@@ -276,10 +278,13 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  auto ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
+  int ret;
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+  ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
   if (ret != RET_NOT_SUPPORT) {
     return ret;
   }
+#endif
 
   int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   auto parame_gen =
@@ -614,11 +619,14 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     }
     cpu_desc.data_type = kNumberTypeFloat16;
   }
-  auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type);
+  int ret;
+#ifdef ENABLE_WEIGHT_DECODE
+  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
   }
+#endif
   std::map<Tensor *, Tensor *> restored_origin_tensors;
 
   ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type,
@@ -661,13 +669,15 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     if (desc.data_type == kNumberTypeFloat32 && context_->IsGpuFloat16Enabled()) {
       gpu_desc.data_type = kNumberTypeFloat16;
     }
-
+    int ret;
+#ifdef ENABLE_WEIGHT_DECODE
     // weight dequant
-    auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
+    ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
     if (ret != RET_OK) {
       MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
       return RET_NOT_SUPPORT;
     }
+#endif
     // we don't need to restore tensor for copy data
     ret = CopyConstTensorData(in_tensors, op_parameter->type_);
     if (ret != RET_OK) {
@@ -686,6 +696,7 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   return RET_NOT_SUPPORT;
 }
 
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                   const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
   MS_ASSERT(kernel != nullptr);
@@ -732,6 +743,7 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
 
   return RET_NOT_SUPPORT;
 }
+#endif
 
 kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
@@ -741,10 +753,13 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   TypeId data_type =
     (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::LiteKernel *kernel = nullptr;
-  int status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
+  int status;
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+  status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
   if (status == RET_OK && kernel != nullptr) {
     return kernel;
   }
+#endif
   MS_ASSERT(!node->output_indices_.empty());
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
