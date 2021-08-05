@@ -55,7 +55,7 @@ def change_current_dump_json(file_name, dump_path):
         json.dump(data, f)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
