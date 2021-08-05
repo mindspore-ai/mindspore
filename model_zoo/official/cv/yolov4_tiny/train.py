@@ -41,8 +41,6 @@ from src.util import keep_loss_fp32
 from src.eval_utils import apply_eval, EvalCallBack
 
 from model_utils.config import config
-from model_utils.moxing_adapter import moxing_wrapper
-from model_utils.device_adapter import get_device_id, get_device_num
 
 set_seed(1)
 
