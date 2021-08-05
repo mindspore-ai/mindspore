@@ -335,6 +335,7 @@ constexpr auto kAttrDataShape = "data_shape";
 constexpr auto kAttrFormat = "format";
 constexpr auto kAttrReshapeType = "reshape_type";
 constexpr auto kAttrAxis = "axis";
+constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kAttrShapeGamma = "shape_gamma";
 constexpr auto kAttrPerm = "perm";

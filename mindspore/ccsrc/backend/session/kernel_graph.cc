@@ -470,7 +470,7 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
   }
 }
 
-void KernelGraph::ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const {
+void KernelGraph::ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const {
   if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(cnode)) == kOpAssignKernelNameList.end()) {
     MS_LOG(EXCEPTION) << "Only supported to change the node [Assign , AssignSub, AssignAdd] node's input feature map "
                          "flag but got the node :"
@@ -493,7 +493,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   node->set_kernel_info(kernel_info);
   if (node->isa<CNode>()) {
     if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(node)) != kOpAssignKernelNameList.end()) {
-      ResetAssignInputFeaatureMapFlag(node->cast<CNodePtr>());
+      ResetAssignInputFeatureMapFlag(node->cast<CNodePtr>());
     }
 #if defined(__APPLE__)
     std::vector<int> feature_map_input_indexs;
