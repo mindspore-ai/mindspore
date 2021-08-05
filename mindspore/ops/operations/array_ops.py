@@ -1203,7 +1203,7 @@ class Size(PrimitiveWithInfer):
         else:
             size = functools.reduce(lambda x, y: x * y, x['shape'])
         out = {'shape': None,
-               'dtype': mstype.int32,
+               'dtype': mstype.int64,
                'value': size}
         return out
 
