@@ -79,13 +79,13 @@ void ResizeBiLinearFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_s
           size_t top_y_index = MSMAX((size_t)(floorf(in_y)), (size_t)(0));
           size_t bottom_y_index = MSMIN((size_t)(ceilf(in_y)), param->out_height_ - 1);
           float16_t y_lerp = in_y - floorf(in_y);
-          float16_t inverse_y_lerp = 1.0 - y_lerp;
+          const float16_t inverse_y_lerp = 1.0 - y_lerp;
 
           float16_t in_x = (float16_t)w * param->width_scale_;
           size_t left_x_index = MSMAX((size_t)(floorf(in_x)), (size_t)(0));
           size_t right_x_index = MSMIN((size_t)(ceilf(in_x)), param->out_width_ - 1);
           float16_t x_lerp = in_x - floorf(in_x);
-          float16_t inverse_x_lerp = 1.0 - x_lerp;
+          const float16_t inverse_x_lerp = 1.0 - x_lerp;
 
           size_t in_offset = h * (param->in_width_ * channel) + (w * channel) + c;
           size_t out_offset_top_y_left_x = top_y_index * (param->out_width_ * channel) + (left_x_index * channel) + c;
