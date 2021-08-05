@@ -67,4 +67,3 @@ if __name__ == '__main__':
     test_net(data_dir=config.data_path,
              ckpt_path=config.checkpoint_file_path,
              cross_valid_ind=config.cross_valid_ind)
-

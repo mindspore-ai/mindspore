@@ -142,4 +142,3 @@ if __name__ == '__main__':
               epochs=epoch_size,
               batch_size=batchsize,
               lr=config.lr)
-

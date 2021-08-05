@@ -48,4 +48,3 @@ class MultiClassLoader:
     @classmethod
     def get_plugin_name(cls):
         return cls._plugin_name
-

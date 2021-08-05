@@ -17,6 +17,10 @@
 #ifndef UNET_SEGMENTATION_H
 #define UNET_SEGMENTATION_H
 
+#include <memory>
+#include <vector>
+#include <string>
+
 #include <opencv2/opencv.hpp>
 
 #include "MxBase/ModelInfer/ModelInferenceProcessor.h"
