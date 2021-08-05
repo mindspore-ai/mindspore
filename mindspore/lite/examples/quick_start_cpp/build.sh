@@ -37,8 +37,8 @@ if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
   wget -c -O ${BASEPATH}/build/${MINDSPORE_FILE} --no-check-certificate ${MINDSPORE_LITE_DOWNLOAD_URL}
 fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/lib/libmindspore-lite.a ${BASEPATH}/lib
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/inference/include ${BASEPATH}/
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/libmindspore-lite.a ${BASEPATH}/lib
+cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/include ${BASEPATH}/
 cd ${BASEPATH}/build || exit
 cmake ${BASEPATH}
 make
