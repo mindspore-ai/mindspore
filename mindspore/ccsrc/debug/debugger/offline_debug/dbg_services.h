@@ -130,7 +130,7 @@ class DbgServices {
 
   ~DbgServices();
 
-  int32_t Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode);
+  int32_t Initialize(const std::string net_name, const std::string dump_folder_path, bool is_sync_mode);
 
   int32_t AddWatchpoint(
     unsigned int id, unsigned int watch_condition,
@@ -143,7 +143,7 @@ class DbgServices {
 
   std::vector<tensor_data_t> ReadTensors(std::vector<tensor_info_t> info);
 
-  std::string GetVersion();
+  std::string GetVersion() const;
 };
 
 #endif  // DEBUG_DBG_SERVICES_H_

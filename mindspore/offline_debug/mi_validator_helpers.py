@@ -94,8 +94,8 @@ def type_check(arg, types, arg_name):
         types (tuple): tuple of all valid types for arg.
         arg_name (str): the name of arg.
 
-    Returns:
-        Exception: when the type is not correct, otherwise nothing.
+    Raises:
+        TypeError: when the type is not correct, otherwise nothing.
     """
     # handle special case of booleans being a subclass of ints
     print_value = '\"\"' if repr(arg) == repr('') else arg
@@ -116,8 +116,8 @@ def type_check_list(args, types, arg_names):
         types (tuple): tuple of all valid types for arg.
         arg_names (Union[list, tuple of str]): the names of args.
 
-    Returns:
-        Exception: when the type is not correct, otherwise nothing.
+    Raises:
+        ValueError: when the type is not correct, otherwise nothing.
     """
     type_check(args, (list, tuple,), arg_names)
     if len(args) != len(arg_names) and not isinstance(arg_names, str):
@@ -127,6 +127,26 @@ def type_check_list(args, types, arg_names):
     for arg, arg_name in zip(args, arg_names):
         type_check(arg, types, arg_name)
 
+
 def replace_minus_one(value):
-    """ replace -1 with a default value """
+    """ Replace -1 with a default value """
     return value if value != -1 else UINT32_MAX
+
+
+def check_param(info_param, info_name):
+    """
+    Check the type of info_param.
+
+    Args:
+        info_name (str): Info name of check_node_list.
+        info_param (list[int]): Info parameters of check_node_list that is either list of ints or *.
+
+    Raises:
+        ValueError: When the type of info_param is not correct, otherwise nothing.
+    """
+    if isinstance(info_param, str):
+        if info_param not in ["*"]:
+            raise ValueError("Node parameter {} only accepts '*' as string.".format(info_name))
+    else:
+        for param in info_param:
+            check_uint32(param, info_name)

@@ -127,11 +127,11 @@ void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoi
       range_count.second->ProcessElement(current_value);
     }
     for (auto &mean : means) {
-      if (mean.first == "curr_prev_diff_mean") {
+      if (mean.first.compare("curr_prev_diff_mean")) {
         mean.second->ProcessElement(std::abs(current_value - previous_value));
-      } else if (mean.first == "abs_prev_mean") {
+      } else if (mean.first.compare("abs_prev_mean")) {
         mean.second->ProcessElement(std::abs(previous_value));
-      } else if (mean.first == "abs_current_mean") {
+      } else if (mean.first.compare("abs_current_mean")) {
         mean.second->ProcessElement(std::abs(current_value));
       }
     }

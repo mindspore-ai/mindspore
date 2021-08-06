@@ -20,7 +20,7 @@
 
 DbgServices::DbgServices(bool verbose) {
   DbgLogger::verbose = verbose;
-  char *dbg_log_path = getenv("OFFLINE_DBG_LOG");
+  char *dbg_log_path = std::getenv("OFFLINE_DBG_LOG");
   if (dbg_log_path != NULL) {
     DbgLogger::verbose = true;
   }
@@ -46,12 +46,12 @@ DbgServices::~DbgServices() {
   delete debug_services;
 }
 
-std::string DbgServices::GetVersion() {
+std::string DbgServices::GetVersion() const {
   MS_LOG(INFO) << "get version is called";
   return "1.3.0";
 }
 
-int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode) {
+int32_t DbgServices::Initialize(const std::string net_name, const std::string dump_folder_path, bool is_sync_mode) {
   MS_LOG(INFO) << "cpp DbgServices initialize network name " << net_name;
   MS_LOG(INFO) << "cpp DbgServices initialize dump folder path " << dump_folder_path;
   MS_LOG(INFO) << "cpp DbgServices initialize sync mode " << is_sync_mode;
@@ -82,8 +82,9 @@ int32_t DbgServices::AddWatchpoint(
 
     std::vector<std::string> rank_id_str = std::get<std::vector<std::string>>(attr_map["rank_id"]);
     std::vector<std::uint32_t> rank_id;
-    std::transform(rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
-                   [](std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
+    (void)std::transform(
+      rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
+      [](std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
     MS_LOG(INFO) << "cpp DbgServices AddWatchpoint rank_id ";
     for (auto const &i : rank_id) {
       MS_LOG(INFO) << i << " ";
@@ -92,7 +93,7 @@ int32_t DbgServices::AddWatchpoint(
     // std::vector<uint32_t> root_graph_id = std::get<std::vector<uint32_t>>(attr_map["root_graph_id"]);
     std::vector<std::string> root_graph_id_str = std::get<std::vector<std::string>>(attr_map["root_graph_id"]);
     std::vector<std::uint32_t> root_graph_id;
-    std::transform(
+    (void)std::transform(
       root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
       [](std::string &graph_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(graph_str)); });
     MS_LOG(INFO) << "cpp DbgServices AddWatchpoint root_graph_id";
@@ -114,36 +115,36 @@ int32_t DbgServices::AddWatchpoint(
   std::vector<std::tuple<std::string, std::vector<uint32_t>>> check_node_graph_list;
   std::vector<DebugServices::parameter_t> parameter_list_backend;
 
-  std::transform(check_nodes.begin(), check_nodes.end(), std::back_inserter(check_node_list),
-                 [](auto &node) -> std::tuple<std::string, bool> {
-                   auto attr_map = node.second;
-                   return std::make_tuple(node.first, std::get<bool>(attr_map["is_output"]));
-                 });
+  (void)std::transform(check_nodes.begin(), check_nodes.end(), std::back_inserter(check_node_list),
+                       [](auto &node) -> std::tuple<std::string, bool> {
+                         auto attr_map = node.second;
+                         return std::make_tuple(node.first, std::get<bool>(attr_map["is_output"]));
+                       });
 
-  std::transform(check_nodes.begin(), check_nodes.end(), std::back_inserter(check_node_device_list),
-                 [](auto &node) -> std::tuple<std::string, std::vector<uint32_t>> {
-                   auto attr_map = node.second;
-                   std::vector<std::string> rank_id_str = std::get<std::vector<std::string>>(attr_map["rank_id"]);
-                   std::vector<std::uint32_t> rank_id;
-                   std::transform(
-                     rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
+  (void)std::transform(
+    check_nodes.begin(), check_nodes.end(), std::back_inserter(check_node_device_list),
+    [](auto &node) -> std::tuple<std::string, std::vector<uint32_t>> {
+      auto attr_map = node.second;
+      std::vector<std::string> rank_id_str = std::get<std::vector<std::string>>(attr_map["rank_id"]);
+      std::vector<std::uint32_t> rank_id;
+      std::transform(rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
                      [](std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
-                   return std::make_tuple(node.first, rank_id);
-                 });
+      return std::make_tuple(node.first, rank_id);
+    });
 
-  std::transform(
+  (void)std::transform(
     check_nodes.begin(), check_nodes.end(), std::back_inserter(check_node_graph_list),
     [](auto &node) -> std::tuple<std::string, std::vector<uint32_t>> {
       auto attr_map = node.second;
       std::vector<std::string> root_graph_id_str = std::get<std::vector<std::string>>(attr_map["root_graph_id"]);
       std::vector<std::uint32_t> root_graph_id;
-      std::transform(
+      (void)std::transform(
         root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
         [](std::string &graph_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(graph_str)); });
       return std::make_tuple(node.first, root_graph_id);
     });
 
-  std::transform(
+  (void)std::transform(
     parameter_list.begin(), parameter_list.end(), std::back_inserter(parameter_list_backend),
     [](const parameter_t &parameter) -> DebugServices::parameter_t {
       return DebugServices::parameter_t{parameter.name, parameter.disabled, parameter.value, parameter.hit};
@@ -214,17 +215,17 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
   return hits;
 }
 
-std::string GetTensorFullName(tensor_info_t info) { return info.node_name + ":" + std::to_string(info.slot); }
+std::string GetTensorFullName(const tensor_info_t info) { return info.node_name + ":" + std::to_string(info.slot); }
 
-unsigned int GetTensorRankId(tensor_info_t info) { return info.rank_id; }
+unsigned int GetTensorRankId(const tensor_info_t info) { return info.rank_id; }
 
-unsigned int GetTensorRootGraphId(tensor_info_t info) { return info.root_graph_id; }
+unsigned int GetTensorRootGraphId(const tensor_info_t info) { return info.root_graph_id; }
 
-unsigned int GetTensorIteration(tensor_info_t info) { return info.iteration; }
+unsigned int GetTensorIteration(const tensor_info_t info) { return info.iteration; }
 
-unsigned int GetTensorSlot(tensor_info_t info) { return info.slot; }
+unsigned int GetTensorSlot(const tensor_info_t info) { return info.slot; }
 
-bool GetTensorIsOutput(tensor_info_t info) { return info.is_output; }
+bool GetTensorIsOutput(const tensor_info_t info) { return info.is_output; }
 
 std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> info) {
   for (auto i : info) {
@@ -241,12 +242,12 @@ std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> i
   std::vector<tensor_data_t> tensors_read;
   std::vector<bool> is_output;
 
-  std::transform(info.begin(), info.end(), std::back_inserter(backend_name), GetTensorFullName);
-  std::transform(info.begin(), info.end(), std::back_inserter(slot), GetTensorSlot);
-  std::transform(info.begin(), info.end(), std::back_inserter(rank_id), GetTensorRankId);
-  std::transform(info.begin(), info.end(), std::back_inserter(root_graph_id), GetTensorRootGraphId);
-  std::transform(info.begin(), info.end(), std::back_inserter(iteration), GetTensorIteration);
-  std::transform(info.begin(), info.end(), std::back_inserter(is_output), GetTensorIsOutput);
+  (void)std::transform(info.begin(), info.end(), std::back_inserter(backend_name), GetTensorFullName);
+  (void)std::transform(info.begin(), info.end(), std::back_inserter(slot), GetTensorSlot);
+  (void)std::transform(info.begin(), info.end(), std::back_inserter(rank_id), GetTensorRankId);
+  (void)std::transform(info.begin(), info.end(), std::back_inserter(root_graph_id), GetTensorRootGraphId);
+  (void)std::transform(info.begin(), info.end(), std::back_inserter(iteration), GetTensorIteration);
+  (void)std::transform(info.begin(), info.end(), std::back_inserter(is_output), GetTensorIsOutput);
 
   MS_LOG(INFO) << "cpp before";
   std::vector<std::string> file_paths;
