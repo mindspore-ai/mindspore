@@ -1864,7 +1864,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
         >>> output = ops.ArgMinWithValue()(input_x)
         >>> print(output)
-        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0.0))
+        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0))
         >>> output = ops.ArgMinWithValue(keep_dims=True)(input_x)
         >>> print(output)
         (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
