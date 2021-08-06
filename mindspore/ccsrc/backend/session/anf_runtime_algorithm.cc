@@ -1575,16 +1575,15 @@ bool AnfRuntimeAlgorithm::IsInplaceNode(const mindspore::AnfNodePtr &kernel, con
 }
 
 bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
+  static const std::set<std::string> kCommunicationOpNames = {kAllReduceOpName,     kAllGatherOpName, kBroadcastOpName,
+                                                              kReduceScatterOpName, kHcomSendOpName,  kReceiveOpName,
+                                                              kAllToAllVOpName};
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
   auto kernel_name = AnfAlgo::GetCNodeName(node);
-  if (kernel_name == kAllReduceOpName || kernel_name == kAllGatherOpName || kernel_name == kBroadcastOpName ||
-      kernel_name == kReduceScatterOpName || kernel_name == kHcomSendOpName || kernel_name == kReceiveOpName) {
-    return true;
-  }
-  return false;
+  return (kCommunicationOpNames.find(kernel_name) != kCommunicationOpNames.end());
 }
 
 bool AnfRuntimeAlgorithm::IsFusedCommunicationOp(const AnfNodePtr &node) {
