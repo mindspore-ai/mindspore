@@ -2119,6 +2119,11 @@ test_case_nn_ops = [
         'block': P.L2Loss(),
         'desc_inputs': [Tensor(np.array([[1, 1], [2, 2], [3, 3], [4, 4]]), mstype.float16)],
         'desc_bprop': []}),
+    ('SoftMarginLoss', {
+        'block': P.SoftMarginLoss(reduction="none"),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([[-1, 1], [1, -1]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))]}),
     ('BCEWithLogitsLoss', {
         'block': P.BCEWithLogitsLoss(),
         'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
