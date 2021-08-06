@@ -143,13 +143,8 @@ if __name__ == "__main__":
     coco_gt = COCO(coco_gt_file)
     coco_dt_file = './result.json'
 
-    #img_id = get_img_id(coco_dt_file)
-    # get object of image json
     coco_dt = coco_gt.loadRes(coco_dt_file)
-    # sort the image_id of coco Annotation set
-    #img_id = sorted(img_id)
     coco_eval = COCOeval(coco_gt, coco_dt, ann_type)
-    # set the param
     coco_eval.params.imgIds = self.get_img_set(coco_gt_file)
     coco_eval.evaluate()
     coco_eval.accumulate()
