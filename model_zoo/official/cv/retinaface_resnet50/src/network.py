@@ -19,7 +19,6 @@ import numpy as np
 
 import mindspore
 import mindspore.nn as nn
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore import context, Tensor
@@ -524,4 +523,5 @@ class TrainingWrapper(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss

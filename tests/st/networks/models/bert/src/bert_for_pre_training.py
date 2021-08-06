@@ -321,8 +321,8 @@ class BertTrainOneStepCell(nn.Cell):
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
 
-        succ = self.optimizer(grads)
-        return F.depend(loss, succ)
+        self.optimizer(grads)
+        return loss
 
 
 grad_scale = C.MultitypeFuncGraph("grad_scale")
@@ -431,9 +431,6 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        ret = (loss, cond, scaling_sens)
-        return F.depend(ret, succ)
+        if not overflow:
+            self.optimizer(grads)
+        return (loss, cond, scaling_sens)

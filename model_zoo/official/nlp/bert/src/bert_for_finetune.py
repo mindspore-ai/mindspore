@@ -152,12 +152,9 @@ class BertFinetuneCell(nn.Cell):
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        ret = (loss, cond)
-        return F.depend(ret, succ)
+        if not overflow:
+            self.optimizer(grads)
+        return (loss, cond)
 
 class BertSquadCell(nn.Cell):
     """
@@ -245,12 +242,9 @@ class BertSquadCell(nn.Cell):
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
-        if overflow:
-            succ = False
-        else:
-            succ = self.optimizer(grads)
-        ret = (loss, cond)
-        return F.depend(ret, succ)
+        if not overflow:
+            self.optimizer(grads)
+        return (loss, cond)
 
 class BertCLS(nn.Cell):
     """

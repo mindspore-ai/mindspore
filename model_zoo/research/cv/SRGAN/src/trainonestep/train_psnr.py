@@ -59,5 +59,6 @@ class TrainOnestepPSNR(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-        return ops.depend(psnr_loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return psnr_loss
     
