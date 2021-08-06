@@ -138,7 +138,6 @@ APP_ERROR Yolov4TinyDetectionOpencv::ReadImage(const std::string &imgPath, cv::M
 APP_ERROR Yolov4TinyDetectionOpencv::Resize(cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
     static constexpr uint32_t resizeHeight = 608;
     static constexpr uint32_t resizeWidth = 608;
-    cv::Mat tmpImg;
     cv::resize(srcImageMat, dstImageMat, cv::Size(resizeWidth, resizeHeight));
     return APP_ERR_OK;
 }
