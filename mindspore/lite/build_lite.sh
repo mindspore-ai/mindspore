@@ -371,7 +371,7 @@ build_aar() {
 
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/app/libs
     ${LITE_JAVA_PATH}/java/gradlew clean -p ${LITE_JAVA_PATH}/java/app
-    ${LITE_JAVA_PATH}/java/gradlew build  -p ${LITE_JAVA_PATH}/java/app
+    ${LITE_JAVA_PATH}/java/gradlew assembleRelease  -p ${LITE_JAVA_PATH}/java/app
     ${LITE_JAVA_PATH}/java/gradlew publish -PLITE_VERSION=${VERSION_STR} -p ${LITE_JAVA_PATH}/java/app
 
     cd ${LITE_JAVA_PATH}/java/app/build
