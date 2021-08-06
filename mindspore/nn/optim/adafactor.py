@@ -23,9 +23,8 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
-from .optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
-
+from .optimizer import Optimizer
 
 def _get_lr(step, RMS, learning_rate, relative_step, warmup_init, scale_parameter, eps):
     """update optimizer learning rete"""
@@ -40,33 +39,18 @@ def _get_lr(step, RMS, learning_rate, relative_step, warmup_init, scale_paramete
     param_scale = 1.0
     if scale_parameter:
         param_scale = P.Maximum()(eps[1], RMS)
-    lr_up = rel_step_sz * param_scale * F.ones_like(RMS)
-    return lr_up
-
-
-def _get_options(beta1):
-    """get use_first_moment options"""
-    use_first_moment = True if beta1 != Tensor(0.0, mstype.float32) else False
-    return use_first_moment
+    return rel_step_sz * param_scale * F.ones_like(RMS)
 
 
 def _rms(update_tensor):
     """calculate rms"""
-    square = P.SquareSumAll()(update_tensor, update_tensor)
-    norm_2 = P.Sqrt()(square[0])
-
-    tensor_shape = F.shape(update_tensor)
-    numel = 1
-    for i in tensor_shape:
-        numel = numel * i
-    return norm_2 / (numel ** 0.5)
+    return F.sqrt(P.ReduceMean(False)(F.square(update_tensor)))
 
 
 def _approx_sq_grad(exp_avg_sq_row, exp_avg_sq_col):
     """Approximation of exponential moving average of square of gradient"""
     reduce_mean = P.ReduceMean(keep_dims=True)(exp_avg_sq_row, -1)
-    div_val = P.Div()(exp_avg_sq_row, reduce_mean)
-    div_val = 1.0 / P.Sqrt()(div_val)
+    div_val = 1.0 / P.Sqrt()(P.Div()(exp_avg_sq_row, reduce_mean))
     r_factor = (P.ExpandDims()(div_val, -1))
 
     exp_avg_sq_col = P.ExpandDims()(exp_avg_sq_col, -2)
@@ -78,13 +62,14 @@ _adam_opt = C.MultitypeFuncGraph("adam_opt")
 
 
 @_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
-                    "Bool", "Bool", "Bool", "Bool", "Tensor", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
+                    "Bool", "Bool", "Bool", "Bool", "Bool", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _run_opt_with_one_number(eps, clip_threshold, decay_rate, beta1,
                              weight_decay, scale_lr, scale_parameter, relative_step,
-                             warmup_init, compression, weight_decay_flag, learning_rate, grad, param,
-                             step, exp_avg, exp_avg_sq_row,
-                             exp_avg_sq_col, exp_avg_sq, RMS, use_first_moment):
+                             warmup_init, compression, use_first_moment, weight_decay_flag,
+                             learning_rate, step, grad, param,
+                             exp_avg, exp_avg_sq_row,
+                             exp_avg_sq_col, exp_avg_sq):
     """Apply ada factor optimizer to the weight parameter using Tensor."""
     success = True
     grad_dtype = F.dtype(grad)
@@ -103,6 +88,7 @@ def _run_opt_with_one_number(eps, clip_threshold, decay_rate, beta1,
     exp_avg_sq_update = exp_avg_sq
     exp_avg_sq_row_update = exp_avg_sq_row
     exp_avg_sq_col_update = exp_avg_sq_col
+
     if use_first_moment:
         if compression:
             exp_avg_update = F.cast(exp_avg, mstype.float16)
@@ -113,10 +99,8 @@ def _run_opt_with_one_number(eps, clip_threshold, decay_rate, beta1,
     else:
         exp_avg_sq_update = F.cast(exp_avg_sq, grad_dtype)
 
-    step = F.assign_add(step, 1)
-    rms_update = _rms(p_data_fp32)
-    RMS = F.assign(RMS, F.cast(rms_update, F.dtype(RMS)))
     if scale_lr:
+        RMS = _rms(p_data_fp32)
         learning_rate_update = _get_lr(step, RMS, learning_rate, relative_step, warmup_init, scale_parameter, eps)
         learning_rate_update = F.assign(learning_rate, F.cast(learning_rate_update, F.dtype(learning_rate)))
     else:
@@ -127,40 +111,32 @@ def _run_opt_with_one_number(eps, clip_threshold, decay_rate, beta1,
 
     if factored:
         exp_avg_sq_row_update = P.Mul()(exp_avg_sq_row_update, beta2t)
-        update_mean = P.ReduceMean()(update, -1)
-        update_mean = update_mean * (1.0 - beta2t)
+        update_mean = P.ReduceMean()(update, -1) * (1.0 - beta2t)
         exp_avg_sq_row_update = P.Add()(exp_avg_sq_row_update, update_mean)
         exp_avg_sq_row_update = F.assign(exp_avg_sq_row, F.cast(exp_avg_sq_row_update, F.dtype(exp_avg_sq_row)))
 
         exp_avg_sq_col_update = P.Mul()(exp_avg_sq_col_update, beta2t)
-        update_mean = P.ReduceMean()(update, -2)
-        update_mean = update_mean * (1.0 - beta2t)
+        update_mean = P.ReduceMean()(update, -2) * (1.0 - beta2t)
         exp_avg_sq_col_update = P.Add()(exp_avg_sq_col_update, update_mean)
         exp_avg_sq_col_update = F.assign(exp_avg_sq_col, F.cast(exp_avg_sq_col_update, F.dtype(exp_avg_sq_col)))
 
         update = _approx_sq_grad(exp_avg_sq_row_update, exp_avg_sq_col_update)
         update = P.Mul()(update, grad)
     else:
-        exp_avg_sq_update = P.Mul()(exp_avg_sq_update, beta2t)
         update = update * (1.0 - beta2t)
-        exp_avg_sq_update = P.Add()(exp_avg_sq_update, update)
+        exp_avg_sq_update = P.Add()(P.Mul()(exp_avg_sq_update, beta2t), update)
         exp_avg_sq_update = F.assign(exp_avg_sq, F.cast(exp_avg_sq_update, F.dtype(exp_avg_sq)))
         exp_avg_sq_update = 1.0 / P.Sqrt()(exp_avg_sq_update)
         update = P.Mul()(exp_avg_sq_update, grad)
 
-    update_rms = _rms(update)
-    update_rms_thres = update_rms / clip_threshold
-    ones = P.OnesLike()(update_rms_thres)
-    update_coff = P.Maximum()(update_rms_thres, ones)
-    update = P.Div()(update, update_coff)
-    update = P.Mul()(update, learning_rate_update)
+    update_rms_thres = _rms(update) / clip_threshold
+    update_coff = P.Maximum()(update_rms_thres, P.OnesLike()(update_rms_thres))
+    update = P.Mul()(P.Div()(update, update_coff), learning_rate_update)
 
     if use_first_moment:
         if compression:
             exp_avg_update = F.cast(exp_avg_update, grad_dtype)
-        exp_avg_update = P.Mul()(exp_avg_update, beta1)
-        update = update * (1 - beta1)
-        exp_avg_update = P.Add()(exp_avg_update, update)
+        exp_avg_update = P.Add()(P.Mul()(exp_avg_update, beta1), update * (1 - beta1))
         update = F.assign(exp_avg, F.cast(exp_avg_update, F.dtype(exp_avg)))
 
     if weight_decay_flag:
@@ -181,11 +157,14 @@ def trans_to_tensor(paras, is_tuple=False, fp32=True):
     return Tensor(paras, data_type)
 
 
-class _AdaFactor(Optimizer):
+class AdaFactor(Optimizer):
     r"""
     Updates gradients by the Adaptive Learning Rates with Sublinear Memory Cost (Adafactor) algorithm.
 
     The Adafactor algorithm is proposed in `Adafactor: Adafactor: Adaptive Learning Rates with Sublinear Memory Cost <https://arxiv.org/abs/1804.04235>`_.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Adafactor for weight vector are as follows,
 
@@ -241,20 +220,7 @@ class _AdaFactor(Optimizer):
         If parameters is not used in the network, please do not add it to the optimizer,
         otherwise the calculation result will be abnormal.
 
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
-        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
-
-        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
-        but the gradient centralization can only be applied to the parameters of the convolution layer.
-        If the parameters of the non convolution layer are set to True, an error will be reported.
-
         To improve parameter groups performance, the customized order of parameters is supported.
-
-        The sparse strategy is applied while the SparseGatherV2 operator is used for forward network.
-        The sparse feature is under continuous development. If the sparse strategy wants to be executed on the host,
-        set the target to the CPU.
-
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
@@ -267,7 +233,7 @@ class _AdaFactor(Optimizer):
             default: (1e-30, 1e-3)
         clip_threshold (Union[float, Tensor]): The threshold of root mean square of final gradient update. default: 1.0
         decay_rate (Union[float, Tensor]): The coefficient used to compute running averages of square gradient.
-            default: -0.8
+            default: 0.8
         beta1 (float): The coefficient to computing running averages of gradient. Should be in range (0.0, 1.0).
                Default: None.
         weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
@@ -305,22 +271,13 @@ class _AdaFactor(Optimizer):
 
     Examples:
         >>> net = Net()
-        >>> #1) All parameters use the same learning rate and weight decay
+        >>> #1) Parameters use the default learning rate with None and weight decay with 0.
         >>> optim = nn.AdaFactor(params=net.trainable_params())
         >>>
-        >>> #2) Use parameter groups and set different values
-        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
-        ...                 {'params': no_conv_params, 'lr': 0.01},
-        ...                 {'order_params': net.trainable_params()}]
-        >>> optim = nn.AdaFactor(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
-        >>> # centralization of True.
-        >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad
-        >>> # centralization of False.
-        >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
-        >>>
+        >>> #2) Use parameter groups
+        >>> all_params = net.trainable_params()
+        >>> group_params = [{'params': [all_params[0]]}, {'params': [all_params[1]]}]
+        >>> optim = nn.AdaFactor(group_params, learning_rate=0.1, weight_decay=0.0, relative_step=False)
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
@@ -350,17 +307,16 @@ class _AdaFactor(Optimizer):
             learning_rate = 0.0
         if beta1 is None:
             beta1 = 0.0
-        self.weight_decay_flag = True if weight_decay != 0.0 else False
         self.scale_lr = True
         if not isinstance(learning_rate, (float, int)) and learning_rate is not None:
             self.scale_lr = False
             if relative_step or scale_parameter:
                 logging.warning("When learning_rate is learning scheduler, it not support update learning rate!")
 
-        super(_AdaFactor, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super(AdaFactor, self).__init__(learning_rate, params, weight_decay, loss_scale)
         validator.check_value_type("eps", eps, [list, tuple], self.cls_name)
         if len(eps) != 2:
-            raise ValueError("eps must have 2 value：(eps1, eps2).")
+            raise ValueError("eps must have 2 value: (eps1, eps2).")
         for i, ele in enumerate(eps):
             validator.check_value_type("eps{}".format(i), ele, [float], self.cls_name)
             validator.check_non_negative_float(ele, "eps{}".format(i), self.cls_name)
@@ -368,6 +324,7 @@ class _AdaFactor(Optimizer):
         validator.check_non_negative_float(clip_threshold, "clip_threshold", self.cls_name)
         validator.check_value_type("decay_rate", decay_rate, [float], self.cls_name)
         validator.check_float_range(decay_rate, 0, 1, Rel.INC_NEITHER, "decay_rate", self.cls_name)
+        validator.check_float_range(weight_decay, 0, 1, Rel.INC_LEFT, "weight_decay", self.cls_name)
         validator.check_value_type("scale_parameter", scale_parameter, [bool], self.cls_name)
         validator.check_value_type("relative_step", relative_step, [bool], self.cls_name)
         validator.check_value_type("compression", compression, [bool], self.cls_name)
@@ -378,47 +335,62 @@ class _AdaFactor(Optimizer):
         self.decay_rate = trans_to_tensor(-decay_rate)
         self.beta1 = trans_to_tensor(beta1)
         self.weight_decay = trans_to_tensor(weight_decay)
+        self.weight_decay_flag = bool(weight_decay)
 
+        self.step = Parameter(Tensor(0, dtype=mstype.float32), name="train_step")
         self.scale_parameter = scale_parameter
         self.relative_step = relative_step
         self.warmup_init = warmup_init
         self.compression = compression
 
-        self.init_ada_factor_state()
+        self.init_ada_factor_state(beta1)
+        self.step = Parameter(initializer(0, [1], mstype.float32), name='afactor_step')
         print("AdaFactor init completed", self.learning_rate)
 
-    def init_ada_factor_state(self):
-        self.step = ParameterTuple(
-            [Parameter(Tensor(0, mstype.int32), name="step_{}".format(i)) for i, _ in enumerate(self.parameters)])
-        self.RMS = ParameterTuple(
-            [Parameter(Tensor(0, mstype.float32), name="RMS_".format(i)) for i, _ in enumerate(self.parameters)])
-        self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')
+    def init_ada_factor_state(self, beta1):
+        """init adafactor variables"""
+        if beta1 > 0:
+            self.use_first_moment = True
+            self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
+        else:
+            self.use_first_moment = False
+            self.exp_avg = ParameterTuple([Parameter(Tensor(0.0))] * len(self.parameters))
 
-        self.exp_avg = []
+        self.exp_avg_sq = []
         self.exp_avg_sq_col = []
         self.exp_avg_sq_row = []
-        self.use_first_moment = []
         for i, paras in enumerate(self.parameters):
             paras_dtype = paras.dtype
             paras_shape = paras.shape
-            self.exp_avg_sq_row.append(Parameter(initializer(0, shape=paras_shape[:-1], dtype=paras_dtype),
-                                                 name="exp_avg_sq_row_{}".format(i)))
-            self.exp_avg_sq_col.append(Parameter(initializer(0, shape=paras_shape[:-2] + paras_shape[-1:],
-                                                             dtype=paras_dtype),
-                                                 name="exp_avg_sq_col_{}".format(i)))
-            use_first_moment = _get_options(self.beta1)
-            self.use_first_moment.append(use_first_moment)
-            if self.compression:
-                self.exp_avg.append(Parameter(initializer(0, shape=paras_shape, dtype=mstype.float16),
-                                              name="exp_avg_{}".format(i)))
+            if len(paras_shape) > 1:
+                self.exp_avg_sq_row.append(Parameter(initializer(0, shape=paras_shape[:-1], dtype=paras_dtype),
+                                                     name="exp_avg_sq_row_{}".format(i)))
+                self.exp_avg_sq_col.append(Parameter(initializer(0, shape=paras_shape[:-2] + paras_shape[-1:],
+                                                                 dtype=paras_dtype),
+                                                     name="exp_avg_sq_col_{}".format(i)))
+                if self.compression:
+                    self.exp_avg_sq.append(Parameter(initializer(0, shape=(1,), dtype=mstype.float16),
+                                                     name="exp_avg_sq_{}".format(i)))
+                else:
+                    self.exp_avg_sq.append(Parameter(initializer(0, shape=(1,), dtype=paras_dtype),
+                                                     name="exp_avg_sq_{}".format(i)))
+
             else:
-                self.exp_avg.append(Parameter(initializer(0, shape=paras_shape, dtype=paras_dtype),
-                                              name="exp_avg_{}".format(i)))
+                self.exp_avg_sq_row.append(Parameter(initializer(0, shape=(1,), dtype=paras_dtype),
+                                                     name="exp_avg_sq_row_{}".format(i)))
+                self.exp_avg_sq_col.append(Parameter(initializer(0, shape=(1,), dtype=paras_dtype),
+                                                     name="exp_avg_sq_col_{}".format(i)))
+
+                if self.compression:
+                    self.exp_avg_sq.append(Parameter(initializer(0, shape=paras_shape, dtype=mstype.float16),
+                                                     name="exp_avg_sq_{}".format(i)))
+                else:
+                    self.exp_avg_sq.append(Parameter(initializer(0, shape=paras_shape, dtype=paras_dtype),
+                                                     name="exp_avg_sq_{}".format(i)))
 
         self.exp_avg_sq_row = ParameterTuple(self.exp_avg_sq_row)
         self.exp_avg_sq_col = ParameterTuple(self.exp_avg_sq_col)
-        self.exp_avg = ParameterTuple(self.exp_avg)
-        self.use_first_moment = tuple(self.use_first_moment)
+        self.exp_avg_sq = ParameterTuple(self.exp_avg_sq)
 
     @property
     def supports_memory_efficient_fp16(self):
@@ -430,12 +402,14 @@ class _AdaFactor(Optimizer):
 
     def construct(self, gradients):
         lr = self.get_lr()
+        step = F.assign_add(self.step, 1)
         success = self.hyper_map(F.partial(_adam_opt, self.eps, self.clip_threshold, self.decay_rate,
                                            self.beta1, self.weight_decay, self.scale_lr,
                                            self.scale_parameter, self.relative_step,
-                                           self.warmup_init, self.compression, self.weight_decay_flag, lr),
-                                 gradients, self.parameters, self.step, self.exp_avg, self.exp_avg_sq_row,
-                                 self.exp_avg_sq_col, self.exp_avg_sq, self.RMS, self.use_first_moment)
+                                           self.warmup_init, self.compression, self.use_first_moment,
+                                           self.weight_decay_flag, lr, step),
+                                 gradients, self.parameters, self.exp_avg, self.exp_avg_sq_row,
+                                 self.exp_avg_sq_col, self.exp_avg_sq)
 
         return success
 
