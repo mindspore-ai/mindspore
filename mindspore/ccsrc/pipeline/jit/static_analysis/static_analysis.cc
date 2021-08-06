@@ -350,7 +350,6 @@ void AnalysisEngine::ClearEvaluatorCache() {
 
 void AnalysisEngine::Clear() {
   AnalysisResultCacheMgr::GetInstance().Clear();
-  AnalysisContext::ClearContext();
   anfnode_config_map_.clear();
   eval_trace_.clear();
   evaluators_.clear();
