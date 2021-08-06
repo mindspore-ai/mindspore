@@ -94,6 +94,8 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitPackedInputOutput() {
 }
 
 int ConvolutionDepthwiseSWCPUKernelX86::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_AVX
   oc_tile_ = C8NUM;
 #endif

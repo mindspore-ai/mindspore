@@ -107,6 +107,8 @@ int ConvolutionDelegateCPUKernel::GetBiasData() {
 }
 
 int ConvolutionDelegateCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = GetWeightAndBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get weight and bias failed.";

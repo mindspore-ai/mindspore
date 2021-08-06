@@ -66,6 +66,8 @@ int ConvolutionDepthwise3x3CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 InitWeightBias failed.";

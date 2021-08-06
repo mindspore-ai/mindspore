@@ -27,6 +27,8 @@ using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
 int LayerNormCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }

@@ -55,7 +55,7 @@ int MeanInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     if (num_axes > MAX_SHAPE_SIZE || num_axes < 0) {
       return NNACL_ERR;
     }
-    for (size_t idx = 0; idx < num_axes; ++idx) {
+    for (int idx = 0; idx < num_axes; ++idx) {
       if (((size_t)(axes[idx])) == i) {
         reduce_axis = true;
         break;

@@ -39,7 +39,7 @@ int ExpandDimsInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   }
   int dim = ((int32_t *)(inputs[1]->data_))[0];
   if (dim < 0) {
-    dim += input->shape_size_ + 1;
+    dim += (int)(input->shape_size_) + 1;
   }
   if (dim > (int)(input->shape_size_)) {
     return NNACL_INPUT_TENSOR_ERROR;

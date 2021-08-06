@@ -64,9 +64,9 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
     free(tensor_shape.shape_size_);
     return NNACL_ERR;
   }
-  for (size_t i = 0; i < dim0; i++) {
+  for (int i = 0; i < dim0; i++) {
     tensor_shape.shape_[i] = (int *)(input0->shape_ + 1);
-    tensor_shape.shape_size_[i] = input0->shape_size_ - 1;
+    tensor_shape.shape_size_[i] = (int)(input0->shape_size_) - 1;
   }
 
   ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, GetElementNum(input1));

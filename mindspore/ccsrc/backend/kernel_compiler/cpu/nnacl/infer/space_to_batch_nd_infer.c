@@ -29,7 +29,7 @@ int SpaceSetOutputShapeFromParam(const TensorC *const *inputs, size_t inputs_siz
   }
   SpaceToBatchParameter *param = (SpaceToBatchParameter *)parameter;
   int *block_shape = param->block_sizes_;
-  size_t block_shape_size = param->m_;
+  int block_shape_size = param->m_;
   int *padding = param->paddings_;
   int padding_left = 0;
   int padding_right = 0;

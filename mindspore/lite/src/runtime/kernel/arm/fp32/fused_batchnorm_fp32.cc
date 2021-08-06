@@ -27,6 +27,8 @@ namespace {
 constexpr int kNumInputSize = 5;
 }  // namespace
 int FusedBatchnormCPUKernel::ReSize() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   FreeMeanAndVariance();
   FreeScaleAndOffset();
   FillParam();
