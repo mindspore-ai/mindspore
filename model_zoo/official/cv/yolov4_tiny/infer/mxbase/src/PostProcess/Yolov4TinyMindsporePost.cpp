@@ -126,10 +126,8 @@ bool Yolov4TinyPostProcess::IsValidTensors(const std::vector<TensorBase> &tensor
                 return false;
             }
         }
-        return true;
-    } else {
-        return true;
     }
+    return true;
 }
 
 void Yolov4TinyPostProcess::ObjectDetectionOutput(const std::vector<TensorBase>& tensors,
@@ -218,8 +216,6 @@ void Yolov4TinyPostProcess::SelectClassNHWC(std::shared_ptr<void> netout, NetInf
             }
             if (classID < 0) continue;
             MxBase::ObjectInfo det;
-            int row = j / layer.width;
-            int col = j % layer.width;
             float x = static_cast<float *>(netout.get())[bIdx];
             float y = static_cast<float *>(netout.get())[bIdx + offsetY];
             float width = static_cast<float *>(netout.get())[bIdx + OFFSETWIDTH];
