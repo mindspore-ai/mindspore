@@ -24,7 +24,8 @@ using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::lite::micro::nnacl {
 int SoftMaxFP32Coder::Prepare(CoderContext *const context) {
-  SoftmaxBaseCoder::Init();
+  auto ret = SoftmaxBaseCoder::Init();
+  MS_CHECK_RET_CODE(ret, "SoftmaxBaseCoder::Init() failed!");
   // malloc tmp buffer
   int n_dim = softmax_param_->n_dim_;
   int32_t axis = softmax_param_->axis_;

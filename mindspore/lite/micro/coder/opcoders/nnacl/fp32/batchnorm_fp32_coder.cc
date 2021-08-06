@@ -53,6 +53,8 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(input_tensors_.size() == DIMENSION_3D, "inputs size is not equal to three");
   Tensor *mean_tensor = input_tensors_.at(1);
   Tensor *var_tensor = input_tensors_.at(kInputSize1);
+  MS_CHECK_PTR(mean_tensor);
+  MS_CHECK_PTR(var_tensor);
   Collect(context,
           {
             "nnacl/fp32/batchnorm.h",

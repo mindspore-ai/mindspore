@@ -25,6 +25,8 @@ using mindspore::schema::PrimitiveType_TopKFusion;
 
 namespace mindspore::kernel {
 int TopKCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   topk_param_->topk_node_list_ = nullptr;
   if (!InferShapeDone()) {
     return RET_OK;
@@ -59,7 +61,8 @@ int TopKCPUKernel::Run() {
     MS_LOG(ERROR) << "The k value is out of the data size range.";
     return RET_ERROR;
   }
-  topk_param_->topk_node_list_ = ms_context_->allocator->Malloc(sizeof(TopkNode) * topk_param_->last_dim_size_);
+  topk_param_->topk_node_list_ =
+    ms_context_->allocator->Malloc(static_cast<int>(sizeof(TopkNode)) * topk_param_->last_dim_size_);
   if (topk_param_->topk_node_list_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;

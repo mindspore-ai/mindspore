@@ -40,17 +40,14 @@ constexpr int kIndexInputIdx = 1;
 constexpr int kValueIndex = 2;
 
 int TensorArrayCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   MSLITE_CHECK_PTR(this->ta_param_);
   int *element_shape = this->ta_param_->element_shape_;
   MSLITE_CHECK_PTR(element_shape);
   int element_shape_size = this->ta_param_->element_shape_size_;
   // element shape to vector
   std::vector<int> element_shape_v(element_shape, element_shape + element_shape_size);
-  // check inputs' size
-  if (this->in_tensors_.size() != 1) {
-    MS_LOG(ERROR) << "invalid number of tensor array!";
-    return RET_ERROR;
-  }
   // get size from input
   lite::Tensor *input = InnerKernel::in_tensors_.at(kInputIndex);
   // check input tensor's datatype is int or not

@@ -48,6 +48,8 @@ void MatmulCPUKernel::InitShapeB() {
 }
 
 int MatmulCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   MatmulFp32BaseCPUKernel::InitParameter();
 
   if (params_->a_const_ == true) {

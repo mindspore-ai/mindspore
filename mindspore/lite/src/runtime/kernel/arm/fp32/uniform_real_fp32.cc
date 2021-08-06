@@ -204,7 +204,11 @@ void GetPhiloxRandomFloat(float *data, size_t length, int seed, int seed2) {
   }
 }
 
-int UniformRealCPUKernel::Init() { return RET_OK; }
+int UniformRealCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int UniformRealCPUKernel::ReSize() { return RET_OK; }
 

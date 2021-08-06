@@ -32,6 +32,8 @@ using mindspore::schema::PrimitiveType_SpaceToDepth;
 
 namespace mindspore::kernel {
 int SpaceToDepthCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
   if (param->block_size_ <= 0) {
     MS_LOG(ERROR) << "Input block_size should > 0!";

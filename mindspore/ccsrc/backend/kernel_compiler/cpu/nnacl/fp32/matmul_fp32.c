@@ -836,8 +836,8 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
       _mm_storeu_ps(dst_c + 8, dst2);
       _mm_storeu_ps(dst_c + 12, dst3);
 #else
-      for (int tr = 0; tr < C4NUM; tr++) {
-        for (int tc = 0; tc < C4NUM; tc++) {
+      for (size_t tr = 0; tr < C4NUM; tr++) {
+        for (size_t tc = 0; tc < C4NUM; tc++) {
           dst_c[tc * C4NUM + tr] = src_c[tr * col + tc];
         }
       }

@@ -32,6 +32,8 @@ constexpr size_t kPadCommonInputSize = 2;
 constexpr size_t kPadMaxInputSize = 3;
 }  // namespace
 int PadCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -76,11 +78,9 @@ void PadCPUKernel::InitMirrorPadBlock() {
   for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
     left_pads[i] = pad_param_->paddings_[2 * i];
   }
-
   std::vector<int> input_separate_dims;
   std::vector<int> output_separate_dims;
   std::vector<int> separate_offset;
-
   /* init separate dims */
   int cur_input = 1;
   int cur_output = 1;
@@ -101,22 +101,18 @@ void PadCPUKernel::InitMirrorPadBlock() {
     output_separate_dims.emplace_back(cur_output);
     separate_offset.emplace_back(0);
   }
-
   /* init separate stride */
   std::vector<int> output_separate_stride;
   output_separate_stride.resize(output_separate_dims.size());
   GetStride(output_separate_stride.data(), output_separate_dims.data(), output_separate_dims.size());
-
   /* init separate stride */
   std::vector<int> remain_stride;
   remain_stride.resize(0);
   int remain_size = GetStride(remain_stride.data(), output_separate_dims.data(), remain_stride.size());
-
   std::vector<int> right_pads(separate_offset.size());
   for (size_t i = 0; i < right_pads.size(); ++i) {
     right_pads[i] = output_separate_dims[i] - input_separate_dims[i] - separate_offset[i];
   }
-
   /* init pad region */
   std::vector<int> pad_region;
   for (size_t i = remain_stride.size(); i < output_separate_stride.size(); ++i) {
@@ -130,30 +126,27 @@ void PadCPUKernel::InitMirrorPadBlock() {
     }
     pad_region.emplace_back(r);
   }
-
   std::vector<int> pad_region_stride(pad_region.size());
   int region_size = GetStride(pad_region_stride.data(), pad_region.data(), pad_region.size());
-  int remain_dim_offset = remain_stride.size();
-
+  int remain_dim_offset = static_cast<int>(remain_stride.size());
   std::vector<int> pad_cord(pad_region.size());
-
   for (int pos = 0; pos < remain_size; ++pos) {
     const int dst_basic_offset = 0;
-
     for (int index = 1; index < region_size; ++index) {
       int dst_offset = dst_basic_offset;
-
       int value = index;
       for (size_t i = 0; i < pad_region.size() && pad_region_stride[i] != 0; ++i) {
         pad_cord[i] = value / pad_region_stride[i];
         value = value % pad_region_stride[i];
       }
-
       MirrorPadBlock block;
       const int size_offset = DEFAULT_PAD_NDIMS - static_cast<int>(pad_region.size());
       for (size_t i = 0; i < pad_region.size(); ++i) {
         int di = size_offset + i;
         int si = remain_dim_offset + i;
+        if (di > DEFAULT_PAD_NDIMS) {
+          continue;
+        }
         switch (pad_cord[i]) {
           case 0:
             dst_offset += separate_offset[si] * output_separate_stride[si];
@@ -183,7 +176,6 @@ void PadCPUKernel::InitMirrorPadBlock() {
       mirror_pad_block_.push_back(std::move(block));
     }
   }
-  return;
 }
 
 int PadCPUKernel::ExtendShape(int *shape, int length, const int *ori_shape, int rank) const {
@@ -258,7 +250,7 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
     Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
 
     /* calculate region part */
-    for (size_t i = task_id; i < mirror_pad_block_.size(); i += op_parameter_->thread_num_) {
+    for (size_t i = task_id; i < mirror_pad_block_.size(); i += static_cast<size_t>(op_parameter_->thread_num_)) {
       auto block = mirror_pad_block_[i];
 
       for (int a = 0; a < block.size_[0]; a++) {
@@ -289,7 +281,7 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   return RET_OK;
 }
 
-int PadCPUKernel::CheckPaddings(int *paddings, int length, int *input_shape, int mode) {
+int PadCPUKernel::CheckPaddings(const int *paddings, int length, const int *input_shape, int mode) {
   if (paddings == nullptr || input_shape == nullptr) {
     return RET_NULL_PTR;
   }
@@ -412,7 +404,7 @@ int PadCPUKernel::Run() {
     int output_size = output->ElementsNum();
     auto output_data = reinterpret_cast<float *>(output->data_c());
     if (abs(pad_param_->constant_value_ - 0.0f) < 1e-5) {
-      memset(output_data, 0, output_size * sizeof(float));
+      memset(output_data, 0, static_cast<size_t>(output_size) * sizeof(float));
     } else {
       for (auto i = 0; i < output_size; ++i) {
         output_data[i] = pad_param_->constant_value_;

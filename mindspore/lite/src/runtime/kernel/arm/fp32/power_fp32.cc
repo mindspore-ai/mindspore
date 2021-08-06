@@ -25,7 +25,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
-int PowerCPUKernel::Init() { return RET_OK; }
+int PowerCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int PowerCPUKernel::ReSize() { return RET_OK; }
 
