@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -21,6 +22,7 @@ from mindspore.common.parameter import Parameter
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
+@pytest.mark.skip(reason="not supported for in while")
 def test_if_after_for_in_while():
     class IfAfterForInWhileNet(nn.Cell):
         def __init__(self):

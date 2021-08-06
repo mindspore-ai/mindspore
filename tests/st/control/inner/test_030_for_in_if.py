@@ -23,6 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
+
 def test_for_in_if_01():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -69,6 +70,7 @@ def test_for_in_if_01():
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
+
 def test_for_in_if_02():
     class ForInIfNet(nn.Cell):
         def __init__(self):
@@ -100,7 +102,7 @@ def test_for_in_if_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([10], mstype.int32)
+    x = Tensor([10], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -152,7 +154,7 @@ def test_for_in_if_03():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([10], mstype.int32)
+    x = Tensor([10], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)

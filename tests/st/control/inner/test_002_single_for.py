@@ -52,16 +52,20 @@ def test_single_for_01():
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
+    for_net_foward = SingleForNet()
+    graph_forward_res = for_net_foward(x, y, z)
+
     for_net = SingleForNet()
     net = GradNet(for_net)
-    graph_forward_res = for_net(x, y, z)
     graph_backward_res = net(x, y, z)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
+    for_net_foward = SingleForNet()
+    pynative_forward_res = for_net_foward(x, y, z)
+
     for_net = SingleForNet()
     net = GradNet(for_net)
-    pynative_forward_res = for_net(x, y, z)
     pynative_backward_res = net(x, y, z)
 
     assert graph_forward_res == pynative_forward_res

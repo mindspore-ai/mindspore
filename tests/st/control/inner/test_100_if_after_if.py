@@ -105,16 +105,20 @@ class GradNet(nn.Cell):
 def control_flow_if_after_if(input_net, x, y):
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
+    forward_net = input_net()
+
     net = input_net()
     grad_net = GradNet(net)
-    graph_forward_res = net(x, y)
+    graph_forward_res = forward_net(x, y)
     graph_backward_res = grad_net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
+    forward_net = input_net()
+
     net = input_net()
     grad_net = GradNet(net)
-    pynative_forward_res = net(x, y)
+    pynative_forward_res = forward_net(x, y)
     pynative_backward_res = grad_net(x, y)
 
     assert graph_forward_res == pynative_forward_res
