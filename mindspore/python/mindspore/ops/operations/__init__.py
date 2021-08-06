@@ -83,7 +83,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, KLDivLoss, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad, SparseApplyAdagradV2, SparseApplyFtrlV2,
-                     FusedSparseFtrl, FusedSparseProximalAdagrad, SparseApplyRMSProp,
+                     FusedSparseFtrl, FusedSparseProximalAdagrad, SparseApplyRMSProp, SparseApplyAdadelta,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2, ApplyAdagradDA,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink)
@@ -464,6 +464,7 @@ __all__ = [
     "ReLUV2",
     "SparseToDense",
     "SparseTensorDenseMatmul",
+    "SparseApplyAdadelta",
     "MatrixInverse",
     "Range",
     "SearchSorted",
