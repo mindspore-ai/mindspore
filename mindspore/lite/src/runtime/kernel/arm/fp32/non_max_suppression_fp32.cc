@@ -47,6 +47,8 @@ constexpr int kBoxPointNum = 4;
 }  // namespace
 
 int NonMaxSuppressionCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   // boxes, scores, max_output_boxes, iou_threshold, score_threshold
   if (in_tensors_.size() < kMinInputsSize || in_tensors_.size() > kMaxInputsSize || out_tensors_.size() != kOutputNum) {
     MS_LOG(ERROR) << "NonMaxSuppression input size should be in [" << kMinInputsSize << ", " << kMaxInputsSize << "]"

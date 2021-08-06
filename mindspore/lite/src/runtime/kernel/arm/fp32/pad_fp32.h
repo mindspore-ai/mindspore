@@ -45,7 +45,7 @@ class PadCPUKernel : public InnerKernel {
   virtual int RunMirrorPadImpl(int task_id);
 
  private:
-  int CheckPaddings(int *paddings, int length, int *input_shape, int mode);
+  int CheckPaddings(const int *paddings, int length, const int *input_shape, int mode);
   void CalculateStrides();
   int ExtendShape(int *shape, int length, const int *ori_shape, int rank) const;
   int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length) const;

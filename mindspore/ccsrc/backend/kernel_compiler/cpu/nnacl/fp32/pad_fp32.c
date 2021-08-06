@@ -36,7 +36,7 @@ void Pad(const float *input_data, float *output_data, const int *input_shape, co
             out[4] = in[4] + paddings[8];
             float *dst = output_data + Offset6d(output_shape, out) + paddings[10];
             const float *src = input_data + Offset6d(input_shape, in);
-            memcpy(dst, src, input_shape[5] * sizeof(float));
+            memcpy(dst, src, input_shape[5] * (int)(sizeof(float)));
           }
         }
       }

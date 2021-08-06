@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_ReverseV2;
 namespace mindspore::kernel {
 int ReverseCPUKernel::Stride(int index) {
   int stride = 1;
-  for (size_t i = index + 1; i < in_tensors_.at(0)->shape().size(); ++i) {
+  for (size_t i = static_cast<int>(index) + 1; i < in_tensors_.at(0)->shape().size(); ++i) {
     stride *= in_tensors_.at(0)->shape().at(i);
   }
   return stride;
@@ -63,12 +63,12 @@ int ReverseCPUKernel::ReSize() {
     free(tmp_);
     tmp_ = nullptr;
   }
-  tmp_ = reinterpret_cast<int *>(malloc(data_size_ * sizeof(int)));
+  tmp_ = reinterpret_cast<int *>(malloc(data_size_ * static_cast<int>(sizeof(int))));
   if (tmp_ == nullptr) {
     MS_LOG(ERROR) << "Reverse Malloc tmp_ error!";
     return RET_ERROR;
   }
-  (void)memset(tmp_, 0, data_size_ * sizeof(int));
+  (void)memset(tmp_, 0, data_size_ * static_cast<int>(sizeof(int)));
 
   for (int i = 0; i < param->num_axis_; i++) {
     int axis = param->axis_[i];
@@ -98,6 +98,8 @@ int ReverseCPUKernel::ReSize() {
 }
 
 int ReverseCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -142,7 +144,7 @@ int ReverseCPUKernel::Run() {
 
 void ReverseCPUKernel::UpdateAxisInfo() {
   auto reverse_param = reinterpret_cast<ReverseParameter *>(op_parameter_);
-  int in_shape_len = in_tensors_.front()->shape().size();
+  int in_shape_len = static_cast<int>(in_tensors_.front()->shape().size());
   for (int i = 0; i < reverse_param->num_axis_; ++i) {
     if (reverse_param->axis_[i] < 0) {
       reverse_param->axis_[i] += in_shape_len;

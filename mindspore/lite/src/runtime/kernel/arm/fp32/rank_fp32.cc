@@ -27,7 +27,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Rank;
 
 namespace mindspore::kernel {
-int RankCPUKernel::Init() { return RET_OK; }
+int RankCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int RankCPUKernel::ReSize() { return RET_OK; }
 

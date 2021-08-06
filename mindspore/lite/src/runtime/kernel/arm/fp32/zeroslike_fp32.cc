@@ -27,7 +27,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ZerosLike;
 
 namespace mindspore::kernel {
-int ZerosLikeCPUKernel::Init() { return RET_OK; }
+int ZerosLikeCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  return RET_OK;
+}
 
 int ZerosLikeCPUKernel::Run() {
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
