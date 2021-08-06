@@ -39,7 +39,7 @@ from bbox import bbox_overlaps
 def get_gt_boxes(gt_dir):
     """ gt dir: (wider_face_val.mat, wider_easy_val.mat, wider_medium_val.mat, wider_hard_val.mat)"""
 
-    gt_mat = loadmat(os.path.join(gt_dir, 'val.mat')) # you own ground_truth name
+    gt_mat = loadmat(os.path.join(gt_dir, 'wider_face_val.mat')) # you own ground_truth name
     hard_mat = loadmat(os.path.join(gt_dir, 'wider_hard_val.mat'))
     medium_mat = loadmat(os.path.join(gt_dir, 'wider_medium_val.mat'))
     easy_mat = loadmat(os.path.join(gt_dir, 'wider_easy_val.mat'))
