@@ -16,7 +16,7 @@ fi
 
 
 docker run -it \
-    --device=/dev/davinci4 \
+    --device=/dev/davinci0 \
     --device=/dev/davinci_manager \
     --device=/dev/devmm_svm \
     --device=/dev/hisi_hdc \
