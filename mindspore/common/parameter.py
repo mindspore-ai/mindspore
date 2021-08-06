@@ -136,7 +136,6 @@ class Parameter(Tensor_):
 
     def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True):
         self.param_info = ParamInfo()
-        self.init_param_info = True
         self.init_in_server = False
         self.cache_enable = False
         self.name = name
@@ -586,11 +585,6 @@ class Parameter(Tensor_):
         obj.init_mode = None
         obj.sliced = set_sliced
         return obj
-
-    def __del__(self):
-        if hasattr(self, "init_param_info"):
-            if self.init_param_info is True and context.get_context("mode") == context.GRAPH_MODE:
-                self.param_info = None
 
 
 class ParameterTuple(tuple):
