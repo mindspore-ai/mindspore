@@ -26,7 +26,7 @@ int PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dim
       for (int w = 0; w < in_dims[2]; w++) {
         const int8_t *in = in_data + offset(in_dims, n, h, w, 0);
         int8_t *out = out_data + offset(out_dims, n + paddings[0], h + paddings[2], w + paddings[4], paddings[6]);
-        memcpy(out, in, copy_size * sizeof(int8_t));
+        memcpy(out, in, (size_t)copy_size * sizeof(int8_t));
       }
     }
   }

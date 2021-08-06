@@ -24,7 +24,7 @@ int Int8Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, UnSqueezeParamete
   float input_scale = para_->quant_arg.in_quant_args_.scale_;
   int8_t input_zp = para_->quant_arg.in_quant_args_.zp_;
 
-  for (int i = task_id; i < data_size; i += para_->thread_count_) {
+  for (int i = task_id; i < (int)data_size; i += para_->thread_count_) {
     output_ptr[i] = output_zp + round(1 / output_scale * input_scale * (input_ptr[i] - input_zp));
   }
   return 0;
