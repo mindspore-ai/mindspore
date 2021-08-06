@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
@@ -165,7 +166,7 @@ def test_single_for_03():
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-
+@pytest.mark.skip(reason="not supported side effect")
 def test_single_for_04():
     class SingleForNet(nn.Cell):
         def __init__(self):
