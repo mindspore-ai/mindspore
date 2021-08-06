@@ -130,8 +130,6 @@ APP_ERROR Yolov4TinyDetectionOpencv::ReadImage(const std::string &imgPath, cv::M
     imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
     imageWidth_ = imageMat.cols;
     imageHeight_ = imageMat.rows;
-    LogInfo << "begin to resize: " << imgPath;
-    LogInfo << "shape: " <<imageMat.cols << "*" << imageMat.rows;
     return APP_ERR_OK;
 }
 
