@@ -44,7 +44,7 @@ parser = argparse.ArgumentParser(description='Seq2seq train entry point.')
 
 parser.add_argument("--is_modelarts", type=ast.literal_eval, default=False, help="model config json file path.")
 parser.add_argument("--data_url", type=str, default=None, help="pre-train dataset address.")
-parser.add_argument('--train_url', required=True, default=None, help='Location of training outputs.')
+parser.add_argument('--train_url', type=str, default=None, help='Location of training outputs.')
 parser.add_argument("--config", type=str, required=True, help="model config json file path.")
 parser.add_argument("--pre_train_dataset", type=str, required=True, help="pre-train dataset address.")
 args = parser.parse_args()
