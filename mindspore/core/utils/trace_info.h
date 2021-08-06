@@ -430,6 +430,14 @@ class TraceOpt : public TraceInfo {
   ~TraceOpt() override = default;
   TraceInfoPtr clone() override { return std::make_shared<TraceOpt>(*shared_from_base<TraceOpt>()); }
 };
+
+class TraceListComp : public TraceInfo {
+ public:
+  explicit TraceListComp(const DebugInfoPtr &info) : TraceInfo(info, "ListComp", "G-") {}
+  MS_DECLARE_PARENT(TraceListComp, TraceInfo);
+  ~TraceListComp() override = default;
+  TraceInfoPtr clone() override { return std::make_shared<TraceListComp>(*shared_from_base<TraceListComp>()); }
+};
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_TRACE_INFO_H_
