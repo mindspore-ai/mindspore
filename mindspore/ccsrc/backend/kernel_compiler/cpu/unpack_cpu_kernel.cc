@@ -29,18 +29,18 @@ void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   }
   output_num_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num"));
   unstack_param_.num_ = SizeToInt(output_num_);
-  unstack_param_.axis_ = LongToSize(axis_tmp);
+  unstack_param_.axis_ = LongToInt(axis_tmp);
   unstack_param_.pre_dims_ = 1;
   unstack_param_.axis_dim_ = 1;
   unstack_param_.after_dims_ = 1;
 
   for (size_t i = 0; i < input_shape.size(); i++) {
-    if (static_cast<int>(i) < unstack_param_.axis_) {
-      unstack_param_.pre_dims_ *= input_shape[i];
-    } else if (static_cast<int>(i) > unstack_param_.axis_) {
-      unstack_param_.after_dims_ *= input_shape[i];
+    if (i < IntToSize(unstack_param_.axis_)) {
+      unstack_param_.pre_dims_ *= SizeToInt(input_shape[i]);
+    } else if (i > IntToSize(unstack_param_.axis_)) {
+      unstack_param_.after_dims_ *= SizeToInt(input_shape[i]);
     } else {
-      unstack_param_.axis_dim_ = input_shape[i];
+      unstack_param_.axis_dim_ = SizeToInt(input_shape[i]);
     }
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
