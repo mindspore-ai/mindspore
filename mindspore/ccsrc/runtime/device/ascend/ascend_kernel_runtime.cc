@@ -47,7 +47,6 @@
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "debug/env_config_parser.h"
 #endif
-#include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
 #include "utils/config_manager.h"
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
@@ -291,9 +290,7 @@ bool AscendKernelRuntime::Init() {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
   try {
-    OpTilingCalculater::GetInstance().Init();
     // Start up profiling before rtSetDevice
-
     bool ret = InitDevice();
     if (!ret) {
       return ret;
