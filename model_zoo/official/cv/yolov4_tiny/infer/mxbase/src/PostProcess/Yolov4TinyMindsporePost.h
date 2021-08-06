@@ -35,11 +35,11 @@ const int DEFAULT_YOLO_VERSION = 4;
 const int YOLOV3_VERSION = 3;
 const int YOLOV4_VERSION = 4;
 const int YOLOV5_VERSION = 5;
-
+const int ANCHOR_NUM = 6;
 struct OutputLayer {
     size_t width;
     size_t height;
-    float anchors[6];
+    float anchors[ANCHOR_NUM];
 };
 
 struct NetInfo {
