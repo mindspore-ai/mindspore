@@ -60,8 +60,8 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 }
 
 bool DumpJsonParser::IsDumpEnabled() {
-  auto config_path = std::getenv(kMindsporeDumpConfig);
-  if (config_path == nullptr) {
+  auto config_path = common::GetEnv(kMindsporeDumpConfig);
+  if (config_path.empty()) {
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;
@@ -90,7 +90,11 @@ void DumpJsonParser::Parse() {
     MS_LOG(EXCEPTION) << "Get dump config file failed";
   }
 
-  std::ifstream json_file(dump_config_file.value());
+  auto dump_file_realpath = Common::GetRealPath(dump_config_file.value());
+  if (!dump_file_realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Get real path failed in Parse.";
+  }
+  std::ifstream json_file(dump_file_realpath.value());
   if (!json_file.is_open()) {
     MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed."
                       << " Errno:" << errno << " ErrInfo:" << strerror(errno);
@@ -101,6 +105,7 @@ void DumpJsonParser::Parse() {
     json_file >> j;
   } catch (nlohmann::json::parse_error &e) {
     MS_LOG(ERROR) << "Dump json contents:" << GetIfstreamString(json_file);
+    json_file.close();
     MS_LOG(EXCEPTION) << "Parse dump json failed, error:" << e.what();
   }
 
@@ -108,6 +113,7 @@ void DumpJsonParser::Parse() {
   std::stringstream ss;
   ss << j;
   std::string cfg = ss.str();
+  json_file.close();
   MS_LOG(INFO) << "Dump json:" << cfg;
 
   ParseE2eDumpSetting(j);
@@ -129,13 +135,14 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
     auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(rank_id) + "/.dump_metadata/data_dump.json");
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
+    } else {
+      const std::string file_path = realpath.value();
+      ChangeFileMode(file_path, S_IWUSR);
+      std::ofstream json_copy(file_path);
+      json_copy << json_file.rdbuf();
+      json_copy.close();
+      ChangeFileMode(file_path, S_IRUSR);
     }
-    const std::string file_path = realpath.value();
-    ChangeFileMode(file_path, S_IWUSR);
-    std::ofstream json_copy(file_path);
-    json_copy << json_file.rdbuf();
-    json_copy.close();
-    ChangeFileMode(file_path, S_IRUSR);
   }
 }
 
