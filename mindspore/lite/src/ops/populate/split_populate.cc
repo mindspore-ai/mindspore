@@ -44,13 +44,13 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   }
 
   /* free split_sizes_ in split op base */
-  param->split_sizes_ = reinterpret_cast<int *>(malloc(param->num_split_ * sizeof(int)));
+  param->split_sizes_ = reinterpret_cast<int *>(malloc(static_cast<size_t>(param->num_split_) * sizeof(int)));
   if (param->split_sizes_ == nullptr) {
     MS_LOG(ERROR) << "malloc param split_sizes_ error";
     free(param);
     return nullptr;
   }
-  memset(param->split_sizes_, 0, param->num_split_ * sizeof(int));
+  memset(param->split_sizes_, 0, static_cast<size_t>(param->num_split_) * sizeof(int));
   auto split_sizes_vector_ = value->size_splits();
   if (split_sizes_vector_ != nullptr && split_sizes_vector_->size() <= static_cast<uint32_t>(param->num_split_)) {
     int i = 0;
