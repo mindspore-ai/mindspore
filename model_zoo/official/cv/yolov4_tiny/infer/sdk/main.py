@@ -111,8 +111,6 @@ if __name__ == '__main__':
             print("GetResultWithUniqueId error. errorCode=%d, errorMsg=%s" % (
                 infer_result.errorCode, infer_result.data.decode()))
             exit()
-        # print the infer result
-        #print(infer_result.data.decode())
         save_infer_result(res_dir_name, infer_result.data.decode())
 
 
