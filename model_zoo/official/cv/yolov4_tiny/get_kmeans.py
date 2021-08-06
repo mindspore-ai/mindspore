@@ -18,14 +18,6 @@ from __future__ import division, print_function
 import numpy as np
 
 def iou(box, clusters):
-    """
-    Calculates the Intersection over Union (IoU) between a box and k clusters.
-    param:
-        box: tuple or array, shifted to the origin (i. e. width and height)
-        clusters: numpy array of shape (k, 2) where k is the number of clusters
-    return:
-        numpy array of shape (k, 0) where k is the number of clusters
-    """
     x = np.minimum(clusters[:, 0], box[0])
     y = np.minimum(clusters[:, 1], box[1])
     if np.count_nonzero(x == 0) > 0 or np.count_nonzero(y == 0) > 0:
@@ -40,25 +32,10 @@ def iou(box, clusters):
 
 
 def avg_iou(boxes, clusters):
-    """
-    Calculates the average Intersection over Union (IoU) between a numpy array of boxes and k clusters.
-    param:
-        boxes: numpy array of shape (r, 2), where r is the number of rows
-        clusters: numpy array of shape (k, 2) where k is the number of clusters
-    return:
-        average IoU as a single float
-    """
     return np.mean([np.max(iou(boxes[i], clusters)) for i in range(boxes.shape[0])])
 
 
 def translate_boxes(boxes):
-    """
-    Translates all the boxes to the origin.
-    param:
-        boxes: numpy array of shape (r, 4)
-    return:
-    numpy array of shape (r, 2)
-    """
     new_boxes = boxes.copy()
     for row in range(new_boxes.shape[0]):
         new_boxes[row][2] = np.abs(new_boxes[row][2] - new_boxes[row][0])
@@ -67,20 +44,10 @@ def translate_boxes(boxes):
 
 
 def kmeans(boxes, k, dist=np.median):
-    """
-    Calculates k-means clustering with the Intersection over Union (IoU) metric.
-    param:
-        boxes: numpy array of shape (r, 2), where r is the number of rows
-        k: number of clusters
-        dist: distance function
-    return:
-        numpy array of shape (k, 2)
-    """
     rows = boxes.shape[0]
 
     distances = np.empty((rows, k))
     last_clusters = np.zeros((rows,))
-
     np.random.seed()
 
     # the Forgy method will fail if the whole array contains the same rows
@@ -145,9 +112,6 @@ def get_kmeans(anno, cluster_num=9):
 
 
 if __name__ == '__main__':
-    # target resize format: [width, height]
-    # if target_resize is specified, the anchors are on the resized image scale
-    # if target_resize is set to None, the anchors are on the original image scale
     img_size = [416, 416]
     annotation_file = "train.txt"
     anno_result = parse_anno(annotation_file, target_size=img_size)
