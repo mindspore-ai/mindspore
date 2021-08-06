@@ -1039,7 +1039,7 @@ class MatMul(PrimitiveWithCheck):
 
      .. math::
 
-        (Output)_{i j}=\\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\\cdots+a_{i p} b_{p j}, p\\in N
+        (Output)_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
 
     where the :math:`i,j` indicates the output of the i-th row and j-th column element.
 
@@ -3274,10 +3274,10 @@ class ApproximateEqual(_LogicBinaryOp):
 
     .. math::
 
-    out_i = \begin{cases}
-      & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True\  \\
-      & \text{ if } \left | x_{i} - y_{i} \right | \ge  \text{tolerance},\ \ False\
-    \end{cases}
+        out_i = \begin{cases}
+        & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
+        & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
+        \end{cases}
 
     where :math:`\text{tolerance}` indicates Acceptable maximum tolerance.
 
@@ -3785,10 +3785,10 @@ class IsNan(PrimitiveWithInfer):
 
     .. math::
 
-    out_i = \begin{cases}
-      & \text{ if } x_{i} = \text{Nan},\ \ True\  \\
-      & \text{ if } x_{i} \ne  \text{Nan},\ \ False\
-    \end{cases}
+        out_i = \begin{cases}
+          & \text{ if } x_{i} = \text{Nan},\ \ True \\
+          & \text{ if } x_{i} \ne  \text{Nan},\ \ False
+        \end{cases}
 
     where :math:`Nan` means not a number.
 
@@ -3831,10 +3831,10 @@ class IsInf(PrimitiveWithInfer):
 
     .. math::
 
-    out_i = \begin{cases}
-      & \text{ if } x_{i} = \text{Inf},\ \ True\  \\
-      & \text{ if } x_{i} \ne  \text{Inf},\ \ False\
-    \end{cases}
+        out_i = \begin{cases}
+        & \text{ if } x_{i} = \text{Inf},\ \ True \\
+        & \text{ if } x_{i} \ne \text{Inf},\ \ False
+        \end{cases}
 
     where :math:`Inf` means not a number.
 
@@ -3877,10 +3877,10 @@ class IsFinite(PrimitiveWithInfer):
 
     .. math::
 
-    out_i = \begin{cases}
-      & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
-      & \text{ if } x_{i} \ne  \text{Finite},\ \ False\
-    \end{cases}
+        out_i = \begin{cases}
+          & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
+          & \text{ if } x_{i} \ne \text{Finite},\ \ False
+        \end{cases}
 
     Inputs:
         - **x** (Tensor) - The input tensor.
