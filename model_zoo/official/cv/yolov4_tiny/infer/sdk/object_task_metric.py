@@ -122,15 +122,21 @@ def get_img_id(file_name):
 
 if __name__ == "__main__":
     ban_path = './coco2014_minival.txt'
-    image_id_list = get_image_id(ban_path)
     input_file = './result/result.txt'
+    if not os.path.exists(ban_path):
+        print('The infer text file does not exist.')
+    if not os.path.exists(input_file):
+        print('The result text file does not exist.')
+
+    image_id_list = get_image_id(ban_path)
     result_dict = get_dict_from_file(input_file, image_id_list)
     json_file_name = './result.json'
+    
     with open(json_file_name, 'w') as f:
         json.dump(result_dict, f)
 
     # set iouType to 'segm', 'bbox' or 'keypoints'
-    ann_type = ['segm', 'bbox', 'keypoints']
+    ann_type = ('segm', 'bbox', 'keypoints')
     # specify type here
     ann_type = ann_type[1]
     coco_gt_file = './instances_val2014.json'
