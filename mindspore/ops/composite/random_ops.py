@@ -226,6 +226,40 @@ def gamma(shape, alpha, beta, seed=None):
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)
+        >>> # case 2: alpha_shape is (2, 3), so shape is (3, 1, 3)
+        >>> shape = (3, 1, 3)
+        >>> alpha = Tensor(np.array([[1, 3, 4], [2, 5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([1.0]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 3)
+        >>> # case 3: beta_shape is (1, 2), the output is different.
+        >>> shape = (3, 1, 2)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([1.0, 2]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
+        >>> result = output.shape
+        >>> print(output)
+        [[[ 2.2132034  5.8855834]]
+         [ 3.3981476  7.5805717]
+        [[ 3.3981476  7.5805717]]
+         [ 3.7190282 19.941492]
+        [[ 2.9512358  2.5969937]]
+         [ 3.786061   5.160872 ]]]
+        >>> # case 4: beta_shape is (2, 1), the output is different.
+        >>> shape = (3, 1, 2)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> beta = Tensor(np.array([[1.0], [2.0]]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=5)
+        >>> result = output.shape
+        >>> print(output)
+        [[[ 5.6085486  7.8280783]]
+         [ 15.97684  16.116285]
+        [[ 1.8347423  1.713663]]
+         [ 3.2434065 15.667398]
+        [[ 4.2922077  7.3365674]]
+         [ 5.3876944  13.159832 ]]]
     """
     seed1, seed2 = _get_seed(seed, "gamma")
     random_gamma = P.Gamma(seed1, seed2)
