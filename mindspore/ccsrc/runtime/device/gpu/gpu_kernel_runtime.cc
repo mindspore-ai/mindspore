@@ -642,6 +642,7 @@ void GPUKernelRuntime::ClearKernelOldOutputAndWorkspace(const session::KernelGra
 
 void GPUKernelRuntime::ClearKernelOutputAddress(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     if (IsGraphOutput(graph, kernel)) {
@@ -666,6 +667,7 @@ void GPUKernelRuntime::ClearKernelOutputAddress(const session::KernelGraph *grap
 
 void GPUKernelRuntime::ClearKernelWorkspaceAddress(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -878,6 +880,7 @@ void GPUKernelRuntime::LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, c
 
 bool GPUKernelRuntime::AddMemorySwapTask(const AnfNodePtr &kernel, bool mock, bool profiling) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   const MemSwapInfoSet &mem_swap_info_set = mem_swap_manager_->QueryKernelMemSwapInfo(kernel);
   for (auto &mem_swap_info : mem_swap_info_set) {
     auto need_swap_kernel = mem_swap_manager_->QueryKernelByTopoOrder(mem_swap_info.topo_order_);
@@ -969,6 +972,7 @@ void GPUKernelRuntime::UpdateHostSwapInQueue(const DeviceAddressPtr device_addre
 
 void GPUKernelRuntime::UpdateHostSwapOutQueue(bool mock) {
   MS_EXCEPTION_IF_NULL(mem_swap_manager_);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!mem_swap_manager_->trigger_swap()) {
     return;
   }
@@ -1107,6 +1111,7 @@ bool GPUKernelRuntime::AllocKernelWorkspaceDynamicRes(const mindspore::kernel::K
       continue;
     }
     auto device_address = AnfAlgo::GetMutableWorkspaceAddr(kernel, i);
+    MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, workspace_sizes[i], mock)) {
       return false;
     }

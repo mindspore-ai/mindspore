@@ -54,6 +54,10 @@ bool CudaEnvChecker::CheckNvccInPath() {
 }
 
 void CudaEnvChecker::GetRealPaths(std::set<std::string> *paths) const {
+  if (paths == nullptr) {
+    MS_LOG(ERROR) << "The pointer paths is nullptr";
+    return;
+  }
   auto env_paths_ptr = std::getenv(kPathEnv);
   if (env_paths_ptr == nullptr) {
     MS_LOG(ERROR) << "Please export environment variable PATH";
