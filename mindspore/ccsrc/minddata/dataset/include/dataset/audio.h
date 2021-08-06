@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -81,6 +82,31 @@ class AllpassBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~AllpassBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief AmplitudeToDB TensorTransform.
+/// \notes Turn a tensor from the power/amplitude scale to the decibel scale.
+class AmplitudeToDB final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] stype ['kPower', 'kMagnitude']
+  /// \param[in] ref_value Calculate db_multiplier
+  /// \param[in] amin Clamp the input waveform
+  /// \param[in] top_db Decibels cut-off value
+  explicit AmplitudeToDB(ScaleType stype = ScaleType::kPower, float ref_value = 1.0, float amin = 1e-10,
+                         float top_db = 80.0);
+
+  /// \brief Destructor.
+  ~AmplitudeToDB() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.

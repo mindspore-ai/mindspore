@@ -16,8 +16,41 @@
 Validators for TensorOps.
 """
 from functools import wraps
+from mindspore.dataset.core.validator_helpers import check_not_zero, check_int32, check_float32, \
+    check_value_normalize_std, check_value_ratio, FLOAT_MAX_INTEGER, parse_user_args, type_check
+from .utils import ScaleType
 
-from mindspore.dataset.core.validator_helpers import check_not_zero, check_int32, check_float32, check_value_normalize_std, parse_user_args, type_check
+
+def check_amplitude_to_db(method):
+    """Wrapper method to check the parameters of amplitude_to_db."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [stype, ref_value, amin, top_db], _ = parse_user_args(method, *args, **kwargs)
+
+        # type check stype
+        type_check(stype, (ScaleType,), "stype")
+
+        # type check ref_value
+        type_check(ref_value, (int, float), "ref_value")
+        # value check ref_value
+        if not ref_value is None:
+            check_value_ratio(ref_value, (0, FLOAT_MAX_INTEGER), "ref_value")
+
+        # type check amin
+        type_check(amin, (int, float), "amin")
+        # value check amin
+        if not amin is None:
+            check_value_ratio(amin, (0, FLOAT_MAX_INTEGER), "amin")
+
+        # type check top_db
+        type_check(top_db, (int, float), "top_db")
+        # value check top_db
+        if not top_db is None:
+            check_value_ratio(top_db, (0, FLOAT_MAX_INTEGER), "top_db")
+
+        return method(self, *args, **kwargs)
+    return new_method
 
 
 def check_biquad_sample_rate(sample_rate):
