@@ -52,10 +52,6 @@ class TfliteModelParser : public ModelParser {
   STATUS ConvertGraphOutputs();
   static STATUS SetTensorQuantParam(const tflite::TensorT *tflite_tensor, std::vector<QuantParamT> *quant_params,
                                     int round_type = 1);
-  int DoWeightFormatTransform(const CNodePtr &conv_node, const AnfNodePtr &weight_node, const FuncGraphPtr &graph,
-                              schema::Format weight_src_format, schema::Format weight_dst_format);
-  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
-  STATUS HardCodeTflite(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
   QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace lite

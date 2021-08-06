@@ -208,7 +208,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
             ${LITE_DIR}/tools/optimizer/common/format_utils.cc
             ${LITE_DIR}/tools/optimizer/common/multiple_pattern_process_pass.cc
-            ${LITE_DIR}/tools/optimizer/format/conv_weight_format.cc
             ${LITE_DIR}/tools/optimizer/format/delete_redundant_transpose.cc
             ${LITE_DIR}/tools/optimizer/format/to_format_base.cc
             ${LITE_DIR}/tools/optimizer/format/to_nchw_format.cc

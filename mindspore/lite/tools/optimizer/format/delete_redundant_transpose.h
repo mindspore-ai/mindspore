@@ -31,6 +31,7 @@ class DeleteRedundantTranspose : public Pass {
  private:
   STATUS DeleteNot4DTranspose(const FuncGraphPtr &func_graph);
   STATUS TransTransFusion(const FuncGraphPtr &func_graph);
+  STATUS UpdateNodeFormat(const FuncGraphPtr &func_graph, const CNodePtr &node);
 };
 }  // namespace opt
 }  // namespace mindspore
