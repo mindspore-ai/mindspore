@@ -27,7 +27,7 @@ def read_file_list(input_file):
     """
     image_file_list = []
     if not os.path.exists(input_file):
-        print('input file  does not exists.')
+        print('input file does not exists.')
     with open(input_file, "r") as fs:
         for line in fs.readlines():
             line = line.strip('\n').split(' ')[1]
