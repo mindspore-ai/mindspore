@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:11.1-cudnn8-devel-ubuntu18.04
 
 MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
@@ -53,7 +53,7 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     && tar -xvf v3.7.5.tar.gz \
     && cd /tmp/cpython-3.7.5 \
     && mkdir -p ${PYTHON_ROOT_PATH} \
-    && ./configure --prefix=${PYTHON_ROOT_PATH} \
+    && ./configure --prefix=${PYTHON_ROOT_PATH} --enable_shared \
     && make -j4 \
     && make install -j4 \
     && rm -f /usr/local/bin/python \

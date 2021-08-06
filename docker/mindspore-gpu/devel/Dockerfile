@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:11.1-cudnn8-devel-ubuntu18.04
 
 MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
@@ -43,7 +43,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     libnuma-dev
 
 # Configure cuDNN (v7.6.5)
-RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.7.6.5 /usr/local/cuda/lib64/libcudnn.so
+RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.8.0.5 /usr/local/cuda/lib64/libcudnn.so
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
