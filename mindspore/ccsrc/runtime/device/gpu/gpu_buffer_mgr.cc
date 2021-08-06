@@ -52,8 +52,8 @@ BlockQueueStatus_T GpuBufferMgr::Create(unsigned int device_id, const std::strin
                                         const std::vector<size_t> &shape, const size_t &capacity) {
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
-    return QUEUE_NOT_EXIST;
+    MS_LOG(ERROR) << "Queue already exist: " << name;
+    return QUEUE_EXIST;
   }
   std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
   BlockQueueStatus_T rt = queue->Create(addr, shape, capacity);
