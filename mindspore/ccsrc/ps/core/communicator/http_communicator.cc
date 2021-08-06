@@ -42,9 +42,12 @@ bool HttpCommunicator::Start() {
 
 bool HttpCommunicator::Stop() {
   MS_EXCEPTION_IF_NULL(http_server_);
-  bool res = http_server_->Stop();
+  if (!http_server_->Stop()) {
+    MS_LOG(ERROR) << "Stopping http server failed.";
+    return false;
+  }
   running_ = false;
-  return res;
+  return true;
 }
 
 void HttpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) {
@@ -60,6 +63,7 @@ void HttpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const Me
 
   std::string url = "/";
   url += msg_type;
+  MS_EXCEPTION_IF_NULL(http_server_);
   bool is_succeed = http_server_->RegisterRoute(url, &http_msg_callbacks_[msg_type]);
   if (!is_succeed) {
     MS_LOG(EXCEPTION) << "Http server register handler for url " << url << " failed.";

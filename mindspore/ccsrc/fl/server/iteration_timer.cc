@@ -40,7 +40,9 @@ void IterationTimer::Start(const std::chrono::milliseconds &duration) {
 
 void IterationTimer::Stop() {
   running_ = false;
-  monitor_thread_.join();
+  if (monitor_thread_.joinable()) {
+    monitor_thread_.join();
+  }
 }
 
 void IterationTimer::SetTimeOutCallBack(const TimeOutCb &timeout_cb) {
