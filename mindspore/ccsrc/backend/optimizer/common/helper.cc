@@ -484,6 +484,7 @@ bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
 }
 
 CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto idx = NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
   auto imm = std::make_shared<Int64Imm>(SizeToLong(output_idx));

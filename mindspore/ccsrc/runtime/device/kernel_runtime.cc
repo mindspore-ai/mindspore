@@ -697,7 +697,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   std::vector<tensor::TensorPtr> tensors;
   TensorValueToTensor(node_value, &tensors);
   // Graph id should be passed to record static memory if profiling is enabled.
-  auto kernel_info = static_cast<device::KernelInfo *>(value_node->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(value_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   uint32_t graph_id = kernel_info->graph_id();
   for (const auto &tensor : tensors) {

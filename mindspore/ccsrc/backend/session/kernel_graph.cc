@@ -482,7 +482,7 @@ void KernelGraph::ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const {
     return;
   }
   if (!AnfAlgo::IsFeatureMapOutput(input_node) && AnfAlgo::IsFeatureMapOutput(assign_value_node)) {
-    auto kernel_info = static_cast<device::KernelInfo *>(input_node->kernel_info());
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
     kernel_info->set_feature_map_flag(true);
   }
 }

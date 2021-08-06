@@ -976,7 +976,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       InsertActor(device_queue_ds_actor.get());
       (void)data_source_actors.emplace_back(device_queue_ds_actor);
       device_queue_ds_actor->data_kernel_ = *iter;
-      device_queue_ds_actor->kernel_info_ = static_cast<device::KernelInfo *>((*iter)->kernel_info());
+      device_queue_ds_actor->kernel_info_ = dynamic_cast<device::KernelInfo *>((*iter)->kernel_info());
     }
   }
 

@@ -30,7 +30,7 @@ void KernelActor::Init() {
 
   MS_EXCEPTION_IF_NULL(kernel_);
   real_input_num_ = AnfAlgo::GetInputTensorNum(kernel_);
-  kernel_info_ = static_cast<KernelInfo *>(kernel_->kernel_info());
+  kernel_info_ = dynamic_cast<KernelInfo *>(kernel_->kernel_info());
   is_dynamic_shape_ = AnfAlgo::IsDynamicShape(kernel_);
 
   // Init the device tensors and kernel launch info.
