@@ -34,9 +34,7 @@ def iou(box, clusters):
     intersection = x * y
     box_area = box[0] * box[1]
     cluster_area = clusters[:, 0] * clusters[:, 1]
-
     iou_ = np.true_divide(intersection, box_area + cluster_area - intersection + 1e-10)
-    # iou_ = intersection / (box_area + cluster_area - intersection + 1e-10)
 
     return iou_
 
@@ -118,8 +116,6 @@ def parse_anno(annotation_path, target_size=None):
             x_min, y_min, x_max, y_max = float(s[i*5+1]), float(s[i*5+2]), float(s[i*5+3]), float(s[i*5+4])
             width = x_max - x_min
             height = y_max - y_min
-            #assert width > 0
-            #assert height > 0
             if width == 0 or height == 0:
                 continue
             # use letterbox resize, i.e. keep the original aspect ratio
