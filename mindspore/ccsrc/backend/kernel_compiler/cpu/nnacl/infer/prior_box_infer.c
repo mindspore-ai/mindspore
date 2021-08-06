@@ -38,6 +38,9 @@ int PriorBoxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
 
   PriorBoxParameter *param = (PriorBoxParameter *)parameter;
   float *aspect_ratios = param->aspect_ratios;
+  if (aspect_ratios == NULL) {
+    return NNACL_NULL_PTR;
+  }
   int32_t aspect_ratios_size = param->aspect_ratios_size;
   for (int32_t i = 0; i < aspect_ratios_size; i++) {
     float ratio = aspect_ratios[i];
