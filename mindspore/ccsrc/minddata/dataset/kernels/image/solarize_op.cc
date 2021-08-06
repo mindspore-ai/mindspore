@@ -41,7 +41,7 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
 
     std::shared_ptr<CVTensor> mask_mat_tensor;
     std::shared_ptr<CVTensor> output_cv_tensor;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_cv->mat(), &mask_mat_tensor));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &mask_mat_tensor));
 
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv_tensor));
     RETURN_UNEXPECTED_IF_NULL(mask_mat_tensor);

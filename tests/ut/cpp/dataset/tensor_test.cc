@@ -303,7 +303,8 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   m.at<uint8_t>(1, 0) = 30;
   m.at<uint8_t>(1, 1) = 40;
   std::shared_ptr<CVTensor> cvt;
-  CVTensor::CreateFromMat(m, &cvt);
+  TensorShape shape{2, 2};
+  CVTensor::CreateFromMat(m, 2, &cvt);
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
   t->SetItemAt<uint8_t>({0, 0}, 10);
@@ -318,7 +319,7 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   m2.at<uint8_t>(2) = 30;
   m2.at<uint8_t>(3) = 40;
   std::shared_ptr<CVTensor> cvt2;
-  CVTensor::CreateFromMat(m2, &cvt2);
+  CVTensor::CreateFromMat(m2, 2, &cvt2);
   std::shared_ptr<Tensor> t2;
   Tensor::CreateEmpty(TensorShape({4}), DataType(DataType::DE_UINT8), &t2);
   t2->SetItemAt<uint8_t>({0}, 10);
@@ -360,7 +361,7 @@ TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
   m.at<int32_t>(1, 1) = 50;
   m.at<int32_t>(1, 2) = 60;
   std::shared_ptr<CVTensor> cvt;
-  CVTensor::CreateFromMat(m, &cvt);
+  CVTensor::CreateFromMat(m, 2, &cvt);
   cv::Mat mat;
   cvt->MatAtIndex({1}, &mat);
   cv::Mat m2(3, 1, CV_32S);
@@ -368,17 +369,17 @@ TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
   m2.at<int32_t>(1) = 50;
   m2.at<int32_t>(2) = 60;
   std::shared_ptr<CVTensor> cvt2;
-  CVTensor::CreateFromMat(mat, &cvt2);
+  CVTensor::CreateFromMat(mat, 2, &cvt2);
   std::shared_ptr<CVTensor> cvt3;
-  CVTensor::CreateFromMat(m2, &cvt3);
+  CVTensor::CreateFromMat(m2, 2, &cvt3);
 
   ASSERT_TRUE(*cvt2 == *cvt3);
   cvt->MatAtIndex({0}, &mat);
   m2.at<int32_t>(0) = 10;
   m2.at<int32_t>(1) = 20;
   m2.at<int32_t>(2) = 30;
-  CVTensor::CreateFromMat(mat, &cvt2);
-  CVTensor::CreateFromMat(m2, &cvt3);
+  CVTensor::CreateFromMat(mat, 2, &cvt2);
+  CVTensor::CreateFromMat(m2, 2, &cvt3);
   ASSERT_TRUE(*cvt2 == *cvt3);
 }
 

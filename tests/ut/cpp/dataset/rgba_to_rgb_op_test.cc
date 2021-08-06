@@ -48,7 +48,7 @@ TEST_F(MindDataTestRgbaToRgbOp, TestOp1) {
   // create new tensor to test conversion
   std::shared_ptr<Tensor> rgba_input;
   std::shared_ptr<CVTensor> input_cv_tensor;
-  CVTensor::CreateFromMat(rgba_image, &input_cv_tensor);
+  CVTensor::CreateFromMat(rgba_image, 3, &input_cv_tensor);
   rgba_input = std::dynamic_pointer_cast<Tensor>(input_cv_tensor);
 
   Status s = op->Compute(rgba_input, &output_tensor_);

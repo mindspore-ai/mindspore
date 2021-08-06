@@ -53,9 +53,10 @@ class CVTensor : public Tensor {
   /// Create CV tensor from cv::Mat
   /// \note This constructor allocates a new space in the memory and copies the CV::Mat buffer into it.
   /// \param mat [in] cv::Mat to be copied into the new tensor.
+  /// \param shape [in] the rank of output CVTensor.
   /// \param out [out] Generated tensor
   /// \return Status code
-  static Status CreateFromMat(const cv::Mat &mat, CVTensorPtr *out);
+  static Status CreateFromMat(const cv::Mat &mat, const dsize_t rank, CVTensorPtr *out);
 
   ~CVTensor() override = default;
 

@@ -189,7 +189,7 @@ Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     }
     cv::cvtColor(img_mat, img_mat, static_cast<int>(cv::COLOR_BGR2RGB));
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(img_mat, &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(img_mat, 3, &output_cv));
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
@@ -600,7 +600,7 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     if (mode == InterpolationMode::kCubicPil) {
       cv::Mat input_roi = cv_in(roi);
       std::shared_ptr<CVTensor> input_image;
-      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_roi, &input_image));
+      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_roi, input_cv->Rank(), &input_image));
       LiteMat imIn, imOut;
       std::shared_ptr<Tensor> output_tensor;
       TensorShape new_shape = TensorShape({target_height, target_width, 3});
@@ -676,7 +676,7 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       // use memcpy and don't compute the new shape since openCV has a rounding problem
       cv::warpAffine(input_img, output_img, rot, bbox.size(), GetCVInterpolationMode(interpolation),
                      cv::BORDER_CONSTANT, fill_color);
-      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, &output_cv));
+      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_img, input_cv->Rank(), &output_cv));
       RETURN_UNEXPECTED_IF_NULL(output_cv);
     }
     *output = std::static_pointer_cast<Tensor>(output_cv);
@@ -999,7 +999,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     cv::merge(image_result, result);
     result.convertTo(result, input_cv->mat().type());
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
   } catch (const cv::Exception &e) {
@@ -1100,7 +1100,7 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     cv::Mat result;
     cv::merge(image_result, result);
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
   } catch (const cv::Exception &e) {
@@ -1196,7 +1196,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
       cv::copyMakeBorder(input_cv->mat(), out_image, pad_top, pad_bottom, pad_left, pad_right, b_type);
     }
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, input_cv->Rank(), &output_cv));
     // pad the dimension if shape information is only 2 dimensional, this is grayscale
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->Rank() == DEFAULT_IMAGE_RANK && num_channels == MIN_IMAGE_CHANNELS &&
@@ -1341,7 +1341,7 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     cv::GaussianBlur(input_cv->mat(), output_cv_mat, cv::Size(kernel_x, kernel_y), static_cast<double>(sigma_x),
                      static_cast<double>(sigma_y));
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_cv_mat, &output_cv));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_cv_mat, input_cv->Rank(), &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
@@ -1414,8 +1414,9 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
     for (int i = 0; i < num_height; ++i) {
       for (int j = 0; j < num_width; ++j) {
         std::shared_ptr<CVTensor> patch_cv;
-        cv::Rect patch(j * patch_w, i * patch_h, patch_w, patch_h);
-        RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_img(patch), &patch_cv));
+        cv::Rect rect(j * patch_w, i * patch_h, patch_w, patch_h);
+        cv::Mat patch(out_img(rect));
+        RETURN_IF_NOT_OK(CVTensor::CreateFromMat(patch, input_cv->Rank(), &patch_cv));
         (*output).push_back(std::static_pointer_cast<Tensor>(patch_cv));
       }
     }
