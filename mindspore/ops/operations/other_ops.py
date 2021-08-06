@@ -291,8 +291,7 @@ class CheckValid(PrimitiveWithInfer):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
+        >>> from mindspore import Tensor, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
