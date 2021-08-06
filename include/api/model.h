@@ -37,32 +37,75 @@ class Metrics;
 namespace dataset {
 class Dataset;
 }  // namespace dataset
-
+/// \brief The Model class is used to define a MindSpore model, facilitating computational graph management.
 class MS_API Model {
  public:
   Model();
   ~Model();
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
-
+  /// \brief Builds a model so that it can run on a device.
+  ///
+  /// \param[in] graph GraphCell is a derivative of Cell. Cell is not available currently. GraphCell can be constructed
+  /// from Graph, for example, model.Build(GraphCell(graph), context).
+  /// \param[in] model_context A context used to store options during execution.
+  /// \param[in] train_cfg A config used by training.
+  ///
+  /// \return Status.
   Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr,
                const std::shared_ptr<TrainCfg> &train_cfg = nullptr);
+
+  /// \brief Resizes the shapes of inputs.
+  ///
+  /// \param[in] inputs A vector that includes all input tensors in order.
+  /// \param[in] dims Defines the new shapes of inputs, should be consistent with inputs.
+  ///
+  /// \return Status.
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
+  /// \brief Inference model.
+  ///
+  /// \param[in] inputs A vector where model inputs are arranged in sequence.
+  /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
+  /// \param[in] before CallBack before predict.
+  /// \param[in] after CallBack after predict.
+  ///
+  /// \return Status.
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
+  /// \brief Obtains all input tensors of the model.
+  ///
+  /// \return The vector that includes all input tensors.
   std::vector<MSTensor> GetInputs();
+  /// \brief Obtains the input tensor of the model by name.
+  ///
+  /// \return The input tensor with the given name, if the name is not found, an invalid tensor is returned.
   inline MSTensor GetInputByTensorName(const std::string &tensor_name);
 
   Status InitMetrics(std::vector<Metrics *> metrics);
   std::vector<Metrics *> GetMetrics();
 
+  /// \brief Obtains all output tensors of the model.
+  ///
+  /// \return The vector that includes all output tensors.
   std::vector<MSTensor> GetOutputs();
+  /// \brief Obtains names of all output tensors of the model.
+  ///
+  /// \return A vector that includes names of all output tensors.
   inline std::vector<std::string> GetOutputTensorNames();
+  /// \brief Obtains the output tensor of the model by name.
+  ///
+  /// \return The output tensor with the given name, if the name is not found, an invalid tensor is returned.
   inline MSTensor GetOutputByTensorName(const std::string &tensor_name);
   inline std::vector<MSTensor> GetOutputsByNodeName(const std::string &tensor_name);
 
+  /// \brief Inference model.
+  ///
+  /// \param[in] device_type Device type，options are kGPU, kAscend910, etc.
+  /// \param[in] model_type The type of model file, options are ModelType::kMindIR, ModelType::kOM.
+  ///
+  /// \return Is supported or not.
   static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
 
   Status SetTrainMode(bool train);
