@@ -194,8 +194,8 @@ APP_ERROR Yolov4TinyDetectionOpencv::PostProcess(const std::vector<MxBase::Tenso
     ResizedImageInfo imgInfo;
     imgInfo.widthOriginal = imageWidth_;
     imgInfo.heightOriginal = imageHeight_;
-    imgInfo.widthResize = 416;
-    imgInfo.heightResize = 416;
+    imgInfo.widthResize = 608;
+    imgInfo.heightResize = 608;
     imgInfo.resizeType = MxBase::RESIZER_STRETCHING;
     std::vector<ResizedImageInfo> imageInfoVec = {};
     imageInfoVec.push_back(imgInfo);
