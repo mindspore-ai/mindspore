@@ -37,20 +37,32 @@ constexpr unsigned int OFFSET_BASE = 10;
 }  // namespace
 void ResizeInt8CPUKernel::FreeResizeBiLinear() {
   free(resize_quant_arg_.x_axis_index_);
+  resize_quant_arg_.x_axis_index_ = nullptr;
   free(resize_quant_arg_.x_axis_lower_);
+  resize_quant_arg_.x_axis_lower_ = nullptr;
   free(resize_quant_arg_.x_axis_upper_);
+  resize_quant_arg_.x_axis_upper_ = nullptr;
   free(resize_quant_arg_.y_axis_index_);
+  resize_quant_arg_.y_axis_index_ = nullptr;
   free(resize_quant_arg_.y_axis_lower_);
+  resize_quant_arg_.y_axis_lower_ = nullptr;
   free(resize_quant_arg_.y_axis_upper_);
+  resize_quant_arg_.y_axis_upper_ = nullptr;
 }
 
 void ResizeInt8CPUKernel::FreeFloatResizeBiLinear() {
   free(resize_float_quant_arg_.x_axis_index_);
+  resize_float_quant_arg_.x_axis_index_ = nullptr;
   free(resize_float_quant_arg_.x_axis_lower_);
+  resize_float_quant_arg_.x_axis_lower_ = nullptr;
   free(resize_float_quant_arg_.x_axis_upper_);
+  resize_float_quant_arg_.x_axis_upper_ = nullptr;
   free(resize_float_quant_arg_.y_axis_index_);
+  resize_float_quant_arg_.y_axis_index_ = nullptr;
   free(resize_float_quant_arg_.y_axis_lower_);
+  resize_float_quant_arg_.y_axis_lower_ = nullptr;
   free(resize_float_quant_arg_.y_axis_upper_);
+  resize_float_quant_arg_.y_axis_upper_ = nullptr;
 }
 
 ResizeInt8CPUKernel::~ResizeInt8CPUKernel() {

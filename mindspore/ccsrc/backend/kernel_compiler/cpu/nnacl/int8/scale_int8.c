@@ -34,8 +34,8 @@ int16x4_t ClacSumHalfWordMul3(int32x4_t scaled_input0, int32x4_t scaled_input1, 
                               const ScaleParameter *scale_param) {
   int32x4_t output_multiplier_vec = vdupq_n_s32(scale_param->scale_mul_arg_.multiplier_);
   int32x4_t output_multiplier_vec2 = vdupq_n_s32(scale_param->offset_mul_arg_.multiplier_);
-  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << scale_param->scale_mul_arg_.left_shift_);
-  int32x4_t left_shift_out_vec2 = vdupq_n_s32(1 << scale_param->offset_mul_arg_.left_shift_);
+  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << (size_t)(scale_param->scale_mul_arg_.left_shift_));
+  int32x4_t left_shift_out_vec2 = vdupq_n_s32(1 << (size_t)(scale_param->offset_mul_arg_.left_shift_));
   int32x4_t input_scale = vmulq_s32(scaled_input0, scaled_input1);
   int32x4_t raw_sum = RoundingDivideByPOTInt32x4(
     SaturatingRoundingDoublingHighMulInt32x4(vmulq_s32(input_scale, left_shift_out_vec), output_multiplier_vec),
