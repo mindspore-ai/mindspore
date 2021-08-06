@@ -6009,3 +6009,15 @@ class _SBDataset():
 
     def __getitem__(self, idx):
         return self._get_item(idx)
+
+
+class DeserializedDataset(Dataset):
+    def __init__(self, input_obj):
+        super().__init__()
+        self.input_obj = input_obj
+
+    def parse(self, children=None):
+        if isinstance(self.input_obj, dict):
+            json_str = json.dumps(self.input_obj)
+            return cde.Dataset.from_json_string(json_str)
+        return cde.Dataset.from_json_file(self.input_obj)

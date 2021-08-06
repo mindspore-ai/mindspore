@@ -84,7 +84,7 @@ Status Serdes::Deserialize(std::string json_filepath, std::shared_ptr<DatasetNod
 }
 
 Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("children") != json_obj.end(), "Fail to find children");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("children") != json_obj.end(), "Failed to find children");
   std::shared_ptr<DatasetNode> child_ds;
 
   if (json_obj["children"].size() == 0) {
@@ -98,7 +98,7 @@ Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<Datase
     RETURN_IF_NOT_OK(CreateNode(child_ds, json_obj, ds));
   } else {
     // if json object has more than 1 children, the operation must be zip.
-    CHECK_FAIL_RETURN_UNEXPECTED((json_obj["op_type"] == "Zip"), "Fail to find right op_type - zip");
+    CHECK_FAIL_RETURN_UNEXPECTED((json_obj["op_type"] == "Zip"), "Failed to find right op_type - zip");
     std::vector<std::shared_ptr<DatasetNode>> datasets;
     for (auto child_json_obj : json_obj["children"]) {
       RETURN_IF_NOT_OK(ConstructPipeline(child_json_obj, &child_ds));
@@ -112,7 +112,7 @@ Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<Datase
 
 Status Serdes::CreateNode(std::shared_ptr<DatasetNode> child_ds, nlohmann::json json_obj,
                           std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("op_type") != json_obj.end(), "Fail to find op_type");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("op_type") != json_obj.end(), "Failed to find op_type");
   std::string op_type = json_obj["op_type"];
   if (child_ds == nullptr) {
     // if dataset doesn't have any child, then create a source dataset IR. e.g., ImageFolderNode, CocoNode
@@ -125,11 +125,11 @@ Status Serdes::CreateNode(std::shared_ptr<DatasetNode> child_ds, nlohmann::json 
 }
 
 Status Serdes::CreateCelebADatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Fail to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Fail to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extensions") != json_obj.end(), "Fail to find extension");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extensions") != json_obj.end(), "Failed to find extension");
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;
@@ -143,9 +143,9 @@ Status Serdes::CreateCelebADatasetNode(nlohmann::json json_obj, std::shared_ptr<
 }
 
 Status Serdes::CreateCifar10DatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Fail to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;
@@ -157,9 +157,9 @@ Status Serdes::CreateCifar10DatasetNode(nlohmann::json json_obj, std::shared_ptr
 }
 
 Status Serdes::CreateCifar100DatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Fail to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;
@@ -171,13 +171,13 @@ Status Serdes::CreateCifar100DatasetNode(nlohmann::json json_obj, std::shared_pt
 }
 
 Status Serdes::CreateCLUEDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Fail to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Fail to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Fail to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Fail to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Fail to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Fail to find shard_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
   std::vector<std::string> dataset_files = json_obj["dataset_dir"];
   std::string task = json_obj["task"];
   std::string usage = json_obj["usage"];
@@ -192,11 +192,11 @@ Status Serdes::CreateCLUEDatasetNode(nlohmann::json json_obj, std::shared_ptr<Da
 }
 
 Status Serdes::CreateCocoDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("annotation_file") != json_obj.end(), "Fail to find annotation_file");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Fail to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Fail to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("annotation_file") != json_obj.end(), "Failed to find annotation_file");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string annotation_file = json_obj["annotation_file"];
   std::string task = json_obj["task"];
@@ -211,13 +211,13 @@ Status Serdes::CreateCocoDatasetNode(nlohmann::json json_obj, std::shared_ptr<Da
 }
 
 Status Serdes::CreateCSVDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Fail to find dataset_files");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("field_delim") != json_obj.end(), "Fail to find field_delim");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("column_names") != json_obj.end(), "Fail to find column_names");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Fail to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Fail to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Fail to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Fail to find shard_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Failed to find dataset_files");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("field_delim") != json_obj.end(), "Failed to find field_delim");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("column_names") != json_obj.end(), "Failed to find column_names");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
   std::vector<std::string> dataset_files = json_obj["dataset_files"];
   std::string field_delim = json_obj["field_delim"];
   std::vector<std::shared_ptr<CsvBase>> column_defaults = {};
@@ -234,11 +234,11 @@ Status Serdes::CreateCSVDatasetNode(nlohmann::json json_obj, std::shared_ptr<Dat
 }
 
 Status Serdes::CreateImageFolderDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Fail to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extensions") != json_obj.end(), "Fail to find extension");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Fail to find class_indexing");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extensions") != json_obj.end(), "Failed to find extension");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Failed to find class_indexing");
   std::string dataset_dir = json_obj["dataset_dir"];
   bool decode = json_obj["decode"];
   std::shared_ptr<SamplerObj> sampler;
@@ -260,11 +260,11 @@ Status Serdes::CreateImageFolderDatasetNode(nlohmann::json json_obj, std::shared
 }
 
 Status Serdes::CreateManifestDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_file") != json_obj.end(), "Fail to find dataset_file");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Fail to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Fail to find class_indexing");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Fail to find decode");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_file") != json_obj.end(), "Failed to find dataset_file");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Failed to find class_indexing");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
   std::string dataset_file = json_obj["dataset_file"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;
@@ -284,9 +284,9 @@ Status Serdes::CreateManifestDatasetNode(nlohmann::json json_obj, std::shared_pt
 }
 
 Status Serdes::CreateMnistDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Fail to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string usage = json_obj["usage"];
   std::shared_ptr<SamplerObj> sampler;
@@ -298,11 +298,11 @@ Status Serdes::CreateMnistDatasetNode(nlohmann::json json_obj, std::shared_ptr<D
 }
 
 Status Serdes::CreateTextFileDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Fail to find dataset_files");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Fail to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Fail to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Fail to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Fail to find shard_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Failed to find dataset_files");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
   std::vector<std::string> dataset_files = json_obj["dataset_files"];
   int64_t num_samples = json_obj["num_samples"];
   ShuffleMode shuffle = static_cast<ShuffleMode>(json_obj["shuffle"]);
@@ -315,14 +315,14 @@ Status Serdes::CreateTextFileDatasetNode(nlohmann::json json_obj, std::shared_pt
 }
 
 Status Serdes::CreateTFRecordDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Fail to find dataset_files");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("schema") != json_obj.end(), "Fail to find schema");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("columns_list") != json_obj.end(), "Fail to find columns_list");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Fail to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Fail to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Fail to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Fail to find shard_id");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_equal_rows") != json_obj.end(), "Fail to find shard_equal_rows");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_files") != json_obj.end(), "Failed to find dataset_files");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("schema") != json_obj.end(), "Failed to find schema");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("columns_list") != json_obj.end(), "Failed to find columns_list");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_equal_rows") != json_obj.end(), "Failed to find shard_equal_rows");
   std::vector<std::string> dataset_files = json_obj["dataset_files"];
   std::string schema = json_obj["schema"];
   std::vector<std::string> columns_list = json_obj["columns_list"];
@@ -339,12 +339,12 @@ Status Serdes::CreateTFRecordDatasetNode(nlohmann::json json_obj, std::shared_pt
 }
 
 Status Serdes::CreateVOCDatasetNode(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Fail to find dataset_dir");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Fail to find task");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Fail to find usage");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Fail to find class_indexing");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Fail to find decode");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Fail to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("task") != json_obj.end(), "Failed to find task");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("class_indexing") != json_obj.end(), "Failed to find class_indexing");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
   std::string dataset_dir = json_obj["dataset_dir"];
   std::string task = json_obj["task"];
   std::string usage = json_obj["usage"];
@@ -398,8 +398,8 @@ Status Serdes::CreateDatasetNode(nlohmann::json json_obj, std::string op_type, s
 
 Status Serdes::CreateBatchOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                         std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("batch_size") != json_obj.end(), "Fail to find batch_size");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("drop_remainder") != json_obj.end(), "Fail to find drop_remainder");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("batch_size") != json_obj.end(), "Failed to find batch_size");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("drop_remainder") != json_obj.end(), "Failed to find drop_remainder");
   int32_t batch_size = json_obj["batch_size"];
   bool drop_remainder = json_obj["drop_remainder"];
   *result = std::make_shared<BatchNode>(ds, batch_size, drop_remainder);
@@ -408,22 +408,25 @@ Status Serdes::CreateBatchOperationNode(std::shared_ptr<DatasetNode> ds, nlohman
 
 Status Serdes::CreateMapOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                       std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Fail to find input_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Fail to find output_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("project_columns") != json_obj.end(), "Fail to find project_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("operations") != json_obj.end(), "Fail to find operations");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
+                               "Failed to find num_parallel_workers");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Failed to find input_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Failed to find output_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("project_columns") != json_obj.end(), "Failed to find project_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("operations") != json_obj.end(), "Failed to find operations");
   std::vector<std::string> input_columns = json_obj["input_columns"];
   std::vector<std::string> output_columns = json_obj["output_columns"];
   std::vector<std::string> project_columns = json_obj["project_columns"];
   std::vector<std::shared_ptr<TensorOperation>> operations;
   RETURN_IF_NOT_OK(ConstructTensorOps(json_obj["operations"], &operations));
   *result = std::make_shared<MapNode>(ds, operations, input_columns, output_columns, project_columns);
+  (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
   return Status::OK();
 }
 
 Status Serdes::CreateProjectOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                           std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("columns") != json_obj.end(), "Fail to find columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("columns") != json_obj.end(), "Failed to find columns");
   std::vector<std::string> columns = json_obj["columns"];
   *result = std::make_shared<ProjectNode>(ds, columns);
   return Status::OK();
@@ -431,8 +434,8 @@ Status Serdes::CreateProjectOperationNode(std::shared_ptr<DatasetNode> ds, nlohm
 
 Status Serdes::CreateRenameOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                          std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Fail to find input_columns");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Fail to find output_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Failed to find input_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Failed to find output_columns");
   std::vector<std::string> input_columns = json_obj["input_columns"];
   std::vector<std::string> output_columns = json_obj["output_columns"];
   *result = std::make_shared<RenameNode>(ds, input_columns, output_columns);
@@ -441,7 +444,7 @@ Status Serdes::CreateRenameOperationNode(std::shared_ptr<DatasetNode> ds, nlohma
 
 Status Serdes::CreateRepeatOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                          std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Fail to find count");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Failed to find count");
   int32_t count = json_obj["count"];
   *result = std::make_shared<RepeatNode>(ds, count);
   return Status::OK();
@@ -449,9 +452,9 @@ Status Serdes::CreateRepeatOperationNode(std::shared_ptr<DatasetNode> ds, nlohma
 
 Status Serdes::CreateShuffleOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                           std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("buffer_size") != json_obj.end(), "Fail to find buffer_size");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("buffer_size") != json_obj.end(), "Failed to find buffer_size");
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("reshuffle_each_epoch") != json_obj.end(),
-                               "Fail to find reshuffle_each_epoch");
+                               "Failed to find reshuffle_each_epoch");
   int32_t buffer_size = json_obj["buffer_size"];
   bool reset_every_epoch = json_obj["reshuffle_each_epoch"];
   *result = std::make_shared<ShuffleNode>(ds, buffer_size, reset_every_epoch);
@@ -460,15 +463,35 @@ Status Serdes::CreateShuffleOperationNode(std::shared_ptr<DatasetNode> ds, nlohm
 
 Status Serdes::CreateSkipOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                        std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Fail to find count");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Failed to find count");
   int32_t count = json_obj["count"];
   *result = std::make_shared<SkipNode>(ds, count);
   return Status::OK();
 }
 
+Status Serdes::CreateTransferOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
+                                           std::shared_ptr<DatasetNode> *result) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("queue_name") != json_obj.end(), "Failed to find queue_name");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("device_type") != json_obj.end(), "Failed to find device_type");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("device_id") != json_obj.end(), "Failed to find device_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("send_epoch_end") != json_obj.end(), "Failed to find send_epoch_end");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("total_batch") != json_obj.end(), "Failed to find total_batch");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("create_data_info_queue") != json_obj.end(),
+                               "Failed to find create_data_info_queue");
+  std::string queue_name = json_obj["queue_name"];
+  std::string device_type = json_obj["device_type"];
+  int32_t device_id = json_obj["device_id"];
+  bool send_epoch_end = json_obj["send_epoch_end"];
+  int32_t total_batch = json_obj["total_batch"];
+  bool create_data_info_queue = json_obj["create_data_info_queue"];
+  *result = std::make_shared<TransferNode>(ds, queue_name, device_type, device_id, send_epoch_end, total_batch,
+                                           create_data_info_queue);
+  return Status::OK();
+}
+
 Status Serdes::CreateTakeOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
                                        std::shared_ptr<DatasetNode> *result) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Fail to find count");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("count") != json_obj.end(), "Failed to find count");
   int32_t count = json_obj["count"];
   *result = std::make_shared<TakeNode>(ds, count);
   return Status::OK();
@@ -490,6 +513,8 @@ Status Serdes::CreateDatasetOperationNode(std::shared_ptr<DatasetNode> ds, nlohm
     RETURN_IF_NOT_OK(CreateShuffleOperationNode(ds, json_obj, result));
   } else if (op_type == kSkipNode) {
     RETURN_IF_NOT_OK(CreateSkipOperationNode(ds, json_obj, result));
+  } else if (op_type == kTransferNode) {
+    RETURN_IF_NOT_OK(CreateTransferOperationNode(ds, json_obj, result));
   } else if (op_type == kTakeNode) {
     RETURN_IF_NOT_OK(CreateTakeOperationNode(ds, json_obj, result));
   } else {
@@ -500,12 +525,12 @@ Status Serdes::CreateDatasetOperationNode(std::shared_ptr<DatasetNode> ds, nlohm
 
 Status Serdes::ConstructDistributedSampler(nlohmann::json json_obj, int64_t num_samples,
                                            std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Fail to find num_shards");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Fail to find shard_id");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Fail to find shuffle");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("seed") != json_obj.end(), "Fail to find seed");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("offset") != json_obj.end(), "Fail to find offset");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("even_dist") != json_obj.end(), "Fail to find even_dist");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_shards") != json_obj.end(), "Failed to find num_shards");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shard_id") != json_obj.end(), "Failed to find shard_id");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("seed") != json_obj.end(), "Failed to find seed");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("offset") != json_obj.end(), "Failed to find offset");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("even_dist") != json_obj.end(), "Failed to find even_dist");
   int64_t num_shards = json_obj["num_shards"];
   int64_t shard_id = json_obj["shard_id"];
   bool shuffle = json_obj["shuffle"];
@@ -522,8 +547,8 @@ Status Serdes::ConstructDistributedSampler(nlohmann::json json_obj, int64_t num_
 }
 
 Status Serdes::ConstructPKSampler(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_val") != json_obj.end(), "Fail to find num_val");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Fail to find shuffle");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_val") != json_obj.end(), "Failed to find num_val");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("shuffle") != json_obj.end(), "Failed to find shuffle");
   int64_t num_val = json_obj["num_val"];
   bool shuffle = json_obj["shuffle"];
   *sampler = std::make_shared<PKSamplerObj>(num_val, shuffle, num_samples);
@@ -536,7 +561,7 @@ Status Serdes::ConstructPKSampler(nlohmann::json json_obj, int64_t num_samples, 
 
 Status Serdes::ConstructRandomSampler(nlohmann::json json_obj, int64_t num_samples,
                                       std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Fail to find replacement");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Failed to find replacement");
   bool replacement = json_obj["replacement"];
   *sampler = std::make_shared<RandomSamplerObj>(replacement, num_samples);
   if (json_obj.find("child_sampler") != json_obj.end()) {
@@ -548,7 +573,7 @@ Status Serdes::ConstructRandomSampler(nlohmann::json json_obj, int64_t num_sampl
 
 Status Serdes::ConstructSequentialSampler(nlohmann::json json_obj, int64_t num_samples,
                                           std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("start_index") != json_obj.end(), "Fail to find start_index");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("start_index") != json_obj.end(), "Failed to find start_index");
   int64_t start_index = json_obj["start_index"];
   *sampler = std::make_shared<SequentialSamplerObj>(start_index, num_samples);
   if (json_obj.find("child_sampler") != json_obj.end()) {
@@ -560,7 +585,7 @@ Status Serdes::ConstructSequentialSampler(nlohmann::json json_obj, int64_t num_s
 
 Status Serdes::ConstructSubsetRandomSampler(nlohmann::json json_obj, int64_t num_samples,
                                             std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("indices") != json_obj.end(), "Fail to find indices");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("indices") != json_obj.end(), "Failed to find indices");
   std::vector<int64_t> indices = json_obj["indices"];
   *sampler = std::make_shared<SubsetRandomSamplerObj>(indices, num_samples);
   if (json_obj.find("child_sampler") != json_obj.end()) {
@@ -572,8 +597,8 @@ Status Serdes::ConstructSubsetRandomSampler(nlohmann::json json_obj, int64_t num
 
 Status Serdes::ConstructWeightedRandomSampler(nlohmann::json json_obj, int64_t num_samples,
                                               std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Fail to find replacement");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("weights") != json_obj.end(), "Fail to find weights");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("replacement") != json_obj.end(), "Failed to find replacement");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("weights") != json_obj.end(), "Failed to find weights");
   bool replacement = json_obj["replacement"];
   std::vector<double> weights = json_obj["weights"];
   *sampler = std::make_shared<WeightedRandomSamplerObj>(weights, num_samples, replacement);
@@ -585,8 +610,8 @@ Status Serdes::ConstructWeightedRandomSampler(nlohmann::json json_obj, int64_t n
 }
 
 Status Serdes::ConstructSampler(nlohmann::json json_obj, std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Fail to find num_samples");
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler_name") != json_obj.end(), "Fail to find sampler_name");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_samples") != json_obj.end(), "Failed to find num_samples");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler_name") != json_obj.end(), "Failed to find sampler_name");
   int64_t num_samples = json_obj["num_samples"];
   std::string sampler_name = json_obj["sampler_name"];
   if (sampler_name == "DistributedSampler") {
@@ -609,7 +634,7 @@ Status Serdes::ConstructSampler(nlohmann::json json_obj, std::shared_ptr<Sampler
 
 Status Serdes::ChildSamplerFromJson(nlohmann::json json_obj, std::shared_ptr<SamplerObj> parent_sampler,
                                     std::shared_ptr<SamplerObj> *sampler) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("child_sampler") != json_obj.end(), "Fail to find child_sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("child_sampler") != json_obj.end(), "Failed to find child_sampler");
   for (nlohmann::json child : json_obj["child_sampler"]) {
     std::shared_ptr<SamplerObj> child_sampler;
     RETURN_IF_NOT_OK(ConstructSampler(child, &child_sampler));
@@ -619,8 +644,8 @@ Status Serdes::ChildSamplerFromJson(nlohmann::json json_obj, std::shared_ptr<Sam
 }
 
 Status Serdes::BoundingBoxAugmentFromJson(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transform") != op_params.end(), "Fail to find transform");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Fail to find ratio");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transform") != op_params.end(), "Failed to find transform");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Failed to find ratio");
   std::vector<std::shared_ptr<TensorOperation>> transforms;
   std::vector<nlohmann::json> json_operations = {};
   json_operations.push_back(op_params["transform"]);
@@ -633,14 +658,14 @@ Status Serdes::BoundingBoxAugmentFromJson(nlohmann::json op_params, std::shared_
 }
 
 Status Serdes::RandomSelectSubpolicyFromJson(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("policy") != op_params.end(), "Fail to find policy");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("policy") != op_params.end(), "Failed to find policy");
   nlohmann::json policy_json = op_params["policy"];
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy;
   std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> policy_items;
   for (nlohmann::json item : policy_json) {
     for (nlohmann::json item_pair : item) {
-      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("prob") != item_pair.end(), "Fail to find prob");
-      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("tensor_op") != item_pair.end(), "Fail to find tensor_op");
+      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("prob") != item_pair.end(), "Failed to find prob");
+      CHECK_FAIL_RETURN_UNEXPECTED(item_pair.find("tensor_op") != item_pair.end(), "Failed to find tensor_op");
       std::vector<std::shared_ptr<TensorOperation>> operations;
       std::pair<std::shared_ptr<TensorOperation>, double> policy_pair;
       std::shared_ptr<TensorOperation> operation;
@@ -659,8 +684,8 @@ Status Serdes::RandomSelectSubpolicyFromJson(nlohmann::json op_params, std::shar
 }
 
 Status Serdes::UniformAugFromJson(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transforms") != op_params.end(), "Fail to find transforms");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_ops") != op_params.end(), "Fail to find num_ops");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("transforms") != op_params.end(), "Failed to find transforms");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_ops") != op_params.end(), "Failed to find num_ops");
   std::vector<std::shared_ptr<TensorOperation>> transforms = {};
   RETURN_IF_NOT_OK(ConstructTensorOps(op_params["transforms"], &transforms));
   int32_t num_ops = op_params["num_ops"];
@@ -671,12 +696,14 @@ Status Serdes::UniformAugFromJson(nlohmann::json op_params, std::shared_ptr<Tens
 Status Serdes::ConstructTensorOps(nlohmann::json operations, std::vector<std::shared_ptr<TensorOperation>> *result) {
   std::vector<std::shared_ptr<TensorOperation>> output;
   for (auto op : operations) {
-    CHECK_FAIL_RETURN_UNEXPECTED(op.find("tensor_op_name") != op.end(), "Fail to find tensor_op_name");
-    CHECK_FAIL_RETURN_UNEXPECTED(op.find("tensor_op_params") != op.end(), "Fail to find tensor_op_params");
+    CHECK_FAIL_RETURN_UNEXPECTED(op.find("is_python_front_end_op") == op.end(),
+                                 "python operation is not yet supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(op.find("tensor_op_name") != op.end(), "Failed to find tensor_op_name");
+    CHECK_FAIL_RETURN_UNEXPECTED(op.find("tensor_op_params") != op.end(), "Failed to find tensor_op_params");
     std::string op_name = op["tensor_op_name"];
     nlohmann::json op_params = op["tensor_op_params"];
     std::shared_ptr<TensorOperation> operation = nullptr;
-    CHECK_FAIL_RETURN_UNEXPECTED(func_ptr_.find(op_name) != func_ptr_.end(), "Fail to find " + op_name);
+    CHECK_FAIL_RETURN_UNEXPECTED(func_ptr_.find(op_name) != func_ptr_.end(), "Failed to find " + op_name);
     RETURN_IF_NOT_OK(func_ptr_[op_name](op_params, &operation));
     output.push_back(operation);
   }
@@ -691,6 +718,7 @@ Serdes::InitializeFuncPtr() {
   ops_ptr[vision::kAutoContrastOperation] = &(vision::AutoContrastOperation::from_json);
   ops_ptr[vision::kBoundingBoxAugmentOperation] = &(BoundingBoxAugmentFromJson);
   ops_ptr[vision::kCenterCropOperation] = &(vision::CenterCropOperation::from_json);
+  ops_ptr[vision::kCropOperation] = &(vision::CropOperation::from_json);
   ops_ptr[vision::kCutMixBatchOperation] = &(vision::CutMixBatchOperation::from_json);
   ops_ptr[vision::kCutOutOperation] = &(vision::CutOutOperation::from_json);
   ops_ptr[vision::kDecodeOperation] = &(vision::DecodeOperation::from_json);
@@ -730,12 +758,20 @@ Serdes::InitializeFuncPtr() {
   ops_ptr[vision::kResizeWithBBoxOperation] = &(vision::ResizeWithBBoxOperation::from_json);
   ops_ptr[vision::kRgbaToBgrOperation] = &(vision::RgbaToBgrOperation::from_json);
   ops_ptr[vision::kRgbaToRgbOperation] = &(vision::RgbaToRgbOperation::from_json);
+  ops_ptr[vision::kRgbToBgrOperation] = &(vision::RgbToBgrOperation::from_json);
+  ops_ptr[vision::kRgbToGrayOperation] = &(vision::RgbToGrayOperation::from_json);
   ops_ptr[vision::kRotateOperation] = &(vision::RotateOperation::from_json);
+  ops_ptr[vision::kSlicePatchesOperation] = &(vision::SlicePatchesOperation::from_json);
   ops_ptr[vision::kSoftDvppDecodeRandomCropResizeJpegOperation] =
     &(vision::SoftDvppDecodeRandomCropResizeJpegOperation::from_json);
   ops_ptr[vision::kSoftDvppDecodeResizeJpegOperation] = &(vision::SoftDvppDecodeResizeJpegOperation::from_json);
   ops_ptr[vision::kSwapRedBlueOperation] = &(vision::SwapRedBlueOperation::from_json);
   ops_ptr[vision::kUniformAugOperation] = &(UniformAugFromJson);
+  ops_ptr[vision::kVerticalFlipOperation] = &(vision::VerticalFlipOperation::from_json);
+  ops_ptr[transforms::kFillOperation] = &(transforms::FillOperation::from_json);
+  ops_ptr[transforms::kOneHotOperation] = &(transforms::OneHotOperation::from_json);
+  ops_ptr[transforms::kTypeCastOperation] = &(transforms::TypeCastOperation::from_json);
+  ops_ptr[text::kToNumberOperation] = &(text::ToNumberOperation::from_json);
   return ops_ptr;
 }
 
