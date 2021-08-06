@@ -55,8 +55,8 @@ def _calculate_accuracy(infer_image, mask_image):
 
 
 def _load_infer_result(infer_result_dir):
-    dir = os.path.expanduser(infer_result_dir)
-    npy_files = os.listdir(dir)
+    infer_result_dir = os.path.expanduser(infer_result_dir)
+    npy_files = os.listdir(infer_result_dir)
     infer = np.array()
     for f in npy_files:
         data = np.load(f)
@@ -70,7 +70,7 @@ def calculate_origin_accuracy(multiclass_dir, infer_result_dir):
     dice_sum = 0.0
     iou_sum = 0.0
     cnt = 0
-    for image_id, image, mask in data_loader.iter_dataset():
+    for image_id, _, mask in data_loader.iter_dataset():
         infer = np.load(os.path.join(infer_result_dir, f"{image_id}.npy"))
         dice, iou = _calculate_accuracy(infer, mask)
         print(f"single dice is: {dice}, iou is {iou}")
@@ -85,5 +85,3 @@ def calculate_origin_accuracy(multiclass_dir, infer_result_dir):
 if __name__ == '__main__':
     args = _parser_args()
     calculate_origin_accuracy(args.dataset_dir, args.infer_dir)
-
-

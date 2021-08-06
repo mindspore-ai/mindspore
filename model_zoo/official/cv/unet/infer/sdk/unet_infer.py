@@ -21,7 +21,6 @@ import json
 import os
 
 import numpy as np
-import cv2
 
 from multiclass_loader import MultiClassLoader
 from sdk_infer_wrapper import SDKInferWrapper
@@ -54,7 +53,7 @@ def main():
     sdk_infer.load_pipeline(args.pipeline)
     data_loader = MultiClassLoader(args.dataset_dir)
 
-    for image_id, image, mask in data_loader.iter_dataset():
+    for image_id, image, _ in data_loader.iter_dataset():
         output_data = sdk_infer.do_infer(image)
         output_tensor = _parse_output_data(output_data)
         os.makedirs(args.output_dir, exist_ok=True)

@@ -93,7 +93,7 @@ def parse_args():
 
 
 def set_config(args):
-    config.img_size= args.img_size
+    config.img_size = args.img_size
     config.lr = args.lr
     config.epochs = args.epochs
     config.repeat = args.repeat

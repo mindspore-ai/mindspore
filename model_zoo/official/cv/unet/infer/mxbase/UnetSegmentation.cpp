@@ -127,7 +127,6 @@ APP_ERROR UnetSegmentation::PostProcess(const std::vector<MxBase::TensorBase> &i
         return ret;
     }
 
-    std::vector<uint32_t> shape = tensor.GetShape();
     uint32_t imgHeight = resizedInfo.heightOriginal;
     uint32_t imgWidth = resizedInfo.widthOriginal;
 

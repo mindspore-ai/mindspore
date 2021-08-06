@@ -24,30 +24,29 @@
 #include "MxBase/Tensor/TensorContext/TensorContext.h"
 
 struct InitParam {
-    uint32_t deviceId;
-    std::string labelPath;
-    std::string modelPath;
-    uint32_t classNum;
-    uint32_t modelType;
+  uint32_t deviceId;
+  std::string labelPath;
+  std::string modelPath;
+  uint32_t classNum;
+  uint32_t modelType;
 };
 
 class UnetSegmentation {
-public:
+ public:
+  APP_ERROR Init(const InitParam &initParam);
+  APP_ERROR DeInit();
+  APP_ERROR ReadImage(const std::string &imgPath, cv::Mat &imageMat);
+  APP_ERROR ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat, MxBase::ResizedImageInfo &resziedImageInfo);
+  APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
+  APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
+  APP_ERROR PostProcess(std::vector<MxBase::TensorBase> &inputs, const MxBase::ResizedImageInfo &resziedInfo,
+                        cv::Mat &output);
+  APP_ERROR Process(const std::string &imgPath);
 
-    APP_ERROR Init(const InitParam &initParam);
-    APP_ERROR DeInit();
-    APP_ERROR ReadImage(const std::string &imgPath, cv::Mat &imageMat);
-    APP_ERROR ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat, MxBase::ResizedImageInfo &resziedImageInfo);
-    APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
-    APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
-    APP_ERROR PostProcess(std::vector<MxBase::TensorBase> &inputs,
-        const MxBase::ResizedImageInfo &resziedInfo, cv::Mat &output);
-    APP_ERROR Process(const std::string &imgPath);
-
-private:
-    std::shared_ptr<MxBase::ModelInferenceProcessor> model_;
-    MxBase::ModelDesc modelDesc_;
-    uint32_t deviceId_ = 0;
+ private:
+  std::shared_ptr<MxBase::ModelInferenceProcessor> model_;
+  MxBase::ModelDesc modelDesc_;
+  uint32_t deviceId_ = 0;
 };
 
 #endif

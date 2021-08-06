@@ -67,7 +67,7 @@ def preprocess_isbi_dataset(data_dir):
                                                  patched_masks)):
             patch_save_dir = os.path.join(
                 data_dir, "multiclass",
-                f"{i}_{'x'.join(list(map(lambda x: str(x), msk.shape)))}"
+                f"{i}_{'x'.join([str(x) for x in msk.shape])}"
                 f"_{config.patch_stride}_{j}")
             os.makedirs(patch_save_dir, exist_ok=True)
             cv2.imwrite(os.path.join(patch_save_dir, "image.png"), _p_img)
@@ -104,7 +104,7 @@ def preprocess_cell_nuclei_dataset(param_dict):
                                                   patched_msk_lst)):
                 patch_save_dir = os.path.join(
                     data_dir, "multiclass",
-                    f"{img_id}_{'x'.join(list(map(lambda x: str(x), _mask.shape)))}"
+                    f"{img_id}_{'x'.join([str(x) for x in _mask.shape])}"
                     f"_{config.patch_stride}_{i}")
                 os.makedirs(patch_save_dir, exist_ok=True)
                 os.makedirs(patch_save_dir, exist_ok=True)
