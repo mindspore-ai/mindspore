@@ -72,7 +72,15 @@ class Server {
         scheduler_ip_(""),
         scheduler_port_(0),
         server_num_(0),
-        worker_num_(0) {}
+        worker_num_(0),
+        fl_server_port_(0),
+        cipher_initial_client_cnt_(0),
+        cipher_exchange_secrets_cnt_(0),
+        cipher_share_secrets_cnt_(0),
+        cipher_get_clientlist_cnt_(0),
+        cipher_reconstruct_secrets_up_cnt_(0),
+        cipher_reconstruct_secrets_down_cnt_(0),
+        cipher_time_window_(0) {}
   ~Server() = default;
   Server(const Server &) = delete;
   Server &operator=(const Server &) = delete;
