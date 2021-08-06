@@ -17,6 +17,7 @@
 #include "minddata/dataset/include/dataset/audio.h"
 
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/amplitude_to_db_ir.h"
 #include "minddata/dataset/audio/ir/kernels/angle_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
@@ -43,11 +44,27 @@ std::shared_ptr<TensorOperation> AllpassBiquad::Parse() {
   return std::make_shared<AllpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
 }
 
+// AmplitudeToDB Operation.
+struct AmplitudeToDB::Data {
+  Data(ScaleType stype, float ref_value, float amin, float top_db)
+      : stype_(stype), ref_value_(ref_value), amin_(amin), top_db_(top_db) {}
+  ScaleType stype_;
+  float ref_value_;
+  float amin_;
+  float top_db_;
+};
+
+AmplitudeToDB::AmplitudeToDB(ScaleType stype, float ref_value, float amin, float top_db)
+    : data_(std::make_shared<Data>(stype, ref_value, amin, top_db)) {}
+
+std::shared_ptr<TensorOperation> AmplitudeToDB::Parse() {
+  return std::make_shared<AmplitudeToDBOperation>(data_->stype_, data_->ref_value_, data_->amin_, data_->top_db_);
+}
+
 // Angle Transform Operation.
 Angle::Angle() {}
 
 std::shared_ptr<TensorOperation> Angle::Parse() { return std::make_shared<AngleOperation>(); }
-
 // BandBiquad Transform Operation.
 struct BandBiquad::Data {
   Data(int32_t sample_rate, float central_freq, float Q, bool noise)

@@ -20,8 +20,9 @@ to improve their training models.
 import mindspore._c_dataengine as cde
 import numpy as np
 from ..transforms.c_transforms import TensorOperation
-from .validators import check_allpass_biquad, check_band_biquad, check_bandpass_biquad, check_bandreject_biquad, \
-    check_bass_biquad
+from .utils import ScaleType
+from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
+    check_bandreject_biquad, check_bass_biquad
 
 
 class AudioTensorOperation(TensorOperation):
@@ -72,6 +73,42 @@ class AllpassBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.AllpassBiquadOperation(self.sample_rate, self.central_freq, self.Q)
+
+
+DE_C_SCALETYPE_TYPE = {ScaleType.MAGNITUDE: cde.ScaleType.DE_SCALETYPE_MAGNITUDE,
+                       ScaleType.POWER: cde.ScaleType.DE_SCALETYPE_POWER}
+
+
+class AmplitudeToDB(AudioTensorOperation):
+    """
+    Converts the input tensor from amplitude/power scale to decibel scale.
+
+    Args:
+        stype (ScaleType, optional): Scale of the input tensor. (Default="ScaleType.POWER").
+        It can be any of [ScaleType.MAGNITUDE, ScaleType.POWER].
+        ref_value (float, optional): Param for generate db_multiplier.
+        amin (float, optional): Lower bound to clamp the input waveform.
+        top_db (float, optional): Minimum cut-off decibels. The range of values is non-negative. Commonly set at 80.
+            (Default=80.0)
+    Examples:
+        >>> channel = 1
+        >>> n_fft = 400
+        >>> n_frame = 30
+        >>> specrogram = np.random.random([channel, n_fft//2+1, n_frame])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=specrogram, column_names=["audio"])
+        >>> transforms = [audio.AmplitudeToDB(stype=ScaleType.POWER)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @ check_amplitude_to_db
+    def __init__(self, stype=ScaleType.POWER, ref_value=1.0, amin=1e-10, top_db=80.0):
+        self.stype = stype
+        self.ref_value = ref_value
+        self.amin = amin
+        self.top_db = top_db
+
+    def parse(self):
+        return cde.AmplitudeToDBOperation(DE_C_SCALETYPE_TYPE[self.stype], self.ref_value, self.amin, self.top_db)
 
 
 class Angle(AudioTensorOperation):

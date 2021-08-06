@@ -18,6 +18,7 @@
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/amplitude_to_db_ir.h"
 #include "minddata/dataset/audio/ir/kernels/angle_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
@@ -38,6 +39,24 @@ PYBIND_REGISTER(
         return allpass_biquad;
       }));
   }));
+
+PYBIND_REGISTER(
+  AmplitudeToDBOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::AmplitudeToDBOperation, TensorOperation, std::shared_ptr<audio::AmplitudeToDBOperation>>(
+      *m, "AmplitudeToDBOperation")
+      .def(py::init([](ScaleType stype, float ref_value, float amin, float top_db) {
+        auto amplitude_to_db = std::make_shared<audio::AmplitudeToDBOperation>(stype, ref_value, amin, top_db);
+        THROW_IF_ERROR(amplitude_to_db->ValidateParams());
+        return amplitude_to_db;
+      }));
+  }));
+
+PYBIND_REGISTER(ScaleType, 0, ([](const py::module *m) {
+                  (void)py::enum_<ScaleType>(*m, "ScaleType", py::arithmetic())
+                    .value("DE_SCALETYPE_MAGNITUDE", ScaleType::kMagnitude)
+                    .value("DE_SCALETYPE_POWER", ScaleType::kPower)
+                    .export_values();
+                }));
 
 PYBIND_REGISTER(AngleOperation, 1, ([](const py::module *m) {
                   (void)py::class_<audio::AngleOperation, TensorOperation, std::shared_ptr<audio::AngleOperation>>(

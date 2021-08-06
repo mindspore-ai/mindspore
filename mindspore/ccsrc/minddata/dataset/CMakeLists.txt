@@ -93,6 +93,7 @@ add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(callback core)
 add_dependencies(audio-kernels core)
+add_dependencies(audio-ir core)
 add_dependencies(audio-ir-kernels core)
 add_dependencies(text core)
 add_dependencies(text-kernels core)
@@ -156,6 +157,7 @@ set(submodules
         $<TARGET_OBJECTS:engine-cache-client>
         $<TARGET_OBJECTS:engine>
         $<TARGET_OBJECTS:audio-kernels>
+        $<TARGET_OBJECTS:audio-ir>
         $<TARGET_OBJECTS:audio-ir-kernels>
         $<TARGET_OBJECTS:text>
         $<TARGET_OBJECTS:text-kernels>

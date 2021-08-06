@@ -17,8 +17,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
@@ -28,6 +31,17 @@
 constexpr double PI = 3.141592653589793;
 namespace mindspore {
 namespace dataset {
+/// \brief Turn a tensor from the power/amplitude scale to the decibel scale.
+/// \param input/output: Tensor of shape <...,freq,time>
+/// \param multiplier: power - 10, amplitude - 20
+/// \param amin: lower bound
+/// \param db_multiplier: multiplier for decibels
+/// \param top_db: the lower bound for decibels cut-off
+/// \return Status code
+template <typename T>
+Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T multiplier, T amin,
+                     T db_multiplier, T top_db);
+
 /// \brief Calculate the angles of the complex numbers
 /// \param input/output: Tensor of shape <...,time>
 template <typename T>
@@ -162,7 +176,6 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   delete m_py;
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
