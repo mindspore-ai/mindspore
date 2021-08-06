@@ -28,18 +28,10 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   ConvolutionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx, float *origin_weight,
                        float *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
-        origin_weight_(origin_weight),
-        origin_bias_(origin_bias) {}
-  ~ConvolutionCPUKernel() override {
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-      packed_weight_ = nullptr;
-    }
-  }
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
+  ~ConvolutionCPUKernel() override {}
 
   int Init() override;
-  virtual int InitWeightBias();
   int InitTmpBuffer();
   int ReSize() override;
   int Run() override;
@@ -48,7 +40,8 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int Eval() override;
 
  protected:
-  void PackWeight();
+  int MallocWeightBiasData() override;
+  void PackWeight() override;
   void FreeTmpBuffer() {
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
@@ -61,9 +54,6 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   }
 
  protected:
-  float *origin_weight_;  // do not free
-  float *origin_bias_;    // do not free
-  float *packed_weight_ = nullptr;
   float *packed_input_ = nullptr;
   float *col_major_input_ = nullptr;
 };
