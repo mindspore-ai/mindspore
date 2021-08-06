@@ -45,6 +45,7 @@ constexpr int kFieldsToPrint = 5;
 constexpr int kPrintOffset = 4;
 constexpr int kCPUBindFlag2 = 2;
 constexpr int kCPUBindFlag1 = 1;
+static const int kTHOUSAND = 1000;
 
 namespace {
 float *ReadFileBuf(const char *file, size_t *size) {
@@ -400,8 +401,8 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
   }
 
   auto end_prepare_time = GetTimeUs();
-  MS_LOG(INFO) << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / 1000) << " ms";
-  std::cout << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / 1000) << " ms" << std::endl;
+  MS_LOG(INFO) << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kTHOUSAND) << " ms";
+  std::cout << "PrepareTime = " << ((end_prepare_time - start_prepare_time) / kTHOUSAND) << " ms" << std::endl;
   // Load input
   MS_LOG(INFO) << "Load input data";
   auto ms_inputs = session->GetInputs();
