@@ -43,7 +43,7 @@ class MindDataTestRandomColorOp : public UT::CVOP::CVOpCommon {
     cv::Mat cv_out;
     cv::merge(temp, 3, cv_out);
     std::shared_ptr<CVTensor> cvt_out;
-    CVTensor::CreateFromMat(cv_out, &cvt_out);
+    CVTensor::CreateFromMat(cv_out, 3, &cvt_out);
     gray_tensor = std::static_pointer_cast<Tensor>(cvt_out);
   }
   TensorShape shape;
