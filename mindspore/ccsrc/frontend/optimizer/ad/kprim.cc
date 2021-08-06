@@ -48,16 +48,38 @@ KPrim g_k_prims;
 namespace {
 constexpr char kBpropMindIRSuffix[] = "_bprop.mindir";
 constexpr char kBpropMindIRDir[] = "/../bprop_mindir/";
-constexpr char kGenerateMindirEnv[] = "GENERATE_MINDIR";
+constexpr char serializable_bprop_ops[] = "serializable_bprop_ops";
+constexpr char bprop_mindir_module[] = "mindspore.ops.bprop_mindir";
 
 #ifndef _WIN32
-bool IsSerializableBprop(const PrimitivePtr &prim) {
-  static std::unordered_set<PrimitivePtr> serializable_bprop_list{prim::kPrimRelu, prim::kPrimIdentity};
+// Get the serializable bprop list from the module mindspore.ops.bprop_mindir in python.
+std::unordered_set<std::string> GetSerializableBpropList() {
+  std::unordered_set<std::string> serializable_bprop_list;
+  py::module mod = py::module::import(bprop_mindir_module);
+  py::object serializable_bprop_ops_attr = mod.attr(serializable_bprop_ops);
+  if (!py::isinstance<py::list>(serializable_bprop_ops_attr)) {
+    MS_LOG(WARNING) << "Can not get the the serializable bprop ops list from python, it is not a python list.";
+    return serializable_bprop_list;
+  }
 
+  auto ops_list = serializable_bprop_ops_attr.cast<py::list>();
+  for (size_t i = 0; i < ops_list.size(); ++i) {
+    auto prim_adapter = ops_list[i].cast<PrimitivePyAdapterPtr>();
+    if (prim_adapter == nullptr) {
+      MS_LOG(EXCEPTION) << "The python obj in serializable bprop list should be a Primitive, but it is "
+                        << py::str(ops_list[i]);
+    }
+    serializable_bprop_list.insert(prim_adapter->name());
+  }
+  return serializable_bprop_list;
+}
+
+bool IsSerializableBprop(const std::string &prim_name) {
+  static std::unordered_set<std::string> serializable_bprop_list = GetSerializableBpropList();
   return std::any_of(serializable_bprop_list.begin(), serializable_bprop_list.end(),
-                     [&prim](const PrimitivePtr &serializable_bprop_prim) {
-                       auto str1 = prim->name();
-                       auto str2 = serializable_bprop_prim->name();
+                     [&prim_name](const std::string &serializable_bprop_prim_name) {
+                       auto str1 = prim_name;
+                       auto str2 = serializable_bprop_prim_name;
                        (void)transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
                        (void)transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
                        return str1 == str2;
@@ -128,8 +150,91 @@ void ExportBpropToMindIR(const PrimitivePtr &prim, const FuncGraphPtr &func_grap
   fout.close();
   ChangeFileMode(bprop_mindir_realpath.value(), S_IRUSR | S_IWUSR);
 }
+
+AnfNodePtr GetPythonOps(const FuncGraphPtr &fg, const AnfNodePtr &origin_node, const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(origin_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  // DoSignaturePrimitive to the pair of primitive name and module name.
+  static std::unordered_map<std::string, std::pair<std::string, std::string>> python_ops{
+    {"S-Prim-zeros_like_leaf", {"zeros_like", ""}},
+    {"S-Prim-getitem", {"getitem", "mindspore.ops.composite.multitype_ops.getitem_impl"}}};
+  auto iter = python_ops.find(prim->name());
+  if (iter == python_ops.end()) {
+    return nullptr;
+  }
+  ValuePtr python_ops_value;
+  if (!iter->second.second.empty()) {
+    python_ops_value = prim::GetPythonOps(iter->second.first, iter->second.second);
+  } else {
+    python_ops_value = prim::GetPythonOps(iter->second.first);
+  }
+  auto origin_cnode = origin_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(origin_cnode);
+  auto &origin_inputs = origin_cnode->inputs();
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(python_ops_value)};
+  (void)std::copy(origin_inputs.begin() + 1, origin_inputs.end(), std::back_inserter(new_inputs));
+  return fg->NewCNode(new_inputs);
+}
+
+// Replace the nodes whose python obj of primitive is needed in the renormalize process,
+// with the new created python ops, such as zeros_like.
+void ReplacePythonOps(const FuncGraphPtr &fg) {
+  MS_EXCEPTION_IF_NULL(fg);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(fg->get_return());
+  for (const auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    for (size_t i = 0; i < cnode->size(); ++i) {
+      auto prim = GetCNodePrimitive(cnode->input(i));
+      if (prim == nullptr) {
+        continue;
+      }
+      auto new_input = GetPythonOps(fg, cnode->input(i), prim);
+      if (new_input == nullptr) {
+        continue;
+      }
+      cnode->set_input(i, new_input);
+    }
+  }
+}
 #endif
 }  // namespace
+
+#ifndef _WIN32
+// Given a python primitive, export a mindir file from the bprop defined in python.
+void KPrim::ExportBpropMindir(const py::object &obj) {
+  auto prim_adapter = obj.cast<PrimitivePyAdapterPtr>();
+  if (prim_adapter == nullptr) {
+    MS_LOG(EXCEPTION) << "The python obj to be exported to bprop mindir should be a Primitive, but it is "
+                      << py::str(obj);
+  }
+  auto prim = prim_adapter->attached_primitive();
+  if (prim == nullptr) {
+    prim = std::make_shared<PrimitivePy>(obj, prim_adapter);
+    prim_adapter->set_attached_primitive(prim);
+  }
+
+  // Get the bprop function from python.
+  py::function fn = prim->cast<PrimitivePyPtr>()->GetBpropFunction();
+  if (py::isinstance<py::none>(fn)) {
+    fn = GetBpropFunction(prim->name());
+  }
+  if (!fn || py::isinstance<py::none>(fn)) {
+    MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
+  }
+  auto func_graph = parse::ParsePythonCode(fn);
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "Fail to parse bprop function for " << prim->name() << ".";
+  }
+  auto res = std::make_shared<pipeline::Resource>();
+  (void)parse::ResolveFuncGraph(func_graph, res);
+  ExportBpropToMindIR(prim, func_graph);
+}
+#endif
 
 FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources) {
   // Set a child scope named "grad'PrimitiveName'" for the bprop function,
@@ -144,10 +249,11 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
   // Firstly we get bprop from mindir. If failed, parse the python function registered.
   FuncGraphPtr func_graph = nullptr;
 #ifndef _WIN32
-  bool serializable = IsSerializableBprop(prim);
-  if (serializable && common::GetEnv(kGenerateMindirEnv) != "1") {
+  bool serializable = IsSerializableBprop(prim->name());
+  if (serializable) {
     func_graph = ImportBpropFromMindIR(prim);
     if (func_graph != nullptr) {
+      ReplacePythonOps(func_graph);
       return func_graph;
     }
   }

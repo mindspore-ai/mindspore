@@ -41,6 +41,7 @@ static constexpr char kCNodeShapeAttr[] = "shape";
 static constexpr char kCNodeShape1Attr[] = "shape1";
 static constexpr char kCNodeShape2Attr[] = "shape2";
 static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
+static constexpr char kHyperMapPrefix[] = "hyper_map";
 
 enum ParseForm : int {
   FORM_PARSE_TYPE = 0,
@@ -770,6 +771,19 @@ std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::Get
   return kv;
 }
 
+// S-Prim-xxx or S-Prim-hyper_map[xxx] -> xxx
+static std::string GetDoSignaturePrimitiveName(const std::string &node_type) {
+  // Remove `S-Prim-` prefix.
+  auto prim_name = node_type.substr(strlen(kDoSignaturePrimitivePrefix));
+  if (prim_name.compare(0, strlen(kHyperMapPrefix), kHyperMapPrefix) != 0) {
+    return prim_name;
+  }
+  // hyper_map[xxx] -> xxx
+  constexpr auto offset = 2;
+  auto op_name = prim_name.substr(strlen(kHyperMapPrefix) + 1, prim_name.length() - strlen(kHyperMapPrefix) - offset);
+  return op_name;
+}
+
 AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_proto) {
   const std::string kOperatorTypeFlag = std::string("REF::");
   const size_t kOpTypeFlagSize = kOperatorTypeFlag.length();
@@ -792,7 +806,7 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
     prim = op_primc_fns[node_type]();
   } else {
     if (node_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
-      auto op_name = node_type.substr(strlen(kDoSignaturePrimitivePrefix));
+      auto op_name = GetDoSignaturePrimitiveName(node_type);
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
       MS_EXCEPTION_IF_NULL(prim);
       prim->set_instance_name(op_name);
@@ -863,7 +877,9 @@ void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, C
       for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
         auto abs = cnode_ptr->input(index)->abstract();
         if (abs != nullptr) {
-          abs->set_value(kAnyValue);
+          if (abs->GetValueTrack() == nullptr) {
+            abs->set_value(kAnyValue);
+          }
           elem.push_back(abs);
         }
       }
