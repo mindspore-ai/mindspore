@@ -17,7 +17,8 @@ Validators for TensorOps.
 """
 from functools import wraps
 from mindspore.dataset.core.validator_helpers import check_not_zero, check_int32, check_float32, check_value, \
-    check_value_normalize_std, check_value_ratio, FLOAT_MAX_INTEGER, INT64_MAX, parse_user_args, type_check
+    check_value_normalize_std, check_value_ratio, DOUBLE_MAX_INTEGER, FLOAT_MAX_INTEGER, INT64_MAX, parse_user_args, \
+    type_check
 from .utils import ScaleType
 
 
@@ -182,7 +183,25 @@ def check_time_stretch(method):
         check_value(n_freq, (1, INT64_MAX), "n_freq")
         if fixed_rate is not None:
             check_value_ratio(fixed_rate, (0, FLOAT_MAX_INTEGER), "fixed_rate")
+        return method(self, *args, **kwargs)
 
+    return new_method
+
+
+def check_masking(method):
+    """Wrapper method to check the parameters of time_masking and frequency_masking"""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [iid_masks, mask_param, mask_start, mask_value], _ = parse_user_args(
+            method, *args, **kwargs)
+        type_check(iid_masks, (bool,), "iid_masks")
+        type_check(mask_param, (int,), "mask_param")
+        check_value(mask_param, (0, FLOAT_MAX_INTEGER), "mask_param")
+        type_check(mask_start, (int,), "mask_start")
+        check_value(mask_start, (0, FLOAT_MAX_INTEGER), "mask_start")
+        type_check(mask_value, (int, float), "mask_value")
+        check_value(mask_value, (0, DOUBLE_MAX_INTEGER), "mask_value")
         return method(self, *args, **kwargs)
 
     return new_method

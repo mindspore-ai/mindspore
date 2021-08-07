@@ -37,6 +37,11 @@ Status CheckFloatScalarNonNegative(const std::string &op_name, const std::string
   return Status::OK();
 }
 
+Status CheckIntScalarNonNegative(const std::string &op_name, const std::string &scalar_name, int32_t scalar) {
+  RETURN_IF_NOT_OK(CheckScalar(op_name, scalar_name, scalar, {0}, false));
+  return Status::OK();
+}
+
 Status CheckIntScalarPositive(const std::string &op_name, const std::string &scalar_name, int32_t scalar) {
   RETURN_IF_NOT_OK(CheckScalar(op_name, scalar_name, scalar, {0}, true));
   return Status::OK();

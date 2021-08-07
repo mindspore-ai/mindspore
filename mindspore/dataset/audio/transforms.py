@@ -22,7 +22,7 @@ import numpy as np
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_time_stretch
+    check_bandreject_biquad, check_bass_biquad, check_masking, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -282,3 +282,35 @@ class TimeStretch(AudioTensorOperation):
 
     def parse(self):
         return cde.TimeStretchOperation(self.hop_length, self.n_freq, self.fixed_rate)
+
+
+class TimeMasking(AudioTensorOperation):
+    """
+    Apply masking to a spectrogram in the time domain.
+
+    Args:
+        iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
+        time_mask_param (int): Maximum possible length of the mask (default=0).
+            Indices uniformly sampled from [0, time_mask_param].
+        mask_start (int): Mask start takes effect when iid_masks=true (default=0).
+        mask_value (double): Mask value (default=0.0).
+
+    Examples:
+        >>> def gen():
+        ...     random.seed(0)
+        ...     data = numpy.random.random([1, 3, 2])
+        ...     yield (numpy.array(data, dtype=numpy.float32),)
+        >>> dataset = ds.GeneratorDataset(source=gen,
+        ...                               column_names=["multi_dim_data"])
+        >>> dataset = dataset.map(operations=TimeMasking(time_mask_param=1),
+        ...                       input_columns=["multi_dim_data"])
+    """
+    @check_masking
+    def __init__(self, iid_masks=False, time_mask_param=0, mask_start=0, mask_value=0.0):
+        self.iid_masks = iid_masks
+        self.time_mask_param = time_mask_param
+        self.mask_start = mask_start
+        self.mask_value = mask_value
+
+    def parse(self):
+        return cde.TimeMaskingOperation(self.iid_masks, self.time_mask_param, self.mask_start, self.mask_value)

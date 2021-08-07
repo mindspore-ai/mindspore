@@ -23,6 +23,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
 namespace mindspore {
@@ -134,6 +135,24 @@ std::shared_ptr<TensorOperation> BassBiquad::Parse() {
   return std::make_shared<BassBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
 }
 
+// TimeMasking Transform Operation.
+struct TimeMasking::Data {
+  Data(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
+      : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {}
+  int64_t time_mask_param_;
+  int64_t mask_start_;
+  bool iid_masks_;
+  double mask_value_;
+};
+
+TimeMasking::TimeMasking(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
+    : data_(std::make_shared<Data>(iid_masks, time_mask_param, mask_start, mask_value)) {}
+
+std::shared_ptr<TensorOperation> TimeMasking::Parse() {
+  return std::make_shared<TimeMaskingOperation>(data_->iid_masks_, data_->time_mask_param_, data_->mask_start_,
+                                                data_->mask_value_);
+}
+
 // TimeStretch Operation.
 struct TimeStretch::Data {
   explicit Data(float hop_length, int n_freq, float fixed_rate)
@@ -149,7 +168,6 @@ TimeStretch::TimeStretch(float hop_length, int n_freq, float fixed_rate)
 std::shared_ptr<TensorOperation> TimeStretch::Parse() {
   return std::make_shared<TimeStretchOperation>(data_->hop_length_, data_->n_freq_, data_->fixed_rate_);
 }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

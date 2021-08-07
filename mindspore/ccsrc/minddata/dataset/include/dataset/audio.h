@@ -210,6 +210,33 @@ class TimeStretch final : public TensorTransform {
   struct Data;
   std::shared_ptr<Data> data_;
 };
+
+/// \brief TimeMasking TensorTransform.
+/// \notes Apply masking to a spectrogram in the time domain.
+class TimeMasking final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] iid_masks Whether to apply different masks to each example.
+  /// \param[in] time_mask_param Maximum possible length of the mask.
+  ///     Indices uniformly sampled from [0, time_mask_param].
+  ///     Mask width when iid_masks=true.
+  /// \param[in] mask_start Mask start when iid_masks=true.
+  /// \param[in] mask_value Mask value.
+  explicit TimeMasking(bool iid_masks = false, int64_t time_mask_param = 0, int64_t mask_start = 0,
+                       double mask_value = 0.0);
+
+  /// \brief Destructor.
+  ~TimeMasking() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

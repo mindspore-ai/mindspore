@@ -10,5 +10,6 @@ add_library(audio-kernels OBJECT
         bandpass_biquad_op.cc
         bandreject_biquad_op.cc
         bass_biquad_op.cc
+        time_masking_op.cc
         time_stretch_op.cc
         )

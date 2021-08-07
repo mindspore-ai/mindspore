@@ -16,6 +16,8 @@
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
+#include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
 
@@ -69,9 +71,9 @@ template Status AmplitudeToDB<double>(const std::shared_ptr<Tensor> &input, std:
 /// \param[out] output - Tensor has n points with linearly space. The spacing between the points is (end-start)/(n-1).
 /// \return Status return code
 template <typename T>
-Status Linespace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
+Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
   if (start > end) {
-    std::string err = "Linespace: input param end must be greater than start.";
+    std::string err = "Linspace: input param end must be greater than start.";
     RETURN_STATUS_UNEXPECTED(err);
   }
   n = std::isnan(n) ? 100 : n;
@@ -367,11 +369,11 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
   std::shared_ptr<Tensor> phase_advance;
   switch (input->type().value()) {
     case DataType::DE_FLOAT32:
-      RETURN_IF_NOT_OK(Linespace<float>(&phase_advance, 0, PI * hop_length, n_freq));
+      RETURN_IF_NOT_OK(Linspace<float>(&phase_advance, 0, PI * hop_length, n_freq));
       RETURN_IF_NOT_OK(TimeStretch<float>(input, output, rate, phase_advance));
       break;
     case DataType::DE_FLOAT64:
-      RETURN_IF_NOT_OK(Linespace<double>(&phase_advance, 0, PI * hop_length, n_freq));
+      RETURN_IF_NOT_OK(Linspace<double>(&phase_advance, 0, PI * hop_length, n_freq));
       RETURN_IF_NOT_OK(TimeStretch<double>(input, output, rate, phase_advance));
       break;
     default:
@@ -379,6 +381,79 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
         "TimeStretch: unsupported type, currently supported types include "
         "[float, double].");
   }
+  return Status::OK();
+}
+
+Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_param,
+                           double mask_value, int axis, std::mt19937 rnd) {
+  std::uniform_int_distribution<int64_t> mask_width_value(0, mask_param);
+  TensorShape input_shape = input->shape();
+  int64_t mask_dim_size = axis == 1 ? input_shape[-2] : input_shape[-1];
+  int64_t mask_width = mask_width_value(rnd);
+  std::uniform_int_distribution<int64_t> min_freq_value(0, mask_dim_size - mask_width);
+  int64_t mask_start = min_freq_value(rnd);
+
+  return MaskAlongAxis(input, output, mask_width, mask_start, mask_value, axis);
+}
+
+Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
+                     int64_t mask_start, double mask_value, int axis) {
+  if (axis != 2 && axis != 1) {
+    RETURN_STATUS_UNEXPECTED(
+      "MaskAlongAxis: only support Time and Frequency masking, the axis should be equal to 1 or 2.");
+  }
+  TensorShape input_shape = input->shape();
+  // squeeze input
+  TensorShape squeeze_shape = TensorShape({-1, input_shape[-2], input_shape[-1]});
+  input->Reshape(squeeze_shape);
+
+  int check_dim_ind = (axis == 1) ? -2 : -1;
+  CHECK_FAIL_RETURN_UNEXPECTED(0 <= mask_start && mask_start <= input_shape[check_dim_ind],
+                               "MaskAlongAxis: mask_start should be smaller than the length of chosen dim.");
+  CHECK_FAIL_RETURN_UNEXPECTED(mask_start + mask_width <= input_shape[check_dim_ind],
+                               "MaskAlongAxis: mask_width with mask_start is out of bounds.");
+
+  int64_t cell_size = input->type().SizeInBytes();
+
+  if (axis == 1) {
+    // freq
+    for (int ind = 0; ind < input->Size() / input_shape[-2] * mask_width; ind++) {
+      int block_num = ind / (mask_width * input_shape[-1]);
+      auto start_pos = ind % (mask_width * input_shape[-1]) + mask_start * input_shape[-1] +
+                       input_shape[-1] * input_shape[-2] * block_num;
+      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
+      if (input->type() != DataType::DE_FLOAT64) {
+        // tensor float 32
+        auto mask_val = static_cast<float>(mask_value);
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      } else {
+        // tensor float 64
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_value, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      }
+    }
+  } else {
+    // time
+    for (int ind = 0; ind < input->Size() / input_shape[-1] * mask_width; ind++) {
+      int row_num = ind / mask_width;
+      auto start_pos = ind % mask_width + mask_start + input_shape[-1] * row_num;
+      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
+      if (input->type() != DataType::DE_FLOAT64) {
+        // tensor float 32
+        auto mask_val = static_cast<float>(mask_value);
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      } else {
+        // tensor float 64
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_value, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      }
+    }
+  }
+  // unsqueeze input
+  input->Reshape(input_shape);
+  *output = input;
   return Status::OK();
 }
 }  // namespace dataset
