@@ -78,7 +78,7 @@ class Yolov4TinyPostProcess : public ObjectPostProcessBase {
 
      void CompareProb(int& classID, float& maxProb, float classProb, int classNum);
      void SelectClassNHWC(std::shared_ptr<void> netout, NetInfo info, std::vector<MxBase::ObjectInfo>& detBoxes,
-                         int stride, OutputLayer layer);
+                         int stride);
      void GenerateBbox(std::vector<std::shared_ptr<void>> featLayerData,
                       std::vector<MxBase::ObjectInfo> &detBoxes,
                       const std::vector<std::vector<size_t>>& featLayerShapes,
