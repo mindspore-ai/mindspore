@@ -111,7 +111,7 @@ class KernelGraph : public FuncGraph {
   CNodePtr NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode = nullptr);
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
   CNodePtr NewCNode(const CNodePtr &cnode);
-  void ResetAssignInputFeaatureMapFlag(const CNodePtr &cnode) const;
+  void ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const;
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
   ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
   ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value);
