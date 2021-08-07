@@ -22,7 +22,7 @@ import numpy as np
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad
+    check_bandreject_biquad, check_bass_biquad, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -249,3 +249,36 @@ class BassBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.BassBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)
+
+
+class TimeStretch(AudioTensorOperation):
+    """
+    Stretch STFT in time at a given rate, without changing the pitch.
+
+    Args:
+        hop_length (int, optional): Length of hop between STFT windows (default=None).
+        n_freq (int, optional): Number of filter banks form STFT (default=201).
+        fixed_rate (float, optional): Rate to speed up or slow down the input in time (default=None).
+
+    Examples:
+        >>> freq = 44100
+        >>> num_frame = 30
+        >>> def gen():
+        ...     np.random.seed(0)
+        ...     data =  np.random.random([freq, num_frame])
+        ...     yield (np.array(data, dtype=np.float32), )
+        >>> data1 = ds.GeneratorDataset(source=gen, column_names=["multi_dimensional_data"])
+        >>> transforms = [py_audio.TimeStretch()]
+        >>> data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
+    """
+    @check_time_stretch
+    def __init__(self, hop_length=None, n_freq=201, fixed_rate=None):
+        self.n_freq = n_freq
+        self.fixed_rate = fixed_rate
+
+        n_fft = (n_freq - 1) * 2
+        self.hop_length = hop_length if hop_length is not None else n_fft // 2
+        self.fixed_rate = fixed_rate if fixed_rate is not None else np.nan
+
+    def parse(self):
+        return cde.TimeStretchOperation(self.hop_length, self.n_freq, self.fixed_rate)

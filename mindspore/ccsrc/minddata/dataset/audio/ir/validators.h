@@ -28,6 +28,15 @@
 namespace mindspore {
 namespace dataset {
 
+// Helper function to non-nan float scalar
+Status CheckFloatScalarNotNan(const std::string &op_name, const std::string &scalar_name, float scalar);
+
+// Helper function to positive float scalar
+Status CheckFloatScalarPositive(const std::string &op_name, const std::string &scalar_name, float scalar);
+
+// Helper function to positive int scalar
+Status CheckIntScalarPositive(const std::string &op_name, const std::string &scalar_name, int32_t scalar);
+
 template <typename T>
 // Helper function to check scalar is not equal to zero
 Status CheckScalarNotZero(const std::string &op_name, const std::string &scalar_name, const T scalar) {

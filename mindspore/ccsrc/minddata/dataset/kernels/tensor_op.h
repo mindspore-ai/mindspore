@@ -145,6 +145,7 @@ constexpr char kBandBiquadOp[] = "BandBiquadOp";
 constexpr char kBandpassBiquadOp[] = "BandpassBiquadOp";
 constexpr char kBandrejectBiquadOp[] = "BandrejectBiquadOp";
 constexpr char kBassBiquadOp[] = "BassBiquadOp";
+constexpr char kTimeStretchOp[] = "TimeStretchOp";
 
 // data
 constexpr char kConcatenateOp[] = "ConcatenateOp";

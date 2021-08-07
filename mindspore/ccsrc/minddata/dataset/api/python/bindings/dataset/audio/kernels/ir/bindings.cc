@@ -24,6 +24,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 
 namespace mindspore {
@@ -113,5 +114,15 @@ PYBIND_REGISTER(
       }));
   }));
 
+PYBIND_REGISTER(
+  TimeStretchOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::TimeStretchOperation, TensorOperation, std::shared_ptr<audio::TimeStretchOperation>>(
+      *m, "TimeStretchOperation")
+      .def(py::init([](float hop_length, int n_freq, float fixed_rate) {
+        auto timestretch = std::make_shared<audio::TimeStretchOperation>(hop_length, n_freq, fixed_rate);
+        THROW_IF_ERROR(timestretch->ValidateParams());
+        return timestretch;
+      }));
+  }));
 }  // namespace dataset
 }  // namespace mindspore

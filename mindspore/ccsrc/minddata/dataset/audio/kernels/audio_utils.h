@@ -176,6 +176,16 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   delete m_py;
   return Status::OK();
 }
+
+/// \brief Stretch STFT in time at a given rate, without changing the pitch.
+/// \param[in] input - Tensor of shape <...,freq,time>.
+/// \param[in] rate - Stretch factor.
+/// \param[in] phase_advance - Expected phase advance in each bin.
+/// \param[out] output - Tensor after stretch in time domain.
+/// \return Status return code
+Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
+                   float n_freq);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

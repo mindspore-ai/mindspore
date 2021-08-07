@@ -306,6 +306,13 @@ class Tensor {
   /// \return bool - true if tensor is not empty
   bool HasData() const { return data_ != nullptr; }
 
+  /// Check if tensor is complex
+  /// \return bool - true if tensor is complex
+  bool IsComplex() const {
+    // check the last dim all be 2
+    return shape_[-1] == 2;
+  }
+
   /// Reshape the tensor. The given shape should have the same number of elements in the Tensor
   /// \param shape
   virtual Status Reshape(const TensorShape &shape);

@@ -19,6 +19,7 @@
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/execute.h"
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/text.h"
@@ -194,6 +195,65 @@ TEST_F(MindDataTestExecute, TestCrop) {
   EXPECT_EQ(rc, Status::OK());
   EXPECT_EQ(image.Shape()[0], 10);
   EXPECT_EQ(image.Shape()[1], 15);
+}
+
+TEST_F(MindDataTestExecute, TestTimeStretchEager) {
+  MS_LOG(INFO) << "Doing test TimeStretchOp with custom param value. Eager.";
+  std::shared_ptr<Tensor> input_tensor_;
+  // op param
+  int freq = 4;
+  int hop_length = 20;
+  float rate = 1.3;
+  int frame_num = 10;
+  // create tensor
+  TensorShape s = TensorShape({2, freq, frame_num, 2});
+  // init input vec
+  std::vector<float> input_vec(2 * freq * frame_num * 2);
+  for (int ind = 0; ind < input_vec.size(); ind++) {
+    input_vec[ind] = std::rand() % (1000) / (1000.0f);
+  }
+  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor_));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> time_stretch_op = std::make_shared<audio::TimeStretch>(hop_length, freq, rate);
+
+  // apply timestretch
+  mindspore::dataset::Execute Transform({time_stretch_op});
+  Status status = Transform(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestTimeStretchParamCheck1) {
+  MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck with invalid parameters.";
+  // Create an input
+  std::shared_ptr<Tensor> input_tensor_;
+  std::shared_ptr<Tensor> output_tensor;
+  TensorShape s = TensorShape({1, 4, 3, 2});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f,
+                        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}),
+    s, &input_tensor_));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> timestretch = std::make_shared<audio::TimeStretch>(4, 512, -2);
+  mindspore::dataset::Execute Transform({timestretch});
+  Status status = Transform(input_ms, &input_ms);
+  EXPECT_FALSE(status.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestTimeStretchParamCheck2) {
+  MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck with invalid parameters.";
+  // Create an input
+  std::shared_ptr<Tensor> input_tensor_;
+  std::shared_ptr<Tensor> output_tensor;
+  TensorShape s = TensorShape({1, 4, 3, 2});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f,
+                        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}),
+    s, &input_tensor_));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> timestretch = std::make_shared<audio::TimeStretch>(4, -512, 2);
+  mindspore::dataset::Execute Transform({timestretch});
+  Status status = Transform(input_ms, &input_ms);
+  EXPECT_FALSE(status.IsOk());
 }
 
 TEST_F(MindDataTestExecute, TestTransformInput1) {
