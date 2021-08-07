@@ -167,7 +167,7 @@ int DeConvolutionCPUKernel::Init() {
     return RET_ERROR;
   }
   if (in_tensors_.at(kWeightIndex)->data_c() != nullptr) {
-    int error_code = InitConvWeightBias(kNumberTypeFloat);
+    int error_code = InitConvWeightBias();
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv InitConvWeightBias error!ret: " << error_code;
       return error_code;
@@ -222,7 +222,7 @@ int DeConvolutionCPUKernel::InitRunBuf() {
 }
 
 int DeConvolutionCPUKernel::Run() {
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

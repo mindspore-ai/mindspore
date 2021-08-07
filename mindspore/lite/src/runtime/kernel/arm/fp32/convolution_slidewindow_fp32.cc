@@ -36,7 +36,7 @@ int ConvolutionSWCPUKernel::Init() {
     in_tile_ = C8NUM;
     ic_res_ = conv_param_->input_channel_ % in_tile_;
   }
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -148,7 +148,7 @@ int ConvolutionSWCPUKernel::Run() {
     return ret;
   }
 
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

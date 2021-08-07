@@ -149,7 +149,7 @@ int ConvolutionWinogradFP16CPUKernel::Init() {
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
 
-  auto ret = InitConvWeightBias(kNumberTypeFloat16);
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -225,7 +225,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (RepackWeight(kNumberTypeFloat16) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

@@ -56,7 +56,7 @@ int ConvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = InitConvWeightBias(kNumberTypeFloat16);
+  auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitConvWeightBias failed.";
     return RET_ERROR;
@@ -102,7 +102,7 @@ static int ConvDwFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sc
 }
 
 int ConvolutionDepthwiseFp16CPUKernel::Run() {
-  if (RepackWeight(kNumberTypeFloat16) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

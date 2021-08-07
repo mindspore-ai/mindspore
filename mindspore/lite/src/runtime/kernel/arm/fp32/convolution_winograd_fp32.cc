@@ -103,7 +103,7 @@ int ConvolutionWinogradCPUKernel::Init() {
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
 
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -159,7 +159,7 @@ int ConvolutionWinogradCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }
@@ -242,7 +242,7 @@ int ConvolutionWinogradCPUKernel::Eval() {
     return ret;
   }
   if (IsTrainable()) {
-    ret = InitConvWeightBias(kNumberTypeFloat);
+    ret = InitConvWeightBias();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Init weight bias failed.";
       return RET_ERROR;

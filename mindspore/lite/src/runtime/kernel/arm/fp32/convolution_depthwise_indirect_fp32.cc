@@ -36,7 +36,7 @@ ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() 
 int ConvolutionDepthwiseIndirectCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise Indirect fp32 InitConvWeightBias failed.";
     return RET_ERROR;
@@ -141,7 +141,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
   } else {
     packed_input_ = input_ptr;
   }
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

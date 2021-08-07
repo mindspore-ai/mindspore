@@ -73,7 +73,7 @@ int DeconvolutionDepthwiseCPUKernel::Init() {
     return RET_ERROR;
   }
 
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitConvWeightBias failed.ret: " << ret;
     return ret;
@@ -115,7 +115,7 @@ int DeconvDwRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int DeconvolutionDepthwiseCPUKernel::Run() {
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

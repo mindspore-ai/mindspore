@@ -137,7 +137,7 @@ int Convolution1x1FP16CPUKernel::Init() {
     MS_LOG(ERROR) << "Init matmul_param_ failed.";
     return RET_ERROR;
   }
-  int ret = InitConvWeightBias(kNumberTypeFloat16);
+  int ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return ret;
@@ -254,7 +254,7 @@ int Convolution1x1FP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;
   }
-  if (RepackWeight(kNumberTypeFloat16) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

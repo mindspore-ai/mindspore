@@ -27,7 +27,7 @@ namespace mindspore::kernel {
 int ConvolutionDepthwise3x3CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 InitConvWeightBias failed.";
     return RET_ERROR;
@@ -83,7 +83,7 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
     MS_LOG(ERROR) << "ConvDw3x3Run failed to allocate buffer";
     return RET_MEMORY_FAILED;
   }
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     ctx_->allocator->Free(buffer_);
     return RET_ERROR;
@@ -111,7 +111,7 @@ int ConvolutionDepthwise3x3CPUKernel::Eval() {
     return ret;
   }
   if (IsTrainable()) {
-    if (InitConvWeightBias(kNumberTypeFloat) != RET_OK) {
+    if (InitConvWeightBias() != RET_OK) {
       MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 Eval:InitWeightBias failed.";
       return RET_ERROR;
     }

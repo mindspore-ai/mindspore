@@ -60,7 +60,7 @@ int ConvolutionDepthwiseSWCPUKernel::Init() {
     return RET_ERROR;
   }
 
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitConvWeightBias failed.";
     return RET_ERROR;
@@ -109,7 +109,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
     FreePackedInputOutput();
     return RET_ERROR;
   }
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }
