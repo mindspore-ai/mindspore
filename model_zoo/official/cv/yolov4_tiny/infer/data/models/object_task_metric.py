@@ -131,7 +131,6 @@ if __name__ == "__main__":
     image_id_list = get_image_id(ban_path)
     result_dict = get_dict_from_file(input_file, image_id_list)
     json_file_name = './result.json'
-    
     with open(json_file_name, 'w') as f:
         json.dump(result_dict, f)
 
