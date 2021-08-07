@@ -38,18 +38,20 @@ class Net(Cell):
 
 
 _x = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
+_x2 = Tensor(np.ones([32, 16, 10, 10]), dtype=ms.float32)
+_w0 = Tensor(np.ones([8, 16, 1, 1]), dtype=ms.float32)
 _w1 = Tensor(np.ones([8, 16, 2, 2]), dtype=ms.float32)
 _w2 = Tensor(np.ones([8, 16, 3, 3]), dtype=ms.float32)
 _w3 = Tensor(np.ones([8, 16, 5, 5]), dtype=ms.float32)
 _b = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
 
 
-def compile_net(net):
+def compile_net(net, input_x=_x):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
     train_net.set_train()
-    _executor.compile(train_net, _x, _b)
+    _executor.compile(train_net, input_x, _b)
     context.reset_auto_parallel_context()
 
 
@@ -85,6 +87,12 @@ def test_conv2d_model_parallel3():
     compile_net(net)
 
 
+def test_conv2d_auto_parallel():
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1)
+    compile_net(net)
+
+
 def test_conv2d_model_parallel4():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
     strategy1 = ((2, 2, 1, 4), (2, 2, 1, 1))
@@ -102,10 +110,82 @@ def test_conv2d_left_and_right_no_need_to_send():
         compile_net(net)
 
 
+def test_conv2d_kernel_size_larger_than_stride_and_split_h():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((2, 2, 4, 1), (2, 2, 1, 1))
+    strategy2 = ((2, 2, 4, 1),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_conv2d_valid_mode_kernel_size_larger_than_stride():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 1, 1, 2), (1, 1, 1, 1))
+    strategy2 = ((2, 1, 1, 4),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="valid", stride=1, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
 def test_conv2d_output_can_not_divisible_by_strategy():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
     strategy2 = ((1, 1, 1, 8),)
     net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=2, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_split_kernel():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 1), (1, 1, 2, 2))
+    strategy2 = ((1, 1, 1, 8),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=2, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_kernel_size_smaller_than_stride_and_slice_can_not_divisible_by_stride_same_mode():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 2), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 8),)
+    net = Net(_w0, out_channel=8, kernel_size=1, pad_mode="same", stride=3, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x2)
+
+
+def test_kernel_size_smaller_than_stride_and_slice_can_not_divisible_by_stride_valid_mode():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 2), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 8),)
+    net = Net(_w0, out_channel=8, kernel_size=1, pad_mode="valid", stride=3, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x2)
+
+
+def test_kernel_size_larger_than_stride_and_input_can_not_divisible_by_stride():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 2), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 8),)
+    net = Net(_w3, out_channel=8, kernel_size=5, pad_mode="same", stride=3, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x2)
+
+
+def test_kernel_size_larger_than_stride_and_slice_too_small():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 8),)
+    net = Net(_w3, out_channel=8, kernel_size=5, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_kernel_size_larger_than_stride_and_left_pad_is_0():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1, 4), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 8),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net)

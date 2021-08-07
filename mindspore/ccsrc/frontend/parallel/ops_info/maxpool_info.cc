@@ -76,6 +76,20 @@ Status MaxPoolInfo::GetAttrs() {
 }
 
 Status MaxPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
+  if (outputs_shape_[0][2] % h_strategy != 0) {
+    MS_LOG(ERROR) << name_
+                  << ": Do not support to split h dimension when out_shape of h dimension is not divisible by strategy "
+                     "of h dimension";
+    return FAILED;
+  }
+
+  if (outputs_shape_[0][3] % w_strategy != 0) {
+    MS_LOG(ERROR) << name_
+                  << ": Do not support to split w dimension when out_shape of w dimension is not divisible by strategy "
+                     "of w dimension";
+    return FAILED;
+  }
+
   if (h_strategy > 1) {
     if (kernel_size_[2] > stride_[2]) {
       MS_LOG(ERROR) << name_ << ": It does not support to split H dimension when kernel_size > stride";
