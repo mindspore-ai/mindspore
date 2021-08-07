@@ -196,7 +196,7 @@ void Yolov4TinyPostProcess::CompareProb(int& classID, float& maxProb, float clas
 }
 
 void Yolov4TinyPostProcess::SelectClassNHWC(std::shared_ptr<void> netout, NetInfo info,
-                                          std::vector<MxBase::ObjectInfo>& detBoxes, int stride, OutputLayer layer) {
+                                          std::vector<MxBase::ObjectInfo>& detBoxes, int stride) {
     const int offsetY = 1;
     for (int j = 0; j < stride; ++j) {
         for (int k = 0; k < info.anchorDim; ++k) {
@@ -256,7 +256,7 @@ void Yolov4TinyPostProcess::GenerateBbox(std::vector<std::shared_ptr<void>> feat
         }
         int stride = layer.width * layer.height;
         std::shared_ptr<void> netout = featLayerData[i];
-        SelectClassNHWC(netout, netInfo, detBoxes, stride, layer);
+        SelectClassNHWC(netout, netInfo, detBoxes, stride);
     }
 }
 
