@@ -120,6 +120,7 @@ from .sponge_update_ops import (v0coordinaterefresh, v1coordinaterefresh, v2coor
                                 NeighborListUpdate, MDIterationLeapFrog,
                                 MDIterationLeapFrogWithMaxVel, MDIterationGradientDescent,
                                 BondForceWithAtomEnergyAndVirial, ConstrainForceCycle)
+from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 
 __all__ = [
     'Unique',
@@ -524,7 +525,10 @@ __all__ = [
     "MDIterationGradientDescent",
     "BondForceWithAtomEnergyAndVirial",
     "ConstrainForceCycle",
-    "PyFunc"
+    "PyFunc",
+    "BufferAppend",
+    "BufferGetItem",
+    "BufferSample",
 ]
 
 __all__.sort()
