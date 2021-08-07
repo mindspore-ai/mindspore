@@ -21,7 +21,7 @@
 #include "tools/converter/registry/pass_content.h"
 
 namespace mindspore {
-namespace opt {
+namespace lite {
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, std::vector<std::string> pass_names) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";
@@ -64,5 +64,5 @@ bool RunExternalPass(const FuncGraphPtr &func_graph, PassPosition position) {
   }
   return true;
 }
-}  // namespace opt
+}  // namespace lite
 }  // namespace mindspore

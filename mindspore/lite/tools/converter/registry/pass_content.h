@@ -23,10 +23,10 @@
 #include "include/registry/pass_registry.h"
 
 namespace mindspore {
-namespace opt {
-std::map<std::string, PassPtr> &MS_API PassStoreRoomInfo();
+namespace lite {
+std::map<std::string, opt::PassPtr> &MS_API PassStoreRoomInfo();
 std::map<PassPosition, std::vector<std::string>> &MS_API ExternalAssignedPassesInfo();
-}  // namespace opt
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_REGISTRY_PASS_CONTENT_H

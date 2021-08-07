@@ -208,15 +208,18 @@ class TestFusion : public Pass {
     return true;
   }
 };
-REG_PASS(TestFusion, TestFusion)
-REG_SCHEDULED_PASS(POSITION_BEGIN, {"TestFusion"})
 }  // namespace opt
 
+namespace lite {
+REG_PASS(TestFusion, opt::TestFusion)
+REG_SCHEDULED_PASS(POSITION_BEGIN, {"TestFusion"})
+}  // namespace lite
+
 TEST_F(PassRegistryTest, TestRegistry) {
-  auto &passes = opt::PassStoreRoomInfo();
-  auto &assigned_passes = opt::ExternalAssignedPassesInfo();
+  auto &passes = lite::PassStoreRoomInfo();
+  auto &assigned_passes = lite::ExternalAssignedPassesInfo();
   ASSERT_EQ(assigned_passes.size(), 1);
-  auto pass_names = assigned_passes[opt::POSITION_BEGIN];
+  auto pass_names = assigned_passes[lite::PassPosition::POSITION_BEGIN];
   ASSERT_EQ(pass_names.size(), 1);
   auto begin_pass = passes[pass_names.front()];
   ASSERT_NE(begin_pass, nullptr);
