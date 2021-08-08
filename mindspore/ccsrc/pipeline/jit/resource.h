@@ -79,6 +79,8 @@ class Resource : public ResourceBase {
     gpu_loopsink_flag_ = flag;
     gpu_loopsink_size_ = size;
   }
+  void set_is_load(bool flag) { is_load_ = flag; }
+  bool is_load() { return is_load_; }
   bool gpu_loopsink_flag() { return gpu_loopsink_flag_; }
   int64_t gpu_loopsink_size() { return gpu_loopsink_size_; }
   // Reclaim resource and clear the cache.
@@ -93,6 +95,8 @@ class Resource : public ResourceBase {
   py::object input_;
   bool is_cleaned_;
   bool gpu_loopsink_flag_{false};
+  // The func_graph_ is loaded from mindir
+  bool is_load_{false};
   int64_t gpu_loopsink_size_{1};
 };
 

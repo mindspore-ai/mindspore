@@ -121,6 +121,28 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 
+inline bool ResetCNodeFromLoad(const AnfNodePtr &node) {
+  if (node->isa<CNode>() && node->cast<CNodePtr>()->get_load_flag()) {
+    // Process partial("DeadNode",args) when the graph is loaded.
+    auto operatorPtr = node->cast<CNodePtr>()->input(0);
+    // Set abstract of switch(c,f,t) to null
+    auto prim = GetValueNode<PrimitivePtr>(operatorPtr);
+    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
+      node->set_abstract(nullptr);
+      return true;
+    }
+    // Set abstract of switch(c,f,t)() to null
+    prim = GetCNodePrimitive(operatorPtr);
+    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
+      node->set_abstract(nullptr);
+      return true;
+    }
+    // Previous inferred value
+    return true;
+  }
+  return false;
+}
+
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_spec, bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
@@ -133,10 +155,19 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraph
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
       const AbstractBasePtr &prev_inferred = node->abstract();
-      // Keep previous inferred value for CNode if is loaded from MindIR.
-      if (node->isa<CNode>() && node->cast<CNodePtr>()->get_load_flag()) {
+
+      // AbstractFunction has context,but contexts in cache have been cleaned.
+      if (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>()) {
+        node->set_abstract(nullptr);
+        MS_LOG(DEBUG) << "Abstract of node " << node->ToString() << " is set to nullptr";
         continue;
       }
+
+      // Handle previous inferred value for CNode if is loaded from MindIR
+      if (res->is_load() && ResetCNodeFromLoad(node)) {
+        continue;
+      }
+
       // Keep previous inferred value for ValueNode if the inferred value is not AbstractFunction.
       if (!node->isa<ValueNode>() || (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>())) {
         node->set_abstract(nullptr);
@@ -200,6 +231,7 @@ const FuncGraphPtr GetLoadedGraph(const ResourcePtr &res) {
     if (graph->has_attr("is_load")) {
       loaded_graph = graph;
       loaded_graph_num += 1;
+      res->set_is_load(true);
     }
   }
   if (loaded_graph_num == 0) {
@@ -218,6 +250,8 @@ void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &load
   FuncGraphPtr root_graph = *(manager->roots().begin());
   auto root_inputs = root_graph->get_inputs();
   auto loaded_inputs = loaded_graph->get_inputs();
+  MS_LOG(DEBUG) << "root_graph: " << root_graph->ToString();
+  MS_LOG(DEBUG) << "loaded_graph: " << loaded_graph->ToString();
 
   size_t root_inputs_num = root_inputs.size();
   size_t loaded_inputs_num = loaded_inputs.size();
@@ -229,10 +263,18 @@ void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &load
     auto root_input = root_inputs[index];
     auto loaded_input = loaded_inputs[index];
 
+    MS_LOG(DEBUG) << "root_input[" << index << "]: " << root_input->DebugString(1);
+    MS_LOG(DEBUG) << "loaded_input[" << index << "]: " << loaded_input->DebugString(1);
+    MS_LOG(DEBUG) << "root_input abstract[" << index
+                  << "]: " << (root_input->abstract() ? root_input->abstract()->ToString() : "NULL");
+    MS_LOG(DEBUG) << "loaded_input abstract [" << index
+                  << "]: " << (loaded_input->abstract() ? loaded_input->abstract()->ToString() : "NULL");
+
     auto root_shape = root_input->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(root_input->Shape());
     auto loaded_shape = loaded_input->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(loaded_input->Shape());
     auto root_type = root_input->Type() == nullptr ? nullptr : dyn_cast<Type>(root_input->Type());
     auto loaded_type = loaded_input->Type() == nullptr ? nullptr : dyn_cast<Type>(loaded_input->Type());
+
     MS_EXCEPTION_IF_NULL(root_shape);
     MS_EXCEPTION_IF_NULL(loaded_shape);
     MS_EXCEPTION_IF_NULL(root_type);
@@ -454,6 +496,7 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   }
   // Analyze
   AnalysisResult result = AbstractAnalyze(res, func_graph, args_spec);
+
   // The top graph may be replaced by infer, update the top graph when the infer is done
   parse::Parser::UpdateTopFuncGraph(result.context->func_graph());
 
