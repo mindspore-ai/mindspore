@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 if [ $# != 4 ]
 then
-    echo "Usage: sh run_eval.sh [se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH] [0|1|2|3|4|5|6|7] "
+    echo "Usage: sh run_eval.sh [DEVICE_ID] [VAL_PATH] [VAL_GT_PATH] [CKPT_PATH] "
 exit 1
 fi
 
 ulimit -u unlimited
-export DEVICE_ID=0
 export RANK_SIZE=1
-export RUN_OFFLINE=$1
+export DEVICE_ID=$1
 export VAL_PATH=$2
 export VAL_GT_PATH=$3
 export CKPT_PATH=$4
@@ -40,6 +39,6 @@ cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation for device $DEVICE_ID"
-python eval.py --run_offline=$RUN_OFFLINE --val_path=$VAL_PATH \
-               --val_gt_path=$VAL_GT_PATH --ckpt_path=$CKPT_PATH &> log &
+python -u eval.py --device_id=$DEVICE_ID --val_path=$VAL_PATH \
+                  --val_gt_path=$VAL_GT_PATH --ckpt_path=$CKPT_PATH &> log &
 cd ..

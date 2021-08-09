@@ -36,9 +36,10 @@ from src.Mcnn_Callback import mcnn_callback
 
 parser = argparse.ArgumentParser(description='MindSpore MCNN Example')
 parser.add_argument('--run_offline', type=ast.literal_eval,
-                    default=False, help='run in offline is False or True')
-parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
+                    default=True, help='run in offline is False or True')
+parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend'],
                     help='device where the code will be implemented (default: Ascend)')
+parser.add_argument('--device_id', type=int, default=0, help='device id of Ascend. (Default: 0)')
 parser.add_argument('--ckpt_path', type=str, default="/cache/train_output", help='Location of ckpt.')
 
 parser.add_argument('--data_url', default=None, help='Location of data.')
@@ -47,10 +48,10 @@ parser.add_argument('--train_url', default=None, help='Location of training outp
 parser.add_argument('--train_path', required=True, default=None, help='Location of data.')
 parser.add_argument('--train_gt_path', required=True, default=None, help='Location of data.')
 parser.add_argument('--val_path', required=True,
-                    default='/lhb1234/mcnn/data/formatted_trainval/shanghaitech_part_A_patches_9/val',
+                    default='/data/formatted_trainval/shanghaitech_part_A_patches_9/val',
                     help='Location of data.')
 parser.add_argument('--val_gt_path', required=True,
-                    default='/lhb1234/mcnn/data/formatted_trainval/shanghaitech_part_A_patches_9/val_den',
+                    default='/data/formatted_trainval/shanghaitech_part_A_patches_9/val_den',
                     help='Location of data.')
 args = parser.parse_args()
 rand_seed = 64678
@@ -58,26 +59,20 @@ np.random.seed(rand_seed)
 
 if __name__ == "__main__":
     device_num = int(os.getenv("RANK_SIZE"))
-    device_id = int(os.getenv("DEVICE_ID"))
 
-    print("device_id:", device_id)
     print("device_num:", device_num)
     device_target = args.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     context.set_context(save_graphs=False)
 
     if device_target == "Ascend":
-        context.set_context(device_id=device_id)
+        context.set_context(device_id=args.device_id)
 
         if device_num > 1:
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             init()
-            # local_data1_url=os.path.join(local_data1_url,str(device_id)) # 可以删除
-            # local_data2_url=os.path.join(local_data2_url,str(device_id))
-            # local_data3_url=os.path.join(local_data3_url,str(device_id))
-            # local_data4_url=os.path.join(local_data4_url,str(device_id))
     else:
         raise ValueError("Unsupported platform.")
     if args.run_offline:
