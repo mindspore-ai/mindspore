@@ -16,7 +16,9 @@
 
 #ifndef DEEPLABV3PLUS_H
 #define DEEPLABV3PLUS_H
-
+#include <vector>
+#include <string>
+#include <memory>
 #include <opencv2/opencv.hpp>
 
 #include "MxBase/DvppWrapper/DvppWrapper.h"
