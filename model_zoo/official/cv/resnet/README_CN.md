@@ -188,18 +188,19 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
 .
 └──resnet
   ├── README.md
-  ├── config
-    ├── resnet18_cifar10_config.yaml         # 参数配置
-    ├── resnet18_cifar10_config_gpu.yaml         # 参数配置
-    ├── resnet18_imagenet2012_config.yaml    # 参数配置
-    ├── resnet18_imagenet2012_config_gpu.yaml # 参数配置
-    ├── resnet34_imagenet2012_config.yaml    # 参数配置
-    ├── resnet50_cifar10_config.yaml         # 参数配置
-    ├── resnet50_imagenet2012_Ascend_config.yaml # 参数配置
-    ├── resnet50_imagenet2012_config.yaml    # 参数配置
-    ├── resnet50_imagenet2012_GPU_config.yaml # 参数配置
-    ├── resnet101_imagenet2012_config.yaml   # 参数配置
-    ├── se-resnet50_imagenet2012_config.yaml # 参数配置
+  ├── config                              # 参数配置
+    ├── resnet18_cifar10_config.yaml
+    ├── resnet18_cifar10_config_gpu.yaml
+    ├── resnet18_imagenet2012_config.yaml
+    ├── resnet18_imagenet2012_config_gpu.yaml
+    ├── resnet34_imagenet2012_config.yaml
+    ├── resnet50_cifar10_config.yaml
+    ├── resnet50_imagenet2012_Acc_config.yaml     # 高性能版本：性能提高超过10%而精度下降少于1%
+    ├── resnet50_imagenet2012_Ascend_Thor_config.yaml
+    ├── resnet50_imagenet2012_config.yaml
+    ├── resnet50_imagenet2012_GPU_Thor_config.yaml
+    ├── resnet101_imagenet2012_config.yaml
+    ├── se-resnet50_imagenet2012_config.yaml
   ├── scripts
     ├── run_distribute_train.sh            # 启动Ascend分布式训练（8卡）
     ├── run_parameter_server_train.sh      # 启动Ascend参数服务器训练(8卡)
