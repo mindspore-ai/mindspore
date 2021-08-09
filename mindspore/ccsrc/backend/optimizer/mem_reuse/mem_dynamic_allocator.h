@@ -65,10 +65,13 @@ class DynamicMemBlock {
   ~DynamicMemBlock() { block_all_mem_buf_map_.clear(); }
   const DeviceMemPtr &device_addr() const { return device_addr_base_; }
   size_t size() const { return mem_block_size_; }
+
+ private:
+  friend class DynamicMemPoolBestFit;
+
   // The map of all memory buf in this memory block by device address.
   DeviceAddrMapMemBuf block_all_mem_buf_map_;
 
- private:
   DeviceMemPtr device_addr_base_{nullptr};
   size_t mem_block_size_{0};
 };
