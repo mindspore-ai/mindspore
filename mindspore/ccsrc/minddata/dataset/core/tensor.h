@@ -68,7 +68,7 @@ class Tensor {
   Tensor(const Tensor &other) = delete;
   Tensor &operator=(const Tensor &other) = delete;
 
-  /// Create a tensor using shape and type. This constructor should not be used directly, use CreateFromTensor instead
+  /// Create a tensor using shape and type. This constructor should not be used directly, use CreateFromTensor instead.
   /// \note The shape and type information should be known and valid
   /// \note The constructor does not allocate data
   /// \param shape TensorShape

@@ -118,7 +118,7 @@ bool AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
   return true;
 }
 
-Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadImageTensor(const std::string &image_file_path, int32_t col_num, TensorRow *row) {
   TensorPtr image;
   std::ifstream fs;
   fs.open(image_file_path, std::ios::binary | std::ios::in);
@@ -168,7 +168,7 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
   return Status::OK();
 }
 
-Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
   std::vector<std::string> data = json_obj;
 
   MS_LOG(INFO) << "String array label found: " << data << ".";
@@ -178,7 +178,7 @@ Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t c
   return Status::OK();
 }
 
-Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
   std::string data = json_obj;
   // now we iterate over the elements in json
 
@@ -189,7 +189,7 @@ Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_nu
   return Status::OK();
 }
 
-Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
   TensorPtr label;
   // consider templating this function to handle all ints
   if (data_schema_->column(col_num).type() == DataType::DE_INT64) {
@@ -218,7 +218,7 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_
   return Status::OK();
 }
 
-Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
   TensorPtr float_array;
   // consider templating this function to handle all ints
   if (data_schema_->column(col_num).type() == DataType::DE_FLOAT64) {
@@ -247,7 +247,7 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t co
   return Status::OK();
 }
 
-Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadIDTensor(const std::string &file, int32_t col_num, TensorRow *row) {
   if (data_schema_->column(col_num).type() == DataType::DE_STRING) {
     TensorPtr id;
     RETURN_IF_NOT_OK(Tensor::CreateScalar<std::string>(file, &id));
@@ -263,7 +263,7 @@ Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorRo
   return Status::OK();
 }
 
-Status AlbumOp::LoadEmptyTensor(uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadEmptyTensor(int32_t col_num, TensorRow *row) {
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
   TensorPtr empty_tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({0}), data_schema_->column(col_num).type(), &empty_tensor));
@@ -275,7 +275,7 @@ Status AlbumOp::LoadEmptyTensor(uint32_t col_num, TensorRow *row) {
 // So we actually have to check what type we want to fill the tensor with.
 // Float64 doesn't work with reinterpret cast here. Otherwise we limit the float in the schema to
 // only be float32, seems like a weird limitation to impose
-Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
   TensorPtr float_tensor;
   if (data_schema_->column(col_num).type() == DataType::DE_FLOAT64) {
     double data = json_obj;
@@ -291,7 +291,7 @@ Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num
 }
 
 // Loads a tensor with int value, we have to cast the value to type specified in the schema.
-Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row) {
+Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, int32_t col_num, TensorRow *row) {
   TensorPtr int_tensor;
   if (data_schema_->column(col_num).type() == DataType::DE_INT64) {
     int64_t data = json_obj;

@@ -192,7 +192,7 @@ Status RepeatPass::VisitAfter(std::shared_ptr<TransferNode> node, bool *const mo
 }
 
 // Adds an operator to the cached operator stack save area
-void RepeatPass::AddToCachedNodeStack(std::shared_ptr<DatasetNode> node) { cached_node_stacks_.push(node); }
+void RepeatPass::AddToCachedNodeStack(const std::shared_ptr<DatasetNode> &node) { cached_node_stacks_.push(node); }
 
 // Pops an operator from the cached operator stack save area
 std::shared_ptr<DatasetNode> RepeatPass::PopFromCachedNodeStack() {

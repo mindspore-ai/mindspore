@@ -61,9 +61,15 @@ Status ResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
     outputW = size2_;
   }
   TensorShape out = TensorShape{outputH, outputW};
-  if (inputs[0].Rank() == 2) outputs.emplace_back(out);
-  if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
-  if (!outputs.empty()) return Status::OK();
+  if (inputs[0].Rank() == 2) {
+    (void)outputs.emplace_back(out);
+  }
+  if (inputs[0].Rank() == 3) {
+    (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
+  }
+  if (!outputs.empty()) {
+    return Status::OK();
+  }
   return Status(StatusCode::kMDUnexpectedError, "Resize: invalid input wrong shape.");
 }
 }  // namespace dataset
