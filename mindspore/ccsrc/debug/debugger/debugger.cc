@@ -582,17 +582,17 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
 }
 
 void Debugger::SendHeartbeat(int32_t period) {
-  bool heartbeat_enabled_ = true;
+  bool heartbeat_enabled = true;
   int num_heartbeat_fail = 0;
   const int max_num_heartbeat_fail = 5;
-  const int retry_period = 500;
+  const int retry_milliseconds = 500;
 
   Heartbeat heartbeat;
   heartbeat.set_message("Debugger is alive");
   heartbeat.set_period(heartbeat_period_second);
 
-  bool run_ = CheckDebuggerEnabled() && heartbeat_enabled_;
-  while (run_) {
+  bool run = CheckDebuggerEnabled() && heartbeat_enabled;
+  while (run) {
     EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
 
     if (reply.status() != reply.OK) {
@@ -601,10 +601,10 @@ void Debugger::SendHeartbeat(int32_t period) {
       if (num_heartbeat_fail >= max_num_heartbeat_fail) {
         MS_LOG(ERROR) << "Maximum number of failure for SendHeartbeat reached : exiting training session.";
         Exit();
-        run_ = false;
+        run = false;
       } else {
         MS_LOG(ERROR) << "Number of consecutive SendHeartbeat fail:" << num_heartbeat_fail;
-        std::this_thread::sleep_for(std::chrono::milliseconds(retry_period));
+        std::this_thread::sleep_for(std::chrono::milliseconds(retry_milliseconds));
       }
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(period * 1000));

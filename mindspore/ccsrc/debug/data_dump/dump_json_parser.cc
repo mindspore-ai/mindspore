@@ -139,6 +139,9 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
       const std::string file_path = realpath.value();
       ChangeFileMode(file_path, S_IWUSR);
       std::ofstream json_copy(file_path);
+      if (!json_copy.is_open()) {
+        MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
+      }
       json_copy << json_file.rdbuf();
       json_copy.close();
       ChangeFileMode(file_path, S_IRUSR);
@@ -166,6 +169,9 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t rank_id) {
     const std::string file_path = realpath.value();
     ChangeFileMode(file_path, S_IWUSR);
     std::ofstream json_copy(file_path);
+    if (!json_copy.is_open()) {
+      MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
+    }
     json_copy << json_file.rdbuf();
     json_copy.close();
     ChangeFileMode(file_path, S_IRUSR);
@@ -188,6 +194,9 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
     const std::string file_path = realpath.value();
     ChangeFileMode(file_path, S_IWUSR);
     std::ofstream json_create(file_path);
+    if (!json_create.is_open()) {
+      MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
+    }
     json_create << ms_info;
     json_create.close();
     ChangeFileMode(file_path, S_IRUSR);
