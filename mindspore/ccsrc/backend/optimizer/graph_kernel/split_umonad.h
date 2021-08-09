@@ -30,12 +30,12 @@ class SplitAssign : public PatternProcessPass {
 
 class OpUMonadExpander : public DefaultExpander {
  public:
-  explicit OpUMonadExpander(int input_idx) : input_idx_(input_idx) {}
+  explicit OpUMonadExpander(size_t input_idx) : input_idx_(input_idx) {}
   ~OpUMonadExpander() = default;
   AnfNodePtr Run(const AnfNodePtr &node) override;
 
  private:
-  int input_idx_;
+  size_t input_idx_;
 };
 }  // namespace opt
 }  // namespace mindspore
