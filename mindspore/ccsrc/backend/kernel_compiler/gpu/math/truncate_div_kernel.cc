@@ -45,3 +45,4 @@ MS_REG_GPU_KERNEL_ONE(
 }  // namespace kernel
 }  // namespace mindspore
 
+
