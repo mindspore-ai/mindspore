@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     ms_info["device_target"] = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    ms_info["ms_version"] = "1.3.0";
+    ms_info["ms_version"] = "1.4.0";
     const std::string file_path = realpath.value();
     ChangeFileMode(file_path, S_IWUSR);
     std::ofstream json_create(file_path);
