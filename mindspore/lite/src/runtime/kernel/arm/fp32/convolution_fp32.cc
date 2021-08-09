@@ -62,7 +62,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
 int ConvolutionCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -110,7 +110,7 @@ int ConvolutionCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

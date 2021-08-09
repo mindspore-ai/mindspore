@@ -179,7 +179,7 @@ int DeConvolutionFp16CPUKernel::Init() {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  int ret = InitConvWeightBias(kNumberTypeFloat16);
+  int ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "deconv InitConvWeightBias error!";
     return ret;
@@ -191,7 +191,7 @@ int DeConvolutionFp16CPUKernel::Init() {
 }
 
 int DeConvolutionFp16CPUKernel::Run() {
-  if (RepackWeight(kNumberTypeFloat16) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

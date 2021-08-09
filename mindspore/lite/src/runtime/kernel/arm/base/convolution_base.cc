@@ -117,7 +117,7 @@ int ConvolutionBaseCPUKernel::Init() {
   return RET_OK;
 }
 
-int ConvolutionBaseCPUKernel::InitConvWeightBias(TypeId data_type) {
+int ConvolutionBaseCPUKernel::InitConvWeightBias() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto shape = weight_tensor->shape();
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
@@ -130,9 +130,7 @@ int ConvolutionBaseCPUKernel::InitConvWeightBias(TypeId data_type) {
   }
 
   if (in_tensors_.size() == kInputSize2) {
-    auto type_size = sizeof(float);
-    type_size = data_type == kNumberTypeFloat16 ? (type_size / 2) : type_size;
-    memcpy(bias_data_, origin_bias_, in_tensors_.at(kBiasIndex)->ElementsNum() * type_size);
+    memcpy(bias_data_, origin_bias_, in_tensors_.at(kBiasIndex)->Size());
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
@@ -145,9 +143,9 @@ int ConvolutionBaseCPUKernel::InitConvWeightBias(TypeId data_type) {
   return lite::RET_OK;
 }
 
-int ConvolutionBaseCPUKernel::RepackWeight(TypeId data_type) {
+int ConvolutionBaseCPUKernel::RepackWeight() {
   origin_weight_ = origin_weight_ != nullptr ? origin_weight_ : in_tensors_.at(kWeightIndex)->data_c();
-  if (packed_weight_ == nullptr && InitConvWeightBias(data_type) != RET_OK) {
+  if (packed_weight_ == nullptr && InitConvWeightBias() != RET_OK) {
     MS_LOG(ERROR) << "Malloc data for bias and weight failed.";
     return lite::RET_ERROR;
   }

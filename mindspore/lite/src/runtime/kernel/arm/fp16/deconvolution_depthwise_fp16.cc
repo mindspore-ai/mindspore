@@ -103,7 +103,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Init() {
     return RET_ERROR;
   }
 
-  auto ret = InitConvWeightBias(kNumberTypeFloat16);
+  auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitConvWeightBias failed.";
     return RET_ERROR;
@@ -154,7 +154,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     FreePackedInputOutput();
     return RET_ERROR;
   }
-  if (RepackWeight(kNumberTypeFloat16) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

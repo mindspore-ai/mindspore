@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 int ConvolutionDepthwiseCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = InitConvWeightBias(kNumberTypeFloat);
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitConvWeightBias failed.";
     return RET_ERROR;
@@ -67,7 +67,7 @@ int ConvDwRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

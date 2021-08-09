@@ -59,7 +59,7 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::MallocWeightBiasData() {
 }
 
 int ConvolutionDepthwise3x3Fp16CPUKernel::Init() {
-  auto ret = InitConvWeightBias(kNumberTypeFloat16);
+  auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise 3x3 fp16 InitConvWeightBias failed.";
     return RET_ERROR;
@@ -99,7 +99,7 @@ int ConvDw3x3Fp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 }
 
 int ConvolutionDepthwise3x3Fp16CPUKernel::Run() {
-  if (RepackWeight(kNumberTypeFloat16) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

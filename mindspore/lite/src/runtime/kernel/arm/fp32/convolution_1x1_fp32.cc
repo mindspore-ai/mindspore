@@ -117,7 +117,7 @@ int Convolution1x1CPUKernel::Init() {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  int error_code = InitConvWeightBias(kNumberTypeFloat);
+  int error_code = InitConvWeightBias();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution1x1 init weight and bias failed.";
     return error_code;
@@ -205,7 +205,7 @@ int Convolution1x1CPUKernel::Run() {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;
   }
-  if (RepackWeight(kNumberTypeFloat) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }

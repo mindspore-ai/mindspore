@@ -97,7 +97,7 @@ int ConvolutionFP16CPUKernel::Init() {
   row_tile_ = C12NUM;
 #endif
   col_tile_ = C8NUM;
-  auto ret = InitConvWeightBias(kNumberTypeFloat16);
+  auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
@@ -157,7 +157,7 @@ int ConvolutionFP16CPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (RepackWeight(kNumberTypeFloat16) != RET_OK) {
+  if (RepackWeight() != RET_OK) {
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }
