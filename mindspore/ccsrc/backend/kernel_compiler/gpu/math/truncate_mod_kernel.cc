@@ -44,3 +44,4 @@ MS_REG_GPU_KERNEL_ONE(
   TruncateModOpGpuKernel, uint8_t)
 }  // namespace kernel
 }  // namespace mindspore
+

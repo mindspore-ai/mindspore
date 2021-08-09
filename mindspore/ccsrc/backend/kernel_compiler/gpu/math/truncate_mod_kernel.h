@@ -150,3 +150,4 @@ class TruncateModOpGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_TRUNCATE_MOD_KERNEL_H
+
