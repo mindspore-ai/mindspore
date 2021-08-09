@@ -106,7 +106,8 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
 
     Tensor *new_tensor = new Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
     new_tensor->set_allocator(old_tensor->allocator());
-    if (new_tensor->allocator() == nullptr && kernel_->Context() != nullptr) {
+    if (new_tensor->allocator() == nullptr && kernel_->Context() != nullptr &&
+        kernel_->desc().arch != kernel::kDelegate) {
       new_tensor->set_allocator(kernel_->Context()->allocator);
     }
 
