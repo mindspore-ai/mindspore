@@ -17,6 +17,9 @@
 #include "DeeplabV3plus.h"
 #include <algorithm>
 #include <vector>
+#include <map>
+#include <memory>
+#include <string>
 #include "MxBase/DeviceManager/DeviceManager.h"
 #include "MxBase/Log/Log.h"
 
