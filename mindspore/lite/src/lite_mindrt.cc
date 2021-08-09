@@ -93,6 +93,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
           old_tensorlist->set_tensors_data_type(kernel_->desc().data_type);
         }
       }
+      old_tensor->set_allocator(kernel_->Context()->allocator);
       continue;
     }
 
