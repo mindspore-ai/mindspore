@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "runtime/device/gpu/gpu_common.h"
