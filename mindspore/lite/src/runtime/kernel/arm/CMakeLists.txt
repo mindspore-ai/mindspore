@@ -14,6 +14,15 @@ if(MSLITE_STRING_KERNEL)
         ${KERNEL_STRING_SRC}
         )
 endif()
+if(MSLITE_CONTROL_TENSORLIST)
+    file(GLOB KERNEL_CONTROL_TENSORLIST
+            ${CMAKE_CURRENT_SOURCE_DIR}/control/*.cc
+            )
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${KERNEL_CONTROL_TENSORLIST}
+            )
+endif()
 list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
 
 if(SUPPORT_TRAIN)

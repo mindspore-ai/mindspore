@@ -45,7 +45,15 @@ if(MSLITE_STRING_KERNEL)
             ${KERNEL_SRC_INFER_STRING}
             )
 endif()
-
+if(MSLITE_CONTROL_TENSORLIST)
+    file(GLOB KERNEL_SRC_INFER_CONTROL_TENSORLIST
+            ${NNACL_DIR}/infer/control/*.c
+            )
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${KERNEL_SRC_INFER_CONTROL_TENSORLIST}
+            )
+endif()
 if(PLATFORM_ARM64)
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)

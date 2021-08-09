@@ -235,6 +235,7 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first,
   return RET_OK;
 }
 
+#ifdef ENABLE_HUFFMAN_DECODE
 int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
   if (!dst_tensor->IsConst() || !src_tensor.enableHuffmanCode()) {
@@ -264,6 +265,7 @@ int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Ten
   }
   return RET_OK;
 }
+#endif
 
 int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
