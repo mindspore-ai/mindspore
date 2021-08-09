@@ -1,0 +1,180 @@
+create_algo:
+  name: yolov4_tiny
+  description: "基于mindspore框架的Ascend910训练"
+  config:
+    training:
+      image:
+        engine_name: Ascend-Powered-Engine
+        engine_version: Mindspore-1.1.1-python3.7-aarch64
+      code:
+        relative_boot_file: train_start.py
+      inputs:
+        - name: 数据来源
+          parameter:
+            label: data_url
+            value: data_url/
+          dataset_enable: false
+          annotations:
+            - key: data_source
+              value:
+                  - obs
+                  - modelarts_dataset
+            - key: dataset_type
+              value:
+                - '0'
+            - key: data_format
+              value:
+                - Default
+            - key: data_segmentation
+              value:
+                - ''
+            - key: isconstrictinput
+            - key: constrictInputTempShow
+            - key: isSelectDatasetAndObs
+      outputs:
+        - name: 模型输出
+          description: ''
+          parameter:
+            label: train_url
+            value: train_url/
+          artifact:
+            - type: ''
+          modelarts_hosted: false
+      flavor:
+        flavor_codes: []
+        annotations:
+          - key: flavor_type
+            value:
+              - Ascend
+          - key: is_multi_devices_supported
+            value:
+              - 'true'
+          - key: flavor_codes
+            value: []
+          - key: isMultiDevHide
+      parameters:
+        regular:
+          - key: "per_batch_size"
+            help: null
+            type: Integer
+            default_value: "8"
+            editable: true
+            required: false
+          - key: "training_shape"
+            help: null
+            type: Integer
+            default_value: "416"
+            editable: true
+            required: false
+          - key: "lr"
+            help: null
+            type: Continuous
+            default_value: "0.5"
+            editable: true
+            required: false
+          - key: "t_max"
+            help: null
+            type: Integer
+            default_value: "320"
+            editable: true
+            required: false
+          - key: "max_epoch"
+            help: null
+            type: Integer
+            default_value: "320"
+            editable: true
+            required: false
+          - key: "warmup_epochs"
+            help: null
+            type: Integer
+            default_value: "20"
+            editable: true
+            required: false
+          - key: "num_classes"
+            help: null
+            type: Integer
+            default_value: "21"
+            editable: true
+            required: false
+          - key: "lr_scheduler"
+            help: null
+            type: String
+            default_value: "cosine_annealing"
+            editable: true
+            required: false
+          - key: "is_distributed"
+            help: null
+            type: Integer
+            default_value: "0"
+            editable: true
+            required: false
+          - key: "False"
+            help: null
+            default_value: ""
+            editable: true
+            required: false
+
+publish_algo:
+  item_name: 目标检测-YoloV4Tiny-Ascend_ModelZoo
+  short_desc: 基于MindSpore框架的Ascend 910训练
+  add_version_desc:
+
+create_train_job:
+  task_type: object_detection
+  job_desc: null
+  config:
+    flavor:
+      code: modelarts.kat1.xlarge
+    log_url: null
+    parameter:
+      - label: "batch_size"
+        value: "32"
+        editable: true
+        required: false
+      - label: "training_shape"
+        value: "512"
+        editable: true
+        required: false
+      - label: "num_classes"
+        value: "21"
+        editable: true
+        required: false
+      - label: "max_epoch"
+        value: "320"
+        editable: true
+        required: false
+      - label: "lr_scheduler"
+        value: "cosine_annealing"
+        editable: true
+        required: false
+      - label: "lr"
+        value: "0.012"
+        editable: true
+        required: false
+      - label: "pretrained_checkpoint"
+        value: ""
+        editable: true
+        required: false
+      - label: "filter_weight"
+        value: "False"
+        editable: true
+        required: false
+    inputs:
+      - data_source:
+          obs:
+            obs_url: null
+    outputs:
+      - value: null
+
+create_model:
+  model_type: MindSpore
+  description: null
+
+create_service:
+  schedule:
+    - duration: 1
+      time_units: HOURS
+      type: stop
+  description: null
+  config:
+    - specification: modelarts.kat1.xlarge
