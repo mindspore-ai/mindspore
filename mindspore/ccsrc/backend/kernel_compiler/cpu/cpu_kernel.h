@@ -62,6 +62,8 @@ const char DELTA[] = "delta";
 const char SORTED[] = "sorted";
 const char ADJ_ST[] = "adjoint_st";
 const char ADJ_dT[] = "adjoint_dt";
+const char PERIODS[] = "periods";
+const char FILL_VALUE[] = "fill_value";
 
 enum OperateType {
   ADD = 0,
