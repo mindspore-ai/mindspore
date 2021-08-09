@@ -36,7 +36,7 @@ class CropInt8CPUKernel : public CropBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int DoExecute(int task_id);
+  void DoExecute(int task_id);
 };
 
 int CropInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);

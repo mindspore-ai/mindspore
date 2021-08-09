@@ -165,7 +165,7 @@ int Conv2DINT8Coder::InitWeightBias(CoderContext *const context) {
 }
 
 int Conv2DINT8Coder::Prepare(CoderContext *const context) {
-  Conv2DBaseCoder::Init();
+  MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2d base init failed.");
   CheckSupportOptimize();
   MS_CHECK_RET_CODE(SetQuantParam(), "Set quant param failed!");
   MS_CHECK_RET_CODE(InitWeightBias(context), "Init weight bias failed.");
