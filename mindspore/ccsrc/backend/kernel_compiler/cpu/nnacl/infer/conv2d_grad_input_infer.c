@@ -40,7 +40,7 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (inputs[2]->shape_size_ < 1 || inputs[2]->data_ == NULL) {
     return NNACL_ERR;
   }
-  size_t data_size = inputs[2]->shape_[0];
+  size_t data_size = (size_t)inputs[2]->shape_[0];
   if (data_size != 4) {
     return NNACL_ERR;
   }

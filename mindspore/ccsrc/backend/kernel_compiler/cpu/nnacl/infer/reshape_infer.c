@@ -190,6 +190,9 @@ int ReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
       return NNACL_INFER_INVALID;
     }
     int shape_size = GetElementNum(shape_tensor);
+    if (shape_size > MAX_SHAPE_SIZE) {
+      return NNACL_ERR;
+    }
     int calRet = CalShapeByType(inputs, shape_size, out_shape, &out_shape_size);
     if (calRet != NNACL_OK) {
       return calRet;
