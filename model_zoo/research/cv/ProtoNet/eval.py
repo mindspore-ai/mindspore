@@ -15,14 +15,13 @@
 """
 ProtoNet evaluation script.
 """
-import os
+import numpy as np
 from mindspore import dataset as ds
 from mindspore import load_checkpoint
 import mindspore.context as context
 from src.protonet import ProtoNet
 from src.parser_util import get_parser
 from src.PrototypicalLoss import PrototypicalLoss
-import numpy as np
 from model_init import init_dataloader
 from train import WithLossCell
 
@@ -67,5 +66,5 @@ if __name__ == '__main__':
                                options.classes_per_it_val, is_train=False)
     Net = WithLossCell(Net, loss_fn)
     val_dataloader = init_dataloader(options, 'val', datapath)
-    load_checkpoint(os.path.join(ckptpath, 'best_ck.ckpt'), net=Net)
+    load_checkpoint(ckptpath, net=Net)
     test(val_dataloader, Net)
