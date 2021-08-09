@@ -1278,8 +1278,8 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
 }
 
 void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompilerInfo &graph_compiler_info,
-                                   const KernelGraphPtr &graph, KernelWithIndex from_kernel_with_output_idx,
-                                   KernelWithIndex to_kernel_with_input_idx) {
+                                   const KernelGraphPtr &graph, const KernelWithIndex &from_kernel_with_output_idx,
+                                   const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph);
 
