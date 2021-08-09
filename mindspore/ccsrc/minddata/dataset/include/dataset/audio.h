@@ -186,6 +186,30 @@ class BassBiquad final : public TensorTransform {
   struct Data;
   std::shared_ptr<Data> data_;
 };
+
+/// \brief TimeStretch TensorTransform
+/// \notes Stretch STFT in time at a given rate, without changing the pitch.
+class TimeStretch final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] hop_length Length of hop between STFT windows. Default: None.
+  /// \param[in] n_freq Number of filter banks form STFT. Default: 201.
+  /// \param[in] fixed_rate Rate to speed up or slow down the input in time. Default: None.
+  explicit TimeStretch(float hop_length = std::numeric_limits<float>::quiet_NaN(), int n_freq = 201,
+                       float fixed_rate = std::numeric_limits<float>::quiet_NaN());
+
+  /// \brief Destructor.
+  ~TimeStretch() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

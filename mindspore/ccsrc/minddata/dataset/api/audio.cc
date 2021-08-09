@@ -23,6 +23,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
 namespace mindspore {
 namespace dataset {
@@ -132,6 +133,23 @@ BassBiquad::BassBiquad(int32_t sample_rate, float gain, float central_freq, floa
 std::shared_ptr<TensorOperation> BassBiquad::Parse() {
   return std::make_shared<BassBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
 }
+
+// TimeStretch Operation.
+struct TimeStretch::Data {
+  explicit Data(float hop_length, int n_freq, float fixed_rate)
+      : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}
+  float hop_length_;
+  int n_freq_;
+  float fixed_rate_;
+};
+
+TimeStretch::TimeStretch(float hop_length, int n_freq, float fixed_rate)
+    : data_(std::make_shared<Data>(hop_length, n_freq, fixed_rate)) {}
+
+std::shared_ptr<TensorOperation> TimeStretch::Parse() {
+  return std::make_shared<TimeStretchOperation>(data_->hop_length_, data_->n_freq_, data_->fixed_rate_);
+}
+
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

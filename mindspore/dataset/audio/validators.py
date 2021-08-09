@@ -16,8 +16,8 @@
 Validators for TensorOps.
 """
 from functools import wraps
-from mindspore.dataset.core.validator_helpers import check_not_zero, check_int32, check_float32, \
-    check_value_normalize_std, check_value_ratio, FLOAT_MAX_INTEGER, parse_user_args, type_check
+from mindspore.dataset.core.validator_helpers import check_not_zero, check_int32, check_float32, check_value, \
+    check_value_normalize_std, check_value_ratio, FLOAT_MAX_INTEGER, INT64_MAX, parse_user_args, type_check
 from .utils import ScaleType
 
 
@@ -161,6 +161,28 @@ def check_bass_biquad(method):
         check_biquad_gain(gain)
         check_biquad_central_freq(central_freq)
         check_biquad_Q(Q)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_time_stretch(method):
+    """Wrapper method to check the parameters of time_stretch."""
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [hop_length, n_freq, fixed_rate], _ = parse_user_args(method, *args, **kwargs)
+        # type check
+        type_check(hop_length, (int, type(None)), "hop_length")
+        type_check(n_freq, (int,), "n_freq")
+        type_check(fixed_rate, (int, float, type(None)), "fixed_rate")
+
+        # value check
+        if hop_length is not None:
+            check_value(hop_length, (1, INT64_MAX), "hop_length")
+        check_value(n_freq, (1, INT64_MAX), "n_freq")
+        if fixed_rate is not None:
+            check_value_ratio(fixed_rate, (0, FLOAT_MAX_INTEGER), "fixed_rate")
+
         return method(self, *args, **kwargs)
 
     return new_method

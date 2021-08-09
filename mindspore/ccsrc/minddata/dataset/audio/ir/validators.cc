@@ -23,8 +23,22 @@ Status CheckFloatScalarPositive(const std::string &op_name, const std::string &s
   return Status::OK();
 }
 
+Status CheckFloatScalarNotNan(const std::string &op_name, const std::string &scalar_name, float scalar) {
+  if (std::isnan(scalar)) {
+    std::string err_msg = op_name + ":" + scalar_name + " should be specified, got: Nan.";
+    MS_LOG(ERROR) << err_msg;
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+  }
+  return Status::OK();
+}
+
 Status CheckFloatScalarNonNegative(const std::string &op_name, const std::string &scalar_name, float scalar) {
   RETURN_IF_NOT_OK(CheckScalar(op_name, scalar_name, scalar, {0}, false));
+  return Status::OK();
+}
+
+Status CheckIntScalarPositive(const std::string &op_name, const std::string &scalar_name, int32_t scalar) {
+  RETURN_IF_NOT_OK(CheckScalar(op_name, scalar_name, scalar, {0}, true));
   return Status::OK();
 }
 
@@ -78,5 +92,7 @@ Status CheckScalar(const std::string &op_name, const std::string &scalar_name, c
 template Status CheckScalar(const std::string &op_name, const std::string &scalar_name, const float scalar,
                             const std::vector<float> &range, bool left_open_interval, bool right_open_interval);
 
+template Status CheckScalar(const std::string &op_name, const std::string &scalar_name, const int32_t scalar,
+                            const std::vector<int32_t> &range, bool left_open_interval, bool right_open_interval);
 }  // namespace dataset
 }  // namespace mindspore
