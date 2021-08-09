@@ -83,7 +83,7 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 }
 
 // Get the shard id of node
-Status AlbumNode::GetShardId(int32_t *shard_id) {
+Status AlbumNode::GetShardId(int32_t *const shard_id) {
   *shard_id = sampler_->ShardId();
 
   return Status::OK();
