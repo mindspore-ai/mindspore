@@ -235,10 +235,10 @@ APP_ERROR DeeplabV3plus::SaveResultToImage(const MxBase::SemanticSegInfo &segInf
             imageMat.at<uchar>(x, y) = gray;
         }
     }
-    
+
     cv::Mat imageGrayC3 = cv::Mat::zeros(imageMat.rows, imageMat.cols, CV_8UC3);
     std::vector<cv::Mat> planes;
-    for (int i=0; i<3; i++) {
+    for (int i = 0; i < 3; i++) {
         planes.push_back(imageMat);
     }
     cv::merge(planes, imageGrayC3);
@@ -266,11 +266,11 @@ APP_ERROR DeeplabV3plus::SaveResultToImage(const MxBase::SemanticSegInfo &segInf
         0, 64, 128,
     };
     cv::Mat lut(1, 256, CV_8UC3, rgbColorMap);
-    
+
     cv::Mat imageColor;
     cv::LUT(imageGrayC3, lut, imageColor);
     cv::cvtColor(imageColor, imageColor, cv::COLOR_RGB2BGR);
-    cv::imwrite(filePath, imageColor);        
+    cv::imwrite(filePath, imageColor);
 
     return APP_ERR_OK;
 }
