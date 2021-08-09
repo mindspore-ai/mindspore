@@ -15,7 +15,7 @@ function Run_Converter() {
     mkdir -p ${ms_models_path}
 
     # Prepare the config file list
-    local npu_cfg_file_list=("$models_npu_config")
+    local npu_cfg_file_list=("$models_npu_config" "$models_npu_weightquant_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
     Convert "${npu_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
@@ -26,26 +26,14 @@ function Run_npu() {
     # Push files to the phone
     Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
     # Prepare the config file list
-    local npu_cfg_file_list=("$models_npu_config")
+    local npu_cfg_file_list=("$models_npu_config" "$models_npu_fp16_config" "$models_npu_weightquant_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
     Run_Benchmark "${npu_cfg_file_list[*]}" . '/data/local/tmp' $run_npu_log_file $run_benchmark_result_file 'arm64' 'NPU' $device_id
 }
 
-# Run on npu and fp16 platform:
-function Run_npu_fp16() {
-    # Push files to the phone
-    Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt" $device_id
-    # Prepare the config file list
-    local npu_fp16_cfg_file_list=("$models_npu_fp16_config")
-    # Run converted models:
-    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${npu_fp16_cfg_file_list[*]}" . '/data/local/tmp' $run_npu_fp16_log_file $run_benchmark_result_file 'arm64' 'NPU' $device_id
-}
-
 basepath=$(pwd)
 echo ${basepath}
-#set -e
 
 # Example:sh run_benchmark_npu.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
 while getopts "r:m:d:e:" opt; do
@@ -81,6 +69,7 @@ version=${file_name_array[2]}
 # Set models config filepath
 models_npu_config=${basepath}/../config/models_npu.cfg
 models_npu_fp16_config=${basepath}/../config/models_npu_fp16.cfg
+models_npu_weightquant_config=${basepath}/../config/models_npu_weightquant.cfg
 
 ms_models_path=${basepath}/ms_models
 
@@ -115,9 +104,6 @@ echo ' ' > ${run_benchmark_result_file}
 run_npu_log_file=${basepath}/run_npu_log.txt
 echo 'run npu logs: ' > ${run_npu_log_file}
 
-run_npu_fp16_log_file=${basepath}/run_npu_fp16_log.txt
-echo 'run npu fp16 logs: ' > ${run_npu_fp16_log_file}
-
 # Copy the MindSpore models:
 echo "Push files to the arm and run benchmark"
 benchmark_test_path=${basepath}/benchmark_test
@@ -139,24 +125,13 @@ if [[ $backend == "all" || $backend == "npu" ]]; then
     echo "start Run npu ..."
     Run_npu
     Run_npu_status=$?
-    sleep 1
     if [[ ${Run_npu_status} != 0 ]];then
         echo "Run_npu failed"
         cat ${run_npu_log_file}
         isFailed=1
     fi
-
-    echo "start Run npu fp16 ..."
-    Run_npu_fp16
-    Run_npu_fp16_status=$?
-    sleep 1
-    if [[ ${Run_npu_fp16_status} != 0 ]];then
-        echo "Run_npu_fp16 failed"
-        cat ${run_npu_fp16_log_file}
-        isFailed=1
-    fi
 fi
 
-echo "Run_npu and Run_npu_fp16 ended"
+echo "Run_npu ended"
 Print_Benchmark_Result $run_benchmark_result_file
 exit ${isFailed}

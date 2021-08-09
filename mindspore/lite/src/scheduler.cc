@@ -149,21 +149,6 @@ int CastKernelWeight(kernel::SubGraphType belong_subgraph_type, kernel::LiteKern
   return RET_OK;
 }
 
-int DequantCpuKernelWeight(kernel::SubGraphType belong_subgraph_type, kernel::LiteKernel *kernel) {
-  MS_ASSERT(kernel != nullptr);
-  MS_ASSERT(kernel->subgraph_type() == kernel::kNotSubGraph);
-  if (belong_subgraph_type != kernel::kCpuFP32SubGraph && belong_subgraph_type != kernel::kCpuFP16SubGraph) {
-    return RET_OK;
-  }
-  TypeId dst_dt = (belong_subgraph_type == kernel::kCpuFP32SubGraph) ? kNumberTypeFloat32 : kNumberTypeFloat16;
-  auto ret = WeightDecoder::DequantNode(kernel->op_parameter(), kernel->in_tensors(), dst_dt);
-  if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
-    return RET_NOT_SUPPORT;
-  }
-  return RET_OK;
-}
-
 int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
   // packed kernels such as conv don't need to copy because weight will be packed in kernel
   if (IsPackedOp(op_type)) {
@@ -203,12 +188,7 @@ int Scheduler::HandleBuildinCpuKernelWeight(kernel::SubGraphType belong_subgraph
       kernel->desc().provider != kernel::kBuiltin) {
     return RET_OK;
   }
-  auto ret = DequantCpuKernelWeight(belong_subgraph_type, kernel);
-  if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "Dequant cpu kernel weight failed: " << ret;
-    return RET_NOT_SUPPORT;
-  }
-  ret = CastKernelWeight(belong_subgraph_type, kernel, context_->device_and_pkg_support_fp16());
+  auto ret = CastKernelWeight(belong_subgraph_type, kernel, context_->device_and_pkg_support_fp16());
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "CastKernelWeight failed: " << ret;
     return RET_NOT_SUPPORT;
@@ -783,14 +763,20 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     cpu_desc.data_type = kNumberTypeFloat16;
   }
 
+  TypeId dequant_data_type;
+  if (context_->IsCpuFloat16Enabled()) {
+    dequant_data_type = kNumberTypeFloat16;
+  } else {
+    dequant_data_type = kNumberTypeFloat32;
+  }
+  auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, dequant_data_type);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
+    return RET_NOT_SUPPORT;
+  }
+
   std::map<Tensor *, Tensor *> restored_origin_tensors;
   if (is_train_session_) {
-    auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type);
-    if (ret != RET_OK) {
-      MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
-      return RET_NOT_SUPPORT;
-    }
-
     ret = CastConstTensorsData(in_tensors, &restored_origin_tensors, kernel_data_type,
                                context_->device_and_pkg_support_fp16());
     if (ret != RET_OK) {
@@ -799,8 +785,8 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     }
   }
 
-  auto ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, cpu_desc,
-                                                      op_parameter, kernel);
+  ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, cpu_desc, op_parameter,
+                                                 kernel);
   if (ret == RET_OK) {
     MS_LOG(DEBUG) << "Get TypeId(" << kernel_data_type << ") op success: " << PrimitiveCurVersionTypeName(op_type);
     if (is_train_session_) {
