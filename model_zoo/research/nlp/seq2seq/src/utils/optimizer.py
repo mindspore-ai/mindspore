@@ -229,7 +229,6 @@ class Adam(Optimizer):
         self.one = Tensor(np.array([1.0]).astype(np.float32))
         self.realdiv = P.RealDiv()
 
-        self.lr_scalar = P.ScalarSummary()
 
     def construct(self, gradients):
         """Adam optimizer."""
@@ -239,8 +238,6 @@ class Adam(Optimizer):
         gradients = self.decay_weight(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
-
-        self.lr_scalar("learning_rate", lr)
 
         beta1_power = self.beta1_power * self.beta1
         self.beta1_power = beta1_power

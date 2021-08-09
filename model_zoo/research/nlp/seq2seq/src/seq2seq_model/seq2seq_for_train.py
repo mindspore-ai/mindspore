@@ -296,7 +296,6 @@ class Seq2seqTrainOneStepWithLossScaleCell(nn.Cell):
                                                dtype=mstype.float32), name="loss_scale")
         self.add_flags(has_effect=True)
 
-        self.loss_scalar = P.ScalarSummary()
 
     def construct(self,
                   source_eos_ids,
@@ -368,5 +367,4 @@ class Seq2seqTrainOneStepWithLossScaleCell(nn.Cell):
         if not overflow:
             self.optimizer(grads)
 
-        self.loss_scalar("loss", loss)
         return (loss, cond, scaling_sens)
