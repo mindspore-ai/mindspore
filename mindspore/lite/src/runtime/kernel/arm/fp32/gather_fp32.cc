@@ -65,7 +65,7 @@ int GatherCPUKernel::DoGather(int task_id) {
   int8_t *int8_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
   int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
 
-  int data_size = lite::DataTypeSize(input_tensor->data_type());
+  int data_size = static_cast<int>(lite::DataTypeSize(input_tensor->data_type()));
   int8_in += thread_stride * limit * inner_size * data_size;
   int8_out += thread_stride * indices_element_size * inner_size * data_size;
 
@@ -121,7 +121,7 @@ int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lit
       }
     } else {
       for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = reinterpret_cast<float *>(indices_tensor->MutableData())[i];
+        indices_data_[i] = static_cast<int>(reinterpret_cast<float *>(indices_tensor->MutableData())[i]);
       }
     }
   } else {
