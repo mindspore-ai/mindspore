@@ -417,10 +417,6 @@ void GraphScheduler::Clear() {
   graph_output_to_actor_.clear();
   front_node_to_actor_.clear();
   copy_actors_.clear();
-
-  // Delete the thread pool.
-  delete thread_pool_;
-  thread_pool_ = nullptr;
 }
 
 void GraphScheduler::Initialize() {
@@ -434,16 +430,15 @@ void GraphScheduler::Initialize() {
   }
   init_ = true;
 
-  auto actorMgr = ActorMgr::GetActorMgrRef();
-  MS_EXCEPTION_IF_NULL(actorMgr);
-  actorMgr->Initialize();
-
   // Create the thread pool of actor runtime and Set the OMP_NUM_THREADS env.
   size_t actor_thread_num = 0;
   size_t OMP_thread_num = 0;
   ComputeThreadNums(&actor_thread_num, &OMP_thread_num);
-  thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num);
-  MS_EXCEPTION_IF_NULL(thread_pool_);
+
+  auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
+  actor_manager->Initialize(true, actor_thread_num);
+
   std::string OMP_env = std::to_string(OMP_thread_num);
   (void)common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
@@ -463,7 +458,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   memory_manager_aid_ = memory_manager_actor->GetAID();
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
-  base_actor->set_thread_pool(thread_pool_);
   // Bind single thread to response to memory alloc and free quickly.
   (void)actorMgr->Spawn(base_actor, false);
 
@@ -472,7 +466,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   MS_EXCEPTION_IF_NULL(recorder_actor);
   recorder_aid_ = &(recorder_actor->GetAID());
   auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
-  base_recorder_actor->set_thread_pool(thread_pool_);
   (void)actorMgr->Spawn(base_recorder_actor, true);
 
   // Create and schedule debug actor.
@@ -487,7 +480,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
     MS_EXCEPTION_IF_NULL(debug_actor);
     debug_aid_ = &(debug_actor->GetAID());
     auto base_debug_actor = static_cast<ActorReference>(debug_actor);
-    base_debug_actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(base_debug_actor, true);
   }
 }
@@ -561,7 +553,6 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   auto actorMgr = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actorMgr);
   for (auto actor : actors) {
-    actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(actor);
   }
 }
