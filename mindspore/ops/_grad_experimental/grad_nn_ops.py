@@ -69,3 +69,19 @@ def get_bprop_hshrink(self):
         return (dx,)
 
     return bprop
+
+
+@bprop_getters.register(P.CeLU)
+def get_bprop_celu(self):
+    """Grad definition for `CeLU` operation."""
+    alpha = self.alpha
+    greater_equal = P.GreaterEqual()
+    less = P.Less()
+
+    def bprop(x, out, dout):
+        greater = greater_equal(x, 0.0)
+        lesser = less(x, 0.0)
+        dx = dout * (greater * 1.0 + lesser * (out / alpha + 1.0))
+        return (dx,)
+
+    return bprop

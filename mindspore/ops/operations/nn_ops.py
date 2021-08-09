@@ -89,6 +89,57 @@ def _update_attr_by_format(arg_value, arg_format):
     return ret
 
 
+class CeLU(Primitive):
+    r"""
+    Computes CeLU (Continuously differentiable exponential linear units) of input tensors element-wise.
+
+    .. math::
+
+        \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
+
+    It returns :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))` element-wise.
+
+    The picture about CeLU looks like this `CeLU <https://arxiv.org/abs/1704.07483>`_.
+
+
+    Args:
+        alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with dtype of float16 and float32.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
+    Raises:
+        TypeError: If `alpha` is not a float.
+        ValueError: If `alpha` has the value of 0.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If the dtype of 'input_x' is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input_x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
+        >>> celu = ops.CeLU(alpha=1.0)
+        >>> output = celu(input_x)
+        >>> print(output)
+        [-0.86466473 -0.63212055  1.          2.        ]
+    """
+
+    @prim_attr_register
+    def __init__(self, alpha=1.0):
+        """Initialize CeLU"""
+        validator.check_value_type("alpha", alpha, [float], self.name)
+        validator.check_float(alpha, 0.0, Rel.NE, "alpha", self.name)
+        self.alpha = alpha
+        self.alpha2 = alpha
+        self.add_prim_attr('alpha', self.alpha)
+        self.add_prim_attr('alpha2', self.alpha2)
+
+
 class Flatten(PrimitiveWithInfer):
     r"""
     Flattens a tensor without changing its batch size on the 0-th axis.

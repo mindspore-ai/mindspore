@@ -41,7 +41,58 @@ __all__ = ['Softmax',
            'LogSigmoid',
            'SoftShrink',
            'HShrink',
+           'CELU',
            ]
+
+
+class CELU(Cell):
+    r"""
+    Continuously differentiable exponential linear units activation function.
+
+    Applies the continuously differentiable exponential linear units function element-wise.
+
+    .. math::
+
+        \text{CELU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
+
+    It returns element-wise :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))`.
+
+    The picture about CELU looks like this `CELU <https://arxiv.org/abs/1704.07483>`_.
+
+    Args:
+        alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+
+    Inputs:
+        - **x** (Tensor) - The input of CELU. The required dtype is float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Outputs:
+        Tensor, with the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If `alpha` is not a float.
+        ValueError: If `alpha` has the value of 0.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If the dtype of 'input_x' is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
+        >>> celu = nn.CELU()
+        >>> output = celu(x)
+        >>> print(output)
+        [-0.86466473 -0.63212055  1.          2.        ]
+    """
+
+    def __init__(self, alpha=1.0):
+        """Initialize CELU."""
+        super(CELU, self).__init__()
+        self.celu = P.CeLU(alpha=alpha)
+
+    def construct(self, x):
+        return self.celu(x)
 
 
 class Softmax(Cell):

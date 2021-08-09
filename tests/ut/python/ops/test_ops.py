@@ -1729,6 +1729,10 @@ test_case_math_ops = [
 ]
 
 test_case_nn_ops = [
+    ('CeLU', {
+        'block': P.CeLU(),
+        'desc_inputs': [[1, 2, 3]],
+        'desc_bprop': [[1, 2, 3]]}),
     ('BiasAdd', {
         'block': P.BiasAdd(),
         'desc_inputs': [[1, 3, 3, 3], [3]],
