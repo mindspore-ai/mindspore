@@ -25,10 +25,16 @@
 #include "include/api/dual_abi_helper.h"
 #include "include/api/format.h"
 
+#ifndef MS_API
 #ifdef _WIN32
+#ifdef BUILDING_DLL
 #define MS_API __declspec(dllexport)
 #else
+#define MS_API __declspec(dllimport)
+#endif
+#else
 #define MS_API __attribute__((visibility("default")))
+#endif
 #endif
 
 namespace mindspore {
