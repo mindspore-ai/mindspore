@@ -877,7 +877,9 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
       sqlite3_free(errmsg);
     }
     std::vector<json> ret;
-    for (unsigned int i = 0; i < labels_ptr->size(); ++i) ret.emplace_back(json{});
+    for (unsigned int i = 0; i < labels_ptr->size(); ++i) {
+      (void)ret.emplace_back(json{});
+    }
     for (unsigned int i = 0; i < labels_ptr->size(); ++i) {
       json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {

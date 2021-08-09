@@ -1015,7 +1015,7 @@ std::vector<std::vector<float>> GetDefaultBoxes(BoxesConfig config) {
   }
   scales.push_back(1.0f);
   std::vector<std::vector<float>> default_boxes;
-  for (int i = 0; i < config.feature_size.size(); i++) {
+  for (auto i = 0; i < config.feature_size.size(); i++) {
     float sk1 = scales[i];
     float sk2 = scales[i + 1];
     float sk3 = sqrt(sk1 * sk2);
@@ -1069,10 +1069,10 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
 
 std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
                           int max_boxes) {
-  int boxes_num = all_boxes.size();
+  size_t boxes_num = all_boxes.size();
   std::vector<float> areas(boxes_num);
   std::vector<int> order(boxes_num);
-  for (int i = 0; i < boxes_num; i++) {
+  for (auto i = 0; i < boxes_num; i++) {
     if (all_boxes[i].size() < 4) {
       return {};
     }

@@ -70,7 +70,7 @@ Status MnistNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 }
 
 // Get the shard id of node
-Status MnistNode::GetShardId(int32_t *shard_id) {
+Status MnistNode::GetShardId(int32_t *const shard_id) {
   *shard_id = sampler_->ShardId();
 
   return Status::OK();

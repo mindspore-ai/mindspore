@@ -112,7 +112,7 @@ class RepeatPass : public IRNodePass {
   /// \brief Adds an operator to the cached stack save area
   /// \param node - The dataset node to add to cached stack
   /// \return Status The status code returned
-  void AddToCachedNodeStack(std::shared_ptr<DatasetNode> node);
+  void AddToCachedNodeStack(const std::shared_ptr<DatasetNode> &node);
 
   /// \brief Pops an operator from the cached stack save area
   /// \return shared_ptr to the popped dataset node

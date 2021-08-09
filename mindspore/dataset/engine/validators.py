@@ -838,7 +838,6 @@ def check_schema(method):
         [schema_file], _ = parse_user_args(method, *args, **kwargs)
 
         if schema_file is not None:
-            type_check(schema_file, (str,), "schema_file")
             check_file(schema_file)
 
         return method(self, *args, **kwargs)

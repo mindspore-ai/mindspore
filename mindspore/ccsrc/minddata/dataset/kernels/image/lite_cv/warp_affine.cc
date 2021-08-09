@@ -410,7 +410,7 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
   int *a = &_a[0], *b = a + dst.width_;
   const int SCALE = 1 << 10;
   const int B_SIZE = 64;
-  int16_t WH[B_SIZE * B_SIZE * 2];
+  int16_t *WH = new int16_t[B_SIZE * B_SIZE * 2];
   int16_t A_Ptr[B_SIZE * B_SIZE];
   int r_delta = SCALE / kTabSz / 2;
   int x, y, x1, y1;
@@ -449,7 +449,7 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
       Remap(src, lite_part, _HW, _matA, borderType, borderValue);
     }
   }
-
+  delete[] WH;
   delete[] _a;
   return true;
 }
