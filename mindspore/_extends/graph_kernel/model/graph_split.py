@@ -804,6 +804,16 @@ class GraphSplitGpu(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
+        def _strided_slice(dom):
+            if dom.dom_op().prim != "StridedSlice":
+                return None
+            fused = []
+            for a, _ in dom.in_relations.items():
+                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
+                    len(a.out_relations) == 1 and not a.is_output:
+                    fused.append(a)
+            return fused, True
+
         def _fuse_loop():
             changed = True
             while changed:
@@ -814,6 +824,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 changed = self.fuse(_reduce_width) or changed
                 changed = self.fuse(_broadcast_depth) or changed
                 changed = self.fuse(_broadcast_width) or changed
+                changed = self.fuse(_strided_slice) or changed
                 if use_poly_reduce:
                     changed = self.fuse(_reduce_output) or changed
                     if enable_stitch_fusion:

@@ -82,6 +82,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimSigmoidGrad,
     prim::kPrimSigmoidCrossEntropyWithLogits,
     prim::kPrimSigmoidCrossEntropyWithLogitsGrad,
+    prim::kPrimSlice,
     prim::kPrimSoftmax,
     prim::kPrimSoftmaxCrossEntropyWithLogits,
     prim::kPrimSquaredDifference,

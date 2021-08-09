@@ -99,6 +99,7 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::kPrimSelect,
     prim::kPrimSign,
     prim::kPrimSin,
+    prim::kPrimStridedSlice,
 #endif
   };
   const auto &flags = context::GraphKernelFlags::GetInstance();
