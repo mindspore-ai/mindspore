@@ -195,6 +195,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // serialize graph and get proto
   GraphProto GetGraphProto(const KernelGraphPtr &graph_ptr) const;
 
+  // send heartbeat message to UI once per 30 second by default
+  void SendHeartbeat(int32_t period);
+
   // send graph and enter command wait loop
   void SendGraphAndSuspend(const GraphProto &graph_proto);
 
@@ -244,6 +247,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::unique_ptr<GrpcClient> grpc_client_;
   std::unique_ptr<DebugServices> debug_services_;
+  std::unique_ptr<std::thread> heartbeat_thread_;
   KernelGraphPtr graph_ptr_;
   uint32_t device_id_;
   std::string device_target_;
