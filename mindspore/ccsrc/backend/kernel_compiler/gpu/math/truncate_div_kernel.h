@@ -149,5 +149,5 @@ class TruncateDivOpGpuKernel : public GpuKernel {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_TRUNCATE_DIV_KERNEL_H
 
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_TRUNCATE_DIV_KERNEL_H
