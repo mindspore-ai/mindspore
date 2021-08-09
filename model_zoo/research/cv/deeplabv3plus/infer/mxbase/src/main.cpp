@@ -23,8 +23,7 @@ namespace {
     const uint32_t FRAMEWORK_TYPE = 2;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     if (argc <= 1) {
         LogWarn << "Please input image path, such as './deeplabv3plus test.jpg'.";
         return APP_ERR_OK;
