@@ -34,9 +34,18 @@ class PoolingOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   int SetConstArgs() override;
   void SetGlobalLocal() override;
+  int Tune() override;
+
+ private:
+  int BuildKernel();
+  int SetGlobalConstArgs();
+  int SetLocalConstArgs();
 
  private:
   PoolingParameter *parameter_;
+  bool is_use_local_ = false;
+  static const size_t LOCAL_CACHE_THREAD{16};
+  GpuTensorInfo input_tensor_;
 };
 
 }  // namespace mindspore::kernel
