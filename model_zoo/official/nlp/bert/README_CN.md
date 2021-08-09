@@ -747,6 +747,8 @@ run_pretrain.py中设置了随机种子，确保分布式训练中每个节点�
 
 # FAQ
 
+优先参考[ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ)来查找一些常见的公共问题。
+
 - **Q: 运行过程中发生持续溢出怎么办？**
   **A**： 持续溢出通常是因为使用了较高的学习率导致训练不收敛。可以考虑修改yaml配置文件中的参数，调低`learning_rate`来降低初始学习率或提高`power`加速学习率衰减。
 

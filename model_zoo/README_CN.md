@@ -113,3 +113,9 @@ MindSpore已获得Apache 2.0许可，请参见LICENSE文件。
 ## 许可证
 
 [Apache 2.0许可证](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)
+
+## FAQ
+
+- **Q: 使用`PYNATIVE_MODE`运行模型出现错误内存不足，例如*Failed to alloc memory pool memory*, 该怎么处理?**
+
+  **A**: `PYNATIVE_MODE`通常比`GRAPH_MODE`使用更多内存，尤其是在需要进行反向传播计算的训练图中，你可以尝试使用一些更小的batch size.
