@@ -94,7 +94,7 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     ShapePush(out_shape, &out_shape_size, input->shape_[i]);
   }
   for (size_t i = 0; i < dims_size; ++i) {
-    if (input->shape_[dims[i]] == 0 || dims[i] >= MAX_SHAPE_SIZE) {
+    if (dims[i] >= MAX_SHAPE_SIZE || input->shape_[dims[i]] == 0) {
       return NNACL_ERR;
     }
     if (input->shape_[dims[i]] != 0 && param->multiples_[i] > INT_MAX / input->shape_[dims[i]]) {
