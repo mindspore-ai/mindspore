@@ -16,7 +16,7 @@
 
 if [ $# -lt 3 ]; then
     echo "Usage: bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH]"
-    echo "Example: bash run_quant_infer.sh ./vgg_quant.air ./00_data ./cifar10_label_ids.npy"
+    echo "Example: bash run_quant_infer.sh ./unet_quant.air ./data ./label_ids.npy"
 exit 1
 fi
 
@@ -51,7 +51,7 @@ fi
 
 function air_to_om()
 {
-    atc --input_format=NCHW --framework=1 --model=$model --output=vgg_quant --soc_version=Ascend310 &> atc.log
+    atc --input_format=NCHW --framework=1 --model=$model --output=unet_quant --soc_version=Ascend310 &> atc.log
 }
 
 function compile_app()
@@ -65,12 +65,12 @@ function infer()
         rm -rf ./result
     fi
     mkdir result
-    ./out/main ./vgg_quant.om $data_path &> infer.log
+    ./out/main ./unet_quant.om $data_path &> infer.log
 }
 
 function cal_acc()
 {
-    python3.7 ./acc.py --result_path=./result --label_path=$label_path  &> acc.log
+    python3.7 ./acc.py --result_path=./result --label_path=$label_path --input_path=$data_path &> acc.log
 }
 
 echo "start atc================================================"

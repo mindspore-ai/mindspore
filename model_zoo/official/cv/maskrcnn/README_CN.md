@@ -25,6 +25,7 @@
     - [推理过程](#推理过程)
         - [使用方法](#使用方法)
         - [结果](#结果)
+    - [训练后量化推理](#训练后量化推理)
 - [模型说明](#模型说明)
     - [性能](#性能)
         - [训练性能](#训练性能)
@@ -694,6 +695,68 @@ Accumulating evaluation results...
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.248
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.478
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.594
+```
+
+## [训练后量化推理](#contents)
+
+训练后量化推理的相关执行脚本文件在"ascend310_quant_infer"目录下，依次执行以下步骤实现训练后量化推理。本训练后量化工程基于COCO2017数据集。
+推理过程需要占用大约600G的硬盘空间来保存推理的结果。
+
+1、生成Ascend310平台AIR模型推理需要的.bin格式数据。
+
+```shell
+python export_bin.py --coco_root [COCO DATA PATH] --mindrecord_dir [MINDRECORD PATH] --ann_file [ANNOTATION PATH]
+```
+
+2、导出训练后量化的AIR格式模型。
+
+导出训练后量化模型需要配套的量化工具包，参考[官方地址](https://www.hiascend.com/software/cann/community)
+
+```shell
+python post_quant.py --coco_root [COCO DATA PATH] --mindrecord_dir [MINDRECORD PATH] --ckpt_file [CKPT_PATH]
+```
+
+导出的模型会存储在./result/maskrcnn_quant.air。
+
+3、在Ascend310执行推理量化模型。
+
+```shell
+# Ascend310 inference
+bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [SHAPE_PATH] [ANNOTATION_PATH]
+```
+
+推理结果保存在脚本执行的当前路径，可以在acc.log中看到精度计算结果。
+
+```bash
+Evaluate annotation type *bbox*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.378
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.602
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.407
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.240
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.420
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.481
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.311
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.500
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.528
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.367
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.572
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.657
+
+Evaluate annotation type *segm*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.321
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.553
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.328
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.164
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.350
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.466
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.276
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.422
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.441
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.279
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.476
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.578
 ```
 
 # 模型说明
