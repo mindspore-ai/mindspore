@@ -23,6 +23,9 @@ message AttributeProto {
     TENSOR = 17;
     GRAPH = 18;
     TENSORS = 19;
+    TUPLE = 20;        // tuple
+    LIST = 21;         // list
+    DICT = 22;         // dictionary
   }
   optional string name = 1;
   optional float f = 2;
@@ -40,6 +43,8 @@ message AttributeProto {
   optional string doc_string = 14;
   optional string ref_attr_name = 15;
   optional AttributeType type = 16;
+  repeated AttributeProto values = 17;          // tuple, list,dict of value
+  optional AttributeType type_val = 18;         // type type info
 }
 
 
@@ -70,6 +75,7 @@ message ModelProto {
   optional string model_version = 5;
   optional string doc_string = 6;
   optional GraphProto graph = 7;
+  repeated GraphProto functions = 8; // all the graphs without the main graph.
 }
 
 
