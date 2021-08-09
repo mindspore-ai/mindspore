@@ -29,7 +29,6 @@ namespace mindspore::kernel {
 namespace {
 constexpr size_t kMirrorPadInputSize = 2;
 constexpr size_t kPadCommonInputSize = 2;
-constexpr size_t kPadMaxInputSize = 3;
 }  // namespace
 int PadCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
@@ -396,9 +395,6 @@ int PadCPUKernel::Run() {
         MS_LOG(ERROR) << "Pad run error, error_code[" << error_code << "]";
         return RET_ERROR;
       }
-    }
-    if (in_tensors_.size() == kPadMaxInputSize) {
-      pad_param_->constant_value_ = reinterpret_cast<float *>(in_tensors_.at(2)->data_c())[0];
     }
     auto output = out_tensors_.at(0);
     int output_size = output->ElementsNum();
