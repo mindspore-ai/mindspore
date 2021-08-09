@@ -372,7 +372,7 @@ struct SquaredDifferenceFunc {
 template <typename T>
 struct TruncateDivFunc {
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    T res = (T)(static_cast<float>lhs / static_cast<float>rhs);
+    T res = static_cast<T>(static_cast<double>lhs / static_cast<double>rhs);
     return res;
   }
 };
@@ -400,7 +400,7 @@ struct TruncateDivFunc<half2> {
 template <typename T>
 struct TruncateModFunc {
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    T res = (T)(lhs - static_cast<int>(lhs / rhs) * rhs);
+    T res = static_cast<T>(lhs - static_cast<int>(lhs / rhs) * rhs);
     return res;
   }
 };
