@@ -280,8 +280,8 @@ def compute_kl_threshold(data, bitwidth):
 def query_quant_layers(network):
     r"""
     Query the network's quantization strategy of each quantized layer and print it to the screen, note that all the
-    quantization layers are queried before graph compile optimization in the graph mode, thus may be appear some
-    redundant quantized layers, which are not exist in practical execution.
+    quantization layers are queried before graph compile optimization in the graph mode, thus, some redundant quantized
+    layers, which not exist in practical execution, may appear.
 
     Args:
         network (Cell): input network
