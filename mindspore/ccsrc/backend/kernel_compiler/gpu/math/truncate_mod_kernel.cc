@@ -35,8 +35,7 @@ MS_REG_GPU_KERNEL_ONE(
   TruncateModOpGpuKernel, int)
 // int8_t
 MS_REG_GPU_KERNEL_ONE(
-  TruncateMod,
-  KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+  TruncateMod, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
   TruncateModOpGpuKernel, int8_t)
 // uint8_t
 MS_REG_GPU_KERNEL_ONE(
