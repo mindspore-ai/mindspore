@@ -22,10 +22,8 @@
 
 using std::max;
 using std::vector;
-using namespace MxBase;
 
-APP_ERROR DeeplabV3plus::Init(const InitParam &initParam)
-{
+APP_ERROR DeeplabV3plus::Init(const InitParam &initParam) {
     deviceId_ = initParam.deviceId;
     APP_ERROR ret = MxBase::DeviceManager::GetInstance()->InitDevices();
     if (ret != APP_ERR_OK) {
@@ -70,8 +68,7 @@ APP_ERROR DeeplabV3plus::Init(const InitParam &initParam)
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::DeInit()
-{
+APP_ERROR DeeplabV3plus::DeInit() {
     dvppWrapper_->DeInit();
     model_->DeInit();
     post_->DeInit();
@@ -79,16 +76,14 @@ APP_ERROR DeeplabV3plus::DeInit()
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::ReadImage(const std::string &imgPath, cv::Mat &imageMat)
-{
+APP_ERROR DeeplabV3plus::ReadImage(const std::string &imgPath, cv::Mat &imageMat) {
     imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
     cv::cvtColor(imageMat, imageMat, cv::COLOR_BGR2RGB);
     return APP_ERR_OK;
 }
 
 APP_ERROR DeeplabV3plus::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat,
-    MxBase::ResizedImageInfo &resizedImageInfo)
-{
+    MxBase::ResizedImageInfo &resizedImageInfo) {
     constexpr float scaleValue = 513;
     float scale = scaleValue / max(srcImageMat.rows, srcImageMat.cols);
     int dstWidth = srcImageMat.cols * scale;
@@ -104,8 +99,7 @@ APP_ERROR DeeplabV3plus::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstIma
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::Normalize(const cv::Mat &srcImageMat, cv::Mat &dstImageMat)
-{
+APP_ERROR DeeplabV3plus::Normalize(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
     constexpr size_t ALPHA_AND_BETA_SIZE = 3;
     cv::Mat float32Mat;
     srcImageMat.convertTo(float32Mat, CV_32FC3);
@@ -122,8 +116,7 @@ APP_ERROR DeeplabV3plus::Normalize(const cv::Mat &srcImageMat, cv::Mat &dstImage
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMat)
-{
+APP_ERROR DeeplabV3plus::Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
     constexpr int32_t paddingHeight = 513;
     constexpr int32_t paddingWidth = 513;
     int padH = paddingHeight - srcImageMat.rows;
@@ -135,8 +128,7 @@ APP_ERROR DeeplabV3plus::Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMa
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase)
-{
+APP_ERROR DeeplabV3plus::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase) {
     const uint32_t dataSize = imageMat.cols * imageMat.rows * imageMat.elemSize();
     MemoryData memoryDataDst(dataSize, MemoryData::MEMORY_DEVICE, deviceId_);
     MemoryData memoryDataSrc(imageMat.data, dataSize, MemoryData::MEMORY_HOST);
@@ -156,8 +148,7 @@ APP_ERROR DeeplabV3plus::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::Tens
 }
 
 APP_ERROR DeeplabV3plus::Inference(const std::vector<MxBase::TensorBase> &inputs,
-    std::vector<MxBase::TensorBase> &outputs)
-{
+    std::vector<MxBase::TensorBase> &outputs) {
     auto dtypes = model_->GetOutputDataType();
     for (size_t i = 0; i < modelDesc_.outputTensors.size(); ++i) {
         std::vector<uint32_t> shape = {};
@@ -183,8 +174,7 @@ APP_ERROR DeeplabV3plus::Inference(const std::vector<MxBase::TensorBase> &inputs
 }
 
 APP_ERROR DeeplabV3plus::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-    std::vector<SemanticSegInfo> &segInfo, const std::vector<MxBase::ResizedImageInfo> &resizedInfo)
-{
+    std::vector<SemanticSegInfo> &segInfo, const std::vector<MxBase::ResizedImageInfo> &resizedInfo) {
     APP_ERROR ret = post_->Process(inputs, segInfo, resizedInfo);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
@@ -193,8 +183,7 @@ APP_ERROR DeeplabV3plus::PostProcess(const std::vector<MxBase::TensorBase> &inpu
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::Process(const std::string &imgPath)
-{
+APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
     cv::Mat imageMat;
     APP_ERROR ret = ReadImage(imgPath, imageMat);
     if (ret != APP_ERR_OK) {
@@ -238,8 +227,7 @@ APP_ERROR DeeplabV3plus::Process(const std::string &imgPath)
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::SaveResultToImage(const MxBase::SemanticSegInfo &segInfo, const std::string &filePath)
-{
+APP_ERROR DeeplabV3plus::SaveResultToImage(const MxBase::SemanticSegInfo &segInfo, const std::string &filePath) {
     cv::Mat imageMat(segInfo.pixels.size(), segInfo.pixels[0].size(), CV_8UC1);
     for (size_t x = 0; x < segInfo.pixels.size(); ++x) {
         for (size_t y = 0; y < segInfo.pixels[x].size(); ++y) {
