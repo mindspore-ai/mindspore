@@ -16,6 +16,7 @@
 import os
 import argparse
 import ast
+import subprocess
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -44,6 +45,36 @@ class BuildTrainNetwork(nn.Cell):
         net_loss = self.criterion(output, label)
         return net_loss
 
+def _get_last_ckpt(ckpt_dir):
+    ckpt_files = [ckpt_file for ckpt_file in os.listdir(ckpt_dir)
+                  if ckpt_file.endswith('.ckpt')]
+    if not ckpt_files:
+        print("No ckpt file found.")
+        return None
+    return os.path.join(ckpt_dir, sorted(ckpt_files)[-1])
+
+
+def _export_air(args, ckpt_dir):
+    ckpt_file = _get_last_ckpt(ckpt_dir)
+    if not ckpt_file:
+        return
+
+    export_file = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "export.py")
+
+    for input_format in ("NHWC", "NCHW"):
+        file_name = os.path.join(ckpt_dir, f"{args.model}")
+        cmd = ["python", export_file,
+               f"--device_id={args.rank}",
+               f"--input_size={args.crop_size}",
+               f"--ckpt_file={ckpt_file}",
+               f"--model={args.model}",
+               f"--num_classes={args.num_classes}",
+               f"--input_format={input_format}",
+               f"--file_name={file_name}"]
+        print(f"Start exporting AIR, cmd = {' '.join(cmd)}.")
+        process = subprocess.Popen(cmd, shell=False)
+        process.wait()
 
 def parse_args():
     """parse_args"""
@@ -74,6 +105,8 @@ def parse_args():
     parser.add_argument('--model', type=str, default='DeepLabV3plus_s16', help='select model')
     parser.add_argument('--freeze_bn', action='store_true', help='freeze bn')
     parser.add_argument('--ckpt_pre_trained', type=str, default='', help='PreTrained model')
+    parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
+                        help="Filter the last weight parameters, default is False.")
 
     # train
     parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'CPU'],
@@ -169,7 +202,16 @@ def train():
     # load pretrained model
     if args.ckpt_pre_trained or args.pretrainedmodel_filename:
         param_dict = load_checkpoint(ckpt_file)
+        if args.filter_weight:
+            filter_list = ["network.last_conv.6.weight"]
+            for key in list(param_dict.keys()):
+                for filter_key in filter_list:
+                    if filter_key not in key:
+                        continue
+                    print('filter {}'.format(key))
+                    del param_dict[key]
         load_param_into_net(train_net, param_dict)
+        print('load pretrained model:', ckpt_file)
 
     # optimizer
     iters_per_epoch = dataset.get_dataset_size()
@@ -207,6 +249,7 @@ def train():
     if args.modelArts_mode:
         # copy train result from cache to obs
         if args.rank == 0:
+            _export_air(args, local_train_url)
             mox.file.copy_parallel(src_url=local_train_url, dst_url=args.train_url)
 
 
