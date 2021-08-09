@@ -873,7 +873,7 @@ bool AscendKernelRuntime::HcclInit() {
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
   bool ret = hccl::HcclAdapter::GetInstance().InitHccl(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str,
-                                                       full_path);
+                                                       full_path, mode == kGraphMode);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";
