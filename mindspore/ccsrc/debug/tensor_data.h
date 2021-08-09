@@ -171,6 +171,9 @@ class TensorData {
     this->shape = obj.shape;
     this->iteration = obj.iteration;
     this->device_id = obj.device_id;
+    this->data_ptr = obj.data_ptr;
+    this->root_graph_id = obj.root_graph_id;
+    this->is_output = obj.is_output;
 #ifdef ONLINE_DBG_MODE
     this->tensor_ptr = obj.tensor_ptr;
 #endif
@@ -194,39 +197,39 @@ class TensorData {
 
   void SetSlot(size_t slot) { this->slot = slot; }
 
-  char *GetDataPtr() { return data_ptr; }
+  char *GetDataPtr() const { return this->data_ptr; }
 
   void SetDataPtr(char *data_ptr) { this->data_ptr = data_ptr; }
 
   uint32_t GetNumElements() { return size / data_type_size; }
 
-  uint64_t GetByteSize() { return size; }
+  uint64_t GetByteSize() const { return this->size; }
 
   void SetByteSize(uint64_t size) { this->size = size; }
 
-  std::vector<int64_t> GetShape() { return shape; }
+  std::vector<int64_t> GetShape() const { return this->shape; }
 
   void SetShape(std::vector<int64_t> shape) { this->shape = shape; }
 
-  unsigned int GetIteration() { return iteration; }
+  unsigned int GetIteration() const { return this->iteration; }
 
   void SetIteration(unsigned int iteration) { this->iteration = iteration; }
 
-  unsigned int GetDeviceId() { return device_id; }
+  unsigned int GetDeviceId() const { return this->device_id; }
 
   void SetDeviceId(unsigned int device_id) { this->device_id = device_id; }
 
-  unsigned int GetRootGraphId() { return root_graph_id; }
+  unsigned int GetRootGraphId() const { return this->root_graph_id; }
 
   void SetRootGraphId(unsigned int root_graph_id) { this->root_graph_id = root_graph_id; }
 
-  DbgDataType GetType() { return data_type; }
+  DbgDataType GetType() const { return this->data_type; }
 
   void SetType(unsigned int type) { ConvertMsToDbgType(type); }
 
   void SetType(std::string type_name) { ConvertStringToDbgType(type_name); }
 
-  bool GetIsOutput() { return is_output; }
+  bool GetIsOutput() const { return this->is_output; }
 
   void SetIsOutput(bool is_output) { this->is_output = is_output; }
 

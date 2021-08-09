@@ -153,7 +153,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   tensor_data->SetSlot(slot);
   tensor_data->SetTensor(out_tensor);
   tensor_data->SetDataPtr(static_cast<char *>(out_tensor->data_c()));
-  tensor_data->SetByteSize(out_tensor->data().nbytes());
+  tensor_data->SetByteSize((uint64_t)out_tensor->data().nbytes());
   tensor_data->SetType((unsigned int)host_type);
   tensor_data->SetShape(out_tensor->shape());
   ret = Debugger::GetInstance()->LoadNewTensor(tensor_data, keep_prev);

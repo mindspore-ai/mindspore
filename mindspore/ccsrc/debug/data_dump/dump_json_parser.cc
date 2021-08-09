@@ -60,8 +60,8 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 }
 
 bool DumpJsonParser::IsDumpEnabled() {
-  auto config_path = std::getenv(kMindsporeDumpConfig);
-  if (config_path == nullptr) {
+  auto config_path = common::GetEnv(kMindsporeDumpConfig);
+  if (config_path.empty()) {
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;
@@ -90,7 +90,12 @@ void DumpJsonParser::Parse() {
     MS_LOG(EXCEPTION) << "Get dump config file failed";
   }
 
-  std::ifstream json_file(dump_config_file.value());
+  auto dump_file_realpath = Common::GetRealPath(dump_config_file.value());
+  if (!dump_file_realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Get real path failed in Parse.";
+  }
+
+  std::ifstream json_file(dump_file_realpath.value());
   if (!json_file.is_open()) {
     MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed.";
   }
@@ -100,6 +105,7 @@ void DumpJsonParser::Parse() {
     json_file >> j;
   } catch (nlohmann::json::parse_error &e) {
     MS_LOG(ERROR) << "Dump json contents:" << GetIfstreamString(json_file);
+    json_file.close();
     MS_LOG(EXCEPTION) << "Parse dump json failed, error:" << e.what();
   }
 
@@ -107,6 +113,7 @@ void DumpJsonParser::Parse() {
   std::stringstream ss;
   ss << j;
   std::string cfg = ss.str();
+  json_file.close();
   MS_LOG(INFO) << "Dump json:" << cfg;
 
   ParseE2eDumpSetting(j);
@@ -128,13 +135,14 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
     auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(rank_id) + "/.dump_metadata/data_dump.json");
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
+    } else {
+      const std::string file_path = realpath.value();
+      ChangeFileMode(file_path, S_IWUSR);
+      std::ofstream json_copy(file_path);
+      json_copy << json_file.rdbuf();
+      json_copy.close();
+      ChangeFileMode(file_path, S_IRUSR);
     }
-    const std::string file_path = realpath.value();
-    ChangeFileMode(file_path, S_IWUSR);
-    std::ofstream json_copy(file_path);
-    json_copy << json_file.rdbuf();
-    json_copy.close();
-    ChangeFileMode(file_path, S_IRUSR);
   }
 }
 
@@ -347,14 +355,16 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   if (iteration_ == "all") {
     return true;
   }
+  const std::string vertical_bar = "|";
+  const std::string dash = "-";
   int start = 0;
-  int end = iteration_.find("|");
-  while (end != -1) {
-    std::string temp = iteration_.substr(start, end - start);
-    int range_idx = temp.find("-");
-    if (range_idx != -1) {
-      uint32_t low_range = std::stoul(temp.substr(0, range_idx));
-      uint32_t high_range = std::stoul(temp.substr((range_idx + 1), -1));
+  unsigned int end = (unsigned int)(iteration_.find(vertical_bar));
+  while (iteration_.find(vertical_bar) != std::string::npos) {
+    std::string temp = iteration_.substr((size_t)start, (size_t)(end - start));
+    unsigned int range_idx = (unsigned int)(temp.find(dash));
+    if (temp.find(dash) != std::string::npos) {
+      uint32_t low_range = std::stoul(temp.substr(0, (size_t)range_idx));
+      uint32_t high_range = std::stoul(temp.substr((size_t)(range_idx + 1), -1));
       if ((low_range <= iteration) && (iteration <= high_range)) {
         return true;
       }
@@ -362,13 +372,13 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
       return true;
     }
     start = end + 1;
-    end = iteration_.find("|", start);
+    end = (unsigned int)(iteration_.find(vertical_bar, (size_t)start));
   }
-  std::string temp = iteration_.substr(start, end - start);
-  int range_idx = temp.find("-");
-  if (range_idx != -1) {
-    uint32_t low_range = std::stoul(temp.substr(0, range_idx));
-    uint32_t high_range = std::stoul(temp.substr((range_idx + 1), -1));
+  std::string temp = iteration_.substr((size_t)start, (size_t)(end - start));
+  int range_idx = (unsigned int)(temp.find(dash));
+  if (temp.find(dash) != std::string::npos) {
+    uint32_t low_range = std::stoul(temp.substr(0, (size_t)range_idx));
+    uint32_t high_range = std::stoul(temp.substr((size_t)(range_idx + 1), -1));
     if ((low_range <= iteration) && (iteration <= high_range)) {
       return true;
     }
@@ -514,9 +524,9 @@ void DumpJsonParser::PrintUnusedKernel() {
 
 std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id) const {
   std::string bin_path;
-  bin_path.append(path_);
-  bin_path.append("/");
-  bin_path.append("rank_");
+  (void)bin_path.append(path_);
+  (void)bin_path.append("/");
+  (void)bin_path.append("rank_");
 
   uint32_t rank_id = 0;
   auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
@@ -565,7 +575,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *>
         if (input->isa<CNode>()) {
           MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << GetKernelNodeName(kernel)
                        << " Input:" << GetKernelNodeName(input);
-          update_kernels.try_emplace(GetKernelNodeName(input), 0);
+          (void)update_kernels.try_emplace(GetKernelNodeName(input), 0);
         }
       }
     }
