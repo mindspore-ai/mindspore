@@ -32,6 +32,7 @@ from src.eval_callback import EvalCallBack
 
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
 mindspore.set_seed(1)
 
@@ -79,9 +80,11 @@ def train_net(cross_valid_ind=1,
         per_print_times = 0
         repeat = config.repeat if hasattr(config, "repeat") else 1
         split = config.split if hasattr(config, "split") else 0.8
+        python_multiprocessing = not (config.device_target == "GPU" and run_distribute)
         train_dataset = create_multi_class_dataset(data_dir, config.image_size, repeat, batch_size,
                                                    num_classes=config.num_classes, is_train=True, augment=True,
-                                                   split=split, rank=rank, group_size=group_size, shuffle=True)
+                                                   split=split, rank=rank, group_size=group_size, shuffle=True,
+                                                   python_multiprocessing=python_multiprocessing)
         valid_dataset = create_multi_class_dataset(data_dir, config.image_size, 1, 1,
                                                    num_classes=config.num_classes, is_train=False,
                                                    eval_resize=config.eval_resize, split=split,
@@ -110,9 +113,9 @@ def train_net(cross_valid_ind=1,
                         loss_scale=config.loss_scale)
 
     loss_scale_manager = mindspore.train.loss_scale_manager.FixedLossScaleManager(config.FixedLossScaleManager, False)
-
-    model = Model(net, loss_fn=criterion, loss_scale_manager=loss_scale_manager, optimizer=optimizer, amp_level="O3")
-
+    amp_level = "O0" if config.device_target == "GPU" else "O3"
+    model = Model(net, loss_fn=criterion, loss_scale_manager=loss_scale_manager, optimizer=optimizer,
+                  amp_level=amp_level)
     print("============== Starting Training ==============")
     callbacks = [StepLossTimeMonitor(batch_size=batch_size, per_print_times=per_print_times), ckpoint_cb]
     if config.run_eval:
@@ -132,7 +135,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
     context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
     if config.device_target == "Ascend":
-        device_id = int(os.getenv('DEVICE_ID'))
+        device_id = get_device_id()
         context.set_context(device_id=device_id)
     epoch_size = config.epochs if not config.run_distribute else config.distribute_epochs
     batchsize = config.batch_size

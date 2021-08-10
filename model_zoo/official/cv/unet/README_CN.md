@@ -131,9 +131,9 @@ python preprocess_dataset.py --config_path path/unet/*.yaml  --data_path /data/s
 
 - Ascend处理器环境运行
 
-  ```python
+  ```shell
   # 训练示例
-python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
+  python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
   OR
   bash scripts/run_standalone_train.sh [DATASET] [CONFIG_PATH]
 
@@ -141,9 +141,29 @@ python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.l
   bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET] [CONFIG_PATH]
 
   # 评估示例
-python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
+  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
   OR
   bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
+  ```
+
+- GPU处理器环境运行
+
+  ```shell
+  # 训练示例
+  python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml --device_target=GPU > train.log 2>&1 &
+  OR
+  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH] [DEVICE_ID](optional)
+
+  # 分布式训练示例
+  bash scripts/run_distribute_train.sh [RANKSIZE] [DATASET] [CONFIG_PATH] [CUDA_VISIBLE_DEVICES(0,1,2,3,4,5,6,7)](optional)
+
+  # 评估示例
+  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
+  OR
+  bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH] [DEVICE_ID](optional)
+
+  # 模型导出
+  python export.py --config_path=[CONFIG_PATH] --checkpoint_file_path=[model_ckpt_path] --file_name=[air_model_name] --file_format=MINDIR --device_target=GPU
   ```
 
 - Docker中运行
@@ -167,7 +187,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
 开始进行模型的训练和推理，具体操作如下：
 
-```python
+```text
 # 在modelarts上使用分布式训练的示例：
 # (1) 选址a或者b其中一种方式。
 #       a. 设置 "enable_modelarts=True" 。
@@ -198,35 +218,20 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 # (7) 开始模型的推理。
 ```
 
-- GPU处理器环境运行
-
-  ```python
-  # 训练示例
-  python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
-  OR
-  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
-
-  # 分布式训练示例
-  bash scripts/run_distribute_train_gpu.sh [RANKSIZE] [DATASET] [CONFIG_PATH]
-
-  # 评估示例
-  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/config/ > eval.log  2>&1 &
-  OR
-  bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
-  ```
-
 # 脚本说明
 
 ## 脚本说明
 
 ### 脚本及样例代码
 
-```path
+```text
 ├── model_zoo
     ├── README.md                           // 模型描述
     ├── unet
         ├── README.md                       // Unet描述
+        ├── README_CN.md                    // Unet中文描述
         ├── ascend310_infer                 // Ascend 310 推理代码
+        ├── Dockerfile
         ├── scripts
         │   ├──docker_start.sh              // docker 脚本
         │   ├──run_disribute_train.sh       // Ascend 上分布式训练脚本
@@ -237,26 +242,29 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
         │   ├──run_standalone_eval_gpu.sh   // GPU 上评估脚本
         │   ├──run_distribute_train_gpu.sh  // GPU 上分布式训练脚本
         ├── src
-        │   ├──config.py                    // 参数配置
+        │   ├──__init__.py
         │   ├──data_loader.py               // 数据处理
         │   ├──loss.py                      // 损失函数
-        │   ├─  eval_callback.py            // 训练时推理回调函数
+        │   ├──eval_callback.py             // 训练时推理回调函数
         │   ├──utils.py                     // 通用组件（回调函数）
         │   ├──unet_medical                 // 医学图像处理Unet结构
                 ├──__init__.py
                 ├──unet_model.py            // Unet 网络结构
-                ├──unet_parts.py            // Unet 子网
+                └──unet_parts.py            // Unet 子网
         │   ├──unet_nested                  // Unet++
                 ├──__init__.py
                 ├──unet_model.py            // Unet++ 网络结构
-                ├──unet_parts.py            // Unet++ 子网
-                        ├── model_utils
-                │   ├── config.py          // 参数配置
-                │   ├── device_adapter.py  // 设备配置
-                │   ├── local_adapter.py   // 本地设备配置
-                │   ├── moxing_adapter.py  // modelarts设备配置
+                └──net_parts.py            // Unet++ 子网
+        │   ├──model_utils
+                ├──__init__.py
+                ├──config.py          // 参数配置
+                ├──device_adapter.py  // 设备配置
+                ├──local_adapter.py   // 本地设备配置
+                └──moxing_adapter.py  // modelarts设备配置
         ├── unet_medical_config.yaml        // 配置文件
+        ├── unet_medicl_gpu_config.yaml     // 配置文件
         ├── unet_nested_cell_config.yaml    // 配置文件
+        ├── unet_nested_coco_config.yaml    // 配置文件
         ├── unet_nested_config.yaml         // 配置文件
         ├── unet_simple_config.yaml         // 配置文件
         ├── unet_simple_coco_config.yaml    // 配置文件
@@ -267,16 +275,16 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
         ├── postprocess.py                  // 310 推理后处理脚本
         ├── preprocess.py                   // 310 推理前处理脚本
         ├── preprocess_dataset.py           // 适配MultiClass数据集脚本
-        ├── requirements.txt                // 需要的三方库.
+        └── requirements.txt                // 需要的三方库.
 ```
 
 ### 脚本参数
 
-在config.py中可以同时配置训练参数和评估参数。
+在*.yaml中可以同时配置训练参数和评估参数。
 
 - U-Net配置，ISBI数据集
 
-  ```python
+  ```yaml
   'name': 'Unet',                     # 模型名称
   'lr': 0.0001,                       # 学习率
   'epochs': 400,                      # 运行1p时的总训练轮次
@@ -300,7 +308,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 - Unet++配置, cell nuclei数据集
 
-  ```python
+  ```yaml
   'model': 'unet_nested',             # 模型名称
   'dataset': 'Cell_nuclei',           # 数据集名称
   'img_size': [96, 96],               # 输入图像大小
@@ -335,7 +343,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 - Ascend处理器环境运行
 
   ```shell
-python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
+  python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
   OR
   bash scripts/run_standalone_train.sh [DATASET] [CONFIG_PATH]
   ```
@@ -363,9 +371,9 @@ python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.l
 - GPU处理器环境运行
 
   ```shell
-  python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
+  python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output --device_target GPU > train.log  2>&1 &
   OR
-  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
+  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH] [DEVICE_ID](optional)
   ```
 
   上述python命令在后台运行，可通过`train.log`文件查看结果。
@@ -412,7 +420,7 @@ bash scripts/run_distribute_train_gpu.sh [RANKSIZE] [DATASET] [CONFIG_PATH]
   在运行以下命令之前，请检查用于评估的检查点路径。将检查点路径设置为绝对全路径，如"username/unet/ckpt_unet_medical_adam-48_600.ckpt"。
 
   ```shell
-python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
+  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
   OR
   bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
   ```
@@ -465,6 +473,25 @@ python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkp
 | 微调检查点 | 355.11M (.ckpt文件)                                         | 355.11M (.ckpt文件)                        |
 | 脚本                    | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
 
+| 参数 | Ascend | GPU |
+| ----- | ------ | ----- |
+| 模型版本 | U-Net nested(unet++) | U-Net nested(unet++) |
+| 资源 | Ascend 910；CPU：2.60GHz，192核；内存：755 GB；系统 Euler2.8  | NV SMX2 V100，内存：32G  |
+| 上传日期 | 2021-8-20 | 2021-8-20 |
+| MindSpore版本 | 1.3.0 | 1.3.0 |
+| 数据集 | Cell_nuclei | Cell_nuclei |
+| 训练参数   | 1卡: epoch=200, total steps=6700, batch_size=16, lr=0.0003; 8卡: epoch=1600, total steps=6560, batch_size=16*8, lr=0.0003 | 1卡: epoch=200, total steps=6700, batch_size=16, lr=0.0003; 8卡: epoch=1600, total steps=6560, batch_size=16*8, lr=0.0003 |
+| 优化器 | ADAM | ADAM |
+| 损失函数 | Softmax交叉熵 | Softmax交叉熵 |
+| 输出 | 概率 | 概率 |
+| 概率 | cross valid dice coeff is 0.966, cross valid IOU is 0.936 | cross valid dice coeff is 0.976,cross valid IOU is 0.955 |
+| 损失 | <0.1 | <0.1 |
+| 速度 | 1卡：150~200 fps | 1卡：230~280 fps, 8卡：(170~210)*8 fps|
+| 总时长 | 1卡: 10.8分钟 | 1卡: 8分钟 |
+| 参数(M)  | 27M | 27M |
+| 微调检查点 | 103.4M(.ckpt文件) | 103.4M(.ckpt文件) |
+| 脚本 | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
+
 ### 用法
 
 #### 推理
@@ -485,7 +512,7 @@ python export.py --config_path=[CONFIG_PATH] --checkpoint_file_path=[model_ckpt_
 
 ModelArts导出mindir
 
-```python
+```text
 # (1) 把训练好的模型地方到桶的对应位置。
 # (2) 选址a或者b其中一种方式。
 #       a.  设置 "enable_modelarts=True"
@@ -522,9 +549,9 @@ Cross valid dice coeff is: 0.9054352151297033
 
 #### 继续训练预训练模型
 
-在`config.py`里将`resume`设置成True，并将`resume_ckpt`设置成对应的权重文件路径，例如：
+在`*.yaml`里将`resume`设置成True，并将`resume_ckpt`设置成对应的权重文件路径，例如：
 
-```python
+```yaml
     'resume': True,
     'resume_ckpt': 'ckpt_unet_medical_adam_1-1_600.ckpt',
     'transfer_training': False,
@@ -535,7 +562,7 @@ Cross valid dice coeff is: 0.9054352151297033
 
 首先像上面讲的那样讲继续训练的权重加载进来。然后将`transfer_training`设置成True。配置中还有一个 `filter_weight`参数，用于将一些不能适用于不同数据集的权重过滤掉。通常这个`filter_weight`的参数不需要修改，其默认值通常是和模型的分类数相关的参数。例如：
 
-```python
+```yaml
     'resume': True,
     'resume_ckpt': 'ckpt_unet_medical_adam_1-1_600.ckpt',
     'transfer_training': True,
