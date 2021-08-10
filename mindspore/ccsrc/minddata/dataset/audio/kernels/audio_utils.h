@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 
@@ -21,6 +20,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -185,6 +185,29 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 /// \return Status return code
 Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
                    float n_freq);
+
+/// \brief Apply a mask along axis.
+/// \param input: Tensor of shape <...,freq,time>
+/// \param output: Tensor of shape <...,freq,time>
+/// \param mask_param: Number of columns to be masked will be uniformly sampled from [0, mask_param]
+/// \param mask_value: Value to assign to the masked columns
+/// \param axis: Axis to apply masking on (1 -> frequency, 2 -> time)
+/// \param rnd: Number generator
+/// \return Status code
+Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_param,
+                           double mask_value, int axis, std::mt19937 rnd);
+
+/// \brief Apply a mask along axis. All examples will have the same mask interval.
+/// \param input: Tensor of shape <...,freq,time>
+/// \param output: Tensor of shape <...,freq,time>
+/// \param mask_width: The width of the mask
+/// \param mask_start: Starting position of the mask
+///     Mask will be applied from indices [mask_start, mask_start + mask_width)
+/// \param mask_value: Value to assign to the masked columns
+/// \param axis: Axis to apply masking on (1 -> frequency, 2 -> time)
+/// \return Status code
+Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
+                     int64_t mask_start, double mask_value, int axis);
 
 }  // namespace dataset
 }  // namespace mindspore

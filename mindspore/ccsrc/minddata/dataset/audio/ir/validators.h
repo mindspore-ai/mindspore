@@ -54,6 +54,9 @@ Status CheckFloatScalarPositive(const std::string &op_name, const std::string &s
 // Helper function to non-negative float scalar
 Status CheckFloatScalarNonNegative(const std::string &op_name, const std::string &scalar_name, float scalar);
 
+// Helper function to positive int scalar
+Status CheckIntScalarNonNegative(const std::string &op_name, const std::string &scalar_name, int32_t scalar);
+
 // Helper function to check string scalar
 Status CheckStringScalarInList(const std::string &op_name, const std::string &scalar_name, const std::string &scalar,
                                const std::vector<std::string> &str_vec);
