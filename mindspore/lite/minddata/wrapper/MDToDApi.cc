@@ -269,10 +269,6 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
   MS_LOG(INFO) << "Start GetNext [1]" << pMDToDApi;
   // get next row for dataset
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
-  if (pMDToDApi->_iter == nullptr) {
-    MS_LOG(ERROR) << "GetNext called with no iteratoe. abort";
-    return -1;
-  }
   // create Execute functions, this replaces Map in Pipeline
 
   bool ret = pMDToDApi->_iter->GetNextRow(&row);

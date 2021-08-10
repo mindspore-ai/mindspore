@@ -156,7 +156,7 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
 }
 
 // Get the shard id of node
-Status TFRecordNode::GetShardId(int32_t *shard_id) {
+Status TFRecordNode::GetShardId(int32_t *const shard_id) {
   *shard_id = shard_id_;
 
   return Status::OK();
@@ -259,7 +259,7 @@ Status TFRecordNode::Accept(IRNodePass *p, bool *const modified) {
 }
 
 // Visitor accepting method for IRNodePass
-Status TFRecordNode::AcceptAfter(IRNodePass *p, bool *const modified) {
+Status TFRecordNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<TFRecordNode>(), modified);
 }

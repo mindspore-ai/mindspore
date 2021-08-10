@@ -49,8 +49,8 @@ class UniformAugOp : public TensorOp {
   std::string Name() const override { return kUniformAugOp; }
 
  private:
-  int32_t num_ops_;
   std::vector<std::shared_ptr<TensorOp>> tensor_op_list_;
+  int32_t num_ops_;
   std::mt19937 rnd_;
 };
 }  // namespace dataset

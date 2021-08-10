@@ -80,7 +80,7 @@ class RandomNode : public NonMappableSourceNode {
 
   /// \brief Get the shard id of node
   /// \return Status Status::OK() if get shard id successfully
-  Status GetShardId(int32_t *shard_id) override;
+  Status GetShardId(int32_t *const shard_id) override;
 
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter

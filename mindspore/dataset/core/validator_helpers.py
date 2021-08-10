@@ -471,8 +471,6 @@ def check_filename(path):
     if filename.startswith(' ') or filename.endswith(' '):
         raise ValueError("filename should not start/end with space.")
 
-    return True
-
 
 def check_dir(dataset_dir):
     """
