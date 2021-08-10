@@ -70,7 +70,7 @@ def _init_stream(pipeline_path):
 
 def _do_infer(stream_manager_api, data_input):
     """
-    send images into stream to do infer 
+    send images into stream to do infer
 
     Returns:
         infer result, numpy array
