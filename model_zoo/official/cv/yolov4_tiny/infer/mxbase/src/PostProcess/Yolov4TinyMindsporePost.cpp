@@ -21,22 +21,6 @@
 #include "MxBase/Log/Log.h"
 #include "MxBase/CV/ObjectDetection/Nms/Nms.h"
 
-const int YOLOV4_VERSION = 4;
-
-struct OutputLayer {
-    size_t width;
-    size_t height;
-    float anchors[6];
-};
-
-struct NetInfo {
-    int anchorDim;
-    int classNum;
-    int bboxDim;
-    int netWidth;
-    int netHeight;
-};
-
 namespace {
 const int SCALE = 32;
 const int BIASESDIM = 2;
