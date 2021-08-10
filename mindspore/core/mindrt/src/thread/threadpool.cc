@@ -197,7 +197,11 @@ void ThreadPool::DistributeTask(Task *task, int task_num) const {
   int sum_frequency = 0;
   std::vector<Worker *> assigned;
   int num = static_cast<int>(workers_.size()) - 1;
-  for (int i = num; i >= 0 && count < num_assigned; --i) {
+  int offset = 0;
+  if (!occupied_actor_thread_) {
+    offset = static_cast<int>(actor_thread_num_);
+  }
+  for (int i = num; i >= offset && count < num_assigned; --i) {
     if (workers_[i]->available()) {
       assigned.push_back(workers_[i]);
       sum_frequency += workers_[i]->frequency();

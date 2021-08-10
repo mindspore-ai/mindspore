@@ -140,7 +140,7 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   size_t core_num = std::thread::hardware_concurrency();
   THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;
-  if (actor_thread_num_ <= 0 || actor_thread_num > all_thread_num) {
+  if (actor_thread_num > all_thread_num) {
     THREAD_ERROR("thread num is invalid");
     return THREAD_ERROR;
   }

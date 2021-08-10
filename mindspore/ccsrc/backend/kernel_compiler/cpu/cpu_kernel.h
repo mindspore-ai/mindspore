@@ -25,6 +25,8 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "ir/anf.h"
+#include "runtime/framework/graph_scheduler.h"
+#include "actor/actormgr.h"
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
@@ -119,6 +121,7 @@ enum OperateType {
   ATAN2,
   RINT,
   ROUND,
+  EXP,
   IDENTITY,
 };
 
@@ -209,6 +212,12 @@ class TransposeIterator {
   std::vector<size_t> axes_;
   size_t pos_{0};
 };
+
+ActorThreadPool *GetActorMgrInnerThreadPool();
+void ParallelLaunch(const CTask &task, size_t count, float block_size = 128.0, Content content = nullptr);
+void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
+                              ParallelSearchInfo *parallel_search_info);
+
 }  // namespace kernel
 }  // namespace mindspore
 

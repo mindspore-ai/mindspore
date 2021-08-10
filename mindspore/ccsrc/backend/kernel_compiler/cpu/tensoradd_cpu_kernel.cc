@@ -42,7 +42,7 @@ bool TensorAddCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
         output_addr[i] = input_addr_a[i] + input_addr_b[i];
       }
     };
-    CPUKernelUtils::ParallelForAutoSearch(task, output_size, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   } else {  // Broadcast
     BroadcastIterator base_iter(input_shape_a_, input_shape_b_, output_shape_);
     auto task = [&base_iter, output_addr, input_addr_a, input_addr_b](size_t start, size_t end) {
@@ -53,7 +53,7 @@ bool TensorAddCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
         iter.GenNextPos();
       }
     };
-    CPUKernelUtils::ParallelForAutoSearch(task, output_size, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   }
   return true;
 }

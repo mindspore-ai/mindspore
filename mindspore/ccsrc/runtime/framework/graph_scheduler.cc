@@ -433,12 +433,11 @@ void GraphScheduler::Initialize() {
   // Create the thread pool of actor runtime and Set the OMP_NUM_THREADS env.
   size_t actor_thread_num = 0;
   size_t OMP_thread_num = 0;
-  ComputeThreadNums(&actor_thread_num, &OMP_thread_num);
-
+  size_t max_thread_num = 0;
+  ComputeThreadNums(&actor_thread_num, &OMP_thread_num, &max_thread_num);
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
-  actor_manager->Initialize(true, actor_thread_num);
-
+  actor_manager->Initialize(true, actor_thread_num, max_thread_num);
   std::string OMP_env = std::to_string(OMP_thread_num);
   (void)common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");

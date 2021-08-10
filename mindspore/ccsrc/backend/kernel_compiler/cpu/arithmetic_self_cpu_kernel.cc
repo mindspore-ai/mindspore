@@ -20,6 +20,7 @@
 #include <map>
 #include "backend/kernel_compiler/cpu/arithmetic_self_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "nnacl/fp32/exp_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,7 +32,15 @@ void Square(const T *in, T *out, size_t size) {
       out[i] = in[i] * in[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, size, MAX_SQUARE_SERIAL_SIZE);
+  ParallelLaunch(task, size, MAX_SQUARE_SERIAL_SIZE);
+}
+
+template <typename T>
+void Exp(const T *in, T *out, size_t size) {
+  if constexpr (std::is_same_v<T, float>) {
+    auto task = [&in, &out](size_t start, size_t end) { ExpFp32(in + start, out + start, end - start); };
+    ParallelLaunch(task, size, MAX_EXP_SERIAL_SIZE);
+  }
 }
 
 template <typename T>
@@ -57,7 +66,7 @@ void Neg(const T *in, T *out, size_t size) {
       out[i] = -in[i];
     }
   };
-  CPUKernelUtils::ParallelFor(task, size, MAX_NEG_SERIAL_SIZE);
+  ParallelLaunch(task, size, MAX_NEG_SERIAL_SIZE);
 }
 
 template <typename T>
@@ -262,6 +271,7 @@ void Identity(const T *in, T *out, size_t size) {
 static const std::map<std::string, OperateType> kArithmeticOpTypeMap = {{prim::kPrimNeg->name(), NEG},
                                                                         {prim::kPrimSquare->name(), SQUARE},
                                                                         {prim::kPrimOnesLike->name(), ONESLIKE},
+                                                                        {prim::kPrimExp->name(), EXP},
                                                                         {prim::kPrimZerosLike->name(), ZEROSLIKE},
                                                                         {prim::kPrimLogicalNot->name(), LOGICALNOT},
                                                                         {prim::kPrimSign->name(), SIGN},
@@ -324,17 +334,29 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
   static const std::map<OperateType, std::function<void(const T *in, T *out, size_t size)>> kArithmeticOpFuncMap = {
-    {SQUARE, Square<T>},     {SIGN, Sign<T>},
-    {NEG, Neg<T>},           {LOGICALNOT, LogicalNot<T>},
-    {ONESLIKE, OnesLike<T>}, {ZEROSLIKE, ZerosLike<T>},
-    {FLOOR, Floor<T>},       {RECIPROCAL, Reciprocal<T>},
-    {GELU, Gelu<T>},         {SIN, Sin<T>},
-    {COS, Cos<T>},           {TAN, Tan<T>},
-    {ASIN, Asin<T>},         {ACOS, ACos<T>},
-    {ATAN, Atan<T>},         {SINH, Sinh<T>},
-    {COSH, Cosh<T>},         {ASINH, Asinh<T>},
-    {ACOSH, Acosh<T>},       {ATANH, Atanh<T>},
-    {RINT, Rint<T>},         {ROUND, Round<T>}};
+    {SQUARE, Square<T>},
+    {SIGN, Sign<T>},
+    {NEG, Neg<T>},
+    {LOGICALNOT, LogicalNot<T>},
+    {ONESLIKE, OnesLike<T>},
+    {ZEROSLIKE, ZerosLike<T>},
+    {FLOOR, Floor<T>},
+    {RECIPROCAL, Reciprocal<T>},
+    {GELU, Gelu<T>},
+    {SIN, Sin<T>},
+    {COS, Cos<T>},
+    {TAN, Tan<T>},
+    {ASIN, Asin<T>},
+    {ACOS, ACos<T>},
+    {ATAN, Atan<T>},
+    {SINH, Sinh<T>},
+    {COSH, Cosh<T>},
+    {ASINH, Asinh<T>},
+    {ACOSH, Acosh<T>},
+    {ATANH, Atanh<T>},
+    {RINT, Rint<T>},
+    {ROUND, Round<T>},
+    {EXP, Exp<T>}};
   if (kArithmeticOpFuncMap.find(operate_type_) != kArithmeticOpFuncMap.end()) {
     kArithmeticOpFuncMap.at(operate_type_)(input, output, lens);
   } else {

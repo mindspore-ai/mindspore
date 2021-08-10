@@ -259,9 +259,9 @@ bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
   const auto input1 = reinterpret_cast<T *>(inputs[1]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
 
-  CPUKernelUtils::ParallelForAutoSearch(
+  ParallelLaunchAutoSearch(
     std::bind(elt_map.at(kernel_name_), this, input0, input1, output, std::placeholders::_1, std::placeholders::_2),
-    outputs[0]->size / sizeof(T), &parallel_search_info_);
+    outputs[0]->size / sizeof(T), this, &parallel_search_info_);
   return true;
 }
 }  // namespace kernel

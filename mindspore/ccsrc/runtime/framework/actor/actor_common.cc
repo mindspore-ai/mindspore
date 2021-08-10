@@ -21,11 +21,12 @@
 
 namespace mindspore {
 namespace runtime {
-void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
+void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
   MS_EXCEPTION_IF_NULL(OMP_thread_num);
-  size_t cpu_core_num = std::thread::hardware_concurrency();
-
+  MS_EXCEPTION_IF_NULL(max_thread_num);
+  size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
+  const size_t kMaxThreadNum = 23;
   const size_t kActorThreadMaxNum = 5;
   // The MemoryManagerActor binds single thread, and the other actors share one thread at least, so the min num is 2.
   const size_t kActorThreadMinNum = 2;
@@ -41,6 +42,10 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
 
   const size_t kOMPThreadMaxNum = 8;
   *OMP_thread_num = cpu_core_num < kOMPThreadMaxNum ? cpu_core_num : kOMPThreadMaxNum;
+  *max_thread_num = cpu_core_num > *actor_thread_num ? cpu_core_num : (*actor_thread_num + 1);
+  if (*max_thread_num > kMaxThreadNum) {
+    *max_thread_num = kMaxThreadNum;
+  }
 }
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {

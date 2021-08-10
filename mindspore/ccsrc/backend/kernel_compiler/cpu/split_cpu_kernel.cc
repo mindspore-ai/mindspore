@@ -67,7 +67,7 @@ void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t size) {
     (void)DoSplit(input, reinterpret_cast<void **>(output), &input_shape_[0], SizeToInt(start), SizeToInt(end - start),
                   &param, SizeToInt(sizeof(T)));
   };
-  CPUKernelUtils::ParallelForAutoSearch(task, param.split_count_ * param.num_split_, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, param.split_count_ * param.num_split_, this, &parallel_search_info_);
   return;
 }
 
