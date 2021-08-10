@@ -16,8 +16,13 @@
 import torch
 from mindspore import Tensor, save_checkpoint
 
-"""transform pth to ckpt"""
 def torch2ms(pth_file, ckpt_file):
+    """
+    transform pth to ckpt
+
+    Returns:
+        ckpt model file
+    """
     pretrained_dict = torch.load(pth_file)
     print('---------pretrained keys------------')
     for k in pretrained_dict:
