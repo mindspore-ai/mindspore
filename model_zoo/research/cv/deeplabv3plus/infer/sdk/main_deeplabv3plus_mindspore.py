@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""the main sdk infer file"""
 import argparse
 import base64
 import json
