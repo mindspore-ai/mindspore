@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +47,7 @@ def _cal_hist(a, b, n):
         n * a[k].astype(np.int32) + b[k], minlength=n ** 2).reshape(n, n)
 
 
+"""initial sdk stream"""
 def _init_stream(pipeline_path):
     stream_manager_api = StreamManagerApi()
     ret = stream_manager_api.InitManager()
@@ -63,6 +63,7 @@ def _init_stream(pipeline_path):
         return stream_manager_api
 
 
+"""send images into stream to do infer """
 def _do_infer(stream_manager_api, data_input):
     stream_name = b'segmentation'
     unique_id = stream_manager_api.SendDataWithUniqueId(
@@ -98,7 +99,7 @@ def main():
         os.makedirs(INFER_RESULT_DIR, exist_ok=True)
         data_input = MxDataInput()
         hist = np.zeros((args.num_classes, args.num_classes))
-        for i, line in enumerate(img_lst):
+        for _, line in enumerate(img_lst):
             img_path, msk_path = line.strip().split(' ')
             img_path = os.path.join(args.data_root, img_path)
             msk_path = os.path.join(args.data_root, msk_path)
