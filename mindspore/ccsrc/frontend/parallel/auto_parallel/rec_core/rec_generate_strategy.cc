@@ -29,6 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
+
 void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
@@ -37,6 +38,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   MS_EXCEPTION_IF_NULL(eli_list);
   MS_EXCEPTION_IF_NULL(index_list);
   GeneratePartitionedOperatorStrategy(graph, ops, index_list);
+
   std::shared_ptr<std::vector<size_t>> no_stra_op_list(new std::vector<size_t>);
   for (size_t i = 0; i < eli_list->size(); i++) {
     no_stra_op_list->push_back(eli_list->at(i)[0]);
@@ -488,6 +490,44 @@ Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
   return strategies;
 }
 
+Strategys MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
+                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                const size_t iter_ops) {
+  if (ops.empty()) {
+    MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
+  }
+  if (iter_ops >= ops.size()) {
+    MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
+  }
+
+  StrategyPtr origin_strategy = ops[iter_ops]->strategy();
+  Strategys strategies;
+  for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
+    if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
+      MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
+    }
+    Dimensions s;
+    size_t input_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
+    for (size_t dim = 0; dim < input_size; dim++) {
+      if (input_size >= 1 && input_size <= 4) {
+        s.push_back(1);
+      } else if (input_size == 0) {
+        s = {};
+      } else {
+        MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": Tensor shape " << input_size << " is unexpected.";
+      }
+    }
+    strategies.push_back(s);
+  }
+  // Update the output strategy of Rec Graph
+  graph->nodes[iter_graph].tensor_parm.tensor_str.str_n = 1.0;
+  graph->nodes[iter_graph].tensor_parm.tensor_str.str_c = 1.0;
+  graph->nodes[iter_graph].tensor_parm.tensor_str.str_h = 1.0;
+  graph->nodes[iter_graph].tensor_parm.tensor_str.str_w = 1.0;
+
+  return strategies;
+}
+
 void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op) {
   StrategyPtr origin_strategy = op->strategy();
   Strategys strategies;
@@ -528,9 +568,14 @@ Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector
     return PrepareOneHot(graph, ops, iter_graph, iter_ops);
   } else if ((type == SOFTMAX) || (type == LAYER_NORM)) {
     return PrepareAxisRelatedStrategy(graph, ops, iter_graph, iter_ops);
-  } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == "_VirtualDataset") || (type == "Dropout") ||
-             (type == BATCH_MATMUL)) {
+  } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == "Dropout") || (type == BATCH_MATMUL)) {
     return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
+  } else if (type == "_VirtualDataset") {
+    if (ParallelContext::GetInstance()->full_batch()) {
+      return MakeFullBatchStrategy(graph, ops, iter_graph, iter_ops);
+    } else {
+      return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
+    }
   } else {
     return MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
   }

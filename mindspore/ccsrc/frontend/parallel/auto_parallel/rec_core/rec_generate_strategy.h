@@ -55,6 +55,9 @@ Strategys CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
 Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
                                    const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
                                    const size_t iter_ops);
+Strategys MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
+                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                const size_t iter_ops);
 void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op);
 Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                           const size_t iter_graph, const size_t iter_ops);
