@@ -220,6 +220,8 @@ from .arg_max_with_value import _arg_max_with_value_tbe
 from .arg_min_with_value import _arg_min_with_value_tbe
 from .smooth_l1_loss import _smooth_l1_loss_tbe
 from .smooth_l1_loss_grad import _smooth_l1_loss_grad_tbe
+from .soft_margin_loss import _soft_margin_loss_tbe
+from .soft_margin_loss_grad import _soft_margin_loss_grad_tbe
 from .fused_mul_add import _fused_mul_add_tbe
 from .fused_mul_add_n import _fused_mul_add_n_tbe
 from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe

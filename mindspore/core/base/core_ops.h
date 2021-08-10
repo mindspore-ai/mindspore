@@ -312,6 +312,8 @@ inline const PrimitivePtr kPrimBinaryCrossEntropy = std::make_shared<Primitive>(
 inline const PrimitivePtr kPrimBinaryCrossEntropyGrad = std::make_shared<Primitive>("BinaryCrossEntropyGrad");
 inline const PrimitivePtr kPrimSmoothL1Loss = std::make_shared<Primitive>("SmoothL1Loss");
 inline const PrimitivePtr kPrimSmoothL1LossGrad = std::make_shared<Primitive>("SmoothL1LossGrad");
+inline const PrimitivePtr kPrimSoftMarginLoss = std::make_shared<Primitive>("SoftMarginLoss");
+inline const PrimitivePtr kPrimSoftMarginLossGrad = std::make_shared<Primitive>("SoftMarginLossGrad");
 inline const PrimitivePtr kPrimSoftmaxCrossEntropyWithLogits =
   std::make_shared<Primitive>("SoftmaxCrossEntropyWithLogits");
 inline const PrimitivePtr kPrimSigmoidCrossEntropyWithLogits =

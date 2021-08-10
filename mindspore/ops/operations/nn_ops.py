@@ -2659,6 +2659,53 @@ class SmoothL1Loss(PrimitiveWithInfer):
         return prediction
 
 
+class SoftMarginLoss(Primitive):
+    r"""
+    SoftMarginLoss operation.
+
+    Creates a criterion that optimizes a two-class classification
+    logistic loss between input tensor :math:`x` and target tensor :math:`y`
+    (containing 1 or -1).
+
+    .. math::
+        \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
+
+    Args:
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth data, with the same type and shape as `logits`.
+
+    Outputs:
+        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `logits` or `labels` is not a Tensor.
+        TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
+        ValueError: If shape of `logits` is not the same as `labels`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> loss = ops.SoftMarginLoss()
+        >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
+        >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        0.6764238
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction="mean"):
+        """Initialize SoftMarginLoss"""
+        self.init_prim_io_names(inputs=['predict', 'label'], outputs=['loss'])
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+
+
 class L2Loss(PrimitiveWithInfer):
     """
     Calculates half of the L2 norm of a tensor without using the `sqrt`.

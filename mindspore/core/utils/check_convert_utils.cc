@@ -175,6 +175,21 @@ void CheckAndConvertUtils::GetPadModEnumValue(const ValuePtr &value, int64_t *en
   }
 }
 
+void CheckAndConvertUtils::GetReductionEnumValue(const ValuePtr &value, int64_t *enum_value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    auto attr_value_str = GetValue<std::string>(value);
+
+    std::map<std::string, int64_t> pad_map = ReductionToEnumMap;
+    if (pad_map.find(attr_value_str) == pad_map.end()) {
+      MS_LOG(EXCEPTION) << "Invalid pad mode " << attr_value_str << " use pad, valid or same";
+    }
+    *enum_value = pad_map[attr_value_str];
+  } else {
+    *enum_value = GetValue<int64_t>(value);
+  }
+}
+
 AttrConverterPair CheckAndConvertUtils::GetAttrConvertPair(const std::string &op_type, const std::string &attr_name) {
   AttrConverterPair attr_pair;
   if (op_type.empty() || attr_name.empty()) {

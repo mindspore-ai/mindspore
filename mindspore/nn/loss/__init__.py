@@ -19,13 +19,13 @@ Cells of loss function. Loss function in machine learning is the target of the m
 It shows how well the model works on a dataset and the optimization target which the optimizer is searching.
 """
 
-from .loss import LossBase, L1Loss, MSELoss, SmoothL1Loss, FocalLoss,\
+from .loss import LossBase, L1Loss, MSELoss, SmoothL1Loss, SoftMarginLoss, FocalLoss,\
     SoftmaxCrossEntropyWithLogits, BCELoss, CosineEmbeddingLoss, \
     SampledSoftmaxLoss, DiceLoss, BCEWithLogitsLoss, MultiClassDiceLoss,\
     RMSELoss, MAELoss
 
 
-__all__ = ['LossBase', 'L1Loss', 'MSELoss', 'SmoothL1Loss', 'FocalLoss',
+__all__ = ['LossBase', 'L1Loss', 'MSELoss', 'SmoothL1Loss', 'SoftMarginLoss', 'FocalLoss',
            'SoftmaxCrossEntropyWithLogits', 'BCELoss', 'BCEWithLogitsLoss',
            'CosineEmbeddingLoss', 'SampledSoftmaxLoss', 'DiceLoss', 'MultiClassDiceLoss',
            'RMSELoss', 'MAELoss']

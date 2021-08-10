@@ -1831,6 +1831,15 @@ class SmoothL1LossGrad(PrimitiveWithInfer):
         return dloss
 
 
+class SoftMarginLossGrad(Primitive):
+    """Computes gradient for prediction on SoftMarginLoss."""
+
+    @prim_attr_register
+    def __init__(self, reduction="mean"):
+        self.init_prim_io_names(inputs=['predict', 'label', "dout"], outputs=['gradient'])
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+
+
 class StridedSliceGrad(PrimitiveWithInfer):
     """
     Performs grad of StridedSlice operation.
