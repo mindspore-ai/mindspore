@@ -43,7 +43,7 @@
                 "dataSource": "mxpi_tensorinfer0",
                 "postProcessConfigPath": "../data/models/yolov4tiny_coco2014_acc_test.cfg",
                 "labelPath": "../data/models/coco2014.names",
-                "postProcessLibPath": "../mxbase/build/libyolov4tiny_mindspore_post.so"
+                "postProcessLibPath": "./mxpi/build/libyolov4tiny_mindspore_post.so"
             },
             "factory": "mxpi_objectpostprocessor",
             "next": "mxpi_dataserialize0"
