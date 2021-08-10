@@ -54,8 +54,13 @@ def _get_last_ckpt(ckpt_dir):
     return os.path.join(ckpt_dir, sorted(ckpt_files)[-1])
 
 
-"""export air file for offline infer"""
 def _export_air(args, ckpt_dir):
+    """
+    export air file for offline infer
+    args:
+        args: arguments for air export
+        ckpt_dir: the path of ckpt file which will be convert to air
+    """
     ckpt_file = _get_last_ckpt(ckpt_dir)
     if not ckpt_file:
         return
