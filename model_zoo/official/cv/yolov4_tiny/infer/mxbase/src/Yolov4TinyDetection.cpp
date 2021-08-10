@@ -141,17 +141,17 @@ APP_ERROR Yolov4TinyDetectionOpencv::Resize(cv::Mat &srcImageMat, cv::Mat &dstIm
 }
 
 APP_ERROR Yolov4TinyDetectionOpencv::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase) {
-    const uint32_t dataSize = imageMat.cols * imageMat.rows * YUV444_RGB_WIDTH_NU;
-    MemoryData memoryDataDst(dataSize, MemoryData::MEMORY_DEVICE, deviceId_);
-    MemoryData memoryDataSrc(imageMat.data, dataSize, MemoryData::MEMORY_HOST_MALLOC);
+    const uint32_t dataSize = imageMat.cols * imageMat.rows * MxBase::YUV444_RGB_WIDTH_NU;
+    MxBase::MemoryData memoryDataDst(dataSize, MxBase::MemoryData::MEMORY_DEVICE, deviceId_);
+    MxBase::MemoryData memoryDataSrc(imageMat.data, dataSize, MxBase::MemoryData::MEMORY_HOST_MALLOC);
 
-    APP_ERROR ret = MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
+    APP_ERROR ret = MxBase::MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
     if (ret != APP_ERR_OK) {
         LogError << GetError(ret) << "Memory malloc failed.";
         return ret;
     }
-    std::vector<uint32_t> shape = {imageMat.rows * YUV444_RGB_WIDTH_NU, static_cast<uint32_t>(imageMat.cols)};
-    tensorBase = TensorBase(memoryDataDst, false, shape, TENSOR_DTYPE_UINT8);
+    std::vector<uint32_t> shape = {imageMat.rows * MxBase::YUV444_RGB_WIDTH_NU, static_cast<uint32_t>(imageMat.cols)};
+    tensorBase = MxBase::TensorBase(memoryDataDst, false, shape, MxBase::TENSOR_DTYPE_UINT8);
     return APP_ERR_OK;
 }
 
@@ -163,8 +163,8 @@ APP_ERROR Yolov4TinyDetectionOpencv::Inference(const std::vector<MxBase::TensorB
         for (size_t j = 0; j < modelDesc_.outputTensors[i].tensorDims.size(); ++j) {
             shape.push_back((uint32_t)modelDesc_.outputTensors[i].tensorDims[j]);
         }
-        TensorBase tensor(shape, dtypes[i], MemoryData::MemoryType::MEMORY_DEVICE, deviceId_);
-        APP_ERROR ret = TensorBase::TensorBaseMalloc(tensor);
+        MxBase::TensorBase tensor(shape, dtypes[i], MxBase::MemoryData::MemoryType::MEMORY_DEVICE, deviceId_);
+        APP_ERROR ret = MxBase::TensorBase::TensorBaseMalloc(tensor);
         if (ret != APP_ERR_OK) {
             LogError << "TensorBaseMalloc failed, ret=" << ret << ".";
             return ret;
@@ -172,8 +172,8 @@ APP_ERROR Yolov4TinyDetectionOpencv::Inference(const std::vector<MxBase::TensorB
         outputs.push_back(tensor);
     }
 
-    DynamicInfo dynamicInfo = {};
-    dynamicInfo.dynamicType = DynamicType::STATIC_BATCH;
+    MxBase::DynamicInfo dynamicInfo = {};
+    dynamicInfo.dynamicType = MxBase::DynamicType::STATIC_BATCH;
     auto startTime = std::chrono::high_resolution_clock::now();
     APP_ERROR ret = model_->ModelInference(inputs, outputs, dynamicInfo);
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -188,13 +188,13 @@ APP_ERROR Yolov4TinyDetectionOpencv::Inference(const std::vector<MxBase::TensorB
 
 APP_ERROR Yolov4TinyDetectionOpencv::PostProcess(const std::vector<MxBase::TensorBase> &outputs,
                                              std::vector<std::vector<MxBase::ObjectInfo>> &objInfos) {
-    ResizedImageInfo imgInfo;
+    MxBase::ResizedImageInfo imgInfo;
     imgInfo.widthOriginal = imageWidth_;
     imgInfo.heightOriginal = imageHeight_;
     imgInfo.widthResize = 608;
     imgInfo.heightResize = 608;
     imgInfo.resizeType = MxBase::RESIZER_STRETCHING;
-    std::vector<ResizedImageInfo> imageInfoVec = {};
+    std::vector<MxBase::ResizedImageInfo> imageInfoVec = {};
     imageInfoVec.push_back(imgInfo);
     APP_ERROR ret = post_->Process(outputs, objInfos, imageInfoVec);
     if (ret != APP_ERR_OK) {
