@@ -619,9 +619,10 @@ def constexpr(fn=None, get_instance=True, name=None):
     to compute constant value using the constants in the constructor.
 
     Args:
-        fn (function): A `fn` use as the infer_value of the output operator.
-        get_instance (bool): If true, return the instance of operator, otherwise return the operator class.
-        name (str): Defines the operator name. If `name` is None, use the function name as op name.
+        fn (function): A `fn` use as the infer_value of the output operator. Default: None.
+        get_instance (bool): If true, return the instance of operator,
+                             otherwise return the operator class. Default: True.
+        name (str): Defines the operator name. If `name` is None, use the function name as op name. Default: None.
 
     Examples:
         >>> from mindspore.ops import constexpr
