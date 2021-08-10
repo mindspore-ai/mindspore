@@ -47,8 +47,13 @@ def _cal_hist(a, b, n):
         n * a[k].astype(np.int32) + b[k], minlength=n ** 2).reshape(n, n)
 
 
-"""initial sdk stream before inference"""
 def _init_stream(pipeline_path):
+    """
+    initial sdk stream before inference
+
+    Returns:
+        stream manager api
+    """
     stream_manager_api = StreamManagerApi()
     ret = stream_manager_api.InitManager()
     if ret != 0:
@@ -63,8 +68,13 @@ def _init_stream(pipeline_path):
         return stream_manager_api
 
 
-"""send images into stream to do infer """
 def _do_infer(stream_manager_api, data_input):
+    """
+    send images into stream to do infer 
+
+    Returns:
+        infer result, numpy array
+    """
     stream_name = b'segmentation'
     unique_id = stream_manager_api.SendDataWithUniqueId(
         stream_name, 0, data_input)
