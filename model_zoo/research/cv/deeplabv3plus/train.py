@@ -209,13 +209,12 @@ def train():
     if args.ckpt_pre_trained or args.pretrainedmodel_filename:
         param_dict = load_checkpoint(ckpt_file)
         if args.filter_weight:
-            filter_list = ["network.last_conv.6.weight"]
+            filter_key = "network.last_conv.6.weight"
             for key in list(param_dict.keys()):
-                for filter_key in filter_list:
-                    if filter_key not in key:
-                        continue
-                    print('filter {}'.format(key))
-                    del param_dict[key]
+                if filter_key not in key:
+                    continue
+                print('filter {}'.format(key))
+                del param_dict[key]
         load_param_into_net(train_net, param_dict)
         print('load pretrained model:', ckpt_file)
 
