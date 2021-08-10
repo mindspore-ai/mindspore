@@ -137,6 +137,7 @@ set(LITE_SRC
         ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/runtime/inner_allocator.cc
         ${SRC_DIR}/runtime/infer_manager.cc
+        ${SRC_DIR}/runtime/runtime_pass.cc
         ${SRC_DIR}/inner_context.cc
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/ms_tensor.cc

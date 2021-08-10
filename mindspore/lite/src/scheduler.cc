@@ -34,6 +34,7 @@
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "src/runtime/infer_manager.h"
+#include "src/runtime/runtime_pass.h"
 #include "src/sub_graph_split.h"
 #include "src/weight_decoder.h"
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
@@ -135,6 +136,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
       return ret;
     }
   }
+
+  if (Nc4hw4PassValid(context_, dst_kernels)) {
+    Nc4hw4Pass(dst_kernels, src_tensors_);
+  }
+
   FindAllInoutKernels(*dst_kernels);
 #ifdef ENABLE_CONTROL_TENSORLIST
   if (IsControlFlowParttern(*dst_kernels)) {
