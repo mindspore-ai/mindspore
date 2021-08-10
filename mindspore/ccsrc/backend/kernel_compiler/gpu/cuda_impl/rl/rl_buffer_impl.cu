@@ -20,8 +20,8 @@ __global__ void BufferAppendKernel(const int64_t capacity, const size_t size, co
                                    unsigned char *buffer, const unsigned char *exp) {
   size_t index_ = index[0];
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    if (i >= size / exp_batch * (capacity - index[0])) {
-      index_ = i - size / exp_batch * (capacity - index[0]);
+    if (i >= (size / exp_batch) * (capacity - index[0])) {
+      index_ = i - (size / exp_batch) * (capacity - index[0]);  // The exp_batch >= 1, guaranteed by op prim.
     } else {
       index_ = i + index[0] * size / exp_batch;
     }
