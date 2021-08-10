@@ -714,7 +714,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Default: 127.5.
             - std_dev (float): The variance of input data after preprocessing,
               used for quantizing the first layer of network. Default: 127.5.
-            - enc_key (str): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
+            - enc_key (byte): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, take effect when enc_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
 
