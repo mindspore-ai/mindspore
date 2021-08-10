@@ -41,8 +41,11 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 
-"""create network for export air model"""
 class BuildNetwork(nn.Cell):
+    """
+    create network for export air model
+    the channels will be transposed to do infer
+    """
     def __init__(self, net, input_format="NHWC"):
         super(BuildNetwork, self).__init__()
         self.network = net
