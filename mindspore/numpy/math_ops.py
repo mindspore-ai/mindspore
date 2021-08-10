@@ -1444,14 +1444,14 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
             axes along which to operate. By default, flattened input is used. If
             this is a tuple of ints, the minimum is selected over multiple axes,
             instead of a single axis or all the axes as before.
-        keepdims (boolean, optional): defaults to False.
+        keepdims (bool, optional): defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
-        initial (scalar, optional):
+        initial (Number, optional):
             The maximum value of an output element. Must be present to allow
             computation on empty slice.
-        where (boolean Tensor, optional): defaults to True.
+        where (bool Tensor, optional): defaults to True.
             A boolean array which is broadcasted to match the dimensions of array,
             and selects elements to include in the reduction. If non-default value
             is passed, initial must also be provided.
