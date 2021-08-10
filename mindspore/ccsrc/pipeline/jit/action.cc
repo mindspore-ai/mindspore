@@ -121,19 +121,21 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 
+// Some operators are not defined.
 inline bool ResetCNodeFromLoad(const AnfNodePtr &node) {
   if (node->isa<CNode>() && node->cast<CNodePtr>()->get_load_flag()) {
     // Process partial("DeadNode",args) when the graph is loaded.
     auto operatorPtr = node->cast<CNodePtr>()->input(0);
     // Set abstract of switch(c,f,t) to null
     auto prim = GetValueNode<PrimitivePtr>(operatorPtr);
-    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
+    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim) ||
+        IsPrimitiveEquals(prim::kPrimPartial, prim)) {
       node->set_abstract(nullptr);
       return true;
     }
-    // Set abstract of switch(c,f,t)() to null
-    prim = GetCNodePrimitive(operatorPtr);
-    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
+    // If the operator is not a primitive, the abstract will been set to null.
+    // Because there are not some operators in front end, the abstract of primitive should be reserved.
+    if (prim == nullptr) {
       node->set_abstract(nullptr);
       return true;
     }
@@ -155,13 +157,6 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraph
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
       const AbstractBasePtr &prev_inferred = node->abstract();
-
-      // AbstractFunction has context,but contexts in cache have been cleaned.
-      if (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>()) {
-        node->set_abstract(nullptr);
-        MS_LOG(DEBUG) << "Abstract of node " << node->ToString() << " is set to nullptr";
-        continue;
-      }
 
       // Handle previous inferred value for CNode if is loaded from MindIR
       if (res->is_load() && ResetCNodeFromLoad(node)) {
@@ -536,8 +531,8 @@ bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes)
         auto func_graph = res->func_graph();
         MS_EXCEPTION_IF_NULL(func_graph);
         func_graph->DumpFuncGraph(fg_name);
-        DumpIR(fg_name + ".ir", func_graph);
         ExportIR(fg_name + ".dat", func_graph);
+        DumpIR(fg_name + ".ir", func_graph);
         MS_LOG(DEBUG) << "Dump " << fg_name << " func graph.";
       }
       counter++;
