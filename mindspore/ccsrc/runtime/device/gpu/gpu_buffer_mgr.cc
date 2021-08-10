@@ -205,6 +205,10 @@ size_t GpuBufferMgr::Size(unsigned int handle) {
     MS_LOG(ERROR) << "handle is invalid";
     return 0;
   }
+  if (handle_queue_map_.count(handle) == 0) {
+    MS_LOG(ERROR) << "Handle not exist " << handle;
+    return 0;
+  }
   return handle_queue_map_.at(handle)->Size();
 }
 
@@ -220,6 +224,10 @@ size_t GpuBufferMgr::Size(unsigned int device_id, const std::string &channel_nam
 size_t GpuBufferMgr::Capacity(unsigned int handle) {
   if (handle == HandleMgr::INVALID_HANDLE) {
     MS_LOG(ERROR) << "handle is invalid";
+    return 0;
+  }
+  if (handle_queue_map_.count(handle) == 0) {
+    MS_LOG(ERROR) << "Handle not exist " << handle;
     return 0;
   }
   return handle_queue_map_.at(handle)->Capacity();

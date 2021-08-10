@@ -135,6 +135,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
     return true;
   }
 
+  MS_EXCEPTION_IF_NULL(Debugger::GetInstance());
   if (Debugger::GetInstance()->TensorExistsInCurrent(tensor_name)) {
     MS_LOG(INFO) << tensor_name << " already loaded for this step so not loading it again.";
     return true;
