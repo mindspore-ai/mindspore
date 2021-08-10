@@ -149,6 +149,14 @@ MS_REG_GPU_KERNEL_ONE(
   NotEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
   BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateDiv,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateMod,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  BroadcastOpGpuKernel, float)
 
 // fp16
 MS_REG_GPU_KERNEL_ONE(
@@ -223,6 +231,14 @@ MS_REG_GPU_KERNEL_ONE(
   NotEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
   BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateDiv,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateMod,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half)
 
 // int32
 MS_REG_GPU_KERNEL_ONE(
@@ -279,6 +295,14 @@ MS_REG_GPU_KERNEL_ONE(
   BroadcastOpGpuKernel, int)
 MS_REG_GPU_KERNEL_ONE(
   NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateDiv,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateMod,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int)
 
 // int64
@@ -351,6 +375,12 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   Mul, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
   BroadcastOpGpuKernel, int8_t)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateDiv, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+  BroadcastOpGpuKernel, int8_t)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateMod, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+  BroadcastOpGpuKernel, int8_t)
 
 // uint32
 MS_REG_GPU_KERNEL_ONE(
@@ -379,6 +409,14 @@ MS_REG_GPU_KERNEL_ONE(
   BroadcastOpGpuKernel, uint8_t)
 MS_REG_GPU_KERNEL_ONE(
   Mul, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  BroadcastOpGpuKernel, uint8_t)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateDiv,
+  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  BroadcastOpGpuKernel, uint8_t)
+MS_REG_GPU_KERNEL_ONE(
+  TruncateMod,
+  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
   BroadcastOpGpuKernel, uint8_t)
 
 // int16
