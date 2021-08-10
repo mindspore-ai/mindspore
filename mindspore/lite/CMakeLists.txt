@@ -221,6 +221,11 @@ else()
     set(CMAKE_CXX_FLAGS "${LITE_COMPILE_FLAGS} -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS} -std=c++17")
     set(CMAKE_CXX_FLAGS_DEBUG "-DDebug -g -fvisibility=default")
 
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        string(REPLACE "-O2" "-O0" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+        string(REPLACE "-O2" "-O0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    endif()
+
     if(WIN32)
         if(CMAKE_SIZEOF_VOID_P EQUAL 4)
             set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-seh ${CMAKE_SHARED_LINKER_FLAGS}")
