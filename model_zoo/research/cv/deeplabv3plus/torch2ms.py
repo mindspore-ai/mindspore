@@ -15,8 +15,9 @@
 import torch
 from mindspore import Tensor, save_checkpoint
 
-def torch2ms(pth_path, ckpt_path):
-    pretrained_dict = torch.load(pth_path)
+"""transform pth to ckpt"""
+def torch2ms(pth_file, ckpt_file):
+    pretrained_dict = torch.load(pth_file)
     print('---------pretrained keys------------')
     for k in pretrained_dict:
         print(k)
@@ -32,9 +33,9 @@ def torch2ms(pth_path, ckpt_path):
             k = k.replace('bias', 'beta')
         k = 'network.resnet.' + k
         print(k)
-        param_dict = {'name':k, 'data': Tensor(v.detach().numpy())}
+        param_dict = {'name': k, 'data': Tensor(v.detach().numpy())}
         new_params.append(param_dict)
-    save_checkpoint(new_params, ckpt_path)
+    save_checkpoint(new_params, ckpt_file)
 
 if __name__ == '__main__':
     pth_path = './resnet101-5d3b4d8f.pth'
