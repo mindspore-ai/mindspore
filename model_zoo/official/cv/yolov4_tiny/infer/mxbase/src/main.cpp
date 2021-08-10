@@ -74,7 +74,7 @@ APP_ERROR ReadImagesPath(const std::string &path, std::vector<std::string> *imag
         SplitString(line, &vectorStr, splitStr);
         imagesPath->push_back(vectorStr[1]);
     }
-    LogInfo << imagesPath[0];
+
     inFile.close();
     return APP_ERR_OK;
 }
