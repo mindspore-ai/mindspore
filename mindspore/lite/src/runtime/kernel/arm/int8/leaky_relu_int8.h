@@ -39,7 +39,7 @@ class LeakyReluInt8CPUKernel : public InnerKernel {
   int DoExecute(int task_id);
 
  private:
-  LeakyReluQuantArg quant_prelu_parm_;
+  LeakyReluQuantArg quant_prelu_parm_ = {};
 };
 }  // namespace mindspore::kernel
 

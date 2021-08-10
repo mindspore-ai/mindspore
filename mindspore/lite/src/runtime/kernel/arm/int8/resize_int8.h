@@ -52,8 +52,8 @@ class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
   QuantArg *quant_in_{nullptr};
   QuantArg *quant_out_{nullptr};
   QuantMulArg *multiplier_{nullptr};
-  ResizeQuantArg resize_quant_arg_;
-  ResizeFloatScaleQuantArg resize_float_quant_arg_;
+  ResizeQuantArg resize_quant_arg_ = {};
+  ResizeFloatScaleQuantArg resize_float_quant_arg_ = {};
 };
 }  // namespace mindspore::kernel
 
