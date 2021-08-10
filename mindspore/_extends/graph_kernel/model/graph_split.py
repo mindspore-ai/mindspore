@@ -486,7 +486,7 @@ class GraphSplitByPattern:
             cheap_regions = []
             for output in outputs:
                 #  tensor should have user other than user_area to be fused
-                if output.para_type != Tensor.PARA_OUTPUT and len(output.to_ops) < 2:
+                if len(output.to_ops) < 2:
                     continue
                 region_ops = []
                 grow = True
