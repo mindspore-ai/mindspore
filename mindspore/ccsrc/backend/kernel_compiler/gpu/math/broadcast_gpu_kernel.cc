@@ -382,7 +382,6 @@ MS_REG_GPU_KERNEL_ONE(
   TruncateMod, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
   BroadcastOpGpuKernel, int8_t)
 
-
 // uint32
 MS_REG_GPU_KERNEL_ONE(
   Sub, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
