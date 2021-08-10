@@ -92,7 +92,7 @@ from ._quant_ops import *
 from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, PopulationCount, UpdateState, Load,
                         CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
-                        StartFLJob, UpdateModel, GetModel)
+                        StartFLJob, UpdateModel, GetModel, PyFunc)
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
                         CusMatMulCubeDenseRight,
@@ -523,6 +523,7 @@ __all__ = [
     "MDIterationGradientDescent",
     "BondForceWithAtomEnergyAndVirial",
     "ConstrainForceCycle",
+    "PyFunc"
 ]
 
 __all__.sort()
