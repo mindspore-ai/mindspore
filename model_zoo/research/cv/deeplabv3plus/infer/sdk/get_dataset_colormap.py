@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""generate the colormap"""
 from six.moves import range
 import numpy as np
 
