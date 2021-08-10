@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
   context->MutableDeviceInfo().push_back(cpu_context);
 
   mindspore::Graph graph;
-  auto status = mindspore::Serialization::Load(infer_model_fn, mindspore::kFlatBuffer, &graph);
+  auto status = mindspore::Serialization::Load(infer_model_fn, mindspore::kMindIR, &graph);
   if (status != mindspore::kSuccess) {
     std::cout << "Error " << status << " during serialization of graph " << infer_model_fn;
     MS_ASSERT(status != mindspore::kSuccess);
