@@ -222,6 +222,7 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
       memset(tensor_list_c, 0, sizeof(TensorListC));
       ret = TensorList2TensorListC(tensor_list, tensor_list_c);
       if (ret != RET_OK) {
+        free(tensor_list_c->tensors_);
         free(tensor_list_c);
         return NNACL_ERR;
       }
