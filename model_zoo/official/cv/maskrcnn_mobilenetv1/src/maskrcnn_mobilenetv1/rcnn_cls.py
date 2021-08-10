@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore import context
 
 class DenseNoTranpose(nn.Cell):
     """Dense method"""
@@ -40,20 +41,25 @@ class FpnCls(nn.Cell):
     """dense layer of classification and box head"""
     def __init__(self, input_channels, output_channels, num_classes, pool_size):
         super(FpnCls, self).__init__()
+        if context.get_context("device_target") == "CPU":
+            self.platform_mstype = mstype.float32
+        else:
+            self.platform_mstype = mstype.float16
         representation_size = input_channels * pool_size * pool_size
         shape_0 = (output_channels, representation_size)
         weights_0 = initializer("XavierUniform", shape=shape_0[::-1], dtype=mstype.float32)
         shape_1 = (output_channels, output_channels)
         weights_1 = initializer("XavierUniform", shape=shape_1[::-1], dtype=mstype.float32)
-        self.shared_fc_0 = DenseNoTranpose(representation_size, output_channels, weights_0).to_float(mstype.float16)
-        self.shared_fc_1 = DenseNoTranpose(output_channels, output_channels, weights_1).to_float(mstype.float16)
+        self.shared_fc_0 = DenseNoTranpose(representation_size, output_channels, weights_0) \
+                           .to_float(self.platform_mstype)
+        self.shared_fc_1 = DenseNoTranpose(output_channels, output_channels, weights_1).to_float(self.platform_mstype)
 
         cls_weight = initializer('Normal', shape=[num_classes, output_channels][::-1],
                                  dtype=mstype.float32)
         reg_weight = initializer('Normal', shape=[num_classes * 4, output_channels][::-1],
                                  dtype=mstype.float32)
-        self.cls_scores = DenseNoTranpose(output_channels, num_classes, cls_weight).to_float(mstype.float16)
-        self.reg_scores = DenseNoTranpose(output_channels, num_classes * 4, reg_weight).to_float(mstype.float16)
+        self.cls_scores = DenseNoTranpose(output_channels, num_classes, cls_weight).to_float(self.platform_mstype)
+        self.reg_scores = DenseNoTranpose(output_channels, num_classes * 4, reg_weight).to_float(self.platform_mstype)
 
         self.relu = P.ReLU()
         self.flatten = P.Flatten()
@@ -99,8 +105,10 @@ class RcnnCls(nn.Cell):
                  ):
         super(RcnnCls, self).__init__()
         cfg = config
-        self.rcnn_loss_cls_weight = Tensor(np.array(cfg.rcnn_loss_cls_weight).astype(np.float16))
-        self.rcnn_loss_reg_weight = Tensor(np.array(cfg.rcnn_loss_reg_weight).astype(np.float16))
+        if context.get_context("device_target") == "CPU":
+            self.platform_mstype = mstype.float32
+        else:
+            self.platform_mstype = mstype.float16
         self.rcnn_fc_out_channels = cfg.rcnn_fc_out_channels
         self.target_means = target_means
         self.target_stds = target_stds
@@ -128,7 +136,6 @@ class RcnnCls(nn.Cell):
 
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
-        self.value = Tensor(1.0, mstype.float16)
 
         self.num_bboxes = (cfg.num_expected_pos_stage2 + cfg.num_expected_neg_stage2) * batch_size
 
@@ -143,7 +150,8 @@ class RcnnCls(nn.Cell):
 
         if self.training:
             bbox_weights = self.cast(self.logicaland(self.greater(labels, 0), mask), mstype.int32) * labels
-            labels = self.cast(self.onehot(labels, self.num_classes, self.on_value, self.off_value), mstype.float16)
+            labels = self.onehot(labels, self.num_classes, self.on_value, self.off_value)
+            labels = self.cast(labels, self.platform_mstype)
             bbox_targets = self.tile(self.expandims(bbox_targets, 1), (1, self.num_classes, 1))
 
             loss_cls, loss_reg = self.loss(x_cls, x_reg,
@@ -160,13 +168,13 @@ class RcnnCls(nn.Cell):
         """Loss method."""
         # loss_cls
         loss_cls, _ = self.loss_cls(cls_score, labels)
-        weights = self.cast(weights, mstype.float16)
+        weights = self.cast(weights, self.platform_mstype)
         loss_cls = loss_cls * weights
         loss_cls = self.sum_loss(loss_cls, (0,)) / self.sum_loss(weights, (0,))
 
         # loss_reg
         bbox_weights = self.cast(self.onehot(bbox_weights, self.num_classes, self.on_value, self.off_value),
-                                 mstype.float16)
+                                 self.platform_mstype)
         bbox_weights = bbox_weights * self.rmv_first_tensor   #  * self.rmv_first_tensor  exclude background
         pos_bbox_pred = self.reshape(bbox_pred, (self.num_bboxes, -1, 4))
         loss_reg = self.loss_bbox(pos_bbox_pred, bbox_targets)

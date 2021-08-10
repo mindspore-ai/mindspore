@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
+from mindspore import context
 from .mobilenetv1 import MobileNetV1_FeatureSelector
 from .bbox_assign_sample_stage2 import BboxAssignSampleForRcnn
 from .fpn_neck import FeatPyramidNeck
@@ -59,16 +60,15 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         self.anchor_strides = config.anchor_strides
         self.target_means = tuple(config.rcnn_target_means)
         self.target_stds = tuple(config.rcnn_target_stds)
+        self.init_datatype()
 
         # Anchor generator
         anchor_base_sizes = None
-        self.anchor_base_sizes = list(
-            self.anchor_strides) if anchor_base_sizes is None else anchor_base_sizes
+        self.anchor_base_sizes = list(self.anchor_strides) if anchor_base_sizes is None else anchor_base_sizes
 
         self.anchor_generators = []
         for anchor_base in self.anchor_base_sizes:
-            self.anchor_generators.append(
-                AnchorGenerator(anchor_base, self.anchor_scales, self.anchor_ratios))
+            self.anchor_generators.append(AnchorGenerator(anchor_base, self.anchor_scales, self.anchor_ratios))
 
         self.num_anchors = len(self.anchor_ratios) * len(self.anchor_scales)
 
@@ -78,30 +78,21 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         self.anchor_list = self.get_anchors(featmap_sizes)
 
         # Backbone mobilenetv1
-        self.backbone = MobileNetV1_FeatureSelector(1001, features_only=True).to_float(mstype.float16)
+        self.backbone = MobileNetV1_FeatureSelector(1001, features_only=True).to_float(self.platform_mstype)
         # Fpn
-        self.fpn_ncek = FeatPyramidNeck(config.fpn_in_channels,
-                                        config.fpn_out_channels,
-                                        config.fpn_num_outs)
+        self.fpn_neck = FeatPyramidNeck(config.fpn_in_channels, config.fpn_out_channels, config.fpn_num_outs)
 
         # Rpn and rpn loss
-        self.gt_labels_stage1 = Tensor(np.ones((self.train_batch_size, config.num_gts)).astype(np.uint8))
-        self.rpn_with_loss = RPN(config,
-                                 self.train_batch_size,
-                                 config.rpn_in_channels,
-                                 config.rpn_feat_channels,
-                                 config.num_anchors,
-                                 config.rpn_cls_out_channels)
+        self.gt_labels_stage1 = Tensor(np.ones((self.train_batch_size, config.num_gts)).astype(self.int_dtype))
+
+        self.rpn_with_loss = RPN(config, self.train_batch_size, config.rpn_in_channels, config.rpn_feat_channels,
+                                 config.num_anchors, config.rpn_cls_out_channels)
 
         # Proposal
-        self.proposal_generator = Proposal(config,
-                                           self.train_batch_size,
-                                           config.activate_num_classes,
+        self.proposal_generator = Proposal(config, self.train_batch_size, config.activate_num_classes,
                                            config.use_sigmoid_cls)
         self.proposal_generator.set_train_local(config, True)
-        self.proposal_generator_test = Proposal(config,
-                                                config.test_batch_size,
-                                                config.activate_num_classes,
+        self.proposal_generator_test = Proposal(config, config.test_batch_size, config.activate_num_classes,
                                                 config.use_sigmoid_cls)
         self.proposal_generator_test.set_train_local(config, False)
 
@@ -112,40 +103,24 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
                                           stds=self.target_stds)
 
         # Roi
-        self.roi_align = SingleRoIExtractor(config,
-                                            config.roi_layer,
-                                            config.roi_align_out_channels,
-                                            config.roi_align_featmap_strides,
-                                            self.train_batch_size,
-                                            config.roi_align_finest_scale,
-                                            mask=False)
+        self.roi_align = SingleRoIExtractor(config, config.roi_layer, config.roi_align_out_channels,
+                                            config.roi_align_featmap_strides, self.train_batch_size,
+                                            config.roi_align_finest_scale, mask=False)
         self.roi_align.set_train_local(config, True)
 
-        self.roi_align_mask = SingleRoIExtractor(config,
-                                                 config.roi_layer,
-                                                 config.roi_align_out_channels,
-                                                 config.roi_align_featmap_strides,
-                                                 self.train_batch_size,
-                                                 config.roi_align_finest_scale,
-                                                 mask=True)
+        self.roi_align_mask = SingleRoIExtractor(config, config.roi_layer, config.roi_align_out_channels,
+                                                 config.roi_align_featmap_strides, self.train_batch_size,
+                                                 config.roi_align_finest_scale, mask=True)
         self.roi_align_mask.set_train_local(config, True)
 
-        self.roi_align_test = SingleRoIExtractor(config,
-                                                 config.roi_layer,
-                                                 config.roi_align_out_channels,
-                                                 config.roi_align_featmap_strides,
-                                                 1,
-                                                 config.roi_align_finest_scale,
+        self.roi_align_test = SingleRoIExtractor(config, config.roi_layer, config.roi_align_out_channels,
+                                                 config.roi_align_featmap_strides, 1, config.roi_align_finest_scale,
                                                  mask=False)
         self.roi_align_test.set_train_local(config, False)
 
-        self.roi_align_mask_test = SingleRoIExtractor(config,
-                                                      config.roi_layer,
-                                                      config.roi_align_out_channels,
-                                                      config.roi_align_featmap_strides,
-                                                      1,
-                                                      config.roi_align_finest_scale,
-                                                      mask=True)
+        self.roi_align_mask_test = SingleRoIExtractor(config, config.roi_layer, config.roi_align_out_channels,
+                                                      config.roi_align_featmap_strides, 1,
+                                                      config.roi_align_finest_scale, mask=True)
         self.roi_align_mask_test.set_train_local(config, False)
 
         # Rcnn
@@ -176,7 +151,7 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
 
         self.rpn_max_num = config.rpn_max_num
 
-        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(np.float16))
+        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(self.platform_dtype))
         self.ones_mask = np.ones((self.rpn_max_num, 1)).astype(np.bool)
         self.zeros_mask = np.zeros((self.rpn_max_num, 1)).astype(np.bool)
         self.bbox_mask = Tensor(np.concatenate((self.ones_mask, self.zeros_mask,
@@ -184,10 +159,11 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         self.nms_pad_mask = Tensor(np.concatenate((self.ones_mask, self.ones_mask,
                                                    self.ones_mask, self.ones_mask, self.zeros_mask), axis=1))
 
-        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_score_thr)
-        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * 0)
-        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(np.float16) * -1)
-        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_iou_thr)
+        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(self.platform_dtype)
+                                        * config.test_score_thr)
+        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(self.platform_dtype) * 0)
+        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(self.platform_dtype) * -1)
+        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(self.platform_dtype) * config.test_iou_thr)
         self.test_max_per_img = config.test_max_per_img
         self.nms_test = P.NMSWithMask(config.test_iou_thr)
         self.softmax = P.Softmax(axis=1)
@@ -201,42 +177,14 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         self.concat_end = (self.num_classes - 1)
 
         # Init tensor
-        roi_align_index = [np.array(np.ones((config.num_expected_pos_stage2 + config.num_expected_neg_stage2, 1)) * i,
-                                    dtype=np.float16) for i in range(self.train_batch_size)]
+        self.init_tensors(config)
 
-        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=np.float16) \
-                                for i in range(self.test_batch_size)]
-
-        self.roi_align_index_tensor = Tensor(np.concatenate(roi_align_index))
-        self.roi_align_index_test_tensor = Tensor(np.concatenate(roi_align_index_test))
-
-        roi_align_index_pos = [np.array(np.ones((config.num_expected_pos_stage2, 1)) * i,
-                                        dtype=np.float16) for i in range(self.train_batch_size)]
-        self.roi_align_index_tensor_pos = Tensor(np.concatenate(roi_align_index_pos))
-
-        self.rcnn_loss_cls_weight = Tensor(np.array(config.rcnn_loss_cls_weight).astype(np.float16))
-        self.rcnn_loss_reg_weight = Tensor(np.array(config.rcnn_loss_reg_weight).astype(np.float16))
-        self.rcnn_loss_mask_fb_weight = Tensor(np.array(config.rcnn_loss_mask_fb_weight).astype(np.float16))
-
-        self.argmax_with_value = P.ArgMaxWithValue(axis=1)
-        self.on_value = Tensor(1.0, mstype.float32)
-        self.off_value = Tensor(0.0, mstype.float32)
-        self.onehot = P.OneHot()
-        self.reducesum = P.ReduceSum()
-        self.sigmoid = P.Sigmoid()
-        self.expand_dims = P.ExpandDims()
-        self.test_mask_fb_zeros = Tensor(np.zeros((self.rpn_max_num, 28, 28)).astype(np.float16))
-        self.value = Tensor(1.0, mstype.float16)
     def construct(self, img_data, img_metas, gt_bboxes, gt_labels, gt_valids, gt_masks):
         x = self.backbone(img_data)
-        x = self.fpn_ncek(x)
+        x = self.fpn_neck(x)
 
-        rpn_loss, cls_score, bbox_pred, rpn_cls_loss, rpn_reg_loss, _ = self.rpn_with_loss(x,
-                                                                                           img_metas,
-                                                                                           self.anchor_list,
-                                                                                           gt_bboxes,
-                                                                                           self.gt_labels_stage1,
-                                                                                           gt_valids)
+        rpn_loss, cls_score, bbox_pred, rpn_cls_loss, rpn_reg_loss, _ = \
+            self.rpn_with_loss(x, img_metas, self.anchor_list, gt_bboxes, self.gt_labels_stage1, gt_valids)
 
         if self.training:
             proposal, proposal_mask = self.proposal_generator(cls_score, bbox_pred, self.anchor_list)
@@ -258,23 +206,13 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         if self.training:
             for i in range(self.train_batch_size):
                 gt_bboxes_i = self.squeeze(gt_bboxes[i:i + 1:1, ::])
-
-                gt_labels_i = self.squeeze(gt_labels[i:i + 1:1, ::])
-                gt_labels_i = self.cast(gt_labels_i, mstype.uint8)
-
-                gt_valids_i = self.squeeze(gt_valids[i:i + 1:1, ::])
-                gt_valids_i = self.cast(gt_valids_i, mstype.bool_)
-
-                gt_masks_i = self.squeeze(gt_masks[i:i + 1:1, ::])
-                gt_masks_i = self.cast(gt_masks_i, mstype.bool_)
+                gt_labels_i = self.cast(self.squeeze(gt_labels[i:i + 1:1, ::]), self.int_mstype)
+                gt_valids_i = self.cast(self.squeeze(gt_valids[i:i + 1:1, ::]), mstype.bool_)
+                gt_masks_i = self.cast(self.squeeze(gt_masks[i:i + 1:1, ::]), mstype.bool_)
 
                 bboxes, deltas, labels, mask, pos_bboxes, pos_mask_fb, pos_labels, pos_mask = \
-                    self.bbox_assigner_sampler_for_rcnn(gt_bboxes_i,
-                                                        gt_labels_i,
-                                                        proposal_mask[i],
-                                                        proposal[i][::, 0:4:1],
-                                                        gt_valids_i,
-                                                        gt_masks_i)
+                    self.bbox_assigner_sampler_for_rcnn(gt_bboxes_i, gt_labels_i, proposal_mask[i], \
+                                                        proposal[i][::, 0:4:1], gt_valids_i, gt_masks_i)
                 bboxes_tuple += (bboxes,)
                 deltas_tuple += (deltas,)
                 labels_tuple += (labels,)
@@ -288,14 +226,12 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
             bbox_targets = self.concat(deltas_tuple)
             rcnn_labels = self.concat(labels_tuple)
             bbox_targets = F.stop_gradient(bbox_targets)
-            rcnn_labels = F.stop_gradient(rcnn_labels)
-            rcnn_labels = self.cast(rcnn_labels, mstype.int32)
+            rcnn_labels = self.cast(F.stop_gradient(rcnn_labels), mstype.int32)
 
             rcnn_pos_masks_fb = self.concat(pos_mask_fb_tuple)
             rcnn_pos_masks_fb = F.stop_gradient(rcnn_pos_masks_fb)
             rcnn_pos_labels = self.concat(pos_labels_tuple)
-            rcnn_pos_labels = F.stop_gradient(rcnn_pos_labels)
-            rcnn_pos_labels = self.cast(rcnn_pos_labels, mstype.int32)
+            rcnn_pos_labels = self.cast(F.stop_gradient(rcnn_pos_labels), mstype.int32)
         else:
             mask_tuple += proposal_mask
             bbox_targets = proposal_mask
@@ -316,8 +252,7 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
                 pos_bboxes_all = pos_bboxes_tuple[0]
             rois = self.concat_1((self.roi_align_index_tensor, bboxes_all))
             pos_rois = self.concat_1((self.roi_align_index_tensor_pos, pos_bboxes_all))
-            pos_rois = self.cast(pos_rois, mstype.float32)
-            pos_rois = F.stop_gradient(pos_rois)
+            pos_rois = F.stop_gradient(self.cast(pos_rois, mstype.float32))
         else:
             if self.test_batch_size > 1:
                 bboxes_all = self.concat(bboxes_tuple)
@@ -325,24 +260,17 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
                 bboxes_all = bboxes_tuple[0]
             rois = self.concat_1((self.roi_align_index_test_tensor, bboxes_all))
 
-        rois = self.cast(rois, mstype.float32)
-        rois = F.stop_gradient(rois)
+        rois = F.stop_gradient(self.cast(rois, mstype.float32))
 
         if self.training:
-            roi_feats = self.roi_align(rois,
-                                       self.cast(x[0], mstype.float32),
-                                       self.cast(x[1], mstype.float32),
-                                       self.cast(x[2], mstype.float32),
-                                       self.cast(x[3], mstype.float32))
+            roi_feats = self.roi_align(rois, self.cast(x[0], mstype.float32), self.cast(x[1], mstype.float32), \
+                                       self.cast(x[2], mstype.float32), self.cast(x[3], mstype.float32))
         else:
-            roi_feats = self.roi_align_test(rois,
-                                            self.cast(x[0], mstype.float32),
-                                            self.cast(x[1], mstype.float32),
-                                            self.cast(x[2], mstype.float32),
-                                            self.cast(x[3], mstype.float32))
+            roi_feats = self.roi_align_test(rois, self.cast(x[0], mstype.float32), self.cast(x[1], mstype.float32), \
+                                            self.cast(x[2], mstype.float32), self.cast(x[3], mstype.float32))
 
 
-        roi_feats = self.cast(roi_feats, mstype.float16)
+        roi_feats = self.cast(roi_feats, self.platform_mstype)
         rcnn_masks = self.concat(mask_tuple)
         rcnn_masks = F.stop_gradient(rcnn_masks)
         rcnn_mask_squeeze = self.squeeze(self.cast(rcnn_masks, mstype.bool_))
@@ -351,22 +279,15 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         rcnn_pos_masks = F.stop_gradient(rcnn_pos_masks)
         rcnn_pos_mask_squeeze = self.squeeze(self.cast(rcnn_pos_masks, mstype.bool_))
 
-        rcnn_cls_loss, rcnn_reg_loss = self.rcnn_cls(roi_feats,
-                                                     bbox_targets,
-                                                     rcnn_labels,
-                                                     rcnn_mask_squeeze)
+        rcnn_cls_loss, rcnn_reg_loss = self.rcnn_cls(roi_feats, bbox_targets, rcnn_labels, rcnn_mask_squeeze)
 
         output = ()
         if self.training:
-            roi_feats_mask = self.roi_align_mask(pos_rois,
-                                                 self.cast(x[0], mstype.float32),
-                                                 self.cast(x[1], mstype.float32),
-                                                 self.cast(x[2], mstype.float32),
+            roi_feats_mask = self.roi_align_mask(pos_rois, self.cast(x[0], mstype.float32),
+                                                 self.cast(x[1], mstype.float32), self.cast(x[2], mstype.float32),
                                                  self.cast(x[3], mstype.float32))
-            roi_feats_mask = self.cast(roi_feats_mask, mstype.float16)
-            rcnn_mask_fb_loss = self.rcnn_mask(roi_feats_mask,
-                                               rcnn_pos_labels,
-                                               rcnn_pos_mask_squeeze,
+            roi_feats_mask = self.cast(roi_feats_mask, self.platform_mstype)
+            rcnn_mask_fb_loss = self.rcnn_mask(roi_feats_mask, rcnn_pos_labels, rcnn_pos_mask_squeeze, \
                                                rcnn_pos_masks_fb)
 
             rcnn_loss = self.rcnn_loss_cls_weight * rcnn_cls_loss + self.rcnn_loss_reg_weight * rcnn_reg_loss + \
@@ -374,7 +295,7 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
             output += (rpn_loss, rcnn_loss, rpn_cls_loss, rpn_reg_loss, rcnn_cls_loss, rcnn_reg_loss, rcnn_mask_fb_loss)
         else:
             mask_fb_pred_all = self.rcnn_mask_test(x, bboxes_all, rcnn_cls_loss, rcnn_reg_loss)
-            output = self.get_det_bboxes(rcnn_cls_loss, rcnn_reg_loss, rcnn_masks, bboxes_all,
+            output = self.get_det_bboxes(rcnn_cls_loss, rcnn_reg_loss, rcnn_masks, bboxes_all, \
                                          img_metas, mask_fb_pred_all)
 
         return output
@@ -526,7 +447,7 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         for i in range(num_levels):
             anchors = self.anchor_generators[i].grid_anchors(
                 featmap_sizes[i], self.anchor_strides[i])
-            multi_level_anchors += (Tensor(anchors.astype(np.float16)),)
+            multi_level_anchors += (Tensor(anchors.astype(self.platform_dtype)),)
 
         return multi_level_anchors
 
@@ -543,7 +464,7 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
         for i in range(self.test_batch_size):
             cls_score_max_index, _ = self.argmax_with_value(cls_scores_all[i])
             cls_score_max_index = self.cast(self.onehot(cls_score_max_index, self.num_classes,
-                                                        self.on_value, self.off_value), mstype.float16)
+                                                        self.on_value, self.off_value), self.platform_mstype)
             cls_score_max_index = self.expand_dims(cls_score_max_index, -1)
             cls_score_max_index = self.tile(cls_score_max_index, (1, 1, 4))
             reg_pred_max = reg_pred_all[i] * cls_score_max_index
@@ -559,6 +480,47 @@ class Mask_Rcnn_Mobilenetv1(nn.Cell):
                                                        self.cast(x[1], mstype.float32),
                                                        self.cast(x[2], mstype.float32),
                                                        self.cast(x[3], mstype.float32))
-        roi_feats_mask_test = self.cast(roi_feats_mask_test, mstype.float16)
+        roi_feats_mask_test = self.cast(roi_feats_mask_test, self.platform_mstype)
         mask_fb_pred_all = self.rcnn_mask(roi_feats_mask_test)
         return mask_fb_pred_all
+
+    def init_datatype(self):
+        self.platform = context.get_context("device_target")
+        if self.platform == "CPU":
+            self.platform_dtype = np.float32
+            self.platform_mstype = mstype.float32
+            self.int_dtype = np.int32
+            self.int_mstype = mstype.int32
+        else:
+            self.platform_dtype = np.float16
+            self.platform_mstype = mstype.float16
+            self.int_dtype = np.uint8
+            self.int_mstype = mstype.uint8
+
+    def init_tensors(self, config):
+        roi_align_index = [np.array(np.ones((config.num_expected_pos_stage2 + config.num_expected_neg_stage2, 1)) * i,
+                                    dtype=self.platform_dtype) for i in range(self.train_batch_size)]
+
+        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=self.platform_dtype) \
+                                for i in range(self.test_batch_size)]
+
+        self.roi_align_index_tensor = Tensor(np.concatenate(roi_align_index))
+        self.roi_align_index_test_tensor = Tensor(np.concatenate(roi_align_index_test))
+
+        roi_align_index_pos = [np.array(np.ones((config.num_expected_pos_stage2, 1)) * i,
+                                        dtype=self.platform_dtype) for i in range(self.train_batch_size)]
+        self.roi_align_index_tensor_pos = Tensor(np.concatenate(roi_align_index_pos))
+
+        self.rcnn_loss_cls_weight = Tensor(np.array(config.rcnn_loss_cls_weight).astype(self.platform_dtype))
+        self.rcnn_loss_reg_weight = Tensor(np.array(config.rcnn_loss_reg_weight).astype(self.platform_dtype))
+        self.rcnn_loss_mask_fb_weight = Tensor(np.array(config.rcnn_loss_mask_fb_weight).astype(self.platform_dtype))
+
+        self.argmax_with_value = P.ArgMaxWithValue(axis=1)
+        self.on_value = Tensor(1.0, mstype.float32)
+        self.off_value = Tensor(0.0, mstype.float32)
+        self.onehot = P.OneHot()
+        self.reducesum = P.ReduceSum()
+        self.sigmoid = P.Sigmoid()
+        self.expand_dims = P.ExpandDims()
+        self.test_mask_fb_zeros = Tensor(np.zeros((self.rpn_max_num, 28, 28)).astype(self.platform_dtype))
+        self.value = Tensor(1.0, self.platform_mstype)

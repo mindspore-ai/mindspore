@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
+from mindspore import context
 
 def _conv(in_channels, out_channels, kernel_size=1, stride=1, padding=0, pad_mode='pad'):
     """Conv2D wrapper."""
@@ -45,27 +46,32 @@ class FpnMask(nn.Cell):
     """conv layers of mask head"""
     def __init__(self, input_channels, output_channels, num_classes):
         super(FpnMask, self).__init__()
+        self.platform = context.get_context("device_target")
+        if self.platform == "CPU":
+            self.platform_mstype = mstype.float32
+        else:
+            self.platform_mstype = mstype.float16
         self.mask_conv1 = _conv(input_channels, output_channels, kernel_size=3,
-                                pad_mode="same").to_float(mstype.float16)
+                                pad_mode="same").to_float(self.platform_mstype)
         self.mask_relu1 = P.ReLU()
 
         self.mask_conv2 = _conv(output_channels, output_channels, kernel_size=3,
-                                pad_mode="same").to_float(mstype.float16)
+                                pad_mode="same").to_float(self.platform_mstype)
         self.mask_relu2 = P.ReLU()
 
         self.mask_conv3 = _conv(output_channels, output_channels, kernel_size=3,
-                                pad_mode="same").to_float(mstype.float16)
+                                pad_mode="same").to_float(self.platform_mstype)
         self.mask_relu3 = P.ReLU()
 
         self.mask_conv4 = _conv(output_channels, output_channels, kernel_size=3,
-                                pad_mode="same").to_float(mstype.float16)
+                                pad_mode="same").to_float(self.platform_mstype)
         self.mask_relu4 = P.ReLU()
 
         self.mask_deconv5 = _convTanspose(output_channels, output_channels, kernel_size=2,
-                                          stride=2, pad_mode="valid").to_float(mstype.float16)
+                                          stride=2, pad_mode="valid").to_float(self.platform_mstype)
         self.mask_relu5 = P.ReLU()
         self.mask_conv6 = _conv(output_channels, num_classes, kernel_size=1, stride=1,
-                                pad_mode="valid").to_float(mstype.float16)
+                                pad_mode="valid").to_float(self.platform_mstype)
 
     def construct(self, x):
         x = self.mask_conv1(x)
@@ -114,6 +120,11 @@ class RcnnMask(nn.Cell):
                  ):
         super(RcnnMask, self).__init__()
         cfg = config
+        self.platform = context.get_context("device_target")
+        if self.platform == "CPU":
+            self.platform_mstype = mstype.float32
+        else:
+            self.platform_mstype = mstype.float16
         self.rcnn_loss_mask_fb_weight = Tensor(np.array(cfg.rcnn_loss_mask_fb_weight).astype(np.float16))
         self.rcnn_mask_out_channels = cfg.rcnn_mask_out_channels
         self.target_means = target_means
@@ -130,7 +141,7 @@ class RcnnMask(nn.Cell):
         self.cast = P.Cast()
         self.sum_loss = P.ReduceSum()
         self.tile = P.Tile()
-        self.expandims = P.ExpandDims()
+        self.expanddims = P.ExpandDims()
 
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
@@ -140,13 +151,14 @@ class RcnnMask(nn.Cell):
         rmv_first[:, 0] = np.zeros((self.num_bboxes,))
         self.rmv_first_tensor = Tensor(rmv_first.astype(np.float16))
         self.mean_loss = P.ReduceMean()
+        self.maximum = P.Maximum()
 
     def construct(self, mask_featuremap, labels=None, mask=None, mask_fb_targets=None):
         x_mask_fb = self.fpn_mask(mask_featuremap)
 
         if self.training:
             bbox_weights = self.cast(self.logicaland(self.greater(labels, 0), mask), mstype.int32) * labels
-            mask_fb_targets = self.tile(self.expandims(mask_fb_targets, 1), (1, self.num_classes, 1, 1))
+            mask_fb_targets = self.tile(self.expanddims(mask_fb_targets, 1), (1, self.num_classes, 1, 1))
 
             loss_mask_fb = self.loss(x_mask_fb, bbox_weights, mask, mask_fb_targets)
             out = loss_mask_fb
@@ -158,17 +170,21 @@ class RcnnMask(nn.Cell):
 
     def loss(self, masks_fb_pred, bbox_weights, weights, masks_fb_targets):
         """Loss method."""
-        weights = self.cast(weights, mstype.float16)
+        weights = self.cast(weights, self.platform_mstype)
         bbox_weights = self.cast(self.onehot(bbox_weights, self.num_classes, self.on_value, self.off_value),
-                                 mstype.float16)
+                                 self.platform_mstype)
         bbox_weights = bbox_weights * self.rmv_first_tensor   #  * self.rmv_first_tensor  exclude background
 
         # loss_mask_fb
-        masks_fb_targets = self.cast(masks_fb_targets, mstype.float16)
+        masks_fb_targets = self.cast(masks_fb_targets, self.platform_mstype)
         loss_mask_fb = self.loss_mask(masks_fb_pred, masks_fb_targets)
         loss_mask_fb = self.mean_loss(loss_mask_fb, (2, 3))
         loss_mask_fb = loss_mask_fb * bbox_weights
-        loss_mask_fb = loss_mask_fb / self.sum_loss(weights, (0,))
+        if self.platform == "CPU":
+            sum_weight = self.sum_loss(weights, (0,))
+            loss_mask_fb = loss_mask_fb / self.maximum(self.expanddims(sum_weight, 0), 1)
+        else:
+            loss_mask_fb = loss_mask_fb / self.sum_loss(weights, (0,))
         loss_mask_fb = self.sum_loss(loss_mask_fb, (0, 1))
 
         return loss_mask_fb
