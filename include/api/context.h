@@ -105,14 +105,29 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
 
     return std::static_pointer_cast<T>(shared_from_this());
   }
-
+  /// \brief obtain provider's name
+  ///
+  /// \return provider's name.
   std::string GetProvider() const;
+  /// \brief set provider's name.
+  ///
+  /// \param[in] provider define the provider's name.
   void SetProvider(const std::string &provider);
-
+  /// \brief obtain provider's device type.
+  ///
+  /// \return provider's device type.
   std::string GetProviderDevice() const;
+  /// \brief set provider's device type.
+  ///
+  /// \param[in] device define the provider's device type.EG: CPU.
   void SetProviderDevice(const std::string &device);
-
+  /// \brief set memory allocator.
+  ///
+  /// \param[in] allocator define the memory allocator which can be defined by user.
   void SetAllocator(const std::shared_ptr<Allocator> &allocator);
+  /// \brief obtain memory allocator.
+  ///
+  /// \return memory allocator.
   std::shared_ptr<Allocator> GetAllocator() const;
 
  protected:
