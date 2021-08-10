@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class DropoutGenMask : public PrimitiveC {
+class MS_CORE_API DropoutGenMask : public PrimitiveC {
  public:
   DropoutGenMask() : PrimitiveC(prim::kPrimDropoutGenMask->name()) {}
   ~DropoutGenMask() = default;

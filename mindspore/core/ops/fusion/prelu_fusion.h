@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePReLUFusion = "PReLUFusion";
-class PReLUFusion : public PReLU {
+class MS_CORE_API PReLUFusion : public PReLU {
  public:
   PReLUFusion() : PReLU(kNamePReLUFusion) {}
   ~PReLUFusion() = default;

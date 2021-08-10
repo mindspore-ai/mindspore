@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePoolingGrad = "PoolingGrad";
-class PoolingGrad : public PrimitiveC {
+class MS_CORE_API PoolingGrad : public PrimitiveC {
  public:
   PoolingGrad() : PrimitiveC(kNamePoolingGrad) {}
   ~PoolingGrad() = default;

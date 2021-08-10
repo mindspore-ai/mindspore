@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDropout = "Dropout";
-class Dropout : public PrimitiveC {
+class MS_CORE_API Dropout : public PrimitiveC {
  public:
   Dropout() : PrimitiveC(kNameDropout) {}
   ~Dropout() = default;

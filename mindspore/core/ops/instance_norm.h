@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInstanceNorm = "InstanceNorm";
-class InstanceNorm : public PrimitiveC {
+class MS_CORE_API InstanceNorm : public PrimitiveC {
  public:
   InstanceNorm() : PrimitiveC(kNameInstanceNorm) {}
   ~InstanceNorm() = default;

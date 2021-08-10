@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulFusion = "MulFusion";
-class MulFusion : public Mul {
+class MS_CORE_API MulFusion : public Mul {
  public:
   MulFusion() : Mul(kNameMulFusion) { InitIOName({"x", "y"}, {"output"}); }
   ~MulFusion() = default;

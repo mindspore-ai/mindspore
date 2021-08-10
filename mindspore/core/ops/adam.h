@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdam = "Adam";
-class Adam : public PrimitiveC {
+class MS_CORE_API Adam : public PrimitiveC {
  public:
   Adam() : PrimitiveC(kNameAdam) {}
   ~Adam() = default;

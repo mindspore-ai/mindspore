@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2D = "Conv2D";
-class Conv2D : public PrimitiveC {
+class MS_CORE_API Conv2D : public PrimitiveC {
  public:
   Conv2D() : PrimitiveC(kNameConv2D) { InitIOName({"x", "w"}, {"output"}); }
   explicit Conv2D(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "w"}, {"output"}); }

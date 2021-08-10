@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoidCrossEntropyWithLogits = "SigmoidCrossEntropyWithLogits";
-class SigmoidCrossEntropyWithLogits : public PrimitiveC {
+class MS_CORE_API SigmoidCrossEntropyWithLogits : public PrimitiveC {
  public:
   SigmoidCrossEntropyWithLogits() : PrimitiveC(kNameSigmoidCrossEntropyWithLogits) {
     InitIOName({"predict", "target"}, {"loss"});

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftMarginLossGrad = "SoftMarginLossGrad";
-class SoftMarginLossGrad : public PrimitiveC {
+class MS_CORE_API SoftMarginLossGrad : public PrimitiveC {
  public:
   SoftMarginLossGrad() : PrimitiveC(kNameSoftMarginLossGrad) { InitIOName({"predict", "label", "dout"}, {"gradient"}); }
   ~SoftMarginLossGrad() = default;

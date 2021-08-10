@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdderFusion = "AdderFusion";
-class AdderFusion : public Adder {
+class MS_CORE_API AdderFusion : public Adder {
  public:
   AdderFusion() : Adder(kNameAdderFusion) {}
   ~AdderFusion() = default;

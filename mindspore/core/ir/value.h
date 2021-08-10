@@ -34,7 +34,7 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore {
-class ValueSequeue : public Value {
+class MS_CORE_API ValueSequeue : public Value {
  public:
   explicit ValueSequeue(const ValuePtrList &elements) : elements_(elements) {
     TypePtrList t_list;
@@ -69,7 +69,7 @@ class ValueSequeue : public Value {
 };
 using ValueSequeuePtr = std::shared_ptr<ValueSequeue>;
 
-class ValueTuple : public ValueSequeue {
+class MS_CORE_API ValueTuple : public ValueSequeue {
  public:
   explicit ValueTuple(const std::vector<ValuePtr> &elements) : ValueSequeue(elements) {}
   ValueTuple(const std::initializer_list<ValuePtr> &elements) : ValueSequeue(elements) {}
@@ -82,7 +82,7 @@ class ValueTuple : public ValueSequeue {
 };
 using ValueTuplePtr = std::shared_ptr<ValueTuple>;
 
-class ValueList : public ValueSequeue {
+class MS_CORE_API ValueList : public ValueSequeue {
  public:
   explicit ValueList(const std::vector<ValuePtr> &elements) : ValueSequeue(elements) {}
   ValueList(const std::initializer_list<ValuePtr> &elements) : ValueSequeue(elements) {}
@@ -110,7 +110,7 @@ ValuePtr MakeValue(const T &vec) {
   return std::make_shared<ValueTuple>(list);
 }
 
-class ValueSlice : public Value {
+class MS_CORE_API ValueSlice : public Value {
  public:
   ValueSlice(const ValuePtr &start, const ValuePtr &stop, const ValuePtr &step)
       : start_(start), stop_(stop), step_(step) {}
@@ -135,7 +135,7 @@ class ValueSlice : public Value {
 };
 using ValueSlicePtr = std::shared_ptr<ValueSlice>;
 
-class KeywordArg : public Value {
+class MS_CORE_API KeywordArg : public Value {
  public:
   KeywordArg(const std::string &key, const ValuePtr &value) : key_(key), value_(value) {}
   ~KeywordArg() override = default;
@@ -156,7 +156,7 @@ class KeywordArg : public Value {
 };
 using KeywordArgPtr = std::shared_ptr<KeywordArg>;
 
-class ValueDictionary : public Value {
+class MS_CORE_API ValueDictionary : public Value {
  public:
   explicit ValueDictionary(const std::vector<std::pair<std::string, ValuePtr>> &key_values) : key_values_(key_values) {}
   ~ValueDictionary() override = default;
@@ -197,7 +197,7 @@ class ValueDictionary : public Value {
 };
 using ValueDictionaryPtr = std::shared_ptr<ValueDictionary>;
 
-class StringImm : public Value {
+class MS_CORE_API StringImm : public Value {
  public:
   explicit StringImm(const std::string &str) : Value(kString), str_(str), hash_(std::hash<std::string>{}(str_)) {}
 
@@ -224,7 +224,7 @@ using StringImmPtr = std::shared_ptr<StringImm>;
 IMM_TRAITS(StringImmPtr, std::string)
 IMM_TRAITS(StringImmPtr, const char *)
 
-class RefKey : public Named {
+class MS_CORE_API RefKey : public Named {
  public:
   explicit RefKey(const std::string &tag) : Named(tag) {}
 
@@ -242,7 +242,7 @@ class RefKey : public Named {
 };
 using RefKeyPtr = std::shared_ptr<RefKey>;
 
-class AnyValue : public Value {
+class MS_CORE_API AnyValue : public Value {
  public:
   AnyValue() = default;
   ~AnyValue() override = default;
@@ -253,7 +253,7 @@ class AnyValue : public Value {
 };
 extern const ValuePtr kAnyValue;
 
-class Monad : public Value {
+class MS_CORE_API Monad : public Value {
  public:
   ~Monad() override = default;
   MS_DECLARE_PARENT(Monad, Value)
@@ -263,7 +263,7 @@ class Monad : public Value {
   explicit Monad(TypePtr type) : Value(type) {}
 };
 
-class UMonad : public Monad {
+class MS_CORE_API UMonad : public Monad {
  public:
   UMonad() : Monad(kUMonadType) {}
   ~UMonad() override = default;
@@ -276,7 +276,7 @@ class UMonad : public Monad {
 using UMonadPtr = std::shared_ptr<UMonad>;
 extern const ValuePtr kUMonad;
 
-class IOMonad : public Monad {
+class MS_CORE_API IOMonad : public Monad {
  public:
   IOMonad() : Monad(kIOMonadType) {}
   ~IOMonad() override = default;

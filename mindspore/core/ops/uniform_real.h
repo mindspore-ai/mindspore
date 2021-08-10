@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUniformReal = "UniformReal";
-class UniformReal : public PrimitiveC {
+class MS_CORE_API UniformReal : public PrimitiveC {
  public:
   UniformReal() : PrimitiveC(kNameUniformReal) {}
   ~UniformReal() = default;

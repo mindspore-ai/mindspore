@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePad = "Pad";
-class Pad : public PrimitiveC {
+class MS_CORE_API Pad : public PrimitiveC {
  public:
   Pad() : PrimitiveC(kNamePad) { InitIOName({"x"}, {"y"}); }
   explicit Pad(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"y"}); }

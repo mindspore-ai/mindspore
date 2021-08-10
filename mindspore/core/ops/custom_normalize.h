@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCustomNormalize = "CustomNormalize";
-class CustomNormalize : public PrimitiveC {
+class MS_CORE_API CustomNormalize : public PrimitiveC {
  public:
   CustomNormalize() : PrimitiveC(kNameCustomNormalize) {}
   ~CustomNormalize() = default;

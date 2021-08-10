@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCustomPredict = "CustomPredict";
-class CustomPredict : public PrimitiveC {
+class MS_CORE_API CustomPredict : public PrimitiveC {
  public:
   CustomPredict() : PrimitiveC(kNameCustomPredict) {}
   ~CustomPredict() = default;

@@ -37,7 +37,7 @@ class BaseShape;
 using BaseShapePtr = std::shared_ptr<BaseShape>;
 using BaseShapePtrList = std::vector<BaseShapePtr>;
 
-class BaseShape : public Base {
+class MS_CORE_API BaseShape : public Base {
  public:
   BaseShape() = default;
   ~BaseShape() override = default;
@@ -53,7 +53,7 @@ class BaseShape : public Base {
   virtual void Broaden() {}
 };
 
-class NoShape : public BaseShape {
+class MS_CORE_API NoShape : public BaseShape {
  public:
   MS_DECLARE_PARENT(NoShape, BaseShape)
   BaseShapePtr Clone() const override { return std::make_shared<NoShape>(); }
@@ -62,7 +62,7 @@ class NoShape : public BaseShape {
 };
 extern const std::shared_ptr<NoShape> kNoShape;
 
-class Shape : public BaseShape {
+class MS_CORE_API Shape : public BaseShape {
  public:
   static const int64_t SHP_ANY = -1;
   Shape() : shape_() {}
@@ -93,7 +93,7 @@ class Shape : public BaseShape {
 using ShapePtr = std::shared_ptr<Shape>;
 using ShapePtrList = std::vector<ShapePtr>;
 
-class SequeueShape : public BaseShape {
+class MS_CORE_API SequeueShape : public BaseShape {
  public:
   SequeueShape() : p_shapes_() {}
   explicit SequeueShape(const BaseShapePtrList &shapes) : p_shapes_(shapes) {}
@@ -118,7 +118,7 @@ class SequeueShape : public BaseShape {
 };
 using SequeueShapePtr = std::shared_ptr<SequeueShape>;
 
-class TupleShape : public SequeueShape {
+class MS_CORE_API TupleShape : public SequeueShape {
  public:
   TupleShape() : SequeueShape() {}
   explicit TupleShape(const BaseShapePtrList &shapes) : SequeueShape(shapes) {}
@@ -133,7 +133,7 @@ class TupleShape : public SequeueShape {
 };
 using TupleShapePtr = std::shared_ptr<TupleShape>;
 
-class ListShape : public SequeueShape {
+class MS_CORE_API ListShape : public SequeueShape {
  public:
   ListShape() : SequeueShape() {}
   explicit ListShape(const BaseShapePtrList &shapes) : SequeueShape(shapes) {}

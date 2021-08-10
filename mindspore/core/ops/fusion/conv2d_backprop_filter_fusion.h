@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropFilterFusion = "Conv2DBackpropFilterFusion";
-class Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
+class MS_CORE_API Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
  public:
   Conv2DBackpropFilterFusion() : Conv2DBackpropFilter(kNameConv2DBackpropFilterFusion) {
     InitIOName({"out_backprop", "input", "filter_sizes"}, {"output"});

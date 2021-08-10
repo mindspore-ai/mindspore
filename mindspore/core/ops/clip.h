@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameClip = "Clip";
-class Clip : public PrimitiveC {
+class MS_CORE_API Clip : public PrimitiveC {
  public:
   Clip() : PrimitiveC(kNameClip) {}
   ~Clip() = default;

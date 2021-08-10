@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePriorBox = "PriorBox";
-class PriorBox : public PrimitiveC {
+class MS_CORE_API PriorBox : public PrimitiveC {
  public:
   PriorBox() : PrimitiveC(kNamePriorBox) {}
   ~PriorBox() = default;

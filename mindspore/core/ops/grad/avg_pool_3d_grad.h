@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class AvgPool3DGrad : public PrimitiveC {
+class MS_CORE_API AvgPool3DGrad : public PrimitiveC {
  public:
   AvgPool3DGrad() : PrimitiveC(prim::kPrimAvgPool3DGrad->name()) {
     InitIOName({"origin_input_size", "grad"}, {"output"});

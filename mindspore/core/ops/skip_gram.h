@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSkipGram = "SkipGram";
-class SkipGram : public PrimitiveC {
+class MS_CORE_API SkipGram : public PrimitiveC {
  public:
   SkipGram() : PrimitiveC(kNameSkipGram) {}
   ~SkipGram() = default;

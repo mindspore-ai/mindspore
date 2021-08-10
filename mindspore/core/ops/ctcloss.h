@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class CTCLoss : public PrimitiveC {
+class MS_CORE_API CTCLoss : public PrimitiveC {
  public:
   CTCLoss() : PrimitiveC(prim::kPrimCTCLoss->name()) {}
   ~CTCLoss() = default;

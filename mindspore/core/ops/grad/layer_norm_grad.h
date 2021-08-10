@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormGrad = prim::kLayerNormGrad;
-class LayerNormGrad : public PrimitiveC {
+class MS_CORE_API LayerNormGrad : public PrimitiveC {
  public:
   LayerNormGrad() : PrimitiveC(kNameLayerNormGrad) {}
   explicit LayerNormGrad(const std::string k_name) : PrimitiveC(k_name) {}

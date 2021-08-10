@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSlice = "Slice";
-class Slice : public PrimitiveC {
+class MS_CORE_API Slice : public PrimitiveC {
  public:
   Slice() : PrimitiveC(kNameSlice) { InitIOName({"x", "begin", "size"}, {"output"}); }
   ~Slice() = default;

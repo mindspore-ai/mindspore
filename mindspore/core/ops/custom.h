@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCustom = "Custom";
-class Custom : public PrimitiveC {
+class MS_CORE_API Custom : public PrimitiveC {
  public:
   Custom() : PrimitiveC(kNameCustom) {}
   ~Custom() override = default;

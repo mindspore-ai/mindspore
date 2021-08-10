@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTopK = "TopK";
-class TopK : public PrimitiveC {
+class MS_CORE_API TopK : public PrimitiveC {
  public:
   explicit TopK(const std::string &k_name = kNameTopK) : PrimitiveC(k_name) {
     InitIOName({"input", "k"}, {"values", "indices"});

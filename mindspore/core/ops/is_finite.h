@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIsFinite = "IsFinite";
-class IsFinite : public PrimitiveC {
+class MS_CORE_API IsFinite : public PrimitiveC {
  public:
   IsFinite() : PrimitiveC(kNameIsFinite) {}
   ~IsFinite() = default;

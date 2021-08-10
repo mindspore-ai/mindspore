@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolGrad = "MaxPoolGrad";
-class MaxPoolGrad : public PoolGrad {
+class MS_CORE_API MaxPoolGrad : public PoolGrad {
  public:
   MaxPoolGrad() : PoolGrad(kNameMaxPoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
   ~MaxPoolGrad() = default;

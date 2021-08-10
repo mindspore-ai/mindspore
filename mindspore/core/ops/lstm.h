@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLSTM = "LSTM";
-class LSTM : public PrimitiveC {
+class MS_CORE_API LSTM : public PrimitiveC {
  public:
   LSTM() : PrimitiveC(kNameLSTM) {}
   ~LSTM() = default;

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPool = "AvgPool";
-class AvgPool : public PrimitiveC {
+class MS_CORE_API AvgPool : public PrimitiveC {
  public:
   AvgPool() : PrimitiveC(kNameAvgPool) { InitIOName({"x"}, {"output"}); }
   explicit AvgPool(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output"}); }

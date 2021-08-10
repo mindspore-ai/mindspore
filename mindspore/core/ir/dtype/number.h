@@ -35,7 +35,7 @@
 
 namespace mindspore {
 // Number, abstract class.
-class Number : public Object {
+class MS_CORE_API Number : public Object {
  public:
   Number() : Object(kObjectTypeNumber), number_type_(kObjectTypeNumber), nbits_(0) {}
   Number(const TypeId number_type, const int nbits, bool is_generic = true)
@@ -71,7 +71,7 @@ class Number : public Object {
 using NumberPtr = std::shared_ptr<Number>;
 
 // Bool
-class Bool : public Number {
+class MS_CORE_API Bool : public Number {
  public:
   Bool() : Number(kNumberTypeBool, 8) {}
   ~Bool() override = default;
@@ -85,7 +85,7 @@ class Bool : public Number {
 };
 
 // Int
-class Int : public Number {
+class MS_CORE_API Int : public Number {
  public:
   Int() : Number(kNumberTypeInt, 0) {}
   explicit Int(const int nbits);
@@ -106,7 +106,7 @@ class Int : public Number {
 };
 
 // UInt
-class UInt : public Number {
+class MS_CORE_API UInt : public Number {
  public:
   UInt() : Number(kNumberTypeUInt, 0) {}
   explicit UInt(const int nbits);
@@ -129,7 +129,7 @@ class UInt : public Number {
 };
 
 // Float
-class Float : public Number {
+class MS_CORE_API Float : public Number {
  public:
   Float() : Number(kNumberTypeFloat, 0) {}
   explicit Float(const int nbits);
@@ -151,7 +151,7 @@ class Float : public Number {
 };
 
 // Complex64
-class Complex64 : public Number {
+class MS_CORE_API Complex64 : public Number {
  public:
   Complex64() : Number(kNumberTypeComplex64, 64, false) {}
   ~Complex64() override {}

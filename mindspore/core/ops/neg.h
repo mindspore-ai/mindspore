@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNeg = prim::kNeg;
-class Neg : public PrimitiveC {
+class MS_CORE_API Neg : public PrimitiveC {
  public:
   Neg() : PrimitiveC(prim::kPrimNeg->name()) { InitIOName({"x"}, {"y"}); }
   ~Neg() = default;

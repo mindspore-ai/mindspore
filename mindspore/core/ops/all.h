@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAll = "All";
-class All : public PrimitiveC {
+class MS_CORE_API All : public PrimitiveC {
  public:
   All() : PrimitiveC(kNameAll) {}
   ~All() = default;

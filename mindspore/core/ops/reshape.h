@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReshape = "Reshape";
-class Reshape : public PrimitiveC {
+class MS_CORE_API Reshape : public PrimitiveC {
  public:
   Reshape() : PrimitiveC(kNameReshape) { InitIOName({"tensor", "shape"}, {"output"}); }
   ~Reshape() = default;

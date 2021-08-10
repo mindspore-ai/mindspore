@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class LayerNormBetaGammaBackprop : public PrimitiveC {
+class MS_CORE_API LayerNormBetaGammaBackprop : public PrimitiveC {
  public:
   LayerNormBetaGammaBackprop() : PrimitiveC(prim::kPrimLayerNormBetaGammaBackprop->name()) {}
   ~LayerNormBetaGammaBackprop() = default;

@@ -25,7 +25,7 @@
 #include "ir/value.h"
 namespace mindspore {
 namespace ops {
-class PrimitiveC : public Primitive {
+class MS_CORE_API PrimitiveC : public Primitive {
  public:
   explicit PrimitiveC(const std::string &name) : Primitive(name) {}
   MS_DECLARE_PARENT(PrimitiveC, Primitive);
@@ -37,7 +37,7 @@ class PrimitiveC : public Primitive {
 };
 
 using OpPrimCDefineFunc = std::function<std::shared_ptr<PrimitiveC>()>;
-class OpPrimCRegister {
+class MS_CORE_API OpPrimCRegister {
  public:
   ~OpPrimCRegister() {}
   static OpPrimCRegister &GetInstance();
@@ -49,7 +49,7 @@ class OpPrimCRegister {
   std::map<std::string, OpPrimCDefineFunc> op_primc_fns_;
 };
 
-class OpPrimCRegisterHelper {
+class MS_CORE_API OpPrimCRegisterHelper {
  public:
   OpPrimCRegisterHelper(const std::string &kname, const OpPrimCDefineFunc &fn) {
     OpPrimCRegister::GetInstance().SetPrimCMap(kname, fn);

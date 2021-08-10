@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFusedBatchNorm = "FusedBatchNorm";
-class FusedBatchNorm : public PrimitiveC {
+class MS_CORE_API FusedBatchNorm : public PrimitiveC {
  public:
   FusedBatchNorm() : PrimitiveC(kNameFusedBatchNorm) {
     InitIOName({"x", "scale", "b", "mean", "variance"},
