@@ -54,6 +54,7 @@ def _get_last_ckpt(ckpt_dir):
     return os.path.join(ckpt_dir, sorted(ckpt_files)[-1])
 
 
+"""export air file for offline infer"""
 def _export_air(args, ckpt_dir):
     ckpt_file = _get_last_ckpt(ckpt_dir)
     if not ckpt_file:
@@ -255,3 +256,4 @@ def train():
 
 if __name__ == '__main__':
     train()
+    
