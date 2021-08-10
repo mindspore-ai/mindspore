@@ -47,7 +47,7 @@ def _cal_hist(a, b, n):
         n * a[k].astype(np.int32) + b[k], minlength=n ** 2).reshape(n, n)
 
 
-"""initial sdk stream"""
+"""initial sdk stream before inference"""
 def _init_stream(pipeline_path):
     stream_manager_api = StreamManagerApi()
     ret = stream_manager_api.InitManager()
