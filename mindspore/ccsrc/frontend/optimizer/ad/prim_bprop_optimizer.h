@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PRIM_BPROP_OPTIMIZER_H
-#define MINDSPORE_CCSRC_PIPELINE_JIT_PRIM_BPROP_OPTIMIZER_H
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_PRIM_BPROP_OPTIMIZER_H
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_PRIM_BPROP_OPTIMIZER_H
 
 #include <vector>
 #include <utility>
@@ -27,7 +27,7 @@
 #include "pipeline/jit/resource.h"
 
 namespace mindspore {
-namespace pipeline {
+namespace ad {
 struct PrimBpropOptGraphInfo;
 
 class PrimBpropOptGraphLevel2Info;
@@ -144,7 +144,7 @@ class PrimBpropOptimizer {
                                       const ValuePtr &out);
 
   // do inline opt for final bprop graph
-  FuncGraphPtr BpropGraphFinalOpt(const ResourcePtr &res) const;
+  FuncGraphPtr BpropGraphFinalOpt(const pipeline::ResourcePtr &res) const;
 
  private:
   PrimBpropOptimizer() = default;
@@ -179,8 +179,7 @@ class PrimBpropOptimizer {
   PrimBpropCache prim_bprop_cache_;
   PrimTupleListCache tuple_list_bprop_cache_;
 };
-
-}  // namespace pipeline
+}  // namespace ad
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PRIM_BPROP_OPTIMIZER_H
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_PRIM_BPROP_OPTIMIZER_H

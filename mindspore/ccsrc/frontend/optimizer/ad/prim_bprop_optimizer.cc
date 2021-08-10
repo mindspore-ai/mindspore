@@ -16,11 +16,11 @@
 
 #include <memory>
 #include "ir/func_graph_cloner.h"
-#include "pipeline/jit/prim_bprop_optimizer.h"
+#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "pipeline/jit/pass.h"
 
 namespace mindspore {
-namespace pipeline {
+namespace ad {
 void PrimBpropOptGraphLevel2Info::TryFreeArgsValue(const ValuePtrList &op_args, const ValuePtr &out) {
   // args_value_using_info_ contains out
   if (args_value_using_info_.size() != op_args.size() + 1) {
@@ -231,9 +231,13 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
   // do step2 opt
   auto new_abs_list = AddOutToAbsList(out, abs_list);
   level_2_graph_info = PrimBpropOptStep2(level_1_graph, new_abs_list);
-  level_1_graph_info->graph_level_2_cache_[abs_list] = level_2_graph_info;
   level_2_graph_info->TryFreeArgsValue(op_args, out);
-  return BasicClone(level_2_graph_info->opt_func_graph());
+  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  if (enable_grad_cache) {
+    level_1_graph_info->graph_level_2_cache_[abs_list] = level_2_graph_info;
+    return BasicClone(level_2_graph_info->opt_func_graph());
+  }
+  return level_2_graph_info->opt_func_graph();
 }
 
 FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args,
@@ -256,8 +260,8 @@ FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(const FuncGraphPtr &bprop_fg, c
   auto new_abs_list = AddOutToAbsList(out, abs_list);
   auto level_2_graph_info = PrimBpropOptStep2(level_1_graph_info->opt_func_graph_, new_abs_list);
   level_2_graph_info->TryFreeArgsValue(op_args, out);
-
-  if (!hook_flg) {
+  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  if (!hook_flg && enable_grad_cache) {
     tuple_list_bprop_cache_[std::pair(prim, abs_list)] = BasicClone(level_2_graph_info->opt_func_graph());
   }
   return level_2_graph_info->opt_func_graph();
@@ -303,7 +307,7 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
   return level_2_graph_info;
 }
 
-FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const ResourcePtr &res) const {
+FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const pipeline::ResourcePtr &res) const {
   MS_EXCEPTION_IF_NULL(res);
   auto after_opt_bg = BpropGraphFinalOptPass(res);
   return after_opt_bg;
@@ -368,5 +372,5 @@ abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr
   (void)new_abs_list.emplace_back(out_abs);
   return new_abs_list;
 }
-}  // namespace pipeline
+}  // namespace ad
 }  // namespace mindspore
