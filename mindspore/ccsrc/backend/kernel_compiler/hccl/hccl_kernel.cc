@@ -197,7 +197,8 @@ const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode)) {
+  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
+      mode == kPynativeMode) {
     return workspace_size_list_;
   }
   workspace_size_list_.emplace_back(

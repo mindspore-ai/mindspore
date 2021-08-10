@@ -218,6 +218,7 @@ class _MiniStepAllGather(PrimitiveWithInfer):
         group (str): The communication group to work on. Default: None.
         grad_accumulation_step (int): The grad accumulation step. Default: None.
     """
+
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP, grad_accumulation_step=None, mean_flag=None):
         """Initialize _MiniStepAllGather."""
@@ -250,6 +251,7 @@ class _MicroStepAllGather(PrimitiveWithInfer):
     Args:
         group (str): The communication group to work on. Default: None.
     """
+
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP, mean_flag=None):
         validator.check_value_type('group', _get_group(group), (str,), self.name)
@@ -421,6 +423,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
         ValueError: If the first dimension of input can not be divided by group size,
                     or group is not set, or rank_id not in [0, 7].
     """
+
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=None):
         """Initialize _HostReduceScatter."""
@@ -603,12 +606,21 @@ class _AlltoAll(PrimitiveWithInfer):
     def __init__(self, split_count, split_dim, concat_dim, group=GlobalComm.WORLD_COMM_GROUP):
         """Initialize AlltoAll"""
         validator.check_value_type('group', _get_group(group), (str,), self.name)
+        validator.check_is_int(split_count, int)
+        validator.check_is_int(split_dim, int)
+        validator.check_is_int(concat_dim, int)
         self.split_count = split_count
         self.split_dim = split_dim
         self.concat_dim = concat_dim
         self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
+        rank_size = get_group_size(_get_group(self.group))
+        if self.split_count != rank_size:
+            raise ValueError(f"split count '{self.split_count}' must be equal to rank size '{rank_size}'.")
+        if x_shape[self.split_dim] % self.split_count != 0:
+            raise ValueError(
+                f"split count '{self.split_count}' must be divisible by rank size '{x_shape[self.split_dim]}'.")
         x_shape[self.concat_dim] = x_shape[self.concat_dim] * self.split_count
         x_shape[self.split_dim] = int(x_shape[self.split_dim] / self.split_count)
         return x_shape
@@ -618,7 +630,7 @@ class _AlltoAll(PrimitiveWithInfer):
         return x_dtype
 
     def __call__(self, tensor):
-        return
+        raise NotImplementedError
 
 
 class _MirrorOperator(PrimitiveWithInfer):
@@ -687,6 +699,7 @@ class _VirtualDiv(PrimitiveWithInfer):
     Args:
         divisor: float32
     """
+
     @prim_attr_register
     def __init__(self, divisor=None):
         """Initialize _VirtualDiv."""
@@ -704,6 +717,7 @@ virtual_div = _VirtualDiv()
 
 class _VirtualAdd(PrimitiveWithInfer):
     """Auto parallel virtual operator. Do nothing in forward, do Add in backward."""
+
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualAdd."""
@@ -742,6 +756,7 @@ class _VirtualAssignAdd(PrimitiveWithInfer):
     internal use of parallel modules and cannot be called by users.
 
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualAssignAdd."""
@@ -761,6 +776,7 @@ class _VirtualAccuGrad(PrimitiveWithInfer):
     Auto parallel virtual operator. Do nothing in forward, return y in backward. It is only for
     internal use of parallel modules and cannot be called by users.
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize _VirtualAccuGrad."""
@@ -816,6 +832,7 @@ class _VirtualOutput(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         return x_dtype
+
 
 class _GetTensorSlice(PrimitiveWithInfer):
     """

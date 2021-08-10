@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import re
+import pytest
 import numpy as np
 
 import mindspore as ms
@@ -24,10 +25,19 @@ from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
+from mindspore.ops.operations.comm_ops import _AlltoAll
 from mindspore.parallel._utils import _reset_op_id
 from mindspore.train import Model
 from mindspore.context import ParallelMode
+from mindspore.communication.management import GlobalComm, init
 from tests.dataset_mock import MindData
+
+context.set_context(device_target="Ascend")
+GlobalComm.CHECK_ENVS = False
+init("hccl")
+GlobalComm.CHECK_ENVS = True
+
+_x1 = Tensor(np.ones([64, 3, 224, 224]), dtype=ms.float32)
 
 
 class Dataset(MindData):
@@ -107,6 +117,203 @@ def test_all_to_all():
         elif re.search('MatMul-op', k) is not None:
             assert v == [[1, 1], [1, 8]]
     context.set_context(save_graphs=False)
+
+
+def test_all_to_all_success():
+    """
+    Feature: AlltoAll
+    Description: on 8p, a 4d tensor split at dim 2 and concat at dim 3
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=8, split_dim=2, concat_dim=3)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    net = Net()
+    _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_split_count_value_failed():
+    """
+    Feature: AlltoAll
+    Description: split_count should be equal to rank size, but not
+    Expectation: throw ValueError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=7, split_dim=2, concat_dim=3)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(ValueError):
+        net = Net()
+        _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_split_count_type_failed():
+    """
+    Feature: AlltoAll
+    Description: split_count should be int, but a list is given
+    Expectation: throw TypeError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=[8], split_dim=2, concat_dim=3)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(TypeError):
+        net = Net()
+        _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_split_dim_value_failed():
+    """
+    Feature: AlltoAll
+    Description: split_dim over input shape
+    Expectation: throw IndexError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=8, split_dim=4, concat_dim=3)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(IndexError):
+        net = Net()
+        _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_split_dim_type_failed():
+    """
+    Feature: AlltoAll
+    Description: split_dim should be int, but a tuple is given
+    Expectation: throw TypeError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=8, split_dim=(3,), concat_dim=3)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(TypeError):
+        net = Net()
+        _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_concat_dim_value_failed():
+    """
+    Feature: AlltoAll
+    Description: concat_dim over input shape
+    Expectation: throw IndexError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=8, split_dim=3, concat_dim=4)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(IndexError):
+        net = Net()
+        _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_concat_dim_type_failed():
+    """
+    Feature: AlltoAll
+    Description: concat_dim should be int, but a tuple is given
+    Expectation: throw TypeError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=8, split_dim=3, concat_dim=([3],))
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(TypeError):
+        net = Net()
+        _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_split_count_cannot_be_divisible_failed():
+    """
+    Feature: AlltoAll
+    Description: shape at split_dim should be divisible by split_count, but not
+    Expectation: throw ValueError
+    """
+    context.set_auto_parallel_context(device_num=3, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=3, split_dim=3, concat_dim=3)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(ValueError):
+        net = Net()
+        _executor.compile(net, _x1)
+
+
+def test_all_to_all_invalid_group_type_failed():
+    """
+    Feature: AlltoAll
+    Description: group should be str, but a tuple is given
+    Expectation: throw TypeError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = _AlltoAll(split_count=8, split_dim=3, concat_dim=3, group=3)
+
+        def construct(self, x1):
+            out = self.alltoallv(x1)
+            return out
+
+    with pytest.raises(TypeError):
+        net = Net()
+        _executor.compile(net, _x1)
 
 
 if __name__ == '__main__':
