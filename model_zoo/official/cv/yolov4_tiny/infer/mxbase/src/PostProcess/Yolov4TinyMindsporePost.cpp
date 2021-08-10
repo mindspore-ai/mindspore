@@ -130,13 +130,13 @@ void Yolov4TinyPostProcess::ObjectDetectionOutput(const std::vector<TensorBase>&
         std::vector<std::shared_ptr<void>> featLayerData = {};
         std::vector<std::vector<size_t>> featLayerShapes = {};
         for (uint32_t j = 0; j < tensors.size(); j++) {
-            auto dataPtr = reinterpret_cast<uint8_t> (tensors[j].GetBuffer()) +
+            auto dataPtr = reinterpret_cast<uint8_t *> (tensors[j].GetBuffer()) +
             i * tensors[j].GetByteSize() / batchSize;
             std::shared_ptr<void> tmpPointer;
             tmpPointer.reset(dataPtr, uint8Deleter);
             featLayerData.push_back(tmpPointer);
             shape = tensors[j].GetShape();
-            std::vector<size_t> featLayerShape = {};
+            std::vector<size_t> featLayerShape(shape.size());
             transform(shape.begin(), shape.end(), featLayerShape.begin(), [](uint32_t s) { return (size_t)s; });
             featLayerShapes.push_back(featLayerShape);
         }
