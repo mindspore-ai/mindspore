@@ -27,7 +27,7 @@ namespace opt {
 namespace {
 // insert tensormove for some cnode even if not a Ref cnode
 const std::set<std::string> kNeedInsertTensorMoveOpSet = {kLambNextMVOpName, kLambNextMVWithDecayOpName,
-                                                          kLambUpdateWithLROpName};
+                                                          kLambUpdateWithLROpName, kGetNextOpName};
 
 bool IsParameterOrValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -86,9 +86,10 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
     if (kernel_query_->IsTbeRef(input)) {
       return true;
     }
-
+    auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(input, 0, true);
+    auto real_node = kernel_with_index.first;
     // when input is some special cnodes
-    if (kNeedInsertTensorMoveOpSet.find(AnfAlgo::GetCNodeName(input)) != kNeedInsertTensorMoveOpSet.end()) {
+    if (kNeedInsertTensorMoveOpSet.find(AnfAlgo::GetCNodeName(real_node)) != kNeedInsertTensorMoveOpSet.end()) {
       return true;
     }
 
