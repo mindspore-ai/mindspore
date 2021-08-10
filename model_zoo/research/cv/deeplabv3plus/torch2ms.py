@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""convert pth to ckpt for training"""
 import torch
 from mindspore import Tensor, save_checkpoint
 
