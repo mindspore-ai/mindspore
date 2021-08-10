@@ -124,4 +124,5 @@ def get_config():
     final_config = merge(args, default)
     return Config(final_config)
 
+
 config = get_config()

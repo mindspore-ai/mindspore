@@ -188,6 +188,8 @@ SLOG_PRINT_TO_STDOUT=1 python eval.py --device_id 0
         │   ├──run_train.sh             // shell script for distributed on Ascend
         │   ├──run_eval.sh              // shell script for evaluation on Ascend
         │   ├──run_process_data.sh      // shell script for convert audio clips to mindrecord
+        │   ├──run_train_gpu.sh         // shell script for distributed on GPU
+        │   ├──run_eval_gpu.sh          // shell script for evaluation on GPU
         ├── src
         │   ├──dataset.py                     // creating dataset
         │   ├──pre_process_data.py            // pre-process dataset
@@ -253,7 +255,13 @@ Parameters for both training and evaluation can be set in default_config.yaml
 - running on Ascend
 
   ```shell
-  python train.py > train.log 2>&1 &
+  python train.py --device_target Ascend > train.log 2>&1 &
+  ```
+
+- running on GPU
+
+  ```shell
+  python train.py --device_target GPU --data_dir [dataset dir path]  --checkpoint_path [chekpoint save dir]  > train.log 2>&1 &
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`.
@@ -310,21 +318,21 @@ AUC: 0.90995
 
 #### Evaluation Performance
 
-| Parameters                 | Ascend                                                      |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | FCN-4                                                       |
-| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8            |
-| uploaded Date              | 07/05/2021 (month/day/year)                                 |
-| MindSpore Version          | 1.3.0                                                |
-| Training Parameters        | epoch=10, steps=534, batch_size = 32, lr=0.005              |
-| Optimizer                  | Adam                                                        |
-| Loss Function              | Binary cross entropy                                        |
-| outputs                    | probability                                                 |
-| Loss                       | AUC 0.909                                                  |
-| Speed                      | 1pc: 160 samples/sec;                                       |
-| Total time                 | 1pc: 20 mins;                                               |
-| Checkpoint for Fine tuning | 198.73M(.ckpt file)                                         |
-| Scripts                    | [music_auto_tagging script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/fcn-4) |
+| Parameters                 | Ascend                                                      | GPU                                                         |
+| -------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| Model Version              | FCN-4                                                       | FCN-4                                                       |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8  | Tesla V100-PICE-32G                                         |
+| uploaded Date              | 07/05/2021 (month/day/year)                                 | 07/26/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.3.0                                                       | 1.3.0                                                       |
+| Training Parameters        | epoch=10, steps=534, batch_size = 32, lr=0.005              | epoch=10, steps=534, batch_size = 32, lr=0.005              |
+| Optimizer                  | Adam                                                        | Adam                                                        |
+| Loss Function              | Binary cross entropy                                        | Binary cross entropy                                        |
+| outputs                    | probability                                                 | probability                                                 |
+| Loss                       | AUC 0.909                                                   | AUC 0.909                                                   |
+| Speed                      | 1pc: 160 samples/sec;                                       | 1pc: 160 samples/sec;                                       |
+| Total time                 | 1pc: 20 mins;                                               | 1pc: 20 mins;                                               |
+| Checkpoint for Fine tuning | 198.73M(.ckpt file)                                         | 198.73M(.ckpt file)                                         |
+| Scripts                    | [music_auto_tagging script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/fcn-4)             |
 
 ## [ModelZoo Homepage](#contents)  
 
