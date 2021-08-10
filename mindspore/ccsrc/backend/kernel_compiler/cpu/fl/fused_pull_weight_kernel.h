@@ -63,7 +63,7 @@ class FusedPullWeightKernel : public CPUKernel {
       fl_iteration_ = 1;
     }
 
-    MS_LOG(INFO) << "Start pulling weight for federated learning iteration " << fl_iteration_;
+    MS_LOG(INFO) << "Launching pulling weight for federated learning iteration " << fl_iteration_;
     if (!BuildPullWeightReq(fbb)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPullWeight failed.";
       return false;
@@ -75,9 +75,9 @@ class FusedPullWeightKernel : public CPUKernel {
     while (retcode == schema::ResponseCode_SucNotReady) {
       if (!fl::worker::FLWorker::GetInstance().SendToServer(
             0, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPullWeight, &pull_weight_rsp_msg)) {
-        MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. This iteration is dropped.";
-        fl::worker::FLWorker::GetInstance().SetIterationRunning();
-        return true;
+        MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. Retry later.";
+        retcode = schema::ResponseCode_SucNotReady;
+        continue;
       }
       MS_EXCEPTION_IF_NULL(pull_weight_rsp_msg);
 
