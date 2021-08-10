@@ -353,7 +353,7 @@ class LiteKernel {
   mutable std::vector<lite::Tensor *> mutable_out_tensors_;
   bool is_model_output_ = false;
   SubGraphType subgraph_type_ = kNotSubGraph;
-  const lite::InnerContext *context_;
+  const lite::InnerContext *context_ = nullptr;
 };
 
 typedef InnerKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
