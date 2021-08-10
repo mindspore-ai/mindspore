@@ -99,6 +99,19 @@ class GpuKernel : public KernelMod {
     if (index >= addr_list.size()) {
       MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
     }
+
+    if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
+      MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index;
+    }
+
+    return reinterpret_cast<T *>(addr_list[index]->addr);
+  }
+
+  template <typename T>
+  inline T *GetPossiblyNullDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
+    if (index >= addr_list.size()) {
+      MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+    }
     // Kernels may run normally without workspace, the addr_list[index] maybe nullptr.
     if ((addr_list[index] == nullptr) || (addr_list[index]->size == 0)) {
       return nullptr;
