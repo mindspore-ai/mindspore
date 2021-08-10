@@ -2309,6 +2309,7 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   MS_LOG(DEBUG) << "Start update top cell info when run finish";
   UpdateTopCellInfo(false, false, true);
   resource->Clean();
+  abstract::AnalysisContext::ClearContext();
 }
 
 std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder) {
