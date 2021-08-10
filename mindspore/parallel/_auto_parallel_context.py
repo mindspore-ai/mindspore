@@ -162,6 +162,8 @@ class _AutoParallelContext:
         Args:
             loss_repeated_mean (bool): The loss_repeated_mean flag.
         """
+        if not isinstance(loss_repeated_mean, bool):
+            raise TypeError(f"The type of loss_repeated_mean must be bool, but got {type(loss_repeated_mean)}.")
         self.check_context_handle()
         self._context_handle.set_loss_repeated_mean(loss_repeated_mean)
 
@@ -229,7 +231,7 @@ class _AutoParallelContext:
         Set strategy checkpoint load path.
 
         Args:
-            strategy_ckpt_load_file (bool): Path to load parallel strategy checkpoint.
+            strategy_ckpt_load_file (str): Path to load parallel strategy checkpoint.
         """
         self.check_context_handle()
         self._context_handle.set_strategy_ckpt_load_file(strategy_ckpt_load_file)
@@ -323,8 +325,8 @@ class _AutoParallelContext:
 
         if isinstance(indices, (list)):
             for index in indices:
-                if not isinstance(index, int):
-                    raise TypeError('indices has invalid value')
+                if not isinstance(index, int) or isinstance(index, bool):
+                    raise TypeError(f"The type of index must be int, but got {type(index)}.")
         else:
             raise TypeError('indices must be a python list')
 
@@ -372,8 +374,8 @@ class _AutoParallelContext:
         self.check_context_handle()
         if isinstance(sizes, (list)):
             for size in sizes:
-                if not isinstance(size, int):
-                    raise TypeError('sizes has invalid value')
+                if not isinstance(size, int) or isinstance(size, bool):
+                    raise TypeError(f"The type of size must be int, but got {type(size)}.")
         else:
             raise TypeError('sizes must be a python list')
 
@@ -453,6 +455,9 @@ class _AutoParallelContext:
         Raises:
             ValueError: If parallel mode is not supported.
         """
+        if not isinstance(communi_parallel_mode, str):
+            raise TypeError(f"The type of communi_parallel_mode must be str, \
+                but got {type(communi_parallel_mode)}.")
         self.check_context_handle()
         ret = self._context_handle.set_communi_parallel_mode(communi_parallel_mode)
         if ret is False:
@@ -472,8 +477,9 @@ class _AutoParallelContext:
                                                optimizer across devices.
         """
         self.check_context_handle()
-        if not isinstance(optimizer_weight_shard_size, int):
-            raise TypeError('optimizer_weight_shard_size is invalid type')
+        if not isinstance(optimizer_weight_shard_size, int) or isinstance(optimizer_weight_shard_size, bool):
+            raise TypeError(f"The type of optimizer_weight_shard_size must be int, \
+                but got {type(optimizer_weight_shard_size)}.")
         if optimizer_weight_shard_size <= 1:
             logger.warning("The setting 'optimizer_weight_shard_size' is invalid. "
                            "Please use the integer larger than 1.")

@@ -21,7 +21,7 @@ from mindspore._checkparam import args_type_check
 __all__ = ["get_algo_parameters", "reset_algo_parameters", "set_algo_parameters"]
 
 
-class _AlgoParameterConfig():
+class _AlgoParameterConfig:
     """
     _AlgoParameterConfig is the configuration of setting parameters used in th algorithm.
 
