@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -62,7 +62,7 @@ APP_ERROR DeeplabV3plus::Init(const InitParam &initParam) {
     std::map<std::string, std::shared_ptr<void>> config;
     config["postProcessConfigContent"] = std::make_shared<std::string>(jsonStr);
     config["labelPath"] = std::make_shared<std::string>(initParam.labelPath);
-    post_ = std::make_shared<Deeplabv3Post>();
+    post_ = std::make_shared<MxBase::Deeplabv3Post>();
     ret = post_->Init(config);
     if (ret != APP_ERR_OK) {
         LogError << "Deeplabv3plusPostProcess init failed, ret=" << ret << ".";
@@ -97,7 +97,7 @@ APP_ERROR DeeplabV3plus::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstIma
     resizedImageInfo.heightResize = dstWidth;
     resizedImageInfo.widthOriginal = srcImageMat.cols;
     resizedImageInfo.widthResize = dstHeight;
-    resizedImageInfo.resizeType = RESIZER_MS_KEEP_ASPECT_RATIO;
+    resizedImageInfo.resizeType = MxBase::RESIZER_MS_KEEP_ASPECT_RATIO;
 
     return APP_ERR_OK;
 }
@@ -133,10 +133,10 @@ APP_ERROR DeeplabV3plus::Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMa
 
 APP_ERROR DeeplabV3plus::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase) {
     const uint32_t dataSize = imageMat.cols * imageMat.rows * imageMat.elemSize();
-    MemoryData memoryDataDst(dataSize, MemoryData::MEMORY_DEVICE, deviceId_);
-    MemoryData memoryDataSrc(imageMat.data, dataSize, MemoryData::MEMORY_HOST);
+    MxBase::MemoryData memoryDataDst(dataSize, MxBase::MemoryData::MEMORY_DEVICE, deviceId_);
+    MxBase::MemoryData memoryDataSrc(imageMat.data, dataSize, MxBase::MemoryData::MEMORY_HOST);
 
-    APP_ERROR ret = MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
+    APP_ERROR ret = MxBase::MemoryHelper::MxbsMallocAndCopy(memoryDataDst, memoryDataSrc);
     if (ret != APP_ERR_OK) {
         LogError << GetError(ret) << "Memory malloc failed.";
         return ret;
@@ -146,7 +146,7 @@ APP_ERROR DeeplabV3plus::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::Tens
         static_cast<uint32_t>(imageMat.rows),
         static_cast<uint32_t>(imageMat.cols),
         static_cast<uint32_t>(imageMat.channels())};
-    tensorBase = TensorBase(memoryDataDst, false, shape, TENSOR_DTYPE_FLOAT32);
+    tensorBase = MxBase::TensorBase(memoryDataDst, false, shape, MxBase::TENSOR_DTYPE_FLOAT32);
     return APP_ERR_OK;
 }
 
@@ -158,16 +158,16 @@ APP_ERROR DeeplabV3plus::Inference(const std::vector<MxBase::TensorBase> &inputs
         for (size_t j = 0; j < modelDesc_.outputTensors[i].tensorDims.size(); ++j) {
             shape.push_back((uint32_t)modelDesc_.outputTensors[i].tensorDims[j]);
         }
-        TensorBase tensor(shape, dtypes[i], MemoryData::MEMORY_DEVICE, deviceId_);
-        APP_ERROR ret = TensorBase::TensorBaseMalloc(tensor);
+        MxBase::TensorBase tensor(shape, dtypes[i], MxBase::MemoryData::MEMORY_DEVICE, deviceId_);
+        APP_ERROR ret = MxBase::TensorBase::TensorBaseMalloc(tensor);
         if (ret != APP_ERR_OK) {
             LogError << "TensorBaseMalloc failed, ret=" << ret << ".";
             return ret;
         }
         outputs.push_back(tensor);
     }
-    DynamicInfo dynamicInfo = {};
-    dynamicInfo.dynamicType = DynamicType::STATIC_BATCH;
+    MxBase::DynamicInfo dynamicInfo = {};
+    dynamicInfo.dynamicType = MxBase::DynamicType::STATIC_BATCH;
     APP_ERROR ret = model_->ModelInference(inputs, outputs, dynamicInfo);
     if (ret != APP_ERR_OK) {
         LogError << "ModelInference failed, ret=" << ret << ".";
@@ -177,7 +177,7 @@ APP_ERROR DeeplabV3plus::Inference(const std::vector<MxBase::TensorBase> &inputs
 }
 
 APP_ERROR DeeplabV3plus::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-    std::vector<SemanticSegInfo> &segInfo, const std::vector<MxBase::ResizedImageInfo> &resizedInfo) {
+    std::vector<MxBase::SemanticSegInfo> &segInfo, const std::vector<MxBase::ResizedImageInfo> &resizedInfo) {
     APP_ERROR ret = post_->Process(inputs, segInfo, resizedInfo);
     if (ret != APP_ERR_OK) {
         LogError << "Process failed, ret=" << ret << ".";
@@ -194,12 +194,12 @@ APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
         return ret;
     }
 
-    ResizedImageInfo resizedImageInfo;
+    MxBase::ResizedImageInfo resizedImageInfo;
     ResizeImage(imageMat, imageMat, resizedImageInfo);
     Normalize(imageMat, imageMat);
     Padding(imageMat, imageMat);
 
-    TensorBase tensorBase;
+    MxBase::TensorBase tensorBase;
     ret = CVMatToTensorBase(imageMat, tensorBase);
     if (ret != APP_ERR_OK) {
         LogError << "CVMatToTensorBase failed, ret=" << ret << ".";
@@ -215,8 +215,8 @@ APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
         return ret;
     }
 
-    std::vector<SemanticSegInfo> semanticSegInfos = {};
-    std::vector<ResizedImageInfo> resizedImageInfos = {resizedImageInfo};
+    std::vector<MxBase::SemanticSegInfo> semanticSegInfos = {};
+    std::vector<MxBase::ResizedImageInfo> resizedImageInfos = {resizedImageInfo};
     ret = PostProcess(outputs, semanticSegInfos, resizedImageInfos);
     if (ret != APP_ERR_OK) {
         LogError << "PostProcess failed, ret=" << ret << ".";
