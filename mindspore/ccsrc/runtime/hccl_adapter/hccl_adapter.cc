@@ -137,43 +137,53 @@ bool HcclAdapter::InitHccl() {
   return true;
 }
 
-bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
-  MS_LOG(INFO) << "Start init hccl adapter.";
+bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file,
+                           bool is_graph_mode) {
+  MS_LOG(INFO) << "Start init hccl adapter for " << (is_graph_mode ? "graph mode." : "pynative mode.");
   std::lock_guard<std::mutex> lock(init_mutex_);
   if (init_flag_) {
     MS_LOG(INFO) << "Hccl has been inited, skip.";
     return true;
   }
-
+  is_graph_mode_ = is_graph_mode;
   InitPlugin();
-  bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
-  if (!ret) {
-    return false;
+  if (is_graph_mode_) {
+    bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
+    if (!ret) {
+      return false;
+    }
+
+    ret = InitHcclExec();
+    if (!ret) {
+      return false;
+    }
+  } else {
+    bool ret = InitHcclComm(rank_id, rank_file);
+    if (!ret) {
+      return false;
+    }
   }
-  ret = InitHcclComm(rank_id, rank_file);
-  if (!ret) {
-    return false;
-  }
-  ret = InitHcclExec();
-  if (!ret) {
-    return false;
-  }
+
   init_flag_ = true;
   MS_LOG(INFO) << "Init hccl adapter success.";
   return true;
 }
 
 bool HcclAdapter::FinalizeHccl() {
-  MS_LOG(INFO) << "Start destroy hccl adapter.";
   std::lock_guard<std::mutex> lock(init_mutex_);
+  MS_LOG(INFO) << "Start destroy hccl adapter for " << (is_graph_mode_ ? "graph mode." : "pynative mode.");
   if (!init_flag_) {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
 
-  (void)FinalizeHcclExec();
-  (void)FinalizeHcclComm();
-  (void)FinalizeKernelInfoStore();
+  if (is_graph_mode_) {
+    (void)FinalizeHcclExec();
+    (void)FinalizeKernelInfoStore();
+  } else {
+    (void)FinalizeHcclComm();
+  }
+
   FinalizePlugin();
   init_flag_ = false;
   MS_LOG(INFO) << "Destroy hccl adapter success.";

@@ -42,7 +42,7 @@ class HcclAdapter {
   static HcclAdapter &GetInstance();
 
   // common
-  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
+  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, bool is_graph_mode);
   bool InitHccl();
   bool FinalizeHccl();
 
@@ -121,6 +121,7 @@ class HcclAdapter {
   std::shared_ptr<::ge::OpsKernelBuilder> ops_kernel_builder_ = nullptr;
 
   bool init_flag_ = false;
+  bool is_graph_mode_ = false;
   std::mutex init_mutex_;
 };
 }  // namespace mindspore::hccl
