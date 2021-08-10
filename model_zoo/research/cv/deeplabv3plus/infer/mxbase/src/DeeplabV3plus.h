@@ -42,7 +42,8 @@ class DeeplabV3plus {
      APP_ERROR Init(const InitParam &initParam);
      APP_ERROR DeInit();
      APP_ERROR ReadImage(const std::string &imgPath, cv::Mat &imageMat);
-     APP_ERROR ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat, MxBase::ResizedImageInfo &resizedImageInfo);
+     APP_ERROR ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat, 
+         MxBase::ResizedImageInfo &resizedImageInfo);
      APP_ERROR Normalize(const cv::Mat &srcImageMat, cv::Mat &dstImageMat);
      APP_ERROR Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMat);
      APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
