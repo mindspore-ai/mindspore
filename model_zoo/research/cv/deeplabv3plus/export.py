@@ -41,18 +41,19 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 
+"""create network"""
 class BuildNetwork(nn.Cell):
-    def __init__(self, network, input_format="NHWC"):
+    def __init__(self, net, input_format="NHWC"):
         super(BuildNetwork, self).__init__()
-        self.network = network
+        self.network = net
         self.softmax = nn.Softmax(axis=1)
         self.format = input_format
         self.transpose = ops.Transpose()
 
-    def construct(self, input_data):
+    def construct(self, data):
         if self.format == "NHWC":
-            input_data = self.transpose(input_data, (0, 3, 1, 2))
-        output = self.network(input_data)
+            data = self.transpose(data, (0, 3, 1, 2))
+        output = self.network(data)
         output = self.softmax(output)
         return output
 
