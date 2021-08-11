@@ -27,7 +27,6 @@ using mindspore::schema::PrimitiveType_PadFusion;
 namespace mindspore::kernel {
 namespace {
 constexpr size_t kPadCommonInputSize = 2;
-constexpr size_t kPadMaxInputSize = 3;
 }  // namespace
 int PadFp16CPUKernel::RunImpl(int task_id) {
   PadFp16(input_, output_, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
@@ -101,9 +100,6 @@ int PadFp16CPUKernel::Run() {
         MS_LOG(ERROR) << "PadFp16CPUKernel CopyPaddingFromInput failed";
         return RET_ERROR;
       }
-    }
-    if (in_tensors_.size() == kPadMaxInputSize) {
-      pad_param_->constant_value_ = reinterpret_cast<float *>(in_tensors_.at(2)->data_c())[0];
     }
     if (pad_param_->constant_value_ - 0.0f < 1e-5) {
       memset(output_, 0, output_tensor->ElementsNum() * sizeof(float16_t));
