@@ -25,14 +25,16 @@
 
 namespace mindspore {
 namespace opt {
-/// \brief PassPosition defined where to plae user's pass.
-enum MS_API PassPosition { POSITION_BEGIN = 0, POSITION_END = 1 };
-
 /// \brief P defined a basic interface.
 ///
 /// \note List public class and interface for reference.
 class MS_API Pass;
 using PassPtr = std::shared_ptr<Pass>;
+}  // namespace opt
+
+namespace lite {
+/// \brief PassPosition defined where to plae user's pass.
+enum MS_API PassPosition { POSITION_BEGIN = 0, POSITION_END = 1 };
 
 /// \brief PassRegistry defined registration of Pass.
 class MS_API PassRegistry {
@@ -41,7 +43,7 @@ class MS_API PassRegistry {
   ///
   /// \param[in] pos Define where to replace the pass.
   /// \param[in] pass Define user's defined pass.
-  PassRegistry(const std::string &pass_name, const PassPtr &pass);
+  PassRegistry(const std::string &pass_name, const opt::PassPtr &pass);
 
   /// \brief Constructor of PassRegistry to assign which passes are required for external extension.
   ///
@@ -57,14 +59,14 @@ class MS_API PassRegistry {
 ///
 /// \param[in] name Define name of user's pass, which is a string.
 /// \param[in] pass Define user's defined pass.
-#define REG_PASS(name, pass) static PassRegistry g_##name##PassReg(#name, std::make_shared<pass>());
+#define REG_PASS(name, pass) static mindspore::lite::PassRegistry g_##name##PassReg(#name, std::make_shared<pass>());
 
 /// \brief Defined assigning macro to assign Passes, which called by user directly.
 ///
 /// \param[in] position Define the place where assigned passes will run.
 /// \param[in] assigned Define the name of passes assigned by user.
-#define REG_SCHEDULED_PASS(position, assigned) static PassRegistry g_##position(position, assigned);
-}  // namespace opt
+#define REG_SCHEDULED_PASS(position, assigned) static mindspore::lite::PassRegistry g_##position(position, assigned);
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_PASS_REGISTRY_H_

@@ -23,12 +23,12 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-namespace opt {
+namespace lite {
 namespace {
-std::map<std::string, PassPtr> pass_store_room;
+std::map<std::string, opt::PassPtr> pass_store_room;
 std::map<PassPosition, std::vector<std::string>> external_assigned_passes;
 std::mutex pass_mutex;
-void RegPass(const std::string &pass_name, const PassPtr &pass) {
+void RegPass(const std::string &pass_name, const opt::PassPtr &pass) {
   if (pass == nullptr) {
     MS_LOG(ERROR) << "pass is nullptr.";
     return;
@@ -38,15 +38,15 @@ void RegPass(const std::string &pass_name, const PassPtr &pass) {
 }
 }  // namespace
 
-PassRegistry::PassRegistry(const std::string &pass_name, const PassPtr &pass) { RegPass(pass_name, pass); }
+PassRegistry::PassRegistry(const std::string &pass_name, const opt::PassPtr &pass) { RegPass(pass_name, pass); }
 
 PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &assigned) {
   std::unique_lock<std::mutex> lock(pass_mutex);
   external_assigned_passes[position] = assigned;
 }
 
-std::map<std::string, PassPtr> &PassStoreRoomInfo() { return pass_store_room; }
+std::map<std::string, opt::PassPtr> &PassStoreRoomInfo() { return pass_store_room; }
 
 std::map<PassPosition, std::vector<std::string>> &ExternalAssignedPassesInfo() { return external_assigned_passes; }
-}  // namespace opt
+}  // namespace lite
 }  // namespace mindspore
