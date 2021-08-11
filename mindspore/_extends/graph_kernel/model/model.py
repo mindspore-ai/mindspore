@@ -216,6 +216,7 @@ class PrimLib:
         'Transpose': Prim(OPAQUE),
         'Tile': Prim(BROADCAST),
         'BroadcastTo': Prim(BROADCAST),
+        'StridedSlice': Prim(OPAQUE),
         'MatMul': Prim(OPAQUE),
         'TransData': Prim(OPAQUE),
         'BatchMatMul': Prim(OPAQUE),
