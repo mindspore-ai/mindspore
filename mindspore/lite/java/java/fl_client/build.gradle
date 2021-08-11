@@ -71,15 +71,12 @@ flatbuffers {
     } else {
         flatcPath = msLibPath
     }
-    println("-----------------flatc path: " + flatcPath + "-----------------")
 }
 
 task createFlatBuffers(type: FlatBuffers) {
-    println("-----------------executing task: createFlatBuffers-----------------")
     inputDir = file("../../../../schema")
     outputDir = file("src/main/java/")
     language = 'java'
-    println("-----------------Finish task: createFlatBuffers-----------------")
 }
 
 
@@ -91,7 +88,6 @@ task clearJar(type: Delete) {
 archivesBaseName ='mindspore-lite-java-flclient'
 
 task packFLJarAAR(type: Jar){
-    println("-----------------executing task: packFLJarAAR-----------------")
     manifest {
         attributes "Main-Class": "com.mindspore.flclient.SyncFLJob"
     }
@@ -102,18 +98,13 @@ task packFLJarAAR(type: Jar){
         }
     }
     destinationDirectory = file('build/libs/jarAAR')
-    println("-----------------Finish task: packFLJarAAR-----------------")
-
 }
 
 task flReleaseJarAAR (type:Exec, dependsOn: ['packFLJarAAR']){
-    println("-----------------executing task: flReleaseJarAAR-----------------")
     commandLine "zip", "-d", "./build/libs/jarAAR/mindspore-lite-java-flclient.jar",'META-INF/.SF',  'META-INF/.RSA',  'META-INF/*SF'
-    println("-----------------zip -d ./build/libs/jarAAR/mindspore-lite-java-flclient.jar-----------------")
 }
 
 task packFLJarX86(type: Jar){
-    println("-----------------executing task: packFLJarX86-----------------")
     manifest {
         attributes "Main-Class": "com.mindspore.flclient.SyncFLJob"
     }
@@ -125,11 +116,8 @@ task packFLJarX86(type: Jar){
             it.isDirectory() ? it : zipTree(it) }
     }
     destinationDirectory = file('build/libs/jarX86')
-    println("-----------------Finish task: packFLJarX86-----------------")
 }
 
 task flReleaseJarX86 (type:Exec, dependsOn: ['packFLJarX86']){
-    println("-----------------executing task: flReleaseJarX86-----------------")
     commandLine "zip", "-d", "./build/libs/jarX86/mindspore-lite-java-flclient.jar",'META-INF/.SF',  'META-INF/.RSA',  'META-INF/*SF'
-    println("-----------------zip -d ./build/libs/jarX86/mindspore-lite-java-flclient.jar-----------------")
 }

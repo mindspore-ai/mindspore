@@ -95,6 +95,7 @@ build_lite_x86_64_jni_and_jar() {
         ${LITE_JAVA_PATH}/java/gradlew clearJar -p ${LITE_JAVA_PATH}/java/fl_client
         ${LITE_JAVA_PATH}/java/gradlew flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
         cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+        rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
     fi
 
     # build jar
@@ -367,6 +368,7 @@ build_aar() {
         ${LITE_JAVA_PATH}/java/gradlew clearJar -p ${LITE_JAVA_PATH}/java/fl_client
         ${LITE_JAVA_PATH}/java/gradlew flReleaseJarAAR --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
         cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarAAR/mindspore-lite-java-flclient.jar ${LITE_JAVA_PATH}/java/app/libs
+        rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
     fi
 
     cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/app/libs
