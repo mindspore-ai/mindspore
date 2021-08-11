@@ -26,7 +26,7 @@ namespace mindspore::kernel {
 typedef int (*ArithmeticCompareFuncFp16)(const float16_t *input0, const float16_t *input1, uint8_t *output,
                                          int element_size);
 typedef int (*ArithmeticCompareOptFuncFp16)(const float16_t *input0, const float16_t *input1, uint8_t *output,
-                                            int element_size, ArithmeticParameter *param);
+                                            int element_size, const ArithmeticParameter *param);
 typedef struct {
   int primitive_type_;
   int activation_type_;
@@ -52,8 +52,8 @@ class ArithmeticCompareFP16CPUKernel : public InnerKernel {
 
  private:
   void FreeTmpBuffer();
-  int outside_;
-  int break_pos_;
+  int outside_ = 0;
+  int break_pos_ = 0;
   bool is_input0_fp32_ = false;
   bool is_input1_fp32_ = false;
   float16_t *input0_fp16_ = nullptr;

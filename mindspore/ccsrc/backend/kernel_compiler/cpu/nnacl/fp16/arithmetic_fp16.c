@@ -69,7 +69,7 @@ int ElementMulFp16(const float16_t *input0, const float16_t *input1, float16_t *
 }
 
 int ElementOptMulFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      ArithmeticParameter *param) {
+                      const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -123,7 +123,7 @@ int ElementMulReluFp16(const float16_t *input0, const float16_t *input1, float16
 }
 
 int ElementOptMulReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          ArithmeticParameter *param) {
+                          const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -180,7 +180,7 @@ int ElementMulRelu6Fp16(const float16_t *input0, const float16_t *input1, float1
 }
 
 int ElementOptMulRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           ArithmeticParameter *param) {
+                           const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -239,7 +239,7 @@ int ElementAddFp16(const float16_t *input0, const float16_t *input1, float16_t *
 }
 
 int ElementOptAddFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      ArithmeticParameter *param) {
+                      const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -299,7 +299,7 @@ int ElementAddReluFp16(const float16_t *input0, const float16_t *input1, float16
 }
 
 int ElementOptAddReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          ArithmeticParameter *param) {
+                          const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -365,7 +365,7 @@ int ElementAddRelu6Fp16(const float16_t *input0, const float16_t *input1, float1
 }
 
 int ElementOptAddRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           ArithmeticParameter *param) {
+                           const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -418,7 +418,7 @@ int ElementSubFp16(const float16_t *input0, const float16_t *input1, float16_t *
 }
 
 int ElementOptSubFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      ArithmeticParameter *param) {
+                      const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -470,7 +470,7 @@ int ElementSubReluFp16(const float16_t *input0, const float16_t *input1, float16
 }
 
 int ElementOptSubReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          ArithmeticParameter *param) {
+                          const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -527,7 +527,7 @@ int ElementSubRelu6Fp16(const float16_t *input0, const float16_t *input1, float1
 }
 
 int ElementOptSubRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           ArithmeticParameter *param) {
+                           const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -581,7 +581,7 @@ int ElementDivFp16(const float16_t *input0, const float16_t *input1, float16_t *
 }
 
 int ElementOptDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                      ArithmeticParameter *param) {
+                      const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -641,7 +641,7 @@ int ElementDivReluFp16(const float16_t *input0, const float16_t *input1, float16
 }
 
 int ElementOptDivReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          ArithmeticParameter *param) {
+                          const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -704,7 +704,7 @@ int ElementDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float1
 }
 
 int ElementOptDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           ArithmeticParameter *param) {
+                           const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -755,7 +755,7 @@ int ElementFloorModFp16(const float16_t *input0, const float16_t *input1, float1
 }
 
 int ElementOptFloorModFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           ArithmeticParameter *param) {
+                           const ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
     for (int i = 0; i < element_size; ++i) {
       NNACL_ASSERT(input1[0] != 0);
@@ -778,7 +778,7 @@ int ElementFloorDivFp16(const float16_t *input0, const float16_t *input1, float1
   return NNACL_OK;
 }
 int ElementOptFloorDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                           ArithmeticParameter *param) {
+                           const ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
     for (int i = 0; i < element_size; ++i) {
       NNACL_ASSERT(input1[0] != 0);
@@ -814,7 +814,7 @@ int ElementLogicalAndFp16(const float16_t *input0, const float16_t *input1, floa
 }
 
 int ElementOptLogicalAndFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                             ArithmeticParameter *param) {
+                             const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -875,7 +875,7 @@ int ElementLogicalOrFp16(const float16_t *input0, const float16_t *input1, float
 }
 
 int ElementOptLogicalOrFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                            ArithmeticParameter *param) {
+                            const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -922,7 +922,7 @@ int ElementSquaredDifferenceFp16(const float16_t *input0, const float16_t *input
 }
 
 int ElementOptSquaredDifferenceFp16(const float16_t *input0, const float16_t *input1, float16_t *output,
-                                    int element_size, ArithmeticParameter *param) {
+                                    int element_size, const ArithmeticParameter *param) {
   ElementOptSubFp16(input0, input1, output, element_size, param);
   return ElementMulFp16(output, output, output, element_size);
 }
@@ -944,7 +944,7 @@ int ElementMaximumFp16(const float16_t *input0, const float16_t *input1, float16
 }
 
 int ElementOptMaximumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          ArithmeticParameter *param) {
+                          const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -993,7 +993,7 @@ int ElementMinimumFp16(const float16_t *input0, const float16_t *input1, float16
 }
 
 int ElementOptMinimumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
-                          ArithmeticParameter *param) {
+                          const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -1042,7 +1042,7 @@ int ElementNotEqualFp16(const float16_t *input0, const float16_t *input1, uint8_
 }
 
 int ElementOptNotEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                           ArithmeticParameter *param) {
+                           const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -1091,7 +1091,7 @@ int ElementEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *
 }
 
 int ElementOptEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                        ArithmeticParameter *param) {
+                        const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -1140,7 +1140,7 @@ int ElementLessFp16(const float16_t *input0, const float16_t *input1, uint8_t *o
 }
 
 int ElementOptLessFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                       ArithmeticParameter *param) {
+                       const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -1189,7 +1189,7 @@ int ElementLessEqualFp16(const float16_t *input0, const float16_t *input1, uint8
 }
 
 int ElementOptLessEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                            ArithmeticParameter *param) {
+                            const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -1238,7 +1238,7 @@ int ElementGreaterFp16(const float16_t *input0, const float16_t *input1, uint8_t
 }
 
 int ElementOptGreaterFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                          ArithmeticParameter *param) {
+                          const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);
@@ -1287,7 +1287,7 @@ int ElementGreaterEqualFp16(const float16_t *input0, const float16_t *input1, ui
 }
 
 int ElementOptGreaterEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
-                               ArithmeticParameter *param) {
+                               const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
   float16x8_t vin1_opt = vdupq_n_f16(input1[0]);

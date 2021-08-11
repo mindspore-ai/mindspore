@@ -18,7 +18,7 @@
 
 // fp16 common winograd
 void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
-                                int out_tile_index, int out_w_block_num, ConvParameter *conv_param,
+                                int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
                                 InputTransFp16Func func) {
 #ifdef ENABLE_ARM64
   const int tile_num = 16;
@@ -126,7 +126,7 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
 }
 
 void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
-                                 int cal_num, int out_tile_index, int output_unit_num, ConvParameter *conv_param,
+                                 int cal_num, int out_tile_index, int output_unit_num, const ConvParameter *conv_param,
                                  OutputTransFp16Func func) {
   int output_unit = conv_param->output_unit_;
   int output_w = conv_param->output_w_;
@@ -166,9 +166,9 @@ void WinogradOutputTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_d
   }
 }
 
-int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winograd_data, float *matrix_g,
-                                float *matrix_gt, int oc_block, int input_unit, int kernel_unit, int filter_channel,
-                                int filter_batch, bool pack) {
+int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winograd_data, const float *matrix_g,
+                                const float *matrix_gt, int oc_block, int input_unit, int kernel_unit,
+                                int filter_channel, int filter_batch, bool pack) {
   // original weight format : ohwi
   int oc_block_num = UP_DIV(filter_batch, oc_block);
   int block_stride = filter_channel * oc_block;

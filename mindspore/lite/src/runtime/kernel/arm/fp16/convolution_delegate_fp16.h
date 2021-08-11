@@ -39,7 +39,7 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
       fp16_conv_kernel_ = nullptr;
     }
   }
-  void *CopyData(lite::Tensor *tensor);
+  void *CopyData(const lite::Tensor *tensor);
   void FreeCopiedData();
   int Init() override;
   int ReSize() override;

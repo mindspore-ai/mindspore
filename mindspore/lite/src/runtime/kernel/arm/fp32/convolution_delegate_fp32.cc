@@ -39,6 +39,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 
@@ -78,14 +79,11 @@ int ConvolutionDelegateCPUKernel::GetWeightData() {
   }
   if (InferShapeDone()) {
     origin_weight_ = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
-    MS_ASSERT(origin_weight_ != nullptr);
+    CHECK_NULL_RETURN(origin_weight_);
     return RET_OK;
   }
   origin_weight_ = CopyData(in_tensors_.at(kWeightIndex));
-  if (origin_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Copy weight data failed.";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(origin_weight_);
   need_free_weight_ = true;
   return RET_OK;
 }
@@ -94,14 +92,11 @@ int ConvolutionDelegateCPUKernel::GetBiasData() {
   if (in_tensors_.size() == 3) {
     if (InferShapeDone()) {
       origin_bias_ = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->data_c());
-      MS_ASSERT(origin_bias_ != nullptr);
+      CHECK_NULL_RETURN(origin_bias_);
       return RET_OK;
     } else {
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
-      if (origin_bias_ == nullptr) {
-        MS_LOG(ERROR) << "Copy bias data failed.";
-        return RET_ERROR;
-      }
+      CHECK_NULL_RETURN(origin_bias_);
       need_free_bias_ = true;
       return RET_OK;
     }
@@ -129,7 +124,7 @@ int ConvolutionDelegateCPUKernel::ReSize() {
   if (conv_kernel_ == nullptr) {
     // need to select actual execute kernel here
     conv_kernel_ = CpuConvFp32KernelSelect();
-    if (!conv_kernel_) {
+    if (conv_kernel_ == nullptr) {
       MS_LOG(ERROR) << "Selecting execute kernel failed for conv_kernel, got a nullptr.";
       return RET_ERROR;
     }
@@ -215,6 +210,7 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "conv kernel init failed.";
       delete kernel;
+      op_parameter_ = nullptr;
       return nullptr;
     }
   }
