@@ -81,7 +81,7 @@ bool DoFuse(const FuncGraphPtr &func_graph) {
     // Cast is only used by matmul
     auto user_index_set = mng->node_users()[cast_node];
     if (user_index_set.size() == 1) {
-      mng->Replace(cast_node, (cast_node->cast<CNodePtr>())->input(1));
+      (void)mng->Replace(cast_node, (cast_node->cast<CNodePtr>())->input(1));
       UpdateBuildInfo(cnode, cast_node);
       changed = true;
       continue;

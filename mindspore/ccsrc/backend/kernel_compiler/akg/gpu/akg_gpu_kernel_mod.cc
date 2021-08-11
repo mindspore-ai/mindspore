@@ -15,8 +15,7 @@
  */
 
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_mod.h"
-#include <fstream>
-#include <algorithm>
+
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 

@@ -47,15 +47,12 @@ CastType GetCastType(const CNodePtr &node) {
   }
   TypeId input_type = AnfAlgo::GetInputDeviceDataType(node, 0);
   TypeId output_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
-
   if (input_type == kNumberTypeFloat16 && output_type == kNumberTypeFloat32) {
     return CAST_UP;
   }
-
   if (input_type == kNumberTypeFloat32 && output_type == kNumberTypeFloat16) {
     return CAST_DOWN;
   }
-
   return CAST_OTHER;
 }
 

@@ -16,13 +16,6 @@
 
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
 
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "backend/kernel_compiler/common_utils.h"

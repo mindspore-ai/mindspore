@@ -798,7 +798,7 @@ class CostModelSplitSchemer : public SplitSchemer {
       need_inline_.clear();
       return;
     } else if (split_plan_.size() == 1 && !NeedInline(0)) {
-      /*In this case, the CostModel decided to keep the whole graph unchanged.*/
+      // In this case, the CostModel decided to keep the whole graph unchanged.
       split_plan_.clear();
       need_inline_.clear();
       return;

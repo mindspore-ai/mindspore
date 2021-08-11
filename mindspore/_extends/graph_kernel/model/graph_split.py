@@ -472,8 +472,8 @@ class GraphSplitByPattern:
                 region_ops.append(op)
                 return False, None, weight, True
             # region fails to grow
-            MAX_WEIGHT = 20
-            if weight > MAX_WEIGHT or len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST:
+            max_weight = 20
+            if weight > max_weight or len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST:
                 return False, None, weight, False
             # region grows successfully
             weight = weight + 1
@@ -810,7 +810,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             fused = []
             for a, _ in dom.in_relations.items():
                 if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
-                    len(a.out_relations) == 1 and not a.is_output:
+                        len(a.out_relations) == 1 and not a.is_output:
                     fused.append(a)
             return fused, True
 
