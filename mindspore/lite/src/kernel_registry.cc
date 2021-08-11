@@ -39,6 +39,7 @@ using mindspore::kernel::kCPU;
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
+using mindspore::lite::registry::CreateKernel;
 
 namespace mindspore::lite {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
@@ -143,8 +144,7 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   MS_ASSERT(kernel != nullptr);
   kernel::KernelDesc desc;
   KernelKeyToKernelDesc(key, &desc);
-  mindspore::kernel::CreateKernel creator =
-    kernel::RegisterUtils::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
+  CreateKernel creator = kernel::RegisterUtils::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
   }

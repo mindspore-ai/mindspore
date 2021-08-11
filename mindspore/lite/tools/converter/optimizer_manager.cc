@@ -41,7 +41,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, std::vector<std::string> p
   return true;
 }
 
-bool RunExternalPass(const FuncGraphPtr &func_graph, PassPosition position) {
+bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition position) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";
     return false;

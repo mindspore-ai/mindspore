@@ -15,13 +15,13 @@
  */
 #include "src/registry/kernel_interface_registry.h"
 #include <memory>
-#include "include/registry/kernel_interface.h"
+#include "include/registry/register_kernel_interface.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "schema/model_generated.h"
 
-using mindspore::kernel::KernelInterfaceCreator;
+using mindspore::lite::registry::KernelInterfaceCreator;
 using mindspore::schema::PrimitiveType_MAX;
 using mindspore::schema::PrimitiveType_MIN;
 namespace mindspore {

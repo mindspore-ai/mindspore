@@ -25,7 +25,7 @@
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
 #include "src/runtime/inner_allocator.h"
-#include "include/registry/kernel_interface.h"
+#include "include/registry/register_kernel_interface.h"
 #include "include/registry/register_kernel.h"
 
 using mindspore::kernel::Kernel;
@@ -96,9 +96,10 @@ std::shared_ptr<Kernel> TestCustomAddCreator(const std::vector<MSTensor> &inputs
 }
 
 std::shared_ptr<KernelInterface> CustomAddInferCreator() { return std::make_shared<TestCustomAddInfer>(); }
+const auto kFloat32 = DataType::kNumberTypeFloat32;
 }  // namespace
 
-REGISTER_KERNEL(CPU, BuiltInTest, kNumberTypeFloat32, PrimitiveType_AddFusion, TestCustomAddCreator)
+REGISTER_KERNEL(CPU, BuiltInTest, kFloat32, PrimitiveType_AddFusion, TestCustomAddCreator)
 REGISTER_KERNEL_INTERFACE(BuiltInTest, PrimitiveType_AddFusion, CustomAddInferCreator)
 
 class TestRegistry : public mindspore::CommonTest {

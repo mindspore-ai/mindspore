@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace lite {
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, std::vector<std::string> pass_names);
-bool RunExternalPass(const FuncGraphPtr &func_graph, PassPosition position);
+bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition position);
 }  // namespace lite
 }  // namespace mindspore
 

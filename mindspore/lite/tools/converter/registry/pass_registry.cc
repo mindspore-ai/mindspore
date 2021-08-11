@@ -26,7 +26,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 std::map<std::string, opt::PassPtr> pass_store_room;
-std::map<PassPosition, std::vector<std::string>> external_assigned_passes;
+std::map<registry::PassPosition, std::vector<std::string>> external_assigned_passes;
 std::mutex pass_mutex;
 void RegPass(const std::string &pass_name, const opt::PassPtr &pass) {
   if (pass == nullptr) {
@@ -38,15 +38,19 @@ void RegPass(const std::string &pass_name, const opt::PassPtr &pass) {
 }
 }  // namespace
 
-PassRegistry::PassRegistry(const std::string &pass_name, const opt::PassPtr &pass) { RegPass(pass_name, pass); }
+registry::PassRegistry::PassRegistry(const std::string &pass_name, const opt::PassPtr &pass) {
+  RegPass(pass_name, pass);
+}
 
-PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &assigned) {
+registry::PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &assigned) {
   std::unique_lock<std::mutex> lock(pass_mutex);
   external_assigned_passes[position] = assigned;
 }
 
 std::map<std::string, opt::PassPtr> &PassStoreRoomInfo() { return pass_store_room; }
 
-std::map<PassPosition, std::vector<std::string>> &ExternalAssignedPassesInfo() { return external_assigned_passes; }
+std::map<registry::PassPosition, std::vector<std::string>> &ExternalAssignedPassesInfo() {
+  return external_assigned_passes;
+}
 }  // namespace lite
 }  // namespace mindspore

@@ -59,8 +59,8 @@ std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_BOOL, mindspore::kNumberTypeBool}};
 
 FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) {
-  string model_file = flag.model_file_;
-  quant_type_ = flag.quant_type_;
+  string model_file = flag.model_file;
+  quant_type_ = flag.quant_type;
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   res_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);

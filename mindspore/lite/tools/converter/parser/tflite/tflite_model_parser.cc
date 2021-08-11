@@ -53,8 +53,8 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
 }
 
 FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag) {
-  auto model_file = flag.model_file_;
-  quant_type_ = flag.quant_type_;
+  auto model_file = flag.model_file;
+  quant_type_ = flag.quant_type;
   // load graph
   tflite_model_ = ReadTfliteModel(model_file);
   if (tflite_model_ == nullptr) {

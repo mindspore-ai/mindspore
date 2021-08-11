@@ -29,16 +29,16 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/model_parser_test.h"
 
-using mindspore::lite::ModelRegistrar;
 using mindspore::lite::converter::ConverterParameters;
 using mindspore::lite::converter::FmkType_CAFFE;
+using mindspore::lite::registry::POSITION_BEGIN;
 namespace mindspore {
 class PassRegistryTest : public mindspore::CommonTest {
  public:
   PassRegistryTest() = default;
   void SetUp() override {
     REG_MODEL_PARSER(FmkType_CAFFE, TestModelParserCreator);
-    auto model_parser = lite::ModelParserRegistry::GetInstance()->GetModelParser(FmkType_CAFFE);
+    auto model_parser = lite::registry::ModelParserRegistry::GetModelParser(FmkType_CAFFE);
     if (model_parser == nullptr) {
       return;
     }
@@ -208,18 +208,16 @@ class TestFusion : public Pass {
     return true;
   }
 };
-}  // namespace opt
 
-namespace lite {
-REG_PASS(TestFusion, opt::TestFusion)
+REG_PASS(TestFusion, TestFusion)
 REG_SCHEDULED_PASS(POSITION_BEGIN, {"TestFusion"})
-}  // namespace lite
+}  // namespace opt
 
 TEST_F(PassRegistryTest, TestRegistry) {
   auto &passes = lite::PassStoreRoomInfo();
   auto &assigned_passes = lite::ExternalAssignedPassesInfo();
   ASSERT_EQ(assigned_passes.size(), 1);
-  auto pass_names = assigned_passes[lite::PassPosition::POSITION_BEGIN];
+  auto pass_names = assigned_passes[POSITION_BEGIN];
   ASSERT_EQ(pass_names.size(), 1);
   auto begin_pass = passes[pass_names.front()];
   ASSERT_NE(begin_pass, nullptr);

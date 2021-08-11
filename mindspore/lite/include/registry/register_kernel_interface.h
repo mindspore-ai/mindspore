@@ -21,33 +21,14 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "include/model.h"
-#include "include/api/types.h"
+#include "include/kernel_interface.h"
 #include "schema/model_generated.h"
 
 namespace mindspore {
-namespace kernel {
-/// \brief KernelInterface defined customized op's interface, such as infershape, and so on.
-class MS_API KernelInterface {
- public:
-  /// \brief Destructor of KernelInterface.
-  virtual ~KernelInterface() = default;
-
-  /// \brief Method to infer customized op's output shape.
-  ///
-  /// \param[in] inputs Define the input tensors of op.
-  /// \param[in] outputs Define the output tensors of op.
-  /// \param[in] primitive Define the attributes of op.
-  ///
-  /// \return  STATUS as an error code of inferring, STATUS is defined in errorcode.h..
-  virtual int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-                    const schema::Primitive *primitive) {
-    return 0;
-  }
-};
-
+namespace lite {
+namespace registry {
 /// \brief KernelInterfaceCreator defined a functor to create KernelInterface.
-using KernelInterfaceCreator = std::function<std::shared_ptr<KernelInterface>()>;
+using KernelInterfaceCreator = std::function<std::shared_ptr<kernel::KernelInterface>()>;
 
 /// \brief RegisterKernelInterface defined registration and acquisition of KernelInterface.
 class MS_API RegisterKernelInterface {
@@ -107,9 +88,9 @@ class MS_API KernelInterfaceReg {
 /// \param[in] provider Define the identification of user.
 /// \param[in] op_type Define the ordinary op type.
 /// \param[in] creator Define the KernelInterface create function.
-#define REGISTER_KERNEL_INTERFACE(provider, op_type, creator)                                                  \
-  namespace {                                                                                                  \
-  static mindspore::kernel::KernelInterfaceReg g_##provider##op_type##_inter_reg(#provider, op_type, creator); \
+#define REGISTER_KERNEL_INTERFACE(provider, op_type, creator)                                                          \
+  namespace {                                                                                                          \
+  static mindspore::lite::registry::KernelInterfaceReg g_##provider##op_type##_inter_reg(#provider, op_type, creator); \
   }  // namespace
 
 /// \brief Defined registering macro to register custom op, which called by user directly.
@@ -117,11 +98,13 @@ class MS_API KernelInterfaceReg {
 /// \param[in] provider Define the identification of user.
 /// \param[in] op_type Define the concrete type of a custom op.
 /// \param[in] creator Define the KernelInterface create function.
-#define REGISTER_CUSTOM_KERNEL_INTERFACE(provider, op_type, creator)                                                   \
-  namespace {                                                                                                          \
-  static mindspore::kernel::KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(#provider, #op_type, creator); \
+#define REGISTER_CUSTOM_KERNEL_INTERFACE(provider, op_type, creator)                                                 \
+  namespace {                                                                                                        \
+  static mindspore::lite::registry::KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(#provider, #op_type, \
+                                                                                                creator);            \
   }  // namespace
-}  // namespace kernel
+}  // namespace registry
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_KERNEL_INTERFACE_H_

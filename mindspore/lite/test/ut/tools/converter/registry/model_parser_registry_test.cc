@@ -19,7 +19,6 @@
 #include "ut/tools/converter/registry/model_parser_test.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-using mindspore::lite::ModelRegistrar;
 using mindspore::lite::converter::ConverterParameters;
 using mindspore::lite::converter::FmkType_CAFFE;
 namespace mindspore {
@@ -36,7 +35,7 @@ TEST_F(ModelParserRegistryTest, TestRegistry) {
   ASSERT_NE(proposal_parser, nullptr);
   REG_MODEL_PARSER(FmkType_CAFFE,
                    TestModelParserCreator);  // register test model parser creator, which will overwrite existing.
-  auto model_parser = lite::ModelParserRegistry::GetInstance()->GetModelParser(FmkType_CAFFE);
+  auto model_parser = lite::registry::ModelParserRegistry::GetModelParser(FmkType_CAFFE);
   ASSERT_NE(model_parser, nullptr);
   ConverterParameters converter_parameters;
   auto func_graph = model_parser->Parse(converter_parameters);

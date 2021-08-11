@@ -33,10 +33,10 @@ namespace mindspore {
 namespace lite {
 namespace {
 void InitConverterParameters(const converter::Flags &flag, converter::ConverterParameters *converter_parameters) {
-  converter_parameters->fmk_ = flag.fmk;
-  converter_parameters->quant_type_ = flag.quantType;
-  converter_parameters->model_file_ = flag.modelFile;
-  converter_parameters->weight_file_ = flag.weightFile;
+  converter_parameters->fmk = flag.fmk;
+  converter_parameters->quant_type = flag.quantType;
+  converter_parameters->model_file = flag.modelFile;
+  converter_parameters->weight_file = flag.weightFile;
 }
 }  // namespace
 
@@ -50,7 +50,7 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
       return nullptr;
     }
   } else {
-    model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmk);
+    model_parser_ = registry::ModelParserRegistry::GetModelParser(flag.fmk);
     if (model_parser_ == nullptr) {
       return nullptr;
     }

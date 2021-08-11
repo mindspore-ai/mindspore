@@ -33,6 +33,7 @@ using PassPtr = std::shared_ptr<Pass>;
 }  // namespace opt
 
 namespace lite {
+namespace registry {
 /// \brief PassPosition defined where to plae user's pass.
 enum MS_API PassPosition { POSITION_BEGIN = 0, POSITION_END = 1 };
 
@@ -59,13 +60,16 @@ class MS_API PassRegistry {
 ///
 /// \param[in] name Define name of user's pass, which is a string.
 /// \param[in] pass Define user's defined pass.
-#define REG_PASS(name, pass) static mindspore::lite::PassRegistry g_##name##PassReg(#name, std::make_shared<pass>());
+#define REG_PASS(name, pass) \
+  static mindspore::lite::registry::PassRegistry g_##name##PassReg(#name, std::make_shared<pass>());
 
 /// \brief Defined assigning macro to assign Passes, which called by user directly.
 ///
 /// \param[in] position Define the place where assigned passes will run.
 /// \param[in] assigned Define the name of passes assigned by user.
-#define REG_SCHEDULED_PASS(position, assigned) static mindspore::lite::PassRegistry g_##position(position, assigned);
+#define REG_SCHEDULED_PASS(position, assigned) \
+  static mindspore::lite::registry::PassRegistry g_##position(position, assigned);
+}  // namespace registry
 }  // namespace lite
 }  // namespace mindspore
 

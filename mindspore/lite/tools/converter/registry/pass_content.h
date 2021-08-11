@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace lite {
 std::map<std::string, opt::PassPtr> &MS_API PassStoreRoomInfo();
-std::map<PassPosition, std::vector<std::string>> &MS_API ExternalAssignedPassesInfo();
+std::map<registry::PassPosition, std::vector<std::string>> &MS_API ExternalAssignedPassesInfo();
 }  // namespace lite
 }  // namespace mindspore
 
