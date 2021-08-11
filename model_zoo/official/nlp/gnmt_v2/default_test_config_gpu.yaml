@@ -8,7 +8,7 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-device_target: "Ascend"
+device_target: "GPU"
 device_id: 0
 need_modelarts_dataset_unzip: False
 modelarts_dataset_unzip_name: ""
@@ -18,15 +18,15 @@ modelarts_dataset_unzip_name: ""
 random_seed: 50
 epochs: 6
 batch_size: 128
-pre_train_dataset: "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord"
+pre_train_dataset: ""
 fine_tune_dataset: ""
-test_dataset:  ""
+test_dataset:  "/home/workspace/dataset_menu/newstest2014.en.mindrecord"
 valid_dataset: ""
 dataset_sink_mode: true
 input_mask_from_dataset: False
 
 # model_config
-seq_length: 51
+seq_length: 107
 vocab_size: 32320
 hidden_size: 1024
 num_hidden_layers: 4
@@ -37,7 +37,7 @@ initializer_range: 0.1
 label_smoothing: 0.1
 beam_width: 2
 length_penalty_weight: 0.6
-max_decode_length: 50
+max_decode_length: 80
 
 # loss_scale_config
 init_loss_scale: 65536
@@ -54,20 +54,25 @@ warmup_lr_decay_interval: -1
 decay_steps: 4
 decay_start_step: -1
 warmup_steps: 200
-min_lr: 0.000001 #1e-6
+min_lr: 0.000001 # 1e-6
 
 # checkpoint_options
-existed_ckpt: ""
+existed_ckpt: "/home/workspace/gnmt_v2/gnmt-6_3452.ckpt"
 save_ckpt_steps: 3452
 keep_ckpt_max: 6
 ckpt_prefix: "gnmt"
 ckpt_path: "text_translation"
 
+# eval option
+bpe_codes: ""
+test_tgt: ""
+vocab: ""
+output: "./output.npz"
+
 # export option
 file_name: "gnmt_v2"
 file_format: "AIR"
 vocab_file: ""
-bpe_codes: ""
 
 ---
 
@@ -79,8 +84,12 @@ data_path: "The location of the input data."
 output_path: "The location of the output file."
 device_target: 'Target device type'
 
+# eval option
+bpe_codes: "bpe codes to use."
+test_tgt: "data file of the test target"
+output: "result file path."
+
 file_name: "output file name."
 file_format: "file format, choices in ['AIR', 'ONNX', 'MINDIR']"
 infer_config: "gnmt_v2 config file"
 vocab_file: "existed checkpoint address."
-bpe_codes: "bpe codes to use."

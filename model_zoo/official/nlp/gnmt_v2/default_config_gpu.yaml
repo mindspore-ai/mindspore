@@ -8,7 +8,7 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-device_target: "Ascend"
+device_target: "GPU"
 device_id: 0
 need_modelarts_dataset_unzip: False
 modelarts_dataset_unzip_name: ""
@@ -16,7 +16,7 @@ modelarts_dataset_unzip_name: ""
 # ==============================================================================
 # dataset_config
 random_seed: 50
-epochs: 6
+epochs: 8
 batch_size: 128
 pre_train_dataset: "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord"
 fine_tune_dataset: ""
@@ -59,7 +59,7 @@ min_lr: 0.000001 #1e-6
 # checkpoint_options
 existed_ckpt: ""
 save_ckpt_steps: 3452
-keep_ckpt_max: 6
+keep_ckpt_max: 8
 ckpt_prefix: "gnmt"
 ckpt_path: "text_translation"
 
