@@ -25,7 +25,7 @@ class TestCxxApiLiteSerialization : public mindspore::CommonTest {
 
 TEST_F(TestCxxApiLiteSerialization, test_load_no_encrpty_mindir_SUCCESS) {
   Graph graph;
-  ASSERT_TRUE(Serialization::Load("./test_data/nets/retinaface1.ms", ModelType::kFlatBuffer, &graph) == kSuccess);
+  ASSERT_TRUE(Serialization::Load("./test_data/nets/retinaface1.ms", ModelType::kMindIR, &graph) == kSuccess);
 }
 
 TEST_F(TestCxxApiLiteSerialization, test_load_file_not_exist_FAILED) {
