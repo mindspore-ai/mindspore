@@ -24,26 +24,26 @@ DbgServices::DbgServices(bool verbose) {
   if (dbg_log_path != NULL) {
     DbgLogger::verbose = true;
   }
-  debug_services = new DebugServices();
+  debug_services_ = new DebugServices();
 }
 
 DbgServices::DbgServices(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is created via copy";
-  debug_services = new DebugServices(*other.debug_services);
+  debug_services_ = new DebugServices(*other.debug_services_);
 }
 
 DbgServices &DbgServices::operator=(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is being assigned a different state";
   if (this != &other) {
-    delete debug_services;
-    debug_services = new DebugServices(*other.debug_services);
+    delete debug_services_;
+    debug_services_ = new DebugServices(*other.debug_services_);
   }
   return *this;
 }
 
 DbgServices::~DbgServices() {
   MS_LOG(INFO) << "cpp DbgServices object is deleted";
-  delete debug_services;
+  delete debug_services_;
 }
 
 std::string DbgServices::GetVersion() {
@@ -55,13 +55,13 @@ int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_pa
   MS_LOG(INFO) << "cpp DbgServices initialize network name " << net_name;
   MS_LOG(INFO) << "cpp DbgServices initialize dump folder path " << dump_folder_path;
   MS_LOG(INFO) << "cpp DbgServices initialize sync mode " << is_sync_mode;
-  if (debug_services == nullptr) {
+  if (debug_services_ == nullptr) {
     MS_LOG(EXCEPTION) << "Debugger services initialize failed as occur null pointer error,"
                       << "may be due to memory allocation failure, check as: top";
   }
-  debug_services->SetNetName(net_name);
-  debug_services->SetDumpDir(dump_folder_path);
-  debug_services->SetSyncMode(is_sync_mode);
+  debug_services_->SetNetName(net_name);
+  debug_services_->SetDumpDir(dump_folder_path);
+  debug_services_->SetSyncMode(is_sync_mode);
   return 0;
 }
 
@@ -149,15 +149,15 @@ int32_t DbgServices::AddWatchpoint(
       return DebugServices::parameter_t{parameter.name, parameter.disabled, parameter.value, parameter.hit};
     });
 
-  debug_services->AddWatchpoint(id, watch_condition, 0, check_node_list, parameter_list_backend,
-                                &check_node_device_list, &check_node_graph_list);
+  debug_services_->AddWatchpoint(id, watch_condition, 0, check_node_list, parameter_list_backend,
+                                 &check_node_device_list, &check_node_graph_list);
   MS_LOG(INFO) << "cpp end";
   return 0;
 }
 
 int32_t DbgServices::RemoveWatchpoint(unsigned int id) {
   MS_LOG(INFO) << "cpp DbgServices RemoveWatchpoint id " << id;
-  debug_services->RemoveWatchpoint(id);
+  debug_services_->RemoveWatchpoint(id);
   return 0;
 }
 
@@ -178,10 +178,10 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
 
   const bool init_dbg_suspend = (iteration == UINT_MAX);
 
-  tensor_list = debug_services->ReadNeededDumpedTensors(iteration, &file_paths);
+  tensor_list = debug_services_->ReadNeededDumpedTensors(iteration, &file_paths);
 
-  debug_services->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                   file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id);
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
+                                    file_paths, &tensor_list, init_dbg_suspend, true, true, &rank_id, &root_graph_id);
 
   std::vector<watchpoint_hit_t> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
@@ -252,11 +252,11 @@ std::vector<tensor_data_t> DbgServices::ReadTensors(std::vector<tensor_info_t> i
   std::vector<std::string> file_paths;
   auto t1 = std::chrono::high_resolution_clock::now();
   // Convert the dumped data to npy format if it's async mode.
-  if (!debug_services->GetSyncMode()) {
-    debug_services->ConvertReadTensors(backend_name, slot, rank_id, iteration, root_graph_id, &file_paths);
+  if (!debug_services_->GetSyncMode()) {
+    debug_services_->ConvertReadTensors(backend_name, slot, rank_id, iteration, root_graph_id, &file_paths);
   }
-  debug_services->ReadDumpedTensor(backend_name, slot, rank_id, iteration, root_graph_id, is_output, file_paths,
-                                   &result_list);
+  debug_services_->ReadDumpedTensor(backend_name, slot, rank_id, iteration, root_graph_id, is_output, file_paths,
+                                    &result_list);
   auto t2 = std::chrono::high_resolution_clock::now();
   /* Getting number of milliseconds as a double. */
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
