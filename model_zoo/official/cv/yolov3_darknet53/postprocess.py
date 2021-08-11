@@ -14,43 +14,33 @@
 # ============================================================================
 """YoloV3 postprocess."""
 import os
-import argparse
 import datetime
 import numpy as np
 from PIL import Image
 from eval import DetectionEngine
+from model_utils.config import config
 
 def get_img_size(file_name):
     img = Image.open(file_name)
     return img.size
 
-parser = argparse.ArgumentParser('YoloV3 postprocess')
-parser.add_argument('--result_path', type=str, required=True, help='result files path.')
-parser.add_argument('--img_path', type=str, required=True, help='train data dir.')
-parser.add_argument('--per_batch_size', default=1, type=int, help='batch size for per gpu')
-parser.add_argument('--nms_thresh', type=float, default=0.5, help='threshold for NMS')
-parser.add_argument('--annFile', type=str, default='', help='path to annotation')
-parser.add_argument('--ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
-parser.add_argument('--log_path', type=str, default='outputs/', help='inference result save location')
-
-args, _ = parser.parse_known_args()
-
 if __name__ == "__main__":
-    args.outputs_dir = os.path.join(args.log_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-    if not os.path.exists(args.outputs_dir):
-        os.makedirs(args.outputs_dir)
+    config.outputs_dir = os.path.join(config.log_path,
+                                      datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    if not os.path.exists(config.outputs_dir):
+        os.makedirs(config.outputs_dir)
 
-    detection = DetectionEngine(args)
-    bs = args.per_batch_size
+    detection = DetectionEngine(config)
+    bs = config.per_batch_size
 
-    f_list = os.listdir(args.img_path)
+    f_list = os.listdir(config.img_path)
     for f in f_list:
-        image_size = get_img_size(os.path.join(args.img_path, f))
+        image_size = get_img_size(os.path.join(config.img_path, f))
         f = f.split('.')[0]
-        output_big = np.fromfile(os.path.join(args.result_path, f + '_0.bin'), np.float32).reshape(bs, 13, 13, 3, 85)
-        output_me = np.fromfile(os.path.join(args.result_path, f + '_1.bin'), np.float32).reshape(bs, 26, 26, 3, 85)
-        output_small = np.fromfile(os.path.join(args.result_path, f + '_2.bin'), np.float32).reshape(bs, 52, 52, 3, 85)
+        output_big = np.fromfile(os.path.join(config.result_path, f + '_0.bin'), np.float32).reshape(bs, 13, 13, 3, 85)
+        output_me = np.fromfile(os.path.join(config.result_path, f + '_1.bin'), np.float32).reshape(bs, 26, 26, 3, 85)
+        output_small = np.fromfile(os.path.join(config.result_path,
+                                                f + '_2.bin'), np.float32).reshape(bs, 52, 52, 3, 85)
         image_id = [int(f.split('_')[-1])]
         image_shape = [[image_size[0], image_size[1]]]
 
