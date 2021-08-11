@@ -259,10 +259,6 @@ class GpuKernelBuildClient : public KernelBuildClient {
     "print('[~]' + path)"
     "\"";
 
-  // Send building request to server
-  constexpr inline static auto kAkgPid = "AKG/PID";
-  constexpr inline static auto kAkgCompileOp = "AKG/COMPILE";  // Compile a single op
-
   static GpuKernelBuildClient &Instance() {
     static GpuKernelBuildClient instance;
     return instance;
@@ -274,11 +270,6 @@ class GpuKernelBuildClient : public KernelBuildClient {
     auto env = GetPyExe();
     return GetScriptFilePath(env, kGetPathScript);
   }
-
-  // Fetch pid(pid_t) from remote.
-  int AkgGetPid();
-  // Run AKG building.
-  bool AkgCompileSingle(const std::string json);
 
   GpuKernelBuildClient(const GpuKernelBuildClient &) = delete;
   GpuKernelBuildClient &operator=(const GpuKernelBuildClient &) = delete;
