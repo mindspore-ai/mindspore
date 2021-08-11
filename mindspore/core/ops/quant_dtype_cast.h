@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameQuantDTypeCast = "QuantDTypeCast";
-class QuantDTypeCast : public PrimitiveC {
+class MS_CORE_API QuantDTypeCast : public PrimitiveC {
  public:
   QuantDTypeCast() : PrimitiveC(kNameQuantDTypeCast) {}
   ~QuantDTypeCast() = default;

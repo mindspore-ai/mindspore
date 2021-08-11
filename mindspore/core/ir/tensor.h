@@ -42,7 +42,7 @@ enum TensorSyncStatus { kNoNeedSync, kNeedSyncHostToDevice, kNeedSyncDeviceToHos
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
 // Tensor data interface.
-class TensorData {
+class MS_CORE_API TensorData {
  public:
   /// virtual destructor is required for base classes.
   virtual ~TensorData() = default;
@@ -111,7 +111,7 @@ class WaitEvent : public ExceptionListener {
 };
 
 // Tensor entity class
-class Tensor : public MetaTensor {
+class MS_CORE_API Tensor : public MetaTensor {
  public:
   abstract::AbstractBasePtr ToAbstract() override;
 

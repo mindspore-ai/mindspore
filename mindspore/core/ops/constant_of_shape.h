@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConstantOfShape = "ConstantOfShape";
-class ConstantOfShape : public PrimitiveC {
+class MS_CORE_API ConstantOfShape : public PrimitiveC {
  public:
   ConstantOfShape() : PrimitiveC(kNameConstantOfShape) {}
   ~ConstantOfShape() = default;

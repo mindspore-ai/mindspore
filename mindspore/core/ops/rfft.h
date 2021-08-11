@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRfft = "Rfft";
-class Rfft : public PrimitiveC {
+class MS_CORE_API Rfft : public PrimitiveC {
  public:
   Rfft() : PrimitiveC(kNameRfft) {}
   ~Rfft() = default;

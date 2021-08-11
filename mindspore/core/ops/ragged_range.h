@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRaggedRange = "RaggedRange";
-class RaggedRange : public PrimitiveC {
+class MS_CORE_API RaggedRange : public PrimitiveC {
  public:
   RaggedRange() : PrimitiveC(kNameRaggedRange) {}
   ~RaggedRange() = default;

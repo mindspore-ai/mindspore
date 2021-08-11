@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseToDense = "SparseToDense";
-class SparseToDense : public PrimitiveC {
+class MS_CORE_API SparseToDense : public PrimitiveC {
  public:
   SparseToDense() : PrimitiveC(kNameSparseToDense) { InitIOName({"indices", "values", "dense_shape"}, {"output"}); }
   ~SparseToDense() = default;

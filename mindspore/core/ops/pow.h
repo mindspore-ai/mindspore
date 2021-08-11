@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePow = "Pow";
-class Pow : public PrimitiveC {
+class MS_CORE_API Pow : public PrimitiveC {
  public:
   explicit Pow(const std::string &k_name = kNamePow) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
   ~Pow() = default;

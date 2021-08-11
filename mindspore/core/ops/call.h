@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCall = "call";
-class Call : public PrimitiveC {
+class MS_CORE_API Call : public PrimitiveC {
  public:
   Call() : PrimitiveC(kNameCall) {}
   ~Call() = default;

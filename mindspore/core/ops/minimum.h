@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMinimum = "Minimum";
-class Minimum : public PrimitiveC {
+class MS_CORE_API Minimum : public PrimitiveC {
  public:
   Minimum() : PrimitiveC(kNameMinimum) { InitIOName({"x", "y"}, {"output"}); }
   ~Minimum() = default;

@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMinimumGrad = "MinimumGrad";
-class MinimumGrad : public PrimitiveC {
+class MS_CORE_API MinimumGrad : public PrimitiveC {
  public:
   MinimumGrad() : PrimitiveC(kNameMinimumGrad) {}
   ~MinimumGrad() = default;

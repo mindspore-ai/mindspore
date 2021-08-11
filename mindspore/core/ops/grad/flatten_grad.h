@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFlattenGrad = "FlattenGrad";
-class FlattenGrad : public PrimitiveC {
+class MS_CORE_API FlattenGrad : public PrimitiveC {
  public:
   FlattenGrad() : PrimitiveC(kNameFlattenGrad) { InitIOName({"x", "shape"}, {"output"}); }
   ~FlattenGrad() = default;

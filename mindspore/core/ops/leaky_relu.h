@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLeakyRelu = "LeakyRelu";
-class LeakyRelu : public PrimitiveC {
+class MS_CORE_API LeakyRelu : public PrimitiveC {
  public:
   LeakyRelu() : PrimitiveC(kNameLeakyRelu) {}
   ~LeakyRelu() = default;

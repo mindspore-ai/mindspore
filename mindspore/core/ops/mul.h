@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMul = prim::kMul;
-class Mul : public PrimitiveC {
+class MS_CORE_API Mul : public PrimitiveC {
  public:
   Mul() : PrimitiveC(kNameMul) { InitIOName({"x", "y"}, {"output"}); }
   explicit Mul(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }

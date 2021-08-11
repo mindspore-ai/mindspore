@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReLUV2 = prim::kReLUV2;
-class ReLUV2 : public PrimitiveC {
+class MS_CORE_API ReLUV2 : public PrimitiveC {
  public:
   ReLUV2() : PrimitiveC(prim::kPrimReluV2->name()) { InitIOName({"x"}, {"output", "mask"}); }
   explicit ReLUV2(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output", "mask"}); }

@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNonZero = "NonZero";
-class NonZero : public PrimitiveC {
+class MS_CORE_API NonZero : public PrimitiveC {
  public:
   NonZero() : PrimitiveC(kNameNonZero) {}
   ~NonZero() = default;

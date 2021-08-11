@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceFusion = "ReduceFusion";
-class ReduceFusion : public Reduce {
+class MS_CORE_API ReduceFusion : public Reduce {
  public:
   ReduceFusion() : Reduce(kNameReduceFusion) {}
   ~ReduceFusion() = default;

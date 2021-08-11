@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBiasAddGrad = prim::kBiasAddGrad;
-class BiasAddGrad : public PrimitiveC {
+class MS_CORE_API BiasAddGrad : public PrimitiveC {
  public:
   BiasAddGrad() : PrimitiveC(prim::kPrimBiasAddGrad->name()) { InitIOName({"x"}, {"output"}); }
   ~BiasAddGrad() = default;

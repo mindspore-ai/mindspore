@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddN = "AddN";
-class AddN : public PrimitiveC {
+class MS_CORE_API AddN : public PrimitiveC {
  public:
   AddN() : PrimitiveC(kNameAddN) { InitIOName({"inputs"}, {"sum"}); }
   ~AddN() = default;

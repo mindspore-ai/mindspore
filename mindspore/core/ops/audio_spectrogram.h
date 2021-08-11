@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameAudioSpectrogram = "AudioSpectrogram";
 int64_t Log2Ceil(int64_t length);
 int64_t GetFftLength(int64_t length);
-class AudioSpectrogram : public PrimitiveC {
+class MS_CORE_API AudioSpectrogram : public PrimitiveC {
  public:
   AudioSpectrogram() : PrimitiveC(kNameAudioSpectrogram) {}
   ~AudioSpectrogram() = default;

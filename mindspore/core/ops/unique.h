@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnique = "Unique";
-class Unique : public PrimitiveC {
+class MS_CORE_API Unique : public PrimitiveC {
  public:
   Unique() : PrimitiveC(kNameUnique) { InitIOName({"x", "y"}, {"output"}); }
   ~Unique() = default;

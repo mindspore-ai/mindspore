@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReverseV2 = "ReverseV2";
-class ReverseV2 : public PrimitiveC {
+class MS_CORE_API ReverseV2 : public PrimitiveC {
  public:
   ReverseV2() : PrimitiveC(kNameReverseV2) {}
   ~ReverseV2() = default;

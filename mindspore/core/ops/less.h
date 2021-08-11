@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLess = "Less";
-class Less : public PrimitiveC {
+class MS_CORE_API Less : public PrimitiveC {
  public:
   Less() : PrimitiveC(kNameLess) { InitIOName({"x", "y"}, {"output"}); }
   ~Less() = default;

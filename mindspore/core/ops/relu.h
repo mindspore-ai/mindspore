@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReLU = prim::kReLU;
-class ReLU : public PrimitiveC {
+class MS_CORE_API ReLU : public PrimitiveC {
  public:
   ReLU() : PrimitiveC(kNameReLU) { InitIOName({"x"}, {"output"}); }
   ~ReLU() = default;

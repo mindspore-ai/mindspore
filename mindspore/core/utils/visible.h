@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,20 @@
 #ifndef MINDSPORE_CORE_UTILS_VISIBLE_H_
 #define MINDSPORE_CORE_UTILS_VISIBLE_H_
 
-namespace mindspore {
-// refer to https://gcc.gnu.org/wiki/Visibility
-#if defined _WIN32 || defined __CYGWIN__
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
+// Because it extremely slow down compile time in mingw,
+// core api exporting is disabled for Windows.
+#define MS_CORE_API
 #ifdef BUILDING_DLL
-#ifdef __GNUC__
-#define MS_EXPORT __attribute__((dllexport))
+#define MS_EXPORT __declspec(dllexport)
 #else
-#define MS_EXPORT __declspec(dllexport)  // Note: actually gcc seems to also supports this syntax.
-#endif
-#else
-#ifdef __GNUC__
-#define MS_EXPORT __attribute__((dllimport))
-#else
-#define MS_EXPORT __declspec(dllimport)  // Note: actually gcc seems to also supports this syntax.
-#endif
+#define MS_EXPORT __declspec(dllimport)
 #endif
 #define MS_LOCAL
 #else
+#define MS_CORE_API __attribute__((visibility("default")))
 #define MS_EXPORT __attribute__((visibility("default")))
 #define MS_LOCAL __attribute__((visibility("hidden")))
 #endif
-}  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_VISIBLE_H_

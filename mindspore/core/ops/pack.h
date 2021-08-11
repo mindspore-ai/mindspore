@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePack = "Pack";
-class Pack : public PrimitiveC {
+class MS_CORE_API Pack : public PrimitiveC {
  public:
   Pack() : PrimitiveC(kNamePack) {}
   ~Pack() = default;

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCeil = "Ceil";
-class Ceil : public PrimitiveC {
+class MS_CORE_API Ceil : public PrimitiveC {
  public:
   Ceil() : PrimitiveC(kNameCeil) { InitIOName({"x"}, {"y"}); }
   ~Ceil() = default;

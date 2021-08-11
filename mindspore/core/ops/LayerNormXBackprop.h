@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class LayerNormXBackprop : public PrimitiveC {
+class MS_CORE_API LayerNormXBackprop : public PrimitiveC {
  public:
   LayerNormXBackprop() : PrimitiveC(prim::kPrimLayerNormXBackprop->name()) {}
   ~LayerNormXBackprop() = default;

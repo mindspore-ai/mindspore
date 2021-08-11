@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropInput = "Conv2DBackpropInput";
-class Conv2DBackpropInput : public PrimitiveC {
+class MS_CORE_API Conv2DBackpropInput : public PrimitiveC {
  public:
   explicit Conv2DBackpropInput(const std::string &k_name = kNameConv2DBackpropInput) : PrimitiveC(k_name) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});

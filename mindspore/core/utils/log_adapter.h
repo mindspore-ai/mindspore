@@ -25,6 +25,7 @@
 #include <map>
 #include <thread>
 #include <functional>
+#include "utils/visible.h"
 #include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
@@ -44,7 +45,7 @@ static constexpr size_t GetRelPathPos() noexcept {
 }
 
 namespace mindspore {
-extern std::map<void **, std::thread *> acl_handle_map __attribute__((visibility("default")));
+MS_CORE_API extern std::map<void **, std::thread *> acl_handle_map;
 #define FILE_NAME                                                                             \
   (sizeof(__FILE__) > GetRelPathPos() ? static_cast<const char *>(__FILE__) + GetRelPathPos() \
                                       : static_cast<const char *>(__FILE__))
@@ -69,7 +70,7 @@ enum ExceptionType {
   NameError
 };
 
-struct LocationInfo {
+struct MS_CORE_API LocationInfo {
   LocationInfo(const char *file, int line, const char *func) : file_(file), line_(line), func_(func) {}
   ~LocationInfo() = default;
 
@@ -78,7 +79,7 @@ struct LocationInfo {
   const char *func_;
 };
 
-class LogStream {
+class MS_CORE_API LogStream {
  public:
   LogStream() { sstream_ = std::make_shared<std::stringstream>(); }
   ~LogStream() = default;
@@ -146,27 +147,15 @@ enum SubModuleId : int {
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif
 
-#if defined(_WIN32) || defined(_WIN64)
-extern const std::string GetSubModuleName(SubModuleId module_id) __attribute__((dllexport));
-#else
-extern const std::string GetSubModuleName(SubModuleId module_id) __attribute__((visibility("default")));
-#endif
+MS_EXPORT const std::string GetSubModuleName(SubModuleId module_id);
 
 const char *EnumStrForMsLogLevel(MsLogLevel level);
 
-#if defined(_WIN32) || defined(_WIN64)
-extern std::string GetTimeString() __attribute__((dllexport));
-#else
-extern std::string GetTimeString() __attribute__((visibility("default")));
-#endif
+MS_EXPORT std::string GetTimeString();
 
-#if defined(_WIN32) || defined(_WIN64)
-extern int g_ms_submodule_log_levels[] __attribute__((dllexport));
-#else
-extern int g_ms_submodule_log_levels[] __attribute__((visibility("default")));
-#endif
+MS_EXPORT extern int g_ms_submodule_log_levels[];
 
-class LogWriter {
+class MS_CORE_API LogWriter {
  public:
   using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
   using TraceProvider = std::function<void(std::ostringstream &oss)>;
@@ -176,8 +165,8 @@ class LogWriter {
       : location_(location), log_level_(log_level), submodule_(submodule), exception_type_(excp_type) {}
   ~LogWriter() = default;
 
-  void operator<(const LogStream &stream) const noexcept __attribute__((visibility("default")));
-  void operator^(const LogStream &stream) const __attribute__((noreturn, visibility("default")));
+  void operator<(const LogStream &stream) const noexcept;
+  [[noreturn]] void operator^(const LogStream &stream) const;
 
   static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
   static void set_trace_provider(TraceProvider trace_provider) { trace_provider_ = trace_provider; }

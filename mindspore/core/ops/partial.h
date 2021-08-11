@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePartial = "Partial";
-class Partial : public PrimitiveC {
+class MS_CORE_API Partial : public PrimitiveC {
  public:
   Partial() : PrimitiveC(kNamePartial) {}
   ~Partial() = default;

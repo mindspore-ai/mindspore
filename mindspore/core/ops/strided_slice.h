@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameStridedSlice = prim::kStridedSlice;
-class StridedSlice : public PrimitiveC {
+class MS_CORE_API StridedSlice : public PrimitiveC {
  public:
   StridedSlice() : PrimitiveC(prim::kPrimStridedSlice->name()) {
     InitIOName({"x", "begin", "end", "strides"}, {"output"});

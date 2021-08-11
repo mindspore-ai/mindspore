@@ -37,7 +37,7 @@ namespace mindspore {
 // TypeRefKey type
 
 // List
-class List : public Object {
+class MS_CORE_API List : public Object {
  public:
   List() : Object(kObjectTypeList) {}
   List(const std::initializer_list<TypePtr> &objs)
@@ -65,7 +65,7 @@ using ListPtr = std::shared_ptr<List>;
 
 using ClassAttrVector = std::vector<std::pair<std::string, TypePtr>>;
 
-class Class : public Object {
+class MS_CORE_API Class : public Object {
  public:
   Class() : Object(kObjectTypeClass), tag_(Named("Class")) {}
   Class(const Named &tag, const ClassAttrVector &attributes, const std::unordered_map<std::string, ValuePtr> &methods);
@@ -95,7 +95,7 @@ class Class : public Object {
 };
 using ClassPtr = std::shared_ptr<Class>;
 
-class Tuple : public Object {
+class MS_CORE_API Tuple : public Object {
  public:
   Tuple() : Object(kObjectTypeTuple) {}
   // usage : Tuple t = {std::make_shared<Bool>(), std::make_shared<Int>(32)};
@@ -125,7 +125,7 @@ class Tuple : public Object {
 };
 using TuplePtr = std::shared_ptr<Tuple>;
 
-class Dictionary : public Object {
+class MS_CORE_API Dictionary : public Object {
  public:
   Dictionary() : Object(kObjectTypeDictionary) {}
   explicit Dictionary(const std::vector<std::pair<std::string, TypePtr>> &key_values)

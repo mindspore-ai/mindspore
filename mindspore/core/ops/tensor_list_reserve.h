@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListReserve = "TensorListReserve";
-class TensorListReserve : public PrimitiveC {
+class MS_CORE_API TensorListReserve : public PrimitiveC {
  public:
   TensorListReserve() : PrimitiveC(kNameTensorListReserve) {}
   ~TensorListReserve() = default;

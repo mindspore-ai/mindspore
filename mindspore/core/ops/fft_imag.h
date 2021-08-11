@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFftImag = "FftImag";
-class FftImag : public PrimitiveC {
+class MS_CORE_API FftImag : public PrimitiveC {
  public:
   FftImag() : PrimitiveC(kNameFftImag) {}
   ~FftImag() = default;

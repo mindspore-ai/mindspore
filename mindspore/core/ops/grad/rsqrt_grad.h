@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRsqrtGrad = "RsqrtGrad";
-class RsqrtGrad : public PrimitiveC {
+class MS_CORE_API RsqrtGrad : public PrimitiveC {
  public:
   RsqrtGrad() : PrimitiveC(kNameRsqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
   ~RsqrtGrad() = default;

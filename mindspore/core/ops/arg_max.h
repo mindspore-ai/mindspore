@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMax = "Argmax";
-class ArgMax : public PrimitiveC {
+class MS_CORE_API ArgMax : public PrimitiveC {
  public:
   ArgMax() : PrimitiveC(kNameArgMax) { InitIOName({"x"}, {"output"}); }
   explicit ArgMax(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output"}); }

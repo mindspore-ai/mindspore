@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class Zeros : public PrimitiveC {
+class MS_CORE_API Zeros : public PrimitiveC {
  public:
   Zeros() : PrimitiveC(prim::kPrimZeros->name()) {}
   ~Zeros() = default;
