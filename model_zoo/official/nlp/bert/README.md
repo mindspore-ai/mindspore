@@ -789,6 +789,8 @@ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/
 
 # FAQ
 
+Refer to the [ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ) for some common question.
+
 - **Q: How to resolve the continually overflow?**
 
   **A**: Continually overflow is usually caused by using too high learning rate.
