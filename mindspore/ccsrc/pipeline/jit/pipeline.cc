@@ -51,7 +51,7 @@
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #include "load_mindir/load_model.h"
-#include "pipeline/jit/prim_bprop_optimizer.h"
+#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/crypto.h"
 
@@ -1320,7 +1320,7 @@ void ClearResAtexit() {
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
-  PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
+  ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
 
   abstract::ClearPrimEvaluatorMap();
   pipeline::GetMethodMap().clear();

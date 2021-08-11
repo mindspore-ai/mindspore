@@ -59,7 +59,7 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/pass.h"
 #include "frontend/parallel/context.h"
-#include "pipeline/jit/prim_bprop_optimizer.h"
+#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 
 #ifdef ENABLE_GE
 #include "pipeline/pynative/pynative_execute_ge.h"
@@ -2447,7 +2447,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph);
-  auto optimized_bg = pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphFinalOpt(resource);
+  auto optimized_bg = ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphFinalOpt(resource);
 
   if (cell_stack_.empty()) {
     need_renormalize_ = false;
