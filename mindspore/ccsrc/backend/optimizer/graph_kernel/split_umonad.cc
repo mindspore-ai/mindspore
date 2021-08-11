@@ -92,6 +92,5 @@ AnfNodePtr OpUMonadExpander::Run(const AnfNodePtr &node) {
 
   return DefaultExpander::Run(node);
 }
-
 }  // namespace opt
 }  // namespace mindspore

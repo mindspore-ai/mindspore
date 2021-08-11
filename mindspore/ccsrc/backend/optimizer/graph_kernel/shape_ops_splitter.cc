@@ -64,7 +64,7 @@ void SplitNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
     split_nodes.push_back(CloneCNode(node));
   }
 
-  int i = 0;
+  size_t i = 0;
   for (auto [user, indices] : users_info) {
     auto user_node = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(user_node);
