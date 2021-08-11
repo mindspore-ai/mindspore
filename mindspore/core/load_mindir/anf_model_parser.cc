@@ -776,6 +776,10 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
   if (node_type.size() > kOpTypeFlagSize && node_type.substr(0, kOpTypeFlagSize) == kOperatorTypeFlag) {
     auto it = anfnode_build_map_.find(node_type.substr(kOpTypeFlagSize));
     if (it != anfnode_build_map_.end()) {
+      auto funcGraph = GetValueNode<FuncGraphPtr>(it->second);
+      if (funcGraph != nullptr) {
+        return NewValueNode(funcGraph);
+      }
       return it->second;
     }
     MS_LOG(EXCEPTION) << "Can't find the ref:" << node_type;
@@ -824,9 +828,10 @@ void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, C
     cnode_ptr->set_abstract(nullptr);
     return;
   }
-  // Set abstract of switch(c,f,t)() to null
-  prim = GetCNodePrimitive(operatorPtr);
-  if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
+
+  // If the operator is not a primitive, the abstract will been set to null.
+  // Because there are not some operators in front end, the abstract of primitive should be reserved.
+  if (prim == nullptr) {
     cnode_ptr->set_abstract(nullptr);
     return;
   }
