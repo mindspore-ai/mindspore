@@ -61,7 +61,7 @@ class FusedPushWeightKernel : public CPUKernel {
       fl_iteration_ = 1;
     }
 
-    MS_LOG(INFO) << "Start pushing weight for federated learning iteration " << fl_iteration_;
+    MS_LOG(INFO) << "Launching pushing weight for federated learning iteration " << fl_iteration_;
     if (!BuildPushWeightReq(fbb, inputs)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
       return false;
@@ -78,8 +78,8 @@ class FusedPushWeightKernel : public CPUKernel {
                                                               &push_weight_rsp_msg)) {
           MS_LOG(WARNING) << "Sending request for FusedPushWeight to server " << i
                           << " failed. This iteration is dropped.";
-          fl::worker::FLWorker::GetInstance().SetIterationCompleted();
-          return true;
+          retcode = schema::ResponseCode_SucNotReady;
+          continue;
         }
         MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
 
