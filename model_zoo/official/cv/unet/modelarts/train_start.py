@@ -22,7 +22,7 @@ from functools import partial
 
 import numpy as np
 from mindspore import Tensor, export, load_checkpoint, load_param_into_net
-from src.model_utils import config
+from src.model_utils.config import config
 from src.unet_medical.unet_model import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.utils import UnetEval
@@ -125,27 +125,27 @@ def _export_air(args, ckpt_dir):
     if not ckpt_file:
         return
 
-    if config['model_name'] == 'unet_medical':
-        net = UNetMedical(n_channels=config['num_channels'],
-                          n_classes=config['num_classes'])
-    elif config['model_name'] == 'unet_nested':
-        net = NestedUNet(in_channel=config['num_channels'],
-                         n_class=config['num_classes'],
-                         use_deconv=config['use_deconv'],
-                         use_bn=config['use_bn'], use_ds=False)
-    elif config['model_name'] == 'unet_simple':
-        net = UNet(in_channel=config['num_channels'], n_class=config['num_classes'])
+    if config.model_name == 'unet_medical':
+        net = UNetMedical(n_channels=config.num_channels,
+                          n_classes=config.num_classes)
+    elif config.model_name == 'unet_nested':
+        net = NestedUNet(in_channel=config.num_channels,
+                         n_class=config.num_classes,
+                         use_deconv=config.use_deconv,
+                         use_bn=config.use_bn, use_ds=False)
+    elif config.model_name == 'unet_simple':
+        net = UNet(in_channel=config.num_channels, n_class=config.num_classes)
     else:
-        raise ValueError("Unsupported model: {}".format(config['model_name']))
+        raise ValueError("Unsupported model: {}".format(config.model_name))
     # return a parameter dict for model
     param_dict = load_checkpoint(ckpt_file)
     # load the parameter into net
     load_param_into_net(net, param_dict)
     net = UnetEval(net)
     input_data = Tensor(np.ones(
-        [1, config["num_channels"], args.img_size[0],
+        [1, config.num_channels, args.img_size[0],
          args.img_size[1]]).astype(np.float32))
-    air_file_name = os.path.join(os.path.dirname(ckpt_file), config['model_name'])
+    air_file_name = os.path.join(os.path.dirname(ckpt_file), config.model_name)
     print(f"Start exporting AIR, ckpt_file = {ckpt_file}, input_tensor_shape ="
           f" {input_data.shape}, air_file_path = {air_file_name}.air.")
     export(net, input_data, file_name=air_file_name, file_format='AIR')
