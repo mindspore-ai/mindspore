@@ -128,6 +128,7 @@
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "backend/optimizer/ascend/enhancer/add_attr_for_3d_graph.h"
 #include "backend/optimizer/ascend/enhancer/split_n_optimizer.h"
+#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "utils/context/graph_kernel_flags.h"

@@ -26,6 +26,25 @@
 #include "utils/utils.h"
 
 namespace mindspore {
+std::string Common::CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path) {
+  std::string res_path = default_path;
+  if (!env_path.empty()) {
+    char real_path[PATH_MAX] = {0};
+#if defined(SYSTEM_ENV_WINDOWS)
+    if (_fullpath(real_path, common::SafeCStr(env_path), PATH_MAX) == nullptr) {
+      MS_LOG(EXCEPTION) << "The dir " << env_path << " does not exist.";
+    }
+    return real_path;
+#else
+    if (realpath(env_path.c_str(), real_path)) {
+      return real_path;
+    }
+    MS_LOG(EXCEPTION) << "Invalid env path, path : " << env_path;
+#endif
+  }
+  return res_path;
+}
+
 std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
   if (input_path.length() >= PATH_MAX) {
     MS_LOG(ERROR) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;

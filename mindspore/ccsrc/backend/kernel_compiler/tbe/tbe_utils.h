@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <tuple>
 #include <unordered_map>
 #include <nlohmann/json.hpp>
 
@@ -33,7 +34,6 @@ namespace kernel {
 namespace tbe {
 using std::string;
 using std::vector;
-
 class TbeUtils {
  public:
   TbeUtils() = default;
@@ -44,11 +44,28 @@ class TbeUtils {
 
   static void LoadCache();
 
+  static void GenLicInfo(nlohmann::json *lic_info_json);
+
   static void GenSocInfo(nlohmann::json *soc_info_json);
 
-  static KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
+  static std::string GetSocVersion();
 
-  static KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
+  static std::string GetOpDebugPath();
+
+  static std::string GetBankPath();
+
+  static std::string GetTuneDumpPath();
+
+  static void SaveCompileInfo(const std::string &json_name, const std::string &build_res, bool *save_flag);
+
+  static void GetCompileInfo(const AnfNodePtr &node, std::string *compile_info, bool *get_flag);
+
+  static bool CheckOfflineTune();
+
+  static KernelPackPtr SearchCache(const std::string &kernel_name, const bool is_akg = false);
+
+  static KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor,
+                                   const bool is_akg = false);
 };
 
 struct KernelMetaInfo {
@@ -77,7 +94,7 @@ class KernelMeta {
  public:
   static KernelMeta *GetInstance();
   bool ReadIndex(const std::string &bin_dir);
-  KernelPackPtr GetKernelPack(const std::string &kernel_name, const std::string &processor);
+  KernelPackPtr GetKernelPack(const std::string &kernel_name, const bool is_akg = false);
 
  private:
   KernelMeta() = default;

@@ -80,4 +80,48 @@ bool TbeJsonUtils::IsNeedChangeDefaultFormat(const AnfNodePtr &anf_node) {
          AnfAlgo::GetNodeAttr<std::string>(anf_node, kAttrFormat) == kOpFormat_NCDHW;
 }
 
+std::vector<int64_t> TbeJsonUtils::GetInputOriShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, real_idx);
+  return GetOutputOriShapeForTbeBuild(kernel_with_index.first, kernel_with_index.second);
+}
+
+std::vector<int64_t> TbeJsonUtils::GetInputDeviceShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<int64_t> shape;
+  session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, real_idx);
+  auto format = AnfAlgo::GetInputFormat(anf_node, real_idx);
+  shape = AnfAlgo::GetOutputDeviceShapeForTbeBuild(kernel_with_index.first, kernel_with_index.second, format);
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
+
+std::vector<int64_t> TbeJsonUtils::GetOutputOriShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<int64_t> shape;
+  auto out_shape = AnfAlgo::GetOutputDetailShape(anf_node, real_idx);
+  MS_EXCEPTION_IF_NULL(out_shape);
+  if (out_shape->isa<abstract::Shape>()) {
+    auto shape_ptr = out_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    shape = shape_ptr->shape();
+  }
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
+
+std::vector<int64_t> TbeJsonUtils::GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::vector<int64_t> shape;
+  auto format = AnfAlgo::GetOutputFormat(anf_node, real_idx);
+  shape = AnfAlgo::GetOutputDeviceShapeForTbeBuild(anf_node, real_idx, format);
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
+  return shape;
+}
 }  // namespace mindspore::kernel

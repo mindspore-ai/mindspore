@@ -197,7 +197,7 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
   kernel_json_info_.sha256 = js["sha256"];
 }
 
-bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &processor) {
+bool KernelPack::LoadKernelMeta(const std::string &json_f) {
   if (json_f.length() <= strlen(kJsonSuffix)) {
     MS_LOG(ERROR) << "please check json path.";
     return false;

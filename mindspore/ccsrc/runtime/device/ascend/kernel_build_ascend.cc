@@ -24,6 +24,7 @@
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_build.h"
@@ -96,11 +97,28 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
       }
     }
   }
-  bool tbe_ret = kernel::TbeOpParallelBuild(tbe_nodes);
-  kernel::AkgAscendKernelBuilder akg_ascend_kernel_builder;
-  bool akg_ret = akg_ascend_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+  bool tbe_ret = true;
+  bool akg_ret = true;
   auto bin_map = kernel::tbe::KernelMeta::GetInstance();
-  (void)bin_map->ReadIndex(kernel::kCceKernelMeta);
+  if (!tbe_nodes.empty()) {
+    std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
+    if (!old_build.empty()) {
+      tbe_ret = kernel::TbeOpParallelBuild(tbe_nodes);
+    } else {
+      auto build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+      MS_EXCEPTION_IF_NULL(build_manager);
+      build_manager->ResetOldTask();
+      tbe_ret = build_manager->AscendSingleOpCompile(tbe_nodes);
+    }
+    auto config_path = TbeUtils::GetOpDebugPath();
+    std::string dir = config_path + "kernel_meta/";
+    (void)bin_map->ReadIndex(dir);
+  }
+  if (!akg_nodes.empty()) {
+    kernel::AkgAscendKernelBuilder akg_ascend_kernel_builder;
+    akg_ret = akg_ascend_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+    (void)bin_map->ReadIndex(kernel::kCceKernelMeta);
+  }
   for (const auto &anf_node : other_nodes) {
     kernel::KernelModPtr kernel_mod_ptr = SerialCompileImpl(anf_node);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
@@ -222,6 +240,11 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
     if (parameters_indexs.at(j) == 1) {
       MS_LOG(EXCEPTION) << "Atomic addr clean doesn't support clean input address, input index: " << j;
     }
+  }
+
+  if (parameters_indexs.size() < total_num) {
+    MS_LOG(EXCEPTION) << "parameters indexes size: " << parameters_indexs.size()
+                      << " less than total num: " << total_num;
   }
   // process output
   std::vector<size_t> output_indexs = {};
