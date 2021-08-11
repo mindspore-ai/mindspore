@@ -62,8 +62,7 @@ if __name__ == "__main__":
     for k in file_list:
         if os.path.splitext(k)[-1].lower() in ['.jpg', '.jpeg', '.png']:
             img_path = os.path.join(config.img_path, k)
-            img = get_img(img_path).reshape(1, 720, 1280, 3)
-            img = img[0].astype(np.uint8).copy()
+            img = get_img(img_path).astype(np.uint8).copy()
             img_name = os.path.split(img_path)[-1]
 
             score = np.fromfile(os.path.join(config.result_path, k.split('.')[0] + '_0.bin'), np.float32)

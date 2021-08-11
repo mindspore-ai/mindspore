@@ -85,8 +85,9 @@ wget https://github.com/opencv/opencv/archive/3.4.9.zip
 unzip 3.4.9.zip
 cd opencv-3.4.9
 mkdir build
+cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_WEBP=OFF ..
-make -j4 # -j指定线程数，用户根据机器配置修改参数
+make -j4 # -j specifies the number of threads, the user can modify the parameters according to the machine configuration
 make install
 
 # export environment variables
