@@ -4078,7 +4078,7 @@ class MirrorPad(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        # case1: mode="REFLECT"
+        >>> # case1: mode="REFLECT"
         >>> class Net(nn.Cell):
         ...    def __init__(self, mode):
         ...        super(Net, self).__init__()

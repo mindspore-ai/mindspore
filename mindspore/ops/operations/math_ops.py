@@ -845,6 +845,12 @@ class MatMul(PrimitiveWithCheck):
 
     The rank of input tensors must equal to `2`.
 
+     .. math::
+
+        (Output)_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
+
+    where the :math:`i,j` indicates the output of the i-th row and j-th column element.
+
     Args:
         transpose_a (bool): If true, `a` is transposed before multiplication. Default: False.
         transpose_b (bool): If true, `b` is transposed before multiplication. Default: False.
@@ -2983,8 +2989,17 @@ class Equal(_LogicBinaryOp):
 
 
 class ApproximateEqual(_LogicBinaryOp):
-    """
-    Returns True if abs(x1-x2) is smaller than tolerance element-wise, otherwise False.
+    r"""
+    Returns True if abs(x-y) is smaller than tolerance element-wise, otherwise False.
+
+    .. math::
+
+        out_i = \begin{cases}
+        & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
+        & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
+        \end{cases}
+
+    where :math:`\text{tolerance}` indicates Acceptable maximum tolerance.
 
     Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3481,8 +3496,17 @@ class LogicalOr(_LogicBinaryOp):
 
 
 class IsNan(PrimitiveWithInfer):
-    """
+    r"""
     Determines which elements are NaN for each position.
+
+    .. math::
+
+        out_i = \begin{cases}
+          & \text{ if } x_{i} = \text{Nan},\ \ True \\
+          & \text{ if } x_{i} \ne  \text{Nan},\ \ False
+        \end{cases}
+
+    where :math:`Nan` means not a number.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -3517,8 +3541,17 @@ class IsNan(PrimitiveWithInfer):
 
 
 class IsInf(PrimitiveWithInfer):
-    """
+    r"""
     Determines which elements are inf or -inf for each position
+
+    .. math::
+
+        out_i = \begin{cases}
+        & \text{ if } x_{i} = \text{Inf},\ \ True \\
+        & \text{ if } x_{i} \ne \text{Inf},\ \ False
+        \end{cases}
+
+    where :math:`Inf` means not a number.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -3553,8 +3586,15 @@ class IsInf(PrimitiveWithInfer):
 
 
 class IsFinite(PrimitiveWithInfer):
-    """
+    r"""
     Determines which elements are finite for each position.
+
+    .. math::
+
+        out_i = \begin{cases}
+          & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
+          & \text{ if } x_{i} \ne \text{Finite},\ \ False
+        \end{cases}
 
     Inputs:
         - **x** (Tensor) - The input tensor.

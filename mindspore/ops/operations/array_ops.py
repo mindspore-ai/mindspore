@@ -1656,7 +1656,7 @@ class Argmax(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        Support data type list as follows:
+          Support data type list as follows:
 
           - Ascend: Float16, Float32.
           - GPU: Float16, Float32.
