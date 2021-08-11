@@ -176,8 +176,8 @@ def random_split_trans2mindrecord(input_file_path, output_file_path, recommendat
     dense_list = []
     label_list = []
 
-    writer_train = FileWriter(os.path.join(output_file_path, "train_input_part.mindrecord"), 1)
-    writer_test = FileWriter(os.path.join(output_file_path, "test_input_part.mindrecord"), 1)
+    writer_train = FileWriter(os.path.join(output_file_path, "train_input_part.mindrecord"), 21)
+    writer_test = FileWriter(os.path.join(output_file_path, "test_input_part.mindrecord"), 3)
 
     schema = {"label": {"type": "float32", "shape": [-1]}, "num_vals": {"type": "float32", "shape": [-1]},
               "cats_vals": {"type": "int32", "shape": [-1]}}
