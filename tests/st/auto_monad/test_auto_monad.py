@@ -1042,7 +1042,7 @@ def test_variable_from_outer_graph():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1079,7 +1079,7 @@ def test_ctrl_while_by_while_and_if_in_first_while():
     net(input_me_a)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

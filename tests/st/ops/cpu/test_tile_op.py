@@ -35,7 +35,7 @@ class Net(nn.Cell):
 arr_x = np.array([[0], [1], [2], [3]]).astype(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
@@ -48,7 +48,7 @@ def test_net():
 arr_x = np.array([[0], [1], [2], [3]]).astype(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_float64():
@@ -61,7 +61,7 @@ def test_net_float64():
 arr_x = np.array([[0], [1], [2], [3]]).astype(np.bool_)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_bool():

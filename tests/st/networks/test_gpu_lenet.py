@@ -187,7 +187,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     return mnist_ds
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_and_eval_lenet():
