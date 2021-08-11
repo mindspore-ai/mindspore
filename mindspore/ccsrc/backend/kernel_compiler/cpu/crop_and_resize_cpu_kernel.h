@@ -35,15 +35,14 @@ class CropAndResizeCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  int method_;
-  float extrapolation_value_;
-  int input_crop_size_;
-  int output_size_;
-  int input_height_;
-  int input_width_;
-  int final_height_;
-  int final_width_;
-  int channel_;
+  int method_{1};
+  float extrapolation_value_{0.0};
+  int output_size_{0};
+  int input_height_{0};
+  int input_width_{0};
+  int final_height_{0};
+  int final_width_{0};
+  int channel_{0};
 };
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
