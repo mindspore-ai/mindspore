@@ -90,7 +90,7 @@ bool CastMatmulFusion::Run(const FuncGraphPtr &func_graph) {
     if (cnode->size() != 4) {
       continue;
     }
-    auto cast_node = cnode->input(3);
+    auto cast_node = cnode->inputs().back();  // bias node
     if (!IsPrimitiveCNode(cast_node, prim::kPrimCast)) {
       continue;
     }

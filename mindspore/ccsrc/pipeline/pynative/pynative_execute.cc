@@ -79,6 +79,7 @@ std::mutex PynativeExecutor::instance_lock_;
 namespace {
 const size_t PTR_LEN = 15;
 const size_t ARG_SIZE = 2;
+const size_t HIGH_GRAD_ORDER_COUNT = 2;
 
 // primitive unable to infer value for constant input in PyNative mode
 const std::set<std::string> kVmOperators = {"make_ref", "HookBackward", "InsertGradientOf", "stop_gradient",
@@ -2580,7 +2581,7 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   // High order
   if (top_cell()->vm_compiled()) {
     MakeNestedCnode(cell, cell_id, forward_args, resource, *ret);
-  } else if (GetHighOrderStackSize() >= 2) {
+  } else if (GetHighOrderStackSize() >= HIGH_GRAD_ORDER_COUNT) {
     SwitchTopcell();
   }
 }

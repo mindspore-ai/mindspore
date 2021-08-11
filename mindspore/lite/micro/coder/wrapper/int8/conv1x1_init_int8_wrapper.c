@@ -35,7 +35,7 @@ int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int3
   memset(packed_weight_, 0, size);
   RowMajor2Row2x16MajorInt8(src_weight, packed_weight_, output_channel, input_channel);
   /* bias */
-  size = UP_ROUND(output_channel, C2NUM);
+  size = (size_t)UP_ROUND(output_channel, C2NUM);
   int32_t *bias_data_ = (int32_t *)malloc(size * sizeof(int32_t));
   if (bias_data_ == NULL) {
     free(packed_weight_);
@@ -43,7 +43,7 @@ int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int3
   }
   memset(bias_data_, 0, size * sizeof(int32_t));
   if (src_bias != NULL) {
-    memcpy(bias_data_, src_bias, output_channel * sizeof(int32_t));
+    memcpy(bias_data_, src_bias, (size_t)output_channel * sizeof(int32_t));
   }
 #else
   /* InitWeightBias */
@@ -65,6 +65,7 @@ int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int3
   int32_t *bias_data_ = (int32_t *)malloc(size * sizeof(int32_t));
   if (bias_data_ == NULL) {
     free(packed_weight_);
+    packed_weight_ = NULL;
     return NNACL_ERR;
   }
   memset(bias_data_, 0, size * sizeof(int32_t));

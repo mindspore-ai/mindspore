@@ -93,6 +93,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
           old_tensorlist->set_tensors_data_type(kernel_->desc().data_type);
         }
       }
+      old_tensor->set_allocator(kernel_->Context()->allocator);
       continue;
     }
 
@@ -102,8 +103,9 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
     }
 
     Tensor *new_tensor = new Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
-    new_tensor->set_allocator(old_tensor->allocator()); /* GPU use opencl allocator */
-    if (new_tensor->allocator() == nullptr && kernel_->subgraph_type() == kernel::kCpuFP16SubGraph) {
+    new_tensor->set_allocator(old_tensor->allocator());
+    if (new_tensor->allocator() == nullptr && kernel_->Context() != nullptr &&
+        kernel_->desc().arch != kernel::kDelegate) {
       new_tensor->set_allocator(kernel_->Context()->allocator);
     }
     new_tensor->set_tensor_name(kernel_->name() + "_duplicate_" + old_tensor->tensor_name());

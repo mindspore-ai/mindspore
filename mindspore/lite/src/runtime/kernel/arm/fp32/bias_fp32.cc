@@ -47,7 +47,7 @@ int BiasCPUKernel::Run() {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto bias = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  size_t data_size = in_tensors_.at(0)->ElementsNum();
+  size_t data_size = static_cast<size_t>(in_tensors_.at(0)->ElementsNum());
   MS_ASSERT(ms_context_->allocator != nullptr);
   float *tile_in = reinterpret_cast<float *>(ms_context_->allocator->Malloc(data_size * sizeof(float)));
   float *tile_bias = reinterpret_cast<float *>(ms_context_->allocator->Malloc(data_size * sizeof(float)));

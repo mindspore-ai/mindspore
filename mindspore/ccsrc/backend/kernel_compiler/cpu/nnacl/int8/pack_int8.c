@@ -849,7 +849,8 @@ void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvPara
   }
 }
 
-void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data, ConvParameter *conv_param) {
+void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data,
+                        const ConvParameter *conv_param) {
   // origin weight format : ohwi
   int input_channel = conv_param->input_channel_;
   int ic8 = input_channel / C8NUM * C8NUM;

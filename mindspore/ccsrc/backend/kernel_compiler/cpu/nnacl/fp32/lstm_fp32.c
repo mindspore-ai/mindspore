@@ -41,7 +41,7 @@ void PackLstmBias(float *dst, const float *src, int batch, int col, int col_alig
   for (int i = 0; i < unidirectional_batch; i++) {
     const float *src_batch = src + i * col;
     float *dst_batch = dst + i * col_align;
-    memcpy(dst_batch, src_batch, col * sizeof(float));
+    memcpy(dst_batch, src_batch, col * (int)sizeof(float));
   }
   if (is_bidirectional) {
     const float *backward_src = src + batch * col;

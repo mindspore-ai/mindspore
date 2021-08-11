@@ -173,6 +173,31 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   return dst_tensor;
 }
 
+namespace {
+void HardCodeForNoNameTensor(const lite::Model *model, size_t tensor_index, lite::Tensor *dst_tensor) {
+  MS_ASSERT(model != nullptr);
+  MS_ASSERT(dst_tensor != nullptr);
+  for (int i = static_cast<int>(model->all_nodes_.size() - 1); i >= 0; i--) {
+    const auto &node = model->all_nodes_.at(i);
+    bool find = false;
+    for (size_t j = 0; j < node->output_indices_.size(); j++) {
+      if (node->output_indices_.at(j) == tensor_index) {
+        if (node->output_indices_.size() == 1) {
+          dst_tensor->set_tensor_name(node->name_);
+        } else {
+          dst_tensor->set_tensor_name(node->name_ + "_o:" + std::to_string(j));
+        }
+        find = true;
+        break;
+      }
+    }
+    if (find) {
+      break;
+    }
+  }
+}
+}  // namespace
+
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   uint32_t tensor_count = model->all_tensors_.size();
@@ -213,6 +238,8 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     }
     if (src_tensor->name() != nullptr) {
       dst_tensor->set_tensor_name(src_tensor->name()->str());
+    } else {  // hardcode for early model without tensor name
+      HardCodeForNoNameTensor(model, i, dst_tensor);
     }
     this->tensors_.emplace_back(dst_tensor);
   }

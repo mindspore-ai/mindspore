@@ -30,10 +30,9 @@
 #include "src/delegate/npu/npu_graph_utils.h"
 namespace mindspore {
 static std::set<mindspore::schema::PrimitiveType> npu_specific_weight_nodes = {
-  schema::PrimitiveType_Conv2DFusion,   schema::PrimitiveType_Conv2dTransposeFusion,
-  schema::PrimitiveType_ScaleFusion,    schema::PrimitiveType_BatchNorm,
-  schema::PrimitiveType_FullConnection, schema::PrimitiveType_InstanceNorm,
-  schema::PrimitiveType_TileFusion,     schema::PrimitiveType_PadFusion};
+  schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_PadFusion,
+  schema::PrimitiveType_BatchNorm,    schema::PrimitiveType_FullConnection,        schema::PrimitiveType_InstanceNorm,
+  schema::PrimitiveType_TileFusion};
 
 NPUSubGraph::~NPUSubGraph() {
   subgraph_input_ops_.clear();

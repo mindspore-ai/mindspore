@@ -55,6 +55,9 @@ bool MPIWrapper::CreateCommGroup(const std::string &group_name, const std::vecto
   }
 
   ncclUniqueId group_unique_id;
+  if (ranks.size() == 0) {
+    return false;
+  }
   if (rank_id_ == ranks[0]) {
     group_unique_id = NCCLWrapper::instance().nccl_unique_id();
   }
@@ -138,9 +141,10 @@ void MPIWrapper::AssignLocalRankID() {
 
   const int kRankSize = rank_size_;
   size_t all_host_hashs[kRankSize];
+  CHECK_RET((rank_id_ < kRankSize), true, "The rank id is not less than rank size.");
   all_host_hashs[rank_id_] = host_hash;
   CHECK_RET(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, all_host_hashs, sizeof(size_t), MPI_BYTE, MPI_COMM_WORLD),
-            MPI_SUCCESS, "MPI_Allgather host hashs failed.");
+            MPI_SUCCESS, "MPI_Allgather host hashes failed.");
   for (int global_rank = 0; global_rank < kRankSize; global_rank++) {
     if (global_rank == rank_id_) {
       break;

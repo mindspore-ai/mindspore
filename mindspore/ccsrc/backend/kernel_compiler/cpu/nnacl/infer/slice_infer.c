@@ -32,6 +32,35 @@ static bool CheckInputsDataType(const TensorC *const *inputs, size_t inputs_size
   return true;
 }
 
+int InitBeginAndSizeParam(const TensorC *const *inputs, SliceParameter *param) {
+  /* init begin parameter */
+  int slice_begin_size = GetElementNum(inputs[1]);
+  int *begin_ptr = (int *)(inputs[1]->data_);
+  if (slice_begin_size != param->param_length_ || begin_ptr == NULL) {
+    return NNACL_INFER_INVALID;
+  }
+  if (slice_begin_size > MAX_AXIS_SIZE) {
+    return NNACL_ERR;
+  }
+  for (size_t i = 0; i < slice_begin_size; i++) {
+    param->begin_[i] = begin_ptr[i];
+  }
+
+  /* init size parameter */
+  int slice_size_size = GetElementNum(inputs[2]);
+  int *size_ptr = (int *)(inputs[2]->data_);
+  if (slice_size_size != param->param_length_ || size_ptr == NULL) {
+    return NNACL_INFER_INVALID;
+  }
+  if (slice_size_size > MAX_AXIS_SIZE) {
+    return NNACL_ERR;
+  }
+  for (size_t i = 0; i < slice_size_size; i++) {
+    param->size_[i] = size_ptr[i];
+  }
+  return NNACL_OK;
+}
+
 int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
   int ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 1);
@@ -57,24 +86,8 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   param->param_length_ = (int)(input->shape_size_);
   output->shape_size_ = input->shape_size_;
 
-  /* init begin parameter */
-  int slice_begin_size = GetElementNum(inputs[1]);
-  int *begin_ptr = (int *)(inputs[1]->data_);
-  if (slice_begin_size != param->param_length_ || begin_ptr == NULL) {
-    return NNACL_INFER_INVALID;
-  }
-  for (size_t i = 0; i < slice_begin_size; i++) {
-    param->begin_[i] = begin_ptr[i];
-  }
-
-  /* init size parameter */
-  int slice_size_size = GetElementNum(inputs[2]);
-  int *size_ptr = (int *)(inputs[2]->data_);
-  if (slice_size_size != param->param_length_ || size_ptr == NULL) {
-    return NNACL_INFER_INVALID;
-  }
-  for (size_t i = 0; i < slice_size_size; i++) {
-    param->size_[i] = size_ptr[i];
+  if (InitBeginAndSizeParam(inputs, param) != NNACL_OK) {
+    return NNACL_ERR;
   }
 
   /* infer output shape information */

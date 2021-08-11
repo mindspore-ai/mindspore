@@ -32,7 +32,7 @@ bool StridedSliceCheckInputs(const TensorC *const *inputs, size_t inputs_size) {
   return true;  // note: the original code is ndim_ <= in_shape_size
 }
 
-void ApplyBeginEndEllipsisMask(size_t ndim, int *begins, uint32_t *begins_mask, int *ends,
+void ApplyBeginEndEllipsisMask(size_t ndim, int *begins, const uint32_t *const begins_mask, int *ends,
                                const uint32_t *const ends_mask, const uint32_t *const ellipsis_mask,
                                const int *const in_shape) {
   for (size_t i = 0; i < ndim; i++) {

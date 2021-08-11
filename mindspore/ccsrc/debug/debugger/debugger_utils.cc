@@ -46,7 +46,8 @@ std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &out
   } else {
     // by default, TensorLoader will load all outputs
     for (size_t j = 0; j < output_size; ++j) {
-      real_outputs.push_back(j);
+      int output = j;
+      real_outputs.push_back(output);
     }
   }
   return real_outputs;
@@ -89,7 +90,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, ui
 
   for (int j : real_outputs) {
     auto addr = kernel_outputs[j];
-    auto type = AnfAlgo::GetOutputInferDataType(cnode, j);
+    auto type = AnfAlgo::GetOutputInferDataType(cnode, (size_t)j);
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
       continue;

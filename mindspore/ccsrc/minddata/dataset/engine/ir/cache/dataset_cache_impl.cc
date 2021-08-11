@@ -31,10 +31,18 @@ Status DatasetCacheImpl::Build() {
 
   CacheClient::Builder builder;
   builder.SetSessionId(session_id_).SetCacheMemSz(cache_mem_sz_).SetSpill(spill_);
-  if (hostname_) builder.SetHostname(hostname_.value());
-  if (port_) builder.SetPort(port_.value());
-  if (num_connections_) builder.SetNumConnections(num_connections_.value());
-  if (prefetch_sz_) builder.SetPrefetchSize(prefetch_sz_.value());
+  if (hostname_) {
+    (void)builder.SetHostname(hostname_.value());
+  }
+  if (port_) {
+    (void)builder.SetPort(port_.value());
+  }
+  if (num_connections_) {
+    (void)builder.SetNumConnections(num_connections_.value());
+  }
+  if (prefetch_sz_) {
+    (void)builder.SetPrefetchSize(prefetch_sz_.value());
+  }
   return builder.Build(&cache_client_);
 }
 

@@ -32,6 +32,9 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
         if (data == NULL) {
           return NNACL_INFER_INVALID;
         }
+        if (GetElementNum(shape_tensor) < 4) {
+          return NNACL_ERR;
+        }
         switch (shape_tensor->format_) {
           case Format_NCHW:
             param->new_height_ = data[2];

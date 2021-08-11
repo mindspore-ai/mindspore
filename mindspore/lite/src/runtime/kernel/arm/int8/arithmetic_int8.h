@@ -42,7 +42,7 @@ class ArithmeticInt8CPUKernel : public InnerKernel {
   int8_t *tile_data0_{nullptr};
   int8_t *tile_data1_{nullptr};
   ArithmeticRunInt8 arithmetic_run_{nullptr};
-  ArithmeticQuantArg quant_args_;
+  ArithmeticQuantArg quant_args_ = {};
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ARITHMETIC_INT8_H_

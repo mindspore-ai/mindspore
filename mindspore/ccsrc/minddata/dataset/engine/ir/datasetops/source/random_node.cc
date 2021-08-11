@@ -118,7 +118,7 @@ Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
 }
 
 // Get the shard id of node
-Status RandomNode::GetShardId(int32_t *shard_id) {
+Status RandomNode::GetShardId(int32_t *const shard_id) {
   // RandomDataset doesn't support multiple shards
   *shard_id = 0;
   return Status::OK();

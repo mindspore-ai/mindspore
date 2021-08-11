@@ -109,11 +109,12 @@ class _Elemwise(OpInfer):
         out_shape = [1] * dim_size
         for i in range(dim_size):
             for align_shape in align_shapes:
-                if align_shape[i] > 1:
-                    if out_shape[i] == 1:
-                        out_shape[i] = align_shape[i]
-                    if out_shape[i] != align_shape[i]:
-                        raise GKException("shape broadcast failed!")
+                if align_shape[i] == 1:
+                    continue
+                if out_shape[i] == 1:
+                    out_shape[i] = align_shape[i]
+                elif out_shape[i] != align_shape[i]:
+                    raise GKException("shape broadcast failed!")
         return out_shape
 
     @staticmethod
