@@ -21,6 +21,7 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
@@ -201,9 +202,9 @@ int ConvolutionWinogradCPUKernel::ReSize() {
 int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto ori_input_data = reinterpret_cast<float *>(input_tensor->data_c());
-  MS_ASSERT(ori_input_data != nullptr);
+  CHECK_NULL_RETURN(ori_input_data);
   auto output_data = reinterpret_cast<float *>(out_tensors_.front()->data_c());
-  MS_ASSERT(output_data != nullptr);
+  CHECK_NULL_RETURN(output_data);
   ConvWinogardFp32(ori_input_data, trans_weight_, reinterpret_cast<const float *>(bias_data_), output_data,
                    tmp_buffer_address_list_, task_id, conv_param_, in_func_, out_func_);
   return RET_OK;

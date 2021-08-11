@@ -59,6 +59,7 @@ class Scheduler {
   int InferSwitchShape(const Model::Node *node);
   int InferCallShape(const Model::Node *node);
   int InferNodeShape(const Model::Node *node);
+  void FreeOpParameters();
   int InferSubGraphShape(size_t subgraph_index);
   // schedule a node to kernel according to context and kernels registered
   int HandleBuildinCpuKernelWeight(kernel::SubGraphType belong_subgraph_type, kernel::LiteKernel *kernel);

@@ -44,12 +44,12 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int InitWeightBias();
 
  private:
-  MatMulParameter *matmul_param_;
-  int input_plane_;
-  int kernel_plane_;
-  int output_plane_;
-  int thread_count_;
-  int thread_stride_;
+  MatMulParameter *matmul_param_ = nullptr;
+  int input_plane_ = 0;
+  int kernel_plane_ = 0;
+  int output_plane_ = 0;
+  int thread_count_ = 0;
+  int thread_stride_ = 0;
   float16_t *pack_input_ = nullptr;
   float16_t *pack_weight_ = nullptr;
   float16_t *pack_output_ = nullptr;

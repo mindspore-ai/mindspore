@@ -20,8 +20,9 @@
 #include "nnacl/fp16/matmul_fp16.h"
 
 // fp16 convolution common (im2col+gemm)
-void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_weight, float16_t *bias_data,
-              float16_t *col_major_input, float16_t *output_data, int task_id, ConvParameter *conv_param) {
+void ConvFp16(const float16_t *input_data, float16_t *packed_input, const float16_t *packed_weight,
+              const float16_t *bias_data, float16_t *col_major_input, float16_t *output_data, int task_id,
+              const ConvParameter *conv_param) {
 #ifdef ENABLE_ARM64
   const int tile_n = 16;
 #else
@@ -60,9 +61,9 @@ void ConvFp16(float16_t *input_data, float16_t *packed_input, float16_t *packed_
 }
 
 // fp16 convolution winograd
-void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const float16_t *bias_data,
-                      float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id, ConvParameter *conv_param,
-                      InputTransFp16Func in_func, OutputTransFp16Func out_func) {
+void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight, const float16_t *bias_data,
+                      float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id,
+                      const ConvParameter *conv_param, InputTransFp16Func in_func, OutputTransFp16Func out_func) {
 #ifdef ENABLE_ARM64
   const int tile_num = 16;
 #else
