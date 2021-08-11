@@ -111,22 +111,16 @@ bool MKLCPUKernel::BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<
 }
 
 dnnl::memory::format_tag MKLCPUKernel::GetDefaultFormatTag(const dnnl::memory::dims &dims) const {
-  dnnl::memory::format_tag mem_tag;
-  auto dim_size = dims.size();
-  if (dim_size == 5) {
-    mem_tag = dnnl::memory::format_tag::abcde;
-  } else if (dim_size == 4) {
-    mem_tag = dnnl::memory::format_tag::abcd;
-  } else if (dim_size == 3) {
-    mem_tag = dnnl::memory::format_tag::abc;
-  } else if (dim_size == 2) {
-    mem_tag = dnnl::memory::format_tag::ab;
-  } else if (dim_size == 1) {
-    mem_tag = dnnl::memory::format_tag::a;
-  } else {
-    MS_LOG(EXCEPTION) << "Kernel dims invalid " << dim_size;
+  static const std::vector<dnnl::memory::format_tag> tag_vec = {
+    dnnl::memory::format_tag::a,      dnnl::memory::format_tag::ab,    dnnl::memory::format_tag::abc,
+    dnnl::memory::format_tag::abcd,   dnnl::memory::format_tag::abcde, dnnl::memory::format_tag::abcdef,
+    dnnl::memory::format_tag::abcdefg};
+
+  auto rank = dims.size();
+  if (rank > tag_vec.size()) {
+    MS_LOG(EXCEPTION) << "The kernel does not support construct " << rank << "-D tensor dnnl memory format_tag.";
   }
-  return mem_tag;
+  return tag_vec[rank - 1];
 }
 
 dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &shape) {
