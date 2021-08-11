@@ -317,7 +317,11 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   MS_LOG(INFO) << "tensor list size: " << tensor_list_size;
   if (tensor_list_size == 0) return;
   // default value for number of threads
-  const int max_thread_num = 32;
+  const int default_thread_num = 32;
+  int max_thread_num = default_thread_num;
+  if (max_thread_num > tensor_list_size) {
+    max_thread_num = tensor_list_size;
+  }
   MS_LOG(INFO) << "Number of threads used for checkwatchpoint: " << max_thread_num;
   int chunk_size = tensor_list_size / max_thread_num;
   int remainder = tensor_list_size % max_thread_num;
@@ -787,7 +791,6 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
             found_file = true;
           }
         }
-        closedir(d);
       }
 
       if (found_file) {
@@ -801,6 +804,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
                         type_name, shape, buffer, result_list);
         MS_LOG(INFO) << "Target tensor has not been found.";
       }
+      closedir(d);
     } else {
       bool found = false;
       std::vector<std::string> matched_paths;
