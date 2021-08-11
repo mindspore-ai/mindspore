@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_
 
+#ifdef ENABLE_RUNTIME_PASS
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/sub_graph_kernel.h"
@@ -37,5 +38,5 @@ bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel
 void Nc4hw4Pass(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors);
 
 }  // namespace mindspore::lite
-
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_

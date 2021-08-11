@@ -53,6 +53,7 @@ class Scheduler {
   void SetupSchedulerCb(std::unique_ptr<SchedulerCb> cb) { sched_cb_ = std::move(cb); }
 
  private:
+  int CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels);
   void FindNodeInoutTensors(const Model::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);
   Model::Node *NodeInputIsPartial(const Model::Node *node);
   int InferPartialShape(const Model::Node *node);

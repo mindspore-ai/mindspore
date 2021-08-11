@@ -88,16 +88,10 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
 }
 
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
-  if (dst_kernels == nullptr) {
-    return RET_ERROR;
-  }
-  if (src_model_ == nullptr) {
-    MS_LOG(ERROR) << "Input model is nullptr";
-    return RET_PARAM_INVALID;
-  }
-  if (src_model_->sub_graphs_.empty()) {
-    MS_LOG(ERROR) << "Model should have a subgraph at least";
-    return RET_PARAM_INVALID;
+  int check_input_ret = CheckInputParam(dst_kernels);
+  if (check_input_ret != RET_OK) {
+    MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
+    return check_input_ret;
   }
 
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
@@ -137,9 +131,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     }
   }
 
+#ifdef ENABLE_RUNTIME_PASS
   if (Nc4hw4PassValid(context_, dst_kernels)) {
     Nc4hw4Pass(dst_kernels, src_tensors_);
   }
+#endif
 
   FindAllInoutKernels(*dst_kernels);
 #ifdef ENABLE_CONTROL_TENSORLIST
@@ -170,6 +166,21 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
   MS_LOG(DEBUG) << "schedule kernels success.";
+  return RET_OK;
+}
+
+int Scheduler::CheckInputParam(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  if (dst_kernels == nullptr) {
+    return RET_ERROR;
+  }
+  if (src_model_ == nullptr) {
+    MS_LOG(ERROR) << "Input model is nullptr";
+    return RET_PARAM_INVALID;
+  }
+  if (src_model_->sub_graphs_.empty()) {
+    MS_LOG(ERROR) << "Model should have a subgraph at least";
+    return RET_PARAM_INVALID;
+  }
   return RET_OK;
 }
 

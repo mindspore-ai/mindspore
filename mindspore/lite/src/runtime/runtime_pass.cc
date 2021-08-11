@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_RUNTIME_PASS
 #include "src/runtime/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
 
@@ -95,9 +96,11 @@ bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel
   }
 
   for (auto kernel : *kernels) {
-    if (kernel->op_parameter()->quant_type_ == schema::QuantType_AwareTraining ||
-        kernel->op_parameter()->quant_type_ == schema::QuantType_PostTraining) {
-      return false;
+    if (kernel->op_parameter() != nullptr) {
+      if (kernel->op_parameter()->quant_type_ == schema::QuantType_AwareTraining ||
+          kernel->op_parameter()->quant_type_ == schema::QuantType_PostTraining) {
+        return false;
+      }
     }
   }
   return true;
@@ -106,7 +109,7 @@ bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel
 void Nc4hw4Pass(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors) {
   size_t kernel_size = kernels->size();
   size_t index = 0;
-  for (; index < kernel_size - 2; index++) {
+  for (; index + 2 < kernel_size; index++) {
     kernel::LiteKernel *kernel = kernels->at(index);
 
     if (kernel->subgraph_type() != kernel::kNotSubGraph) {
@@ -124,3 +127,4 @@ void Nc4hw4Pass(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *
   return;
 }
 }  // namespace mindspore::lite
+#endif
