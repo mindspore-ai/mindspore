@@ -322,8 +322,13 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
@@ -338,10 +343,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
-  ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
-  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
 
