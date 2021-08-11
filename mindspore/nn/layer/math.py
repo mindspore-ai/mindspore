@@ -276,8 +276,8 @@ class LGamma(Cell):
         reflection_denom = self.log(self.sin(self.pi * reduced_frac_input))
 
         reflection = self.select(self.isfinite(reflection_denom),
-                                 -reflection_denom - log_y + self.log_pi,
-                                 -reflection_denom)
+                                 -reflection_denom - log_y + self.log_pi, # pylint: disable=invalid-unary-operand-type
+                                 -reflection_denom)  # pylint: disable=invalid-unary-operand-type
 
         result = self.select(need_to_reflect, reflection, log_y)
 
@@ -642,15 +642,17 @@ class IGamma(Cell):
 
 class LBeta(Cell):
     r"""
+    This method avoids the numeric cancellation by explicitly
+    decomposing lgamma into the Stirling approximation and an explicit log_gamma_correction, and cancelling
+    the large terms from the Striling analytically.
+
     This is semantically equal to
 
     .. math::
         P(x, y) = lgamma(x) + lgamma(y) - lgamma(x + y).
 
     The method is more accurate for arguments above 8. The reason for accuracy loss in the naive computation
-    is catastrophic cancellation between the lgammas. This method avoids the numeric cancellation by explicitly
-    decomposing lgamma into the Stirling approximation and an explicit log_gamma_correction, and cancelling
-    the large terms from the Striling analytically.
+    is catastrophic cancellation between the lgammas.
 
     Inputs:
         - **x** (Tensor) - The input tensor. With float16 or float32 data type. `x` should have
