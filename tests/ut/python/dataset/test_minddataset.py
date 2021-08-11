@@ -2568,6 +2568,60 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     assert datas_epoch2 not in (datas_epoch1, datas_epoch3)
     assert datas_epoch3 not in (datas_epoch2, datas_epoch1)
 
+def test_field_is_null_numpy():
+    """add/remove nlp file"""
+    paths = ["{}{}".format(NLP_FILE_NAME, str(x).rjust(1, '0'))
+             for x in range(FILES_NUM)]
+    for x in paths:
+        if os.path.exists("{}".format(x)):
+            os.remove("{}".format(x))
+        if os.path.exists("{}.db".format(x)):
+            os.remove("{}.db".format(x))
+
+    writer = FileWriter(NLP_FILE_NAME, FILES_NUM)
+    data = []
+    # field array_d is null
+    for row_id in range(16):
+        data.append({
+            "label": row_id,
+            "array_a": np.reshape(np.array([0, 1, -1, 127, -128, 128, -129,
+                                            255, 256, -32768, 32767, -32769, 32768, -2147483648,
+                                            2147483647], dtype=np.int32), [-1]),
+            "array_b": np.reshape(np.array([0, 1, -1, 127, -128, 128, -129, 255,
+                                            256, -32768, 32767, -32769, 32768,
+                                            -2147483648, 2147483647, -2147483649, 2147483649,
+                                            -922337036854775808, 9223372036854775807]), [1, -1]),
+            "array_d": np.array([], dtype=np.int64)
+        })
+    nlp_schema_json = {"label": {"type": "int32"},
+                       "array_a": {"type": "int32",
+                                   "shape": [-1]},
+                       "array_b": {"type": "int64",
+                                   "shape": [1, -1]},
+                       "array_d": {"type": "int64",
+                                   "shape": [-1]}
+                       }
+    writer.set_header_size(1 << 14)
+    writer.set_page_size(1 << 15)
+    writer.add_schema(nlp_schema_json, "nlp_schema")
+    writer.write_raw_data(data)
+    writer.commit()
+
+    data_set = ds.MindDataset(dataset_file=NLP_FILE_NAME + "0",
+                              columns_list=["label", "array_a", "array_b", "array_d"],
+                              num_parallel_workers=2,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 16
+    assert data_set.output_shapes() == [[], [15], [1, 19], []]
+    assert data_set.output_types()[0] == np.int32
+    assert data_set.output_types()[1] == np.int32
+    assert data_set.output_types()[2] == np.int64
+    assert data_set.output_types()[3] == np.int64
+
+    for x in paths:
+        os.remove("{}".format(x))
+        os.remove("{}.db".format(x))
+
 if __name__ == '__main__':
     test_nlp_compress_data(add_and_remove_nlp_compress_file)
     test_nlp_compress_data_old_version(add_and_remove_nlp_compress_file)
@@ -2603,3 +2657,4 @@ if __name__ == '__main__':
     test_shuffle_with_global_infile_files(create_multi_mindrecord_files)
     test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_files)
     test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files)
+    test_field_is_null_numpy()
