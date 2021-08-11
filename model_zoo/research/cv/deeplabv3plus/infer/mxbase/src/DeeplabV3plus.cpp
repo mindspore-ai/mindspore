@@ -71,21 +71,19 @@ APP_ERROR DeeplabV3plus::Init(const InitParam &initParam) {
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::DeInit() {
+void DeeplabV3plus::DeInit() {
     dvppWrapper_->DeInit();
     model_->DeInit();
     post_->DeInit();
     MxBase::DeviceManager::GetInstance()->DestroyDevices();
-    return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::ReadImage(const std::string &imgPath, cv::Mat &imageMat) {
+void DeeplabV3plus::ReadImage(const std::string &imgPath, cv::Mat &imageMat) {
     imageMat = cv::imread(imgPath, cv::IMREAD_COLOR);
     cv::cvtColor(imageMat, imageMat, cv::COLOR_BGR2RGB);
-    return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat,
+void DeeplabV3plus::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat,
     MxBase::ResizedImageInfo &resizedImageInfo) {
     constexpr float scaleValue = 513;
     float scale = scaleValue / max(srcImageMat.rows, srcImageMat.cols);
@@ -98,11 +96,9 @@ APP_ERROR DeeplabV3plus::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstIma
     resizedImageInfo.widthOriginal = srcImageMat.cols;
     resizedImageInfo.widthResize = dstHeight;
     resizedImageInfo.resizeType = MxBase::RESIZER_MS_KEEP_ASPECT_RATIO;
-
-    return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::Normalize(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
+void DeeplabV3plus::Normalize(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
     constexpr size_t ALPHA_AND_BETA_SIZE = 3;
     cv::Mat float32Mat;
     srcImageMat.convertTo(float32Mat, CV_32FC3);
@@ -116,10 +112,9 @@ APP_ERROR DeeplabV3plus::Normalize(const cv::Mat &srcImageMat, cv::Mat &dstImage
         tmp[i].convertTo(tmp[i], CV_32FC3, 1 / std[i], - mean[i] / std[i]);
     }
     cv::merge(tmp, dstImageMat);
-    return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
+void DeeplabV3plus::Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMat) {
     constexpr int32_t paddingHeight = 513;
     constexpr int32_t paddingWidth = 513;
     int padH = paddingHeight - srcImageMat.rows;
@@ -128,7 +123,6 @@ APP_ERROR DeeplabV3plus::Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMa
         cv::Scalar value(0, 0, 0);
         cv::copyMakeBorder(srcImageMat, dstImageMat, 0, padH, 0, padW, cv::BORDER_CONSTANT, value);
     }
-    return APP_ERR_OK;
 }
 
 APP_ERROR DeeplabV3plus::CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase) {
@@ -230,7 +224,7 @@ APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::SaveResultToImage(const MxBase::SemanticSegInfo &segInfo, const std::string &filePath) {
+void DeeplabV3plus::SaveResultToImage(const MxBase::SemanticSegInfo &segInfo, const std::string &filePath) {
     cv::Mat imageMat(segInfo.pixels.size(), segInfo.pixels[0].size(), CV_8UC1);
     for (size_t x = 0; x < segInfo.pixels.size(); ++x) {
         for (size_t y = 0; y < segInfo.pixels[x].size(); ++y) {
@@ -274,6 +268,4 @@ APP_ERROR DeeplabV3plus::SaveResultToImage(const MxBase::SemanticSegInfo &segInf
     cv::LUT(imageGrayC3, lut, imageColor);
     cv::cvtColor(imageColor, imageColor, cv::COLOR_RGB2BGR);
     cv::imwrite(filePath, imageColor);
-
-    return APP_ERR_OK;
 }
