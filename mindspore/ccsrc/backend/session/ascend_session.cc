@@ -1175,9 +1175,9 @@ void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const
   MS_EXCEPTION_IF_NULL(kernel_graph);
   bool finish = E2eDump::DumpData(kernel_graph.get(), rank_id_);
   if (finish) {
-    MS_LOG(DEBUG) << "Finish!";
+    MS_LOG(DEBUG) << "Dump completed!";
   } else {
-    MS_LOG(ERROR) << "Dump Data failed!";
+    MS_LOG(DEBUG) << "Dump has not occurred!";
   }
 }
 
