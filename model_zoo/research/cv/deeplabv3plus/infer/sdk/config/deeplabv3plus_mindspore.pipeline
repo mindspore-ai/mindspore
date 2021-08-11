@@ -3,6 +3,13 @@
         "stream_config": {
             "deviceId": "0"
         },
+        "appsrc0": {
+            "props": {
+                "blocksize": "409600"
+            },
+            "factory": "appsrc",
+            "next": "mxpi_imagedecoder0"
+        },
         "mxpi_imagedecoder0": {
             "props": {
                 "handleMethod": "opencv"
@@ -67,13 +74,6 @@
             },
             "factory": "mxpi_dataserialize",
             "next": "appsink0"
-        },
-        "appsrc0": {
-            "props": {
-                "blocksize": "409600"
-            },
-            "factory": "appsrc",
-            "next": "mxpi_imagedecoder0"
         },
         "appsink0": {
             "props": {
