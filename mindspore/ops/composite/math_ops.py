@@ -464,7 +464,8 @@ def batch_dot(x1, x2, axes=None):
           be same as x1's.
         - **axes** (Union[int, tuple(int), list(int)]) - Single value or tuple/list of length 2 with dimensions
           specified for `a` and `b` each. If single value `N` passed, automatically picks up last N dims from
-          `a` input shape and last N dims from `b` input shape in order as axes for each respectively.
+          `a` input shape and last N dimensions from `b` input shape in order as axes for each respectively.
+          Default: None.
 
     Outputs:
         Tensor, batch dot product of x1 and x2. The Shape of output for input shapes (batch, d1, axes, d2) and
