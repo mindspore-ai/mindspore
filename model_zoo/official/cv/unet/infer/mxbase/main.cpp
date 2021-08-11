@@ -23,32 +23,32 @@ const uint32_t MODEL_TYPE = 1;
 }  // namespace
 
 int main(int argc, char *argv[]) {
-  if (argc <= 1) {
-    LogWarn << "Please input image path, such as './unet_seg_opencv test.png'";
-    return APP_ERR_OK;
-  }
+    if (argc <= 1) {
+        LogWarn << "Please input image path, such as './unet_seg_opencv test.png'";
+        return APP_ERR_OK;
+    }
 
-  InitParam initParam = {};
-  initParam.deviceId = 0;
-  initParam.classNum = CLASS_NUM;
-  initParam.modelType = MODEL_TYPE;
-  initParam.labelPath = "./models/unet_simple.names";        // 根据实际路径修改
-  initParam.modelPath = "./models/unet_nested_isbi2012.om";  // 根据实际路径修改
-  UnetSegmentation unetSeg;
-  APP_ERROR ret = unetSeg.Init(initParam);
-  if (ret != APP_ERR_OK) {
-    LogError << "UnetSegmentation init failed, ret=" << ret << ".";
-    return ret;
-  }
+    InitParam initParam = {};
+    initParam.deviceId = 0;
+    initParam.classNum = CLASS_NUM;
+    initParam.modelType = MODEL_TYPE;
+    initParam.labelPath = "./models/unet_simple.names";        // 根据实际路径修改
+    initParam.modelPath = "./models/unet_nested_isbi2012.om";  // 根据实际路径修改
+    UnetSegmentation unetSeg;
+    APP_ERROR ret = unetSeg.Init(initParam);
+    if (ret != APP_ERR_OK) {
+        LogError << "UnetSegmentation init failed, ret=" << ret << ".";
+        return ret;
+    }
 
-  std::string imgPath = argv[1];
-  ret = unetSeg.Process(imgPath);
-  if (ret != APP_ERR_OK) {
-    LogError << "UnetSegmentation process failed, ret=" << ret << ".";
+    std::string imgPath = argv[1];
+    ret = unetSeg.Process(imgPath);
+    if (ret != APP_ERR_OK) {
+        LogError << "UnetSegmentation process failed, ret=" << ret << ".";
+        unetSeg.DeInit();
+        return ret;
+    }
+
     unetSeg.DeInit();
-    return ret;
-  }
-
-  unetSeg.DeInit();
-  return APP_ERR_OK;
+    return APP_ERR_OK;
 }
