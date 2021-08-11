@@ -146,7 +146,7 @@ def parse_args(cloud_args=None):
     #dataset of eval dataset
     parser.add_argument('--eval_data_dir',
                         type=str,
-                        default='/opt/npu/pvc/dataset/storage/imagenet/val',
+                        default='',
                         help='eval data dir')
     parser.add_argument('--eval_per_batch_size',
                         default=32,
@@ -289,9 +289,6 @@ def train(cloud_args=None):
     # checkpoint save
     progress_cb = ProgressMonitor(args)
     callbacks = [progress_cb,]
-    #eval dataset
-    if args.eval_data_dir is None or (not os.path.isdir(args.eval_data_dir)):
-        raise ValueError("{} is not a existing path.".format(args.eval_data_dir))
     #code like eval.py
     #if run eval
     if args.run_eval:
