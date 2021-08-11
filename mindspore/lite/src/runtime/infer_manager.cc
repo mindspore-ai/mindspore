@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
+#include <memory>
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
@@ -29,6 +30,7 @@
 
 namespace mindspore {
 namespace lite {
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers) {
   if (primitive == nullptr) {
@@ -64,6 +66,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   }
   return RET_OK;
 }
+#endif
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {

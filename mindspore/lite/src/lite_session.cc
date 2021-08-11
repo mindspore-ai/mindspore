@@ -47,47 +47,45 @@
 namespace mindspore {
 namespace lite {
 namespace {
+bool NeedBitUppackCheck(const schema::Tensor &src_tensor) {
+  if (src_tensor.enableHuffmanCode()) {
+    return true;
+  }
+  bool need_bit_unpack = src_tensor.quantParams() != nullptr && src_tensor.quantParams()->size() > 0 &&
+                         src_tensor.quantParams()->Get(0) != nullptr && src_tensor.quantParams()->Get(0)->inited();
+  if (need_bit_unpack) {
+    auto num_bits = src_tensor.quantParams()->Get(0)->numBits();
+    need_bit_unpack = ((num_bits >= kBitNum1 && num_bits < kBitNum8) || (num_bits > kBitNum8 && num_bits < kBitNum16));
+  }
+
+  return need_bit_unpack;
+}
+
 int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
+#ifdef ENABLE_WEIGHT_DECODE
   if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
     return IndexingDecompress(src_tensor, dst_tensor);
   } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
     return SparseDecompress(src_tensor, dst_tensor);
   }
-
-  bool need_bit_unpack = src_tensor.quantParams() != nullptr && src_tensor.quantParams()->size() > 0 &&
-                         src_tensor.quantParams()->Get(0) != nullptr && src_tensor.quantParams()->Get(0)->inited();
-  if (need_bit_unpack) {
-    auto num_bits = src_tensor.quantParams()->Get(0)->numBits();
-    need_bit_unpack = ((num_bits >= WeightDecoder::kBitNum1 && num_bits < WeightDecoder::kBitNum8) ||
-                       (num_bits > WeightDecoder::kBitNum8 && num_bits < WeightDecoder::kBitNum16));
-  }
-  if (!src_tensor.enableHuffmanCode() && !need_bit_unpack) {
-    return RET_NO_CHANGE;
-  }
-  // huffman code and bit pack are not assumed to be performed at same time
-  STATUS ret = RET_ERROR;
-  if (src_tensor.enableHuffmanCode()) {
-#ifdef ENABLE_HUFFMAN_DECODE
-    ret = WeightDecoder::DecodeHuffmanCode(src_tensor, dst_tensor);
-    if (ret != RET_OK && ret != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
-      return ret;
-    }
 #else
-    MS_LOG(ERROR) << unsupport_huffman_decode_log;
+  if (src_tensor.weightQunatCompressType() != schema::WeightQunatCompressType_NONE) {
+    MS_LOG(ERROR) << unsupport_weight_decode_log;
+    return RET_ERROR;
+  }
+#endif
+
+  if (!NeedBitUppackCheck(src_tensor)) {
+    return RET_NO_CHANGE;
+  } else {
+#ifdef ENABLE_WEIGHT_DECODE
+    return WeightDecoder::UnPack(src_tensor, dst_tensor);
+#else
+    MS_LOG(ERROR) << unsupport_weight_decode_log;
     return RET_ERROR;
 #endif
-  } else if (need_bit_unpack) {
-    ret = WeightDecoder::UnPackToInt(src_tensor, dst_tensor);
-    if (ret != RET_OK && ret != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Unpack to int8 failed: " << ret;
-      return ret;
-    }
-  } else {
-    ret = RET_OK;
   }
-  return ret;
 }
 }  // namespace
 

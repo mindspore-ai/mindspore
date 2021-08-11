@@ -17,8 +17,10 @@
 #include <utility>
 #include <memory>
 #include "include/errorcode.h"
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
 #include "include/registry/register_kernel.h"
 #include "src/registry/register_utils.h"
+#endif
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "nnacl/pooling_parameter.h"
@@ -32,7 +34,6 @@
 #endif
 #include "src/common/tensor_util.h"
 
-using mindspore::kernel::CreateKernel;
 using mindspore::kernel::kBuiltin;
 using mindspore::kernel::kCPU;
 using mindspore::kernel::KERNEL_ARCH;
@@ -40,6 +41,7 @@ using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
 
 namespace mindspore::lite {
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
 namespace {
 const char *const kArchCPU = "CPU";
 void KernelKeyToKernelDesc(const KernelKey &key, kernel::KernelDesc *desc) {
@@ -50,6 +52,7 @@ void KernelKeyToKernelDesc(const KernelKey &key, kernel::KernelDesc *desc) {
   desc->provider = key.provider;
 }
 }  // namespace
+#endif
 
 void KernelRegistry::CreatorArraysInit() {
   std::unique_lock<std::mutex> malloc_creator_array(lock_);
@@ -132,6 +135,7 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   return kernel_creator != nullptr;
 }
 
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                     const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
                                     kernel::LiteKernel **kernel, const void *primitive) {
@@ -139,7 +143,8 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   MS_ASSERT(kernel != nullptr);
   kernel::KernelDesc desc;
   KernelKeyToKernelDesc(key, &desc);
-  CreateKernel creator = kernel::RegisterUtils::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
+  mindspore::kernel::CreateKernel creator =
+    kernel::RegisterUtils::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
   }
@@ -162,13 +167,16 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   }
   return RET_ERROR;
 }
+#endif
 
 int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                               const InnerContext *ctx, const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
                               OpParameter *parameter, kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
   if (key.provider == kBuiltin) {
+#endif
     auto creator = GetCreator(key);
     if (creator != nullptr) {
       auto inner_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
@@ -185,6 +193,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       }
       return RET_ERROR;
     }
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
   } else {
     auto ret = GetCustomKernel(in_tensors, out_tensors, ms_ctx, key, kernel, primitive);
     if (ret == RET_OK) {
@@ -192,6 +201,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
     }
     return ret;
   }
+#endif
   return RET_NOT_SUPPORT;
 }
 }  // namespace mindspore::lite
