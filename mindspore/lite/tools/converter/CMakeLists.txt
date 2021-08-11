@@ -113,6 +113,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/reduce_same_act_pass.cc
         ../optimizer/graph/split_one_pass.cc
         ../optimizer/graph/find_const_subgraph_pass.cc
+        ../optimizer/graph/specify_graph_input_format.cc
         )
 
 add_subdirectory(../anf_exporter anf_exporter)

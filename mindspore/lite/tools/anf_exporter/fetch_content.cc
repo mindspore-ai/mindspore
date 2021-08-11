@@ -286,14 +286,14 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
     return RET_ERROR;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim->GetAttr(ops::kFormat) == nullptr && !param_node->has_default()) {
+    data_info->format_ = mindspore::NHWC;
+  }
   if (prim->GetAttr(ops::kFormat) != nullptr && !opt::CheckPrimitiveType(cnode, prim::kPrimResize)) {
     auto value = prim->GetAttr(ops::kFormat);
     if (value->isa<mindspore::Int64Imm>()) {
       data_info->format_ = GetValue<int64_t>(value);
     }
-  }
-  if (!param_node->has_default()) {
-    data_info->format_ = NHWC;
   }
   // attr weightFormat is only used by conv-like ops' second input
   if ((opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||

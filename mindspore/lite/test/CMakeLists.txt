@@ -257,6 +257,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/transpose_strategy.cc
             ${LITE_DIR}/tools/optimizer/graph/reduce_same_act_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/split_one_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/specify_graph_input_format.cc
             ${LITE_DIR}/tools/optimizer/fisson/eliminate_concat_split.cc
             ${LITE_DIR}/tools/optimizer/fisson/fisson_util.cc
             ${LITE_DIR}/tools/optimizer/fisson/iter_node_outputs.cc

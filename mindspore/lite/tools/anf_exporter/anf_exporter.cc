@@ -739,7 +739,6 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
           graph_inputs_has_exported_.find(input_node) == graph_inputs_has_exported_.end()) {
         graph_inputs_has_exported_.insert(input_node);
         meta_graphT->inputIndex.push_back(meta_graphT->allTensors.size() - 1);
-        meta_graphT->allTensors.back()->format = schema::Format_NHWC;
       }
     } else if (input_node->isa<ValueNode>()) {
       auto ret = ConvertInputValueNode(cnode, i, primitive_c, meta_graphT, fb_node);

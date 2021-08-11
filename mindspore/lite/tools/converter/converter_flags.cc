@@ -76,6 +76,8 @@ Flags::Flags() {
           "set this option. Model input shapes is same with origin model by default."
           "e.g. inTensor1:1,32,32,32;inTensor2:1,1,32,32,4",
           "");
+  AddFlag(&Flags::graphInputFormatStr, "inputFormat",
+          "Assign the format of model inputs. Valid only for 4-dimensional input. NHWC | NCHW", "NHWC");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -211,6 +213,9 @@ int Flags::InitTrainModel() {
 }
 
 int Flags::InitInTensorShape() {
+  if (this->inTensorShape.empty()) {
+    return RET_OK;
+  }
   std::string content = this->inTensorShape;
   std::vector<int64_t> shape;
   auto shape_strs = lite::StrSplit(content, std::string(";"));
@@ -238,6 +243,18 @@ int Flags::InitInTensorShape() {
       }
     }
     lite::ConverterContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
+  }
+  return RET_OK;
+}
+
+int Flags::InitGraphInputFormat() {
+  if (this->graphInputFormatStr == "NHWC") {
+    graphInputFormat = mindspore::NHWC;
+  } else if (this->graphInputFormatStr == "NCHW") {
+    graphInputFormat = mindspore::NCHW;
+  } else if (!this->graphInputFormatStr.empty()) {
+    MS_LOG(ERROR) << "graph input format is invalid.";
+    return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
 }
@@ -351,12 +368,16 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (!this->inTensorShape.empty()) {
-    ret = InitInTensorShape();
-    if (ret != RET_OK) {
-      std::cerr << "Init input tensor shape failed." << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
+  ret = InitInTensorShape();
+  if (ret != RET_OK) {
+    std::cerr << "Init input tensor shape failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = InitGraphInputFormat();
+  if (ret != RET_OK) {
+    std::cerr << "Init graph input format failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;
 }

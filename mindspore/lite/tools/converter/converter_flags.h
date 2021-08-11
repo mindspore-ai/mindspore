@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include "include/api/format.h"
 #include "include/registry/parser_context.h"
 #include "tools/common/flag_parser.h"
 #include "ir/dtype/type_id.h"
@@ -60,6 +61,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitInTensorShape();
 
+  int InitGraphInputFormat();
+
   int Init(int argc, const char **argv);
 
  public:
@@ -93,6 +96,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string inTensorShape;
   std::string dec_key = "";
   std::string dec_mode = "AES-GCM";
+  std::string graphInputFormatStr;
+  mindspore::Format graphInputFormat = mindspore::NHWC;
 };
 
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
