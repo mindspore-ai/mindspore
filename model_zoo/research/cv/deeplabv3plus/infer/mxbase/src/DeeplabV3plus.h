@@ -48,8 +48,6 @@ class DeeplabV3plus {
      void Padding(const cv::Mat &srcImageMat, cv::Mat &dstImageMat);
      APP_ERROR CVMatToTensorBase(const cv::Mat &imageMat, MxBase::TensorBase &tensorBase);
      APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
-     APP_ERROR PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-         std::vector<MxBase::SemanticSegInfo> &segInfo, const std::vector<MxBase::ResizedImageInfo> &resizedInfo);
      APP_ERROR Process(const std::string &imgPath);
      void SaveResultToImage(const MxBase::SemanticSegInfo &segInfo, const std::string &filePath);
 
