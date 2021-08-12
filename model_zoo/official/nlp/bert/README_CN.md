@@ -613,10 +613,12 @@ bash scripts/squad.sh
 
 ## 导出mindir模型
 
+由于预训练模型通常没有应用场景，需要经过下游任务的finetune之后才能使用，所以当前仅支持使用下游任务模型和yaml配置文件进行export操作。
+
 - 在本地导出
 
 ```shell
-python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [../../*.yaml] --export_ckpt_file [CKPT_PATH] --export_file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 - 在ModelArts上导出
@@ -647,7 +649,7 @@ python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_nam
 # 你将在{Output file path}下看到 'bert_ner.mindir'文件
 ```
 
-参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+参数`export_ckpt_file` 是必需的，`file_format` 必须在 ["AIR", "MINDIR"]中进行选择。
 
 ## 推理过程
 
