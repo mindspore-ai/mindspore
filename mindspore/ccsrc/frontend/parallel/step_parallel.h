@@ -187,6 +187,8 @@ std::string MirrorOpName();
 
 CommInfo GetCommInfo();
 
+std::string GetPrimName(const CNodePtr &node);
+
 void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, int64_t pipeline_stages);
 }  // namespace parallel
 }  // namespace mindspore

@@ -261,6 +261,9 @@ void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const An
   PrimitivePtr new_node_prim = new_node_value->value()->cast<PrimitivePtr>();
   new_node_prim->set_instance_name(instance_name);
   new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
+  if (instance_name.find(NOT_RECOMPUTE) != std::string::npos) {
+    new_node_prim->set_attr("recompute", MakeValue(false));
+  }
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
   manager->SetEdge(node, SizeToLong(index), new_node);
@@ -290,6 +293,9 @@ static CNodePtr ReplaceNode(const Operator &op, const AnfNodePtr &pre_node, cons
   auto new_node_prim = GetValueNode<PrimitivePtr>(node_input[0]);
   new_node_prim->set_instance_name(instance_name);
   new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
+  if (instance_name.find(NOT_RECOMPUTE) != std::string::npos) {
+    new_node_prim->set_attr("recompute", MakeValue(false));
+  }
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
   manager->Replace(pre_node, new_node);
@@ -394,6 +400,18 @@ void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_p
     std::string op_name = (redistribution_oplist_ptr->first)[index].first;
     std::string instance_name_base = REDISTRIBUTION_OP;
     std::string instance_name = instance_name_base + "_" + CreateInstanceName(pre_node, index) + op_name;
+    auto prim_out = GetCNodePrimitive(node);
+    auto prim_in = GetCNodePrimitive(pre_node);
+    if (prim_out != nullptr && prim_in != nullptr) {
+      auto prim_out_attr = prim_out->attrs();
+      auto prim_in_attr = prim_in->attrs();
+      if (prim_out_attr.find(RECOMPUTE_COMM_OP) != prim_out_attr.end() &&
+          prim_in_attr.find(RECOMPUTE_COMM_OP) != prim_in_attr.end() &&
+          COMMUNICATION_OPS.find(op_name) != COMMUNICATION_OPS.end()) {
+        MS_LOG(INFO) << "The redistribution node would not be recomputed.";
+        instance_name = instance_name + "_" + NOT_RECOMPUTE;
+      }
+    }
     InsertNode(op, node, LongToSize(pos), target_node, func_graph, instance_name);
     if ((redistribution_oplist_ptr->second)[index].first) {
       target_node = node->input(LongToSize(pos));
@@ -443,12 +461,7 @@ TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &
 }
 
 std::string GetPrimName(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!IsValueNode<Primitive>(node->input(0))) {
-    MS_LOG(EXCEPTION) << "The node is not a primitive";
-  }
-  auto value_node = node->input(0)->cast<ValueNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(value_node);
+  auto prim = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(prim);
   return prim->name();
 }
@@ -881,6 +894,11 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
     PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
     SetUserAttrs(origin_prim->attrs(), prim);
+    if (origin_prim->attrs().find(RECOMPUTE_COMM_OP) != origin_prim->attrs().end() &&
+        COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end()) {
+      MS_LOG(INFO) << "The redistribution node in reshape would not be recomputed.";
+      prim->set_attr("recompute", MakeValue(false));
+    }
     if (index == replace_op.size() - 1) {
       replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());
       replace_node->set_primal_attrs(node->primal_attrs());
