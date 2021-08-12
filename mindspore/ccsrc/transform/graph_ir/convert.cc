@@ -55,6 +55,7 @@ using Data = ge::op::Data;
 
 namespace {
 std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
+  MS_EXCEPTION_IF_NULL(fg);
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
     std::vector<AnfNodePtr> vecs;
@@ -132,6 +133,7 @@ OpAdapterPtr DfGraphConvertor::FindAdapter(const AnfNodePtr node, bool train) {
 }
 
 void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
+  MS_EXCEPTION_IF_NULL(init_input);
   if (this->training_) {
     GeTensorDesc desc(GeShape(), ge::FORMAT_NCHW, ge::DT_INT64);
     auto var_iter_num = std::make_shared<Variable>("npu_runconfig/iterations_per_loop");
@@ -237,6 +239,7 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
 
   for (auto &it : nodes) {
+    MS_EXCEPTION_IF_NULL(it);
     if (it->isa<ValueNode>()) {
       if (IsValueNode<SymbolicKeyInstance>(it)) {
         auto symbolic = GetValueNode<SymbolicKeyInstancePtr>(it);
@@ -251,6 +254,7 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std
         }
       } else if (IsValueNode<RefKey>(it)) {
         auto refkey = GetValueNode<RefKeyPtr>(it);
+        MS_EXCEPTION_IF_NULL(refkey);
         auto name = refkey->tag();
         auto iter = vars_.find(name);  // get corresponding variable op
         if (iter != vars_.end()) {
@@ -771,9 +775,10 @@ void DfGraphConvertor::GetCaseNodeInput(const CNodePtr node, const CNodePtr inpu
     case_inputs.emplace_back(node->input(i));
   }
   auto bnode = input_node->input(2)->cast<CNodePtr>();
-
+  MS_EXCEPTION_IF_NULL(bnode);
   for (size_t i = 1; i < bnode->inputs().size(); i++) {
     auto branch_node = bnode->input(i)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(branch_node);
     for (size_t j = 2; j < branch_node->inputs().size(); j++) {
       if (std::find(case_inputs.begin(), case_inputs.end(), branch_node->input(j)) == case_inputs.end()) {
         case_inputs.emplace_back(branch_node->input(j));
@@ -1073,7 +1078,9 @@ void DfGraphConvertor::AddEdgeForLoad(const AnfNodePtr &node) {
   }
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-
+  if (manager->node_users().find(node) == manager->node_users().end()) {
+    MS_LOG(EXCEPTION) << "Can't find node in nodes_users.";
+  }
   auto &users = manager->node_users()[node];
   std::shared_ptr<std::vector<AnfNodePtr>> src_node_list = std::make_shared<std::vector<AnfNodePtr>>();
   std::shared_ptr<std::vector<AnfNodePtr>> dst_node_list = std::make_shared<std::vector<AnfNodePtr>>();
@@ -1101,6 +1108,7 @@ void DfGraphConvertor::AddEdgeForLoad(const AnfNodePtr &node) {
 
 void DfGraphConvertor::FindDestOps(const AnfNodePtr &node, const std::shared_ptr<std::vector<AnfNodePtr>> &node_list,
                                    bool top) {
+  MS_EXCEPTION_IF_NULL(node);
   auto func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto mng = func_graph->manager();
@@ -1356,6 +1364,7 @@ void DfGraphConvertor::ProcessSubgraph(AnfNodePtr node, const std::vector<AnfNod
     return;
   }
   auto graph_node = node->cast<CNodePtr>()->input(1)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(graph_node);
   FuncGraphPtr anf_graph = graph_node->value()->cast<FuncGraphPtr>();
   DfGraphConvertor converter(anf_graph);
   converter.use_inputs_ = true;
@@ -1449,13 +1458,16 @@ void DfGraphConvertor::ConvertMakeTuple(const CNodePtr node) {
 }
 
 void DfGraphConvertor::ConvertTopK(const CNodePtr node) {
+  MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
   auto value_ptr = node->input(2)->cast<ValueNodePtr>();
   std::ostringstream ss;
   ss << "op" << value_ptr.get();
   op_draw_name_[value_ptr.get()] = ss.str();
   compute_sout_ << ss.str() << "[label= \"" << value_ptr->value()->ToString() << "\" shape=ellipse]" << endl;
-  auto int64_value = value_ptr->value()->cast<Int64ImmPtr>()->value();
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  auto input_value = value_ptr->value();
+  auto int64_value = GetValue<int64_t>(input_value);
   OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
   auto op = adpt->generate(value_ptr);
   adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));

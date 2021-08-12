@@ -105,7 +105,7 @@ class Parameter(Tensor_):
         >>> x = Tensor(np.ones((2, 1)), mindspore.float32)
         >>> print(net(x))
         [[2.]]
-        >>> _ = net.weight.set_data(Tensor(np.zeros((1, 2)), mindspore.float32))
+        >>> net.weight.set_data(Tensor(np.zeros((1, 2)), mindspore.float32))
         >>> print(net(x))
         [[0.]]
     """
