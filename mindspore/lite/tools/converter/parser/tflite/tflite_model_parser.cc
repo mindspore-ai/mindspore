@@ -398,6 +398,12 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     returnCnode->set_fullname_with_scope("Return");
     res_graph_->set_return(returnCnode);
   }
+  // save original output tensor names.
+  std::vector<std::string> output_names;
+  auto output_idx = tflite_subgraph->outputs;
+  std::transform(output_idx.begin(), output_idx.end(), std::back_inserter(output_names),
+                 [&](auto out_idx) { return tflite_subgraph->tensors.at(out_idx)->name; });
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
   return RET_OK;
 }
 

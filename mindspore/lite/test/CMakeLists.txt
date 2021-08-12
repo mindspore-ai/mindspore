@@ -224,7 +224,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/multi_head_attention_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/reshape_reshape_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/constant_folding_fusion.cc
-            ${LITE_DIR}/tools/optimizer/fusion/quant_dtype_cast_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/norm_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/batchmatmul_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/sigmoid_mul_fusion.cc
