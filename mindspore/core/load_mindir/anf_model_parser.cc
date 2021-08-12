@@ -493,6 +493,7 @@ bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
     shape.push_back(attr_tensor.dims(i));
   }
   tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+  MS_EXCEPTION_IF_NULL(tensor_info);
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
@@ -570,6 +571,7 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
     shape.push_back(attr_tensor.dims(i));
   }
   tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+  MS_EXCEPTION_IF_NULL(tensor_info);
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
@@ -794,9 +796,11 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
     if (node_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
       auto op_name = node_type.substr(strlen(kDoSignaturePrimitivePrefix));
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
+      MS_EXCEPTION_IF_NULL(prim);
       prim->set_instance_name(op_name);
     } else {
       prim = std::make_shared<Primitive>(node_type);
+      MS_EXCEPTION_IF_NULL(prim);
       prim->set_instance_name(node_type);
     }
   }
@@ -940,10 +944,15 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     for (int out_size = 0; out_size < importProto.output_size(); ++out_size) {
       const mind_ir::ValueInfoProto &output_node = importProto.output(out_size);
       const std::string &out_tuple = output_node.name();
+      if (anfnode_build_map_.find(out_tuple) == anfnode_build_map_.end()) {
+        MS_LOG(ERROR) << "Can't find out_tuple in anfnode_build_map_";
+        return false;
+      }
       inputs.push_back(anfnode_build_map_[out_tuple]);
       elem.push_back(anfnode_build_map_[out_tuple]->abstract());
     }
     auto maketuple_ptr = outputFuncGraph->NewCNode(inputs);
+    MS_EXCEPTION_IF_NULL(maketuple_ptr);
     maketuple_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     inputs.clear();
     inputs.push_back(NewValueNode(prim::kPrimReturn));
@@ -992,8 +1001,7 @@ bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
     }
   }
 
-  BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr);
-  return true;
+  return BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr);
 }
 
 bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto) {

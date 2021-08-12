@@ -51,7 +51,6 @@ class LearningRateScheduler(Callback):
         >>> dataset = create_custom_dataset("custom_dataset_path")
         >>> model.train(1, dataset, callbacks=[LearningRateScheduler(learning_rate_function)],
         ...             dataset_sink_mode=False)
-
     """
 
     def __init__(self, learning_rate_function):
@@ -59,6 +58,12 @@ class LearningRateScheduler(Callback):
         self.learning_rate_function = learning_rate_function
 
     def step_end(self, run_context):
+        """
+        Change the learning_rate at the end of step.
+
+        Args:
+            run_context (RunContext): Context of the train running.
+        """
         cb_params = run_context.original_args()
         arr_lr = cb_params.optimizer.learning_rate.asnumpy()
         lr = float(np.array2string(arr_lr))

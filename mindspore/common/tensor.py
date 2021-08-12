@@ -1232,7 +1232,7 @@ class Tensor(Tensor_):
             raise ValueError(msg)
 
         class seed_context:
-            '''set and restore seed'''
+            """Set and restore seed."""
 
             def __init__(self, init):
                 self.init = init

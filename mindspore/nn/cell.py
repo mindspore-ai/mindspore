@@ -339,7 +339,7 @@ class Cell(Cell_):
 
     def run_construct(self, cast_inputs, kwargs):
         if self.enable_hook:
-            output = self._hook_construct(*cast_inputs, **kwargs)
+            output = self._hook_construct(*cast_inputs)
         else:
             output = self.construct(*cast_inputs, **kwargs)
         return output
@@ -1209,7 +1209,7 @@ class Cell(Cell_):
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def _hook_construct(self, *inputs, **kwargs):
+    def _hook_construct(self, *inputs):
         """Hook construct method to replace original construct method when hook function enabled."""
         inputs = self._backward_hook(*inputs)
         inputs = self.construct(inputs)
