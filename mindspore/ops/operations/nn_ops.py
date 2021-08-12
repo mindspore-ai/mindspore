@@ -346,17 +346,17 @@ class Softplus(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16, float32 or float64 data type.
+          additional dimensions, with float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` does not belong to any of [float16, float32, float64].
+        TypeError: If the dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``
+        ``Ascend``  ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
