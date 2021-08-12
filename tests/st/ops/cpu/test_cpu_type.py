@@ -57,7 +57,7 @@ class Net2(nn.Cell):
         return self.bias_add1(self.bias_add(x, b), c)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_bias_add2():

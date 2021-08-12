@@ -226,7 +226,7 @@ class SideEffectTwoAssignTwoAddnDependencyNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ctrl_while_by_while_and_if_in_first_while():
@@ -262,7 +262,7 @@ def test_ctrl_while_by_while_and_if_in_first_while():
     net(input_me_a)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ctrl_while_by_while_and_while_in_first_while():

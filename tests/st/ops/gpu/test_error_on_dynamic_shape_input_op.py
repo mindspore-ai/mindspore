@@ -46,7 +46,7 @@ def test_error_on_dynamic_shape_input_is_dynamic():
         error_on_dynamic_shape_input.infer_shape([-1, -1, -1])
     assert "Input is dynamically shaped" in str(info.value)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_error_on_dynamic_shape_input_not_dynamic():
