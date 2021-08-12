@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "common/common.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/include/dataset/datasets.h"
@@ -28,7 +29,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
-  MS_LOG(INFO) << "Doing TestTimeMasking Pipeline.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingPipeline.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -67,7 +68,7 @@ TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestTimeMaskingWrongArgs) {
-  MS_LOG(INFO) << "Doing TestTimeMasking with wrong args.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingWrongArgs.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 20}));
@@ -89,7 +90,7 @@ TEST_F(MindDataTestPipeline, TestTimeMaskingWrongArgs) {
 }
 
 TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
-  MS_LOG(INFO) << "Doing test TimeStretchOp with custom param value. Pipeline.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeStretchPipeline.";
   // op param
   int freq = 1025;
   int hop_length = 512;
@@ -115,7 +116,7 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
-  std::vector<int64_t> expected = {2, freq, int(std::ceil(400 / rate)), 2};
+  std::vector<int64_t> expected = {2, freq, static_cast<int64_t>(std::ceil(400 / rate)), 2};
 
   int i = 0;
   while (row.size() != 0) {
@@ -131,7 +132,7 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestTimeStretchPipelineWrongArgs) {
-  MS_LOG(INFO) << "Doing test TimeStretchOp with wrong param value. Pipeline.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeStretchPipelineWrongArgs.";
   // op param
   int freq = 1025;
   int hop_length = 512;

@@ -877,7 +877,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
   try {
     int num_channels = 1;
     if (input->Rank() < 2) {
-      RETURN_STATUS_UNEXPECTED("AdjustGamma: image shape is not <...,H,W,C> or <H,W>.");
+      RETURN_STATUS_UNEXPECTED("AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>.");
     }
     if (input->Rank() > 2) {
       num_channels = input->shape()[-1];
@@ -1261,7 +1261,7 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       RETURN_STATUS_UNEXPECTED("RgbToBgr: load image failed.");
     }
     if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("RgbToBgr: image shape is not <H,W,C> or channel is not 3.");
+      RETURN_STATUS_UNEXPECTED("RgbToBgr: input tensor is not in shape of <H,W,C> or channel is not 3.");
     }
 
     cv::Mat image = input_cv->mat().clone();

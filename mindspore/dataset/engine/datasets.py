@@ -5773,62 +5773,74 @@ class FlickrDataset(MappableDataset):
         >>> # In FLICKR dataset, each dictionary has keys "image" and "annotation"
 
     About Flickr8k dataset:
-        | The Flickr8k dataset consists of 8092 colour images. There are 40460 annotations in the Flickr8k.token.txt,
-          each image has 5 annotations.
 
-        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
-        | .
-        | └── Flickr8k
-        |      ├── Flickr8k_Dataset
-        |      |    ├── 1000268201_693b08cb0e.jpg
-        |      |    ├── 1001773457_577c3a7d70.jpg
-        |      |    ├── ...
-        |      └── Flickr8k.token.txt
+    The Flickr8k dataset consists of 8092 colour images. There are 40460 annotations in the Flickr8k.token.txt,
+    each image has 5 annotations.
 
-        .. code-block::
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
 
-            @article{DBLP:journals/jair/HodoshYH13,
-            author    = {Micah Hodosh and Peter Young and Julia Hockenmaier},
-            title     = {Framing Image Description as a Ranking Task: Data, Models and Evaluation Metrics},
-            journal   = {J. Artif. Intell. Res.},
-            volume    = {47},
-            pages     = {853--899},
-            year      = {2013},
-            url       = {https://doi.org/10.1613/jair.3994},
-            doi       = {10.1613/jair.3994},
-            timestamp = {Mon, 21 Jan 2019 15:01:17 +0100},
-            biburl    = {https://dblp.org/rec/journals/jair/HodoshYH13.bib},
-            bibsource = {dblp computer science bibliography, https://dblp.org}
-            }
+    .. code-block::
+
+        .
+        └── Flickr8k
+             ├── Flickr8k_Dataset
+             │    ├── 1000268201_693b08cb0e.jpg
+             │    ├── 1001773457_577c3a7d70.jpg
+             │    ├── ...
+             └── Flickr8k.token.txt
+
+    Citation:
+
+    .. code-block::
+
+        @article{DBLP:journals/jair/HodoshYH13,
+        author    = {Micah Hodosh and Peter Young and Julia Hockenmaier},
+        title     = {Framing Image Description as a Ranking Task: Data, Models and Evaluation Metrics},
+        journal   = {J. Artif. Intell. Res.},
+        volume    = {47},
+        pages     = {853--899},
+        year      = {2013},
+        url       = {https://doi.org/10.1613/jair.3994},
+        doi       = {10.1613/jair.3994},
+        timestamp = {Mon, 21 Jan 2019 15:01:17 +0100},
+        biburl    = {https://dblp.org/rec/journals/jair/HodoshYH13.bib},
+        bibsource = {dblp computer science bibliography, https://dblp.org}
+        }
 
     About Flickr30k dataset:
-        | The Flickr30k dataset consists of 31783 colour images. There are 158915 annotations in
-          the results_20130124.token, each image has 5 annotations.
 
-        | You can unzip the dataset files into the following directory structure and read by MindSpore's API.
-        | .
-        | └── Flickr30k
-        |      ├── flickr30k-images
-        |      |    ├── 1000092795.jpg
-        |      |    ├── 10002456.jpg
-        |      |    ├── ...
-        |      └── results_20130124.token
+    The Flickr30k dataset consists of 31783 colour images. There are 158915 annotations in
+    the results_20130124.token, each image has 5 annotations.
 
-        .. code-block::
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
 
-            @article{DBLP:journals/tacl/YoungLHH14,
-            author    = {Peter Young and Alice Lai and Micah Hodosh and Julia Hockenmaier},
-            title     = {From image descriptions to visual denotations: New similarity metrics
-                         for semantic inference over event descriptions},
-            journal   = {Trans. Assoc. Comput. Linguistics},
-            volume    = {2},
-            pages     = {67--78},
-            year      = {2014},
-            url       = {https://tacl2013.cs.columbia.edu/ojs/index.php/tacl/article/view/229},
-            timestamp = {Wed, 17 Feb 2021 21:55:25 +0100},
-            biburl    = {https://dblp.org/rec/journals/tacl/YoungLHH14.bib},
-            bibsource = {dblp computer science bibliography, https://dblp.org}
-            }
+    Citation:
+
+    .. code-block::
+
+        .
+        └── Flickr30k
+             ├── flickr30k-images
+             │    ├── 1000092795.jpg
+             │    ├── 10002456.jpg
+             │    ├── ...
+             └── results_20130124.token
+
+    .. code-block::
+
+        @article{DBLP:journals/tacl/YoungLHH14,
+        author    = {Peter Young and Alice Lai and Micah Hodosh and Julia Hockenmaier},
+        title     = {From image descriptions to visual denotations: New similarity metrics
+                     for semantic inference over event descriptions},
+        journal   = {Trans. Assoc. Comput. Linguistics},
+        volume    = {2},
+        pages     = {67--78},
+        year      = {2014},
+        url       = {https://tacl2013.cs.columbia.edu/ojs/index.php/tacl/article/view/229},
+        timestamp = {Wed, 17 Feb 2021 21:55:25 +0100},
+        biburl    = {https://dblp.org/rec/journals/tacl/YoungLHH14.bib},
+        bibsource = {dblp computer science bibliography, https://dblp.org}
+        }
     """
 
     @check_flickr_dataset
@@ -5928,39 +5940,43 @@ class SBDataset(GeneratorDataset):
         >>>
         >>> # In Semantic Boundaries Dataset, each dictionary has keys "image" and "task"
 
-    About Semantic Boundaries Dataset.
-        | The Semantic Boundaries Dataset consists of 11355 colour images. There are 8498 images' name in the train.txt,
-          2857 images' name in the val.txt and 5623 images' name in the train_noval.txt. The category cls/
-          contains the Segmentation and Boundaries results of category-level, the category inst/ catains the
-          Segmentation and Boundaries results of instance-level.
+    About Semantic Boundaries Dataset:
 
-        | You can unzip the dataset files into the following structure and read by MindSpore's API,
-        | .
-        | └── benchmark_RELEASE
-        |      └── dataset
-        |           ├── img
-        |           |    ├── 2008_000002.jpg
-        |           |    ├── 2008_000003.jpg
-        |           |    ├── ...
-        |           ├── cls
-        |           |    ├── 2008_000002.mat
-        |           |    ├── 2008_000003.mat
-        |           |    ├── ...
-        |           ├── inst
-        |           |    ├── 2008_000002.mat
-        |           |    ├── 2008_000003.mat
-        |           |    ├── ...
-        |           ├── train.txt
-        |           └── val.txt
+    The Semantic Boundaries Dataset consists of 11355 colour images. There are 8498 images' name in the train.txt,
+    2857 images' name in the val.txt and 5623 images' name in the train_noval.txt. The category cls/
+    contains the Segmentation and Boundaries results of category-level, the category inst/ catains the
+    Segmentation and Boundaries results of instance-level.
 
-        .. code-block::
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
 
-            @InProceedings{BharathICCV2011,
-                author       = "Bharath Hariharan and Pablo Arbelaez and Lubomir Bourdev and
-                                Subhransu Maji and Jitendra Malik",
-                title        = "Semantic Contours from Inverse Detectors",
-                booktitle    = "International Conference on Computer Vision (ICCV)",
-                year         = "2011",
+    .. code-block::
+
+         .
+         └── benchmark_RELEASE
+              ├── dataset
+              ├── img
+              │    ├── 2008_000002.jpg
+              │    ├── 2008_000003.jpg
+              │    ├── ...
+              ├── cls
+              │    ├── 2008_000002.mat
+              │    ├── 2008_000003.mat
+              │    ├── ...
+              ├── inst
+              │    ├── 2008_000002.mat
+              │    ├── 2008_000003.mat
+              │    ├── ...
+              ├── train.txt
+              └── val.txt
+
+    .. code-block::
+
+        @InProceedings{BharathICCV2011,
+            author       = "Bharath Hariharan and Pablo Arbelaez and Lubomir Bourdev and
+                            Subhransu Maji and Jitendra Malik",
+            title        = "Semantic Contours from Inverse Detectors",
+            booktitle    = "International Conference on Computer Vision (ICCV)",
+            year         = "2011",
     """
 
     @check_sb_dataset
@@ -5972,7 +5988,7 @@ class SBDataset(GeneratorDataset):
                          num_shards=num_shards, shard_id=shard_id)
 
 
-class _SBDataset():
+class _SBDataset:
     """
     Dealing with the data file with .mat extension, and return one row in tuple (image, task) each time.
     """

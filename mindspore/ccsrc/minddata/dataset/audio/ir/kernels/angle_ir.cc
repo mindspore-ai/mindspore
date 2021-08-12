@@ -16,13 +16,12 @@
 
 #include "minddata/dataset/audio/ir/kernels/angle_ir.h"
 
-// Kernel Audio headers
 #include "minddata/dataset/audio/kernels/angle_op.h"
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
+
 // AngleOperation
 AngleOperation::AngleOperation() {}
 

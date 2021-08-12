@@ -15,21 +15,21 @@
  */
 
 #include "minddata/dataset/kernels/image/adjust_gamma_op.h"
-#include <memory>
+
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
 
-const float AdjustGammaOp::kGain = 1.0;
+constexpr float AdjustGammaOp::kGain = 1.0;
 
 Status AdjustGammaOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
 
   // typecast
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "AdjustGamma: input tensor type should be [int, float, double], but got string.");
+                               "AdjustGamma: input tensor type should be int, float or double, but got: string.");
 
   if (input->type().IsFloat()) {
     std::shared_ptr<Tensor> input_tensor;

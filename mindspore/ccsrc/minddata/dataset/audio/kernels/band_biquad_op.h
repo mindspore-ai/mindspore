@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_BAND_BIQUAD_OP_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
+
 class BandBiquadOp : public TensorOp {
  public:
   BandBiquadOp(int32_t sample_rate, float central_freq, float Q, bool noise)

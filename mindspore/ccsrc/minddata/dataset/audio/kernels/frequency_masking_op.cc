@@ -47,7 +47,7 @@ Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::sh
   std::shared_ptr<Tensor> input_tensor;
   // typecast
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "FrequencyMasking: input tensor type should be float, but got string.");
+                               "FrequencyMasking: input tensor type should be float, but got: string.");
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
   } else {

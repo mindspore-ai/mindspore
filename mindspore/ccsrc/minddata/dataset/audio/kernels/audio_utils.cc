@@ -18,58 +18,16 @@
 
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 
-template <typename T>
-Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T multiplier, T amin,
-                     T db_multiplier, T top_db) {
-  TensorShape input_shape = input->shape();
-  TensorShape to_shape = input_shape.Rank() == 2
-                           ? TensorShape({1, 1, input_shape[-2], input_shape[-1]})
-                           : TensorShape({input->Size() / (input_shape[-3] * input_shape[-2] * input_shape[-1]),
-                                          input_shape[-3], input_shape[-2], input_shape[-1]});
-  RETURN_IF_NOT_OK(input->Reshape(to_shape));
-
-  std::vector<T> max_val;
-  int step = to_shape[-3] * input_shape[-2] * input_shape[-1];
-  int cnt = 0;
-  T temp_max = std::numeric_limits<T>::lowest();
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
-    // do clamp
-    *itr = *itr < amin ? log10(amin) * multiplier : log10(*itr) * multiplier;
-    *itr -= multiplier * db_multiplier;
-    // calculate max by axis
-    cnt++;
-    if ((*itr) > temp_max) temp_max = *itr;
-    if (cnt % step == 0) {
-      max_val.push_back(temp_max);
-      temp_max = std::numeric_limits<T>::lowest();
-    }
-  }
-
-  if (!std::isnan(top_db)) {
-    int ind = 0;
-    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
-      float lower_bound = max_val[ind / step] - top_db;
-      *itr = std::max((*itr), static_cast<T>(lower_bound));
-    }
-  }
-  RETURN_IF_NOT_OK(input->Reshape(input_shape));
-  *output = input;
-  return Status::OK();
-}
-template Status AmplitudeToDB<float>(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                                     float multiplier, float amin, float db_multiplier, float top_db);
-template Status AmplitudeToDB<double>(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                                      double multiplier, double amin, double db_multiplier, double top_db);
-
-/// \brief Generate linearly spaced vector
+/// \brief Generate linearly spaced vector.
 /// \param[in] start - Value of the startpoint.
 /// \param[in] end - Value of the endpoint.
 /// \param[in] n - N points in the output tensor.
 /// \param[out] output - Tensor has n points with linearly space. The spacing between the points is (end-start)/(n-1).
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
   if (start > end) {
@@ -91,10 +49,10 @@ Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
   return Status::OK();
 }
 
-/// \brief Calculate complex tensor angle
+/// \brief Calculate complex tensor angle.
 /// \param[in] input - Input tensor, must be complex, <channel, freq, time, complex=2>.
 /// \param[out] output - Complex tensor angle.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // check complex
@@ -123,10 +81,10 @@ Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   return Status::OK();
 }
 
-/// \brief Calculate complex tensor abs
+/// \brief Calculate complex tensor abs.
 /// \param[in] input - Input tensor, must be complex, <channel, freq, time, complex=2>.
 /// \param[out] output - Complex tensor abs.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // check complex
@@ -152,17 +110,17 @@ Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
   return Status::OK();
 }
 
-/// \brief Reconstruct complex tensor from norm and angle
+/// \brief Reconstruct complex tensor from norm and angle.
 /// \param[in] abs - The absolute value of the complex tensor.
 /// \param[in] angle - The angle of the complex tensor.
 /// \param[out] output - Complex tensor, <channel, freq, time, complex=2>.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &angle,
              std::shared_ptr<Tensor> *output) {
   // check shape
   if (abs->shape() != angle->shape()) {
-    std::string err_msg = "Polar: input shape of abs and angle must be same.";
+    std::string err_msg = "Polar: input tensor shape of abs and angle must be the same.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -185,12 +143,12 @@ Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &
   return Status::OK();
 }
 
-/// \brief Pad complex tensor
+/// \brief Pad complex tensor.
 /// \param[in] input - The complex tensor.
 /// \param[in] length - The length of padding.
 /// \param[in] dim - The dim index for padding.
 /// \param[out] output - Complex tensor, <channel, freq, time, complex=2>.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int length, int dim) {
   TensorShape input_shape = input->shape();
@@ -218,13 +176,13 @@ Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   return Status::OK();
 }
 
-/// \brief Calculate phase
+/// \brief Calculate phase.
 /// \param[in] angle_0 - The angle.
 /// \param[in] angle_1 - The angle.
 /// \param[in] phase_advance - The phase advance.
 /// \param[in] phase_time0 - The phase at time 0.
 /// \param[out] output - Phase tensor.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tensor> &angle_1,
              const std::shared_ptr<Tensor> &phase_advance, const std::shared_ptr<Tensor> &phase_time0,
@@ -269,12 +227,12 @@ Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tenso
   return Status::OK();
 }
 
-/// \brief Calculate magnitude
+/// \brief Calculate magnitude.
 /// \param[in] alphas - The alphas.
 /// \param[in] abs_0 - The norm.
 /// \param[in] abs_1 - The norm.
 /// \param[out] output - Magnitude tensor.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status Mag(const std::shared_ptr<Tensor> &abs_0, const std::shared_ptr<Tensor> &abs_1, std::shared_ptr<Tensor> *output,
            const std::vector<T> &alphas) {
@@ -377,9 +335,8 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
       RETURN_IF_NOT_OK(TimeStretch<double>(input, output, rate, phase_advance));
       break;
     default:
-      RETURN_STATUS_UNEXPECTED(
-        "TimeStretch: unsupported type, currently supported types include "
-        "[float, double].");
+      RETURN_STATUS_UNEXPECTED("TimeStretch: input tensor type should be float or double, but got: " +
+                               input->type().ToString());
   }
   return Status::OK();
 }
