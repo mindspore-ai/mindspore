@@ -238,6 +238,23 @@ def test_batch_12():
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
+def test_batch_13():
+    """
+    Test batch: python_multiprocessing is True and does not work for per_batch_map is None
+    """
+    logger.info("test_batch_12")
+    # define parameters
+    batch_size = True
+
+    # apply dataset operations
+    data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
+    data1 = data1.batch(batch_size=batch_size, python_multiprocessing=True)
+
+    assert sum([1 for _ in data1]) == 12
+    filename = "batch_12_result.npz"
+    save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
+
+
 def test_batch_exception_01():
     """
     Test batch exception: num_parallel_workers=0
@@ -493,6 +510,7 @@ if __name__ == '__main__':
     test_batch_10()
     test_batch_11()
     test_batch_12()
+    test_batch_13()
     test_batch_exception_01()
     test_batch_exception_02()
     test_batch_exception_03()
