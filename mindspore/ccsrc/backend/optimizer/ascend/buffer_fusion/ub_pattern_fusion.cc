@@ -270,6 +270,22 @@ bool TupleGetitemNodeCompare(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   return output_idx1 < output_idx2;
 }
 
+AnfNodePtr RemoveNodeFromUpdateState(session::KernelGraph *kernel_graph, const AnfNodePtr &node,
+                                     const AnfNodePtr &updatestate) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(updatestate);
+  auto updatestate_cnode = updatestate->cast<CNodePtr>();
+  auto inputs = updatestate_cnode->inputs();
+  std::vector<AnfNodePtr> new_inputs;
+  std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(new_inputs),
+               [node](const AnfNodePtr &input) { return node != input; });
+  auto new_updatestate = kernel_graph->NewCNode(new_inputs);
+  new_updatestate->set_scope(updatestate->scope());
+  new_updatestate->set_abstract(updatestate->abstract());
+  return new_updatestate;
+}
+
 void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
                                   std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -282,7 +298,15 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
     const auto &fusion_info = buffer_fusion_info.second;
     for (const auto &node : fusion_info.anf_nodes) {
       if (AnfAlgo::GetOutputTensorNum(node) == 1) {
-        for (auto use_node : manager->node_users()[node]) {
+        auto use_nodes = manager->node_users()[node];
+        for (auto use_node : use_nodes) {
+          // Do not think of updatestate as real output,
+          // Ensuring normal fusion requires eliminating the node of the updatestate
+          if (AnfAlgo::CheckPrimitiveType(use_node.first, prim::kPrimUpdateState)) {
+            auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, use_node.first);
+            manager->Replace(use_node.first, new_updatestate);
+            continue;
+          }
           if (std::find(fusion_info.anf_nodes.begin(), fusion_info.anf_nodes.end(), use_node.first) ==
               fusion_info.anf_nodes.end()) {
             (*buffer_fusion_infos)[fusion_id].outputs_list.push_back(node);
@@ -292,7 +316,13 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
       } else {
         int64_t prev_idx = 0;
         std::vector<AnfNodePtr> tuple_getitem_nodes;
-        for (auto &user : manager->node_users()[node]) {
+        auto users = manager->node_users()[node];
+        for (auto &user : users) {
+          if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimUpdateState)) {
+            auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, user.first);
+            manager->Replace(user.first, new_updatestate);
+            continue;
+          }
           if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimTupleGetItem)) {
             (void)tuple_getitem_nodes.emplace_back(user.first);
           }
