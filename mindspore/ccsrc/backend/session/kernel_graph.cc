@@ -1362,10 +1362,8 @@ void KernelGraph::SetOptimizerFlag() {
         continue;
       }
       auto param = real_node->cast<ParameterPtr>();
-      if (AnfAlgo::IsParameterWeight(param)) {
-        has_optimizer_ = true;
-        (void)updated_parameters_.insert(param);
-      }
+      has_optimizer_ = true;
+      (void)updated_parameters_.insert(param);
     }
   }
 }

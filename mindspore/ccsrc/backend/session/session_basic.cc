@@ -446,6 +446,26 @@ void UpdateGraphAquireGilAttr(const NotNull<KernelGraphPtr> &root_graph) {
   }
   return;
 }
+
+bool NoPartialInPartialGraph(const AnfNodePtr &partial_node) {
+  MS_EXCEPTION_IF_NULL(partial_node);
+  auto partial_cnode = partial_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(partial_cnode);
+  auto partial_graph = GetValueNode<FuncGraphPtr>(partial_cnode->input(kFirstDataInputIndex));
+  MS_EXCEPTION_IF_NULL(partial_graph);
+  auto graph_nodes = TopoSort(partial_graph->get_return());
+  for (auto &node : graph_nodes) {
+    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall) ||
+        AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch)) {
+      return false;
+    }
+    if (node->isa<CNode>() && IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(kAnfPrimitiveIndex))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
@@ -1958,7 +1978,8 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
   if (internal_output) {
     auto users = ExtendNodeUsers(front_func_graph_manager, front_node);
     for (auto &user : users) {
-      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice) {
+      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice &&
+          NoPartialInPartialGraph(user)) {
         auto partial_target = AddPartialParametersMap(user);
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;
