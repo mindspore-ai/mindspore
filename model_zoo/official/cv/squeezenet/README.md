@@ -92,6 +92,19 @@ After installing MindSpore via the official website, you can start training and 
   Usage: bash scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [CHECKPOINT_PATH]
   ```
 
+- running on GPU
+
+  ```bash
+  # distributed training
+  Usage: bash scripts/run_distribute_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+  # standalone training
+  Usage: bash scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+  # run evaluation example
+  Usage: bash scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+  ```
+
 - running on CPU
 
   ```bash
@@ -139,46 +152,53 @@ After installing MindSpore via the official website, you can start training and 
 
 ## [Script and Sample Code](#contents)
 
-```shell
+```text
 .
 └── squeezenet
   ├── README.md
-  ├── ascend310_infer                      # application for 310 inference
+  ├── ascend310_infer                        # application for 310 inference
   ├── scripts
-    ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
-    ├── run_standalone_train.sh            # launch ascend standalone training(1 pcs)
-    ├── run_eval.sh                        # launch ascend evaluation
-    ├── run_infer_310.sh                   # shell script for 310 infer
+      ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
+      ├── run_distribute_train_gpu.sh        # launch GPU distributed training(8 pcs)
+      ├── run_standalone_train.sh            # launch ascend standalone training(1 pcs)
+      ├── run_standalone_train_gpu.sh        # launch GPU standalone training(1 pcs)
+      ├── run_train_cpu.sh                   # launch CPU training
+      ├── run_eval.sh                        # launch ascend evaluation
+      ├── run_eval_gpu.sh                    # launch GPU evaluation
+      ├── run_eval_cpu.sh                    # launch CPU evaluation
+      ├── run_infer_310.sh                   # shell script for 310 infer
   ├── src
-    ├── dataset.py                         # data preprocessing
-    ├── CrossEntropySmooth.py              # loss definition for ImageNet dataset
-    ├── lr_generator.py                    # generate learning rate for each step
-    └── squeezenet.py                      # squeezenet architecture, including squeezenet and squeezenet_residual
+      ├── dataset.py                         # data preprocessing
+      ├── CrossEntropySmooth.py              # loss definition for ImageNet dataset
+      ├── lr_generator.py                    # generate learning rate for each step
+      └── squeezenet.py                      # squeezenet architecture, including squeezenet and squeezenet_residual
   ├── model_utils
-  │   ├── device_adapter.py                    # device adapter
-  │   ├── local_adapter.py                     # local adapter
-  │   ├── moxing_adapter.py                    # moxing adapter
-  │   ├── config.py                            # parameter analysis
+  │   ├── device_adapter.py                  # device adapter
+  │   ├── local_adapter.py                   # local adapter
+  │   ├── moxing_adapter.py                  # moxing adapter
+  │   └── config.py                          # parameter analysis
   ├── squeezenet_cifar10_config.yaml            # parameter configuration
   ├── squeezenet_imagenet_config.yaml           # parameter configuration
   ├── squeezenet_residual_cifar10_config.yaml   # parameter configuration
   ├── squeezenet_residual_imagenet_config.yaml  # parameter configuration
   ├── train.py                                  # train net
   ├── eval.py                                   # eval net
-  └── export.py                                 # export checkpoint files into geir/onnx
-  ├── postprocess.py                       # postprocess script
-  ├── preprocess.py                       # preprocess script
+  ├── export.py                                 # export checkpoint files into geir/onnx
+  ├── postprocess.py                         # postprocess script
+  ├── preprocess.py                          # preprocess script
+  ├── requirements.txt
+  └── mindspore_hub_conf.py                  # mindspore hub interface
 ```
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py
+Parameters for both training and evaluation can be set in *.yaml
 
 - config for SqueezeNet, CIFAR-10 dataset
 
   ```py
   "class_num": 10,                  # dataset class num
-  "batch_size": 32,                 # batch size of input tensor
+  "global_batch_size": 32,          # the total batch_size for training and evaluation
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 1e-4,             # weight decay
@@ -199,7 +219,7 @@ Parameters for both training and evaluation can be set in config.py
 
   ```py
   "class_num": 1000,                # dataset class num
-  "batch_size": 32,                 # batch size of input tensor
+  "global_batch_size": 256,         # the total batch_size for training and evaluation
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 7e-5,             # weight decay
@@ -222,7 +242,7 @@ Parameters for both training and evaluation can be set in config.py
 
   ```py
   "class_num": 10,                  # dataset class num
-  "batch_size": 32,                 # batch size of input tensor
+  "global_batch_size": 32,          # the total batch_size for training and evaluation
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 1e-4,             # weight decay
@@ -243,7 +263,7 @@ Parameters for both training and evaluation can be set in config.py
 
   ```py
   "class_num": 1000,                # dataset class num
-  "batch_size": 32,                 # batch size of input tensor
+  "global_batch_size": 256,         # The total batch_size for training and evaluation
   "loss_scale": 1024,               # loss scale
   "momentum": 0.9,                  # momentum
   "weight_decay": 7e-5,             # weight decay
@@ -262,7 +282,7 @@ Parameters for both training and evaluation can be set in config.py
   "lr_max": 0.01,                   # maximum learning rate
   ```
 
-For more configuration details, please refer the script `config.py`.
+For more configuration details, please refer the file `*.yaml`.
 
 ## [Training Process](#contents)
 
@@ -469,137 +489,137 @@ Inference result is saved in current path, you can find result like this in acc.
 
 #### SqueezeNet on CIFAR-10
 
-| Parameters                 | Ascend                                                      |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | SqueezeNet                                                  |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
-| uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
-| Dataset                    | CIFAR-10                                                    |
-| Training Parameters        | epoch=120, steps=195, batch_size=32, lr=0.01                |
-| Optimizer                  | Momentum                                                    |
-| Loss Function              | Softmax Cross Entropy                                       |
-| outputs                    | probability                                                 |
-| Loss                       | 0.0496                                                      |
-| Speed                      | 1pc: 16.7 ms/step;  8pcs: 17.0 ms/step                      |
-| Total time                 | 1pc: 55.5 mins;  8pcs: 15.0 mins                            |
-| Parameters (M)             | 4.8                                                         |
-| Checkpoint for Fine tuning | 6.4M (.ckpt file)                                           |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
+| Parameters                 | Ascend                                                      | GPU |
+| -------------------------- | ----------------------------------------------------------- | --- |
+| Model Version              | SqueezeNet                                                  | SqueezeNet |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 | NV SMX2 V100-32G |
+| uploaded Date              | 11/06/2020 (month/day/year)                                 | 8/26/2021 (month/day/year) |
+| MindSpore Version          | 1.0.0                                                       | 1.4.0 |
+| Dataset                    | CIFAR-10                                                    | CIFAR-10 |
+| Training Parameters        | epoch=120, steps=195, batch_size=32, lr=0.01                | 1pc:epoch=120, steps=1562, batch_size=32, lr=0.01; 8pcs:epoch=120, steps=1562, batch_size=4, lr=0.01|
+| Optimizer                  | Momentum                                                    | Momentum |
+| Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy |
+| outputs                    | probability                                                 | probability |
+| Loss                       | 0.0496                                                      | 1pc:0.0892, 8pcs:0.0130 |
+| Speed                      | 1pc: 16.7 ms/step;  8pcs: 17.0 ms/step                      | 1pc: 28.6 ms/step; 8pcs: 10.8 ms/step |
+| Total time                 | 1pc: 55.5 mins;  8pcs: 15.0 mins                            | 1pc: 90mins; 8pcs: 34mins |
+| Parameters (M)             | 4.8                                                         | 0.74 |
+| Checkpoint for Fine tuning | 6.4M (.ckpt file)                                           | 6.4M (.ckpt file)|
+| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 #### SqueezeNet on ImageNet
 
-| Parameters                 | Ascend                                                      |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | SqueezeNet                                                  |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8              |
-| uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
-| Dataset                    | ImageNet                                                    |
-| Training Parameters        | epoch=200, steps=5004, batch_size=32, lr=0.01               |
-| Optimizer                  | Momentum                                                    |
-| Loss Function              | Softmax Cross Entropy                                       |
-| outputs                    | probability                                                 |
-| Loss                       | 2.9150                                                      |
-| Speed                      | 8pcs: 19.9 ms/step                                          |
-| Total time                 | 8pcs: 5.2 hours                                             |
-| Parameters (M)             | 4.8                                                         |
-| Checkpoint for Fine tuning | 13.3M (.ckpt file)                                          |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
+| Parameters                 | Ascend                                                      | GPU |
+| -------------------------- | ----------------------------------------------------------- | --- |
+| Model Version              | SqueezeNet                                                  | SqueezeNet |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 | NV SMX2 V100-32G |
+| uploaded Date              | 11/06/2020 (month/day/year)                                 | 8/26/2021 (month/day/year) |
+| MindSpore Version          | 1.0.0                                                       | 1.4.0 |
+| Dataset                    | ImageNet                                                    | ImageNet |
+| Training Parameters        | epoch=200, steps=5004, batch_size=32, lr=0.01               | epoch=200, steps=5004, batch_size=32, lr=0.01 |
+| Optimizer                  | Momentum                                                    | Momentum |
+| Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy |
+| outputs                    | probability                                                 | probability |
+| Loss                       | 2.9150                                                      | 3.009 |
+| Speed                      | 8pcs: 19.9 ms/step                                          | 8pcs: 43.5ms/step|
+| Total time                 | 8pcs: 5.2 hours                                             | 8pcs: 12.1 hours |
+| Parameters (M)             | 4.8                                                         | 1.25 |
+| Checkpoint for Fine tuning | 13.3M (.ckpt file)                                          | 13.3M (.ckpt file) |
+| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 #### SqueezeNet_Residual on CIFAR-10
 
-| Parameters                 | Ascend                                                      |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | SqueezeNet_Residual                                         |
-| Resource                   |  Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
-| uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
-| Dataset                    | CIFAR-10                                                    |
-| Training Parameters        | epoch=150, steps=195, batch_size=32, lr=0.01                |
-| Optimizer                  | Momentum                                                    |
-| Loss Function              | Softmax Cross Entropy                                       |
-| outputs                    | probability                                                 |
-| Loss                       | 0.0641                                                      |
-| Speed                      | 1pc: 16.9 ms/step;  8pcs: 17.3 ms/step                      |
-| Total time                 | 1pc: 68.6 mins;  8pcs: 20.9 mins                            |
-| Parameters (M)             | 4.8                                                         |
-| Checkpoint for Fine tuning | 6.5M (.ckpt file)                                           |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
+| Parameters                 | Ascend                                                      | GPU |
+| -------------------------- | ----------------------------------------------------------- | --- |
+| Model Version              | SqueezeNet_Residual                                         | SqueezeNet_Residual |
+| Resource                   |  Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 | NV SMX2 V100-32G |
+| uploaded Date              | 11/06/2020 (month/day/year)                                 | 8/26/2021 (month/day/year) |
+| MindSpore Version          | 1.0.0                                                       | 1.4.0 |
+| Dataset                    | CIFAR-10                                                    | CIFAR-10 |
+| Training Parameters        | epoch=150, steps=195, batch_size=32, lr=0.01                | 1pc:epoch=150, steps=1562, batch_size=32, lr=0.01; 8pcs: epoch=150, steps=1562, batch_size=4|
+| Optimizer                  | Momentum                                                    | Momentum
+| Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy
+| outputs                    | probability                                                 | probability
+| Loss                       | 0.0641                                                      | 1pc: 0.0402; 8pcs:0.004 |
+| Speed                      | 1pc: 16.9 ms/step;  8pcs: 17.3 ms/step                      | 1pc: 29.4 ms/step; 8pcs:11.0 ms/step |
+| Total time                 | 1pc: 68.6 mins;  8pcs: 20.9 mins                            | 1pc: 115 mins; 8pcs: 43.5 mins |
+| Parameters (M)             | 4.8                                                         | 0.74 |
+| Checkpoint for Fine tuning | 6.5M (.ckpt file)                                           | 6.5M (.ckpt file) |
+| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 #### SqueezeNet_Residual on ImageNet
 
-| Parameters                 | Ascend                                                      |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | SqueezeNet_Residual                                         |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8            |
-| uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
-| Dataset                    | ImageNet                                                    |
-| Training Parameters        | epoch=300, steps=5004, batch_size=32, lr=0.01               |
-| Optimizer                  | Momentum                                                    |
-| Loss Function              | Softmax Cross Entropy                                       |
-| outputs                    | probability                                                 |
-| Loss                       | 2.9040                                                      |
-| Speed                      | 8pcs: 20.2 ms/step                                          |
-| Total time                 | 8pcs: 8.0 hours                                             |
-| Parameters (M)             | 4.8                                                         |
-| Checkpoint for Fine tuning | 15.3M (.ckpt file)                                          |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
+| Parameters                 | Ascend                                                      | GPU |
+| -------------------------- | ----------------------------------------------------------- | --- |
+| Model Version              | SqueezeNet_Residual                                         | SqueezeNet_Residual |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 | NV SMX2 V100-32G |
+| uploaded Date              | 11/06/2020 (month/day/year)                                 | 8/26/2021 (month/day/year) |
+| MindSpore Version          | 1.0.0                                                       | 1.4.0 |
+| Dataset                    | ImageNet                                                    | ImageNet |
+| Training Parameters        | epoch=300, steps=5004, batch_size=32, lr=0.01               | epoch=300, steps=5004, batch_size=32, lr=0.01 |
+| Optimizer                  | Momentum                                                    | Momentum |
+| Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy |
+| outputs                    | probability                                                 | probability |
+| Loss                       | 2.9040                                                      | 2.969 |
+| Speed                      | 8pcs: 20.2 ms/step                                          | 8pcs: 44.1 ms/step |
+| Total time                 | 8pcs: 8.0 hours                                             | 8pcs: 18.4 hours |
+| Parameters (M)             | 4.8                                                         | 1.25 |
+| Checkpoint for Fine tuning | 15.3M (.ckpt file)                                          | 15.3M (.ckpt file) |
+| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 ### Inference Performance
 
 #### SqueezeNet on CIFAR-10
 
-| Parameters          | Ascend                      |
-| ------------------- | --------------------------- |
-| Model Version       | SqueezeNet                  |
-| Resource            | Ascend 910; OS Euler2.8                  |
-| Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
-| Dataset             | CIFAR-10                    |
-| batch_size          | 32                          |
-| outputs             | probability                 |
-| Accuracy            | 1pc: 89.0%;  8pcs: 84.4%    |
+| Parameters          | Ascend                      | GPU |
+| ------------------- | --------------------------- | --- |
+| Model Version       | SqueezeNet                  | SqueezeNet |
+| Resource            | Ascend 910; OS Euler2.8     | NV SMX2 V100-32G |
+| Uploaded Date       | 11/06/2020 (month/day/year) | 8/26/2021 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.4.0 |
+| Dataset             | CIFAR-10                    | CIFAR-10 |
+| batch_size          | 32                          | 1pc:32; 8pcs:4 |
+| outputs             | probability                 | probability |
+| Accuracy            | 1pc: 89.0%;  8pcs: 84.4%    | 1pc: 89.0%; 8pcs: 88.8%|
 
 #### SqueezeNet on ImageNet
 
-| Parameters          | Ascend                      |
-| ------------------- | --------------------------- |
-| Model Version       | SqueezeNet                  |
-| Resource            | Ascend 910; OS Euler2.8                 |
-| Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
-| Dataset             | ImageNet                    |
-| batch_size          | 32                          |
-| outputs             | probability                 |
-| Accuracy            | 8pcs: 58.5%(TOP1), 81.1%(TOP5)       |
+| Parameters          | Ascend                      | GPU |
+| ------------------- | --------------------------- | --- |
+| Model Version       | SqueezeNet                  | SqueezeNet |
+| Resource            | Ascend 910; OS Euler2.8                 | NV SMX2 V100-32G |
+| Uploaded Date       | 11/06/2020 (month/day/year) | 8/26/2021 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.4.0 |
+| Dataset             | ImageNet                    | ImageNet |
+| batch_size          | 32                          |  32 |
+| outputs             | probability                 | probability |
+| Accuracy            | 8pcs: 58.5%(TOP1), 81.1%(TOP5)       | 8pcs: 58.5%(TOP1), 80.7%(TOP5) |
 
 #### SqueezeNet_Residual on CIFAR-10
 
-| Parameters          | Ascend                      |
-| ------------------- | --------------------------- |
-| Model Version       | SqueezeNet_Residual         |
-| Resource            | Ascend 910; OS Euler2.8             |
-| Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
-| Dataset             | CIFAR-10                    |
-| batch_size          | 32                          |
-| outputs             | probability                 |
-| Accuracy            | 1pc: 90.8%;  8pcs: 87.4%    |
+| Parameters          | Ascend                      |  GPU |
+| ------------------- | --------------------------- | --- |
+| Model Version       | SqueezeNet_Residual         | SqueezeNet_Residual         |
+| Resource            | Ascend 910; OS Euler2.8             | NV SMX2 V100-32G |
+| Uploaded Date       | 11/06/2020 (month/day/year) | 8/26/2021 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.4.0 |
+| Dataset             | CIFAR-10                    | CIFAR-10                    |
+| batch_size          | 32                          | 1pc:32; 8pcs:4 |
+| outputs             | probability                 | probability                 |
+| Accuracy            | 1pc: 90.8%;  8pcs: 87.4%    | 1pc: 90.7%; 8pcs: 90.5% |
 
 #### SqueezeNet_Residual on ImageNet
 
-| Parameters          | Ascend                      |
-| ------------------- | --------------------------- |
-| Model Version       | SqueezeNet_Residual         |
-| Resource            | Ascend 910; OS Euler2.8               |
-| Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
-| Dataset             | ImageNet                    |
-| batch_size          | 32                          |
-| outputs             | probability                 |
-| Accuracy            | 8pcs: 60.9%(TOP1), 82.6%(TOP5)       |
+| Parameters          | Ascend                      | GPU |
+| ------------------- | --------------------------- | --- |
+| Model Version       | SqueezeNet_Residual         | SqueezeNet_Residual         |
+| Resource            | Ascend 910; OS Euler2.8               |  NV SMX2 V100-32G |
+| Uploaded Date       | 11/06/2020 (month/day/year) | 8/24/2021 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.4.0 |
+| Dataset             | ImageNet                    | ImageNet                   |
+| batch_size          | 32                          | 32 |
+| outputs             | probability                 | probability |
+| Accuracy            | 8pcs: 60.9%(TOP1), 82.6%(TOP5)       | 8pcs: 60.2%(TOP1), 82.3%(TOP5)|
 
 ### 310 Inference Performance
 
