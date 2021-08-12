@@ -62,13 +62,7 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
 
 - 准备Backbone模型
 
-准备resnet101模型，点此下载(https://download.pytorch.org/models/resnet101-5d3b4d8f.pth).
-
-使用convert_resnet101.py脚本转换Backbone模型.
-
-```shell
-python convert_resnet101.py
-```
+准备resnet101模型，点此下载(https://download.mindspore.cn/model_zoo/r1.2/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt).
 
 - 下载分段数据集。
 

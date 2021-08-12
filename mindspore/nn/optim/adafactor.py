@@ -359,34 +359,35 @@ class AdaFactor(Optimizer):
         self.exp_avg_sq = []
         self.exp_avg_sq_col = []
         self.exp_avg_sq_row = []
-        for i, paras in enumerate(self.parameters):
+        for paras in self.parameters:
             paras_dtype = paras.dtype
             paras_shape = paras.shape
+            paras_name = paras.name
             if len(paras_shape) > 1:
                 self.exp_avg_sq_row.append(Parameter(initializer(0, shape=paras_shape[:-1], dtype=paras_dtype),
-                                                     name="exp_avg_sq_row_{}".format(i)))
+                                                     name="exp_avg_sq_row_{}".format(paras_name)))
                 self.exp_avg_sq_col.append(Parameter(initializer(0, shape=paras_shape[:-2] + paras_shape[-1:],
                                                                  dtype=paras_dtype),
-                                                     name="exp_avg_sq_col_{}".format(i)))
+                                                     name="exp_avg_sq_col_{}".format(paras_name)))
                 if self.compression:
                     self.exp_avg_sq.append(Parameter(initializer(0, shape=(1,), dtype=mstype.float16),
-                                                     name="exp_avg_sq_{}".format(i)))
+                                                     name="exp_avg_sq_{}".format(paras_name)))
                 else:
                     self.exp_avg_sq.append(Parameter(initializer(0, shape=(1,), dtype=paras_dtype),
-                                                     name="exp_avg_sq_{}".format(i)))
+                                                     name="exp_avg_sq_{}".format(paras_name)))
 
             else:
                 self.exp_avg_sq_row.append(Parameter(initializer(0, shape=(1,), dtype=paras_dtype),
-                                                     name="exp_avg_sq_row_{}".format(i)))
+                                                     name="exp_avg_sq_row_{}".format(paras_name)))
                 self.exp_avg_sq_col.append(Parameter(initializer(0, shape=(1,), dtype=paras_dtype),
-                                                     name="exp_avg_sq_col_{}".format(i)))
+                                                     name="exp_avg_sq_col_{}".format(paras_name)))
 
                 if self.compression:
                     self.exp_avg_sq.append(Parameter(initializer(0, shape=paras_shape, dtype=mstype.float16),
-                                                     name="exp_avg_sq_{}".format(i)))
+                                                     name="exp_avg_sq_{}".format(paras_name)))
                 else:
                     self.exp_avg_sq.append(Parameter(initializer(0, shape=paras_shape, dtype=paras_dtype),
-                                                     name="exp_avg_sq_{}".format(i)))
+                                                     name="exp_avg_sq_{}".format(paras_name)))
 
         self.exp_avg_sq_row = ParameterTuple(self.exp_avg_sq_row)
         self.exp_avg_sq_col = ParameterTuple(self.exp_avg_sq_col)

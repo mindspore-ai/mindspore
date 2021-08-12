@@ -112,13 +112,7 @@ After installing MindSpore via the official website, you can start training and 
 
 - Prepare backbone
 
-Download resnet101 for here(https://download.pytorch.org/models/resnet101-5d3b4d8f.pth).
-
-Use convert_resnet101.py to convert as backbone.
-
-```shell
-python convert_resnet101.py
-```
+Download resnet101 for here(https://download.mindspore.cn/model_zoo/r1.2/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78/resnet101_ascend_v120_imagenet2012_official_cv_bs32_acc78.ckpt).
 
 - Running on Ascend
 
