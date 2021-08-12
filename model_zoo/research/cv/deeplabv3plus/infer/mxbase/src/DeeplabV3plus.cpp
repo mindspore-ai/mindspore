@@ -26,6 +26,8 @@
 using std::max;
 using std::vector;
 
+const float IMAGE_SIZE = 513;
+
 APP_ERROR DeeplabV3plus::Init(const InitParam &initParam) {
     deviceId_ = initParam.deviceId;
     APP_ERROR ret = MxBase::DeviceManager::GetInstance()->InitDevices();
@@ -85,8 +87,7 @@ void DeeplabV3plus::ReadImage(const std::string &imgPath, cv::Mat &imageMat) {
 
 void DeeplabV3plus::ResizeImage(const cv::Mat &srcImageMat, cv::Mat &dstImageMat,
     MxBase::ResizedImageInfo &resizedImageInfo) {
-    constexpr float scaleValue = 513;
-    float scale = scaleValue / max(srcImageMat.rows, srcImageMat.cols);
+    float scale = IMAGE_SIZE / max(srcImageMat.rows, srcImageMat.cols);
     int dstWidth = srcImageMat.cols * scale;
     int dstHeight = srcImageMat.rows * scale;
     cv::resize(srcImageMat, dstImageMat, cv::Size(dstWidth, dstHeight));
