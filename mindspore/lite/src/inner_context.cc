@@ -97,11 +97,14 @@ int InnerContext::Init() {
     MS_LOG(ERROR) << "Context is not valid";
     return RET_NOT_SUPPORT;
   }
-  if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
+  if (this->thread_pool_ == nullptr) {
     int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
+    BindMode bind_mode = Power_NoBind;
+    if (this->IsCpuEnabled()) {
+      bind_mode = static_cast<BindMode>(this->GetCpuDeviceInfo()->cpu_bind_mode_);
+    }
 
     if (this->affinity_core_list_.empty()) {
-      auto bind_mode = static_cast<BindMode>(this->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_);
       thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
       if (thread_pool_ == nullptr) {
         MS_LOG(ERROR) << "Create ThreadPool failed";
@@ -116,6 +119,7 @@ int InnerContext::Init() {
       }
     }
   }
+
   if (this->allocator == nullptr) {
     this->allocator = mindspore::Allocator::Create();
     if (this->allocator == nullptr) {
@@ -170,11 +174,6 @@ int InnerContext::IsValid() const {
     return RET_NOT_SUPPORT;
   }
 
-  if (!IsUserSetCpu()) {
-    MS_LOG(ERROR) << "CPU context should be set.";
-    return RET_NOT_SUPPORT;
-  }
-
   if (IsCpuBindModeInvalid()) {
     MS_LOG(ERROR) << "CPU bind mode should be one of NO_BIND, HIGHER_CPU or MID_CPU.";
     return RET_NOT_SUPPORT;
@@ -221,6 +220,23 @@ bool InnerContext::IsGpuFloat16Enabled() const {
 }
 
 bool InnerContext::IsCpuEnabled() const { return IsUserSetCpu(); }
+
+const CpuDeviceInfo *InnerContext::GetCpuDeviceInfo() const {
+  if (IsUserSetCpu() == false) {
+    return nullptr;
+  }
+  const DeviceInfo *device_info = nullptr;
+
+  (void)std::find_if(this->device_list_.begin(), this->device_list_.end(), [&](const DeviceContext &device) {
+    if (device.device_type_ == DeviceType::DT_CPU) {
+      device_info = &device.device_info_;
+      return true;
+    }
+    return false;
+  });
+
+  return reinterpret_cast<const CpuDeviceInfo *>(device_info);
+}
 
 bool InnerContext::IsGpuEnabled() const {
 #ifdef SUPPORT_GPU

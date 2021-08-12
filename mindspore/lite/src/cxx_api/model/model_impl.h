@@ -67,7 +67,7 @@ class ModelImpl {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
                  const MSKernelCallBack &after);
 
-  static session::LiteSession *CreateLiteSession(lite::InnerContext *context);
+  session::LiteSession *CreateLiteSession(lite::InnerContext *context);
 
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();
@@ -84,6 +84,7 @@ class ModelImpl {
     return kSuccess;
   }
   std::vector<Metrics *> GetMetrics() { return metrics_; }
+  const session::LiteSession *GetSession() const { return session_.get(); }
 
  protected:
   // Utility methods

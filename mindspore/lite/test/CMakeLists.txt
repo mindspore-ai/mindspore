@@ -335,6 +335,7 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/lite_mindrt_test.cc
         ${TEST_DIR}/ut/src/registry/registry_test.cc
         ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
+        ${TEST_DIR}/st/multiple_device_test.cc
         )
 
 if(MSLITE_ENABLE_CONVERTER)
