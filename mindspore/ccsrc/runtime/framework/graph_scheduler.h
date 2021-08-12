@@ -302,7 +302,7 @@ class GraphScheduler {
 
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
-  void DumpBaseActor(const OpActor<DeviceTensor> *actor, std::ofstream &ofs) const;
+  void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) const;
   void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) const;
   void DumpLoopCountActor(const LoopCountActor *actor, std::ofstream &ofs) const;
   void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const;

@@ -39,30 +39,24 @@ using mindspore::kernel::KernelLaunchInfo;
 using mindspore::tensor::TensorPtr;
 
 // The kernel actor is used to receive the device tensors and control info to luanch kernel.
-// The processing flow is RunOpData/RunOpControl -> CheckLaunchCondition -> SendMemoryAllocReq
+// The processing flow is RunOpData/RunOpControl -> CheckRunningCondition -> SendMemoryAllocReq
 // -> OnMemoryAllocFinish -> LaunchKernel -> SendMemoryFreeReq -> SendOutput.
 class KernelActor : public DebugAwareActor {
  public:
   KernelActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
-              const AID memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
+              const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
               GraphExecutionStrategy strategy)
-      : DebugAwareActor(name),
+      : DebugAwareActor(name, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
         kernel_info_(nullptr),
         is_dynamic_shape_(false),
-        device_context_(device_context),
-        memory_manager_aid_(memory_manager_aid),
-        debug_aid_(debug_aid),
-        recorder_aid_(recorder_aid),
-        input_datas_num_(0),
-        input_controls_num_(0),
         real_input_num_(0),
-        running_dependent_msg_num_(1),
-        strategy_(strategy) {}
+        strategy_(strategy) {
+    (void)device_contexts_.emplace_back(device_context);
+  }
   ~KernelActor() override = default;
 
   void Init() override;
-  bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
   // The kernel actor run when receive the input data.
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
@@ -86,8 +80,6 @@ class KernelActor : public DebugAwareActor {
  private:
   friend class GraphScheduler;
 
-  // Check whether satisfy the condition for launch.
-  bool CheckLaunchCondition(OpContext<DeviceTensor> *const context) const;
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
   void FetchOutputDeviceTensor();
@@ -102,44 +94,19 @@ class KernelActor : public DebugAwareActor {
 
   // Send output data and output controls when finish kernel launch.
   void SendOutput(OpContext<DeviceTensor> *const context) const;
-  // Erase input data and input controls when finish kernel launch.
-  void EraseInput(OpContext<DeviceTensor> *const context);
 
   // The info of kernel.
   CNodePtr kernel_;
   KernelInfo *kernel_info_;
   bool is_dynamic_shape_;
 
-  // The device interface of kernel launch.
-  const DeviceContext *device_context_;
-
-  // The id of memory manager actor. Send message to it for alloc and free memory during the kernel launch.
-  const AID memory_manager_aid_;
-  // The id of debug actor. Send message to it for debug after the kernel launch.
-  const AID *debug_aid_;
-  // The id of recorder actor. Send message to it for recording kernel info after the kernel launch.
-  const AID *recorder_aid_;
-
-  // The dependent input data number.
-  size_t input_datas_num_;
-  // The dependent input controls number.
-  size_t input_controls_num_;
   // The real input number of kernel launch.
   size_t real_input_num_;
-  // The dependent messages number of actor running.
-  int running_dependent_msg_num_;
 
   // The execution strategy of kernel actor.
   // In pipeline mode, kernel actor executes asynchronously.
   // In step mode, kernel actor executes synchronously.
   GraphExecutionStrategy strategy_{GraphExecutionStrategy::kPipeline};
-
-  // The dependent input actors.
-  std::vector<AID> input_data_arrow_aids_;
-  std::vector<AID> input_control_arrow_aids_;
-
-  // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
-  std::vector<std::pair<size_t, AnfNode *>> device_tensor_store_keys_;
 
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;
@@ -159,9 +126,6 @@ class KernelActor : public DebugAwareActor {
 
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;
-
-  // The output result arrows of graph output.
-  std::vector<DataArrowPtr> output_result_arrows_;
 
   // Cache unique output data by output index to modify the output data effectively.
   std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_by_output_index_;

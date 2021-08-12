@@ -86,7 +86,7 @@ void LoopCountActor::RunOpControl(AID *const input_control, OpContext<DeviceTens
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
-  if (CheckLoopCountIncreaseCondition(context)) {
+  if (CheckRunningCondition(context)) {
     IncreaseLoopCount(context);
   }
 }
@@ -102,12 +102,7 @@ void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
 
 void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto sequential_num = context->sequential_num_;
-  auto ret = input_op_controls_.erase(sequential_num);
-  if (ret == 0) {
-    std::string error_info = "Erase input controls failed: " + GetAID().Name();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-  }
+  EraseInput(context);
 
   total_running_count_++;
   current_count_++;
@@ -164,13 +159,6 @@ void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context)
   for (auto &kernel_aid : no_input_kernel_aids_) {
     Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
   }
-}
-
-bool LoopCountActor::CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  auto sequential_num = context->sequential_num_;
-
-  return input_op_controls_[sequential_num].size() == input_controls_num_;
 }
 }  // namespace runtime
 }  // namespace mindspore
