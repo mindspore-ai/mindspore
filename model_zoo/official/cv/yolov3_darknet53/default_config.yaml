@@ -75,6 +75,10 @@ file_name: "yolov3_darknet53"
 file_format: "AIR" # ["AIR", "ONNX", "MINDIR"]
 keep_detect: True
 
+# PostProcess option
+result_path: ""
+img_path: ""
+
 # convert weight option
 input_file: "./darknet53.conv.74"
 output_file: "./backbone_darknet53.ckpt"
