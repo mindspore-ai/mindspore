@@ -1,0 +1,305 @@
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+"""Operators for reinforce learning."""
+
+from functools import reduce
+import mindspore.context as context
+from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
+from ...common import dtype as mstype
+from ..primitive import prim_attr_register, PrimitiveWithInfer
+
+class BufferSample(PrimitiveWithInfer):
+    r"""
+    In reinforcement learning, the data is sampled from the replaybuffer randomly.
+
+    Returns the tuple tensor with the given shape, decided by the given batchsize.
+
+    .. warning::
+            This is an experiental prototype that is subject to change and/or deletion.
+
+    Args:
+        capacity (int64): Capacity of the buffer, must be non-negative.
+        batch_size (int64): The size of the sampled data, lessequal to `capacity`.
+        buffer_shape (tuple(shape)): The shape of an buffer.
+        buffer_dtype (tuple(type)): The type of an buffer.
+
+    Inputs:
+        - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
+         each tensor is described by the `buffer_shape` and `buffer_type`.
+        - **indexes** (tuple(int32)) - The position list in replaybuffer,
+         the size equal to `batch_size`.
+        - **count** (Parameter) - The count mean the real available size of the buffer,
+         data type: int32.
+        - **head** (Parameter) - The position of the first data in buffer, data type: int32.
+
+    Outputs:
+        tuple(Tensor). The shape is `batch_size` * `buffer_shape`. The dtype is `buffer_dtype`.
+
+    Raises:
+        TypeError: If `buffer_shape` is not a tuple.
+        ValueError: If batch_size is larger than capacity.
+        ValueError: If `capacity` is not a positive integer.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> capacity = 100
+        >>> batch_size = 5
+        >>> count = Parameter(Tensor(5, ms.int32), name="count")
+        >>> head = Parameter(Tensor(0, ms.int32), name="head")
+        >>> shapes = [(4,), (2,), (1,), (4,)]
+        >>> types = [ms.float32, ms.int32, ms.int32, ms.float32]
+        >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
+                      Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
+                      Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
+                      Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
+        >>> buffer_sample = ops.BufferSample(capacity, batch_size, shapes, types)
+        >>> indexes = Parameter(Tensor([0, 2, 4, 3, 8], ms.int32), name="index")
+        >>> output = buffer_sample(buffer, indexes, count, head)
+        >>> print(output)
+            (Tensor(shape=[5, 4], dtype=Float32, value=
+                [[ 0.00000000e+00, 1.00000000e+00, 2.00000000e+00, 3.00000000e+00],
+                [ 8.00000000e+00, 9.00000000e+00, 1.00000000e+01, 1.10000000e+01],
+                [ 1.60000000e+01, 1.70000000e+01, 1.80000000e+01, 1.90000000e+01],
+                [ 1.20000000e+01, 1.30000000e+01, 1.40000000e+01, 1.50000000e+01],
+                [ 3.20000000e+01, 3.30000000e+01, 3.40000000e+01, 3.50000000e+01]]),
+             Tensor(shape=[5, 2], dtype=Int32, value=
+                [[ 0, 1],
+                [ 4, 5],
+                [ 8, 9],
+                [ 6, 7],
+                [16, 17]]),
+             Tensor(shape=[5, 1], dtype=Int32, value=
+                [[1],
+                [1],
+                [1],
+                [1],
+                [1]]),
+             Tensor(shape=[5, 4], dtype=Float32, value=
+                [[ 0.00000000e+00, 1.00000000e+00, 2.00000000e+00, 3.00000000e+00],
+                [ 8.00000000e+00, 9.00000000e+00, 1.00000000e+01, 1.10000000e+01],
+                [ 1.60000000e+01, 1.70000000e+01, 1.80000000e+01, 1.90000000e+01],
+                [ 1.20000000e+01, 1.30000000e+01, 1.40000000e+01, 1.50000000e+01],
+                [ 3.20000000e+01, 3.30000000e+01, 3.40000000e+01, 3.50000000e+01]]))
+    """
+
+    @prim_attr_register
+    def __init__(self, capacity, batch_size, buffer_shape, buffer_dtype):
+        """Initialize BufferSample."""
+        self.init_prim_io_names(inputs=["buffer"], outputs=["sample"])
+        validator.check_value_type("shape of init data", buffer_shape, [tuple, list], self.name)
+        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        self._batch_size = batch_size
+        self._buffer_shape = buffer_shape
+        self._buffer_dtype = buffer_dtype
+        self._n = len(buffer_shape)
+        validator.check_int(self._batch_size, capacity, Rel.LE, "batchsize", self.name)
+        self.add_prim_attr('capacity', capacity)
+        buffer_elements = []
+        for shape in buffer_shape:
+            buffer_elements.append(reduce(lambda x, y: x * y, shape))
+        self.add_prim_attr('buffer_elements', buffer_elements)
+        self.add_prim_attr('buffer_dtype', buffer_dtype)
+        self.add_prim_attr('side_effect_mem', True)
+        if context.get_context('device_target') == "Ascend":
+            self.add_prim_attr('device_target', "CPU")
+
+    def infer_shape(self, data_shape, index_shape, count_shape, head_shape):
+        validator.check_value_type("shape of data", data_shape, [tuple, list], self.name)
+        out_shapes = []
+        for i in range(self._n):
+            out_shapes.append((self._batch_size,) + self._buffer_shape[i])
+        return tuple(out_shapes)
+
+    def infer_dtype(self, data_type, index_type, count_type, head_type):
+        validator.check_type_name("count type", count_type, (mstype.int32), self.name)
+        validator.check_type_name("head type", head_type, (mstype.int32), self.name)
+        validator.check_type_name("index type", index_type, (mstype.int64, mstype.int32), self.name)
+        return tuple(self._buffer_dtype)
+
+class BufferAppend(PrimitiveWithInfer):
+    r"""
+    In reinforcement learning, the experience data is collected in each step. We use `BufferAppend` to
+    push data to the bottom of buffer under the First-In-First-Out rule.
+
+    .. warning::
+        This is an experiental prototype that is subject to change and/or deletion.
+
+    Args:
+        capacity (int64): Capacity of the buffer, must be non-negative.
+        buffer_shape (tuple(shape)): The shape of an buffer.
+        buffer_dtype (tuple(type)): The type of an buffer.
+
+    Inputs:
+        - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
+         each tensor is described by the `buffer_shape` and `buffer_type`.
+        - **exp** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents one list of experince data,
+         each tensor is described by the `buffer_shape` and `buffer_type`.
+        - **count** (Parameter) - The count mean the real available size of the buffer,
+         data type: int32.
+        - **head** (Parameter) - The position of the first data in buffer, data type: int32.
+
+    Outputs:
+        None.
+
+    Raises:
+        ValueError: If `count` and `head` is not a integer.
+        ValueError: If `capacity` is not a positive integer.
+        ValueError: If length of `data` not equal to length of `exp`.
+        ValueError: If dim of data euqals to dim of exp, but `data[1:]` not equal to the shape in `exp`.
+        ValueError: If the shape of `data[1:]` not equal to the shape in `exp`.
+        TypeError: If the type in `exp` is not the same with `data`.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> capacity = 100
+        >>> count = Parameter(Tensor(5, ms.int32), name="count")
+        >>> head = Parameter(Tensor(0, ms.int32), name="head")
+        >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
+                      Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
+                      Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
+                      Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
+        >>> exp = [Tensor(np.array([2, 2, 2, 2]), ms.float32), Tensor(np.array([0, 0]), ms.int32),
+                   Tensor(np.array([0]), ms.int32), Tensor(np.array([3, 3, 3, 3]), ms.float32)]
+        >>> batch_exp = [Tensor(np.array([[2, 2, 2, 2], [2, 2, 2, 2]]), ms.float32),
+                         Tensor(np.array([[0, 0], [0, 0]), ms.int32),
+                         Tensor(np.array([[0], [0]]), ms.int32),
+                         Tensor(np.array([[3, 3, 3, 3], [3, 3, 3, 3]]), ms.float32)]
+        >>> buffer_append = ops.BufferAppend(capacity, shapes, types)
+        >>> buffer_append(buffer, exp, count, head)
+        >>> buffer_append(buffer, batch_exp, count, head)
+    """
+    @prim_attr_register
+    def __init__(self, capacity, buffer_shape, buffer_dtype):
+        """Initialize BufferAppend."""
+        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        self.add_prim_attr('capacity', capacity)
+        buffer_elements = []
+        for shape in buffer_shape:
+            buffer_elements.append(reduce(lambda x, y: x * y, shape))
+        self.add_prim_attr('buffer_elements', buffer_elements)
+        self.add_prim_attr('buffer_dtype', buffer_dtype)
+        self.add_prim_attr('side_effect_mem', True)
+        if context.get_context('device_target') == "Ascend":
+            self.add_prim_attr('device_target', "CPU")
+
+    def infer_shape(self, data_shape, exp_shape, count_shape, head_shape):
+        validator.check_equal_int(len(data_shape), len(exp_shape), "exp elements", self.name)
+        exp_batch = 1
+        if len(data_shape[0]) == len(exp_shape[0]):
+            exp_batch = exp_shape[0][0]
+            for i in range(len(data_shape)):
+                if len(data_shape[i]) != len(exp_shape[i]):
+                    raise ValueError(f'For {self.name}, exp shape size must equal to buffer')
+                if data_shape[i][0] < exp_shape[i][0]:
+                    raise ValueError(f'For {self.name}, exp batch size must lessequal than buffer')
+        else:
+            for i in range(len(data_shape)):
+                if data_shape[i][1:] != exp_shape[i]:
+                    raise ValueError(f'For {self.name}, exp shape must equal to one of buffer shape')
+        self.add_prim_attr('exp_batch', exp_batch)
+        return count_shape
+
+    def infer_dtype(self, data_type, exp_type, count_type, head_type):
+        for i in range(len(data_type)):
+            if data_type[i] != exp_type[i]:
+                raise TypeError(f'For {self.name}, each tensor in exp must has the same type with buffer')
+        validator.check_type_name("count type", count_type, (mstype.int32), self.name)
+        validator.check_type_name("head type", head_type, (mstype.int32), self.name)
+        return count_type
+
+class BufferGetItem(PrimitiveWithInfer):
+    r"""
+    Get the data from buffer in the position of input inedx.
+
+    .. warning::
+        This is an experiental prototype that is subject to change and/or deletion.
+
+    Args:
+        capacity (int64): Capacity of the buffer, must be non-negative.
+        buffer_shape (tuple(shape)): The shape of an buffer.
+        buffer_dtype (tuple(type)): The type of an buffer.
+
+    Inputs:
+        - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
+         each tensor is described by the `buffer_shape` and `buffer_type`.
+        - **count** (Parameter) - The count mean the real available size of the buffer,
+         data type: int32.
+        - **head** (Parameter) - The position of the first data in buffer, data type: int32.
+        - **index** (int64) - The position of the data in buffer.
+
+    Outputs:
+        tuple(Tensor). The shape is `buffer_shape`. The dtype is `buffer_dtype`.
+
+    Raises:
+        ValueError: If `count` and `head` is not a integer.
+        ValueError: If `capacity` is not a positive integer.
+        TypeError: If `buffer_shape` is not a tuple.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> capacity = 100
+        >>> index = 3
+        >>> count = Parameter(Tensor(5, ms.int32), name="count")
+        >>> head = Parameter(Tensor(0, ms.int32), name="head")
+        >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
+                      Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
+                      Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
+                      Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
+        >>> buffer_get = ops.BufferGetItem(capacity, shapes, types)
+        >>> output = buffer_get(buffer, count, head, index)
+        >>> print(output)
+            (Tensor(shape=[4], dtype=Float32, value=
+                [ 1.20000000e+01, 1.30000000e+01, 1.40000000e+01, 1.50000000e+01]),
+             Tensor(shape=[2], dtype=Int32, value= [6, 7]),
+             Tensor(shape=[1], dtype=Int32, value= [1]),
+             Tensor(shape=[4], dtype=Float32, value=
+                [ 1.20000000e+01, 1.30000000e+01, 1.40000000e+01, 1.50000000e+01]))
+
+    """
+    @prim_attr_register
+    def __init__(self, capacity, buffer_shape, buffer_dtype):
+        """Initialize BufferGetItem."""
+        self.init_prim_io_names(inputs=["buffer"], outputs=["item"])
+        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        self._buffer_shape = buffer_shape
+        self._buffer_dtype = buffer_dtype
+        self._n = len(buffer_shape)
+        buffer_elements = []
+        for shape in buffer_shape:
+            buffer_elements.append(reduce(lambda x, y: x * y, shape))
+        self.add_prim_attr('buffer_elements', buffer_elements)
+        self.add_prim_attr('buffer_dtype', buffer_dtype)
+        self.add_prim_attr('capacity', capacity)
+        self.add_prim_attr('side_effect_mem', True)
+        if context.get_context('device_target') == "Ascend":
+            self.add_prim_attr('device_target', "CPU")
+
+    def infer_shape(self, data_shape, count_shape, head_shape, index_shape):
+        validator.check_value_type("shape of data", data_shape, [tuple, list], self.name)
+        return tuple(self._buffer_shape)
+
+    def infer_dtype(self, data_type, count_type, head_type, index_type):
+        validator.check_type_name("count type", count_type, (mstype.int32), self.name)
+        validator.check_type_name("head type", head_type, (mstype.int32), self.name)
+        validator.check_type_name("index type", index_type, (mstype.int64, mstype.int32), self.name)
+        return tuple(self._buffer_dtype)
