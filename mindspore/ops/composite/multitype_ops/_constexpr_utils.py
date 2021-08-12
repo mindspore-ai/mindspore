@@ -586,7 +586,7 @@ def get_stride_info_from_integer(data_shape, number):
         step_strides.append(1)
     return tuple(begin_strides), tuple(end_strides), tuple(step_strides)
 
-
+@constexpr
 def get_slice_stride(index_slice, dim_size):
     """Get slice stride info"""
     step = 1 if index_slice.step is None else index_slice.step

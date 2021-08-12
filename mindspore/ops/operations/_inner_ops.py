@@ -16,15 +16,16 @@
 """Inner operators."""
 
 import numpy as np
+
 from mindspore.common import Tensor
+from .. import signature as sig
+from ..operations.math_ops import _infer_shape_reduce
+from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive
+from ... import context
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
-from ... import context
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive
-from ..operations.math_ops import _infer_shape_reduce
 from ...communication.management import GlobalComm
-from .. import signature as sig
 
 
 class ExtractImagePatches(PrimitiveWithInfer):
@@ -1318,6 +1319,7 @@ class DSDGrad(PrimitiveWithInfer):
     """
     The definition of the CusSquare primitive.
     """
+
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['w1_gm', 'w2_gm', 'v_gm', 'a_gm', 'd_a_gm'],
@@ -1373,8 +1375,31 @@ class NonZero(Primitive):
         [[ 0 0]
          [ 1 1]]
     """
+
     @prim_attr_register
     def __init__(self, transpose=False):
         """Initialize ScatterElements"""
         validator.check_value_type("transpose", transpose, [bool], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
+class SliceGetItem(Primitive):
+    """
+        using SliceGetItem to get slice's attribute of 'start' 'stop' 'step'
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScatterElements"""
+        self.init_prim_io_names(inputs=['slice', 'attr'], outputs=['slice_item'])
+
+    def __call__(self, slice_value, value):
+        if not isinstance(slice_value, slice):
+            raise TypeError(
+                "Primitive[SliceGetItem] only support to get a slice type element but got {}".format(slice_value))
+        if value == "start":
+            return slice_value.start
+        if value == "stop":
+            return slice_value.stop
+        if value == "step":
+            return slice_value.step
+        raise AttributeError("\'slice\' object has no attribute {}".format(value))
