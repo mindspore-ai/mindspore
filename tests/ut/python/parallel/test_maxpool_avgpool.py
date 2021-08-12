@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
@@ -96,6 +97,16 @@ def test_maxpool_auto_parallel():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, pool_kernel_size=2, pool_strides=4)
     compile_net(net)
+
+
+def test_maxpool_output_can_not_divisible_by_strategy():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 8),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, pool_kernel_size=2, pool_strides=2,
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
 
 
 def test_avgpool_data_parallel():
