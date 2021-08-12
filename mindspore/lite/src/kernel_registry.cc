@@ -19,7 +19,6 @@
 #include "include/errorcode.h"
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
 #include "include/registry/register_kernel.h"
-#include "src/registry/register_utils.h"
 #endif
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
@@ -40,14 +39,15 @@ using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
 using mindspore::lite::registry::CreateKernel;
+using mindspore::lite::registry::KernelDesc;
 
 namespace mindspore::lite {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
 namespace {
 const char *const kArchCPU = "CPU";
-void KernelKeyToKernelDesc(const KernelKey &key, kernel::KernelDesc *desc) {
+void KernelKeyToKernelDesc(const KernelKey &key, KernelDesc *desc) {
   MS_ASSERT(desc != nullptr);
-  desc->data_type = key.data_type;
+  desc->data_type = static_cast<DataType>(key.data_type);
   desc->type = key.type;
   desc->arch = key.kernel_arch;
   desc->provider = key.provider;
@@ -142,9 +142,9 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
                                     kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ms_ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
-  kernel::KernelDesc desc;
+  KernelDesc desc;
   KernelKeyToKernelDesc(key, &desc);
-  CreateKernel creator = kernel::RegisterUtils::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
+  auto creator = registry::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
   }

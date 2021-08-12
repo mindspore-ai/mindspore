@@ -42,6 +42,15 @@ int RegisterKernel::RegKernel(const std::string &arch, const std::string &provid
   return lite::RET_NOT_SUPPORT;
 #endif
 }
+
+CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDesc *desc) {
+#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+  return lite::RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
+#else
+  MS_LOG(ERROR) << unsuppor_custom_kernel_register_log;
+  return lite::RET_NOT_SUPPORT;
+#endif
+}
 }  // namespace registry
 }  // namespace lite
 }  // namespace mindspore

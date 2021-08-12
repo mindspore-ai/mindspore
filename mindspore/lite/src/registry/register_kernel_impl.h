@@ -24,10 +24,6 @@
 #include <vector>
 #include <set>
 #include "include/registry/register_kernel.h"
-#include "src/registry/register_utils.h"
-
-using mindspore::schema::PrimitiveType_MAX;
-using mindspore::schema::PrimitiveType_MIN;
 
 namespace mindspore::lite {
 class RegistryKernelImpl {
@@ -40,23 +36,19 @@ class RegistryKernelImpl {
     return &instance;
   }
 
-  int GetFuncIndex(const kernel::KernelDesc &desc);
-
   int RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type, const std::string &type,
                       registry::CreateKernel creator);
 
   int RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
                 registry::CreateKernel creator);
 
-  virtual registry::CreateKernel GetProviderCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
+  virtual registry::CreateKernel GetProviderCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
 
   const std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>> &kernel_creators() {
     return kernel_creators_;
   }
 
  protected:
-  static const int data_type_length_{kNumberTypeEnd - kNumberTypeBegin - 1};
-  static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN};
   std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>> kernel_creators_;
   // keys:provider, arch, type
   std::map<std::string, std::map<std::string, std::unordered_map<std::string, registry::CreateKernel *>>>
@@ -65,7 +57,8 @@ class RegistryKernelImpl {
  private:
   std::mutex lock_;
 
-  registry::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, kernel::KernelDesc *desc);
+  registry::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
+  int GetFuncIndex(const registry::KernelDesc &desc);
 };
 }  // namespace mindspore::lite
 
