@@ -39,9 +39,7 @@ class KernelRuntimeManager {
   KernelRuntime *GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ReleaseKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ClearRuntimeResource();
-  void ClearGraphResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
-                          const std::unordered_set<ValueNodePtr> &value_nodes,
-                          const std::vector<CNodePtr> &execution_order);
+  void ClearGraphResource(uint32_t graph_id);
 
  private:
   KernelRuntimeManager() = default;

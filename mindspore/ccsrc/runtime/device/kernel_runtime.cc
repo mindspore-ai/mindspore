@@ -1053,52 +1053,8 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
   return true;
 }
 
-void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &,
-                                              const std::unordered_set<ValueNodePtr> &, const std::vector<CNodePtr> &) {
+void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
-}
-
-void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
-                                       const std::unordered_set<ValueNodePtr> &value_nodes,
-                                       const std::vector<CNodePtr> &execution_order) {
-  // clear input parameter output address.
-  for (const auto &input_node : inputs) {
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (!input_node->isa<Parameter>()) {
-      continue;
-    }
-    auto parameter = input_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(parameter);
-    parameter->DecreaseUsedGraphCount();
-    // Only the parameter has no graph used, then clear the output address.
-    if (parameter->used_graph_count() != 0) {
-      continue;
-    }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
-    for (size_t index = 0; index < output_num; ++index) {
-      if (!AnfAlgo::OutputAddrExist(input_node, index)) {
-        continue;
-      }
-      AnfAlgo::SetOutputAddr(nullptr, index, input_node.get());
-    }
-  }
-  // clear input value node output address.
-  for (const auto &value_node : value_nodes) {
-    if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
-      continue;
-    }
-    AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
-  }
-  // clear cnode output address.
-  for (const auto &cnode : execution_order) {
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
-    for (size_t index = 0; index < output_num; ++index) {
-      if (!AnfAlgo::OutputAddrExist(cnode, index)) {
-        continue;
-      }
-      AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
-    }
-  }
 }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
