@@ -41,6 +41,7 @@ namespace mindspore {
 TypeId IntBitsToTypeId(const int nbits);
 TypeId UIntBitsToTypeId(const int nbits);
 TypeId FloatBitsToTypeId(const int nbits);
+TypeId ComplexBitsToTypeId(const int nbits);
 const std::string &TypeIdLabel(const TypeId &v);
 TypeId NormalizeTypeId(const TypeId type_id);
 bool IsSameObjectType(const Type &lhs, const Type &rhs);

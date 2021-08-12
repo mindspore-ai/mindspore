@@ -908,3 +908,6 @@ class DataType:
     F64_HWCN = ("float64", "HWCN")
     F64_NDHWC = ("float64", "NDHWC")
     F64_ChannelLast = ("float64", "ChannelLast")
+
+    C64_Default = ("complex64", "DefaultFormat")
+    C128_Default = ("complex128", "DefaultFormat")

@@ -150,20 +150,19 @@ class MS_CORE_API Float : public Number {
   }
 };
 
-// Complex64
-class MS_CORE_API Complex64 : public Number {
+// Complex
+class MS_CORE_API Complex : public Number {
  public:
-  Complex64() : Number(kNumberTypeComplex64, 64, false) {}
-  ~Complex64() override {}
-  MS_DECLARE_PARENT(Complex64, Number)
+  Complex() : Number(kNumberTypeComplex64, 64, false) {}
+  explicit Complex(const int nbits);
+  ~Complex() override {}
+  MS_DECLARE_PARENT(Complex, Number)
 
   TypeId generic_type_id() const override { return kNumberTypeComplex64; }
-  TypePtr DeepCopy() const override { return std::make_shared<Complex64>(); }
+  TypePtr DeepCopy() const override { return std::make_shared<Complex>(nbits()); }
   std::string ToString() const override { return GetTypeName("Complex"); }
-  std::string ToReprString() const override { return nbits() == 0 ? "complex64_" : GetTypeName("complex64"); }
-  std::string DumpText() const override {
-    return nbits() == 0 ? std::string("Complex64") : std::string("C") + std::to_string(nbits());
-  }
+  std::string ToReprString() const override { return GetTypeName("complex"); }
+  std::string DumpText() const override { return std::string("C") + std::to_string(nbits()); }
 };
 
 inline const TypePtr kBool = std::make_shared<Bool>();
@@ -182,7 +181,8 @@ inline const TypePtr kInt = std::make_shared<Int>();
 inline const TypePtr kUInt = std::make_shared<UInt>();
 inline const TypePtr kFloat = std::make_shared<Float>();
 inline const TypePtr kNumber = std::make_shared<Number>();
-inline const TypePtr kComplex64 = std::make_shared<Complex64>();
+inline const TypePtr kComplex64 = std::make_shared<Complex>(64);
+inline const TypePtr kComplex128 = std::make_shared<Complex>(128);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_NUMBER_H_
