@@ -17,6 +17,7 @@
     Evaluate Pix2Pix Model.
 """
 
+import os
 from mindspore import Tensor, nn
 from mindspore.train.serialization import load_checkpoint
 from mindspore.train.serialization import load_param_into_net
@@ -62,6 +63,9 @@ if __name__ == '__main__':
     print("CKPT:", ckpt_url)
     param_G = load_checkpoint(ckpt_url)
     load_param_into_net(netG, param_G)
+
+    if not os.path.isdir(args.predict_dir):
+        os.makedirs(args.predict_dir)
 
     data_loader_val = ds_val.create_dict_iterator(output_numpy=True, num_epochs=args.epoch_num)
     print("=======Starting evaluating Loop=======")
