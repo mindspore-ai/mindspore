@@ -79,7 +79,7 @@ python preprocess.py --raw_path [RAW_PATH] --save_path [SAVE_PATH]
 - 硬件
     - 准备Ascend处理器搭建硬件环境。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/)
 - 如需查看详情，请参见如下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/r1.3/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
@@ -238,7 +238,7 @@ bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [DEVICE_ID]
 | 总时长   |  132分钟 |
 | 参数(M)   | 60.19 |
 | 微调检查点 | 462M（.ckpt文件）  |
-| 脚本  | [链接](https://gitee.com/alreadyhad/mindspore/tree/r1.3/model_zoo/research/cv/LearningToSeeInTheDark)  |
+| 脚本  | [链接](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/research/cv/LearningToSeeInTheDark)  |
 
 # 随机情况说明
 
