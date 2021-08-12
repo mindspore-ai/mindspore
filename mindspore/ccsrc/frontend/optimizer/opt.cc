@@ -30,14 +30,15 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name, const PrimitivePtr &prim,
-                                 const RenormAction &renorm_action, bool has_priority_pattern) {
+                                 bool has_node_replacement, const RenormAction &renorm_action,
+                                 bool has_priority_pattern) {
   auto fn = [prim](const AnfNodePtr &node) -> bool { return IsPrimitiveCNode(node, prim); };
-  return std::make_shared<Substitution>(transform, name, fn, renorm_action, has_priority_pattern);
+  return std::make_shared<Substitution>(transform, name, fn, has_node_replacement, renorm_action, has_priority_pattern);
 }
 
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
-                                 const std::vector<PrimitivePtr> &prims, const RenormAction &renorm_action,
-                                 bool has_priority_pattern) {
+                                 const std::vector<PrimitivePtr> &prims, bool has_node_replacement,
+                                 const RenormAction &renorm_action, bool has_priority_pattern) {
   auto fn = [prims](const AnfNodePtr &node) -> bool {
     if (!node->isa<CNode>()) {
       return false;
@@ -60,13 +61,14 @@ SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std:
     return false;
   };
 
-  return std::make_shared<Substitution>(transform, name, fn, renorm_action, has_priority_pattern);
+  return std::make_shared<Substitution>(transform, name, fn, has_node_replacement, renorm_action, has_priority_pattern);
 }
 
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
-                                 const PredicateFuncType &predicate, const RenormAction &renorm_action,
-                                 bool has_priority_pattern) {
-  return std::make_shared<Substitution>(transform, name, predicate, renorm_action, has_priority_pattern);
+                                 const PredicateFuncType &predicate, bool has_node_replacement,
+                                 const RenormAction &renorm_action, bool has_priority_pattern) {
+  return std::make_shared<Substitution>(transform, name, predicate, has_node_replacement, renorm_action,
+                                        has_priority_pattern);
 }
 
 AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
@@ -212,6 +214,14 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
         change = true;
         changes = true;
         node = res;
+        // If there is a node replacement in the substitution, add replaced nodes to todo list.
+        if (substitution->has_node_replacement_) {
+          for (auto &replaced_node : optimizer->substitution_replaced_nodes()) {
+            UpdateTransformingListForSubstitutions(replaced_node, &todo, change);
+            UpdateTransformingListWithUserNodes(optimizer, replaced_node, &todo, change, seen);
+          }
+          optimizer->clear_substitution_replaced_nodes();
+        }
         break;
       }
     }
@@ -251,6 +261,14 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
       change = true;
       changes = true;
       node = res;
+      // If there is a node replacement in the substitution, add replaced nodes to todo list.
+      if (substitution->has_node_replacement_) {
+        for (auto &replaced_node : optimizer->substitution_replaced_nodes()) {
+          UpdateTransformingListForIR(replaced_node, &todo, change, substitution);
+          UpdateTransformingListWithUserNodes(optimizer, replaced_node, &todo, change, seen);
+        }
+        optimizer->clear_substitution_replaced_nodes();
+      }
     }
     UpdateTransformingListForIR(node, &todo, change, substitution);
     UpdateTransformingListWithUserNodes(optimizer, node, &todo, change, seen);

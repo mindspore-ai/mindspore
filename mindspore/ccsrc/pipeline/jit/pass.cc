@@ -686,19 +686,19 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
   // opt::irpass::OptimizeIRPassLib is not used here to avoid double free problems in external calls.
   opt::SubstitutionPtr updatestate_depend_eliminater =
     opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateDependEliminater>(), "updatestate_depend_eliminater",
-                          prim::kPrimUpdateState);
+                          prim::kPrimUpdateState, true);
   opt::SubstitutionPtr updatestate_assign_eliminater =
     opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateAssignEliminater>(), "updatestate_assign_eliminater",
-                          prim::kPrimUpdateState);
+                          prim::kPrimUpdateState, true);
   opt::SubstitutionPtr updatestate_maketuple_eliminater =
     opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateMakeTupleEliminater>(),
-                          "updatestate_maketuple_eliminater", prim::kPrimUpdateState);
+                          "updatestate_maketuple_eliminater", prim::kPrimUpdateState, true);
   opt::SubstitutionPtr updatestate_only_used_node_eliminater =
     opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateOnlyUsedNodeEliminater>(),
                           "updatestate_only_used_node_eliminater", prim::kPrimUpdateState);
   opt::SubstitutionPtr updatestate_loads_eliminater =
     opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateLoadsEliminater>(), "updatestate_loads_eliminater",
-                          prim::kPrimUpdateState);
+                          prim::kPrimUpdateState, true);
   opt::SubstitutionPtr updatestate_pure_node_eliminater =
     opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestatePureNodeEliminater>(),
                           "updatestate_pure_node_eliminater", prim::kPrimUpdateState);
