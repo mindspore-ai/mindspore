@@ -282,7 +282,12 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
       RETURN_IF_NOT_OK(Tensor::CreateScalar(s, &tensor));
     } else if (column.hasShape()) {
       auto new_shape = TensorShape(column.shape());
-      RETURN_IF_NOT_OK(column.MaterializeTensorShape(static_cast<int32_t>(num_elements), &new_shape));
+      // if the numpy is null, create empty tensor shape
+      if (num_elements == 0) {
+        new_shape = TensorShape({});
+      } else {
+        RETURN_IF_NOT_OK(column.MaterializeTensorShape(static_cast<int32_t>(num_elements), &new_shape));
+      }
       RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, type, data, &tensor));
     } else {
       std::vector<dsize_t> shapeDetails = {static_cast<dsize_t>(num_elements)};

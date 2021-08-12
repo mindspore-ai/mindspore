@@ -155,7 +155,9 @@ Status ColDescriptor::MaterializeTensorShape(int32_t num_elements, TensorShape *
 
   // Sanity check the the computed element counts divide evenly into the input element count
   if (num_elements < num_elements_of_shape || num_elements_of_shape == 0 || num_elements % num_elements_of_shape != 0) {
-    RETURN_STATUS_UNEXPECTED("Requested shape has an invalid element count!");
+    std::string err = "Requested shape has an invalid element count! Number elements: " + std::to_string(num_elements) +
+                      ", number elements of shape: " + std::to_string(num_elements_of_shape);
+    RETURN_STATUS_UNEXPECTED(err);
   }
 
   // If there was any unknown dimensions, then update the requested shape to fill in the unknown
