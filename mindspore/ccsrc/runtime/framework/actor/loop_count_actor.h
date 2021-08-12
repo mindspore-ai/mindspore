@@ -34,16 +34,12 @@ namespace runtime {
 // and decide whether to loop execution by loop count.
 class LoopCountActor : public DebugAwareActor {
  public:
-  LoopCountActor(std::string name, size_t loop_count, const AID memory_manager_aid, const AID *debug_aid,
+  LoopCountActor(const std::string &name, size_t loop_count, const AID &memory_manager_aid, const AID *debug_aid,
                  const AID *recorder_aid)
-      : DebugAwareActor(name),
+      : DebugAwareActor(name, recorder_aid, memory_manager_aid, debug_aid),
         loop_count_(loop_count),
         current_count_(0),
-        total_running_count_(0),
-        input_controls_num_(0),
-        memory_manager_aid_(memory_manager_aid),
-        debug_aid_(debug_aid),
-        recorder_aid_(recorder_aid) {}
+        total_running_count_(0) {}
 
   ~LoopCountActor() override = default;
 
@@ -68,29 +64,16 @@ class LoopCountActor : public DebugAwareActor {
   void IncreaseLoopCount(OpContext<DeviceTensor> *const context);
   void SendOutput(OpContext<DeviceTensor> *const context);
 
-  bool CheckLoopCountIncreaseCondition(OpContext<DeviceTensor> *const context);
   // The loop count is constant, the current count is increased after each step running finished.
   size_t loop_count_;
   size_t current_count_;
   // The total running count represents the toal step running count.
   size_t total_running_count_;
 
-  // The dependent input controls number.
-  // In the multi-branch output scenario of the control flow, the control of each branch needs to be recorded
-  // separately with the branch id as the key. When the output has only one branch, the branch id is 0.
-  size_t input_controls_num_;
-
   // The output controls contain the data source actors and the no input kernel actors and output actor.
   std::vector<AID> data_source_aids_;
   std::vector<AID> no_input_kernel_aids_;
   AID output_aid_;
-
-  // The id of memory manager actor. Send message to it for alloc continuous memory before next step running.
-  const AID memory_manager_aid_;
-  // The id of debug actor. Send message to it for debug before loop count actor exits.
-  const AID *debug_aid_;
-  // The id of recorder actor. Send message to it for clearing recorder info before loop count actor exits.
-  const AID *recorder_aid_;
 
   // The nodes need continuous memory, which must allocate in the begin of step running. The first bool of pair
   // expresses the inputs of node need continuous memory, the second bool of pair expresses the outputs of node need
@@ -100,7 +83,6 @@ class LoopCountActor : public DebugAwareActor {
   std::vector<std::vector<DeviceTensorPtr>> continuous_memory_alloc_list_list_;
   std::vector<std::vector<size_t>> size_list_list_;
   std::vector<size_t> total_size_list_;
-  std::vector<const DeviceContext *> device_contexts_;
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;
