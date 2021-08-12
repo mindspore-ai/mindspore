@@ -76,3 +76,17 @@ def test_softplus_grad_fp16():
     output = grad(Tensor(x_np), Tensor(dy_np))
     expect = dy_np * np.exp(x_np) / (1 + np.exp(x_np))
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_softplus_grad_7d_fp64():
+    np.random.seed(20)
+    x_np = np.random.randn(5, 3, 6, 3, 4, 5, 6).astype(np.float64)
+    dy_np = np.random.randn(5, 3, 6, 3, 4, 5, 6).astype(np.float64)
+    net = SoftplusNet()
+    grad = Grad(net)
+    output = grad(Tensor(x_np), Tensor(dy_np))
+    expect = dy_np * np.exp(x_np) / (1 + np.exp(x_np))
+    assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
