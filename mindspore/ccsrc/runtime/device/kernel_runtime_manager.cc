@@ -37,9 +37,7 @@ void KernelRuntimeManager::ClearRuntimeResource() {
   runtime_map_.clear();
 }
 
-void KernelRuntimeManager::ClearGraphResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
-                                              const std::unordered_set<ValueNodePtr> &value_nodes,
-                                              const std::vector<CNodePtr> &execution_order) {
+void KernelRuntimeManager::ClearGraphResource(uint32_t graph_id) {
   std::lock_guard<std::mutex> guard(lock_);
   for (auto &iter : runtime_map_) {
     MS_LOG(INFO) << "Clear device " << iter.first << " graph " << graph_id << " runtime resource";
@@ -47,7 +45,7 @@ void KernelRuntimeManager::ClearGraphResource(uint32_t graph_id, const std::vect
       MS_LOG(ERROR) << "Kernel runtime is nullptr";
       continue;
     }
-    iter.second->ClearGraphRuntimeResource(graph_id, inputs, value_nodes, execution_order);
+    iter.second->ClearGraphRuntimeResource(graph_id);
   }
 }
 

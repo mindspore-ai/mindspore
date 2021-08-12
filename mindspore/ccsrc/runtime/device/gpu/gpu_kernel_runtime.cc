@@ -282,12 +282,8 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
   }
 }
 
-void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
-                                                 const std::unordered_set<ValueNodePtr> &value_nodes,
-                                                 const std::vector<CNodePtr> &execution_order) {
+void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " GPU runtime resource";
-  // Clear the output address of graph.
-  ClearOutputAddress(inputs, value_nodes, execution_order);
   graph_output_map_.erase(graph_id);
 }
 

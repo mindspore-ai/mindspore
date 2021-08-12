@@ -42,9 +42,7 @@ class GPUKernelRuntime : public KernelRuntime {
   ~GPUKernelRuntime() override = default;
   bool Init() override;
   void ReleaseDeviceRes() override;
-  void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
-                                 const std::unordered_set<ValueNodePtr> &value_nodes,
-                                 const std::vector<CNodePtr> &execution_order) override;
+  void ClearGraphRuntimeResource(uint32_t graph_id) override;
   void AssignMemory(session::KernelGraph *graph) override;
   bool Run(session::KernelGraph *graph, bool is_task_sink) override;
   bool GenDynamicKernel(const session::KernelGraph *graph) override { return true; }

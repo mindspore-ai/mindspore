@@ -1379,8 +1379,7 @@ KernelGraph::~KernelGraph() {
         kernel_mod->ReleaseResource();
       }
     }
-    device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_, *inputs_, graph_value_nodes_,
-                                                                execution_order_);
+    device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "KernelGraph call destructor failed: " << e.what();
   } catch (...) {
