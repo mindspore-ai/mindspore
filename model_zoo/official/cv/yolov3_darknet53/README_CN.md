@@ -117,7 +117,9 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
       --data_dir=./dataset/coco2014 \
       --pretrained_backbone=darknet53_backbone.ckpt \
       --is_distributed=0 \
-      --lr=0.1 \
+      --lr=0.001 \
+      --loss_scale=1024 \
+      --weight_decay=0.016 \
       --T_max=320 \
       --max_epoch=320 \
       --warmup_epochs=4 \
@@ -295,7 +297,9 @@ python train.py \
     --data_dir=./dataset/coco2014 \
     --pretrained_backbone=darknet53_backbone.ckpt \
     --is_distributed=0 \
-    --lr=0.1 \
+    --lr=0.001 \
+    --loss_scale=1024 \
+    --weight_decay=0.016 \
     --T_max=320 \
     --max_epoch=320 \
     --warmup_epochs=4 \
@@ -331,7 +335,7 @@ bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table
 bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 ```
 
-上述shell脚本将在后台运行分布训练。您可以通过`train_parallel[X]/log.txt`文件查看结果。损失值的实现如下：
+上述shell脚本将在后台运行分布训练。您可以通过`train_parallel0/log.txt`文件查看结果。损失值的实现如下：
 
 ```text
 # 分布式训练示例(8卡)
