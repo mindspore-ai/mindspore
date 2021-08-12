@@ -335,5 +335,23 @@ size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_
     return 1;
   }
 }
+
+STATUS GetInputIndexOfTupleGetItem(const AnfNodePtr &node, int *index) {
+  MS_ASSERT(node != nullptr);
+  if (!opt::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+    MS_LOG(ERROR) << "The node is not a tupleGetItem node.";
+    return RET_ERROR;
+  }
+  auto index_vnode = node->cast<CNodePtr>()->input(2);
+  if (!utils::isa<ValueNodePtr>(index_vnode)) {
+    MS_LOG(ERROR) << "TupleGetItem's input 2 is not a valueNode.";
+    return RET_ERROR;
+  }
+  auto value_node = utils::cast<ValueNodePtr>(index_vnode);
+  MS_ASSERT(value_node != nullptr);
+  *index = value_node->value()->type()->number_type() == kNumberTypeInt64 ? GetValue<int64_t>(value_node->value())
+                                                                          : GetValue<int>(value_node->value());
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

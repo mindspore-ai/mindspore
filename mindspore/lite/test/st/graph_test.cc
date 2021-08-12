@@ -81,21 +81,21 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
     string name = out_data.first;
     void *data = out_data.second;
     float *fp32_data = reinterpret_cast<float *>(data);
-    if (name == "Conv2D-7") {
+    if (name == "output") {
       ASSERT_LE(fabs(fp32_data[0] - (-0.01506812)), 0.01);
       ASSERT_LE(fabs(fp32_data[1] - (0.007832255)), 0.01);
       ASSERT_LE(fabs(fp32_data[2] - (-0.00440396)), 0.01);
       ASSERT_LE(fabs(fp32_data[3] - (0.000382302)), 0.01);
       ASSERT_LE(fabs(fp32_data[4] - (0.001282413)), 0.01);
     }
-    if (name == "Conv2D-8") {
+    if (name == "output2") {
       ASSERT_LE(fabs(fp32_data[0] - (0.019412944)), 0.01);
       ASSERT_LE(fabs(fp32_data[1] - (-0.01643771)), 0.01);
       ASSERT_LE(fabs(fp32_data[2] - (0.001904978)), 0.01);
       ASSERT_LE(fabs(fp32_data[3] - (-0.00486740)), 0.01);
       ASSERT_LE(fabs(fp32_data[4] - (0.009935631)), 0.01);
     }
-    if (name == "Conv2D-9") {
+    if (name == "output3") {
       ASSERT_LE(fabs(fp32_data[0] - (-0.012825339)), 0.01);
       ASSERT_LE(fabs(fp32_data[1] - (-0.012769699)), 0.01);
       ASSERT_LE(fabs(fp32_data[2] - (-0.004285028)), 0.01);
