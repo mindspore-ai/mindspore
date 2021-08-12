@@ -53,8 +53,9 @@ STATUS CaffeInspector::FindGraphInputsAndOutputs() {
     }
   }
   for (const auto &iter : layerTops) {
-    if (layerBottoms.find(iter) == layerBottoms.end()) {
-      graphOutput.insert(iter);
+    if (layerBottoms.find(iter) == layerBottoms.end() &&
+        std::find(graphOutput.begin(), graphOutput.end(), iter) == graphOutput.end()) {
+      graphOutput.push_back(iter);
     }
   }
   return RET_OK;

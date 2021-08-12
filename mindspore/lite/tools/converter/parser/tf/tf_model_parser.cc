@@ -33,6 +33,7 @@
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/common/tensor_util.h"
+#include "tools/common/node_util.h"
 #include "tools/converter/parser/unify_format.h"
 
 using mindspore::lite::converter::FmkType_TF;
@@ -1054,7 +1055,18 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
           return RET_ERROR;
         }
         output_nodes.push_back(anf_node);
-        graph_output_names_.push_back(anf_node->fullname_with_scope());
+        auto name = anf_node->fullname_with_scope();
+        if (utils::isa<CNodePtr>(anf_node) && opt::CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
+          int index = 0;
+          if (GetInputIndexOfTupleGetItem(anf_node, &index) != RET_OK) {
+            MS_LOG(ERROR) << "Get input index of tupleGetItem failed.";
+            return RET_ERROR;
+          }
+          auto in_node = anf_node->cast<CNodePtr>()->input(1);
+          MS_ASSERT(in_node != nullptr);
+          name = in_node->fullname_with_scope() + ":" + std::to_string(index);
+        }
+        graph_output_names_.push_back(name);
       }
     }
   }
@@ -1063,6 +1075,8 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     MS_LOG(ERROR) << "make anf graph outputs node error";
     return status;
   }
+  // save original output tensor names.
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(graph_output_names_);
   return RET_OK;
 }
 STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph) {
