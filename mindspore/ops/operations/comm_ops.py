@@ -26,7 +26,15 @@ from ...common.api import context
 
 class ReduceOp:
     """
-    Operation options for reducing tensors.
+    Operation options for reducing tensors. This is an enumerated type, not an operator.
+    Mainly used in data parallel mode.
+
+    The main calling methods are as follows:
+
+    - SUM: ReduceOp.SUM.
+    - MAX: ReduceOp.MAX.
+    - MIN: ReduceOp.MIN.
+    - PROD: ReduceOp.PROD.
 
     There are four kinds of operation options, "SUM", "MAX", "MIN", and "PROD".
 
@@ -35,8 +43,33 @@ class ReduceOp:
     - MIN: Take the minimum.
     - PROD: Take the product.
 
+    For more, refer to example. Note: This needs to run in an environment with multiple graphics cards.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
+
+    Examples:
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.comm_ops import ReduceOp
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops.operations as ops
+        >>>
+        >>> init()
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.allreduce_sum = ops.AllReduce(ReduceOp.SUM, group="nccl_world_group")
+        ...
+        ...     def construct(self, x):
+        ...         return self.allreduce_sum(x)
+        ...
+        >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+        >>> net = Net()
+        >>> output = net(input_)
+        >>> print(output)
+        [[4. 5. 6. 0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0. 0. 0. 0.]]
     """
     SUM = "sum"
     MAX = "max"
