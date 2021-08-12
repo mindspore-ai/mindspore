@@ -970,5 +970,39 @@ size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &
   }
   return offset;
 }
+
+size_t UnitSizeInBytes(const mindspore::TypeId &t) {
+  size_t bytes = 0;
+  switch (t) {
+    case kNumberTypeBool:
+    case kNumberTypeInt8:
+    case kNumberTypeUInt8:
+      bytes = sizeof(int8_t);
+      break;
+    case kNumberTypeInt16:
+    case kNumberTypeUInt16:
+    case kNumberTypeFloat16:
+      bytes = sizeof(int16_t);
+      break;
+    case kNumberTypeInt:
+    case kNumberTypeUInt:
+    case kNumberTypeInt32:
+    case kNumberTypeUInt32:
+    case kNumberTypeFloat:
+    case kNumberTypeFloat32:
+      bytes = sizeof(int32_t);
+      break;
+    case kNumberTypeUInt64:
+    case kNumberTypeInt64:
+    case kNumberTypeFloat64:
+      bytes = sizeof(int64_t);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Invalid types " << t;
+      break;
+  }
+
+  return bytes;
+}
 }  // namespace kernel
 }  // namespace mindspore

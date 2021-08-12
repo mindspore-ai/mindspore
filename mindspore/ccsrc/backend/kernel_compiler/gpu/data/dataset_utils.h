@@ -21,7 +21,6 @@
 #include "ir/dtype/type.h"
 namespace mindspore {
 namespace kernel {
-size_t UnitSizeInBytes(const mindspore::TypeId &t);
 int ElementNums(const std::vector<int> &shape);
 void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> *shapes, std::vector<TypePtr> *types);
 }  // namespace kernel
