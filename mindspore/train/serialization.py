@@ -690,7 +690,8 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     Export the MindSpore prediction model to a file in the specified format.
 
     Note:
-        When exporting to AIR、ONNX format, the size of a single tensor can not exceed 2GB.
+        1. When exporting to AIR、ONNX format, the size of a single tensor can not exceed 2GB.
+        2. When `file_name` does not have a suffix, the system will automatically add according to the `file_format`.
 
     Args:
         net (Cell): MindSpore network.
@@ -699,12 +700,9 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
 
             - AIR: Ascend Intermediate Representation. An intermediate representation format of Ascend model.
-              Recommended suffix for output file is '.air'.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
-              Recommended suffix for output file is '.onnx'.
             - MINDIR: MindSpore Native Intermediate Representation for Anf. An intermediate representation format
               for MindSpore models.
-              Recommended suffix for output file is '.mindir'.
 
         kwargs (dict): Configuration options dictionary.
 
@@ -1191,8 +1189,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, merge_sliced_parameter
-        >>> from mindspore.common.parameter import Parameter
+        >>> from mindspore import Tensor, merge_sliced_parameter, Parameter
         >>>
         >>> sliced_parameters = [
         ...                      Parameter(Tensor(np.array([0.00023915, 0.00013939, -0.00098059])),
