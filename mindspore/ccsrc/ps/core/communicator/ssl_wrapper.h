@@ -29,6 +29,7 @@
 #include <string>
 
 #include "utils/log_adapter.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace ps {

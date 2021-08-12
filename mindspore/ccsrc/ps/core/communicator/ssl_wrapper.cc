@@ -44,10 +44,7 @@ SSLWrapper::SSLWrapper()
 SSLWrapper::~SSLWrapper() { CleanSSL(); }
 
 void SSLWrapper::InitSSL() {
-  SSL_library_init();
-  ERR_load_crypto_strings();
-  SSL_load_error_strings();
-  OpenSSL_add_all_algorithms();
+  CommUtil::InitOpenSSLEnv();
   int rand = RAND_poll();
   if (rand == 0) {
     MS_LOG(ERROR) << "RAND_poll failed";
