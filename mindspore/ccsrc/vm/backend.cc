@@ -364,8 +364,9 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
 const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
-  root_graph_ = WrapPrimitives(func_graph);
-  MS_EXCEPTION_IF_NULL(root_graph_);
+  auto root_graph = WrapPrimitives(func_graph);
+  MS_EXCEPTION_IF_NULL(root_graph);
+  root_graph_ = root_graph.get();
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
 
@@ -377,11 +378,11 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Compile root graph.
   graph_id_to_device_context_.clear();
   control_nodes_.clear();
-  CompileGraph(root_graph_);
+  CompileGraph(root_graph);
 
   // Compile sub graphs.
-  MS_EXCEPTION_IF_NULL(root_graph_->manager());
-  FuncGraphSet sub_graphs = root_graph_->manager()->func_graphs();
+  MS_EXCEPTION_IF_NULL(root_graph->manager());
+  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
   for (auto sub_graph : sub_graphs) {
     if (sub_graph != func_graph && sub_graph != nullptr) {
       CompileGraph(sub_graph);
@@ -389,7 +390,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   }
 
   // Construct the graph compiler info.
-  auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph_);
+  auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
 
   if (real_execution_mode_ == kGraphMode) {
     // Transform graph to actor DAG, and schedule the actor DAG.
