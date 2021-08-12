@@ -413,8 +413,6 @@ static STATUS TransFilterFormat(schema::TensorT *tensor, kTransFilterType type) 
 STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat);
 
 size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag = false);
-
-STATUS GetInputIndexOfTupleGetItem(const AnfNodePtr &node, int *index);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H

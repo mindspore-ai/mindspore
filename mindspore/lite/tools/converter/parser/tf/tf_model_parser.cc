@@ -33,7 +33,6 @@
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/common/tensor_util.h"
-#include "tools/common/node_util.h"
 
 using mindspore::lite::converter::FmkType_TF;
 namespace mindspore {
@@ -1176,6 +1175,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     auto it = all_node_inputs.find(pair.first);
     if (it == all_node_inputs.end() && pair.second->input_size() > 0) {  // output node not constraint to Identity
       auto origin_name = GetOriginInputName(*(pair.second), tf_root_graph_nodes_);
+      // node with multiple outputs has been changed to tupleGetItem, and the original name changes to be name:idx.
       for (int i = 0; i < node_output_num_[origin_name]; i++) {
         auto anf_node = GetAnfNode(origin_name, anf_root_node_map_, i);
         if (anf_node == nullptr) {
@@ -1183,18 +1183,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
           return RET_ERROR;
         }
         output_nodes.push_back(anf_node);
-        auto name = anf_node->fullname_with_scope();
-        if (utils::isa<CNodePtr>(anf_node) && opt::CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
-          int index = 0;
-          if (GetInputIndexOfTupleGetItem(anf_node, &index) != RET_OK) {
-            MS_LOG(ERROR) << "Get input index of tupleGetItem failed.";
-            return RET_ERROR;
-          }
-          auto in_node = anf_node->cast<CNodePtr>()->input(1);
-          MS_ASSERT(in_node != nullptr);
-          name = in_node->fullname_with_scope() + ":" + std::to_string(index);
-        }
-        graph_output_names_.push_back(name);
+        graph_output_names_.push_back(origin_name);
       }
     }
   }
