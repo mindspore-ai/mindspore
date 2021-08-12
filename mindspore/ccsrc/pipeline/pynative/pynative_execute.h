@@ -261,6 +261,7 @@ class GradExecutor {
   bool grad_is_running_{false};
   int custom_bprop_cell_count_{0};
   size_t grad_order_{0};
+  size_t top_cell_switch_counts_{0};
 
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
