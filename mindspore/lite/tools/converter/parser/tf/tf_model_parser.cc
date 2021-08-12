@@ -487,8 +487,8 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
 }
 
 FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
-  auto modelFile = flag.model_file_;
-  quant_type_ = flag.quant_type_;
+  auto modelFile = flag.model_file;
+  quant_type_ = flag.quant_type;
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {

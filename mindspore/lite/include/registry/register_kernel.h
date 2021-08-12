@@ -25,10 +25,11 @@
 #include "include/api/context.h"
 #include "include/api/types.h"
 #include "include/api/kernel.h"
-#include "ir/dtype/type_id.h"
+#include "include/api/data_type.h"
 
 namespace mindspore {
-namespace kernel {
+namespace lite {
+namespace registry {
 /// \brief CreateKernel Defined a functor to create a kernel.
 ///
 /// \param[in] inputs Define input tensors of kernel.
@@ -53,7 +54,7 @@ class MS_API RegisterKernel {
   /// \param[in] creator Define a function pointer to create a kernel.
   ///
   /// \return STATUS as an error code of registering, STATUS is defined in errorcode.h.
-  static int RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type,
+  static int RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
                        CreateKernel creator);
 
   /// \brief Static method to register kernel which is corresponding to custom op.
@@ -65,7 +66,7 @@ class MS_API RegisterKernel {
   /// \param[in] creator Define a function pointer to create a kernel.
   ///
   /// \return STATUS as an error code of registering, STATUS is defined in errorcode.h.
-  static int RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
+  static int RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
                              const std::string &type, CreateKernel creator);
 };
 
@@ -82,7 +83,8 @@ class MS_API KernelReg {
   /// \param[in] data_type Define kernel's input data type.
   /// \param[in] op_type Define the ordinary op type.
   /// \param[in] creator Define a function pointer to create a kernel.
-  KernelReg(const std::string &arch, const std::string &provider, TypeId data_type, int op_type, CreateKernel creator) {
+  KernelReg(const std::string &arch, const std::string &provider, DataType data_type, int op_type,
+            CreateKernel creator) {
     RegisterKernel::RegKernel(arch, provider, data_type, op_type, creator);
   }
 
@@ -93,7 +95,7 @@ class MS_API KernelReg {
   /// \param[in] data_type Define kernel's input data type.
   /// \param[in] op_type Define the concrete type of a custom op.
   /// \param[in] creator Define a function pointer to create a kernel.
-  KernelReg(const std::string &arch, const std::string &provider, TypeId data_type, const std::string &op_type,
+  KernelReg(const std::string &arch, const std::string &provider, DataType data_type, const std::string &op_type,
             CreateKernel creator) {
     RegisterKernel::RegCustomKernel(arch, provider, data_type, op_type, creator);
   }
@@ -106,10 +108,11 @@ class MS_API KernelReg {
 /// \param[in] data_type Define kernel's input data type.
 /// \param[in] op_type Define the ordinary op type.
 /// \param[in] creator Define a function pointer to create a kernel.
-#define REGISTER_KERNEL(arch, provider, data_type, op_type, creator)                                                 \
-  namespace {                                                                                                        \
-  static mindspore::kernel::KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, \
-                                                                                        op_type, creator);           \
+#define REGISTER_KERNEL(arch, provider, data_type, op_type, creator)                                                \
+  namespace {                                                                                                       \
+  static mindspore::lite::registry::KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider,   \
+                                                                                                data_type, op_type, \
+                                                                                                creator);           \
   }  // namespace
 
 /// \brief Defined registering macro to register custom op kernel, which called by user directly.
@@ -121,10 +124,12 @@ class MS_API KernelReg {
 /// \param[in] creator Define a function pointer to create a kernel.
 #define REGISTER_CUSTOM_KERNEL(arch, provider, data_type, op_type, creator)                                          \
   namespace {                                                                                                        \
-  static mindspore::kernel::KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, \
-                                                                                        #op_type, creator);          \
+  static mindspore::lite::registry::KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider,    \
+                                                                                                data_type, #op_type, \
+                                                                                                creator);            \
   }  // namespace
-}  // namespace kernel
+}  // namespace registry
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_REGISTER_KERNEL_H_

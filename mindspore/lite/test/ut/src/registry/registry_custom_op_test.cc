@@ -25,7 +25,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
-#include "include/registry/kernel_interface.h"
+#include "include/registry/register_kernel_interface.h"
 #include "include/registry/register_kernel.h"
 
 using mindspore::kernel::Kernel;
@@ -39,6 +39,7 @@ namespace mindspore {
 namespace {
 const char *const kKeyName = "test_key";
 const char *const kTestData = "test_data";
+constexpr auto kFloat32 = DataType::kNumberTypeFloat32;
 }  // namespace
 
 class TestData {
@@ -128,7 +129,7 @@ std::shared_ptr<Kernel> TestCustomAddCreator(const std::vector<MSTensor> &inputs
 std::shared_ptr<KernelInterface> CustomAddInferCreator() { return std::make_shared<TestCustomOpInfer>(); }
 }  // namespace
 
-REGISTER_CUSTOM_KERNEL(CPU, BuiltInTest, kNumberTypeFloat32, Add, TestCustomAddCreator)
+REGISTER_CUSTOM_KERNEL(CPU, BuiltInTest, kFloat32, Add, TestCustomAddCreator)
 REGISTER_CUSTOM_KERNEL_INTERFACE(BuiltInTest, Add, CustomAddInferCreator)
 
 class TestRegistryCustomOp : public mindspore::CommonTest {

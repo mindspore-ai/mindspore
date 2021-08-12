@@ -21,6 +21,7 @@
 #include "schema/model_generated.h"
 #include "ir/dtype/type_id.h"
 
+using mindspore::lite::registry::CreateKernel;
 namespace mindspore {
 namespace kernel {
 /// \brief KernelDesc defined kernel's basic attribute.

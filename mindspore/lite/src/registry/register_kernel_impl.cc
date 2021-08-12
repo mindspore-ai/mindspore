@@ -19,8 +19,8 @@
 #include "src/common/version_manager.h"
 #include "src/common/log_adapter.h"
 
-using mindspore::kernel::CreateKernel;
 using mindspore::kernel::KernelDesc;
+using mindspore::lite::registry::CreateKernel;
 
 namespace mindspore::lite {
 namespace {
@@ -38,10 +38,11 @@ int RegistryKernelImpl::GetFuncIndex(const kernel::KernelDesc &desc) {
   return data_type_index * op_type_length_ + desc.type;
 }
 
-int RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
+int RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
                                         const std::string &type, CreateKernel creator) {
-  if (data_type >= kNumberTypeEnd) {
-    MS_LOG(ERROR) << "invalid data_type: " << data_type << "!provider: " << provider;
+  int data_type_rank = static_cast<int>(data_type);
+  if (data_type_rank >= kNumberTypeEnd) {
+    MS_LOG(ERROR) << "invalid data_type: " << data_type_rank << "!provider: " << provider;
     return RET_ERROR;
   }
   std::unique_lock<std::mutex> lock(lock_);
@@ -54,17 +55,17 @@ int RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::stri
     }
   }
 
-  int data_type_index = data_type - kNumberTypeBegin - 1;
+  int data_type_index = data_type_rank - kNumberTypeBegin - 1;
   if (data_type_index < 0 || data_type_index >= data_type_length_) {
-    MS_LOG(ERROR) << "invalid data_type: " << data_type << "!provider: " << provider;
+    MS_LOG(ERROR) << "invalid data_type: " << data_type_rank << "!provider: " << provider;
     return RET_ERROR;
   }
   custom_kernel_creators_[provider][arch][type][data_type_index] = creator;
   return RET_OK;
 }
 
-int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type,
-                                  kernel::CreateKernel creator) {
+int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
+                                  registry::CreateKernel creator) {
   std::unique_lock<std::mutex> lock(lock_);
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
@@ -84,10 +85,11 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
     }
   }
 
-  KernelDesc desc = {data_type, type, arch, provider};
+  KernelDesc desc = {static_cast<TypeId>(data_type), type, arch, provider};
   int index = GetFuncIndex(desc);
   if (index >= kKernelMaxNum || index < 0) {
-    MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << data_type << ",op type " << type;
+    MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << static_cast<int>(data_type) << ",op type "
+                  << type;
     return RET_ERROR;
   }
 
@@ -95,8 +97,8 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
   return RET_OK;
 }
 
-kernel::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Primitive *primitive,
-                                                                kernel::KernelDesc *desc) {
+registry::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Primitive *primitive,
+                                                                  kernel::KernelDesc *desc) {
   int data_type_index = static_cast<int>(desc->data_type) - kNumberTypeBegin - 1;
   if (data_type_index < 0) {
     return nullptr;
@@ -125,9 +127,9 @@ kernel::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Pr
   return nullptr;
 }
 
-kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const schema::Primitive *primitive,
-                                                            kernel::KernelDesc *desc) {
-  kernel::CreateKernel creator = nullptr;
+registry::CreateKernel RegistryKernelImpl::GetProviderCreator(const schema::Primitive *primitive,
+                                                              kernel::KernelDesc *desc) {
+  registry::CreateKernel creator = nullptr;
   std::unique_lock<std::mutex> lock(lock_);
   if (desc->type == schema::PrimitiveType_Custom) {
     return GetCustomKernelCreator(primitive, desc);

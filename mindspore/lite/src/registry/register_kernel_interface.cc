@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/registry/kernel_interface.h"
+#include "include/registry/register_kernel_interface.h"
 #include <set>
 #include <utility>
 #include "include/errorcode.h"
@@ -21,12 +21,13 @@
 #include "src/registry/kernel_interface_registry.h"
 
 namespace mindspore {
-namespace kernel {
+namespace lite {
+namespace registry {
 int RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
   return lite::KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
 #else
-  MS_LOG(ERROR) << unsuppor_custom_kernel_register_log;
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
 #endif
 }
@@ -36,7 +37,7 @@ int RegisterKernelInterface::CustomReg(const std::string &provider, const std::s
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
   return lite::KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
 #else
-  MS_LOG(ERROR) << unsuppor_custom_kernel_register_log;
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
 #endif
 }
@@ -46,9 +47,10 @@ std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInter
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
   return lite::KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive);
 #else
-  MS_LOG(ERROR) << unsuppor_custom_kernel_register_log;
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return nullptr;
 #endif
 }
-}  // namespace kernel
+}  // namespace registry
+}  // namespace lite
 }  // namespace mindspore

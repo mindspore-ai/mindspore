@@ -325,7 +325,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  if (!RunExternalPass(old_graph, PassPosition::POSITION_BEGIN)) {
+  if (!RunExternalPass(old_graph, registry::PassPosition::POSITION_BEGIN)) {
     MS_LOG(ERROR) << "Run external pass failed, place is BEGIN";
     return nullptr;
   }
@@ -360,7 +360,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  if (!RunExternalPass(old_graph, PassPosition::POSITION_END)) {
+  if (!RunExternalPass(old_graph, registry::PassPosition::POSITION_END)) {
     MS_LOG(ERROR) << "Run external pass failed, place is END";
     return nullptr;
   }
@@ -388,11 +388,11 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
 void AnfTransform::AppendPassToStoreRoom(const converter::Flags *config) {
   auto fmk = config->fmk;
   auto is_train = config->trainModel;
-  PassRegistry("DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train));
-  PassRegistry("DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>());
-  PassRegistry("InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train));
-  PassRegistry("ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train));
-  PassRegistry("ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train));
+  registry::PassRegistry("DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train));
+  registry::PassRegistry("DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>());
+  registry::PassRegistry("InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train));
+  registry::PassRegistry("ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train));
+  registry::PassRegistry("ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train));
 }
 
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {

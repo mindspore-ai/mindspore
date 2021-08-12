@@ -45,7 +45,7 @@
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
-#include "include/registry/kernel_interface.h"
+#include "include/registry/register_kernel_interface.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
 
 namespace mindspore::lite {
