@@ -28,7 +28,7 @@
 
 Inception_ResNet_v2是Google的深度学习卷积架构系列的一个版本。Inception_ResNet_v2主要通过修改以前的Inception架构来减少计算资源的消耗。该方法在2016年出版的Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning一文中提出的。
 
-[论文](https://arxiv.org/pdf/1512.00567.pdf)：(https://arxiv.org/pdf/1602.07261.pdf) Christian Szegedy, Sergey Ioffe, Vincent Vanhoucke, Alex Alemi. Computer Vision and Pattern Recognition[J]. 2016.
+[论文](https://arxiv.org/pdf/1512.00567.pdf)：(<https://arxiv.org/pdf/1602.07261.pdf>) Christian Szegedy, Sergey Ioffe, Vincent Vanhoucke, Alex Alemi. Computer Vision and Pattern Recognition[J]. 2016.
 
 # 模型架构
 
@@ -50,7 +50,7 @@ Inception_ResNet_v2的总体网络架构如下：
 
 ## 混合精度（Ascend）
 
-采用[混合精度](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
+采用[混合精度](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
 
 以FP16算子为例，如果输入数据类型为FP32，MindSpore后台会自动降低精度来处理数据。用户可打开INFO日志，搜索“reduce precision”查看精度降低的算子。
 
@@ -212,4 +212,3 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 # ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
-

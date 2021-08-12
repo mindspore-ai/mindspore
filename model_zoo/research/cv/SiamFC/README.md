@@ -40,12 +40,12 @@ used Dataset :[ILSVRC2015-VID](http://bvisionweb1.cs.unc.edu/ilsvrc2015/ILSVRC20
 # [Environmental requirements](#Contents)
 
 - Hardware :(Ascend)
-    - Prepare ascend processor to build hardware environment
+    - Prepare Ascend processor to build hardware environment
 - frame:
-    - [Mindspore](https://www.mindspore.cn/install)
+    - [Mindspore](https://www.mindspore.cn/install/en)
 - For details, please refer to the following resources:
-    - [MindSpore course](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore course](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 - more API
     - got10k toolkit
     - opencv
@@ -191,5 +191,5 @@ Check the checkpoint path used for evaluation before running the following comma
 |loss function     |BCEWithLogits   |
 |training speed    | epoch time：285693.557 ms per step time :42.961 ms |
 |total time        |about 5 hours    |
-|Script URL        |https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/SiamFC  |
+|Script URL        |<https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/SiamFC>  |
 |Random number seed         |set_seed = 1234     |

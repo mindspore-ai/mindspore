@@ -34,8 +34,8 @@ The overall network architecture of DQN is show below:
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 - third-party libraries
 
@@ -118,7 +118,7 @@ pip install gym
 | Loss Function              | MSELoss                                        |MSELoss                                                     |
 | outputs                    | Reward                                                 | Reward                                                 |
 | Params (M)                 | 7.3k                                                       | 7.3k                                                       |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn |
+| Scripts                    | <<<https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn>>> | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn |
 
 ## [Description of Random Situation](#content)
 
