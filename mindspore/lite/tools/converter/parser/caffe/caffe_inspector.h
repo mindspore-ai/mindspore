@@ -21,6 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <vector>
 #include "proto/caffe.pb.h"
 #include "include/errorcode.h"
 
@@ -37,7 +38,7 @@ class CaffeInspector {
   STATUS SetLayerTopsAndBottoms();
 
   std::set<std::string> GetGraphInput() { return graphInput; }
-  std::set<std::string> GetGraphOutput() { return graphOutput; }
+  std::vector<std::string> GetGraphOutput() { return graphOutput; }
 
  private:
   caffe::NetParameter net;
@@ -46,7 +47,7 @@ class CaffeInspector {
   std::set<std::string> layerBottoms;
 
   std::set<std::string> graphInput;
-  std::set<std::string> graphOutput;
+  std::vector<std::string> graphOutput;
 };
 
 using CaffeInspectorPtr = std::shared_ptr<CaffeInspector>;
