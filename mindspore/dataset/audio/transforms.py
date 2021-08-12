@@ -251,37 +251,37 @@ class BassBiquad(AudioTensorOperation):
         return cde.BassBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)
 
 
-class TimeStretch(AudioTensorOperation):
+class FrequencyMasking(AudioTensorOperation):
     """
-    Stretch STFT in time at a given rate, without changing the pitch.
+    Apply masking to a spectrogram in the frequency domain.
 
     Args:
-        hop_length (int, optional): Length of hop between STFT windows (default=None).
-        n_freq (int, optional): Number of filter banks form STFT (default=201).
-        fixed_rate (float, optional): Rate to speed up or slow down the input in time (default=None).
+        iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
+        frequency_mask_param (int): Maximum possible length of the mask (default=0).
+            Indices uniformly sampled from [0, frequency_mask_param].
+        mask_start (int): Mask start when iid_masks=true (default=0).
+        mask_value (double): Mask value (default=0.0).
 
     Examples:
-        >>> freq = 44100
-        >>> num_frame = 30
         >>> def gen():
-        ...     np.random.seed(0)
-        ...     data =  np.random.random([freq, num_frame])
-        ...     yield (np.array(data, dtype=np.float32), )
-        >>> data1 = ds.GeneratorDataset(source=gen, column_names=["multi_dimensional_data"])
-        >>> transforms = [py_audio.TimeStretch()]
-        >>> data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
+        ...     random.seed(0)
+        ...     data = numpy.random.random([1, 3, 2])
+        ...     yield (numpy.array(data, dtype=numpy.float32),)
+        >>> dataset = ds.GeneratorDataset(source=gen,
+        ...                               column_names=["multi_dim_data"])
+        >>> dataset = dataset.map(operations=FrequencyMasking(frequency_mask_param=1),
+        ...                       input_columns=["multi_dim_data"])
     """
-    @check_time_stretch
-    def __init__(self, hop_length=None, n_freq=201, fixed_rate=None):
-        self.n_freq = n_freq
-        self.fixed_rate = fixed_rate
-
-        n_fft = (n_freq - 1) * 2
-        self.hop_length = hop_length if hop_length is not None else n_fft // 2
-        self.fixed_rate = fixed_rate if fixed_rate is not None else np.nan
+    @check_masking
+    def __init__(self, iid_masks=False, frequency_mask_param=0, mask_start=0, mask_value=0.0):
+        self.iid_masks = iid_masks
+        self.frequency_mask_param = frequency_mask_param
+        self.mask_start = mask_start
+        self.mask_value = mask_value
 
     def parse(self):
-        return cde.TimeStretchOperation(self.hop_length, self.n_freq, self.fixed_rate)
+        return cde.FrequencyMaskingOperation(self.iid_masks, self.frequency_mask_param, self.mask_start,
+                                             self.mask_value)
 
 
 class TimeMasking(AudioTensorOperation):
@@ -314,3 +314,36 @@ class TimeMasking(AudioTensorOperation):
 
     def parse(self):
         return cde.TimeMaskingOperation(self.iid_masks, self.time_mask_param, self.mask_start, self.mask_value)
+
+
+class TimeStretch(AudioTensorOperation):
+    """
+    Stretch STFT in time at a given rate, without changing the pitch.
+
+    Args:
+        hop_length (int, optional): Length of hop between STFT windows (default=None).
+        n_freq (int, optional): Number of filter banks form STFT (default=201).
+        fixed_rate (float, optional): Rate to speed up or slow down the input in time (default=None).
+
+    Examples:
+        >>> freq = 44100
+        >>> num_frame = 30
+        >>> def gen():
+        ...     np.random.seed(0)
+        ...     data =  np.random.random([freq, num_frame])
+        ...     yield (np.array(data, dtype=np.float32), )
+        >>> data1 = ds.GeneratorDataset(source=gen, column_names=["multi_dimensional_data"])
+        >>> transforms = [py_audio.TimeStretch()]
+        >>> data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
+    """
+    @check_time_stretch
+    def __init__(self, hop_length=None, n_freq=201, fixed_rate=None):
+        self.n_freq = n_freq
+        self.fixed_rate = fixed_rate
+
+        n_fft = (n_freq - 1) * 2
+        self.hop_length = hop_length if hop_length is not None else n_fft // 2
+        self.fixed_rate = fixed_rate if fixed_rate is not None else np.nan
+
+    def parse(self):
+        return cde.TimeStretchOperation(self.hop_length, self.n_freq, self.fixed_rate)

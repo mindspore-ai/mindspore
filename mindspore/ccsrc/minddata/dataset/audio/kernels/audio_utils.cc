@@ -399,8 +399,7 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
                      int64_t mask_start, double mask_value, int axis) {
   if (axis != 2 && axis != 1) {
-    RETURN_STATUS_UNEXPECTED(
-      "MaskAlongAxis: only support Time and Frequency masking, the axis should be equal to 1 or 2.");
+    RETURN_STATUS_UNEXPECTED("MaskAlongAxis: only support Time and Frequency masking, axis should be 1 or 2.");
   }
   TensorShape input_shape = input->shape();
   // squeeze input
@@ -409,9 +408,9 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
   int check_dim_ind = (axis == 1) ? -2 : -1;
   CHECK_FAIL_RETURN_UNEXPECTED(0 <= mask_start && mask_start <= input_shape[check_dim_ind],
-                               "MaskAlongAxis: mask_start should be smaller than the length of chosen dim.");
+                               "MaskAlongAxis: mask_start should be less than the length of chosen dimension.");
   CHECK_FAIL_RETURN_UNEXPECTED(mask_start + mask_width <= input_shape[check_dim_ind],
-                               "MaskAlongAxis: mask_width with mask_start is out of bounds.");
+                               "MaskAlongAxis: the sum of mask_start and mask_width is out of bounds.");
 
   int64_t cell_size = input->type().SizeInBytes();
 

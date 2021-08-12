@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/audio/kernels/time_masking_op.h"
+#include "minddata/dataset/audio/kernels/frequency_masking_op.h"
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
@@ -24,35 +24,42 @@ namespace mindspore {
 namespace dataset {
 
 // constructor
-TimeMaskingOp::TimeMaskingOp(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
-    : time_mask_param_(time_mask_param), mask_start_(mask_start), iid_masks_(iid_masks), mask_value_(mask_value) {
+FrequencyMaskingOp::FrequencyMaskingOp(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start,
+                                       double mask_value)
+    : frequency_mask_param_(frequency_mask_param),
+      mask_start_(mask_start),
+      iid_masks_(iid_masks),
+      mask_value_(mask_value) {
   rnd_.seed(GetSeed());
 }
 
 // main function
-Status TimeMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status FrequencyMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // input <..., freq, time>
-  CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 2, "TimeMasking: input dimension must be greater than 2.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 2,
+                               "FrequencyMasking: input tensor is not in shape of <..., freq, time>.");
   TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape[-1] >= time_mask_param_,
-                               "TimeMasking: time_mask_param should be less than the length of time dimension.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input_shape[-2] >= frequency_mask_param_,
+    "FrequencyMasking: frequency_mask_param should be less than the length of frequency dimension.");
 
   std::shared_ptr<Tensor> input_tensor;
   // typecast
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "TimeMasking: input type should be float, but got string.");
+                               "FrequencyMasking: input tensor type should be float, but got string.");
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
   } else {
     input_tensor = input;
   }
-
+  auto mask_val =
+    input->type() != DataType::DE_FLOAT64 ? static_cast<float>(mask_value_) : static_cast<double>(mask_value_);
   // iid_masks - whether to apply different masks to each example/channel.
   if (iid_masks_ == false) {
-    return MaskAlongAxis(input_tensor, output, time_mask_param_, mask_start_, mask_value_, 2);
+    return MaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_start_, mask_val, 1);
   } else {
-    return RandomMaskAlongAxis(input_tensor, output, time_mask_param_, mask_value_, 2, rnd_);
+    return RandomMaskAlongAxis(input_tensor, output, frequency_mask_param_, mask_val, 1, rnd_);
   }
 }
 }  // namespace dataset

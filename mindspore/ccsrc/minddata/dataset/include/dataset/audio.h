@@ -187,19 +187,22 @@ class BassBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief TimeStretch TensorTransform
-/// \notes Stretch STFT in time at a given rate, without changing the pitch.
-class TimeStretch final : public TensorTransform {
+/// \brief FrequencyMasking TensorTransform.
+/// \notes Apply masking to a spectrogram in the frequency domain.
+class FrequencyMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: None.
-  /// \param[in] n_freq Number of filter banks form STFT. Default: 201.
-  /// \param[in] fixed_rate Rate to speed up or slow down the input in time. Default: None.
-  explicit TimeStretch(float hop_length = std::numeric_limits<float>::quiet_NaN(), int n_freq = 201,
-                       float fixed_rate = std::numeric_limits<float>::quiet_NaN());
+  /// \param[in] iid_masks Whether to apply different masks to each example.
+  /// \param[in] frequency_mask_param Maximum possible length of the mask.
+  ///     Indices uniformly sampled from [0, frequency_mask_param].
+  ///     Mask width when iid_masks=true.
+  /// \param[in] mask_start Mask start when iid_masks=true.
+  /// \param[in] mask_value Mask value.
+  explicit FrequencyMasking(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
+                            double mask_value = 0.0);
 
   /// \brief Destructor.
-  ~TimeStretch() = default;
+  ~FrequencyMasking() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -227,6 +230,30 @@ class TimeMasking final : public TensorTransform {
 
   /// \brief Destructor.
   ~TimeMasking() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief TimeStretch TensorTransform
+/// \notes Stretch STFT in time at a given rate, without changing the pitch.
+class TimeStretch final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] hop_length Length of hop between STFT windows. Default: None.
+  /// \param[in] n_freq Number of filter banks form STFT. Default: 201.
+  /// \param[in] fixed_rate Rate to speed up or slow down the input in time. Default: None.
+  explicit TimeStretch(float hop_length = std::numeric_limits<float>::quiet_NaN(), int n_freq = 201,
+                       float fixed_rate = std::numeric_limits<float>::quiet_NaN());
+
+  /// \brief Destructor.
+  ~TimeStretch() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
