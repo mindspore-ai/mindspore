@@ -35,9 +35,4 @@ docker run -it --ipc=host \
                -v /usr/local/Ascend/add-ons/:/usr/local/Ascend/add-ons \
                -v ${data_dir}:${data_dir} \
                -v ${model_dir}:${model_dir} \
-               -v /var/log/npu/conf/slog/slog.conf:/var/log/npu/conf/slog/slog.conf \
-               -v /var/log/npu/slog/:/var/log/npu/slog/ \
-               -v /var/log/npu/profiling/:/var/log/npu/profiling \
-               -v /var/log/npu/dump/:/var/log/npu/dump \
-               -v /var/log/npu/:/usr/slog ${docker_image} \
-               /bin/bash
+               -v /root/ascend/log:/root/ascend/log ${docker_image} /bin/bash
