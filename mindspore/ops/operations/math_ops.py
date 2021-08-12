@@ -845,7 +845,7 @@ class MatMul(PrimitiveWithCheck):
 
     The rank of input tensors must equal to `2`.
 
-     .. math::
+    .. math::
 
         (Output)_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
 
