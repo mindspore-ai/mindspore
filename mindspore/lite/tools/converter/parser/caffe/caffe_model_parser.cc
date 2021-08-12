@@ -476,11 +476,11 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     }
     auto valueNode = NewValueNode(returnPrim);
     std::vector<AnfNodePtr> opInputs{valueNode};
-    if (nodes_.find(*caffeInspector.GetGraphOutput().begin()) == nodes_.end()) {
+    if (nodes_.find(caffeInspector.GetGraphOutput().front()) == nodes_.end()) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }
-    auto cnode = nodes_.find(*caffeInspector.GetGraphOutput().begin())->second;
+    auto cnode = nodes_.find(caffeInspector.GetGraphOutput().front())->second;
     if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
@@ -490,6 +490,8 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     returnCnode->set_fullname_with_scope("Return");
     res_graph_->set_return(returnCnode);
   }
+  // save original output tensor names.
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(caffeInspector.GetGraphOutput());
   return RET_OK;
 }
 
