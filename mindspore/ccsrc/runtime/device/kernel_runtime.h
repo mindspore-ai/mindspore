@@ -68,12 +68,7 @@ class KernelRuntime {
                                      const AddressPtrList &kernel_workspaces) const;
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
-  virtual void ClearGraphRuntimeResource(uint32_t graph_id, const std::vector<AnfNodePtr> &inputs,
-                                         const std::unordered_set<ValueNodePtr> &value_nodes,
-                                         const std::vector<CNodePtr> &execution_order);
-  virtual void ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
-                                  const std::unordered_set<ValueNodePtr> &value_nodes,
-                                  const std::vector<CNodePtr> &execution_order);
+  virtual void ClearGraphRuntimeResource(uint32_t graph_id);
   virtual bool SyncStream() = 0;
   virtual bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) = 0;
   virtual void ClearGlobalIdleMem() {}
