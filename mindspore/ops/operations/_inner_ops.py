@@ -500,10 +500,10 @@ class NeighborExchange(Primitive):
     as while receive data from recv_rank_ids.
 
     Args:
-        send_rank_ids (list): Ranks which the data is sent to.
-        recv_rank_ids (list): Ranks which the data is received from.
-        recv_shapes (list): Data shape which received from recv_rank_ids.
-        send_shapes (list): Data shape which send to the send_rank_ids.
+        send_rank_ids (list(int)): Ranks which the data is sent to.
+        recv_rank_ids (list(int)): Ranks which the data is received from.
+        recv_shapes (tuple(list(int))): Data shape which received from recv_rank_ids.
+        send_shapes (tuple(list(int))): Data shape which send to the send_rank_ids.
         recv_type (type): Data type which received from recv_rank_ids
         group (str):
     """
@@ -517,6 +517,9 @@ class NeighborExchange(Primitive):
         self.recv_shapes = recv_shapes
         self.send_shapes = send_shapes
         self.recv_type = recv_type
+
+    def __call__(self, tensor):
+        raise NotImplementedError
 
 
 class MatrixSetDiag(PrimitiveWithInfer):
@@ -954,6 +957,7 @@ class StackInit(PrimitiveWithInfer):
         [[1 3]
          [2 0]]
     """
+
     @prim_attr_register
     def __init__(self, index=1):
         """StackInit"""
@@ -979,6 +983,7 @@ class StackPush(PrimitiveWithInfer):
     Examples:
         Please refer to the usage of `StackInit`.
     """
+
     @prim_attr_register
     def __init__(self, index=1):
         """StackPush"""
@@ -1007,6 +1012,7 @@ class StackPop(PrimitiveWithInfer):
     Examples:
         Please refer to the usage of `StackInit`.
     """
+
     @prim_attr_register
     def __init__(self, index=1, shape=(1,), dtype=mstype.float32):
         """StackPop"""
@@ -1046,6 +1052,7 @@ class StackDestroy(PrimitiveWithInfer):
     Examples:
         Please refer to the usage of `StackInit`.
     """
+
     @prim_attr_register
     def __init__(self, index=1):
         """StackDestroy"""

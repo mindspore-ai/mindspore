@@ -27,6 +27,10 @@ namespace {
 constexpr size_t kCNodePrimitiveIdx = 0;
 constexpr size_t kAllToAllInputIdx = 1;
 
+inline int64_t NormalizeDim(const std::vector<size_t> &shape, int64_t dim) {
+  return dim < 0 ? SizeToLong(shape.size()) + dim : dim;
+}
+
 void ChangePrimitiveToAllToAllV(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto neighbor_exchange = node->cast<CNodePtr>();
@@ -66,6 +70,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) 
   MS_EXCEPTION_IF_NULL(split_v);
   auto dtype = AnfAlgo::GetOutputInferDataType(all_to_all_input, 0);
   auto shape = AnfAlgo::GetOutputInferShape(all_to_all_input, 0);
+  split_dim = NormalizeDim(shape, split_dim);
   if (SizeToLong(shape.size()) <= split_dim) {
     MS_LOG(EXCEPTION) << "Invalid split dim " << split_dim << " is over the shape size " << shape.size();
   }
@@ -133,6 +138,7 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
   auto concat = graph->NewCNode(concat_input);
   MS_EXCEPTION_IF_NULL(concat);
   auto single_shape = AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[0], 0);
+  concat_dim = NormalizeDim(single_shape, concat_dim);
   if (LongToSize(concat_dim) >= single_shape.size()) {
     MS_LOG(EXCEPTION) << "Invalid concat dim " << concat_dim << " is greater than shape size " << single_shape.size();
   }
