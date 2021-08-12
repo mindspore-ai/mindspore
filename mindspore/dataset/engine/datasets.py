@@ -5784,10 +5784,19 @@ class FlickrDataset(MappableDataset):
 
         .. code-block::
 
-            M. Hodosh, P. Young and J. Hockenmaier (2013)
-            "Framing Image Description as a Ranking Task: Data, Models and Evaluation Metrics"
-            Journal of Artificial Intellegence Research, Volume 47, pages 853-899
-            http://www.jair.org/papers/paper3994.html
+            @article{DBLP:journals/jair/HodoshYH13,
+            author    = {Micah Hodosh and Peter Young and Julia Hockenmaier},
+            title     = {Framing Image Description as a Ranking Task: Data, Models and Evaluation Metrics},
+            journal   = {J. Artif. Intell. Res.},
+            volume    = {47},
+            pages     = {853--899},
+            year      = {2013},
+            url       = {https://doi.org/10.1613/jair.3994},
+            doi       = {10.1613/jair.3994},
+            timestamp = {Mon, 21 Jan 2019 15:01:17 +0100},
+            biburl    = {https://dblp.org/rec/journals/jair/HodoshYH13.bib},
+            bibsource = {dblp computer science bibliography, https://dblp.org}
+            }
 
     About Flickr30k dataset:
         | The Flickr30k dataset consists of 31783 colour images. There are 158915 annotations in
@@ -5804,10 +5813,19 @@ class FlickrDataset(MappableDataset):
 
         .. code-block::
 
-            P. Young, A. Lai, M. Hodosh, and J. Hockenmaier.
-            From image description to visual denotations:
-            New similarity metrics for semantic inference over event descriptions.
-            Transactions of the Association for Computational Linguistics (to appear).
+            @article{DBLP:journals/tacl/YoungLHH14,
+            author    = {Peter Young and Alice Lai and Micah Hodosh and Julia Hockenmaier},
+            title     = {From image descriptions to visual denotations: New similarity metrics
+                         for semantic inference over event descriptions},
+            journal   = {Trans. Assoc. Comput. Linguistics},
+            volume    = {2},
+            pages     = {67--78},
+            year      = {2014},
+            url       = {https://tacl2013.cs.columbia.edu/ojs/index.php/tacl/article/view/229},
+            timestamp = {Wed, 17 Feb 2021 21:55:25 +0100},
+            biburl    = {https://dblp.org/rec/journals/tacl/YoungLHH14.bib},
+            bibsource = {dblp computer science bibliography, https://dblp.org}
+            }
     """
 
     @check_flickr_dataset
