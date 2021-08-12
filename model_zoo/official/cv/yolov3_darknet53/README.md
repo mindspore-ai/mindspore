@@ -340,7 +340,7 @@ For GPU device, distributed training example(8p) by shell script
 bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 ```
 
-The above shell script will run distribute training in the background. You can view the results through the file `train_parallel[X]/log.txt`. The loss value will be achieved as follows:
+The above shell script will run distribute training in the background. You can view the results through the file `train_parallel0/log.txt`. The loss value will be achieved as follows:
 
 ```log
 # distribute training result(8p)
