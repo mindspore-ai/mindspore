@@ -83,6 +83,10 @@ class Iteration {
 
   bool is_last_iteration_valid() const;
 
+  // Set the instance metrics which will be called for each iteration.
+  void set_loss(float loss);
+  void set_accuracy(float accuracy);
+
  private:
   Iteration()
       : server_node_(nullptr),
@@ -91,7 +95,9 @@ class Iteration {
         iteration_loop_count_(0),
         iteration_num_(1),
         is_last_iteration_valid_(true),
-        pinned_iter_num_(0) {
+        pinned_iter_num_(0),
+        loss_(0.0),
+        accuracy_(0.0) {
     LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   }
   ~Iteration() = default;
@@ -153,6 +159,12 @@ class Iteration {
   // To avoid Next method is called multiple times in one iteration, we should mark the iteration number.
   uint64_t pinned_iter_num_;
   std::mutex pinned_mtx_;
+
+  // The training loss after this federated learning iteration, passed by worker.
+  float loss_;
+
+  // The evaluation result after this federated learning iteration, passed by worker.
+  float accuracy_;
 };
 }  // namespace server
 }  // namespace fl

@@ -42,6 +42,9 @@ constexpr uint32_t kWorkerSleepTimeForNetworking = 1000;
 // The time duration between retrying when server is in safemode.
 constexpr uint32_t kWorkerRetryDurationForSafeMode = 500;
 
+// The leader server rank.
+constexpr uint32_t kLeaderServerRank = 0;
+
 enum class IterationState {
   // This iteration is still in process.
   kRunning,
