@@ -171,16 +171,6 @@ APP_ERROR DeeplabV3plus::Inference(const std::vector<MxBase::TensorBase> &inputs
     return APP_ERR_OK;
 }
 
-APP_ERROR DeeplabV3plus::PostProcess(const std::vector<MxBase::TensorBase> &inputs,
-    std::vector<MxBase::SemanticSegInfo> &segInfo, const std::vector<MxBase::ResizedImageInfo> &resizedInfo) {
-    APP_ERROR ret = post_->Process(inputs, segInfo, resizedInfo);
-    if (ret != APP_ERR_OK) {
-        LogError << "Process failed, ret=" << ret << ".";
-        return ret;
-    }
-    return APP_ERR_OK;
-}
-
 APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
     cv::Mat imageMat;
     APP_ERROR ret = ReadImage(imgPath, imageMat);
@@ -212,7 +202,7 @@ APP_ERROR DeeplabV3plus::Process(const std::string &imgPath) {
 
     std::vector<MxBase::SemanticSegInfo> semanticSegInfos = {};
     std::vector<MxBase::ResizedImageInfo> resizedImageInfos = {resizedImageInfo};
-    ret = PostProcess(outputs, semanticSegInfos, resizedImageInfos);
+    ret = post_->Process(outputs, semanticSegInfos, resizedImageInfos);
     if (ret != APP_ERR_OK) {
         LogError << "PostProcess failed, ret=" << ret << ".";
         return ret;
