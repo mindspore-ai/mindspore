@@ -191,10 +191,10 @@ std::vector<NPUOp *> NPUGraph::FindReadySubgraphOps(std::queue<NPUOp *> op_queue
       }
       auto input_ready = std::all_of(out_op->in_ops().begin(), out_op->in_ops().end(),
                                      [&](NPUOp *in_op) { return (*is_visited)[in_op] == true; });
-      if (input_ready && out_op->type() != schema::PrimitiveType_Transpose) {
-        op_queue.push(out_op);
-      } else {
+      if (out_op->type() == schema::PrimitiveType_Transpose) {
         next_candidate_ops->push(out_op);
+      } else if (input_ready) {
+        op_queue.push(out_op);
       }
     }
   }
