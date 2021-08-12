@@ -68,7 +68,9 @@ void DynamicKernel::RebuildDependTensor() {
     auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
     auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
     MS_EXCEPTION_IF_NULL(out_tensor);
-    out_tensor->set_device_address(output_addr);
+    // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
+    // address size will be wrong in the dynamic shape scenario.
+    out_tensor->set_device_address(output_addr, false);
     auto ret = depend_tensor_map_.try_emplace(depend, out_tensor);
     if (!ret.second) {
       MS_LOG(EXCEPTION) << "Insert map failed";
