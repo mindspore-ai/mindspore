@@ -28,7 +28,7 @@ add_definitions(-DENABLE_DVPP_INTERFACE)
 #include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${ACL_LIB_PATH}/include)
 
-add_library(${TARGET_LIBRARY} SHARED ../../mxbase/src/PostProcess/Yolov4TinyMindsporePost.cpp \
+add_library(${TARGET_LIBRARY} SHARED ../../mxbase/src/PostProcess/Yolov4TinyMindsporePost.cpp
 ../../mxbase/src/PostProcess/Yolov4TinyMindsporePost.h)
 
 target_link_libraries(${TARGET_LIBRARY} glib-2.0 gstreamer-1.0 gobject-2.0 gstbase-1.0 gmodule-2.0)

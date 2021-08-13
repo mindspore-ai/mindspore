@@ -12,6 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
+import os
 import json
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
@@ -144,7 +145,7 @@ if __name__ == "__main__":
 
     coco_dt = coco_gt.loadRes(coco_dt_file)
     coco_eval = COCOeval(coco_gt, coco_dt, ann_type)
-    coco_eval.params.imgIds = self.get_img_set(coco_gt_file)
+    coco_eval.params.imgIds = get_img_set(coco_gt_file)
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
