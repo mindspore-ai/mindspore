@@ -36,7 +36,7 @@ class E2eDump {
   E2eDump() = default;
   ~E2eDump() = default;
   static void DumpSetup(const session::KernelGraph *graph, uint32_t rank_id);
-  static bool DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
+  static void DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
 
   static bool DumpParametersAndConstData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger);
 
