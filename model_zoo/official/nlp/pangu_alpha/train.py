@@ -118,21 +118,11 @@ def run_train(args_opt):
     data_parallel_num = int(device_num / model_parallel_num)
     batch_size = args_opt.per_batch_size * data_parallel_num
     config = PANGUALPHAConfig(
-        data_parallel_num=data_parallel_num,
-        model_parallel_num=model_parallel_num,
-        batch_size=batch_size,
-        seq_length=args_opt.seq_length,
-        vocab_size=args_opt.vocab_size,
-        embedding_size=args_opt.embedding_size,
-        num_layers=args_opt.num_layers,
-        num_heads=args_opt.num_heads,
-        expand_ratio=4,
-        dropout_rate=0.1,
-        compute_dtype=mstype.float16,
-        stage_num=args_opt.stage_num,
-        micro_size=args_opt.micro_size,
-        eod_reset=bool(args_opt.eod_reset),
-        load_ckpt_path=args_opt.load_ckpt_path,
+        data_parallel_num=data_parallel_num, model_parallel_num=model_parallel_num, batch_size=batch_size,
+        seq_length=args_opt.seq_length, vocab_size=args_opt.vocab_size, embedding_size=args_opt.embedding_size,
+        num_layers=args_opt.num_layers, num_heads=args_opt.num_heads, expand_ratio=4, dropout_rate=0.1,
+        compute_dtype=mstype.float16, stage_num=args_opt.stage_num, micro_size=args_opt.micro_size,
+        eod_reset=bool(args_opt.eod_reset), load_ckpt_path=args_opt.load_ckpt_path,
         param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16,
         word_emb_dp=bool(args_opt.word_emb_dp))
     print("===config is: ", config, flush=True)
@@ -146,10 +136,8 @@ def run_train(args_opt):
     print("=====args_opt is: ", args_opt, flush=True)
 
     # Warm-up and cosine decay learning rate
-    lr = LearningRate(learning_rate=args_opt.start_lr,
-                      end_learning_rate=args_opt.end_lr,
-                      warmup_steps=args_opt.warmup_step,
-                      decay_steps=200000)
+    lr = LearningRate(learning_rate=args_opt.start_lr, end_learning_rate=args_opt.end_lr,
+                      warmup_steps=args_opt.warmup_step, decay_steps=200000)
 
     # Set weight decay coefficient, zero for bias and layernorm, 1e-1 for rest
     decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
