@@ -243,6 +243,10 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
   for (int i = 0; i < caffe_model_.layer_size(); i++) {
     auto layer = caffe_model_.layer(i);
     if (layer.type() == "Input") {
+      if (layer.bottom_size() != 0) {
+        MS_LOG(ERROR) << "The input layer should not have inputs";
+        return RET_ERROR;
+      }
       auto parameter = res_graph_->add_parameter();
       std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(layer.name());
       if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
@@ -259,7 +263,8 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
         return RET_ERROR;
       }
       parameter->set_abstract(abstract);
-      parameter->set_name("graph_input-" + std::to_string(i));
+      parameter->set_name(layer.name());
+      ConverterContext::GetInstance()->AddGraphInputTensorNames(layer.name());
       nodes_.insert(std::pair(layer.top(0), parameter));
     }
   }
@@ -291,7 +296,8 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
       return RET_ERROR;
     }
     parameter->set_abstract(abstract);
-    parameter->set_name("graph_input-" + caffe_model_.input(i));
+    parameter->set_name(caffe_model_.input(i));
+    ConverterContext::GetInstance()->AddGraphInputTensorNames(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
@@ -323,7 +329,8 @@ STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
       return RET_ERROR;
     }
     parameter->set_abstract(abstract);
-    parameter->set_name("graph_input-" + caffe_model_.input(i));
+    parameter->set_name(caffe_model_.input(i));
+    ConverterContext::GetInstance()->AddGraphInputTensorNames(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
@@ -334,12 +341,17 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
   if (ret != RET_OK) {
     return ret;
   }
-  if (caffe_model_.input_dim_size() > 0) {
-    return ConvertGraphInputsOfDim();
-  } else {
-    return ConvertGraphInputsOfShape();
+  ret = ConvertGraphInputsOfShape();
+  if (ret != RET_OK) {
+    return ret;
   }
-  return ret;
+  if (caffe_model_.input_dim_size() > 0) {
+    ret = ConvertGraphInputsOfDim();
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
+  return RET_OK;
 }
 
 STATUS CaffeModelParser::ConvertGraphOutputs() {

@@ -109,7 +109,12 @@ class ConverterContext {
   void SetGraphOutputTensorNames(const std::vector<std::string> &output_names) {
     graph_output_tensor_names_ = output_names;
   }
-  const std::vector<std::string> GetGraphOutputTensorNames() { return graph_output_tensor_names_; }
+
+  const std::vector<std::string> GetGraphOutputTensorNames() const { return graph_output_tensor_names_; }
+
+  void AddGraphInputTensorNames(const std::string &input_name) { graph_input_tensor_names_.emplace_back(input_name); }
+
+  const std::vector<std::string> GetGraphInputTensorNames() const { return graph_input_tensor_names_; }
 
  private:
   ConverterContext() {}
@@ -118,6 +123,7 @@ class ConverterContext {
   std::map<int32_t, int32_t> graph_input_data_type_map_;
   std::map<int32_t, int32_t> graph_output_data_type_map_;
   std::map<std::string, std::vector<int64_t>> graph_input_tensor_shape_map_;
+  std::vector<std::string> graph_input_tensor_names_;
   std::vector<std::string> graph_output_tensor_names_;
 };
 }  // namespace lite
