@@ -40,8 +40,8 @@ Status InvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     if (num_channels != 3 && num_channels != 1) {
         RETURN_STATUS_UNEXPECTED(
           "Invert: image shape is incorrect, expected num of channels is 1 or  3, "
-	  "but got:" +
-	  std::to_string(num_channels));
+          "but got:" +
+          std::to_string(num_channels));
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
