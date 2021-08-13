@@ -18,12 +18,11 @@
 #define MINDSPORE_CORE_UTILS_VISIBLE_H_
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
-// Because it extremely slow down compile time in mingw,
-// core api exporting is disabled for Windows.
-#define MS_CORE_API
 #ifdef BUILDING_DLL
+#define MS_CORE_API __declspec(dllexport)
 #define MS_EXPORT __declspec(dllexport)
 #else
+#define MS_CORE_API __declspec(dllimport)
 #define MS_EXPORT __declspec(dllimport)
 #endif
 #define MS_LOCAL
