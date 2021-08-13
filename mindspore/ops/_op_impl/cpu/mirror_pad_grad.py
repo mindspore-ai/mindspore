@@ -21,9 +21,11 @@ mirror_pad_grad_op_info = CpuRegOp("MirrorPadGrad") \
     .output(0, "y", "required") \
     .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
     .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I32_Default) \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.F64_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .get_op_info()
 

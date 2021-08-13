@@ -144,8 +144,7 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
         const int bottom_y_index = ceilf(target_y);
         const int left_x_index = floorf(target_x);
         const int right_x_index = ceilf(target_x);
-        const float y_lerp = target_y - top_y_index;
-        const float x_lerp = target_x - left_x_index;
+
         const float top_left = static_cast<float>(
           input_image[((box_index * input_height_ + top_y_index) * input_width_ + left_x_index) * channel_ +
                       pos_channel]);
@@ -158,9 +157,9 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
         const float bottom_right = static_cast<float>(
           input_image[((box_index * input_height_ + bottom_y_index) * input_width_ + right_x_index) * channel_ +
                       pos_channel]);
-        const float top = top_left + (top_right - top_left) * x_lerp;
-        const float bottom = bottom_left + (bottom_right - bottom_left) * x_lerp;
-        output[pos] = top + (bottom - top) * y_lerp;
+        const float top = top_left + (top_right - top_left) * (target_x - left_x_index);
+        const float bottom = bottom_left + (bottom_right - bottom_left) * (target_x - left_x_index);
+        output[pos] = top + (bottom - top) * (target_y - top_y_index);
       } else if (method_ == 3) {
         int y1h = static_cast<int>(y1 * input_height_);
         int x1w = static_cast<int>(x1 * input_width_);
@@ -170,36 +169,37 @@ bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &in
         int h = ((y2h - y1h + 1) > 1) ? y2h - y1h + 1 : 1;
 
         float y_point = (pos_y + 0.5) * (h / static_cast<float>(final_height_)) - 0.5;
-        int top_y_index = floorf(y_point);
-        top_y_index = std::min(std::max(0, top_y_index), h - 1);
-
-        int bottom_y_index = ceilf(y_point);
-        bottom_y_index = std::min(std::max(0, bottom_y_index), h - 1);
+        int top_y_index = std::min(std::max(0, static_cast<int>(floorf(y_point))), h - 1);
+        int bottom_y_index = std::min(std::max(0, static_cast<int>(ceilf(y_point))), h - 1);
 
         float x_point = (pos_x + 0.5) * (w / static_cast<float>(final_width_)) - 0.5;
-        int left_x_index = floorf(x_point);
-        left_x_index = std::min(std::max(0, left_x_index), w - 1);
-
-        int right_x_index = ceilf(x_point);
-        right_x_index = std::min(std::max(0, right_x_index), w - 1);
+        int left_x_index = std::min(std::max(0, static_cast<int>(floorf(x_point))), w - 1);
+        int right_x_index = std::min(std::max(0, static_cast<int>(ceilf(x_point))), w - 1);
 
         const float y_lerp = y_point - top_y_index;
         const float x_lerp = x_point - left_x_index;
-        const int y_top_index = box_index * input_height_ + y1h + top_y_index;
-        const int y_bottom_index = box_index * input_height_ + y1h + bottom_y_index;
 
-        const float top_left =
-          static_cast<float>(input_image[(y_top_index * input_width_ + x1w + left_x_index) * channel_ + pos_channel]);
-        const float top_right =
-          static_cast<float>(input_image[(y_top_index * input_width_ + x1w + right_x_index) * channel_ + pos_channel]);
+        const int y_top_index = std::max(0, y1h + top_y_index);
+        const int y_bottom_index = std::max(0, y1h + bottom_y_index);
+        const int x_left_index = std::max(0, x1w + left_x_index);
+        const int x_right_index = std::max(0, x1w + right_x_index);
+
+        const float top_left = static_cast<float>(
+          input_image[((box_index * input_height_ + y_top_index) * input_width_ + x_left_index) * channel_ +
+                      pos_channel]);
+        const float top_right = static_cast<float>(
+          input_image[((box_index * input_height_ + y_top_index) * input_width_ + x_right_index) * channel_ +
+                      pos_channel]);
         const float bottom_left = static_cast<float>(
-          input_image[(y_bottom_index * input_width_ + x1w + left_x_index) * channel_ + pos_channel]);
+          input_image[((box_index * input_height_ + y_bottom_index) * input_width_ + x_left_index) * channel_ +
+                      pos_channel]);
         const float bottom_right = static_cast<float>(
-          input_image[(y_bottom_index * input_width_ + x1w + right_x_index) * channel_ + pos_channel]);
+          input_image[((box_index * input_height_ + y_bottom_index) * input_width_ + x_right_index) * channel_ +
+                      pos_channel]);
 
-        float ret = top_left * (1 - y_lerp) * (1 - x_lerp) + bottom_right * y_lerp * x_lerp +
-                    top_right * (1 - y_lerp) * x_lerp + bottom_left * y_lerp * (1 - x_lerp);
-        output[pos] = ret;
+        output[pos] = top_left * (1 - y_lerp) * (1 - x_lerp) + bottom_right * y_lerp * x_lerp +
+                      top_right * (1 - y_lerp) * x_lerp + bottom_left * y_lerp * (1 - x_lerp);
+
       } else {
         // Nearest Neighbour
         const int closest_x_index = roundf(target_x);

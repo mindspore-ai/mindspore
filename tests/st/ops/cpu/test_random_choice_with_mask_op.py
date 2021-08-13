@@ -109,8 +109,8 @@ def test_RCWM_1D():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_tensor = Tensor(
         np.array([1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1]).astype(np.bool))
-    expect_index = np.array([[0], [7], [9], [8], [8], [0],
-                             [2], [7], [0], [0]]).astype(np.int32)
+    expect_index = np.array([[11], [0], [8], [2], [9], [7],
+                             [10], [15], [0], [0]]).astype(np.int32)
     expect_mask = np.array(
         [True, True, True, True, True, True, True, True, False, False])
     rcwm = RCWM_1D()
