@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.ops.operations import _quant_ops as Q
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU', device_id=0)
+context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
 
 class Net(nn.Cell):
