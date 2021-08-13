@@ -54,10 +54,10 @@ Status InvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
         output_cv->mat() = cv::Scalar::(255) - input_img;
     }
     *output = std::static_pointer_cast<Tensor>(output_cv);
-  }
+    }
 
-  catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Invert: " + std::string(e.what()));
+    catch (const cv::Exception &e) {
+        RETURN_STATUS_UNEXPECTED("Invert: " + std::string(e.what()));
   }
   return Status::OK();
 }
