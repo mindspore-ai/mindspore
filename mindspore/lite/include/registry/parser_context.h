@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_FRAMEWORK_H_
-#define MINDSPORE_LITE_INCLUDE_REGISTRY_FRAMEWORK_H_
+#ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_PARSER_CONTEXT_H_
+#define MINDSPORE_LITE_INCLUDE_REGISTRY_PARSER_CONTEXT_H_
 
+#include <map>
+#include <string>
 #include "include/lite_utils.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
-namespace lite {
 namespace converter {
 /// \brief FmkType defined frameworks which converter tool supports.
 enum MS_API FmkType : int {
@@ -30,7 +32,19 @@ enum MS_API FmkType : int {
   FmkType_MS = 3,
   FmkType_TFLITE = 4,
 };
+
+/// \brief ConverterParameters defined read-only converter parameters used by users in ModelParser.
+struct MS_API ConverterParameters {
+  FmkType fmk;
+  schema::QuantType quant_type;
+  std::string model_file;
+  std::string weight_file;
+  std::map<std::string, std::string> attrs;
+};
+
+/// \brief ModelParser defined a model parser
+class MS_API ModelParser;
 }  // namespace converter
-}  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_FRAMEWORK_H_
+
+#endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_PARSER_CONTEXT_H_

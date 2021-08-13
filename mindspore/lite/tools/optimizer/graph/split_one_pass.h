@@ -27,7 +27,7 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/transpose_strategy.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
 class SplitOnePass : public Pass {

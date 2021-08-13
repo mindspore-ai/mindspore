@@ -32,7 +32,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::lite::converter::FmkType_TFLITE;
+using mindspore::converter::FmkType_TFLITE;
 namespace mindspore::lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
@@ -105,7 +105,7 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_TFLITE, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_TFLITE, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -546,5 +546,5 @@ int TfliteModelParser::Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_g
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_TFLITE, LiteModelParserCreator<TfliteModelParser>)
+REG_MODEL_PARSER(FmkType_TFLITE, converter::LiteModelParserCreator<TfliteModelParser>)
 }  // namespace mindspore::lite

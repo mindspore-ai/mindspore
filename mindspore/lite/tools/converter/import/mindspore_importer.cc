@@ -119,7 +119,7 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_MS, flag.trainModel, flag.quantType);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_MS, flag.trainModel, flag.quantType);
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;

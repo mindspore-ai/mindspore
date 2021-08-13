@@ -37,7 +37,7 @@
 #include "ops/transpose.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::lite::converter::FmkType_ONNX;
+using mindspore::converter::FmkType_ONNX;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -95,7 +95,7 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_ONNX, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_ONNX, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -253,7 +253,7 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
       continue;
     }
     if (primitive_c->GetAttr(ops::kFormat) == nullptr) {
-      primitive_c->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(Format_NCHW));
+      primitive_c->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
     }
     status = ConvertOpQuantParams(onnx_node, primitive_c);
     if (status != RET_OK) {
@@ -1253,6 +1253,6 @@ int OnnxModelParser::Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graph
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_ONNX, LiteModelParserCreator<OnnxModelParser>)
+REG_MODEL_PARSER(FmkType_ONNX, converter::LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite
 }  // namespace mindspore

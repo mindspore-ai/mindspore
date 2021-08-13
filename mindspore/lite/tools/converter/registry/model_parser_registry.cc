@@ -33,7 +33,7 @@ ModelParserRegistry::ModelParserRegistry(FmkType fmk, ModelParserCreator creator
   model_parser_room[fmk] = creator;
 }
 
-ModelParser *ModelParserRegistry::GetModelParser(FmkType fmk) {
+converter::ModelParser *ModelParserRegistry::GetModelParser(FmkType fmk) {
   auto it = model_parser_room.find(fmk);
   if (it != model_parser_room.end()) {
     auto creator = it->second;

@@ -17,34 +17,17 @@
 #ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H
 #define MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H
 
-#include <map>
 #include <memory>
-#include <string>
 #include "include/lite_utils.h"
-#include "include/registry/framework.h"
-#include "schema/inner/model_generated.h"
+#include "include/registry/parser_context.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace lite {
-namespace converter {
-/// \brief ConverterParameters defined read-only converter parameters used by users in ModelParser.
-struct MS_API ConverterParameters {
-  FmkType fmk;
-  schema::QuantType quant_type;
-  std::string model_file;
-  std::string weight_file;
-  std::map<std::string, std::string> attrs;
-};
-}  // namespace converter
-
-/// \brief ModelParser defined a model parser
-class MS_API ModelParser;
-
-/// \brief ModelParserCreator defined function pointer to get a ModelParser class.
-typedef ModelParser *(*ModelParserCreator)();
-
 namespace registry {
+/// \brief ModelParserCreator defined function pointer to get a ModelParser class.
+typedef converter::ModelParser *(*ModelParserCreator)();
+
 /// \brief ModelParserRegistry defined registration and storage of ModelParser.
 class MS_API ModelParserRegistry {
  public:
@@ -62,7 +45,7 @@ class MS_API ModelParserRegistry {
   /// \param[in] fmk Define identification of a certain framework.
   ///
   /// \return Pointer of ModelParser.
-  static ModelParser *GetModelParser(FmkType fmk);
+  static converter::ModelParser *GetModelParser(FmkType fmk);
 };
 
 /// \brief Defined registering macro to register ModelParser, which called by user directly.

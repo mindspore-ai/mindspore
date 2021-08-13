@@ -35,7 +35,7 @@
 
 namespace mindspore {
 namespace lite {
-class TFModelParser : public ModelParser {
+class TFModelParser : public converter::ModelParser {
  public:
   TFModelParser() = default;
   ~TFModelParser() override = default;
@@ -106,7 +106,7 @@ class TFModelParser : public ModelParser {
   std::vector<std::string> while_cond_branch_name_;
   std::vector<std::string> if_then_branch_name_;
   std::unordered_map<std::string, int> node_output_num_;
-  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
+  schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
   std::map<CNodePtr, FuncGraphPtr> while_cond_map_, while_body_map_, if_then_map_, if_else_map_;
 };
 }  // namespace lite

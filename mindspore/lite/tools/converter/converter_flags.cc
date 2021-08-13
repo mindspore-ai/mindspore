@@ -27,8 +27,9 @@
 #include "tools/converter/converter_context.h"
 
 namespace mindspore {
-namespace lite {
 namespace converter {
+using mindspore::lite::RET_INPUT_PARAM_INVALID;
+using mindspore::lite::RET_OK;
 namespace {
 constexpr int kBase = 10;
 constexpr int kQuantBitNumInt16 = 16;
@@ -168,11 +169,11 @@ int Flags::QuantParamInputCheck() {
 
 int Flags::InitQuantParam() {
   if (this->quantTypeStr == "WeightQuant") {
-    this->quantType = QuantType_WeightQuant;
+    this->quantType = schema::QuantType_WeightQuant;
   } else if (this->quantTypeStr == "PostTraining") {
-    this->quantType = QuantType_PostTraining;
+    this->quantType = schema::QuantType_PostTraining;
   } else if (this->quantTypeStr.empty()) {
-    this->quantType = QuantType_QUANT_NONE;
+    this->quantType = schema::QuantType_QUANT_NONE;
   } else {
     std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining" << std::endl;
     return RET_INPUT_PARAM_INVALID;
@@ -212,10 +213,10 @@ int Flags::InitTrainModel() {
 int Flags::InitInTensorShape() {
   std::string content = this->inTensorShape;
   std::vector<int64_t> shape;
-  auto shape_strs = StrSplit(content, std::string(";"));
+  auto shape_strs = lite::StrSplit(content, std::string(";"));
   for (const auto &shape_str : shape_strs) {
     shape.clear();
-    auto string_split = StrSplit(shape_str, std::string(":"));
+    auto string_split = lite::StrSplit(shape_str, std::string(":"));
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
@@ -224,19 +225,19 @@ int Flags::InitInTensorShape() {
     if (dim_strs.empty()) {
       MS_LOG(ERROR) << "input tensor dim string is empty";
     }
-    auto dims = StrSplit(dim_strs, std::string(","));
+    auto dims = lite::StrSplit(dim_strs, std::string(","));
     if (dims.empty()) {
       MS_LOG(ERROR) << "input tensor dim is empty";
     }
     for (const auto &dim : dims) {
       if (std::stoi(dim) < 0) {
         MS_LOG(ERROR) << "Unsupported dim < 0.";
-        return RET_ERROR;
+        return lite::RET_ERROR;
       } else {
         shape.push_back(std::stoi(dim));
       }
     }
-    ConverterContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
+    lite::ConverterContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
   }
   return RET_OK;
 }
@@ -247,7 +248,7 @@ int Flags::InitConfigFile() {
     const char *delimiter = ";";
     auto relative_path = SplitStringToVector(plugins_path_str, *delimiter);
     for (size_t i = 0; i < relative_path.size(); i++) {
-      this->pluginsPath.push_back(RealPath(relative_path[i].c_str()));
+      this->pluginsPath.push_back(lite::RealPath(relative_path[i].c_str()));
     }
   }
 
@@ -271,9 +272,9 @@ int Flags::Init(int argc, const char **argv) {
   int ret;
   if (argc == 1) {
     std::cout << this->Usage() << std::endl;
-    return RET_SUCCESS_EXIT;
+    return lite::RET_SUCCESS_EXIT;
   }
-  Option<std::string> err = this->ParseFlags(argc, argv);
+  lite::Option<std::string> err = this->ParseFlags(argc, argv);
 
   if (err.IsSome()) {
     std::cerr << err.Get() << std::endl;
@@ -283,7 +284,7 @@ int Flags::Init(int argc, const char **argv) {
 
   if (this->help) {
     std::cout << this->Usage() << std::endl;
-    return RET_SUCCESS_EXIT;
+    return lite::RET_SUCCESS_EXIT;
   }
   if (this->modelFile.empty()) {
     std::cerr << "INPUT MISSING: model file path is necessary" << std::endl;
@@ -488,5 +489,4 @@ std::vector<std::string> SplitStringToVector(const std::string &raw_str, const c
   return res;
 }
 }  // namespace converter
-}  // namespace lite
 }  // namespace mindspore

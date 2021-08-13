@@ -53,7 +53,7 @@ void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *out
   }
 }
 
-std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, lite::converter::FmkType fmk_type) {
+std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, converter::FmkType fmk_type) {
   MS_ASSERT(CNode != nullptr);
   std::vector<Tensor *> tensors;
   for (size_t i = 1; i < cnode->size(); ++i) {

@@ -21,7 +21,7 @@
 #include "include/registry/model_parser_registry.h"
 
 namespace mindspore {
-FuncGraphPtr ModelParserTest::Parse(const lite::converter::ConverterParameters &flag) {
+FuncGraphPtr ModelParserTest::Parse(const converter::ConverterParameters &flag) {
   // construct funcgraph
   res_graph_ = std::make_shared<FuncGraph>();
   auto ret = InitOriginModelStructure();
@@ -160,7 +160,7 @@ int ModelParserTest::BuildGraphOutputs() {
   return lite::RET_OK;
 }
 
-lite::ModelParser *TestModelParserCreator() {
+converter::ModelParser *TestModelParserCreator() {
   auto *model_parser = new (std::nothrow) ModelParserTest();
   if (model_parser == nullptr) {
     MS_LOG(ERROR) << "new model parser failed";

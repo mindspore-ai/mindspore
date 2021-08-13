@@ -29,8 +29,8 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/model_parser_test.h"
 
-using mindspore::lite::converter::ConverterParameters;
-using mindspore::lite::converter::FmkType_CAFFE;
+using mindspore::converter::ConverterParameters;
+using mindspore::converter::FmkType_CAFFE;
 using mindspore::lite::registry::POSITION_BEGIN;
 namespace mindspore {
 class PassRegistryTest : public mindspore::CommonTest {
