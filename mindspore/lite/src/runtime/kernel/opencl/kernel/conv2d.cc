@@ -367,6 +367,7 @@ int Conv2DOpenCLKernel::InitBias() {
   // align bias from C to C4
   auto bias_tensor = in_tensors_.at(2);
   void *src_data = stored_bias_ == nullptr ? bias_tensor->data_c() : stored_bias_;
+  MS_ASSERT(src_data);
   size_t packed_bias_size = UP_ROUND(CO_SLICES_, block_size_.C) * CO_TILE * sizeof_FLT_;
   packed_bias_ = allocator->Malloc(packed_bias_size, lite::opencl::MemType::BUF);
   if (packed_bias_ == nullptr) {

@@ -141,6 +141,8 @@ int LayerNormOpenCLKernel::Initweight() {
   }
   memset(gamma_, 0x01, weight_size);
   memset(beta_, 0x00, weight_size);
+  MS_ASSERT(in_tensors_.at(1)->data_c());
+  MS_ASSERT(in_tensors_.at(INPUT_TENSOR_SIZE_2)->data_c());
 
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {
@@ -187,9 +189,9 @@ int LayerNormOpenCLKernel::Initweight() {
 int LayerNormOpenCLKernel::Prepare() {
   use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
   int ret = Initweight();
-  if (ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Initweight failed ";
-    return RET_ERROR;
+    return ret;
   }
   normalized_shape_size_ = in_tensors_.at(0)->shape().at(normalized_axis_);
   auto allocator = ocl_runtime_->GetAllocator();

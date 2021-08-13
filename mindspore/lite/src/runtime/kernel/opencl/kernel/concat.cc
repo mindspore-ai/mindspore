@@ -34,6 +34,7 @@ int ConcatOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   ImageSize img_size;
   auto dst_data = out_tensors_[0]->data_c();
+  MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
   for (int i = 0; i < in_tensors_.size(); i++) {
@@ -45,7 +46,10 @@ int ConcatOpenCLKernel::RunAxis0() {
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
     auto *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-    ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin, region);
+    if (ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin,
+                                                                 region) != CL_SUCCESS) {
+      MS_LOG(WARNING) << "enqueueCopyImage failed.";
+    }
     dst_origin[1] += region[1];
   }
   return RET_OK;
@@ -219,7 +223,11 @@ int ConcatOpenCLKernel::ConvertWeightToTensor() {
 }
 
 int ConcatOpenCLKernel::Prepare() {
-  ConvertWeightToTensor();
+  int ret = ConvertWeightToTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConvertWeightToTensor failed.";
+    return ret;
+  }
   if (axis_ == 0) {
     if (std::any_of(in_tensors_.begin(), in_tensors_.end(), [](lite::Tensor *t) { return t->shape().size() != 1; })) {
       return RET_OK;
@@ -248,7 +256,7 @@ int ConcatOpenCLKernel::Prepare() {
     return RET_ERROR;
   }
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
-  auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
+  ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
