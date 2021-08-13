@@ -66,7 +66,7 @@ function get_server_id()
     echo ${srv_id}
 }
 
-ret=$(check_hccl_status)
+check_hccl_status
 if [[ $? -eq 1 ]]; then
     echo "wait hccl status timeout, train job failed." | tee -a hccl.log
     exit 1

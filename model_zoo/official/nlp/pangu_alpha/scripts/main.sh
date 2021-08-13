@@ -24,7 +24,7 @@ if [ $# == 5 ]; then
     export RANK_TABLE_FILE=$3
 
     SERVER_ID=$4
-    device_each_server=$((SERVER_NUM / SERVER_NUM))
+    device_each_server=$((RANK_SIZE / SERVER_NUM))
     rank_start=$((${device_each_server} * SERVER_ID))
 
     # 先启动后台任务，最后留一个前台任务查看日志输出

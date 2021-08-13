@@ -87,8 +87,7 @@ def run_train(args_opt):
     os.environ['HCCL_CONNECT_TIMEOUT'] = "6000"
 
     # Set execution mode
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target=args_opt.device_target)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     context.set_context(variable_memory_max_size="31GB")
     # Set parallel context
     if args_opt.distribute == "true":
@@ -195,7 +194,7 @@ def run_train(args_opt):
     model = Model(pangu_alpha_with_grads)
 
     if args_opt.pre_trained:
-        load_checkpoint(args_opt, callback_size,  ds, model, rank)
+        load_checkpoint(args_opt, callback_size, ds, model, rank)
 
     if args_opt.incremental_training:
         from mindspore.train.serialization import load_distributed_checkpoint
