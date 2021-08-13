@@ -197,6 +197,19 @@ TEST_F(MindDataTestExecute, TestCrop) {
   EXPECT_EQ(image.Shape()[1], 15);
 }
 
+TEST_F(MindDataTestExecute, TestFrequencyMasking) {
+  MS_LOG(INFO) << "Doing TestFrequencyMasking.";
+  std::shared_ptr<Tensor> input_tensor_;
+  TensorShape s = TensorShape({6, 2});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input_tensor_));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> frequency_masking_op = std::make_shared<audio::FrequencyMasking>(true, 2);
+  mindspore::dataset::Execute transform({frequency_masking_op});
+  Status status = transform(input_tensor, &input_tensor);
+  EXPECT_TRUE(status.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestTimeMasking) {
   MS_LOG(INFO) << "Doing TestTimeMasking.";
   std::shared_ptr<Tensor> input_tensor_;

@@ -24,6 +24,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -113,6 +114,19 @@ PYBIND_REGISTER(
         THROW_IF_ERROR(bass_biquad->ValidateParams());
         return bass_biquad;
       }));
+  }));
+
+PYBIND_REGISTER(
+  FrequencyMaskingOperation, 1, ([](const py::module *m) {
+    (void)
+      py::class_<audio::FrequencyMaskingOperation, TensorOperation, std::shared_ptr<audio::FrequencyMaskingOperation>>(
+        *m, "FrequencyMaskingOperation")
+        .def(py::init([](bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value) {
+          auto frequency_masking =
+            std::make_shared<audio::FrequencyMaskingOperation>(iid_masks, frequency_mask_param, mask_start, mask_value);
+          THROW_IF_ERROR(frequency_masking->ValidateParams());
+          return frequency_masking;
+        }));
   }));
 
 PYBIND_REGISTER(

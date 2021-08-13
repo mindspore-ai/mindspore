@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing TimeMasking op in DE.
+Testing FrequencyMasking op in DE.
 """
 
 import numpy as np
@@ -25,7 +25,7 @@ from mindspore import log as logger
 
 
 CHANNEL = 2
-FREQ = 20
+FREQ = 30
 TIME = 30
 
 
@@ -57,43 +57,43 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert True
 
 
-def test_func_time_masking_eager_random_input():
-    """ mindspore eager mode normal testcase:time_masking op"""
-    logger.info("test time_masking op")
+def test_func_frequency_masking_eager_random_input():
+    """ mindspore eager mode normal testcase:frequency_masking op"""
+    logger.info("test frequency_masking op")
     spectrogram = next(gen((CHANNEL, FREQ, TIME)))[0]
-    out_put = atf.TimeMasking(False, 3, 1, 10)(spectrogram)
+    out_put = atf.FrequencyMasking(False, 3, 1, 10)(spectrogram)
     assert out_put.shape == (CHANNEL, FREQ, TIME)
 
 
-def test_func_time_masking_eager_precision():
-    """ mindspore eager mode normal testcase:time_masking op"""
-    logger.info("test time_masking op")
+def test_func_frequency_masking_eager_precision():
+    """ mindspore eager mode normal testcase:frequency_masking op"""
+    logger.info("test frequency_masking op")
     spectrogram = np.array([[[0.17274511, 0.85174704, 0.07162686, -0.45436913],
                              [-1.045921, -1.8204843, 0.62333095, -0.09532598],
                              [1.8175547, -0.25779432, -0.58152324, -0.00221091]],
                             [[-1.205032, 0.18922766, -0.5277673, -1.3090396],
                              [1.8914849, -0.97001046, -0.23726775, 0.00525892],
                              [-1.0271876, 0.33526883, 1.7413973, 0.12313101]]]).astype(np.float32)
-    out_ms = atf.TimeMasking(False, 2, 0, 0)(spectrogram)
-    out_benchmark = np.array([[[0., 0., 0.07162686, -0.45436913],
-                               [0., 0., 0.62333095, -0.09532598],
-                               [0., 0., -0.58152324, -0.00221091]],
-                              [[0., 0., -0.5277673, -1.3090396],
-                               [0., 0., -0.23726775, 0.00525892],
-                               [0., 0., 1.7413973, 0.12313101]]]).astype(np.float32)
+    out_ms = atf.FrequencyMasking(False, 2, 0, 0)(spectrogram)
+    out_benchmark = np.array([[[0.0, 0.0, 0.0, 0.0],
+                               [0.0, 0.0, 0.0, 0.0],
+                               [1.8175547, -0.25779432, -0.58152324, -0.00221091]],
+                              [[0.0, 0.0, 0.0, 0.0],
+                               [0.0, 0.0, 0.0, 0.0],
+                               [-1.0271876, 0.33526883, 1.7413973, 0.12313101]]]).astype(np.float32)
     allclose_nparray(out_ms, out_benchmark, 0.0001, 0.0001)
 
 
-def test_func_time_masking_pipeline():
-    """ mindspore pipeline mode normal testcase:time_masking op"""
-    logger.info("test time_masking op, pipeline")
+def test_func_frequency_masking_pipeline():
+    """ mindspore pipeline mode normal testcase:frequency_masking op"""
+    logger.info("test frequency_masking op, pipeline")
 
     generator = gen([CHANNEL, FREQ, TIME])
     data1 = ds.GeneratorDataset(source=generator, column_names=[
         "multi_dimensional_data"])
 
     transforms = [
-        atf.TimeMasking(True, 8)
+        atf.FrequencyMasking(True, 8)
     ]
     data1 = data1.map(operations=transforms, input_columns=[
         "multi_dimensional_data"])
@@ -103,18 +103,18 @@ def test_func_time_masking_pipeline():
     assert out_put.shape == (CHANNEL, FREQ, TIME)
 
 
-def test_time_masking_invalid_input():
-    def test_invalid_param(test_name, iid_masks, time_mask_param, mask_start, error, error_msg):
-        logger.info("Test TimeMasking with wrong params: {0}".format(test_name))
+def test_frequency_masking_invalid_input():
+    def test_invalid_param(test_name, iid_masks, frequency_mask_param, mask_start, error, error_msg):
+        logger.info("Test FrequencyMasking with wrong params: {0}".format(test_name))
         with pytest.raises(error) as error_info:
-            atf.TimeMasking(iid_masks, time_mask_param, mask_start)
+            atf.FrequencyMasking(iid_masks, frequency_mask_param, mask_start)
         assert error_msg in str(error_info.value)
 
-    def test_invalid_input(test_name, iid_masks, time_mask_param, mask_start, error, error_msg):
-        logger.info("Test TimeMasking with wrong params: {0}".format(test_name))
+    def test_invalid_input(test_name, iid_masks, frequency_mask_param, mask_start, error, error_msg):
+        logger.info("Test FrequencyMasking with wrong params: {0}".format(test_name))
         with pytest.raises(error) as error_info:
             spectrogram = next(gen((CHANNEL, FREQ, TIME)))[0]
-            _ = atf.TimeMasking(iid_masks, time_mask_param, mask_start)(spectrogram)
+            _ = atf.FrequencyMasking(iid_masks, frequency_mask_param, mask_start)(spectrogram)
         assert error_msg in str(error_info.value)
 
     test_invalid_param("invalid mask_start", True, 2, -10, ValueError,
@@ -127,11 +127,11 @@ def test_time_masking_invalid_input():
     test_invalid_input("invalid mask_start", False, 2, 100, RuntimeError,
                        "MaskAlongAxis: mask_start should be less than the length of chosen dimension.")
     test_invalid_input("invalid mask_width", False, 200, 2, RuntimeError,
-                       "TimeMasking: time_mask_param should be less than the length of time dimension.")
+                       "FrequencyMasking: frequency_mask_param should be less than the length of frequency dimension.")
 
 
 if __name__ == "__main__":
-    test_func_time_masking_eager_random_input()
-    test_func_time_masking_eager_precision()
-    test_func_time_masking_pipeline()
-    test_time_masking_invalid_input()
+    test_func_frequency_masking_eager_random_input()
+    test_func_frequency_masking_eager_precision()
+    test_func_frequency_masking_pipeline()
+    test_frequency_masking_invalid_input()

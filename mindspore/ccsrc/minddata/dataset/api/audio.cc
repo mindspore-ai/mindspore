@@ -23,6 +23,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
@@ -133,6 +134,27 @@ BassBiquad::BassBiquad(int32_t sample_rate, float gain, float central_freq, floa
 
 std::shared_ptr<TensorOperation> BassBiquad::Parse() {
   return std::make_shared<BassBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
+}
+
+// FrequencyMasking Transform Operation.
+struct FrequencyMasking::Data {
+  Data(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value)
+      : iid_masks_(iid_masks),
+        frequency_mask_param_(frequency_mask_param),
+        mask_start_(mask_start),
+        mask_value_(mask_value) {}
+  int32_t frequency_mask_param_;
+  int32_t mask_start_;
+  bool iid_masks_;
+  double mask_value_;
+};
+
+FrequencyMasking::FrequencyMasking(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value)
+    : data_(std::make_shared<Data>(iid_masks, frequency_mask_param, mask_start, mask_value)) {}
+
+std::shared_ptr<TensorOperation> FrequencyMasking::Parse() {
+  return std::make_shared<FrequencyMaskingOperation>(data_->iid_masks_, data_->frequency_mask_param_,
+                                                     data_->mask_start_, data_->mask_value_);
 }
 
 // TimeMasking Transform Operation.

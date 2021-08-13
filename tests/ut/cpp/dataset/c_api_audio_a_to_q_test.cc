@@ -19,6 +19,8 @@
 
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/execute.h"
+#include "minddata/dataset/include/dataset/transforms.h"
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;
@@ -486,4 +488,65 @@ TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   std::unordered_map<std::string, mindspore::MSTensor> row;
   EXPECT_ERROR(iter->GetNextRow(&row));
+}
+
+TEST_F(MindDataTestPipeline, TestFrequencyMaskingPipeline) {
+  MS_LOG(INFO) << "Doing TestFrequencyMasking Pipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {200, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto frequencymasking = audio::FrequencyMasking(true, 6);
+
+  ds = ds->Map({frequencymasking});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by bandbiquad
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {200, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFrequencyMaskingWrongArgs) {
+  MS_LOG(INFO) << "Doing TestFrequencyMasking with wrong args.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {20, 20}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto frequencymasking = audio::FrequencyMasking(true, -100);
+
+  ds = ds->Map({frequencymasking});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by bandbiquad
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
 }
