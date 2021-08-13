@@ -58,8 +58,8 @@ Status InvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
 
     catch (const cv::Exception &e) {
         RETURN_STATUS_UNEXPECTED("Invert: " + std::string(e.what()));
-  }
-  return Status::OK();
+    }
+    return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore
