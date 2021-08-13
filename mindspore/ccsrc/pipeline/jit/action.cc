@@ -121,30 +121,6 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 
-// Some operators are not defined.
-inline bool ResetCNodeFromLoad(const AnfNodePtr &node) {
-  if (node->isa<CNode>() && node->cast<CNodePtr>()->get_load_flag()) {
-    // Process partial("DeadNode",args) when the graph is loaded.
-    auto operatorPtr = node->cast<CNodePtr>()->input(0);
-    // Set abstract of switch(c,f,t) to null
-    auto prim = GetValueNode<PrimitivePtr>(operatorPtr);
-    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim) ||
-        IsPrimitiveEquals(prim::kPrimPartial, prim)) {
-      node->set_abstract(nullptr);
-      return true;
-    }
-    // If the operator is not a primitive, the abstract will been set to null.
-    // Because there are not some operators in front end, the abstract of primitive should be reserved.
-    if (prim == nullptr) {
-      node->set_abstract(nullptr);
-      return true;
-    }
-    // Previous inferred value
-    return true;
-  }
-  return false;
-}
-
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_spec, bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
@@ -156,17 +132,22 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraph
     engine->Clear();
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
-      const AbstractBasePtr &prev_inferred = node->abstract();
 
       // Handle previous inferred value for CNode if is loaded from MindIR
-      if (res->is_load() && ResetCNodeFromLoad(node)) {
-        continue;
+      if (res->is_load()) {
+        // If the primitive is not defined in front end,keep the inferred value loaded from MindIR.
+        auto primitive = GetCNodePrimitive(node);
+        if (primitive != nullptr && abstract::GetPrimEvaluator(primitive, engine) == nullptr) {
+          MS_LOG(INFO) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
+          continue;
+        }
       }
 
+      const AbstractBasePtr &prev_inferred = node->abstract();
       // Keep previous inferred value for ValueNode if the inferred value is not AbstractFunction.
       if (!node->isa<ValueNode>() || (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>())) {
         node->set_abstract(nullptr);
-        MS_LOG(DEBUG) << "Abstract of node " << node->ToString() << " is set to nullptr";
+        MS_LOG(DEBUG) << "Abstract of node " << node->DebugString() << " is set to nullptr";
       }
     }
   }
@@ -275,7 +256,9 @@ void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &load
     MS_EXCEPTION_IF_NULL(root_type);
     MS_EXCEPTION_IF_NULL(loaded_type);
 
-    if (root_shape->shape() != loaded_shape->shape()) {
+    auto shapeEqu = (root_shape->shape() == loaded_shape->shape()) ||
+                    (root_shape->shape().size() <= 1 && loaded_shape->shape().size() <= 1);
+    if (!shapeEqu) {
       MS_EXCEPTION(ValueError) << "The " << index
                                << " th input shape differ from loaded graph. Input shape: " << root_shape->ToString()
                                << ", input shape of loaded graph: " << loaded_shape->ToString();
@@ -531,8 +514,8 @@ bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes)
         auto func_graph = res->func_graph();
         MS_EXCEPTION_IF_NULL(func_graph);
         func_graph->DumpFuncGraph(fg_name);
-        ExportIR(fg_name + ".dat", func_graph);
         DumpIR(fg_name + ".ir", func_graph);
+        ExportIR(fg_name + ".dat", func_graph);
         MS_LOG(DEBUG) << "Dump " << fg_name << " func graph.";
       }
       counter++;
