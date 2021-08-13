@@ -67,13 +67,10 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
@@ -128,6 +125,13 @@ set(LITE_SRC
     ${LITE_SRC}
     ${KERNEL_REG_SRC}
     )
+
+if(MSLITE_DELEGATE_USE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
+            )
+endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC

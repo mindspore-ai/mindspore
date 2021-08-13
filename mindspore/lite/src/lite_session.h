@@ -31,7 +31,9 @@
 #include "src/executor.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
+#ifdef ENABLE_DELEGATE_USE
 #include "include/api/delegate.h"
+#endif
 #if GPU_OPENCL
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif

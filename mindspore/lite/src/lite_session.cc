@@ -416,10 +416,11 @@ void LiteSession::IsolateOutputTensor() {
           subgraph->set_out_tensor(new_tensor, i);
         }
       }
-
+#ifdef ENABLE_DELEGATE_USE
       if (subgraph->desc().delegate != nullptr) {
         continue;
       }
+#endif
       /* node input and output */
       auto nodes = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
       for (size_t i = 0; i < nodes.size(); i++) {
@@ -576,14 +577,18 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   // find in_kernels and out_kernels for subgraphs
   for (auto kernel : this->kernels_) {
     kernel->FindInoutKernels(this->kernels_);
+#ifdef ENABLE_DELEGATE_USE
     if (kernel->desc().delegate != nullptr) {
       all_kernels.push_back(kernel);
     } else {
+#endif
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
       MS_ASSERT(sub_graph != nullptr);
       auto kernel_in_subgraph = sub_graph->nodes();
       all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
+#ifdef ENABLE_DELEGATE_USE
     }
+#endif
   }
 
   if (!use_mindrt_run) {
@@ -595,9 +600,11 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
 
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
+#ifdef ENABLE_DELEGATE_USE
     if (kernel->desc().delegate != nullptr) {
       continue;
     }
+#endif
     if (IsIsolatedSubGraph(kernel)) {
       static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
     }
@@ -690,6 +697,7 @@ int LiteSession::Init(const Context *context) {
     }
   }
 #endif
+#ifdef ENABLE_DELEGATE_USE
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
     if (delegate_ret == RET_NOT_SUPPORT) {
@@ -701,6 +709,7 @@ int LiteSession::Init(const Context *context) {
       return RET_ERROR;
     }
   }
+#endif
   ret = InitGPURuntime();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
@@ -844,9 +853,11 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
       return RET_ERROR;
     }
     auto ret = RET_OK;
+#ifdef ENABLE_DELEGATE_USE
     if (kernel->desc().delegate != nullptr) {
       ret = kernel->ReSize();
     } else {
+#endif
       if (kernel->subgraph_type() == kernel::kGpuSubGraph) {
 #if GPU_OPENCL
         auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
@@ -856,7 +867,9 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
         auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
         ret = sub_graph->ReSize();
       }
+#ifdef ENABLE_DELEGATE_USE
     }
+#endif
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape is interrupted";
       continue;
