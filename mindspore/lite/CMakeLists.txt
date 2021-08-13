@@ -192,6 +192,10 @@ if(TARGET_HIMIX200 OR TARGET_OHOS_LITE)
   set(ENABLE_MINDRT off)
 endif()
 
+if(MSVC)
+  set(MSLITE_ENABLE_CONVERTER off)
+endif()
+
 message(STATUS "************MindSpore Lite Build Option:************")
 message(STATUS "\tMSLITE_GPU_BACKEND      = \t${MSLITE_GPU_BACKEND}")
 message(STATUS "\tMSLITE_ENABLE_NPU       = \t${MSLITE_ENABLE_NPU}")

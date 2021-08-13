@@ -29,14 +29,10 @@ using mindspore::schema::PrimitiveType_CustomNormalize;
 namespace mindspore::kernel {
 namespace {
 const char kPunctuationsRegex[] = "[.*()\"]";
-const std::map<std::string, std::string> *kRegexTransforms = new (std::nothrow) std::map<std::string, std::string>({
-  {"([\\S]+)n't", "$1 not"},
-  {"([\\S]+)'nt", "$1 not"},
-  {"([\\S]+)'ll", "$1 will"},
-  {"([\\S]+)'re", "$1 are"},
-  {"([\\S]+)'ve", "$1 have"},
-  {"i'm", "i am"},
-});
+const std::map<std::string, std::string> kRegexTransforms = {
+  {"([\\S]+)n't", "$1 not"}, {"([\\S]+)'nt", "$1 not"},  {"([\\S]+)'ll", "$1 will"},
+  {"([\\S]+)'re", "$1 are"}, {"([\\S]+)'ve", "$1 have"}, {"i'm", "i am"},
+};
 const int32_t kMaxStringLength = 300;
 }  // namespace
 
@@ -74,8 +70,7 @@ std::string NormalizeCPUKernel::Normalize(const std::string &str) {
   result = GlobalReplace(result, "\\s('t|'nt|n't|'d|'ll|'s|'m|'ve|'re)([\\s,;:/])", "$1$2");
   result = GlobalReplace(result, "\\s('t|'nt|n't|'d|'ll|'s|'m|'ve|'re)$", "$1");
   // transform shortening to full
-  MS_ASSERT(kRegexTransforms != nullptr);
-  for (auto iter = kRegexTransforms->begin(); iter != kRegexTransforms->end(); ++iter) {
+  for (auto iter = kRegexTransforms.begin(); iter != kRegexTransforms.end(); ++iter) {
     result = GlobalReplace(result, iter->first, iter->second);
   }
   result = GlobalReplace(result, "([?])+", "$1");

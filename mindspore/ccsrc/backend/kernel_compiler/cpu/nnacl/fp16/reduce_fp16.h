@@ -22,8 +22,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ReduceMeanFp16(const int outer_size, const int inner_size, const int axis_size, const float16_t *src_data,
-                   float16_t *dst_data, const int tid, const int thread_num);
+int ReduceMeanFp16(int outer_size, int inner_size, int axis_size, const float16_t *src_data, float16_t *dst_data,
+                   int tid, int thread_num);
 int ReduceMaxFp16(int outer_size, int inner_size, int axis_size, const float16_t *src_data, float16_t *dst_data,
                   int tid, int thread_num);
 int ReduceSumFp16(int outer_size, int inner_size, int axis_size, const float16_t *src_data, float16_t *dst_data,

@@ -37,7 +37,10 @@ int LiteModel::ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *ds
     return RET_ERROR;
   }
   auto primitive = node->primitive_;
-  MS_ASSERT(primitive != nullptr);
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr.";
+    return RET_ERROR;
+  }
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
   int primitive_type = prim->value_type();
   auto creator = CompatRegistry::GetInstance()->GetTransferAttrFunc(SCHEMA_VERSION::SCHEMA_V0, primitive_type);

@@ -20,8 +20,8 @@
 #define MIN_UNIT_FP16 2
 #define MAX_UNIT_FP16 4
 
-void GeneralInputTransformUnitFp16(const float16_t *src_data, float16_t *dst_data, float16_t *matrix_b,
-                                   float16_t *matrix_bt, int src_step, int dst_step, int in_unit) {
+void GeneralInputTransformUnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *matrix_b,
+                                   const float16_t *matrix_bt, int src_step, int dst_step, int in_unit) {
   int len = in_unit * in_unit;
   if (len > MAX_LEN) return;
   float16x8_t src[MAX_LEN];
@@ -44,8 +44,8 @@ void GeneralInputTransformUnitFp16(const float16_t *src_data, float16_t *dst_dat
 }
 
 void GeneralOutputTransformUnitFp16(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
-                                    float16_t *matrix_a, float16_t *matrix_at, int src_step, int dst_step, int in_unit,
-                                    int out_unit) {
+                                    const float16_t *matrix_a, const float16_t *matrix_at, int src_step, int dst_step,
+                                    int in_unit, int out_unit) {
   int src_len = in_unit * in_unit;
   if (src_len > MAX_LEN) {
     return;
@@ -2943,7 +2943,7 @@ void OutputTransform8x7Relu6UnitFp16(const float16_t *src_data, float16_t *dst_d
   }
 }
 
-int SelectOutputUnitFp16(ConvParameter *conv_param) {
+int SelectOutputUnitFp16(const ConvParameter *conv_param) {
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int in_c = conv_param->input_channel_;
@@ -2980,7 +2980,7 @@ int SelectOutputUnitFp16(ConvParameter *conv_param) {
   return unit;
 }
 
-void CheckIfUseWinogradFp16(bool *use_winograd, int *output_unit, ConvParameter *conv_param) {
+void CheckIfUseWinogradFp16(bool *use_winograd, int *output_unit, const ConvParameter *conv_param) {
   if (conv_param->kernel_w_ == conv_param->kernel_h_ && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 &&
       conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1) {
     *output_unit = SelectOutputUnitFp16(conv_param);
