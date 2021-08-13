@@ -15,9 +15,33 @@
 # ============================================================================
 
 python export.py --device_id=0 \
-        --batch_size=32  \
+        --batch_size=1  \
         --number_labels=26  \
-        --ckpt_file=/home/ma-user/work/ckpt/atis_intent/0.9791666666666666_atis_intent-11_155.ckpt  \
+        --ckpt_file=./ckpt/atis_intent/atis_intent-11_155.ckpt  \
         --file_name=atis_intent.mindir  \
+        --file_format=MINDIR  \
+        --device_target=Ascend
+
+python export.py --device_id=0 \
+        --batch_size=1  \
+        --number_labels=5  \
+        --ckpt_file=./ckpt/mrda/mrda-7_2364.ckpt  \
+        --file_name=mrda.mindir  \
+        --file_format=MINDIR  \
+        --device_target=Ascend
+
+python export.py --device_id=0 \
+        --batch_size=1  \
+        --number_labels=42  \
+        --ckpt_file=./ckpt/swda/swda-3_6094.ckpt  \
+        --file_name=swda.mindir  \
+        --file_format=MINDIR  \
+        --device_target=Ascend
+
+python export.py --device_id=0 \
+        --batch_size=1  \
+        --number_labels=2  \
+        --ckpt_file=./ckpt/udc/udc-2_31250.ckpt  \
+        --file_name=udc.mindir  \
         --file_format=MINDIR  \
         --device_target=Ascend
