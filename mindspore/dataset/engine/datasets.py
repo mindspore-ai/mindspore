@@ -2151,6 +2151,9 @@ class BatchDataset(Dataset):
         Per iterator bootstrap callback.
         """
         if self.python_multiprocessing:
+            if self.per_batch_map is None:
+                logger.warning("per_batch_map is None so python_multiprocessing does not work.")
+                return
             arg_q_list = []
             res_q_list = []
 
