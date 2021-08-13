@@ -86,10 +86,10 @@ constexpr auto kTuneBankPath = "tune_bank_path";
 constexpr auto kTbeImplPath = "tbe_impl_path";
 constexpr auto kParaDebugPath = "para_debug_path";
 constexpr auto kMS_BUILD_PROCESS_NUM = "MS_BUILD_PROCESS_NUM";
-constexpr auto kMS_PARA_DEBUG_PATH = "MS_PARA_DEBUG_PATH";
-constexpr auto kTBE_IMPL_PATH = "MS_TBE_IMPL_PATH";
-constexpr auto kTUNE_OPS_NAME = "MS_TUNE_OPS_NAME";
-constexpr auto kDefPath = "/usr/local/HiAI/runtime/ops/op_impl/built-in/ai_core/tbe/";
+constexpr auto kMS_PARA_DEBUG_PATH = "PARA_DEBUG_PATH";
+constexpr auto kTBE_IMPL_PATH = "TBE_IMPL_PATH";
+constexpr auto kTUNE_OPS_NAME = "TUNE_OPS_NAME";
+constexpr auto kDefPath = "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/";
 constexpr auto kBkPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/";
 constexpr int sleep_time = 2;
 constexpr int tune_sleep_time = 10;
@@ -129,20 +129,20 @@ uint32_t GetProcessNum() {
   return process_num;
 }
 
-int StrToInt(const char *env) {
-  if (env == nullptr) {
-    return WARNING;
+int StrToInt(const std::string &env) {
+  if (env == "0") {
+    return DEBUG;
+  } else if (env == "1") {
+    return INFO;
+  } else if (env == "3") {
+    return ERROR;
   }
-  if (strcmp(env, "0") == 0) return DEBUG;
-  if (strcmp(env, "1") == 0) return INFO;
-  if (strcmp(env, "2") == 0) return WARNING;
-  if (strcmp(env, "3") == 0) return ERROR;
   return WARNING;
 }
 
 int GetLogLevel() {
-  static const char *env = std::getenv(kGLOG_v);
-  static int ms_level = StrToInt(env);
+  auto env = common::GetEnv(kGLOG_v);
+  int ms_level = StrToInt(env);
   return ms_level;
 }
 
@@ -176,7 +176,7 @@ std::string GetTbePath() {
     } else if (realpath(kBkPath, real_path)) {
       save_path = real_path;
     } else {
-      MS_LOG(EXCEPTION) << "Can not get access to [" << kDefPath << "] or [" << kBkPath << "]";
+      MS_LOG(WARNING) << "Can not get access to [" << kDefPath << "] or [" << kBkPath << "]";
     }
   }
   return save_path;
@@ -264,9 +264,14 @@ std::string AscendKernelCompileManager::FormatSelectResultProcess(const nlohmann
   auto job_type = GetJsonValue<std::string>(json, kJobType);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
   MS_LOG(DEBUG) << "Job: " << job_type << " post process";
-  PrintProcessLog(json);
+  PrintProcessLog(json, kFusionLogLevel);
   if (json.at(kStatus) == kFailed) {
-    MS_LOG(EXCEPTION) << "Job:" << job_type << " running failed, job_id: " << json.at(kJobId) << ", " << json_name;
+    if (job_type == kCheckSupport) {
+      MS_LOG(WARNING) << "Job:" << job_type << " running failed, job_id: " << json.at(kJobId) << ", " << json_name;
+      return kFailed;
+    } else {
+      MS_LOG(EXCEPTION) << "Job:" << job_type << " running failed, job_id: " << json.at(kJobId) << ", " << json_name;
+    }
   }
   auto res = GetJsonValue<std::string>(json, kResult);
   MS_LOG(INFO) << "Job:" << job_type << " running success, id: " << json.at(kJobId) << ", " << json_name
