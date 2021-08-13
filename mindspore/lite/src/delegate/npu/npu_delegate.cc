@@ -206,6 +206,14 @@ int NPUDelegate::Build(DelegateModel *model) {
 }
 
 NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is NULL!";
+    return nullptr;
+  }
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is NULL!";
+    return nullptr;
+  }
   auto name = kernel->name();
   NPUOp *npu_op = nullptr;
   auto node_type = primitive->value_type();
