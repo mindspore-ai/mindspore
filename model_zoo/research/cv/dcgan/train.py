@@ -22,14 +22,14 @@ import numpy as np
 
 from mindspore import context
 from mindspore import nn, Tensor
-from mindspore.train.callback import CheckpointConfig, _InternalCallbackParam
+from mindspore.train.callback import CheckpointConfig
 from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_group_size
 from src.dataset import create_dataset_imagenet
 from src.config import dcgan_imagenet_cfg as cfg
 from src.generator import Generator
 from src.discriminator import Discriminator
-from src.cell import WithLossCellD, WithLossCellG, ModelCheckpoint
+from src.cell import WithLossCellD, WithLossCellG, DcganModelCheckpoint
 from src.dcgan import DCGAN
 
 if __name__ == '__main__':
@@ -80,9 +80,18 @@ if __name__ == '__main__':
     # checkpoint save
     ckpt_config = CheckpointConfig(save_checkpoint_steps=steps_per_epoch,
                                    keep_checkpoint_max=cfg.epoch_size)
-    ckpt_cb = ModelCheckpoint(config=ckpt_config, directory=args.save_path, prefix='dcgan')
+    ckpt_cb = DcganModelCheckpoint(config=ckpt_config, directory=args.save_path, prefix='dcgan')
 
-    cb_params = _InternalCallbackParam()
+    class CallbackParam(dict):
+        """Internal callback object's parameters."""
+
+        def __getattr__(self, key):
+            return self[key]
+
+        def __setattr__(self, key, value):
+            self[key] = value
+
+    cb_params = CallbackParam()
     cb_params.train_network = dcgan
     cb_params.batch_num = steps_per_epoch
     cb_params.epoch_num = cfg.epoch_size
@@ -105,9 +114,9 @@ if __name__ == '__main__':
             latent_code = Tensor(data["latent_code"])
             netD_loss, netG_loss = dcgan(real_data, latent_code)
             if i % 50 == 0:
-                print("Date time: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "\tepoch: ", epoch, "/",
-                      cfg.epoch_size, "\tstep: ", i, "/", steps_per_epoch, "\tDloss: ", netD_loss, "\tGloss: ",
-                      netG_loss)
+                time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                print("Date time: ", time, "\tepoch: ", epoch, "/", cfg.epoch_size, "\tstep: ", i,
+                      "/", steps_per_epoch, "\tDloss: ", netD_loss, "\tGloss: ", netG_loss)
             D_losses.append(netD_loss.asnumpy())
             G_losses.append(netG_loss.asnumpy())
             cb_params.cur_step_num = cb_params.cur_step_num + 1
