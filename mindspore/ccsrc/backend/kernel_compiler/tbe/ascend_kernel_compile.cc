@@ -388,7 +388,7 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
       auto json_obj = TurnStrToJson(build_result);
       if (json_obj.at(kStatus) == kSuccess) {
         struct TargetJobStatus task_info;
-        QueryResultProcess(json_obj, &task_info);
+        QueryResultProcess(json_obj, &task_info, kFusionLogLevel);
         if (task_info.job_status == kSuccess) {
           MS_LOG(DEBUG) << "Job " << GetJsonValue<std::string>(json_obj, kJobType) << " running success.";
           std::string build_res = GetJsonValue<std::string>(json_obj, kResult);
