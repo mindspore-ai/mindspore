@@ -233,7 +233,7 @@ class GradExecutor {
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
                              const std::vector<AnfNodePtr> &weights, size_t arg_size, const py::args &args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
-  abstract::AbstractBasePtrList GetArgsSpec(const py::args &args, const FuncGraphPtr &bprop_graph);
+  abstract::AbstractBasePtrList GetArgsSpec(const py::list &args, const FuncGraphPtr &bprop_graph);
   // Manage resource for construct forward graph.
   std::string &graph_phase() { return graph_phase_; }
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
