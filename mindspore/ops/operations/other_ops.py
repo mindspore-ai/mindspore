@@ -273,6 +273,9 @@ class CheckValid(PrimitiveWithInfer):
 
     Checks whether the bounding box cross data and data border are valid.
 
+    .. warning::
+        specifying the valid boundary (heights x ratio, weights x ratio).
+
     Inputs:
         - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). Data type must be float16 or float32.
         - **img_metas** (Tensor) - Raw image size information with the format of (height, width, ratio).
@@ -339,6 +342,10 @@ class IOU(PrimitiveWithInfer):
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
 
         \text{IOF} = \frac{\text{Area of Overlap}}{\text{Area of Ground Truth}}
+
+    .. warning::
+        In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
+        and width are scaled by 0.2 internally.
 
     Args:
         mode (string): The mode is used to specify the calculation method,

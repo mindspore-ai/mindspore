@@ -1770,6 +1770,10 @@ class ArgMaxWithValue(PrimitiveWithInfer):
     Note:
         In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
 
+    .. warning::
+        - If there are multiple maximum values, the index of the first maximum value is used.
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+
     Args:
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
@@ -1833,6 +1837,10 @@ class ArgMinWithValue(PrimitiveWithInfer):
 
     Note:
         In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+
+    .. warning::
+        - If there are multiple minimum values, the index of the first minimum value is used.
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
 
     Args:
         axis (int): The dimension to reduce. Default: 0.
@@ -2111,7 +2119,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
           The data type must be float16, float32 or int32.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be non-negative tensor.
           The data type must be int32.
         - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
 
@@ -2170,7 +2178,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
           The data type must be float16, float32 or int32.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be non-negative tensor.
           The data type must be int32.
         - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
 
@@ -2226,7 +2234,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
           With float16, float32 or int32 data type.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be non-negative tensor.
           Data type must be int32.
         - **num_segments** (int) - The value specifies the number of distinct `segment_ids`,
           must be greater than 0.
@@ -2296,6 +2304,9 @@ class Concat(PrimitiveWithInfer):
 
         (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
 
+    .. warning::
+        "axis" is in the range [-len(x.shape), len(x.shape)].
+
     Args:
         axis (int): The specified axis. Default: 0.
 
@@ -2308,7 +2319,7 @@ class Concat(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-          The data type is the same with `input_x`.
+        The data type is the same with `input_x`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -2731,6 +2742,9 @@ class Slice(PrimitiveWithInfer):
 class ReverseV2(PrimitiveWithInfer):
     """
     Reverses specific dimensions of a tensor.
+
+    .. warning::
+        "axis" must be within the rank of "input_x".
 
     Args:
         axis (Union[tuple(int), list(int)): The indices of the dimensions to reverse.
