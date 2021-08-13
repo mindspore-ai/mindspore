@@ -23,7 +23,6 @@
 
 using mindspore::converter::FmkType;
 namespace mindspore {
-namespace lite {
 namespace registry {
 /// \brief ModelParserCreator defined function pointer to get a ModelParser class.
 typedef converter::ModelParser *(*ModelParserCreator)();
@@ -53,9 +52,8 @@ class MS_API ModelParserRegistry {
 /// \param[in] fmk Define identification of a certain framework.
 /// \param[in] parserCreator Define function pointer of creating ModelParser.
 #define REG_MODEL_PARSER(fmk, parserCreator) \
-  static mindspore::lite::registry::ModelParserRegistry g_##type##fmk##ModelParserReg(fmk, parserCreator);
+  static mindspore::registry::ModelParserRegistry g_##type##fmk##ModelParserReg(fmk, parserCreator);
 }  // namespace registry
-}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H

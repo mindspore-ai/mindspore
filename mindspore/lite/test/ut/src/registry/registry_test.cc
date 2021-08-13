@@ -80,12 +80,12 @@ class TestCustomAddInfer : public KernelInterface {
  public:
   TestCustomAddInfer() = default;
   ~TestCustomAddInfer() = default;
-  int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-            const schema::Primitive *primitive) override {
+  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
+               const schema::Primitive *primitive) override {
     (*outputs)[0].SetFormat((*inputs)[0].format());
     (*outputs)[0].SetDataType((*inputs)[0].DataType());
     (*outputs)[0].SetShape((*inputs)[0].Shape());
-    return RET_OK;
+    return kSuccess;
   }
 };
 

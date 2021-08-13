@@ -39,8 +39,8 @@ using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
-using mindspore::lite::registry::CreateKernel;
-using mindspore::lite::registry::KernelDesc;
+using mindspore::registry::CreateKernel;
+using mindspore::registry::KernelDesc;
 #endif
 
 namespace mindspore::lite {

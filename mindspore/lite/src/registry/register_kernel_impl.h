@@ -25,7 +25,7 @@
 #include <set>
 #include "include/registry/register_kernel.h"
 
-namespace mindspore::lite {
+namespace mindspore::registry {
 class RegistryKernelImpl {
  public:
   RegistryKernelImpl() = default;
@@ -36,11 +36,11 @@ class RegistryKernelImpl {
     return &instance;
   }
 
-  int RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type, const std::string &type,
-                      registry::CreateKernel creator);
+  Status RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
+                         const std::string &type, registry::CreateKernel creator);
 
-  int RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
-                registry::CreateKernel creator);
+  Status RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
+                   registry::CreateKernel creator);
 
   virtual registry::CreateKernel GetProviderCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
 
@@ -60,6 +60,6 @@ class RegistryKernelImpl {
   registry::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
   int GetFuncIndex(const registry::KernelDesc &desc);
 };
-}  // namespace mindspore::lite
+}  // namespace mindspore::registry
 
 #endif  // MINDSPORE_LITE_SRC_REGISTRY_REGISTER_KERNEL_IMPL_H_

@@ -26,7 +26,7 @@
 #include "include/model.h"
 
 namespace mindspore {
-namespace lite {
+namespace registry {
 class KernelInterfaceRegistry {
  public:
   static KernelInterfaceRegistry *Instance() {
@@ -36,8 +36,8 @@ class KernelInterfaceRegistry {
 
   std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
                                                               const schema::Primitive *primitive);
-  int CustomReg(const std::string &provider, const std::string &op_type, registry::KernelInterfaceCreator creator);
-  int Reg(const std::string &provider, int op_type, registry::KernelInterfaceCreator creator);
+  Status CustomReg(const std::string &provider, const std::string &op_type, registry::KernelInterfaceCreator creator);
+  Status Reg(const std::string &provider, int op_type, registry::KernelInterfaceCreator creator);
   virtual ~KernelInterfaceRegistry();
 
  private:
@@ -55,7 +55,7 @@ class KernelInterfaceRegistry {
   std::map<std::string, std::map<std::string, registry::KernelInterfaceCreator>> custom_creators_;
   std::map<std::string, std::map<std::string, std::shared_ptr<kernel::KernelInterface>>> custom_kernels_;
 };
-}  // namespace lite
+}  // namespace registry
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_REGISTRY_H_

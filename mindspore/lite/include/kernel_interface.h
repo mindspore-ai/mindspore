@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include "include/api/types.h"
+#include "include/api/status.h"
 #include "include/lite_utils.h"
 #include "schema/model_generated.h"
 
@@ -36,10 +37,10 @@ class MS_API KernelInterface {
   /// \param[in] outputs Define the output tensors of op.
   /// \param[in] primitive Define the attributes of op.
   ///
-  /// \return  STATUS as an error code of inferring, STATUS is defined in errorcode.h..
-  virtual int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-                    const schema::Primitive *primitive) {
-    return 0;
+  /// \return  Status as a status identification of inferring.
+  virtual Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
+                       const schema::Primitive *primitive) {
+    return kSuccess;
   }
 };
 }  // namespace kernel

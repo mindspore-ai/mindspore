@@ -21,22 +21,21 @@
 #include "src/registry/register_kernel_impl.h"
 
 namespace mindspore {
-namespace lite {
 namespace registry {
-int RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
-                                    const std::string &type, CreateKernel creator) {
+Status RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
+                                       const std::string &type, CreateKernel creator) {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
-  return lite::RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
+  return RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
 #endif
 }
 
-int RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int op_type,
-                              CreateKernel creator) {
+Status RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int op_type,
+                                 CreateKernel creator) {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
-  return lite::RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
+  return RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
@@ -45,12 +44,11 @@ int RegisterKernel::RegKernel(const std::string &arch, const std::string &provid
 
 CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDesc *desc) {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
-  return lite::RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
+  return RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
 #else
   MS_LOG(ERROR) << unsuppor_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
 #endif
 }
 }  // namespace registry
-}  // namespace lite
 }  // namespace mindspore

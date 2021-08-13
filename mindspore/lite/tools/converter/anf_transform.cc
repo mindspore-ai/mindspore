@@ -326,7 +326,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  if (!RunExternalPass(old_graph, registry::PassPosition::POSITION_BEGIN)) {
+  if (!RunExternalPass(old_graph, registry::POSITION_BEGIN)) {
     MS_LOG(ERROR) << "Run external pass failed, place is BEGIN";
     return nullptr;
   }
@@ -361,7 +361,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  if (!RunExternalPass(old_graph, registry::PassPosition::POSITION_END)) {
+  if (!RunExternalPass(old_graph, registry::POSITION_END)) {
     MS_LOG(ERROR) << "Run external pass failed, place is END";
     return nullptr;
   }

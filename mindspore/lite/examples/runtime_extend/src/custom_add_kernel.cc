@@ -60,13 +60,13 @@ class CustomAddKernel : public Kernel {
   // if output shape exists value -1, need to be inferred before applying memory for output tensor.
   int PreProcess() {
     if (common::CheckOutputs(outputs_) != lite::RET_OK) {
-      auto ret = lite::registry::RegisterKernelInterface::GetKernelInterface({}, primitive_)
-                   ->Infer(&inputs_, &outputs_, primitive_);
-      if (ret != lite::RET_OK) {
+      auto status =
+        registry::RegisterKernelInterface::GetKernelInterface({}, primitive_)->Infer(&inputs_, &outputs_, primitive_);
+      if (status != kSuccess) {
         std::cerr << "infer failed." << std::endl;
         return lite::RET_ERROR;
       }
-      ret = ReSize();
+      auto ret = ReSize();
       if (ret != lite::RET_OK) {
         std::cerr << "resize failed." << std::endl;
         return ret;
