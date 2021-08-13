@@ -299,8 +299,7 @@ class Profiler:
 
         # Analyze minddata information
         try:
-            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._device_target, self._dev_id,
-                                                    self._output_path)
+            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._dev_id, self._output_path)
             md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
@@ -358,8 +357,7 @@ class Profiler:
 
         # Analyze minddata information
         try:
-            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._device_target, self._dev_id,
-                                                    self._output_path)
+            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._dev_id, self._output_path)
             md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)

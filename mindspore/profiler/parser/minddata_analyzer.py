@@ -32,7 +32,6 @@ class MinddataProfilingAnalyzer:
 
     Args:
         source_dir (str): The source directory for MindData profiling input files.
-        device_target (str): Device target, either 'CPU', 'GPU' or 'Ascend'.
         device_id (str): The device ID.
         output_path (str): The target directory for the analyzed summary. Default: `./`.
 
@@ -42,9 +41,8 @@ class MinddataProfilingAnalyzer:
         ProfilerFileNotFoundException: If any of the MindData profiling input files do not exist.
     """
 
-    def __init__(self, source_dir, device_target, device_id, output_path='./'):
+    def __init__(self, source_dir, device_id, output_path='./'):
         # Validate and save input parameters
-        self._validate_device_target(device_target)
         self._device_id = device_id
         self._source_dir = self._validate_directory(source_dir, 'Source directory')
         self._output_path = self._validate_directory(output_path, 'Output path')
@@ -52,7 +50,7 @@ class MinddataProfilingAnalyzer:
         # Get MindData profiling input filenames
         self._pipeline_path_filename = self._get_pipeline_path_filename(source_dir)
         self._cpu_utilization_path_filename = self._get_cpu_utilization_path_filename(source_dir)
-        self._device_trace_path_filename, self._device_trace_file_flag = \
+        self._device_trace_path_filename, self._device_queue_file_found = \
             self._get_device_trace_path_filename(source_dir)
 
         # Save output filename
@@ -106,38 +104,21 @@ class MinddataProfilingAnalyzer:
             logger.warning('The MindData CPU utilization file <%s> is empty.', self._cpu_utilization_path_filename)
             raise ProfilerRawFileException('The MindData CPU utilization file is empty.')
 
-        # Check if a device trace profiling filename was identified
-        if self._device_trace_file_flag:
-            # Open the dataset iterator (CPU) or device queue (GPU, Ascend) trace profiling file
-            with open(self._device_trace_path_filename, 'r') as device_trace_file:
-                try:
-                    device_trace_info = device_trace_file.readlines()
-                except (TypeError) as path_filename_error:
-                    logger.warning(path_filename_error)
-                    raise ProfilerRawFileException(
-                        'Failed to find the MindData trace profiling file.') from path_filename_error
-            if not device_trace_info:
-                logger.warning('The MindData trace profiling file <%s> is empty.', self._device_trace_path_filename)
-                raise ProfilerRawFileException('The MindData trace profiling file is empty.')
-        else:
-            device_trace_info = None
+        # Open the device queue or dataset iterator trace profiling file
+        with open(self._device_trace_path_filename, 'r') as device_trace_file:
+            try:
+                device_trace_info = device_trace_file.readlines()
+            except (TypeError) as path_filename_error:
+                logger.warning(path_filename_error)
+                raise ProfilerRawFileException(
+                    'Failed to find the MindData trace profiling file.') from path_filename_error
+        if not device_trace_info:
+            logger.warning('The MindData trace profiling file <%s> is empty.', self._device_trace_path_filename)
+            raise ProfilerRawFileException('The MindData trace profiling file is empty.')
 
         # Analyze the MindData profiling file information and save the result
         summary_dict = self._analyze_and_save(pipeline_info, cpu_util_info, device_trace_info)
         return summary_dict
-
-    def _validate_device_target(self, device_target):
-        """
-        Validate the device_target.
-
-        Args:
-            device_target (str): Device target, either 'CPU', 'GPU' or 'Ascend'.
-        """
-        if device_target not in ('CPU', 'GPU', 'Ascend'):
-            msg = 'Invalid device target "', device_target, '". Must be "CPU", "GPU" or "Ascend."'
-            logger.warning(msg)
-            raise ValueError(msg)
-        self._device_target = device_target
 
     @staticmethod
     def _validate_directory(dir_name, dir_type):
@@ -219,41 +200,43 @@ class MinddataProfilingAnalyzer:
     def _get_device_trace_path_filename(self, source_dir):
         """
         Get the MindData device trace profiling full path filename.
-        On CPU, the filename is 'dataset_iterator_profiling_<device_id>.txt'.
-        On GPU and Ascend, the filename is 'device_trace_profiling_<device_id>.txt'.
+        File search order:
+        1) 'device_queue_profiling_<device_id>.txt' and then
+        2) 'dataset_iterator_profiling_<device_id>.txt'.
 
         Args:
             source_dir (str): The source directory for MindData profiling files.
 
         Returns:
             str, the MindData device trace profiling full path filename.
-            bool, flag which indicates if device trace profiling filename has been identified or not
+            bool, flag which indicates if 'device_queue_profiling_<device_id>.txt' has been found or not
         """
-        # Initialize flag that device trace file as correctly identified
-        device_trace_file_flag = True
+        # Initialize variable for MindData device trace profiling filename
+        device_trace_path_filename = ''
+        # Initialize flag that 'device_queue_profiling_<device_id>.txt' has not yet been found
+        device_queue_file_found = False
 
-        # Determine the device trace profiling filename
-        if self._device_target in ('GPU', 'Ascend'):
-            device_trace_template_filename = 'device_queue_profiling_{}.txt'
-        elif self._device_target == 'CPU':
-            device_trace_template_filename = 'dataset_iterator_profiling_{}.txt'
-        # Note: No need to else statement since self._device_target has already been verified to be valid
-
-        device_trace_path_filename = os.path.join(
+        txt_names = [os.path.join(
             source_dir,
-            device_trace_template_filename.format(self._device_id))
+            txt_name.format(self._device_id)) for txt_name in
+                     ('device_queue_profiling_{}.txt', 'dataset_iterator_profiling_{}.txt')]
 
-        try:
-            device_trace_path_filename = validate_and_normalize_path(device_trace_path_filename)
-        except RuntimeError:
-            logger.warning('The MindData profiling path <%s> is invalid.', device_trace_path_filename)
-            device_trace_file_flag = False
+        # Search for a device trace profiling file
+        if os.path.exists(txt_names[0]):
+            device_trace_path_filename = txt_names[0]
+            device_queue_file_found = True
+        elif os.path.exists(txt_names[1]):
+            device_trace_path_filename = txt_names[1]
+        else:
+            logger.warning('A MindData device trace profiling file <%s> nor <%s> cannot be found.',
+                           txt_names[0], txt_names[1])
+            raise ProfilerPathErrorException('A MindData device trace profiling file cannot be found.')
 
-        if device_trace_file_flag and not os.path.isfile(device_trace_path_filename):
+        if not os.path.isfile(device_trace_path_filename):
             logger.warning('The MindData device trace profiling file <%s> is not found.', device_trace_path_filename)
-            device_trace_file_flag = False
+            raise ProfilerFileNotFoundException(device_trace_path_filename)
 
-        return device_trace_path_filename, device_trace_file_flag
+        return device_trace_path_filename, device_queue_file_found
 
     def _get_save_path(self, output_path):
         """
@@ -503,7 +486,8 @@ class MinddataProfilingAnalyzer:
             if record[0] == 0:  # type 0: time record
                 q_time[record[1]].append(record[3])
             elif record[0] == 1:  # type 1: connector size record
-                if self._device_target == 'CPU':
+                # Check if dataset_iterator trace profiling file was found
+                if not self._device_queue_file_found:
                     q_time[2].append(record[4] - prev_time)
                     prev_time = record[4]
 
@@ -704,7 +688,8 @@ class BottleneckAnalyzer:
         for op_id in self.op_ids:
             if op_id == self.op_id_not_exist or self.op_names[op_id] in self.non_multithreaded_ops:
                 continue
-            elif self.avg_cpu_pct_per_worker[op_id] > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM and \
+
+            if self.avg_cpu_pct_per_worker[op_id] > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM and \
                     self.op_names[op_id]:
                 cpu_usage_analysis.append(
                     ("{} is using {}% CPU per worker."
@@ -727,7 +712,8 @@ class BottleneckAnalyzer:
         for op_id in self.op_ids:
             if op_id == self.op_id_not_exist or self.op_names[op_id] in self.non_multithreaded_ops:
                 continue
-            elif self.op_names[op_id] == "Batch":
+
+            if self.op_names[op_id] == "Batch":
                 pass
             else:
                 in_op_id, out_q = self.__get_non_inline_child_recur(
@@ -772,12 +758,12 @@ class BottleneckAnalyzer:
                     self.op_names[op_id] in self.non_multithreaded_ops \
                     or self.op_names[op_id] == "DeviceQueue":
                 continue
-            elif wkr_cpu > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM:
+
+            if wkr_cpu > self._AVG_CPU_UTIL_PCT_PER_WORKER_MAXIMUM:
                 bottleneck = self.pipeline_ops[op_id]
                 suggestion = "{} has high CPU utilization per worker of {}%".format(
                     self.pipeline_ops[op_id], wkr_cpu)
                 suggestion += " Try increasing num_parallel_workers above {}.".format(self.num_workers[op_id])
-                break
             elif wkr_cpu < self._AVG_CPU_UTIL_PCT_PER_WORKER_MINIMUM:
                 in_op_id = self.__get_non_inline_child_recur(op_id)
                 in_q_usage = self.queue_utilization_pct[in_op_id]
@@ -788,7 +774,5 @@ class BottleneckAnalyzer:
                     suggestion = "{} has low CPU utilization per worker of {}%".format(
                         self.pipeline_ops[op_id], wkr_cpu)
                     suggestion += " and abnormal queue usage. Try increasing prefetch_size."
-
-                    break
 
         return [bottleneck], [suggestion]

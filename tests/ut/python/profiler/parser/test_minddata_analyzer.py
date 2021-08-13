@@ -125,7 +125,7 @@ def test_analyze_basic():
         # 1. returned dictionary
         # 2. JSON file
         # 3. CSV file
-        md_analyzer = MinddataProfilingAnalyzer(ANALYZE_FILE_PATH, "CPU", 0, ANALYZE_FILE_PATH)
+        md_analyzer = MinddataProfilingAnalyzer(ANALYZE_FILE_PATH, 0, ANALYZE_FILE_PATH)
         md_summary_dict = md_analyzer.analyze()
 
         # Confirm MindData Profiling analyze summary files are created
