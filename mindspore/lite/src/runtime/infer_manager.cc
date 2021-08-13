@@ -74,9 +74,9 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     MS_LOG(ERROR) << "No input!";
     return RET_ERROR;
   }
-#ifndef ENABLE_CONTROL_TENSORLIST
+#ifndef ENABLE_CONTROLFLOW_TENSORLIST
   if (parameter->type_ == schema::PrimitiveType_Switch) {
-    MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
     return RET_ERROR;
   }
 #endif
@@ -110,7 +110,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     if (out_tensors.at(i) == nullptr) {
       continue;
     }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
     if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
       auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
       auto *tensor_list = reinterpret_cast<TensorList *>(outputs.at(i));
@@ -124,7 +124,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     } else {
 #endif
       TensorC2Tensor(out_tensors.at(i), outputs.at(i));
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
     }
 #endif
     if (ret == NNACL_INFER_INVALID) {

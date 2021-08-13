@@ -90,7 +90,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
-if(MSLITE_CONTROL_TENSORLIST)
+if(MSLITE_CONTROLFLOW_TENSORLIST)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc

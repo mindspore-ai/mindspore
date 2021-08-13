@@ -24,7 +24,7 @@
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
 #include "src/tensor.h"
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
 namespace mindspore::lite {
 /**
  * Tensorlist is a container of vector, in which each element is a tensor object.

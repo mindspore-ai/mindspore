@@ -28,7 +28,7 @@ int RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
   return lite::RegistryKernelImpl::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
 #else
-  MS_LOG(ERROR) << unsuppor_custom_kernel_register_log;
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
 #endif
 }
@@ -38,7 +38,7 @@ int RegisterKernel::RegKernel(const std::string &arch, const std::string &provid
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
   return lite::RegistryKernelImpl::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
 #else
-  MS_LOG(ERROR) << unsuppor_custom_kernel_register_log;
+  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
 #endif
 }
