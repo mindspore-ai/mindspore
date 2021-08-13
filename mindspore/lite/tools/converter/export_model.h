@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-void ExportModelInit(lite::converter::Flags *flag);
+void ExportModelInit(converter::Flags *flag);
 }  // namespace lite
 }  // namespace mindspore
 

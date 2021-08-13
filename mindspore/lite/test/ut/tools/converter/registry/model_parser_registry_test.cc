@@ -19,8 +19,8 @@
 #include "ut/tools/converter/registry/model_parser_test.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-using mindspore::lite::converter::ConverterParameters;
-using mindspore::lite::converter::FmkType_CAFFE;
+using mindspore::converter::ConverterParameters;
+using mindspore::converter::FmkType_CAFFE;
 namespace mindspore {
 class ModelParserRegistryTest : public mindspore::CommonTest {
  public:

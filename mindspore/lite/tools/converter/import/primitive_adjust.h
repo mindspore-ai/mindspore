@@ -24,7 +24,7 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace lite {
 typedef int (*PrimitiveAdjustCreator)(const CNodePtr &value_node);

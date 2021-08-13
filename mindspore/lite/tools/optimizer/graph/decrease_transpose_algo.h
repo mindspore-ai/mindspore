@@ -28,7 +28,7 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/transpose_strategy.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
 class DecreaseTransposeAlgo : public Pass {
@@ -62,7 +62,7 @@ class DecreaseTransposeAlgo : public Pass {
   void ResetSubGraphInput();
   void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   void SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
-  FmkType fmk_type_{lite::converter::FmkType_MS};
+  FmkType fmk_type_{converter::FmkType_MS};
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;
   TransposeStrategy transpose_strategy_;

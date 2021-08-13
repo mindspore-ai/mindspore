@@ -30,7 +30,7 @@
 #include "tools/converter/converter_flags.h"
 #include "src/common/string_util.h"
 
-using mindspore::lite::converter::FmkType_TF;
+using mindspore::converter::FmkType_TF;
 namespace mindspore {
 namespace lite {
 namespace {

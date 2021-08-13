@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace lite {
-class TfliteModelParser : public ModelParser {
+class TfliteModelParser : public converter::ModelParser {
  public:
   TfliteModelParser() = default;
 
@@ -52,7 +52,7 @@ class TfliteModelParser : public ModelParser {
   STATUS ConvertGraphOutputs();
   static STATUS SetTensorQuantParam(const tflite::TensorT *tflite_tensor, std::vector<QuantParamT> *quant_params,
                                     int round_type = 1);
-  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
+  schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace lite
 }  // namespace mindspore

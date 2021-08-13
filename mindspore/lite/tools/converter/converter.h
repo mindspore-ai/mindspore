@@ -39,7 +39,7 @@ class Converter {
   FuncGraphPtr BuildFuncGraph(const converter::Flags &flag);
 
  protected:
-  ModelParser *model_parser_ = nullptr;
+  converter::ModelParser *model_parser_ = nullptr;
   std::unique_ptr<GraphDefTransform> metagraph_transform_ = std::make_unique<GraphDefTransform>();
   std::unique_ptr<AnfTransform> funcgraph_transform_ = std::make_unique<AnfTransform>();
 };

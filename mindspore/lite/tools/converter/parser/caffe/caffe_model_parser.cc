@@ -33,7 +33,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::lite::converter::FmkType_CAFFE;
+using mindspore::converter::FmkType_CAFFE;
 namespace mindspore::lite {
 namespace {
 namespace {
@@ -112,7 +112,7 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_CAFFE, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_CAFFE, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -555,5 +555,5 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
   }
   return layer.name();
 }
-REG_MODEL_PARSER(FmkType_CAFFE, LiteModelParserCreator<CaffeModelParser>)
+REG_MODEL_PARSER(FmkType_CAFFE, converter::LiteModelParserCreator<CaffeModelParser>)
 }  // namespace mindspore::lite

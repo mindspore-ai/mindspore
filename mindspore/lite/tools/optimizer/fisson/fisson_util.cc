@@ -26,7 +26,7 @@
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "nnacl/op_base.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
 std::vector<int64_t> GetSplitPadList(const std::shared_ptr<ops::Conv2DFusion> &ori_conv_prim, int64_t input_h,

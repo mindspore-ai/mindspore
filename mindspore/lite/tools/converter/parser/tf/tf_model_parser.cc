@@ -35,7 +35,7 @@
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::lite::converter::FmkType_TF;
+using mindspore::converter::FmkType_TF;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -576,7 +576,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_TF, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_TF, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -1122,6 +1122,6 @@ int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_TF, LiteModelParserCreator<TFModelParser>)
+REG_MODEL_PARSER(FmkType_TF, converter::LiteModelParserCreator<TFModelParser>)
 }  // namespace lite
 }  // namespace mindspore

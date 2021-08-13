@@ -25,10 +25,10 @@
 #include "tools/converter/model_parser.h"
 
 namespace mindspore {
-class ModelParserTest : public lite::ModelParser {
+class ModelParserTest : public converter::ModelParser {
  public:
   ModelParserTest() = default;
-  FuncGraphPtr Parse(const lite::converter::ConverterParameters &flag) override;
+  FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
  private:
   int InitOriginModelStructure();
@@ -40,7 +40,7 @@ class ModelParserTest : public lite::ModelParser {
   std::vector<std::string> model_structure_;
 };
 
-lite::ModelParser *TestModelParserCreator();
+converter::ModelParser *TestModelParserCreator();
 }  // namespace mindspore
 
 #endif  // LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_MODEL_PARSER_TEST_H

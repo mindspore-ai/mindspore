@@ -105,7 +105,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         return false;
       }
       SetSubGraphOutput(cnode, sub_func_graph);
-      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(2));
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
