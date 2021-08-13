@@ -191,7 +191,11 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   param->keep_dims_ =
     param->keep_dims_ || param->topk_ > 1 || in_tensors_[0]->shape().size() == out_tensors_[0]->shape().size();
 
-  InitWeights();
+  ret = InitWeights();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitWeights failed.";
+    return ret;
+  }
   SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";

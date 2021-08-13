@@ -172,6 +172,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
   }
   auto data_type = indices_tensor->data_type();
   auto data = indices_tensor->data_c();
+  MS_ASSERT(data);
   if (data_type == kNumberTypeInt32) {
     for (int i = 0; i < indices_num; i++) {
       indices_data_[i] = reinterpret_cast<int32_t *>(data)[i];
@@ -205,6 +206,7 @@ int GatherOpenCLKernel::InitWeights() {
 
   auto data_type = indices_tensor->data_type();
   auto data = indices_tensor->data_c();
+  MS_ASSERT(data);
   if (data_type == kNumberTypeInt32) {
     for (int i = 0; i < indices_num; i++) {
       indices_data_[i] = reinterpret_cast<int32_t *>(data)[i];
@@ -242,7 +244,11 @@ int GatherOpenCLKernel::PreProcess() {
 int GatherOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   if (intensor1_is_tensor) {
-    ConvertTensorToweight();
+    int ret = ConvertTensorToweight();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ConvertTensorToweight failed.";
+      return ret;
+    }
   }
   if (ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_.front()->data_c()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
