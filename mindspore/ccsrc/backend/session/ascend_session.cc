@@ -1173,12 +1173,8 @@ void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) 
 void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  bool finish = E2eDump::DumpData(kernel_graph.get(), rank_id_);
-  if (finish) {
-    MS_LOG(DEBUG) << "Dump completed!";
-  } else {
-    MS_LOG(DEBUG) << "Dump has not occurred!";
-  }
+  E2eDump::DumpData(kernel_graph.get(), rank_id_);
+  MS_LOG(DEBUG) << "Finish!";
 }
 
 void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) {
