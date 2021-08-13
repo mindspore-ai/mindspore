@@ -113,7 +113,7 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
       auto dst = static_cast<int8_t *>(output_addr) + data_size_ * slice_param_.size_[1] * start;
       SliceSimpleDim2(src, dst, &slice_param_, data_size_, end - start);
     };
-    CPUKernelUtils::ParallelForAutoSearch(task, slice_param_.size_[0], &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, slice_param_.size_[0], this, &parallel_search_info_);
     return true;
   }
   DoSliceNoParallel(input_addr, output_addr, &slice_param_, data_size_);

@@ -36,9 +36,6 @@ class MulCPUKernel : public MKLCPUKernel {
  private:
   bool need_swap_{false};
 };
-
-MS_REG_CPU_KERNEL(Mul, KernelAttr(), MulCPUKernel);
-MS_REG_CPU_KERNEL_T(Mul, KernelAttr(), ArithmeticCPUKernel, int32_t);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -66,7 +66,7 @@ enum class GraphExecutionStrategy {
     return;                                                                          \
   }
 
-void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num);
+void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num);
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 

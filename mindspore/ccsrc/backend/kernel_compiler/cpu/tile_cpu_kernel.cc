@@ -112,7 +112,7 @@ void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
 
   if (one_dim_tile_) {
     auto task = [&](size_t start, size_t end) { TileSimple(x_addr, y_addr, start, end, &tile_parameter_); };
-    CPUKernelUtils::ParallelForAutoSearch(task, tile_parameter_.fast_outer_size_, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, tile_parameter_.fast_outer_size_, this, &parallel_search_info_);
     return;
   }
 

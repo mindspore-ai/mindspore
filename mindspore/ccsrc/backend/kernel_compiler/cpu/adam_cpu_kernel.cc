@@ -83,7 +83,7 @@ void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &input
       MS_LOG(EXCEPTION) << "AdamFp32 failed.";
     }
   };
-  CPUKernelUtils::ParallelForAutoSearch(task, lens, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
 void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {

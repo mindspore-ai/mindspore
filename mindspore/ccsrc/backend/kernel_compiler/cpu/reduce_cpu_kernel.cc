@@ -139,7 +139,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
             }
           }
         };
-        CPUKernelUtils::ParallelForAutoSearch(task, output_size, &parallel_search_info_);
+        ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
         return true;
       }
     }
