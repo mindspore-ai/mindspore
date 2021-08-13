@@ -139,7 +139,12 @@ class MindRTBackend : public Backend {
   // Construct the GraphCompilerInfo by the compilation results of graph, used in PyNative mode.
   std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const ActorInfo &actor_info,
                                                                 const std::vector<int64_t> *tensors_mask,
-                                                                const std::vector<tensor::TensorPtr> *input_tensors);
+                                                                const std::vector<tensor::TensorPtr> *input_tensors,
+                                                                bool need_erase);
+
+  // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
+  // so the latest single op cache should be erased when cache list size exceeds threshold value.
+  void EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph);
 
   // Split complete kernel graph to single op graph in PyNative back
   // propagation, then compile and run single op graph.
