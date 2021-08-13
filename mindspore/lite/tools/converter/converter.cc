@@ -118,6 +118,14 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
+
+  // set output tensor names to the original names, the output_names is null in nnie converter.
+  auto output_names = ConverterContext::GetInstance()->GetGraphOutputTensorNames();
+  MS_ASSERT(output_names.size() == meta_graphT->outputIndex.size());
+  for (size_t idx = 0; idx < output_names.size(); idx++) {
+    auto &tensor = meta_graph->allTensors.at(meta_graph->outputIndex.at(idx));
+    tensor->name = output_names.at(idx);
+  }
   return meta_graph;
 }
 
