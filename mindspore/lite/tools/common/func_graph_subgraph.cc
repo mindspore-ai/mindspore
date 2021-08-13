@@ -482,7 +482,9 @@ void SubGraph::CreateCNodeForPartialSubGraph(
   // move cnode from belong_graph to subgraph
   for (auto &node : this->GetNodes()) {
     sub_graph->AddNode(node);
-    node->set_func_graph(sub_graph);
+    if (!utils::isa<ValueNodePtr>(node)) {
+      node->set_func_graph(sub_graph);
+    }
     for (size_t i = 0; i < node->inputs().size(); i++) {
       if (node == nullptr || node->inputs().at(i)) {
         continue;

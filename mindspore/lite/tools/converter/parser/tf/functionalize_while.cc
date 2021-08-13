@@ -297,7 +297,9 @@ STATUS FunctionalizeWhile::CondSubgraphAddNodes() {
     } else {
       cond_sub_func_graph_->AddNode(node);
     }
-    node->set_func_graph(cond_sub_func_graph_);
+    if (!utils::isa<ValueNodePtr>(node)) {
+      node->set_func_graph(cond_sub_func_graph_);
+    }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
@@ -418,7 +420,9 @@ STATUS FunctionalizeWhile::BodySubgraphAddNodes() {
     } else {
       body_sub_func_graph_->AddNode(node);
     }
-    node->set_func_graph(body_sub_func_graph_);
+    if (!utils::isa<ValueNodePtr>(node)) {
+      node->set_func_graph(body_sub_func_graph_);
+    }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
