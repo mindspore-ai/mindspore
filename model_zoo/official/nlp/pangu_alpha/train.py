@@ -99,15 +99,11 @@ def run_train(args_opt):
 
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(
-            parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
-            gradients_mean=False,
-            full_batch=bool(args_opt.full_batch),
-            strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path,
-            enable_parallel_optimizer=bool(args_opt.optimizer_shard),
-            strategy_ckpt_save_file='strategy.ckpt')
+            parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, gradients_mean=False,
+            full_batch=bool(args_opt.full_batch), strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path,
+            enable_parallel_optimizer=bool(args_opt.optimizer_shard), strategy_ckpt_save_file='strategy.ckpt')
         set_algo_parameters(elementwise_op_strategy_follow=True)
         _set_multi_subgraphs()
-
     else:
         rank = 0
         device_num = 1
@@ -190,18 +186,7 @@ def run_train(args_opt):
         LossCallBack(callback_size, rank, 0, 0)
     ]
 
-    if args_opt.save_checkpoint:
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args_opt.keep_checkpoint_max,
-                                       keep_checkpoint_max=args_opt.keep_checkpoint_max,
-                                       integrated_save=False,
-                                       append_info=["epoch_num", "step_num"]
-                                       )
-
-        ckpoint_cb = ModelCheckpoint(prefix=args_opt.ckpt_name_prefix + str(rank),
-                                     directory=args_opt.save_checkpoint_path,
-                                     config=ckpt_config)
-
-        callback.append(ckpoint_cb)
+    add_checkpoint_callback_policy(args_opt, callback, rank)
 
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
     pangu_alpha_with_grads = PanguAlphaTrainOneStepWithLossScaleCell(
@@ -225,6 +210,24 @@ def run_train(args_opt):
         load_distributed_checkpoint(model.train_network, ckpt_file_list, strategy)
     print("Dataset size: {}, actual_epoch_num: {}".format(ds.get_dataset_size(), actual_epoch_num), flush=True)
     model.train(actual_epoch_num, ds, callbacks=callback, sink_size=callback_size, dataset_sink_mode=True)
+
+
+def add_checkpoint_callback_policy(args_param, callback, rank_id):
+    r"""
+    Add checkpoint policy to callback.
+    """
+    if args_param.save_checkpoint:
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=args_param.keep_checkpoint_max,
+                                       keep_checkpoint_max=args_param.keep_checkpoint_max,
+                                       integrated_save=False,
+                                       append_info=["epoch_num", "step_num"]
+                                       )
+
+        ckpoint_cb = ModelCheckpoint(prefix=args_param.ckpt_name_prefix + str(rank_id),
+                                     directory=args_param.save_checkpoint_path,
+                                     config=ckpt_config)
+
+        callback.append(ckpoint_cb)
 
 
 def load_checkpoint(args_param, sink_size, dataset, model, rank_id):
