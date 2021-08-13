@@ -43,6 +43,9 @@ class Round {
   // Reinitialize count service and round kernel of this round after scaling operations are done.
   bool ReInitForScaling(uint32_t server_num);
 
+  // After hyper-parameters are updated, some rounds and kernels should be reinitialized.
+  bool ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window);
+
   // Bind a round kernel to this Round. This method should be called after Initialize.
   void BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel);
 
@@ -62,6 +65,9 @@ class Round {
   // The callbacks which will be set to DistributedCounterService.
   void OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
   void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
+
+  // Judge whether the training service is available.
+  bool IsServerAvailable(std::string *reason);
 
   std::string name_;
 

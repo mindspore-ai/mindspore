@@ -60,6 +60,21 @@ bool ParameterAggregator::ReInitForScaling() {
   return true;
 }
 
+bool ParameterAggregator::ReInitForUpdatingHyperParams(size_t aggr_threshold) {
+  required_push_count_ = aggr_threshold;
+  required_pull_count_ = aggr_threshold;
+  auto result = std::find_if(aggregation_kernel_parameters_.begin(), aggregation_kernel_parameters_.end(),
+                             [aggr_threshold](auto aggregation_kernel) {
+                               MS_ERROR_IF_NULL_W_RET_VAL(aggregation_kernel.first, true);
+                               return !aggregation_kernel.first->ReInitForUpdatingHyperParams(aggr_threshold);
+                             });
+  if (result != aggregation_kernel_parameters_.end()) {
+    MS_LOG(ERROR) << "Reinitializing aggregation kernel after scaling failed";
+    return false;
+  }
+  return true;
+}
+
 bool ParameterAggregator::UpdateData(const std::map<std::string, Address> &new_data) {
   std::map<std::string, AddressPtr> &name_to_addr = memory_register_->addresses();
   for (const auto &data : new_data) {

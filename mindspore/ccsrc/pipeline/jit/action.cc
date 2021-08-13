@@ -747,7 +747,8 @@ bool StartServerAction(const ResourcePtr &res) {
     {"updateModel", true, update_model_time_window, true, update_model_threshold},
     {"getModel"},
     {"pullWeight"},
-    {"pushWeight", false, 3000, true, server_num, true}};
+    {"pushWeight", false, 3000, true, server_num, true},
+    {"pushMetrics", false, 3000, true, 1}};
 
   float share_secrets_ratio = ps::PSContext::instance()->share_secrets_ratio();
   uint64_t cipher_time_window = ps::PSContext::instance()->cipher_time_window();

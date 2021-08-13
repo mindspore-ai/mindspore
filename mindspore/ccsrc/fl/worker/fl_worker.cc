@@ -123,8 +123,9 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
         return false;
       }
 
-      if (std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size()) == ps::kClusterSafeMode) {
-        MS_LOG(INFO) << "The server " << server_rank << " is in safemode.";
+      std::string response_str = std::string(reinterpret_cast<char *>((*output)->data()), (*output)->size());
+      if (response_str == ps::kClusterSafeMode || response_str == ps::kJobNotAvailable) {
+        MS_LOG(INFO) << "The server " << server_rank << " is in safemode or finished.";
         std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerRetryDurationForSafeMode));
       } else {
         break;

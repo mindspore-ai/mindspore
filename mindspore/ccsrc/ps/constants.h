@@ -250,6 +250,7 @@ using HandlerAfterScaleOut = std::function<void(void)>;
 using HandlerAfterScaleIn = std::function<void(void)>;
 
 constexpr char kClusterSafeMode[] = "The cluster is in safemode.";
+constexpr char kJobNotAvailable[] = "The server's training job is disabled or finished.";
 
 enum class CustomEvent { kIterationRunning = 0, kIterationCompleted };
 

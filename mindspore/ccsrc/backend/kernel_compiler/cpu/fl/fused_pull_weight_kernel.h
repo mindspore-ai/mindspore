@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
-// The duration between two downloading requests when return code is ResponseCode_SucNotReady.
+// The duration between two PullWeights requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPullWeights = 200;
 template <typename T>
 class FusedPullWeightKernel : public CPUKernel {
@@ -51,9 +51,12 @@ class FusedPullWeightKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(fbb);
 
     total_iteration_++;
+    uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
-    if (total_iteration_ % fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
-        fl::kTrainBeginStepNum) {
+    MS_LOG(INFO) << "Try to pull weights. Local step number: " << total_iteration_
+                 << ", step number needs to run per iteration: " << step_num_per_iteration;
+    if (step_num_per_iteration != fl::kOneStepPerIteration &&
+        total_iteration_ % step_num_per_iteration != fl::kTrainBeginStepNum) {
       return true;
     }
 
@@ -77,6 +80,7 @@ class FusedPullWeightKernel : public CPUKernel {
             0, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPullWeight, &pull_weight_rsp_msg)) {
         MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. Retry later.";
         retcode = schema::ResponseCode_SucNotReady;
+        std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPullWeights));
         continue;
       }
       MS_EXCEPTION_IF_NULL(pull_weight_rsp_msg);
@@ -116,7 +120,7 @@ class FusedPullWeightKernel : public CPUKernel {
         return false;
       }
     }
-    MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
+    MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " success. Iteration: " << fl_iteration_;
     fl::worker::FLWorker::GetInstance().SetIterationRunning();
     return true;
   }
