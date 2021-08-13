@@ -581,7 +581,6 @@ ParameterPtr KernelGraph::NewParameter(const abstract::AbstractBasePtr &abstract
 ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(value_node);
   auto new_value_node = MakeValueNode(value_node)->cast<ValueNodePtr>();
-  new_value_node->set_func_graph(shared_from_this()->cast<FuncGraphPtr>());
   AnfAlgo::SetGraphId(graph_id_, new_value_node.get());
   return new_value_node;
 }
@@ -591,7 +590,6 @@ ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const Va
   MS_EXCEPTION_IF_NULL(value);
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(value);
   new_value_node->set_abstract(abstract);
-  new_value_node->set_func_graph(shared_from_this()->cast<FuncGraphPtr>());
   SetKernelInfoForNode(new_value_node);
   AnfAlgo::SetGraphId(graph_id(), new_value_node.get());
   return new_value_node;
@@ -696,9 +694,8 @@ AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
   } else if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    auto cur_graph = value_node->func_graph()->cast<KernelGraphPtr>();
-    auto make_tuple = cur_graph->TransValueNodeTuple(value_node->abstract(), value_node->value());
-    if (!cur_graph->RemoveValueNodeFromGraph(value_node)) {
+    auto make_tuple = TransValueNodeTuple(value_node->abstract(), value_node->value());
+    if (!RemoveValueNodeFromGraph(value_node)) {
       MS_LOG(WARNING) << "Failed to remove the value_node " << value_node->DebugString();
     }
     return make_tuple;
