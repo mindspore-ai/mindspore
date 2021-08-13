@@ -32,7 +32,7 @@
 #include "utils/utils.h"
 #include "frontend/parallel/context.h"
 #include "debug/env_config_parser.h"
-#include "runtime/device/pynative_profiling.h"
+#include "pipeline/pynative/pynative_profiling.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -66,7 +66,6 @@ std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph *graph) {
 }
 }  // namespace
 constexpr size_t kMinInputSize = 2;
-
 KernelRuntime::~KernelRuntime() {}
 
 bool KernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) { return true; }
@@ -987,10 +986,9 @@ bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_
   end->SyncEvent();
   start->ElapsedTime(&cost_time, end.get());
   auto launch_end_time = GetTime();
-  auto &profiler_inst = PynativeProfiler::GetInstance();
   double launch_start_time = launch_end_time - cost_time / kBasicTimeTransferUnit;
   auto op_launch_start_time_end_time = std::make_pair(launch_start_time, launch_end_time);
-  profiler_inst.SetOpNameAndLaunchTime(std::make_pair(op_name, op_launch_start_time_end_time));
+  PynativeProfiler::SetOpNameAndLaunchTime(std::make_pair(op_name, op_launch_start_time_end_time));
   if (!ret) {
     MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
   }

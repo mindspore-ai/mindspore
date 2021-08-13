@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/session/executor.h"
 #include "backend/session/executor_manager.h"
 #include <algorithm>
 #include <exception>
 #include <set>
 #include "runtime/device/kernel_runtime_manager.h"
+#include "pipeline/pynative/pynative_profiling.h"
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
 #include "pybind_api/ir/tensor_py.h"
@@ -150,13 +152,17 @@ void RunGraphTask::Run() {
 }
 
 void RunOpTask::Run() {
+  PynativeProfiler::SetForwardTimePoint("ForwardRunOpImpl", "Start");
   MS_EXCEPTION_IF_NULL(session_);
   session_->RunOpImpl(graph_info_, op_run_info_, input_tensors_, &outputs_, tensors_mask_);
+  PynativeProfiler::SetForwardTimePoint("ForwardRunOpImpl", "End");
 }
 
 void RunOpsInGraphTask::Run() {
+  PynativeProfiler::SetBackwardTimePoint("BackwardRunOpsInGraphImpl", "Start");
   MS_EXCEPTION_IF_NULL(session_);
   session_->RunOpsInGraphImpl(graph_id_, input_tensors_, &outputs_);
+  PynativeProfiler::SetBackwardTimePoint("BackwardRunOpsInGraphImpl", "End");
 }
 
 void CreateCommGroupTask::Run() { result_ = CommManager::GetInstance().CreateGroupSync(group_name_, ranks_); }
