@@ -280,8 +280,8 @@ class _ConfusionMatrix:
                            common aliases for these indicators.
         calculation_method (bool): If true, the measurement for each sample is calculated first. If it is false, the
                                    confusion  matrix for each image (the output of function '_get_confusion_matrix')
-                                   will be returned. In this way, users should achieve the confusion matrixes for all
-                                   images during an epochand then use '_compute_confusion_matrix_metric' to calculate
+                                   will be returned. In this way, users should achieve the confusion matrix for all
+                                   images during an epoch and then use '_compute_confusion_matrix_metric' to calculate
                                    the metric. Default: False.
         decrease (Union[DecreaseMetric, str]): ["none", "mean", "sum", "mean_batch", "sum_batch", "mean_channel",
                                                 "sum_channel"]
