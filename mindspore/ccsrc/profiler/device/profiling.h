@@ -79,6 +79,10 @@ class Profiler {
   bool GetEnableFlag() const { return enable_flag_; }
   std::string ProfileDataPath() const { return profile_data_path_; }
   void RecordOneStepStartEndInfo(std::string op_name);
+  std::pair<double, double> GetSingleOpLaunchTime() { return single_op_launch_start_time_end_time_; }
+  void SetSingleOpLaunchTime(const std::pair<double, double> &launch_start_end) {
+    single_op_launch_start_time_end_time_ = launch_start_end;
+  }
 
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
@@ -86,6 +90,7 @@ class Profiler {
   uint64_t GetHostMonoTimeStamp() const;
   virtual void SaveProfileData() = 0;
   virtual void ClearInst() = 0;
+  std::pair<double, double> single_op_launch_start_time_end_time_;
   bool enable_flag_ = false;
   std::string profile_data_path_;
   std::unordered_map<std::string, OpInfo> op_info_map_;

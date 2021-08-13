@@ -32,6 +32,7 @@
 #include "ir/tensor.h"
 #include "utils/any.h"
 #include "utils/utils.h"
+#include "utils/profile.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "utils/context/context_extends.h"
@@ -67,6 +68,7 @@
 
 #include "debug/anf_ir_dump.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "runtime/device/pynative_profiling.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -702,6 +704,9 @@ py::object GetDstType(const TypeId &type_id) {
 }  // namespace
 
 py::object RealRunOp(const py::args &args) {
+  auto real_run_op_start = GetTime();
+  auto &profiler_inst = device::PynativeProfiler::GetInstance();
+  profiler_inst.AddRealRunOpIndex();
   CheckPyNativeContext();
   auto executor = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
@@ -709,6 +714,10 @@ py::object RealRunOp(const py::args &args) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   py::object ret = py::none();
   PynativeExecutorTry(executor->forward_executor()->RunOpS, &ret, op_exec_info);
+  auto real_run_op_end = GetTime();
+  profiler_inst.SetRealRunOpName(op_exec_info->op_name);
+  profiler_inst.SetRealRunOpTime(std::make_pair(real_run_op_start, real_run_op_end));
+  profiler_inst.SingleOpProfilingData();
   return ret;
 }
 
