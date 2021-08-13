@@ -25,6 +25,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
+#include "tools/converter/parser/lstm_adjust_pass.h"
 
 namespace mindspore::lite {
 namespace {
@@ -122,6 +123,12 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(lite::converter::FmkType_MS, flag.trainModel, flag.quantType);
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
+    return nullptr;
+  }
+
+  auto lstm_adjust_pass = std::make_shared<opt::LstmAdjustPass>();
+  if (!lstm_adjust_pass->Run(func_graph)) {
+    MS_LOG(ERROR) << "Run mindir lstm adjust failed.";
     return nullptr;
   }
   return func_graph;

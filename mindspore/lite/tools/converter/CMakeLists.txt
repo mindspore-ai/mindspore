@@ -39,6 +39,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unify_format.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/lstm_adjust_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindspore_importer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc

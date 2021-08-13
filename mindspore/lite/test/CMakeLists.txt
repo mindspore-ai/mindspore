@@ -277,6 +277,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/common/storage.cc
             ${LITE_DIR}/tools/converter/parser/inputs_adjust.cc
             ${LITE_DIR}/tools/converter/parser/unify_format.cc
+            ${LITE_DIR}/tools/converter/parser/lstm_adjust_pass.cc
             ${LITE_DIR}/tools/converter/parser/unused_node_remove_pass.cc
             ${LITE_DIR}/tools/converter/parser/conv1d_inout_adjust.cc
             ${LITE_DIR}/tools/converter/parser/tf_bidirection_gru_cf_fusion.cc
