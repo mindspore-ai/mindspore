@@ -21,7 +21,7 @@ import mindspore as ms
 import mindspore.ops.operations as P
 import mindspore.nn as nn
 from mindspore.nn import Cell
-from mindspore.nn import ReLU, BatchNorm2d, Conv2d, Dense, PReLU, ParameterUpdate
+from mindspore.nn import ReLU, BatchNorm2d, Conv2d, ParameterUpdate
 from mindspore.nn import Momentum, SoftmaxCrossEntropyWithLogits
 from mindspore import context, Tensor
 from mindspore.common.parameter import Parameter
@@ -1220,27 +1220,6 @@ def read_file():
     return content
 
 
-# Net contain Prelu,BN,Conv,Dense which have weight value
-class NetRrelu(Cell):
-    def __init__(self, in_channel, out_channel):
-        super().__init__()
-        self.relu = PReLU(channel=in_channel, w=0.25)
-        self.bn = BatchNorm2d(num_features=in_channel)
-        self.conv = Conv2d(in_channels=in_channel, out_channels=out_channel, kernel_size=2, stride=1, has_bias=False,
-                           weight_init='ones', pad_mode='same')
-        self.mean = P.ReduceMean(keep_dims=False)
-        self.fc = Dense(in_channels=out_channel, out_channels=out_channel,
-                        weight_init='ones', bias_init='zeros', has_bias=True)
-
-    def construct(self, x):
-        x = self.relu(x)
-        x = self.bn(x)
-        x = self.conv(x)
-        x = self.mean(x, (2, 3))
-        x = self.fc(x)
-        return x
-
-
 def check_keep_batchnorm_fp32_false(kwargs, level):
     if ms.context.get_context("device_target") == "GPU":
         if level == "O2":
@@ -1272,13 +1251,6 @@ def use_build_train_network_check_cast_num(network, level, inputs, label, cast_n
         castnum = re.findall('Cast', content)
         assert len(castnum) == max(cast_num - diff_cast, 0)
     return out_me
-
-
-def test_auto_mixed_precision_train_prelunet(with_save_graphs):
-    net2 = NetRrelu(3, 12)
-    input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
-    label32 = Tensor(np.zeros([1, 12]).astype(np.float32))
-    use_build_train_network_check_cast_num(net2, "O2", input32, label32, 16)
 
 
 class AssignNet(Cell):
