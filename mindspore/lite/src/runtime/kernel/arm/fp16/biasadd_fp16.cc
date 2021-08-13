@@ -72,10 +72,10 @@ int BiasAddCPUFp16Kernel::Run() {
     ms_context_->allocator->Free(tile_bias);
     return RET_NULL_PTR;
   }
-  BroadcastAddFp16(in, bias_data_, tile_in, tile_bias, out, data_size, bias_param_);
+  auto ret = BroadcastAddFp16(in, bias_data_, tile_in, tile_bias, out, data_size, bias_param_);
   ms_context_->allocator->Free(tile_in);
   ms_context_->allocator->Free(tile_bias);
-  return RET_OK;
+  return ret;
 }
 
 BiasAddCPUFp16Kernel::~BiasAddCPUFp16Kernel() {

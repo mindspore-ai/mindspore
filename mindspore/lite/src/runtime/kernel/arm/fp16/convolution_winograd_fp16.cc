@@ -20,8 +20,8 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ConvolutionWinogradFP16CPUKernel::WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g,
-                                                                  float *matrix_gt, int oc_block) {
+int ConvolutionWinogradFP16CPUKernel::WinogradFilterTransformFp16(const float16_t *weight_data, const float *matrix_g,
+                                                                  const float *matrix_gt, int oc_block) {
   if (oc_block == 0) {
     MS_LOG(ERROR) << "Divide by zero";
     return RET_ERROR;

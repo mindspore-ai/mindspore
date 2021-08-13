@@ -98,7 +98,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       }
     }
     void *bias_origin_tmp = IsTrainable() ? in_tensors_.at(kBiasIndex)->data_c() : origin_bias_;
-    memcpy(bias_data_, bias_origin_tmp, output_channel * sizeof(float16_t));
+    memcpy(bias_data_, bias_origin_tmp, bias_size);
     memset(reinterpret_cast<char *>(bias_data_) + bias_size, 0, size - bias_size);
   }
 

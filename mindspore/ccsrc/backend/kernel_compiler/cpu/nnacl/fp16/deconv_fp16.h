@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, float16_t *dst, int output_channel,
-                   ConvParameter *conv_param);
+                   const ConvParameter *conv_param);
 
 #ifdef __cplusplus
 }

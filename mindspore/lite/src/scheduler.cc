@@ -262,6 +262,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
   int ret = ScheduleGraphToKernels(dst_kernels);
+  FreeOpParameters();
   op_parameters_.clear();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule graph to kernels failed.";
@@ -407,11 +408,13 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
     PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
   if (parame_gen == nullptr) {
     MS_LOG(ERROR) << "parameter generator is nullptr.";
+    FreeOpParameters();
     return RET_NULL_PTR;
   }
   auto parameter = parame_gen(primitive);
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
+    FreeOpParameters();
     return RET_ERROR;
   }
   parameter->quant_type_ = node->quant_type_;
@@ -448,17 +451,24 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
     for (auto &output : outputs) {
       if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
         MS_LOG(ERROR) << "The size of output tensor is too big";
+        FreeOpParameters();
         return RET_ERROR;
       }
     }
   } else if (ret != RET_INFER_INVALID) {
-    for (auto &param : op_parameters_) {
-      free(param.second);
-      param.second = nullptr;
-      return RET_ERROR;
-    }
+    FreeOpParameters();
+    return RET_ERROR;
   }
   return ret;
+}
+
+void Scheduler::FreeOpParameters() {
+  for (auto &param : op_parameters_) {
+    if (param.second != nullptr) {
+      free(param.second);
+      param.second = nullptr;
+    }
+  }
 }
 
 int Scheduler::RestoreSubGraphInput(const lite::Model::Node *partial_node) {
@@ -957,6 +967,8 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
         MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
       }
+    } else if (status == RET_NOT_SUPPORT) {
+      free(op_parameter);
     }
   }
   return nullptr;
@@ -1183,8 +1195,10 @@ std::vector<kernel::LiteKernel *> Scheduler::ScheduleSubGraphToSubGraphKernels(c
 kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src_node, TypeId prefer_data_type) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
+  MS_ASSERT(src_node != nullptr);
   FindNodeInoutTensors(*src_node, &inputs, &outputs);
   auto *kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
+  op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_
                   << ", type: " << PrimitiveTypeName(GetPrimitiveType(src_node->primitive_));
