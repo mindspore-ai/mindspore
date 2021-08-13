@@ -440,7 +440,7 @@ STATUS TfliteModelParser::ConvertGraphInputs() {
       return RET_ERROR;
     }
     parameter->set_abstract(abstract_tensor);
-    parameter->set_name("graph_input-" + std::to_string(tflite_graph_input));
+    parameter->set_name(tensor->name);
     nodes_.insert(std::pair(tflite_graph_input, parameter));
   }
   return RET_OK;

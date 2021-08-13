@@ -351,7 +351,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
         return RET_ERROR;
       }
       parameter->set_abstract(abstract);
-      parameter->set_name("graph_input-" + std::to_string(i));
+      parameter->set_name(layer.name());
       nodes_.insert(std::pair(layer.top(0), parameter));
     }
   }
@@ -383,7 +383,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
       return RET_ERROR;
     }
     parameter->set_abstract(abstract);
-    parameter->set_name("graph_input-" + caffe_model_.input(i));
+    parameter->set_name(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
@@ -415,7 +415,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
       return RET_ERROR;
     }
     parameter->set_abstract(abstract);
-    parameter->set_name("graph_input-" + caffe_model_.input(i));
+    parameter->set_name(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
@@ -426,12 +426,17 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
   if (ret != RET_OK) {
     return ret;
   }
-  if (caffe_model_.input_dim_size() > 0) {
-    return ConvertGraphInputsOfDim();
-  } else {
-    return ConvertGraphInputsOfShape();
+  ret = ConvertGraphInputsOfShape();
+  if (ret != RET_OK) {
+    return ret;
   }
-  return ret;
+  if (caffe_model_.input_dim_size() > 0) {
+    ret = ConvertGraphInputsOfDim();
+    if (ret != RET_OK) {
+      return ret;
+    }
+  }
+  return RET_OK;
 }
 
 STATUS CaffeModelParser::ConvertGraphOutputs() {
