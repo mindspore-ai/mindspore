@@ -54,11 +54,6 @@ struct CommInfo {
   std::string communication_backend;
 };
 
-struct ParameterSliceInfo {
-  Shape slice_shape;
-  RankList group_ranks;
-};
-
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
@@ -76,8 +71,6 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
                     const CNodePtr &pre_node);
 
 bool StrategyFound(std::unordered_map<std::string, ValuePtr> attrs);
-
-bool IsParallelCareNode(const CNodePtr &cnode);
 
 void MarkForwardCNode(const FuncGraphPtr &root);
 
@@ -107,8 +100,6 @@ OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAtt
 
 // Extract strategy from attr
 StrategyPtr ExtractStrategy(const ValuePtr &strategy);
-
-Shapes GetNodeShape(const AnfNodePtr &node);
 
 // Extract shape from anfnode
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
@@ -160,14 +151,7 @@ std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
 
 std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);
 
-using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
-using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
-
-RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode);
-
 std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node);
-
-ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
 
 bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter);
 
