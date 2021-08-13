@@ -309,7 +309,7 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
   }
 }
 
-bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
+void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -379,7 +379,11 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     success = true;
   }
 
-  return success;
+  if (success) {
+    MS_LOG(DEBUG) << "Dump Data completed!";
+  } else {
+    MS_LOG(DEBUG) << "Dump has not occurred!";
+  }
 }
 
 bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger) {
