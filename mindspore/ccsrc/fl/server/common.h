@@ -65,6 +65,20 @@ struct CipherConfig {
   size_t reconstruct_secrets_threshold = 0;
 };
 
+// Every instance is one training loop that runs fl_iteration_num iterations of federated learning.
+// During every instance, server's training process could be controlled by scheduler, which will change the state of
+// this instance.
+enum class InstanceState {
+  // If this instance is in kRunning state, server could communicate with client/worker and the traning process moves
+  // on.
+  kRunning = 0,
+  // The server is not available for client/worker if in kDisable state.
+  kDisable,
+  // The server is not available for client/worker if in kDisable state. And this state means one instance has finished.
+  // In other words, fl_iteration_num iterations are completed.
+  kFinish
+};
+
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::CPUKernel;

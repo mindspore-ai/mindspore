@@ -160,6 +160,10 @@ const std::vector<std::shared_ptr<Round>> &Iteration::rounds() const { return ro
 
 bool Iteration::is_last_iteration_valid() const { return is_last_iteration_valid_; }
 
+void Iteration::set_loss(float loss) { loss_ = loss; }
+
+void Iteration::set_accuracy(float accuracy) { accuracy_ = accuracy; }
+
 bool Iteration::SyncIteration(uint32_t rank) {
   MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
   SyncIterationRequest sync_iter_req;

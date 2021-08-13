@@ -54,7 +54,8 @@ enum class TcpUserCommand {
   kEndLastIter,
   kStartFLJob,
   kUpdateModel,
-  kGetModel
+  kGetModel,
+  kPushMetrics
 };
 
 const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
@@ -75,7 +76,8 @@ const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kEndLastIter, "endLastIter"},
   {TcpUserCommand::kStartFLJob, "startFLJob"},
   {TcpUserCommand::kUpdateModel, "updateModel"},
-  {TcpUserCommand::kGetModel, "getModel"}};
+  {TcpUserCommand::kGetModel, "getModel"},
+  {TcpUserCommand::kPushMetrics, "pushMetrics"}};
 
 class TcpCommunicator : public CommunicatorBase {
  public:
