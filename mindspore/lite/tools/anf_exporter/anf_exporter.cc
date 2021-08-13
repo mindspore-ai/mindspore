@@ -533,12 +533,8 @@ int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
   auto &final_meta_graph = meta_graphT->subGraph.at(final_meta_graph_index);
   meta_graphT->outputIndex.assign(final_meta_graph->outputIndices.begin(), final_meta_graph->outputIndices.end());
 
-  // set output tensor names to the original names, the output_names is null in nnie converter.
-  auto output_names = ConverterContext::GetInstance()->GetGraphOutputTensorNames();
-  MS_ASSERT(output_names.size() == meta_graphT->outputIndex.size());
-  for (size_t idx = 0; idx < output_names.size(); idx++) {
-    auto &tensor = meta_graphT->allTensors.at(meta_graphT->outputIndex.at(idx));
-    tensor->name = output_names.at(idx);
+  for (auto &output_index : meta_graphT->outputIndex) {
+    auto &tensor = meta_graphT->allTensors.at(output_index);
     ConverterContext::GetInstance()->UpdateGraphOutputDType(meta_graphT->outputIndex.size(), tensor->dataType);
   }
 

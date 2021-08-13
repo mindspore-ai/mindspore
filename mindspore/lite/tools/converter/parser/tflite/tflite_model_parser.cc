@@ -243,8 +243,8 @@ STATUS TfliteModelParser::ConvertOps() {
   int op_idx = 0;
   for (auto &op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model_->operator_codes[op->opcode_index])->builtin_code;
-    auto op_type = GetMSOpType(tflite_op_type);
-    auto op_name = op_type + "-" + std::to_string(op_idx);
+    std::string op_type = tflite::EnumNameBuiltinOperator(tflite_op_type);
+    std::string op_name = op_type + "-" + std::to_string(op_idx);
     op_idx++;
     // parse primitive
     MS_LOG(INFO) << "parse node :" << op_name;
