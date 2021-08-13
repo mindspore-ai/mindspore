@@ -196,9 +196,9 @@ void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel
 
 int LiteKernelUtil::SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs) { return -1; }
 
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
   if (kernel->desc().delegate != nullptr) {
     return false;
   }

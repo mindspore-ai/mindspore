@@ -24,6 +24,7 @@
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_slidewindow_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_depthwise_3x3_fp16.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
+#include "nnacl/base/conv_common_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

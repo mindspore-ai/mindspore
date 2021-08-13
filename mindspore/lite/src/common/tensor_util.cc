@@ -44,7 +44,7 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
     if (i == nullptr) {
       continue;
     }
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (i->data_type_ == kObjectTypeTensorType) {
       TensorListC *tensorListC = reinterpret_cast<TensorListC *>(i);
       FreeTensorListC(tensorListC);
@@ -53,7 +53,7 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
 #endif
       free(i);
       i = nullptr;
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
 #endif
   }
@@ -84,7 +84,7 @@ void TensorC2Tensor(const TensorC *src, Tensor *dst) {
   dst->set_shape(std::vector<int>(src->shape_, src->shape_ + src->shape_size_));
 }
 
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 void FreeTensorListC(TensorListC *tensorlist_c) {
   MS_ASSERT(tensorlist_c != nullptr);
   if (tensorlist_c->tensors_ != nullptr) {
@@ -169,7 +169,7 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
   if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem) {
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     // TensorListC ->TensorC
     auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
     if (tensor_list_c == nullptr) {
@@ -193,7 +193,7 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
   int ret = RET_OK;
   for (auto input : inputs) {
     if (input->data_type() == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
       // Tensor ->TensorList -> TensorListC -> TensorC
       auto *tensor_list = reinterpret_cast<TensorList *>(input);
       auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));

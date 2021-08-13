@@ -125,6 +125,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/dynamic_library_loader.cc
         ${LITE_DIR}/src/common/string_util.cc
+        ${LITE_DIR}/src/common/lite_utils.cc
         ${LITE_DIR}/src/common/quant_utils.cc
         ${LITE_DIR}/src/delegate/delegate.cc
         ${LITE_DIR}/src/errorcode.cc
@@ -170,7 +171,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
             )
 endif()
 
-if(ENABLE_MINDRT)
+if(MSLITE_ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt/)
     include_directories(${CORE_DIR}/mindrt/src/)
     set(TEST_LITE_SRC ${TEST_LITE_SRC}

@@ -90,7 +90,7 @@
   do {                                                             \
     if ((size1) < (size2)) {                                       \
       MS_LOG(ERROR) << #size1 << " must not less than " << #size2; \
-      return RET_ERROR;                                            \
+      return lite::RET_ERROR;                                      \
     }                                                              \
   } while (0);
 

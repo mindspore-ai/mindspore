@@ -34,7 +34,7 @@ static constexpr int kBitNum1 = 1;
 static constexpr int kBitNum8 = 8;
 static constexpr int kBitNum16 = 16;
 
-#ifdef ENABLE_WEIGHT_DECODE
+#ifndef WEIGHT_DECODE_CLIP
 namespace mindspore::lite {
 
 template <typename T>

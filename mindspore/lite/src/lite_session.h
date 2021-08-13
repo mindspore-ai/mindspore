@@ -30,8 +30,10 @@
 #include "schema/model_generated.h"
 #include "src/executor.h"
 #include "src/tensor.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#ifdef ENABLE_DELEGATE_USE
+#endif
+#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
 #endif
 #if GPU_OPENCL

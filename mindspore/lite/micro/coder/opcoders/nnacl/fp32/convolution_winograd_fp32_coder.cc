@@ -228,6 +228,7 @@ int ConvolutionWinogradFP32Coder::DoCode(CoderContext *const context) {
             "common_func_fp32.c",
             "fixed_point.c",
             "winograd_utils.c",
+            "conv_common_base.c",
             "minimal_filtering_generator.c",
           });
   if (target_ == kARM32A) {

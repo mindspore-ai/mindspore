@@ -17,7 +17,7 @@
 #include <utility>
 #include <memory>
 #include "include/errorcode.h"
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 #include "include/registry/register_kernel.h"
 #endif
 #include "src/ops/populate/populate_register.h"
@@ -38,13 +38,13 @@ using mindspore::kernel::kCPU;
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelCreator;
 using mindspore::kernel::KernelKey;
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 using mindspore::registry::CreateKernel;
 using mindspore::registry::KernelDesc;
 #endif
 
 namespace mindspore::lite {
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 namespace {
 const char *const kArchCPU = "CPU";
 void KernelKeyToKernelDesc(const KernelKey &key, KernelDesc *desc) {
@@ -138,7 +138,7 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   return kernel_creator != nullptr;
 }
 
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                     const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
                                     kernel::LiteKernel **kernel, const void *primitive) {
@@ -176,7 +176,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
                               OpParameter *parameter, kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   if (key.provider == kBuiltin) {
 #endif
     auto creator = GetCreator(key);
@@ -195,7 +195,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       }
       return RET_ERROR;
     }
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   } else {
     auto ret = GetCustomKernel(in_tensors, out_tensors, ms_ctx, key, kernel, primitive);
     if (ret == RET_OK) {

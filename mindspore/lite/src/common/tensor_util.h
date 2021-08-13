@@ -20,9 +20,11 @@
 
 #include <memory>
 #include "src/tensor.h"
-#include "src/tensorlist.h"
 #include "nnacl/tensor_c.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+#include "src/tensorlist.h"
 #include "nnacl/infer/common_infer.h"
+#endif
 #include "src/cxx_api/tensor/tensor_impl.h"
 
 namespace mindspore {
@@ -31,7 +33,7 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vec
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
 int Tensor2TensorC(const Tensor *src, TensorC *dst);
 void TensorC2Tensor(const TensorC *src, Tensor *dst);
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 void FreeTensorListC(TensorListC *tensorListC);
 int TensorList2TensorListC(TensorList *src, TensorListC *dst);
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst);
