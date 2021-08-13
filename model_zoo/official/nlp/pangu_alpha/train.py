@@ -15,10 +15,11 @@
 """
 PanguAlpha train script
 """
-
+import glob
 import os
 import math
 import time
+
 from mindspore import context
 from mindspore.train.model import Model
 import mindspore.communication.management as D
@@ -30,6 +31,8 @@ import mindspore.common.dtype as mstype
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
+
 from src.dataset import create_dataset
 from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
 from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, PanguAlphaTrainPipelineWithLossScaleCell
@@ -80,6 +83,9 @@ def run_train(args_opt):
     r"""
     The main training process.
     """
+    # Set hccl connect time
+    os.environ['HCCL_CONNECT_TIMEOUT'] = "6000"
+
     # Set execution mode
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=args_opt.device_target)
@@ -97,7 +103,8 @@ def run_train(args_opt):
             gradients_mean=False,
             full_batch=bool(args_opt.full_batch),
             strategy_ckpt_load_file=args_opt.strategy_load_ckpt_path,
-            enable_parallel_optimizer=bool(args_opt.optimizer_shard))
+            enable_parallel_optimizer=bool(args_opt.optimizer_shard),
+            strategy_ckpt_save_file='strategy.ckpt')
         set_algo_parameters(elementwise_op_strategy_follow=True)
         _set_multi_subgraphs()
 
@@ -182,11 +189,29 @@ def run_train(args_opt):
         TimeMonitor(callback_size),
         LossCallBack(callback_size, rank, 0, 0)
     ]
+
+    if args_opt.save_checkpoint:
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=args_opt.keep_checkpoint_max,
+                                       keep_checkpoint_max=args_opt.keep_checkpoint_max,
+                                       integrated_save=False,
+                                       append_info=["epoch_num", "step_num"]
+                                       )
+
+        ckpoint_cb = ModelCheckpoint(prefix=args_opt.ckpt_name_prefix + str(rank),
+                                     directory=args_opt.save_checkpoint_path,
+                                     config=ckpt_config)
+
+        callback.append(ckpoint_cb)
+
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
     pangu_alpha_with_grads = PanguAlphaTrainOneStepWithLossScaleCell(
         pangu_alpha_with_loss, optimizer=optimizer, scale_update_cell=update_cell, enable_global_norm=True,
         config=config)
     model = Model(pangu_alpha_with_grads)
+
+    if args_opt.pre_trained:
+        load_checkpoint(args_opt, callback_size,  ds, model, rank)
+
     if args_opt.incremental_training:
         from mindspore.train.serialization import load_distributed_checkpoint
         strategy = model.infer_train_layout(train_dataset=ds, sink_size=callback_size)
@@ -201,10 +226,50 @@ def run_train(args_opt):
     print("Dataset size: {}, actual_epoch_num: {}".format(ds.get_dataset_size(), actual_epoch_num), flush=True)
     model.train(actual_epoch_num, ds, callbacks=callback, sink_size=callback_size, dataset_sink_mode=True)
 
+
+def load_checkpoint(args_param, sink_size, dataset, model, rank_id):
+    r"""
+    Load checkpoint process.
+    """
+    from mindspore.train.serialization import load_distributed_checkpoint
+    strategy = model.infer_train_layout(train_dataset=dataset, sink_size=sink_size)
+    print("======start load_distributed checkpoint", flush=True)
+    # For 2.6B and 13B models, the number of ckpt files is 512.
+    ckpt_name = args_param.ckpt_name_prefix
+    if os.path.isdir(args_param.pre_trained):
+        ckpt_pattern = os.path.join(args_param.save_checkpoint_path,
+                                    ckpt_name + str(rank_id) + "*.ckpt")
+        ckpt_files = glob.glob(ckpt_pattern)
+        if not ckpt_files:
+            print(f"There is no ckpt file in {args_param.load_ckpt_path}, "
+                  f"pre_trained is unsupported.")
+        else:
+            ckpt_files.sort(key=os.path.getmtime, reverse=True)
+            first_ckpt_file = ckpt_files[0]
+            prefix_first_ckpt_file = first_ckpt_file.split("-")
+            if len(prefix_first_ckpt_file) < 2:
+                print(f"Invalid ckpt file {first_ckpt_file}.")
+            else:
+                ckpt_step = prefix_first_ckpt_file[-1].split("_")[0]
+                ckpt_sink_size = prefix_first_ckpt_file[-1].split("_")[-1]
+                ckpt_file_list = [os.path.join(args_param.save_checkpoint_path,
+                                               f"{ckpt_name}{ckpt_rank}-{ckpt_step}_{ckpt_sink_size}.ckpt") for
+                                  ckpt_rank in
+                                  range(D.get_group_size())]
+                print(f"Loading from path {ckpt_file_list[0]}", flush=True)
+                # Load checkpoint files
+                load_distributed_checkpoint(model.train_network, ckpt_file_list, strategy)
+    else:
+        print(f"please check {args_param.pre_trained} value.")
+
+
 def run_train_pipeline(args_opt):
     r"""
     The main training process in pipeline.
     """
+    # Set hccl connect time
+    os.environ['HCCL_CONNECT_TIMEOUT'] = "6000"
+
     context.set_context(save_graphs=False, mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     context.set_context(variable_memory_max_size="31GB")
     if args_opt.distribute == "true":
@@ -297,6 +362,7 @@ def run_train_pipeline(args_opt):
     model = Model(pangu_alpha_with_grads)
     model.train(actual_epoch_num, ds, callbacks=callback,
                 sink_size=callback_size, dataset_sink_mode=True)
+
 
 if __name__ == "__main__":
     opt = get_args()
