@@ -51,10 +51,11 @@ class TFModelParser : public ModelParser {
                                    std::vector<int64_t> *shape_vector);
   static STATUS SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
-                          std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
-  STATUS ConvertGraphInputsAndConsts(const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes,
+                          std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph = false);
+  STATUS ConvertGraphInputsAndConsts(const std::vector<const tensorflow::NodeDef *> &tf_graph_nodes,
                                      const FuncGraphPtr &anf_graph,
-                                     std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
+                                     std::unordered_map<std::string, AnfNodePtr> *anf_node_map,
+                                     bool root_graph = false);
   static STATUS ConvertInputNodes(const tensorflow::NodeDef &node_def, const std::vector<std::string> &input_names,
                                   const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                                   const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
@@ -104,6 +105,7 @@ class TFModelParser : public ModelParser {
 
   std::unique_ptr<tensorflow::GraphDef> tf_root_graph_;                     // tf root graph def
   std::map<std::string, const tensorflow::NodeDef *> tf_root_graph_nodes_;  // tf root graph node map
+  std::vector<const tensorflow::NodeDef *> tf_root_graph_nodes_vec_;
   std::unordered_map<std::string, AnfNodePtr> anf_root_node_map_;
   std::vector<std::string> graph_input_names_;
   std::vector<std::string> graph_output_names_;
