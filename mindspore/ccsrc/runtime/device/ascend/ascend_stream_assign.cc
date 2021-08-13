@@ -234,7 +234,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     SubModuleId module = SubModuleId::SM_SESSION;
     std::string name = "assign_stream." + std::to_string(graph_ptr->graph_id());
     const std::vector<CNodePtr> &exec_order = graph_ptr->execution_order();
-    mindspore::RDR::RecordStreamExecOrder(module, name, exec_order);
+    (void)mindspore::RDR::RecordStreamExecOrder(module, name, exec_order);
 #endif
     graph_ptr->PrintGraphExecuteOrder();
 
