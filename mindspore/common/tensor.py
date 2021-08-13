@@ -734,7 +734,6 @@ class Tensor(Tensor_):
             axis1, axis2 = axis2, axis1
 
         perm = tuple(range(0, self.ndim))
-        new_perm = None
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
                 perm[axis1+1:axis2] + perm[axis1:axis1+1] + perm[axis2+1:]

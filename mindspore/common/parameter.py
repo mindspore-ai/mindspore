@@ -499,7 +499,7 @@ class Parameter(Tensor_):
         current_tensor_is_init = isinstance(self, Tensor) and not self.has_init
 
         if incoming_tensor_is_init and not current_tensor_is_init:
-            raise TypeError("Parameter is a `Tensor` and not initializered, `data` for `set_data`"
+            raise TypeError("Parameter is a `Tensor` and not initialized, `data` for `set_data`"
                             "should be a Tensor. If you want to update it by Tensor, call method"
                             "`init_parameters_data` of `Cell` to init and replace all the Parameter of"
                             "network, then call this method.")
@@ -515,7 +515,7 @@ class Parameter(Tensor_):
                 from mindspore.ops import functional as F
                 data = F.cast(data, self.dtype)
         if isinstance(data, Tensor) and data.has_init:
-            # The parameter has been initializered, directly update by the data
+            # The parameter has been initialized, directly update by the data
             if current_tensor_is_init:
                 self._update_tensor_data(data.init_data())
             else:

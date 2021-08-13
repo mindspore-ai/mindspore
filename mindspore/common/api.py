@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -169,7 +169,6 @@ class _MindsporeFunctionExecutor:
         key = generate_arguments_key(dic)
         phase = generate_name + '.' + str(key)
         if phase not in ms_compile_cache.keys():
-            is_compile = False
             if self.obj is None:
                 is_compile = self._graph_executor.compile(self.fn, args_list, phase, True, "")
             else:

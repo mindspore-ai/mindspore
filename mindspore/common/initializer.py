@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ def _register(*aliases):
 def _assignment(arr, num):
     """Assign the value of `num` to `arr`."""
     if arr.shape == ():
-        arr = arr.reshape((1))
+        arr = arr.reshape(1)
         arr[:] = num
         arr = arr.reshape(())
     else:
@@ -155,9 +155,8 @@ def _calculate_fan_in_and_fan_out(shape):
         num_input_fmaps = shape[1]
         num_output_fmaps = shape[0]
         receptive_field_size = 1
-        if dimensions > 2:
-            for i in range(2, dimensions):
-                receptive_field_size *= shape[i]
+        for i in range(2, dimensions):
+            receptive_field_size *= shape[i]
         fan_in = num_input_fmaps * receptive_field_size
         fan_out = num_output_fmaps * receptive_field_size
     return fan_in, fan_out
