@@ -253,8 +253,19 @@ def run_train_pipeline(args_opt):
     pangu_alpha_with_grads = PanguAlphaTrainPipelineWithLossScaleCell(
         pangu_alpha_with_loss, optimizer=optimizer, config=config, scale_update_cell=update_cell)
     if args_opt.train_and_eval_mode:
-        raise ValueError("The pipeline train_and_eval_mode is not supported yet")
-    model = Model(pangu_alpha_with_grads)
+        ds_eval = create_dataset(config.batch_size // config.micro_size, data_path=eval_cache_url,
+                                 device_num=stage_device_num, rank=rank_id % stage_device_num, eod_reset=True,
+                                 data_start_index=0, full_batch=bool(args_opt.full_batch),
+                                 column_name=args_opt.data_column_name,
+                                 num_samples=args_opt.eval_steps * config.batch_size)
+        ppl_metric = PPLMetric(config.seq_length)
+        pangu_alpha_with_loss_eval_net = _VirtualDatasetCell(PanguAlphaWithLoss(config, pangu_alpha, loss))
+        model = Model(pangu_alpha_with_grads, eval_network=pangu_alpha_with_loss_eval_net, metrics={"ppl": ppl_metric})
+        model.build(ds, ds_eval, sink_size=callback_size)
+        eval_callback = EvalCallBack(model, ds_eval, ppl_metric)
+        callback.append(eval_callback)
+    else:
+        model = Model(pangu_alpha_with_grads)
     model.train(actual_epoch_num, ds, callbacks=callback,
                 sink_size=callback_size, dataset_sink_mode=True)
 
