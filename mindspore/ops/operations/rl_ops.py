@@ -36,12 +36,12 @@ class BufferSample(PrimitiveWithInfer):
         batch_size (int64): The size of the sampled data, lessequal to `capacity`.
         buffer_shape (tuple(shape)): The shape of an buffer.
         buffer_dtype (tuple(type)): The type of an buffer.
+        seed (int64): Random seed for sample. Default: 0. If use the default seed, it will generate a ramdom
+        one in kernel. Set a number other than `0` to keep a specific seed.
 
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
          each tensor is described by the `buffer_shape` and `buffer_type`.
-        - **indexes** (tuple(int32)) - The position list in replaybuffer,
-         the size equal to `batch_size`.
         - **count** (Parameter) - The count mean the real available size of the buffer,
          data type: int32.
         - **head** (Parameter) - The position of the first data in buffer, data type: int32.
@@ -69,8 +69,7 @@ class BufferSample(PrimitiveWithInfer):
                       Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
                       Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
         >>> buffer_sample = ops.BufferSample(capacity, batch_size, shapes, types)
-        >>> indexes = Parameter(Tensor([0, 2, 4, 3, 8], ms.int32), name="index")
-        >>> output = buffer_sample(buffer, indexes, count, head)
+        >>> output = buffer_sample(buffer, count, head)
         >>> print(output)
             (Tensor(shape=[5, 4], dtype=Float32, value=
                 [[ 0.00000000e+00, 1.00000000e+00, 2.00000000e+00, 3.00000000e+00],
@@ -99,7 +98,7 @@ class BufferSample(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, capacity, batch_size, buffer_shape, buffer_dtype):
+    def __init__(self, capacity, batch_size, buffer_shape, buffer_dtype, seed=0):
         """Initialize BufferSample."""
         self.init_prim_io_names(inputs=["buffer"], outputs=["sample"])
         validator.check_value_type("shape of init data", buffer_shape, [tuple, list], self.name)
@@ -110,6 +109,7 @@ class BufferSample(PrimitiveWithInfer):
         self._n = len(buffer_shape)
         validator.check_int(self._batch_size, capacity, Rel.LE, "batchsize", self.name)
         self.add_prim_attr('capacity', capacity)
+        self.add_prim_attr('seed', seed)
         buffer_elements = []
         for shape in buffer_shape:
             buffer_elements.append(reduce(lambda x, y: x * y, shape))
@@ -119,17 +119,16 @@ class BufferSample(PrimitiveWithInfer):
         if context.get_context('device_target') == "Ascend":
             self.add_prim_attr('device_target', "CPU")
 
-    def infer_shape(self, data_shape, index_shape, count_shape, head_shape):
+    def infer_shape(self, data_shape, count_shape, head_shape):
         validator.check_value_type("shape of data", data_shape, [tuple, list], self.name)
         out_shapes = []
         for i in range(self._n):
             out_shapes.append((self._batch_size,) + self._buffer_shape[i])
         return tuple(out_shapes)
 
-    def infer_dtype(self, data_type, index_type, count_type, head_type):
+    def infer_dtype(self, data_type, count_type, head_type):
         validator.check_type_name("count type", count_type, (mstype.int32), self.name)
         validator.check_type_name("head type", head_type, (mstype.int32), self.name)
-        validator.check_type_name("index type", index_type, (mstype.int64, mstype.int32), self.name)
         return tuple(self._buffer_dtype)
 
 class BufferAppend(PrimitiveWithInfer):

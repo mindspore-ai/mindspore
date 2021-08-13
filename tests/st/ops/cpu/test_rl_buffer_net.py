@@ -45,9 +45,6 @@ class RLBuffer(nn.Cell):
         self.buffer_get = P.BufferGetItem(self._capacity, shapes, types)
         self.buffer_sample = P.BufferSample(
             self._capacity, batch_size, shapes, types)
-        self.dummy_tensor = Tensor(np.ones(shape=[batch_size]), ms.bool_)
-        self.rnd_choice_mask = P.RandomChoiceWithMask(count=batch_size)
-        self.reshape = P.Reshape()
 
     @ms_function
     def append(self, exps):
@@ -59,9 +56,7 @@ class RLBuffer(nn.Cell):
 
     @ms_function
     def sample(self):
-        index, _ = self.rnd_choice_mask(self.dummy_tensor)
-        index = self.reshape(index, (self._batch_size,))
-        return self.buffer_sample(self.buffer, index, self.count, self.head)
+        return self.buffer_sample(self.buffer, self.count, self.head)
 
 
 s = Tensor(np.array([2, 2, 2, 2]), ms.float32)

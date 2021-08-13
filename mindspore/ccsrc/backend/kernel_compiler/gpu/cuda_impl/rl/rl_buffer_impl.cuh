@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RL_BUFFER_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RL_BUFFER_IMPL_H_
-
+#include <curand_kernel.h>
 #include "runtime/device/gpu/cuda_common.h"
 void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
                   unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream);
@@ -29,5 +29,5 @@ void CheckBatchSize(const int *count, const int *head, const size_t batch_size, 
                     cudaStream_t cuda_stream);
 void BufferSample(const size_t size, const size_t one_element, const int *index, const unsigned char *buffer,
                   unsigned char *out, cudaStream_t cuda_stream);
-
+void RandomGen(const int size, curandState *globalState, const int &seedc, float *out, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAM_IMPL_H_
