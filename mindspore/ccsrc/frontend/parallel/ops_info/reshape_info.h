@@ -60,7 +60,7 @@ class ReshapeInfo : public OperatorInfo {
   void set_next_operator_index(int64_t next_index) { next_operator_index_ = next_index; }
   Status GenetateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
                                const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs, int64_t out_index,
-                               int64_t in_index, bool is_prev_param);
+                               int64_t in_index, bool is_prev_param, bool is_next_reshape);
   Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int64_t stage_id) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
