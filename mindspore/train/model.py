@@ -598,8 +598,8 @@ class Model:
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
             If sink_size > 0, each epoch the dataset can be traversed unlimited times until you get sink_size
             elements of the dataset. Next epoch continues to traverse from the end position of the previous traversal.
-            The interface builds the compute graphs and then executes the compute graphs,
-            however, when the 'model.build' is executed first, it only performs the graphs execution.
+            The interface builds the computational graphs and then executes the computational graphs.
+            However, when the 'model.build' is executed first, it only performs the graphs execution.
 
         Args:
             epoch (int): Generally, total number of iterations on the data per epoch.
@@ -657,21 +657,21 @@ class Model:
 
     def build(self, train_dataset=None, valid_dataset=None, sink_size=-1):
         """
-        Build compute graphs and data graphs with the sink mode.
+        Build computational graphs and data graphs with the sink mode.
 
         .. warning::
             This is an experimental prototype that is subject to change and/or deletion.
 
         Note:
             Pre-build process only supports `GRAPH_MODE` and `Ascend` target currently.
-            The interface builds the compute graphs, when the interface is executed first,
+            The interface builds the computational graphs, when the interface is executed first,
             'model.train' only performs the graphs execution.
-            Only support dataset sink mode.
+            It only support dataset sink mode.
 
         Args:
             train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
                                      initialized. Default: None.
-            valid_dataset (Dataset): A evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
+            valid_dataset (Dataset): An evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
                                      will be initialized, and `metrics` in `Model` can not be None. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
 
