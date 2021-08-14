@@ -129,10 +129,11 @@ class LogNormal(msd.TransformedDistribution):
         return loc, scale
 
     def extend_repr(self):
+        """Display instance object as string."""
         if self.is_scalar_batch:
-            s = f'loc = {self.loc}, scale = {self.scale}'
+            s = 'loc = {}, scale = {}'.format(self.loc, self.scale)
         else:
-            s = f'batch_shape = {self.broadcast_shape}'
+            s = 'batch_shape = {}'.format(self.broadcast_shape)
         return s
 
     def _mean(self, loc=None, scale=None):
