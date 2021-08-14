@@ -16,6 +16,7 @@
 
 #include "tools/converter/parser/caffe/caffe_inspector.h"
 #include "src/common/log_adapter.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -48,13 +49,12 @@ STATUS CaffeInspector::ParseInput() {
 
 STATUS CaffeInspector::FindGraphInputsAndOutputs() {
   for (const auto &iter : layerBottoms) {
-    if (layerTops.find(iter) == layerTops.end()) {
+    if (!IsContain(layerTops, iter)) {
       graphInput.insert(iter);
     }
   }
   for (const auto &iter : layerTops) {
-    if (layerBottoms.find(iter) == layerBottoms.end() &&
-        std::find(graphOutput.begin(), graphOutput.end(), iter) == graphOutput.end()) {
+    if (layerBottoms.find(iter) == layerBottoms.end() && !IsContain(graphOutput, iter)) {
       graphOutput.push_back(iter);
     }
   }
@@ -71,7 +71,9 @@ STATUS CaffeInspector::SetLayerTopsAndBottoms() {
       graphInput.insert(layer.top(0));
     }
     for (int j = 0; j < layer.top_size(); j++) {
-      layerTops.insert(layer.top(j));
+      if (!IsContain(layerTops, layer.top(j))) {
+        layerTops.push_back(layer.top(j));
+      }
     }
     for (int j = 0; j < layer.bottom_size(); j++) {
       layerBottoms.insert(layer.bottom(j));

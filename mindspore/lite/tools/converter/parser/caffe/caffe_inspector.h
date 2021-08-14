@@ -43,7 +43,7 @@ class CaffeInspector {
  private:
   caffe::NetParameter net;
 
-  std::set<std::string> layerTops;
+  std::vector<std::string> layerTops;
   std::set<std::string> layerBottoms;
 
   std::set<std::string> graphInput;
