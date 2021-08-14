@@ -228,7 +228,7 @@ def load_checkpoint(args_param, sink_size, dataset, model, rank_id):
     ckpt_name = args_param.ckpt_name_prefix
     if os.path.isdir(args_param.pre_trained):
         ckpt_pattern = os.path.join(args_param.save_checkpoint_path,
-                                    ckpt_name + str(rank_id) + "*.ckpt")
+                                    f"{ckpt_name}{str(rank_id)} *.ckpt")
         ckpt_files = glob.glob(ckpt_pattern)
         if not ckpt_files:
             print(f"There is no ckpt file in {args_param.load_ckpt_path}, "
