@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -lt 3 ]; then
-    echo "Usage: bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH]"
-    echo "Example: bash run_quant_infer.sh ./vgg_quant.air ./00_data ./cifar10_label_ids.npy"
+if [ $# -lt 4 ]; then
+    echo "Usage: bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [SHAPE_PATH]"
+    echo "Example: bash run_quant_infer.sh ./deeplabv3_quant.air ./00_data ./01_label ./shape.npy"
 exit 1
 fi
 
@@ -30,10 +30,12 @@ get_real_path(){
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
 label_path=$(get_real_path $3)
+shape_path=$(get_real_path $4)
 
 echo "air name: "$model
 echo "dataset path: "$data_path
 echo "label path: "$label_path
+echo "shape path: "$shape_path
 
 export ASCEND_HOME=/usr/local/Ascend/
 if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
@@ -51,7 +53,7 @@ fi
 
 function air_to_om()
 {
-    atc --input_format=NCHW --framework=1 --model=$model --output=vgg_quant --soc_version=Ascend310 &> atc.log
+    atc --input_format=NCHW --framework=1 --model=$model --output=deeplabv3_quant --soc_version=Ascend310 --fusion_switch_file=./fusion_switch.cfg &> atc.log
 }
 
 function compile_app()
@@ -65,12 +67,12 @@ function infer()
         rm -rf ./result
     fi
     mkdir result
-    ./out/main ./vgg_quant.om $data_path &> infer.log
+    ./out/main ./deeplabv3_quant.om $data_path &> infer.log
 }
 
 function cal_acc()
 {
-    python3.7 ./acc.py --result_path=./result --label_path=$label_path  &> acc.log
+    python3.7 ./acc.py --result_path=./result --label_path=$label_path --shape_path=$shape_path &> acc.log
 }
 
 echo "start atc================================================"
