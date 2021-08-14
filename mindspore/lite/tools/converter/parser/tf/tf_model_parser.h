@@ -51,10 +51,11 @@ class TFModelParser : public ModelParser {
                                    std::vector<int64_t> *shape_vector);
   static STATUS SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
-                          std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
+                          std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph = false);
   STATUS ConvertGraphInputsAndConsts(const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes,
                                      const FuncGraphPtr &anf_graph,
-                                     std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
+                                     std::unordered_map<std::string, AnfNodePtr> *anf_node_map,
+                                     bool root_graph = false);
   static STATUS ConvertInputNodes(const tensorflow::NodeDef &node_def, const std::vector<std::string> &input_names,
                                   const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                                   const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,

@@ -175,8 +175,7 @@ STATUS CaffeModelParser::HardCodeCaffe(const CNodePtr &conv_node, const tensor::
     }
   }
   if (utils::isa<CNodePtr>(weight_node)) {
-    auto status =
-      HandleWeightConst(graph, conv_node, weight_node->cast<CNodePtr>(), weight_src_format, weight_dst_format);
+    status = HandleWeightConst(graph, conv_node, weight_node->cast<CNodePtr>(), weight_src_format, weight_dst_format);
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "handle weight-const failed.";
       return RET_ERROR;
@@ -202,8 +201,7 @@ STATUS CaffeModelParser::HardCodeCaffe(const CNodePtr &conv_node, const tensor::
     weight_node->set_abstract(abstract);
   }
   if (utils::isa<ParameterPtr>(weight_node)) {
-    auto status =
-      HandleWeightSharing(graph, KHWC, weight_node->cast<ParameterPtr>(), weight_src_format, weight_dst_format);
+    status = HandleWeightSharing(graph, KHWC, weight_node->cast<ParameterPtr>(), weight_src_format, weight_dst_format);
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "handle weight-sharing failed.";
       return RET_ERROR;
@@ -335,6 +333,10 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
   for (int i = 0; i < caffe_model_.layer_size(); i++) {
     auto layer = caffe_model_.layer(i);
     if (layer.type() == "Input") {
+      if (layer.bottom_size() != 0) {
+        MS_LOG(ERROR) << "The input layer should not have inputs";
+        return RET_ERROR;
+      }
       auto parameter = res_graph_->add_parameter();
       std::vector<int64_t> shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(layer.name());
       if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
@@ -352,6 +354,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
       }
       parameter->set_abstract(abstract);
       parameter->set_name(layer.name());
+      ConverterContext::GetInstance()->AddGraphInputTensorNames(layer.name());
       nodes_.insert(std::pair(layer.top(0), parameter));
     }
   }
@@ -384,6 +387,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
     }
     parameter->set_abstract(abstract);
     parameter->set_name(caffe_model_.input(i));
+    ConverterContext::GetInstance()->AddGraphInputTensorNames(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
@@ -416,6 +420,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
     }
     parameter->set_abstract(abstract);
     parameter->set_name(caffe_model_.input(i));
+    ConverterContext::GetInstance()->AddGraphInputTensorNames(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;

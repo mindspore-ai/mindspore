@@ -413,7 +413,7 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, co
 }
 
 STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
-                                       std::unordered_map<std::string, AnfNodePtr> *anf_node_map) {
+                                       std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph) {
   MS_ASSERT(node != nullptr);
   MS_ASSERT(parameter != nullptr);
 
@@ -445,7 +445,10 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
       return status;
     }
   } else {
-    graph_input_names_.emplace_back(node.name());  // only root graph need set graph input names
+    if (root_graph) {
+      graph_input_names_.emplace_back(node.name());  // only root graph need set graph input names
+      ConverterContext::GetInstance()->AddGraphInputTensorNames(node.name());
+    }
   }
 
   type = (type == kNumberTypeInt64) ? kNumberTypeInt32 : type;
@@ -464,7 +467,7 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
 
 STATUS TFModelParser::ConvertGraphInputsAndConsts(
   const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes, const FuncGraphPtr &anf_graph,
-  std::unordered_map<std::string, AnfNodePtr> *anf_node_map) {
+  std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph) {
   for (auto &pair : tf_graph_nodes) {
     bool have_data_depend = false;
     for (int i = 0; i < pair.second->input_size(); ++i) {
@@ -476,7 +479,7 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
     }
     if (!have_data_depend) {
       auto parameter = anf_graph->add_parameter();
-      if (ConvertParameter(*pair.second, parameter, anf_node_map) != RET_OK) {
+      if (ConvertParameter(*pair.second, parameter, anf_node_map, root_graph) != RET_OK) {
         MS_LOG(ERROR) << "convert Parameter Node failed";
         return RET_ERROR;
       }
@@ -521,7 +524,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     tf_root_graph_nodes_[node_def.name()] = &node_def;
   }
 
-  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_, res_graph_, &anf_root_node_map_);
+  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_, res_graph_, &anf_root_node_map_, true);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
@@ -739,7 +742,7 @@ STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorfl
     auto &node_def = tf_sub_fuction.node_def(j);
     (*tf_sub_node_map)[node_def.name()] = &node_def;
   }
-  if (ConvertGraphInputsAndConsts(*tf_sub_node_map, sub_func_graph, anf_sub_node_map) != RET_OK) {
+  if (ConvertGraphInputsAndConsts(*tf_sub_node_map, sub_func_graph, anf_sub_node_map, false) != RET_OK) {
     MS_LOG(ERROR) << "Convert subgraph consts failed";
     return RET_ERROR;
   }

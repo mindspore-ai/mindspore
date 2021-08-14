@@ -83,6 +83,7 @@ class AnfExporter {
                         const bool &copy_primitive, const CNodePtr &partial_cnode,
                         const std::unique_ptr<schema::CNodeT> &schema_cnode);
   std::list<CNodePtr> InsertCallNode(const FuncGraphPtr &func_graph);
+  int SetMetaGraphInput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int SetMetaGraphOutput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   bool IsCall(const AnfNodePtr node);
   int CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const AnfNodePtr &input);
@@ -94,8 +95,10 @@ class AnfExporter {
   std::map<FuncGraphPtr, size_t> fg_subgraph_map_;
   std::vector<AnfNodePtr> graph_inputs_;
   std::set<AnfNodePtr> graph_inputs_has_exported_;
+  std::map<AnfNodePtr, int> graph_inputs_map_;
   uint32_t node_idx_ = 0;
   bool train_flag_ = false;
+  bool reorder_input_ = false;
 };
 // by default, copy_primitive is false, which means that the MetaGraph and func_graph share the same schema::PrimitiveT.
 // but in PostQuantization, the func_graph need to transfer to MetaGraph first and do MetaGraph pass, which may modify
