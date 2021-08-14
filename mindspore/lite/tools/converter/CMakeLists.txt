@@ -67,6 +67,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/batchmatmul_fusion.cc
         ../optimizer/fusion/sigmoid_mul_fusion.cc
         ../optimizer/fusion/conv_conv_fusion.cc
+        ../optimizer/fusion/conv_pad_fusion.cc
         ../optimizer/fusion/tflite_lstm_cell_fusion.cc
         ../optimizer/fusion/tf_lstm_cell_fusion.cc
         ../optimizer/fusion/tf_bidirection_gru_fusion.cc

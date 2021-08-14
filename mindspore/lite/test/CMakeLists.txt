@@ -229,6 +229,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/batchmatmul_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/sigmoid_mul_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_conv_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/conv_pad_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_tuplegetitem_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tflite_lstm_cell_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_lstm_cell_fusion.cc
