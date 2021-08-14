@@ -492,7 +492,6 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(const std::vector<const tensor
 
 FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
   auto modelFile = flag.model_file;
-  quant_type_ = flag.quant_type;
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {
@@ -581,7 +580,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeTf, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeTf, false);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;

@@ -33,7 +33,6 @@ namespace lite {
 namespace {
 void InitConverterParameters(const converter::Flags &flag, converter::ConverterParameters *converter_parameters) {
   converter_parameters->fmk = flag.fmk;
-  converter_parameters->quant_type = flag.quantType;
   converter_parameters->model_file = flag.modelFile;
   converter_parameters->weight_file = flag.weightFile;
 }

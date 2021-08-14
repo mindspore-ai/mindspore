@@ -42,7 +42,6 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
   }
   auto mindir_adjust_pass = std::make_shared<MindirAdjust>();
   mindir_adjust_pass->SetFmkType(flag.fmk);
-  mindir_adjust_pass->SetQuantType(flag.quantType);
   mindir_adjust_pass->SetTrainFlag(flag.trainModel);
   if (!mindir_adjust_pass->Run(func_graph)) {
     MS_LOG(ERROR) << "MindIr adjust failed.";
@@ -97,7 +96,6 @@ size_t MindsporeImporter::Hex2ByteArray(const std::string &hex_str, unsigned cha
 }
 
 FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
-  quant_type_ = flag.quantType;
   FuncGraphPtr func_graph;
   if (flag.dec_key.size() != 0) {
     unsigned char key[32];
@@ -128,7 +126,7 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, flag.trainModel, flag.quantType);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, flag.trainModel);
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;

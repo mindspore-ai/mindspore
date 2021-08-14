@@ -24,9 +24,8 @@ namespace mindspore {
 namespace lite {
 class UnifyFormatToNHWC : public opt::ToFormatBase {
  public:
-  explicit UnifyFormatToNHWC(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
-                             schema::QuantType quant_type = schema::QuantType_QUANT_NONE)
-      : ToFormatBase(fmk_type, train_flag), quant_type_(quant_type) {}
+  explicit UnifyFormatToNHWC(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
+      : ToFormatBase(fmk_type, train_flag) {}
   ~UnifyFormatToNHWC() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
@@ -41,7 +40,6 @@ class UnifyFormatToNHWC : public opt::ToFormatBase {
   bool DecideWhetherInferShapeForNewNode() override;
   STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                          schema::Format *dst_format) override;
-  schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
 };
 }  // namespace lite
 }  // namespace mindspore
