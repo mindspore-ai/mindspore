@@ -23,8 +23,8 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
-class MindDataTestPipeline : public UT::Common {
- public:
+class MindDataTestPipeline : public UT::DatasetOpTesting {
+ protected:
 };
 
 TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
