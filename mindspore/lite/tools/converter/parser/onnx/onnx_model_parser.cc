@@ -297,6 +297,13 @@ STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, con
     MS_LOG(ERROR) << "convert graph outputs failed.";
     return RET_ERROR;
   }
+  // save original output tensor names.
+  if (root_node_name == "root_node") {
+    std::vector<std::string> output_names;
+    std::transform(onnx_graph.output().begin(), onnx_graph.output().end(), std::back_inserter(output_names),
+                   [](auto &graph_output) { return graph_output.name(); });
+    ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
+  }
   return status;
 }
 STATUS OnnxModelParser::ConvertConstTensors(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,

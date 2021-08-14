@@ -1181,6 +1181,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     auto it = all_node_inputs.find(pair.first);
     if (it == all_node_inputs.end() && pair.second->input_size() > 0) {  // output node not constraint to Identity
       auto origin_name = GetOriginInputName(*(pair.second), tf_root_graph_nodes_);
+      // node with multiple outputs has been changed to tupleGetItem, and the original name changes to be name:idx.
       for (int i = 0; i < node_output_num_[origin_name]; i++) {
         auto anf_node = GetAnfNode(origin_name, anf_root_node_map_, i);
         if (anf_node == nullptr) {
@@ -1188,7 +1189,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
           return RET_ERROR;
         }
         output_nodes.push_back(anf_node);
-        graph_output_names_.push_back(anf_node->fullname_with_scope());
+        graph_output_names_.push_back(origin_name);
       }
     }
   }
@@ -1197,6 +1198,8 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     MS_LOG(ERROR) << "make anf graph outputs node error";
     return status;
   }
+  // save original output tensor names.
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(graph_output_names_);
   return RET_OK;
 }
 STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph) {

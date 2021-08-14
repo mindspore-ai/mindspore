@@ -249,8 +249,8 @@ STATUS TfliteModelParser::ConvertOps() {
   int op_idx = 0;
   for (auto &op : tflite_subgraph->operators) {
     auto tflite_op_type = (tflite_model_->operator_codes[op->opcode_index])->builtin_code;
-    auto op_type = GetMSOpType(tflite_op_type);
-    auto op_name = op_type + "-" + std::to_string(op_idx);
+    std::string op_type = tflite::EnumNameBuiltinOperator(tflite_op_type);
+    std::string op_name = op_type + "-" + std::to_string(op_idx);
     op_idx++;
     // parse primitive
     MS_LOG(INFO) << "parse node :" << op_name;
@@ -513,6 +513,12 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     returnCnode->set_fullname_with_scope("Return");
     res_graph_->set_return(returnCnode);
   }
+  // save original output tensor names.
+  std::vector<std::string> output_names;
+  auto output_idx = tflite_subgraph->outputs;
+  std::transform(output_idx.begin(), output_idx.end(), std::back_inserter(output_names),
+                 [&](auto out_idx) { return tflite_subgraph->tensors.at(out_idx)->name; });
+  ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_names);
   return RET_OK;
 }
 
