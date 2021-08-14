@@ -51,6 +51,18 @@ bool Executor::ReInitForScaling() {
   return true;
 }
 
+bool Executor::ReInitForUpdatingHyperParams(size_t aggr_threshold) {
+  aggregation_count_ = aggr_threshold;
+  auto result = std::find_if(param_aggrs_.begin(), param_aggrs_.end(), [this](auto param_aggr) {
+    return !param_aggr.second->ReInitForUpdatingHyperParams(aggregation_count_);
+  });
+  if (result != param_aggrs_.end()) {
+    MS_LOG(ERROR) << "Reinitializing aggregator of " << result->first << " for scaling failed.";
+    return false;
+  }
+  return true;
+}
+
 bool Executor::initialized() const { return initialized_; }
 
 bool Executor::HandlePush(const std::string &param_name, const UploadData &upload_data) {

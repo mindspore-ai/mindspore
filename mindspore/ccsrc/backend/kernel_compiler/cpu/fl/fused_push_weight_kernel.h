@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-// The duration between two uploading requests when return code is ResponseCode_SucNotReady.
+// The duration between two PushWeights requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPushWeights = 200;
 template <typename T>
 class FusedPushWeightKernel : public CPUKernel {
@@ -49,9 +49,12 @@ class FusedPushWeightKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(fbb);
 
     total_iteration_++;
+    uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
-    if (total_iteration_ % fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration() !=
-        fl::kTrainBeginStepNum) {
+    MS_LOG(INFO) << "Try to push weights. Local step number: " << total_iteration_
+                 << ", step number needs to run per iteration: " << step_num_per_iteration;
+    if (step_num_per_iteration != fl::kOneStepPerIteration &&
+        total_iteration_ % step_num_per_iteration != fl::kTrainEndStepNum) {
       return true;
     }
 
@@ -76,9 +79,9 @@ class FusedPushWeightKernel : public CPUKernel {
         if (!fl::worker::FLWorker::GetInstance().SendToServer(i, fbb->GetBufferPointer(), fbb->GetSize(),
                                                               ps::core::TcpUserCommand::kPushWeight,
                                                               &push_weight_rsp_msg)) {
-          MS_LOG(WARNING) << "Sending request for FusedPushWeight to server " << i
-                          << " failed. This iteration is dropped.";
+          MS_LOG(WARNING) << "Sending request for FusedPushWeight to server " << i << " failed.";
           retcode = schema::ResponseCode_SucNotReady;
+          std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPushWeights));
           continue;
         }
         MS_EXCEPTION_IF_NULL(push_weight_rsp_msg);
@@ -105,8 +108,7 @@ class FusedPushWeightKernel : public CPUKernel {
       }
     }
 
-    MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " succeed. Iteration: " << fl_iteration_;
-    fl::worker::FLWorker::GetInstance().SetIterationCompleted();
+    MS_LOG(INFO) << "Push weights for " << weight_full_names_ << " success. Iteration: " << fl_iteration_;
     return true;
   }
 

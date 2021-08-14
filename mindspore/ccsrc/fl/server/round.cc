@@ -102,6 +102,21 @@ bool Round::ReInitForScaling(uint32_t server_num) {
   return true;
 }
 
+bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t updated_time_window) {
+  time_window_ = updated_time_window;
+  threshold_count_ = updated_threshold_count;
+  if (check_count_) {
+    auto first_count_handler = std::bind(&Round::OnFirstCountEvent, this, std::placeholders::_1);
+    auto last_count_handler = std::bind(&Round::OnLastCountEvent, this, std::placeholders::_1);
+    DistributedCountService::GetInstance().RegisterCounter(name_, threshold_count_,
+                                                           {first_count_handler, last_count_handler});
+  }
+
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_, false);
+  kernel_->InitKernel(threshold_count_);
+  return true;
+}
+
 void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   kernel_ = kernel;
@@ -114,10 +129,9 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
   MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
-  // If the server is still in the process of scaling, refuse the request.
-  if (Server::GetInstance().IsSafeMode()) {
-    MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
-    std::string reason = "The cluster is in safemode.";
+
+  std::string reason = "";
+  if (!IsServerAvailable(&reason)) {
     if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
       MS_LOG(ERROR) << "Sending response failed.";
       return;
@@ -125,6 +139,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     return;
   }
 
+  Iteration::GetInstance().running_round_num_++;
   AddressPtr input = std::make_shared<Address>();
   AddressPtr output = std::make_shared<Address>();
   MS_ERROR_IF_NULL_WO_RET_VAL(input);
@@ -133,7 +148,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   input->size = message->len();
   bool ret = kernel_->Launch({input}, {}, {output});
   if (output->size == 0) {
-    std::string reason = "The output of the round " + name_ + " is empty.";
+    reason = "The output of the round " + name_ + " is empty.";
     MS_LOG(WARNING) << reason;
     if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
       MS_LOG(ERROR) << "Sending response failed.";
@@ -149,9 +164,10 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
 
   // Must send response back no matter what value Launch method returns.
   if (!ret) {
-    std::string reason = "Launching round kernel of round " + name_ + " failed.";
-    Iteration::GetInstance().MoveToNextIteration(false, reason);
+    reason = "Launching round kernel of round " + name_ + " failed.";
+    Iteration::GetInstance().NotifyNext(false, reason);
   }
+  Iteration::GetInstance().running_round_num_--;
   return;
 }
 
@@ -194,6 +210,30 @@ void Round::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &me
   // Some kernels override the OnLastCountEvent method.
   kernel_->OnLastCountEvent(message);
   return;
+}
+
+bool Round::IsServerAvailable(std::string *reason) {
+  MS_ERROR_IF_NULL_W_RET_VAL(reason, false);
+  // After one instance is completed, the model should be accessed by clients.
+  if (Iteration::GetInstance().instance_state() == InstanceState::kFinish && name_ == "getModel") {
+    return true;
+  }
+
+  // If the server state is Disable or Finish, refuse the request.
+  if (Iteration::GetInstance().instance_state() == InstanceState::kDisable ||
+      Iteration::GetInstance().instance_state() == InstanceState::kFinish) {
+    MS_LOG(WARNING) << "The server's training job is disabled or finished, please retry " + name_ + " later.";
+    *reason = ps::kJobNotAvailable;
+    return false;
+  }
+
+  // If the server is still in the process of scaling, reject the request.
+  if (Server::GetInstance().IsSafeMode()) {
+    MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
+    *reason = ps::kClusterSafeMode;
+    return false;
+  }
+  return true;
 }
 }  // namespace server
 }  // namespace fl

@@ -187,6 +187,7 @@ constexpr size_t kCipherMgrMaxTaskNum = 64;
 constexpr size_t kExecutorThreadPoolSize = 32;
 constexpr size_t kExecutorMaxTaskNum = 32;
 constexpr int kHttpSuccess = 200;
+constexpr uint32_t kThreadSleepTime = 50;
 constexpr auto kPBProtocol = "PB";
 constexpr auto kFBSProtocol = "FBS";
 constexpr auto kSuccess = "Success";

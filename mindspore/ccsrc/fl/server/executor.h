@@ -33,8 +33,6 @@
 namespace mindspore {
 namespace fl {
 namespace server {
-constexpr int kThreadSleepTime = 5;
-
 // Executor is the entrance for server to handle aggregation, optimizing, model querying, etc. It handles
 // logics relevant to kernel launching.
 class Executor {
@@ -52,6 +50,9 @@ class Executor {
 
   // Reinitialize parameter aggregators after scaling operations are done.
   bool ReInitForScaling();
+
+  // After hyper-parameters are updated, some parameter aggregators should be reinitialized.
+  bool ReInitForUpdatingHyperParams(size_t aggr_threshold);
 
   // Called in parameter server training mode to do Push operation.
   // For the same trainable parameter, HandlePush method must be called aggregation_count_ times before it's considered
