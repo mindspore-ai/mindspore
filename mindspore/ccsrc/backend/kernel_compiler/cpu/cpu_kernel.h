@@ -157,6 +157,19 @@ class CPUKernel : public kernel::KernelMod {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   ParallelSearchInfo parallel_search_info_;
+
+  template <typename T>
+  inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
+    if (index >= addr_list.size()) {
+      MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+    }
+
+    if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
+      MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index;
+    }
+
+    return reinterpret_cast<T *>(addr_list[index]->addr);
+  }
 };
 
 class CPUKernelUtils {
