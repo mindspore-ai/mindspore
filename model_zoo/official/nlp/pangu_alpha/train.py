@@ -173,8 +173,6 @@ def run_train(args_opt):
         LossCallBack(callback_size, rank, 0, 0)
     ]
 
-    add_checkpoint_callback_policy(args_opt, callback, rank)
-
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=loss_scale_value, scale_factor=2, scale_window=1000)
     pangu_alpha_with_grads = PanguAlphaTrainOneStepWithLossScaleCell(
         pangu_alpha_with_loss, optimizer=optimizer, scale_update_cell=update_cell, enable_global_norm=True,
@@ -183,6 +181,8 @@ def run_train(args_opt):
 
     if args_opt.pre_trained:
         load_checkpoint(args_opt, callback_size, ds, model, rank)
+
+    add_checkpoint_callback_policy(args_opt, callback, rank)
 
     if args_opt.incremental_training:
         from mindspore.train.serialization import load_distributed_checkpoint
@@ -204,10 +204,13 @@ def add_checkpoint_callback_policy(args_param, callback, rank_id):
     Add checkpoint policy to callback.
     """
     if args_param.save_checkpoint:
+        # checkpoint store epoch_num and step_num info
+        ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": args_param.has_trained_epoches,
+                                                      "step_num": args_param.has_trained_steps}]
         ckpt_config = CheckpointConfig(save_checkpoint_steps=args_param.keep_checkpoint_max,
                                        keep_checkpoint_max=args_param.keep_checkpoint_max,
                                        integrated_save=False,
-                                       append_info=["epoch_num", "step_num"]
+                                       append_info=ckpt_append_info
                                        )
 
         ckpoint_cb = ModelCheckpoint(prefix=args_param.ckpt_name_prefix + str(rank_id),

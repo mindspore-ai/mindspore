@@ -402,6 +402,14 @@ def add_retrain_params(opt):
                      type=str,
                      default="pangu",
                      help="Saving checkpoint name prefix.")
+    opt.add_argument("--has_trained_epoches",
+                     type=int,
+                     default=0,
+                     help="Epoches has been trained before.")
+    opt.add_argument("--has_trained_steps",
+                     type=int,
+                     default=0,
+                     help="Steps has been trained before.")
 
 
 def get_args(inference=False):
