@@ -12,7 +12,9 @@ add_library(audio-ir-kernels OBJECT
         complex_norm_ir.cc
         contrast_ir.cc
         frequency_masking_ir.cc
+        highpass_biquad_ir.cc
         lowpass_biquad_ir.cc
         time_masking_ir.cc
         time_stretch_ir.cc
         )
+

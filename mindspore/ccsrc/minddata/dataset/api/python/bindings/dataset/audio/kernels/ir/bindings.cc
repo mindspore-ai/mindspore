@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "pybind11/pybind11.h"
 
 #include "minddata/dataset/api/python/pybind_conversion.h"
@@ -29,6 +30,7 @@
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
+#include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -153,6 +155,17 @@ PYBIND_REGISTER(
           THROW_IF_ERROR(frequency_masking->ValidateParams());
           return frequency_masking;
         }));
+  }));
+
+PYBIND_REGISTER(
+  HighpassBiquadOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::HighpassBiquadOperation, TensorOperation, std::shared_ptr<audio::HighpassBiquadOperation>>(
+      *m, "HighpassBiquadOperation")
+      .def(py::init([](float sample_rate, float cutoff_freq, float Q) {
+        auto highpass_biquad = std::make_shared<audio::HighpassBiquadOperation>(sample_rate, cutoff_freq, Q);
+        THROW_IF_ERROR(highpass_biquad->ValidateParams());
+        return highpass_biquad;
+      }));
   }));
 
 PYBIND_REGISTER(

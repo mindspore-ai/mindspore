@@ -25,8 +25,8 @@ import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, check_lowpass_biquad, \
-    check_masking, check_time_stretch
+    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, \
+    check_highpass_biquad, check_lowpass_biquad, check_masking, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -324,6 +324,34 @@ class FrequencyMasking(AudioTensorOperation):
     def parse(self):
         return cde.FrequencyMaskingOperation(self.iid_masks, self.frequency_mask_param, self.mask_start,
                                              self.mask_value)
+
+
+class HighpassBiquad(AudioTensorOperation):
+    """
+    Design biquad highpass filter and perform filtering. Similar to SoX implementation.
+
+    Args:
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        cutoff_freq (float): Filter cutoff frequency (in Hz).
+        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.HighpassBiquad(44100, 1500, 0.7)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_highpass_biquad
+    def __init__(self, sample_rate, cutoff_freq, Q=0.707):
+        self.sample_rate = sample_rate
+        self.cutoff_freq = cutoff_freq
+        self.Q = Q
+
+    def parse(self):
+        return cde.HighpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.Q)
 
 
 class LowpassBiquad(AudioTensorOperation):
