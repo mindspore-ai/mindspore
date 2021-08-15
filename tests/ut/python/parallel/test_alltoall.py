@@ -25,7 +25,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.ops.operations.comm_ops import _AlltoAll
+from mindspore.ops.operations.comm_ops import AlltoAll
 from mindspore.parallel._utils import _reset_op_id
 from mindspore.train import Model
 from mindspore.context import ParallelMode
@@ -130,7 +130,7 @@ def test_all_to_all_success():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=8, split_dim=2, concat_dim=3)
+            self.alltoallv = AlltoAll(split_count=8, split_dim=2, concat_dim=3)
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -151,7 +151,7 @@ def test_all_to_all_invalid_split_count_value_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=7, split_dim=2, concat_dim=3)
+            self.alltoallv = AlltoAll(split_count=7, split_dim=2, concat_dim=3)
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -173,7 +173,7 @@ def test_all_to_all_invalid_split_count_type_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=[8], split_dim=2, concat_dim=3)
+            self.alltoallv = AlltoAll(split_count=[8], split_dim=2, concat_dim=3)
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -195,7 +195,7 @@ def test_all_to_all_invalid_split_dim_value_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=8, split_dim=4, concat_dim=3)
+            self.alltoallv = AlltoAll(split_count=8, split_dim=4, concat_dim=3)
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -217,7 +217,7 @@ def test_all_to_all_invalid_split_dim_type_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=8, split_dim=(3,), concat_dim=3)
+            self.alltoallv = AlltoAll(split_count=8, split_dim=(3,), concat_dim=3)
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -239,7 +239,7 @@ def test_all_to_all_invalid_concat_dim_value_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=8, split_dim=3, concat_dim=4)
+            self.alltoallv = AlltoAll(split_count=8, split_dim=3, concat_dim=4)
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -261,7 +261,7 @@ def test_all_to_all_invalid_concat_dim_type_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=8, split_dim=3, concat_dim=([3],))
+            self.alltoallv = AlltoAll(split_count=8, split_dim=3, concat_dim=([3],))
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -283,7 +283,7 @@ def test_all_to_all_invalid_split_count_cannot_be_divisible_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=3, split_dim=3, concat_dim=3)
+            self.alltoallv = AlltoAll(split_count=3, split_dim=3, concat_dim=3)
 
         def construct(self, x1):
             out = self.alltoallv(x1)
@@ -305,7 +305,7 @@ def test_all_to_all_invalid_group_type_failed():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.alltoallv = _AlltoAll(split_count=8, split_dim=3, concat_dim=3, group=3)
+            self.alltoallv = AlltoAll(split_count=8, split_dim=3, concat_dim=3, group=3)
 
         def construct(self, x1):
             out = self.alltoallv(x1)

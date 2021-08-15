@@ -18,7 +18,6 @@ from .._grad.grad_base import get_bprop_fn
 from . import grad_array_ops
 from . import grad_inner_ops
 from . import grad_nn_ops
-from . import grad_comm_ops
 from . import grad_math_ops
 
 __all__ = ['get_bprop_fn']

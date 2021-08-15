@@ -20,7 +20,7 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...communication.management import get_rank, get_group_size, GlobalComm, _get_group
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
+from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, Primitive, prim_attr_register
 from ...common.api import context
 
 
@@ -613,7 +613,37 @@ class AllSwap(PrimitiveWithCheck):
         return out
 
 
-class _AlltoAll(PrimitiveWithInfer):
+class NeighborExchange(Primitive):
+    """
+    NeighborExchange is a collective operation.
+
+    NeighborExchange sends data from the local rank to ranks in the send_rank_ids,
+    as while receive data from recv_rank_ids.
+
+    Args:
+        send_rank_ids (list(int)): Ranks which the data is sent to.
+        recv_rank_ids (list(int)): Ranks which the data is received from.
+        recv_shapes (tuple(list(int))): Data shape which received from recv_rank_ids.
+        send_shapes (tuple(list(int))): Data shape which send to the send_rank_ids.
+        recv_type (type): Data type which received from recv_rank_ids
+        group (str):
+    """
+
+    @prim_attr_register
+    def __init__(self, send_rank_ids, recv_rank_ids, recv_shapes, send_shapes, recv_type,
+                 group=GlobalComm.WORLD_COMM_GROUP):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        self.send_rank_ids = send_rank_ids
+        self.recv_rank_ids = recv_rank_ids
+        self.recv_shapes = recv_shapes
+        self.send_shapes = send_shapes
+        self.recv_type = recv_type
+
+    def __call__(self, tensor):
+        raise NotImplementedError
+
+
+class AlltoAll(PrimitiveWithInfer):
     """
     AlltoAll is a collective operation.
 

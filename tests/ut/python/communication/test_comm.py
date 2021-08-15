@@ -25,7 +25,7 @@ from mindspore.nn import Dense
 from mindspore.nn import Momentum
 from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
+from mindspore.ops.operations.comm_ops import AllReduce, AllGather, AlltoAll, ReduceOp, ReduceScatter
 from mindspore.ops.operations.comm_ops import Broadcast, AllSwap
 from mindspore.ops.operations.array_ops import Gather
 import mindspore
@@ -113,7 +113,7 @@ class AlltoAllNet(nn.Cell):
     def __init__(self, input_channel, out_channel):
         super(AlltoAllNet, self).__init__()
         self.dense = Dense(input_channel, out_channel)
-        self.alltoall = _AlltoAll(1, 0, 1)
+        self.alltoall = AlltoAll(1, 0, 1)
         self.relu = ReLU()
 
     def construct(self, x):

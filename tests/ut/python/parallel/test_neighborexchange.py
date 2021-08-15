@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
-from mindspore.ops.operations._inner_ops import NeighborExchange
+from mindspore.ops.operations.comm_ops import NeighborExchange
 
 _w1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
 _x1 = Tensor(np.ones([32, 16]), dtype=ms.float32)
