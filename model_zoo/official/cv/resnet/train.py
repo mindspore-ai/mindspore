@@ -13,8 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """train resnet."""
+import datetime
+import glob
 import os
 import numpy as np
+
 from mindspore import context
 from mindspore import Tensor, Parameter
 from mindspore.nn.optim import Momentum, thor, LARS
@@ -25,13 +28,14 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.common import dtype as mstype
 from mindspore.common import set_seed
 from mindspore.parallel import set_algo_parameters
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 import mindspore.log as logger
+
 from src.lr_generator import get_lr, warmup_cosine_annealing_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
 from src.eval_callback import EvalCallBack
@@ -150,7 +154,7 @@ def set_parameter():
 
     # init context
     if config.run_distribute:
-        rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma", str(get_rank_id()))
+        rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma", str(get_rank()))
     else:
         rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma")
 
@@ -195,6 +199,7 @@ def load_pre_trained_checkpoint():
     Load checkpoint according to pre_trained path.
     """
     param_dict = None
+    ckpt_save_dir = set_save_ckpt_dir()
     if config.pre_trained:
         if os.path.isdir(config.pre_trained):
             ckpt_pattern = os.path.join(ckpt_save_dir, "*.ckpt")
