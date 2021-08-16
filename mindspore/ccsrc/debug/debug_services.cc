@@ -505,7 +505,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
           }
         }
       }
-      closedir(d_handle);
+      (void)closedir(d_handle);
     }
   }
 }
@@ -586,7 +586,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
           }
         }
       }
-      closedir(d);
+      (void)closedir(d);
     }
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
@@ -627,7 +627,7 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
           }
         }
       }
-      closedir(d);
+      (void)closedir(d);
     }
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
@@ -786,8 +786,8 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
             matched_paths.push_back(full_path);
             found_file = true;
           }
-          closedir(d);
         }
+        (void)closedir(d);
       }
 
       if (found_file) {
@@ -940,7 +940,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
             }
           }
         }
-        closedir(d);
+        (void)closedir(d);
       }
     } else {
       GetTensorDataInfoAsync(proto_to_dump, specific_dump_dir, iteration, device_id, root_graph_id, *async_file_pool,
@@ -1169,7 +1169,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
           infile.close();
         }
       }
-      closedir(d);
+      (void)closedir(d);
     }
 
     // find the op_names with an overflow hit
