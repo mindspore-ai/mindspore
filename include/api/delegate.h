@@ -22,6 +22,7 @@
 #include <memory>
 #include "schema/model_generated.h"
 #include "include/api/kernel.h"
+#include "include/api/status.h"
 
 namespace mindspore {
 typedef enum {
@@ -100,15 +101,17 @@ class MS_API Delegate {
 
   /// \brief Init delegate.
   ///
-  /// \note Init willed be called in CreateSession.
-  virtual int Init() = 0;
+  /// \note Init willed be called in Model::Build.
+  ///
+  /// \return Status. If Status is kLiteNotSupport, the program will return to the MindSpore Lite inner inference.
+  virtual Status Init() = 0;
 
   /// \brief Build delegate graph for MindSpore Lite model.
   ///
-  /// \note Build willed be called in LiteSession::CompileGraph.
+  /// \note Build willed be called in Model::Build.
   ///
   /// \param[in] model Define the delegate model to be built.
-  virtual int Build(DelegateModel *model) = 0;
+  virtual Status Build(DelegateModel *model) = 0;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_DELEGATE_H
