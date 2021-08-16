@@ -120,11 +120,33 @@ def test_e2e_dump():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_e2e_dump_with_hccl_env():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
+    os.environ["RANK_ID"] = "4"
+    run_e2e_dump()
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     run_e2e_dump()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cpu_e2e_dump_with_hccl_set():
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
+    os.environ["RANK_ID"] = "4"
+    run_e2e_dump()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -132,6 +154,17 @@ def test_cpu_e2e_dump():
 def test_gpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_e2e_dump()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gpu_e2e_dump_with_hccl_set():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
+    os.environ["RANK_ID"] = "4"
+    run_e2e_dump()
+
 
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):

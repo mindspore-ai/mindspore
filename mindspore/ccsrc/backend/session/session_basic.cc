@@ -2683,6 +2683,11 @@ uint32_t GetRankId() {
   uint32_t rank_id = 0;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  auto env_rank_id = common::GetEnv("RANK_ID");
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) || env_rank_id.empty()) {
+    MS_LOG(INFO) << "HCCL not enabled, use 0 as default rank id.";
+    return rank_id;
+  }
   std::string world_group;
   std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (backend == kAscendDevice) {
@@ -2691,6 +2696,7 @@ uint32_t GetRankId() {
     world_group = kNcclWorldGroup;
   } else {
     MS_LOG(ERROR) << "Invalid backend: " << backend;
+    return rank_id;
   }
   if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
     MS_LOG(INFO) << "Failed to get rank id.";
