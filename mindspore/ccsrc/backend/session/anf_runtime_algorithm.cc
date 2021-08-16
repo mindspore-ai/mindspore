@@ -203,6 +203,9 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
     auto input0 = cnode->input(0);
     MS_EXCEPTION_IF_NULL(input0);
     if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
+      if (AnfAlgo::GetInputTensorNum(cnode) == 0) {
+        return std::make_pair(nullptr, 0);
+      }
       auto node = cnode->input(index + IntToSize(1));
       MS_EXCEPTION_IF_NULL(node);
       return VisitKernel(node, 0);
