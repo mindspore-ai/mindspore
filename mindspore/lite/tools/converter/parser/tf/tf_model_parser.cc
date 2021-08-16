@@ -1049,7 +1049,10 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   MS_ASSERT(func_graph_ptr != nullptr);
   STATUS status = RET_OK;
   const auto &op_type = node_def.op();
-  if (op_type == "Placeholder" || op_type == "Const" || op_type == "Identity" || op_type == "StopGradient") {
+  if (op_type == "Identity" || op_type == "StopGradient") {
+    return RET_OK;
+  } else if (op_type == "Placeholder" || op_type == "Const") {
+    node_output_num_[node_def.name()] = 1;
     return RET_OK;
   }
 
