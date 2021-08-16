@@ -42,13 +42,14 @@
 #include "tools/common/node_util.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "tools/converter/quantizer/fix_bit_weight_quantizer.h"
+#include "tools/converter/quantizer/fse_encoder.h"
 
 using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
 namespace {
 constexpr int kIndexOfValueInputOfGetTupleItem = 2;
-
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
@@ -116,7 +117,17 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
     auto repetition_packed = false;
     MS_LOG(DEBUG) << dst_node->name;
     if (dst_node->quantType == schema::QuantType_QUANT_WEIGHT) {
-      if (bit_num <= kBitNum8) {
+      if (bit_num == 0) {
+        if (tensor_input->data.empty() || tensor_input->dims.size() <= 1) {
+          return RET_OK;
+        }
+        quant::FSEEncoder fse_encoder;
+        if (dst_node->primitive->value.type == PrimitiveType_GRU) {
+          fse_encoder.Compress(tensor_input);
+        } else {
+          fse_encoder.Compress(tensor_input);
+        }
+      } else if (bit_num <= kBitNum8) {
         repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);
       } else {
         repetition_packed = PackRepetition<int16_t>(bit_num, tensor_input);

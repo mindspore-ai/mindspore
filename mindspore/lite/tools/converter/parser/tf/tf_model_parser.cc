@@ -921,7 +921,6 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   if (op_type == "Placeholder" || op_type == "Const" || op_type == "Identity" || op_type == "StopGradient") {
     return RET_OK;
   }
-
   MS_LOG(INFO) << "parse op : " << op_type;
   auto node_parser = TFNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
   if (node_parser == nullptr) {
@@ -1055,6 +1054,21 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
           return RET_ERROR;
         }
         output_nodes.push_back(anf_node);
+        // Get the name of node 'Identity' and 'StopGradient'.
+        if (pair.second->op() == "Identity" || pair.second->op() == "StopGradient") {
+          auto tmp_node = pair.second;
+          bool found_input = true;
+          while (tmp_node->name().empty() && (tmp_node->op() == "Identity" || tmp_node->op() == "StopGradient")) {
+            auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
+            if (tf_root_graph_nodes_.find(flatten_input_name) != tf_root_graph_nodes_.end()) {
+              tmp_node = tf_root_graph_nodes_.at(flatten_input_name);
+            } else {
+              found_input = false;
+              break;
+            }
+          }
+          origin_name = found_input ? tmp_node->name() : origin_name;
+        }
         graph_output_names_.push_back(origin_name);
       }
     }
