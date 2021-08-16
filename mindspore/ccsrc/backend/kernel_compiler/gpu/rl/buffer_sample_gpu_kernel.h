@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <random>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 
@@ -45,6 +46,8 @@ class BufferSampleKernel : public GpuKernel {
   size_t element_nums_;
   int64_t capacity_;
   size_t batch_size_;
+  int64_t seed_;
+  std::mt19937 generator_;
   std::vector<size_t> exp_element_list;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

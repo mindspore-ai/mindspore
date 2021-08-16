@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RL_BUFFER_SAMPLE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RL_BUFFER_SAMPLE_CPU_KERNEL_H_
+#include <stdlib.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,13 +28,14 @@ namespace mindspore {
 namespace kernel {
 class BufferCPUSampleKernel : public CPUKernel {
  public:
-  BufferCPUSampleKernel() : element_nums_(0), capacity_(0), batch_size_(0), exp_size_(0) {}
+  BufferCPUSampleKernel() : element_nums_(0), capacity_(0), batch_size_(0), exp_size_(0), seed_(0) {}
 
   ~BufferCPUSampleKernel() override = default;
   void Init(const CNodePtr &kernel_node) {
     auto shapes = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
     auto types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
     capacity_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
+    seed_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed");
     batch_size_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "batch_size"));
     element_nums_ = shapes.size();
     for (size_t i = 0; i < element_nums_; i++) {
@@ -45,8 +47,6 @@ class BufferCPUSampleKernel : public CPUKernel {
       output_size_list_.push_back(i * batch_size_);
       exp_size_ += i;
     }
-    // index
-    input_size_list_.push_back(sizeof(int) * batch_size_);
     // count and head
     input_size_list_.push_back(sizeof(int));
     input_size_list_.push_back(sizeof(int));
@@ -54,18 +54,29 @@ class BufferCPUSampleKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) {
-    auto indexes_addr = GetDeviceAddress<int>(inputs, element_nums_);
-    auto count_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
-    auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 2);
+    auto count_addr = GetDeviceAddress<int>(inputs, element_nums_);
+    auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
 
     if ((head_addr[0] > 0 && SizeToLong(batch_size_) > capacity_) ||
         (head_addr[0] == 0 && SizeToLong(batch_size_) > count_addr[0])) {
       MS_LOG(ERROR) << "The batch size " << batch_size_ << " is larger than total buffer size "
                     << std::min(capacity_, IntToLong(count_addr[0]));
     }
+    // Generate random indexes
+    std::vector<size_t> indexes;
+    for (size_t i = 0; i < IntToSize(count_addr[0]); ++i) {
+      indexes.push_back(i);
+    }
+    if (seed_ == 0) {
+      std::srand(time(nullptr));
+    } else {
+      std::srand(seed_);
+    }
+    random_shuffle(indexes.begin(), indexes.end());
+
     auto task = [&](size_t start, size_t end) {
       for (size_t j = start; j < end; j++) {
-        int64_t index = IntToSize(indexes_addr[j]);
+        size_t index = indexes[j];
         for (size_t i = 0; i < element_nums_; i++) {
           auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
           auto output_addr = GetDeviceAddress<unsigned char>(outputs, i);
@@ -92,6 +103,7 @@ class BufferCPUSampleKernel : public CPUKernel {
   int64_t capacity_;
   size_t batch_size_;
   int64_t exp_size_;
+  int64_t seed_;
   std::vector<size_t> exp_element_list;
 };
 }  // namespace kernel

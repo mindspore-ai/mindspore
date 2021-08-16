@@ -91,6 +91,14 @@ __global__ void BufferSampleKernel(const size_t size, const size_t one_element, 
   }
 }
 
+__global__ void SrandUniformFloat(const int size, curandState *globalState, const int seedc, float *out) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    curand_init(seedc, threadIdx.x, 0, &globalState[i]);
+    out[i] = curand_uniform(&globalState[i]);
+  }
+  __syncthreads();
+}
+
 void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
                   unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream) {
   BufferAppendKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(capacity, size, index, exp_batch, buffer, exp);
@@ -118,4 +126,8 @@ void CheckBatchSize(const int *count, const int *head, const size_t batch_size, 
 void BufferSample(const size_t size, const size_t one_element, const int *index, const unsigned char *buffer,
                   unsigned char *out, cudaStream_t cuda_stream) {
   BufferSampleKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, one_element, index, buffer, out);
+}
+
+void RandomGen(const int size, curandState *globalState, const int &seedc, float *out, cudaStream_t stream) {
+  SrandUniformFloat<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(size, globalState, seedc, out);
 }

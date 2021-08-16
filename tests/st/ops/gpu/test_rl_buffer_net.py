@@ -56,9 +56,7 @@ class RLBuffer(nn.Cell):
 
     @ms_function
     def sample(self):
-        count = self.reshape(self.count, (1,))
-        index = self.randperm(count)
-        return self.buffer_sample(self.buffer, index, self.count, self.head)
+        return self.buffer_sample(self.buffer, self.count, self.head)
 
 
 s = Tensor(np.array([2, 2, 2, 2]), ms.float32)

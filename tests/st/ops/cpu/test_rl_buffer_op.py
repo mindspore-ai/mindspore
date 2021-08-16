@@ -55,16 +55,13 @@ class RLBufferSample(nn.Cell):
     def __init__(self, capcity, batch_size, shapes, types):
         super(RLBufferSample, self).__init__()
         self._capacity = capcity
-        count = 5
         self.count = Parameter(Tensor(5, ms.int32), name="count")
         self.head = Parameter(Tensor(0, ms.int32), name="head")
-        self.input_x = Tensor(np.ones(shape=[count]), ms.bool_)
         self.buffer_sample = P.BufferSample(self._capacity, batch_size, shapes, types)
-        self.index = Parameter(Tensor([0, 2, 4], ms.int32), name="index")
 
     @ms_function
     def construct(self, buffer):
-        return self.buffer_sample(buffer, self.index, self.count, self.head)
+        return self.buffer_sample(buffer, self.count, self.head)
 
 
 states = Tensor(np.arange(4*5).reshape(5, 4).astype(np.float32)/10.0)
@@ -93,14 +90,7 @@ def test_BufferSample():
     buffer_sample = RLBufferSample(capcity=5, batch_size=3, shapes=[(4,), (2,), (1,), (4,)], types=[
         ms.float32, ms.int32, ms.int32, ms.float32])
     ss, aa, rr, ss_ = buffer_sample(b)
-    expect_s = [[0, 0.1, 0.2, 0.3], [0.8, 0.9, 1.0, 1.1], [1.6, 1.7, 1.8, 1.9]]
-    expect_a = [[0, 1], [4, 5], [8, 9]]
-    expect_r = [[1], [1], [1]]
-    expect_s_ = [[0, 1, 2, 3], [8, 9, 10, 11], [16, 17, 18, 19]]
-    np.testing.assert_almost_equal(ss.asnumpy(), expect_s)
-    np.testing.assert_almost_equal(aa.asnumpy(), expect_a)
-    np.testing.assert_almost_equal(rr.asnumpy(), expect_r)
-    np.testing.assert_almost_equal(ss_.asnumpy(), expect_s_)
+    print(ss, aa, rr, ss_)
 
 
 @ pytest.mark.level0
