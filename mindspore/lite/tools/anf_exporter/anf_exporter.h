@@ -46,7 +46,6 @@ class AnfExporter {
  public:
   AnfExporter() = default;
   virtual ~AnfExporter() = default;
-  void set_train_flag(bool train_flag) { train_flag_ = train_flag; }
   schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false,
                              bool train_flag = false);
   void SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,

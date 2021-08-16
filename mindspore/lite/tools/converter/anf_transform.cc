@@ -58,6 +58,7 @@
 #include "tools/optimizer/graph/reduce_same_act_pass.h"
 #include "tools/optimizer/graph/split_one_pass.h"
 #include "tools/optimizer/graph/decrease_transpose_algo.h"
+#include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -382,6 +383,11 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     MS_LOG(ERROR) << "Do Quantize failed.";
     return nullptr;
   }
+
+  if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat"})) {
+    MS_LOG(ERROR) << "Run transpose opt pass failed.";
+    return nullptr;
+  }
   return old_graph;
 }
 
@@ -393,6 +399,8 @@ void AnfTransform::AppendPassToStoreRoom(const converter::Flags *config) {
   registry::PassRegistry("InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train));
   registry::PassRegistry("ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train));
   registry::PassRegistry("ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train));
+  registry::PassRegistry("SpecifyGraphInputFormat",
+                         std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat));
 }
 
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
