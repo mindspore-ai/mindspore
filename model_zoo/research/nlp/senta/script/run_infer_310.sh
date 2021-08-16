@@ -95,7 +95,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --result_dir=./result_files --label_dir=./preprocess_result/03_data &> acc.log
+    python3.7 ../postprocess.py --result_dir=./result_files --label_dir=./preprocess_result/03_data &> acc.log &
 }
 
 if [ $need_preprocess == "y" ]; then
