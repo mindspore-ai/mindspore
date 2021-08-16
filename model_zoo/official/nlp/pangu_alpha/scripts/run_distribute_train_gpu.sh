@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_distributed_train_gpu.sh RANK_SIZE HOSTFILE DATASET MODE"
-echo "for example: bash run_distributed_train_gpu.sh 16 hostfile_16p /mass_dataset/train_data/ 2.6B"
+echo "bash run_distributed_train_gpu.sh RANK_SIZE HOSTFILE DATASET PER_BATCH MODE"
+echo "for example: bash run_distributed_train_gpu.sh 16 hostfile_16p /mass_dataset/train_data/ 16 2.6B"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -26,7 +26,8 @@ self_path=$(dirname "${script_self}")
 RANK_SIZE=$1
 HOSTFILE=$2
 DATASET=$3
-MODE=$4
+PER_BATCH=$4
+MODE=$5
 
 mpirun --allow-run-as-root -x PATH -x LD_LIBRARY_PATH -x PYTHONPATH -x NCCL_DEBUG -x GLOG_v -n $RANK_SIZE --hostfile $HOSTFILE --output-filename log_output --merge-stderr-to-stdout \
     python -s ${self_path}/../train.py  \
@@ -35,4 +36,5 @@ mpirun --allow-run-as-root -x PATH -x LD_LIBRARY_PATH -x PYTHONPATH -x NCCL_DEBU
       --device_target="GPU"             \
       --data_url=$DATASET               \
       --mode=$MODE                      \
+      --per_batch_size=$PER_BATCH       \
       --run_type=train > train_log.txt 2>&1 &
