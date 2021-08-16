@@ -487,7 +487,10 @@ const ActorInfo &MindRTBackend::CompileGraph(const OpRunInfo &op_run_info, const
   graph_info_to_device_context_.clear();
   graph_info_to_device_context_[graph_info] = device_context;
 
-  auto graph_compiler_info = ConstructGraphCompilerInfo(actor_info, tensors_mask, input_tensors);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  auto graph_compiler_info = ConstructGraphCompilerInfo(actor_info, tensors_mask, input_tensors, !enable_cache);
   const auto actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
@@ -979,13 +982,13 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
-                                             root_graph->parameters(), parser, outputs_order, outputs_num, name,
+                                             root_graph->parameters(), parser, outputs_order, outputs_num, name, false,
                                              runtime::GraphExecutionStrategy::kPipeline);
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   const ActorInfo &actor_info, const std::vector<int64_t> *tensors_mask,
-  const std::vector<tensor::TensorPtr> *input_tensors) {
+  const std::vector<tensor::TensorPtr> *input_tensors, bool need_erase) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   std::vector<KernelGraphPtr> graphs;
   std::vector<DeviceContext *> device_contexts;
@@ -1014,8 +1017,17 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   auto parser = std::make_shared<ControlNodeParser>();
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
                                              std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), parser,
-                                             outputs_order, outputs_order.size(), actor_info,
+                                             outputs_order, outputs_order.size(), actor_info, need_erase,
                                              runtime::GraphExecutionStrategy::kStep);
+}
+
+void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph) {
+  if (graph_info_to_device_context_.empty()) {
+    MS_LOG(EXCEPTION) << "The map graph_info_to_device_context_ is empty.";
+  }
+  const auto &graph_info = graph_info_to_device_context_.begin()->first;
+  graph_compiler_->EraseSingleOpCache(graph_info, graph->graph_id());
+  actor_to_graph_compiler_info_.erase(actor_info);
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,
@@ -1085,6 +1097,10 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
   // Update device address for input and output of graph.
   UpdateOutputDeviceAddress(output_nodes, graph_compiler_info.device_contexts_.front());
   UpdateInputDeviceAddress(graph);
+
+  if (graph_compiler_info.need_erase_) {
+    EraseSingleOpCache(actor_info, graph);
+  }
 }
 }  // namespace compile
 }  // namespace mindspore

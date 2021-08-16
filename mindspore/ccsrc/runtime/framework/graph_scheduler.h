@@ -65,6 +65,7 @@ using DataArrowPair = std::pair<AID, DataArrowPtr>;
 // The control node parser is used to parse the edge info in control nodes.
 // The origin parameters order is used to correspond to the input args.
 // The origin outputs order is used to correspond to the output args.
+// The need_erase means need erase this GraphCompilerInfo object after run actor set.
 struct GraphCompilerInfo {
   GraphCompilerInfo(const std::vector<KernelGraphPtr> &graphs, const std::vector<DeviceContext *> &device_contexts,
                     const std::vector<std::vector<int64_t> *> &tensors_mask,
@@ -72,7 +73,7 @@ struct GraphCompilerInfo {
                     const std::vector<AnfNodePtr> &control_nodes,
                     const std::vector<AnfNodePtr> &origin_parameters_order, const ControlNodeParserPtr &parser,
                     const KernelMapPosition &origin_outputs_order, const size_t outputs_num, const std::string &name,
-                    GraphExecutionStrategy strategy)
+                    bool need_erase, GraphExecutionStrategy strategy)
       : graphs_(graphs),
         device_contexts_(device_contexts),
         tensors_mask_(tensors_mask),
@@ -83,6 +84,7 @@ struct GraphCompilerInfo {
         origin_outputs_order_(origin_outputs_order),
         outputs_num_(outputs_num),
         name_(name),
+        need_erase_(need_erase),
         strategy_(strategy) {}
   ~GraphCompilerInfo();
   std::vector<KernelGraphPtr> graphs_;
@@ -95,6 +97,7 @@ struct GraphCompilerInfo {
   KernelMapPosition origin_outputs_order_;
   size_t outputs_num_;
   std::string name_;
+  bool need_erase_;
   GraphExecutionStrategy strategy_;
 };
 
