@@ -43,7 +43,7 @@ void PadSliceParameterTo8D(SliceParameter *param) {
   param->param_length_ = DIMENSION_8D;
 }
 
-void DoSlice(const void *input, void *output, SliceParameter *param, int thread_id, int data_size) {
+void DoSlice(const void *input, void *output, const SliceParameter *param, int thread_id, int data_size) {
   int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
 
@@ -94,14 +94,14 @@ void DoSlice(const void *input, void *output, SliceParameter *param, int thread_
   }
 }
 
-static bool WhetherCopyByAxis(int begin[], int end[], const int shape[], int dim) {
+static bool WhetherCopyByAxis(const int begin[], const int end[], const int shape[], int dim) {
   for (int i = dim + 1; i < DIMENSION_8D; ++i) {
     if (begin[i] != 0 || end[i] != shape[i]) return false;
   }
   return true;
 }
 
-void DoSliceNoParallel(const void *input, void *output, SliceParameter *param, int data_size) {
+void DoSliceNoParallel(const void *input, void *output, const SliceParameter *param, int data_size) {
   int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
 
