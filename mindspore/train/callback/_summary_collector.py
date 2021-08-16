@@ -919,8 +919,11 @@ class SummaryCollector(Callback):
         if not self._collect_specified_data.get('collect_eval_lineage'):
             return
         eval_lineage = dict()
-
-        eval_lineage[LineageMetadata.metrics] = json.dumps(cb_params.metrics)
+        try:
+            eval_lineage[LineageMetadata.metrics] = json.dumps(cb_params.metrics)
+        except TypeError as exc:
+            logger.warning("Summary cannot collect the type of metrics, currently support type: dict, list, tuple, "
+                           "str, int, float, bool and None. %s.", str(exc))
         self._parse_dataset(cb_params, eval_lineage)
 
         eval_lineage_message = self._package_eval_lineage_message(eval_lineage)

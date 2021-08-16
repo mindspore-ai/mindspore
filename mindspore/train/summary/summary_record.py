@@ -111,7 +111,8 @@ class SummaryRecord:
         file_suffix (str): The suffix of file. Default: "_MS".
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: None.
         max_file_size (int, optional): The maximum size of each file that can be written to disk (in bytes).
-            Unlimited by default. For example, to write not larger than 4GB, specify `max_file_size=4 * 1024 ** 3`.
+            For example, to write not larger than 4GB, specify `max_file_size=4*1024**3`.
+            Default: None, which means no limit.
         raise_exception (bool, optional): Sets whether to throw an exception when a RuntimeError or OSError exception
             occurs in recording data. Default: False, this means that error logs are printed and no exception is thrown.
         export_options (Union[None, dict]): Perform custom operations on the export data.
@@ -295,9 +296,10 @@ class SummaryRecord:
 
         Args:
             step (int): Represents training step number.
-            train_network (Cell): The network to call the callback.
+            train_network (Cell): The spare network for saving graph.
+                Default: None, it means just do not saving the graph summary when the original network graph is None.
             plugin_filter (Optional[Callable[[str], bool]]): The filter function, \
-                which is used to filter out plugins from being written by returning False.
+                which is used to filter out plugins from being written by returning False. Default: None.
 
         Returns:
             bool, whether the record process is successful or not.
