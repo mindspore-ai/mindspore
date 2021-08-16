@@ -91,8 +91,8 @@ constexpr auto kTBE_IMPL_PATH = "TBE_IMPL_PATH";
 constexpr auto kTUNE_OPS_NAME = "TUNE_OPS_NAME";
 constexpr auto kDefPath = "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/";
 constexpr auto kBkPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/";
-constexpr int sleep_time = 2;
-constexpr int tune_sleep_time = 10;
+constexpr int KSleepSeconds = 3;
+constexpr int KSleepInterval = 1000;
 constexpr int kFusionLogLevel = 1;
 
 namespace {
@@ -356,6 +356,7 @@ void AscendKernelCompileManager::ParseTargetJobStatus(const std::string &type, c
 
 void AscendKernelCompileManager::QueryFinishJob(const std::string &job_type) {
   MS_EXCEPTION_IF_NULL(build_manager_);
+  size_t query_cnt = 0;
   while (!job_list_.empty()) {
     std::vector<int> success_job;
     auto iter = job_list_.begin();
@@ -364,6 +365,7 @@ void AscendKernelCompileManager::QueryFinishJob(const std::string &job_type) {
       auto kernel_json = iter->second;
       JsonAssemble(kQuery, kernel_json, &query_json);
       auto build_result = build_manager_->ProcessTbeJob(query_json);
+      query_cnt++;
       ParseTargetJobStatus(job_type, build_result, &success_job);
       iter++;
     }
@@ -372,8 +374,10 @@ void AscendKernelCompileManager::QueryFinishJob(const std::string &job_type) {
     }
     success_job.clear();
     if (!job_list_.empty()) {
-      int s_time = is_tune_flag_ ? tune_sleep_time : sleep_time;
-      sleep(s_time);
+      if (query_cnt % KSleepInterval == 0) {
+        MS_LOG(INFO) << "Querying Parallel Compilation Job, Current Query Count: " << query_cnt;
+        sleep(KSleepSeconds);
+      }
     }
   }
 }
@@ -382,6 +386,7 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
   MS_EXCEPTION_IF_NULL(build_manager_);
   MS_EXCEPTION_IF_NULL(kernel_mode_ret);
   int build_failed_nums = 0;
+  size_t query_cnt = 0;
   while (!job_list_.empty()) {
     std::vector<int> success_job;
     auto iter = job_list_.begin();
@@ -390,6 +395,7 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
       auto kernel_json = iter->second;
       JsonAssemble(kQuery, kernel_json, &query_json);
       auto build_result = build_manager_->ProcessTbeJob(query_json);
+      query_cnt++;
       auto json_obj = TurnStrToJson(build_result);
       if (json_obj.at(kStatus) == kSuccess) {
         struct TargetJobStatus task_info;
@@ -421,8 +427,10 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
     }
     success_job.clear();
     if (!job_list_.empty()) {
-      int s_time = is_tune_flag_ ? tune_sleep_time : sleep_time;
-      sleep(s_time);
+      if (query_cnt % KSleepInterval == 0) {
+        MS_LOG(INFO) << "Querying Parallel Compilation Job, Current Query Count: " << query_cnt;
+        sleep(KSleepSeconds);
+      }
     }
   }
   MS_LOG(INFO) << "Compile Fusion Kernel Failed Num: " << build_failed_nums;

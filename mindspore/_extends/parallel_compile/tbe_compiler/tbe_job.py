@@ -152,7 +152,6 @@ class TbeJob:
         result["job_type"] = self.type.value
         result["fusion_op_name"] = self.fusion_op_name
         result["result"] = self.result
-        self.debug("Resp result:{}".format(json.dumps(result)))
         process_info = []
         for info in self.process_info:
             msg = {"index": info.index, "level": info.level.value, "message": info.info}
