@@ -137,10 +137,11 @@ class IrExportBuilder {
   mind_ir::ModelProto model_;
   mind_ir::NodeProto *last_node_{nullptr};
   std::list<FuncGraphPtr> todo_;
-  std::map<AnfNodePtr, size_t> node_index_map_;
+  std::map<AnfNodePtr, std::string> node_index_map_;
   std::set<std::string> nodeName_;
   size_t node_index_{0};
   size_t shape_index_{0};
+  bool top_graph{true};
 };
 
 using IrExporterPtr = std::shared_ptr<IrExporter>;
@@ -185,9 +186,11 @@ void IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   nodeName_.clear();
   // Build the main funcGraph
   nodeName_.insert(func_graph->ToString());
+  top_graph = true;
   BuildFuncGraph(func_graph, graph_proto, save_tensor_data);
   std::set<FuncGraphPtr> graphVisited;
   graphVisited.insert(func_graph);
+  top_graph = false;
   while (!todo_.empty()) {
     FuncGraphPtr fg = todo_.back();
     todo_.pop_back();
@@ -204,6 +207,7 @@ void IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph, bool save_tenso
   }
   // Release resource
   nodeName_.clear();
+  node_index_map_.clear();
 }
 
 void IrExportBuilder::BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto,
@@ -227,8 +231,8 @@ void IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
       MS_LOG(EXCEPTION) << "Parameter: '" << item->ToString() << "' could not cast to parameter.";
     }
     std::string param_name = GetUniqueNodeName(param);
-    if (param->has_default()) {
-      MS_LOG(DEBUG) << "Parameter: '" << item->ToString() << "' has default.";
+    if (top_graph && param->has_default()) {
+      MS_LOG(DEBUG) << "Parameter: '" << item->DebugString() << "' has default. address: " << (size_t)param.get();
       mind_ir::TensorProto *parameter_proto = graph_proto->add_parameter();
       parameter_proto->set_name(param_name);
       SetParamToTensorProto(param, parameter_proto);
@@ -308,7 +312,7 @@ void IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
   } else if (type->isa<Tuple>()) {
     auto tup_shape = shape->cast<abstract::TupleShapePtr>();
     value_proto->set_denotation(type->type_name() + ":" + std::to_string(tup_shape->shape().size()));
-  } else if (type->isa<Number>() || type->isa<String>()) {
+  } else if (type->isa<Number>() || type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
     value_proto->set_denotation(type->type_name());
   } else {
     MS_LOG(EXCEPTION) << "Value type: " << type->type_name() << " is not supported!";
@@ -541,27 +545,18 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
   // Naming anfnode
   // 1. parameter is unique in one func_graph
   // 2. cnode and valuenode may be reduplicative, so add index to identify.
-  std::string node_name = "";
-  if (node->isa<Parameter>()) {
-    node_name = GetNodeName(node);
-  } else if (node->isa<CNode>()) {
-    auto iter = node_index_map_.find(node);
-    if (iter != node_index_map_.end()) {
-      node_name = GetNodeName(node) + ":" + std::to_string(iter->second);
-    } else {
-      auto node_idx = GetNodeIndex();
-      node_index_map_[node] = node_idx;
-      node_name = GetNodeName(node) + ":" + std::to_string(node_idx);
-    }
-  } else if (node->isa<ValueNode>()) {
-    auto node_idx = GetNodeIndex();
-    node_index_map_[node] = node_idx;
-    node_name = GetNodeName(node) + ":" + std::to_string(node_idx);
+  auto iter = node_index_map_.find(node);
+  if (iter != node_index_map_.end()) {
+    return iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "Can not support type of node:" << node->ToString();
+    std::string node_name = GetNodeName(node);
+    while (nodeName_.count(node_name) > 0) {
+      auto node_idx = GetNodeIndex();
+      node_name = node_name + ":" + std::to_string(node_idx);
+    }
+    node_index_map_[node] = node_name;
+    return node_name;
   }
-  MS_LOG(DEBUG) << "Node name: " << node_name;
-  return node_name;
 }
 
 std::string IrExportBuilder::GetNodeName(const AnfNodePtr &node) {
