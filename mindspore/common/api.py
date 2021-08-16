@@ -173,7 +173,7 @@ class _MindSporeFunction:
             self.obj.__parse_method__ = method_name
             generate_name = self.obj.__module__ + "."
             if self.obj.__class__.__name__ != "ClipByNorm":
-                generate_name = generate_name + str(self.obj.create_time)
+                generate_name = generate_name + str(self.obj.create_time) + '.' + self.fn.__name__
         if self.identify_obj is not None:
             generate_name = generate_name + str(id(self.identify_obj))
 
