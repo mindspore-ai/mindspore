@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
 
 
 class ForwardNet(nn.Cell):
