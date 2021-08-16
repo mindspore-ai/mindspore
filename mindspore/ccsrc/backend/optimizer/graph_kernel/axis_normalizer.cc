@@ -69,6 +69,7 @@ bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) const {
       }
       if (diff) {
         changed = true;
+        std::sort(axis_vec.begin(), axis_vec.end());
         SetNodeAttrSafely(kAttrAxis, MakeValue(axis_vec), node);
       }
     }

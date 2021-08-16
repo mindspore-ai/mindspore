@@ -81,7 +81,6 @@ class GraphBuilder:
         """Create a new Value"""
         if name in (None, ''):
             name = self._alloc_tensor_name()
-
         v = Value(name, dtype, value)
         return v
 
@@ -128,34 +127,14 @@ class CompositeGraph:
 
     def load(self, desc):
         """Load Graph from json"""
-        def _attr_of(op, inputs, output):
-            def _get_axis_while_none(input_shape, output_shape):
-                red_axis = []
-                if len(output_shape) == len(input_shape):
-                    for i, s in enumerate(output_shape):
-                        if s == 1 and input_shape[i] > 1:
-                            red_axis.append(i)
-                else:
-                    red_axis = list(range(len(output_shape)))
-                return red_axis
-
+        def _attr_of(op):
+            if not op['attr']:
+                return dict()
             attr = {}
-            if op['name'] in ('ReduceSum', 'ReduceMax', 'ReduceMin'):
-                for a in op['attr']:
-                    if a['name'] == 'axis':
-                        red_axis, dim_size = [], len(inputs[0].shape)
-                        if not a['value']:
-                            red_axis = _get_axis_while_none(inputs[0].shape, output.shape)
-                        else:
-                            if isinstance(a['value'], int):
-                                a['value'] = [a['value']]
-                            for i in a['value']:
-                                red_axis.append(i if i >= 0 else dim_size + i)
-                        attr['reduce_axis'] = red_axis
-                    if a['name'] == "reduce_output_fuse":
-                        attr['reduce_output_fuse'] = a['value']
-            elif op['attr']:
-                for a in op['attr']:
+            for a in op['attr']:
+                if a['name'] == 'axis' and op['name'] in ('ReduceSum', 'ReduceMax', 'ReduceMin'):
+                    attr['reduce_axis'] = a['value']
+                else:
                     attr[a['name']] = a['value']
             return attr
 
@@ -171,7 +150,6 @@ class CompositeGraph:
                     'shape'], out_desc['data_type'], out_desc['format']
                 self.tensors[name] = builder.tensor(
                     shape, dtype, data_format, name=name, para_type=Tensor.PARA_OUTPUT)
-            cur_fusion = None
             for op in desc['op_desc']:
                 inputs = [self.tensors[d['tensor_name']] for x in op['input_desc'] for d in x if 'value' not in d]
                 out_desc = op['output_desc']
@@ -182,21 +160,12 @@ class CompositeGraph:
                     inputs[1].para_type = Tensor.PARA_OUTPUT
                     output = inputs[2]
                     self.tensors[name] = output
-                else:
-                    output = self.tensors.get(name, None)
-                    if not output:
-                        output = builder.tensor(
-                            shape, dtype, data_format, name=name)
-                        self.tensors[name] = output
-                    builder.op(op['name'], output, inputs,
-                               attrs=_attr_of(op, inputs, output))
-                if 'fusion' in op:
-                    if cur_fusion is None:
-                        cur_fusion = output
-                    else:
-                        cur_fusion.add_buddy(output)
-                        if op['fusion'].endswith('_end'):
-                            cur_fusion = None
+                    continue
+                output = self.tensors.get(name, None)
+                if not output:
+                    output = builder.tensor(shape, dtype, data_format, name=name)
+                    self.tensors[name] = output
+                builder.op(op['name'], output, inputs, attrs=_attr_of(op))
         self.graph = builder.get()[0]
         self.desc = desc
 
@@ -234,43 +203,40 @@ class CompositeGraph:
         inputs, outputs = subgraph.deduce_parameters()
         graph_ops = set(subgraph.ops)
         inplace_assign, inplace_assign_z = self._pre_dump(outputs)
-        for key in self.desc:
+
+        def dump_output(t):
+            if t.name in inplace_assign:
+                z = inplace_assign_z if inplace_assign_z is not None else self.tensors[t.name]
+                return {'data_type': z.dtype, 'shape': z.shape, 'tensor_name': inplace_assign[t.name]}
+            return {'data_type': t.dtype, 'shape': t.shape, 'tensor_name': t.name}
+
+        def dump_op_desc(d):
+            if d['name'] == 'InplaceAssign':
+                y = d['input_desc'][1][0]['tensor_name']
+                if self.tensors[y].op in graph_ops:
+                    z, fake = (inplace_assign_z, False) if inplace_assign_z is not None else (self.tensors[y], True)
+                    inplace_desc = copy.deepcopy(d)
+                    inplace_desc['attr'] = {'name': 'fake_output', 'value': fake}
+                    z_desc, out_desc = inplace_desc['input_desc'][2][0], inplace_desc['output_desc'][0]
+                    z_desc['shape'] = z.shape
+                    z_desc['data_type'] = z.dtype
+                    z_desc['tensor_name'] = z.name
+                    out_desc['shape'] = z.shape
+                    out_desc['data_type'] = z.dtype
+                    return inplace_desc
+            op = self.tensors[d['output_desc'][0]['tensor_name']].op
+            if op in graph_ops or op in subgraph.recompute_ops:
+                return d
+            return None
+
+        for key in self.desc.keys():
             if key == 'input_desc':
-                desc[key] = [
-                    [{'data_type': t.dtype, 'shape': t.shape, 'tensor_name': t.name}] for t in inputs]
+                desc[key] = [[{'data_type': t.dtype, 'shape': t.shape, 'tensor_name': t.name}] for t in inputs]
             elif key == 'output_desc':
-                out_desc = []
-                for t in outputs:
-                    if t.name in inplace_assign:
-                        z = inplace_assign_z if inplace_assign_z is not None else self.tensors[t.name]
-                        out_desc.append(
-                            {'data_type': z.dtype, 'shape': z.shape, 'tensor_name': inplace_assign[t.name]})
-                    else:
-                        out_desc.append(
-                            {'data_type': t.dtype, 'shape': t.shape, 'tensor_name': t.name})
-                desc[key] = out_desc
+                desc[key] = list(map(dump_output, outputs))
             elif key == 'op_desc':
-                op_desc = []
-                for d in self.desc[key]:
-                    if d['name'] == 'InplaceAssign':
-                        y = d['input_desc'][1][0]['tensor_name']
-                        if self.tensors[y].op in graph_ops:
-                            z, fake = (inplace_assign_z, False) if inplace_assign_z is not None else (
-                                self.tensors[y], True)
-                            inplace_desc = copy.deepcopy(d)
-                            inplace_desc['attr'] = {'name': 'fake_output', 'value': fake}
-                            z_desc, out_desc = inplace_desc['input_desc'][2][0], inplace_desc['output_desc'][0]
-                            z_desc['shape'] = z.shape
-                            z_desc['data_type'] = z.dtype
-                            z_desc['tensor_name'] = z.name
-                            out_desc['shape'] = z.shape
-                            out_desc['data_type'] = z.dtype
-                            op_desc.append(inplace_desc)
-                    else:
-                        op = self.tensors[d['output_desc'][0]['tensor_name']].op
-                        if op in graph_ops or op in subgraph.recompute_ops:
-                            op_desc.append(d)
-                desc[key] = op_desc
+                op_desc = map(dump_op_desc, self.desc[key])
+                desc[key] = [d for d in op_desc if d is not None]
             elif key == 'op':
                 desc[key] = subgraph.name
             else:

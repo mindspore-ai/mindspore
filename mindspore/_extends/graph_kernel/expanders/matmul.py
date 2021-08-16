@@ -48,24 +48,22 @@ class MatMul(Expander):
         if input_num < 2:
             raise GKException("matul inputs number should bigger than 1, but got {}.".format(input_num))
 
-    @staticmethod
-    def _trans_shape(shape):
-        trans_shape = list(shape)
-        trans_shape[-2] = shape[-1]
-        trans_shape[-1] = shape[-2]
-        return trans_shape
-
     def _expand(self, graph_builder):
+        def transpose(shape):
+            trans_shape = list(shape)
+            trans_shape[-2] = shape[-1]
+            trans_shape[-1] = shape[-2]
+            return trans_shape
         if not self._optimize_to_mul():
             raise GKException("MatMul/BatchMatMul do not need to be replaced by Mul")
         # Matmul is replaced by Mul([b m k], [b k n]) when k==1
         input_a = self.inputs[0]
         input_b = self.inputs[1]
         if self.transpose_a:
-            shape_a_trans = self._trans_shape(self.shape_a)
+            shape_a_trans = transpose(self.shape_a)
             input_a = graph_builder.emit('Reshape', [input_a], attrs={'shape': shape_a_trans})
         if self.transpose_b:
-            shape_b_trans = self._trans_shape(self.shape_b)
+            shape_b_trans = transpose(self.shape_b)
             input_b = graph_builder.emit('Reshape', [input_b], attrs={'shape': shape_b_trans})
         result = graph_builder.emit('Mul', [input_a, input_b])
         if 'dst_type' in self.attrs and self.inputs[0].dtype != self.attrs['dst_type']:

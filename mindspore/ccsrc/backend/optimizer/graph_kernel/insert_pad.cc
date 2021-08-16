@@ -239,13 +239,7 @@ bool InsertPadUnpad(const FuncGraphPtr &func_graph) {
     if (!AnfAlgo::CheckPrimitiveType(n, prim::kPrimMatMul)) continue;
     auto mm_cnode = n->cast<CNodePtr>();
     vec pad_shape_a, pad_shape_b, tail_shape_a, tail_shape_b, tail_shape_unpad, unpad_shape;
-    bool pad_K, pad_M, pad_N;
-    pad_shape_a.clear();
-    pad_shape_b.clear();
-    tail_shape_a.clear();
-    tail_shape_b.clear();
-    tail_shape_unpad.clear();
-    unpad_shape.clear();
+    bool pad_K{false}, pad_M{false}, pad_N{false};
     std::tie(pad_K, pad_M, pad_N) =
       NeedPad(mm_cnode, &pad_shape_a, &pad_shape_b, &unpad_shape, &tail_shape_a, &tail_shape_b, &tail_shape_unpad);
     if (!pad_K && !pad_M && !pad_N) continue;

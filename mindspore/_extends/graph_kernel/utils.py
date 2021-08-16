@@ -26,3 +26,5 @@ def create_dir(pathname):
         os.mkdir(pathname)
     except OSError:
         pass
+    finally:
+        pass
