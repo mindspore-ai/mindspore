@@ -115,7 +115,7 @@ class DenoisingDataset:
         batch_x = self.xs[index, ...]
         noise = np.random.standard_normal(size=batch_x.shape) * (self.sigma/255.0)
         batch_y = batch_x + noise
-        return batch_y, noise
+        return batch_y.astype(np.float32), noise.astype(np.float32)
 
     def __len__(self):
         return len(self.xs)

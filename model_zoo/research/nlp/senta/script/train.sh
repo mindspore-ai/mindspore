@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-python train.py --data_url ./data/ --train_url ./output/
+python train.py --data_url ./data/ --train_url ./output/ &> train.log &

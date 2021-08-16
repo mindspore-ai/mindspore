@@ -14,4 +14,4 @@
 # limitations under the License.
 # ============================================================================
 
-python eval.py --data_url ./data/ --ckpt ./SST-2.ckpt
+python eval.py --data_url ./data/ --ckpt ./SST-2.ckpt &> eval.log &
