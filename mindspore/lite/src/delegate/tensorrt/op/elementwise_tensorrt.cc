@@ -97,6 +97,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     this->AddInnerInTensors(constant_input);
   }
+
   nvinfer1::IElementWiseLayer *cal_layer = network->addElementWise(
     *tensorrt_in_tensors_[first_in_tensor_index_], *tensorrt_in_tensors_[1 - first_in_tensor_index_], element_wise_op_);
 

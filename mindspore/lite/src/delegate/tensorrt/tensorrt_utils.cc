@@ -47,6 +47,14 @@ nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
   return dims;
 }
 
+std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims) {
+  std::vector<int64_t> shape;
+  for (int i = 0; i < dims.nbDims; i++) {
+    shape.push_back(dims.d[i]);
+  }
+  return shape;
+}
+
 nvinfer1::IShuffleLayer *SetTranspose(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input,
                                       nvinfer1::Permutation permutation) {
   nvinfer1::IShuffleLayer *layer = network->addShuffle(const_cast<nvinfer1::ITensor &>(input));

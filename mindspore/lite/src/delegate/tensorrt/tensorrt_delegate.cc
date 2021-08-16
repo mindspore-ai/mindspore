@@ -38,6 +38,11 @@
 #include "src/delegate/tensorrt/op/pad_tensorrt.h"
 
 namespace mindspore::lite {
+TensorRTDelegate::~TensorRTDelegate() {
+  if (runtime_ != nullptr) {
+    delete runtime_;
+  }
+}
 bool IsHardwareSupport() {
   int driver_version = 0;
   cudaDriverGetVersion(&driver_version);
@@ -93,6 +98,13 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Flatten, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
   };
+  if (runtime_ == nullptr) {
+    runtime_ = new (std::nothrow) TensorRTRuntime();
+  }
+  if (runtime_->Init() != RET_OK) {
+    MS_LOG(ERROR) << "TensorRTRuntime init failed.";
+    return mindspore::kLiteError;
+  }
   return mindspore::kSuccess;
 }
 
@@ -154,7 +166,8 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
                                                         KernelIter from, KernelIter end) {
   auto in_tensors = GraphInTensors<TensorRTOp>(ops, model, from, end);
   auto out_tensors = GraphOutTensors<TensorRTOp>(ops, model, from, end);
-  auto *tensorrt_graph = new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_);
+  auto *tensorrt_graph =
+    new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_, runtime_);
   if (tensorrt_graph == nullptr) {
     MS_LOG(ERROR) << "new tensorrt_graph failed.";
     return nullptr;

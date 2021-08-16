@@ -304,7 +304,7 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
     return RET_OK;
   }
 
-  /* tensor RT delegate  :  high Priority */
+  /* external context delegate */
   if (context_->delegate != nullptr) {
     auto ret = ReplaceDelegateKernels(dst_kernels);
     if (ret != RET_OK) {
@@ -321,11 +321,12 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
     std::vector<kernel::LiteKernel *> tmp_kernels;
     kernel::LiteKernel *remain_kernel = nullptr;
 
-    /* Loop for npu-subgraph */
+    /* Loop for inner delegate npu and TensorRT subgraph */
     while (!src_kernels.empty()) {
       auto kernel = src_kernels.front();
       VectorErase(&src_kernels, kernel);
-      bool priority_ret = DeviceTypePriority(context_, DT_NPU, KernelArchToDeviceType(kernel->desc().arch));
+      bool priority_ret =
+        DeviceTypePriority(context_, delegate_device_type_, KernelArchToDeviceType(kernel->desc().arch));
       if (priority_ret == true) {
         tmp_kernels.push_back(kernel);
       } else {

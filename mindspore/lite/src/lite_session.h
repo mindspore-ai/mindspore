@@ -161,6 +161,7 @@ class LiteSession : public session::LiteSession {
 #endif
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
+  DeviceType delegate_device_type_;  // only valid when delegate_ is not null
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
 };
 }  // namespace lite

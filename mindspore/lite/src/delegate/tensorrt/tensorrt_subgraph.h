@@ -32,8 +32,11 @@ class TensorRTSubGraph : public kernel::Kernel {
  public:
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
                    const std::vector<mindspore::MSTensor> &outputs, const mindspore::Context *ctx,
-                   std::shared_ptr<GPUDeviceInfo> device_info)
-      : kernel::Kernel(inputs, outputs, nullptr, ctx), all_ops_(std::move(ops)), device_info_(device_info) {
+                   std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime)
+      : kernel::Kernel(inputs, outputs, nullptr, ctx),
+        all_ops_(std::move(ops)),
+        device_info_(device_info),
+        runtime_(runtime) {
     trt_specific_weight_nodes_ = {
       schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
       schema::PrimitiveType_Gather,       schema::PrimitiveType_Reshape,      schema::PrimitiveType_PowFusion,
@@ -49,10 +52,7 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   int Execute() override;
 
-  int ReSize() override {
-    MS_LOG(ERROR) << "TensorRT does not support the resize function temporarily.";
-    return lite::RET_ERROR;
-  }
+  int ReSize();
 
   int BuildTensorRTGraph();
 
@@ -67,7 +67,7 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   static nvinfer1::ITensor *FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
-  TensorRTRuntime *runtime_{nullptr};
+  void SetCudaDevice();
 
   std::vector<TensorRTOp *> all_ops_{};
   // subgraph input nodes.
@@ -76,7 +76,10 @@ class TensorRTSubGraph : public kernel::Kernel {
   std::vector<TensorRTOp *> out_ops_{};
 
   void **tensor_bindings_{nullptr};
+
   std::shared_ptr<GPUDeviceInfo> device_info_{nullptr};
+
+  TensorRTRuntime *runtime_{nullptr};  // all subgraph in one delegate share a runtime_
 
   std::set<mindspore::schema::PrimitiveType> trt_specific_weight_nodes_;
 
@@ -88,6 +91,12 @@ class TensorRTSubGraph : public kernel::Kernel {
   nvinfer1::IBuilderConfig *config_{nullptr};
   nvinfer1::ICudaEngine *engine_{nullptr};
   nvinfer1::IExecutionContext *trt_context_{nullptr};
+
+  int input_batchsize_index_{0};
+  int output_batchsize_index_{0};
+
+  // -1 means don't support hw resize
+  int input_hw_index_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_SUB_GTAPH_

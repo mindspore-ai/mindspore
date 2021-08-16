@@ -35,7 +35,7 @@ class TensorRTDelegate : public Delegate {
  public:
   explicit TensorRTDelegate(mindspore::Context *context) : context_(context) {}
 
-  ~TensorRTDelegate() override = default;
+  ~TensorRTDelegate() override;
 
   Status Init() override;
 
@@ -52,6 +52,8 @@ class TensorRTDelegate : public Delegate {
   mindspore::Context *context_;
 
   std::shared_ptr<GPUDeviceInfo> device_info_{nullptr};
+
+  TensorRTRuntime *runtime_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
