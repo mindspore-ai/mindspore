@@ -47,27 +47,27 @@ bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 template <typename T>
 void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
   SplitParameter param;
-  param.num_split_ = output_num_;
-  param.split_dim_ = axis_;
+  param.num_split_ = static_cast<int>(output_num_);
+  param.split_dim_ = static_cast<int>(axis_);
   param.strides_[input_shape_.size() - 1] = 1;
   for (int i = input_shape_.size() - 2; i >= 0; i--) {  // from -2 to 0 dim
     param.strides_[i] = param.strides_[i + 1] * input_shape_[i + 1];
   }
-  auto split_sizes = std::make_unique<int[]>(param.num_split_);
+  auto split_sizes = std::make_unique<int[]>(static_cast<size_t>(param.num_split_));
   param.split_sizes_ = split_sizes.get();
-  int split_size = input_shape_[param.split_dim_] / output_num_;
+  int split_size = input_shape_[static_cast<size_t>(param.split_dim_)] / output_num_;
   for (int i = 0; i < param.num_split_; i++) {
     param.split_sizes_[i] = split_size;
   }
   param.split_count_ = 1;
-  for (int i = 0; i < axis_; ++i) {
+  for (size_t i = 0; i < static_cast<size_t>(axis_); ++i) {
     param.split_count_ *= input_shape_[i];
   }
   auto task = [&](size_t start, size_t end) {
     (void)DoSplit(input, reinterpret_cast<void **>(output), &input_shape_[0], SizeToInt(start), SizeToInt(end - start),
                   &param, SizeToInt(sizeof(T)));
   };
-  CPUKernelUtils::ParallelFor(task, param.split_count_ * param.num_split_);
+  CPUKernelUtils::ParallelFor(task, static_cast<size_t>(param.split_count_ * param.num_split_));
   return;
 }
 

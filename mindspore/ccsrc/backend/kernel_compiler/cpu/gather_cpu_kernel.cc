@@ -27,37 +27,34 @@ void GatherV2CPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  if (axis_ < 0) {
-    axis_ = axis_ + SizeToLong(input_shape_.size());
-  }
-  const size_t expand_dim = 4;
-  axis_ += expand_dim - input_shape_.size();
+  auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  axis_ = axis < 0 ? static_cast<size_t>(axis + SizeToLong(input_shape_.size())) : static_cast<size_t>(axis);
+  axis_ += 4 - input_shape_.size();
   CPUKernelUtils::ExpandDimsTo4(&input_shape_);
   CPUKernelUtils::ExpandDimsTo4(&output_shape_);
 }
 
 template <typename T>
 void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, int thread_num) {
-  int outer_size = 1, inner_size = 1;
-  for (size_t i = 0; i < LongToSize(axis_); ++i) {
+  size_t outer_size = 1, inner_size = 1;
+  for (size_t i = 0; i < axis_; ++i) {
     outer_size *= input_shape_.at(i);
   }
   for (size_t i = axis_ + 1; i < input_shape_.size(); ++i) {
     inner_size *= input_shape_.at(i);
   }
-  int indices_element_size = 1;
+  size_t indices_element_size = 1;
   for (size_t i = 0; i < indices_shape_.size(); i++) {
     indices_element_size *= indices_shape_.at(i);
   }
-  const int limit = input_shape_.at(axis_);
-  int stride = UP_DIV(outer_size, thread_num);
+  auto limit = input_shape_.at(axis_);
+  size_t stride = UP_DIV(outer_size, thread_num);
   std::vector<common::Task> tasks;
   int thread_index = 0;
   while (thread_index < thread_num) {
     int count = MSMIN(stride, outer_size - stride * thread_index);
     if (count <= 0) break;
-    auto thread_stride = stride * thread_index;
+    auto thread_stride = static_cast<size_t>(stride * thread_index);
     int8_t *in = input_addr + thread_stride * limit * inner_size * sizeof(T);
     int8_t *out = output_addr + thread_stride * indices_element_size * inner_size * sizeof(T);
     auto block = [&, in, count, out]() {

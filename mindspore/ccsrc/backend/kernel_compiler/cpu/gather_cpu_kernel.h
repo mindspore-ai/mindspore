@@ -41,7 +41,7 @@ class GatherV2CPUKernel : public CPUKernel {
   std::vector<size_t> indices_shape_;
   std::vector<size_t> output_shape_;
   int *indices_data_ = nullptr;
-  int64_t axis_{0};
+  size_t axis_{0};
 };
 
 MS_REG_CPU_KERNEL_T(Gather, KernelAttr(), GatherV2CPUKernel, uint8_t);
