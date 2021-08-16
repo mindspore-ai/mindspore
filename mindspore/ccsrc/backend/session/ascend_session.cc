@@ -523,30 +523,14 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   InitRuntimeResource();
   // multiple graph handle
   if (graph_id == final_graph_id_) {
-    if (!graph->executable()) {
-      return;
-    }
-    SetFinalGraphSummaryFlag(graph);
-    // OptChildGraphs
-    auto graph_order = GetGraphOrder(final_graph_id_);
-    auto &graph_type = GetGraphOrderType(final_graph_id_);
-    for (size_t i = 0; i < graph_order.size(); i++) {
-      if (!(graph_type[i] == BRANCH_END || graph_type[i] == BRANCH_START)) {
-        auto child_graph = GetGraph(graph_order[i]);
-        CompileChildGraph(child_graph);
-      }
-    }
-    SetSummaryNodes(graph.get());
-    // merge child graph
-    MergeGraphExecOrder();
-  } else {
-    auto single_graph = GetGraph(graph_id);
-    MS_EXCEPTION_IF_NULL(single_graph);
-    CompileChildGraph(single_graph);
-    // set the distinction label of single graph
-    single_graph->set_stream_distinction_label(graph_id);
-    single_graph->UpdateExecuteKernelStreamLabel();
+    MS_LOG(EXCEPTION) << "Unexpected graph id:" << graph_id << ", final_graph_id_:" << final_graph_id_;
   }
+  auto single_graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(single_graph);
+  CompileChildGraph(single_graph);
+  // set the distinction label of single graph
+  single_graph->set_stream_distinction_label(graph_id);
+  single_graph->UpdateExecuteKernelStreamLabel();
   // adjust execution order because  merge child graph and other special operations
   AdjustKernel(graph);
 #if ENABLE_CPU && ENABLE_D

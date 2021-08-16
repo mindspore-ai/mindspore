@@ -61,7 +61,6 @@ class Backend {
   virtual bool GetCond(const BaseRef &c, bool *value);
   virtual bool GetIndex(const BaseRef &c, int64_t *value);
   virtual GraphId CompileGraph(NotNull<FuncGraphPtr> fg) { return kInvalidGraphId; }
-  virtual void Link(GraphId) {}
   virtual void SetDebugger() {}
 
   bool is_multi_graph_sink() const { return is_multi_graph_sink_; }
@@ -82,7 +81,6 @@ class MsBackend : public Backend {
   VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target = "");
 
   VectorRef MsSimuRunGraph(const GraphId &g);
-  void Link(GraphId) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
   void ClearSessionGraphs();

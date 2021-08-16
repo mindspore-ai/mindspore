@@ -614,9 +614,18 @@ bool TaskEmitAction(const ResourcePtr &res) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
   } else if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    if (device_target == kAscendDevice && backend != kMsVm) {
+    auto manager = func_graph->manager();
+    auto graphs = manager->func_graphs();
+    bool exist_while =
+      std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+    if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
+      MS_LOG(INFO) << "Run graph mode with multigraph sink.";
       bc_ptr->set_is_multi_graph_sink(true);
       context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
+    } else {
+      MS_LOG(INFO) << "Run graph mode with vm.";
+      bc_ptr->set_is_multi_graph_sink(false);
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
     }
   }
 
