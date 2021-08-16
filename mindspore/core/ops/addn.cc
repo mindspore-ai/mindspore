@@ -73,17 +73,17 @@ TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim->name());
   std::map<std::string, TypePtr> types;
-  types.emplace("element_0", elements[0]->BuildType());
+  (void)types.emplace("element_0", elements[0]->BuildType());
   for (size_t i = 0; i < elements.size(); ++i) {
     if (elements[i]->BuildType()->type_id() == kObjectTypeUndeterminedType) {
       return elements[0]->BuildType();
     }
     std::string element_i = "element_" + std::to_string(i);
-    types.emplace(element_i, elements[i]->BuildType());
+    (void)types.emplace(element_i, elements[i]->BuildType());
   }
   std::set<TypePtr> valid_types = common_valid_types;
   valid_types.insert(kBool);
-  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return elements[0]->BuildType();
 }
 }  // namespace

@@ -75,11 +75,8 @@ void LRN::Init(const int64_t depth_radius, const float bias, const float alpha, 
 }
 
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
+abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(in_shape.size()), kEqual, 4, prim_name);
 
   return std::make_shared<abstract::Shape>(in_shape);
 }
@@ -90,15 +87,17 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     MS_LOG(EXCEPTION) << "nullptr";
   }
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
+  (void)types.emplace("x", input_args[0]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
 
 AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_nums = 4;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_nums, primitive->name());
+  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args), InferShape(input_args));
 }
 REGISTER_PRIMITIVE_C(kNameLRN, LRN);
 }  // namespace ops

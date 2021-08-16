@@ -35,9 +35,9 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
   auto length = x_length < y_length ? x_length : y_length;
   std::vector<int64_t> broadcast_shape;
   if (x_length == length) {
-    std::copy(y_shape.begin(), y_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
+    (void)std::copy(y_shape.begin(), y_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
   } else {
-    std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
+    (void)std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
   }
   for (int64_t i = -length; i < 0; i++) {
     if (x_shape[x_length + i] == 1) {

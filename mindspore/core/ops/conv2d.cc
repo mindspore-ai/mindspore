@@ -320,9 +320,9 @@ AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const Primitive
                                            primitive->name());
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
-  types.emplace("w", input_args[1]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+  (void)types.emplace("x", input_args[0]->BuildType());
+  (void)types.emplace("w", input_args[1]->BuildType());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return abstract::MakeAbstract(Conv2dInferShape(primitive, input_args), Conv2dInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2D, prim::kPrimConv2D, Conv2dInfer, nullptr, true);

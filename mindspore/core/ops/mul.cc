@@ -44,8 +44,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   auto op_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("Mul infer", input_args.size(), kGreaterEqual, 2, op_name);
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
-  types.emplace("y", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->BuildType());
+  (void)types.emplace("y", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
 }
 }  // namespace
