@@ -250,6 +250,8 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
+  // DestroyHccl must be called before FreeDeviceMemory
+  (void)DestroyHccl();
   if (mem_manager_ != nullptr) {
     mem_manager_->FreeDeviceMemory();
   }
@@ -259,7 +261,6 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
   }
 
-  (void)DestroyHccl();
   (void)ResetDevice(device_id);
   (void)ProfilingManager::GetInstance().StopProfiling();
   current_graph_ = nullptr;
