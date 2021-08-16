@@ -2308,7 +2308,7 @@ class Concat(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-          The data type is the same with `input_x`.
+        The data type is the same with `input_x`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -5983,8 +5983,15 @@ class SearchSorted(PrimitiveWithInfer):
 
 class TensorScatterMax(PrimitiveWithInfer):
     """
-    This operator is equivalent to TensorScatterAdd, except we take the maximum instead
-    of adding values together.
+    By comparing the value at the position indicated by the index in input_x with the value in the update,
+    the value at the index will eventually be equal to the largest one to create a new tensor.
+
+    The last axis of the index is the depth of each index vector. For each index vector,
+    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `update` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6034,8 +6041,15 @@ class TensorScatterMax(PrimitiveWithInfer):
 
 class TensorScatterMin(PrimitiveWithInfer):
     """
-    This operator is equivalent to TensorScatterAdd, except we take the minimum instead
-    of adding values together.
+    By comparing the value at the position indicated by the index in input_x with the value in the update,
+    the value at the index will eventually be equal to the smallest one to create a new tensor.
+
+    The last axis of the index is the depth of each index vector. For each index vector,
+    there must be a corresponding value in update. The shape of update should be equal to the shape of input_x[indices].
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `update` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6086,8 +6100,18 @@ class TensorScatterMin(PrimitiveWithInfer):
 
 class TensorScatterSub(PrimitiveWithInfer):
     """
-    This operator is equivalent to TensorScatterAdd, except we subtract, instead of
-    adding values together.
+    Creates a new tensor by subtracting the values from the positions in `input_x` indicicated by
+    `indices`, with values from `update`. When multiple values are provided for the same
+    index, the result of the update will be to subtract these values respectively. This operation is almost
+    equivalent to using ScatterNdSub, except that the updates are applied on `Tensor` instead of `Parameter`.
+
+    The last axis of `indices` is the depth of each index vectors. For each index vector,
+    there must be a corresponding value in `update`. The shape of `update` should be
+    equal to the shape of `input_x[indices]`.
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `update` will not be updated to `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -6113,8 +6137,8 @@ class TensorScatterSub(PrimitiveWithInfer):
         >>> op = ops.TensorScatterSub()
         >>> output = op(input_x, indices, update)
         >>> print(output)
-        [[ -3.3  0.3  3.6]
-         [ 0.4  0.5 -3.2]]
+        [[-3.3000002  0.3        3.6      ]
+         [ 0.4        0.5       -3.2      ]]
     """
 
     @prim_attr_register
