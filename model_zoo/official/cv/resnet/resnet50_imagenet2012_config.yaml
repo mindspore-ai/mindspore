@@ -70,7 +70,7 @@ network_dataset: "resnet50_imagenet2012"
 
 # Retrain options
 save_graphs: False
-save_graphs_path: ""
+save_graphs_path: "./graphs"
 has_trained_epoch: 0
 has_trained_step: 0
 ---
