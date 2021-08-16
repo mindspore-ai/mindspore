@@ -353,6 +353,10 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
         return RET_ERROR;
       }
       parameter->set_abstract(abstract);
+      if (layer.bottom().size() != 0) {
+        MS_LOG(ERROR) << "The input layer should not have other inputs.";
+        return RET_ERROR;
+      }
       parameter->set_name(layer.name());
       ConverterContext::GetInstance()->AddGraphInputTensorNames(layer.name());
       nodes_.insert(std::pair(layer.top(0), parameter));
