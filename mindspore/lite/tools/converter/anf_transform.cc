@@ -287,7 +287,7 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
     m_quantizer_->flags = *config;
     auto status = m_quantizer_->DoQuantize(old_graph);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Quant failed " << status;
+      MS_LOG(ERROR) << "DoQuantization failed " << status;
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return RET_ERROR;
     }

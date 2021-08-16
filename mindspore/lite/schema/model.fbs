@@ -41,7 +41,8 @@ table QuantParam {
 enum WeightQunatCompressType: int {
     NONE,
     INDEXING,
-    SPARSE
+    SPARSE,
+    FSE
 }
 
 table Tensor {

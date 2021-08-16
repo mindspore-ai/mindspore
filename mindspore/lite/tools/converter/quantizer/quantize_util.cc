@@ -1017,4 +1017,53 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
     }
   }
 }
+
+STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitive, QuantType quant_type,
+                   WeightQuantType weight_quant_type, TypeId quant_data_type, int index) {
+  MS_ASSERT(weight != nullptr);
+  MS_ASSERT(primitive != nullptr);
+  auto dims = weight->shape();
+  if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
+    if (dims.size() <= 1) {
+      MS_LOG(WARNING) << "dims is " << dims.size() << " can not per_channel";
+      weight_quant_type = FIXED_BIT_PER_LAYER;
+    }
+  }
+  std::vector<schema::QuantParamT> quant_params;
+  size_t elem_count = weight->DataSize();
+  auto *raw_data = static_cast<float *>(weight->data_c());
+  if (raw_data == nullptr) {
+    MS_LOG(ERROR) << "rawDatas is nullptr";
+    return RET_ERROR;
+  }
+
+  std::vector<int16_t> quant_data(elem_count);
+  int ret = RET_OK;
+  if (weight_quant_type == MIXED_BIT_PER_LAYER) {
+    FixBitWeightQuantizer quantizer(0.02);
+    quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), index - 1, &quant_params,
+                             &quant_data);
+  } else {
+    MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
+  }
+  auto status =
+    UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(int16_t), TypeId::kNumberTypeInt16);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
+    return RET_ERROR;
+  }
+
+  if (quant_params.empty()) {
+    MS_LOG(ERROR) << "quant_params empty";
+    return RET_ERROR;
+  }
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  if (quant_type == QuantType_PostTraining) {
+    quant_param_holder->AddInputQuantParam(quant_params);
+  } else {
+    quant_param_holder->set_input_quant_param(index, quant_params);
+  }
+  return ret;
+}
+
 }  // namespace mindspore::lite::quant
