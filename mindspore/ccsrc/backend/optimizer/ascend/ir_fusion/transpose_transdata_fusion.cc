@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace opt {
 const BaseRef TransposeTransDataFusion::DefinePattern() const {
-  const auto prim_transdata = std::make_shared<Primitive>(prim::KPrimTransData->name());
+  const auto prim_transdata = std::make_shared<Primitive>(prim::kPrimTransData->name());
   VectorRef transpose({prim::kPrimTranspose, input_varptr_});
 
   return VectorRef({prim_transdata, transpose});

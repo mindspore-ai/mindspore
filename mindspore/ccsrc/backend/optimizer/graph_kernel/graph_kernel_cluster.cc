@@ -63,7 +63,7 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
     prim::kPrimTranspose,
 #if ENABLE_D
     prim::kPrimMatMul,
-    prim::KPrimTransData,
+    prim::kPrimTransData,
     prim::kPrimBatchMatMul,
 #elif ENABLE_GPU
     prim::kPrimACos,

@@ -1723,7 +1723,7 @@ void AnfRuntimeAlgorithm::ReorderOptimizerExecList(NotNull<std::vector<CNodePtr>
 
     auto trans_data_func = [&](const CNodePtr &node) -> bool {
       MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::GetCNodeName(node) == prim::KPrimTransData->name()) {
+      if (AnfAlgo::GetCNodeName(node) == prim::kPrimTransData->name()) {
         auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, 0), 0);
         MS_EXCEPTION_IF_NULL(kernel_index.first);
         if (kernel_index.first->isa<CNode>() && kOptOperatorSet.find(AnfAlgo::GetCNodeName(
