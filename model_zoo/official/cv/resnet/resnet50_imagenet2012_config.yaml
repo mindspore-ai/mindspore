@@ -68,7 +68,7 @@ file_format: "AIR"
 ckpt_file: ""
 network_dataset: "resnet50_imagenet2012"
 
-# Retrain optins
+# Retrain options
 save_graphs: False
 save_graphs_path: ""
 has_trained_epoch: 0

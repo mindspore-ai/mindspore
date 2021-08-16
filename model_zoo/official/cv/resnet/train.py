@@ -190,10 +190,13 @@ def set_parameter():
                 context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
 
 
-def load_checkpoint():
+def load_pre_trained_checkpoint():
+    """
+    Load checkpoint according to pre_trained path.
+    """
     param_dict = None
-    if args_opt.pre_trained:
-        if os.path.isdir(args_opt.pre_trained):
+    if config.pre_trained:
+        if os.path.isdir(config.pre_trained):
             ckpt_pattern = os.path.join(ckpt_save_dir, "*.ckpt")
             ckpt_files = glob.glob(ckpt_pattern)
             if not ckpt_files:
@@ -206,10 +209,10 @@ def load_checkpoint():
                       f" pre trained ckpt model {ckpt_files[0]} loading",
                       flush=True)
                 param_dict = load_checkpoint(ckpt_files[0])
-        elif os.path.isfile(args_opt.pre_trained):
-            param_dict = load_checkpoint(args_opt.pre_trained)
+        elif os.path.isfile(config.pre_trained):
+            param_dict = load_checkpoint(config.pre_trained)
         else:
-            print(f"Invalid pre_trained {args_opt.pre_trained} parameter.")
+            print(f"Invalid pre_trained {config.pre_trained} parameter.")
     return param_dict
 
 
@@ -323,7 +326,7 @@ def set_save_ckpt_dir():
 def train_net():
     """train net"""
     target = config.device_target
-    ckpt_param_dict = load_checkpoint()
+    ckpt_param_dict = load_pre_trained_checkpoint()
     set_parameter()
     dataset = create_dataset(dataset_path=config.data_path, do_train=True, repeat_num=1,
                              batch_size=config.batch_size, target=target,
@@ -375,7 +378,7 @@ def train_net():
     if config.save_checkpoint:
         if not config.run_distribute or (config.run_distribute and get_rank() % get_group_size() == 0):
             ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": config.has_trained_epoch,
-                                "step_num": config.has_trained_step}]
+                                                          "step_num": config.has_trained_step}]
             config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                          keep_checkpoint_max=config.keep_checkpoint_max,
                                          append_info=ckpt_append_info)
