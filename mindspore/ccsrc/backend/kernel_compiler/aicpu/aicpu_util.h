@@ -68,7 +68,8 @@ const std::set<std::string> kCustAiCpuKernelOps{kIdentity,     kMaskedSelect,   
                                                 kSearchSorted, kResizeBilinear, kResizeBilinearGrad};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
                                             kPadAndShift, kDropout3D,      kDropout2D};
-
+const std::set<std::string> kDynamicInputOps{
+  kPrint, kPack, kMeshgrid, kStackInitOpName, kStackDestroyOpName, kStackPushOpName, kStackPopOpName, kDynamicStitch};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number
