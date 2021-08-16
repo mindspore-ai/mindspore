@@ -53,8 +53,8 @@ Train DCGAN Dataset used: [Imagenet-1k](<http://www.image-net.org/index>)
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 # [Script Description](#contents)
 
@@ -110,7 +110,7 @@ Usage: bash run_standalone_train.sh [DATASET_PATH] [SAVE_PATH]
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including learning rate, output filename and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `config.py`, including learning rate, output filename and network hyperparameters. Click [here](https://www.mindspore.cn/docs/programming_guide/en/master/dataset_sample.html) for more information about dataset.
 
 ### [Training](#content)
 
@@ -190,7 +190,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 | Speed                      | 1pc: 420 ms/step;  8pcs:  143 ms/step                          |
 | Total time                 | 1pc: 24.32 hours                                            |
 | Checkpoint for Fine tuning | 79.05M(.ckpt file)                                         |
-| Scripts                    | [dcgan script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/dcgan) |
+| Scripts                    | [dcgan script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/dcgan) |
 
 # [Description of Random Situation](#contents)
 
