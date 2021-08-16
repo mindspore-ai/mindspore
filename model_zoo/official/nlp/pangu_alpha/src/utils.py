@@ -16,6 +16,7 @@
 network config setting, gradient clip function and dynamic learning rate function
 """
 import argparse
+import ast
 import os
 import time
 import numpy as np
@@ -373,6 +374,44 @@ def add_training_params(opt):
                      help="Column name of datasets")
 
 
+def add_retrain_params(opt):
+    """
+    Add parameters about retrain.
+    """
+    opt.add_argument("--pre_trained",
+                     type=str,
+                     default=None,
+                     help="Pretrained checkpoint path.")
+    opt.add_argument("--save_checkpoint_path",
+                     type=str,
+                     default=None,
+                     help="Save checkpoint path.")
+    opt.add_argument("--keep_checkpoint_max",
+                     type=int,
+                     default=1,
+                     help="Max checkpoint save number.")
+    opt.add_argument("--save_checkpoint_steps",
+                     type=int,
+                     default=2000,
+                     help="Save checkpoint step number.")
+    opt.add_argument("--save_checkpoint",
+                     type=ast.literal_eval,
+                     default=False,
+                     help="Whether save checkpoint in local disk.")
+    opt.add_argument("--ckpt_name_prefix",
+                     type=str,
+                     default="pangu",
+                     help="Saving checkpoint name prefix.")
+    opt.add_argument("--has_trained_epoches",
+                     type=int,
+                     default=0,
+                     help="Epoches has been trained before.")
+    opt.add_argument("--has_trained_steps",
+                     type=int,
+                     default=0,
+                     help="Steps has been trained before.")
+
+
 def get_args(inference=False):
     """train function for PanguAlpha"""
     parser = argparse.ArgumentParser(description="PanguAlpha training")
@@ -445,6 +484,7 @@ def get_args(inference=False):
                         default=0,
                         help="Enable incremental training. Default 0.")
     add_training_params(parser)
+    add_retrain_params(parser)
     if inference:
         add_inference_params(parser)
     args_opt = parser.parse_args()
