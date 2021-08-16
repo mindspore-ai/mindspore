@@ -847,12 +847,7 @@ void AscendSession::InitRuntimeResource() {
   if (!runtime_instance->Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
-  auto env_rank_id = common::GetEnv("RANK_ID");
-  if (!(env_table_file.empty() || env_rank_id.empty())) {
-    // get actual rank id if it's distribution training case.
-    rank_id_ = GetRankId();
-  }
+  rank_id_ = GetRankId();
   DumpInit(rank_id_);
   MS_LOG(INFO) << "Finish!";
 }
