@@ -100,8 +100,6 @@ def run_train(args_opt):
     # Set model property
     model_parallel_num = args_opt.op_level_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
-    if data_parallel_num <= 1 and args_opt.optimizer_shard == 1:
-        raise ValueError("The dp must large than 1 when applying optimizer shard.")
     batch_size = args_opt.per_batch_size * data_parallel_num
     config = PANGUALPHAConfig(
         data_parallel_num=data_parallel_num, model_parallel_num=model_parallel_num,
