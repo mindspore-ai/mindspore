@@ -5721,6 +5721,9 @@ class EmbeddingLookup(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
         params_shp = params['shape']
+        indices_shp = indices['shape']
+        if not indices_shp:
+            raise ValueError("'indices' should NOT be a scalar.")
         if len(params_shp) > 2:
             raise ValueError("The dimension of 'params' in EmbeddingLookup must <= 2, but got %d." % len(params_shp))
 
