@@ -39,8 +39,8 @@ TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vecto
   auto prim_name = prim->name();
   // check
   std::map<std::string, TypePtr> types;
-  types.emplace("doutput", input_args[0]->BuildType());
-  types.emplace("x", input_args[1]->BuildType());
+  (void)types.emplace("doutput", input_args[0]->BuildType());
+  (void)types.emplace("x", input_args[1]->BuildType());
   std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
 }

@@ -53,7 +53,7 @@ AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const P
   (void)CheckAndConvertUtils::CheckInteger("input_shape_rank", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
   std::vector<int64_t> out_shape = {input_shape[0], input_shape[1]};
   auto size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSize));
-  out_shape.insert(out_shape.end(), size.begin(), size.end());
+  (void)out_shape.insert(out_shape.end(), size.begin(), size.end());
 
   // Infer type
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};

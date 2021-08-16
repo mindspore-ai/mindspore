@@ -35,7 +35,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
-  types.emplace("input_x", input_args[0]->BuildType());
+  (void)types.emplace("input_x", input_args[0]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
 }
 }  // namespace

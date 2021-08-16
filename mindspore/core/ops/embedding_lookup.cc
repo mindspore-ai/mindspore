@@ -53,21 +53,21 @@ AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const 
   MS_EXCEPTION_IF_NULL(indices->shape());
   auto indices_shp = indices->shape()->shape();
   ShapeVector shape;
-  shape.insert(shape.end(), indices_shp.begin(), indices_shp.end());
-  shape.insert(shape.end(), params_shp.begin() + 1, params_shp.end());
+  (void)shape.insert(shape.end(), indices_shp.begin(), indices_shp.end());
+  (void)shape.insert(shape.end(), params_shp.begin() + 1, params_shp.end());
   auto indices_max_shape = indices->shape()->max_shape();
   ShapeVector max_shape;
   if (!indices_max_shape.empty()) {
-    max_shape.insert(max_shape.end(), indices_max_shape.begin(), indices_max_shape.end());
-    max_shape.insert(max_shape.end(), params_shp.begin() + 1, params_shp.end());
+    (void)max_shape.insert(max_shape.end(), indices_max_shape.begin(), indices_max_shape.end());
+    (void)max_shape.insert(max_shape.end(), params_shp.begin() + 1, params_shp.end());
   } else {
     max_shape = shape;
   }
   auto indices_min_shape = indices->shape()->min_shape();
   ShapeVector min_shape;
   if (!indices_min_shape.empty()) {
-    min_shape.insert(min_shape.end(), indices_min_shape.begin(), indices_min_shape.end());
-    min_shape.insert(min_shape.end(), params_shp.begin() + 1, params_shp.end());
+    (void)min_shape.insert(min_shape.end(), indices_min_shape.begin(), indices_min_shape.end());
+    (void)min_shape.insert(min_shape.end(), params_shp.begin() + 1, params_shp.end());
   } else {
     min_shape = shape;
   }

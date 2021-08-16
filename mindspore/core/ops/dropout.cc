@@ -46,8 +46,8 @@ AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kGreaterEqual, 1, prim_name);
   std::vector<int64_t> out_shape;
-  out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end());
-  out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end());
+  (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end());
+  (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end());
   auto infer_shape = std::make_shared<abstract::Shape>(out_shape);
 
   // Infer type

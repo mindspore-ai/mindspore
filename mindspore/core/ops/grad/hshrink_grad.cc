@@ -46,8 +46,8 @@ TypePtr HShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   }
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  types.emplace("gradients", input_args[0]->BuildType());
-  types.emplace("features", input_args[1]->BuildType());
+  (void)types.emplace("gradients", input_args[0]->BuildType());
+  (void)types.emplace("features", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 

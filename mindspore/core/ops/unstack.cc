@@ -38,7 +38,7 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   (void)CheckAndConvertUtils::CheckInteger("The dimension which to unstack divides output_num", output_valid_check,
                                            kEqual, 0, prim_name);
   std::vector<int64_t> infer_shape(x_shape.begin(), x_shape.begin() + axis);
-  infer_shape.insert(infer_shape.end(), x_shape.begin() + axis + 1, x_shape.end());
+  (void)infer_shape.insert(infer_shape.end(), x_shape.begin() + axis + 1, x_shape.end());
   AbstractBasePtrList output;
   auto tensor_type = input_args[0]->BuildType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);

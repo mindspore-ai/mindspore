@@ -44,10 +44,10 @@ TypePtr SoftMarginLossGradInferType(const PrimitivePtr &primitive, const std::ve
   CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputSize, op_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  types.emplace("logits", input_args[0]->BuildType());
-  types.emplace("labels", input_args[1]->BuildType());
-  types.emplace("dout", input_args[2]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  (void)types.emplace("logits", input_args[0]->BuildType());
+  (void)types.emplace("labels", input_args[1]->BuildType());
+  (void)types.emplace("dout", input_args[2]->BuildType());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return CheckAndConvertUtils::CheckTensorTypeValid("logits", input_args[0]->BuildType(), valid_types, op_name);
 }
 }  // namespace

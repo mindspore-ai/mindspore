@@ -99,7 +99,7 @@ void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &in
   }
   // check input shape & attr send shape
   (void)CheckAndConvertUtils::CheckInteger("input_numbers", input_args.size(), kEqual, 1, prim_name);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTuple>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTuple>(prim_name, input_args, 0);
   auto abstract_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   auto abstract_element = abstract_tuple->elements();

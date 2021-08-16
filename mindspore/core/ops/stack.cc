@@ -44,7 +44,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
     }
   }
   std::vector<int64_t> infer_shape = input_shape;
-  infer_shape.insert(infer_shape.begin() + GetValue<int64_t>(primitive->GetAttr(kAxis)), input_args.size());
+  (void)infer_shape.insert(infer_shape.begin() + GetValue<int64_t>(primitive->GetAttr(kAxis)), input_args.size());
 
   auto infer_type0 = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   for (size_t i = 1; i < input_args.size(); i++) {

@@ -67,7 +67,7 @@ TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   }
   auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>();
   std::set<TypePtr> template_types = {kTensorType};
-  CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
+  (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
   return x_dtype->element();
 }
 }  // namespace

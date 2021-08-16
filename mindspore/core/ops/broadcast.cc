@@ -58,7 +58,7 @@ AbstractBasePtr BroadcastInfer(const abstract::AnalysisEnginePtr &, const Primit
   for (size_t i = 0; i < input_args.size(); i++) {
     auto out_type = input_args[i]->BuildType()->cast<TensorTypePtr>()->element();
     output_types.push_back(out_type);
-    CheckAndConvertUtils::CheckTensorTypeValid("index_type", out_type, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", out_type, valid_types, prim_name);
   }
   return std::make_shared<abstract::AbstractTensor>(x_type, in_shape);
 }
