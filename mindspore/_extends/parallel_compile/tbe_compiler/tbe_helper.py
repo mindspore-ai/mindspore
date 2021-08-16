@@ -218,6 +218,19 @@ def get_func_names(job_content):
     return func_names
 
 
+def get_module_name(compute_op_info):
+    """
+    get compute_op_info
+    :param compute_op_info:
+    :return:
+    """
+    unknown_shape = compute_op_info["unknown_shape"]
+    op_module_name = compute_op_info["module_name"]
+    if unknown_shape:
+        op_module_name = op_module_name.split(".")[0] + ".dynamic." + op_module_name.split(".")[-1]
+    return op_module_name
+
+
 def adjust_custom_op_info(compute_op_info):
     """
     adjust custom op info
