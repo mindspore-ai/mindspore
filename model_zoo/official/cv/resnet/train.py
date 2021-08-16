@@ -43,6 +43,38 @@ from src.resnet import conv_variance_scaling_initializer
 
 set_seed(1)
 
+
+class LossCallBack(LossMonitor):
+    """
+    Monitor the loss in training.
+    If the loss in NAN or INF terminating training.
+    """
+
+    def __init__(self, has_trained_epoch=0):
+        super(LossCallBack, self).__init__()
+        self.has_trained_epoch = has_trained_epoch
+
+    def step_end(self, run_context):
+        cb_params = run_context.original_args()
+        loss = cb_params.net_outputs
+
+        if isinstance(loss, (tuple, list)):
+            if isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray):
+                loss = loss[0]
+
+        if isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
+            loss = np.mean(loss.asnumpy())
+
+        cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
+
+        if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
+            raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
+                cb_params.cur_epoch_num, cur_step_in_epoch))
+        if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
+            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num + int(self.has_trained_epoch),
+                                                      cur_step_in_epoch, loss), flush=True)
+
+
 if config.net_name in ("resnet18", "resnet34", "resnet50"):
     if config.net_name == "resnet18":
         from src.resnet import resnet18 as resnet
@@ -63,6 +95,7 @@ elif config.net_name == "resnet101":
 else:
     from src.resnet import se_resnet50 as resnet
     from src.dataset import create_dataset4 as create_dataset
+
 
 def acc_group_params_generator(net, weight_decay):
     acc_weight = 'end_point.weight'
@@ -94,6 +127,7 @@ def filter_checkpoint_parameter_by_list(origin_dict, param_filter):
                 del origin_dict[key]
                 break
 
+
 def apply_eval(eval_param):
     eval_model = eval_param["model"]
     eval_ds = eval_param["dataset"]
@@ -101,10 +135,12 @@ def apply_eval(eval_param):
     res = eval_model.eval(eval_ds)
     return res[metrics_name]
 
+
 def set_graph_kernel_context(run_platform, net_name):
     if run_platform == "GPU" and net_name == "resnet101":
         context.set_context(enable_graph_kernel=True)
         context.set_context(graph_kernel_flags="--enable_parallel_fusion --enable_expand_ops=Conv2D")
+
 
 def set_parameter():
     """set_parameter"""
@@ -113,8 +149,19 @@ def set_parameter():
         config.run_distribute = False
 
     # init context
+    if config.run_distribute:
+        rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma", str(get_rank_id()))
+    else:
+        rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma")
+
+    if config.pre_trained:
+        config.save_graphs = False
+    else:
+        config.save_graphs = True
+
     if config.mode_name == 'GRAPH':
-        context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
+        context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs,
+                            save_graphs_path=rank_save_graphs_path)
         set_graph_kernel_context(target, config.net_name)
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target=target, save_graphs=False)
@@ -142,14 +189,40 @@ def set_parameter():
             if config.net_name == "resnet50":
                 context.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
 
-def init_weight(net):
+
+def load_checkpoint():
+    param_dict = None
+    if args_opt.pre_trained:
+        if os.path.isdir(args_opt.pre_trained):
+            ckpt_pattern = os.path.join(ckpt_save_dir, "*.ckpt")
+            ckpt_files = glob.glob(ckpt_pattern)
+            if not ckpt_files:
+                logger.warning(f"There is no ckpt file in {ckpt_save_dir}, "
+                               f"pre_trained is unsupported.")
+            else:
+                ckpt_files.sort(key=os.path.getmtime, reverse=True)
+                time_stamp = datetime.datetime.now()
+                print(f"time stamp {time_stamp.strftime('%Y.%m.%d-%H:%M:%S')}"
+                      f" pre trained ckpt model {ckpt_files[0]} loading",
+                      flush=True)
+                param_dict = load_checkpoint(ckpt_files[0])
+        elif os.path.isfile(args_opt.pre_trained):
+            param_dict = load_checkpoint(args_opt.pre_trained)
+        else:
+            print(f"Invalid pre_trained {args_opt.pre_trained} parameter.")
+    return param_dict
+
+
+def init_weight(net, param_dict):
     """init_weight"""
     if config.pre_trained:
-        param_dict = load_checkpoint(config.pre_trained)
-        if config.filter_weight:
-            filter_list = [x.name for x in net.end_point.get_parameters()]
-            filter_checkpoint_parameter_by_list(param_dict, filter_list)
-        load_param_into_net(net, param_dict)
+        if param_dict:
+            config.has_trained_epoch = int(param_dict["epoch_num"].data.asnumpy())
+            config.has_trained_step = int(param_dict["step_num"].data.asnumpy())
+            if config.filter_weight:
+                filter_list = [x.name for x in net.end_point.get_parameters()]
+                filter_checkpoint_parameter_by_list(param_dict, filter_list)
+            load_param_into_net(net, param_dict)
     else:
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Conv2d):
@@ -174,6 +247,7 @@ def init_weight(net):
                     weight = Tensor(np.reshape(weight, (out_channel, in_channel)), dtype=mstype.float32)
                     cell.weight.set_data(weight)
 
+
 def init_lr(step_size):
     """init lr"""
     if config.optimizer == "Thor":
@@ -188,6 +262,7 @@ def init_lr(step_size):
             lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size,
                                             config.pretrain_epoch_size * step_size)
     return lr
+
 
 def init_loss_scale():
     if config.dataset == "imagenet2012":
@@ -248,6 +323,7 @@ def set_save_ckpt_dir():
 def train_net():
     """train net"""
     target = config.device_target
+    ckpt_param_dict = load_checkpoint()
     set_parameter()
     dataset = create_dataset(dataset_path=config.data_path, do_train=True, repeat_num=1,
                              batch_size=config.batch_size, target=target,
@@ -256,7 +332,7 @@ def train_net():
     net = resnet(class_num=config.class_num)
     if config.parameter_server:
         net.set_param_ps()
-    init_weight(net=net)
+    init_weight(net=net, param_dict=ckpt_param_dict)
     lr = Tensor(init_lr(step_size=step_size))
     # define opt
     group_params = init_group_prams(net)
@@ -293,24 +369,30 @@ def train_net():
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)
-    loss_cb = LossMonitor()
+    loss_cb = LossCallBack(config.has_trained_epoch)
     cb = [time_cb, loss_cb]
     ckpt_save_dir = set_save_ckpt_dir()
     if config.save_checkpoint:
-        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
-                                     keep_checkpoint_max=config.keep_checkpoint_max)
-        ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
-        cb += [ckpt_cb]
+        if not config.run_distribute or (config.run_distribute and get_rank() % get_group_size() == 0):
+            ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": config.has_trained_epoch,
+                                "step_num": config.has_trained_step}]
+            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
+                                         keep_checkpoint_max=config.keep_checkpoint_max,
+                                         append_info=ckpt_append_info)
+            ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
+            cb += [ckpt_cb]
     run_eval(target, model, ckpt_save_dir, cb)
     # train model
     if config.net_name == "se-resnet50":
         config.epoch_size = config.train_epoch_size
     dataset_sink_mode = (not config.parameter_server) and target != "CPU"
+    config.pretrain_epoch_size = config.has_trained_epoch
     model.train(config.epoch_size - config.pretrain_epoch_size, dataset, callbacks=cb,
                 sink_size=dataset.get_dataset_size(), dataset_sink_mode=dataset_sink_mode)
 
     if config.run_eval and config.enable_cache:
         print("Remember to shut down the cache server via \"cache_admin --stop\"")
+
 
 if __name__ == '__main__':
     train_net()
