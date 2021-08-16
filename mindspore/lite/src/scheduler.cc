@@ -133,7 +133,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
   SetSubgraphForPartialNode();
 #endif
 
@@ -145,7 +145,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
       return ret;
     }
 #else
-    MS_LOG(ERROR) << unsuppor_delegate_log;
+    MS_LOG(ERROR) << unsupport_delegate_log;
     return RET_ERROR;
 #endif
   }
@@ -157,7 +157,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 #endif
 
   FindAllInoutKernels(*dst_kernels);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
   if (IsControlFlowParttern(*dst_kernels)) {
     ret = ConstructControlFlowMainGraph(dst_kernels);
     if (ret != RET_OK) {
@@ -174,7 +174,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
       MS_LOG(ERROR) << "ConstructSubGraphs failed.";
       return ret;
     }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
   }
 #endif
 
@@ -461,7 +461,7 @@ int Scheduler::InferCallShape(const lite::Model::Node *node) {
   if (partial_input) {
     return InferPartialShape(partial_input);
   }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
   auto switch_input = NodeInputIsSwitch(node);
   if (switch_input) {
     return InferSwitchShape(switch_input);
@@ -1149,7 +1149,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
 
     if (IsPartialNode(primitive)) {
       if (IsControlFlowPattern(*node)) {
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
         kernel = ScheduleNodeToKernel(node, prefer_data_type);
         auto partial_subgraph_index = GetPartialGraphIndex(primitive);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
@@ -1161,7 +1161,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
           subgraphs_to_schedule_.push_back(partial_subgraph_index);
         }
 #else
-        MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+        MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
         return RET_ERROR;
 #endif
       } else {
@@ -1303,7 +1303,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
     if (dtype == kObjectTypeString) {
       return kNumberTypeFloat32;
     }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
     if (dtype == kObjectTypeTensorType) {
       auto tensor_list = reinterpret_cast<TensorList *>(tensor);
       auto tensor_list_dtype = tensor_list->tensors_data_type();
@@ -1388,7 +1388,7 @@ kernel::SubGraphType Scheduler::PartialSubGraphType(const std::vector<kernel::Li
   return kernel::kCpuFP32SubGraph;
 }
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
 int Scheduler::InferSwitchShape(const lite::Model::Node *switch_node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(switch_node != nullptr);

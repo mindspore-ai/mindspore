@@ -20,20 +20,20 @@ namespace mindspore {
 const char *const unsupport_string_tensor_log =
   "This mindspore-lite library does not support string tensors. Set environment variable MSLITE_STRING_KERNEL to on to "
   "recompile it.";
-const char *const unsupport_control_tensorlist_log =
-  "This mindspore-lite library does not support control and tensorlist op. Set environment variable "
-  "MSLITE_CONTROL_TENSORLIST to on to recompile it.";
+const char *const unsupport_controlflow_tensorlist_log =
+  "This mindspore-lite library does not support controlflow and tensorlist op. Set environment variable "
+  "MSLITE_CONTROLFLOW_TENSORLIST to on to recompile it.";
 const char *const unsupport_auto_parallel_log =
   "The mindspore-lite library does not support auto parallel. Set environment variable MSLITE_AUTO_PARALLEL to on to "
   "recompile it.";
 const char *const unsupport_weight_decode_log =
   "The mindspore-lite library does not support weight decode. Set environment variable MSLITE_WEIGHT_DECODE to on to "
   "recompile it.";
-const char *const unsuppor_custom_kernel_register_log =
+const char *const unsupport_custom_kernel_register_log =
   "The mindspore-lite library does not support custom kernel register. Set environment variable "
   "MSLITE_CUSTOM_KERNEL_REGISTRY to on to "
   "recompile it.";
-const char *const unsuppor_delegate_log =
+const char *const unsupport_delegate_log =
   "The mindspore-lite library does not support delegate. Set environment variable "
   "MSLITE_DELEGATE_USE to on to "
   "recompile it.";

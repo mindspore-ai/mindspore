@@ -101,7 +101,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   int CastInputData(Tensor *dst_tensor, Tensor *src_tensor);
   bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
   int CastTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
   void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   int CastTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
@@ -114,7 +114,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #endif
 };
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
 class LiteSwitchOpActor : public LiteOpActor {
  public:
   explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}

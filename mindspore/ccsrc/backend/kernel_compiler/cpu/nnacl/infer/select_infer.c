@@ -34,7 +34,7 @@ int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     TensorC *output = outputs[i];
     SetDataTypeFormat(output, input);
     if (input->data_type_ == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
       TensorListC *input_tensorlist = (TensorListC *)(input);
       TensorListC *output_tensorlist = (TensorListC *)(output);
       output_tensorlist->element_shape_size_ = input_tensorlist->element_shape_size_;

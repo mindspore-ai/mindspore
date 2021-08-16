@@ -126,14 +126,14 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
   MS_ASSERT(dst_tensor != nullptr);
   if (src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
     if (dst_tensor->data_type() == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
       auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
       if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
         MS_LOG(ERROR) << "Decode tensorlist data failed";
         return RET_ERROR;
       }
 #else
-      MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+      MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
       return RET_NOT_SUPPORT;
 #endif
     } else {
@@ -167,7 +167,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(src_tensor.dataType()) == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
     dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
     // set tensor list datatype
     auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
@@ -176,7 +176,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
       tensor_list->set_tensors_data_type(tensor_data_type);
     }
 #else
-    MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
 #endif
   } else {
     dst_tensor = new (std::nothrow)

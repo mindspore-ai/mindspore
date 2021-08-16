@@ -106,7 +106,7 @@ class Scheduler {
 
   bool IsControlFlowPattern(const lite::Model::Node &partial_node);
   int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
   int InferSwitchShape(const Model::Node *node);
   Model::Node *NodeInputIsSwitch(const Model::Node *node);
   bool SubGraphHasScheduled(const int &index);
@@ -133,7 +133,7 @@ class Scheduler {
   std::shared_ptr<Delegate> delegate_ = nullptr;
   std::deque<int> subgraphs_to_schedule_{};
   std::unordered_map<size_t, kernel::LiteKernel *> subgraph_index_subgraph_kernel_map_{};
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
   std::set<int> scheduled_subgraph_index_{};
   std::unordered_map<kernel::LiteKernel *, size_t> partial_kernel_subgraph_index_map_{};
   std::set<lite::Model::Node *> partial_cnode_inferred_{};

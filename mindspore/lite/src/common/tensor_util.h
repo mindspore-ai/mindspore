@@ -31,7 +31,7 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vec
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
 int Tensor2TensorC(const Tensor *src, TensorC *dst);
 void TensorC2Tensor(const TensorC *src, Tensor *dst);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
 void FreeTensorListC(TensorListC *tensorListC);
 int TensorList2TensorListC(TensorList *src, TensorListC *dst);
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst);

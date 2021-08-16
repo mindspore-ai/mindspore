@@ -13,7 +13,7 @@ if(MSLITE_STRING_KERNEL)
             ${OPS_SRC_STRING}
             )
 endif()
-if(MSLITE_CONTROL_TENSORLIST)
+if(MSLITE_CONTROLFLOW_TENSORLIST)
     file(GLOB OPS_SRC_CONTROL_TENSORLIST
             ${CMAKE_CURRENT_SOURCE_DIR}/populate/control/*.cc
             )
@@ -34,7 +34,7 @@ if(ENABLE_V0)
                 ${OPS_SRC_STRING_V0}
                 )
     endif()
-    if(MSLITE_CONTROL_TENSORLIST)
+    if(MSLITE_CONTROLFLOW_TENSORLIST)
         file(GLOB OPS_SRC_CONTROL_TENSORLIST_V0
                 ${CMAKE_CURRENT_SOURCE_DIR}/populate/v0/control/*.cc
                 )

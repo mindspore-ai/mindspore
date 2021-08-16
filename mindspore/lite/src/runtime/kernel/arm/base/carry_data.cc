@@ -45,12 +45,12 @@ int CarryDataKernel::MoveData(const std::vector<lite::Tensor *>::iterator &dst_b
       MS_LOG(ERROR) << "Carry const data and graph inputs.";
     } else {
       if (src_tensor->data_type() == kObjectTypeTensorType && dst_tensor->data_type() == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
         MS_LOG(ERROR) << "Carry MoveTensorListData";
         ret = MoveTensorListData(reinterpret_cast<lite::TensorList *>(dst_tensor),
                                  reinterpret_cast<lite::TensorList *>(src_tensor));
 #else
-        MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+        MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
         return RET_NOT_SUPPORT;
 #endif
       } else {
@@ -87,7 +87,7 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
   memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
   return RET_OK;
 }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifdef ENABLE_CONTROLFLOW_TENSORLIST
 int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_tensorlist) {
   // shape may change, because tensors.size() can be change in RunGraph
   if (dst_tensorlist->data_type() != src_tensorlist->data_type() ||
