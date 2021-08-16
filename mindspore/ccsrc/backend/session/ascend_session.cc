@@ -552,6 +552,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   } else {
     // alloc memory, including static memory and dynamic memory
     MemoryAlloc(graph.get());
+    AnfAlgo::CacheAddrForGraph(graph);
     // generate and load task info to device if it is sink mode
     Load(graph);
   }
@@ -669,6 +670,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   RunOpRemoveNopNode(graph);
   RunOpMemoryAlloc(*input_tensors, graph.get());
   RunOpGenKernelEvent(graph.get());
+  AnfAlgo::CacheAddrForGraph(graph);
   // Build dynamic kernel
   if (op_run_info->is_dynamic_shape) {
     BuildDynamicKernel(graph);

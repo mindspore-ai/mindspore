@@ -185,11 +185,22 @@ class KernelMod {
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
+  void set_inputs_addr(const std::vector<AddressPtr> &addr) { inputs_addr_ = addr; }
+  void set_workspaces_addr(const std::vector<AddressPtr> &addr) { workspaces_addr_ = addr; }
+  void set_outputs_addr(const std::vector<AddressPtr> &addr) { outputs_addr_ = addr; }
+  const std::vector<AddressPtr> &GetInputsAddr() { return inputs_addr_; }
+  const std::vector<AddressPtr> &GetWorkSpacesAddr() { return workspaces_addr_; }
+  const std::vector<AddressPtr> &GetOutputsAddr() { return outputs_addr_; }
 
  protected:
   std::string unique_name_;
   std::string fullname_;
   bool is_monad_{false};
+
+ private:
+  std::vector<AddressPtr> inputs_addr_;
+  std::vector<AddressPtr> workspaces_addr_;
+  std::vector<AddressPtr> outputs_addr_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 }  // namespace kernel
