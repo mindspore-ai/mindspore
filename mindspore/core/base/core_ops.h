@@ -55,7 +55,7 @@ constexpr auto kMul = "Mul";
 constexpr auto kRealDiv = "RealDiv";
 constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kLog = "Log";
-
+constexpr auto kSelect = "Select";
 constexpr auto kAdd = "Add";
 constexpr auto kBiasAdd = "BiasAdd";
 constexpr auto kTile = "Tile";
@@ -510,7 +510,7 @@ inline const PrimitivePtr kPrimSwitchLayer = std::make_shared<Primitive>("switch
 inline const PrimitivePtr kPrimAssign = std::make_shared<Primitive>("Assign");
 inline const PrimitivePtr kPrimAssignAdd = std::make_shared<Primitive>("AssignAdd");
 inline const PrimitivePtr kPrimAssignSub = std::make_shared<Primitive>("AssignSub");
-inline const PrimitivePtr kPrimSelect = std::make_shared<Primitive>("Select");
+inline const PrimitivePtr kPrimSelect = std::make_shared<Primitive>(kSelect);
 inline const PrimitivePtr kPrimCall = std::make_shared<Primitive>("call");
 
 inline const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>("MakeTuple");

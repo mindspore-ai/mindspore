@@ -721,4 +721,15 @@ size_t CheckAndConvertUtils::GetRemoveMonadAbsNum(const AbstractBasePtrList &abs
   }
   return remove_monad_count;
 }
+
+bool CheckAndConvertUtils::HasDynamicShapeInput(const AbstractBasePtrList &abs_list) {
+  for (const auto &item : abs_list) {
+    MS_EXCEPTION_IF_NULL(item);
+    auto shape = item->BuildShape();
+    if (shape->IsDynamic()) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace mindspore

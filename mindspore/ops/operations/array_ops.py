@@ -2838,7 +2838,7 @@ class Rint(PrimitiveWithInfer):
         return x_dtype
 
 
-class Select(PrimitiveWithInfer):
+class Select(Primitive):
     r"""
 
     Returns the selected elements, either from input :math:`x` or input :math:`y`, depending on the `condition`.
@@ -2899,28 +2899,6 @@ class Select(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Select."""
         self.init_prim_io_names(inputs=['condition', 'x', 'y'], outputs=['output'])
-
-    def infer_shape(self, cond_shape, x_shape, y_shape):
-        if cond_shape != x_shape or x_shape != y_shape:
-            raise ValueError('The x_shape and y_shape must be the same as cond_shape.')
-        return x_shape
-
-    def infer_dtype(self, cond_type, x_type, y_type):
-        validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
-        validator.check_subclass("y_type", y_type, mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("cond", cond_type, [mstype.bool_], self.name)
-        if x_type != y_type:
-            raise TypeError('\'%s\' the x_type %s must be the same as y_type %s.' % (self.name, x_type, y_type))
-        return x_type
-
-    def infer_value(self, cond, x, y):
-        if cond is not None and x is not None and y is not None:
-            cond = cond.asnumpy()
-            x = x.asnumpy()
-            y = y.asnumpy()
-            out = np.where(cond, x, y)
-            return Tensor(out)
-        return None
 
 
 def _compute_slicing_length(begin, end, stride, x_shape, i):
