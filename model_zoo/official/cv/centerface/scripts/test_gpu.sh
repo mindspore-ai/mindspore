@@ -14,10 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+if [ $# != 4 ]
 then
-    echo "Usage: bash train_standalone_gpu.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [ANNOTATIONS] [DATASET]"
-    exit 1
+    echo "Usage: bash test_gpu.sh [DEVICE_ID] [CKPT] [DATASET] [GROUND_TRUTH_MAT]"
+exit 1
 fi
 
 get_real_path(){
@@ -29,12 +29,12 @@ get_real_path(){
 }
 
 current_exec_path=$(pwd)
-echo "current_exec_path: "   ${current_exec_path}
+echo ${current_exec_path}
 
 dirname_path=$(dirname "$(pwd)")
-echo "dirname_path: "   ${dirname_path}
+echo ${dirname_path}
 
-SCRIPT_NAME='train.py'
+SCRIPT_NAME='test.py'
 
 ulimit -c unlimited
 
@@ -44,56 +44,63 @@ then
     exit 1
 fi
 
+device_id=$1
 export CUDA_VISIBLE_DEVICES="$1"
 
-pretrained_backbone=$(get_real_path $2)
-if [ ! -f $pretrained_backbone ]
+root=${current_exec_path} # your script path
+save_path=$root/output/centerface/
+
+ckpt=$(get_real_path $2)
+if [ ! -f $ckpt ]
 then
-    echo "error: pretrained_backbone=$pretrained_backbone is not a file"
-    exit 1
+    echo "error: ckpt=$ckpt is not a file"
+exit 1
 fi
 
-annot_path=$(get_real_path $3)
-if [ ! -f $annot_path ]
-then
-    echo "error: annot_path=$annot_path is not a file"
-    exit 1
-fi
+ckpt_name=$(basename $ckpt)
+ckpt_dir=$(dirname $ckpt)
 
-dataset_path=$(get_real_path $4)
+echo $ckpt
+echo $ckpt_name
+echo $ckpt_dir
+
+dataset_path=$(get_real_path $3)
 if [ ! -d $dataset_path ]
 then
     echo "error: dataset_path=$dataset_path is not a dir"
-    exit 1
+exit 1
 fi
 
-echo $pretrained_backbone
-echo $annot_path
+ground_truth_mat=$(get_real_path $4)
+if [ ! -f $ground_truth_mat ]
+then
+    echo "error: ground_truth_mat=$ground_truth_mat is not a file"
+exit 1
+fi
+
 echo $dataset_path
+echo $ground_truth_mat
+echo $save_path
 
 export PYTHONPATH=${dirname_path}:$PYTHONPATH
 export RANK_SIZE=1
 
-echo 'start training'
-rm -rf ${current_exec_path}/train_standalone_gpu
-mkdir ${current_exec_path}/train_standalone_gpu
-cd ${current_exec_path}/train_standalone_gpu || exit
+echo 'start testing'
+rm -rf ${current_exec_path}/device_test$device_id
+rm -rf $save_path
+echo 'start rank '$device_id
+mkdir ${current_exec_path}/device_test$device_id
+mkdir -p $save_path
+cd ${current_exec_path}/device_test$device_id || exit
 export RANK_ID=0
 
 python ${dirname_path}/${SCRIPT_NAME} \
-    --lr=5e-4 \
-    --per_batch_size=8 \
     --is_distributed=0 \
-    --t_max=140 \
-    --max_epoch=140 \
-    --warmup_epochs=0 \
-    --lr_scheduler=multistep \
-    --lr_epochs=90,120 \
-    --weight_decay=0.0000 \
-    --loss_scale=1024 \
-    --pretrained_backbone=$pretrained_backbone \
-    --annot_path=$annot_path \
-    --img_dir=$dataset_path \
-    --device_target="GPU" > train.log  2>&1 &
+    --data_dir=$dataset_path \
+    --test_model=$ckpt_dir \
+    --ground_truth_mat=$ground_truth_mat \
+    --save_dir=$save_path \
+    --rank=$device_id \
+    --ckpt_name=$ckpt_name > test.log  2>&1 &
 
 echo 'running'
