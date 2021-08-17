@@ -46,7 +46,10 @@
 
 namespace mindspore {
 namespace compile {
-bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
+bool Backend::GetCond(const BaseRef &c, bool *const value) {
+  mindspore::ScopedLongRunning long_running;
+  return BaseRefToBool(c, value);
+}
 bool Backend::GetIndex(const BaseRef &c, int64_t *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
 Backend::Backend(const std::string &name) : name_(name) {
