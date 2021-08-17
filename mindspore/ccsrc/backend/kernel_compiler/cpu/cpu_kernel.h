@@ -65,6 +65,11 @@ const char SORTED[] = "sorted";
 const char ADJ_ST[] = "adjoint_st";
 const char ADJ_dT[] = "adjoint_dt";
 const char PERIODS[] = "periods";
+const char WINDOW[] = "window";
+const char MIN_PERIODS[] = "min_periods";
+const char CENTER[] = "center";
+const char METHOD[] = "method";
+const char CLOSED[] = "closed";
 
 enum OperateType {
   ADD = 0,
