@@ -263,6 +263,7 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.env_get_set_item_eliminate_,
     irpass.env_get_item_depend_swap_,
 
+    irpass.cast_eliminate_,
     irpass.reshape_eliminate_,
     irpass.reduce_eliminate_,
     irpass.tile_eliminate_,
@@ -295,7 +296,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_2 = opt::OptPassConfig(
     {
       irpass.switch_simplify_,
-      irpass.cast_eliminate_,
       irpass.specialize_transform_,
       irpass.merge_addn_,
       irpass.float_tuple_getitem_switch_,
