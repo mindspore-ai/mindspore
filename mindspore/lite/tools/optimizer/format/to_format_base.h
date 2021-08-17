@@ -32,7 +32,7 @@ namespace mindspore {
 namespace opt {
 class ToFormatBase : public Pass {
  public:
-  explicit ToFormatBase(FmkType fmk_type = converter::FmkType_MS, bool train_flag = false,
+  explicit ToFormatBase(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
                         std::string pass_name = "to_format_base")
       : Pass(pass_name), fmk_type_(fmk_type), train_flag_(train_flag) {}
   ~ToFormatBase() override = default;
@@ -56,7 +56,7 @@ class ToFormatBase : public Pass {
   virtual bool DecideWhetherInferShapeForNewNode() { return true; }
   virtual STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                                  schema::Format *dst_format) = 0;
-  FmkType fmk_type_{converter::FmkType_MS};
+  FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   mindspore::Format format_{mindspore::NHWC};
   std::shared_ptr<NodeInferShape> node_infer_shape_{nullptr};

@@ -199,8 +199,8 @@ STATUS ExportModel(const FuncGraphPtr &graph) {
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
-  if (flags->fmk == converter::FmkType_TFLITE || flags->fmk == converter::FmkType_TF ||
-      flags->fmk == converter::FmkType_ONNX) {
+  if (flags->fmk == converter::kFmkTypeTflite || flags->fmk == converter::kFmkTypeTf ||
+      flags->fmk == converter::kFmkTypeOnnx) {
     graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   optimizer->AddPassManager(graph_pm);

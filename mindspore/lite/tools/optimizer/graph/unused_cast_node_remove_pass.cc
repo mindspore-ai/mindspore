@@ -22,7 +22,7 @@ constexpr size_t kCastInputNum = 3;
 void RemoveUnusedCastOpPass::SetFmkType(FmkType type) { this->fmk_type = type; }
 
 bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
-  if (this->fmk_type != converter::FmkType_MS) {
+  if (this->fmk_type != converter::kFmkTypeMs) {
     MS_LOG(ERROR) << "The framework type of model should be mindspore.";
     return RET_ERROR;
   }

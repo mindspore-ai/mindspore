@@ -31,7 +31,7 @@ namespace mindspore {
 namespace opt {
 class ConstFoldPass : public PatternProcessPass {
  public:
-  explicit ConstFoldPass(converter::FmkType fmk_type = converter::FmkType_MS, bool multigraph = true)
+  explicit ConstFoldPass(converter::FmkType fmk_type = converter::kFmkTypeMs, bool multigraph = true)
       : PatternProcessPass("constfold_pass", multigraph), fmk_type_(fmk_type) {
     context_ = std::make_shared<lite::InnerContext>();
     context_->Init();
@@ -41,7 +41,7 @@ class ConstFoldPass : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  converter::FmkType fmk_type_{converter::FmkType_MS};
+  converter::FmkType fmk_type_{converter::kFmkTypeMs};
   std::shared_ptr<lite::InnerContext> context_{nullptr};
   std::shared_ptr<mindspore::Context> ms_context_{nullptr};
 };

@@ -257,7 +257,7 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
 }
 
 bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
-  if (this->fmk_type_ != converter::FmkType_MS) {
+  if (this->fmk_type_ != converter::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;
   }

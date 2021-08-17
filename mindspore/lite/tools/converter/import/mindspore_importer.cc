@@ -113,14 +113,14 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     return nullptr;
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
-  func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
+  func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
   STATUS status;
   if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_MS, flag.trainModel, flag.quantType);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, flag.trainModel, flag.quantType);
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;

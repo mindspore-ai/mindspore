@@ -199,7 +199,7 @@ int ControlFlowPass::CreateAfterGraph(const FuncGraphPtr &main_fg, const std::ve
   *after_fg = std::make_shared<FuncGraph>();
   auto manager = main_fg->manager();
   manager->AddFuncGraph(*after_fg);
-  (*after_fg)->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
+  (*after_fg)->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
   (*after_fg)->set_attr("graph_name", MakeValue(aim_cnode->fullname_with_scope() + "_after_fg"));
   (*after_fg)->set_manager(main_fg->manager());
 

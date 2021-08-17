@@ -261,13 +261,13 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
     auto padding_node = cnode->input(kInputIndexTwo);
     lite::DataInfo data_info;
     if (utils::isa<Parameter>(padding_node)) {
-      auto status = lite::FetchDataFromParameterNode(cnode, 2, converter::FmkType_MS, false, &data_info);
+      auto status = lite::FetchDataFromParameterNode(cnode, 2, converter::kFmkTypeMs, false, &data_info);
       if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
         MS_LOG(ERROR) << "fetch data from parameter node failed.";
         return lite::RET_ERROR;
       }
     } else if (utils::isa<ValueNode>(padding_node)) {
-      auto status = lite::FetchDataFromValueNode(cnode, 2, converter::FmkType_MS, false, &data_info);
+      auto status = lite::FetchDataFromValueNode(cnode, 2, converter::kFmkTypeMs, false, &data_info);
       if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
         MS_LOG(ERROR) << "fetch data from value node failed.";
         return lite::RET_ERROR;

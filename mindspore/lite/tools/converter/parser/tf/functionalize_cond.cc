@@ -133,7 +133,7 @@ STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, std::
 }
 
 FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::string name, BranchType branch_type) {
-  auto graph = FunctionalizeControlOpPass::NewFuncGraph(name, converter::FmkType_TF);
+  auto graph = FunctionalizeControlOpPass::NewFuncGraph(name, converter::kFmkTypeTf);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "new graph Partial Node return nullptr";
     return nullptr;

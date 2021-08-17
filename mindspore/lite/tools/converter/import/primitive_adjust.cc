@@ -519,7 +519,7 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
 }  // namespace
 
 bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
-  if (this->fmk_type_ != converter::FmkType_MS) {
+  if (this->fmk_type_ != converter::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;
   }

@@ -37,7 +37,7 @@ class ConvTransformFusion : public PatternProcessPass {
   void SetFmkType(FmkType type) { this->fmk_type_ = type; }
 
  private:
-  FmkType fmk_type_ = converter::FmkType_TF;
+  FmkType fmk_type_ = converter::kFmkTypeTf;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_TRANSFORM_FUSION_H_

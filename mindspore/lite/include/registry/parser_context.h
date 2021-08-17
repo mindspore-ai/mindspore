@@ -26,11 +26,11 @@ namespace mindspore {
 namespace converter {
 /// \brief FmkType defined frameworks which converter tool supports.
 enum MS_API FmkType : int {
-  FmkType_TF = 0,
-  FmkType_CAFFE = 1,
-  FmkType_ONNX = 2,
-  FmkType_MS = 3,
-  FmkType_TFLITE = 4,
+  kFmkTypeTf = 0,
+  kFmkTypeCaffe = 1,
+  kFmkTypeOnnx = 2,
+  kFmkTypeMs = 3,
+  kFmkTypeTflite = 4,
 };
 
 /// \brief ConverterParameters defined read-only converter parameters used by users in ModelParser.
@@ -42,7 +42,7 @@ struct MS_API ConverterParameters {
   std::map<std::string, std::string> attrs;
 };
 
-/// \brief ModelParser defined a model parser
+/// \brief ModelParser defined a base class of model parser
 class MS_API ModelParser;
 }  // namespace converter
 }  // namespace mindspore

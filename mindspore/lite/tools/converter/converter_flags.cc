@@ -114,21 +114,21 @@ int Flags::InitInputOutputDataType() {
 
 int Flags::InitFmk() {
   if (this->fmkIn == "CAFFE") {
-    this->fmk = FmkType_CAFFE;
+    this->fmk = kFmkTypeCaffe;
   } else if (this->fmkIn == "MINDIR") {
-    this->fmk = FmkType_MS;
+    this->fmk = kFmkTypeMs;
   } else if (this->fmkIn == "TFLITE") {
-    this->fmk = FmkType_TFLITE;
+    this->fmk = kFmkTypeTflite;
   } else if (this->fmkIn == "ONNX") {
-    this->fmk = FmkType_ONNX;
+    this->fmk = kFmkTypeOnnx;
   } else if (this->fmkIn == "TF") {
-    this->fmk = FmkType_TF;
+    this->fmk = kFmkTypeTf;
   } else {
     std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->fmk != FmkType_CAFFE && !weightFile.empty()) {
+  if (this->fmk != kFmkTypeCaffe && !weightFile.empty()) {
     std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
@@ -196,7 +196,7 @@ int Flags::InitTrainModel() {
   }
 
   if (this->trainModel) {
-    if (this->fmk != FmkType_MS) {
+    if (this->fmk != kFmkTypeMs) {
       std::cerr << "INPUT ILLEGAL: train model converter supporting only MINDIR format" << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }

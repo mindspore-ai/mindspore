@@ -30,7 +30,7 @@ class RemoveUnusedCastOpPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  FmkType fmk_type = converter::FmkType_TF;
+  FmkType fmk_type = converter::kFmkTypeTf;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_REMOVE_UNUSED_CAST_PASS_H_

@@ -71,7 +71,7 @@ class PrimitiveAdjust {
   bool Run(const FuncGraphPtr &func_graph);
 
  protected:
-  FmkType fmk_type_ = FmkType::FmkType_MS;
+  FmkType fmk_type_ = FmkType::kFmkTypeMs;
 };
 }  // namespace lite
 }  // namespace mindspore

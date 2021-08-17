@@ -45,7 +45,7 @@ void FreeTensors(std::vector<lite::Tensor *> *tensors) {
 
 void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) {
   MS_ASSERT(cnode != nullptr);
-  if (fmk_type != converter::FmkType_ONNX) {
+  if (fmk_type != converter::kFmkTypeOnnx) {
     return;
   }
   for (auto &input : inputs) {

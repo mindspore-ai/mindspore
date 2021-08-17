@@ -367,7 +367,7 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphOutput() {
 
 STATUS FunctionalizeWhile::BuildCondGraph() {
   cond_subgraph_name_ = FunctionalizeControlOpPass::NodeClusterName(loop_cond_node_) + "_cond";
-  cond_sub_func_graph_ = FunctionalizeControlOpPass::NewFuncGraph(cond_subgraph_name_, converter::FmkType_TF);
+  cond_sub_func_graph_ = FunctionalizeControlOpPass::NewFuncGraph(cond_subgraph_name_, converter::kFmkTypeTf);
   if (cond_sub_func_graph_ == nullptr) {
     MS_LOG(ERROR) << "new cond_sub_func_graph_ return nullptr";
     return RET_NULL_PTR;
@@ -522,7 +522,7 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
 
 STATUS FunctionalizeWhile::BuildBodyGraph() {
   body_subgraph_name_ = FunctionalizeControlOpPass::NodeClusterName(loop_cond_node_) + "_body";
-  body_sub_func_graph_ = FunctionalizeControlOpPass::NewFuncGraph(body_subgraph_name_, converter::FmkType_TF);
+  body_sub_func_graph_ = FunctionalizeControlOpPass::NewFuncGraph(body_subgraph_name_, converter::kFmkTypeTf);
   if (body_sub_func_graph_ == nullptr) {
     MS_LOG(ERROR) << "new body_sub_func_graph_ return nullptr";
     return RET_NULL_PTR;
