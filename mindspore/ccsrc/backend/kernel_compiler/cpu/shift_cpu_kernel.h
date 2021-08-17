@@ -52,20 +52,27 @@ class ShiftCpuKernel : public CPUKernel {
   size_t fill_size_{0};
 };
 
-MS_REG_CPU_KERNEL_T(Shift, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), ShiftCpuKernel,
-                    bool)
+MS_REG_CPU_KERNEL_T(
+  Shift, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  ShiftCpuKernel, bool)
 
-MS_REG_CPU_KERNEL_T(Shift, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    ShiftCpuKernel, float)
+MS_REG_CPU_KERNEL_T(
+  Shift,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ShiftCpuKernel, float)
 
-MS_REG_CPU_KERNEL_T(Shift, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    ShiftCpuKernel, double)
+MS_REG_CPU_KERNEL_T(
+  Shift,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  ShiftCpuKernel, double)
 
-MS_REG_CPU_KERNEL_T(Shift, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), ShiftCpuKernel,
-                    int32_t)
+MS_REG_CPU_KERNEL_T(
+  Shift, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  ShiftCpuKernel, int32_t)
 
-MS_REG_CPU_KERNEL_T(Shift, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), ShiftCpuKernel,
-                    int64_t)
+MS_REG_CPU_KERNEL_T(
+  Shift, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ShiftCpuKernel, int64_t)
 
 }  // namespace kernel
 }  // namespace mindspore
