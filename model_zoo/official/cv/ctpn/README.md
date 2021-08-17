@@ -1,6 +1,6 @@
 ![logo](https://www.mindspore.cn/static/img/logo_black.6a5c850d.png)
 
-# CTPN for Ascend
+# CTPN
 
 <!-- TOC -->
 

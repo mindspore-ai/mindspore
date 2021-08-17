@@ -1,4 +1,4 @@
-# DeepText for Ascend
+# DeepText
 
 - [DeepText Description](#DeepText-description)
 - [Model Architecture](#model-architecture)
