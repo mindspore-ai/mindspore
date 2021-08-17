@@ -130,6 +130,7 @@ def get_file_join_name(input_path, file_name):
                     bin_data.write(txt.read())
     return file_join_name
 
+
 def get_file_names(input_path, file_name):
     """
     Search files under the special path.

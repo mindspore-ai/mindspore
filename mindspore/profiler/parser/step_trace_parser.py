@@ -339,7 +339,7 @@ class BaseStepTraceParser:
 
     def _save(self):
         """save step trace file."""
-        BP_POINT, TAIL, FP_DURATION = 5, -1, -2
+        bp_point, tail, fp_duration = 5, -1, -2
         log.info("Start to save step trace file.")
         if not self._header:
             return
@@ -347,13 +347,13 @@ class BaseStepTraceParser:
             with open(self._output_path, 'w') as file_handle:
                 csv_writer = csv.writer(file_handle)
                 if not self._is_training_mode:
-                    self._header[FP_DURATION] = 'fp'
-                    self._header = self._header[:BP_POINT] + self._header[BP_POINT + 1:TAIL]
+                    self._header[fp_duration] = 'fp'
+                    self._header = self._header[:bp_point] + self._header[bp_point + 1:tail]
                 csv_writer.writerow(self._header)
                 for row_data in self._result:
                     if not self._is_training_mode:
-                        row_data[FP_DURATION] += row_data[TAIL]
-                        row_data = row_data[:BP_POINT] + row_data[BP_POINT + 1:TAIL]
+                        row_data[fp_duration] += row_data[tail]
+                        row_data = row_data[:bp_point] + row_data[bp_point + 1:tail]
                     csv_writer.writerow(row_data)
             os.chmod(self._output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
@@ -429,13 +429,13 @@ class GpuStepTraceParser(BaseStepTraceParser):
         fp_start, bp_end, iter_end, iter_start = 0, 1, 2, 3
         reduce_start = 4
         start_time, end_time = 0, 1
-        STEP_TRACE_POINT_COUNT = 3
+        step_trace_point_count = 3
 
         source_file = validate_and_normalize_path(source_file)
         try:
             with open(source_file, 'r') as f:
                 lines = f.readlines()
-                if len(lines) < STEP_TRACE_POINT_COUNT:
+                if len(lines) < step_trace_point_count:
                     raise ProfilerRawFileException(
                         f"Failed to parse {source_file} file. The FP_POINT/BP_POINT/ITER_END_POINT "
                         f"do not recognized correctly. Try to set the environment variable'PROFILING_FP_START' "
