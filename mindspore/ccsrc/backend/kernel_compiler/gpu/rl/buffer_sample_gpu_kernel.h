@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_RL_BUFFER_SAMPLE_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_RL_BUFFER_SAMPLE_GPU_KERNEL_H_
 
+#include <curand_kernel.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -47,7 +48,9 @@ class BufferSampleKernel : public GpuKernel {
   int64_t capacity_;
   size_t batch_size_;
   int64_t seed_;
+  bool states_init_;
   std::mt19937 generator_;
+  curandState *devStates_;
   std::vector<size_t> exp_element_list;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

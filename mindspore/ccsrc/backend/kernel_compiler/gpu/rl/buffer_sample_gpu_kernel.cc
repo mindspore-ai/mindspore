@@ -30,9 +30,14 @@
 namespace mindspore {
 namespace kernel {
 
-BufferSampleKernel::BufferSampleKernel() : element_nums_(0), capacity_(0), batch_size_(0), seed_(0) {}
+BufferSampleKernel::BufferSampleKernel()
+    : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), states_init_(false) {}
 
-BufferSampleKernel::~BufferSampleKernel() {}
+BufferSampleKernel::~BufferSampleKernel() {
+  if (devStates_ != nullptr) {
+    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(devStates_));
+  }
+}
 
 void BufferSampleKernel::ReleaseResource() {}
 
@@ -50,6 +55,19 @@ bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
   seed_ = GetAttr<int64_t>(kernel_node, "seed");
   batch_size_ = LongToSize(GetAttr<int64_t>(kernel_node, "batch_size"));
   element_nums_ = shapes.size();
+  // Set default seed, if seed == 0
+  if (seed_ == 0) {
+    generator_.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    seed_ = generator_();
+  }
+  // Keep the device memory for curandstate
+  const size_t cap_state_size = sizeof(curandState) * capacity_;
+  void *dev_state = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(cap_state_size);
+  if (dev_state == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to alloc dev_state, size is " << cap_state_size;
+  }
+  devStates_ = reinterpret_cast<curandState *>(dev_state);
+
   for (size_t i = 0; i < element_nums_; i++) {
     auto element = shapes[i] * UnitSizeInBytes(types[i]->type_id());
     exp_element_list.push_back(element);
@@ -59,10 +77,8 @@ bool BufferSampleKernel::Init(const CNodePtr &kernel_node) {
   // count and head
   input_size_list_.push_back(sizeof(int));
   input_size_list_.push_back(sizeof(int));
-  workspace_size_list_.push_back(capacity_ * sizeof(curandState));
-  workspace_size_list_.push_back(capacity_ * sizeof(float));
-  workspace_size_list_.push_back(capacity_ * sizeof(int));
-  workspace_size_list_.push_back(capacity_ * sizeof(float));
+  workspace_size_list_.push_back(capacity_ * sizeof(unsigned int));
+  workspace_size_list_.push_back(capacity_ * sizeof(unsigned int));
   return true;
 }
 
@@ -74,29 +90,20 @@ bool BufferSampleKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   int *head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   CheckBatchSize(count_addr, head_addr, batch_size_, capacity_, cuda_stream);
-  int k_cut = 0;
+  int k_num = 0;
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&k_cut, count_addr, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
+                             cudaMemcpyAsync(&k_num, count_addr, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
                              "sync dev to host failed");
-  // 1 Generate random floats
-  auto States = GetDeviceAddress<void *>(workspaces, 0);
-  auto random_f = GetDeviceAddress<float>(workspaces, 1);
-  auto indexes = GetDeviceAddress<int>(workspaces, 2);
-  auto useless_out = GetDeviceAddress<float>(workspaces, 3);
-  int seedc = 0;
-  if (seed_ == 0) {
-    generator_.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    seedc = generator_();
-  } else {
-    seedc = seed_;
+  // 1 Init curandState for the first time
+  if (!states_init_) {
+    RandInit(capacity_, seed_, devStates_, cuda_stream);
+    states_init_ = true;
   }
-
-  float init_k = std::numeric_limits<float>::lowest();
-  curandState *devStates = reinterpret_cast<curandState *>(States);
-  RandomGen(k_cut, devStates, seedc, random_f, cuda_stream);
-  // 2 Sort the random floats, and get the sorted indexes as the random indexes
-  FastTopK(1, k_cut, random_f, k_cut, useless_out, indexes, init_k, cuda_stream);
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSync failed, sample-topk");
+  auto key = GetDeviceAddress<unsigned int>(workspaces, 0);
+  auto indexes = GetDeviceAddress<unsigned int>(workspaces, 1);
+  // 2 Generate random indexes by kernel
+  RandomGen(k_num, devStates_, indexes, key, cuda_stream);
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSync failed, random generate.");
   for (size_t i = 0; i < element_nums_; i++) {
     auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
     auto out_addr = GetDeviceAddress<unsigned char>(outputs, i);

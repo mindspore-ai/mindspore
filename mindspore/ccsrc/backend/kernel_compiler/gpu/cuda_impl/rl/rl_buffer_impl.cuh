@@ -27,7 +27,8 @@ void BufferGetItem(const size_t size, const int *index, const size_t one_exp_len
                    unsigned char *out, cudaStream_t cuda_stream);
 void CheckBatchSize(const int *count, const int *head, const size_t batch_size, const int64_t capacity,
                     cudaStream_t cuda_stream);
-void BufferSample(const size_t size, const size_t one_element, const int *index, const unsigned char *buffer,
+void BufferSample(const size_t size, const size_t one_element, const unsigned int *index, const unsigned char *buffer,
                   unsigned char *out, cudaStream_t cuda_stream);
-void RandomGen(const int size, curandState *globalState, const int &seedc, float *out, cudaStream_t stream);
+void RandomGen(const int size, curandState *globalState, unsigned int *value, unsigned int *key, cudaStream_t stream);
+void RandInit(const int size, const int seed, curandState *state, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAM_IMPL_H_
