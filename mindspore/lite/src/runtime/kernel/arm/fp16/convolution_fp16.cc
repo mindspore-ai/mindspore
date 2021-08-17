@@ -127,16 +127,21 @@ int ConvolutionFP16CPUKernel::ReSize() {
 }
 
 int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(input_ptr != nullptr);
-  MS_ASSERT(output_ptr != nullptr);
-  if (input_ptr == nullptr || output_ptr == nullptr) {
-    MS_LOG(ERROR) << "Convolution Fp16 get null tensor data!";
-    return RET_ERROR;
+  auto input_tensor = in_tensors_[0];
+  auto output_tensor = out_tensors_[0];
+  MS_ASSERT(input_tensor != nullptr);
+  MS_ASSERT(output_tensor != nullptr);
+  auto input_ptr = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  CHECK_NULL_RETURN(input_ptr);
+  CHECK_NULL_RETURN(output_ptr);
+  if (output_tensor->format() == NC4HW4) {
+    ConvOutNc8hw8Fp16(input_ptr, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
+                      reinterpret_cast<float16_t *>(bias_data_), col_major_input_, output_ptr, task_id, conv_param_);
+  } else {
+    ConvFp16(input_ptr, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
+             reinterpret_cast<float16_t *>(bias_data_), col_major_input_, output_ptr, task_id, conv_param_);
   }
-  ConvFp16(input_ptr, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
-           reinterpret_cast<float16_t *>(bias_data_), col_major_input_, output_ptr, task_id, conv_param_);
   return RET_OK;
 }
 
