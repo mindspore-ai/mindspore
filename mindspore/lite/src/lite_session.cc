@@ -738,7 +738,9 @@ LiteSession::~LiteSession() {
     kernel = nullptr;
   }
   for (auto tensor : tensors_) {
-    MS_ASSERT(tensor != nullptr);
+    if (tensor == nullptr) {
+      continue;
+    }
     // Data of const tensor which doesn't own data will not freed.
     // Such as const data from meta_graph which will be freed when freeing meta_graph.
     if (tensor->IsConst() && !tensor->own_data()) {
