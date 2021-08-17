@@ -852,17 +852,24 @@ class PyFunc(PrimitiveWithInfer):
     r"""
     Execute Python function.
 
+    `PyFunc` encapsulates Python functions as an operator which could be compiled into computation graph.
+    Unlike normal operators, it cannot be exported to MindIR as it is executed in current Python context.
+    As only the weights of the network is stored in the checkpoint, network include `PyFunc` could save
+    checkpoint and load to the network again, but will lose any Python function state.
+
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         fn (function): Python function which inputs and outputs should be Python built-in scalar or numpy ndarray.
         in_types (list[:class:`mindspore.dtype`]): The type of the inputs.
-        in_shapes (list[tuple[int]]): The dimensionality of the inputs.
+        in_shapes (list[tuple[int]]): The dimensionality of the inputs. An empty list represents a scalar, otherwise it
+                                      represent a numpy array.
         out_types (list[:class:`mindspore.dtype`]): The type of the outputs.
-        out_shapes (list[tuple[int]]): The dimensionality of the outputs.
+        out_shapes (list[tuple[int]]): The dimensionality of the outputs. An empty list represents a scalar, otherwise
+                                       it represent a numpy array.
         stateful (bool): Whether the function is stateful or not.
-                         If True, the execution order are same with model definition.
+                         If True, the execution order is same with model definition.
 
     Inputs:
         - **input_x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
@@ -872,7 +879,9 @@ class PyFunc(PrimitiveWithInfer):
         tuple[Tensor], execution results Python functions.
 
     Raises:
-        TypeError: If the Python function execution failed.
+        TypeError: The Python function execution failed.
+        TypeError: The attributes(in_types/in_shapes/out_types/out_shapes) are inconsistent with Python function
+                   specifications.
 
     Supported Platforms:
         ``CPU``
