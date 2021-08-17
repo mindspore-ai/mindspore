@@ -22,6 +22,7 @@ from model_utils.moxing_adapter import config
 
 
 def create_label(result_path, dir_path):
+    """create label for dataset"""
     print("[WARNING] Create imagenet label. Currently only use for Imagenet2012!")
     dirs = os.listdir(dir_path)
     file_list = []
