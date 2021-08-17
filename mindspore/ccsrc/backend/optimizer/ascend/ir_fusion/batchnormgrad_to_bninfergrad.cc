@@ -125,7 +125,7 @@ const AnfNodePtr BatchNormGrad2BNInferGrad::Process(const FuncGraphPtr &graph, c
     return nullptr;
   }
   auto bn_infer_grad = CreateBNInferGrad(graph, batchnorm_grad, node);
-  TransferDepend(batchnorm_grad, graph, bn_infer_grad);
+  TransferDependOrUpdateState(batchnorm_grad, graph, bn_infer_grad);
   return bn_infer_grad;
 }
 }  // namespace opt
