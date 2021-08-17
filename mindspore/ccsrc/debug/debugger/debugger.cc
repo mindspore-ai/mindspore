@@ -79,6 +79,7 @@ Debugger::Debugger()
       is_dataset_graph_(false),
       partial_memory_(false),
       initial_suspend_(true),
+      enable_heartbeat_(false),
       not_dataset_graph_sum_(0),
       version_("") {
   CheckDebuggerEnabledParam();
@@ -131,6 +132,7 @@ void Debugger::EnableDebugger() {
   // reset some of the class members
   num_step_ = 0;
   debugger_enabled_ = false;
+  enable_heartbeat_ = false;
   partial_memory_ = false;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
@@ -188,7 +190,7 @@ void Debugger::EnableDebugger() {
     // initialize grpc client
     grpc_client_ = std::make_unique<GrpcClient>(host, port);
     // initialize sending heartbeat
-    heartbeat_thread_ = std::make_unique<std::thread>([&]() { SendHeartbeat(heartbeat_period_second); });
+    heartbeat_thread_ = std::make_unique<std::thread>([=]() { SendHeartbeat(heartbeat_period_second); });
   }
   debug_services_ = std::make_unique<DebugServices>();
 }
@@ -582,7 +584,6 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
 }
 
 void Debugger::SendHeartbeat(int32_t period) {
-  bool heartbeat_enabled = true;
   int num_heartbeat_fail = 0;
   const int max_num_heartbeat_fail = 5;
   const int retry_milliseconds = 500;
@@ -591,8 +592,8 @@ void Debugger::SendHeartbeat(int32_t period) {
   heartbeat.set_message("Debugger is alive");
   heartbeat.set_period(heartbeat_period_second);
 
-  bool run = CheckDebuggerEnabled() && heartbeat_enabled;
-  while (run) {
+  SetEnableHeartbeat(CheckDebuggerEnabled());
+  while (enable_heartbeat_) {
     EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
 
     if (reply.status() != reply.OK) {
@@ -600,8 +601,8 @@ void Debugger::SendHeartbeat(int32_t period) {
       num_heartbeat_fail++;
       if (num_heartbeat_fail >= max_num_heartbeat_fail) {
         MS_LOG(ERROR) << "Maximum number of failure for SendHeartbeat reached : exiting training session.";
-        Exit();
-        run = false;
+        SetEnableHeartbeat(false);
+        break;
       } else {
         MS_LOG(ERROR) << "Number of consecutive SendHeartbeat fail:" << num_heartbeat_fail;
         std::this_thread::sleep_for(std::chrono::milliseconds(retry_milliseconds));
@@ -943,9 +944,15 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
   }
   return tensor_list;
 }
+
 void Debugger::Exit() {
   // clear resource before exit
-  // debugger will notify main thread to exit because main thread can only exit at step boundary
+  // debugger will notify main thread to exit because main thread can only exit at step boundary.
+  SetEnableHeartbeat(false);
+  if (heartbeat_thread_ && heartbeat_thread_->joinable()) {
+    heartbeat_thread_->join();
+    MS_LOG(INFO) << "Join Heartbeat thread.";
+  }
   pipeline::ExecutorPy::DebugTerminate(true);
 }
 
@@ -1135,6 +1142,8 @@ std::string GetTensorFullName(const TensorProto &tensor) {
 bool GetMiVersionMatched(const EventReply &reply) { return reply.version_matched(); }
 
 bool Debugger::partial_memory() const { return partial_memory_; }
+
+void Debugger::SetEnableHeartbeat(bool enabled) { enable_heartbeat_ = enabled; }
 
 void Debugger::SetCurNode(const std::string &cur_name) {
   // access lock for public method
