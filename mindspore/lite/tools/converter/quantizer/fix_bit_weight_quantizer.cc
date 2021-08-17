@@ -18,7 +18,6 @@
 #include <cmath>
 
 namespace mindspore::lite::quant {
-
 // the error is currently measured per channel.
 // it could be measured per layer but it would be less good.
 // the `preferred` dim should point to the output channels dimension.

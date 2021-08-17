@@ -89,13 +89,13 @@ void BitStream::Push(int64_t state, uint8_t bit_count) {
     }
   } else {
     // split, rare
-    int leftbits = curr_bit_count_ - 64;
-    int rightbits = bit_count - leftbits;
-    curr_chunk_ = (curr_chunk_ << rightbits) | ((state >> leftbits) & ((1 << rightbits) - 1));
+    int left_bits = curr_bit_count_ - 64;
+    int right_bits = bit_count - left_bits;
+    curr_chunk_ = (curr_chunk_ << right_bits) | ((state >> left_bits) & ((1 << right_bits) - 1));
     // flush left
     chunks_[++curr_chunk_index_] = curr_chunk_;
-    curr_chunk_ = state & ((1 << leftbits) - 1);
-    curr_bit_count_ = leftbits;
+    curr_chunk_ = state & ((1 << left_bits) - 1);
+    curr_bit_count_ = left_bits;
   }
 }
 

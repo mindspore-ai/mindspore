@@ -182,7 +182,9 @@ void FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   *table_log = std::min(MAX_TABLE_LOG, fse_count_bits((uint32_t)q->size) + 3);
   int new_table_size = 1 << (*table_log);
   int curr_table_size = 0;
-  for (int i = 0; i < q->size; i++) curr_table_size += q->frequency[i];
+  for (int i = 0; i < q->size; i++) {
+    curr_table_size += q->frequency[i];
+  }
 
   // normalize
   int updated_table_size = 0;
@@ -221,24 +223,12 @@ int FSEEncoder::FSEEncode(BitStream *bs, const uint16_t *data, int data_count, u
   // symbolTT.deltaNbBits stores a value which, when added with state,
   // makes the result of >> 16 produces either n or n+1, as required.
   std::vector<uint32_t> delta_number_bits(frequency_count);
-  for (int i = 0; i < frequency_count; i++) {
-    delta_number_bits[i] = 0;
-  }
   // symbolTT.deltaFindState provides the offset to find the correct segment into the table.
   std::vector<int16_t> delta_find_state(frequency_count);
-  for (int i = 0; i < frequency_count; i++) {
-    delta_find_state[i] = 0;
-  }
   // nextStateTable with symbol
   std::vector<uint16_t> coding_table(table_size);
-  for (int i = 0; i < table_size; i++) {
-    coding_table[i] = 0;
-  }
   // position with symbol
   std::vector<uint16_t> symtable(table_size);
-  for (int i = 0; i < table_size; i++) {
-    symtable[i] = 0;
-  }
   int ret = FSECreateStatesForEncoding(frequency, frequency_count, table_log, delta_number_bits.data(),
                                        delta_find_state.data(), coding_table.data(), symtable.data());
   if (ret != RET_OK) {

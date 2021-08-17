@@ -43,7 +43,9 @@
 #if GPU_TENSORRT
 #include "src/delegate/tensorrt/tensorrt_delegate.h"
 #endif
-
+#if ENABLE_WEIGHT_DECODE
+#include "tools/converter/quantizer/fse_decoder.h"
+#endif
 namespace mindspore {
 namespace lite {
 namespace {
@@ -64,7 +66,9 @@ bool NeedBitUppackCheck(const schema::Tensor &src_tensor) {
 int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
 #ifdef ENABLE_WEIGHT_DECODE
-  if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
+  if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
+    return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
+  } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
     return IndexingDecompress(src_tensor, dst_tensor);
   } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
     return SparseDecompress(src_tensor, dst_tensor);
@@ -75,7 +79,6 @@ int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
     return RET_ERROR;
   }
 #endif
-
   if (!NeedBitUppackCheck(src_tensor)) {
     return RET_NO_CHANGE;
   } else {

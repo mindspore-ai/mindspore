@@ -134,6 +134,15 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
         )
 
+# Avoid multiple definitions
+if(MSLITE_ENABLE_CONVERTER STREQUAL "off")
+    set(TEST_LITE_SRC
+            ${TEST_LITE_SRC}
+            ${LITE_DIR}/tools/converter/quantizer/fse_decoder.cc
+            ${LITE_DIR}/tools/converter/quantizer/fse_bit_stream.cc
+            )
+endif()
+
 file(GLOB KERNEL_REG_SRC ${LITE_DIR}/src/registry/*.cc)
 set(TEST_LITE_SRC ${TEST_LITE_SRC} ${KERNEL_REG_SRC})
 
