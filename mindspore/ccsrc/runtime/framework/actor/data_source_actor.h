@@ -41,9 +41,9 @@ using mindspore::kernel::KernelLaunchInfo;
 // -> OnMemoryAllocFinish -> SendMemoryFreeReq -> SendOutput.
 class DataSourceActor : public DebugAwareActor {
  public:
-  DataSourceActor(const std::string &name, size_t buffer_capacity, const AID &memory_manager_aid, const AID *debug_aid,
-                  const AID *recorder_aid)
-      : DebugAwareActor(name, recorder_aid, memory_manager_aid, debug_aid), buffer_capacity_(buffer_capacity) {}
+  DataSourceActor(const std::string &name, KernelTransformType type, size_t buffer_capacity,
+                  const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
+      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), buffer_capacity_(buffer_capacity) {}
   virtual ~DataSourceActor() = default;
 
   void Init() override;
@@ -85,7 +85,8 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
  public:
   DeviceQueueDataSourceActor(const std::string &name, size_t buffer_capacity, const DeviceContext *device_context,
                              const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
-      : DataSourceActor(name, buffer_capacity, memory_manager_aid, debug_aid, recorder_aid) {
+      : DataSourceActor(name, KernelTransformType::kDeviceDataSourceActor, buffer_capacity, memory_manager_aid,
+                        debug_aid, recorder_aid) {
     (void)device_contexts_.emplace_back(device_context);
   }
   ~DeviceQueueDataSourceActor() override = default;
@@ -120,14 +121,16 @@ class HostQueueDataSourceActor : public DataSourceActor {
  public:
   HostQueueDataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid, const AID *debug_aid,
                            const AID *recorder_aid, HostTensorQueuePtr host_queue)
-      : DataSourceActor(name, buffer_capacity, memory_manager_aid, debug_aid, recorder_aid), host_queue_(host_queue) {}
+      : DataSourceActor(name, KernelTransformType::kHostDataSourceActor, buffer_capacity, memory_manager_aid, debug_aid,
+                        recorder_aid),
+        host_queue_(host_queue) {}
   ~HostQueueDataSourceActor() override = default;
 
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
-  size_t FetchDataNodePosition(const AnfNodePtr &data_node) const;
+  size_t FetchNodePosition(const AnfNodePtr &node) const override;
 
  protected:
   void FillDataBuffer() override;

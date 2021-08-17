@@ -25,9 +25,9 @@ namespace runtime {
 // The actor represents a set of common debug related operations of actor.
 class DebugAwareActor : public MemoryAwareActor {
  public:
-  explicit DebugAwareActor(const std::string &name, const AID *recorder_aid, const AID &memory_manager_aid,
-                           const AID *debug_aid)
-      : MemoryAwareActor(name, recorder_aid, memory_manager_aid), debug_aid_(debug_aid) {}
+  explicit DebugAwareActor(const std::string &name, KernelTransformType type, const AID *recorder_aid,
+                           const AID &memory_manager_aid, const AID *debug_aid)
+      : MemoryAwareActor(name, type, recorder_aid, memory_manager_aid), debug_aid_(debug_aid) {}
   virtual ~DebugAwareActor() = default;
 
   virtual void SendDebugReq(OpContext<DeviceTensor> *const context) {}

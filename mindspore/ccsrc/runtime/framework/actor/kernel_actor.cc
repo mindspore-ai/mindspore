@@ -26,7 +26,7 @@ namespace mindspore {
 namespace runtime {
 void KernelActor::Init() {
   // Check device contexts number.
-  if (device_contexts_.size() != kDeviceContextsNumOne) {
+  if (device_contexts_.size() != device::kDeviceContextsNumOne) {
     MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
 

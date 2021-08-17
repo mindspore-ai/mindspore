@@ -15,8 +15,8 @@
  */
 
 #include "runtime/framework/actor/actor_common.h"
-#include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/framework/device_tensor_store.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -52,6 +52,38 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strateg
   if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
     return true;
   }
+  return false;
+}
+
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
+                        const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
+  MS_EXCEPTION_IF_NULL(node);
+
+  bool is_parameter_data = node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()));
+  if (!is_parameter_data) {
+    return false;
+  }
+
+  if (strategy == GraphExecutionStrategy::kStep) {
+    MS_EXCEPTION_IF_NULL(graph);
+    return graph->execution_order().size() > 1;
+  }
+
+  if (graph == nullptr) {
+    return true;
+  }
+
+  // In control flow, only the parameters of the root funcgraph are in the host data source.
+  const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
+  bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
+                  find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
+
+  //  Judge whether node is internal parameter.
+  const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(node);
+  if (internal_front_node.first == nullptr && is_host) {
+    return true;
+  }
+
   return false;
 }
 
