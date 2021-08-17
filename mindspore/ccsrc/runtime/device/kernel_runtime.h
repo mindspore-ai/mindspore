@@ -52,6 +52,8 @@ class KernelRuntime {
   KernelRuntime() = default;
   virtual ~KernelRuntime();
   virtual bool Init() = 0;
+  virtual uint32_t GetRankId() { MS_LOG(EXCEPTION) << "Not Implement"; }
+  virtual uint32_t GetRankSize() { MS_LOG(EXCEPTION) << "Not Implement"; }
   virtual void AssignMemory(session::KernelGraph *graph);
   void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph);
   void RunOpClearMemory(const session::KernelGraph *graph) const;

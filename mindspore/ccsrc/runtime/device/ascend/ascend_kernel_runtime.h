@@ -39,6 +39,8 @@ class AscendKernelRuntime : public KernelRuntime {
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
+  uint32_t GetRankId() override;
+  uint32_t GetRankSize() override;
   bool LoadData(session::KernelGraph *graph) override;
   bool GenTask(const session::KernelGraph *graph);
   bool GenDynamicKernel(const session::KernelGraph *graph) override;

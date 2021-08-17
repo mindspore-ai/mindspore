@@ -51,6 +51,9 @@ class HcclAdapter {
   HcclResult HcclGetRankId(const std::string &group, uint32_t *rank_id) const;
   HcclResult HcclGetRankSize(const std::string &group, uint32_t *rank_size) const;
 
+  HcclResult HcclGetRankId(uint32_t *rank_id) const;
+  HcclResult HcclGetRankSize(uint32_t *rank_size) const;
+
   // for ge node
   bool GenTask(const AnfNodePtr &node, HcclDataType datatype, std::vector<HcclTaskInfo> *task_info_lists) const;
   int64_t CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) const;
@@ -104,6 +107,8 @@ class HcclAdapter {
   HcclAllGatherFunObj launch_hccl_all_gather_ = nullptr;
   HcclSendFunObj launch_hccl_send_ = nullptr;
   HcclRecvFunObj launch_hccl_recv_ = nullptr;
+  HcclGetRankIdFunObj single_op_hccl_get_rank_id_ = nullptr;
+  HcclGetRankSizeFunObj single_op_hccl_get_rank_size_ = nullptr;
 
   HcomCreateGroupFunObj hccl_create_group_ = nullptr;
   HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;

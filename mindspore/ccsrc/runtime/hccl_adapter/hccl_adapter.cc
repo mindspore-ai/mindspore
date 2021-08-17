@@ -84,6 +84,8 @@ void HcclAdapter::InitPlugin() {
   get_all_kernel_builder_ = DlsymFuncObj(GetAllKernelBuilder, plugin_handle_);
   init_hccl_comm_ = DlsymFuncObj(HcclCommInitClusterInfo, plugin_handle_);
   finalize_hccl_comm_ = DlsymFuncObj(HcclCommDestroy, plugin_handle_);
+  single_op_hccl_get_rank_id_ = DlsymFuncObj(HcclGetRankId, plugin_handle_);
+  single_op_hccl_get_rank_size_ = DlsymFuncObj(HcclGetRankSize, plugin_handle_);
   launch_hccl_broadcast_ = DlsymFuncObj(HcclBroadcast, plugin_handle_);
   launch_hccl_all_reduce_ = DlsymFuncObj(HcclAllReduce, plugin_handle_);
   hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
@@ -452,6 +454,16 @@ HcclResult HcclAdapter::HcclCreateGroup(const std::string &group, uint32_t rank_
 HcclResult HcclAdapter::HcclDestroyGroup(const std::string &group) const {
   MS_EXCEPTION_IF_NULL(hccl_destroy_group_);
   return hccl_destroy_group_(group.c_str());
+}
+
+HcclResult HcclAdapter::HcclGetRankId(uint32_t *rank_id) const {
+  MS_EXCEPTION_IF_NULL(single_op_hccl_get_rank_id_);
+  return single_op_hccl_get_rank_id_(hccl_comm_, rank_id);
+}
+
+HcclResult HcclAdapter::HcclGetRankSize(uint32_t *rank_size) const {
+  MS_EXCEPTION_IF_NULL(single_op_hccl_get_rank_size_);
+  return single_op_hccl_get_rank_size_(hccl_comm_, rank_size);
 }
 
 HcclResult HcclAdapter::HcclGetRankId(const std::string &group, uint32_t *rank_id) const {
