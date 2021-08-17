@@ -1,7 +1,3 @@
-if(NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
-    add_definitions(-DUSE_GLOG)
-endif()
-
 set(3RD_DIR ${TOP_DIR}/third_party)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(MICRO_DIR ${LITE_DIR}/micro)
@@ -35,7 +31,7 @@ if(MSLITE_ENABLE_CONVERTER)
     add_executable(codegen main.cc ${FILE_SET})
     add_dependencies(codegen fbs_src)
     add_dependencies(codegen fbs_inner_src)
-    target_link_libraries(codegen PRIVATE ${SECUREC_LIBRARY} mindspore::glog wrapper_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(codegen PRIVATE ${SECUREC_LIBRARY} wrapper_mid nnacl_mid cpu_ops_mid)
     if(ENABLE_MODEL_OBF)
         target_link_libraries(codegen PRIVATE
                 ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)

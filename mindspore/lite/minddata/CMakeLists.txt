@@ -290,14 +290,14 @@ if(BUILD_MINDDATA STREQUAL "full")
 
     add_library(minddata-lite SHARED
             ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log.cc
             ${CORE_DIR}/utils/ms_utils.cc
             ${MINDDATA_FULL_SRC}
             )
 
     add_library(minddata-lite_static STATIC
             ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log.cc
             ${CORE_DIR}/utils/ms_utils.cc
             ${MINDDATA_FULL_SRC}
             )
@@ -436,7 +436,7 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
 
     add_library(minddata-lite SHARED
             ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log.cc
             ${CORE_DIR}/utils/ms_utils.cc
             ${MINDDATA_TODAPI_SRC}
             ${MINDSPORE_LITE_CXXAPI_SRC}
@@ -533,7 +533,7 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         ${MINDDATA_DIR}/util/memory_pool.cc
         ${MINDDATA_DIR}/util/path.cc
         ${MINDDATA_DIR}/api/transforms.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log.cc
         ${CORE_DIR}/utils/ms_utils.cc
         ${MINDDATA_DIR}/kernels/ir/validators.cc
         ${MINDDATA_DIR}/kernels/ir/data/transforms_ir.cc

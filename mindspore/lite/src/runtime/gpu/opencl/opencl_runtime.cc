@@ -274,13 +274,7 @@ int OpenCLRuntime::Init() {
   if (gpu_info_.type == MALI || gpu_info_.type == MALI_T || gpu_info_.type == MALI_G) {
     clImportMemoryARM = reinterpret_cast<clImportMemoryARMFunc>(dlsym(handle_, "clImportMemoryARM"));
     if (clImportMemoryARM == nullptr) {
-      mindspore::LogWriter(mindspore::LocationInfo((sizeof("_file_name_") > GetRealPathPos()
-                                                      ? static_cast<const char *>("_file_name_") + GetRealPathPos()
-                                                      : static_cast<const char *>("_file_name_")),
-                                                   105, "_function_name_"),
-                           mindspore::ERROR) < mindspore::LogStream() << "load func ("
-                                                                      << "clImportMemoryARM"
-                                                                      << ") failed!";
+      MS_LOG(ERROR) << "load func (clImportMemoryARM) failed!";
       UnLoadOpenCLLibrary(handle_);
       return false;
     }

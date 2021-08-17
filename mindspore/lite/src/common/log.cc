@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/common/log_adapter.h"
+#include "src/common/log.h"
 #include <cstring>
 #include <cstdio>
 
@@ -60,16 +59,15 @@ bool IsPrint(int level) {
 
 #ifdef ENABLE_ARM
 #if defined(__ANDROID__) || defined(ANDROID)
-// convert MsLogLevel to corresponding android level
-static int GetAndroidLogLevel(MsLogLevel level) {
+static int GetAndroidLogLevel(LiteLogLevel level) {
   switch (level) {
-    case DEBUG:
+    case LiteLogLevel::DEBUG:
       return ANDROID_LOG_DEBUG;
-    case INFO:
+    case LiteLogLevel::INFO:
       return ANDROID_LOG_INFO;
-    case WARNING:
+    case LiteLogLevel::WARNING:
       return ANDROID_LOG_WARN;
-    case ERROR:
+    case LiteLogLevel::ERROR:
     default:
       return ANDROID_LOG_ERROR;
   }
@@ -77,22 +75,22 @@ static int GetAndroidLogLevel(MsLogLevel level) {
 #endif
 #endif
 
-const char *EnumStrForMsLogLevel(MsLogLevel level) {
-  if (level == DEBUG) {
+const char *EnumStrForMsLogLevel(LiteLogLevel level) {
+  if (level == LiteLogLevel::DEBUG) {
     return "DEBUG";
-  } else if (level == INFO) {
+  } else if (level == LiteLogLevel::INFO) {
     return "INFO";
-  } else if (level == WARNING) {
+  } else if (level == LiteLogLevel::WARNING) {
     return "WARNING";
-  } else if (level == ERROR) {
+  } else if (level == LiteLogLevel::ERROR) {
     return "ERROR";
   } else {
     return "NO_LEVEL";
   }
 }
 
-void LogWriter::OutputLog(const std::ostringstream &msg) const {
-  if (IsPrint(log_level_)) {
+void LiteLogWriter::OutputLog(const std::ostringstream &msg) const {
+  if (IsPrint(static_cast<int>(log_level_))) {
 #if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
     __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s", location_.file_,
                         location_.line_, location_.func_, msg.str().c_str());
@@ -103,7 +101,7 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
   }
 }
 
-void LogWriter::operator<(const LogStream &stream) const noexcept {
+void LiteLogWriter::operator<(const LiteLogStream &stream) const noexcept {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
   OutputLog(msg);

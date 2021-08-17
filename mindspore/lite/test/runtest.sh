@@ -14,7 +14,7 @@ cd ${CUR_DIR}/do_test
 cp ${BUILD_DIR}/test/lite-test ./
 cp ${BUILD_DIR}/googletest/googlemock/gtest/libgtest.so ./
 ls -l *.so*
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./
+export LD_LIBRARY_PATH=./:${TENSORRT_PATH}/lib:${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 
 cp -r ${CUR_DIR}/ut/src/runtime/kernel/arm/test_data/* ./
 cp -r ${CUR_DIR}/ut/tools/converter/parser/tflite/test_data/* ./
