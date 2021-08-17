@@ -153,19 +153,8 @@ def set_parameter():
         config.run_distribute = False
 
     # init context
-    if config.run_distribute:
-        rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma", str(get_rank()))
-    else:
-        rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma")
-
-    if config.pre_trained:
-        config.save_graphs = False
-    else:
-        config.save_graphs = True
-
     if config.mode_name == 'GRAPH':
-        context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs,
-                            save_graphs_path=rank_save_graphs_path)
+        context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs)
         set_graph_kernel_context(target, config.net_name)
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target=target, save_graphs=False)
