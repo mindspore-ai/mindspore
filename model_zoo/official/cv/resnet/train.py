@@ -153,8 +153,16 @@ def set_parameter():
         config.run_distribute = False
 
     # init context
+    rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma")
+
+    if config.pre_trained:
+        config.save_graphs = False
+    else:
+        config.save_graphs = True
+
     if config.mode_name == 'GRAPH':
-        context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs)
+        context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs,
+                            save_graphs_path=rank_save_graphs_path)
         set_graph_kernel_context(target, config.net_name)
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target=target, save_graphs=False)
@@ -320,8 +328,8 @@ def set_save_ckpt_dir():
 def train_net():
     """train net"""
     target = config.device_target
-    ckpt_param_dict = load_pre_trained_checkpoint()
     set_parameter()
+    ckpt_param_dict = load_pre_trained_checkpoint()
     dataset = create_dataset(dataset_path=config.data_path, do_train=True, repeat_num=1,
                              batch_size=config.batch_size, target=target,
                              distribute=config.run_distribute)
