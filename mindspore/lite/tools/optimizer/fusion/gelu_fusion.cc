@@ -41,7 +41,7 @@ CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNod
 const float GeLUFusion::GetParameterValue(const EquivPtr &equiv, const VarPtr &input) const {
   MS_ASSERT(equiv != nullptr);
   MS_ASSERT(input != nullptr);
-  float value = -1;
+  const float value = -1;
   auto node = utils::cast<AnfNodePtr>((*equiv)[input]);
   if (node == nullptr || !utils::isa<ParameterPtr>(node)) {
     return value;

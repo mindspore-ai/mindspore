@@ -24,7 +24,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Int8Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, UnSqueezeParameter *para_, size_t data_size,
+int Int8Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, const UnSqueezeParameter *para_, size_t data_size,
                   int task_id);
 #ifdef __cplusplus
 }
