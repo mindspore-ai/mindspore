@@ -144,7 +144,7 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs, const
   for (auto i : inputs) {
     if (i->NodeType() != NType::Value) return nullptr;
   }
-  TypeId output_type = InferType(inputs, attrs);
+  TypeId output_type = this->type;
   tensor::TensorPtr res = nullptr;
   switch (output_type) {
     case TypeId::kNumberTypeUInt8: {
