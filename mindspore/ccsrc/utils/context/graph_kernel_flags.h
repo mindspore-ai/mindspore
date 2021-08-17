@@ -96,6 +96,13 @@ class GraphKernelFlags {
   unsigned int fusion_ops_level{OpLevel_0};
 
   /**
+   * Enable optimization for transform operators (Transpose/TransData)
+   *
+   * Experimental feature, enabled by default when opt_level=3.
+   */
+  bool enable_trans_op_optimize{false};
+
+  /**
    * Optimization level, value from 0 to 3.
    * 0: Disable GraphKernel
    * 1: Enable GraphKernel with basic features only.

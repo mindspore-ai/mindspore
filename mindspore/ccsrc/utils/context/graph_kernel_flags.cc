@@ -165,7 +165,7 @@ void GraphKernelFlags::Refresh() {
     }
   }
   // Dump flags so that people can check the setting.
-  MS_LOG(INFO) << "GraphKernelFlags info: " << DumpAllFlags();
+  MS_LOG(INFO) << "graph_kernel_flags = \"" << flags_cache_ << "\", all flags: " << DumpAllFlags();
 }
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
@@ -188,10 +188,11 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level >= OptLevel_2);
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
   reg.AddFlag("enable_low_precision", &enable_low_precision);
-  reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_gpu ? OpLevel_MAX : OpLevel_0);
+  reg.AddFlag("enable_trans_op_optimize", &enable_trans_op_optimize);
 
   // Integer flags
   reg.AddFlag("online_tuning", &online_tuning);
+  reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_gpu ? OpLevel_MAX : OpLevel_0);
 
   // String flags
   reg.AddFlag("repository_path", &repository_path);
@@ -217,6 +218,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_recompute_fusion"] = enable_recompute_fusion;
   json["enable_parallel_fusion"] = enable_parallel_fusion;
   json["enable_low_precision"] = enable_low_precision;
+  json["enable_trans_op_optimize"] = enable_trans_op_optimize;
 
   json["opt_level"] = opt_level;
   json["fusion_ops_level"] = fusion_ops_level;

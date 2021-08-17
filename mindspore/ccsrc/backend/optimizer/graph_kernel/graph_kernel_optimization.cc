@@ -48,6 +48,7 @@
 #include "backend/optimizer/graph_kernel/uss_atomic_add.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
+#include "backend/optimizer/graph_kernel/transform_op_optimizer.h"
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
 
 namespace mindspore {
@@ -123,8 +124,12 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   // Common subexpression elimination
   pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_2);
 
-  // Elimate Redundant Complex op
+  // Eliminate Redundant Complex op
   pm->AddPass(std::make_shared<EliminateRedundantComplex>(), OptLevel_2, false);
+
+  // Eliminate unnecessary transform ops
+  auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_trans_op_optimize);
+  pm->AddPass(std::make_shared<TransformOpOptimizer>(), level, is_gpu);
   return pm;
 }
 
