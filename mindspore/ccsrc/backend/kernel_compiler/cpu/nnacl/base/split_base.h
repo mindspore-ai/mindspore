@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, int num_unit,
-            SplitParameter *split_param, int data_size);
+            const SplitParameter *split_param, int data_size);
 #ifdef __cplusplus
 }
 #endif
