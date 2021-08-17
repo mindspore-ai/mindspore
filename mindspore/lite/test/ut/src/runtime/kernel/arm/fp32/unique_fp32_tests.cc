@@ -69,5 +69,6 @@ TEST_F(TestUniqueFp32, Unique) {
   in_tensor.set_data(nullptr);
   out_tensor0.set_data(nullptr);
   out_tensor1.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

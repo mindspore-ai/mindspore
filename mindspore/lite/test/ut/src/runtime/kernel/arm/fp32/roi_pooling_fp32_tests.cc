@@ -71,6 +71,7 @@ TEST_F(TestROIPoolingFp32, Simple) {
   printf("\n");
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete op;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }

@@ -94,6 +94,7 @@ TEST_F(TestCropInt8, crop_1d_axis0_offset0_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_2d_axis1_offset0_quant0_thread2) {
@@ -160,6 +161,7 @@ TEST_F(TestCropInt8, crop_2d_axis1_offset0_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread0) {
@@ -226,6 +228,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread0) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread2) {
@@ -293,6 +296,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread0) {
@@ -359,6 +363,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread0) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_4d_axis1_offset0_quant0_thread0) {
@@ -425,6 +430,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset0_quant0_thread0) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant0_thread0) {
@@ -494,6 +500,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant0_thread0) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant1_thread0) {
@@ -563,6 +570,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant1_thread0) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread2) {
@@ -631,6 +639,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread2) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread3) {
@@ -699,5 +708,6 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread3) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 }  // namespace mindspore

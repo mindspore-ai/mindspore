@@ -45,6 +45,7 @@ class TestResizeBilinearFp32 : public mindspore::CommonTest {
 };
 
 void TestResizeBilinearFp32::TearDown() {
+  delete kernel_;
   in_tensor_.set_data(nullptr);
   out_tensor_.set_data(nullptr);
 }

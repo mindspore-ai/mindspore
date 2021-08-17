@@ -70,6 +70,7 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
@@ -116,6 +117,7 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
@@ -162,5 +164,6 @@ TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

@@ -81,6 +81,7 @@ void TestResizeNearestNeighborInt8::Prepare(const std::vector<int> &in_shape, co
 }
 
 void TestResizeNearestNeighborInt8::TearDown() {
+  delete kernel_;
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
 }

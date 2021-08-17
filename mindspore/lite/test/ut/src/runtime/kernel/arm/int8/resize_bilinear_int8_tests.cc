@@ -47,6 +47,7 @@ class TestResizeBilinearInt8 : public mindspore::CommonTest {
 };
 
 void TestResizeBilinearInt8::TearDown() {
+  delete kernel_;
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
 }

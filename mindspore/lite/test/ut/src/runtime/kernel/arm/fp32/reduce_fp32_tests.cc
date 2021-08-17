@@ -60,6 +60,9 @@ class TestReduceFp32 : public mindspore::CommonTest {
 
 void TestReduceFp32::TearDown() {
   delete ctx_;
+  delete kernel_;
+  ctx_ = nullptr;
+  kernel_ = nullptr;
   in_tensor_.set_data(nullptr);
   out_tensor_.set_data(nullptr);
 }

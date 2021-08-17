@@ -71,6 +71,7 @@ TEST_F(TestReluXInt8, Relu) {
 
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestReluXInt8, Relu6) {
@@ -118,5 +119,6 @@ TEST_F(TestReluXInt8, Relu6) {
 
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

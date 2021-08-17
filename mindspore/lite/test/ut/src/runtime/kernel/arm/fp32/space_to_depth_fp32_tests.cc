@@ -92,6 +92,7 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   }
   std::cout << "\n";
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_out, out_size, 0.000001));
+  delete kernel;
 }
 
 }  // namespace mindspore
