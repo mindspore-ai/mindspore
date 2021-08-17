@@ -33,6 +33,8 @@ class CustomAddKernel : public Kernel {
   CustomAddKernel(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
                   const schema::Primitive *primitive, const mindspore::Context *ctx)
       : Kernel(inputs, outputs, primitive, ctx) {}
+  ~CustomAddKernel() = default;
+
   // Prepare will be called during graph compilation
   int Prepare() override { return lite::RET_OK; }
 

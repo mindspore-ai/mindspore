@@ -24,7 +24,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int PowerInt8(const int8_t *input_ptr, const int8_t *exp_ptr, int8_t *output_ptr, int count, PowerParameter *parameter);
+int PowerInt8(const int8_t *input_ptr, const int8_t *exp_ptr, int8_t *output_ptr, int count,
+              const PowerParameter *parameter);
 #ifdef __cplusplus
 }
 #endif
