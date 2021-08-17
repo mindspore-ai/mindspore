@@ -112,9 +112,11 @@ class DataPreProcessParser:
             thread_line = ai_cpu_lines[i + 1]
             if "Node" in node_line and "Thread" in thread_line:
                 # Get the node data from node_line
-                node_list = node_line.split(',')
-                thread_list = thread_line.split(',')
-                result = self._get_kernel_result(serial_number, node_list, thread_list)
+                result = self._get_kernel_result(
+                    serial_number,
+                    node_line.split(','),
+                    thread_line.split(',')
+                )
 
                 if result is None:
                     continue
