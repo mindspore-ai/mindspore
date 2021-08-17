@@ -74,7 +74,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer format_trans_optimizer;
-    if (!ctx.trainModel && ctx.fmk != converter::FmkType_ONNX) {
+    if (!ctx.trainModel && ctx.fmk != converter::kFmkTypeOnnx) {
       format_trans_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
       format_trans_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     }
@@ -117,7 +117,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   }
 
   // quantization
-  if (ctx.fmk != converter::FmkType_TF) {
+  if (ctx.fmk != converter::kFmkTypeTf) {
     // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer tensor_quant_optimizer;
@@ -134,7 +134,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   }
 
   // quantization
-  if (ctx.fmk != converter::FmkType_TF) {
+  if (ctx.fmk != converter::kFmkTypeTf) {
     // init old node indices
     Optimizer quant_node_optimizer;
     quant_node_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());

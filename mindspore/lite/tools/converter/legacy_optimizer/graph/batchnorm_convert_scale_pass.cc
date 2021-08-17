@@ -240,7 +240,7 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
   MS_ASSERT(graph->allTensors.size() > bnNode->inputIndex.at(1));
   auto bnWeightTensorIdxes = bnNode->inputIndex;
   bnWeightTensorIdxes.erase(bnWeightTensorIdxes.begin());
-  if (fmkType == converter::FmkType_CAFFE) {
+  if (fmkType == converter::kFmkTypeCaffe) {
     bnWeightTensors->meanTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_MEAN_INDEX]).get();
     bnWeightTensors->varianceTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_VARIANCE_INDEX]).get();
   } else {
@@ -258,7 +258,7 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
     MS_LOG(ERROR) << "BatchNorm's variance tensor is nullptr";
     return RET_ERROR;
   }
-  if (fmkType == converter::FmkType_CAFFE) {
+  if (fmkType == converter::kFmkTypeCaffe) {
     auto scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_SCALE_INDEX]).get();
     // calibrate mean and variance
     float scale_factor_data = (reinterpret_cast<float *>(scaleTensor->data.data()))[0];

@@ -77,12 +77,12 @@ STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, Shap
 }
 int GetFormatByFmk(int32_t fmk_type) {
   switch (fmk_type) {
-    case converter::FmkType_ONNX:
-    case converter::FmkType_CAFFE:
-    case converter::FmkType_MS:
+    case converter::kFmkTypeOnnx:
+    case converter::kFmkTypeCaffe:
+    case converter::kFmkTypeMs:
       return mindspore::NCHW;
-    case converter::FmkType_TF:
-    case converter::FmkType_TFLITE:
+    case converter::kFmkTypeTf:
+    case converter::kFmkTypeTflite:
       return mindspore::NHWC;
     default:
       return -1;

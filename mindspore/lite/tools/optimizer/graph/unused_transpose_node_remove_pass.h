@@ -30,7 +30,7 @@ class RemoveUnusedTransposeOpPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  FmkType fmk_type = converter::FmkType_TF;
+  FmkType fmk_type = converter::kFmkTypeTf;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_REMOVE_UNUSED_TRANSPOSE_PASS_H_

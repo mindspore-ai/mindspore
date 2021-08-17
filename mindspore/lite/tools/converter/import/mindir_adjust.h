@@ -38,7 +38,7 @@ class MindirAdjust {
   int ComputeQuantParams(AnfNodePtr anf_node);
 
   QuantType quant_type_ = QuantType::QuantType_QUANT_NONE;
-  FmkType fmk_type_ = FmkType::FmkType_MS;
+  FmkType fmk_type_ = FmkType::kFmkTypeMs;
   bool train_flag_ = false;
 };
 }  // namespace mindspore::lite

@@ -37,7 +37,7 @@
 #include "ops/transpose.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::converter::FmkType_ONNX;
+using mindspore::converter::kFmkTypeOnnx;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -79,10 +79,10 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
   static auto root_func_manager = Manage(res_graph_);
   for (auto &subgraph : all_subgraphs_) {
     subgraph->set_manager(root_func_manager);
-    subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+    subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
@@ -95,7 +95,7 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_ONNX, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeOnnx, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -118,7 +118,7 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
   }
   OnnxNodeParser::set_opset_version(onnx_model_.opset_import().Get(0).version());
   onnx_root_graph_ = onnx_model_.graph();
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
   return RET_OK;
 }
 STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
@@ -1253,6 +1253,6 @@ int OnnxModelParser::Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graph
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_ONNX, converter::LiteModelParserCreator<OnnxModelParser>)
+REG_MODEL_PARSER(kFmkTypeOnnx, converter::LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite
 }  // namespace mindspore

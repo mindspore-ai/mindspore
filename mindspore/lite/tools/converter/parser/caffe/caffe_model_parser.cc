@@ -33,7 +33,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::converter::FmkType_CAFFE;
+using mindspore::converter::kFmkTypeCaffe;
 namespace mindspore::lite {
 namespace {
 namespace {
@@ -104,7 +104,7 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
     return nullptr;
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeCaffe)));
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
@@ -112,7 +112,7 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_CAFFE, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeCaffe, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -555,5 +555,5 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
   }
   return layer.name();
 }
-REG_MODEL_PARSER(FmkType_CAFFE, converter::LiteModelParserCreator<CaffeModelParser>)
+REG_MODEL_PARSER(kFmkTypeCaffe, converter::LiteModelParserCreator<CaffeModelParser>)
 }  // namespace mindspore::lite

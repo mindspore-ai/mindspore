@@ -27,7 +27,7 @@ namespace mindspore {
 namespace opt {
 class InferShapePass : public Pass {
  public:
-  explicit InferShapePass(FmkType fmk_type = converter::FmkType_MS, bool train_flag = false)
+  explicit InferShapePass(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false)
       : Pass("infer_shape"), fmk_type_(fmk_type), train_flag_(train_flag) {}
   ~InferShapePass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
@@ -40,7 +40,7 @@ class InferShapePass : public Pass {
   void SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   void ResetSubGraphInput();
 
-  FmkType fmk_type_{converter::FmkType_MS};
+  FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   std::shared_ptr<NodeInferShape> node_infer_shape_{nullptr};
   std::map<FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_;

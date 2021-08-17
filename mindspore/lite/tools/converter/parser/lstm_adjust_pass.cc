@@ -151,13 +151,13 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
   auto lstm_weight_node = GetRealLstmWeightNode(func_graph, lstm_cnode, kWeightIndex);
   lite::DataInfo data_info;
   if (lstm_weight_node->isa<Parameter>()) {
-    auto ret = FetchDataFromParameterNode(lstm_cnode, kWeightIndex, converter::FmkType_MS, false, &data_info);
+    auto ret = FetchDataFromParameterNode(lstm_cnode, kWeightIndex, converter::kFmkTypeMs, false, &data_info);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "parse const node failed.";
       return RET_ERROR;
     }
   } else if (lstm_weight_node->isa<ValueNode>()) {
-    auto ret = FetchDataFromValueNode(lstm_cnode, kWeightIndex, converter::FmkType_MS, false, &data_info);
+    auto ret = FetchDataFromValueNode(lstm_cnode, kWeightIndex, converter::kFmkTypeMs, false, &data_info);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "parse const node failed.";
       return RET_ERROR;

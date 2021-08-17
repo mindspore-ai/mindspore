@@ -24,7 +24,7 @@ namespace mindspore {
 namespace lite {
 class UnifyFormatToNHWC : public opt::ToFormatBase {
  public:
-  explicit UnifyFormatToNHWC(FmkType fmk_type = converter::FmkType_MS, bool train_flag = false,
+  explicit UnifyFormatToNHWC(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
                              schema::QuantType quant_type = schema::QuantType_QUANT_NONE)
       : ToFormatBase(fmk_type, train_flag), quant_type_(quant_type) {}
   ~UnifyFormatToNHWC() override = default;

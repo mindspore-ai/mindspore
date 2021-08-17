@@ -95,7 +95,7 @@ class SlicePreposePass : public Pass {
   static bool MergeParallelSlice(const FuncGraphPtr &graph, const NodeUsedListPtr &slices);
 
  private:
-  FmkType fmk_type = converter::FmkType_ONNX;
+  FmkType fmk_type = converter::kFmkTypeOnnx;
 };
 }  // namespace mindspore::opt
 

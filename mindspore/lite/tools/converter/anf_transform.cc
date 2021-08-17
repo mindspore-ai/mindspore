@@ -115,7 +115,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
     fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
   }
-  if (config->fmk == converter::FmkType_MS) {
+  if (config->fmk == converter::kFmkTypeMs) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
     if (remove_unused_cast_pass == nullptr) {
       MS_LOG(ERROR) << "RemoveUnusedCastOpPass should be specified";
@@ -195,8 +195,8 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
 int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
-  if (config->fmk == converter::FmkType_TFLITE || config->fmk == converter::FmkType_TF ||
-      config->fmk == converter::FmkType_ONNX) {
+  if (config->fmk == converter::kFmkTypeTflite || config->fmk == converter::kFmkTypeTf ||
+      config->fmk == converter::kFmkTypeOnnx) {
     graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();

@@ -42,7 +42,7 @@ void InitConverterParameters(const converter::Flags &flag, converter::ConverterP
 
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   FuncGraphPtr func_graph = nullptr;
-  if (flag.fmk == converter::FmkType::FmkType_MS) {
+  if (flag.fmk == converter::FmkType::kFmkTypeMs) {
     kernel::PopulateTrainParameters();
     MindsporeImporter ms_import;
     func_graph = ms_import.ImportMindIR(flag);

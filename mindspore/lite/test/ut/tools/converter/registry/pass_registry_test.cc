@@ -29,15 +29,15 @@
 #include "ut/tools/converter/registry/model_parser_test.h"
 
 using mindspore::converter::ConverterParameters;
-using mindspore::converter::FmkType_CAFFE;
+using mindspore::converter::kFmkTypeCaffe;
 using mindspore::registry::POSITION_BEGIN;
 namespace mindspore {
 class PassRegistryTest : public mindspore::CommonTest {
  public:
   PassRegistryTest() = default;
   void SetUp() override {
-    REG_MODEL_PARSER(FmkType_CAFFE, TestModelParserCreator);
-    auto model_parser = registry::ModelParserRegistry::GetModelParser(FmkType_CAFFE);
+    REG_MODEL_PARSER(kFmkTypeCaffe, TestModelParserCreator);
+    auto model_parser = registry::ModelParserRegistry::GetModelParser(kFmkTypeCaffe);
     if (model_parser == nullptr) {
       return;
     }

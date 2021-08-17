@@ -20,7 +20,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::converter::ConverterParameters;
-using mindspore::converter::FmkType_CAFFE;
+using mindspore::converter::kFmkTypeCaffe;
 namespace mindspore {
 class ModelParserRegistryTest : public mindspore::CommonTest {
  public:
@@ -33,9 +33,9 @@ TEST_F(ModelParserRegistryTest, TestRegistry) {
   ASSERT_NE(add_parser, nullptr);
   auto proposal_parser = node_parser_reg->GetNodeParser("proposal");
   ASSERT_NE(proposal_parser, nullptr);
-  REG_MODEL_PARSER(FmkType_CAFFE,
+  REG_MODEL_PARSER(kFmkTypeCaffe,
                    TestModelParserCreator);  // register test model parser creator, which will overwrite existing.
-  auto model_parser = registry::ModelParserRegistry::GetModelParser(FmkType_CAFFE);
+  auto model_parser = registry::ModelParserRegistry::GetModelParser(kFmkTypeCaffe);
   ASSERT_NE(model_parser, nullptr);
   ConverterParameters converter_parameters;
   auto func_graph = model_parser->Parse(converter_parameters);

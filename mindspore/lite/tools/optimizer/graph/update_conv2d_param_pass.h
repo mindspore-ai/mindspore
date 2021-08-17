@@ -33,7 +33,7 @@ class UpdateConv2DParamPass : public Pass {
   void SetFmkType(FmkType fmk_type) { this->fmk_type_ = fmk_type; }
 
  private:
-  FmkType fmk_type_ = converter::FmkType_ONNX;
+  FmkType fmk_type_ = converter::kFmkTypeOnnx;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_

@@ -35,7 +35,7 @@
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
 
-using mindspore::converter::FmkType_TF;
+using mindspore::converter::kFmkTypeTf;
 namespace mindspore {
 namespace lite {
 namespace {
@@ -515,7 +515,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     return nullptr;
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
+  res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
 
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
@@ -576,7 +576,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::FmkType_TF, false, quant_type_);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeTf, false, quant_type_);
   if (!unify_format->Run(res_graph_)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
@@ -727,7 +727,7 @@ STATUS TFModelParser::ConvertSubgraph() {
 
     FuncGraphPtr sub_func_graph = std::make_shared<FuncGraph>();
     sub_func_graph->set_attr("graph_name", MakeValue(sub_graph_name));
-    sub_func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
+    sub_func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
     std::unordered_map<std::string, AnfNodePtr> anf_sub_node_map;
     std::map<std::string, const tensorflow::NodeDef *> tf_sub_node_map;
 
@@ -1136,6 +1136,6 @@ int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   return RET_OK;
 }
 
-REG_MODEL_PARSER(FmkType_TF, converter::LiteModelParserCreator<TFModelParser>)
+REG_MODEL_PARSER(kFmkTypeTf, converter::LiteModelParserCreator<TFModelParser>)
 }  // namespace lite
 }  // namespace mindspore

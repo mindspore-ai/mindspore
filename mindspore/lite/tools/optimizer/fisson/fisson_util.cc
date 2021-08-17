@@ -172,8 +172,8 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
   }
   auto splited_axis = split_info->axis;
   // need to check
-  if (split_info->fmk_type == FmkType::FmkType_CAFFE ||
-      split_info->fmk_type == FmkType::FmkType_ONNX) {  // NHWC -> NCHW
+  if (split_info->fmk_type == FmkType::kFmkTypeCaffe ||
+      split_info->fmk_type == FmkType::kFmkTypeOnnx) {  // NHWC -> NCHW
     splited_axis += 1;
   }
 
