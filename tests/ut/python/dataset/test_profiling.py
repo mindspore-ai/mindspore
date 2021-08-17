@@ -415,7 +415,7 @@ def confirm_2ops_in_pipeline():
             assert op_info[i]["op_type"] in ("GeneratorOp", "BatchOp")
 
 
-def test_profiling_epochctrl3():
+def test_profiling_seq_pipelines_epochctrl3():
     """
     Test with these 2 sequential pipelines:
     1) Generator -> Batch -> EpochCtrl
@@ -461,7 +461,7 @@ def test_profiling_epochctrl3():
         delete_profiling_files()
 
 
-def test_profiling_epochctrl2():
+def test_profiling_seq_pipelines_epochctrl2():
     """
     Test with these 2 sequential pipelines:
     1) Generator -> Batch
@@ -506,6 +506,49 @@ def test_profiling_epochctrl2():
         delete_profiling_files()
 
 
+def test_profiling_seq_pipelines_repeat():
+    """
+    Test with these 2 sequential pipelines:
+    1) Generator -> Batch
+    2) Generator -> Batch -> Repeat
+    """
+    set_profiling_env_var()
+
+    source = [(np.array([x]),) for x in range(64)]
+    data2 = ds.GeneratorDataset(source, ["data"])
+    data2 = data2.batch(16)
+
+    try:
+        # Test A - Call create_dict_iterator with 2 ops in pipeline
+        num_iter = 0
+        for _ in data2.create_dict_iterator(num_epochs=1):
+            num_iter += 1
+        assert num_iter == 4
+
+        confirm_2ops_in_pipeline()
+        confirm_cpuutil(2)
+
+        # Test B - Add repeat op to pipeline.  Call create_dict_iterator with 3 ops in pipeline
+        data2 = data2.repeat(5)
+        num_iter = 0
+        for _ in data2.create_dict_iterator(num_epochs=1):
+            num_iter += 1
+        assert num_iter == 20
+
+        # confirm_3ops_in_pipeline()
+        # MD BUG: Confirm pipeline file is not changed and wrongly still has 2 ops
+        confirm_2ops_in_pipeline()
+        # Confirm CPU util file has correct number of ops
+        confirm_cpuutil(3)
+
+    except Exception as error:
+        delete_profiling_files()
+        raise error
+
+    else:
+        delete_profiling_files()
+
+
 if __name__ == "__main__":
     test_profiling_simple_pipeline()
     test_profiling_complex_pipeline()
@@ -514,5 +557,6 @@ if __name__ == "__main__":
     test_profiling_sampling_interval()
     test_profiling_basic_pipeline()
     test_profiling_cifar10_pipeline()
-    test_profiling_epochctrl3()
-    test_profiling_epochctrl2()
+    test_profiling_seq_pipelines_epochctrl3()
+    test_profiling_seq_pipelines_epochctrl2()
+    test_profiling_seq_pipelines_repeat()

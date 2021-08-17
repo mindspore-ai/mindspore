@@ -278,7 +278,7 @@ class MinddataProfilingAnalyzer:
                 output queue utilization percentage
                 output queue empty frequency percentage
         """
-        # Note: Some ops like DeviceQueue do not have metrics information
+        # Note: Some ops like DeviceQueue and inline ops do not have metrics information
         queue_size = -1
         queue_length = -1
         queue_average_size = -1
@@ -391,13 +391,12 @@ class MinddataProfilingAnalyzer:
         return return_dict
 
     @staticmethod
-    def _parse_cpu_util_info(cpu_util_info, num_pipeline_ops):
+    def _parse_cpu_util_info(cpu_util_info):
         """
         Parse and process the CPU profiling information.
 
         Args:
             cpu_util_info (dict): The CPU utilization profiling information.
-            num_pipeline_ops (int): Number of ops in the pipeline information.
 
         Returns:
             Dictionary with analyzed summary output information
@@ -427,17 +426,9 @@ class MinddataProfilingAnalyzer:
                 op_sys, op_usr = op["metrics"]["sys_utilization"], op["metrics"]["user_utilization"]
                 dict_opid_cpuutil[op["op_id"]] = [op_sys[i] + op_usr[i] for i in range(len(op_sys))]
 
-        # Produce a warning if the CPU utilization data and pipeline data do not include information
-        # for the same number of ops
-        # Note: There are cases in which CPU utilization data does not have information for some ops
-        if len(dict_opid_cpuutil) != num_pipeline_ops:
-            warning_msg = 'Number of ops for CPU utilization data: ' + str(len(dict_opid_cpuutil)) + \
-                          ' does not match number of ops for pipeline data: ' + str(num_pipeline_ops)
-            logger.warning(warning_msg)
-
         # Initialize oplist_avg_cpu_pct with -1 for each pipeline op, since
         # CPU utilization data may not have information for each pipeline op
-        oplist_avg_cpu_pct = [-1] * num_pipeline_ops
+        oplist_avg_cpu_pct = [-1] * len(dict_opid_cpuutil)
         total_cpu = 0
         for op_id, cpu in dict_opid_cpuutil.items():
             op_avg_cpu_pct = sum(cpu) / len(cpu) if cpu else 0
@@ -458,7 +449,9 @@ class MinddataProfilingAnalyzer:
         Returns:
             Dictionary with analyzed summary output information
             Dictionary consists of:
-                avg_batch_time: Average per batch time for pipeline in milliseconds
+                per_batch_time: Average per batch time for pipeline in milliseconds
+                per_pipeline_time: Average per pipeline time in milliseconds
+                per_push_queue_time: Average per queue push time in milliseconds
         """
         # Information on the format of the device tracing profiling information.
         # Format is: type extra-info batch-num value timestamp
@@ -491,11 +484,38 @@ class MinddataProfilingAnalyzer:
                     q_time[2].append(record[4] - prev_time)
                     prev_time = record[4]
 
-        # Compute average batch time
+        # Compute average queue times
+        avg_pipeline_time = sum(q_time[0]) / len(q_time[0]) if q_time[0] else -1
+        avg_push_queue_time = sum(q_time[1]) / len(q_time[1]) if q_time[1] else -1
         avg_batch_time = sum(q_time[2]) / len(q_time[2]) if q_time[2] else -1
 
         return_dict = {}
         return_dict['per_batch_time'] = [round(avg_batch_time, 3)]
+        return_dict['per_pipeline_time'] = [round(avg_pipeline_time, 3)]
+        return_dict['per_push_queue_time'] = [round(avg_push_queue_time, 3)]
+
+        return return_dict
+
+    def _compute_composite_info(self, summary_dict):
+        """
+        Compute composite analysis information from the current summary pipeline data.
+
+        Args:
+            summary_dict (dict): Input summary pipeline information.
+
+        Returns:
+            Dictionary with composite analysis output information
+            Dictionary consists of:
+                avg_cpu_pct_per_worker: Average CPU utilization percentage per worker
+        """
+        return_dict = {}
+
+        # Build list: average CPU utilization percentage per worker - for each op
+        avg_cpu_pct_per_worker = []
+        for c, n in zip(summary_dict.get('avg_cpu_pct'), summary_dict.get('num_workers')):
+            avg_cpu_pct_per_worker.append(round(c / n if (n != 0 and c >= 0) else -1, 2))
+        return_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
+
         return return_dict
 
     @staticmethod
@@ -505,9 +525,7 @@ class MinddataProfilingAnalyzer:
         in the MindData pipeline.
 
         Args:
-            summary_dict (dict): Input summary pipeline information.  This is updated the following additional
-                key-value pairs, each value is a list ordered by increasing op id:
-                    avg_cpu_pct_per_worker: Average CPU utilization percentage per worker
+            summary_dict (dict): Input summary pipeline information.
 
         Returns:
             Dictionary with the following information, if applicable:
@@ -519,13 +537,6 @@ class MinddataProfilingAnalyzer:
                 a potential bottleneck, plus suggestion on how to resolve the bottleneck.
                 (This is returned only if a potential bottleneck is identified.)
         """
-
-        # Build list: average CPU utilization percentage per worker - for each op
-        avg_cpu_pct_per_worker = []
-        for c, n in zip(summary_dict.get('avg_cpu_pct'), summary_dict.get('num_workers')):
-            avg_cpu_pct_per_worker.append(round(c / n if (n != 0 and c >= 0) else -1, 2))
-        summary_dict['avg_cpu_pct_per_worker'] = avg_cpu_pct_per_worker
-
         try:
             bottleneck_analyzer = BottleneckAnalyzer(summary_dict)
             return_dict = bottleneck_analyzer.analyze()
@@ -591,17 +602,30 @@ class MinddataProfilingAnalyzer:
         summary_dict.update(self._parse_pipeline_info(pipeline_info))
 
         # Parse and process CPU utilization information
-        # Supply the number of ops from the pipeline information
-        summary_dict.update(self._parse_cpu_util_info(cpu_util_info, len(summary_dict.get('pipeline_ops'))))
+        summary_dict.update(self._parse_cpu_util_info(cpu_util_info))
 
         if device_trace_info is not None:
-            # Parse and process dataset iterator (CPU) or device queue (CPU, Ascend) trace profiling information
+            # Parse and process device queue or dataset iterator trace profiling information
             summary_dict.update(self._parse_device_trace_info(device_trace_info))
 
-        # Analyze pipeline info for potential bottleneck op
-        bottleneck_dict = self._analyze_for_bottleneck_op(summary_dict)
-        if bottleneck_dict:
-            summary_dict.update(bottleneck_dict)
+        # Check if both pipeline data and CPU utilization data have the same number of ops
+        num_pipeline_ops = len(summary_dict.get('pipeline_ops'))
+        num_cpu_util_ops = len(summary_dict.get('avg_cpu_pct'))
+        if num_pipeline_ops == num_cpu_util_ops:
+            # Compute composite analysis information
+            summary_dict.update(self._compute_composite_info(summary_dict))
+
+            # Analyze pipeline info for potential bottleneck op
+            bottleneck_dict = self._analyze_for_bottleneck_op(summary_dict)
+            if bottleneck_dict:
+                summary_dict.update(bottleneck_dict)
+
+        else:
+            # Produce a warning since the pipeline data and the CPU utilization data do not include information
+            # for the same number of ops
+            warning_msg = 'Number of ops for pipeline data: ' + str(num_pipeline_ops) + \
+                          ' does not match number of ops for CPU utilization data: ' + str(num_cpu_util_ops)
+            logger.warning(warning_msg)
 
         # Save summary output dictionary to JSON output file (format#1)
         with open(self._save_path, 'w') as save_file:
