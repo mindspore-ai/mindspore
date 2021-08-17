@@ -23,6 +23,10 @@
 namespace mindspore::lite::quant {
 int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int symbol_frequency_count, int table_log,
                                            uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table) {
+  MS_ASSERT(symbol_frequency != nullptr);
+  MS_ASSERT(new_state != nullptr);
+  MS_ASSERT(bit_count != nullptr);
+  MS_ASSERT(symbol_table != nullptr);
   int table_size = 1 << table_log;
   int table_mask = table_size - 1;
   int step = ((table_size >> 1) + (table_size >> 3) + 3);
@@ -57,6 +61,10 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int
 
 int FSEDecoder::FSEDecode(BitStream *bs, float *buff, int buff_count, uint16_t *frequency, int frequency_count,
                           const float *centroids, int table_log) {
+  MS_ASSERT(bs != nullptr);
+  MS_ASSERT(buff != nullptr);
+  MS_ASSERT(frequency != nullptr);
+  MS_ASSERT(centroids != nullptr);
   int table_size = 1 << table_log;
   std::vector<uint16_t> states_table(table_size);
   std::vector<uint8_t> bit_count_table(table_size);
