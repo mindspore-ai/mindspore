@@ -344,7 +344,7 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
       MS_LOG(EXCEPTION) << "iteration only supports digits, {'-', '|'}, or just \"all\" but got: " << iteration_;
     }
   } else if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
-    MS_LOG(WARNING) << "Dump not enabled. ";
+    MS_LOG(WARNING) << "Dump is not enabled. ";
   } else {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. Async or E2E should be enabled. ";
   }
@@ -481,14 +481,14 @@ void DumpJsonParser::JudgeDumpEnabled() {
   }
 
   if (!async_dump_enabled_ && !e2e_dump_enabled_) {
-    MS_LOG(WARNING) << "Dump json parse failed. Dump not enabled";
+    MS_LOG(WARNING) << "Dump json parse failed. Dump is not enabled";
   }
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kCPUDevice) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     if (support_devices_.find(device_id) == support_devices_.end()) {
       async_dump_enabled_ = false;
       e2e_dump_enabled_ = false;
-      MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
+      MS_LOG(WARNING) << "Dump is not enabled. device_id:" << device_id << " not support";
     }
   }
   JsonConfigToString();
@@ -529,9 +529,10 @@ std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id) const {
   (void)bin_path.append("rank_");
 
   uint32_t rank_id = 0;
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   auto env_rank_id = common::GetEnv("RANK_ID");
-  if (!(env_table_file.empty() || env_rank_id.empty())) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
     // get actual rank id if it's distribution training case.
     if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
       MS_LOG(INFO) << "Failed to get rank id.";
