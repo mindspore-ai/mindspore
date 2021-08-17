@@ -2638,6 +2638,7 @@ uint32_t GetRankId() {
     world_group = kNcclWorldGroup;
   } else {
     MS_LOG(ERROR) << "Invalid backend: " << backend;
+    return rank_id;
   }
   if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
     MS_LOG(INFO) << "Failed to get rank id.";
