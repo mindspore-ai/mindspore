@@ -16,7 +16,7 @@
 export DEVICE_ID=$1
 ckpt_file=$2
 
-python3 eval_blfur.py \
+python3 eval_blufr.py \
           --device_target Ascend \
           --device_id "${DEVICE_ID}" \
           --resume "${ckpt_file}" > eval_blfur.log 2>&1 &

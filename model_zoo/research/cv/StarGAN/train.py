@@ -66,7 +66,7 @@ if __name__ == '__main__':
         # unzip data
         path = os.getcwd()
         print("cwd: %s" % path)
-        data_url = 'obs://hit-wcy/data/CelebA/'
+        data_url = 'obs://data/CelebA/'
 
         data_name = '/celeba.zip'
         print('listdir1: %s' % os.listdir('./'))
