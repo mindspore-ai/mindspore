@@ -141,6 +141,7 @@ class Scheduler {
   std::unordered_map<kernel::LiteKernel *, size_t> partial_kernel_subgraph_index_map_{};
   std::set<lite::Model::Node *> partial_cnode_inferred_{};
 #endif
+  int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
 };
 }  // namespace mindspore::lite
 

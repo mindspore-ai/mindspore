@@ -56,7 +56,7 @@ bool IsOfflineParallelNode(const void *node_primitive, int node_device_type) {
   if (node_primitive == nullptr) {
     return false;
   }
-  return (GetPrimitiveType(node_primitive) == schema::PrimitiveType_Conv2DFusion) &&
+  return (GetPrimitiveType(node_primitive, SCHEMA_VERSION::SCHEMA_CUR) == schema::PrimitiveType_Conv2DFusion) &&
          (node_device_type != kDefaultDeviceType);
 }
 
@@ -95,7 +95,7 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
         continue;
       }
       auto input_node_index = tensors_.at(input).out_nodes_.front();
-      if (GetPrimitiveType(model_->all_nodes_.at(input_node_index)->primitive_) !=
+      if (GetPrimitiveType(model_->all_nodes_.at(input_node_index)->primitive_, SCHEMA_VERSION::SCHEMA_CUR) !=
           schema::PrimitiveType_SplitWithOverlap) {
         return false;
       }
@@ -107,7 +107,8 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
         continue;
       }
       auto output_node_index = tensors_.at(output).in_nodes_.front();
-      if (GetPrimitiveType(model_->all_nodes_.at(output_node_index)->primitive_) != schema::PrimitiveType_Concat) {
+      if (GetPrimitiveType(model_->all_nodes_.at(output_node_index)->primitive_, SCHEMA_VERSION::SCHEMA_CUR) !=
+          schema::PrimitiveType_Concat) {
         return false;
       }
     }
@@ -346,7 +347,7 @@ void SearchSubGraph::SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes) {
     uint32_t node_index = all_main_sub_nodes[i];
     Model::Node *node = node_list_[node_index];
 
-    if (IsPartialNode(node->primitive_)) {
+    if (IsPartialNode(node->primitive_, model_->GetSchemaVersion())) {
       continue;
     }
     int input_count = std::count_if(node->input_indices_.begin(), node->input_indices_.end(),
@@ -772,7 +773,7 @@ void SearchSubGraph::CalculateCostModel(std::vector<Subgraph> *sub_graphs) {
       cost.mul_cost_ = 1;
 
       Model::Node *node = model_->all_nodes_[node_index];
-      if (GetPrimitiveType(node->primitive_) == schema::PrimitiveType_Conv2DFusion) {
+      if (GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR) == schema::PrimitiveType_Conv2DFusion) {
         cost = CalculateConv2DFusion(node);
       }
 
@@ -851,7 +852,7 @@ void SearchSubGraph::SubGraphSplitByOffLineParallel() {
 
   for (uint32_t node_index : multy_in_nodes) {
     Model::Node *node = node_list_[node_index];
-    if (GetPrimitiveType(node->primitive_) != schema::PrimitiveType_Concat) {
+    if (GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR) != schema::PrimitiveType_Concat) {
       continue;
     }
     std::vector<Subgraph> node_subs;
@@ -1037,6 +1038,9 @@ bool SearchSubGraph::ValidInParallel() {
     return false;
   }
   if (model_->sub_graphs_.size() > 1) {
+    return false;
+  }
+  if (model_->GetSchemaVersion() != SCHEMA_VERSION::SCHEMA_CUR) {
     return false;
   }
   return true;

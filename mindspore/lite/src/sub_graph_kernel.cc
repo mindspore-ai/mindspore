@@ -106,7 +106,8 @@ int SubGraphKernel::ReSize() {
     }
     int ret;
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-    ret = lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders());
+    ret = lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders(),
+                                 schema_version_);
     if (ret == lite::RET_NOT_SUPPORT) {
 #endif
       auto parameter = kernel->op_parameter();
