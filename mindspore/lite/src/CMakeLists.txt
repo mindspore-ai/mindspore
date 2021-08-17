@@ -3,9 +3,6 @@ if(ENABLE_V0)
     add_definitions(-DENABLE_V0)
 endif()
 include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
-set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${LITE_DIR}/nnacl/)
-include_directories(${LITE_DIR}/nnacl/optimize)
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
