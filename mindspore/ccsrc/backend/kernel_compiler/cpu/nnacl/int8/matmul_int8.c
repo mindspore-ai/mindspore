@@ -17,7 +17,7 @@
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/int8/fixed_point.h"
 
-void RowMajor2Row2x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
+void RowMajor2Row2x16MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   int col16 = UP_ROUND(col, C16NUM);
   for (int r = 0; r < row; r++) {
     int rd2 = r / C2NUM;
@@ -32,7 +32,7 @@ void RowMajor2Row2x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int co
   }
 }
 
-void RowMajor2Col16x2MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
+void RowMajor2Col16x2MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   int row16 = UP_ROUND(row, C16NUM);
   int stride = sizeof(int8_t) * C16NUM * C2NUM;
   for (int r = 0; r < row; ++r) {
@@ -60,9 +60,9 @@ void RowMajor2Row8x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, i
   }
 }
 
-void MatrixPack4x16UnitInt8(int8_t *src, int8_t *dst, int row, int col, int stride) {
+void MatrixPack4x16UnitInt8(const int8_t *src, int8_t *dst, int row, int col, int stride) {
   for (int r = 0; r < row; r++) {
-    int8_t *src_r = src + r * stride;
+    const int8_t *src_r = src + r * stride;
     int8_t *dst_r = dst + r * C16NUM;
     memcpy(dst_r, src_r, col * sizeof(int8_t));
   }
@@ -196,9 +196,9 @@ void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int 
 }
 
 void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
-                      size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
-                      int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                      bool peroc) {
+                      size_t stride, const int32_t *input_sum, const int32_t *bias, const int32_t *left_shift,
+                      const int32_t *right_shift, const int32_t *multiplier, int32_t output_zp, int32_t mini,
+                      int32_t maxi, bool peroc) {
   /* support per-layer && weight per-channel */
   /*  row4x16-major * row16x2-major => (int8)row-major*/
   for (int r = 0; r < row; r++) {

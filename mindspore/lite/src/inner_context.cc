@@ -205,7 +205,6 @@ bool InnerContext::IsGpuEnabled() const {
 
 bool InnerContext::IsNpuEnabled() const {
 #ifdef SUPPORT_NPU
-  //  return IsUserSetNpu() && npu_manager_->IsSupportNPU();
   return IsUserSetNpu();
 #else
   return false;

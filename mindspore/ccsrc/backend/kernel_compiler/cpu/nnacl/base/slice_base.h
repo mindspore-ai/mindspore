@@ -25,8 +25,8 @@ extern "C" {
 #endif
 void PadSliceParameterTo8D(SliceParameter *param);
 
-void DoSlice(const void *input, void *output, SliceParameter *param, int thread_id, int data_size);
-void DoSliceNoParallel(const void *input, void *output, SliceParameter *param, int data_size);
+void DoSlice(const void *input, void *output, const SliceParameter *param, int thread_id, int data_size);
+void DoSliceNoParallel(const void *input, void *output, const SliceParameter *param, int data_size);
 #ifdef __cplusplus
 }
 #endif
