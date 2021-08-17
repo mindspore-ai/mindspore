@@ -45,6 +45,7 @@
 #include "backend/session/executor_manager.h"
 #include "debug/trace.h"
 #include "debug/draw.h"
+#include "debug/common.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
 #include "pybind_api/pybind_patch.h"
