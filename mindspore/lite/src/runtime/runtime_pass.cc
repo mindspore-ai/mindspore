@@ -21,29 +21,59 @@
 namespace mindspore::lite {
 void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors, size_t index) {
   kernel::LiteKernel *conv_kernel = kernels->at(index);
-  kernel::LiteKernel *traspose_kernel = conv_kernel->out_kernels().front();
-  kernel::LiteKernel *c4_kernel = traspose_kernel->out_kernels().front();
+  kernel::LiteKernel *transpose_kernel = conv_kernel->out_kernels().front();
+  kernel::LiteKernel *c4_kernel = transpose_kernel->out_kernels().front();
+  kernel::LiteKernel *transpose2_kernel = c4_kernel->out_kernels().front();
+  std::vector<kernel::LiteKernel *> end_kernels = transpose2_kernel->out_kernels();
 
   /* tensor */
-  Tensor *transpose_param_tensor = traspose_kernel->in_tensors().at(1);
-  VectorErase(tensors, transpose_param_tensor);
-  delete transpose_param_tensor;
-  transpose_param_tensor = nullptr;
+  {
+    /* transpose_kernel */
+    Tensor *transpose_param_tensor = transpose_kernel->in_tensors().at(1);
+    VectorSetNull(tensors, transpose_param_tensor);
+    delete transpose_param_tensor;
+    transpose_param_tensor = nullptr;
 
-  Tensor *conv_out_tensor = conv_kernel->out_tensors().front();
-  conv_out_tensor->set_format(NC4HW4);
-  Tensor *c4_input_tensor = c4_kernel->in_tensors().front();
-  c4_kernel->set_in_tensor(conv_out_tensor, 0);
-  VectorErase(tensors, c4_input_tensor);
-  delete c4_input_tensor;
-  c4_input_tensor = nullptr;
+    Tensor *conv_out_tensor = conv_kernel->out_tensors().front();
+    conv_out_tensor->set_format(NC4HW4);
+    Tensor *c4_input_tensor = c4_kernel->in_tensors().front();
+    c4_kernel->set_in_tensor(conv_out_tensor, 0);
+    VectorSetNull(tensors, c4_input_tensor);
+    delete c4_input_tensor;
+    c4_input_tensor = nullptr;
+  }
+  {
+    /* transpose2_kernel */
+    Tensor *transpose_param_tensor = transpose2_kernel->in_tensors().at(1);
+    VectorSetNull(tensors, transpose_param_tensor);
+    delete transpose_param_tensor;
+    transpose_param_tensor = nullptr;
+
+    Tensor *nwhc_tensor = c4_kernel->out_tensors().front();
+    nwhc_tensor->set_format(NHWC);
+    for (auto end : end_kernels) {
+      end->set_in_tensor(nwhc_tensor, 0);
+    }
+    Tensor *trans_out = transpose2_kernel->out_tensors().front();
+    VectorSetNull(tensors, trans_out);
+    delete trans_out;
+    trans_out = nullptr;
+  }
 
   /* kernel */
-  VectorErase(kernels, traspose_kernel);
-  delete traspose_kernel;
-  traspose_kernel = nullptr;
+  VectorErase(kernels, transpose_kernel);
+  delete transpose_kernel;
+  transpose_kernel = nullptr;
   conv_kernel->set_out_kernels({c4_kernel});
   c4_kernel->set_in_kernels({conv_kernel});
+
+  c4_kernel->set_out_kernels(transpose2_kernel->out_kernels());
+  for (auto end : end_kernels) {
+    end->set_in_kernels({c4_kernel});
+  }
+  VectorErase(kernels, transpose2_kernel);
+  delete transpose2_kernel;
+  transpose2_kernel = nullptr;
 
   return;
 }
@@ -61,27 +91,38 @@ bool Nc4hw4PassMatch(std::vector<kernel::LiteKernel *> *kernels, size_t index) {
     return false;
   }
 
-  kernel::LiteKernel *traspose_kernel = start_kernel->out_kernels().front();
-  if (start_kernel->type() != Nc4hw4FormatTransposeOp) {
+  kernel::LiteKernel *traspose_nhwc2nchw_kernel = start_kernel->out_kernels().front();
+  if (traspose_nhwc2nchw_kernel->type() != Nc4hw4FormatTransposeOp) {
     return false;
   }
-  if (traspose_kernel->out_kernels().size() != 1) {
+  if (traspose_nhwc2nchw_kernel->out_kernels().size() != 1) {
     return false;
   }
 
-  kernel::LiteKernel *end_kernel = traspose_kernel->out_kernels().front();
+  kernel::LiteKernel *end_kernel = traspose_nhwc2nchw_kernel->out_kernels().front();
   if (IsContain(Nc4hw4FormatInOpList, end_kernel->type()) == false) {
+    return false;
+  }
+  if (end_kernel->out_kernels().size() != 1) {
+    return false;
+  }
+
+  kernel::LiteKernel *transpose_nchw2nhwc_kernel = end_kernel->out_kernels().front();
+  if (transpose_nchw2nhwc_kernel->type() != Nc4hw4FormatTransposeOp) {
     return false;
   }
 
   /* double check ops topological sorted in kernel-list */
   auto start_iter = find(kernels->begin(), kernels->end(), start_kernel);
   auto start_index = std::distance(kernels->begin(), start_iter);
-  auto transpose_iter = find(kernels->begin(), kernels->end(), traspose_kernel);
-  auto transpose_index = std::distance(kernels->begin(), transpose_iter);
+  auto traspose_nhwc2nchw_iter = find(kernels->begin(), kernels->end(), traspose_nhwc2nchw_kernel);
+  auto traspose_nhwc2nchw_index = std::distance(kernels->begin(), traspose_nhwc2nchw_iter);
   auto end_iter = find(kernels->begin(), kernels->end(), end_kernel);
   auto end_index = std::distance(kernels->begin(), end_iter);
-  if (start_index > transpose_index || transpose_index > end_index) {
+  auto transpose_nchw2nhwc_iter = find(kernels->begin(), kernels->end(), transpose_nchw2nhwc_kernel);
+  auto transpose_nchw2nhwc_index = std::distance(kernels->begin(), transpose_nchw2nhwc_iter);
+  if (start_index > traspose_nhwc2nchw_index || traspose_nhwc2nchw_index > end_index ||
+      end_index > transpose_nchw2nhwc_index) {
     return false;
   }
 
@@ -89,8 +130,6 @@ bool Nc4hw4PassMatch(std::vector<kernel::LiteKernel *> *kernels, size_t index) {
 }
 
 bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels) {
-  return false;
-
   if (context->IsGpuEnabled() || context->IsNpuEnabled()) {
     return false;
   }
@@ -103,19 +142,19 @@ bool Nc4hw4PassValid(const InnerContext *context, std::vector<kernel::LiteKernel
       }
     }
   }
-  return true;
+  return false;
 }
 
-void Nc4hw4Pass(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors) {
+void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors) {
   size_t kernel_size = kernels->size();
   size_t index = 0;
-  for (; index + 2 < kernel_size; index++) {
+  for (; index + 3 < kernel_size; index++) {
     kernel::LiteKernel *kernel = kernels->at(index);
 
     if (kernel->subgraph_type() != kernel::kNotSubGraph) {
       kernel::SubGraphKernel *subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
       std::vector<kernel::LiteKernel *> &particial_nodes = subgraph->nodes();
-      Nc4hw4Pass(&particial_nodes, tensors);
+      Nc4hw4PassAct(&particial_nodes, tensors);
     }
 
     if (Nc4hw4PassMatch(kernels, index)) {
@@ -125,6 +164,13 @@ void Nc4hw4Pass(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *
     kernel_size = kernels->size();
   }
   return;
+}
+
+void Nc4hw4Pass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
+                std::vector<Tensor *> *tensors) {
+  if (Nc4hw4PassValid(context, kernels)) {
+    Nc4hw4PassAct(kernels, tensors);
+  }
 }
 }  // namespace mindspore::lite
 #endif

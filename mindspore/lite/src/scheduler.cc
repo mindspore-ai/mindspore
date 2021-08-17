@@ -150,13 +150,12 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 #endif
   }
 
+  FindAllInoutKernels(*dst_kernels);
+
 #ifdef ENABLE_RUNTIME_PASS
-  if (Nc4hw4PassValid(context_, dst_kernels)) {
-    Nc4hw4Pass(dst_kernels, src_tensors_);
-  }
+  Nc4hw4Pass(context_, dst_kernels, src_tensors_);
 #endif
 
-  FindAllInoutKernels(*dst_kernels);
 #ifdef ENABLE_CONTROLFLOW_TENSORLIST
   if (IsControlFlowParttern(*dst_kernels)) {
     ret = ConstructControlFlowMainGraph(dst_kernels);
