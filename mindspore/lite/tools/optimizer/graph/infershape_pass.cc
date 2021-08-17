@@ -391,7 +391,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       fbb.Clear();
       return false;
     }
-    status = KernelInferShape(input_tensors, output_tensors, prim, {});
+    status = KernelInferShape(input_tensors, output_tensors, prim, {}, lite::SCHEMA_CUR);
     if (status == lite::RET_NOT_SUPPORT) {
       auto parameter_gen =
         lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);

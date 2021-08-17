@@ -25,8 +25,8 @@
 namespace mindspore::lite::micro {
 class Train {
  public:
-  static int TransformGraphForTrain(CoderContext *context,
-                                    const std::vector<std::unique_ptr<OperatorCoder>> &op_coders);
+  static int TransformGraphForTrain(CoderContext *context, const std::vector<std::unique_ptr<OperatorCoder>> &op_coders,
+                                    int schema_version);
 };
 
 }  // namespace mindspore::lite::micro

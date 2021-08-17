@@ -49,14 +49,6 @@ const char *kOptimizerName = "optimizer";
 TrainSession::TrainSession() {
   is_train_session_ = true;
   InitCallBack();
-#ifdef ENABLE_V0
-  if (VersionManager::GetInstance()->CheckV0Schema()) {
-    kernel::PopulateTrainV0Parameters();
-  }
-#endif
-  if (!VersionManager::GetInstance()->CheckV0Schema()) {
-    kernel::PopulateTrainParameters();
-  }
 }
 
 int TrainSession::Init(const Context *context, const TrainCfg *train_cfg) {
@@ -122,7 +114,7 @@ int TrainSession::InitCallBack() {
     if (!context_->IsCpuFloat16Enabled()) {
       return false;
     }
-    auto node_type = GetPrimitiveType(node->primitive_);
+    auto node_type = GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR);
     if (node_type == schema::PrimitiveType_Cast) {
       return false;
     }
@@ -168,6 +160,15 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
   if (sched_cb_ == nullptr) {
     MS_LOG(ERROR) << "Failed to create SchedulerCb node";
     return RET_ERROR;
+  }
+
+#ifdef ENABLE_V0
+  if (reinterpret_cast<LiteModel *>(model_.get())->GetSchemaVersion() == SCHEMA_VERSION::SCHEMA_V0) {
+    kernel::PopulateTrainV0Parameters();
+  }
+#endif
+  if (reinterpret_cast<LiteModel *>(model_.get())->GetSchemaVersion() == SCHEMA_VERSION::SCHEMA_CUR) {
+    kernel::PopulateTrainParameters();
   }
 
   auto ret = lite::LiteSession::CompileGraph(model_.get());

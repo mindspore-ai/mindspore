@@ -137,7 +137,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     fbb.Clear();
     return lite::RET_ERROR;
   }
-  auto ret = KernelInferShape(inputs, outputs, prim, {});
+  auto ret = KernelInferShape(inputs, outputs, prim, {}, lite::SCHEMA_CUR);
   if (ret == lite::RET_NOT_SUPPORT) {
     auto parameter_gen =
       lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);

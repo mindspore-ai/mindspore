@@ -23,9 +23,9 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
-std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
+std::unique_ptr<OperatorCoder> OpCoderBuilder::build(int schema_version) {
   MS_CHECK_PTR_RET_NULL(node_->primitive_);
-  int primitive_type = GetPrimitiveType(node_->primitive_);
+  int primitive_type = GetPrimitiveType(node_->primitive_, schema_version);
   CoderKey coder_key(target_, data_type_, primitive_type);
   CoderCreatorFunc creator_func = OpCoderFactory::GetInstance()->FindOpCoder(coder_key);
   if (creator_func == nullptr) {
@@ -39,7 +39,8 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
     MS_CHECK_PTR_RET_NULL(inputs_.at(kInputIndex));
     MS_CHECK_PTR_RET_NULL(outputs_.at(kOutputIndex));
   }
-  std::unique_ptr<OperatorCoder> op_coder = creator_func(inputs_, outputs_, node_, node_index_++, target_);
+  std::unique_ptr<OperatorCoder> op_coder =
+    creator_func(inputs_, outputs_, node_, node_index_++, target_, schema_version);
   if (op_coder == nullptr) {
     MS_LOG(ERROR) << "create op_coder failed: " << node_->name_ << " primitive type: "
                   << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive_type))
