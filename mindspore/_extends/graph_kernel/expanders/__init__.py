@@ -28,6 +28,7 @@ from .erfc import Erfc
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
 from .fused_mul_add import FusedMulAdd
+from .gather import Gather
 from .gelu import GeLU
 from .gelu_grad import GeLUGrad
 from .gkdropout import GkDropout
@@ -55,8 +56,8 @@ from .softmax_cross_entropy_with_logits import SoftmaxCrossEntropyWithLogits
 from .softmax_grad_ext import SoftmaxGradExt
 from .sqrt_grad import SqrtGrad
 from .square import Square
-from .square_sum_v1 import SquareSumV1
 from .squared_difference import SquaredDifference
+from .square_sum_v1 import SquareSumV1
 from .square_sum_all import SquareSumAll
 from .squeeze import Squeeze
 from .tanh_grad import TanhGrad

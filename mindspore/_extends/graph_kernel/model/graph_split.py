@@ -483,6 +483,8 @@ class GraphSplitByPattern:
         def _find_cheap_regions(dom):
             sub = self.to_subgraph(dom)
             inputs, outputs = sub.deduce_parameters()
+            if not inputs:
+                return list()
             cheap_regions = []
             for output in outputs:
                 #  tensor should have user other than user_area to be fused
@@ -788,6 +790,63 @@ class GraphSplitGpu(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
+        def _gather_output(dom):
+            gather_prims = ("Gather", "GatherNd")
+            if not dom.dom_op().prim in gather_prims:
+                return None
+
+            def _count_target_prim(ops, target_list):
+                count = 0
+                for op in ops:
+                    if op.prim in target_list:
+                        count += 1
+                return count
+
+            def _shape_consistent(start_prims, end_prims, source, target):
+                start_ops = []
+                for op in source.ops:
+                    if op.prim in start_prims:
+                        start_ops.append(op)
+
+                total_ops = source.ops + target.ops
+                for start_op in start_ops:
+                    consisten_shape = start_op.output.shape
+                    visited = []
+                    op_queue = [start_op]
+                    while op_queue:
+                        tmp_queue = []
+                        for op in op_queue:
+                            if op in visited:
+                                continue
+                            if op.prim in end_prims or not op in total_ops:
+                                continue
+                            if (op.prim in start_prims and op != start_op) or consisten_shape != op.output.shape:
+                                return False
+                            for to_op in op.output.to_ops:
+                                tmp_queue.append(to_op)
+                            visited.append(op)
+                        op_queue = tmp_queue
+                return True
+
+            appected_areas = {"TensorScatterAdd", "UnsortedSegmentSum"}
+            for a, _ in dom.out_relations.items():
+                if _shape_consistent(gather_prims, appected_areas, dom, a) and \
+                   _count_target_prim(a.ops + dom.ops, appected_areas) < 2 and dom.check_acyclic(a):
+                    return [a], False
+            return None
+
+        def _broadcast_opaque(dom):
+            fuse_arg = {"TensorScatterAdd": slice(1, None), "UnsortedSegmentSum": slice(0, 2)}
+            arg_idx = fuse_arg.get(dom.dom_op().prim, -1)
+            if arg_idx == -1 or len(dom.ops) != 1:
+                return None
+            fuse_tensor = dom.dom_op().inputs[arg_idx]
+            for a, _ in dom.in_relations.items():
+                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
+                        any([op.output in fuse_tensor for op in a.ops]):
+                    return [a], True
+            return None
+
         def _fuse_loop():
             changed = True
             while changed:
@@ -799,6 +858,8 @@ class GraphSplitGpu(GraphSplitByPattern):
                 changed = self.fuse(_broadcast_depth) or changed
                 changed = self.fuse(_broadcast_width) or changed
                 changed = self.fuse(_strided_slice) or changed
+                changed = self.fuse(_broadcast_opaque) or changed
+                changed = self.fuse(_gather_output) or changed
                 changed = self.fuse(_reduce_output) or changed
                 if enable_stitch_fusion:
                     changed = self.fuse(_reduce_stitch) or changed

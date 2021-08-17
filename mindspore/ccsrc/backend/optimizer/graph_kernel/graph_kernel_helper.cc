@@ -66,14 +66,6 @@ bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
   return false;
 }
 
-AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx) {
-  auto out_spec = node->abstract();
-  if (out_spec->isa<abstract::AbstractTuple>()) {
-    return out_spec->cast<abstract::AbstractTuplePtr>()->elements()[output_idx];
-  }
-  return out_spec;
-}
-
 AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr &fg, const FuncGraphManagerPtr &mng) {
   AnfNodePtrList outs;
   auto out_node = fg->output();
@@ -185,6 +177,14 @@ void ReplaceTensorWithScalar(const FuncGraphPtr &fg, const std::vector<AnfNodePt
   }
 }
 }  // namespace
+
+AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx) {
+  auto out_spec = node->abstract();
+  if (out_spec->isa<abstract::AbstractTuple>()) {
+    return out_spec->cast<abstract::AbstractTuplePtr>()->elements()[output_idx];
+  }
+  return out_spec;
+}
 
 bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   MS_EXCEPTION_IF_NULL(inputs_ptr);
@@ -612,13 +612,7 @@ void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
 #endif
 }
 
-std::string GetFormat(const AnfNodePtr &node) {
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  auto kernel_build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(kernel_build_info);
-  return kernel_build_info->GetOutputFormat(0);
-}
+std::string GetFormat(const AnfNodePtr &node) { return AnfAlgo::GetOutputFormat(node, 0); }
 
 TypePtr GetType(const AnfNodePtr &node) {
   const auto &abstract = node->abstract();

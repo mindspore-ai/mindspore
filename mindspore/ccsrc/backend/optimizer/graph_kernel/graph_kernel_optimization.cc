@@ -44,6 +44,8 @@
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"
 #include "backend/optimizer/graph_kernel/decrease_compute_precision.h"
 #include "backend/optimizer/graph_kernel/decrease_transfer_precision.h"
+#include "backend/optimizer/graph_kernel/tsa_atomic_add_to_first_tensor.h"
+#include "backend/optimizer/graph_kernel/uss_atomic_add.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
@@ -162,6 +164,11 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto level_low_precision = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_low_precision);
   pm->AddPass(std::make_shared<DecreaseTransferPrecision>(), level_low_precision);
   pm->AddPass(std::make_shared<DecreaseComputePrecision>(), level_low_precision, is_ascend);
+
+  // Enable tsa and uss
+  pm->AddPass(std::make_shared<TsaAtomicAddToFirstTensor>(), OptLevel_1);
+  pm->AddPass(std::make_shared<UssAtomicAdd>(), OptLevel_1);
+
   return pm;
 }
 
