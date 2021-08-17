@@ -777,7 +777,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
-  MS_LOG(INFO) << "Run actor begin, actor name: " << actor_info;
+  MS_LOG(DEBUG) << "Run actor begin, actor name: " << actor_info;
   MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
     return;
@@ -1025,6 +1025,20 @@ void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const Kernel
   actor_to_graph_compiler_info_.erase(actor_info);
 }
 
+void DebugStreamSync(const GraphCompilerInfo &graph_compiler_info) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_sync_run = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+  if (enable_sync_run) {
+    if (!graph_compiler_info.device_contexts_.empty()) {
+      MS_EXCEPTION_IF_NULL(graph_compiler_info.device_contexts_[0]);
+      if (!graph_compiler_info.device_contexts_[0]->SyncStream()) {
+        MS_LOG(EXCEPTION) << "Sync stream failed!";
+      }
+    }
+  }
+}
+
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,
                              const std::vector<int64_t> *tensors_mask,
                              const std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs) {
@@ -1063,6 +1077,9 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set, runtime::GraphExecutionStrategy::kStep, input_tensors)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
+
+  // Debug for pynative
+  DebugStreamSync(graph_compiler_info);
 
   // Fetch outputs.
   const auto &graph = graph_compiler_info.graphs_.front();

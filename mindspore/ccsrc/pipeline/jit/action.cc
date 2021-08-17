@@ -108,7 +108,7 @@ void ExecuteActionForMindRT(const ResourcePtr &res) {
   // Construct the graph run function ptr.
   compile::VmEvalFuncPtr run =
     std::make_shared<compile::VmEvalFunc>([mindrt_bc_ptr, actor_info](const VectorRef &args) -> BaseRef {
-      MS_LOG(INFO) << "Execute args size " << args.size();
+      MS_LOG(DEBUG) << "Execute args size " << args.size();
       VectorRef outputs;
       mindrt_bc_ptr->RunGraph(actor_info, args, &outputs);
       MS_LOG(DEBUG) << "out size " << outputs.size();

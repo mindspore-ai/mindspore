@@ -610,7 +610,7 @@ void SetMindRTEnable() {
   }
 #endif
 
-  MS_LOG(INFO) << "Enable mindRT.";
+  MS_LOG(DEBUG) << "Enable mindRT.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
 }
 }  // namespace compile
