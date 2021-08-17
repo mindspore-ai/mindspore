@@ -45,17 +45,23 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
   context_ = ms_context;
-  lite::Context lite_context;
-  auto status = A2L_ConvertContext(ms_context.get(), &lite_context);
+
+  lite::InnerContext *lite_context = new lite::InnerContext();
+  auto status = A2L_ConvertContext(ms_context.get(), lite_context);
   if (status != kSuccess) {
     return status;
   }
 
-  auto session = std::shared_ptr<session::LiteSession>(
-    session::LiteSession::CreateSession(static_cast<const char *>(model_data), data_size, &lite_context));
+  auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
+  }
+
+  auto ret = lite::LiteSession::CreateSessionByBuf(static_cast<const char *>(model_data), data_size, session.get());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init session failed";
+    return kLiteError;
   }
 
   session_.swap(session);
@@ -65,15 +71,21 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
-  lite::Context lite_context;
-  auto status = A2L_ConvertContext(ms_context.get(), &lite_context);
+  lite::InnerContext *lite_context = new lite::InnerContext();
+  auto status = A2L_ConvertContext(ms_context.get(), lite_context);
   if (status != kSuccess) {
     return status;
   }
 
-  auto session = std::shared_ptr<session::LiteSession>(lite::LiteSession::CreateSession(model_path, &lite_context));
+  auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
+    return kLiteNullptr;
+  }
+
+  auto ret = lite::LiteSession::CreateSessionByPath(model_path, session.get());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init session failed";
     return kLiteError;
   }
 
@@ -94,8 +106,8 @@ Status ModelImpl::Build() {
     return kLiteNullptr;
   }
 
-  lite::Context model_context;
-  auto status = A2L_ConvertContext(context_.get(), &model_context);
+  lite::InnerContext *lite_context = new lite::InnerContext();
+  auto status = A2L_ConvertContext(context_.get(), lite_context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Failed to convert Context to Lite Context";
     return status;
@@ -103,7 +115,7 @@ Status ModelImpl::Build() {
 
   auto create_callback = CreateTrainSessionCallbackHolder();
   if (create_callback != nullptr) {
-    auto session = create_callback(graph_->graph_data_, cfg_, &model_context);
+    auto session = create_callback(graph_->graph_data_, cfg_, lite_context);
     if (session != nullptr) {
       session_ = session;
       MS_LOG(DEBUG) << "Build model success.";
@@ -116,7 +128,8 @@ Status ModelImpl::Build() {
     MS_LOG(ERROR) << "Lite model has been freed.";
     return kLiteError;
   }
-  auto session = std::shared_ptr<session::LiteSession>(session::LiteSession::CreateSession(&model_context));
+
+  auto session = std::shared_ptr<session::LiteSession>(CreateLiteSession(lite_context));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
     return kLiteNullptr;
@@ -441,4 +454,21 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   auto ret = session_->Resize(inner_input, truncated_shape);
   return static_cast<StatusCode>(ret);
 }
+
+session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
+  auto session = new (std::nothrow) lite::LiteSession();
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "create session failed";
+    return nullptr;
+  }
+
+  auto ret = session->Init(context);
+  if (ret != mindspore::lite::RET_OK) {
+    MS_LOG(ERROR) << "init session failed";
+    delete session;
+    return nullptr;
+  }
+  return session;
+}
+
 }  // namespace mindspore

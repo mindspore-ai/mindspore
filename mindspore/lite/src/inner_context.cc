@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "src/common/utils.h"
+#include "src/common/log_util.h"
 #ifdef SUPPORT_NPU
 #include "include/HiAiModelManagerType.h"
 #endif
@@ -28,6 +28,8 @@
 namespace mindspore::lite {
 namespace {
 constexpr int kDefaultParallelNum = 2;
+const constexpr int kMaxLiteContextDeviceNums = 2;
+const constexpr int kMaxInnerContextDeviceNums = 3;
 }  // namespace
 
 InnerContext::InnerContext(const Context *context) {
@@ -45,24 +47,49 @@ InnerContext::InnerContext(const Context *context) {
 }
 
 void InnerContext::SetContextDevice(const Context *context) {
+  MS_ASSERT(context->device_list_.size() <= kMaxLiteContextDeviceNums);
+
+  this->device_list_.clear();
+
+  /* user set order for different device */
+  if (context->device_list_.size() < kMaxLiteContextDeviceNums) {
+    this->device_list_.push_back(context->device_list_.front());
+    return;
+  }
+
+  /* keep compatibility :
+   * if user set CPU & NPU/GPU
+   * NPU/GPU higher priority */
   bool isUserSetNPU = context->device_list_.end() !=
-                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
+                      std::find_if(this->device_list_.begin(), this->device_list_.end(),
                                    [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
   bool isUserSetGPU = context->device_list_.end() !=
-                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
+                      std::find_if(this->device_list_.begin(), this->device_list_.end(),
                                    [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
-  this->device_list_.clear();
+  if (isUserSetGPU == false && isUserSetNPU == false) {
+    return;
+  }
+
+  /* add GPU/NPU first */
   for (auto &device_ctx : context->device_list_) {
-    // npu/gpu server would use one core so we don't bind core to avoid competition.
-    // If user does not set npu/gpu device, we still bind core.
-    if (device_ctx.device_type_ == DT_CPU && (isUserSetNPU || (isUserSetGPU && !enable_parallel_))) {
-      auto cpu_ctx = device_ctx;
-      cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
-      this->device_list_.push_back(cpu_ctx);
-    } else {
+    if (device_ctx.device_type_ != DT_CPU) {
       this->device_list_.push_back(device_ctx);
     }
   }
+
+  /* add CPU */
+  for (auto &device_ctx : context->device_list_) {
+    if (device_ctx.device_type_ == DT_CPU) {
+      if (isUserSetNPU || (isUserSetGPU && enable_parallel_ == false)) {
+        auto cpu_ctx = device_ctx;
+        cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
+        this->device_list_.push_back(cpu_ctx);
+      } else {
+        this->device_list_.push_back(device_ctx);
+      }
+    }
+  }
+  return;
 }
 
 int InnerContext::Init() {
@@ -130,7 +157,7 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
   }
-  if (this->device_list_.size() > kMaxDeviceNums) {
+  if (this->device_list_.size() > kMaxInnerContextDeviceNums) {
     MS_LOG(ERROR) << "Not support device list more than 2.";
     return RET_NOT_SUPPORT;
   }

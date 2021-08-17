@@ -49,7 +49,10 @@ class LiteSession : public session::LiteSession {
 
   static session::LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
 
-  virtual int Init(const Context *context);
+  static int CreateSessionByBuf(const char *model_buf, size_t size, session::LiteSession *session);
+  static int CreateSessionByPath(const std::string &model_path, session::LiteSession *session);
+
+  virtual int Init(InnerContext *context);
 
   void BindThread(bool if_bind) override;
 
