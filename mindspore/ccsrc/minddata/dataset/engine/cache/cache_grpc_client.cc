@@ -111,7 +111,7 @@ Status CacheClientGreeter::WorkerEntry() {
     auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kWaitForNewEventDeadlineInSec);
     // Set a timeout for one second. Check for interrupt if we need to do early exit.
     auto r = cq_.AsyncNext(&tag, &success, deadline);
-    if (r == grpc_impl::CompletionQueue::NextStatus::GOT_EVENT) {
+    if (r == grpc::CompletionQueue::NextStatus::GOT_EVENT) {
       auto rq = reinterpret_cast<CacheClientRequestTag *>(tag);
       if (success) {
         auto &rc = rq->rc_;
@@ -137,7 +137,7 @@ Status CacheClientGreeter::WorkerEntry() {
         auto n = req_.erase(seq_no);
         CHECK_FAIL_RETURN_UNEXPECTED(n == 1, "Sequence " + std::to_string(seq_no) + " not found");
       }
-    } else if (r == grpc_impl::CompletionQueue::NextStatus::TIMEOUT) {
+    } else if (r == grpc::CompletionQueue::NextStatus::TIMEOUT) {
       // If we are interrupted, exit. Otherwise wait again.
       RETURN_IF_INTERRUPTED();
     } else {
