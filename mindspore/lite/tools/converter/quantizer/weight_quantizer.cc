@@ -35,6 +35,10 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &con
   this->config_file_ = config.configFile;
   auto quant_size = config.quantWeightSize;
   this->bit_num_ = config.bitNum;
+  if (this->bit_num_ == 0) {
+    type_id_ = kNumberTypeInt16;
+    this->is_mixed_bit_ = true;
+  }
   auto convQuantWeightChannelThreshold = config.quantWeightChannel;
   quant_strategy_ = std::make_unique<QuantStrategy>(quant_size, convQuantWeightChannelThreshold);
   quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
@@ -75,7 +79,7 @@ STATUS WeightQuantizer::SetAbstract(const tensor::TensorPtr &tensor_info, const 
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
 
-  weight_quantized_tensors.insert({tensor_info, param_node});
+  weight_quantized_tensors_.insert({tensor_info, param_node});
   return RET_OK;
 }
 
@@ -105,7 +109,7 @@ STATUS WeightQuantizer::DoConvQuantize(const CNodePtr &cnode) {
     return RET_OK;
   }
   auto status = RET_ERROR;
-  if (is_mixed_bit) {
+  if (is_mixed_bit_) {
     type_id_ = kNumberTypeInt16;
     status = QuantFilter(tensor_info, primitive, QuantType_WeightQuant, WeightQuantType::MIXED_BIT_PER_LAYER, type_id_);
   } else if (type_id_ == kNumberTypeInt8) {
@@ -149,7 +153,10 @@ STATUS WeightQuantizer::DoMulQuantize(const CNodePtr &cnode) {
           if (i == 3) {
             weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
           }
-          if (type_id_ == kNumberTypeInt8) {
+          if (is_mixed_bit_) {
+            status = QuantFilter(tensor_info, primitive, QuantType_WeightQuant, WeightQuantType::MIXED_BIT_PER_LAYER,
+                                 type_id_, i - 1);
+          } else if (type_id_ == kNumberTypeInt8) {
             status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_,
                                          bit_num_, weight_quant_type, type_id_, i - 1);
           } else if (type_id_ == kNumberTypeInt16) {
@@ -227,7 +234,10 @@ STATUS WeightQuantizer::DoGatherQuantize(const CNodePtr &cnode) {
   }
 
   auto status = RET_ERROR;
-  if (type_id_ == kNumberTypeInt8) {
+  if (is_mixed_bit_) {
+    status =
+      QuantFilter(tensor_info, primitive, QuantType_WeightQuant, WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, 0);
+  } else if (type_id_ == kNumberTypeInt8) {
     status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
                                  WeightQuantType::FIXED_BIT_PER_LAYER, type_id_, 0);
   } else if (type_id_ == kNumberTypeInt16) {
@@ -314,8 +324,8 @@ STATUS WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
       ParameterPtr param_node;
       tensor::TensorPtr tensor_info;
       GetLiteParameter(inputNode, &param_node, &tensor_info);
-      auto param = weight_quantized_tensors.find(tensor_info);
-      if (param != weight_quantized_tensors.end()) {
+      auto param = weight_quantized_tensors_.find(tensor_info);
+      if (param != weight_quantized_tensors_.end()) {
         quant_param_holder->set_quant_type(schema::QuantType_QUANT_WEIGHT);
         continue;
       }
@@ -346,7 +356,10 @@ STATUS WeightQuantizer::ProcessLstmWeightByIndex(const CNodePtr &cnode, const Pr
     return RET_OK;
   }
   auto status = RET_ERROR;
-  if (type_id_ == kNumberTypeInt8) {
+  if (is_mixed_bit_) {
+    status = QuantFilter(tensor_info, primitive, QuantType_WeightQuant, WeightQuantType::MIXED_BIT_PER_LAYER, type_id_,
+                         index - 1);
+  } else if (type_id_ == kNumberTypeInt8) {
     status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
                                  WeightQuantType::FIXED_BIT_PER_CHANNEL, type_id_, index - 1);
   } else if (type_id_ == kNumberTypeInt16) {
@@ -730,7 +743,7 @@ STATUS WeightQuantizer::DoMixedQuant(const FuncGraphPtr &func_graph) {
 
 STATUS WeightQuantizer::DoFixedQuant(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  weight_quantized_tensors.clear();
+  weight_quantized_tensors_.clear();
 
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));

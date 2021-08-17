@@ -162,10 +162,18 @@ int Flags::QuantParamInputCheck() {
     std::cerr << "bitNum should be a valid number." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
-  if (this->bitNum <= 0 || this->bitNum > kQuantBitNumInt16) {
-    std::cerr << "bitNum should be greater than zero and lesser than 16 currently." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
+  if (this->quantType == schema::QuantType_WeightQuant) {
+    if (this->bitNum < 0 || this->bitNum > kQuantBitNumInt16) {
+      std::cerr << "bitNum should be greater than zero and less than 16 currently." << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  } else {
+    if (this->bitNum <= 0 || this->bitNum > kQuantBitNumInt16) {
+      std::cerr << "bitNum should be greater or equal to zero and less than 16 currently." << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
   }
+
   return RET_OK;
 }
 

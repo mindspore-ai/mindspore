@@ -1041,8 +1041,7 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
   int ret = RET_OK;
   if (weight_quant_type == MIXED_BIT_PER_LAYER) {
     FixBitWeightQuantizer quantizer(0.02);
-    quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), index - 1, &quant_params,
-                             &quant_data);
+    quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data);
   } else {
     MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
   }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_FSE_ENCODER_H
-#define LITE_FSE_ENCODER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H
 
 #include <vector>
 #include "tools/converter/quantizer/fse_bit_stream.h"
@@ -52,4 +52,4 @@ class FSEEncoder {
   int SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, const FSEQuant &fse_quant, int table_log);
 };
 }  // namespace mindspore::lite::quant
-#endif  // LITE_FSE_ENCODER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H

@@ -58,11 +58,11 @@ class WeightQuantizer : public Quantizer {
   std::unique_ptr<QuantStrategy> quant_strategy_;
   size_t bit_num_{8};
   std::string config_file_;
-  std::map<tensor::TensorPtr, ParameterPtr> weight_quantized_tensors;
+  std::map<tensor::TensorPtr, ParameterPtr> weight_quantized_tensors_;
   PostQuantConfig config_param_;
   std::vector<std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
-  bool is_mixed_bit = false;
+  bool is_mixed_bit_ = false;
 
   STATUS DoMixedQuant(const FuncGraphPtr &);
   STATUS SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,

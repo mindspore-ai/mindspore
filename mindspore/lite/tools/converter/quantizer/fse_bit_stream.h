@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_FSEBITSTREAM_H
-#define LITE_FSEBITSTREAM_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSEBITSTREAM_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSEBITSTREAM_H
 #include <cstdint>
 
 namespace mindspore::lite::quant {
@@ -53,4 +53,4 @@ class BitStream {
   int chunk_count_{0};         // the number of chunks
 };
 }  // namespace mindspore::lite::quant
-#endif  // LITE_FSEBITSTREAM_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_

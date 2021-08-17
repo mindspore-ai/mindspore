@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_FIX_BIT_WEIGHT_QUANTIZER_H
-#define LITE_FIX_BIT_WEIGHT_QUANTIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FIX_BIT_WEIGHT_QUANTIZER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FIX_BIT_WEIGHT_QUANTIZER_H
 #include <cstdint>
 #include <vector>
 #include <cmath>
@@ -47,9 +47,6 @@ class FixBitWeightQuantizer {
                      std::vector<schema::QuantParamT> *quant_params, std::vector<int16_t> *quant_datas);
 
  private:
-  // the error is currently measured per channel.
-  // it could be measured per layer but it would be less good.
-  // the `preferred` dim should point to the output channels dimension.
   float MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim, float scale);
 
   MinMax GetMinMax(const float *arr, int arrc);
@@ -68,4 +65,4 @@ class FixBitWeightQuantizer {
   int max_search_iters;
 };
 }  // namespace mindspore::lite::quant
-#endif  // LITE_FIX_BIT_WEIGHT_QUANTIZER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FIX_BIT_WEIGHT_QUANTIZER_H

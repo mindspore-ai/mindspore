@@ -99,6 +99,8 @@ if(MSLITE_WEIGHT_DECODE)
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/quantizer/fse_decoder.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/quantizer/fse_bit_stream.cc
         )
 endif()
 
