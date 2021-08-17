@@ -129,6 +129,7 @@ constexpr auto kBNTrainingReduceGradOpName = "BNTrainingReduceGrad";
 constexpr auto kSquareSumV1OpName = "SquareSumV1";
 constexpr auto kSquareSumV2OpName = "SquareSumV2";
 constexpr auto kClipByNormNoDivSumOpName = "ClipByNormNoDivSum";
+constexpr auto kPReluOpName = "PReLU";
 constexpr auto kGreaterOpName = "Greater";
 constexpr auto kSqrtOpName = "Sqrt";
 constexpr auto kRsqrtOpName = "Rsqrt";

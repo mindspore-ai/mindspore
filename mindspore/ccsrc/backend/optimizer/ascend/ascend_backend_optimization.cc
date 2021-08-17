@@ -38,6 +38,7 @@
 #include "backend/optimizer/ascend/ir_fusion/square_sum_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/lamb_update_with_lr_rule_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/prelu_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/clip_by_value_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/confusion_softmax_grad_rule.h"
 #include "backend/optimizer/ascend/ir_fusion/lamb_next_mv_rule.h"
@@ -165,6 +166,7 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<PReluFusion>());
 }
 
 void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
