@@ -147,9 +147,11 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   }
   uint32_t graph_id = kernel_graph_->graph_id();
   uint32_t rank_id = 0;
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   auto env_rank_id = common::GetEnv("RANK_ID");
-  if (!(env_table_file.empty() || env_rank_id.empty())) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
     // get actual rank id if it's distribution training case.
     if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
       MS_LOG(INFO) << "Failed to get rank id.";
