@@ -384,6 +384,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   // other optimization
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
+  other_pm->AddPass(std::make_shared<SendFusion>());
+  other_pm->AddPass(std::make_shared<RecvFusion>());
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
   other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
