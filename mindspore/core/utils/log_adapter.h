@@ -70,7 +70,7 @@ enum ExceptionType {
   NameError
 };
 
-struct MS_CORE_API LocationInfo {
+struct LocationInfo {
   LocationInfo(const char *file, int line, const char *func) : file_(file), line_(line), func_(func) {}
   ~LocationInfo() = default;
 
@@ -79,7 +79,7 @@ struct MS_CORE_API LocationInfo {
   const char *func_;
 };
 
-class MS_CORE_API LogStream {
+class LogStream {
  public:
   LogStream() { sstream_ = std::make_shared<std::stringstream>(); }
   ~LogStream() = default;
@@ -155,7 +155,7 @@ MS_EXPORT std::string GetTimeString();
 
 MS_EXPORT extern int g_ms_submodule_log_levels[];
 
-class MS_CORE_API LogWriter {
+class LogWriter {
  public:
   using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
   using TraceProvider = std::function<void(std::ostringstream &oss)>;
@@ -165,8 +165,8 @@ class MS_CORE_API LogWriter {
       : location_(location), log_level_(log_level), submodule_(submodule), exception_type_(excp_type) {}
   ~LogWriter() = default;
 
-  void operator<(const LogStream &stream) const noexcept;
-  [[noreturn]] void operator^(const LogStream &stream) const;
+  MS_CORE_API void operator<(const LogStream &stream) const noexcept;
+  MS_CORE_API void operator^(const LogStream &stream) const __attribute__((noreturn));
 
   static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
   static void set_trace_provider(TraceProvider trace_provider) { trace_provider_ = trace_provider; }
