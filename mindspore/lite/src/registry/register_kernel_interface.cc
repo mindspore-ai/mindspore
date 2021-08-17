@@ -21,21 +21,20 @@
 #include "src/registry/kernel_interface_registry.h"
 
 namespace mindspore {
-namespace lite {
 namespace registry {
-int RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
-  return lite::KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
+  return KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
 #endif
 }
 
-int RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
-                                       KernelInterfaceCreator creator) {
+Status RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
+                                          KernelInterfaceCreator creator) {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
-  return lite::KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
+  return KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return lite::RET_NOT_SUPPORT;
@@ -45,12 +44,11 @@ int RegisterKernelInterface::CustomReg(const std::string &provider, const std::s
 std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(
   const std::string &provider, const schema::Primitive *primitive) {
 #ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
-  return lite::KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive);
+  return KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
   return nullptr;
 #endif
 }
 }  // namespace registry
-}  // namespace lite
 }  // namespace mindspore

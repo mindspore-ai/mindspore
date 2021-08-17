@@ -19,7 +19,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-namespace lite {
 namespace registry {
 namespace {
 std::map<FmkType, ModelParserCreator> model_parser_room;
@@ -42,5 +41,4 @@ converter::ModelParser *ModelParserRegistry::GetModelParser(FmkType fmk) {
   return nullptr;
 }
 }  // namespace registry
-}  // namespace lite
 }  // namespace mindspore
