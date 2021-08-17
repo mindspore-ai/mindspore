@@ -259,6 +259,7 @@ def get_bprop_max_pool3d_grad(self):
         kernel_size=self.kernel_size,
         strides=self.strides,
         pad_mode=self.pad_mode,
+        pad_list=self.pad_list,
         data_format=self.data_format)
 
     def bprop(x, out, dout):

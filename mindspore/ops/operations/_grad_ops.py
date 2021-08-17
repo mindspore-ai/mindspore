@@ -955,17 +955,35 @@ class MaxPool3DGrad(PrimitiveWithInfer):
     """Gradients of the max pool3d operation."""
 
     @prim_attr_register
-    def __init__(self, kernel_size=(1, 1, 1, 1, 1), strides=(1, 1, 1, 1, 1), pad_mode='VALID', data_format="NCDHW"):
+    def __init__(self, kernel_size=(1, 1, 1, 1, 1), strides=(1, 1, 1, 1, 1),
+                 pad_mode='VALID', pad_list=0, data_format="NCDHW"):
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
-        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        if pad_mode.upper() == 'PAD':
+            pad_mode = 'CALCULATED'
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME', 'CALCULATED'], 'pad_mode', self.name)
         self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
                                                   allow_five=True, ret_five=True)
         self.add_prim_attr("kernel_size", self.kernel_size)
         self.strides = _check_3d_int_or_tuple("strides", strides, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr("strides", self.strides)
+        validator.check_value_type('pad_list', pad_list, (int, tuple), self.name)
+        self.pad_list = pad_list
+        if isinstance(self.pad_list, int):
+            self.pad_list = (self.pad_list,) * 6
+        if len(self.pad_list) == 3:
+            self.pad_list = (pad_list[0], pad_list[0], pad_list[1], pad_list[1], pad_list[2], pad_list[3])
+        if len(self.pad_list) != 3 and len(self.pad_list) != 6:
+            raise ValueError(f"For `maxpool3d` attr 'pad_list' should be an positive int number or a tuple of "
+                             f"three or six positive int numbers, but got `{len(self.pad_list)}` numbers.")
+        if self.pad_mode != 'CALCULATED' and self.pad_list != (0, 0, 0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', when pad_list is not 0, pad_mode should be set as 'pad'.")
+        if self.pad_mode == 'CALCULATED':
+            for item in self.pad_list:
+                validator.check_non_negative_int(item, 'pad_list item', self.name)
+        self.add_prim_attr("pad_list", self.pad_list)
 
     def infer_shape(self, x_shape, y_shape, grad_shape):
         validator.check_equal_int(len(x_shape), 5, "x rank", self.name)

@@ -1853,6 +1853,16 @@ class MaxPool3D(PrimitiveWithInfer):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
+
+            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of "pad" will
+              be padded to the input Tensor borders. "pad" must be greater than or equal to 0.
+
+        pad_list (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings
+            of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+            integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+            pad[3], pad[4] and pad[5] correspondingly.
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Only effective in "pad" mode.
+            When "pad_mode" is "pad" and "ceil_mode" is "None", "ceil_mode" will be set as "False". Default: None.
         data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
 
     Inputs:
@@ -1866,7 +1876,8 @@ class MaxPool3D(PrimitiveWithInfer):
         TypeError: If `kernel_size` or `strides` is neither an int not a tuple.
         TypeError: If `pad_mode` or `data_format` is not a string.
         ValueError: If numbers in `kernel_size` or `strides` are not positive.
-        ValueError: If `pad_mode` is not one of 'same', 'valid'.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad_mode` is 'same' or 'valid', 'ceil_mode' is not None.
         ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3.
         ValueError: If `data_format` is not 'NCDHW'.
 
@@ -1883,13 +1894,15 @@ class MaxPool3D(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCDHW"):
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", pad_list=0, ceil_mode=None, data_format="NCDHW"):
         """Initialize MaxPool3D."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
-        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME', 'PAD'], 'pad_mode', self.name)
+        if pad_mode.upper() == "PAD":
+            self.pad_mode = "CALCULATED"
         self.add_prim_attr("pad_mode", self.pad_mode)
         self.data_format = validator.check_string(data_format, ['NCDHW'], 'data_format', self.name)
         self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
@@ -1897,6 +1910,29 @@ class MaxPool3D(PrimitiveWithInfer):
         self.add_prim_attr("kernel_size", self.kernel_size)
         self.strides = _check_3d_int_or_tuple("strides", strides, self.name, allow_five=False, ret_five=True)
         self.add_prim_attr("strides", self.strides)
+        if ceil_mode is None:
+            self.ceil_mode = not self.pad_mode == "CALCULATED"
+        else:
+            self.ceil_mode = validator.check_value_type('ceil_mode', ceil_mode, [bool], self.name)
+            if self.pad_mode != "CALCULATED":
+                raise ValueError("When pad_mode is same or valid, ceil_mode only support 'None'.")
+        self.add_prim_attr("ceil_mode", int(self.ceil_mode))
+
+        validator.check_value_type('pad_list', pad_list, (int, tuple), self.name)
+        self.pad_list = pad_list
+        if isinstance(self.pad_list, int):
+            self.pad_list = (self.pad_list,) * 6
+        if len(self.pad_list) == 3:
+            self.pad_list = (pad_list[0], pad_list[0], pad_list[1], pad_list[1], pad_list[2], pad_list[3])
+        if len(self.pad_list) != 3 and len(self.pad_list) != 6:
+            raise ValueError(f"For `maxpool3d` attr 'pad_list' should be an positive int number or a tuple of "
+                             f"three or six positive int numbers, but got `{len(self.pad_list)}` numbers.")
+        if self.pad_mode != 'CALCULATED' and self.pad_list != (0, 0, 0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', when pad_list is not 0, pad_mode should be set as 'pad'.")
+        if self.pad_mode == 'CALCULATED':
+            for item in self.pad_list:
+                validator.check_non_negative_int(item, 'pad_list item', self.name)
+        self.add_prim_attr("pad_list", self.pad_list)
 
     def infer_shape(self, x_shape):
         validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
@@ -1913,6 +1949,21 @@ class MaxPool3D(PrimitiveWithInfer):
             out_d = math.ceil(input_d / stride_d)
             out_h = math.ceil(input_h / stride_h)
             out_w = math.ceil(input_w / stride_w)
+        else:
+            out_d = ((input_d + self.pad_list[0] + self.pad_list[1] -
+                      (self.kernel_size[0] - 1) - 1) / stride_d) + 1
+            out_h = ((input_h + self.pad_list[2] + self.pad_list[3] -
+                      (self.kernel_size[1] - 1) - 1) / stride_h) + 1
+            out_w = ((input_w + self.pad_list[4] + self.pad_list[5] -
+                      (self.kernel_size[2] - 1) - 1) / stride_w) + 1
+            if self.ceil_mode:
+                out_d = math.ceil(out_d)
+                out_h = math.ceil(out_h)
+                out_w = math.ceil(out_w)
+            else:
+                out_d = math.floor(out_d)
+                out_h = math.floor(out_h)
+                out_w = math.floor(out_w)
         out_shape = [batch, channel, out_d, out_h, out_w]
 
         _check_shape('output', out_shape, self.name)
