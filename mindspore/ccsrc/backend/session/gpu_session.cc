@@ -114,12 +114,12 @@ void GPUSession::Init(uint32_t device_id) {
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   if (collective_inited) {
-    rank_id_ = GetRankId();
     if (collective_handle_ != nullptr) {
       auto init_nccl_comm_funcptr =
         reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle_), "InitNCCLComm"));
       MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
       (*init_nccl_comm_funcptr)();
+      rank_id_ = GetRankId();
     }
   }
 
