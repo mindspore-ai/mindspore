@@ -19,7 +19,9 @@
 #include <string>
 #include <memory>
 
+#ifndef ENABLE_LITE_ACL
 #include "pybind11/pybind11.h"
+#endif
 #include "utils/log_adapter.h"
 #include "utils/config_manager.h"
 #include "sys/time.h"
@@ -40,9 +42,9 @@ Session::Session(const std::map<std::string, std::string> &options) {
 Session::~Session() {}
 }  // namespace ge
 #endif
-
+#ifndef ENABLE_LITE_ACL
 namespace py = pybind11;
-
+#endif
 namespace mindspore {
 namespace transform {
 std::shared_ptr<ge::Session> GraphRunner::NewSession(const SessionOptions &sess_options) {
@@ -189,7 +191,9 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
   Status ret;
   {
     // Release GIL before calling into (potentially long-running) C++ code
+#ifndef ENABLE_LITE_ACL
     py::gil_scoped_release release;
+#endif
     ret = RunGraph(options, ge_inputs, &ge_outputs);
   }
   if (ret != Status::SUCCESS) {

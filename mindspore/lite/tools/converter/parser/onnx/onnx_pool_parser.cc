@@ -19,6 +19,7 @@
 #include <vector>
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
+#include "include/registry/parser_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -90,6 +91,8 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
     prim->set_global(false);
   }
 
+  int fmk_type = converter::FmkType::kFmkTypeOnnx;
+  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim.release();
 }
 
@@ -159,6 +162,8 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
 
   prim->set_global(onnx_node.op_type() == "GlobalMaxPool");
 
+  int fmk_type = converter::FmkType::kFmkTypeOnnx;
+  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim.release();
 }
 

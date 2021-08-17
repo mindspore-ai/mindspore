@@ -381,9 +381,18 @@ build_aar() {
     sha256sum mindspore-lite-maven-${VERSION_STR}.zip > mindspore-lite-maven-${VERSION_STR}.zip.sha256
 }
 
+update_submodule()
+{
+  git submodule update --init graphengine
+  cd "${BASEPATH}/graphengine"
+  git submodule update --init metadef
+}
 
 LITE_JAVA_PATH=${BASEPATH}/mindspore/lite/java
 LITE_BUILD_TYPE="Release"
+if [[ "${MSLITE_ENABLE_ACL}" == "on" ]]; then
+    update_submodule
+fi
 if [[ "${DEBUG_MODE}" == "on" ]]; then
     LITE_BUILD_TYPE="Debug"
 fi

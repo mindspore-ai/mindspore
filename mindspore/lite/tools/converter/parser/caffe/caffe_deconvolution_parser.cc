@@ -17,6 +17,7 @@
 #include "tools/converter/parser/caffe/caffe_deconvolution_parser.h"
 #include <memory>
 #include "ops/fusion/conv2d_transpose_fusion.h"
+#include "include/registry/parser_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -83,6 +84,8 @@ ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pr
     prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
 
+  int fmk_type = converter::FmkType::kFmkTypeCaffe;
+  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim.release();
 }
 

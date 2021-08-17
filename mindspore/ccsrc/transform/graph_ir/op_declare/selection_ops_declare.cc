@@ -77,6 +77,7 @@ INPUT_ATTR_MAP(GatherV2D) = {{3, ATTR_DESC(axis, AnyTraits<int64_t>())}};
 ATTR_MAP(GatherV2D) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherV2D, prim::kPrimGather->name(), ADPT_DESC(GatherV2D))
+REG_ADPT_DESC(Gather, kNameGather, ADPT_DESC(GatherV2D))
 
 // ScatterNdD
 INPUT_MAP(ScatterNdD) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}};
@@ -150,6 +151,17 @@ ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t
                           {"shrink_axis_mask", ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
 OUTPUT_MAP(StridedSlice) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StridedSlice, kNameStridedSlice, ADPT_DESC(StridedSlice))
+
+// StridedSliceV2
+INPUT_MAP(StridedSliceV2) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(begin)}, {3, INPUT_DESC(end)}, {4, INPUT_DESC(axes)}, {5, INPUT_DESC(strides)}};
+ATTR_MAP(StridedSliceV2) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
+                            {"end_mask", ATTR_DESC(end_mask, AnyTraits<int64_t>())},
+                            {"ellipsis_mask", ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
+                            {"new_axis_mask", ATTR_DESC(new_axis_mask, AnyTraits<int64_t>())},
+                            {"shrink_axis_mask", ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
+OUTPUT_MAP(StridedSliceV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(StridedSliceV2, kNameStridedSliceV2, ADPT_DESC(StridedSliceV2))
 
 // UnsortedSegmentSum
 INPUT_MAP(UnsortedSegmentSumD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};

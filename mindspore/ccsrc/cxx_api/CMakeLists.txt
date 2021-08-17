@@ -1,8 +1,15 @@
 # build mindspore_shared_lib
-set(LOAD_MINDIR_SRC
-        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc
-        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/anf_model_parser.cc
-        )
+if(NOT(BUILD_LITE))
+    set(LOAD_MINDIR_SRC
+            ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc
+            ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/anf_model_parser.cc
+            )
+else()
+    set(MS_UTILS_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc
+            )
+endif()
+
 file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 
 if(ENABLE_D OR ENABLE_ACL)
@@ -12,11 +19,15 @@ if(ENABLE_D OR ENABLE_ACL)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-            "akg_kernel_register.cc"
             "model/acl/*.cc"
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
             )
+
+    if(NOT(BUILD_LITE))
+        list(APPEND API_ACL_SRC "akg_kernel_register.cc")
+    endif()
+
     if(NOT ENABLE_D)
         list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
     endif()
@@ -44,10 +55,13 @@ set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${API_MS_INFER_SRC}
               ${API_ACL_SRC}
               ${API_OPS_SRC}
-              ${LOAD_MINDIR_SRC})
+              ${LOAD_MINDIR_SRC}
+              ${MS_UTILS_SRC})
 
 add_library(mindspore_shared_lib SHARED ${MSLIB_SRC})
-set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
+if(NOT(BUILD_LITE))
+    set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
@@ -58,8 +72,12 @@ else()
             -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore_gvar
             mindspore::protobuf)
     else()
-        target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-          mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
+        if(NOT(BUILD_LITE))
+            target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
+              mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
+        else()
+            target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
+        endif()
     endif()
 endif()
 

@@ -22,6 +22,8 @@
 #include <vector>
 #include <string>
 #include "ops/strided_slice.h"
+#include "ops/op_utils.h"
+#include "include/registry/parser_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -87,6 +89,8 @@ ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, cons
   prim->AddAttr("axes", MakeValue(axes));
   prim->AddAttr("ends", MakeValue(ends));
   prim->AddAttr("steps", MakeValue(steps));
+  int fmk_type = converter::FmkType::kFmkTypeOnnx;
+  prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
 
   return prim.release();
 }

@@ -120,4 +120,47 @@ ATTR_MAP(MaxPoolGradGradWithArgmax) = {
   {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPoolGradGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPoolGradGradWithArgmax, kNameMaxPoolGradGradWithArgmax, ADPT_DESC(MaxPoolGradGradWithArgmax))
+
+// Pooling
+INPUT_MAP(Pooling) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Pooling) = {{"mode", ATTR_DESC(mode, AnyTraits<int64_t>())},
+                     {"global", ATTR_DESC(global_pooling, AnyTraits<bool>())},
+                     {"kernel_size", ATTR_DESC(window, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                     {"strides", ATTR_DESC(stride, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                     {"pad", ATTR_DESC(pad, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                     {"dilation", ATTR_DESC(dilation, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                     {"round_mode", ATTR_DESC(ceil_mode, AnyTraits<int64_t>())},
+                     {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(Pooling) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Pooling, kNamePooling, ADPT_DESC(Pooling))
+
+// MaxPoolV3
+INPUT_MAP(MaxPoolV3) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MaxPoolV3) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                       {"pad", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                       {"global", ATTR_DESC(global_pooling, AnyTraits<bool>())},
+                       {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())}};
+OUTPUT_MAP(MaxPoolV3) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaxPoolV3, kNameMaxPoolV3, ADPT_DESC(MaxPoolV3))
+
+// AvgPoolV2
+INPUT_MAP(AvgPoolV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(AvgPoolV2) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                       {"pad", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                       {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                       {"global", ATTR_DESC(global_pooling, AnyTraits<bool>())},
+                       {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())}};
+OUTPUT_MAP(AvgPoolV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AvgPoolV2, kNameAvgPoolV2, ADPT_DESC(AvgPoolV2))
+
+// GlobalAveragePool
+INPUT_MAP(GlobalAveragePool) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(GlobalAveragePool) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(GlobalAveragePool) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GlobalAveragePool, kNameGlobalAvgPool, ADPT_DESC(GlobalAveragePool))
 }  // namespace mindspore::transform

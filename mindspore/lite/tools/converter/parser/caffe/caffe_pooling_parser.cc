@@ -18,6 +18,8 @@
 #include <memory>
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
+#include "ops/op_utils.h"
+#include "include/registry/parser_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -124,7 +126,6 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
 
   // parse round mode
   auto roundMode = ParseRoundMode(poolingParam);
-
   if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
     auto prim = std::make_unique<ops::MaxPoolFusion>();
     prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
@@ -134,6 +135,8 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
     prim->set_pad(pad);
     prim->set_round_mode(roundMode);
     prim->set_global(poolingParam.global_pooling());
+    int fmk_type = converter::FmkType::kFmkTypeCaffe;
+    prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
     return prim.release();
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
     auto prim = std::make_unique<ops::AvgPoolFusion>();
@@ -144,6 +147,8 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
     prim->set_pad(pad);
     prim->set_round_mode(roundMode);
     prim->set_global(poolingParam.global_pooling());
+    int fmk_type = converter::kFmkTypeCaffe;
+    prim->AddAttr(ops::kFmkType, MakeValue(fmk_type));
     return prim.release();
   } else {
     MS_LOG(ERROR) << "poolingParam.pool() is not MAX or AVE";

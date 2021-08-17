@@ -18,8 +18,10 @@
 
 #include <sstream>
 
+#ifndef ENABLE_LITE_ACL
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/pipeline.h"
+#endif
 #ifndef NO_DLIB
 #include "tdt/tsd_client.h"
 #endif
@@ -37,11 +39,13 @@ DfGraphManager::DfGraphManager() {
 }
 
 DfGraphManager::~DfGraphManager() {
-  // in python fisrt destroy after atexit but in c++ destoy before atexit
+  // in python first destroy after atexit but in c++ destoy before atexit
   DeleteGraphRunner();
   DeleteGeSession();
   ClearGraph();
+#ifndef ENABLE_LITE_ACL
   parse::python_adapter::set_python_env_flag(false);
+#endif
 }
 
 DfGraphManager &DfGraphManager::GetInstance() {

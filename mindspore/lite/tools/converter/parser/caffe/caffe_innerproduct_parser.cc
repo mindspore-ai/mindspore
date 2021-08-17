@@ -17,6 +17,7 @@
 #include "tools/converter/parser/caffe/caffe_innerproduct_parser.h"
 #include <memory>
 #include "ops/fusion/full_connection.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,8 @@ ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &pro
     MS_LOG(ERROR) << "InnerProduct Parse num_output for " << proto.name().c_str() << " failed.";
     return nullptr;
   }
+  int64_t num_output = static_cast<int64_t>(innerProductParam.num_output());
+  prim->AddAttr(ops::kNumOutput, MakeValue(num_output));
 
   if (innerProductParam.axis() == 1) {
     prim->set_axis(1);

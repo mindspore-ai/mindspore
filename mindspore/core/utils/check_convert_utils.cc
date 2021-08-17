@@ -138,7 +138,11 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"BinaryCrossEntropyGrad", ReductionMap},
   {"NLLLoss", ReductionMap},
   {"DepthToSpace", DataFormatMap},
-};
+  {"Pooling", DataFormatMap},
+  {"Deconvolution", DataFormatMap},
+  {"AvgPoolV2", DataFormatMap},
+  {"MaxPoolV3", DataFormatMap},
+  {"FusedBatchNorm", DataFormatMap}};
 
 bool CheckAndConvertUtils::GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value) {
   MS_EXCEPTION_IF_NULL(value);

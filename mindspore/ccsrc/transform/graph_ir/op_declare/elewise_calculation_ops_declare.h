@@ -316,5 +316,8 @@ DECLARE_OP_USE_OUTPUT(LambApplyOptimizerAssign)
 
 DECLARE_OP_ADAPTER(LambApplyWeightAssign)
 DECLARE_OP_USE_OUTPUT(LambApplyWeightAssign)
+
+DECLARE_OP_ADAPTER(Eltwise)
+DECLARE_OP_USE_OUTPUT(Eltwise)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_

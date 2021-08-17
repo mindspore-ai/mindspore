@@ -1474,6 +1474,65 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr node) {
   op_cache_[value_ptr.get()] = op;
 }
 
+std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) {
+  if (value == nullptr) {
+    MS_LOG(WARNING) << "Value ptr is nullptr.";
+    return {};
+  }
+  std::vector<int64_t> cur_value = {};
+  if (utils::isa<ValueSequeuePtr>(value)) {
+    auto val_seq_ptr = value->cast<ValueSequeuePtr>();
+    MS_EXCEPTION_IF_NULL(val_seq_ptr);
+    if (!val_seq_ptr->value().empty()) {
+      auto first_val = val_seq_ptr->value().front();
+      MS_EXCEPTION_IF_NULL(first_val);
+      MS_EXCEPTION_IF_NULL(first_val->type());
+      if (first_val->type()->number_type() == kNumberTypeInt64) {
+        cur_value = GetValue<std::vector<int64_t>>(value);
+      } else {
+        auto origin_value = GetValue<std::vector<int>>(value);
+        std::transform(origin_value.begin(), origin_value.end(), std::back_inserter(cur_value),
+                       [](int index) { return static_cast<int64_t>(index); });
+      }
+    }
+  } else {
+    MS_EXCEPTION_IF_NULL(value->type());
+    if (value->type()->number_type() == kNumberTypeInt64) {
+      cur_value.push_back(GetValue<int64_t>(value));
+    } else {
+      cur_value.push_back(static_cast<int64_t>(GetValue<int>(value)));
+    }
+  }
+  return cur_value;
+}
+
+void DfGraphConvertor::ConvertReshape(const CNodePtr node) {
+  MS_LOG(INFO) << "Convert the second input of reshape to op attr.";
+  const auto kInputNum = 3;
+  if (node->size() < kInputNum) {
+    MS_LOG(WARNING) << "Reshape must have two inputs.";
+    return;
+  }
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  // get shape form attr
+  auto value_node = node->input(0)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(value_node->value());
+  auto primitive = value_node->value()->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto value = primitive->GetAttr("shape");
+  std::vector<int64_t> list;
+  list = CastToInt(value);
+
+  op->SetAttr("shape", list);
+  op_cache_[node.get()] = op;
+}
+
 AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, uint64_t *index) {
   const int TUPLE_GET_ITEM_INDEX = 2;
   if (node->inputs().size() < 3) {  // "tuple_getitem" primitive must have 3 inputs
@@ -1657,6 +1716,12 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
   // Convert TopK second input from int64 to int32.
   if (name == prim::kPrimTopK->name()) {
     ConvertTopK(node);
+    return true;
+  }
+
+  // Convert Reshape add const input to attr(shape)
+  if (name == prim::kPrimReshape->name()) {
+    ConvertReshape(node);
     return true;
   }
 

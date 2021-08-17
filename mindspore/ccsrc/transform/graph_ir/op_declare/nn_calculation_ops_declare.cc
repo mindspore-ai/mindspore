@@ -49,6 +49,19 @@ ATTR_MAP(Conv2DBackpropInputD) = {
 };
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropInputD, prim::kPrimConv2DBackpropInput->name(), ADPT_DESC(Conv2DBackpropInputD))
+
+// Deconvolution for caffe inference
+INPUT_MAP(Deconvolution) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(bias)}, {4, INPUT_DESC(offset_w)}};
+ATTR_MAP(Deconvolution) = {
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<string>())},
+  {"offset", ATTR_DESC(offset_x, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Deconvolution) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Deconvolution, kNameDeconvolution, ADPT_DESC(Deconvolution))
 REG_ADPT_DESC(Conv2DTranspose, kConv2DTransposeOpName, ADPT_DESC(Conv2DBackpropInputD))
 
 // Conv2DBackpropFilterD

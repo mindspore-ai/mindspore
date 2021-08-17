@@ -43,6 +43,12 @@ INPUT_MAP(Data) = EMPTY_INPUT_MAP;
 ATTR_MAP(Data) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(Data, kNameParam, ADPT_DESC(Data))
 
+// Shape
+INPUT_MAP(Shape) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Shape) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Shape) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Shape, kNameShape, ADPT_DESC(Shape))
+
 // Reshape
 INPUT_MAP(Reshape) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(shape)}};
 ATTR_MAP(Reshape) = EMPTY_ATTR_MAP;
@@ -95,4 +101,10 @@ INPUT_MAP(EditDistance) = {{1, INPUT_DESC(hypothesis_indices)}, {2, INPUT_DESC(h
 ATTR_MAP(EditDistance) = {{"normalize", ATTR_DESC(normalize, AnyTraits<bool>())}};
 OUTPUT_MAP(EditDistance) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(EditDistance, kNameEditDistance, ADPT_DESC(EditDistance))
+
+// Unsqueeze
+INPUT_MAP(Unsqueeze) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Unsqueeze) = {{"axis", ATTR_DESC(axes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(Unsqueeze) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Unsqueeze, kNameUnsqueeze, ADPT_DESC(Unsqueeze))
 }  // namespace mindspore::transform

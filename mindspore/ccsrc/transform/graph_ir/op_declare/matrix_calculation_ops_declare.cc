@@ -133,4 +133,15 @@ INPUT_MAP(L2Loss) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(L2Loss) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(L2Loss) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(L2Loss, kNameL2Loss, ADPT_DESC(L2Loss))
+
+// FullyConnection
+INPUT_MAP(FullyConnection) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(w)}, {3, INPUT_DESC(b)}, {4, INPUT_DESC(offset_w)}};
+
+ATTR_MAP(FullyConnection) = {{"num_output", ATTR_DESC(num_output, AnyTraits<int64_t>())},
+                             {"transpose", ATTR_DESC(transpose, AnyTraits<bool>())},
+                             {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())},
+                             {"offset_x", ATTR_DESC(offset_x, AnyTraits<int64_t>())}};
+
+OUTPUT_MAP(FullyConnection) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FullyConnection, kNameFullConnection, ADPT_DESC(FullyConnection))
 }  // namespace mindspore::transform

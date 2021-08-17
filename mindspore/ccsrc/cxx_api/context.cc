@@ -199,7 +199,7 @@ void Ascend310DeviceInfo::SetDumpConfigPath(const std::vector<char> &cfg_path) {
 }
 std::vector<char> Ascend310DeviceInfo::GetDumpConfigPathChar() const {
   MS_EXCEPTION_IF_NULL(data_);
-  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DeviceID);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310DumpCfgPath);
   return StringToChar(ref);
 }
 

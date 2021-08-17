@@ -154,4 +154,10 @@ INPUT_MAP(FastGeluGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}};
 ATTR_MAP(FastGeluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FastGeluGrad) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(FastGeluGrad, prim::kPrimFastGeLUGrad->name(), ADPT_DESC(FastGeluGrad))
+
+// LeakyRelu
+INPUT_MAP(LeakyRelu) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(LeakyRelu) = {{"alpha", ATTR_DESC(negative_slope, AnyTraits<float>())}};
+OUTPUT_MAP(LeakyRelu) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LeakyRelu, prim::kPrimLeakyRelu->name(), ADPT_DESC(LeakyRelu))
 }  // namespace mindspore::transform
