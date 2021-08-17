@@ -201,7 +201,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/converter_flags.cc
             ${LITE_DIR}/tools/converter/converter.cc
             ${LITE_DIR}/tools/converter/export_model.cc
-            ${LITE_DIR}/tools/converter/dump_graph.cc
             ${LITE_DIR}/tools/converter/optimizer_manager.cc
             ${LITE_DIR}/tools/converter/parser/parser_utils.cc
             ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc

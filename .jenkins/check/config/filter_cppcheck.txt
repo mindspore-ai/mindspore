@@ -35,6 +35,7 @@
 # Lite
 "mindspore/mindspore/core/mindrt/src/thread/"                                                         "useStlAlgorithm"
 "mindspore/mindspore/lite/test/"                                                                      "syntaxError"
+"mindspore/mindspore/lite/test/ut/tools/converter/registry/pass_registry_test.cc"                     "unknownMacro"
 "mindspore/mindspore/lite/src/ops/unsqueeze.cc"                                                       "useStlAlgorithm"
 "mindspore/mindspore/lite/tools/common/flag_parser.cc"                                                "useStlAlgorithm"
 "mindspore/mindspore/lite/tools/common/tensor_util.cc"                                                "useStlAlgorithm"

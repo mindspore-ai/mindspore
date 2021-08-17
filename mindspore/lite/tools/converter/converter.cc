@@ -26,7 +26,6 @@
 #include "src/train/train_populate_parameter.h"
 #include "include/registry/model_parser_registry.h"
 #include "src/common/dynamic_library_loader.h"
-#include "tools/converter/export_model.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/mindspore_importer.h"
 namespace mindspore {
@@ -149,8 +148,6 @@ int RunConverter(int argc, const char **argv) {
     }
     return status;
   }
-  // Init dump graph func
-  ExportModelInit(flags.get());
   // Load graph
   MS_LOG(DEBUG) << "start reading model file";
   Converter cvt;

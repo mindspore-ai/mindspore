@@ -51,7 +51,7 @@ namespace opt {
 // fuse add and add to addn.
 class Test1Fusion : public Pass {
  public:
-  Test1Fusion() : Pass("test1_fusion") {}
+  Test1Fusion() : Pass("Test1Fusion") {}
   bool CanFusion(const CNodePtr &cnode) {
     if (cnode == nullptr) {
       return false;
@@ -94,7 +94,7 @@ class Test1Fusion : public Pass {
     if (func_graph == nullptr) {
       return false;
     }
-    auto manager = func_graph->manager();
+    auto manager = Manage(func_graph);
     if (manager == nullptr) {
       return false;
     }
@@ -132,9 +132,9 @@ class Test1Fusion : public Pass {
 // convert addn to custom op
 class Test2Fusion : public Pass {
  public:
-  Test2Fusion() : Pass("test2_fusion") {}
+  Test2Fusion() : Pass("Test2Fusion") {}
   AnfNodePtr CreateCustomOp(const FuncGraphPtr func_graph, const CNodePtr &cnode) {
-    if (cnode == nullptr) {
+    if (func_graph == nullptr || cnode == nullptr) {
       return nullptr;
     }
     auto primc = std::make_shared<ops::Custom>();
@@ -143,7 +143,7 @@ class Test2Fusion : public Pass {
     }
     primc->set_type("Custom_AddN");
     std::map<std::string, std::vector<uint8_t>> custom_attrs;
-    std::string input_num = std::to_string(3);
+    std::string input_num = std::to_string(cnode->size() - 1);
     std::vector<uint8_t> input_num_attr(input_num.begin(), input_num.end());
     custom_attrs["input_num"] = input_num_attr;
     std::string op_kind = "custom op";
@@ -162,7 +162,7 @@ class Test2Fusion : public Pass {
     if (func_graph == nullptr) {
       return false;
     }
-    auto manager = func_graph->manager();
+    auto manager = Manage(func_graph);
     if (manager == nullptr) {
       return false;
     }
@@ -185,45 +185,22 @@ class Test2Fusion : public Pass {
   }
 };
 
-class TestFusion : public Pass {
- public:
-  TestFusion() : Pass("test_fusion") {}
-  bool Run(const FuncGraphPtr &func_graph) override {
-    if (func_graph == nullptr) {
-      return false;
-    }
-    auto manager = Manage(func_graph, true);
-    if (manager == nullptr) {
-      return false;
-    }
-    auto test1_fusion = std::make_shared<Test1Fusion>();
-    if (!test1_fusion->Run(func_graph)) {
-      return false;
-    }
-    auto test2_fusion = std::make_shared<Test2Fusion>();
-    if (!test2_fusion->Run(func_graph)) {
-      return false;
-    }
-    return true;
-  }
-};
-
-REG_PASS(TestFusion, TestFusion)
-REG_SCHEDULED_PASS(POSITION_BEGIN, {"TestFusion"})
+REG_PASS(Test1Fusion, Test1Fusion)
+REG_PASS(Test2Fusion, Test2Fusion)
+const std::vector<std::string> schedule = {"Test1Fusion", "Test2Fusion"};
+REG_SCHEDULED_PASS(POSITION_BEGIN, schedule)
 }  // namespace opt
 
 TEST_F(PassRegistryTest, TestRegistry) {
   auto schedule_task = registry::PassRegistry::GetOuterScheduleTask(POSITION_BEGIN);
-  ASSERT_EQ(schedule_task.size(), 1);
+  ASSERT_EQ(schedule_task.size(), 2);
   auto passes = registry::PassRegistry::GetPassFromStoreRoom(schedule_task);
-  ASSERT_EQ(passes.size(), 1);
-  auto begin_pass = passes.front();
-  ASSERT_NE(begin_pass, nullptr);
-  auto begin_pass_test = std::dynamic_pointer_cast<opt::TestFusion>(begin_pass);
-  ASSERT_NE(begin_pass_test, nullptr);
+  ASSERT_EQ(passes.size(), 2);
   ASSERT_NE(func_graph_, nullptr);
-  auto res = begin_pass_test->Run(func_graph_);
-  ASSERT_EQ(res, true);
+  for (auto &pass : passes) {
+    auto ret = pass->Run(func_graph_);
+    ASSERT_EQ(ret, true);
+  }
   auto cnode_list = func_graph_->GetOrderedCnodes();
   ASSERT_EQ(cnode_list.size(), 2);
   bool is_custom = opt::CheckPrimitiveType(cnode_list.front(), prim::kPrimCustom);
