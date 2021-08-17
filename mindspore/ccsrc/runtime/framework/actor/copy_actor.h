@@ -37,7 +37,7 @@ using mindspore::device::DeviceContext;
 class CopyActor : public MemoryAwareActor {
  public:
   CopyActor(const std::string &name, const AID &memory_manager_aid)
-      : MemoryAwareActor(name, nullptr, memory_manager_aid), output_(nullptr) {}
+      : MemoryAwareActor(name, KernelTransformType::kCopyActor, nullptr, memory_manager_aid), output_(nullptr) {}
   ~CopyActor() override = default;
 
   void Init() override;

@@ -28,7 +28,7 @@ namespace mindspore {
 namespace runtime {
 void DataSourceActor::Init() {
   // Check device contexts number.
-  if (device_contexts_.size() < kDeviceContextsNumOne) {
+  if (device_contexts_.size() < device::kDeviceContextsNumOne) {
     MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
 
@@ -104,7 +104,7 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
 void DeviceQueueDataSourceActor::Init() {
   // Check device contexts number.
-  if (device_contexts_.size() != kDeviceContextsNumOne) {
+  if (device_contexts_.size() != device::kDeviceContextsNumOne) {
     MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
 
@@ -305,7 +305,7 @@ void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context
   }
 }
 
-size_t HostQueueDataSourceActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
+size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) const {
   const auto &iter = data_node_position_map_.find(data_node);
   if (iter == data_node_position_map_.end()) {
     MS_LOG(EXCEPTION) << "Data node: " << data_node->fullname_with_scope() << " is not exist.";

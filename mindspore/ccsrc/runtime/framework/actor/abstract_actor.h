@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include "mindrt/include/actor/op_actor.h"
+#include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 
@@ -29,15 +30,13 @@ namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 
-const size_t kDeviceContextsNumOne = 1;
-const size_t kDeviceContextsNumTwo = 2;
-
 // The abstract common attributes of actors. The actor inheritance relationship:  OpActor --> AbstractActor -->
 // MemoryAwareActor --> DebugAwareActor --> KernelActor/DataSourceActor/CopyActor/LoopCountActor/OutputActor.
 class AbstractActor : public OpActor<DeviceTensor> {
  public:
-  explicit AbstractActor(const std::string &name, const AID *recorder_aid)
+  explicit AbstractActor(const std::string &name, KernelTransformType type, const AID *recorder_aid)
       : OpActor(name),
+        type_(type),
         recorder_aid_(recorder_aid),
         input_datas_num_(0),
         input_controls_num_(0),
@@ -46,6 +45,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
+  // Get the position of node in the actor.
+  virtual size_t FetchNodePosition(const AnfNodePtr &node) const { return 0; }
+
  protected:
   friend class GraphScheduler;
 
@@ -53,6 +55,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
   bool CheckRunningCondition(OpContext<DeviceTensor> *const context) const;
   // Erase input data and input controls when finish actor running.
   void EraseInput(OpContext<DeviceTensor> *const context);
+
+  KernelTransformType type_;
 
   // The device interface.
   std::vector<const DeviceContext *> device_contexts_;

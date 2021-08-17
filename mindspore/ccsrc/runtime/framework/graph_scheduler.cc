@@ -74,6 +74,13 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_c
 AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(backend_node);
   MS_EXCEPTION_IF_NULL(graph);
+
+  // Internal parameter ---> front node.
+  auto front_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);
+  if (front_node_with_index.first != nullptr) {
+    return front_node_with_index.first;
+  }
+
   auto front_node = graph->GetFrontAnfByBackendAnf(backend_node);
   // PyNative forward graph does not has front node, using backend node instead.
   if (front_node == nullptr) {
@@ -306,7 +313,7 @@ void PrepareDataForInputData(const HostQueueDataSourceActor *host_data_source_ac
   MS_EXCEPTION_IF_NULL(tensor);
   // Fill the host tensors for non weighted parameters.
   if (host_data_source_actor != nullptr) {
-    (*host_tensors)[host_data_source_actor->FetchDataNodePosition(node)] = tensor;
+    (*host_tensors)[host_data_source_actor->FetchNodePosition(node)] = tensor;
   }
 
   auto device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
@@ -516,14 +523,27 @@ void GraphScheduler::Clear() {
   actors_.clear();
   actor_name_to_actor_.clear();
   actor_to_host_queue_.clear();
-  device_tensor_to_actor_.clear();
 }
+
+using DataArrowLinkFunc = void (GraphScheduler::*)(AbstractActor *const, KernelActor *const, const KernelWithIndex &,
+                                                   const KernelWithIndex &, const KernelGraphPtr &);
+static std::map<KernelTransformType, DataArrowLinkFunc> kKernelTypeToLinkFunc;
 
 void GraphScheduler::Initialize() {
   if (init_) {
     return;
   }
   init_ = true;
+
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kDeviceDataSourceActor,
+                                      &GraphScheduler::LinkDataArrowForDeviceDSActor);
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kHostDataSourceActor,
+                                      &GraphScheduler::LinkDataArrowForHostDSActor);
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kKernelActor, &GraphScheduler::LinkDataArrowForKernelActor);
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kDeviceTensorStore,
+                                      &GraphScheduler::LinkDataArrowForDeviceTensorStore);
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kInternalParameter,
+                                      &GraphScheduler::LinkDataArrowForInternalParameter);
 
   // Create the thread pool of actor runtime and Set the OMP_NUM_THREADS env.
   size_t actor_thread_num = 0;
@@ -886,7 +906,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
         const auto &host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
         MS_EXCEPTION_IF_NULL(host_ds_actor);
         // Get the position of output kernel in the data source actor.
-        actor_output_index = host_ds_actor->FetchDataNodePosition(output_kernel);
+        actor_output_index = host_ds_actor->FetchNodePosition(output_kernel);
       } else if (IsPersistentDeviceTensor(output_kernel)) {
         MS_LOG(INFO) << "The graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
                      << " is device tensor store.";
@@ -902,7 +922,8 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
                    << " with index:" << actor_output_index
                    << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
                    << " with index: " << origin_output_with_index.second;
-      (void)graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(actor, actor_output_index));
+      (void)graph_output_to_actor_.emplace(origin_output_with_index,
+                                           GraphOutputPair(dynamic_cast<AbstractActor *>(actor), actor_output_index));
     }
   }
 }
@@ -1353,8 +1374,6 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
   MS_EXCEPTION_IF_NULL(graph);
 
   auto from_kernel = from_kernel_with_output_idx.first;
-  auto front_node = GetFrontNodeByBackendNode(from_kernel);
-
   if (from_kernel->isa<Parameter>() && graph_compiler_info.control_node_parser_->IsCallInputKernelGraph(graph)) {
     const auto &kernel_with_index = GetFrontNodeByKernelGraph(from_kernel, graph);
     const auto &real_front_node_with_index =
@@ -1364,7 +1383,6 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
                                                              real_front_node_with_index.first);
       return;
     }
-
     // When there is a call input in the kernel graph, all the inputs of the kernel graph needs to be sent by gather.
     const auto actor_name = graph->ToString();
     auto actor = FetchActor(actor_name);
@@ -1374,12 +1392,8 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
     return;
   }
 
-  if (IsDeviceQueueDSActor(from_kernel, graph_compiler_info.strategy_)) {
-    // Link the data arrows of device queue data source actor.
-    std::string actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
-    const auto &from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(FetchActor(actor_name));
-    LinkDataArrowForDeviceDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (front_node != nullptr && IsGatherActor(front_node, actor_name_to_actor_)) {
+  auto front_node = GetFrontNodeByBackendNode(from_kernel);
+  if (front_node != nullptr && IsGatherActor(front_node, actor_name_to_actor_)) {
     // Link the data arrows of gather actor.
     auto func_graph = GetFuncgraphByBackendNode(from_kernel);
     if (func_graph == nullptr) {
@@ -1392,37 +1406,40 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
       return;
     }
     LinkDataArrowForGatherActor(from_actor, to_actor, {front_node, 0}, to_kernel_with_input_idx);
-  } else if (IsHostQueueDSActor(from_kernel, graph, graph_compiler_info.origin_parameters_order_,
-                                graph_compiler_info.strategy_)) {
-    // Link the data arrows of host queue data source actor.
-    std::string actor_name = graph_compiler_info.name_ + "_HostDSActor";
-    const auto &from_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
-    LinkDataArrowForHostDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsKernelActor(from_kernel, graph_compiler_info.strategy_)) {
-    // Link the data arrows of kernel actor.
-    const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(from_kernel->fullname_with_scope()));
-    LinkDataArrowForKernelActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsInternalParameter(from_kernel, graph)) {
-    // Link data arrow for internal parameter, convert internal parameter to actor by internal parameter cache to
-    // link.
-    LinkDataArrowForInternalParameter(from_kernel, graph_compiler_info.origin_parameters_order_, graph, to_actor,
-                                      to_kernel_with_input_idx);
-  } else if (IsPersistentDeviceTensor(from_kernel)) {
-    const auto device_tensor_store_key = FetchFrontNodeByBackendNode(from_kernel, graph);
-    (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, device_tensor_store_key);
-  } else {
-    // May exist the from kernel that no need link in the pynative mode.
-    MS_LOG(DEBUG) << "Invalid from kernel: " << from_kernel->fullname_with_scope();
+    return;
+  }
+
+  auto kernel_type = KernelTransformType::kUnknown;
+  std::string kernel_name = "";
+  FetchKernelTransformTypeAndName(from_kernel, graph, graph_compiler_info, &kernel_type, &kernel_name);
+  auto from_actor = dynamic_cast<AbstractActor *>(FetchActor(kernel_name));
+  if (kKernelTypeToLinkFunc.count(kernel_type) > 0) {
+    (this->*kKernelTypeToLinkFunc[kernel_type])(from_actor, to_actor, from_kernel_with_output_idx,
+                                                to_kernel_with_input_idx, graph);
   }
 }
 
-void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter,
-                                                       const std::vector<AnfNodePtr> &host_parameters,
-                                                       const KernelGraphPtr &graph, KernelActor *to_actor,
-                                                       const KernelWithIndex &to_kernel_with_input_idx) {
-  MS_EXCEPTION_IF_NULL(internal_parameter);
-  MS_EXCEPTION_IF_NULL(graph);
+void GraphScheduler::LinkDataArrowForDeviceTensorStore(AbstractActor *const, KernelActor *const to_actor,
+                                                       const KernelWithIndex &from_kernel_with_output_idx,
+                                                       const KernelWithIndex &to_kernel_with_input_idx,
+                                                       const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto from_kernel = from_kernel_with_output_idx.first;
+  MS_EXCEPTION_IF_NULL(from_kernel);
+
+  auto device_tensor_store_key = FetchFrontNodeByBackendNode(from_kernel, graph);
+  (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, device_tensor_store_key);
+}
+
+void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, KernelActor *to_actor,
+                                                       const KernelWithIndex &from_kernel_with_output_idx,
+                                                       const KernelWithIndex &to_kernel_with_input_idx,
+                                                       const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto internal_parameter = from_kernel_with_output_idx.first;
+  MS_EXCEPTION_IF_NULL(internal_parameter);
 
   // Parameter ---> front node.
   auto front_output_with_index = graph->GetFrontNodeByInternalParameter(internal_parameter);
@@ -1435,74 +1452,40 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
     to_actor->input_datas_num_++;
     return;
   }
+
+  auto real_from_kernel_with_output_idx = from_kernel_with_output_idx;
+  AbstractActor *real_from_actor = nullptr;
+  KernelTransformType kernel_type;
   if (IsPersistentDeviceTensor(front_output_node)) {
-    (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_output_node);
-    return;
-  }
-
-  // front node ---> actor.
-  if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-    MS_LOG(EXCEPTION) << "Can't find actor by front node:" << AnfAlgo::GetNodeDebugString(front_output_node)
-                      << ", internal parameter:" << AnfAlgo::GetNodeDebugString(internal_parameter);
-  }
-  auto actor_pair = graph_output_to_actor_[front_output_with_index];
-  MS_EXCEPTION_IF_NULL(actor_pair.first);
-  MS_LOG(INFO) << "Graph " << graph->graph_id() << " internal parameter:" << internal_parameter->DebugString()
-               << ", corresponding front node:" << front_output_node->fullname_with_scope()
-               << " with index:" << front_output_with_index.second
-               << ", from actor:" << actor_pair.first->GetAID().Name() << " with index:" << actor_pair.second
-               << ", to actor:" << to_actor->GetAID().Name() << " with index:" << to_kernel_with_input_idx.second;
-
-  if (IsDeviceQueueDSActor(front_output_node)) {
-    auto from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(actor_pair.first);
-    MS_EXCEPTION_IF_NULL(from_actor);
-    auto from_kernel_with_output_idx = KernelWithIndex(from_actor->data_kernel_, actor_pair.second);
-    LinkDataArrowForDeviceDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsKernelActor(front_output_node)) {
-    auto from_actor = dynamic_cast<KernelActor *>(actor_pair.first);
-    MS_EXCEPTION_IF_NULL(from_actor);
-    auto from_kernel_with_output_idx = KernelWithIndex(from_actor->kernel_, actor_pair.second);
-    LinkDataArrowForKernelActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsHostQueueDSActor(front_output_node, graph, host_parameters)) {
-    auto from_actor = dynamic_cast<HostQueueDataSourceActor *>(actor_pair.first);
-    MS_EXCEPTION_IF_NULL(from_actor);
-    auto from_kernel_with_output_idx = KernelWithIndex(from_actor->data_nodes_[actor_pair.second], 0);
-    LinkDataArrowForHostDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
+    kernel_type = KernelTransformType::kDeviceTensorStore;
   } else {
-    MS_LOG(EXCEPTION) << "Invalid internal parameter: " << internal_parameter->DebugString();
+    // front node ---> actor.
+    if (graph_output_to_actor_.count(front_output_with_index) == 0) {
+      MS_LOG(EXCEPTION) << "Can't find actor by front node:" << AnfAlgo::GetNodeDebugString(front_output_node)
+                        << ", internal parameter:" << AnfAlgo::GetNodeDebugString(internal_parameter);
+    }
+    auto actor_pair = graph_output_to_actor_[front_output_with_index];
+    MS_EXCEPTION_IF_NULL(actor_pair.first);
+    MS_LOG(INFO) << "Graph " << graph->graph_id() << " internal parameter:" << internal_parameter->DebugString()
+                 << ", corresponding front node:" << front_output_node->fullname_with_scope()
+                 << " with index:" << front_output_with_index.second
+                 << ", from actor:" << actor_pair.first->GetAID().Name() << " with index:" << actor_pair.second
+                 << ", to actor:" << to_actor->GetAID().Name() << " with index:" << to_kernel_with_input_idx.second;
+    real_from_actor = actor_pair.first;
+    real_from_kernel_with_output_idx = KernelWithIndex(nullptr, actor_pair.second);
+    kernel_type = actor_pair.first->type_;
   }
+
+  if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
+    MS_LOG(EXCEPTION) << "Invalid internal parameter:" << internal_parameter->DebugString() << ", type:" << kernel_type;
+  }
+  (this->*kKernelTypeToLinkFunc[kernel_type])(real_from_actor, to_actor, real_from_kernel_with_output_idx,
+                                              to_kernel_with_input_idx, graph);
 }
 
-void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *const from_actor,
-                                                   KernelActor *const to_actor,
-                                                   const KernelWithIndex &from_kernel_with_output_idx,
-                                                   const KernelWithIndex &to_kernel_with_input_idx) {
-  MS_EXCEPTION_IF_NULL(from_actor);
-  MS_EXCEPTION_IF_NULL(to_actor);
-
-  auto from_kernel = from_kernel_with_output_idx.first;
-  MS_EXCEPTION_IF_NULL(from_kernel);
-  auto from_output_index = from_kernel_with_output_idx.second;
-  auto to_input_index = to_kernel_with_input_idx.second;
-
-  if (IsNeedInsertCopyActor(from_actor->device_contexts_[0], to_actor->device_contexts_[0])) {
-    LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else {
-    auto to_aid = to_actor->GetAID();
-    auto op_arrow = std::make_shared<DataArrow>(from_output_index, to_aid, to_input_index);
-    (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
-    to_actor->input_datas_num_++;
-    (void)to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
-
-    // Update the reference count of device tensor.
-    UpdateRefCount(from_kernel, from_output_index);
-  }
-}
-
-void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const from_actor,
-                                                 KernelActor *const to_actor,
-                                                 const KernelWithIndex &from_kernel_with_output_idx,
-                                                 const KernelWithIndex &to_kernel_with_input_idx) {
+void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, KernelActor *const to_actor,
+                                               const KernelWithIndex &from_kernel_with_output_idx,
+                                               const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
@@ -1512,52 +1495,21 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const
   auto to_input_index = to_kernel_with_input_idx.second;
 
   // Get the position of from kernel in the data source actor.
-  auto position = from_actor->FetchDataNodePosition(from_kernel);
+  auto position = from_actor->FetchNodePosition(from_kernel);
+  if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
+    MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
+  }
+
   if (IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     auto to_aid = to_actor->GetAID();
-    auto op_arrow = std::make_shared<DataArrow>(position, to_aid, to_input_index);
-    (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
-    to_actor->input_datas_num_++;
-    (void)to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
-
-    // Update the reference count of device tensor.
-    UpdateRefCount(from_actor->data_nodes_[position], from_output_index);
-  }
-}
-
-void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *const to_actor,
-                                                 KernelWithIndex from_kernel_with_output_idx,
-                                                 const KernelWithIndex &to_kernel_with_input_idx) {
-  MS_EXCEPTION_IF_NULL(to_actor);
-  if (IsSkippedKernelActor(from_kernel_with_output_idx.first)) {
-    auto real_kernel_with_index = AnfAlgo::GetPrevNodeOutput(from_kernel_with_output_idx.first, 0);
-    MS_EXCEPTION_IF_NULL(real_kernel_with_index.first);
-    LinkControlArrowBySkippedNode(to_actor, from_kernel_with_output_idx.first);
-
-    // Update the from kernel info by the real node info.
-    MS_LOG(INFO) << "Link data arrow for inplace node, aggregate node: "
-                 << to_kernel_with_input_idx.first->fullname_with_scope()
-                 << ", aggregate input index: " << to_kernel_with_input_idx.second
-                 << ", skip node: " << from_kernel_with_output_idx.first->fullname_with_scope()
-                 << ", real node: " << real_kernel_with_index.first->fullname_with_scope();
-    from_kernel_with_output_idx.first = real_kernel_with_index.first;
-    from_kernel_with_output_idx.second = real_kernel_with_index.second;
-    from_actor = dynamic_cast<KernelActor *>(FetchActor(from_kernel_with_output_idx.first->fullname_with_scope()));
-  }
-
-  MS_EXCEPTION_IF_NULL(from_actor);
-  auto from_kernel = from_kernel_with_output_idx.first;
-  MS_EXCEPTION_IF_NULL(from_kernel);
-  auto from_output_index = from_kernel_with_output_idx.second;
-  auto to_input_index = to_kernel_with_input_idx.second;
-
-  if (IsNeedInsertCopyActor(from_actor->device_contexts_[0], to_actor->device_contexts_[0])) {
-    LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else {
-    auto to_aid = to_actor->GetAID();
     auto op_arrow = std::make_shared<DataArrow>(from_output_index, to_aid, to_input_index);
+    // If the from actor has the multi nodes, then use the real output position.
+    if (position != 0) {
+      op_arrow->from_output_index_ = SizeToInt(position);
+    }
+
     (void)from_actor->output_data_arrows_.emplace_back(op_arrow);
     to_actor->input_datas_num_++;
     (void)to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
@@ -1567,15 +1519,82 @@ void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, Kernel
   }
 }
 
-void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from_actor, KernelActor *const to_actor,
+void GraphScheduler::LinkDataArrowForDeviceDSActor(AbstractActor *const from_actor, KernelActor *const to_actor,
+                                                   const KernelWithIndex &from_kernel_with_output_idx,
+                                                   const KernelWithIndex &to_kernel_with_input_idx,
+                                                   const KernelGraphPtr &) {
+  auto real_from_kernel_with_output_idx = from_kernel_with_output_idx;
+  if (real_from_kernel_with_output_idx.first == nullptr) {
+    auto device_ds_actor = dynamic_cast<DeviceQueueDataSourceActor *>(from_actor);
+    MS_EXCEPTION_IF_NULL(device_ds_actor);
+    real_from_kernel_with_output_idx.first = device_ds_actor->data_kernel_;
+  }
+
+  LinkDataArrowForBaseActor(from_actor, to_actor, real_from_kernel_with_output_idx, to_kernel_with_input_idx);
+}
+
+void GraphScheduler::LinkDataArrowForHostDSActor(AbstractActor *const from_actor, KernelActor *const to_actor,
+                                                 const KernelWithIndex &from_kernel_with_output_idx,
+                                                 const KernelWithIndex &to_kernel_with_input_idx,
+                                                 const KernelGraphPtr &) {
+  auto host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(from_actor);
+  MS_EXCEPTION_IF_NULL(host_ds_actor);
+
+  KernelWithIndex real_from_kernel_with_output_idx;
+  if (from_kernel_with_output_idx.first != nullptr) {
+    // Get the position of from kernel in the data source actor.
+    auto position = host_ds_actor->FetchNodePosition(from_kernel_with_output_idx.first);
+    real_from_kernel_with_output_idx.first = host_ds_actor->data_nodes_[position];
+    real_from_kernel_with_output_idx.second = from_kernel_with_output_idx.second;
+  } else {
+    real_from_kernel_with_output_idx.first = host_ds_actor->data_nodes_[from_kernel_with_output_idx.second];
+    real_from_kernel_with_output_idx.second = 0;
+  }
+
+  LinkDataArrowForBaseActor(from_actor, to_actor, real_from_kernel_with_output_idx, to_kernel_with_input_idx);
+}
+
+void GraphScheduler::LinkDataArrowForKernelActor(AbstractActor *const from_actor, KernelActor *const to_actor,
+                                                 const KernelWithIndex &from_kernel_with_output_idx,
+                                                 const KernelWithIndex &to_kernel_with_input_idx,
+                                                 const KernelGraphPtr &) {
+  auto real_from_actor = from_actor;
+  auto real_from_kernel_with_output_idx = from_kernel_with_output_idx;
+  auto from_kernel = from_kernel_with_output_idx.first;
+  if (from_kernel == nullptr) {
+    auto kernel_actor = dynamic_cast<KernelActor *>(from_actor);
+    MS_EXCEPTION_IF_NULL(kernel_actor);
+    from_kernel = kernel_actor->kernel_;
+    real_from_kernel_with_output_idx.first = kernel_actor->kernel_;
+  }
+
+  MS_EXCEPTION_IF_NULL(from_kernel);
+  if (IsSkippedKernelActor(from_kernel)) {
+    real_from_kernel_with_output_idx = AnfAlgo::GetPrevNodeOutput(from_kernel, 0);
+    MS_EXCEPTION_IF_NULL(real_from_kernel_with_output_idx.first);
+    LinkControlArrowBySkippedNode(to_actor, from_kernel);
+
+    // Update the from kernel info by the real node info.
+    MS_LOG(INFO) << "Link data arrow for inplace node, aggregate node: "
+                 << to_kernel_with_input_idx.first->fullname_with_scope()
+                 << ", aggregate input index: " << to_kernel_with_input_idx.second
+                 << ", skip node: " << from_kernel->fullname_with_scope()
+                 << ", real node: " << real_from_kernel_with_output_idx.first->fullname_with_scope();
+    real_from_actor =
+      dynamic_cast<AbstractActor *>(FetchActor(real_from_kernel_with_output_idx.first->fullname_with_scope()));
+    MS_EXCEPTION_IF_NULL(real_from_actor);
+  }
+
+  LinkDataArrowForBaseActor(real_from_actor, to_actor, real_from_kernel_with_output_idx, to_kernel_with_input_idx);
+}
+
+void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, KernelActor *const to_actor,
                                                const KernelWithIndex &from_kernel_with_output_idx,
                                                const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
-  auto to_device_context = to_actor->device_contexts_[0];
-  MS_EXCEPTION_IF_NULL(to_device_context);
   auto from_output_index = from_kernel_with_output_idx.second;
   auto to_input_index = to_kernel_with_input_idx.second;
 
@@ -1591,34 +1610,28 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from
     MS_EXCEPTION_IF_NULL(copy_actor);
     InsertActor(copy_actor);
 
-    // Link.
-    const DeviceContext *from_device_context = nullptr;
-    auto from_device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
-    auto op_arrow_to_copy = std::make_shared<DataArrow>(from_output_index, copy_actor->GetAID(), 0);
-    if (IsDeviceQueueDSActor(from_kernel)) {
-      auto real_from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(from_actor);
-      MS_EXCEPTION_IF_NULL(real_from_actor);
-      from_device_context = real_from_actor->device_contexts_[0];
-      (void)real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
-    } else if (IsKernelActor(from_kernel)) {
-      auto real_from_actor = dynamic_cast<KernelActor *>(from_actor);
-      MS_EXCEPTION_IF_NULL(real_from_actor);
-      from_device_context = real_from_actor->device_contexts_[0];
-      (void)real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
-    } else if (IsHostQueueDSActor(from_kernel)) {
-      auto real_from_actor = dynamic_cast<HostQueueDataSourceActor *>(from_actor);
-      MS_EXCEPTION_IF_NULL(real_from_actor);
-      auto position = real_from_actor->FetchDataNodePosition(from_kernel);
-      from_device_context = real_from_actor->device_contexts_[position];
-      op_arrow_to_copy->from_output_index_ = SizeToInt(position);
-      (void)real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
-      from_device_tensor =
-        AnfAlgo::GetMutableOutputAddr(real_from_actor->data_nodes_[position], from_output_index, false);
+    // Get the position of from kernel in the data source actor.
+    auto position = from_actor->FetchNodePosition(from_kernel);
+    if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
+      MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
     }
+    auto from_device_context = from_actor->device_contexts_[position];
+    auto to_device_context = to_actor->device_contexts_[0];
+    auto from_device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
+    MS_EXCEPTION_IF_NULL(from_device_context);
+    MS_EXCEPTION_IF_NULL(to_device_context);
+    MS_EXCEPTION_IF_NULL(from_device_tensor);
+    auto op_arrow_to_copy = std::make_shared<DataArrow>(from_output_index, copy_actor->GetAID(), 0);
+    // If the from actor has the multi nodes, then use the real output position.
+    if (position != 0) {
+      op_arrow_to_copy->from_output_index_ = SizeToInt(position);
+    }
+
+    // Link.
+    (void)from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     copy_actor->input_datas_num_++;
 
     // Set the member of the copy actor.
-    MS_EXCEPTION_IF_NULL(from_device_tensor);
     auto to_kernel_mod = AnfAlgo::GetKernelMod(to_kernel_with_input_idx.first);
     MS_EXCEPTION_IF_NULL(to_kernel_mod);
     auto input_sizes = to_kernel_mod->GetInputSizeList();
@@ -1627,7 +1640,6 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from
     }
     copy_actor->output_ = to_device_context->CreateDeviceAddress(
       nullptr, input_sizes[to_input_index], from_device_tensor->format(), from_device_tensor->type_id());
-    MS_EXCEPTION_IF_NULL(from_device_context);
     (void)copy_actor->device_contexts_.emplace_back(from_device_context);
     (void)copy_actor->device_contexts_.emplace_back(to_device_context);
 
@@ -1935,45 +1947,27 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
           continue;
         }
 
-        // The graph output is from kernel actor.
-        if (IsKernelActor(output_with_index.first)) {
-          const auto &from_actor =
-            dynamic_cast<KernelActor *>(FetchActor(output_with_index.first->fullname_with_scope()));
-          MS_EXCEPTION_IF_NULL(from_actor);
-          auto op_arrow = std::make_shared<DataArrow>(output_with_index.second, to_actor->GetAID(), output_position);
-          (void)from_actor->output_result_arrows_.emplace_back(op_arrow);
+        // The graph output is from kernel actor or data source actor.
+        auto kernel_type = KernelTransformType::kUnknown;
+        std::string kernel_name = "";
+        FetchKernelTransformTypeAndName(output_with_index.first, graph, graph_compiler_info, &kernel_type,
+                                        &kernel_name);
+        auto from_actor = dynamic_cast<AbstractActor *>(FetchActor(kernel_name));
+        if (from_actor == nullptr) {
           continue;
         }
-
-        // The graph output is from data source actor.
-        std::string actor_name;
-        DataSourceActor *from_actor = nullptr;
-        size_t from_actor_output_index = 0;
-        if (IsHostQueueDSActor(output_with_index.first, graph, graph_compiler_info.origin_parameters_order_,
-                               graph_compiler_info.strategy_)) {
-          actor_name = graph_compiler_info.name_ + "_HostDSActor";
-          const auto &host_queue_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
-          from_actor_output_index = host_queue_ds_actor->FetchDataNodePosition(output_with_index.first);
-          UpdateRefCount(host_queue_ds_actor->data_nodes_[from_actor_output_index], output_with_index.second, true);
-          from_actor = static_cast<DataSourceActor *>(host_queue_ds_actor);
-        } else if (IsDeviceQueueDSActor(output_with_index.first, graph_compiler_info.strategy_)) {
-          actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
-          from_actor = dynamic_cast<DataSourceActor *>(FetchActor(actor_name));
-          from_actor_output_index = output_with_index.second;
+        auto op_arrow = std::make_shared<DataArrow>(output_with_index.second, to_actor->GetAID(), output_position);
+        auto position = from_actor->FetchNodePosition(output_with_index.first);
+        // If the from actor has the multi nodes, then use the real output position.
+        if (position != 0) {
+          op_arrow->from_output_index_ = SizeToInt(position);
         }
-
-        // When the input is a parameter node, it should be connected by gather actor.
-        if (from_actor == nullptr) {
-          if (output_with_index.first->isa<CNode>()) {
-            MS_LOG(EXCEPTION) << "Cannot find kernel actor for kernel:"
-                              << output_with_index.first->fullname_with_scope();
-          } else {
-            continue;
-          }
-        }
-        MS_EXCEPTION_IF_NULL(from_actor);
-        auto op_arrow = std::make_shared<DataArrow>(from_actor_output_index, to_actor->GetAID(), output_position);
         (void)from_actor->output_result_arrows_.emplace_back(op_arrow);
+        if (kernel_type == KernelTransformType::kHostDataSourceActor) {
+          auto host_queue_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(from_actor);
+          MS_EXCEPTION_IF_NULL(host_queue_ds_actor);
+          UpdateRefCount(host_queue_ds_actor->data_nodes_[position], output_with_index.second, true);
+        }
       }
     }
   }
@@ -2765,6 +2759,39 @@ HostTensorQueue *GraphScheduler::FetchHostQueue(const ActorInfo &actor_info) con
   }
 }
 
+void GraphScheduler::FetchKernelTransformTypeAndName(const AnfNodePtr &node, const KernelGraphPtr &graph,
+                                                     const GraphCompilerInfo &graph_compiler_info,
+                                                     KernelTransformType *const kernel_type,
+                                                     std::string *const kernel_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(kernel_type);
+  MS_EXCEPTION_IF_NULL(kernel_name);
+
+  if (IsDeviceQueueDSActor(node, graph_compiler_info.strategy_)) {
+    *kernel_type = KernelTransformType::kDeviceDataSourceActor;
+    *kernel_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
+  } else if (IsHostQueueDSActor(node, graph, graph_compiler_info.origin_parameters_order_,
+                                graph_compiler_info.strategy_)) {
+    *kernel_type = KernelTransformType::kHostDataSourceActor;
+    *kernel_name = graph_compiler_info.name_ + "_HostDSActor";
+  } else if (IsKernelActor(node, graph_compiler_info.strategy_)) {
+    *kernel_type = KernelTransformType::kKernelActor;
+    *kernel_name = node->fullname_with_scope();
+  } else if (IsInternalParameter(node, graph)) {
+    *kernel_type = KernelTransformType::kInternalParameter;
+    *kernel_name = "";
+  } else if (IsPersistentDeviceTensor(node)) {
+    *kernel_type = KernelTransformType::kDeviceTensorStore;
+    *kernel_name = "";
+  } else {
+    // May exist the from kernel that no need link in the pynative mode.
+    MS_LOG(DEBUG) << "Invalid from kernel: " << node->fullname_with_scope();
+    *kernel_type = KernelTransformType::kUnknown;
+    *kernel_name = "";
+  }
+}
+
 void GraphScheduler::InsertActor(OpActor<DeviceTensor> *actor) {
   MS_EXCEPTION_IF_NULL(actor);
   if (actor_name_to_actor_.count(actor->GetAID().Name()) > 0) {
@@ -2779,39 +2806,6 @@ OpActor<DeviceTensor> *GraphScheduler::FetchActor(const std::string &actor_name)
     return nullptr;
   }
   return iter->second;
-}
-
-bool GraphScheduler::IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
-                                        const std::vector<AnfNodePtr> &host_parameters,
-                                        GraphExecutionStrategy strategy) {
-  MS_EXCEPTION_IF_NULL(node);
-
-  bool is_parameter_data = node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()));
-  if (!is_parameter_data) {
-    return false;
-  }
-
-  if (strategy == GraphExecutionStrategy::kStep) {
-    MS_EXCEPTION_IF_NULL(graph);
-    return graph->execution_order().size() > 1;
-  }
-
-  if (graph == nullptr) {
-    return true;
-  }
-
-  // In control flow, only the parameters of the root funcgraph are in the host data source.
-  const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
-  bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
-                  find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
-
-  //  Judge whether node is internal parameter.
-  const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(node);
-  if (internal_front_node.first == nullptr && is_host) {
-    return true;
-  }
-
-  return false;
 }
 
 void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const {
