@@ -701,11 +701,13 @@ int LiteSession::Init(const Context *context) {
 #endif
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
-    if (delegate_ret == RET_NOT_SUPPORT) {
+    if (delegate_ret == mindspore::kLiteNotSupport) {
       MS_LOG(DEBUG) << "Delegate is unsupported";
+      delegate_.reset();
       delegate_ = nullptr;
-    }
-    if (delegate_ret == RET_ERROR) {
+    } else if (delegate_ret == mindspore::kSuccess) {
+      MS_LOG(INFO) << "Delegate init successfully";
+    } else {
       MS_LOG(ERROR) << "Delegate init failed";
       return RET_ERROR;
     }

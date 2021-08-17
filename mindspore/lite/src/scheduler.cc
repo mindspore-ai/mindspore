@@ -322,10 +322,10 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
     return RET_NULL_PTR;
   }
   auto ret = delegate_->Build(model);
-  if (ret != RET_OK) {
+  if (ret != mindspore::kSuccess) {
     delete model;
     MS_LOG(ERROR) << "Delegate prepare kernels failed.";
-    return ret;
+    return RET_ERROR;
   }
 
   auto src_kernels = *dst_kernels;

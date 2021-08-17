@@ -44,9 +44,9 @@ bool IsHardwareSupport() {
   return true;
 }
 
-int TensorRTDelegate::Init() {
+Status TensorRTDelegate::Init() {
   if (!IsHardwareSupport()) {
-    return RET_NOT_SUPPORT;
+    return mindspore::kLiteNotSupport;
   }
   op_func_lists_.clear();
   op_func_lists_ = {
@@ -66,10 +66,10 @@ int TensorRTDelegate::Init() {
     {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
   };
-  return RET_OK;
+  return mindspore::kSuccess;
 }
 
-int TensorRTDelegate::Build(DelegateModel *model) {
+Status TensorRTDelegate::Build(DelegateModel *model) {
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
   int graph_index = 0;
@@ -88,7 +88,7 @@ int TensorRTDelegate::Build(DelegateModel *model) {
         auto tensorrt_subgraph = CreateTensorRTGraph(tensorrt_ops, model, from, end);
         if (tensorrt_subgraph == nullptr) {
           MS_LOG(ERROR) << "Create TensorRT Graph failed.";
-          return RET_ERROR;
+          return mindspore::kLiteNullptr;
         }
         tensorrt_subgraph->set_name("TensorRtGraph" + std::to_string(graph_index++));
         iter = model->Replace(from, end + 1, tensorrt_subgraph);
@@ -100,13 +100,13 @@ int TensorRTDelegate::Build(DelegateModel *model) {
     auto tensorrt_subgraph = CreateTensorRTGraph(tensorrt_ops, model, from, end);
     if (tensorrt_subgraph == nullptr) {
       MS_LOG(DEBUG) << "Create TensorRT Graph failed.";
-      return RET_ERROR;
+      return mindspore::kLiteNullptr;
     }
     tensorrt_subgraph->set_name("TensorRtGraph" + std::to_string(graph_index++));
     model->Replace(from, end + 1, tensorrt_subgraph);
     tensorrt_ops.clear();
   }
-  return RET_OK;
+  return mindspore::kSuccess;
 }
 
 TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive) {
