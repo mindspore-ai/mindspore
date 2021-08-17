@@ -1,4 +1,4 @@
-# Inception_ResNet_v2 for Ascend
+# Inception_ResNet_v2
 
 - [Inception_ResNet_v2 Description](#Inception_ResNet_v2-description)
 - [Model Architecture](#model-architecture)
