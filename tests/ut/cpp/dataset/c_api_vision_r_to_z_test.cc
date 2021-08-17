@@ -312,3 +312,41 @@ TEST_F(MindDataTestPipeline, TestRotatePass) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestRGB2BGR) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRGB2BGR.";
+  // create two imagenet dataset
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds1, nullptr);
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds2, nullptr);
+
+  auto rgb2bgr_op = vision::RGB2BGR();
+
+  ds1 = ds1->Map({rgb2bgr_op});
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  EXPECT_NE(iter1, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row1;
+  iter1->GetNextRow(&row1);
+
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  EXPECT_NE(iter2, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row2;
+  iter2->GetNextRow(&row2);
+
+  uint64_t i = 0;
+  while (row1.size() != 0) {
+    i++;
+    auto image =row1["image"];
+    iter1->GetNextRow(&row1);
+    iter2->GetNextRow(&row2);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter1->Stop();
+  iter2->Stop();
+}

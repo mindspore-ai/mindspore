@@ -19,16 +19,14 @@ import mindspore.dataset.audio.transforms as audio
 from mindspore import log as logger
 
 
-def _count_unequal_element(data_expected, data_me, rtol, atol):
-
+def count_unequal_element(data_expected, data_me, rtol, atol):
     assert data_expected.shape == data_me.shape
     total_count = len(data_expected.flatten())
     error = np.abs(data_expected - data_me)
     greater = np.greater(error, atol + np.abs(data_expected) * rtol)
     loss_count = np.count_nonzero(greater)
-    assert (loss_count / total_count) < rtol, \
-        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-        format(data_expected[greater], data_me[greater], error[greater])
+    assert (loss_count / total_count) < rtol, "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".format(
+        data_expected[greater], data_me[greater], error[greater])
 
 
 def test_func_band_biquad_eager():
@@ -42,7 +40,7 @@ def test_func_band_biquad_eager():
     band_biquad_op = audio.BandBiquad(44100, 200.0, 0.707, False)
     # Filtered waveform by bandbiquad
     output = band_biquad_op(waveform)
-    _count_unequal_element(expect_waveform, output, 0.0001, 0.0001)
+    count_unequal_element(expect_waveform, output, 0.0001, 0.0001)
 
 
 def test_func_band_biquad_pipeline():
@@ -61,9 +59,9 @@ def test_func_band_biquad_pipeline():
     dataset = dataset.map(
         input_columns=["channel"], operations=band_biquad_op, num_parallel_workers=8)
     i = 0
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        _count_unequal_element(expect_waveform[i, :],
-                               _['channel'], 0.0001, 0.0001)
+    for item in dataset.create_dict_iterator(output_numpy=True):
+        count_unequal_element(expect_waveform[i, :],
+                              item['channel'], 0.0001, 0.0001)
         i += 1
 
 
@@ -83,7 +81,7 @@ def test_band_biquad_invalid_input():
                        "Argument central_freq with value 200 is not of type [<class 'float'>, <class 'int'>],"
                        " but got <class 'str'>.")
     test_invalid_input("invalid sample_rate parameter value", 0, 200, 0.707, True, ValueError,
-                       "Input sample_rate can not be 0.")
+                       "Input sample_rate is not within the required interval of [-2147483648, 0) and (0, 2147483647].")
     test_invalid_input("invalid contral_freq parameter value", 44100, 32434324324234321, 0.707, True, ValueError,
                        "Input central_freq is not within the required interval of [-16777216, 16777216].")
     test_invalid_input("invalid Q parameter type as a String", 44100, 200, "0.707", True, TypeError,
@@ -94,7 +92,7 @@ def test_band_biquad_invalid_input():
     test_invalid_input("invalid Q parameter value", 44100, 200, 0, True, ValueError,
                        "Input Q is not within the required interval of (0, 1].")
     test_invalid_input("invalid sample_rate parameter value", 441324343243242342345300, 200, 0.707, True, ValueError,
-                       "Input sample_rate is not within the required interval of [-2147483648, 2147483647].")
+                       "Input sample_rate is not within the required interval of [-2147483648, 0) and (0, 2147483647].")
     test_invalid_input("invalid sample_rate parameter value", None, 200, 0.707, True, TypeError,
                        "Argument sample_rate with value None is not of type [<class 'int'>],"
                        " but got <class 'NoneType'>.")

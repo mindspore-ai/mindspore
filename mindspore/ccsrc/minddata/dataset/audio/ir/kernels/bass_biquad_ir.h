@@ -31,7 +31,6 @@ namespace mindspore {
 namespace dataset {
 namespace audio {
 
-// Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kBassBiquadOperation[] = "BassBiquad";
 
 class BassBiquadOperation : public TensorOperation {

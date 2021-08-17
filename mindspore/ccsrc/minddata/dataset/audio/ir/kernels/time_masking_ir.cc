@@ -15,12 +15,12 @@
  */
 
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
-#include "minddata/dataset/audio/kernels/time_masking_op.h"
+
 #include "minddata/dataset/audio/ir/validators.h"
+#include "minddata/dataset/audio/kernels/time_masking_op.h"
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
 
 TimeMaskingOperation::TimeMaskingOperation(bool iid_masks, int64_t time_mask_param, int64_t mask_start,
@@ -30,8 +30,8 @@ TimeMaskingOperation::TimeMaskingOperation(bool iid_masks, int64_t time_mask_par
 TimeMaskingOperation::~TimeMaskingOperation() = default;
 
 Status TimeMaskingOperation::ValidateParams() {
-  RETURN_IF_NOT_OK(CheckIntScalarNonNegative("TimeMasking", "time_mask_param", time_mask_param_));
-  RETURN_IF_NOT_OK(CheckIntScalarNonNegative("TimeMasking", "mask_start", mask_start_));
+  RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("TimeMasking", "time_mask_param", time_mask_param_));
+  RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("TimeMasking", "mask_start", mask_start_));
 
   return Status::OK();
 }

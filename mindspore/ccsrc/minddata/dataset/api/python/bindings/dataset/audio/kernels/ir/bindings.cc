@@ -17,6 +17,8 @@
 
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/amplitude_to_db_ir.h"
 #include "minddata/dataset/audio/ir/kernels/angle_ir.h"
@@ -27,7 +29,6 @@
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
-#include "minddata/dataset/include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {

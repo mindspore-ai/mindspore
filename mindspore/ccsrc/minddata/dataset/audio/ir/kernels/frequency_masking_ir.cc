@@ -33,8 +33,8 @@ FrequencyMaskingOperation::FrequencyMaskingOperation(bool iid_masks, int32_t fre
 FrequencyMaskingOperation::~FrequencyMaskingOperation() = default;
 
 Status FrequencyMaskingOperation::ValidateParams() {
-  RETURN_IF_NOT_OK(CheckIntScalarNonNegative("FrequencyMasking", "frequency_mask_param", frequency_mask_param_));
-  RETURN_IF_NOT_OK(CheckIntScalarNonNegative("FrequencyMasking", "mask_start", mask_start_));
+  RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("FrequencyMasking", "frequency_mask_param", frequency_mask_param_));
+  RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("FrequencyMasking", "mask_start", mask_start_));
 
   return Status::OK();
 }

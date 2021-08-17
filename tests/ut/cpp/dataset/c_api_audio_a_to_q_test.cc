@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "common/common.h"
 #include "include/api/types.h"
 #include "utils/log_adapter.h"
 
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/datasets.h"
-#include "minddata/dataset/include/dataset/execute.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 
 using namespace mindspore::dataset;
@@ -33,7 +33,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 TEST_F(MindDataTestPipeline, TestAmplitudeToDBPipeline) {
-  MS_LOG(INFO) << "Basic Function Test";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmplitudeToDBPipeline.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -71,7 +71,7 @@ TEST_F(MindDataTestPipeline, TestAmplitudeToDBPipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestAmplitudeToDBWrongArgs) {
-  MS_LOG(INFO) << "Basic Function Test";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmplitudeToDBWrongArgs.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -91,8 +91,8 @@ TEST_F(MindDataTestPipeline, TestAmplitudeToDBWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBandBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -130,8 +130,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBandBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -159,8 +159,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestAllpassBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAllpassBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -198,8 +198,8 @@ TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestAllpassBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAllpassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -227,8 +227,8 @@ TEST_F(MindDataTestPipeline, Level0_TestAllpassBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBandpassBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandpassBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -266,8 +266,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBandpassBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandpassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -295,8 +295,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandpassBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBandrejectBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandrejectBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -334,8 +334,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBandrejectBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandrejectBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -363,8 +363,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBandrejectBiquad002) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBassBiquad001) {
-  MS_LOG(INFO) << "Basic Function Test";
+TEST_F(MindDataTestPipeline, TestBassBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBassBiquadBasic.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
@@ -402,8 +402,8 @@ TEST_F(MindDataTestPipeline, Level0_TestBassBiquad001) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, Level0_TestBassBiquad002) {
-  MS_LOG(INFO) << "Wrong Arg.";
+TEST_F(MindDataTestPipeline, TestBassBiquadParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
   // Original waveform
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -432,7 +432,7 @@ TEST_F(MindDataTestPipeline, Level0_TestBassBiquad002) {
 }
 
 TEST_F(MindDataTestPipeline, TestAnglePipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipeline";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipeline.";
 
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("complex", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
@@ -470,7 +470,7 @@ TEST_F(MindDataTestPipeline, TestAnglePipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipelineError";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipelineError.";
 
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("complex", mindspore::DataType::kNumberTypeFloat32, {3, 2, 1}));
@@ -491,7 +491,7 @@ TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
 }
 
 TEST_F(MindDataTestPipeline, TestFrequencyMaskingPipeline) {
-  MS_LOG(INFO) << "Doing TestFrequencyMasking Pipeline.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFrequencyMaskingPipeline.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {200, 200}));
@@ -506,7 +506,6 @@ TEST_F(MindDataTestPipeline, TestFrequencyMaskingPipeline) {
   ds = ds->Map({frequencymasking});
   EXPECT_NE(ds, nullptr);
 
-  // Filtered waveform by bandbiquad
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(ds, nullptr);
 
@@ -530,7 +529,7 @@ TEST_F(MindDataTestPipeline, TestFrequencyMaskingPipeline) {
 }
 
 TEST_F(MindDataTestPipeline, TestFrequencyMaskingWrongArgs) {
-  MS_LOG(INFO) << "Doing TestFrequencyMasking with wrong args.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFrequencyMaskingWrongArgs.";
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {20, 20}));

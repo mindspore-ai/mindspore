@@ -35,6 +35,7 @@ class TensorOperation;
 
 // Transform operations for performing computer audio.
 namespace audio {
+
 /// \brief Compute the angle of complex tensor input.
 class Angle final : public TensorTransform {
  public:
@@ -98,10 +99,10 @@ class AllpassBiquad final : public TensorTransform {
 class AmplitudeToDB final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] stype ['kPower', 'kMagnitude']
-  /// \param[in] ref_value Calculate db_multiplier
-  /// \param[in] amin Clamp the input waveform
-  /// \param[in] top_db Decibels cut-off value
+  /// \param[in] stype ['kPower', 'kMagnitude'].
+  /// \param[in] ref_value Calculate db_multiplier.
+  /// \param[in] amin Clamp the input waveform.
+  /// \param[in] top_db Decibels cut-off value.
   explicit AmplitudeToDB(ScaleType stype = ScaleType::kPower, float ref_value = 1.0, float amin = 1e-10,
                          float top_db = 80.0);
 
@@ -124,9 +125,9 @@ class BandpassBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor  (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
   /// \param[in] const_skirt_gain, If ``True``, uses a constant skirt gain (peak gain = Q). If ``False``, uses a
-  /// constant 0dB peak gain. (Default: False).
+  ///     constant 0dB peak gain (Default: False).
   explicit BandpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool const_skirt_gain = false);
 
   /// \brief Destructor.

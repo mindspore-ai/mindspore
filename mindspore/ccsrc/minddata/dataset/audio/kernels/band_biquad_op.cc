@@ -25,12 +25,12 @@ Status BandBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   IO_CHECK(input, output);
   TensorShape input_shape = input->shape();
   // check input tensor dimension, it should be greater than 0.
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "BandBiquad: input dimension should be greater than 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "BandBiquad: input tensor is not in shape of <..., time>.");
   // check input type, it should be DE_FLOAT32 or DE_FLOAT16 or DE_FLOAT64
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType(DataType::DE_FLOAT32) ||
                                  input->type() == DataType(DataType::DE_FLOAT16) ||
                                  input->type() == DataType(DataType::DE_FLOAT64),
-                               "BandBiquad: input type should be float, but got " + input->type().ToString());
+                               "BandBiquad: input tensor type should be float, but got: " + input->type().ToString());
   double w0 = 2 * PI * central_freq_ / sample_rate_;
   double bw_Hz = central_freq_ / Q_;
   double a0 = 1.;
@@ -45,15 +45,16 @@ Status BandBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   }
   double b1 = 0.;
   double b2 = 0.;
-  if (input->type() == DataType(DataType::DE_FLOAT32))
+  if (input->type() == DataType(DataType::DE_FLOAT32)) {
     return Biquad(input, output, static_cast<float>(b0), static_cast<float>(b1), static_cast<float>(b2),
                   static_cast<float>(a0), static_cast<float>(a1), static_cast<float>(a2));
-  else if (input->type() == DataType(DataType::DE_FLOAT64))
+  } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
     return Biquad(input, output, static_cast<double>(b0), static_cast<double>(b1), static_cast<double>(b2),
                   static_cast<double>(a0), static_cast<double>(a1), static_cast<double>(a2));
-  else
+  } else {
     return Biquad(input, output, static_cast<float16>(b0), static_cast<float16>(b1), static_cast<float16>(b2),
                   static_cast<float16>(a0), static_cast<float16>(a1), static_cast<float16>(a2));
+  }
 }
 
 }  // namespace dataset

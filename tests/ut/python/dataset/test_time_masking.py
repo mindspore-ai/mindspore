@@ -20,9 +20,8 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as atf
+import mindspore.dataset.audio.transforms as audio
 from mindspore import log as logger
-
 
 CHANNEL = 2
 FREQ = 20
@@ -32,19 +31,18 @@ TIME = 30
 def gen(shape):
     np.random.seed(0)
     data = np.random.random(shape)
-    yield(np.array(data, dtype=np.float32),)
+    yield (np.array(data, dtype=np.float32),)
 
 
-def _count_unequal_element(data_expected, data_me, rtol, atol):
+def count_unequal_element(data_expected, data_me, rtol, atol):
     """ Precision calculation func """
     assert data_expected.shape == data_me.shape
     total_count = len(data_expected.flatten())
     error = np.abs(data_expected - data_me)
     greater = np.greater(error, atol + np.abs(data_expected) * rtol)
     loss_count = np.count_nonzero(greater)
-    assert (loss_count / total_count) < rtol, \
-        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-        format(data_expected[greater], data_me[greater], error[greater])
+    assert (loss_count / total_count) < rtol, "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".format(
+        data_expected[greater], data_me[greater], error[greater])
 
 
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
@@ -52,16 +50,14 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     if np.any(np.isnan(data_expected)):
         assert np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan)
     elif not np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan):
-        _count_unequal_element(data_expected, data_me, rtol, atol)
-    else:
-        assert True
+        count_unequal_element(data_expected, data_me, rtol, atol)
 
 
 def test_func_time_masking_eager_random_input():
     """ mindspore eager mode normal testcase:time_masking op"""
     logger.info("test time_masking op")
     spectrogram = next(gen((CHANNEL, FREQ, TIME)))[0]
-    out_put = atf.TimeMasking(False, 3, 1, 10)(spectrogram)
+    out_put = audio.TimeMasking(False, 3, 1, 10)(spectrogram)
     assert out_put.shape == (CHANNEL, FREQ, TIME)
 
 
@@ -74,7 +70,7 @@ def test_func_time_masking_eager_precision():
                             [[-1.205032, 0.18922766, -0.5277673, -1.3090396],
                              [1.8914849, -0.97001046, -0.23726775, 0.00525892],
                              [-1.0271876, 0.33526883, 1.7413973, 0.12313101]]]).astype(np.float32)
-    out_ms = atf.TimeMasking(False, 2, 0, 0)(spectrogram)
+    out_ms = audio.TimeMasking(False, 2, 0, 0)(spectrogram)
     out_benchmark = np.array([[[0., 0., 0.07162686, -0.45436913],
                                [0., 0., 0.62333095, -0.09532598],
                                [0., 0., -0.58152324, -0.00221091]],
@@ -89,14 +85,10 @@ def test_func_time_masking_pipeline():
     logger.info("test time_masking op, pipeline")
 
     generator = gen([CHANNEL, FREQ, TIME])
-    data1 = ds.GeneratorDataset(source=generator, column_names=[
-        "multi_dimensional_data"])
+    data1 = ds.GeneratorDataset(source=generator, column_names=["multi_dimensional_data"])
 
-    transforms = [
-        atf.TimeMasking(True, 8)
-    ]
-    data1 = data1.map(operations=transforms, input_columns=[
-        "multi_dimensional_data"])
+    transforms = [audio.TimeMasking(True, 8)]
+    data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
 
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["multi_dimensional_data"]
@@ -107,14 +99,14 @@ def test_time_masking_invalid_input():
     def test_invalid_param(test_name, iid_masks, time_mask_param, mask_start, error, error_msg):
         logger.info("Test TimeMasking with wrong params: {0}".format(test_name))
         with pytest.raises(error) as error_info:
-            atf.TimeMasking(iid_masks, time_mask_param, mask_start)
+            audio.TimeMasking(iid_masks, time_mask_param, mask_start)
         assert error_msg in str(error_info.value)
 
     def test_invalid_input(test_name, iid_masks, time_mask_param, mask_start, error, error_msg):
         logger.info("Test TimeMasking with wrong params: {0}".format(test_name))
         with pytest.raises(error) as error_info:
             spectrogram = next(gen((CHANNEL, FREQ, TIME)))[0]
-            _ = atf.TimeMasking(iid_masks, time_mask_param, mask_start)(spectrogram)
+            _ = audio.TimeMasking(iid_masks, time_mask_param, mask_start)(spectrogram)
         assert error_msg in str(error_info.value)
 
     test_invalid_param("invalid mask_start", True, 2, -10, ValueError,

@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
+
 class BandrejectBiquadOp : public TensorOp {
  public:
   BandrejectBiquadOp(int32_t sample_rate, float central_freq, float Q)

@@ -47,7 +47,7 @@ std::shared_ptr<TensorOperation> AllpassBiquad::Parse() {
   return std::make_shared<AllpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
 }
 
-// AmplitudeToDB Operation.
+// AmplitudeToDB Transform Operation.
 struct AmplitudeToDB::Data {
   Data(ScaleType stype, float ref_value, float amin, float top_db)
       : stype_(stype), ref_value_(ref_value), amin_(amin), top_db_(top_db) {}
@@ -175,7 +175,7 @@ std::shared_ptr<TensorOperation> TimeMasking::Parse() {
                                                 data_->mask_value_);
 }
 
-// TimeStretch Operation.
+// TimeStretch Transform Operation.
 struct TimeStretch::Data {
   explicit Data(float hop_length, int n_freq, float fixed_rate)
       : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}

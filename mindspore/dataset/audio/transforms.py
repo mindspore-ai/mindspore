@@ -11,14 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
 """
-The module audio.transforms is inherited from _c_dataengine.
-and is implemented based on  C++. It's a high performance module to
-process audio. Users can apply suitable augmentations on audio data
-to improve their training models.
+The module audio.transforms is inherited from _c_dataengine and is
+implemented based on C++. It's a high performance module to process
+audio. Users can apply suitable augmentations on audio data to improve
+their training models.
 """
-import mindspore._c_dataengine as cde
+
 import numpy as np
+
+import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
@@ -33,38 +36,31 @@ class AudioTensorOperation(TensorOperation):
     def __call__(self, *input_tensor_list):
         for tensor in input_tensor_list:
             if not isinstance(tensor, (np.ndarray,)):
-                raise TypeError(
-                    "Input should be NumPy audio, got {}.".format(type(tensor)))
+                raise TypeError("Input should be NumPy audio, got {}.".format(type(tensor)))
         return super().__call__(*input_tensor_list)
 
     def parse(self):
-        raise NotImplementedError(
-            "AudioTensorOperation has to implement parse() method.")
+        raise NotImplementedError("AudioTensorOperation has to implement parse() method.")
 
 
 class AllpassBiquad(AudioTensorOperation):
     """
-    Design two-pole all-pass filter for audio waveform of dimension of `(..., time)`
+    Design two-pole all-pass filter for audio waveform of dimension of (..., time).
 
-        Args:
-            sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
-                the value must be greater than 0 .
-            central_freq (float): central frequency (in Hz),
-                the value must be greater than 0 .
-            Q(float, optional): Quality factor,https://en.wikipedia.org/wiki/Q_factor,
-                Range: (0, 1] (Default=0.707).
+    Args:
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value must be greater than 0.
+        central_freq (float): central frequency (in Hz), the value must be greater than 0.
+        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
-        Examples:
-            >>> import mindspore.dataset.audio.transforms as audio
-            >>> import numpy as np
-
-            >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
-            >>> allpasspass_biquad_op = audio.AllpassBiquad(44100, 200.0)
-            >>> waveform_filtered = allpass_biquad_op(waveform)
-
-        References:
-            https://www.w3.org/2011/audio/audio-eq-cookbook.html#APF
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.AllpassBiquad(44100, 200.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_allpass_biquad
     def __init__(self, sample_rate, central_freq, Q=0.707):
         self.sample_rate = sample_rate
@@ -84,23 +80,22 @@ class AmplitudeToDB(AudioTensorOperation):
     Converts the input tensor from amplitude/power scale to decibel scale.
 
     Args:
-        stype (ScaleType, optional): Scale of the input tensor. (Default="ScaleType.POWER").
-        It can be any of [ScaleType.MAGNITUDE, ScaleType.POWER].
+        stype (ScaleType, optional): Scale of the input tensor (default=ScaleType.POWER).
+            It can be one of ScaleType.MAGNITUDE or ScaleType.POWER.
         ref_value (float, optional): Param for generate db_multiplier.
         amin (float, optional): Lower bound to clamp the input waveform.
-        top_db (float, optional): Minimum cut-off decibels. The range of values is non-negative. Commonly set at 80.
-            (Default=80.0)
+        top_db (float, optional): Minimum cut-off decibels. The range of values is non-negative.
+            Commonly set at 80 (default=80.0).
     Examples:
-        >>> channel = 1
-        >>> n_fft = 400
-        >>> n_frame = 30
-        >>> specrogram = np.random.random([channel, n_fft//2+1, n_frame])
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=specrogram, column_names=["audio"])
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([1, 400//2+1, 30])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.AmplitudeToDB(stype=ScaleType.POWER)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
 
-    @ check_amplitude_to_db
+    @check_amplitude_to_db
     def __init__(self, stype=ScaleType.POWER, ref_value=1.0, amin=1e-10, top_db=80.0):
         self.stype = stype
         self.ref_value = ref_value
@@ -115,15 +110,14 @@ class Angle(AudioTensorOperation):
     """
     Calculate the angle of the complex number sequence of shape (..., 2).
     The first dimension represents the real part while the second represents the imaginary.
-    Args:
 
     Examples:
-        >>> import mindspore.dataset.audio.transforms as audio
         >>> import numpy as np
-
-        >>> input_complex = np.array([[1.43, 5.434], [23.54, 89.38]])
-        >>> angle_op = audio.Angle()
-        >>> angles = angle_op(input_complex)
+        >>>
+        >>> waveform = np.array([[1.43, 5.434], [23.54, 89.38]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Angle()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
 
     def parse(self):
@@ -132,24 +126,24 @@ class Angle(AudioTensorOperation):
 
 class BandBiquad(AudioTensorOperation):
     """
-    Design two-pole band filter for audio waveform of dimension of `(..., time)`
+    Design two-pole band filter for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-        central_freq (float): central frequency (in Hz),
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, Range: (0, 1] (Default=0.707).
-        noise (bool, optional) : If ``True``, uses the alternate mode for un-pitched audio (e.g. percussion).
-            If ``False``, uses mode oriented to pitched audio, i.e. voice, singing,
-            or instrumental music (Default: ``False``).
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        central_freq (float): Central frequency (in Hz).
+        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        noise (bool, optional) : If True, uses the alternate mode for un-pitched audio (e.g. percussion).
+            If False, uses mode oriented to pitched audio, i.e. voice, singing, or instrumental music (default=False).
 
     Examples:
-        >>> import mindspore.dataset.audio.transforms as audio
         >>> import numpy as np
-
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
-        >>> band_biquad_op = audio.BandBiquad(44100, 200.0)
-        >>> waveform_filtered = band_biquad_op(waveform)
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.BandBiquad(44100, 200.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_band_biquad
     def __init__(self, sample_rate, central_freq, Q=0.707, noise=False):
         self.sample_rate = sample_rate
@@ -161,25 +155,26 @@ class BandBiquad(AudioTensorOperation):
         return cde.BandBiquadOperation(self.sample_rate, self.central_freq, self.Q, self.noise)
 
 
-class BandpassBiquad(TensorOperation):
+class BandpassBiquad(AudioTensorOperation):
     """
-    Design two-pole band-pass filter.  Similar to SoX implementation.
+    Design two-pole band-pass filter. Similar to SoX implementation.
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz)
-        central_freq (float): central frequency (in Hz)
-        Q (float, optional): https://en.wikipedia.org/wiki/Q_factor Range: (0,1] (Default=0.707).
-        const_skirt_gain (bool, optional) : If ``True``, uses a constant skirt gain (peak gain = Q).
-            If ``False``, uses a constant 0dB peak gain. (Default: ``False``)
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
+        central_freq (float): Central frequency (in Hz).
+        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0,1] (default=0.707).
+        const_skirt_gain (bool, optional) : If True, uses a constant skirt gain (peak gain = Q).
+            If False, uses a constant 0dB peak gain (default=False).
 
     Examples:
-        >>> import mindspore.dataset.audio.transforms as audio
         >>> import numpy as np
-
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
-        >>> bandpass_biquad_op = audio.BandpassBiquad(44100, 200.0)
-        >>> waveform_filtered = bandpass_biquad_op(waveform)
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.BandpassBiquad(44100, 200.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_bandpass_biquad
     def __init__(self, sample_rate, central_freq, Q=0.707, const_skirt_gain=False):
         self.sample_rate = sample_rate
@@ -193,23 +188,20 @@ class BandpassBiquad(TensorOperation):
 
 class BandrejectBiquad(AudioTensorOperation):
     """
-    Design two-pole band filter for audio waveform of dimension of `(..., time)`
+    Design two-pole band filter for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
-            the value must be greater than 0 .
-        central_freq (float): central frequency (in Hz),
-            the value must be greater than 0 .
-        Q(float, optional): Quality factor,https://en.wikipedia.org/wiki/Q_factor,
-            Range: (0, 1] (Default=0.707).
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value must be greater than 0.
+        central_freq (float): central frequency (in Hz), the value must be greater than 0.
+        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
     Examples:
-        >>> import mindspore.dataset.audio.transforms as audio
         >>> import numpy as np
-
+        >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
-        >>> band_biquad_op = audio.BandBiquad(44100, 200.0)
-        >>> waveform_filtered = band_biquad_op(waveform)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.BandrejectBiquad(44100, 200.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
 
     @check_bandreject_biquad
@@ -224,22 +216,23 @@ class BandrejectBiquad(AudioTensorOperation):
 
 class BassBiquad(AudioTensorOperation):
     """
-    Design a bass tone-control effect for audio waveform of dimension of `(..., time)`
+    Design a bass tone-control effect for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz)
-        gain (float): desired gain at the boost (or attenuation) in dB.
-        central_freq (float): central frequency (in Hz)(Default=100.0).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, Range: (0, 1] (Default=0.707).
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
+        gain (float): Desired gain at the boost (or attenuation) in dB.
+        central_freq (float): Central frequency (in Hz) (default=100.0).
+        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
     Examples:
-        >>> import mindspore.dataset.audio.transforms as audio
         >>> import numpy as np
-
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
-        >>> bass_biquad_op = audio.BassBiquad(44100, 100.0)
-        >>> waveform_filtered = bass_biquad_op(waveform)
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.BassBiquad(44100, 100.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_bass_biquad
     def __init__(self, sample_rate, gain, central_freq=100.0, Q=0.707):
         self.sample_rate = sample_rate
@@ -263,14 +256,12 @@ class FrequencyMasking(AudioTensorOperation):
         mask_value (double): Mask value (default=0.0).
 
     Examples:
-        >>> def gen():
-        ...     random.seed(0)
-        ...     data = numpy.random.random([1, 3, 2])
-        ...     yield (numpy.array(data, dtype=numpy.float32),)
-        >>> dataset = ds.GeneratorDataset(source=gen,
-        ...                               column_names=["multi_dim_data"])
-        >>> dataset = dataset.map(operations=FrequencyMasking(frequency_mask_param=1),
-        ...                       input_columns=["multi_dim_data"])
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([1, 3, 2])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.FrequencyMasking(frequency_mask_param=1)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
     @check_masking
     def __init__(self, iid_masks=False, frequency_mask_param=0, mask_start=0, mask_value=0.0):
@@ -296,15 +287,14 @@ class TimeMasking(AudioTensorOperation):
         mask_value (double): Mask value (default=0.0).
 
     Examples:
-        >>> def gen():
-        ...     random.seed(0)
-        ...     data = numpy.random.random([1, 3, 2])
-        ...     yield (numpy.array(data, dtype=numpy.float32),)
-        >>> dataset = ds.GeneratorDataset(source=gen,
-        ...                               column_names=["multi_dim_data"])
-        >>> dataset = dataset.map(operations=TimeMasking(time_mask_param=1),
-        ...                       input_columns=["multi_dim_data"])
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([1, 3, 2])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.TimeMasking(time_mask_param=1)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_masking
     def __init__(self, iid_masks=False, time_mask_param=0, mask_start=0, mask_value=0.0):
         self.iid_masks = iid_masks
