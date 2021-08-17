@@ -275,6 +275,7 @@ constexpr auto kDynamicRNNOpName = "DynamicRNN";
 constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
 constexpr auto kDynamicGRUV2OpName = "DynamicGRUV2";
 constexpr auto kGRUV2HiddenGradOpName = "GRUV2HiddenGrad";
+constexpr auto kGRUV2HiddenGradCellOpName = "GRUV2HiddenGradCell";
 constexpr auto kFusedSparseFtrlName = "FusedSparseFtrl";
 constexpr auto kFusedSparseProximalAdagradName = "FusedSparseProximalAdagrad";
 constexpr auto kFusedSparseLazyAdamName = "FusedSparseLazyAdam";
