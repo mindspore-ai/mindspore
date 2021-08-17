@@ -90,7 +90,7 @@ FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
   MS_EXCEPTION_IF_NULL(specialized_zeros_like_fg);
   auto opted_zeros_like_fg = ZerosLikePrimOptPass(resource);
   MS_EXCEPTION_IF_NULL(opted_zeros_like_fg);
-  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
     zeros_like_funcgraph_cache[args_spec] = BasicClone(opted_zeros_like_fg);
   }
@@ -149,7 +149,7 @@ FuncGraphPtr GetOnesLike(const abstract::AbstractBasePtrList &args_spec) {
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   auto specialized_ones_like_fg = pipeline::Renormalize(resource, ones_like_fg, args_spec);
   MS_EXCEPTION_IF_NULL(specialized_ones_like_fg);
-  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
     ones_like_funcgraph_cache[args_spec] = BasicClone(specialized_ones_like_fg);
   }

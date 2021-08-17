@@ -484,7 +484,7 @@ const ActorInfo &MindRTBackend::CompileGraph(const OpRunInfo &op_run_info, const
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   auto graph_compiler_info = ConstructGraphCompilerInfo(actor_info, tensors_mask, input_tensors, !enable_cache);
   const auto actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);

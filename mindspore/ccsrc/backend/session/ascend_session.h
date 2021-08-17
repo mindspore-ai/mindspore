@@ -57,9 +57,9 @@ class AscendSession : public SessionBasic {
                         VectorRef *const outputs) override;
   void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) override;
   void BuildGraphImpl(GraphId) override;
-  void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                   const std::vector<tensor::TensorPtr> &input_tensors,
-                   const std::vector<int64_t> &tensors_mask) override;
+  KernelGraphPtr BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                             const std::vector<tensor::TensorPtr> &input_tensors,
+                             const std::vector<int64_t> &tensors_mask) override;
   void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
   void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -104,8 +104,6 @@ class AscendSession : public SessionBasic {
   const std::vector<GraphId> &GetGraphOrder(GraphId final_graph_id) const;
   // get graph order type vector by graph id
   const std::vector<GraphType> &GetGraphOrderType(GraphId final_graph_id) const;
-  // check if graph cache exist
-  bool GraphCacheExist(const GraphInfo &graph_info) const;
   // sync initial tensors' data to device
   void SyncInitialTenosrToDevice();
   void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);

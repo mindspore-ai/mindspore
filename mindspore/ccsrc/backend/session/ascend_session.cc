@@ -628,15 +628,12 @@ void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelG
   MS_LOG(INFO) << "HardwareOptimize Finish";
 }
 
-bool AscendSession::GraphCacheExist(const GraphInfo &graph_info) const {
-  return run_op_graphs_.find(graph_info) != run_op_graphs_.end();
-}
-
-void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                                const std::vector<tensor::TensorPtr> &input_tensors,
-                                const std::vector<int64_t> &tensors_mask) {
-  if (GraphCacheExist(graph_info)) {
-    return;
+KernelGraphPtr AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                                          const std::vector<tensor::TensorPtr> &input_tensors,
+                                          const std::vector<int64_t> &tensors_mask) {
+  auto it = run_op_graphs_.find(graph_info);
+  if (it != run_op_graphs_.end()) {
+    return it->second;
   }
 
   const auto &graph = PreBuildOp(op_run_info, input_tensors, tensors_mask);
@@ -646,7 +643,11 @@ void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &g
   // build kernel
   RunOpAdjustKernel(graph);
   BuildKernel(graph);
-  run_op_graphs_[graph_info] = graph;
+  auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
+  if (enable_op_graph_cache) {
+    run_op_graphs_[graph_info] = graph;
+  }
+  return graph;
 }
 
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
@@ -654,7 +655,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
                               const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
-  BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
+  const auto &graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   // wait for allreduce
@@ -663,9 +664,6 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
       tensor->WaitDevice();
     }
   }
-  // Run op
-  auto graph = run_op_graphs_[graph_info];
-  MS_EXCEPTION_IF_NULL(graph);
   // malloc mem
   RunOpRemoveNopNode(graph);
   RunOpMemoryAlloc(*input_tensors, graph.get());
@@ -792,7 +790,10 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   // Record single op graphs in run_op_graphs_ so that these graphs can be reused in BuildOpImpl
   for (const auto &graph_item : single_op_graphs) {
     RunOpMemoryClear(graph_item.first.get());
-    run_op_graphs_[graph_item.second] = graph_item.first;
+    auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
+    if (enable_op_graph_cache) {
+      run_op_graphs_[graph_item.second] = graph_item.first;
+    }
     MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_item.second;
   }
   built_graph_id_.insert(graph_id);

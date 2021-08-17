@@ -516,7 +516,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
                  enable_sparse=bool, max_call_depth=int, env_config_path=str, graph_kernel_flags=str,
-                 save_compile_cache=bool, load_compile_cache=bool, grad_for_scalar=bool, enable_grad_cache=bool)
+                 save_compile_cache=bool, load_compile_cache=bool, grad_for_scalar=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -554,7 +554,6 @@ def set_context(**kwargs):
     grad_for_scalar
     save_compile_cache
     load_compile_cache
-    enable_grad_cache
     ===========================  ===========================  =================
 
     Args:
@@ -666,9 +665,6 @@ def set_context(**kwargs):
             you should make sure the network has not been changed since the last execution. By now, we have
             not support automatically checking the changes yet. Default: False.
             This is an experimental prototype that is subject to change and/or deletion.
-        enable_grad_cache (bool): Whether to use cache for grad, default True.
-            The cache will cost memory for every compiled graph.
-            If the input data shape is uncertian, advised to disable the cache for save memory.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -692,7 +688,6 @@ def set_context(**kwargs):
         >>> context.set_context(print_file_path="print.pb")
         >>> context.set_context(max_call_depth=80)
         >>> context.set_context(env_config_path="./env_config.json")
-        >>> context.set_context(enable_grad_cache=True)
     """
     ctx = _context()
     # set device target first
