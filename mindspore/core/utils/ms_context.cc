@@ -35,6 +35,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG, false);
   set_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH, ".");
   set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, "python");
+  set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, "");
   set_param<bool>(MS_CTX_ENABLE_DUMP, false);
   set_param<std::string>(MS_CTX_SAVE_DUMP_PATH, ".");
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
