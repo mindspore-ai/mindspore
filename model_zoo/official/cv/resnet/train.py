@@ -155,10 +155,8 @@ def set_parameter():
     # init context
     rank_save_graphs_path = os.path.join(config.save_graphs_path, "soma")
 
-    if config.pre_trained:
-        config.save_graphs = False
-    else:
-        config.save_graphs = True
+    # Whether open graph saving
+    config.save_graphs = not config.pre_trained
 
     if config.mode_name == 'GRAPH':
         context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs,
