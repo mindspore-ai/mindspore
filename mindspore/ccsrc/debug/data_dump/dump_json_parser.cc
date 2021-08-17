@@ -370,7 +370,7 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
       MS_LOG(EXCEPTION) << "iteration only supports digits, {'-', '|'}, or just \"all\" but got: " << iteration_;
     }
   } else if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
-    MS_LOG(WARNING) << "Dump not enabled. ";
+    MS_LOG(WARNING) << "Dump is not enabled. ";
   } else {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. Async or E2E should be enabled. ";
   }
@@ -505,14 +505,14 @@ void DumpJsonParser::JudgeDumpEnabled() {
   }
 
   if (!async_dump_enabled_ && !e2e_dump_enabled_) {
-    MS_LOG(WARNING) << "Dump json parse failed. Dump not enabled";
+    MS_LOG(WARNING) << "Dump json parse failed. Dump is not enabled";
   }
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kCPUDevice) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     if (support_devices_.find(device_id) == support_devices_.end()) {
       async_dump_enabled_ = false;
       e2e_dump_enabled_ = false;
-      MS_LOG(WARNING) << "Dump not enabled. device_id:" << device_id << " not support";
+      MS_LOG(WARNING) << "Dump is not enabled. device_id:" << device_id << " not support";
     }
   }
   JsonConfigToString();
