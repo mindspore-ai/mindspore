@@ -847,7 +847,13 @@ void AscendSession::InitRuntimeResource() {
   if (!runtime_instance->Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  rank_id_ = GetRankId();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto env_rank_id = common::GetEnv("RANK_ID");
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
+    // get actual rank id if it's distribution training case.
+    rank_id_ = GetRankId();
+  }
   DumpInit(rank_id_);
   MS_LOG(INFO) << "Finish!";
 }
