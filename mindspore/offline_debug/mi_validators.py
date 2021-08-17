@@ -42,10 +42,11 @@ def check_initialize(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [net_name, is_sync_mode], _ = parse_user_args(method, *args, **kwargs)
+        [net_name, is_sync_mode, max_mem_usage], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(net_name, (str,), "net_name")
         type_check(is_sync_mode, (bool,), "is_sync_mode")
+        check_uint32(max_mem_usage, "max_mem_usage")
 
         return method(self, *args, **kwargs)
 

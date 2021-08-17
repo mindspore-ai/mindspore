@@ -115,8 +115,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SetTensorLoaderIterNum(uint32_t iter_num);
 
-  void EmptyPrevTensor();
-
   uint32_t GetTensorLoaderIterNum() const;
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);

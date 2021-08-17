@@ -51,10 +51,13 @@ std::string DbgServices::GetVersion() {
   return "1.4.0";
 }
 
-int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode) {
+int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode,
+                                uint32_t max_mem_usage) {
   MS_LOG(INFO) << "cpp DbgServices initialize network name " << net_name;
   MS_LOG(INFO) << "cpp DbgServices initialize dump folder path " << dump_folder_path;
   MS_LOG(INFO) << "cpp DbgServices initialize sync mode " << is_sync_mode;
+  MS_LOG(INFO) << "cpp DbgServices initialize maximum memory size for debugger internal cache " << max_mem_usage
+               << "MB.";
   if (debug_services_ == nullptr) {
     MS_LOG(EXCEPTION) << "Debugger services initialize failed as occur null pointer error,"
                       << "may be due to memory allocation failure, check as: top";
@@ -62,6 +65,9 @@ int32_t DbgServices::Initialize(std::string net_name, std::string dump_folder_pa
   debug_services_->SetNetName(net_name);
   debug_services_->SetDumpDir(dump_folder_path);
   debug_services_->SetSyncMode(is_sync_mode);
+  // Set the memory ratio used by tensor cache. Leave 50% for other debugger backend usage.
+  auto cache_mem_ratio = 0.5;
+  debug_services_->SetMemLimit(max_mem_usage * pow(2, 20) * cache_mem_ratio);
   return 0;
 }
 
@@ -256,6 +262,12 @@ std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vecto
   }
   debug_services_->ReadDumpedTensor(backend_name, slot, rank_id, iteration, root_graph_id, is_output, file_paths,
                                     &result_list);
+  for (auto result : result_list) {
+    std::string key_name_in_cache = result->GetName() + ":" + std::to_string(result->GetDeviceId()) + ":" +
+                                    std::to_string(result->GetRootGraphId()) + ":" +
+                                    std::to_string(result->GetIsOutput()) + ":" + std::to_string(result->GetSlot());
+    debug_services_->ReleaseInUsedStatus(key_name_in_cache);
+  }
   auto t2 = std::chrono::high_resolution_clock::now();
   /* Getting number of milliseconds as a double. */
   std::chrono::duration<double, std::milli> ms_double = t2 - t1;
