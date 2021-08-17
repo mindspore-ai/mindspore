@@ -462,6 +462,7 @@ TEST_F(MindDataTestDeserialize, TestDeserializeFill) {
   std::shared_ptr<TensorOperation> operation2 = std::make_shared<text::ToNumberOperation>("int32_t");
   std::vector<std::shared_ptr<TensorOperation>> ops = {operation1, operation2};
   ds = std::make_shared<MapNode>(ds, ops);
+  ds = std::make_shared<TransferNode>(ds, "queue", "type", 1, true, 10, true);
   compare_dataset(ds);
 }
 
@@ -481,4 +482,20 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTensor) {
   std::stringstream json_ss1;
   json_ss1 << json_obj1;
   EXPECT_EQ(json_ss.str(), json_ss1.str());
+}
+
+// Helper function to get the session id from SESSION_ID env variable
+Status GetSessionFromEnv(session_id_type *session_id);
+
+TEST_F(MindDataTestDeserialize, DISABLED_TestDeserializeCache) {
+  MS_LOG(INFO) << "Doing MindDataTestDeserialize-Cache.";
+  std::string data_dir = "./data/dataset/testCache";
+  std::string usage = "all";
+  session_id_type env_session;
+  ASSERT_TRUE(GetSessionFromEnv(&env_session));
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false, "127.0.0.1", 50052, 1, 1);
+
+  std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
+  std::shared_ptr<DatasetNode> ds = std::make_shared<Cifar10Node>(data_dir, usage, sampler, some_cache);
+  compare_dataset(ds);
 }

@@ -123,6 +123,14 @@ class RepeatNode : public DatasetNode {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
+  /// \brief Function for read dataset operation from json
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[in] ds dataset node constructed
+  /// \param[out] result Deserialized dataset after the operation
+  /// \return Status The status code returned
+  static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
+                          std::shared_ptr<DatasetNode> *result);
+
  protected:
   std::shared_ptr<RepeatOp> op_;                // keep its corresponding run-time op of EpochCtrlNode and RepeatNode
   std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass

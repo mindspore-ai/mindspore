@@ -25,6 +25,9 @@
 
 #include "debug/common.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
+#endif
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
@@ -182,5 +185,28 @@ Status CelebANode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+#ifndef ENABLE_ANDROID
+Status CelebANode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
+                               "Failed to find num_parallel_workers");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("dataset_dir") != json_obj.end(), "Failed to find dataset_dir");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("usage") != json_obj.end(), "Failed to find usage");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("sampler") != json_obj.end(), "Failed to find sampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("decode") != json_obj.end(), "Failed to find decode");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("extensions") != json_obj.end(), "Failed to find extension");
+  std::string dataset_dir = json_obj["dataset_dir"];
+  std::string usage = json_obj["usage"];
+  std::shared_ptr<SamplerObj> sampler;
+  RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
+  bool decode = json_obj["decode"];
+  std::set<std::string> extension = json_obj["extensions"];
+  std::shared_ptr<DatasetCache> cache = nullptr;
+  RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
+  *ds = std::make_shared<CelebANode>(dataset_dir, usage, sampler, decode, extension, cache);
+  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  return Status::OK();
+}
+#endif
 }  // namespace dataset
 }  // namespace mindspore

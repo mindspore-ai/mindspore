@@ -126,6 +126,12 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
+  /// \brief Function to read dataset in json
+  /// \param[in] json_obj The JSON object to be deserialized
+  /// \param[out] ds Deserialized dataset
+  /// \return Status The status code returned
+  static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
+
   /// \brief TFRecord by itself is a non-mappable dataset that does not support sampling.
   ///     However, if a cache operator is injected at some other place higher in the tree, that cache can
   ///     inherit this sampler from the leaf, providing sampling support from the caching layer.
