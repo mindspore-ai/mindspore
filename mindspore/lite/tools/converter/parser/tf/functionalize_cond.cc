@@ -79,7 +79,9 @@ STATUS FunctionalizeCond::BranchSubGraphAddNodes(const FuncGraphPtr &graph, cons
     } else {
       graph->AddNode(node);
     }
-    node->set_func_graph(graph);
+    if (!utils::isa<ValueNodePtr>(node)) {
+      node->set_func_graph(graph);
+    }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
       for (size_t i = 1; i < cnode->inputs().size(); i++) {

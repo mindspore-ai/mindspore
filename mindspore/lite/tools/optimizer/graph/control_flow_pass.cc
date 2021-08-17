@@ -211,7 +211,9 @@ int ControlFlowPass::CreateAfterGraph(const FuncGraphPtr &main_fg, const std::ve
       continue;
     }
     (*after_fg)->AddNode(cur_node);
-    cur_node->set_func_graph(*after_fg);
+    if (!utils::isa<ValueNodePtr>(cur_node)) {
+      cur_node->set_func_graph(*after_fg);
+    }
     if (cur_node == main_fg->output()) {
       (*after_fg)->set_output(cur_node, false);
     }
