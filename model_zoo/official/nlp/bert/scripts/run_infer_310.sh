@@ -23,7 +23,9 @@ exit 1
 fi
 
 get_real_path(){
-    if [ "${1:0:1}" == "/" ]; then
+    if [ -z "$1" ]; then
+        echo ""
+    elif [ "${1:0:1}" == "/" ]; then
         echo "$1"
     else
         echo "$(realpath -m $PWD/$1)"

@@ -654,8 +654,10 @@ The result will be as follows:
 
 - Export on local
 
+We only support export with fine-tuned downstream task model and yaml config file, because the pretrained model is useless in inferences task.
+
 ```shell
-python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [../../*.yaml] --export_ckpt_file [CKPT_PATH] --export_file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 - Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
@@ -686,8 +688,7 @@ python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_nam
 # You will see bert_ner.mindir under {Output file path}.
 ```
 
-The ckpt_file parameter is required,
-`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+The `export_ckpt_file` parameter is required, and `file_format` should be in ["AIR", "MINDIR"]
 
 ### [Inference Process](#contents)
 
@@ -799,4 +800,3 @@ Refer to the [ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/mo
 - **Q: Why the training process failed with error for the shape can not match?**
   **A**: This is usually caused by the config `seq_length` of model can't match the dataset. You could check and modified the `seq_length` in yaml config according to the dataset you used.
   The parameter of model won't change with `seq_length`, the shapes of parameter only depends on model config `max_position_embeddings`.
-
