@@ -38,7 +38,6 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Eval() override;
   int RunImpl(int task_id);
   int InitTmpBuffer();
   int ConfigInputOutput();
@@ -67,6 +66,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
       col_buffer_ = nullptr;
     }
   }
+  int FilterWeight();
   int kernel_unit_ = 0;
   int input_unit_ = 0;
   int output_unit_;

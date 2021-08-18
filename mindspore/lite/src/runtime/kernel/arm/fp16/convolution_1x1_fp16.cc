@@ -84,14 +84,16 @@ int Convolution1x1FP16CPUKernel::MallocWeightBiasData() {
   auto output_channel = weight_tensor->Batch();
 
   size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
-  if (packed_weight_ == nullptr) {
-    packed_weight_ = malloc(size);
+  if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
-      MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
-      return RET_ERROR;
+      packed_weight_ = malloc(size);
+      if (packed_weight_ == nullptr) {
+        MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
+        return RET_ERROR;
+      }
     }
+    memset(reinterpret_cast<char *>(packed_weight_), 0, size);
   }
-  memset(reinterpret_cast<char *>(packed_weight_), 0, size);
 
   if (in_tensors_.size() == kInputSize2) {
     size = UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
@@ -111,7 +113,7 @@ void Convolution1x1FP16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Channel();
   auto output_channel = weight_tensor->Batch();
-  void *weight_origin = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *weight_origin = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
   MS_ASSERT(weight_origin != nullptr);
 #ifdef ENABLE_ARM64
   RowMajor2Col16MajorFp16Opt(static_cast<const float16_t *>(weight_origin),
@@ -132,6 +134,13 @@ int Convolution1x1FP16CPUKernel::Init() {
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
 #endif
+  if (op_parameter_->is_train_session_) {
+    auto weight_tensor = in_tensors_.at(kWeightIndex);
+    auto input_channel = weight_tensor->Channel();
+    auto output_channel = weight_tensor->Batch();
+    size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
+    set_workspace_size(size);
+  }
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Init matmul_param_ failed.";
@@ -288,10 +297,4 @@ int Convolution1x1FP16CPUKernel::Run() {
   return RET_OK;
 }
 
-int Convolution1x1FP16CPUKernel::Eval() {
-  if (IsTrainable()) {
-    is_repack_ = true;
-  }
-  return InnerKernel::Eval();
-}
 }  // namespace mindspore::kernel

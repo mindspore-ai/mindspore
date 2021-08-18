@@ -55,13 +55,15 @@ int DeConvolutionCPUKernel::MallocWeightBiasData() {
   auto kernel_h_ = weight_tensor->Height();
   auto kernel_w_ = weight_tensor->Width();
   int output_aligned_size = UP_ROUND(output_channel, C8NUM);
-  size_t weight_pack_size = input_channel * kernel_w_ * kernel_h_ * output_aligned_size * sizeof(float);
-  packed_weight_ = MallocAlignedData(C32NUM, weight_pack_size);
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "deconv malloc packed_weight_ error!";
-    return RET_ERROR;
+  size_t pack_weight_size = input_channel * kernel_w_ * kernel_h_ * output_aligned_size * sizeof(float);
+  if (!op_parameter_->is_train_session_) {
+    packed_weight_ = MallocAlignedData(C32NUM, pack_weight_size);
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "deconv malloc packed_weight_ error!";
+      return RET_ERROR;
+    }
+    memset(packed_weight_, 0, pack_weight_size);
   }
-  memset(packed_weight_, 0, weight_pack_size);
 
   bias_data_ = MallocAlignedData(C32NUM, output_aligned_size * sizeof(float));
   if (bias_data_ == nullptr) {
@@ -161,6 +163,16 @@ int DeConvolutionCPUKernel::Init() {
 #else
   row_tile_ = C12NUM;
 #endif
+  if (op_parameter_->is_train_session_) {
+    auto weight_tensor = in_tensors_.at(kWeightIndex);
+    auto input_channel = weight_tensor->Batch();
+    auto output_channel = weight_tensor->Channel();
+    auto kernel_h_ = weight_tensor->Height();
+    auto kernel_w_ = weight_tensor->Width();
+    int output_aligned_size = UP_ROUND(output_channel, C8NUM);
+    size_t pack_weight_size = input_channel * kernel_w_ * kernel_h_ * output_aligned_size * sizeof(float);
+    set_workspace_size(pack_weight_size);
+  }
   matmul_param_ = new (std::nothrow) MatMulParameter();
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";

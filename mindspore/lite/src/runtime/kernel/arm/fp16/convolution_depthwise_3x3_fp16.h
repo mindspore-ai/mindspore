@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
 
 #ifdef ENABLE_ARM
 #include <vector>
@@ -37,7 +37,6 @@ class ConvolutionDepthwise3x3Fp16CPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
 
   int Execute(int task_id);
-  int Eval() override;
 
  private:
   void PackWeight() override;
@@ -48,4 +47,4 @@ class ConvolutionDepthwise3x3Fp16CPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 #endif
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DEPTHWISE_3X3_FP16_H_

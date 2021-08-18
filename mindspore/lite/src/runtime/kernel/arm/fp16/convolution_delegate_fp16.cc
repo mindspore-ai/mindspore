@@ -113,7 +113,9 @@ int ConvolutionDelegateFP16CPUKernel::ReSize() {
   }
   // copied weight and bias are not be used anymore,free them.
   FreeCopiedData();
-  return fp16_conv_kernel_->ReSize();
+  auto ret = fp16_conv_kernel_->ReSize();
+  set_workspace_size(fp16_conv_kernel_->workspace_size());
+  return ret;
 }
 
 kernel::InnerKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,

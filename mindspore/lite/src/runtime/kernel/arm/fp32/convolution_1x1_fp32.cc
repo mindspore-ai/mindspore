@@ -117,6 +117,13 @@ int Convolution1x1CPUKernel::Init() {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
+  if (op_parameter_->is_train_session_) {
+    auto filter_tensor = in_tensors_.at(kWeightIndex);
+    auto input_channel = filter_tensor->Channel();
+    auto output_channel = filter_tensor->Batch();
+    int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
+    set_workspace_size(size);
+  }
   int error_code = InitConvWeightBias();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution1x1 init weight and bias failed.";
@@ -253,7 +260,7 @@ void Convolution1x1CPUKernel::PackWeight() {
     return;
   }
 
-  void *origin_weight = IsTrainable() ? filter_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   RowMajor2Col16Major(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
@@ -272,12 +279,14 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
   int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
-  packed_weight_ = malloc(size);
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
-    return RET_ERROR;
+  if (!op_parameter_->is_train_session_) {
+    packed_weight_ = malloc(size);
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
+      return RET_ERROR;
+    }
+    memset(reinterpret_cast<char *>(packed_weight_), 0, size);
   }
-  memset(reinterpret_cast<char *>(packed_weight_), 0, size);
 
   if (in_tensors_.size() == 3) {
     size = UP_ROUND(output_channel, col_tile_) * sizeof(float);
@@ -287,18 +296,6 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
       return RET_ERROR;
     }
     memset(reinterpret_cast<char *>(bias_data_), 0, size);
-  }
-  return RET_OK;
-}
-
-int Convolution1x1CPUKernel::Eval() {
-  auto ret = InnerKernel::Eval();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "eval failed!";
-    return ret;
-  }
-  if (IsTrainable()) {
-    PackWeight();
   }
   return RET_OK;
 }
