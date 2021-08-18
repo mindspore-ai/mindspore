@@ -25,6 +25,7 @@
 #include "include/api/callback/callback.h"
 #include "include/api/metrics/metrics.h"
 #include "src/lite_model.h"
+#include "src/inner_context.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/cxx_api/model/model_impl.h"
 #include "src/cxx_api/converters.h"
@@ -40,7 +41,7 @@
 
 namespace mindspore {
 std::shared_ptr<session::LiteSession> CreateTrainSession(std::shared_ptr<Graph::GraphData> graph_data,
-                                                         std::shared_ptr<TrainCfg> cfg, lite::Context *context) {
+                                                         std::shared_ptr<TrainCfg> cfg, lite::InnerContext *context) {
   bool is_train_session = graph_data->IsTrainModel();
   if (is_train_session) {
     auto model = graph_data->lite_model();

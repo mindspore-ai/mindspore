@@ -650,7 +650,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   return ret;
 }
 
-int LiteSession::Init(const Context *context) {
+int LiteSession::Init(InnerContext *context) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";
@@ -661,12 +661,8 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return RET_NULL_PTR;
   }
-  this->context_ = new (std::nothrow) InnerContext(context);
-  if (this->context_ == nullptr) {
-    MS_LOG(ERROR) << "New Context failed";
-    is_running_.store(false);
-    return RET_MEMORY_FAILED;
-  }
+  this->context_ = context;
+
   auto ret = this->context_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
@@ -964,7 +960,10 @@ session::LiteSession *session::LiteSession::CreateSession(const lite::Context *c
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
-  auto ret = session->Init(context);
+
+  mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
+
+  auto ret = session->Init(inner_context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
     delete session;
@@ -980,48 +979,67 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
-  auto *model = lite::ImportFromBuffer(model_buf, size, true);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model failed";
+  auto ret = lite::LiteSession::CreateSessionByBuf(model_buf, size, session);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init session failed";
     delete session;
     return nullptr;
   }
-  auto ret = session->CompileGraph(model);
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Compile model failed";
-    delete model;
-    delete session;
-    return nullptr;
-  }
-  model->buf = nullptr;
-  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
   return session;
 }
 
 session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
-  size_t model_size;
-  auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
-  if (model_buf == nullptr) {
-    MS_LOG(ERROR) << "Read model file failed";
-    return nullptr;
-  }
   auto *session = session::LiteSession::CreateSession(context);
   if (session == nullptr) {
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
+  auto ret = lite::LiteSession::CreateSessionByPath(model_path, session);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init session failed";
+    delete session;
+    return nullptr;
+  }
+  return session;
+}
+
+int lite::LiteSession::CreateSessionByBuf(const char *model_buf, size_t size, session::LiteSession *session) {
+  auto *model = lite::ImportFromBuffer(model_buf, size, true);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model failed";
+    return RET_ERROR;
+  }
+  auto ret = session->CompileGraph(model);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Compile model failed";
+    delete model;
+    return RET_ERROR;
+  }
+  model->buf = nullptr;
+  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
+  return RET_OK;
+}
+
+int lite::LiteSession::CreateSessionByPath(const std::string &model_path, session::LiteSession *session) {
+  size_t model_size;
+  auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "Read model file failed";
+    return RET_ERROR;
+  }
   auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
-    return nullptr;
+    return RET_ERROR;
   }
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = session->CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
-    return nullptr;
+    return RET_ERROR;
   }
   (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
-  return session;
+  return RET_OK;
 }
+
 }  // namespace mindspore
