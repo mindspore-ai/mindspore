@@ -99,10 +99,11 @@ class AllpassBiquad final : public TensorTransform {
 class AmplitudeToDB final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] stype ['kPower', 'kMagnitude'].
-  /// \param[in] ref_value Calculate db_multiplier.
-  /// \param[in] amin Clamp the input waveform.
-  /// \param[in] top_db Decibels cut-off value.
+  /// \param[in] stype Scale of input tensor, must be one of [ScaleType::kPower, ScaleType::kMagnitude] (Default:
+  ///    ScaleType::kPower).
+  /// \param[in] ref_value Calculate db_multiplier (Default: 1.0).
+  /// \param[in] amin Minimum threshold for input tensor and ref_value (Default: 1e-10). It must be greater than zero.
+  /// \param[in] top_db Decibels cut-off value (Default: 80.0). It must be greater than or equal to zero.
   explicit AmplitudeToDB(ScaleType stype = ScaleType::kPower, float ref_value = 1.0, float amin = 1e-10,
                          float top_db = 80.0);
 
