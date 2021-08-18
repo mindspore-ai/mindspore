@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/sponge/neighbor_list/neighbor_list_update_new_kernel.h"
+#include "backend/kernel_compiler/gpu/sponge/neighbor_list/neighbor_list_update_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,6 +40,6 @@ MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NeighborListUpdateNewGpuKernel, int, float)
+                      NeighborListUpdateGpuKernel, int, float)
 }  // namespace kernel
 }  // namespace mindspore
