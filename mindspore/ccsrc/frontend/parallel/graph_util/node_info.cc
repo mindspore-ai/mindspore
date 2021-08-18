@@ -24,6 +24,7 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {
