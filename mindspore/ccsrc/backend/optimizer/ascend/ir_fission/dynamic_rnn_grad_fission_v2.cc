@@ -518,6 +518,10 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
                  << (kDynamicRNNGradInputNum + 1) << " inputs";
     return nullptr;
   }
+  if (AnfAlgo::IsDynamicShape(node)) {
+    MS_LOG(INFO) << "DynamicRnnGrad is dynamic shape, can not do fission.";
+    return nullptr;
+  }
   std::vector<AnfNodePtr> new_outputs;
   auto lstm_input_grad = AddLSTMInputGradNode(func_graph, dynamic_rnn_grad_cnode, &new_outputs);
 

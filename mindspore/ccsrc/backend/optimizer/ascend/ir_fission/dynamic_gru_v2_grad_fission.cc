@@ -459,7 +459,7 @@ const AnfNodePtr DynamicGRUV2GradFission::Process(const FuncGraphPtr &func_graph
     return nullptr;
   }
   if (AnfAlgo::IsDynamicShape(node)) {
-    MS_LOG(INFO) << "DynamicGRUV2Grad is dynamic shape, can not optimizer.";
+    MS_LOG(INFO) << "DynamicGRUV2Grad is dynamic shape, can not do fission.";
     return nullptr;
   }
 

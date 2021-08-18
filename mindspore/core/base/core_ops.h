@@ -205,6 +205,7 @@ inline const PrimitivePtr kPrimTile = std::make_shared<Primitive>(kTile);
 inline const PrimitivePtr kPrimAddN = std::make_shared<Primitive>("AddN");
 inline const PrimitivePtr kPrimAccumulateNV2 = std::make_shared<Primitive>("AccumulateNV2");
 inline const PrimitivePtr kPrimTransData = std::make_shared<Primitive>("TransData");
+inline const PrimitivePtr kPrimTransDataRNN = std::make_shared<Primitive>("TransDataRNN");
 inline const PrimitivePtr kPrimNMSWithMask = std::make_shared<Primitive>("NMSWithMask");
 inline const PrimitivePtr kPrimPad = std::make_shared<Primitive>("Pad");
 inline const PrimitivePtr kPrimArgMaxWithValue = std::make_shared<Primitive>("ArgMaxWithValue");

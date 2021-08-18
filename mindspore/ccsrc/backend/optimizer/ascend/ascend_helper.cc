@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
+bool NeedInsertTransData(const std::vector<size_t> &origin_shape, const std::string &format) {
+  return kCommonFormatSet.find(format) == kCommonFormatSet.end() &&
+         (origin_shape.size() > 1 || format == kOpFormat_ND_RNN_BIAS);
+}
+
 AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                              const KernelSelectPtr &kernel_select, const std::vector<size_t> &dst_shape) {
   std::vector<AnfNodePtr> trans_inputs;
@@ -50,14 +55,15 @@ AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &i
 
 void SetTransNodeAttr(const CNodePtr &trans_node) {
   MS_EXCEPTION_IF_NULL(trans_node);
-  if (AnfAlgo::GetCNodeName(trans_node) == kTransDataOpName) {
+  auto trans_opname = AnfAlgo::GetCNodeName(trans_node);
+  if (trans_opname == kTransDataOpName || trans_opname == kTransDataRNNOpName) {
     std::string input_format = AnfAlgo::GetInputFormat(trans_node, 0);
     std::string output_format = AnfAlgo::GetOutputFormat(trans_node, 0);
     if (input_format == kOpFormat_DEFAULT) {
-      input_format = kOpFormat_NCHW;
+      input_format = AnfAlgo::GetCNodeName(trans_node) == kTransDataOpName ? kOpFormat_NCHW : kOpFormat_ND;
     }
     if (output_format == kOpFormat_DEFAULT) {
-      output_format = kOpFormat_NCHW;
+      output_format = AnfAlgo::GetCNodeName(trans_node) == kTransDataOpName ? kOpFormat_NCHW : kOpFormat_ND;
     }
     AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(input_format), trans_node);
     AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(output_format), trans_node);
@@ -115,7 +121,7 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
   }
   std::vector<size_t> origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, index);
   std::string dest_format = AnfAlgo::GetInputFormat(node, index);
-  if (kCommonFormatSet.find(dest_format) == kCommonFormatSet.end() && origin_shape.size() > 1) {
+  if (NeedInsertTransData(origin_shape, dest_format)) {
     MS_LOG(DEBUG) << node->DebugString() << "Insert transdata " << AnfAlgo::GetInputFormat(node, index)
                   << " To DefaultFormat , index: " << index;
     auto transdata = AddTransOpNodeToGraph(func_graph, node, kernel_select, index, true);
@@ -136,7 +142,7 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
     MS_LOG(EXCEPTION) << "Got the hw format " << output_format << "when insert the transdata node "
                       << node->DebugString() << " trace: " << trace::DumpSourceLines(node);
   }
-  if (kCommonFormatSet.find(output_format) == kCommonFormatSet.end() && origin_shape.size() > 1) {
+  if (NeedInsertTransData(origin_shape, output_format)) {
     MS_LOG(DEBUG) << "Inserted transdata " << output_format << " to default , index :0";
     return AddTransOpNodeToGraph(func_graph, node, kernel_select, 0, false);
   }
@@ -164,7 +170,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
     }
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);
     std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
-    if (origin_shape.size() > 1 && kCommonFormatSet.find(output_format) == kCommonFormatSet.end()) {
+    if (NeedInsertTransData(origin_shape, output_format)) {
       auto trans_op = AddTransOpNodeToGraph(func_graph, tuple_getitem, kernel_select, 0, false);
       if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, output_idx)) {
         kernel_graph->ReplaceInternalOutput(node, trans_op, output_idx, 0);
@@ -193,11 +199,14 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
                                              : AnfAlgo::GetOutputReshapeType(node, insert_index);
   auto input_node_out_shape = is_insert_input ? AnfAlgo::GetPrevNodeOutputInferShape(node, insert_index)
                                               : AnfAlgo::GetOutputInferShape(input_node, insert_index);
-  bool need_padding = is_insert_input ? trans::IsNeedPadding(dst_format, input_node_out_shape.size())
-                                      : trans::IsNeedPadding(input_format, input_node_out_shape.size());
+  std::string spec_format = is_insert_input ? dst_format : input_format;
+  bool need_padding = trans::IsNeedPadding(spec_format, input_node_out_shape.size());
+  std::string trans_opname = (spec_format == kOpFormat_FRACTAL_ZN_RNN || spec_format == kOpFormat_ND_RNN_BIAS)
+                               ? prim::kPrimTransDataRNN->name()
+                               : prim::kPrimTransData->name();
   if (!need_padding) {
     // don't need padding insert transdata only
-    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::kPrimTransData->name());
+    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, trans_opname);
     trans_node = trans_data;
   } else if (is_insert_input) {
     // if need padding & is input need insert a transdata
@@ -205,15 +214,19 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
     auto padding_shape = trans::PaddingShape(input_node_out_shape, AnfAlgo::GetInputFormat(node, insert_index),
                                              AnfAlgo::GetInputReshapeType(node, insert_index));
     auto reshape_node = CreateReshapeNode(func_graph, input_node, kernel_select, padding_shape);
-    trans_data = NewTransOpNode(func_graph, reshape_node, kernel_select, need_padding, prim::kPrimTransData->name());
+    trans_data = NewTransOpNode(func_graph, reshape_node, kernel_select, need_padding, trans_opname);
     trans_node = trans_data;
     trans_data->set_abstract(input_node->abstract());
   } else {
     // if need padding & is output need insert a transdata
     // node -> transdata[padding shape] -> reshape[ori_shape]
-    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, prim::kPrimTransData->name());
+    trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, trans_opname);
     auto reshape_node = CreateReshapeNode(func_graph, trans_data, kernel_select, input_node_out_shape);
     trans_node = reshape_node;
+  }
+  if (trans_opname == prim::kPrimTransDataRNN->name()) {
+    AnfAlgo::CopyNodeAttr(kAttrHiddenSize, node, trans_data);
+    AnfAlgo::CopyNodeAttr(kAttrInputSize, node, trans_data);
   }
   // refresh the transdata's format to ori format & dst format
   RefreshKernelBuildInfo(input_format, dst_format, trans_data, padding_axis);

@@ -31,7 +31,10 @@
 
 namespace mindspore {
 namespace trans {
+constexpr int64_t kAlign16 = 16;
+
 enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims };
+
 enum Axis5D : int {
   N_ncdhw = 0,
   C_ncdhw,
@@ -66,23 +69,30 @@ struct FormatArgs {
 };
 
 int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index);
+std::vector<int64_t> GetAttrInputAndHiddenSize(const AnfNodePtr &node);
 void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec);
 void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
 bool IsNeedPadding(const std::string &format, const size_t shape_size);
 int64_t GetNodeGroups(const AnfNodePtr &node);
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
-                                       const int64_t groups = 1);
+                                       const int64_t groups = 1,
+                                       const std::vector<int64_t> &input_hidden_size = {kAlign16, kAlign16});
 std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const std::string &format,
-                                        const int64_t groups = 1);
+                                        const int64_t groups = 1,
+                                        const std::vector<int64_t> &input_hidden_size = {kAlign16, kAlign16});
 template <typename T>
 std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string &format, const AnfNodePtr &node,
-                                  const size_t index) {
+                                  const size_t index, bool is_output = true) {
   int64_t groups = 1;
   if (format == kOpFormat_FRAC_Z) {
     groups = GetAttrGroups(node, index);
   }
-  return TransShapeToDevice(shape, format, groups);
+  std::vector<int64_t> input_hidden_size = {kAlign16, kAlign16};
+  if (format == kOpFormat_FRACTAL_ZN_RNN || format == kOpFormat_ND_RNN_BIAS) {
+    input_hidden_size = GetAttrInputAndHiddenSize(node);
+  }
+  return TransShapeToDevice(shape, format, groups, input_hidden_size);
 }
 bool TransDataType(const TypeIdArgs &args, void *result);
 bool TransFormat(const FormatArgs &args, void *result, int64_t groups = 1);

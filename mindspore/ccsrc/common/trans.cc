@@ -626,8 +626,8 @@ std::vector<size_t> FracNZDeviceShape(const std::vector<size_t> &shape) {
     return shape;
   }
   std::vector<size_t> device_shape;
-  if (shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "Format FRACTAL_NZ is not support shape " << shape.size();
+  if (shape.size() < kShape2dDims) {
+    MS_LOG(EXCEPTION) << "Format FRACTAL_NZ don't support shape with " << shape.size() << " dims";
   } else {
     (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
   }
@@ -646,8 +646,8 @@ std::vector<int64_t> FracNZDeviceDynamicShape(const std::vector<int64_t> &shape)
     // For [1] and [1024] shape we can trait it as NZ shape
     return shape;
   }
-  if (shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "Format FRACTAL_NZ is not support shape " << shape.size();
+  if (shape.size() < kShape2dDims) {
+    MS_LOG(EXCEPTION) << "Format FRACTAL_NZ don't support shape with " << shape.size() << " dims";
   } else {
     (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
   }
@@ -695,6 +695,108 @@ std::vector<int64_t> FracNZLSTMDeviceDynamicShape(const std::vector<int64_t> &sh
   device_shape.push_back(kCubeSize);
   return device_shape;
 }
+
+std::vector<size_t> FracZNRNNDeviceShape(const std::vector<size_t> &shape,
+                                         const std::vector<int64_t> &input_hidden_size = {kAlign16, kAlign16}) {
+  if (shape.size() < kShape2dDims) {
+    MS_LOG(EXCEPTION) << "Format FRACTAL_ZN_RNN don't support shape with " << shape.size() << " dims";
+  }
+  size_t input_size = LongToSize(input_hidden_size[0]);
+  size_t hidden_size = LongToSize(input_hidden_size[1]);
+  auto dim_last1 = shape[shape.size() - 1];
+  auto dim_last2 = shape[shape.size() - 2];
+  if (dim_last1 % hidden_size != 0) {
+    MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;
+  }
+  size_t n_num = dim_last1 / hidden_size;
+  const size_t NUM16 = 16;
+  const size_t C0 = kCubeSize;
+
+  std::vector<size_t> device_shape = shape;
+  if (dim_last2 == input_size || dim_last2 == hidden_size) {
+    device_shape[shape.size() - 2] = DivCeil(dim_last2, NUM16);
+  } else if (dim_last2 == input_size + hidden_size) {
+    device_shape[shape.size() - 2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
+  } else {
+    MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid.";
+  }
+  device_shape[shape.size() - 1] = n_num * DivCeil(hidden_size, C0);
+  device_shape.push_back(NUM16);
+  device_shape.push_back(C0);
+  return device_shape;
+}
+
+std::vector<int64_t> FracZNRNNDeviceDynamicShape(const std::vector<int64_t> &shape,
+                                                 const std::vector<int64_t> &input_hidden_size = {kAlign16, kAlign16}) {
+  if (shape.size() < kShape2dDims) {
+    MS_LOG(EXCEPTION) << "Format FRACTAL_NZ_RNN don't support shape with " << shape.size() << " dims";
+  }
+  int64_t input_size = input_hidden_size[0];
+  int64_t hidden_size = input_hidden_size[1];
+  auto dim_last1 = shape[shape.size() - 1];
+  auto dim_last2 = shape[shape.size() - 2];
+  const int64_t NUM16 = 16;
+  const int64_t C0 = SizeToLong(kCubeSize);
+
+  std::vector<int64_t> device_shape = shape;
+  if (dim_last2 == Shape::SHP_ANY) {
+    device_shape[shape.size() - 2] = Shape::SHP_ANY;
+  } else if (dim_last2 == input_size || dim_last2 == hidden_size) {
+    device_shape[shape.size() - 2] = DivCeil(dim_last2, NUM16);
+  } else if (dim_last2 == input_size + hidden_size) {
+    device_shape[shape.size() - 2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
+  } else {
+    MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid.";
+  }
+  if (dim_last1 == Shape::SHP_ANY) {
+    device_shape[shape.size() - 1] = Shape::SHP_ANY;
+  } else {
+    if (dim_last1 % hidden_size != 0) {
+      MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;
+    }
+    int64_t n_num = shape[shape.size() - 1] / hidden_size;
+    device_shape[shape.size() - 1] = n_num * DivCeil(hidden_size, C0);
+  }
+  device_shape.push_back(NUM16);
+  device_shape.push_back(C0);
+  return device_shape;
+}
+
+std::vector<size_t> NDRNNBiasDeviceShape(const std::vector<size_t> &shape, const int64_t hidden_size = 16) {
+  if (shape.empty()) {
+    MS_LOG(EXCEPTION) << "Format ND_RNN_BIAS don't support empty shape.";
+  }
+  size_t hid_size = LongToSize(hidden_size);
+  // cppcheck-suppress *
+  if (shape[shape.size() - 1] % hid_size != 0) {
+    MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hid_size;
+  }
+  size_t n_num = shape[shape.size() - 1] / hid_size;
+  const size_t C0 = kCubeSize;
+  std::vector<size_t> device_shape = shape;
+  device_shape[shape.size() - 1] = n_num * DivCeil(hid_size, C0) * C0;
+  return device_shape;
+}
+
+std::vector<int64_t> NDRNNBiasDeviceDynamicShape(const std::vector<int64_t> &shape, const int64_t hidden_size = 16) {
+  if (shape.empty()) {
+    MS_LOG(EXCEPTION) << "Format ND_RNN_BIAS don't support empty shape.";
+  }
+  const int64_t C0 = SizeToLong(kCubeSize);
+  std::vector<int64_t> device_shape = shape;
+  // cppcheck-suppress *
+  auto dim_last1 = shape[shape.size() - 1];
+  if (dim_last1 == Shape::SHP_ANY) {
+    device_shape[shape.size() - 1] = Shape::SHP_ANY;
+  } else {
+    if (dim_last1 % hidden_size != 0) {
+      MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;
+    }
+    int64_t n_num = shape[shape.size() - 1] / hidden_size;
+    device_shape[shape.size() - 1] = n_num * DivCeil(hidden_size, C0) * C0;
+  }
+  return device_shape;
+}
 }  // namespace
 
 int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index) {
@@ -721,6 +823,22 @@ int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index) {
     return param->fracz_group();
   }
   return 1;
+}
+
+std::vector<int64_t> GetAttrInputAndHiddenSize(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<int64_t> input_hidden_size = {kAlign16, kAlign16};
+  if (!node->isa<CNode>()) {
+    return input_hidden_size;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!AnfAlgo::HasNodeAttr(kAttrHiddenSize, cnode) || !AnfAlgo::HasNodeAttr(kAttrInputSize, cnode)) {
+    MS_LOG(EXCEPTION) << "Node with format FRACTAL_ZN_RNN or ND_RNN_BIAS should have hidden_size or input_size attr.";
+  }
+  input_hidden_size[0] = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrInputSize);
+  input_hidden_size[1] = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrHiddenSize);
+  return input_hidden_size;
 }
 
 bool IsNeedPadding(const std::string &format, const size_t shape_size) {
@@ -820,7 +938,7 @@ void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5
 }
 
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format,
-                                       const int64_t groups) {
+                                       const int64_t groups, const std::vector<int64_t> &input_hidden_size) {
   using DeviceShapeTransfer = std::function<std::vector<size_t>(const std::vector<size_t> &)>;
   const std::map<std::string, DeviceShapeTransfer> device_shape_map{{kOpFormat_NCHW, NchwDeviceShape},
                                                                     {kOpFormat_NHWC, NhwcDeviceShape},
@@ -843,6 +961,12 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
   if (groups > 1 && format == kOpFormat_FRAC_Z) {
     return FracZDeviceShapeWithGroups(shape, groups);
   }
+  if (format == kOpFormat_FRACTAL_ZN_RNN) {
+    return FracZNRNNDeviceShape(shape, input_hidden_size);
+  }
+  if (format == kOpFormat_ND_RNN_BIAS) {
+    return NDRNNBiasDeviceShape(shape, input_hidden_size[1]);
+  }
   auto temp_shape = shape;
   if (kNoPaddingFormatSet.find(format) == kNoPaddingFormatSet.end() && format != kOpFormat_FRACTAL_ZN_LSTM &&
       shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
@@ -860,7 +984,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
 }
 
 std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const std::string &format,
-                                        const int64_t groups) {
+                                        const int64_t groups, const std::vector<int64_t> &input_hidden_size) {
   using DeviceShapeTransfer = std::function<std::vector<int64_t>(const std::vector<int64_t> &)>;
   const std::map<std::string, DeviceShapeTransfer> device_shape_map{
     {kOpFormat_NCHW, NchwDeviceDynamicShape},
@@ -883,6 +1007,12 @@ std::vector<int64_t> TransShapeToDevice(const std::vector<int64_t> &shape, const
   }
   if (groups > 1 && format == kOpFormat_FRAC_Z) {
     return FracZDeviceShapeWithGroups(shape, groups);
+  }
+  if (format == kOpFormat_FRACTAL_ZN_RNN) {
+    return FracZNRNNDeviceDynamicShape(shape, input_hidden_size);
+  }
+  if (format == kOpFormat_ND_RNN_BIAS) {
+    return NDRNNBiasDeviceDynamicShape(shape, input_hidden_size[1]);
   }
   auto temp_shape = shape;
   if (kNoPaddingFormatSet.find(format) == kNoPaddingFormatSet.end() && format != kOpFormat_FRACTAL_ZN_LSTM &&
