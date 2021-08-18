@@ -87,6 +87,18 @@ enum class BorderType {
   kSymmetric = 3  ///< Reflect the values on the edge repeating the last value of edge.
 };
 
+/// \brief Possible fix rotation angle for Rotate Op.
+enum class FixRotationAngle {
+  k0Degree = 1,             ///< Rotate 0 degree.
+  k0DegreeAndMirror = 2,    ///< Rotate 0 degree and apply horizontal flip.
+  k180Degree = 3,           ///< Rotate 180 degree.
+  k180DegreeAndMirror = 4,  ///< Rotate 180 degree and apply horizontal flip.
+  k90DegreeAndMirror = 5,   ///< Rotate 90 degree and apply horizontal flip.
+  k90Degree = 6,            ///< Rotate 90 degree.
+  k270DegreeAndMirror = 7,  ///< Rotate 270 degree and apply horizontal flip.
+  k270Degree = 8,           ///< Rotate 270 degree.
+};
+
 /// \brief Possible options for Image format types in a batch.
 enum class ImageBatchFormat {
   kNHWC = 0,  ///< Indicate the input batch is of NHWC format.

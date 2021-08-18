@@ -59,7 +59,6 @@ Compose::Compose(const std::vector<std::reference_wrapper<TensorTransform>> &tra
 
 std::shared_ptr<TensorOperation> Compose::Parse() { return std::make_shared<ComposeOperation>(data_->transforms_); }
 
-#ifndef ENABLE_ANDROID
 // Constructor to Concatenate
 struct Concatenate::Data {
   explicit Data(int8_t axis, const MSTensor &prepend, const MSTensor &append)
@@ -73,6 +72,7 @@ Concatenate::Concatenate(int8_t axis, const MSTensor &prepend, const MSTensor &a
     : data_(std::make_shared<Data>(axis, prepend, append)) {}
 
 std::shared_ptr<TensorOperation> Concatenate::Parse() {
+#ifndef ENABLE_ANDROID
   std::shared_ptr<Tensor> out_prepend, out_append;
   Status rc = Tensor::CreateFromMSTensor(data_->prepend_, &out_prepend);
   if (rc.IsError()) {
@@ -85,15 +85,17 @@ std::shared_ptr<TensorOperation> Concatenate::Parse() {
     return nullptr;
   }
   return std::make_shared<ConcatenateOperation>(data_->axis_, out_prepend, out_append);
-}
+#else
+  MS_LOG(ERROR) << "Concatenate op is not supported for Android.";
+  return nullptr;
 #endif  // not ENABLE_ANDROID
+}
 
 // Constructor to Duplicate
 Duplicate::Duplicate() {}
 
 std::shared_ptr<TensorOperation> Duplicate::Parse() { return std::make_shared<DuplicateOperation>(); }
 
-#ifndef ENABLE_ANDROID
 // Constructor to Fill
 struct Fill::Data {
   explicit Data(const MSTensor &fill_value) : fill_value_(fill_value) {}
@@ -103,6 +105,7 @@ struct Fill::Data {
 Fill::Fill(const MSTensor &fill_value) : data_(std::make_shared<Data>(fill_value)) {}
 
 std::shared_ptr<TensorOperation> Fill::Parse() {
+#ifndef ENABLE_ANDROID
   std::shared_ptr<Tensor> out_fill_value;
   Status rc = Tensor::CreateFromMSTensor(data_->fill_value_, &out_fill_value);
   if (rc.IsError()) {
@@ -110,6 +113,10 @@ std::shared_ptr<TensorOperation> Fill::Parse() {
     return nullptr;
   }
   return std::make_shared<FillOperation>(out_fill_value);
+#else
+  MS_LOG(ERROR) << "Fill op is not supported for Android.";
+  return nullptr;
+#endif  // not ENABLE_ANDROID
 }
 
 // Constructor to Mask
@@ -125,6 +132,7 @@ Mask::Mask(RelationalOp op, const MSTensor &constant, mindspore::DataType ms_typ
     : data_(std::make_shared<Data>(op, constant, ms_type)) {}
 
 std::shared_ptr<TensorOperation> Mask::Parse() {
+#ifndef ENABLE_ANDROID
   std::shared_ptr<Tensor> out_constant;
   Status rc = Tensor::CreateFromMSTensor(data_->constant_, &out_constant);
   if (rc.IsError()) {
@@ -134,8 +142,11 @@ std::shared_ptr<TensorOperation> Mask::Parse() {
 
   DataType de_type = dataset::MSTypeToDEType(static_cast<TypeId>(data_->ms_type_));
   return std::make_shared<MaskOperation>(data_->op_, out_constant, de_type);
-}
+#else
+  MS_LOG(ERROR) << "Mask op is not supported for Android.";
+  return nullptr;
 #endif  // not ENABLE_ANDROID
+}
 
 // Constructor to OneHot
 struct OneHot::Data {
@@ -147,7 +158,6 @@ OneHot::OneHot(int32_t num_classes) : data_(std::make_shared<Data>(num_classes))
 
 std::shared_ptr<TensorOperation> OneHot::Parse() { return std::make_shared<OneHotOperation>(data_->num_classes_); }
 
-#ifndef ENABLE_ANDROID
 // Constructor to PadEnd
 struct PadEnd::Data {
   explicit Data(const std::vector<dsize_t> &pad_shape, const MSTensor &pad_value)
@@ -160,6 +170,7 @@ PadEnd::PadEnd(const std::vector<dsize_t> &pad_shape, const MSTensor &pad_value)
     : data_(std::make_shared<Data>(pad_shape, pad_value)) {}
 
 std::shared_ptr<TensorOperation> PadEnd::Parse() {
+#ifndef ENABLE_ANDROID
   std::shared_ptr<Tensor> pad_value;
   Status rc = Tensor::CreateFromMSTensor(data_->pad_value_, &pad_value);
   if (rc.IsError()) {
@@ -167,8 +178,11 @@ std::shared_ptr<TensorOperation> PadEnd::Parse() {
     return nullptr;
   }
   return std::make_shared<PadEndOperation>(TensorShape(data_->pad_shape_), pad_value);
-}
+#else
+  MS_LOG(ERROR) << "PadEnd op is not supported for Android.";
+  return nullptr;
 #endif  // not ENABLE_ANDROID
+}
 
 // Constructor to RandomApply.
 struct RandomApply::Data {
@@ -235,7 +249,6 @@ std::shared_ptr<TensorOperation> RandomChoice::Parse() {
   return std::make_shared<RandomChoiceOperation>(data_->transforms_);
 }
 
-#ifndef ENABLE_ANDROID
 // Constructor to Slice
 struct Slice::Data {
   explicit Data(const std::vector<SliceOption> &slice_input) : slice_input_(slice_input) {}
@@ -244,8 +257,14 @@ struct Slice::Data {
 
 Slice::Slice(const std::vector<SliceOption> &slice_input) : data_(std::make_shared<Data>(slice_input)) {}
 
-std::shared_ptr<TensorOperation> Slice::Parse() { return std::make_shared<SliceOperation>(data_->slice_input_); }
+std::shared_ptr<TensorOperation> Slice::Parse() {
+#ifndef ENABLE_ANDROID
+  return std::make_shared<SliceOperation>(data_->slice_input_);
+#else
+  MS_LOG(ERROR) << "Slice op is not supported for Android.";
+  return nullptr;
 #endif  // not ENABLE_ANDROID
+}
 
 // Constructor to TypeCast
 struct TypeCast::Data {

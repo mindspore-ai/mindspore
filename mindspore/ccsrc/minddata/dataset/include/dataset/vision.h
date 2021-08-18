@@ -429,7 +429,7 @@ class RandomCropDecodeResize final : public TensorTransform {
   /// \param[in] ratio Range [min, max) of aspect ratio to be
   ///               cropped (default=(3. / 4., 4. / 3.)).
   /// \param[in] interpolation An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
@@ -614,7 +614,7 @@ class RandomResizedCrop final : public TensorTransform {
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
   ///     (default=(3. / 4., 4. / 3.)).
   /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear).
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
@@ -651,7 +651,7 @@ class RandomResizedCropWithBBox final : public TensorTransform {
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
   ///     (default=(3. / 4., 4. / 3.)).
   /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear).
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
@@ -681,7 +681,7 @@ class RandomRotation final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the starting and ending degrees.
   /// \param[in] resample An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
@@ -854,7 +854,7 @@ class ResizeWithBBox final : public TensorTransform {
   ///     If the size is an integer, smaller edge of the image will be resized to this value with the same image aspect
   ///     ratio. If the size is a sequence of length 2, it should be (height, width).
   /// \param[in] interpolation An enum for the mode of interpolation (default=InterpolationMode::kLinear).
-  ///   - InterpolationMode::kLinear, Interpolation method is linear interpolation.
+  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
   ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
   ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
   ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.

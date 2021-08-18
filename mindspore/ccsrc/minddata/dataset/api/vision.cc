@@ -849,31 +849,41 @@ std::shared_ptr<TensorOperation> ResizePreserveAR::Parse() {
 }
 
 // Rotate Transform Operation.
-#ifdef ENABLE_ANDROID
-Rotate::Rotate() {}
-
-std::shared_ptr<TensorOperation> Rotate::Parse() { return std::make_shared<RotateOperation>(); }
-#else
 struct Rotate::Data {
   Data(const float &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
        const std::vector<uint8_t> &fill_value)
       : degrees_(degrees), interpolation_mode_(resample), expand_(expand), center_(center), fill_value_(fill_value) {}
-  float degrees_;
-  InterpolationMode interpolation_mode_;
-  std::vector<float> center_;
-  bool expand_;
-  std::vector<uint8_t> fill_value_;
+  explicit Data(const FixRotationAngle &angle_id) : angle_id_(angle_id), lite_impl_(true) {}
+  FixRotationAngle angle_id_{FixRotationAngle::k0Degree};
+  bool lite_impl_{false};
+  float degrees_{0};
+  InterpolationMode interpolation_mode_{InterpolationMode::kNearestNeighbour};
+  std::vector<float> center_{{}};
+  bool expand_{false};
+  std::vector<uint8_t> fill_value_{0, 0, 0};
 };
+
+Rotate::Rotate(FixRotationAngle angle_id) : data_(std::make_shared<Data>(angle_id)) {}
 
 Rotate::Rotate(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
                std::vector<uint8_t> fill_value)
     : data_(std::make_shared<Data>(degrees, resample, expand, center, fill_value)) {}
 
 std::shared_ptr<TensorOperation> Rotate::Parse() {
-  return std::make_shared<RotateOperation>(data_->degrees_, data_->interpolation_mode_, data_->expand_, data_->center_,
-                                           data_->fill_value_);
+#ifndef ENABLE_ANDROID
+  if (!data_->lite_impl_) {
+    return std::make_shared<RotateOperation>(data_->degrees_, data_->interpolation_mode_, data_->expand_,
+                                             data_->center_, data_->fill_value_);
+  }
+#else
+  if (data_->lite_impl_) {
+    return std::make_shared<RotateOperation>(data_->angle_id_);
+  }
+#endif  // not ENABLE_ANDROID
+  std::string platform = data_->lite_impl_ ? "Cloud" : "Android";
+  MS_LOG(ERROR) << "This Rotate API is not supported for " + platform + ", use another Rotate API.";
+  return nullptr;
 }
-#endif
 
 #ifndef ENABLE_ANDROID
 // ResizeWithBBox Transform Operation.
@@ -890,6 +900,7 @@ ResizeWithBBox::ResizeWithBBox(std::vector<int32_t> size, InterpolationMode inte
 std::shared_ptr<TensorOperation> ResizeWithBBox::Parse() {
   return std::make_shared<ResizeWithBBoxOperation>(data_->size_, data_->interpolation_);
 }
+#endif  // not ENABLE_ANDROID
 
 // RGB2BGR Transform Operation.
 std::shared_ptr<TensorOperation> RGB2BGR::Parse() { return std::make_shared<RgbToBgrOperation>(); }
@@ -897,6 +908,7 @@ std::shared_ptr<TensorOperation> RGB2BGR::Parse() { return std::make_shared<RgbT
 // RGB2GRAY Transform Operation.
 std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
 
+#ifndef ENABLE_ANDROID
 // RgbaToBgr Transform Operation.
 RGBA2BGR::RGBA2BGR() {}
 

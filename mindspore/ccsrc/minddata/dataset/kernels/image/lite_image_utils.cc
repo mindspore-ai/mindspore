@@ -345,9 +345,6 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
 
-    lite_mat_norm.Init(lite_mat_rgb.width_, lite_mat_rgb.height_, lite_mat_rgb.channel_,
-                       reinterpret_cast<void *>(buffer), GetLiteCVDataType(input->type()));
-
     if (input->type() == DataType::DE_UINT8) {
       LiteMat lite_mat_float;
       // change input to float

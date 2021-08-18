@@ -677,9 +677,6 @@ static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const
     return false;
   }
   if (mean.size() > 0) {
-    if (CheckZero(mean)) {
-      return false;
-    }
     if (mean.size() != channel) {
       return false;
     }
@@ -1527,7 +1524,7 @@ bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> ds
   LiteMat dst(1, 8, M.data_ptr_, LDataType(LDataType::DOUBLE));
 
   GetPerspectiveTransformImpl(src1, src2, dst);
-  dst.ptr<double>(8)[0] = 1;
+  M.ptr<double>(2)[2] = 1;
   return true;
 }
 

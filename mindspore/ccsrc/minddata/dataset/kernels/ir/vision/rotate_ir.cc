@@ -22,7 +22,7 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 // RotateOperation
-RotateOperation::RotateOperation() { rotate_op_ = std::make_shared<RotateOp>(0); }
+RotateOperation::RotateOperation(FixRotationAngle angle) : angle_id_(static_cast<uint64_t>(angle)) {}
 
 RotateOperation::RotateOperation(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
                                  std::vector<uint8_t> fill_value)
@@ -43,6 +43,12 @@ Status RotateOperation::ValidateParams() {
   }
   // fill_value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("Rotate", fill_value_));
+#else
+  if (angle_id_ < 1 || angle_id_ > 8) {
+    std::string err_msg = "Rotate: angle_id must be in range of [1, 8], got: " + std::to_string(angle_id_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
 #endif
   return Status::OK();
 }
@@ -64,6 +70,8 @@ std::shared_ptr<TensorOp> RotateOperation::Build() {
     std::make_shared<RotateOp>(degrees_, interpolation_mode_, expand_, center_, fill_r, fill_g, fill_b);
   return tensor_op;
 #else
+  rotate_op_ = std::make_shared<RotateOp>(0);
+  setAngle(angle_id_);
   return rotate_op_;
 #endif
 }
@@ -99,7 +107,8 @@ Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
 #else
   CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("angle_id") != op_params.end(), "Failed to find angle_id");
   uint64_t angle_id = op_params["angle_id"];
-  std::shared_ptr<RotateOperation> rotate_operation = std::make_shared<vision::RotateOperation>();
+  std::shared_ptr<RotateOperation> rotate_operation =
+    std::make_shared<vision::RotateOperation>(FixRotationAngle::k0Degree);
   rotate_operation.get()->setAngle(angle_id);
   *operation = rotate_operation;
 #endif

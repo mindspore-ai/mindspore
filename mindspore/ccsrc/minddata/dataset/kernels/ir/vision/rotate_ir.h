@@ -37,7 +37,7 @@ constexpr char kRotateOperation[] = "Rotate";
 
 class RotateOperation : public TensorOperation {
  public:
-  RotateOperation();
+  explicit RotateOperation(FixRotationAngle angle);
 
   RotateOperation(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
                   std::vector<uint8_t> fill_value);

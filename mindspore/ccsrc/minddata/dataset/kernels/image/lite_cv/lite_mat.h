@@ -253,6 +253,9 @@ class LiteMat {
 
   template <typename T>
   inline T *ptr(int w) const {
+    if (w >= height_) {
+      return nullptr;
+    }
     if (IsEmpty()) {
       return nullptr;
     }
