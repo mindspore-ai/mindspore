@@ -234,7 +234,7 @@ enum PrimType {
 
 void RegInfer(int prim_type, InferShape func);
 
-#ifdef SUPPORT_MSVC
+#ifdef _MSC_VER
 #define REG_INFER(op, type, func)
 #else
 #define REG_INFER(op, type, func) \

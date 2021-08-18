@@ -14,8 +14,6 @@ function Run_Build_x86() {
   rm -rf ${nnie_code_path}/mindspore/mindspore/lite/tools/converter/nnie/third_party/ms_lite/
   mkdir -p ${nnie_code_path}/mindspore/mindspore/lite/tools/converter/nnie/third_party/ms_lite/ || exit 1
   cp -r ./tools/ ${nnie_code_path}/mindspore/mindspore/lite/tools/converter/nnie/third_party/ms_lite/ || exit 1
-  mkdir -pv ${open_source_ms_path}/mindspore/lite/test/do_test
-  cp ./tools/converter/lib/*.so* ${open_source_ms_path}/mindspore/lite/test/do_test
 
   # compile nnie converter so
   export MSLITE_ENABLE_NNIE=on

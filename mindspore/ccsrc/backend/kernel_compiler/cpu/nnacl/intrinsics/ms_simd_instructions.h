@@ -147,10 +147,10 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;
-  dst[0] = sqrtf(src[0]);
-  dst[1] = sqrtf(src[1]);
-  dst[2] = sqrtf(src[2]);
-  dst[3] = sqrtf(src[3]);
+  MS_F32X4_GETI(dst, 0) = sqrtf(MS_F32X4_GETI(src, 0));
+  MS_F32X4_GETI(dst, 1) = sqrtf(MS_F32X4_GETI(src, 1));
+  MS_F32X4_GETI(dst, 2) = sqrtf(MS_F32X4_GETI(src, 2));
+  MS_F32X4_GETI(dst, 3) = sqrtf(MS_F32X4_GETI(src, 3));
   return dst;
 }
 

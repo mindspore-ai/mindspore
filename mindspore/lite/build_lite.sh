@@ -221,6 +221,14 @@ build_lite() {
         else
           mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         fi
+
+        if [[ "${local_lite_platform}" == "x86_64" ]]; then
+          mkdir -pv ${BASEPATH}/mindspore/lite/test/do_test || true
+          cp ${BASEPATH}/output/tmp/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+          cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+          cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/third_party/libjpeg-turbo/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+        fi
+
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/tmp/
         if [[ "${MSLITE_ENABLE_NNIE}" == "on" ]]; then
           compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
