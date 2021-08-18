@@ -21,7 +21,12 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from model_utils.config import config as default_config
 
+if default_config.export_device_target == "Ascend":
+    mtype = mstype.float16
+else:
+    mtype = mstype.float32
 
 class DenseNoTranpose(nn.Cell):
     """Dense method"""
@@ -38,8 +43,8 @@ class DenseNoTranpose(nn.Cell):
         self.cast = P.Cast()
 
     def construct(self, x):
-        x = self.cast(x, mstype.float16)
-        weight = self.cast(self.weight, mstype.float16)
+        x = self.cast(x, mtype)
+        weight = self.cast(self.weight, mtype)
         output = self.bias_add(self.matmul(x, weight), self.bias)
         return output
 
