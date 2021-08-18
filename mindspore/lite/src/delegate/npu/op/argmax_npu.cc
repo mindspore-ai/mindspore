@@ -31,7 +31,7 @@ int ArgmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
     return RET_ERROR;
   }
 
-  auto axis_const_ = new (std::nothrow) hiai::op::Const(name_ + "_axis");
+  axis_const_ = new (std::nothrow) hiai::op::Const(name_ + "_axis");
   if (axis_const_ == nullptr) {
     MS_LOG(ERROR) << "New weight const failed.";
     return RET_ERROR;
