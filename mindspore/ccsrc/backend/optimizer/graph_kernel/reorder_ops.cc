@@ -31,7 +31,7 @@ namespace {
 bool IsTypeInsensitive(const CNodePtr &node) {
   // Nodes that will change the input data type will not seen as type insensitive nodes.
   static std::unordered_set<PrimitivePtr> type_insensitive_op_list{
-    prim::KPrimTransData, prim::kPrimTranspose, prim::kPrimExpandDims, prim::kPrimReshape,
+    prim::kPrimTransData, prim::kPrimTranspose, prim::kPrimExpandDims, prim::kPrimReshape,
     prim::kPrimSqueeze,   prim::kPrimTile,      prim::kPrimNeg,        prim::kPrimRelu,
     prim::kPrimMaximum,   prim::kPrimMinimum,   prim::kPrimSelect};
 

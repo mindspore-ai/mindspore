@@ -53,7 +53,7 @@ bool TransDataSplit::IsFormatInvaild(const AnfNodePtr &node) const {
 
 const BaseRef TransDataSplit::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
-  return VectorRef({prim::KPrimTransData, X});
+  return VectorRef({prim::kPrimTransData, X});
 }
 
 // transdata cannot support frac_z to nchw need split transdata(frac_z-HWCN) and transpose(HWCN-NCHW)
@@ -75,7 +75,7 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
   if (output_format == kOpFormat_DEFAULT || output_format == kOpFormat_NCHW) {
     // trans input_format to hwcn
     new_transdata_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
-                                        false, prim::KPrimTransData->name());
+                                        false, prim::kPrimTransData->name());
     RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transdata_node, padding_axis);
     // trans hwcn to default_format
     new_transpose_node = NewTransOpNode(func_graph, new_transdata_node, kernel_select_, false,
@@ -93,7 +93,7 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
 
     // trans hwcn to output_format
     new_transdata_node =
-      NewTransOpNode(func_graph, new_transpose_node, kernel_select_, false, prim::KPrimTransData->name());
+      NewTransOpNode(func_graph, new_transpose_node, kernel_select_, false, prim::kPrimTransData->name());
     RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transdata_node, padding_axis);
     new_transdata_node->set_abstract(node->abstract());
     new_replace_node = new_transdata_node;

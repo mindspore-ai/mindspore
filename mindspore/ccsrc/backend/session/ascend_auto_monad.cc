@@ -1735,7 +1735,7 @@ class ExecuteOrderGenerator {
                            return {p.first.first, {p.first.second, p.second.first, p.second.second}};
                          });
     auto validate_ref_parameter = [](AnfNodePtr node) -> AnfNodePtr {
-      if (node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(node, prim::KPrimTransData)) {
+      if (node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(node, prim::kPrimTransData)) {
         auto cnode = node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
         auto first_input = cnode->input(kFirstDataInputIndex);

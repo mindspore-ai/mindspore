@@ -166,7 +166,7 @@ std::vector<size_t> SearchTransDataAndCast(const CNodePtr &cnode) {
   for (size_t i = 1; i < cnode->size(); ++i) {
     auto &input = cnode->input(i);
     if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimCast) ||
-        AnfAlgo::CheckPrimitiveType(input, prim::KPrimTransData) ||
+        AnfAlgo::CheckPrimitiveType(input, prim::kPrimTransData) ||
         AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
       result.emplace_back(i);
     }
