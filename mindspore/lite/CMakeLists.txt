@@ -24,7 +24,7 @@ if(PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPI
     your Clang version:[${CMAKE_CXX_COMPILER_VERSION}] must not be less than 9.0 and please use android nkd r21e!")
 endif()
 
-# Options that can be configured through environment variables or manually
+#Options that can be configured through environment variables or manually
 set(MSLITE_GPU_BACKEND "" CACHE STRING "enable gpu backend, \
     only arm64 support opencl, only x86_64 support tensorrt, opencl/cuda/tensorrt/off")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
@@ -46,7 +46,7 @@ option(MSLITE_CUSTOM_KERNEL_REGISTRY "enable extend kernel registry" on)
 option(MSLITE_MINDRT_USE "enable mindrt use" on)
 option(MSLITE_DELEGATE_USE "enable delegate use" on)
 
-# Option that can be configured through manually
+#Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
 option(ENABLE_MINDRT "if support mindrt" on)
 option(ENABLE_MODEL_OBF "if support model obfuscation" off)
@@ -174,7 +174,7 @@ if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(MSLITE_ENABLE_SSE off)
     set(MSLITE_ENABLE_AVX off)
     set(MSLITE_ENABLE_CONVERTER off)
-    #set for cross-compiling toolchain
+#set for cross - compiling toolchain
     set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)

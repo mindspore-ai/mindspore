@@ -125,6 +125,28 @@ static inline float16x8_t MS_ERFX8_F16(float16x8_t src) {
   return dst;
 }
 
+static inline float16x8_t MS_SQRTFX8_F16(float16x8_t src) {
+  float16x8_t dst;
+  dst[0] = sqrtf(src[0]);
+  dst[1] = sqrtf(src[1]);
+  dst[2] = sqrtf(src[2]);
+  dst[3] = sqrtf(src[3]);
+  dst[4] = sqrtf(src[4]);
+  dst[5] = sqrtf(src[5]);
+  dst[6] = sqrtf(src[6]);
+  dst[7] = sqrtf(src[7]);
+  return dst;
+}
+
+static inline float16x4_t MS_SQRTFX4_F16(float16x4_t src) {
+  float16x4_t dst;
+  dst[0] = sqrtf(src[0]);
+  dst[1] = sqrtf(src[1]);
+  dst[2] = sqrtf(src[2]);
+  dst[3] = sqrtf(src[3]);
+  return dst;
+}
+
 static inline float32x4_t MS_VMLAL_F16(float16x4_t x, float16x4_t dy, float32x4_t sum) {
   float32x4_t x_fp32 = MS_CVT_F32_F16(x);
   float32x4_t dy_fp32 = MS_CVT_F32_F16(dy);

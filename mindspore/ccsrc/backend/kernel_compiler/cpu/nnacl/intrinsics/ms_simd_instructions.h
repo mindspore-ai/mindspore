@@ -145,6 +145,15 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #endif
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
+  MS_FLOAT32X4 dst;
+  dst[0] = sqrtf(src[0]);
+  dst[1] = sqrtf(src[1]);
+  dst[2] = sqrtf(src[2]);
+  dst[3] = sqrtf(src[3]);
+  return dst;
+}
+
 #define LOAD128X8_F32(src, input_ptr, num)               \
   MS_FLOAT32X4 src##1 = MS_LDQ_F32(input_ptr + 0 * num); \
   MS_FLOAT32X4 src##2 = MS_LDQ_F32(input_ptr + 1 * num); \

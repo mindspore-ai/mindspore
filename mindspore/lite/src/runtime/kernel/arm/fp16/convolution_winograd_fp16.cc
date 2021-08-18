@@ -190,6 +190,7 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "AdjustNumberOfThread failed.";
     return ret;
   }
+  conv_param_->out_format_ = out_tensors_[0]->format();
   return RET_OK;
 }
 
