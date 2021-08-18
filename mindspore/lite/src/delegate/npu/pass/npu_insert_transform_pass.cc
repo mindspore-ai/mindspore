@@ -167,8 +167,7 @@ int NPUInsertTransformPass::InsertNode(NPUOp *op, NPUOp *post_op, size_t post_in
   } else {
     // post_op nullptr mean output, we remain graph output tensor name unchanged
     auto graph_output_name = in_tensor.Name();
-    in_tensor.SetTensorName(graph_output_name + "_before_" + name_);
-    nc2nh_tensor->SetTensorName(graph_output_name);
+    nc2nh_tensor->SetTensorName(graph_output_name + "_after_" + name_);
   }
   return RET_OK;
 }

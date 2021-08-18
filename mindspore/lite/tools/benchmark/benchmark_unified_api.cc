@@ -120,7 +120,7 @@ int BenchmarkUnifiedApi::ReadTensorData(std::ifstream &in_file_stream, const std
   if (this->benchmark_data_.find(tensor_name) != this->benchmark_data_.end()) {
     return RET_OK;
   }
-  mindspore::MSTensor tensor = GetMSTensorByNameOrShape(tensor_name, dims);
+  mindspore::MSTensor tensor = ms_model_.GetOutputByTensorName(tensor_name);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
     return RET_ERROR;
@@ -178,10 +178,10 @@ int BenchmarkUnifiedApi::CompareOutput() {
   float total_bias = 0;
   int total_size = 0;
   for (const auto &calib_tensor : benchmark_data_) {
-    std::string node_or_tensor_name = calib_tensor.first;
-    mindspore::MSTensor tensor = GetMSTensorByNameOrShape(node_or_tensor_name, calib_tensor.second->shape);
+    std::string tensor_name = calib_tensor.first;
+    mindspore::MSTensor tensor = ms_model_.GetOutputByTensorName(tensor_name);
     if (tensor == nullptr) {
-      MS_LOG(ERROR) << "Get tensor failed, tensor name: " << node_or_tensor_name;
+      MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
       return RET_ERROR;
     }
     int ret;
@@ -190,7 +190,7 @@ int BenchmarkUnifiedApi::CompareOutput() {
       MS_LOG(ERROR) << "Unsupported  kObjectTypeString:";
       return RET_ERROR;
     } else {
-      ret = CompareDataGetTotalBiasAndSize(node_or_tensor_name, &tensor, &total_bias, &total_size);
+      ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Error in CompareData";
@@ -215,36 +215,6 @@ int BenchmarkUnifiedApi::CompareOutput() {
     return RET_ERROR;
   }
   return RET_OK;
-}
-
-mindspore::MSTensor BenchmarkUnifiedApi::GetMSTensorByNodeShape(const std::vector<size_t> &node_shape) {
-  std::vector<mindspore::MSTensor> match_tensors;
-  std::vector<int64_t> shape_vector = ConverterToInt64Vector<size_t>(node_shape);
-  auto tensors = ms_model_.GetOutputs();
-  for (auto &out_tensor_pair : tensors) {
-    if (out_tensor_pair.Shape() == shape_vector) {
-      match_tensors.emplace_back(out_tensor_pair);
-    }
-  }
-
-  return match_tensors.front();
-}
-
-mindspore::MSTensor BenchmarkUnifiedApi::GetMSTensorByNameOrShape(const std::string &node_or_tensor_name,
-                                                                  const std::vector<size_t> &dims) {
-  mindspore::MSTensor tensor;
-  auto tensors = ms_model_.GetOutputsByNodeName(node_or_tensor_name);
-  if (tensors.empty() || tensors.size() != 1) {
-    MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
-                 << " or node has more than one output tensor, switch to GetOutputByTensorName";
-    tensor = ms_model_.GetOutputByTensorName(node_or_tensor_name);
-    if (tensor == nullptr) {
-      return GetMSTensorByNodeShape(dims);
-    }
-  } else {
-    tensor = tensors.front();
-  }
-  return tensor;
 }
 
 int BenchmarkUnifiedApi::CompareDataGetTotalBiasAndSize(const std::string &name, mindspore::MSTensor *tensor,
