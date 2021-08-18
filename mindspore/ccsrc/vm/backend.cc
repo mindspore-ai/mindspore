@@ -289,14 +289,6 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   return outputs;
 }
 
-void MsBackend::Link(GraphId graph_id) {
-  MS_EXCEPTION_IF_NULL(target_sess_);
-  if (graph_id == kInvalidGraphId) {
-    graph_id = target_sess_->GetFinalRunGraph();
-  }
-  target_sess_->BuildGraph(graph_id);
-}
-
 MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_t device_id) : Backend(name) {
   convert_fn_ = std::bind(&MsBackend::MsConvert, this, std::placeholders::_1, std::placeholders::_2);
   target_sess_ = session::SessionFactory::Get().Create(target);
