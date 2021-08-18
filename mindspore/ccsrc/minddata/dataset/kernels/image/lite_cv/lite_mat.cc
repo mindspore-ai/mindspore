@@ -305,6 +305,7 @@ void *LiteMat::AlignMalloc(unsigned int size) {
   }
   void *p_raw = reinterpret_cast<void *>(malloc(size + length));
   if (p_raw) {
+    release_flag = true;
     void **p_algin = reinterpret_cast<void **>(((size_t)(p_raw) + length) & ~(ALIGN - 1));
     p_algin[-1] = p_raw;
     return p_algin;
@@ -313,8 +314,11 @@ void *LiteMat::AlignMalloc(unsigned int size) {
 }
 
 void LiteMat::AlignFree(void *ptr) {
-  (void)free(reinterpret_cast<void **>(ptr)[-1]);
-  ptr = nullptr;
+  if (release_flag) {
+    (void)free(reinterpret_cast<void **>(ptr)[-1]);
+    ptr = nullptr;
+    release_flag = false;
+  }
 }
 
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }

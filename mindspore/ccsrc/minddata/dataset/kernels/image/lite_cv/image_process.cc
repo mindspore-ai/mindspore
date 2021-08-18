@@ -962,16 +962,23 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
 
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (top < 0 || bottom < 0 || left < 0 || right < 0) {
     return false;
   }
-  if (src.IsEmpty()) {
+  if (src.width_ > std::numeric_limits<int>::max() - left ||
+      src.width_ + left > std::numeric_limits<int>::max() - right) {
+    return false;
+  }
+  if (src.height_ > std::numeric_limits<int>::max() - top ||
+      src.height_ + top > std::numeric_limits<int>::max() - bottom) {
     return false;
   }
   int dst_width = src.width_ + left + right;
   int dst_height = src.height_ + top + bottom;
   if (dst.IsEmpty()) {
     dst.Init(dst_width, dst_height, src.channel_, src.data_type_);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (dst.width_ != dst_width || dst.height_ != dst_height || src.channel_ != dst.channel_) {
     return false;
   } else if (src.data_type_ != dst.data_type_) {
@@ -1544,8 +1551,9 @@ bool GetAffineTransformImpl(LiteMat &src, LiteMat &dst) {
     }
 
     if (std::abs(src.ptr<double>(k)[i]) < DBL_EPSILON * 100) {
-      double x[6] = {0};
-      dst.Init(1, 6, x, LDataType(LDataType::DOUBLE));
+      dst.Init(1, 6, LDataType(LDataType::DOUBLE));
+      (void)memset(dst.data_ptr_, 0, 6 * sizeof(double));
+      RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       return false;
     }
     if (k != i) {

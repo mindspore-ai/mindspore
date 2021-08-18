@@ -304,6 +304,7 @@ class LiteMat {
   LDataType data_type_;
   int *ref_count_;
   size_t steps_[MAX_DIMS];
+  bool release_flag;
 };
 
 /// \brief Calculates the difference between the two images for each element
@@ -314,6 +315,20 @@ bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
 /// \brief Calculates the multiply between the two images for each element
 bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
+
+#define RETURN_FALSE_IF_LITEMAT_EMPTY(_m) \
+  do {                                    \
+    if ((_m).IsEmpty()) {                 \
+      return false;                       \
+    }                                     \
+  } while (false)
+
+#define RETURN_IF_LITEMAT_EMPTY(_m) \
+  do {                              \
+    if ((_m).IsEmpty()) {           \
+      return;                       \
+    }                               \
+  } while (false)
 
 }  // namespace dataset
 }  // namespace mindspore
