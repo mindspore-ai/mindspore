@@ -15,6 +15,7 @@
  */
 
 #include "include/api/model.h"
+#include <mutex>
 #include "include/api/types.h"
 #include "include/api/context.h"
 #include "include/api/callback/callback.h"
@@ -25,14 +26,19 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+std::mutex g_impl_init_lock;
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode) {
-  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
-    return kLiteNullptr;
+    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "Model implement is null.";
+      return kLiteFileError;
+    }
   }
+
   Status ret = impl_->Build(model_data, data_size, model_type, model_context);
   if (ret != kSuccess) {
     return ret;
@@ -42,11 +48,15 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 
 Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
                     const Key &dec_key, const std::string &dec_mode) {
-  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
-    return kLiteNullptr;
+    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "Model implement is null.";
+      return kLiteFileError;
+    }
   }
+
   Status ret = impl_->Build(model_path, model_type, model_context);
   if (ret != kSuccess) {
     return ret;
@@ -57,16 +67,15 @@ Status Model::Build(const std::string &model_path, ModelType model_type, const s
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context,
                     const std::shared_ptr<TrainCfg> &train_cfg) {
   std::stringstream err_msg;
-  if (impl_ != nullptr) {
-    MS_LOG(DEBUG) << "Model has been already built.";
-    return kSuccess;
-  }
-  impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
-    err_msg << "Model implement is null.";
-    MS_LOG(ERROR) << err_msg.str();
-    return Status(kLiteNullptr, err_msg.str());
+    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+    impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "Model implement is null.";
+      return kLiteFileError;
+    }
   }
+
   if (graph.GetGraph() == nullptr) {
     err_msg << "Invalid null graph.";
     MS_LOG(ERROR) << err_msg.str();
@@ -159,6 +168,27 @@ std::vector<MSTensor> Model::GetOutputsByNodeName(const std::vector<char> &node_
     return empty;
   }
   return impl_->GetOutputsByNodeName(CharToString(node_name));
+}
+
+Status Model::LoadConfig(const std::string &config_path) {
+  std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
+  if (impl_ != nullptr) {
+    MS_LOG(ERROR) << "impl_ illegal in LoadConfig.";
+    return kLiteFileError;
+  }
+
+  impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteFileError;
+  }
+
+  auto ret = impl_->LoadConfig(config_path);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "impl_ LoadConfig failed,";
+    return kLiteFileError;
+  }
+  return kSuccess;
 }
 
 Status Model::SetTrainMode(bool train) {

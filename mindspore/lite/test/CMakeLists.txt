@@ -329,6 +329,7 @@ set(TEST_SRC
         ${TEST_CASE_KERNEL_SRC}
         ${TEST_DIR}/main.cc
         ${TEST_DIR}/common/common_test.cc
+        ${TEST_DIR}/st/mix_data_type_test.cc
         ${TEST_DIR}/ut/src/infer_test.cc
         ${TEST_DIR}/ut/src/utils_test.cc
         ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc

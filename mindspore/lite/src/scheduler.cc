@@ -718,6 +718,17 @@ inline void RestoreTensorData(std::map<Tensor *, Tensor *> *restored_origin_tens
 }
 }  // namespace
 
+void Scheduler::ResetByExecutionPlan(std::string node_name, TypeId *data_type) {
+  if (execution_plan_ == nullptr) {
+    return;
+  }
+  auto iter = execution_plan_->find(node_name);
+  if (iter != execution_plan_->end()) {
+    *data_type = iter->second;
+  }
+  return;
+}
+
 int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                              kernel::LiteKernel **kernel) {
@@ -1192,6 +1203,9 @@ kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
   std::vector<Tensor *> outputs;
   MS_ASSERT(src_node != nullptr);
   FindNodeInoutTensors(*src_node, &inputs, &outputs);
+
+  ResetByExecutionPlan(src_node->name_, &prefer_data_type);
+
   auto *kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
   op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   if (kernel == nullptr) {
@@ -1276,7 +1290,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
       kernel = ScheduleNodeToKernel(node, prefer_data_type);
     }
     if (kernel == nullptr || ret != RET_OK) {
-      MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << node->name_
+      MS_LOG(ERROR) << "schedule node return nullptr, name: " << node->name_
                     << ", type: " << GetPrimitiveTypeName(primitive, schema_version_);
       return RET_ERROR;
     }

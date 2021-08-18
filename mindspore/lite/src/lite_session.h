@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <atomic>
 #include "src/lite_kernel.h"
 #include "include/ms_tensor.h"
@@ -76,6 +77,8 @@ class LiteSession : public session::LiteSession {
 
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
              const std::vector<std::vector<int>> &dims) override;
+
+  void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
 
   void set_model(Model *model) { this->model_ = model; }
 
@@ -158,6 +161,7 @@ class LiteSession : public session::LiteSession {
 #endif
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
+  std::map<std::string, TypeId> *execution_plan_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

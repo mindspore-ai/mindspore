@@ -91,3 +91,6 @@ echo 'user set output tensors st test'
 
 echo 'runtime pass'
 ./lite-test --gtest_filter="RuntimePass.*"
+
+echo 'Runtime config file test'
+./lite-test --gtest_filter="MixDataTypeTest.Config1"

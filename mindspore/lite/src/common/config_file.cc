@@ -18,17 +18,16 @@
 
 namespace mindspore {
 namespace lite {
-std::map<std::string, std::string> GetSectionInfoFromConfigFile(const std::string &file,
-                                                                const std::string &section_name) {
-  std::map<std::string, std::string> section_info;
+int GetSectionInfoFromConfigFile(const std::string &file, const std::string &section_name,
+                                 std::map<std::string, std::string> *section_info) {
   if (file.empty()) {
     MS_LOG(ERROR) << "file is nullptr";
-    return section_info;
+    return RET_ERROR;
   }
   auto resolved_path = std::make_unique<char[]>(PATH_MAX);
   if (resolved_path == nullptr) {
     MS_LOG(ERROR) << "new resolved_path failed";
-    return section_info;
+    return RET_ERROR;
   }
 
 #ifdef _WIN32
@@ -38,16 +37,16 @@ std::map<std::string, std::string> GetSectionInfoFromConfigFile(const std::strin
 #endif
   if (real_path == nullptr || strlen(real_path) == 0) {
     MS_LOG(ERROR) << "file path is not valid : " << file;
-    return section_info;
+    return RET_ERROR;
   }
   std::ifstream ifs(resolved_path.get());
   if (!ifs.good()) {
     MS_LOG(ERROR) << "file: " << real_path << " is not exist";
-    return section_info;
+    return RET_ERROR;
   }
   if (!ifs.is_open()) {
     MS_LOG(ERROR) << "file: " << real_path << "open failed";
-    return section_info;
+    return RET_ERROR;
   }
   std::string line;
 
@@ -81,12 +80,41 @@ std::map<std::string, std::string> GetSectionInfoFromConfigFile(const std::strin
       auto value = line.substr(index + 1);
       lite::Trim(&key);
       lite::Trim(&value);
-      section_info.insert(std::make_pair(key, value));
+      section_info->insert(std::make_pair(key, value));
     }
   }
 
   ifs.close();
-  return section_info;
+  return RET_OK;
+}
+
+void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
+                         std::map<std::string, TypeId> *data_type_plan) {
+  for (auto info : *config_infos) {
+    std::string op_name = info.first;
+    std::string value = info.second;
+    if (value[0] == '"') {
+      value = value.substr(1, value.length() - 2);
+    }
+    auto index = value.find(':');
+    if (index == std::string::npos) {
+      continue;
+    }
+    auto data_type_key = value.substr(0, index);
+    auto data_type_value = value.substr(index + 1);
+    if (data_type_key != "data_type") {
+      continue;
+    }
+    TypeId type_id = kTypeUnknown;
+    if (data_type_value == "float32") {
+      type_id = kNumberTypeFloat32;
+    } else if (data_type_value == "float16") {
+      type_id = kNumberTypeFloat16;
+    } else {
+      continue;
+    }
+    data_type_plan->insert(std::make_pair(op_name, type_id));
+  }
 }
 }  // namespace lite
 }  // namespace mindspore

@@ -509,7 +509,8 @@ int LiteSession::CompileGraph(Model *model) {
   InitGraphInputTensors(model);
   InitGraphOutputTensors(model);
   // scheduler kernels
-  Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, delegate_);
+  Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, execution_plan_,
+                      delegate_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {

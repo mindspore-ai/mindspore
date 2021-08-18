@@ -69,6 +69,7 @@ class ModelImpl {
 
   session::LiteSession *CreateLiteSession(lite::InnerContext *context);
 
+  Status LoadConfig(const std::string &config_path);
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();
   MSTensor GetInputByTensorName(const std::string &name);
@@ -106,6 +107,7 @@ class ModelImpl {
   void SetContext(const std::shared_ptr<Context> &context) { context_ = context; }
   void SetConfig(const std::shared_ptr<TrainCfg> cfg) { cfg_ = cfg; }
   Status RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after);
+  std::map<std::string, TypeId> execution_plan_;
 };
 }  // namespace mindspore
 
