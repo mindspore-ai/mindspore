@@ -2837,6 +2837,24 @@ void PynativeExecutor::set_graph_phase(const std::string &graph_phase) {
   grad_executor()->set_graph_phase(graph_phase);
 }
 
+void PynativeExecutor::set_py_exe_path(const py::object &py_exe_path) {
+  if (!py::isinstance<py::str>(py_exe_path)) {
+    MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
+  }
+  auto py_exe_path_s = py::cast<std::string>(py_exe_path);
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
+}
+
+void PynativeExecutor::set_kernel_build_server_dir(const py::object &kernel_build_server_dir) {
+  if (!py::isinstance<py::str>(kernel_build_server_dir)) {
+    MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
+  }
+  auto kernel_build_server_dir_s = py::cast<std::string>(kernel_build_server_dir);
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, kernel_build_server_dir_s);
+}
+
 py::object PynativeExecutor::CheckGraph(const py::object &cell, const py::args &args) {
   return grad_executor()->CheckGraph(cell, args);
 }
@@ -2941,6 +2959,11 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
-                                "Executor set grad flag.");
+                                "Executor set grad flag.")
+                           .def("set_py_exe_path", &PynativeExecutor::set_py_exe_path,
+                                py::arg("py_exe_path") = py::str(""), "set python executable path.")
+                           .def("set_kernel_build_server_dir", &PynativeExecutor::set_kernel_build_server_dir,
+                                py::arg("kernel_build_server_dir") = py::str(""),
+                                "set kernel build server directory path.");
                        }));
 }  // namespace mindspore::pynative

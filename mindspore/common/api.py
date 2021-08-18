@@ -17,11 +17,13 @@
 """Providing interface methods."""
 import types
 import sys
+import os
 from collections import OrderedDict
 from functools import wraps
 
 from mindspore import context
 from mindspore import log as logger
+from mindspore._extends.remote import kernel_build_server
 from .tensor import Tensor as MsTensor
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
@@ -376,6 +378,8 @@ class _PynativeExecutor:
 
     def __init__(self):
         self._executor = PynativeExecutor_.get_instance()
+        self._executor.set_py_exe_path(sys.executable)
+        self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
 
     def new_graph(self, obj, *args, **kwargs):
         self._executor.new_graph(obj, *args, *(kwargs.values()))
@@ -445,6 +449,7 @@ class _Executor:
         self._executor = Executor_.get_instance()
         self.compile_cache = {}
         self._executor.set_py_exe_path(sys.executable)
+        self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
         self.queue_name = ""
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,

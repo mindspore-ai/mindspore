@@ -96,7 +96,9 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
     .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.")
-    .def("set_py_exe_path", &ExecutorPy::PyExePath, py::arg("phase") = py::str(""), "set python executable path.");
+    .def("set_py_exe_path", &ExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""), "set python executable path.")
+    .def("set_kernel_build_server_dir", &ExecutorPy::KernelBuildServerDir,
+         py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 

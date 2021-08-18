@@ -1061,11 +1061,20 @@ void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &ph
 
 void ExecutorPy::PyExePath(const py::object &py_exe_path) {
   if (!py::isinstance<py::str>(py_exe_path)) {
-    MS_LOG(EXCEPTION) << "Failed, phase input is not a str";
+    MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
   }
   auto py_exe_path_s = py::cast<std::string>(py_exe_path);
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
+}
+
+void ExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server_dir) {
+  if (!py::isinstance<py::str>(kernel_build_server_dir)) {
+    MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
+  }
+  auto kernel_build_server_dir_s = py::cast<std::string>(kernel_build_server_dir);
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, kernel_build_server_dir_s);
 }
 
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,

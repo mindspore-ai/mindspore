@@ -353,6 +353,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   void set_grad_flag(bool flag);
   void set_graph_phase(const std::string &graph_phase);
+  void set_py_exe_path(const py::object &py_exe_path);
+  void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
   void GradMsFunction(const py::object &out, const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
