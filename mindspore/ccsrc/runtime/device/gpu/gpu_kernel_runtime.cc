@@ -16,6 +16,7 @@
 #include "runtime/device/gpu/gpu_kernel_runtime.h"
 #include <algorithm>
 #include <map>
+#include "debug/anf_ir_utils.h"
 #include "runtime/device/gpu/gpu_device_address.h"
 #include "runtime/device/gpu/cuda_driver.h"
 #include "runtime/device/gpu/gpu_event.h"
@@ -150,7 +151,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     for (size_t j = 0; j < input_size; ++j) {
       auto input_kernel = kernel->input(j + 1);
       MS_EXCEPTION_IF_NULL(input_kernel);
-      std::string input_kernel_name = input_kernel->fullname_with_scope();
+      std::string input_kernel_name = GetKernelNodeName(input_kernel);
       auto addr = kernel_inputs[j];
       auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
       // For example, this happens with the Depend op
@@ -795,7 +796,8 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   }
   if (!mock) {
     // collect weights and bias for dump mode
-    debugger_->LoadParametersAndConst();
+    auto kernel_graph_ptr = std::make_shared<session::KernelGraph>(*graph);
+    debugger_->LoadParametersAndConst(kernel_graph_ptr);
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
