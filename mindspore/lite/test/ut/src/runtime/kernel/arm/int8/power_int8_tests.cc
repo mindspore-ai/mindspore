@@ -85,6 +85,7 @@ TEST_F(TestPowerInt8, PowerInt8) {
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestPowerInt8, normal) {
@@ -156,5 +157,6 @@ TEST_F(TestPowerInt8, normal) {
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

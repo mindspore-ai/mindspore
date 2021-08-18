@@ -71,6 +71,7 @@ TEST_F(TestL2NormInt8, norm) {
   free(param_.axis_);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestL2NormInt8, norm2) {
@@ -116,5 +117,6 @@ TEST_F(TestL2NormInt8, norm2) {
   free(param_.axis_);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

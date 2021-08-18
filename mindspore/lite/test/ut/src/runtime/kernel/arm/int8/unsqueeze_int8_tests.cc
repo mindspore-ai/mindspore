@@ -92,6 +92,7 @@ TEST_F(TestUnsqueezeInt8, Unsqueeze_1) {
   delete input_tensor1;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 }  // namespace mindspore

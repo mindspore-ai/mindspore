@@ -60,11 +60,11 @@ TEST_F(TestSkipGramFp32, ElTest) {
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  kernel::SkipGramCPUKernel *el =
+  kernel::SkipGramCPUKernel *op =
     new kernel::SkipGramCPUKernel(reinterpret_cast<OpParameter *>(skip_gram_param_), inputs_, outputs_, ctx);
 
-  el->Init();
-  el->Run();
+  op->Init();
+  op->Run();
 
   std::vector<StringPack> output = mindspore::lite::ParseTensorBuffer(outputs_[0]);
   for (unsigned int i = 0; i < output.size(); i++) {
@@ -73,6 +73,13 @@ TEST_F(TestSkipGramFp32, ElTest) {
     }
     printf("\n");
   }
+  for (unsigned int i = 0; i < inputs_.size(); i++) {
+    delete inputs_[i];
+  }
+  for (unsigned int i = 0; i < outputs_.size(); i++) {
+    delete outputs_[i];
+  }
+  delete op;
   delete ctx;
 }
 

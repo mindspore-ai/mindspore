@@ -51,6 +51,7 @@ class TestPadFp32 : public mindspore::CommonTest {
 };
 
 void TestPadFp32::TearDown() {
+  delete kernel_;
   paddings_tensor_.set_data(nullptr);
   in_tensor_.set_data(nullptr);
   out_tensor_.set_data(nullptr);
