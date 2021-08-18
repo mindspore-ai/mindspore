@@ -96,7 +96,7 @@ function Run_Build_arm32() {
     echo "build arm32 for nnie failed"; return 1
   fi
 }
-exit 0
+
 # bashpath should be /home/jenkins/agent-working-dir/workspace/Compile_Lite_ARM32_3516D/
 basepath=$(pwd)
 echo "basepath is ${basepath}"
