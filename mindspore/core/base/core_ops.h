@@ -93,6 +93,7 @@ constexpr auto kDropoutDoMask = "DropoutDoMask";
 constexpr auto kDropout = "Dropout";
 constexpr auto kDropoutGrad = "DropoutGrad";
 constexpr auto kConv2DTranspose = "Conv2DTranspose";
+constexpr auto kRoll = "Roll";
 
 // Here list all primitives used in backend or some special primitives used by core.
 // GetNext
@@ -283,6 +284,7 @@ inline const PrimitivePtr kPrimCTCLossV2Grad = std::make_shared<Primitive>("CTCL
 inline const PrimitivePtr kPrimCTCLoss = std::make_shared<Primitive>(kCTCLoss);
 inline const PrimitivePtr kPrimFullConnection = std::make_shared<Primitive>("FullConnection");
 inline const PrimitivePtr kPrimConv2DTranspose = std::make_shared<Primitive>(kConv2DTranspose);
+inline const PrimitivePtr kPrimRoll = std::make_shared<Primitive>(kRoll);
 inline const PrimitivePtr kPrimGroupConv2DGradInput = std::make_shared<Primitive>("GroupConv2DGradInput");
 inline const PrimitivePtr kPrimBatchNorm = std::make_shared<Primitive>("BatchNorm");
 inline const PrimitivePtr kPrimBatchNormGrad = std::make_shared<Primitive>("BatchNormGrad");
