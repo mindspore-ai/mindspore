@@ -97,3 +97,29 @@ def get_bprop_matrix_set_diag(self):
         return dx, dy, dz
 
     return bprop
+
+
+@bprop_getters.register(inner.DSDMatmul)
+def get_dsd_matmul_bprop(self):
+    def bprop(w1_gm, w2_gm, v_gm, out, dout):
+        d_w1_gm, d_w2_gm, d_v_gm = inner.DSDGrad()(w1_gm, w2_gm, v_gm, out, dout)
+        return d_w1_gm, d_w2_gm, d_v_gm
+
+    return bprop
+
+
+@bprop_getters.register(inner.MatmulDDS)
+def get_bprop(self):
+    """brop of the matmulDDS operator"""
+    def bprop(q, k, local_mask, global_mask, out, d_out):
+        lc, gc = out
+        d_lc, d_gc = d_out
+        dq, dk = inner.MatmulDDSGrad()(q, k, lc, gc, d_lc, d_gc)
+        dk = P.Transpose()(dk, (1, 0, 3, 2))
+        # local_mask = 0
+        # d_local_mask = local_mask
+        # global_mask = 0
+        # d_global_mask = global_mask
+        all_d = (dq, dk, None, None)
+        return all_d
+    return bprop

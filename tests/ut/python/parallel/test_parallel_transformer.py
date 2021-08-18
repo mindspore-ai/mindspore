@@ -22,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 import mindspore.ops as P
 from mindspore.parallel.nn import TransformerEncoder, TransformerDecoder, Transformer, TransformerOpParallelConfig, \
-    VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig
+    VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig, FixedSparseAttention
 from mindspore.nn import Dense as Linear
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay
@@ -351,6 +351,23 @@ def test_vocabembedding_dp_false():
     encoder_input_value = Tensor(np.ones((2, 64)), mstype.int32)
     dataset = Dataset(encoder_input_value)
 
+    model = Model(net)
+    model.train(1, dataset, dataset_sink_mode=False)
+
+
+def _test_sparse_attention_parallel():
+    sparse_attention_config = OpParallelConfig(model_parallel=8)
+    net = FixedSparseAttention(batch_size=2,
+                               seq_length=1024,
+                               size_per_head=64,
+                               num_heads=8,
+                               block_size=64,
+                               parallel_config=sparse_attention_config)
+    q = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    k = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    v = Tensor(np.ones((2, 1024, 512)), mstype.float16)
+    mask = Tensor(np.ones((2, 1024)), mstype.float32)
+    dataset = Dataset(q, k, v, mask)
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
 

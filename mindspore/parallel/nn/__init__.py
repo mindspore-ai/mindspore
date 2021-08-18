@@ -26,3 +26,4 @@ __all__ = []
 __all__.extend(transformer.__all__)
 __all__.extend(loss.__all__)
 __all__.extend(op_parallel_config.__all__)
+__all__.extend(layers.__all__)

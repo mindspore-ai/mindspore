@@ -120,6 +120,7 @@ from .sponge_update_ops import (v0coordinaterefresh, v1coordinaterefresh, v2coor
                                 MDIterationLeapFrogWithMaxVel, MDIterationGradientDescent,
                                 BondForceWithAtomEnergyAndVirial, ConstrainForceCycle)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
+from ._inner_ops import (MatmulDDS, DSDMatmul)
 
 __all__ = [
     'Unique',
