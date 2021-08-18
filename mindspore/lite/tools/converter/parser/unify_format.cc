@@ -173,7 +173,9 @@ STATUS UnifyFormatToNHWC::GetTransNodeFormatType(const CNodePtr &cnode, opt::Tra
   MS_ASSERT(cnode != nullptr && trans_info != nullptr);
   auto prim_node = cnode->input(0);
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_ASSERT(prim != nullptr);
+  if (prim == nullptr) {
+    return RET_OK;
+  }
   auto &specify_nhwc_op_map = opt::GetNHWCOpMap();
   auto &specify_nchw_op_map = opt::GetNCHWOpMap();
   if (fmk_type_ == converter::kFmkTypeTflite) {

@@ -332,9 +332,13 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  if (!RunOptimizerPass(old_graph, {"InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
-    MS_LOG(ERROR) << "Run transpose opt pass failed.";
-    return nullptr;
+  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
+    MS_LOG(WARNING) << "Run infershape opt pass failed.";
+  } else {
+    if (!RunOptimizerPass(old_graph, {"DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "Run transpose opt pass failed.";
+      return nullptr;
+    }
   }
 
   auto reduce_act_pass = std::make_shared<opt::ReduceSameActPass>();
@@ -357,9 +361,13 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     }
   }
 
-  if (!RunOptimizerPass(old_graph, {"InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
-    MS_LOG(ERROR) << "Run transpose opt pass failed.";
-    return nullptr;
+  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
+    MS_LOG(WARNING) << "Run infershape opt pass failed.";
+  } else {
+    if (!RunOptimizerPass(old_graph, {"DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
+      MS_LOG(ERROR) << "Run transpose opt pass failed.";
+      return nullptr;
+    }
   }
 
   if (!RunExternalPass(old_graph, registry::POSITION_END)) {

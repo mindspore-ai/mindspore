@@ -15,6 +15,7 @@
  */
 
 #include "tools/optimizer/graph/infershape_pass.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace opt {
@@ -122,6 +123,10 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
     auto cnode = node->cast<CNodePtr>();
     if (IsSpecialType(cnode)) {
       continue;
+    }
+    if (lite::IsCall(cnode) || lite::IsPartialFusion(node)) {
+      all_op_can_infer = false;
+      return all_op_can_infer;
     }
     if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));

@@ -1056,7 +1056,10 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
     return {};
   }
   FindAllInoutKernels(kernels);
-  auto cur_sub_graph_type = GetKernelSubGraphType(kernels.front(), *context_, true);
+  kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
+  if (!kernels.empty()) {
+    cur_sub_graph_type = GetKernelSubGraphType(kernels.front(), *context_, true);
+  }
   MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
   auto subgraph_kernel = CreateSubGraphKernel(kernels, &in_tensors, &out_tensors, cur_sub_graph_type, *context_);
   if (subgraph_kernel == nullptr) {

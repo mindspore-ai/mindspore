@@ -206,6 +206,12 @@ class LiteModel : public Model {
       return RET_ERROR;
     }
 
+    if (meta_graph.inputIndex() == nullptr || meta_graph.outputIndex() == nullptr ||
+        meta_graph.allTensors() == nullptr) {
+      MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
+      return RET_ERROR;
+    }
+
     // converterInputOutput
     auto in_count = meta_graph.inputIndex()->size();
     for (uint32_t i = 0; i < in_count; ++i) {

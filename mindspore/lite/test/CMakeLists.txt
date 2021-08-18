@@ -293,6 +293,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/import/mindspore_importer.cc
             ${LITE_DIR}/tools/converter/import/primitive_adjust.cc
             ${LITE_DIR}/tools/converter/import/mindir_adjust.cc
+            ${LITE_DIR}/tools/converter/import/mindir_control_flow_adjust.cc
             )
 endif()
 ### train

@@ -22,6 +22,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/primitive_adjust.h"
 #include "tools/converter/import/mindir_adjust.h"
+#include "tools/converter/import/mindir_control_flow_adjust.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/unify_format.h"
@@ -44,7 +45,14 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
   mindir_adjust_pass->SetQuantType(flag.quantType);
   mindir_adjust_pass->SetTrainFlag(flag.trainModel);
   if (!mindir_adjust_pass->Run(func_graph)) {
-    MS_LOG(ERROR) << "mindir adjust failed.";
+    MS_LOG(ERROR) << "MindIr adjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+  auto mindir_control_flow_adjust = std::make_shared<MindIRControlFlowAdjust>();
+  mindir_control_flow_adjust->SetFmkType(flag.fmk);
+  if (!mindir_control_flow_adjust->Run(func_graph)) {
+    MS_LOG(ERROR) << "MindIR control flow adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }

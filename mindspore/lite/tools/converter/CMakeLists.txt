@@ -43,6 +43,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindspore_importer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_control_flow_adjust.cc
 
         ../optimizer/common/node_pass_extends.cc
         ../optimizer/common/pass_manager_extends.cc
