@@ -22,6 +22,7 @@ import time
 import threading
 from collections import namedtuple
 from types import FunctionType
+
 from mindspore import log as logger
 from mindspore._c_expression import MSContext, ms_ctx_param
 from mindspore._checkparam import args_type_check, Validator
@@ -369,7 +370,7 @@ def set_auto_parallel_context(**kwargs):
     gradients_mean               auto_parallel_search_mode
     parallel_mode                strategy_ckpt_load_file
     all_reduce_fusion_config     strategy_ckpt_save_file
-    enable_parallel_optimizer    full_batch
+    enable_parallel_optimizer    dataset_strategy
                \                 pipeline_stages
                \                 grad_accumulation_step
     ===========================  ===========================
@@ -379,9 +380,8 @@ def set_auto_parallel_context(**kwargs):
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
         gradients_mean (bool): Whether to perform mean operator after allreduce of gradients.
                      "stand_alone" do not support gradients_mean. Default: False.
-        gradient_fp32_sync (bool): Run allreduce of gradients in fp32.
-                     "stand_alone", "data_parallel" and "hybrid_parallel" do not support
-                     gradient_fp32_sync. Default: True.
+        gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
+                     and "hybrid_parallel" do not support gradient_fp32_sync. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
                      "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
 
@@ -391,8 +391,7 @@ def set_auto_parallel_context(**kwargs):
 
                      - hybrid_parallel: Achieves data parallelism and model parallelism manually.
 
-                     - semi_auto_parallel: Achieves data parallelism and model parallelism by
-                       setting parallel strategies.
+                     - semi_auto_parallel: Achieves data and model parallelism by setting parallel strategies.
 
                      - auto_parallel: Achieving parallelism automatically.
         auto_parallel_search_mode (str): There are two kinds of shard strategy search modes, "recursive_programming"
@@ -410,17 +409,21 @@ def set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
-                       should be set as True. Default: False.
+                       should be set as True. Default: False. The interface is not be recommended currently,
+                       it is better using 'dataset_strategy' to replace it.
+        dataset_strategy Union[str, tuple]: Dataset sharding strategy. Default: "data_parallel".
+                       dataset_strategy="data_parallel" is equal to full_batch=False, dataset_strategy="full_batch" is
+                       equal to full_batch=True. For dataset load into net by model parallel strategy likes
+                       ds_stra ((1, 8), (1, 8)), it requires using set_auto_parallel_context(dataset_strategy=ds_stra).
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
                        parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
                        `Lamb` and `AdamWeightDecay` in Ascend . Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
-        pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
-                        the devices are distributed alone the pipeline. The total devices will be divided into
-                        'pipeline_stags' stages. Currently this could only be used when
-                        parallel mode semi_auto_parallel is enabled. Default: 1.
+        pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
+                         distributed alone the pipeline. The total devices will be divided into 'pipeline_stags' stages.
+                        Currently this could only be used when parallel mode semi_auto_parallel is enabled. Default: 1.
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
                         This should be a positive int. Default: 1.
 
@@ -437,13 +440,12 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
         >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
-        >>> context.set_auto_parallel_context(full_batch=True)
+        >>> context.set_auto_parallel_context(dataset_strategy=((1, 8), (1, 8)))
         >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
         >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> context.set_auto_parallel_context(pipeline_stages=2)
     """
     _set_auto_parallel_context(**kwargs)
-
 
 def get_auto_parallel_context(attr_key):
     """
