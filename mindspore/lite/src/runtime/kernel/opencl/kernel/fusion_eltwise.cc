@@ -181,7 +181,11 @@ int FusionEltwiseOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  InitWeights();
+  ret = InitWeights();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitWeights failed.";
+    return ret;
+  }
   SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";

@@ -41,6 +41,7 @@ int PReluOpenCLKernel::InitWeights() {
     } else {
       weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data_c());
     }
+    MS_ASSERT(weight_scalar_);
   } else {
     int C_ = weight_tensor->ElementsNum();
     auto sizeof_FLT = enable_fp16_ ? sizeof(float16_t) : sizeof(float);

@@ -115,7 +115,9 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
 
   if (type() == PrimitiveType_SliceFusion) {
     auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+    MS_ASSERT(begin);
     auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+    MS_ASSERT(size);
     Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
     Broadcast2GpuShape(size_.s, size, input_info.NDim, -1);
     for (int i = 0; i < 4; ++i) {
@@ -137,8 +139,11 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
     }
   } else {
     auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+    MS_ASSERT(begin);
     auto *end = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+    MS_ASSERT(end);
     auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(3)->data_c());
+    MS_ASSERT(stride);
     cl_int4 end_ = input_shape_;
     Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
     Broadcast2GpuShape(end_.s, end, input_info.NDim);

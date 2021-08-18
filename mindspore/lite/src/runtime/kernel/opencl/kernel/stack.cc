@@ -32,10 +32,12 @@ int StackOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   ImageSize img_size;
   auto dst_data = out_tensors_[0]->data_c();
+  MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
   for (int i = 0; i < in_tensors_.size(); i++) {
     auto src_data = in_tensors_[i]->data_c();
+    MS_ASSERT(src_data);
     if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
       MS_LOG(ERROR) << "GetImageSize failed.";
       return RET_ERROR;
@@ -43,7 +45,10 @@ int StackOpenCLKernel::RunAxis0() {
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
     cl::Image2D *input_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-    ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin, region);
+    if (ocl_runtime_->GetDefaultCommandQueue()->enqueueCopyImage(*input_image, *out_image, src_origin, dst_origin,
+                                                                 region) != CL_SUCCESS) {
+      MS_LOG(WARNING) << "enqueueCopyImage failed.";
+    }
     dst_origin[1] += region[1];
   }
   return RET_OK;
