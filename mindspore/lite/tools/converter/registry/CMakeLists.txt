@@ -16,8 +16,7 @@ set(REG_SRC ${CONVERT_REG_SRC}
         ${CORE_DIR}/utils/log_adapter.cc
         ${CORE_DIR}/utils/status.cc
         ${CORE_DIR}/gvar/log_adapter_common.cc
-        ${CORE_DIR}/gvar/logging_level.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../dump_graph.cc)
+        ${CORE_DIR}/gvar/logging_level.cc)
 set_property(SOURCE ${REG_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(mslite_converter_plugin SHARED ${REG_SRC})
 target_link_libraries(mslite_converter_plugin mindspore::glog)

@@ -18,10 +18,11 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H
 
 #include "tools/converter/converter_flags.h"
+#include "ir/func_graph.h"
 
 namespace mindspore {
 namespace lite {
-void ExportModelInit(converter::Flags *flag);
+STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags);
 }  // namespace lite
 }  // namespace mindspore
 

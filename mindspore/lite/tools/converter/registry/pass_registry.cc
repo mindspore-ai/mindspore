@@ -39,9 +39,9 @@ void RegPass(const std::string &pass_name, const opt::PassPtr &pass) {
 
 PassRegistry::PassRegistry(const std::string &pass_name, const opt::PassPtr &pass) { RegPass(pass_name, pass); }
 
-PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &assigned) {
+PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &names) {
   std::unique_lock<std::mutex> lock(pass_mutex);
-  external_assigned_passes[position] = assigned;
+  external_assigned_passes[position] = names;
 }
 
 std::vector<std::string> PassRegistry::GetOuterScheduleTask(PassPosition position) {

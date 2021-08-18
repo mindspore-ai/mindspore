@@ -48,8 +48,8 @@ class MS_API PassRegistry {
   /// \brief Constructor of PassRegistry to assign which passes are required for external extension.
   ///
   /// \param[in] position Define the place where assigned passes will run.
-  /// \param[in] assigned Define the names of the passes.
-  PassRegistry(PassPosition position, const std::vector<std::string> &assigned);
+  /// \param[in] names Define the names of the passes.
+  PassRegistry(PassPosition position, const std::vector<std::string> &names);
 
   /// \brief Destructor of PassRegistrar.
   ~PassRegistry() = default;
@@ -79,9 +79,8 @@ class MS_API PassRegistry {
 /// \brief Defined assigning macro to assign Passes, which called by user directly.
 ///
 /// \param[in] position Define the place where assigned passes will run.
-/// \param[in] assigned Define the names of the passes.
-#define REG_SCHEDULED_PASS(position, assigned) \
-  static mindspore::registry::PassRegistry g_##position(position, assigned);
+/// \param[in] names Define the names of the passes.
+#define REG_SCHEDULED_PASS(position, names) static mindspore::registry::PassRegistry g_##position(position, names);
 }  // namespace registry
 }  // namespace mindspore
 
