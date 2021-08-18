@@ -49,7 +49,10 @@ void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<T
     transpose_param_tensor = nullptr;
 
     Tensor *nwhc_tensor = c4_kernel->out_tensors().front();
+    std::vector<int> nhwc_shape = {nwhc_tensor->Batch(), nwhc_tensor->Height(), nwhc_tensor->Width(),
+                                   nwhc_tensor->Channel()};
     nwhc_tensor->set_format(NHWC);
+    nwhc_tensor->set_shape(nhwc_shape);
     for (auto end : end_kernels) {
       end->set_in_tensor(nwhc_tensor, 0);
     }

@@ -122,6 +122,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/common/context_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
+        ${LITE_DIR}/src/common/config_file.cc
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/dynamic_library_loader.cc
         ${LITE_DIR}/src/common/string_util.cc
@@ -336,6 +337,8 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/registry/registry_test.cc
         ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
         ${TEST_DIR}/st/multiple_device_test.cc
+        ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc
+        ${TEST_DIR}/st/mix_data_type_test.cc
         )
 
 if(MSLITE_ENABLE_CONVERTER)
