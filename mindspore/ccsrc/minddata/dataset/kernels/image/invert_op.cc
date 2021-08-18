@@ -18,7 +18,6 @@
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/util/status.h"
 
-
 namespace mindspore {
 namespace dataset {
 
