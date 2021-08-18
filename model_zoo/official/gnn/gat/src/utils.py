@@ -18,6 +18,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 
@@ -149,8 +150,7 @@ class TrainOneStepCell(nn.Cell):
         loss = self.network(feature, biases)
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(feature, biases, sens)
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))
 
 
 class TrainGAT(nn.Cell):
