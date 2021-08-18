@@ -36,7 +36,7 @@ class LoopCountActor : public DebugAwareActor {
  public:
   LoopCountActor(const std::string &name, size_t loop_count, const AID &memory_manager_aid, const AID *debug_aid,
                  const AID *recorder_aid)
-      : DebugAwareActor(name, recorder_aid, memory_manager_aid, debug_aid),
+      : DebugAwareActor(name, KernelTransformType::kLoopCountActor, recorder_aid, memory_manager_aid, debug_aid),
         loop_count_(loop_count),
         current_count_(0),
         total_running_count_(0) {}

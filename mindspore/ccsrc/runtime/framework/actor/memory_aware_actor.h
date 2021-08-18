@@ -27,8 +27,9 @@ namespace runtime {
 // The actor represents a set of common memory related operations of actor.
 class MemoryAwareActor : public AbstractActor {
  public:
-  explicit MemoryAwareActor(const std::string &name, const AID *recorder_aid, const AID &memory_manager_aid)
-      : AbstractActor(name, recorder_aid), memory_manager_aid_(memory_manager_aid) {}
+  explicit MemoryAwareActor(const std::string &name, KernelTransformType type, const AID *recorder_aid,
+                            const AID &memory_manager_aid)
+      : AbstractActor(name, type, recorder_aid), memory_manager_aid_(memory_manager_aid) {}
   virtual ~MemoryAwareActor() = default;
 
   virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {}

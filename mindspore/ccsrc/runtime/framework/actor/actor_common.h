@@ -43,6 +43,19 @@ enum class GraphExecutionStrategy {
   kStep       // The actor running need be triggered by control in addition.
 };
 
+enum class KernelTransformType {
+  kUnknown,
+  kDeviceDataSourceActor,
+  kHostDataSourceActor,
+  kKernelActor,
+  kCopyActor,
+  kLoopCountActor,
+  kOutputActor,
+  kDeviceTensorStore,
+  // Internal parameter is the output of previous kernel graph which is related to the input of next kernel graph.
+  kInternalParameter
+};
+
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
   {                                                            \
     MS_LOG(ERROR) << message;                                  \
@@ -69,6 +82,12 @@ enum class GraphExecutionStrategy {
 void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num);
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
+
+// Host parameters are parameters of root funcgraph, in control flow, only the parameters of the root funcgraph are
+// in the host data source.
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr,
+                        const std::vector<AnfNodePtr> &host_parameters = {},
+                        GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
 bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
