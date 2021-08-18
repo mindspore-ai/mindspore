@@ -3,37 +3,16 @@ project(Lite-java)
 
 set(BUILD_LITE "on")
 
-set(CMAKE_SKIP_RPATH TRUE)
-set(CMAKE_SKIP_BUILD_RPATH TRUE)
-set(CMAKE_SKIP_INSTALL_RPATH TRUE)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/secure_option.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/compile_link_option.cmake)
+
+if(TARGET_HIMIX200)
+    set(CMAKE_CXX_FLAGS "-Wno-error=maybe-uninitialized ${CMAKE_CXX_FLAGS}")
+endif()
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(PLATFORM_ARM "on")
     add_compile_definitions(PLATFORM_ARM)
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDebug -g")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDebug -g")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
-else()
-    ## enable for binscope for release
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
-    -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
-    -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
-    if(TARGET_HIMIX200)
-        set(CMAKE_CXX_FLAGS "-Wno-error=maybe-uninitialized ${CMAKE_CXX_FLAGS}")
-    endif()
-    if(NOT WIN32)
-        set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack -s ${CMAKE_SHARED_LINKER_FLAGS}")
-        set(CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro,-z,now -Wl,-z,noexecstack -s -pie ${CMAKE_EXE_LINKER_FLAGS}")
-        if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-            string(REPLACE "-s " "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
-            string(REPLACE "-s " "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
-        endif()
-    endif()
 endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
