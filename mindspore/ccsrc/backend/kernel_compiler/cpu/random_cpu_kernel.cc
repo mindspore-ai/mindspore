@@ -99,7 +99,7 @@ void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "Expect output number 1, actual got output number " << outputs.size();
   }
   // Init output address.
-  auto output = reinterpret_cast<int *>(outputs[0]->addr);
+  auto output = reinterpret_cast<float *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output);
 
   // Init sample number.
