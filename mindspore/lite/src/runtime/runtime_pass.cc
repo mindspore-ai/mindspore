@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_RUNTIME_PASS
 #include "src/runtime/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
 
@@ -173,4 +172,3 @@ void Nc4hw4Pass(const InnerContext *context, std::vector<kernel::LiteKernel *> *
   }
 }
 }  // namespace mindspore::lite
-#endif

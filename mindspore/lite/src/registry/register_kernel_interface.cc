@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace registry {
 Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
@@ -33,7 +33,7 @@ Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, Ke
 
 Status RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
                                           KernelInterfaceCreator creator) {
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
@@ -43,7 +43,7 @@ Status RegisterKernelInterface::CustomReg(const std::string &provider, const std
 
 std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(
   const std::string &provider, const schema::Primitive *primitive) {
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;

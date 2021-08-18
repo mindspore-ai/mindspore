@@ -24,12 +24,10 @@
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/winograd_utils.h"
+#include "src/scheduler.h"
 #include "nnacl/pooling_parameter.h"
 #include "include/model.h"
-#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
-#include "nnacl/fp32/conv_depthwise_fp32.h"
-#endif
+#include "nnacl/base/conv_common_base.h"
 
 namespace mindspore::lite {
 size_t CommConvMul(std::vector<int> weight_shape, std::vector<int> output_shape) {

@@ -26,6 +26,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/node_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/lite_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/protobuf_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/func_graph_subgraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
@@ -134,6 +135,7 @@ set(LITE_SRC
         ${SRC_DIR}/common/context_util.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/string_util.cc
+        ${SRC_DIR}/common/lite_utils.cc
         ${SRC_DIR}/common/prim_util.cc
         ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/runtime/inner_allocator.cc

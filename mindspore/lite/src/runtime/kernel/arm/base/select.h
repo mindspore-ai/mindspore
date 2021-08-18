@@ -19,7 +19,9 @@
 #include <vector>
 #include "src/runtime/kernel/arm/base/carry_data.h"
 #include "src/inner_kernel.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
+#endif
 
 namespace mindspore::kernel {
 class SelectCPUKernel : public CarryDataKernel {

@@ -35,7 +35,7 @@
 #include "include/api/kernel.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/inner_kernel.h"
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
 #endif
 
@@ -49,7 +49,7 @@ struct KernelKey {
   int type = 0;
   std::string kernel_arch;
   std::string provider{kBuiltin};
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
   std::shared_ptr<Delegate> delegate = nullptr;
 #endif
   bool operator<(const KernelKey &dst) const {

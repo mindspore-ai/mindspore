@@ -27,7 +27,9 @@
 #include "async/future.h"
 #include "src/sub_graph_kernel.h"
 #include "src/cpu_info.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
+#endif
 
 namespace mindspore::lite {
 
@@ -101,7 +103,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   int CastInputData(Tensor *dst_tensor, Tensor *src_tensor);
   bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
   int CastTensorInputData(Tensor *dst_tensor, Tensor *src_tensor);
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   void MoveTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
   int CastTensorListInputData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
@@ -114,7 +116,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #endif
 };
 
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 class LiteSwitchOpActor : public LiteOpActor {
  public:
   explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}

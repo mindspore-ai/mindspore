@@ -43,14 +43,13 @@ option(MSLITE_CONTROLFLOW_TENSORLIST "enable control and tensorlist" on)
 option(MSLITE_AUTO_PARALLEL "enable automatic parallelism" on)
 option(MSLITE_WEIGHT_DECODE "enable weight decode" on)
 option(MSLITE_CUSTOM_KERNEL_REGISTRY "enable extend kernel registry" on)
-option(MSLITE_MINDRT_USE "enable mindrt use" on)
+option(MSLITE_ENABLE_MINDRT "enable mindrt use" on)
 option(MSLITE_DELEGATE_USE "enable delegate use" on)
+option(MSLITE_ENABLE_V0 "support v0 schema" on)
 
 # Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
-option(ENABLE_MINDRT "if support mindrt" on)
 option(ENABLE_MODEL_OBF "if support model obfuscation" off)
-option(ENABLE_V0 "support v0 schema" on)
 set(BUILD_MINDDATA "lite_cv" CACHE STRING "off, lite, lite_cv, wrapper or full")
 
 if(APPLE)
@@ -112,35 +111,11 @@ endif()
 if(DEFINED ENV{MSLITE_CUSTOM_KERNEL_REGISTRY})
     set(MSLITE_CUSTOM_KERNEL_REGISTRY $ENV{MSLITE_CUSTOM_KERNEL_REGISTRY})
 endif()
-if(DEFINED ENV{MSLITE_MINDRT_USE})
-    set(MSLITE_MINDRT_USE $ENV{MSLITE_MINDRT_USE})
+if(DEFINED ENV{MSLITE_ENABLE_MINDRT})
+    set(MSLITE_ENABLE_MINDRT $ENV{MSLITE_ENABLE_MINDRT})
 endif()
 if(DEFINED ENV{MSLITE_DELEGATE_USE})
     set(MSLITE_DELEGATE_USE $ENV{MSLITE_DELEGATE_USE})
-endif()
-
-set(ENABLE_MINDRT $ENV{MSLITE_MINDRT_USE})
-
-if(MSLITE_STRING_KERNEL)
-    add_compile_definitions(ENABLE_STRING_KERNEL)
-endif()
-if(MSLITE_CONTROLFLOW_TENSORLIST)
-    add_compile_definitions(ENABLE_CONTROLFLOW_TENSORLIST)
-endif()
-if(MSLITE_AUTO_PARALLEL)
-    add_compile_definitions(ENABLE_AUTO_PARALLEL)
-endif()
-if(MSLITE_WEIGHT_DECODE)
-    add_compile_definitions(ENABLE_WEIGHT_DECODE)
-endif()
-if(MSLITE_CUSTOM_KERNEL_REGISTRY)
-    add_compile_definitions(ENABLE_CUSTOM_KERNEL_REGISTRY)
-endif()
-if(MSLITE_ENABLE_RUNTIME_PASS)
-    add_compile_definitions(ENABLE_RUNTIME_PASS)
-endif()
-if(MSLITE_DELEGATE_USE)
-    add_compile_definitions(ENABLE_DELEGATE_USE)
 endif()
 
 if(PLATFORM_ARM64)
@@ -200,11 +175,22 @@ if(MSLITE_ENABLE_NPU)
 endif()
 
 if(TARGET_HIMIX200 OR TARGET_OHOS_LITE)
-  set(ENABLE_MINDRT off)
+  set(MSLITE_ENABLE_MINDRT off)
 endif()
 
 if(MSVC)
   set(MSLITE_ENABLE_CONVERTER off)
+endif()
+
+if(MSLITE_ENABLE_CONVERTER AND (
+        NOT MSLITE_ENABLE_MINDRT
+        OR NOT MSLITE_STRING_KERNEL
+        OR NOT MSLITE_CONTROLFLOW_TENSORLIST
+        OR NOT MSLITE_WEIGHT_DECODE
+        OR NOT MSLITE_CUSTOM_KERNEL_REGISTRY))
+    message(FATAL_ERROR "If one of 'MSLITE_ENABLE_MINDRT MSLITE_STRING_KERNEL "
+            "MSLITE_CONTROLFLOW_TENSORLIST MSLITE_WEIGHT_DECODE MSLITE_CUSTOM_KERNEL_REGISTRY'"
+            "is configured as off, MSLITE_ENABLE_CONVERTER must also be configured as off")
 endif()
 
 message(STATUS "************MindSpore Lite Build Option:************")
@@ -223,8 +209,8 @@ message(STATUS "\tMSLITE_CONTROLFLOW_TENSORLIST = \t${MSLITE_CONTROLFLOW_TENSORL
 message(STATUS "\tMSLITE_AUTO_PARALLEL = \t${MSLITE_AUTO_PARALLEL}")
 message(STATUS "\tMSLITE_WEIGHT_DECODE = \t${MSLITE_WEIGHT_DECODE}")
 message(STATUS "\tMSLITE_CUSTOM_KERNEL_REGISTRY = \t${MSLITE_CUSTOM_KERNEL_REGISTRY}")
-message(STATUS "\tENABLE_MINDRT = \t${ENABLE_MINDRT}")
-message(STATUS "\tENABLE_V0 = \t${ENABLE_V0}")
+message(STATUS "\tMSLITE_ENABLE_MINDRT = \t${MSLITE_ENABLE_MINDRT}")
+message(STATUS "\tMSLITE_ENABLE_V0 = \t${MSLITE_ENABLE_V0}")
 message(STATUS "\tBUILD_MINDDATA = \t${BUILD_MINDDATA}")
 message(STATUS "\tMSLITE_DELEGATE_USE = \t${MSLITE_DELEGATE_USE}")
 
@@ -401,7 +387,7 @@ if(MSLITE_ENABLE_CONVERTER)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter)
 endif()
 
-if(ENABLE_MINDRT)
+if(MSLITE_ENABLE_MINDRT)
     add_compile_definitions(ENABLE_MINDRT)
 endif()
 

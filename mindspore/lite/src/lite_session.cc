@@ -43,7 +43,7 @@
 #if GPU_TENSORRT
 #include "src/delegate/tensorrt/tensorrt_delegate.h"
 #endif
-#if ENABLE_WEIGHT_DECODE
+#ifndef WEIGHT_DECODE_CLIP
 #include "tools/converter/quantizer/fse_decoder.h"
 #endif
 namespace mindspore {
@@ -65,7 +65,7 @@ bool NeedBitUppackCheck(const schema::Tensor &src_tensor) {
 
 int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   MS_ASSERT(dst_tensor != nullptr);
-#ifdef ENABLE_WEIGHT_DECODE
+#ifndef WEIGHT_DECODE_CLIP
   if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
     return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
   } else if (src_tensor.weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
@@ -82,7 +82,7 @@ int DecompressTensor(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   if (!NeedBitUppackCheck(src_tensor)) {
     return RET_NO_CHANGE;
   } else {
-#ifdef ENABLE_WEIGHT_DECODE
+#ifndef WEIGHT_DECODE_CLIP
     return WeightDecoder::UnPack(src_tensor, dst_tensor);
 #else
     MS_LOG(ERROR) << unsupport_weight_decode_log;
@@ -129,7 +129,7 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
   MS_ASSERT(dst_tensor != nullptr);
   if (src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
     if (dst_tensor->data_type() == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
       auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
       if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
         MS_LOG(ERROR) << "Decode tensorlist data failed";
@@ -170,7 +170,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(src_tensor.dataType()) == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
     // set tensor list datatype
     auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
@@ -419,7 +419,7 @@ void LiteSession::IsolateOutputTensor() {
           subgraph->set_out_tensor(new_tensor, i);
         }
       }
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
       if (subgraph->desc().delegate != nullptr) {
         continue;
       }
@@ -580,7 +580,7 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   // find in_kernels and out_kernels for subgraphs
   for (auto kernel : this->kernels_) {
     kernel->FindInoutKernels(this->kernels_);
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
     if (kernel->desc().delegate != nullptr) {
       all_kernels.push_back(kernel);
     } else {
@@ -589,7 +589,7 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
       MS_ASSERT(sub_graph != nullptr);
       auto kernel_in_subgraph = sub_graph->nodes();
       all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
     }
 #endif
   }
@@ -603,7 +603,7 @@ int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
 
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
     if (kernel->desc().delegate != nullptr) {
       continue;
     }
@@ -700,7 +700,7 @@ int LiteSession::Init(const Context *context) {
     }
   }
 #endif
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
   if (delegate_ != nullptr) {
     auto delegate_ret = delegate_->Init();
     if (delegate_ret == RET_NOT_SUPPORT) {
@@ -858,7 +858,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
       return RET_ERROR;
     }
     auto ret = RET_OK;
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
     if (kernel->desc().delegate != nullptr) {
       ret = kernel->ReSize();
     } else {
@@ -872,7 +872,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
         auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
         ret = sub_graph->ReSize();
       }
-#ifdef ENABLE_DELEGATE_USE
+#ifndef DELEGATE_CLIP
     }
 #endif
     if (ret == RET_INFER_INVALID) {

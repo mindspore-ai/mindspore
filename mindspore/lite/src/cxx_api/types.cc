@@ -129,6 +129,7 @@ MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType
 }
 
 MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &inputs) {
+#ifndef STRING_KERNEL_CLIP
   auto impl = Impl::StringsToTensorImpl(CharToString(name), VectorCharToString(inputs));
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
@@ -140,15 +141,25 @@ MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std
     return nullptr;
   }
   return ms_tensor;
+#else
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
+  return nullptr;
+#endif
 }
 
 std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &tensor) {
+#ifndef STRING_KERNEL_CLIP
   if (tensor.impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor.";
     std::vector<std::vector<char>> empty;
     return empty;
   }
   return VectorStringToChar(Impl::TensorImplToStrings(tensor.impl_));
+#else
+  std::vector<std::vector<char>> empty;
+  MS_LOG(ERROR) << unsupport_string_tensor_log;
+  return empty;
+#endif
 }
 
 MSTensor *MSTensor::Clone() const {

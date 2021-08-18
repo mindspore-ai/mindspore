@@ -47,7 +47,7 @@ class KernelRegistry {
                 OpParameter *op_parameter, kernel::LiteKernel **kernel, const void *primitive = nullptr);
 
  protected:
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   int GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                       const mindspore::Context *ctx, const kernel::KernelKey &key, kernel::LiteKernel **kernel,
                       const void *primitive = nullptr);

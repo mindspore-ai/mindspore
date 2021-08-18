@@ -16,7 +16,9 @@
 
 #include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
+#endif
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
@@ -103,7 +105,7 @@ int SubGraphKernel::ReSize() {
       output->FreeData();
     }
     int ret;
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
     ret = lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders());
     if (ret == lite::RET_NOT_SUPPORT) {
 #endif
@@ -113,7 +115,7 @@ int SubGraphKernel::ReSize() {
         return RET_ERROR;
       }
       ret = lite::KernelInferShape(inputs, outputs, parameter);
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
     }
 #endif
     if (ret == RET_INFER_INVALID) {

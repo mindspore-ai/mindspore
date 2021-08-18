@@ -24,13 +24,15 @@
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
+#endif
 #include "include/registry/register_kernel_interface.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore {
 namespace lite {
-#ifdef ENABLE_CUSTOM_KERNEL_REGISTRY
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers) {
   if (primitive == nullptr) {
@@ -77,7 +79,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     MS_LOG(ERROR) << "No input!";
     return RET_ERROR;
   }
-#ifndef ENABLE_CONTROLFLOW_TENSORLIST
+#ifdef CONTROLFLOW_TENSORLIST_CLIP
   if (parameter->type_ == schema::PrimitiveType_Switch) {
     MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
     return RET_ERROR;
@@ -113,7 +115,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     if (out_tensors.at(i) == nullptr) {
       continue;
     }
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
       auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
       auto *tensor_list = reinterpret_cast<TensorList *>(outputs.at(i));
@@ -127,7 +129,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     } else {
 #endif
       TensorC2Tensor(out_tensors.at(i), outputs.at(i));
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
 #endif
     if (ret == NNACL_INFER_INVALID) {

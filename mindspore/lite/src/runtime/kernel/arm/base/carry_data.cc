@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/base/carry_data.h"
 #include "include/errorcode.h"
-#include "src/tensorlist.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NOT_SUPPORT;
@@ -45,7 +44,7 @@ int CarryDataKernel::MoveData(const std::vector<lite::Tensor *>::iterator &dst_b
       MS_LOG(ERROR) << "Carry const data and graph inputs.";
     } else {
       if (src_tensor->data_type() == kObjectTypeTensorType && dst_tensor->data_type() == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
         MS_LOG(ERROR) << "Carry MoveTensorListData";
         ret = MoveTensorListData(reinterpret_cast<lite::TensorList *>(dst_tensor),
                                  reinterpret_cast<lite::TensorList *>(src_tensor));
@@ -87,7 +86,7 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
   memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
   return RET_OK;
 }
-#ifdef ENABLE_CONTROLFLOW_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_tensorlist) {
   // shape may change, because tensors.size() can be change in RunGraph
   if (dst_tensorlist->data_type() != src_tensorlist->data_type() ||

@@ -24,6 +24,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_x86_fp32.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 #include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
+#include "nnacl/base/conv_common_base.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))

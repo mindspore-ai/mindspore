@@ -210,7 +210,7 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
     old_data.push_back(input->data());
     if (input->data_type() == kObjectTypeString) {
-#ifdef ENABLE_STRING_KERNEL
+#ifndef STRING_KERNEL_CLIP
       std::vector<int32_t> shape = TruncateShape(user_input.Shape(), input->data_type(), user_input.DataSize(), false);
       if (shape.empty() && !(user_input.Shape().empty())) {
         ResetTensorData(old_data, input_tensors);
