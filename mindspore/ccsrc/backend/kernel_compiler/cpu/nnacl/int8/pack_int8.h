@@ -39,7 +39,7 @@ void PackNHWCToNCHWInt8(const void *src, void *dst, int batch, int plane, int ch
 void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, const int32_t *filter_zp,
                           const ConvParameter *conv_param);
 void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16);
-void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvParameter *conv_param);
+void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, const ConvParameter *conv_param);
 void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data, const ConvParameter *conv_param);
 void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int real_cal_num,
                            int block_index, const int32_t *filter_zp, int32_t *input_sum,
@@ -52,9 +52,9 @@ void PreSum4x16Int8Peroc(const int8_t *src, int32_t *sum, const int32_t *zp, siz
 
 void PackDepthwiseInt8Input(const int8_t *src, int16_t *dst, const ConvParameter *conv_param);
 void PackDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
-                             ConvQuantArg *quant_qrg);
+                             const ConvQuantArg *quant_qrg);
 void PackDeconvDepthwiseInt8Weight(const int8_t *origin_weight, int16_t *packed_weight_, int plane, int channel,
-                                   ConvQuantArg *quant_qrg);
+                                   const ConvQuantArg *quant_qrg);
 
 #ifdef __cplusplus
 }

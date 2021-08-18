@@ -1358,7 +1358,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
       AnfAlgo::VisitKernelWithReturnType(kernel_with_index.first, SizeToInt(kernel_with_index.second));
     if (HasAbstractRef(real_front_node_with_index.first)) {
       (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second,
-                                                             real_front_node_with_index.first.get());
+                                                             real_front_node_with_index.first);
       return;
     }
 
@@ -1385,7 +1385,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
     auto actor_name = func_graph->ToString();
     const auto &from_actor = dynamic_cast<GatherActor *>(FetchActor(actor_name));
     if (HasAbstractRef(from_kernel)) {
-      (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_node.get());
+      (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_node);
       return;
     }
     LinkDataArrowForGatherActor(from_actor, to_actor, {front_node, 0}, to_kernel_with_input_idx);
@@ -1406,8 +1406,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
                                       to_kernel_with_input_idx);
   } else if (IsPersistentDeviceTensor(from_kernel)) {
     const auto device_tensor_store_key = FetchFrontNodeByBackendNode(from_kernel, graph);
-    (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second,
-                                                           device_tensor_store_key.get());
+    (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, device_tensor_store_key);
   } else {
     // May exist the from kernel that no need link in the pynative mode.
     MS_LOG(DEBUG) << "Invalid from kernel: " << from_kernel->fullname_with_scope();
@@ -1434,7 +1433,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(const AnfNodePtr &interna
     return;
   }
   if (IsPersistentDeviceTensor(front_output_node)) {
-    (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_output_node.get());
+    (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, front_output_node);
     return;
   }
 
@@ -1483,7 +1482,7 @@ void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *c
   auto from_output_index = from_kernel_with_output_idx.second;
   auto to_input_index = to_kernel_with_input_idx.second;
 
-  if (IsNeedInsertCopyActor(from_actor->device_context_, to_actor->device_context_)) {
+  if (IsNeedInsertCopyActor(from_actor->device_contexts_[0], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     auto to_aid = to_actor->GetAID();
@@ -1511,7 +1510,7 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *const
 
   // Get the position of from kernel in the data source actor.
   auto position = from_actor->FetchDataNodePosition(from_kernel);
-  if (IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_context_)) {
+  if (IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     auto to_aid = to_actor->GetAID();
@@ -1551,7 +1550,7 @@ void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, Kernel
   auto from_output_index = from_kernel_with_output_idx.second;
   auto to_input_index = to_kernel_with_input_idx.second;
 
-  if (IsNeedInsertCopyActor(from_actor->device_context_, to_actor->device_context_)) {
+  if (IsNeedInsertCopyActor(from_actor->device_contexts_[0], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     auto to_aid = to_actor->GetAID();
@@ -1572,7 +1571,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from
   MS_EXCEPTION_IF_NULL(to_actor);
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
-  auto to_device_context = to_actor->device_context_;
+  auto to_device_context = to_actor->device_contexts_[0];
   MS_EXCEPTION_IF_NULL(to_device_context);
   auto from_output_index = from_kernel_with_output_idx.second;
   auto to_input_index = to_kernel_with_input_idx.second;
@@ -1596,12 +1595,12 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from
     if (IsDeviceQueueDSActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(from_actor);
       MS_EXCEPTION_IF_NULL(real_from_actor);
-      from_device_context = real_from_actor->device_context_;
+      from_device_context = real_from_actor->device_contexts_[0];
       (void)real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     } else if (IsKernelActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<KernelActor *>(from_actor);
       MS_EXCEPTION_IF_NULL(real_from_actor);
-      from_device_context = real_from_actor->device_context_;
+      from_device_context = real_from_actor->device_contexts_[0];
       (void)real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     } else if (IsHostQueueDSActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<HostQueueDataSourceActor *>(from_actor);
@@ -1626,8 +1625,8 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *const from
     copy_actor->output_ = to_device_context->CreateDeviceAddress(
       nullptr, input_sizes[to_input_index], from_device_tensor->format(), from_device_tensor->type_id());
     MS_EXCEPTION_IF_NULL(from_device_context);
-    copy_actor->input_device_context_ = from_device_context;
-    copy_actor->output_device_context_ = to_device_context;
+    (void)copy_actor->device_contexts_.emplace_back(from_device_context);
+    (void)copy_actor->device_contexts_.emplace_back(to_device_context);
 
     // Update the reference count of device tensor.
     UpdateRefCount(from_device_tensor.get());
@@ -2057,7 +2056,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
   for (auto &kernel_actor : auto_monad_actors) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     for (auto &device_tensor_store_key : kernel_actor->device_tensor_store_keys_) {
-      auto device_tensors = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second);
+      auto device_tensors = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get());
       if (device_tensors.size() < kNeedUpdateDeviceTensorStoreNum) {
         continue;
       }
@@ -2074,9 +2073,9 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
       InsertActor(copy_actor.get());
 
       // Set the member of the copy actor.
-      copy_actor->device_tensor_store_key_ = std::pair<size_t, AnfNode *>(0, device_tensor_store_key.second);
-      auto input_device_context = kernel_actor->device_context_;
-      copy_actor->input_device_context_ = input_device_context;
+      (void)copy_actor->device_tensor_store_keys_.emplace_back(0, device_tensor_store_key.second);
+      auto input_device_context = kernel_actor->device_contexts_[0];
+      (void)copy_actor->device_contexts_.emplace_back(input_device_context);
       auto another_device_tensor = (device_tensors[0]->DeviceType() == input_device_context->GetDeviceAddressType())
                                      ? device_tensors[1]
                                      : device_tensors[0];
@@ -2085,7 +2084,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
       const auto &another_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {device::kDeviceTypeToName.at(another_device_type), input_device_context->device_context_key().device_id_});
       MS_EXCEPTION_IF_NULL(another_device_context);
-      copy_actor->output_device_context_ = another_device_context;
+      (void)copy_actor->device_contexts_.emplace_back(another_device_context);
 
       MS_LOG(INFO) << "The kernel actor: " << kernel_actor->GetAID().Name()
                    << "has control arrows number:" << kernel_actor->output_control_arrows_.size();
@@ -2657,7 +2656,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
 
     const size_t kCopyActorInputDataNum = 1;
     auto input_data_num = copy_actor->input_datas_num_;
-    size_t device_tensor_store_num = (copy_actor->device_tensor_store_key_.second == nullptr) ? 0 : 1;
+    size_t device_tensor_store_num = copy_actor->device_tensor_store_keys_.size();
     if (input_data_num + device_tensor_store_num != kCopyActorInputDataNum) {
       MS_LOG(ERROR) << "The input building of " << copy_actor->GetAID().Name()
                     << " is wrong, input data num: " << input_data_num
@@ -2833,78 +2832,131 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   ofs << "[Device tensor stores]\n";
   DumpDeviceTensorStore(graph_compiler_info, ofs);
 
-  ofs << "\n\n[Data source actors]\n";
+  ofs << "\n\n[Data source actors:" << actor_set->data_source_actors_.size() << "]\n";
   for (const auto &data_source_actor : actor_set->data_source_actors_) {
     DumpDSActor(data_source_actor.get(), ofs);
   }
 
-  ofs << "\n\n[Kernel actors]\n";
+  ofs << "\n\n[Kernel actors:" << actor_set->kernel_actors_.size() << "]\n";
   for (const auto &kernel_actor : actor_set->kernel_actors_) {
     DumpKernelActor(kernel_actor.get(), ofs);
   }
 
-  ofs << "\n\n[No input kernel actors]\n";
+  ofs << "\n\n[No input kernel actors:" << actor_set->no_input_kernel_actors_.size() << "]\n";
   for (const auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
     DumpKernelActor(no_input_kernel_actor.get(), ofs);
   }
 
-  ofs << "\n\n[Copy actors]\n";
+  ofs << "\n\n[Copy actors:" << actor_set->copy_actors_.size() << "]\n";
   for (const auto &copy_actor : actor_set->copy_actors_) {
     DumpCopyActor(copy_actor.get(), ofs);
   }
 
-  ofs << "\n\n[Gather actors]\n";
+  ofs << "\n\n[Gather actors:" << actor_set->gather_actors_.size() << "]\n";
   for (const auto &gather_actor : actor_set->gather_actors_) {
     DumpGatherActor(gather_actor.get(), ofs);
   }
 
-  ofs << "\n\n[Switch actors]\n";
+  ofs << "\n\n[Switch actors:" << actor_set->switch_actors_.size() << "]\n";
   for (const auto &switch_actor : actor_set->switch_actors_) {
     DumpSwitchActor(switch_actor.get(), ofs);
   }
 
-  ofs << "\n\n[Loop count actor]\n";
   const auto &loop_count_actor = actor_set->loop_count_actor_;
+  ofs << "\n\n[Loop count actor:" << (loop_count_actor != nullptr ? 1 : 0) << "]\n";
   if (loop_count_actor != nullptr) {
     DumpLoopCountActor(loop_count_actor.get(), ofs);
   }
 
-  ofs << "\n\n[Output actor]\n";
   const auto &output_actor = actor_set->output_actor_;
+  ofs << "\n\n[Output actor:" << (output_actor != nullptr ? 1 : 0) << "]\n";
   if (output_actor != nullptr) {
     DumpOutputActor(output_actor.get(), ofs);
   }
 }
 
-void GraphScheduler::DumpBaseActor(const OpActor<DeviceTensor> *actor, std::ofstream &ofs) const {
+void GraphScheduler::DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\t\tdevice_contexts_num:" << actor->device_contexts_.size()
+      << "\tdevice_tensor_store_keys_num:" << actor->device_tensor_store_keys_.size()
+      << "\tinput_data_arrow_actors_num:" << actor->input_datas_num_
+      << "\tinput_control_arrow_actors_num:" << actor->input_controls_num_ << "\n";
+  ofs << "\t\toutput_data_arrows_num:" << actor->output_data_arrows_.size()
+      << "\toutput_control_arrows_num:" << actor->output_control_arrows_.size()
+      << "\toutput_result_arrows_num:" << actor->output_result_arrows_.size() << "\n";
+
+  if (actor->device_contexts_.size() > 0) {
+    ofs << "\t\tdevice_contexts:" << actor->device_contexts_.size() << "\n ";
+    for (const auto &device_context : actor->device_contexts_) {
+      if (device_context == nullptr) {
+        ofs << "\t\t\tdevice_context:" << device_context << "\n";
+        continue;
+      }
+      ofs << "\t\t\tdevice_context:" << device_context->device_context_key().ToString() << "\n";
+    }
+  }
+
+  if (actor->device_tensor_store_keys_.size() > 0) {
+    ofs << "\t\tdevice_tensor_store_keys:" << actor->device_tensor_store_keys_.size() << "\n ";
+    for (const auto &device_tensor_store_key : actor->device_tensor_store_keys_) {
+      MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
+      ofs << "\t\t\tto_input_index:" << device_tensor_store_key.first
+          << "\tfrom_node_name:" << device_tensor_store_key.second->fullname_with_scope() << "\n";
+    }
+  }
+
+  if (actor->input_data_arrow_aids_.size() > 0) {
+    ofs << "\t\tinput_data_arrow_actors:" << actor->input_data_arrow_aids_.size() << "\n ";
+    for (const auto &input_data_arrow_aid : actor->input_data_arrow_aids_) {
+      ofs << "\t\t\tfrom_actor_name:" << input_data_arrow_aid.Name() << "\n";
+    }
+  }
+
+  if (actor->input_control_arrow_aids_.size() > 0) {
+    ofs << "\t\tinput_control_arrow_actors:" << actor->input_control_arrow_aids_.size() << "\n ";
+    for (const auto &input_control_arrow_aid : actor->input_control_arrow_aids_) {
+      ofs << "\t\t\tfrom_actor_name:" << input_control_arrow_aid.Name() << "\n";
+    }
+  }
 
   const auto &output_data_arrows = actor->output_data_arrows();
-  ofs << "\t\toutput_data_arrows:" << output_data_arrows.size() << "\n ";
-  for (const auto &data_arrow : output_data_arrows) {
-    MS_EXCEPTION_IF_NULL(data_arrow);
-    ofs << "\t\t\tfrom_output_index:" << data_arrow->from_output_index_
-        << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
-        << "\n";
+  if (output_data_arrows.size() > 0) {
+    ofs << "\t\toutput_data_arrows:" << output_data_arrows.size() << "\n ";
+    for (const auto &data_arrow : output_data_arrows) {
+      MS_EXCEPTION_IF_NULL(data_arrow);
+      ofs << "\t\t\tfrom_output_index:" << data_arrow->from_output_index_
+          << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
+          << "\n";
+    }
   }
 
   const auto &output_control_arrows = actor->output_control_arrows();
-  ofs << "\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
-  for (const auto &aid : output_control_arrows) {
-    ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
+  if (output_control_arrows.size() > 0) {
+    ofs << "\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
+    for (const auto &aid : output_control_arrows) {
+      ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
+    }
+  }
+
+  if (actor->output_result_arrows_.size() > 0) {
+    ofs << "\t\toutput_result_arrows:" << actor->output_result_arrows_.size() << "\n ";
+    for (const auto &result_arrow : actor->output_result_arrows_) {
+      MS_EXCEPTION_IF_NULL(result_arrow);
+      ofs << "\t\t\tfrom_output_index:" << result_arrow->from_output_index_
+          << "\tto_actor_name:" << result_arrow->to_op_id_.Name()
+          << "\toutput_node_position:" << result_arrow->to_input_index_ << "\n";
+    }
   }
 }
 
 void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
   const auto &actor_name = actor->GetAID().Name();
+  ofs << "\tactor_name:" << actor_name << "\n";
 
   if (actor_name.find("_DeviceDSActor") != string::npos) {
     // Dump the member info of device queue data source actor.
     const auto &device_queue_ds_actor = dynamic_cast<const DeviceQueueDataSourceActor *>(actor);
-    MS_EXCEPTION_IF_NULL(device_queue_ds_actor->device_context_);
-    ofs << "\tactor_name:" << actor_name
-        << "\tdevice_context:" << device_queue_ds_actor->device_context_->device_context_key().ToString() << "\n";
     const auto &data_kernel = device_queue_ds_actor->data_kernel_;
     MS_EXCEPTION_IF_NULL(data_kernel);
     ofs << "\t\tdata_kernel_name:" << data_kernel->fullname_with_scope()
@@ -2918,7 +2970,6 @@ void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &of
     }
   } else if (actor_name.find("_HostDSActor") != string::npos) {
     // Dump the member info of host queue data source actor.
-    ofs << "\tactor_name:" << actor_name << "\n";
     const auto &host_queue_ds_actor = dynamic_cast<const HostQueueDataSourceActor *>(actor);
     ofs << "\t\tdata_nodes:" << host_queue_ds_actor->data_nodes_.size() << "\n";
     for (size_t i = 0; i < host_queue_ds_actor->data_nodes_.size(); ++i) {
@@ -2928,27 +2979,18 @@ void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &of
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\tnode_order_number:" << i << "\tnode_name:" << data_node->fullname_with_scope()
           << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
-          << "\toriginal_ref_count:" << device_tensor->original_ref_count()
-          << "\tdevice_context:" << host_queue_ds_actor->device_contexts_[i]->device_context_key().ToString() << "\n";
+          << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n";
     }
   }
 
-  DumpBaseActor(actor, ofs);
-
-  ofs << "\t\toutput_result_arrows:" << actor->output_result_arrows_.size() << "\n ";
-  for (const auto &result_arrow : actor->output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    ofs << "\t\t\tfrom_output_index:" << result_arrow->from_output_index_
-        << "\tto_actor_name:" << result_arrow->to_op_id_.Name()
-        << "\toutput_node_position:" << result_arrow->to_input_index_ << "\n";
-  }
+  DumpAbstractActor(actor, ofs);
   ofs << "\n";
 }
 
 void GraphScheduler::DumpLoopCountActor(const LoopCountActor *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count_
-      << "\tinput_controls_num:" << actor->input_controls_num_ << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count_ << "\n";
+  DumpAbstractActor(actor, ofs);
 
   ofs << "\t\toutput_control_arrows:" << (actor->data_source_aids_.size() + actor->no_input_kernel_aids_.size() + 1)
       << "\n ";
@@ -2970,16 +3012,12 @@ void GraphScheduler::DumpLoopCountActor(const LoopCountActor *actor, std::ofstre
 
 void GraphScheduler::DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
-  MS_EXCEPTION_IF_NULL(actor->device_context_);
-  ofs << "\tactor_name:" << actor->GetAID().Name()
-      << "\tdevice_context:" << actor->device_context_->device_context_key().ToString()
-      << "\tinput_data_num:" << actor->input_datas_num_ << "\tinput_controls_num:" << actor->input_controls_num_
-      << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
 
   const auto &kernel = actor->kernel_;
   MS_EXCEPTION_IF_NULL(kernel);
-  ofs << "\t\tkernel_name:" << kernel->fullname_with_scope() << "\tinput_number:" << AnfAlgo::GetInputTensorNum(kernel)
-      << "\toutput_number:" << AnfAlgo::GetOutputTensorNum(kernel) << "\n";
+  ofs << "\t\tkernel_name:" << kernel->fullname_with_scope() << "\tinputs_num:" << AnfAlgo::GetInputTensorNum(kernel)
+      << "\toutputs_num:" << AnfAlgo::GetOutputTensorNum(kernel) << "\n";
   for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -2987,22 +3025,7 @@ void GraphScheduler::DumpKernelActor(const KernelActor *actor, std::ofstream &of
         << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
   }
 
-  ofs << "\t\tdevice_tensor_stores:" << actor->device_tensor_store_keys_.size() << "\n ";
-  for (const auto &device_tensor_store_key : actor->device_tensor_store_keys_) {
-    MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
-    ofs << "\t\t\tto_input_index:" << device_tensor_store_key.first
-        << "\tfrom_node_name:" << device_tensor_store_key.second->fullname_with_scope() << "\n";
-  }
-
-  DumpBaseActor(actor, ofs);
-
-  ofs << "\t\toutput_result_arrows:" << actor->output_result_arrows_.size() << "\n ";
-  for (const auto &result_arrow : actor->output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    ofs << "\t\t\tfrom_output_index:" << result_arrow->from_output_index_
-        << "\tto_actor_name:" << result_arrow->to_op_id_.Name()
-        << "\toutput_node_position:" << result_arrow->to_input_index_ << "\n";
-  }
+  DumpAbstractActor(actor, ofs);
   ofs << "\n";
 }
 
@@ -3010,33 +3033,12 @@ void GraphScheduler::DumpOutputActor(const OutputActor *actor, std::ofstream &of
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count_
       << "\toutputs_num:" << actor->outputs_num_ << "\n";
-
-  ofs << "\t\tdevice_tensor_store_keys:" << actor->device_tensor_store_keys_.size() << "\n ";
-  for (const auto &device_tensor_store_key : actor->device_tensor_store_keys_) {
-    MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
-    ofs << "\t\t\toutput_node_position:" << device_tensor_store_key.first
-        << "\toutput_node_name:" << device_tensor_store_key.second->fullname_with_scope() << "\n";
-  }
-
-  ofs << "\t\tdevice_contexts:" << actor->device_contexts_.size() << "\n ";
-  for (const auto &device_context : actor->device_contexts_) {
-    if (device_context == nullptr) {
-      ofs << "\t\t\tdevice_context:" << device_context << "\n";
-      continue;
-    }
-    ofs << "\t\t\tdevice_context:" << device_context->device_context_key().ToString() << "\n";
-  }
+  DumpAbstractActor(actor, ofs);
 }
 
 void GraphScheduler::DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
-  MS_EXCEPTION_IF_NULL(actor->input_device_context_);
-  MS_EXCEPTION_IF_NULL(actor->output_device_context_);
-  ofs << "\tactor_name:" << actor->GetAID().Name()
-      << "\tinput_device_context:" << actor->input_device_context_->device_context_key().ToString()
-      << "\toutput_device_context:" << actor->output_device_context_->device_context_key().ToString()
-      << "\tinput_data_num:" << actor->input_datas_num_ << "\tinput_controls_num:" << actor->input_controls_num_
-      << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
 
   auto device_tensor = actor->output_;
   if (device_tensor != nullptr) {
@@ -3044,13 +3046,7 @@ void GraphScheduler::DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) c
         << "\toriginal_ref_count:" << device_tensor->original_ref_count() << "\n ";
   }
 
-  if (actor->device_tensor_store_key_.second != nullptr) {
-    ofs << "\t\tdevice_tensor_stores:" << 1 << "\n ";
-    ofs << "\t\t\tto_input_index:" << actor->device_tensor_store_key_.first
-        << "\tfrom_node_name:" << actor->device_tensor_store_key_.second->fullname_with_scope() << "\n";
-  }
-
-  DumpBaseActor(actor, ofs);
+  DumpAbstractActor(actor, ofs);
   ofs << "\n";
 }
 
@@ -3139,6 +3135,7 @@ void GraphScheduler::DumpGatherActor(const GatherActor *actor, std::ofstream &of
   for (const auto &control_arrow : actor->output_control_arrows_) {
     ofs << "\t\t\tto_actor_name:" << control_arrow;
   }
+  ofs << "\n";
 }
 
 void GraphScheduler::DumpSwitchActor(const SwitchActor *actor, std::ofstream &ofs) const {
@@ -3186,6 +3183,7 @@ void GraphScheduler::DumpSwitchActor(const SwitchActor *actor, std::ofstream &of
       ofs << "\t\t\t\t from index:" << arrow << '\n';
     }
   }
+  ofs << "\n";
 }
 }  // namespace runtime
 }  // namespace mindspore

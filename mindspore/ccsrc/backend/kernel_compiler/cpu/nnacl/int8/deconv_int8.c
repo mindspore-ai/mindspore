@@ -130,9 +130,9 @@ void DeConvPackInputSum(const int8_t *src, int32_t *dst, int32_t filter_zp, size
   return;
 }
 
-int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, int32_t *weight_sum, int32_t *input_sum,
-               size_t act_row, size_t act_col, size_t act_deep, ConvParameter *conv_param,
-               MATMUL_OPT_R4_FUNC matmul_func) {
+int DeConvInt8(const int8_t *input, const int8_t *weight, int32_t *output, const int32_t *weight_sum,
+               const int32_t *input_sum, size_t act_row, size_t act_col, size_t act_deep,
+               const ConvParameter *conv_param, MATMUL_OPT_R4_FUNC matmul_func) {
   if (matmul_func != NULL) {
     matmul_func(input, weight, output, act_row, act_col, act_deep, input_sum, weight_sum);
   } else {

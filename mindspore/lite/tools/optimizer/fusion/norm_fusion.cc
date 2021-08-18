@@ -143,7 +143,12 @@ bool NormFusion::GetNormTypeAndAxis(const FuncGraphPtr &func_graph, const CNodeP
       return false;
     }
   }
-  if (shape_size == 4 && mean_axes.size() == 2 && mean_axes[0] == 1 && mean_axes[1] == 2) {
+  const int kInstanceNormShapeSize = 4;
+  const int kInstanceNormMeanAxesSize = 2;
+  const int kInstanceNormMeanAxes0 = 1;
+  const int kInstanceNormMeanAxes1 = 2;
+  if (shape_size == kInstanceNormShapeSize && mean_axes.size() == kInstanceNormMeanAxesSize &&
+      mean_axes[0] == kInstanceNormMeanAxes0 && mean_axes[1] == kInstanceNormMeanAxes1) {
     if (params_shape.size() == 1 && params_shape.back() == shape.back()) {
       *type = schema::PrimitiveType_InstanceNorm;
       return true;
@@ -341,11 +346,12 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
 
     // Get in node shape size
     std::vector<int> in_shape_sizes;
+    const size_t kShapeIndex = 2;
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
       int in_shape_size = 0;
       if (utils::isa<CNodePtr>(cnode->input(i))) {
         in_shape_size = node_shape_size[cnode->input(i)->fullname_with_scope()];
-        if (prim_type == schema::PrimitiveType_Reshape && i == 2 &&
+        if (prim_type == schema::PrimitiveType_Reshape && i == kShapeIndex &&
             node_shape.find(cnode->input(i)->fullname_with_scope()) != node_shape.end()) {
           in_shape_size = node_shape[cnode->input(i)->fullname_with_scope()].at(0);
         }
@@ -354,7 +360,7 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
         auto ret = GetTensorInfoFromAbstract(&tensor_info, cnode, i);
         if (ret == RET_OK) {
           in_shape_size = tensor_info->shape().size();
-          if (prim_type == schema::PrimitiveType_Reshape && i == 2) {
+          if (prim_type == schema::PrimitiveType_Reshape && i == kShapeIndex) {
             in_shape_size = tensor_info->shape().at(0);
           }
         }

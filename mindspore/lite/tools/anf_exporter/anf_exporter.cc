@@ -49,6 +49,7 @@ namespace {
 constexpr int kBitNum8 = 8;
 constexpr int kBitNum16 = 16;
 constexpr int kIndexOfValueInputOfGetTupleItem = 2;
+constexpr const int kMaxDepth = 2048;
 
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
@@ -498,6 +499,12 @@ bool IsPartialFusion(const AnfNodePtr &node) {
 }
 
 FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph) {
+  static int i = 0;
+  if (i > kMaxDepth) {
+    MS_LOG(ERROR) << "exceed max depth 2048!";
+    return nullptr;
+  }
+  i++;
   // get output
   CNodePtr call_cnode = nullptr;
   auto fg_output = func_graph->output();
