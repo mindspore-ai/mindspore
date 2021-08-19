@@ -32,7 +32,7 @@ ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->set_group(1);
   prim->set_pad({0, 0, 0, 0});
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->set_format(format);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
   prim->set_output_paddings({0, 0});
 
   std::vector<int64_t> dilations(2);

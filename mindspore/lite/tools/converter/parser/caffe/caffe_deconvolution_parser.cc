@@ -25,7 +25,7 @@ ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pr
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
 
   prim->set_pad({0, 0, 0, 0});
-  prim->set_format(mindspore::Format::NCHW);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_pad_mode(mindspore::PadMode::PAD);
   prim->set_output_paddings({0, 0});
 

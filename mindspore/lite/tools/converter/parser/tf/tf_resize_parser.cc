@@ -19,6 +19,7 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/op_utils.h"
 #include "ops/resize.h"
 
 namespace mindspore {
@@ -29,7 +30,7 @@ ops::PrimitiveC *TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   auto prim = std::make_unique<ops::Resize>();
 
   tensorflow::AttrValue attr_value;
-  prim->set_format(mindspore::Format::NHWC);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NHWC));
   prim->set_cubic_coeff(-0.75f);
   if (!TensorFlowUtils::FindAttrValue(tf_op, "align_corners", &attr_value)) {
     MS_LOG(ERROR) << "The align_corners attr should be specified";

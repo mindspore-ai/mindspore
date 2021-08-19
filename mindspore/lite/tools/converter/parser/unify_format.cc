@@ -16,11 +16,22 @@
 
 #include "tools/converter/parser/unify_format.h"
 #include <map>
+#include <memory>
+#include <vector>
+#include "tools/common/tensor_util.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr int kInputChannal = 3;
+constexpr int kNumGatherIndiceSize_4 = 4;
+constexpr int kNumGatherIndiceSize_2 = 2;
+constexpr int kNumResizeInputShape = 2;
+constexpr int kNumInputSize = 2;
+constexpr int kNumIndex_0 = 0;
+constexpr int kNumIndex_1 = 1;
+constexpr int kNumIndex_2 = 2;
+constexpr int kNumIndex_3 = 3;
 STATUS DecideMINDIRConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType quant_type,
                                        schema::Format *src_format) {
   MS_ASSERT(cnode != nullptr && src_format != nullptr);
@@ -29,7 +40,8 @@ STATUS DecideMINDIRConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType 
     MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
     return lite::RET_ERROR;
   }
-  int64_t format = prim->GetAttr(ops::kFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kFormat)) : 0;
+  int64_t format =
+    prim->GetAttr(ops::kOriginalFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kOriginalFormat)) : 0;
   if (format == schema::Format_NHWC) {
     *src_format = schema::Format_KHWC;
   } else if (format == schema::Format_NCHW) {
@@ -125,7 +137,8 @@ STATUS DecideONNXConvWeightSrcFormat(const CNodePtr &cnode, schema::QuantType qu
     return lite::RET_ERROR;
   }
   bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
-  int64_t format = prim->GetAttr(ops::kFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kFormat)) : 0;
+  int64_t format =
+    prim->GetAttr(ops::kOriginalFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kOriginalFormat)) : 0;
   switch (quant_type) {
     case schema::QuantType_AwareTraining: {
       if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
@@ -185,7 +198,9 @@ STATUS UnifyFormatToNHWC::GetTransNodeFormatType(const CNodePtr &cnode, opt::Tra
     trans_info->pre_ = opt::kNHWC2NCHW;
     trans_info->post_ = opt::kNCHW2NHWC;
   } else if (fmk_type_ == converter::kFmkTypeTf) {
-    if (specify_nhwc_op_map.find(prim->name()) != specify_nhwc_op_map.end() && opt::GetFormat(cnode) == NCHW) {
+    if (specify_nhwc_op_map.find(prim->name()) != specify_nhwc_op_map.end() &&
+        prim->GetAttr(ops::kOriginalFormat) != nullptr &&
+        GetValue<int64_t>(prim->GetAttr(ops::kOriginalFormat)) == NCHW) {
       trans_info->pre_ = opt::kNCHW2NHWC;
       trans_info->post_ = opt::kNHWC2NCHW;
     }
@@ -195,8 +210,8 @@ STATUS UnifyFormatToNHWC::GetTransNodeFormatType(const CNodePtr &cnode, opt::Tra
     }
   } else {
     if (specify_nhwc_op_map.find(prim->name()) != specify_nhwc_op_map.end()) {
-      if (fmk_type_ == converter::kFmkTypeOnnx && prim->GetAttr(ops::kFormat) != nullptr &&
-          GetValue<int64_t>(prim->GetAttr(ops::kFormat)) == NHWC) {
+      if (fmk_type_ == converter::kFmkTypeOnnx && prim->GetAttr(ops::kOriginalFormat) != nullptr &&
+          GetValue<int64_t>(prim->GetAttr(ops::kOriginalFormat)) == NHWC) {
         return lite::RET_OK;
       }
       trans_info->pre_ = opt::kNCHW2NHWC;
@@ -250,5 +265,156 @@ STATUS UnifyFormatToNHWC::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode,
   }
   return RET_OK;
 }
+
+STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  auto resize_shape_node = cnode->input(kNumResizeInputShape)->cast<ParameterPtr>();
+  auto shape_tensor = std::dynamic_pointer_cast<tensor::Tensor>(resize_shape_node->default_param());
+  if (shape_tensor == nullptr) {
+    MS_LOG(ERROR) << " shape tensor is nullptr.";
+    return RET_ERROR;
+  }
+  auto shape_data = static_cast<float *>(shape_tensor->data_c());
+  std::vector<float> new_shape;
+  if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_4) {
+    new_shape = {shape_data[kNumIndex_0], shape_data[kNumIndex_2], shape_data[kNumIndex_3], shape_data[kNumIndex_1]};
+  } else if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_2) {
+    return RET_OK;
+  } else {
+    return RET_ERROR;
+  }
+  auto new_shape_node = func_graph->add_parameter();
+  auto tensor_info = CreateTensorInfo(nullptr, 0, shape_tensor->shape(), shape_tensor->data_type());
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "create tensor info failed.";
+    return RET_ERROR;
+  }
+  auto new_shape_data = static_cast<float *>(tensor_info->data_c());
+  if (new_shape_data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr";
+    return RET_ERROR;
+  }
+  auto status = memcpy_s(new_shape_data, sizeof(float) * kNumGatherIndiceSize_4, new_shape.data(),
+                         sizeof(float) * kNumGatherIndiceSize_4);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
+  status = InitParameterFromTensorInfo(new_shape_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
+  cnode->set_input(kNumResizeInputShape, new_shape_node);
+  return RET_OK;
+}
+
+STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  auto gather_name = cnode->fullname_with_scope() + "_gather";
+  auto gather_input = cnode->input(kNumResizeInputShape);
+  auto abstract = cnode->input(kNumResizeInputShape)->abstract();
+  std::vector<int> gather_indices = {0, 2, 3, 1};  // NCHW to NHWC
+  auto gather_cnode = opt::GenGatherNode(func_graph, gather_input, gather_indices, gather_name);
+  if (gather_cnode == nullptr) {
+    MS_LOG(ERROR) << "create gather cnode failed.";
+    return RET_ERROR;
+  }
+  ShapeVector indices_shape = {kNumGatherIndiceSize_4};
+  auto gather_prim = GetValueNode<PrimitivePtr>(gather_cnode->input(0));
+  MS_ASSERT(gather_prim != nullptr);
+  gather_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+  gather_cnode->set_abstract(abstract->Clone());
+  abstract->set_shape(std::make_shared<abstract::Shape>(indices_shape));
+  auto tr = func_graph->manager()->Transact();
+  tr.SetEdge(cnode, kNumIndex_2, gather_cnode);
+  tr.Commit();
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+  return RET_OK;
+}
+
+STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  if (fmk_type_ != converter::kFmkTypeOnnx) {
+    return RET_OK;
+  }
+  if (cnode->inputs().size() > kNumInputSize && utils::isa<ParameterPtr>(cnode->input(kNumResizeInputShape))) {
+    auto status = ConvertOnnxResizeForConstShape(func_graph, cnode);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "ConvertOnnxResizeForConstShape failed.";
+      return RET_ERROR;
+    }
+  } else if (cnode->inputs().size() > kNumInputSize && utils::isa<CNodePtr>(cnode->input(kNumResizeInputShape))) {
+    auto status = ConvertOnnxResizeForVariableShape(func_graph, cnode);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "ConvertResizeForVariableShape failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+bool UnifyFormatToNHWC::ProcessResizeAndFormat(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto node_list = TopoSort(func_graph->get_return());
+  int status;
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (opt::IsSpecialType(cnode)) {
+      continue;
+    }
+    auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+    if (value_node == nullptr) {
+      if (cnode->input(0)->cast<CNodePtr>() != nullptr) {
+        continue;
+      }
+      MS_LOG(ERROR) << "cnode first input is invalid.";
+      return false;
+    }
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      continue;
+    }
+    if (prim->GetAttr(ops::kFormat) == nullptr && prim->GetAttr(ops::kOriginalFormat) != nullptr) {
+      prim->AddAttr(mindspore::ops::kFormat, prim->GetAttr(ops::kOriginalFormat));
+    }
+    if (opt::CheckPrimitiveType(node, prim::kPrimIf) || opt::CheckPrimitiveType(node, prim::kPrimWhile)) {
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kNumIndex_1));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      (void)ProcessResizeAndFormat(sub_func_graph);
+      sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kNumIndex_2));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      (void)ProcessResizeAndFormat(sub_func_graph);
+      continue;
+    }
+    if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
+      status = ResizeNodeProcess(func_graph, cnode);
+      if (status != lite::RET_OK) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool UnifyFormatToNHWC::Run(const FuncGraphPtr &func_graph) {
+  if (!ProcessResizeAndFormat(func_graph)) {
+    MS_LOG(ERROR) << "ProcessResizeAndFormat failed.";
+    return false;
+  }
+  if (!opt::ToFormatBase::Run(func_graph)) {
+    MS_LOG(ERROR) << "run ToFormatBase failed.";
+    return false;
+  }
+  return true;
+}
+
 }  // namespace lite
 }  // namespace mindspore

@@ -28,8 +28,13 @@ class UnifyFormatToNHWC : public opt::ToFormatBase {
                              schema::QuantType quant_type = schema::QuantType_QUANT_NONE)
       : ToFormatBase(fmk_type, train_flag), quant_type_(quant_type) {}
   ~UnifyFormatToNHWC() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
+  bool ProcessResizeAndFormat(const FuncGraphPtr &func_graph);
+  STATUS ResizeNodeProcess(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS ConvertOnnxResizeForConstShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS ConvertOnnxResizeForVariableShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) override;
   void SetSensitiveOps() override;
   bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ShapeVector &shape) override;

@@ -75,19 +75,6 @@ STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, Shap
   }
   return RET_OK;
 }
-int GetFormatByFmk(int32_t fmk_type) {
-  switch (fmk_type) {
-    case converter::kFmkTypeOnnx:
-    case converter::kFmkTypeCaffe:
-    case converter::kFmkTypeMs:
-      return mindspore::NCHW;
-    case converter::kFmkTypeTf:
-    case converter::kFmkTypeTflite:
-      return mindspore::NHWC;
-    default:
-      return -1;
-  }
-}
 
 STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, ShapeVector *shape_vector) {
   MS_ASSERT(param_node != nullptr && data_type != nullptr && shape_vector != nullptr);
@@ -133,7 +120,6 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
   MS_ASSERT(value != nullptr);
   auto data = value->cast<tensor::TensorPtr>();
   data_info->data_.resize(data->Size());
-  data_info->format_ = GetFormatByFmk(fmk_type);
   if (data_info->format_ != mindspore::NHWC && data_info->format_ != mindspore::NCHW) {
     MS_LOG(ERROR) << "schema tensor format is wrong, " << data_info->format_;
     return RET_ERROR;
@@ -260,15 +246,7 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
     }
   }
 
-  data_info->format_ = GetFormatByFmk(fmk_type);
-  if (data_info->format_ < 0) {
-    MS_LOG(ERROR) << "don't support current fmk: " << fmk_type;
-    return RET_ERROR;
-  }
-  if (data_info->format_ != mindspore::NHWC && data_info->format_ != mindspore::NCHW) {
-    MS_LOG(ERROR) << "schema tensor format is wrong, " << data_info->format_;
-    return RET_ERROR;
-  }
+  data_info->format_ = NHWC;
   return RET_OK;
 }
 
@@ -289,20 +267,12 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
   if (prim->GetAttr(ops::kFormat) == nullptr && !param_node->has_default()) {
     data_info->format_ = mindspore::NHWC;
   }
-  if (prim->GetAttr(ops::kFormat) != nullptr && !opt::CheckPrimitiveType(cnode, prim::kPrimResize)) {
+  if (prim->GetAttr(ops::kFormat) != nullptr) {
     auto value = prim->GetAttr(ops::kFormat);
     if (value->isa<mindspore::Int64Imm>()) {
       data_info->format_ = GetValue<int64_t>(value);
     }
   }
-  // attr weightFormat is only used by conv-like ops' second input
-  if ((opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
-       opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) ||
-       opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) &&
-      (index == kNumWeightIndex && prim->GetAttr(ops::kFormat) != nullptr)) {
-    data_info->format_ = mindspore::KHWC;
-  }
-
   QuantParamHolderPtr quant_param_holder =
     prim->GetAttr("quant_params") == nullptr ? nullptr : prim->GetAttr("quant_params")->cast<QuantParamHolderPtr>();
   if (quant_param_holder != nullptr && quant_param_holder->enable_huffman_code() &&

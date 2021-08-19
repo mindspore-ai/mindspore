@@ -35,35 +35,15 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
         if (GetElementNum(shape_tensor) < 4) {
           return NNACL_ERR;
         }
-        switch (shape_tensor->format_) {
-          case Format_NCHW:
-            param->new_height_ = data[2];
-            param->new_width_ = data[3];
-            break;
-          case Format_NHWC:
-            param->new_height_ = data[1];
-            param->new_width_ = data[2];
-            break;
-          default:
-            return NNACL_INFER_INVALID;
-        }
+        param->new_height_ = data[1];
+        param->new_width_ = data[2];
       } else if (shape_tensor->data_type_ == kNumberTypeFloat32) {
         float *data = (float *)(shape_tensor->data_);
         if (data == NULL) {
           return NNACL_INFER_INVALID;
         }
-        switch (shape_tensor->format_) {
-          case Format_NCHW:
-            param->new_height_ = round(data[2] * GetHeight(input));
-            param->new_width_ = round(data[3] * GetWidth(input));
-            break;
-          case Format_NHWC:
-            param->new_height_ = round(data[1] * GetHeight(input));
-            param->new_width_ = round(data[2] * GetWidth(input));
-            break;
-          default:
-            return NNACL_INFER_INVALID;
-        }
+        param->new_height_ = round(data[1] * GetHeight(input));
+        param->new_width_ = round(data[2] * GetWidth(input));
       }
       break;
     }

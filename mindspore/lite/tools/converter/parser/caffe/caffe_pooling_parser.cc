@@ -127,7 +127,7 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
 
   if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
     auto prim = std::make_unique<ops::MaxPoolFusion>();
-    prim->set_format(mindspore::Format::NCHW);
+    prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
     prim->set_pad_mode(mindspore::PadMode::PAD);
     prim->set_kernel_size(windows);
     prim->set_strides(strides);
@@ -137,7 +137,7 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
     return prim.release();
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
     auto prim = std::make_unique<ops::AvgPoolFusion>();
-    prim->set_format(mindspore::Format::NCHW);
+    prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
     prim->set_pad_mode(mindspore::PadMode::PAD);
     prim->set_kernel_size(windows);
     prim->set_strides(strides);

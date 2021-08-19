@@ -24,8 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::AvgPoolFusion>();
-
-  prim->set_format(mindspore::Format::NCHW);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_pad_mode(mindspore::PadMode::PAD);
   mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
@@ -96,8 +95,7 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
 
 ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::MaxPoolFusion>();
-
-  prim->set_format(mindspore::Format::NCHW);
+  prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
   std::vector<int64_t> strides;

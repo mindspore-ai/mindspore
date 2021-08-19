@@ -115,19 +115,18 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "conv2d is nullptr.";
       return false;
     }
-    if (conv2d_node->GetAttr(ops::kFormat) == nullptr) {
+    if (conv2d_node->GetAttr(ops::kOriginalFormat) == nullptr) {
       MS_LOG(ERROR) << "The format of conv2d is nullptr.";
       return false;
     }
-
     std::vector<int64_t> axis;
-    switch (conv2d_node->get_format()) {
+    switch (Format(GetValue<int64_t>(conv2d_node->GetAttr(ops::kOriginalFormat)))) {
       case mindspore::Format::NWC:
-        conv2d_node->set_format(mindspore::NHWC);
+        conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NHWC));
         axis = {1};
         break;
       case mindspore::Format::NCW:
-        conv2d_node->set_format(mindspore::NCHW);
+        conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NCHW));
         axis = {2};
         break;
       default:
