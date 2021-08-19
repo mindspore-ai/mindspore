@@ -28,14 +28,14 @@ int ConvDelegateCoder::Prepare(CoderContext *const context) {
   SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(parameter_), input_tensor_, output_tensor_);
   if (conv_coder_ == nullptr) {
     // need to select actual execute coder here
-    conv_coder_ = CPUConvolutionFP32CoderSelect(input_tensors_, output_tensors_, node_, node_index(), target_);
+    conv_coder_ =
+      CPUConvolutionFP32CoderSelect(input_tensors_, output_tensors_, node_, node_index(), target_, schema_version_);
     MS_CHECK_PTR(conv_coder_);
     const void *primitive = node_->primitive_;
     MS_CHECK_PTR(primitive);
-    int primitive_type = GetPrimitiveType(node_->primitive_);
-    int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-    ParameterGen parameter_gen =
-      PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node_->primitive_), schema_version);
+    int primitive_type = GetPrimitiveType(node_->primitive_, schema_version_);
+    ParameterGen parameter_gen = PopulateRegistry::GetInstance()->GetParameterCreator(
+      GetPrimitiveType(node_->primitive_, schema_version_), schema_version_);
     MS_CHECK_PTR(parameter_gen);
     OpParameter *op_parameter = parameter_gen(node_->primitive_);
     MS_CHECK_PTR(op_parameter);
@@ -62,15 +62,14 @@ void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *inpu
 
 std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
-                                                             const Model::Node *node, size_t node_index,
-                                                             Target target) {
+                                                             const Model::Node *node, size_t node_index, Target target,
+                                                             int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {
     return nullptr;
   }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen paramGen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
+  ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
+    GetPrimitiveType(node->primitive_, schema_version), schema_version);
   MS_CHECK_PTR_RET_NULL(paramGen);
   auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
   MS_CHECK_PTR_RET_NULL(conv_param);
@@ -89,40 +88,41 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<T
   std::unique_ptr<OperatorCoder> coder;
   if (kernel_h == 1 && kernel_w == 1) {
     MS_LOG(DEBUG) << "create ConvolutionFP32Coder";
-    coder = CPUOpCoderCreator<ConvolutionFP32Coder>(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUOpCoderCreator<ConvolutionFP32Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
   } else if (use_winograd) {
     MS_LOG(DEBUG) << "create Conv2DWinogradFP32Coder";
     coder = std::make_unique<ConvolutionWinogradFP32Coder>(in_tensors, out_tensors, node, node_index, target, out_unit);
   } else {
     MS_LOG(DEBUG) << "create ConvolutionFP32Coder";
-    coder = CPUOpCoderCreator<ConvolutionFP32Coder>(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUOpCoderCreator<ConvolutionFP32Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
   }
   return coder;
 }
 
 std::unique_ptr<OperatorCoder> CreateDelegateConv(const std::vector<Tensor *> &in_tensors,
                                                   const std::vector<Tensor *> &out_tensors, const Model::Node *node,
-                                                  size_t node_index, Target target) {
-  return CPUOpCoderCreator<ConvDelegateCoder>(in_tensors, out_tensors, node, node_index, target);
+                                                  size_t node_index, Target target, int schema_version) {
+  return CPUOpCoderCreator<ConvDelegateCoder>(in_tensors, out_tensors, node, node_index, target, schema_version);
 }
 
 std::unique_ptr<OperatorCoder> CPUConvDwFp32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                          const std::vector<Tensor *> &out_tensors,
-                                                         const Model::Node *node, size_t node_index, Target target) {
-  return CPUOpCoderCreator<ConvolutionDepthwiseFP32Coder>(in_tensors, out_tensors, node, node_index, target);
+                                                         const Model::Node *node, size_t node_index, Target target,
+                                                         int schema_version) {
+  return CPUOpCoderCreator<ConvolutionDepthwiseFP32Coder>(in_tensors, out_tensors, node, node_index, target,
+                                                          schema_version);
 }
 
 std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                                const std::vector<Tensor *> &out_tensors,
                                                                const Model::Node *node, size_t node_index,
-                                                               Target target) {
+                                                               Target target, int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {
     return nullptr;
   }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen paramGen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
+  ParameterGen paramGen = PopulateRegistry::GetInstance()->GetParameterCreator(
+    GetPrimitiveType(node->primitive_, schema_version), schema_version);
   if (paramGen == nullptr) {
     MS_LOG(ERROR) << "parameter generator is null";
     return nullptr;
@@ -130,9 +130,9 @@ std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector
   auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
   std::unique_ptr<OperatorCoder> coder;
   if (conv_param->group_ == 1) {
-    coder = CreateDelegateConv(in_tensors, out_tensors, node, node_index, target);
+    coder = CreateDelegateConv(in_tensors, out_tensors, node, node_index, target, schema_version);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    coder = CPUConvDwFp32CoderCreator(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUConvDwFp32CoderCreator(in_tensors, out_tensors, node, node_index, target, schema_version);
   } else {
     // GroupConv
     return nullptr;

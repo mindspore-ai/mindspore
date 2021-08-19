@@ -19,17 +19,18 @@
 
 namespace mindspore {
 namespace lite {
-int GetPrimitiveType(const void *prim);
-const char *PrimitiveTypeName(int type);
+int GetPrimitiveType(const void *prim, int schema_version);
+const char *GetPrimitiveTypeName(const void *primitive, int schema_version);
 const char *PrimitiveCurVersionTypeName(int type);
 int GenPrimVersionKey(int primitive_type, int schema_version);
-bool IsPartialNode(const void *primitive);
-bool IsCallNode(const void *node);
-bool IsSwitchNode(const void *node);
-int GetPartialGraphIndex(const void *primitive);
-bool IsWhileNode(const void *primitive);
-int GetWhileBodySubgraphIndex(const void *primitive);
-int GetWhileCondSubgraphIndex(const void *primitive);
+bool IsPartialNode(const void *primitive, int schema_version);
+bool IsCallNode(const void *node, int schema_version);
+bool IsSwitchNode(const void *node, int schema_version);
+bool IsCustomNode(const void *primitive, int schema_version);
+bool IsWhileNode(const void *primitive, int schema_version);
+int GetPartialGraphIndex(const void *primitive, int schema_version);
+int GetWhileBodySubgraphIndex(const void *primitive, int schema_version);
+int GetWhileCondSubgraphIndex(const void *primitive, int schema_version);
 }  // namespace lite
 }  // namespace mindspore
 

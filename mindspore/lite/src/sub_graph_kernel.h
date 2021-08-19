@@ -26,6 +26,7 @@
 #include "src/lite_kernel.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
+#include "src/common/version_manager.h"
 #include "src/cpu_info.h"
 #ifdef ENABLE_ARM64
 #include "src/common/utils.h"
@@ -117,6 +118,8 @@ class SubGraphKernel : public LiteKernel {
 
   std::vector<LiteKernel *> out_nodes() { return this->out_nodes_; }
 
+  void SetSchemaVersion(int schema_version) { schema_version_ = schema_version; }
+
  protected:
   std::vector<LiteKernel *> nodes_{};
   // entry nodes in nodes
@@ -124,6 +127,7 @@ class SubGraphKernel : public LiteKernel {
   // exit nodes in nodes
   std::vector<LiteKernel *> out_nodes_{};
   mindspore::lite::Executor *executor_ = nullptr;
+  int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
 };
 
 class CpuSubGraph : public SubGraphKernel {

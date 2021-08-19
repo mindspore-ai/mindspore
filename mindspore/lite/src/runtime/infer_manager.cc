@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
+#include <memory>
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
@@ -30,13 +31,12 @@
 namespace mindspore {
 namespace lite {
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     const void *primitive, std::set<std::string> &&providers) {
+                     const void *primitive, std::set<std::string> &&providers, int schema_version) {
   if (primitive == nullptr) {
     return RET_NOT_SUPPORT;
   }
-  auto prim_type = GetPrimitiveType(primitive);
   std::shared_ptr<kernel::KernelInterface> kernel_interface = nullptr;
-  if (prim_type == schema::PrimitiveType_Custom) {
+  if (IsCustomNode(primitive, schema_version)) {
     kernel_interface =
       kernel::RegisterKernelInterface::GetKernelInterface("", static_cast<const schema::Primitive *>(primitive));
   } else {
@@ -59,7 +59,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
                  [](lite::Tensor *tensor) { return mindspore::MSTensor(std::make_shared<MSTensor::Impl>(tensor)); });
   auto ret = kernel_interface->Infer(&in_tensors, &out_tensors, static_cast<const schema::Primitive *>(primitive));
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "op_type: " << PrimitiveTypeName(prim_type) << " infer fail!ret: " << ret;
+    MS_LOG(ERROR) << "op_type: " << GetPrimitiveTypeName(primitive, schema_version) << " infer fail!ret: " << ret;
     return ret;
   }
   return RET_OK;

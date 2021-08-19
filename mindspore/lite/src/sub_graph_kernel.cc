@@ -102,8 +102,8 @@ int SubGraphKernel::ReSize() {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    auto ret =
-      lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders());
+    auto ret = lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders(),
+                                      schema_version_);
     if (ret == lite::RET_NOT_SUPPORT) {
       auto parameter = kernel->op_parameter();
       if (parameter == nullptr) {
