@@ -74,6 +74,13 @@ class MS_API Model {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
+  /// \brief Load config file.
+  ///
+  /// \param[in] config_path config file path.
+  ///
+  /// \return Status.
+  Status LoadConfig(const std::string &config_path);
+
   /// \brief Obtains all input tensors of the model.
   ///
   /// \return The vector that includes all input tensors.
