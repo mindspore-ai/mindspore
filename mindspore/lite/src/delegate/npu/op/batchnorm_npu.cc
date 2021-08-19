@@ -46,41 +46,41 @@ int BatchnormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tens
                                  const std::vector<mindspore::MSTensor> &out_tensors,
                                  const std::vector<ge::Operator *> &npu_inputs) {
   batchnorm_->set_input_x(*npu_inputs[0]);
-  auto scale = new (std::nothrow) hiai::op::Const(name_ + "_scale");
-  if (scale == nullptr) {
+  scale_ = new (std::nothrow) hiai::op::Const(name_ + "_scale");
+  if (scale_ == nullptr) {
     MS_LOG(ERROR) << "New scale const failed.";
     return RET_ERROR;
   }
   auto scale_tensor = ConverterToNPUTensor(in_tensors[SCALE_INDEX]);
-  scale->set_attr_value(scale_tensor);
-  batchnorm_->set_input_scale(*scale);
+  scale_->set_attr_value(scale_tensor);
+  batchnorm_->set_input_scale(*scale_);
 
-  auto offset = new (std::nothrow) hiai::op::Const(name_ + "_offset");
-  if (offset == nullptr) {
+  offset_ = new (std::nothrow) hiai::op::Const(name_ + "_offset");
+  if (offset_ == nullptr) {
     MS_LOG(ERROR) << "New offset const failed.";
     return RET_ERROR;
   }
   auto offset_tensor = ConverterToNPUTensor(in_tensors[OFFSET_INDEX]);
-  offset->set_attr_value(offset_tensor);
-  batchnorm_->set_input_offset(*offset);
+  offset_->set_attr_value(offset_tensor);
+  batchnorm_->set_input_offset(*offset_);
 
-  auto mean = new (std::nothrow) hiai::op::Const(name_ + "_mean");
-  if (mean == nullptr) {
+  mean_ = new (std::nothrow) hiai::op::Const(name_ + "_mean");
+  if (mean_ == nullptr) {
     MS_LOG(ERROR) << "New mean const failed.";
     return RET_ERROR;
   }
   auto mean_tensor = ConverterToNPUTensor(in_tensors[MEAN_INDEX]);
-  mean->set_attr_value(mean_tensor);
-  batchnorm_->set_input_mean(*mean);
+  mean_->set_attr_value(mean_tensor);
+  batchnorm_->set_input_mean(*mean_);
 
-  auto variance = new (std::nothrow) hiai::op::Const(name_ + "_variance");
-  if (variance == nullptr) {
+  variance_ = new (std::nothrow) hiai::op::Const(name_ + "_variance");
+  if (variance_ == nullptr) {
     MS_LOG(ERROR) << "New variance const failed.";
     return RET_ERROR;
   }
   auto variance_tensor = ConverterToNPUTensor(in_tensors[VARIANCE_INDEX]);
-  variance->set_attr_value(variance_tensor);
-  batchnorm_->set_input_variance(*variance);
+  variance_->set_attr_value(variance_tensor);
+  batchnorm_->set_input_variance(*variance_);
   return RET_OK;
 }
 
@@ -90,6 +90,22 @@ BatchnormNPUOp::~BatchnormNPUOp() {
   if (batchnorm_ != nullptr) {
     delete batchnorm_;
     batchnorm_ = nullptr;
+  }
+  if (scale_ != nullptr) {
+    delete scale_;
+    scale_ = nullptr;
+  }
+  if (offset_ != nullptr) {
+    delete offset_;
+    offset_ = nullptr;
+  }
+  if (mean_ != nullptr) {
+    delete mean_;
+    mean_ = nullptr;
+  }
+  if (variance_ != nullptr) {
+    delete variance_;
+    variance_ = nullptr;
   }
 }
 }  // namespace mindspore
