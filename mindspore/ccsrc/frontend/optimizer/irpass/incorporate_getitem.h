@@ -301,6 +301,23 @@ bool ShouldTransform(const AnfNodePtr &node, const std::vector<TpCNodeAndIndex> 
   }
   return false;
 }
+
+// Incorporate getitem if the indexed node is a ZerosLike node, so another opt pass AddN(MakeTuple(Xs, ZerosLike))
+// can work.
+bool AlwaysTransformThisIndex(const AnfNodePtr &output, const int64_t index) {
+  if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+    const auto &output_cnode = output->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(output_cnode);
+    if (index >= SizeToLong(output_cnode->size() - 1)) {
+      MS_LOG(EXCEPTION) << "Index of GetItem: " << index
+                        << " exceeds size of MakeTuple: " << output_cnode->DebugString();
+    }
+    if (IsPrimitiveCNode(output_cnode->input(index + 1), prim::kPrimZerosLike)) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace internal
 
 // {prim::kPrimTupleGetItem, {G, Xs}, C}
@@ -316,14 +333,18 @@ class IncorporateGetitem : public AnfVisitor {
         fg_->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
       return nullptr;
     }
+
+    const auto &manager = fg_->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    if (internal::AlwaysTransformThisIndex(fg_->output(), idx_)) {
+      return TransformFuncGraph(manager, node);
+    }
     // This node had been substituted.
     if (processed_nodes_.find(fg_call_cnode_) != processed_nodes_.end()) {
       MS_LOG(DEBUG) << "fg call with same cnode is already replaced, node: " << node->DebugString()
                     << ", fg_call: " << fg_call_cnode_->DebugString();
       return nullptr;
     }
-    const auto &manager = fg_->manager();
-    MS_EXCEPTION_IF_NULL(manager);
     bool output_is_shrinkable = internal::IsOutputShrinkable(fg_->output());
     std::vector<internal::TpCNodeAndIndex> tp_cnodes_and_index;
     auto fg_call_cnode_users_counter = MultipleUse(fg_call_cnode_, fg_, &tp_cnodes_and_index);
@@ -347,36 +368,7 @@ class IncorporateGetitem : public AnfVisitor {
     }
     MS_LOG(DEBUG) << "Cannot shrink, transform_getitem, node: " << node->DebugString()
                   << ", fg_call: " << fg_call_cnode_->DebugString();
-    auto new_fg = getitem_transform_(node, fg_, idx_);
-    MS_LOG(DEBUG) << "Original fg: " << fg_->ToString() << ", new fg: " << new_fg->ToString();
-    (void)args_.insert(args_.begin(), NewValueNode(new_fg));
-    auto new_node = node->func_graph()->NewCNode(args_);
-    // Check if the another only usage of {G, Xs} is UpdateState{s, {G, Xs}}, if yes, replace
-    // UpdateState{s, {G, Xs}} with UpdateState{s, new_node};
-    auto &node_users_map = manager->node_users();
-    auto it = node_users_map.find(fg_call_cnode_);
-    if (it != node_users_map.end()) {
-      AnfNodePtr update_state_node = nullptr;
-      auto &node_users = it->second;
-      if (node_users.size() == 2) {
-        for (auto &node_user : node_users) {
-          if (IsPrimitiveCNode(node_user.first, prim::kPrimUpdateState)) {
-            update_state_node = node_user.first;
-          }
-        }
-      }
-      if (update_state_node != nullptr) {
-        auto update_state_cnode = update_state_node->cast<CNodePtr>();
-        // double check;
-        if (update_state_cnode->input(2) == fg_call_cnode_) {
-          MS_LOG(DEBUG) << "Replace UpdateState node: " << update_state_cnode->DebugString(2)
-                        << ", input 2 with: " << new_node->DebugString();
-          manager->SetEdge(update_state_cnode, 2, new_node);
-        }
-      }
-    }
-    new_node->set_abstract(node->abstract());
-    return new_node;
+    return TransformFuncGraph(manager, node);
   }
 
   size_t MultipleUse(const CNodePtr &fg_call, const FuncGraphPtr &fg,
@@ -463,6 +455,39 @@ class IncorporateGetitem : public AnfVisitor {
     MS_LOG(DEBUG) << "Shrink failed. node: " << node->DebugString()
                   << ", switch_call: " << fg_call_cnode_->DebugString();
     return nullptr;
+  }
+
+  AnfNodePtr TransformFuncGraph(const FuncGraphManagerPtr &manager, const AnfNodePtr &origin_node) {
+    auto new_fg = getitem_transform_(origin_node, fg_, idx_);
+    MS_LOG(DEBUG) << "Original fg: " << fg_->ToString() << ", new fg: " << new_fg->ToString();
+    (void)args_.insert(args_.begin(), NewValueNode(new_fg));
+    auto new_node = origin_node->func_graph()->NewCNode(args_);
+    // Check if the another only usage of {G, Xs} is UpdateState{s, {G, Xs}}, if yes, replace
+    // UpdateState{s, {G, Xs}} with UpdateState{s, new_node};
+    auto &node_users_map = manager->node_users();
+    auto it = node_users_map.find(fg_call_cnode_);
+    if (it != node_users_map.end()) {
+      AnfNodePtr update_state_node = nullptr;
+      auto &node_users = it->second;
+      if (node_users.size() == 2) {
+        for (auto &node_user : node_users) {
+          if (IsPrimitiveCNode(node_user.first, prim::kPrimUpdateState)) {
+            update_state_node = node_user.first;
+          }
+        }
+      }
+      if (update_state_node != nullptr) {
+        auto update_state_cnode = update_state_node->cast<CNodePtr>();
+        // double check;
+        if (update_state_cnode->input(2) == fg_call_cnode_) {
+          MS_LOG(DEBUG) << "Replace UpdateState node: " << update_state_cnode->DebugString(2)
+                        << ", input 2 with: " << new_node->DebugString();
+          manager->SetEdge(update_state_cnode, 2, new_node);
+        }
+      }
+    }
+    new_node->set_abstract(origin_node->abstract());
+    return new_node;
   }
 
   void Visit(const CNodePtr &cnode) override {
