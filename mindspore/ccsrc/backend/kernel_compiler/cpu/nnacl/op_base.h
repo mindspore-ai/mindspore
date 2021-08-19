@@ -76,6 +76,7 @@
 #define MAX_AXIS_SIZE 6
 #define MAX_LEN 256
 #define FLT16_MAX 65504
+#define NNACL_NC4HW4 13
 
 #ifndef ENABLE_HIGH_PERFORMANCE
 #define CHECK_NULL_RETURN(ptr)                       \
@@ -108,11 +109,19 @@
     }                                \
   } while (0);
 
+#define NNACL_CHECK_NULL_RETURN_ERR(ptr) \
+  do {                                   \
+    if ((ptr) == NULL) {                 \
+      return NNACL_NULL_PTR;             \
+    }                                    \
+  } while (0);
+
 #else
 #define CHECK_NULL_RETURN(ptr)
 #define CHECK_LESS_RETURN(size1, size2)
 #define NNACL_CHECK_ZERO_RETURN_ERR(val)
 #define NNACL_CHECK_ZERO_RETURN(val)
+#define NNACL_CHECK_NULL_RETURN_ERR(ptr)
 #endif
 
 typedef enum LiteDataType {

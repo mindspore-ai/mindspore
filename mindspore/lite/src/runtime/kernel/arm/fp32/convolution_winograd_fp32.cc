@@ -128,6 +128,7 @@ int ConvolutionWinogradCPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConfigInputOutput failed.";
     return RET_ERROR;
   }
+  conv_param_->out_format_ = out_tensors_[0]->format();
   return RET_OK;
 }
 

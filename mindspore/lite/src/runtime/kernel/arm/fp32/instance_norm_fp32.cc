@@ -37,15 +37,20 @@ int InstanceNormCPUKernel::Init() {
 
 int InstanceNormCPUKernel::ReSize() {
   param_->op_parameter_.thread_num_ = op_parameter_->thread_num_;
-  auto shape = in_tensors_.front()->shape();
-  param_->batch_ = shape[0];
-  param_->inner_size_ = shape[2] * shape[3];
-  param_->channel_ = shape[1];
+  auto in_tensor = in_tensors_.front();
+  param_->batch_ = in_tensor->Batch();
+  param_->inner_size_ = in_tensor->Height() * in_tensor->Width();
+  param_->channel_ = in_tensor->Channel();
   return RET_OK;
 }
 
 int InstanceNormCPUKernel::DoInstanceNorm(int task_id) {
-  int ret = InstanceNorm(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+  int ret = 0;
+  if (in_tensors_[0]->format() == NC4HW4) {
+    ret = InstanceNormNC4HW4(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+  } else {
+    ret = InstanceNorm(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoInstanceNorm error error_code[" << ret << "]";
     return ret;
