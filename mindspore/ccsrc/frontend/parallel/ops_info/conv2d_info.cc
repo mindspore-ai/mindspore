@@ -103,10 +103,6 @@ Status Conv2DInfo::GetAttrsBase() {
 
   // group
   group_ = GetIntAttr(GROUP);
-  if (group_ != 1) {
-    MS_LOG(ERROR) << name_ << ": The group must be 1, but got " << group_;
-    return FAILED;
-  }
 
   // format
   format_ = GetStringAttr(FORMAT);
@@ -176,10 +172,10 @@ Status Conv2DInfo::CheckHWStrategySameMode(int64_t h_strategy, int64_t w_strateg
       return FAILED;
     }
 
-    if (w_slice_shape < ((kernel_size_[1] - stride_[3] + 1) / 2)) {
+    if (w_slice_shape <= ((kernel_size_[1] - stride_[3] + 1) / 2)) {
       MS_LOG(ERROR) << name_
                     << ": The 'same' mode do not support to split W when kernel_size > stride but w slice shape is "
-                       "smaller than (k - s + 1) / 2";
+                       "smaller than or equal to (k - s + 1) / 2";
       return FAILED;
     }
 
@@ -275,6 +271,23 @@ Status Conv2DInfo::CheckStrategyBase(const StrategyPtr &strategy) {
     new_out_channel_ = out_channel_;
   }
 
+  int64_t input_except_n_shards =
+    std::accumulate(input_strategy.begin() + 1, input_strategy.end(), 1, std::multiplies<int64_t>());
+  int64_t weight_shards =
+    std::accumulate(weight_strategy.begin() + 1, weight_strategy.end(), 1, std::multiplies<int64_t>());
+
+  bool is_data_parallel = (input_except_n_shards * weight_shards == 1);
+  if (!is_data_parallel) {
+    if (std::any_of(dilation_.begin(), dilation_.end(), [](int64_t value) { return value != 1; })) {
+      MS_LOG(ERROR) << name_ << ": If it is not data parallel, the value of dilation must be 1, but got " << dilation_;
+      return FAILED;
+    }
+
+    if (group_ != 1) {
+      MS_LOG(ERROR) << name_ << ": If it is not data parallel, the group must be 1, but got " << group_;
+      return FAILED;
+    }
+  }
   return SUCCESS;
 }
 
@@ -536,17 +549,17 @@ void Conv2DInfo::InferSendRecvFlag() {
                << right_need_recv_;
 
   if (left_need_send_) {
-    if (left_rank_overlap_right_size_ > input_slice_shape_[3]) {
+    if (left_rank_overlap_right_size_ >= input_slice_shape_[3]) {
       MS_LOG(EXCEPTION) << name_ << ": Do not support left overlap size(" << left_rank_overlap_right_size_
-                        << ") larger than slice shape in w dimension(" << input_slice_shape_[3] << ")";
+                        << ") larger than or equal to slice shape in w dimension(" << input_slice_shape_[3] << ")";
     }
     send_rank_ids_.push_back(left_rank_id_);
   }
 
   if (right_need_send_) {
-    if (right_rank_overlap_left_size_ > input_slice_shape_[3]) {
+    if (right_rank_overlap_left_size_ >= input_slice_shape_[3]) {
       MS_LOG(EXCEPTION) << name_ << ": Do not support left overlap size(" << right_rank_overlap_left_size_
-                        << ") larger than slice shape in w dimension(" << input_slice_shape_[3] << ")";
+                        << ") larger than or equal to slice shape in w dimension(" << input_slice_shape_[3] << ")";
     }
     send_rank_ids_.push_back(right_rank_id_);
   }
@@ -862,8 +875,8 @@ Status Conv2DBackpropInputInfo::GetOutShape() {
   for (auto &element : elements) {
     MS_EXCEPTION_IF_NULL(element);
     if (element->isa<Int64Imm>()) {
-      int64_t axis = element->cast<Int64ImmPtr>()->value();
-      out_shape_.push_back(axis);
+      int64_t ele_value = element->cast<Int64ImmPtr>()->value();
+      out_shape_.push_back(ele_value);
     } else {
       MS_LOG(ERROR) << name_ << ": The value of shape must be int";
       return FAILED;
