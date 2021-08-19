@@ -25,11 +25,11 @@
 namespace py = pybind11;
 
 namespace mindspore {
-py::function GetBpropFunctionByObj(py::object obj);
+py::function GetBpropFunctionByObj(const py::object &obj);
 
-py::function GetBpropFunction(std::string name);
+py::function GetBpropFunction(const std::string &name);
 
-py::function GetComputeFunction(std::string name);
+py::function GetComputeFunction(const std::string &name);
 
 BaseRef RunComputeFunction(const PrimitivePtr &prim, const VectorRef &args);
 
