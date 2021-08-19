@@ -1051,6 +1051,44 @@ class GatherV2PCost : public GatherV2Cost {
   int64_t axis_;
   Shape strategy_;
 };
+
+class MatmulDDSCost : public OperatorCost {
+ public:
+  MatmulDDSCost() : OperatorCost() {}
+  ~MatmulDDSCost() override = default;
+
+  // per device communication cost
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int64_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override {
+    return 0.0;
+  };
+  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                             int64_t stage_id) const override {
+    return 0.0;
+  };
+
+  // per device computation cost
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                   int64_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int64_t stage_id) const override {
+    return 0.0;
+  };
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using MatmulDDSCostPtr = std::shared_ptr<MatmulDDSCost>;
+
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_

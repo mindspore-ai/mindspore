@@ -204,6 +204,7 @@ REGISTER(MaxPoolInfo);
 REGISTER(AvgPoolInfo);
 REGISTER(GatherDInfo);
 REGISTER(ReduceAnyInfo);
+REGISTER(MatmulDDSInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

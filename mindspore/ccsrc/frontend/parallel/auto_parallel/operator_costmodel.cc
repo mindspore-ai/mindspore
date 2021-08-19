@@ -1744,5 +1744,35 @@ void VirtualDatasetCost::CalculateInputsInMemory(const std::map<size_t, bool> &)
     is_inputs_should_in_memory_[i] = is_parameter_[i];
   }
 }
+
+double MatmulDDSCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                                int64_t) const {
+  double result = 0.0;
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for layer norm cost";
+  }
+
+  for (size_t index = 0; index < inputs.size(); ++index) {
+    TensorInfo tensor_info = inputs[index];
+    Shape slice_shape = tensor_info.slice_shape();
+    result += ListProduct(slice_shape) * static_cast<double>(inputs_type_lengths_[index]);
+  }
+  return result;
+}
+
+// Not taking account of output
+void MatmulDDSCost::CalculateOutputInMemory() {
+  is_output_should_in_memory_ =
+    (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
+}
+
+// Taking account of input
+void MatmulDDSCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  bool keep_mem =
+    (std::find(is_parameter_.begin(), is_parameter_.end(), true) != is_parameter_.end()) ||
+    (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
+  std::fill(is_inputs_should_in_memory_.begin(), is_inputs_should_in_memory_.end(), keep_mem);
+}
+
 }  // namespace parallel
 }  // namespace mindspore
