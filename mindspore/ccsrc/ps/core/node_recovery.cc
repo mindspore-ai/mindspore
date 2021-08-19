@@ -25,7 +25,7 @@ bool NodeRecovery::Recover() {
   }
   // 1. recover worker num
   if (recovery_storage_->Exists(kRecoveryWorkerNum)) {
-    int32_t worker_num = std::strtol(recovery_storage_->Get(kRecoveryWorkerNum, "").c_str(), nullptr, 10);
+    int32_t worker_num = std::strtol(recovery_storage_->Get(kRecoveryWorkerNum, "").c_str(), nullptr, kBase);
     node_->set_worker_num(worker_num);
   } else {
     node_->set_worker_num(PSContext::instance()->cluster_config().initial_worker_num);
@@ -33,7 +33,7 @@ bool NodeRecovery::Recover() {
 
   // 2. recover server num
   if (recovery_storage_->Exists(kRecoveryServerNum)) {
-    int32_t server_num = std::strtol(recovery_storage_->Get(kRecoveryServerNum, "").c_str(), nullptr, 10);
+    int32_t server_num = std::strtol(recovery_storage_->Get(kRecoveryServerNum, "").c_str(), nullptr, kBase);
     node_->set_server_num(server_num);
   } else {
     node_->set_server_num(PSContext::instance()->cluster_config().initial_server_num);
@@ -49,7 +49,7 @@ bool NodeRecovery::Recover() {
 
   // 4. recover scheduler port
   if (recovery_storage_->Exists(kRecoverySchedulerPort)) {
-    uint16_t scheduler_port = std::strtol(recovery_storage_->Get(kRecoverySchedulerPort, "").c_str(), nullptr, 10);
+    uint16_t scheduler_port = std::strtol(recovery_storage_->Get(kRecoverySchedulerPort, "").c_str(), nullptr, kBase);
     node_->set_scheduler_port(scheduler_port);
   } else {
     node_->set_scheduler_port(PSContext::instance()->cluster_config().scheduler_port);

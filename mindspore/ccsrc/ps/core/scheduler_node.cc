@@ -226,7 +226,7 @@ void SchedulerNode::ProcessScaleOutDone(const std::shared_ptr<TcpServer> &server
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   ScaleOutDoneMessage scale_out_done_message;
-  scale_out_done_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(scale_out_done_message.ParseFromArray(data, size));
   std::string node_id = scale_out_done_message.node_id();
   MS_LOG(INFO) << "The scheduler process a scale_out_done message from node id:" << node_id;
   node_manager_.AddScaleOutDoneNode(node_id);
@@ -252,7 +252,7 @@ void SchedulerNode::ProcessScaleInDone(const std::shared_ptr<TcpServer> &server,
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   ScaleInDoneMessage scale_in_done_message;
-  scale_in_done_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(scale_in_done_message.ParseFromArray(data, size));
   std::string node_id = scale_in_done_message.node_id();
   MS_LOG(INFO) << "The scheduler process a scale_in_done message from node id:" << node_id;
   node_manager_.AddScaleInDoneNode(node_id);
@@ -278,7 +278,7 @@ void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   EventMessage event_message;
-  event_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(event_message.ParseFromArray(data, size));
   std::string node_id = event_message.node_id();
   uint32_t event = event_message.event();
   MS_LOG(DEBUG) << "The scheduler process a event message from node id:" << node_id;

@@ -871,6 +871,10 @@ void Worker::WorkerInitEmbeddingPartitioner(const KVMessage &send, std::vector<s
   auto keys = send.keys();
   auto values = send.values();
   auto lens = send.len();
+  int id_size = send.len_size();
+  if (id_size <= 0) {
+    MS_LOG(EXCEPTION) << "The len should not be 0.";
+  }
 
   int32_t col_cnt = lens[0] / embedding_row_cnt_[keys[0]];
   const std::vector<EmbeddingTableShardMetadata> &ranges = *(embedding_table_ranges_[keys[0]]);

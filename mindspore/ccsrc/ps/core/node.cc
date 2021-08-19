@@ -102,7 +102,6 @@ bool Node::CheckMessageTrack(const uint64_t &request_id) {
 void Node::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta) {
   std::lock_guard<std::mutex> lock(message_tracker_mutex_);
   uint64_t request_id = meta->request_id();
-
   if (message_tracker_.count(request_id)) {
     message_tracker_[request_id].second++;
   } else {

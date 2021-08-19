@@ -77,7 +77,9 @@ bool AbstractNode::Broadcast(const NodeRole &node_role, const DataPtr &message, 
     message_meta->set_user_cmd(command);
 
     auto client = GetOrCreateTcpClient((*it).first.second);
-    client->SendMessage(message_meta, Protos::RAW, message.get(), size);
+    if (!client->SendMessage(message_meta, Protos::RAW, message.get(), size)) {
+      MS_LOG(WARNING) << "Client send message failed.";
+    }
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
@@ -216,7 +218,9 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
     auto send = data.at(it);
     auto len = lens.at(it);
     auto client = GetOrCreateTcpClient(rank_ids.at(it));
-    client->SendMessage(message_meta, Protos::RAW, send.get(), len);
+    if (!client->SendMessage(message_meta, Protos::RAW, send.get(), len)) {
+      MS_LOG(WARNING) << "Client send message failed.";
+    }
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
@@ -253,7 +257,9 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
   message_meta->set_user_cmd(command);
 
   auto client = GetOrCreateTcpClient(rank_id);
-  client->SendMessage(message_meta, Protos::RAW, message.get(), len);
+  if (!client->SendMessage(message_meta, Protos::RAW, message.get(), len)) {
+    MS_LOG(WARNING) << "Client send message failed.";
+  }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return Wait(request_id, timeout);
@@ -302,7 +308,9 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
     auto len = data_lens.at(it);
 
     auto client = GetOrCreateTcpClient(rank_ids.at(it));
-    client->SendMessage(message_meta, Protos::RAW, send.get(), len);
+    if (!client->SendMessage(message_meta, Protos::RAW, send.get(), len)) {
+      MS_LOG(WARNING) << "Client send message failed.";
+    }
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
@@ -555,7 +563,7 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
     return;
   }
   SendMetadataMessage send_meta_message;
-  send_meta_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(send_meta_message.ParseFromArray(data, size));
   worker_num_ = send_meta_message.worker_num();
   server_num_ = send_meta_message.server_num();
   if (send_meta_message.rank_id() < 0) {
@@ -572,7 +580,9 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
     nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
     MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port() << ", the rank id:" << it.rank_id();
   }
-  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server send message failed.";
+  }
   is_ready_ = true;
   wait_start_cond_.notify_all();
 
@@ -595,7 +605,9 @@ void AbstractNode::ProcessFinish(const std::shared_ptr<TcpConnection> &conn, con
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server send message failed.";
+  }
   is_finish_ = true;
   wait_finish_cond_.notify_all();
 }
@@ -606,54 +618,62 @@ void AbstractNode::ProcessScaleOutDone(const std::shared_ptr<TcpConnection> &con
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
   is_ready_ = true;
   current_cluster_state_ = ClusterState::CLUSTER_READY;
 }
 
 void AbstractNode::ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn,
-                                      const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
+                                      const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
                                       size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
   is_ready_ = true;
   current_cluster_state_ = ClusterState::CLUSTER_READY;
 }
 
 void AbstractNode::ProcessEvent(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                                const Protos &protos, const void *data, size_t size) {
+                                const Protos &, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   EventRespMessage event_resp_message;
-  event_resp_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(event_resp_message.ParseFromArray(data, size));
   uint32_t event = event_resp_message.event();
-  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
   OnCustomEventCallback(event);
 }
 
 void AbstractNode::ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                                   const Protos &protos, const void *data, size_t size) {
+                                   const Protos &, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
 
   ScaleOutMessage scale_out_message;
-  scale_out_message.ParseFromArray(data, size);
+  CHECK_RETURN_TYPE(scale_out_message.ParseFromArray(data, size));
   int32_t worker_num = scale_out_message.worker_num();
   int32_t server_num = scale_out_message.server_num();
   MS_LOG(WARNING) << "The scale out worker num:" << worker_num << ", the server num:" << server_num;
 
-  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
   OnEventCallback(ClusterEvent::READY_FOR_SCALE_OUT);
   current_cluster_state_ = ClusterState::CLUSTER_SCALE_OUT;
   is_ready_ = false;
 }
 
 void AbstractNode::ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                                  const Protos &protos, const void *data, size_t size) {
+                                  const Protos &, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -665,7 +685,6 @@ void AbstractNode::ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, co
   MS_LOG(WARNING) << "The scale in worker num:" << worker_num << ", the server num:" << server_num;
 
   is_current_node_scale_in_ = scale_in_message.is_node_scale_in();
-
   if (is_current_node_scale_in_) {
     MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                     << " the node id:" << node_info_.node_id_ << " is a scale in node!";
@@ -674,7 +693,9 @@ void AbstractNode::ProcessScaleIn(const std::shared_ptr<TcpConnection> &conn, co
                     << " the node id:" << node_info_.node_id_ << " is not a scale in node!";
   }
 
-  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
   OnEventCallback(ClusterEvent::READY_FOR_SCALE_IN);
   current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
   is_ready_ = false;
