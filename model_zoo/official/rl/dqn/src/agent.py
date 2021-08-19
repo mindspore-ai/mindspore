@@ -118,5 +118,5 @@ class Agent:
         q_next_numpy = q_next.asnumpy()
         tem_ = Tensor(np.max(q_next_numpy, axis=1).reshape(-1, 1))
         q_target = b_r + self.gamma * tem_
-        self.train_net(b_s, q_target, b_a)
-        
+        loss = self.train_net(b_s, q_target, b_a)
+        return loss
