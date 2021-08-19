@@ -12,6 +12,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         coco_node.cc
         csv_node.cc
         div2k_node.cc
+        emnist_node.cc
         flickr_node.cc
         image_folder_node.cc
         manifest_node.cc

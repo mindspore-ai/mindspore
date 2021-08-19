@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1457,6 +1457,39 @@ def check_to_device_send(method):
         if num_epochs is not None:
             type_check(num_epochs, (int,), "num_epochs")
             check_value(num_epochs, [-1, INT32_MAX], "num_epochs")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_emnist_dataset(method):
+    """A wrapper that wraps a parameter checker emnist dataset"""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle']
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        name = param_dict.get('name')
+        check_valid_str(name, ["byclass", "bymerge", "balanced", "letters", "digits", "mnist"], "name")
+
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "test", "all"], "usage")
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
 
         return method(self, *args, **kwargs)
 
