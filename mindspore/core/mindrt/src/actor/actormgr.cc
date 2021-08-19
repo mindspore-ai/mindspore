@@ -253,6 +253,9 @@ void ActorMgr::Terminate(const AID &id) {
     MINDRT_OOM_EXIT(msg);
     (void)actor->EnqueMessage(std::move(msg));
     actor->SetRunningStatus(true);
+
+    // Wait actor's thread to finish.
+    actor->Await();
   }
 }
 
