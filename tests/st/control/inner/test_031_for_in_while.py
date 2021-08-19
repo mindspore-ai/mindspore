@@ -22,7 +22,6 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
-context.set_context(device_target="Ascend")
 
 @pytest.mark.skip(reason="not supported for in while")
 def test_for_in_while_01():
@@ -62,16 +61,20 @@ def test_for_in_while_01():
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     for_in_while_net = ForInWhileNet()
-    net = GradNet(for_in_while_net)
-    graph_forward_res = for_in_while_net(x)
-    graph_backward_res = net(x)
+    backward_net = GradNet(for_in_while_net)
+
+    forward_net = ForInWhileNet()
+    graph_forward_res = forward_net(x)
+    graph_backward_res = backward_net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_in_while_net = ForInWhileNet()
-    net = GradNet(for_in_while_net)
-    pynative_forward_res = for_in_while_net(x)
-    pynative_backward_res = net(x)
+    backward_net = GradNet(for_in_while_net)
+
+    forward_net = ForInWhileNet()
+    pynative_forward_res = forward_net(x)
+    pynative_backward_res = backward_net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res

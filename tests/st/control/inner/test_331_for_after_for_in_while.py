@@ -22,7 +22,6 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
-context.set_context(device_target="Ascend")
 @pytest.mark.skip(reason="not supported for in while")
 def test_for_after_for_in_while_01():
     class ForAfterForInWhileNet(nn.Cell):
@@ -75,14 +74,18 @@ def test_for_after_for_in_while_01():
     context.set_context(mode=context.GRAPH_MODE)
     for_after_for_in_while_net = ForAfterForInWhileNet()
     net = GradNet(for_after_for_in_while_net)
-    graph_forward_res = for_after_for_in_while_net(x, y)
+
+    forward_net = ForAfterForInWhileNet()
+    graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_after_for_in_while_net = ForAfterForInWhileNet()
     net = GradNet(for_after_for_in_while_net)
-    pynative_forward_res = for_after_for_in_while_net(x, y)
+
+    forward_net = ForAfterForInWhileNet()
+    pynative_forward_res = forward_net(x, y)
     pynative_backward_res = net(x, y)
 
     assert graph_forward_res == pynative_forward_res
@@ -128,14 +131,18 @@ def test_for_after_for_in_while_02():
     context.set_context(mode=context.GRAPH_MODE)
     for_after_for_in_while_net = ForAfterForInWhileNet()
     net = GradNet(for_after_for_in_while_net)
-    graph_forward_res = for_after_for_in_while_net(x, y)
+
+    forward_net = ForAfterForInWhileNet()
+    graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_after_for_in_while_net = ForAfterForInWhileNet()
     net = GradNet(for_after_for_in_while_net)
-    pynative_forward_res = for_after_for_in_while_net(x, y)
+
+    forward_net = ForAfterForInWhileNet()
+    pynative_forward_res = forward_net(x, y)
     pynative_backward_res = net(x, y)
 
     assert graph_forward_res == pynative_forward_res

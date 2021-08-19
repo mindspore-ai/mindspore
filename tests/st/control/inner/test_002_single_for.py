@@ -19,11 +19,17 @@ from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 grad_all = C.GradOperation(get_all=True)
-context.set_context(device_target="Ascend")
 
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_for_01():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -72,6 +78,11 @@ def test_single_for_01():
     assert graph_backward_res == pynative_backward_res
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_for_02():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -102,20 +113,29 @@ def test_single_for_02():
     context.set_context(mode=context.GRAPH_MODE)
     for_net = SingleForNet()
     net = GradNet(for_net)
-    graph_forward_res = for_net(x, y, z)
+
+    for_net_forward = SingleForNet()
+    graph_forward_res = for_net_forward(x, y, z)
     graph_backward_res = net(x, y, z)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     for_net = SingleForNet()
     net = GradNet(for_net)
-    pynative_forward_res = for_net(x, y, z)
+
+    for_net_forward = SingleForNet()
+    pynative_forward_res = for_net_forward(x, y, z)
     pynative_backward_res = net(x, y, z)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_for_03():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -157,20 +177,29 @@ def test_single_for_03():
     context.set_context(mode=context.GRAPH_MODE)
     single_for_net = SingleForNet()
     net = GradNet(single_for_net)
-    graph_forward_res = single_for_net(x, y)
+
+    for_net_forward = SingleForNet()
+    graph_forward_res = for_net_forward(x, y)
     graph_backward_res = net(x, y)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     single_for_net = SingleForNet()
     net = GradNet(single_for_net)
-    pynative_forward_res = single_for_net(x, y)
+
+    for_net_forward = SingleForNet()
+    pynative_forward_res = for_net_forward(x, y)
     pynative_backward_res = net(x, y)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-@pytest.mark.skip(reason="not supported side effect")
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_for_04():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -187,7 +216,7 @@ def test_single_for_04():
         def construct(self, x):
             self.assign(self.param_a, x + self.param_a)
             for _ in range(1):
-                self.param_b = x - self.param_a
+                F.assign(self.param_b, x - self.param_a)
             return self.param_b
 
     class GradNet(nn.Cell):
@@ -204,20 +233,29 @@ def test_single_for_04():
     context.set_context(mode=context.GRAPH_MODE)
     single_for_net = SingleForNet()
     net = GradNet(single_for_net)
-    graph_forward_res = single_for_net(x)
+
+    for_net_forward = SingleForNet()
+    graph_forward_res = for_net_forward(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     single_for_net = SingleForNet()
     net = GradNet(single_for_net)
-    pynative_forward_res = single_for_net(x)
+
+    for_net_forward = SingleForNet()
+    pynative_forward_res = for_net_forward(x)
     pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_for_05():
     class SingleForNet(nn.Cell):
         def __init__(self):
@@ -249,14 +287,18 @@ def test_single_for_05():
     context.set_context(mode=context.GRAPH_MODE)
     single_for_net = SingleForNet()
     net = GradNet(single_for_net)
-    graph_forward_res = single_for_net(x)
+
+    for_net_forward = SingleForNet()
+    graph_forward_res = for_net_forward(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     single_for_net = SingleForNet()
     net = GradNet(single_for_net)
-    pynative_forward_res = single_for_net(x)
+
+    for_net_forward = SingleForNet()
+    pynative_forward_res = for_net_forward(x)
     pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res

@@ -626,6 +626,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
       MS_LOG(INFO) << "Run graph mode with vm.";
       bc_ptr->set_is_multi_graph_sink(false);
       context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+      context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
     }
   }
 

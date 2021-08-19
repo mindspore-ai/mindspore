@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.ops import functional as F
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
 
 
 class ForwardNet(nn.Cell):
@@ -52,8 +52,10 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -62,13 +64,16 @@ def test_forward():
     graph_forward_net = ForwardNet(max_cycles=3)
     graph_mode_out = graph_forward_net(x, y)
     # Pynative Mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    pynative_forward_net = ForwardNet(max_cycles=3)
-    pynative_mode_out = pynative_forward_net(x, y)
-    assert graph_mode_out == pynative_mode_out
+    # context.set_context(mode=context.PYNATIVE_MODE)
+    # pynative_forward_net = ForwardNet(max_cycles=3)
+    # pynative_mode_out = pynative_forward_net(x, y)
+    expect = (Tensor(np.array(9), mstype.int32), Tensor(np.array(2), mstype.int32))
+    assert graph_mode_out == expect
 
-
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -78,8 +83,9 @@ def test_backward():
     graph_backward_net = BackwardNet(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)
     # Pynative Mode
-    context.set_context(mode=context.PYNATIVE_MODE)
-    pynative_forward_net = ForwardNet(max_cycles=3)
-    pynative_backward_net = BackwardNet(pynative_forward_net)
-    pynative_mode_grads = pynative_backward_net(x, y)
-    assert graph_mode_grads == pynative_mode_grads
+    # context.set_context(mode=context.PYNATIVE_MODE)
+    # pynative_forward_net = ForwardNet(max_cycles=3)
+    # pynative_backward_net = BackwardNet(pynative_forward_net)
+    # pynative_mode_grads = pynative_backward_net(x, y)
+    expect = (Tensor(np.array(9), mstype.int32), Tensor(np.array(3), mstype.int32))
+    assert graph_mode_grads == expect

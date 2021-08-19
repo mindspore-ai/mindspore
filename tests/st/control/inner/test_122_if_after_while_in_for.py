@@ -19,10 +19,11 @@ from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 from mindspore import context
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="GPU")
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
 
 
 class ForwardNet(nn.Cell):
@@ -38,9 +39,9 @@ class ForwardNet(nn.Cell):
             while x < y:
                 out = x * y + out
                 x = x + 1
-                self.weight = x
+                F.assign(self.weight, x)
         if out > 20:
-            self.weight = out
+            F.assign(self.weight, out)
             out = out - 20
         return out, self.weight
 
@@ -55,7 +56,11 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -70,7 +75,11 @@ def test_forward():
     assert graph_mode_out == pynative_mode_out
 
 
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -84,6 +93,7 @@ def test_backward():
     pynative_forward_net = ForwardNet(max_cycles=3)
     pynative_backward_net = BackwardNet(pynative_forward_net)
     pynative_mode_grads = pynative_backward_net(x, y)
+    #expect = (Tensor(np.array(6), mstype.int32), Tensor(np.array(3), mstype.int32))
     assert graph_mode_grads == pynative_mode_grads
 
 
@@ -100,7 +110,7 @@ class ForwardNetNoAssign(nn.Cell):
             while x < y:
                 out = x * y + out
                 x = x + 1
-                #self.weight = x
+                # self.weight = x
         if out > 20:
             self.weight = out
             out = out - 20
@@ -119,6 +129,8 @@ class BackwardNetNoAssign(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_backward_no_assign():
     x = Tensor(np.array(1), mstype.int32)
