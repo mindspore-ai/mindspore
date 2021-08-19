@@ -446,6 +446,28 @@ void UpdateGraphAquireGilAttr(const NotNull<KernelGraphPtr> &root_graph) {
   }
   return;
 }
+
+// 1. Convert the node to make_tuple if the node is a ValueNode<ValueTuple> and it's the input of 'return' node.
+// 2. Set the return of graph if node is "Return" node.
+void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+    constexpr auto kReturnInputIdx = 1;
+    auto return_node = node->cast<CNodePtr>();
+    graph->set_return(return_node);
+    auto graph_output = return_node->input(kReturnInputIdx);
+    MS_EXCEPTION_IF_NULL(graph_output);
+
+    // If return's input is value node, then the graph has no kernel, and the pass 'trans tuple to make_tuple' cannot
+    // match this pattern because that pass begin with output node but return node. So we add transform value tuple
+    // to make_tuple here.
+    if (AnfAlgo::IsTupleOutput(graph_output) && graph_output->isa<ValueNode>()) {
+      return_node->set_input(kReturnInputIdx, graph->TransTupleToMakeTuple(graph_output));
+    }
+  }
+}
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
@@ -1463,9 +1485,7 @@ bool SessionBasic::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph 
   new_cnode->set_fullname_with_scope(fullname);
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendlMapAdd(node, new_cnode);
-  if (AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimReturn)) {
-    graph->set_return(new_cnode);
-  }
+  SetReturnNode(new_cnode, graph);
   return true;
 }
 

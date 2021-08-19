@@ -290,6 +290,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.merge_addn_,
       irpass.float_tuple_getitem_switch_,
       irpass.float_env_getitem_switch_,
+      irpass.inline_,
       irpass.incorporate_getitem_set_,
       irpass.incorporate_call_,
       irpass.incorporate_call_switch_,
