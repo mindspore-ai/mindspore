@@ -36,28 +36,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-enum class TcpUserCommand {
-  kPush,
-  kPull,
-  kCount,
-  kReachThreshold,
-  kResetCount,
-  kGetMetadata,
-  kUpdateMetadata,
-  kCounterEvent,
-  kPullWeight,
-  kPushWeight,
-  kSyncIteration,
-  kNotifyLeaderToNextIter,
-  kPrepareForNextIter,
-  kProceedToNextIter,
-  kEndLastIter,
-  kStartFLJob,
-  kUpdateModel,
-  kGetModel,
-  kPushMetrics
-};
-
 const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kPush, "push"},
   {TcpUserCommand::kPull, "pull"},

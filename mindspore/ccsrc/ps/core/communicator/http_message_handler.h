@@ -44,7 +44,6 @@ namespace mindspore {
 namespace ps {
 namespace core {
 using HttpHeaders = std::map<std::string, std::list<std::string>>;
-using VectorPtr = std::shared_ptr<std::vector<char>>;
 
 class HttpMessageHandler {
  public:
@@ -67,7 +66,6 @@ class HttpMessageHandler {
   virtual ~HttpMessageHandler() = default;
 
   void InitHttpMessage();
-  void ParseUrl(const std::string &url);
 
   std::string GetRequestUri() const;
   std::string GetRequestHost();
@@ -95,7 +93,7 @@ class HttpMessageHandler {
   void SendResponse();
   void QuickResponse(int code, const unsigned char *body, size_t len);
   void SimpleResponse(int code, const HttpHeaders &headers, const std::string &body);
-  void ErrorResponse(int code, RequestProcessResult status);
+  void ErrorResponse(int code, const RequestProcessResult &status);
 
   // If message is empty, libevent will use default error code message instead
   void RespError(int nCode, const std::string &message);
@@ -110,9 +108,9 @@ class HttpMessageHandler {
   void set_request(const struct evhttp_request *req);
   const struct evhttp_request *request() const;
   void InitBodySize();
-  VectorPtr body();
-  void set_body(const VectorPtr &body);
-  const nlohmann::json &request_message() const;
+  std::shared_ptr<std::vector<char>> body();
+  void set_body(const std::shared_ptr<std::vector<char>> &body);
+  nlohmann::json request_message() const;
   RequestProcessResult ParseValueFromKey(const std::string &key, int32_t *const value);
 
   // Parse node ids when receiving an http request for scale in
@@ -126,7 +124,7 @@ class HttpMessageHandler {
   struct evkeyvalq post_params_;
   bool post_param_parsed_;
   std::unique_ptr<std::string> post_message_;
-  VectorPtr body_;
+  std::shared_ptr<std::vector<char>> body_;
   struct evkeyvalq *resp_headers_;
   struct evbuffer *resp_buf_;
   int resp_code_;
