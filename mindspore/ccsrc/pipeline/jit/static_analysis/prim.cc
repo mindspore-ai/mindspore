@@ -158,7 +158,6 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                       << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
                       << ", inputs size " << out_node_inputs.size();
   }
-  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &ref) -> AbstractBasePtr {
@@ -513,7 +512,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
 }
 
 namespace {
-py::tuple PreparePyInputs(const PrimitivePyPtr &prim_py, const AbstractBasePtrList &args) {
+py::tuple PreparePyInputs(const PrimitivePyPtr &, const AbstractBasePtrList &args) {
   // The monad parameter is defined at the end of the parameter and needs to be ignored
   std::size_t size_args = args.size() - GetAbstractMonadNum(args);
   py::tuple py_args(size_args);
@@ -864,8 +863,7 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engine,
-                                                  const AbstractBasePtrList &args_spec_list,
+EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list,
                                                   const AnfNodeConfigPtr &out_conf) {
   // args_spec_list: same as StaticGetter
   if (args_spec_list.size() < 2) {

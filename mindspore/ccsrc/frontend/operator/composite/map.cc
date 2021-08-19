@@ -77,11 +77,11 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
       num++;
       auto lhs = std::dynamic_pointer_cast<List>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a List, but got "
+        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a List, but got "
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
+        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
                       << lhs->elements().size();
         return true;
       }
@@ -136,11 +136,11 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
       num++;
       auto lhs = std::dynamic_pointer_cast<Tuple>(item.second);
       if (lhs == nullptr) {
-        MS_LOG(EXCEPTION) << "The elements[" << num - 1 << "] has wrong type, expected a Tuple, but got "
+        MS_LOG(EXCEPTION) << "The elements[" << (num - 1) << "] has wrong type, expected a Tuple, but got "
                           << item.second->ToString();
       }
       if (lhs->elements().size() != size) {
-        MS_LOG(ERROR) << "The elements[" << num - 1 << "] has different length, expected " << size << ", but got "
+        MS_LOG(ERROR) << "The elements[" << (num - 1) << "] has different length, expected " << size << ", but got "
                       << lhs->elements().size();
         return true;
       }
@@ -216,7 +216,8 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      (void)inputs.insert(inputs.begin() + 2, call_node);
+      constexpr size_t kCallNodePosition = 2;
+      (void)inputs.insert(inputs.begin() + kCallNodePosition, call_node);
     } else {
       inputs.emplace_back(call_node);
     }
