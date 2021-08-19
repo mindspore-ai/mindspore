@@ -32,20 +32,25 @@ from .bert_for_pre_training import clip_grad
 from .finetune_eval_model import BertCLSModel, BertNERModel, BertSquadModel
 from .utils import CrossEntropyCalculation
 
-
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
 grad_scale = C.MultitypeFuncGraph("grad_scale")
 reciprocal = P.Reciprocal()
+
+
 @grad_scale.register("Tensor", "Tensor")
 def tensor_grad_scale(scale, grad):
     return grad * reciprocal(scale)
 
+
 _grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
 grad_overflow = P.FloatStatus()
+
+
 @_grad_overflow.register("Tensor")
 def _tensor_grad_overflow(grad):
     return grad_overflow(grad)
+
 
 class BertFinetuneCell(nn.Cell):
     """
@@ -61,6 +66,7 @@ class BertFinetuneCell(nn.Cell):
         optimizer (Optimizer): Optimizer for updating the weights.
         scale_update_cell (Cell): Cell to do the loss scale. Default: None.
     """
+
     def __init__(self, network, optimizer, scale_update_cell=None):
 
         super(BertFinetuneCell, self).__init__(auto_prefix=False)
@@ -156,10 +162,12 @@ class BertFinetuneCell(nn.Cell):
             self.optimizer(grads)
         return (loss, cond)
 
+
 class BertSquadCell(nn.Cell):
     """
     specifically defined for finetuning where only four inputs tensor are needed.
     """
+
     def __init__(self, network, optimizer, scale_update_cell=None):
         super(BertSquadCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -179,9 +187,16 @@ class BertSquadCell(nn.Cell):
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.cast = P.Cast()
-        self.alloc_status = P.NPUAllocFloatStatus()
-        self.get_status = P.NPUGetFloatStatus()
-        self.clear_status = P.NPUClearFloatStatus()
+        self.gpu_target = False
+        if context.get_context("device_target") == "GPU":
+            self.gpu_target = True
+            self.float_status = P.FloatStatus()
+            self.addn = P.AddN()
+            self.reshape = P.Reshape()
+        else:
+            self.alloc_status = P.NPUAllocFloatStatus()
+            self.get_status = P.NPUGetFloatStatus()
+            self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
@@ -202,7 +217,7 @@ class BertSquadCell(nn.Cell):
                   sens=None):
         """BertSquad"""
         weights = self.weights
-        init = self.alloc_status()
+        init = False
         loss = self.network(input_ids,
                             input_mask,
                             token_type_id,
@@ -214,9 +229,11 @@ class BertSquadCell(nn.Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
-        init = F.depend(init, loss)
-        clear_status = self.clear_status(init)
-        scaling_sens = F.depend(scaling_sens, clear_status)
+        if not self.gpu_target:
+            init = self.alloc_status()
+            init = F.depend(init, loss)
+            clear_status = self.clear_status(init)
+            scaling_sens = F.depend(scaling_sens, clear_status)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
                                                  token_type_id,
@@ -230,10 +247,15 @@ class BertSquadCell(nn.Cell):
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
-        init = F.depend(init, grads)
-        get_status = self.get_status(init)
-        init = F.depend(init, get_status)
-        flag_sum = self.reduce_sum(init, (0,))
+        if not self.gpu_target:
+            init = F.depend(init, grads)
+            get_status = self.get_status(init)
+            init = F.depend(init, get_status)
+            flag_sum = self.reduce_sum(init, (0,))
+        else:
+            flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
+            flag_sum = self.addn(flag_sum)
+            flag_sum = self.reshape(flag_sum, (()))
         if self.is_distributed:
             flag_reduce = self.allreduce(flag_sum)
             cond = self.less_equal(self.base, flag_reduce)
@@ -246,10 +268,12 @@ class BertSquadCell(nn.Cell):
             self.optimizer(grads)
         return (loss, cond)
 
+
 class BertCLS(nn.Cell):
     """
     Train interface for classification finetuning task.
     """
+
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False,
                  assessment_method=""):
         super(BertCLS, self).__init__()
@@ -259,6 +283,7 @@ class BertCLS(nn.Cell):
         self.num_labels = num_labels
         self.assessment_method = assessment_method
         self.is_training = is_training
+
     def construct(self, input_ids, input_mask, token_type_id, label_ids):
         logits = self.bert(input_ids, input_mask, token_type_id)
         if self.assessment_method == "spearman_correlation":
@@ -275,6 +300,7 @@ class BertNER(nn.Cell):
     """
     Train interface for sequence labeling finetuning task.
     """
+
     def __init__(self, config, batch_size, is_training, num_labels=11, use_crf=False,
                  tag_to_index=None, dropout_prob=0.0, use_one_hot_embeddings=False):
         super(BertNER, self).__init__()
@@ -288,6 +314,7 @@ class BertNER(nn.Cell):
             self.loss = CrossEntropyCalculation(is_training)
         self.num_labels = num_labels
         self.use_crf = use_crf
+
     def construct(self, input_ids, input_mask, token_type_id, label_ids):
         logits = self.bert(input_ids, input_mask, token_type_id)
         if self.use_crf:
@@ -296,10 +323,12 @@ class BertNER(nn.Cell):
             loss = self.loss(logits, label_ids, self.num_labels)
         return loss
 
+
 class BertSquad(nn.Cell):
     '''
     Train interface for SQuAD finetuning task.
     '''
+
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False):
         super(BertSquad, self).__init__()
         self.bert = BertSquadModel(config, is_training, num_labels, dropout_prob, use_one_hot_embeddings)

@@ -78,7 +78,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     param_dict = load_checkpoint(load_checkpoint_path)
     load_param_into_net(network, param_dict)
 
-    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=2**32, scale_factor=2, scale_window=1000)
+    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=2 ** 32, scale_factor=2, scale_window=1000)
     netwithgrads = BertSquadCell(network, optimizer=optimizer, scale_update_cell=update_cell)
     model = Model(netwithgrads)
     callbacks = [TimeMonitor(dataset.get_dataset_size()), LossCallBack(dataset.get_dataset_size()), ckpoint_cb]
@@ -157,6 +157,7 @@ def run_squad():
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
     elif target == "GPU":
         context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+        context.set_context(enable_graph_kernel=True)
         if bert_net_cfg.compute_type != mstype.float32:
             logger.warning('GPU only support fp32 temporarily, run with fp32.')
             bert_net_cfg.compute_type = mstype.float32
