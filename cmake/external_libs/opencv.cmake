@@ -18,7 +18,7 @@ else()
 endif()
 
 if(ENABLE_GITEE)
-    if(PYTHON_VERSION MATCHES "3.9")
+    if("${BUILD_LITE}" STREQUAL "on" OR PYTHON_VERSION MATCHES "3.9")
         set(REQ_URL "https://gitee.com/mirrors/opencv/repository/archive/4.5.1.tar.gz")
         set(MD5 "e74309207f2fa88fb6cc417d8ea9ff09")
     elseif((PYTHON_VERSION MATCHES "3.7") OR (PYTHON_VERSION MATCHES "3.8"))
@@ -29,7 +29,7 @@ if(ENABLE_GITEE)
         return()
     endif()
 else()
-    if(PYTHON_VERSION MATCHES "3.9")
+    if("${BUILD_LITE}" STREQUAL "on" OR PYTHON_VERSION MATCHES "3.9")
         set(REQ_URL "https://github.com/opencv/opencv/archive/4.5.1.tar.gz")
         set(MD5 "2205d3169238ec1f184438a96de68513")
     elseif((PYTHON_VERSION MATCHES "3.7") OR (PYTHON_VERSION MATCHES "3.8"))
@@ -42,7 +42,7 @@ else()
 endif()
 
 if(WIN32)
-    if(PYTHON_VERSION MATCHES "3.9")
+    if("${BUILD_LITE}" STREQUAL "on" OR PYTHON_VERSION MATCHES "3.9")
         mindspore_add_pkg(opencv
                 VER 4.5.1
                 LIBS libopencv_core451.dll.a libopencv_imgcodecs451.dll.a libopencv_imgproc451.dll.a
@@ -97,7 +97,7 @@ if(WIN32)
                 -DTIFF_LIBRARY=${tiff_LIB})
     endif()
 else()
-    if(PYTHON_VERSION MATCHES "3.9")
+    if("${BUILD_LITE}" STREQUAL "on"  OR PYTHON_VERSION MATCHES "3.9")
         mindspore_add_pkg(opencv
                 VER 4.5.1
                 LIBS opencv_core opencv_imgcodecs opencv_imgproc
@@ -150,7 +150,7 @@ else()
 endif()
 
 if(WIN32)
-    if(PYTHON_VERSION MATCHES "3.9")
+    if("${BUILD_LITE}" STREQUAL "on" OR PYTHON_VERSION MATCHES "3.9")
         include_directories(${opencv_INC})
         add_library(mindspore::opencv_core ALIAS opencv::libopencv_core451.dll.a)
         add_library(mindspore::opencv_imgcodecs ALIAS opencv::libopencv_imgcodecs451.dll.a)

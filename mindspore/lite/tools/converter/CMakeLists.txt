@@ -6,7 +6,8 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
-
+set(ENABLE_GLIBCXX ON)
+include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 
@@ -127,6 +128,7 @@ add_subdirectory(parser/tf)
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
 add_subdirectory(registry)
+add_subdirectory(preprocess)
 add_subdirectory(${CORE_DIR} mindspore_core)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
@@ -212,6 +214,7 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::glog
         mindspore::protobuf
         mindspore::flatbuffers
+        preprocess_mid
         )
 
 if(NOT MSVC)
