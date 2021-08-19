@@ -96,8 +96,18 @@ int ConvolutionCPUKernel::ReSize() {
 int ConvolutionCPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
-  ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
-           reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+  if (out_tensors()[0]->format() != NC4HW4) {
+    ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+             reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+  } else {
+#if ENABLE_ARM64
+    ConvFp32OutNC4HW4(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+                      reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+#else
+    MS_LOG(ERROR) << "ConvFp32OutNC4HW4 not implemented.";
+    return RET_ERROR;
+#endif
+  }
   return RET_OK;
 }
 

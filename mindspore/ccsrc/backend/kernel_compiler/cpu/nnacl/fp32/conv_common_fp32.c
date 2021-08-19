@@ -103,6 +103,61 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
   }
 }
 
+#ifdef ENABLE_ARM64
+void ConvFp32OutNC4HW4(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
+                       float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param) {
+  if (conv_param->thread_num_ == 0) {
+    return;
+  }
+  int output_hw = conv_param->output_h_ * conv_param->output_w_;
+  Row2ColMajorFuncPtr Row2ColMajor = NULL;
+  int cal_num = 0;
+  MatmulFloatOptFuncPtr MatmulFloatOpt = NULL;
+  if (output_hw <= C4NUM) {
+    cal_num = C4NUM;
+    Row2ColMajor = RowMajor2Col4Major;
+    MatmulFloatOpt = MatmulFloatNeon64OptRow4;
+  } else if (output_hw <= C8NUM) {
+    cal_num = C8NUM;
+    Row2ColMajor = RowMajor2Col8Major;
+    MatmulFloatOpt = MatmulFloatNeon64OptRow8;
+  } else {
+    cal_num = C12NUM;
+    Row2ColMajor = RowMajor2Col12Major;
+    MatmulFloatOpt = MatmulFloatNeon64OptRow12;
+  }
+
+  int block_per_thread = UP_DIV(UP_DIV(output_hw, cal_num), conv_param->thread_num_);
+  int start_block = block_per_thread * task_id;
+  int start_hw = start_block * cal_num;
+  int end_hw = MSMIN(output_hw, (start_block + block_per_thread) * cal_num);
+  if (start_hw >= end_hw) {
+    return;
+  }
+  int out_stride = MSMIN(conv_param->output_channel_, C4NUM) * cal_num;
+  int deep = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
+  packed_input += task_id * deep * cal_num;
+  col_major_input += task_id * deep * cal_num;
+  size_t input_size = deep * cal_num * sizeof(float);
+
+  for (int b = 0; b < conv_param->input_batch_; b++) {
+    int out_channel = conv_param->output_channel_;
+    int in_offset = b * conv_param->input_channel_ * conv_param->input_h_ * conv_param->input_w_;
+    int out_offset = b * out_channel * output_hw + start_hw * MSMIN(out_channel, C4NUM);
+    for (int i = start_hw; i < end_hw; i += cal_num, out_offset += out_stride) {
+      int real_cal_row = MSMIN(output_hw - i, cal_num);
+      memset(packed_input, 0, input_size);
+      Im2ColPackUnitFp32(input_data + in_offset, conv_param, packed_input, real_cal_row, i);
+      Row2ColMajor(packed_input, col_major_input, cal_num, deep);
+      float *gemm_output = output_data + out_offset;
+
+      MatmulFloatOpt(col_major_input, packed_weight, gemm_output, bias_data, conv_param->act_type_, deep, real_cal_row,
+                     out_channel, output_hw, OutType_NC4HW4);
+    }
+  }
+}
+#endif
+
 #ifdef ENABLE_AVX
 void SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
               int right, const ConvParameter *conv_param, const SlidingWindowParam *sw_param, const SWConvKernel kernel,
