@@ -36,6 +36,7 @@
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
+#include "tools/optimizer/fusion/conv_pad_fusion.h"
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
@@ -126,6 +127,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     fusion_pm->AddPass(remove_unused_cast_pass);
   }
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ConvPadFusion>());
   if (!config->trainModel) {
     fusion_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
   }
