@@ -141,20 +141,69 @@ class KernelBuildClient {
   std::shared_ptr<DuplexPipe> dp_;
 };
 
-static std::string GetScriptFilePath(const std::string &server_script) {
+static std::string GetScriptFilePath(const std::string cmd_env, const std::string &cmd_script,
+                                     const std::string &server_script) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto server_dir = ms_context->get_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR);
-  if (server_dir.empty()) {
-    MS_LOG(EXCEPTION) << "Can't get kernel build server directory from context.";
+  if (!server_dir.empty()) {
+    return server_dir + server_script;
   }
 
-  return server_dir + server_script;
+  std::string cmd = cmd_env;
+  (void)cmd.append(1, ' ').append(cmd_script);
+  FILE *fpipe = popen(cmd.c_str(), "r");
+  if (fpipe == nullptr) {
+    MS_LOG(EXCEPTION) << "popen failed, errno: " << errno;
+  }
+  bool start = false;
+  std::string result;
+  char buf[kBufferSize];
+  while (std::fgets(buf, sizeof(buf), fpipe) != nullptr) {
+    auto len = std::strlen(buf);
+    if (len == 0 || len >= kBufferSize) {
+      // Safe check for codedex
+      // Should never reach here
+      MS_LOG(EXCEPTION) << "fgets() failed, len: " << len << ", errno: " << errno;
+    }
+    if (std::strncmp(buf, kTag, std::strlen(kTag)) == 0) {
+      start = true;
+    }
+    // Filter with 'kTAG' and '\n'
+    if (start) {
+      bool line_end = buf[len - 1] == '\n';
+      result.append(buf, line_end ? len - 1 : len);
+      if (line_end) {
+        break;
+      }
+    }
+  }
+  pclose(fpipe);
+  const std::string py_suffix = ".py";
+  if (result.empty() || result.rfind(py_suffix) != (result.length() - py_suffix.length())) {
+    MS_LOG(EXCEPTION) << "py file seems incorrect, result: {" << result << "}";
+  }
+  if (strlen(kTag) > result.size()) {  // Safe check for codedex
+    MS_LOG(EXCEPTION) << "result size seems incorrect, result(" << result.size() << "): {" << result << "}";
+  }
+  result = result.substr(strlen(kTag));
+  MS_LOG(DEBUG) << "result: " << result;
+  return result;
 }
 
 class AscendKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure
+  constexpr inline static auto kGetPathScript =
+    "-c "
+    "\""
+    "import pkgutil;"
+    "path = pkgutil"
+    ".get_loader(\\\"mindspore._extends.remote.kernel_build_server_ascend\\\")"  // Server module name
+    ".get_filename();"
+    "print('[~]' + path)"
+    "\"";
+
   constexpr inline static auto kServerScript = "kernel_build_server_ascend.py";
 
   // Receive the response from server
@@ -180,7 +229,10 @@ class AscendKernelBuildClient : public KernelBuildClient {
 
   std::string GetEnv() override { return GetPyExe(); }
 
-  std::string GetScript() override { return GetScriptFilePath(kServerScript); }
+  std::string GetScript() override {
+    auto env = GetPyExe();
+    return GetScriptFilePath(env, kGetPathScript, kServerScript);
+  }
 
   // Before building.
   std::string SelectFormat(const std::string &json);
@@ -207,6 +259,16 @@ class AscendKernelBuildClient : public KernelBuildClient {
 class GpuKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure
+  constexpr inline static auto kGetPathScript =
+    "-c "
+    "\""
+    "import pkgutil;"
+    "path = pkgutil"
+    ".get_loader(\\\"mindspore._extends.remote.kernel_build_server_gpu\\\")"  // Server module name
+    ".get_filename();"
+    "print('[~]' + path)"
+    "\"";
+
   constexpr inline static auto kServerScript = "kernel_build_server_gpu.py";
 
   static GpuKernelBuildClient &Instance() {
@@ -216,7 +278,10 @@ class GpuKernelBuildClient : public KernelBuildClient {
 
   std::string GetEnv() override { return GetPyExe(); }
 
-  std::string GetScript() override { return GetScriptFilePath(kServerScript); }
+  std::string GetScript() override {
+    auto env = GetPyExe();
+    return GetScriptFilePath(env, kGetPathScript, kServerScript);
+  }
 
   GpuKernelBuildClient(const GpuKernelBuildClient &) = delete;
   GpuKernelBuildClient &operator=(const GpuKernelBuildClient &) = delete;
