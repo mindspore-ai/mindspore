@@ -92,6 +92,8 @@ mindspore::RoundMode CaffePoolingParser::ParseRoundMode(const caffe::PoolingPara
     } else if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_CEIL) {
       roundMode = mindspore::RoundMode::CEIL;
     }
+  } else if (poolingParam.has_ceil_mode()) {
+    roundMode = poolingParam.ceil_mode() ? mindspore::RoundMode::CEIL : mindspore::RoundMode::FLOOR;
   }
   return roundMode;
 }

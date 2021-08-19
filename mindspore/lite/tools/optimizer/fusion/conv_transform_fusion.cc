@@ -101,7 +101,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
 
   auto pre_node = transform_node->input(1);
   auto conv_node = pre_node->cast<CNodePtr>();
-  if (IsMultiOutputTensors(func_graph, conv_node)) {
+  if (IsMultiOutputTensors(func_graph, conv_node) || IsVariableWeightConv(conv_node)) {
     return nullptr;
   }
 
@@ -312,5 +312,15 @@ void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, boo
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     }
   }
+}
+
+bool ConvTransformFusion::IsVariableWeightConv(const CNodePtr &conv_node) const {
+  MS_ASSERT(conv_node != nullptr);
+  MS_ASSERT(conv_node->inputs().size() >= kConvNoBiasLen);
+  auto conv_weight_node = conv_node->input(kConvWeightIndex);
+  bool is_value_node = conv_weight_node->isa<ValueNode>();
+  auto conv_weight_param =
+    conv_weight_node->isa<Parameter>() ? conv_weight_node->cast<ParameterPtr>()->default_param() : nullptr;
+  return !is_value_node && conv_weight_param == nullptr;
 }
 }  // namespace mindspore::opt
