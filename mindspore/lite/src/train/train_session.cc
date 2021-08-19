@@ -114,7 +114,10 @@ int TrainSession::AllocWorkSpace() {
 }
 
 void TrainSession::FreeWorkSpace() {
-  free(workspace_);
+  if (workspace_ != nullptr) {
+    free(workspace_);
+    workspace_ = nullptr;
+  }
   for (auto kernel : this->train_kernels_) {
     static_cast<kernel::InnerKernel *>(kernel->kernel())->FreeWorkspace();
   }
@@ -763,6 +766,30 @@ bool TrainSession::IsMaskOutput(kernel::LiteKernel *kernel) const {
 bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
   return ((kernel->type() == schema::PrimitiveType_BatchNorm) ||
           (kernel->type() == schema::PrimitiveType_FusedBatchNorm));
+}
+
+int TrainSession::Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) {
+  FreeWorkSpace();
+  if (tensors_data_ != nullptr) {
+    free(tensors_data_);
+    tensors_data_ = nullptr;
+  }
+  auto ret = lite::LiteSession::Resize(inputs, dims);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "train resize input failed.";
+    return RET_ERROR;
+  }
+  ret = AllocWorkSpace();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "failed to allocate space";
+    return RET_ERROR;
+  }
+  ret = AllocTensors(train_kernels_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "train alloc failed after resize.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,

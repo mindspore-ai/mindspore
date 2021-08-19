@@ -80,9 +80,7 @@ class TrainSession : virtual public lite::LiteSession {
   mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override {
     return lite::LiteSession::GetOutputByTensorName(tensor_name);
   }
-  int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override {
-    return lite::LiteSession::Resize(inputs, dims);
-  }
+  int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
 
   std::vector<tensor::MSTensor *> GetPredictions() const override {
     std::vector<tensor::MSTensor *> outputs;
