@@ -15,13 +15,31 @@
  */
 
 #include <malloc.h>
+#include <unistd.h>
+#include <fstream>
 #include "tools/benchmark_train/net_train.h"
 #include "include/version.h"
+
+void PrintMem() {
+  std::string proc_file = "/proc/" + std::to_string(getpid()) + "/status";
+  std::ifstream infile(proc_file);
+  if (infile.good()) {
+    std::string line;
+    while (std::getline(infile, line)) {
+      if (line.find("VmHWM") != std::string::npos) {
+        std::cout << line << std::endl;
+      }
+    }
+    infile.close();
+    struct mallinfo info = mallinfo();
+    std::cout << "Arena allocation: " << info.arena + info.hblkhd << std::endl;
+    // process pair (a,b)
+  }
+}
 
 int main(int argc, const char **argv) {
   MS_LOG(INFO) << mindspore::lite::Version();
   int res = mindspore::lite::RunNetTrain(argc, argv);
-  struct mallinfo info = mallinfo();
-  std::cout << "Total allocation: " << info.arena + info.hblkhd << std::endl;
+  PrintMem();
   return res;
 }

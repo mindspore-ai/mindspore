@@ -45,11 +45,8 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override {
     fp16_conv_kernel_->set_name(name_);
+    fp16_conv_kernel_->set_workspace(workspace());
     return fp16_conv_kernel_->Run();
-  }
-  int Eval() override {
-    InnerKernel::Eval();
-    return fp16_conv_kernel_->Eval();
   }
   int Train() override {
     InnerKernel::Train();
@@ -58,6 +55,10 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
   void SetTrainable(bool trainable) override {
     InnerKernel::SetTrainable(trainable);
     return fp16_conv_kernel_->SetTrainable(trainable);
+  }
+  size_t workspace_size() override {
+    InnerKernel::workspace_size();
+    return fp16_conv_kernel_->workspace_size();
   }
 
   void set_in_tensor(lite::Tensor *in_tensor, size_t index) override {

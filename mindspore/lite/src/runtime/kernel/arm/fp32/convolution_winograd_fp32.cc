@@ -103,7 +103,14 @@ int ConvolutionWinogradCPUKernel::Init() {
   input_unit_ = output_unit_ + kernel_unit_ - 1;
   conv_param_->input_unit_ = input_unit_;
   conv_param_->output_unit_ = output_unit_;
-
+  if (op_parameter_->is_train_session_) {
+    auto filter_tensor = in_tensors_.at(kWeightIndex);
+    int in_channel = filter_tensor->Channel();
+    int out_channel = filter_tensor->Batch();
+    auto trans_matrix_data_size =
+      input_unit_ * input_unit_ * in_channel * UP_ROUND(out_channel, oc_block_) * sizeof(float);
+    set_workspace_size(trans_matrix_data_size);
+  }
   auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -193,14 +200,16 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
   // set data
   auto trans_matrix_data_size =
     input_unit_ * input_unit_ * in_channel * UP_ROUND(out_channel, oc_block_) * sizeof(float);
-  if (packed_weight_ == nullptr) {
-    packed_weight_ = malloc(trans_matrix_data_size);
+  if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
-      MS_LOG(ERROR) << "malloc matrix_buffer failed.";
-      return RET_MEMORY_FAILED;
+      packed_weight_ = malloc(trans_matrix_data_size);
+      if (packed_weight_ == nullptr) {
+        MS_LOG(ERROR) << "malloc matrix_buffer failed.";
+        return RET_MEMORY_FAILED;
+      }
     }
+    memset(packed_weight_, 0, trans_matrix_data_size);
   }
-  memset(packed_weight_, 0, trans_matrix_data_size);
 
   float matrix_a[64];
   float matrix_at[64];
@@ -232,24 +241,9 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
 
 void ConvolutionWinogradCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   WinogradFilterTransform(reinterpret_cast<float *>(origin_weight), matrix_g_, matrix_gt_, oc_block_);
 }
 
-int ConvolutionWinogradCPUKernel::Eval() {
-  auto ret = InnerKernel::Eval();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "eval failed!";
-    return ret;
-  }
-  if (IsTrainable()) {
-    ret = InitConvWeightBias();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Init weight bias failed.";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
 }  // namespace mindspore::kernel

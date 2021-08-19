@@ -44,7 +44,7 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
     return nullptr;
   }
   std::vector<int> primitive_context(context->begin(), context->end());
-  if (primitive_context.size() > std::numeric_limits<int>::max()) {
+  if (static_cast<int>(primitive_context.size()) > std::numeric_limits<int>::max()) {
     MS_LOG(ERROR) << "size is too big.";
     free(param);
     return nullptr;
@@ -74,7 +74,7 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
     return nullptr;
   }
   std::vector<int> primitive_forward_indexes(forward_indexes->begin(), forward_indexes->end());
-  if (primitive_forward_indexes.size() > std::numeric_limits<int>::max()) {
+  if (static_cast<int>(primitive_forward_indexes.size()) > std::numeric_limits<int>::max()) {
     MS_LOG(ERROR) << "size is too big.";
     free(param->context_);
     free(param);

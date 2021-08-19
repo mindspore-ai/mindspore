@@ -22,9 +22,19 @@ using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+
 int ConvolutionDepthwiseCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (op_parameter_->is_train_session_) {
+    auto weight_tensor = in_tensors_.at(kWeightIndex);
+    int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
+    if (pack_weight_size >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(float))) {
+      MS_LOG(ERROR) << "pack_weight_size is invalid, pack_weight_size: " << pack_weight_size;
+      return RET_ERROR;
+    }
+    set_workspace_size(pack_weight_size * sizeof(float));
+  }
   auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitConvWeightBias failed.";
@@ -89,7 +99,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
 
 void ConvolutionDepthwiseCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackWeightKHWToHWKFp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
                          weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
@@ -103,10 +113,12 @@ int ConvolutionDepthwiseCPUKernel::MallocWeightBiasData() {
     MS_LOG(ERROR) << "pack_weight_size is invalid, pack_weight_size: " << pack_weight_size;
     return RET_ERROR;
   }
-  packed_weight_ = malloc(pack_weight_size * sizeof(float));
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+  if (!op_parameter_->is_train_session_) {
+    packed_weight_ = malloc(pack_weight_size * sizeof(float));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
 
   bias_data_ = malloc(channel * sizeof(float));
@@ -115,18 +127,6 @@ int ConvolutionDepthwiseCPUKernel::MallocWeightBiasData() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, channel * sizeof(float));
-  return RET_OK;
-}
-
-int ConvolutionDepthwiseCPUKernel::Eval() {
-  auto ret = InnerKernel::Eval();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "eval failed!";
-    return ret;
-  }
-  if (IsTrainable()) {
-    PackWeight();
-  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

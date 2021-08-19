@@ -44,7 +44,6 @@ class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Eval() override;
 
   int InitPackedInputOutput();
   int Execute(int task_id);

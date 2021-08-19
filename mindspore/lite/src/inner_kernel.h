@@ -164,7 +164,7 @@ class InnerKernel : public Kernel {
   void set_registry_data_type(TypeId data_type) { registry_data_type_ = data_type; }
 
   void set_workspace_size(size_t value) { workspace_size_ = value; }
-  size_t workspace_size() { return workspace_size_; }
+  virtual size_t workspace_size() { return workspace_size_; }
   void AllocWorkspace();
   void FreeWorkspace();
   void *workspace() { return workspace_; }

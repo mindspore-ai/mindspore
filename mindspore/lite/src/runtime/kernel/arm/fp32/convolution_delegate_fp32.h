@@ -38,7 +38,11 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   };
   int Init() override;
   int ReSize() override;
-  int Run() override { return conv_kernel_->Run(); }
+  int Run() override {
+    conv_kernel_->set_name(name_);
+    conv_kernel_->set_workspace(workspace());
+    return conv_kernel_->Run();
+  }
 
   void set_in_tensor(lite::Tensor *in_tensor, size_t index) override {
     MS_ASSERT(index < in_tensors_.size());
@@ -81,10 +85,6 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
     }
   }
   // Train API
-  int Eval() override {
-    InnerKernel::Eval();
-    return conv_kernel_->Eval();
-  }
   int Train() override {
     InnerKernel::Train();
     return conv_kernel_->Train();
@@ -92,6 +92,10 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   void SetTrainable(bool trainable) override {
     InnerKernel::SetTrainable(trainable);
     return conv_kernel_->SetTrainable(trainable);
+  }
+  size_t workspace_size() override {
+    InnerKernel::workspace_size();
+    return conv_kernel_->workspace_size();
   }
 
  protected:
