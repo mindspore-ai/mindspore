@@ -217,6 +217,18 @@ class _Linear(Dense):
         if self.has_bias:
             self.bias_add.shard(strategy_bias)
         if self.activation_flag:
-            getattr(self.activation, self.act_name).shard(strategy_activation)
+            # some operations has many primitives, need to manually set the shard
+            if self.act_name.lower() == "leakyrelu":
+                self.activation.maximum.shard((strategy_activation[0], strategy_activation[0]))
+            elif self.act_name.lower() == "logsigmoid":
+                self.activation.mul.shard((strategy_activation[0], ()))
+                self.activation.exp.shard(strategy_activation)
+                self.activation.add.shard((strategy_activation[0], ()))
+                self.activation.rec.shard(strategy_activation)
+                self.activation.log.shard(strategy_activation)
+            elif self.act_name.lower() == "logsoftmax":
+                raise ValueError("logsoftmax is not supported.")
+            else:
+                getattr(self.activation, self.act_name).shard(strategy_activation)
 
         return self

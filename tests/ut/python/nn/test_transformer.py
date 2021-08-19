@@ -14,9 +14,10 @@
 # ============================================================================
 """ test transformer"""
 import numpy as np
+import pytest
 from mindspore import Tensor
 from mindspore.common import dtype
-from mindspore.nn.parallel import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
+from mindspore.parallel.nn import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
     TransformerDecoder, TransformerDecoderLayer, Transformer, CrossEntropyLoss, AttentionMask
 from mindspore.common.api import _executor
 
@@ -27,6 +28,55 @@ def test_transformer_encoder_only():
                         tgt_seq_length=0,
                         encoder_layers=2,
                         decoder_layers=0,
+                        hidden_size=64,
+                        ffn_hidden_size=64)
+
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+
+    _executor.compile(model, encoder_input_value, encoder_input_mask)
+
+
+def test_transformer_encoder_log_softmax():
+    with pytest.raises(ValueError):
+        model = Transformer(batch_size=2,
+                            src_seq_length=20,
+                            tgt_seq_length=0,
+                            encoder_layers=2,
+                            decoder_layers=0,
+                            hidden_act='logsoftmax',
+                            hidden_size=64,
+                            ffn_hidden_size=64)
+
+        encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+        encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+
+        _executor.compile(model, encoder_input_value, encoder_input_mask)
+
+
+def test_transformer_encoder_leakyrelu():
+    model = Transformer(batch_size=2,
+                        src_seq_length=20,
+                        tgt_seq_length=0,
+                        encoder_layers=2,
+                        decoder_layers=0,
+                        hidden_act='leakyrelu',
+                        hidden_size=64,
+                        ffn_hidden_size=64)
+
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+
+    _executor.compile(model, encoder_input_value, encoder_input_mask)
+
+
+def test_transformer_encoder_logsigmoid():
+    model = Transformer(batch_size=2,
+                        src_seq_length=20,
+                        tgt_seq_length=0,
+                        encoder_layers=2,
+                        decoder_layers=0,
+                        hidden_act='logsigmoid',
                         hidden_size=64,
                         ffn_hidden_size=64)
 
