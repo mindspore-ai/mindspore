@@ -1458,4 +1458,6 @@ class GraphCell(Cell):
         return self.graph(*inputs)
 
     def __call__(self, *inputs):
+        self.phase = "graph_load_from_mindir"
+        self._add_attr("graph_load_from_mindir", self.graph)
         return self.compile_and_run(*inputs)

@@ -612,6 +612,11 @@ bool IsPhaseTrain(const std::string &phase_s) {
   return phase_s.rfind(phase_to_train) != std::string::npos;
 }
 
+bool IsPhaseLoadFromMindIR(const std::string &phase_s) {
+  const std::string mindir_graph = "graph_load_from_mindir";
+  return phase_s.rfind(mindir_graph) != std::string::npos;
+}
+
 std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
   MS_EXCEPTION_IF_NULL(resource);
   bool is_air = IsPhaseExportAir(phase_s);
@@ -645,6 +650,9 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     if (IsPhaseTrain(phase_s) && MsContext::GetInstance()->get_param<bool>(MS_CTX_LOAD_COMPILE_CACHE) &&
         resource->func_graph() != nullptr) {
       return BackendPipeline();
+    }
+    if (IsPhaseLoadFromMindIR(phase_s)) {
+      return MindIRPipeline();
     }
     return VmPipeline();
   }
