@@ -522,6 +522,23 @@ FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph) {
   return nullptr;
 }
 
+int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
+                                   const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
+  MS_ASSERT(func_graph != nullptr);
+  if (!reorder_input_) {
+    return RET_OK;
+  }
+  meta_graphT->inputIndex.clear();
+  for (const auto &input : func_graph->get_inputs()) {
+    auto iter = graph_inputs_map_.find(input);
+    if (iter == graph_inputs_map_.end()) {
+      return RET_ERROR;
+    }
+    meta_graphT->inputIndex.emplace_back(iter->second);
+  }
+  return RET_OK;
+}
+
 int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
                                     const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
   auto final_fg = GetFinalGraph(func_graph);
@@ -544,6 +561,9 @@ int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
 schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph, bool copy_primitive,
                                         bool train_flag) {
   this->train_flag_ = train_flag;
+  // hardcode for nnie and train
+  this->reorder_input_ = !(train_flag) && !(ConverterContext::GetInstance()->GetGraphInputTensorNames().empty());
+  this->graph_inputs_map_.clear();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   auto fmk = func_graph->get_attr("fmk");
   MS_ASSERT(fmk != nullptr);
@@ -558,7 +578,18 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
     return nullptr;
   }
 
-  SetMetaGraphOutput(func_graph, meta_graphT);
+  ret = SetMetaGraphInput(func_graph, meta_graphT);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetMetaGraphInput failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return nullptr;
+  }
+  ret = SetMetaGraphOutput(func_graph, meta_graphT);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetMetaGraphOutput failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return nullptr;
+  }
 
   return meta_graphT.release();
 }
@@ -739,7 +770,11 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
       if (IsContain(graph_inputs_, input_node->cast<AnfNodePtr>()) &&
           graph_inputs_has_exported_.find(input_node) == graph_inputs_has_exported_.end()) {
         graph_inputs_has_exported_.insert(input_node);
-        meta_graphT->inputIndex.push_back(meta_graphT->allTensors.size() - 1);
+        if (reorder_input_) {
+          graph_inputs_map_[input_node] = meta_graphT->allTensors.size() - 1;
+        } else {
+          meta_graphT->inputIndex.push_back(meta_graphT->allTensors.size() - 1);
+        }
         meta_graphT->allTensors.back()->format = schema::Format_NHWC;
       }
     } else if (input_node->isa<ValueNode>()) {
