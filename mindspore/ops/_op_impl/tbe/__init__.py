@@ -289,7 +289,6 @@ from .reciprocal_grad import _reciprocal_grad_tbe
 from .sqrt_grad import _sqrt_grad_tbe
 from .sqrt_grad_ds import _sqrt_grad_ds_tbe
 from .rsqrt_grad import _rsqrt_grad_tbe
-from .flatten_grad import _flatten_grad_tbe
 from .scatter_add import _scatter_add_tbe
 from .scatter_add_ds import _scatter_add_ds_tbe
 from .atan2 import _atan2_tbe
