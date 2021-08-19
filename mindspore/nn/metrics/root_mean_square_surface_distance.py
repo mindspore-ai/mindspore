@@ -101,9 +101,9 @@ class RootMeanSquareDistance(Metric):
 
         Raises:
             ValueError: If the number of the inputs is not 3.
-            TypeError: If the data type of label_idx not be int or float.
+            TypeError: If the data type of label_idx is not int or float.
             ValueError: If the value of label_idx is not in y_pred or y.
-            ValueError: If y_pred and y should have different shape.
+            ValueError: If y_pred and y have different shapes.
         """
         if len(inputs) != 3:
             raise ValueError('MeanSurfaceDistance need 3 inputs (y_pred, y, label), but got {}.'.format(len(inputs)))

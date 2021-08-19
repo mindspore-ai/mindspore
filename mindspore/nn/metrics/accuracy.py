@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ class Accuracy(EvaluationBase):
     Calculates the accuracy for classification and multilabel data.
 
     The accuracy class creates two local variables, the correct number and the total number that are used to compute the
-    frequency with which predictions matches labels. This frequency is ultimately returned as the accuracy: an
+    frequency with which `y_pred` matches `y`. This frequency is ultimately returned as the accuracy: an
     idempotent operation that simply divides the correct number by the total number.
 
     .. math::
@@ -30,7 +30,7 @@ class Accuracy(EvaluationBase):
         {\text{true_positive} + \text{true_negative} + \text{false_positive} + \text{false_negative}}
 
     Args:
-        eval_type (str): Metric to calculate the accuracy over a dataset, for
+        eval_type (str): The metric to calculate the accuracy over a dataset, for
             classification (single-label), and multilabel (multilabel classification).
             Default: 'classification'.
 
@@ -77,7 +77,7 @@ class Accuracy(EvaluationBase):
             ValueError: If the number of the inputs is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('Accuracy need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('The accuracy needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
@@ -88,8 +88,9 @@ class Accuracy(EvaluationBase):
         if self._class_num == 0:
             self._class_num = y_pred.shape[1]
         elif y_pred.shape[1] != self._class_num:
-            raise ValueError('Class number not match, last input data contain {} classes, but current data contain {} '
-                             'classes'.format(self._class_num, y_pred.shape[1]))
+            raise ValueError('The y_pred shape does not match the class number, the last input data contains '
+                             '{} classes, but the current data contains {} classes'
+                             .format(self._class_num, y_pred.shape[1]))
 
         if self._type == 'classification':
             indices = y_pred.argmax(axis=1)
@@ -114,5 +115,5 @@ class Accuracy(EvaluationBase):
             RuntimeError: If the sample size is 0.
         """
         if self._total_num == 0:
-            raise RuntimeError('Accuary can not be calculated, because the number of samples is 0.')
+            raise RuntimeError('The accuracy can not be calculated, because the number of samples is 0.')
         return self._correct_num / self._total_num

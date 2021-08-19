@@ -91,7 +91,7 @@ class Precision(EvaluationBase):
             ValueError: If the number of input is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('Precision need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('The precision needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         if self._type == 'classification' and y_pred.ndim == y.ndim and self._check_onehot_data(y):
@@ -141,7 +141,7 @@ class Precision(EvaluationBase):
             Float, the computed result.
         """
         if self._class_num == 0:
-            raise RuntimeError('Input number of samples can not be 0.')
+            raise RuntimeError('The input number of samples can not be 0.')
 
         validator.check_value_type("average", average, [bool], self.__class__.__name__)
         result = self._true_positives / (self._positives + self.eps)

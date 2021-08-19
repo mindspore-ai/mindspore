@@ -19,10 +19,10 @@ from .metric import Metric, rearrange_inputs
 
 class MAE(Metric):
     r"""
-    Calculates the mean absolute error.
+    Calculates the mean absolute error(MAE).
 
-    Creates a criterion that measures the mean absolute error (MAE)
-    between each element in the input: :math:`x` and the target: :math:`y`.
+    Creates a criterion that measures the MAE between each element
+    in the input: :math:`x` and the target: :math:`y`.
 
     .. math::
         \text{MAE} = \frac{\sum_{i=1}^n \|y_i - x_i\|}{n}
@@ -60,14 +60,14 @@ class MAE(Metric):
         Updates the internal evaluation result :math:`y_{pred}` and :math:`y`.
 
         Args:
-            inputs: Input `y_pred` and `y` for calculating mean absolute error where the shape of
+            inputs: Input `y_pred` and `y` for calculating MAE where the shape of
                 `y_pred` and `y` are both N-D and the shape are the same.
 
         Raises:
             ValueError: If the number of the input is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('Mean absolute error need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('The MAE needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         abs_error_sum = np.abs(y.reshape(y_pred.shape) - y_pred)
@@ -76,25 +76,25 @@ class MAE(Metric):
 
     def eval(self):
         """
-        Computes the mean absolute error.
+        Computes the mean absolute error(MAE).
 
         Returns:
             Float, the computed result.
 
         Raises:
-            RuntimeError: If the number of the total samples is 0.
+            RuntimeError: If the total number of samples is 0.
         """
         if self._samples_num == 0:
-            raise RuntimeError('Total samples num must not be 0.')
+            raise RuntimeError('The total number of samples must not be 0.')
         return self._abs_error_sum / self._samples_num
 
 
 class MSE(Metric):
     r"""
-    Measures the mean squared error.
+    Measures the mean squared error(MSE).
 
-    Creates a criterion that measures the mean squared error (squared L2
-    norm) between each element in the input: :math:`x` and the target: :math:`y`.
+    Creates a criterion that measures the MSE (squared L2 norm) between
+    each element in the input: :math:`x` and the target: :math:`y`.
 
     .. math::
         \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_i - x_i)^2}{n}
@@ -127,14 +127,14 @@ class MSE(Metric):
         Updates the internal evaluation result :math:`y_{pred}` and :math:`y`.
 
         Args:
-            inputs: Input `y_pred` and `y` for calculating mean square error where the shape of
+            inputs: Input `y_pred` and `y` for calculating the MSE where the shape of
                 `y_pred` and `y` are both N-D and the shape are the same.
 
         Raises:
             ValueError: If the number of input is not 2.
         """
         if len(inputs) != 2:
-            raise ValueError('Mean squared error need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('The MSE needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
@@ -144,7 +144,7 @@ class MSE(Metric):
 
     def eval(self):
         """
-        Compute the mean squared error.
+        Computes the mean squared error(MSE).
 
         Returns:
             Float, the computed result.
