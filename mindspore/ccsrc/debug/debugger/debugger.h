@@ -124,6 +124,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   bool partial_memory() const;
 
+  void SetEnableHeartbeat(bool enabled);
+
   void SetCurNode(const std::string &cur_name);
 
   std::string run_level() const;
@@ -263,6 +265,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::mutex access_lock_;
   // flag to keep track of the very first suspension of debugger
   bool initial_suspend_;
+  bool enable_heartbeat_;
 
   std::list<GraphProto> graph_proto_list_;
   std::list<KernelGraphPtr> graph_ptr_list_;
