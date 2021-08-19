@@ -173,9 +173,7 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
 FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   MS_EXCEPTION_IF_NULL(res->func_graph());
-  if (!TransformTopGraphPass(res)) {
-    MS_LOG(EXCEPTION) << "Run TransformTopGraphPass failed";
-  }
+  (void)TransformTopGraphPass(res);
 
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig bg_final_opt = opt::OptPassConfig({
