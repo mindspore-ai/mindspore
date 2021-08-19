@@ -26,7 +26,6 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -754,7 +753,6 @@ class CostModelSplitSchemer : public SplitSchemer {
 
   virtual bool DecodeJson(const std::string &json_desc, const std::map<std::string, AnfNodePtr> &address_node_map) {
     auto kernel_json = nlohmann::json::parse(json_desc);
-    kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
     std::vector<nlohmann::json> graph_descs = kernel_json[kJsonKeyGraphDesc];
     std::vector<std::string> graph_modes = kernel_json[kJsonKeyGraphMode];
     if (graph_modes.size() != graph_descs.size()) {
