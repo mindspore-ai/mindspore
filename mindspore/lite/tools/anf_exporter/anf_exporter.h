@@ -31,6 +31,7 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/common/node_util.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -73,8 +74,6 @@ class AnfExporter {
              const size_t &subgraph_index, const bool &keep_graph, const bool &copy_primitive);
   int ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      bool keep_graph, bool copy_primitive, const std::shared_ptr<AnfNode> &partial_anode = nullptr);
-  static ValueNodePtr GetPartialAnfPrim();
-  static ValueNodePtr GetCallAnfPrim();
   static CNodePtr CreateCallCnode(const FuncGraphPtr &fg, const AnfNodePtr &cnode);
   static CNodePtr CreatePartialCnode(const FuncGraphPtr &fg, const AnfNodePtr &node);
   bool HasExported(const FuncGraphPtr &func_graph);
@@ -84,7 +83,6 @@ class AnfExporter {
   std::list<CNodePtr> InsertCallNode(const FuncGraphPtr &func_graph);
   int SetMetaGraphInput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int SetMetaGraphOutput(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
-  bool IsCall(const AnfNodePtr node);
   int CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT, const AnfNodePtr &input);
 
  private:

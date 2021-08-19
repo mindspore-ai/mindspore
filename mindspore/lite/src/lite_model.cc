@@ -145,7 +145,7 @@ void LiteModel::Destroy() {
 
 int LiteModel::ConvertSubGraph(const schema::SubGraph &sub_graph) {
   if (sub_graph.name() == nullptr || sub_graph.inputIndices() == nullptr || sub_graph.outputIndices() == nullptr ||
-      sub_graph.nodeIndices() == nullptr || sub_graph.tensorIndices() == nullptr) {
+      sub_graph.tensorIndices() == nullptr) {
     MS_LOG(ERROR) << "sub_graph is invalid";
     return RET_ERROR;
   }
@@ -165,9 +165,11 @@ int LiteModel::ConvertSubGraph(const schema::SubGraph &sub_graph) {
   for (uint32_t i = 0; i < out_count; ++i) {
     subgraph->output_indices_.push_back(sub_graph.outputIndices()->Get(i));
   }
-  auto node_count = sub_graph.nodeIndices()->size();
-  for (uint32_t i = 0; i < node_count; ++i) {
-    subgraph->node_indices_.push_back(sub_graph.nodeIndices()->Get(i));
+  if (sub_graph.nodeIndices() != nullptr) {
+    auto node_count = sub_graph.nodeIndices()->size();
+    for (uint32_t i = 0; i < node_count; ++i) {
+      subgraph->node_indices_.push_back(sub_graph.nodeIndices()->Get(i));
+    }
   }
   auto tensor_count = sub_graph.tensorIndices()->size();
   for (uint32_t i = 0; i < tensor_count; ++i) {
@@ -228,8 +230,7 @@ int LiteModel::SubGraphVerify() const {
   auto tensor_size = this->all_tensors_.size();
   auto node_size = this->all_nodes_.size();
 
-  if (sub_graphs_[0]->input_indices_.size() == 0 || GetGraphInputNodes(this).size() == 0 ||
-      sub_graphs_[0]->output_indices_.size() == 0 || GetGraphOutputNodes(this).size() == 0) {
+  if (sub_graphs_[0]->input_indices_.size() == 0 || sub_graphs_[0]->output_indices_.size() == 0) {
     MS_LOG(ERROR) << "The model has invalid input and output, please check";
     return RET_ERROR;
   }

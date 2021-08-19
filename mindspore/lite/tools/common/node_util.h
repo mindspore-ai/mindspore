@@ -413,6 +413,20 @@ static STATUS TransFilterFormat(schema::TensorT *tensor, kTransFilterType type) 
 STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat);
 
 size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag = false);
+
+bool IsPartialFusion(const AnfNodePtr &node);
+
+bool IsCall(const AnfNodePtr &node);
+
+bool IsSwitch(const AnfNodePtr &node);
+
+bool IsMakeTuple(const AnfNodePtr &node);
+
+ValueNodePtr GetPartialFusionPrim();
+
+ValueNodePtr GetSwitchAnfPrim();
+
+ValueNodePtr GetCallAnfPrim();
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H

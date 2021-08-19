@@ -50,6 +50,7 @@ using mindspore::ops::PrimitiveC;
 namespace mindspore::lite {
 namespace {
 constexpr int kIndexOfValueInputOfGetTupleItem = 2;
+constexpr int kMaxDepth = 2048;
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
@@ -478,36 +479,13 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
   return RET_OK;
 }
 
-bool AnfExporter::IsCall(const AnfNodePtr node) {
-  if (!utils::isa<CNodePtr>(node)) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode->inputs().empty()) {
-    return false;
-  }
-  auto cnode_first_input = cnode->input(kPrimIndex);
-  if (utils::isa<CNodePtr>(cnode_first_input)) {
-    return true;
-  }
-
-  return false;
-}
-
-bool IsPartialFusion(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return false;
-  }
-  if (node->isa<mindspore::CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-    auto vnode_value = cnode->input(0)->cast<ValueNodePtr>()->value();
-    return GetValue<NamedPtr>(vnode_value)->name() == "PartialFusion";
-  }
-  return false;
-}
-
 FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph) {
+  static int i = 0;
+  if (i > kMaxDepth) {
+    MS_LOG(ERROR) << "exceed max depth 2048, i " << i;
+    return nullptr;
+  }
+  i++;
   // get output
   CNodePtr call_cnode = nullptr;
   auto fg_output = func_graph->output();
@@ -890,18 +868,6 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
   }
 }
 
-ValueNodePtr AnfExporter::GetPartialAnfPrim() {
-  auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
-  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
-  return partial_anf_prim;
-}
-
-ValueNodePtr AnfExporter::GetCallAnfPrim() {
-  auto call_prim = std::make_shared<mindspore::ops::Call>();
-  ValueNodePtr call_anf_prim = NewValueNode(call_prim);
-  return call_anf_prim;
-}
-
 CNodePtr AnfExporter::CreateCallCnode(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   auto call_anf_prim_vnode = GetCallAnfPrim();
   std::vector<AnfNodePtr> inputs{call_anf_prim_vnode, node};
@@ -917,13 +883,13 @@ CNodePtr AnfExporter::CreatePartialCnode(const FuncGraphPtr &fg, const AnfNodePt
     if (primitive_c != nullptr) {
       return cnode;
     }
-    auto partial_anf_prim_vnode = GetPartialAnfPrim();
+    auto partial_anf_prim_vnode = GetPartialFusionPrim();
     auto cnode_input = cnode->inputs();
     cnode_input.insert(cnode_input.begin(), partial_anf_prim_vnode);
     cnode->set_inputs(cnode_input);
     return cnode;
   } else if (utils::isa<ValueNodePtr>(node)) {
-    auto partial_anf_prim_vnode = GetPartialAnfPrim();
+    auto partial_anf_prim_vnode = GetPartialFusionPrim();
     std::vector<AnfNodePtr> inputs{partial_anf_prim_vnode, node};
     auto cnode = fg->NewCNode(inputs);
     return cnode;
