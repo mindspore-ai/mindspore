@@ -93,6 +93,21 @@ void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) 
   }
 }
 
+bool AsyncMemcpy(void *dst, uint64_t dst_size, const void *src, uint64_t src_size) {
+  if (dst == src) {
+    MS_LOG(INFO) << "dst addr is same with src addr, no need memcpy data.";
+    return true;
+  }
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto ret = runtime_instance->MemcpyAsync(dst, src, src_size, static_cast<int32_t>(RT_MEMCPY_DEVICE_TO_DEVICE));
+  if (!ret) {
+    MS_LOG(ERROR) << "rtMemcpyAsync failed!";
+    return false;
+  }
+  return true;
+}
+
 bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src, size_t src_size) {
   auto elem_num = src_size / FLOAT_LEN;
   if (elem_num != (dst_size / FLOAT16_LEN)) {
@@ -377,6 +392,28 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
     MS_LOG(ERROR) << "Unsupported trans, dev_format:" << format_ << ", dev_type:" << TypeIdLabel(type_id_)
                   << ", host_type:" << TypeIdLabel(type);
     return false;
+  }
+  return sync_ok;
+}
+
+bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+                                             const std::string &format) const {
+  MS_LOG(INFO) << "SyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+               << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
+               << ", size:" << size << ")";
+  if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
+    return true;
+  }
+  bool sync_ok = false;
+  if (format_ == format && type_id_ == type) {
+    if (!AsyncMemcpy(ptr_, size_, src_ptr, size)) {
+      MS_LOG(ERROR) << "AsyncMemcpy failed!";
+      return false;
+    }
+    sync_ok = true;
+  } else {
+    MS_LOG(ERROR) << "format or type is different.";
+    sync_ok = false;
   }
   return sync_ok;
 }

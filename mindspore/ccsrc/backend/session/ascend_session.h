@@ -43,7 +43,7 @@ class AscendSession : public SessionBasic {
   void Init(uint32_t device_id) override;
   // get graph id of final graph
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
-  void SyncStream() override;
+  void SyncStream() const override;
 
   static void BatchBuildKernel(const std::vector<std::shared_ptr<SessionTask>> &build_tasks);
 
@@ -79,6 +79,11 @@ class AscendSession : public SessionBasic {
   void ReportWarningMessage() override;
   void ReportErrorMessage() override;
   void ExecuteAllTaskInQueue() override;
+  void UpdateOutputTensors(const VectorRef *outputs,
+                           const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                           std::map<DeviceAddressPtr, DeviceAddressPtr> *) override;
+  DeviceAddressPtr AssignExtraMemForGraphOutput(const tensor::TensorPtr &tensor, const AnfNodePtr &node,
+                                                int index) const;
 
  private:
   // compile child graph when session have multiple child graphs
@@ -159,6 +164,8 @@ class AscendSession : public SessionBasic {
   GraphId final_graph_id_;
   // record graph ids of bp graphs that has been built in PyNative mode
   std::set<GraphId> built_graph_id_;
+  // tensor with new device addr map
+  std::map<tensor::TensorPtr, DeviceAddressPtr> tensor_device_addr_map_;
 };
 MS_REG_SESSION(kAscendDevice, AscendSession);
 }  // namespace session

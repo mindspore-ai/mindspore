@@ -40,6 +40,7 @@ class RuntimeModel {
   const std::vector<uint32_t> &GetStreamIdList() const;
   const std::map<std::string, std::shared_ptr<RuntimeInfo>> &GetRuntimeInfoMap() const { return runtime_info_map_; }
   rtModel_t GetModelHandle() const { return rt_model_handle_; }
+  rtStream_t GetModelStream() const { return rt_model_stream_; }
   void Run();
 
  private:

@@ -39,7 +39,10 @@ class DeviceSync {
   virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const = 0;
   virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
                                 const std::string &format = "DefaultFormat") const = 0;
-
+  virtual bool SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+                                  const std::string &format) const {
+    return true;
+  }
   virtual void *GetMutablePtr() const = 0;
   virtual void ClearDeviceMemory() = 0;
 

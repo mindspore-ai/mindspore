@@ -128,6 +128,21 @@ void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::
   buf << "================== execution order ==================\n";
 }
 
+bool IsVMGraphTaskSink() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
+    return false;
+  }
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) == false) {
+    return false;
+  }
+  if (ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) == true) {
+    return false;
+  }
+  return true;
+}
+
 // Handle control flow by auto-monad.
 void HandleControlFlow(NotNull<KernelGraphPtr> graph) {
   AscendAutoMonad auto_monad(graph);
@@ -240,7 +255,22 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   return inputs_params->size();
 }
 
-bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor) {
+bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
+                        const device::DeviceAddressPtr &dst_device_addr) {
+  MS_EXCEPTION_IF_NULL(dst_device_addr);
+  if (src_device_addr.get() == nullptr) {
+    return false;
+  }
+  if (src_device_addr->DeviceType() == dst_device_addr->DeviceType() &&
+      src_device_addr->format() == dst_device_addr->format() &&
+      src_device_addr->type_id() == dst_device_addr->type_id()) {
+    return true;
+  }
+  return false;
+}
+
+bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfNodePtr &parameter,
+                    const tensor::TensorPtr &tensor, uint32_t *memcpy_nums) {
   if (tensor->NeedSyncHostToDevice()) {
     return true;
   }
@@ -250,10 +280,37 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
     return tensor->device_address().get() == nullptr || tensor->device_address() != device_address;
   }
-  auto tensor_address = tensor->device_address();
+  auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   if (tensor_address != device_address) {
-    tensor->data_sync(false);
-    return true;
+    if (!kernel_graph->is_dynamic_shape() && IsVMGraphTaskSink() &&
+        NeedMemcpyInDevice(tensor_address, device_address)) {
+      auto status = device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(parameter, 0),
+                                                       tensor_address->GetSize(), tensor_address->type_id(),
+                                                       tensor_address->GetPtr(), tensor_address->format());
+      if (status == false) {
+        MS_LOG(EXCEPTION) << "SyncDeviceToDevice failed.";
+      }
+      MS_EXCEPTION_IF_NULL(memcpy_nums);
+      (*memcpy_nums)++;
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
+      const std::string &param_name = parameter->fullname_with_scope();
+      if (ps::ps_cache_instance.IsHashTable(param_name)) {
+        return false;
+      }
+#endif
+      auto input_param = parameter->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(input_param);
+      if (AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
+        tensor->set_device_address(device_address);
+      }
+      if (kernel_graph->IsUpdatedParameter(input_param)) {
+        tensor->SetIsUpdateByDevice();
+      }
+      return false;
+    } else {
+      tensor->data_sync(false);
+      return true;
+    }
   }
   return false;
 }
@@ -335,6 +392,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
                                   const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
   size_t input_ctrl_size = kLoopSinkTensorNum;
+  uint32_t device_memcpy_nums = 0;
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->input_ctrl_tensors()) {
     input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
@@ -344,6 +402,11 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
                       << ", input_ctrl_size:" << input_ctrl_size;
   }
+  for (auto item : tensor_device_addr_map_) {
+    auto output_tensor = item.first;
+    output_tensor->set_device_address(item.second);
+  }
+  SyncStream();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -368,7 +431,8 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
                                           input_node.get());
       size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
     }
-    if (AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
+    if (AnfAlgo::OutputAddrExist(input_node, 0) &&
+        TensorNeedSync(kernel_graph, input_node, tensor, &device_memcpy_nums)) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
       const std::string &param_name = input_node->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
@@ -391,6 +455,17 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
       }
     }
     tensor->set_sync_status(kNoNeedSync);
+  }
+  if (device_memcpy_nums > 0) {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    auto compute_stream = runtime_instance->compute_stream();
+    auto model_stream = runtime_instance->GetModelStream(kernel_graph->graph_id());
+    auto memcpy_event = runtime_instance->CreateDeviceEvent();
+    memcpy_event->set_wait_stream(model_stream);
+    memcpy_event->set_record_stream(compute_stream);
+    memcpy_event->RecordEvent();
+    memcpy_event->WaitEvent();
   }
 }
 
@@ -1740,7 +1815,7 @@ void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
   }
 }
 
-void AscendSession::SyncStream() {
+void AscendSession::SyncStream() const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto ret = runtime_instance->SyncStream();
@@ -1814,6 +1889,63 @@ void AscendSession::ExecuteAllTaskInQueue() {
     std::string exName(abi::__cxa_current_exception_type()->name());
     MS_LOG(EXCEPTION) << "Error occurred when execute task in queue. Exception name: " << exName;
   }
+}
+void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
+                                        const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
+                                        std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
+  MS_EXCEPTION_IF_NULL(outputs);
+  tensor_device_addr_map_.clear();
+  for (const auto &item : *outputs) {
+    if (utils::isa<VectorRefPtr>(item)) {
+      const auto &vector_ref = utils::cast<VectorRef>(item);
+      std::map<DeviceAddressPtr, DeviceAddressPtr> new_to_old_device_address;
+      UpdateOutputTensors(&vector_ref, tensor_to_node, &new_to_old_device_address);
+    } else if (utils::isa<tensor::TensorPtr>(item)) {
+      const auto &tensor = utils::cast<tensor::TensorPtr>(item);
+      MS_EXCEPTION_IF_NULL(tensor);
+      const auto &iter = tensor_to_node.find(tensor);
+      if (iter != tensor_to_node.end()) {
+        const auto &node = iter->second.first;
+        const auto &output_index = iter->second.second;
+        if (!AnfAlgo::OutputAddrExist(node, output_index, true)) {
+          continue;
+        }
+        const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+        tensor->set_device_address(address);
+        if (IsVMGraphTaskSink()) {
+          auto dst_device_address = AssignExtraMemForGraphOutput(tensor, node, output_index);
+          MS_EXCEPTION_IF_NULL(dst_device_address);
+          if (!dst_device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(node, output_index),
+                                                      address->GetSize(), address->type_id(), address->GetPtr(),
+                                                      address->format())) {
+            MS_LOG(EXCEPTION) << "SyncDeviceToDevice failed!";
+          }
+          tensor->set_sync_status(kNoNeedSync);
+          tensor_device_addr_map_[tensor] = dst_device_address;
+        }
+
+        if (AnfAlgo::IsDynamicShape(node)) {
+          const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
+          ShapeVector int_shape;
+          (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+          (void)tensor->set_shape(int_shape);
+        }
+      }
+      if (tensor->NeedSyncDeviceToHostImmediately()) {
+        tensor->data_sync(false);
+        tensor->set_device_address(nullptr);
+        tensor->set_sync_status(kNeedSyncHostToDevice);
+      }
+    }
+  }
+}
+DeviceAddressPtr AscendSession::AssignExtraMemForGraphOutput(const tensor::TensorPtr &tensor, const AnfNodePtr &node,
+                                                             int index) const {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(node);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->AssignExtraStaticMem(tensor, node, index);
 }
 }  // namespace session
 }  // namespace mindspore

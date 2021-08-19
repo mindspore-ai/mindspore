@@ -69,6 +69,7 @@ class AscendKernelRuntime : public KernelRuntime {
   std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() override;
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
+  void *GetModelStream(uint32_t graph_id) const override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

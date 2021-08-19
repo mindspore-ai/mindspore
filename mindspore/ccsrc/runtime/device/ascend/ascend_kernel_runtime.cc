@@ -195,6 +195,10 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   }
 }
 
+void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
+  return ModelRunner::Instance().GetModelStream(graph_id);
+}
+
 void AscendKernelRuntime::ClearGlobalIdleMem() {
   if (mem_manager_ != nullptr) {
     mem_manager_->ClearGlobalIdleMem();
@@ -972,7 +976,7 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
   }
 
   auto copy_kind = static_cast<rtMemcpyKind_t>(kind);
-  if (copy_kind != RT_MEMCPY_HOST_TO_DEVICE_EX) {
+  if (copy_kind != RT_MEMCPY_HOST_TO_DEVICE_EX && copy_kind != RT_MEMCPY_DEVICE_TO_DEVICE) {
     MS_LOG(EXCEPTION) << "Memory copy async not support cache host buffer in kind: " << kind;
   }
   if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
