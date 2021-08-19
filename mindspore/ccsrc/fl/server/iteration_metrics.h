@@ -89,8 +89,6 @@ class IterationMetrics {
   void set_iteration_time_cost(uint64_t iteration_time_cost);
 
  private:
-  bool initialized_;
-
   // This is the main config file set by ps context.
   std::string config_file_path_;
   std::unique_ptr<ps::core::FileConfiguration> config_;
@@ -99,7 +97,7 @@ class IterationMetrics {
   std::fstream metrics_file_;
 
   // Json object of metrics data.
-  nlohmann::json js_;
+  nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, float> js_;
 
   // The federated learning job name. Set by ps_context.
   std::string fl_name_;

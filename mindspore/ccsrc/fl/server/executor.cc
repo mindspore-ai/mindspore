@@ -340,10 +340,10 @@ bool Executor::InitParamAggregator(const FuncGraphPtr &func_graph) {
     param_aggrs_[param_name] = param_aggr;
     parameter_mutex_[param_name];
     if (!param_aggr->Init(cnode, aggregation_count_)) {
-      MS_LOG(EXCEPTION) << "Initializing parameter aggregator failed for " << param_name;
+      MS_LOG(EXCEPTION) << "Initializing parameter aggregator for " << param_name << " failed.";
       return false;
     }
-    MS_LOG(DEBUG) << "Initializing control flow for param_name " << param_name << " success.";
+    MS_LOG(DEBUG) << "Initializing parameter aggregator for param_name " << param_name << " success.";
   }
   return true;
 }

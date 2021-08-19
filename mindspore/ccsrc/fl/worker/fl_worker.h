@@ -72,6 +72,9 @@ class FLWorker {
   uint32_t rank_id() const;
   uint64_t worker_step_num_per_iteration() const;
 
+  // Check whether worker has exited.
+  bool running() const;
+
   // These methods set the worker's iteration state.
   void SetIterationRunning();
   void SetIterationCompleted();
@@ -116,7 +119,7 @@ class FLWorker {
   void ProcessAfterScalingOut();
   void ProcessAfterScalingIn();
 
-  bool running_;
+  std::atomic_bool running_;
   uint32_t server_num_;
   uint32_t worker_num_;
   std::string scheduler_ip_;

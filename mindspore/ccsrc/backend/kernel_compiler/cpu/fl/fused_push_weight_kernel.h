@@ -59,11 +59,6 @@ class FusedPushWeightKernel : public CPUKernel {
     }
 
     fl_iteration_++;
-    if (fl_iteration_ > ps::PSContext::instance()->fl_iteration_num()) {
-      MS_LOG(INFO) << ps::PSContext::instance()->fl_iteration_num() << " iterations are completed.";
-      fl_iteration_ = 1;
-    }
-
     MS_LOG(INFO) << "Launching pushing weight for federated learning iteration " << fl_iteration_;
     if (!BuildPushWeightReq(fbb, inputs)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
@@ -76,6 +71,10 @@ class FusedPushWeightKernel : public CPUKernel {
       const schema::ResponsePushWeight *push_weight_rsp = nullptr;
       int retcode = schema::ResponseCode_SucNotReady;
       while (retcode == schema::ResponseCode_SucNotReady) {
+        if (!fl::worker::FLWorker::GetInstance().running()) {
+          MS_LOG(WARNING) << "Worker has finished.";
+          return true;
+        }
         if (!fl::worker::FLWorker::GetInstance().SendToServer(i, fbb->GetBufferPointer(), fbb->GetSize(),
                                                               ps::core::TcpUserCommand::kPushWeight,
                                                               &push_weight_rsp_msg)) {

@@ -32,7 +32,7 @@ namespace server {
 namespace kernel {
 class PushMetricsKernel : public RoundKernel {
  public:
-  PushMetricsKernel() = default;
+  PushMetricsKernel() : local_rank_(0) {}
   ~PushMetricsKernel() override = default;
 
   void InitKernel(size_t threshold_count);

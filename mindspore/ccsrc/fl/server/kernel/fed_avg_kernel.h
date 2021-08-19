@@ -180,7 +180,10 @@ class FedAvgKernel : public AggregationKernel {
 
   bool ReInitForUpdatingHyperParams(size_t aggr_threshold) override {
     done_count_ = aggr_threshold;
-    DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
+    if (!DistributedCountService::GetInstance().ReInitCounter(name_, done_count_)) {
+      MS_LOG(ERROR) << "Reinitializing counter for " << name_ << " failed.";
+      return false;
+    }
     return true;
   }
 

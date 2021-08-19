@@ -56,6 +56,10 @@ class PushMetricsKernel : public CPUKernel {
     uint32_t retry_time = 0;
     std::shared_ptr<std::vector<unsigned char>> push_metrics_rsp_msg = nullptr;
     do {
+      if (!fl::worker::FLWorker::GetInstance().running()) {
+        MS_LOG(WARNING) << "Worker has finished.";
+        return true;
+      }
       retry_time++;
       if (!fl::worker::FLWorker::GetInstance().SendToServer(fl::kLeaderServerRank, fbb_->GetBufferPointer(),
                                                             fbb_->GetSize(), ps::core::TcpUserCommand::kPushMetrics,
@@ -66,7 +70,7 @@ class PushMetricsKernel : public CPUKernel {
       } else {
         break;
       }
-    } while (retry_time > kMaxRetryTime);
+    } while (retry_time < kMaxRetryTime);
 
     flatbuffers::Verifier verifier(push_metrics_rsp_msg->data(), push_metrics_rsp_msg->size());
     if (!verifier.VerifyBuffer<schema::ResponsePushMetrics>()) {
