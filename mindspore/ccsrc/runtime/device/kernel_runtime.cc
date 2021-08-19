@@ -1059,7 +1059,15 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       AddressPtrList kernel_inputs;
       AddressPtrList kernel_workspaces;
       AddressPtrList kernel_outputs;
-      GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+      auto ms_context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(ms_context);
+      if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+        GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+      } else {
+        kernel_inputs = kernel_mod->GetInputsAddr();
+        kernel_workspaces = kernel_mod->GetWorkSpacesAddr();
+        kernel_outputs = kernel_mod->GetOutputsAddr();
+      }
       bool ret;
       if (AnfAlgo::IsCommunicationOp(kernel)) {
         if (pynative_mode_profiling_flag_) {

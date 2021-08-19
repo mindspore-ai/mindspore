@@ -43,7 +43,8 @@ using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, Primitive
 using AnfVisitFuncion = std::function<Any(const AnfNodePtr &node, int index)>;
 using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
-
+using Address = kernel::Address;
+using AddressPtr = kernel::AddressPtr;
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 struct KernelWithIndexCmp {
   bool operator()(const KernelWithIndex &key1, const KernelWithIndex &key2) const {
@@ -308,6 +309,10 @@ class AnfRuntimeAlgorithm {
   static bool IsControlOpExecInBackend(const AnfNodePtr &node);
 
   static bool IsNodeInputContainMonad(const AnfNodePtr &node);
+  // Save inputs/outputs/workspace address in kernel_mod.
+  static void CacheAddrForGraph(const KernelGraphPtr &kernel_graph);
+  static void CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
+  static void CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
