@@ -373,7 +373,6 @@ class OrderEnforcer {
   std::unordered_map<AnfNodePtr, size_t> topo_sort_map_;
   std::unordered_set<AnfNodePtr> processed_nodes_;
 };
-
 }  // namespace
 
 // Enforce order of execution for Load users node.
