@@ -233,7 +233,7 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
     return lite::RET_NULL_PTR;
   }
   if (utils::isa<CNodePtr>(cnode->input(0))) {
-    MS_LOG(INFO) << "call cnode no need to convert primitive.";
+    MS_LOG(DEBUG) << "call cnode no need to convert primitive.";
     return lite::RET_NO_CHANGE;
   }
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
@@ -244,7 +244,7 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   auto primitive = value_node->value()->cast<PrimitivePtr>();
   if (primitive == nullptr) {
     if (utils::isa<FuncGraphPtr>(value_node->value())) {
-      MS_LOG(INFO) << "is a funcgraph.";
+      MS_LOG(DEBUG) << "is a funcgraph.";
       return lite::RET_NO_CHANGE;
     } else {
       MS_LOG(ERROR) << "the value is not primitive.";
