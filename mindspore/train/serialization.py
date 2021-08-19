@@ -829,7 +829,6 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
         os.makedirs(data_path, exist_ok=True)
-        os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         index = 0
         graphproto = graph_proto()
         data_size = 0

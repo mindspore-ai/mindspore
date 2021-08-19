@@ -81,9 +81,7 @@ def _column_or_1d(y):
      Ravel column or 1d numpy array, otherwise raise an error.
     """
     shape = np.shape(y)
-    if len(shape) == 1:
-        return np.ravel(y)
-    if len(shape) == 2 and shape[1] == 1:
+    if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
         return np.ravel(y)
 
     raise ValueError("Bad input shape {0}.".format(shape))
