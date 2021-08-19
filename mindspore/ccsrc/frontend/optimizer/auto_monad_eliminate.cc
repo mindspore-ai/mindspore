@@ -26,24 +26,82 @@
 
 namespace mindspore {
 namespace opt {
+std::unordered_set<FuncGraphPtr> GetAllSubGraphs(const std::unordered_set<AnfNodePtr> &call_partial) {
+  std::unordered_set<FuncGraphPtr> graphs;
+  for (auto node : call_partial) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto fg_idx = IsPrimitiveCNode(cnode, prim::kPrimCall) ? 0 : 1;
+    auto fg_value_node = cnode->input(fg_idx)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(fg_value_node);
+    auto value = fg_value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    auto caller_fg = value->cast<FuncGraphPtr>();
+    auto sub_graphs = caller_fg->func_graphs_used_total();
+    for (auto sub_graph : sub_graphs) {
+      graphs.insert(sub_graph);
+    }
+  }
+  return graphs;
+}
+
+bool HasUMonadCallNodeUser(const FuncGraphPtr &fg, const std::unordered_set<AnfNodePtr> &call_partial,
+                           const AnfNodePtr &load_param) {
+  if (call_partial.empty()) {
+    return false;
+  }
+  auto manager = fg->manager();
+  auto load_param_users = manager->node_users()[load_param];
+  std::unordered_set<FuncGraphPtr> sub_graphs = GetAllSubGraphs(call_partial);
+  for (auto user : load_param_users) {
+    if (!user.first->isa<CNode>()) {
+      continue;
+    }
+    auto node = user.first->cast<CNodePtr>();
+    auto user_graph = node->func_graph();
+    // Check if user graph is in sub graphs.
+    bool exist_user_graph = std::any_of(sub_graphs.begin(), sub_graphs.end(),
+                                        [&user_graph](const FuncGraphPtr &graph) { return user_graph == graph; });
+    if (exist_user_graph) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::vector<std::vector<size_t>> GenerateLoadGroups(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &toposet,
                                                     std::vector<AnfNodePtr> *need_replace_loads) {
   std::unordered_map<AnfNodePtr, size_t> load_groups_record;
   std::vector<std::vector<size_t>> load_groups;
-  std::unordered_set<AnfNodePtr> unload_users_record;
+  // Record the param and the user set of param in toposet nodes
+  std::unordered_map<AnfNodePtr, std::unordered_set<AnfNodePtr>> unload_users_record;
+  std::unordered_set<AnfNodePtr> call_partial_nodes;
+  std::unordered_map<AnfNodePtr, bool> has_umonad_call_node_users;
   for (size_t i = 0; i < toposet.size(); i++) {
     auto &node = toposet[i];
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
       continue;
     }
-    if (!IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
-      for (const auto &input : cnode->inputs()) {
-        if (input->isa<Parameter>() ||
-            (IsPrimitiveCNode(input, prim::kPrimDepend) && input->cast<CNodePtr>()->input(1)->isa<Parameter>())) {
-          unload_users_record.insert(input);
-        }
+    // Record param user in toposort nodes.
+    for (const auto &input : cnode->inputs()) {
+      AnfNodePtr cur_param = nullptr;
+      if (input->isa<Parameter>()) {
+        cur_param = input;
+      } else if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
+        cur_param = input->cast<CNodePtr>()->input(1);
+      } else if (IsPrimitiveCNode(input, prim::kPrimDepend) && input->cast<CNodePtr>()->input(1)->isa<Parameter>()) {
+        cur_param = input->cast<CNodePtr>()->input(1);
       }
+      if (cur_param != nullptr) {
+        unload_users_record[cur_param].insert(cnode);
+      }
+    }
+    if (IsPrimitiveCNode(cnode, prim::kPrimCall) || IsPrimitiveCNode(cnode, prim::kPrimPartial)) {
+      call_partial_nodes.insert(cnode);
+    }
+
+    if (!IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
       continue;
     }
     // Exclude free variable node.
@@ -55,7 +113,13 @@ std::vector<std::vector<size_t>> GenerateLoadGroups(const FuncGraphPtr &fg, cons
     if (load_groups_record.find(load_param) == load_groups_record.end()) {
       load_groups_record[load_param] = load_groups.size();
       load_groups.push_back({i});
-      if (unload_users_record.find(load_param) == unload_users_record.end()) {
+      // If had not user in toposort, should check if has call or partial user
+      // If already has call node user, do not need check again.
+      if (!unload_users_record[load_param].empty() || has_umonad_call_node_users[load_param] == true) {
+        continue;
+      }
+      has_umonad_call_node_users[load_param] = HasUMonadCallNodeUser(fg, call_partial_nodes, load_param);
+      if (has_umonad_call_node_users[load_param] == false) {
         need_replace_loads->emplace_back(cnode);
       }
     } else {
@@ -236,27 +300,6 @@ AnfNodePtr GetFirstMonad(const FuncGraphPtr &fg) {
   return monad;
 }
 
-bool MayModifyParameter(const AnfNodePtr &update_state, const AnfNodePtr &load) {
-  MS_EXCEPTION_IF_NULL(update_state);
-  MS_EXCEPTION_IF_NULL(load);
-  auto update_state_cnode = update_state->cast<CNodePtr>();
-  auto load_cnode = load->cast<CNodePtr>();
-  constexpr size_t attach_index = 2;
-  auto attach = update_state_cnode->input(attach_index);
-  if (!attach->isa<CNode>()) {
-    return false;
-  }
-  if (IsValueNode<FuncGraph>(attach->cast<CNodePtr>()->input(0))) {
-    return true;
-  }
-  auto inputs = attach->cast<CNodePtr>()->inputs();
-  bool exist_param_or_load = std::any_of(inputs.begin(), inputs.end(), [&load_cnode](const AnfNodePtr &input) {
-    auto parameter = load_cnode->input(1);
-    return input == load_cnode || input == parameter;
-  });
-  return exist_param_or_load;
-}
-
 // Replace UpdateStates with U for first load.
 // Covert:
 // u1 = UpdateState(u, c)
@@ -277,9 +320,6 @@ bool ReplaceUpdateStateForLoad(const FuncGraphPtr &fg, const std::vector<AnfNode
     }
     auto update_state = load_node->cast<CNodePtr>()->input(second_input_index);
     if (!IsPrimitiveCNode(update_state, prim::kPrimUpdateState)) {
-      continue;
-    }
-    if (MayModifyParameter(update_state, load_node)) {
       continue;
     }
     auto mgr = fg->manager();
