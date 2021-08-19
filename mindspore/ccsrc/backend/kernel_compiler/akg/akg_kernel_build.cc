@@ -423,8 +423,8 @@ bool AkgKernelBuilder::HandleRepeatNodes() {
                     << anf_node->fullname_with_scope() << "].";
       return false;
     }
-    MS_LOG(INFO) << "Use just compiled kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
-                 << anf_node->fullname_with_scope() << "].";
+    MS_LOG(DEBUG) << "Use just compiled kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
+                  << anf_node->fullname_with_scope() << "].";
     AkgSetKernelMod(cached_kernel_pack, json_generator, anf_node);
   }
   return true;
@@ -546,7 +546,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
   }
 
   if (json_and_node.empty()) {
-    MS_LOG(DEBUG) << "There is no kernel needed to be compiled.";
+    MS_LOG(INFO) << "There is no akg kernel to be compiled.";
     return true;
   }
 
