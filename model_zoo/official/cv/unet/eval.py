@@ -41,7 +41,7 @@ def test_net(data_dir,
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(net, param_dict)
     net = UnetEval(net, eval_activate=config.eval_activate.lower())
-    if hasattr(config, "dataset") and config.dataset != "ISBI":
+    if hasattr(config, "multiclass") and config.multiclass or hasattr(config, "dataset") and config.dataset != "ISBI":
         split = config.split if hasattr(config, "split") else 0.8
         valid_dataset = create_multi_class_dataset(data_dir, config.image_size, 1, 1,
                                                    num_classes=config.num_classes, is_train=False,

@@ -1,0 +1,164 @@
+create_algo:
+  name: unet_nested
+  description: null
+  config:
+    training:
+      image:
+        engine_name: Ascend-Powered-Engine
+        engine_version: Mindspore-1.1.1-python3.7-aarch64
+      code:
+        relative_boot_file: train_start.py
+      inputs:
+        - name: 数据来源
+          parameter:
+            label: data_url
+            value: data_url/
+          dataset_enable: false
+          annotations:
+            - key: data_source
+              value:
+                  - obs
+                  - modelarts_dataset
+            - key: dataset_type
+              value:
+                - '3'
+            - key: data_segmentation
+              value:
+                - ''
+            - key: isconstrictinput
+            - key: constrictInputTempShow
+            - key: isSelectDatasetAndObs
+      outputs:
+        - name: 模型输出
+          description: ''
+          parameter:
+            label: train_url
+            value: train_url/
+          artifact:
+            - type: ''
+          modelarts_hosted: false
+      flavor:
+        flavor_codes: []
+        annotations:
+          - key: flavor_type
+            value:
+              - Ascend
+          - key: is_multi_devices_supported
+            value:
+              - 'true'
+          - key: flavor_codes
+            value: []
+          - key: isMultiDevHide
+      parameters:
+        regular:
+          - key: "dataset"
+            help: null
+            type: String
+            default_value: "ISBI2012"
+            editable: true
+            required: true
+          - key: "img_size"
+            help: null
+            type: String
+            default_value: "[96, 96]"
+            editable: true
+            required: true
+          - key: "lr"
+            help: null
+            type: Continuous
+            default_value: "0.0003"
+            editable: true
+            required: true
+          - key: "epochs"
+            help: null
+            type: Integer
+            default_value: "200"
+            editable: true
+            required: true
+          - key: "repeat"
+            help: null
+            type: Integer
+            default_value: "10"
+            editable: true
+            required: true
+          - key: "batchsize"
+            help: null
+            type: Integer
+            default_value: "16"
+            editable: true
+            required: true
+          - key: "num_classes"
+            help: null
+            type: Integer
+            default_value: "2"
+            editable: true
+            required: true
+          - key: "num_channels"
+            help: null
+            type: Integer
+            default_value: "3"
+            editable: true
+            required: true
+        customization: true
+
+publish_algo:
+  item_name: 语义分割-UNet
+  short_desc: 基于MindSpore, Ascend910训练，Ascend310推理
+  add_version_desc:
+
+create_train_job:
+  job_desc: null
+  config:
+    pool_id: "poola4e86449"
+    parameter:
+      - label: dataset
+        value: "Cell_nuclei"
+        required: true
+        editable: true
+      - label: img_size
+        value: "(96, 96)"
+        required: true
+        editable: true
+      - label: lr
+        value: "0.0003"
+        required: true
+        editable: true
+      - label: epochs
+        value: "200"
+        required: true
+        editable: true
+      - label: repeat
+        value: "10"
+        required: true
+        editable: true
+      - label: batchsize
+        value: "16"
+        required: true
+        editable: true
+      - label: num_classes
+        value: "2"
+        required: true
+        editable: true
+      - label: num_channels
+        value: "3"
+        required: true
+        editable: true
+    inputs:
+      - data_source:
+          obs:
+            obs_url: '/cnnorth4-job-test/e2e-input/unet'
+    outputs:
+      - value:
+
+create_model:
+  model_type: TensorFlow
+  description: null
+
+create_service:
+  schedule:
+    - duration: 1
+      time_units: HOURS
+      type: stop
+  description: null
+  config:
+    - specification: modelarts.kat1.xlarge

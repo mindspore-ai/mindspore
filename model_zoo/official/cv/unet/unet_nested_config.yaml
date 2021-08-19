@@ -17,8 +17,12 @@ model_name: "unet_nested"
 include_background: True
 run_eval: False
 run_distribute: False
+dataset: "ISBI"
+multiclass: True
+patch_size: [96, 96]
+patch_stride: 48
 crop: None
-image_size : [576, 576]
+image_size : [96, 96]
 lr: 0.0001
 epochs: 400
 repeat: 400
@@ -26,7 +30,7 @@ distribute_epochs: 1600
 batch_size: 16
 cross_valid_ind: 1
 num_classes: 2
-num_channels: 1
+num_channels: 3
 weight_decay: 0.0005
 loss_scale: 1024.0
 FixedLossScaleManager: 1024.0

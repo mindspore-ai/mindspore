@@ -20,6 +20,23 @@ import os
 import cv2
 import numpy as np
 from src.model_utils.config import config
+from PIL import Image
+from PIL import ImageSequence
+
+
+def do_patch(img, shape, stride):
+    y = 0
+    result = []
+    while y < img.shape[0] - shape[0] + stride:
+        y = min(y, img.shape[0] - shape[0])
+        x = 0
+        while x < img.shape[1] - shape[1] + stride:
+            x = min(x, img.shape[1] - shape[1])
+            result.append(img[y: y + shape[0], x: x + shape[1]])
+            x += stride
+        y += stride
+    return result
+
 
 def annToMask(ann, height, width):
     """Convert annotation to RLE and then to binary mask."""
@@ -34,6 +51,28 @@ def annToMask(ann, height, width):
         rle = ann['segmentation']
     m = maskHelper.decode(rle)
     return m
+
+
+def preprocess_isbi_dataset(data_dir):
+    def _load_tif(path):
+        return (np.array(p) for p in ImageSequence.Iterator(Image.open(path)))
+
+    images = _load_tif(os.path.join(data_dir, 'train-volume.tif'))
+    masks = _load_tif(os.path.join(data_dir, 'train-labels.tif'))
+
+    for i, (img, msk) in enumerate(zip(images, masks)):
+        patched_images = do_patch(img, config.patch_size, config.patch_stride)
+        patched_masks = do_patch(msk, config.patch_size, config.patch_stride)
+        for j, (_p_img, _p_msk) in enumerate(zip(patched_images,
+                                                 patched_masks)):
+            patch_save_dir = os.path.join(
+                data_dir, "multiclass",
+                f"{i}_{'x'.join([str(x) for x in msk.shape])}"
+                f"_{config.patch_stride}_{j}")
+            os.makedirs(patch_save_dir, exist_ok=True)
+            cv2.imwrite(os.path.join(patch_save_dir, "image.png"), _p_img)
+            cv2.imwrite(os.path.join(patch_save_dir, "mask.png"), _p_msk)
+
 
 def preprocess_cell_nuclei_dataset(param_dict):
     """
@@ -56,8 +95,23 @@ def preprocess_cell_nuclei_dataset(param_dict):
                 mask_ = cv2.imread(os.path.join(path, "masks", mask_file), cv2.IMREAD_GRAYSCALE)
                 mask.append(mask_)
             mask = np.max(mask, axis=0)
-            cv2.imwrite(os.path.join(path, "image.png"), img)
-            cv2.imwrite(os.path.join(path, "mask.png"), mask)
+            print("***do patch****")
+            patched_img_lst = do_patch(img, config.patch_size,
+                                       config.patch_stride)
+            patched_msk_lst = do_patch(mask, config.patch_size,
+                                       config.patch_stride)
+            for i, (_img, _mask) in enumerate(zip(patched_img_lst,
+                                                  patched_msk_lst)):
+                patch_save_dir = os.path.join(
+                    data_dir, "multiclass",
+                    f"{img_id}_{'x'.join([str(x) for x in _mask.shape])}"
+                    f"_{config.patch_stride}_{i}")
+                os.makedirs(patch_save_dir, exist_ok=True)
+                os.makedirs(patch_save_dir, exist_ok=True)
+                cv2.imwrite(os.path.join(patch_save_dir, "image.png"),
+                            _img)
+                cv2.imwrite(os.path.join(patch_save_dir, "mask.png"),
+                            _mask)
 
 def preprocess_coco_dataset(param_dict):
     """
@@ -108,7 +162,9 @@ def preprocess_coco_dataset(param_dict):
 
 def preprocess_dataset(data_dir):
     """Select preprocess function."""
-    if config.dataset.lower() == "cell_nuclei":
+    if config.dataset.lower() == 'isbi':
+        preprocess_isbi_dataset(data_dir)
+    elif config.dataset.lower() == "cell_nuclei":
         preprocess_cell_nuclei_dataset({"data_dir": data_dir})
     elif config.dataset.lower() == "coco":
         if config.split == 1.0:
