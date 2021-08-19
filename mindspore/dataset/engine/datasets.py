@@ -64,7 +64,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
-    check_sb_dataset
+    check_sb_dataset, check_flowers102dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -5419,6 +5419,232 @@ class CSVDataset(SourceDataset):
     def parse(self, children=None):
         return cde.CSVNode(self.dataset_files, self.field_delim, self.column_defaults, self.column_names,
                            self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class _Flowers102Dataset:
+    """
+    Mainly for loading Flowers102 Dataset, and return one row each time.
+    """
+    def __init__(self, dataset_dir, task, usage, decode):
+        self.dataset_dir = os.path.realpath(dataset_dir)
+        self.task = task
+        self.usage = usage
+        self.decode = decode
+
+        if self.task == "Classification":
+            self.column_names = ["image", "label"]
+        else:
+            self.column_names = ["image", "segmentation", "label"]
+
+        labels_path = os.path.join(self.dataset_dir, "imagelabels.mat")
+        setid_path = os.path.join(self.dataset_dir, "setid.mat")
+        # minus one to transform 1~102 to 0 ~ 101
+        self.labels = (loadmat(labels_path)["labels"][0] - 1).astype(np.uint32)
+        self.setid = loadmat(setid_path)
+
+        if self.usage == 'train':
+            self.indices = self.setid["trnid"][0].tolist()
+        elif self.usage == 'test':
+            self.indices = self.setid["tstid"][0].tolist()
+        elif self.usage == 'valid':
+            self.indices = self.setid["valid"][0].tolist()
+        elif self.usage == 'all':
+            self.indices = self.setid["trnid"][0].tolist()
+            self.indices += self.setid["tstid"][0].tolist()
+            self.indices += self.setid["valid"][0].tolist()
+        else:
+            raise ValueError("Input usage is not within the valid set of ['train', 'valid', 'test', 'all'].")
+
+    def __getitem__(self, index):
+        # range: 1 ~ 8189
+        image_path = os.path.join(self.dataset_dir, "jpg", "image_" + str(self.indices[index]).zfill(5) + ".jpg")
+        if not os.path.exists(image_path):
+            raise RuntimeError("Can not find image file: " + image_path)
+
+        if self.decode is True:
+            image = np.asarray(Image.open(image_path).convert("RGB"))
+        else:
+            image = np.fromfile(image_path, dtype=np.uint8)
+
+        label = self.labels[self.indices[index] - 1]
+
+        if self.task == "Segmentation":
+            segmentation_path = \
+                os.path.join(self.dataset_dir, "segmim", "segmim_" + str(self.indices[index]).zfill(5) + ".jpg")
+            if not os.path.exists(segmentation_path):
+                raise RuntimeError("Can not find segmentation file: " + segmentation_path)
+            if self.decode is True:
+                segmentation = np.asarray(Image.open(segmentation_path).convert("RGB"))
+            else:
+                segmentation = np.fromfile(segmentation_path, dtype=np.uint8)
+            return image, segmentation, label
+
+        return image, label
+
+    def __len__(self):
+        return len(self.indices)
+
+
+class Flowers102Dataset(GeneratorDataset):
+    """
+    A source dataset for reading and parsing Flowers102 dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]` or three :py:obj:`[image, segmentation, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`segmentation` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar or a tensor of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str): Specify the 'Classification' or 'Segmentation' task (default='Classification').
+        usage (str): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset
+            (default='all', will read all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Whether or not to decode the images and segmentations after reading (default=False).
+        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+            input is required (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            Random accessible input is required. When this argument is specified, 'num_samples' reflects the max
+            sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
+            when num_shards is also specified. Random accessible input is required.
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> flowers102_dataset_dir = "/path/to/flowers102_dataset_directory"
+        >>> dataset = ds.Flowers102Dataset(dataset_dir=flowers102_dataset_dir,
+        ...                                task="Classification",
+        ...                                usage="all",
+        ...                                decode=True)
+
+    About Flowers102 dataset:
+
+    Flowers102 dataset consists of 102 flower categories.
+    The flowers commonly occur in the United Kingdom.
+    Each class consists of between 40 and 258 images.
+
+    Here is the original Flowers102 dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── flowes102_dataset_dir
+             ├── imagelabels.mat
+             ├── setid.mat
+             ├── jpg
+                  ├── image_00001.jpg
+                  ├── image_00002.jpg
+                  ├── ...
+             ├── segmim
+                  ├── segmim_00001.jpg
+                  ├── segmim_00002.jpg
+                  ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @InProceedings{Nilsback08,
+          author       = "Maria-Elena Nilsback and Andrew Zisserman",
+          title        = "Automated Flower Classification over a Large Number of Classes",
+          booktitle    = "Indian Conference on Computer Vision, Graphics and Image Processing",
+          month        = "Dec",
+          year         = "2008",
+        }
+    """
+
+    @check_flowers102dataset
+    def __init__(self, dataset_dir, task="Classification", usage="all", num_samples=None, num_parallel_workers=1,
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+        self.dataset_dir = os.path.realpath(dataset_dir)
+        self.task = replace_none(task, "Classification")
+        self.usage = replace_none(usage, "all")
+        self.decode = replace_none(decode, False)
+        dataset = _Flowers102Dataset(self.dataset_dir, self.task, self.usage, self.decode)
+        super().__init__(dataset, column_names=dataset.column_names, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, sampler=sampler,
+                         num_shards=num_shards, shard_id=shard_id)
+
+    def get_class_indexing(self):
+        """
+        Get the class index.
+
+        Returns:
+            dict, a str-to-int mapping from label name to index.
+        """
+        class_names = [
+            "pink primrose", "hard-leaved pocket orchid", "canterbury bells",
+            "sweet pea", "english marigold", "tiger lily", "moon orchid",
+            "bird of paradise", "monkshood", "globe thistle", "snapdragon",
+            "colt's foot", "king protea", "spear thistle", "yellow iris",
+            "globe-flower", "purple coneflower", "peruvian lily", "balloon flower",
+            "giant white arum lily", "fire lily", "pincushion flower", "fritillary",
+            "red ginger", "grape hyacinth", "corn poppy", "prince of wales feathers",
+            "stemless gentian", "artichoke", "sweet william", "carnation",
+            "garden phlox", "love in the mist", "mexican aster", "alpine sea holly",
+            "ruby-lipped cattleya", "cape flower", "great masterwort", "siam tulip",
+            "lenten rose", "barbeton daisy", "daffodil", "sword lily", "poinsettia",
+            "bolero deep blue", "wallflower", "marigold", "buttercup", "oxeye daisy",
+            "common dandelion", "petunia", "wild pansy", "primula", "sunflower",
+            "pelargonium", "bishop of llandaff", "gaura", "geranium", "orange dahlia",
+            "pink-yellow dahlia?", "cautleya spicata", "japanese anemone",
+            "black-eyed susan", "silverbush", "californian poppy", "osteospermum",
+            "spring crocus", "bearded iris", "windflower", "tree poppy", "gazania",
+            "azalea", "water lily", "rose", "thorn apple", "morning glory",
+            "passion flower", "lotus", "toad lily", "anthurium", "frangipani",
+            "clematis", "hibiscus", "columbine", "desert-rose", "tree mallow",
+            "magnolia", "cyclamen", "watercress", "canna lily", "hippeastrum",
+            "bee balm", "ball moss", "foxglove", "bougainvillea", "camellia", "mallow",
+            "mexican petunia", "bromelia", "blanket flower", "trumpet creeper",
+            "blackberry lily"
+        ]
+
+        class_dict = {}
+        for i, class_name in enumerate(class_names):
+            class_dict[class_name] = i
+
+        return class_dict
 
 
 class TextFileDataset(SourceDataset):
