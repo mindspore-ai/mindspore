@@ -899,18 +899,22 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
     return;
   }
 
-  // The empty value node return the empty VectorRef.
+  auto outputs_num = AnfAlgo::GetOutputTensorNum(output_node);
+  // The value node uses the value to be output, to avoid the host memory of value free due to value node destruction.
   if (output_node->isa<ValueNode>()) {
     auto value = output_node->cast<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<ValueTuple>()) {
       outputs->emplace_back(value);
       (*output_position) += CountValueNum(value->cast<ValueTuplePtr>());
-      return;
+    } else if (outputs_num != 0) {
+      outputs->emplace_back(value);
+      (*output_position) += outputs_num;
     }
+    // The empty value node return the empty VectorRef.
+    return;
   }
 
-  auto outputs_num = AnfAlgo::GetOutputTensorNum(output_node);
   auto &output_abstract = output_node->abstract();
   MS_EXCEPTION_IF_NULL(output_abstract);
   // Wrap output to VectorRef if the output is tuple.
