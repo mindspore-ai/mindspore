@@ -224,10 +224,10 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
       continue;
     }
 
-    MS_LOG(INFO) << "Expanding node: " << node->fullname_with_scope();
+    MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope();
     auto new_node = GetExpander(node)->Run(node);
     if (new_node == nullptr) {
-      MS_LOG(INFO) << "Skipped node: " << node->fullname_with_scope();
+      MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
       continue;
     }
     (void)mng->Replace(node, new_node);
