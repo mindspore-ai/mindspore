@@ -34,6 +34,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/emnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/fake_image_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
@@ -161,6 +162,18 @@ PYBIND_REGISTER(EMnistNode, 2, ([](const py::module *m) {
                         std::make_shared<EMnistNode>(dataset_dir, name, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(emnist->ValidateParams());
                       return emnist;
+                    }));
+                }));
+
+PYBIND_REGISTER(FakeImageNode, 2, ([](const py::module *m) {
+                  (void)py::class_<FakeImageNode, DatasetNode, std::shared_ptr<FakeImageNode>>(
+                    *m, "FakeImageNode", "to create a FakeImageNode")
+                    .def(py::init([](int32_t num_images, const std::vector<int32_t> image_size, int32_t num_classes,
+                                     int32_t base_seed, py::handle sampler) {
+                      auto fake_image = std::make_shared<FakeImageNode>(num_images, image_size, num_classes, base_seed,
+                                                                        toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(fake_image->ValidateParams());
+                      return fake_image;
                     }));
                 }));
 

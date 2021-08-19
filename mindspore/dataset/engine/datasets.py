@@ -66,7 +66,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
-    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset
+    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -6480,6 +6480,95 @@ class EMnistDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.EMnistNode(self.dataset_dir, self.name, self.usage, self.sampler)
+
+
+class FakeImageDataset(MappableDataset):
+    """
+    A source dataset for generating fake images.
+
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
+
+    Args:
+        num_images (int, optional): Number of images to generate in the dataset (default=1000).
+        image_size (tuple, optional):  Size of the fake image (default=(224, 224, 3)).
+        num_classes (int, optional): Number of classes in the dataset (default=10).
+        base_seed (int, optional): Offsets the index-based random seed used to generate each image (default=0).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> # Read 3 samples from FakeImage dataset
+        >>> dataset = ds.FakeImageDataset(num_images=1000, image_size=(224,224,3),
+        ...                               num_classes=10, base_seed=0, num_samples=3)
+        >>>
+        >>> # Note: In FakeImage dataset, each dictionary has keys "image" and "label"
+    """
+
+    @check_fake_image_dataset
+    def __init__(self, num_images=1000, image_size=(224, 224, 3), num_classes=10, base_seed=0, num_samples=None,
+                 num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.num_images = num_images
+        self.image_size = image_size
+        self.num_classes = num_classes
+        self.base_seed = base_seed
+
+    def parse(self, children=None):
+        return cde.FakeImageNode(self.num_images, self.image_size, self.num_classes, self.base_seed, self.sampler)
 
 
 class FlickrDataset(MappableDataset):

@@ -13,6 +13,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         csv_node.cc
         div2k_node.cc
         emnist_node.cc
+        fake_image_node.cc
         flickr_node.cc
         image_folder_node.cc
         manifest_node.cc

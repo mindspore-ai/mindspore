@@ -1715,6 +1715,96 @@ inline std::shared_ptr<EMnistDataset> EMnist(const std::string &dataset_dir, con
                                          cache);
 }
 
+/// \class FakeImageDataset
+/// \brief A source dataset for generating fake images.
+class FakeImageDataset : public Dataset {
+ public:
+  /// \brief Constructor of FakeImageDataset.
+  /// \param[in] num_images The number of images to generate, which must be positive.
+  /// \param[in] image_size Size of the images, which must be a vector of three positive values.
+  /// \param[in] num_classes The number of classes of the images, which must be positive.
+  /// \param[in] base_seed The base seed to generate the images.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///    given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes,
+                            int32_t base_seed, const std::shared_ptr<Sampler> &sampler,
+                            const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of FakeImageDataset.
+  /// \param[in] num_images The number of images to generate, which must be positive.
+  /// \param[in] image_size Size of the images, which must be a vector of three positive values.
+  /// \param[in] num_classes The number of classes of the images, which must be positive.
+  /// \param[in] base_seed The base seed to generate the images.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes,
+                            int32_t base_seed, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of FakeImageDataset.
+  /// \param[in] num_images The number of images to generate, which must be positive.
+  /// \param[in] image_size Size of the images, which must be a vector of three positive values.
+  /// \param[in] num_classes The number of classes of the images, which must be positive.
+  /// \param[in] base_seed The base seed to generate the images.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit FakeImageDataset(int32_t num_images, const std::vector<int32_t> &image_size, int32_t num_classes,
+                            int32_t base_seed, const std::reference_wrapper<Sampler> sampler,
+                            const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of FakeImageDataset.
+  ~FakeImageDataset() = default;
+};
+
+/// \brief Function to create a FakeImageDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] num_images The number of images to generate, which must be positive (default = 1000).
+/// \param[in] image_size Size of the images, which must be a vector of three positive values
+///    (default = {224, 224, 3}).
+/// \param[in] num_classes The number of classes of the images, which must be positive (default = 10).
+/// \param[in] base_seed The base seed to generate the images (default = 0).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///    given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current FakeDataset.
+inline std::shared_ptr<FakeImageDataset> FakeImage(
+  int32_t num_images = 1000, const std::vector<int32_t> &image_size = {224, 224, 3}, int32_t num_classes = 10,
+  int32_t base_seed = 0, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<FakeImageDataset>(num_images, image_size, num_classes, base_seed, sampler, cache);
+}
+
+/// \brief Function to create a FakeImageDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] num_images The number of images to generate, which must be positive.
+/// \param[in] image_size Size of the images, which must be a vector of three positive values.
+/// \param[in] num_classes The number of classes of the images, which must be positive.
+/// \param[in] base_seed The base seed to generate the images.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current FakeImageDataset.
+inline std::shared_ptr<FakeImageDataset> FakeImage(int32_t num_images, const std::vector<int32_t> &image_size,
+                                                   int32_t num_classes, int32_t base_seed, const Sampler *sampler,
+                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<FakeImageDataset>(num_images, image_size, num_classes, base_seed, sampler, cache);
+}
+
+/// \brief Function to create a FakeImageDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] num_images The number of images to generate, which must be positive.
+/// \param[in] image_size Size of the images, which must be a vector of three positive values.
+/// \param[in] num_classes The number of classes of the images, which must be positive.
+/// \param[in] base_seed The base seed to generate the images.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current FakeImageDataset.
+inline std::shared_ptr<FakeImageDataset> FakeImage(int32_t num_images, const std::vector<int32_t> &image_size,
+                                                   int32_t num_classes, int32_t base_seed,
+                                                   const std::reference_wrapper<Sampler> sampler,
+                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<FakeImageDataset>(num_images, image_size, num_classes, base_seed, sampler, cache);
+}
+
 /// \class FlickrDataset
 /// \brief A source dataset for reading and parsing Flickr dataset.
 class FlickrDataset : public Dataset {
