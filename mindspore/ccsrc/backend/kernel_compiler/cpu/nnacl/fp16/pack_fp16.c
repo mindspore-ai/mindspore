@@ -435,6 +435,23 @@ void PackNCHWFp16ToNC8HW8Fp16(const float16_t *src, float16_t *dst, int batch, i
   }
 }
 
+#ifdef ENABLE_DEBUG
+void PackNC8HW8ToNHWCFp16(const float16_t *src, float16_t *dst, int batch, int plane, int channel) {
+  int block = UP_DIV(channel, C8NUM);
+  int last_block_idx = block - 1;
+  int last_src_col = channel - last_block_idx * C8NUM;
+  for (size_t i = 0; i < block; i++) {
+    size_t src_col = (i != last_block_idx) ? C8NUM : last_src_col;
+    float16_t *dst_cur = dst + i * C8NUM;
+    for (size_t j = 0; j < plane; j++) {
+      memcpy(dst_cur, src, src_col * sizeof(float16_t));
+      src += src_col;
+      dst_cur += channel;
+    }
+  }
+}
+#endif
+
 void PackNHWCFp32ToNHWC8Fp16(const float *src, float16_t *dst, int batch, int plane, int channel) {
   int c8_channel = UP_DIV(channel, C8NUM) * C8NUM;
   for (int b = 0; b < batch; b++) {
