@@ -13,18 +13,19 @@
 # limitations under the License.
 # ============================================================================
 """do post training quantization for Ascend310"""
+import os
 import sys
 import numpy as np
 
 from amct_mindspore.quantize_tool import create_quant_config
 from amct_mindspore.quantize_tool import quantize_model
 from amct_mindspore.quantize_tool import save_model
-from mindspore import Tensor, context
-from mindspore.train.model import Model
+import mindspore as ms
+from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 
-def quant_unet(network, dataset, input_data):
+def quant_yolov3(network, dataset, input_data):
     """
     Export post training quantization model of AIR format.
 
@@ -43,41 +44,34 @@ def quant_unet(network, dataset, input_data):
     calibration_network.set_train(False)
 
     # step4: perform the evaluation of network to do activation calibration
-    model = Model(calibration_network, loss_fn=TempLoss(), metrics={"dice_coff": dice_coeff()})
-    _ = model.eval(dataset, dataset_sink_mode=False)
+    for _, data in enumerate(dataset.create_dict_iterator(num_epochs=1)):
+        image = data["image"]
+        _ = calibration_network(image)
 
     # step5: export the air file
-    save_model("results/unet_quant", calibration_network, input_data)
-    print("[INFO] the quantized AIR file has been stored at: \n {}".format("results/unet_quant.air"))
-
-
-def run_export():
-    """run export."""
-    if config.model_name == 'unet_medical':
-        net = UNetMedical(n_channels=config.num_channels, n_classes=config.num_classes)
-    else:
-        raise ValueError("post training quantization currently does not support model: {}".format(config.model_name))
-    # return a parameter dict for model
-    param_dict = load_checkpoint(config.checkpoint_file_path)
-    # load the parameter into net
-    load_param_into_net(net, param_dict)
-    net = UnetEval(net, eval_activate="softmax")
-    batch_size = 1
-    input_data = Tensor(np.ones([batch_size, config.num_channels, config.height, config.width]).astype(np.float32))
-    _, valid_dataset = create_dataset(config.data_path, 1, batch_size, False, 1, False, do_crop=config.crop,
-                                      img_size=config.image_size)
-    dataset = valid_dataset.take(1)
-    quant_unet(net, dataset, input_data)
+    save_model("results/yolov3_quant", calibration_network, input_data)
+    print("[INFO] the quantized AIR file has been stored at: \n {}".format("results/yolov3_quant.air"))
 
 
 if __name__ == "__main__":
     sys.path.append("..")
-    from src.data_loader import create_dataset
-    from src.unet_medical import UNetMedical
-    from src.utils import UnetEval, TempLoss, dice_coeff
-    from src.model_utils.config import config
-    from src.model_utils.device_adapter import get_device_id
+    from src.yolo import YOLOV3DarkNet53
+    from src.yolo_dataset import create_yolo_dataset
+    from model_utils.config import config
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    net = YOLOV3DarkNet53(is_training=False)
 
-    run_export()
+    param_dict = load_checkpoint(config.ckpt_file)
+    load_param_into_net(net, param_dict)
+    net.set_train(False)
+
+    config.batch_size = 1
+    data_path = os.path.join(config.data_dir, "val2014")
+    datasets, data_size = create_yolo_dataset(data_path, config.annFile, is_training=False,
+                                              batch_size=config.batch_size, max_epoch=1, device_num=1, rank=0,
+                                              shuffle=False, config=config)
+    ds = datasets.take(1)
+    shape = [config.batch_size, 3] + config.test_img_shape
+    inputs = Tensor(np.zeros(shape), ms.float32)
+    quant_yolov3(net, ds, inputs)
