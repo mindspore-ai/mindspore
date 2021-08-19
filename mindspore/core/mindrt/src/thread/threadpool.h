@@ -126,7 +126,7 @@ class ThreadPool {
 
   int InitAffinityInfo();
 
-  void SyncRunTask(Task *task, int task_num) const;
+  void SyncRunTask(Task *task, int start_num, int task_num) const;
 
   void DistributeTask(Task *task, int task_num) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
