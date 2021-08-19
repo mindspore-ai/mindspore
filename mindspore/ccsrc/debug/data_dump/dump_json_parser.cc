@@ -384,11 +384,11 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   int start = 0;
   int end = iteration_.find("|");
   while (end != -1) {
-    std::string temp = iteration_.substr(start, end - start);
+    std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
     int range_idx = temp.find("-");
     if (range_idx != -1) {
-      uint32_t low_range = std::stoul(temp.substr(0, range_idx));
-      uint32_t high_range = std::stoul(temp.substr((range_idx + 1), -1));
+      uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
+      uint32_t high_range = std::stoul(temp.substr(IntToSize(range_idx + 1), -1));
       if ((low_range <= iteration) && (iteration <= high_range)) {
         return true;
       }
@@ -398,10 +398,10 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
     start = end + 1;
     end = iteration_.find("|", start);
   }
-  std::string temp = iteration_.substr(start, end - start);
+  std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
   int range_idx = temp.find("-");
   if (range_idx != -1) {
-    uint32_t low_range = std::stoul(temp.substr(0, range_idx));
+    uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
     uint32_t high_range = std::stoul(temp.substr((range_idx + 1), -1));
     if ((low_range <= iteration) && (iteration <= high_range)) {
       return true;
@@ -484,9 +484,9 @@ void DumpJsonParser::JsonConfigToString() {
   cur_config.append(" input_output:");
   cur_config.append(std::to_string(input_output_));
   cur_config.append("e2e_enable:");
-  cur_config.append(std::to_string(e2e_dump_enabled_));
+  cur_config.append(std::to_string(static_cast<int>(e2e_dump_enabled_)));
   cur_config.append(" async_dump_enable:");
-  cur_config.append(std::to_string(async_dump_enabled_));
+  cur_config.append(std::to_string(static_cast<int>(async_dump_enabled_)));
   MS_LOG(INFO) << cur_config;
 }
 
