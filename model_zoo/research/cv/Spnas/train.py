@@ -16,6 +16,6 @@
 import vega
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     vega.run('./src/spnas.yml')
     vega.set_backend('mindspore', 'NPU')
