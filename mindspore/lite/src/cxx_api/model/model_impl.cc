@@ -162,8 +162,8 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
     std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
     std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
     MSCallBackParam mscall_param;
-    mscall_param.node_name_ = call_param.node_name;
-    mscall_param.node_type_ = call_param.node_type;
+    mscall_param.node_name = call_param.node_name;
+    mscall_param.node_type = call_param.node_type;
     return before(inputs, outputs, mscall_param);
   };
 
@@ -173,8 +173,8 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
     std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
     std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
     MSCallBackParam mscall_param;
-    mscall_param.node_name_ = call_param.node_name;
-    mscall_param.node_type_ = call_param.node_type;
+    mscall_param.node_name = call_param.node_name;
+    mscall_param.node_type = call_param.node_type;
     return after(inputs, outputs, mscall_param);
   };
   auto ret = session_->RunGraph(before_call_back, after_call_back);

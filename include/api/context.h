@@ -44,27 +44,57 @@ class MS_API Context {
   Context();
   ~Context() = default;
 
-  /// \brief Set the number of threads at runtime. This option is only valid for MindSpore Lite.
+  /// \brief Set the number of threads at runtime. Only valid for Lite.
   ///
   /// \param[in] thread_num the number of threads at runtime.
   void SetThreadNum(int32_t thread_num);
-  /// \brief Get the current thread number setting.
+
+  /// \brief Get the current thread number setting. Only valid for Lite.
   ///
   /// \return The current thread number setting.
   int32_t GetThreadNum() const;
 
-  /// \brief Set the thread affinity to CPU cores.
+  /// \brief Set the thread affinity to CPU cores. Only valid for Lite.
   ///
-  /// \param mode: 0: no affinities, 1: big cores first, 2: little cores first
+  /// \param[in] mode: 0: no affinities, 1: big cores first, 2: little cores first
   void SetThreadAffinity(int mode);
+
+  /// \brief Get the thread affinity of CPU cores. Only valid for Lite.
+  ///
+  /// \return Thread affinity to CPU cores. 0: no affinities, 1: big cores first, 2: little cores first
   int GetThreadAffinityMode() const;
 
+  /// \brief Set the thread lists to CPU cores. Only valid for Lite.
+  ///
+  /// \note If core_list and mode are set by SetThreadAffinity at the same time, the core_list is effective, but the
+  /// mode is not effective.
+  ///
+  /// \param[in] core_list: a vector of thread core lists.
   void SetThreadAffinity(const std::vector<int> &core_list);
+
+  /// \brief Get the thread lists of CPU cores. Only valid for Lite.
+  ///
+  /// \return core_list: a vector of thread core lists.
   std::vector<int32_t> GetThreadAffinityCoreList() const;
+
+  /// \brief Set the status whether to perform model inference or training in parallel. Only valid for Lite.
+  ///
+  /// \param[in] is_parallel: true, parallel; false, not in parallel.
   void SetEnableParallel(bool is_parallel);
+
+  /// \brief Get the status whether to perform model inference or training in parallel. Only valid for Lite.
+  ///
+  /// \return Bool value that indicates whether in parallel.
   bool GetEnableParallel() const;
 
+  /// \brief Set Delegate to access third-party AI framework. Only valid for Lite.
+  ///
+  /// \param[in] Pointer to the custom delegate.
   void SetDelegate(const std::shared_ptr<Delegate> &delegate);
+
+  /// \brief Get the delegate of the third-party AI framework. Only valid for Lite.
+  ///
+  /// \return Pointer to the custom delegate.
   std::shared_ptr<Delegate> GetDelegate() const;
 
   /// \brief Get a mutable reference of DeviceInfoContext vector in this context. Only MindSpore Lite supports
@@ -112,19 +142,23 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
   /// \brief set provider's name.
   ///
   /// \param[in] provider define the provider's name.
+
   void SetProvider(const std::string &provider);
   /// \brief obtain provider's device type.
   ///
   /// \return provider's device type.
+
   std::string GetProviderDevice() const;
   /// \brief set provider's device type.
   ///
   /// \param[in] device define the provider's device type.EG: CPU.
   void SetProviderDevice(const std::string &device);
+
   /// \brief set memory allocator.
   ///
   /// \param[in] allocator define the memory allocator which can be defined by user.
   void SetAllocator(const std::shared_ptr<Allocator> &allocator);
+
   /// \brief obtain memory allocator.
   ///
   /// \return memory allocator.
@@ -147,6 +181,7 @@ class MS_API CPUDeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] is_fp16 Enable float16 inference or not.
   void SetEnableFP16(bool is_fp16);
+
   /// \brief Get enables to perform the float16 inference
   ///
   /// \return Whether enable float16 inference.
@@ -167,6 +202,7 @@ class MS_API KirinNPUDeviceInfo : public DeviceInfoContext {
   /// \param[in] frequency Can be set to 1 (low power consumption), 2 (balanced), 3 (high performance), 4 (extreme
   /// performance), default as 3.
   void SetFrequency(int frequency);
+
   /// \brief Get the NPU frequency.
   ///
   /// \return NPU frequency
@@ -185,6 +221,7 @@ class MS_API GPUDeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] device_id The device id.
   void SetDeviceID(uint32_t device_id);
+
   /// \brief Get the device id.
   ///
   /// \return The device id.
@@ -200,6 +237,7 @@ class MS_API GPUDeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] is_fp16 Enable float16 inference or not.
   void SetEnableFP16(bool is_fp16);
+
   /// \brief Get enables to perform the float16 inference
   ///
   /// \return Whether enable float16 inference.
@@ -228,6 +266,7 @@ class MS_API Ascend910DeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] device_id The device id.
   void SetDeviceID(uint32_t device_id);
+
   /// \brief Get the device id.
   ///
   /// \return The device id.
@@ -247,6 +286,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] device_id The device id.
   void SetDeviceID(uint32_t device_id);
+
   /// \brief Get the device id.
   ///
   /// \return The device id.
@@ -259,6 +299,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] cfg_path AIPP configuration file path.
   inline void SetInsertOpConfigPath(const std::string &cfg_path);
+
   /// \brief Get AIPP configuration file path.
   ///
   /// \return AIPP configuration file path.
@@ -268,6 +309,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] format Optional "NCHW", "NHWC", etc.
   inline void SetInputFormat(const std::string &format);
+
   /// \brief Get format of model inputs.
   ///
   /// \return The format of model inputs.
@@ -277,6 +319,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] shape e.g. "input_op_name1: 1,2,3,4;input_op_name2: 4,3,2,1".
   inline void SetInputShape(const std::string &shape);
+
   /// \brief Get shape of model inputs.
   ///
   /// \return The shape of model inputs.
@@ -287,6 +330,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   /// \param[in] shape e.g. {{1, {1,2,3,4}}, {2, {4,3,2,1}}} means the first input shape 1,2,3,4 and the second input
   /// shape 4,3,2,1.
   void SetInputShapeMap(const std::map<int, std::vector<int>> &shape);
+
   /// \brief Get shape of model inputs.
   ///
   /// \return The shape of model inputs.
@@ -299,6 +343,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   ///
   /// \param[in] output_type FP32, UINT8 or FP16, default as FP32.
   void SetOutputType(enum DataType output_type);
+
   /// \brief Get type of model outputs.
   ///
   /// \return The set type of model outputs.
@@ -309,6 +354,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   /// \param[in] precision_mode Optional "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" and
   /// "allow_mix_precision", "force_fp16" is set as default
   inline void SetPrecisionMode(const std::string &precision_mode);
+
   /// \brief Get precision mode of model.
   ///
   /// \return The set type of model outputs
@@ -319,6 +365,7 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   /// \param[in] op_select_impl_mode Optional "high_performance" and "high_precision", "high_performance" is set as
   /// default.
   inline void SetOpSelectImplMode(const std::string &op_select_impl_mode);
+
   /// \brief Get op select implementation mode.
   ///
   /// \return The set op select implementation mode.

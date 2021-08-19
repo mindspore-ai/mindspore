@@ -32,9 +32,9 @@ class NPUDelegate : public Delegate {
 
   ~NPUDelegate() override;
 
-  int Init() override;
+  Status Init() override;
 
-  int Build(DelegateModel *model) override;
+  Status Build(DelegateModel *model) override;
 
  protected:
   NPUOp *GetOP(kernel::Kernel *kernel, const schema::Primitive *primitive);

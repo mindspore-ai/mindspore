@@ -199,7 +199,7 @@ int LiteKernelUtil::SetInput(const LiteKernel &kernelMod, const std::vector<lite
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
 #ifndef DELEGATE_CLIP
-  if (kernel->desc().delegate != nullptr) {
+  if (kernel->desc().arch == kernel::kDelegate) {
     return false;
   }
 #endif

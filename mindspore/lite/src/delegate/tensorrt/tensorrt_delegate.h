@@ -37,9 +37,9 @@ class TensorRTDelegate : public Delegate {
 
   ~TensorRTDelegate() override = default;
 
-  int Init() override;
+  Status Init() override;
 
-  int Build(DelegateModel *model) override;
+  Status Build(DelegateModel *model) override;
 
  private:
   TensorRTOp *FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive);
