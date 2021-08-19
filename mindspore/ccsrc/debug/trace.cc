@@ -130,9 +130,11 @@ class AnalyzeFailExporter : public AnfExporter {
 
   bool ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack);
 
- private:
+ protected:
   void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map) override;
+
+ private:
   std::string GetNodeType(const AnfNodePtr &nd) override;
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
   AnfNodeConfigPtr GetFordwardConfig(const AnfNodeConfigPtr &cfg);
