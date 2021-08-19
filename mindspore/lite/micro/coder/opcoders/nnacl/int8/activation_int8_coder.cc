@@ -26,15 +26,14 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::lite::micro::nnacl {
 std::unique_ptr<OperatorCoder> CPUActivationINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
-                                                             const Model::Node *node, size_t node_index,
-                                                             Target target) {
+                                                             const Model::Node *node, size_t node_index, Target target,
+                                                             int schema_version) {
   const void *primitive_c = node->primitive_;
   if (primitive_c == nullptr) {
     return nullptr;
   }
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-  ParameterGen parameter_gen =
-    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
+  ParameterGen parameter_gen = PopulateRegistry::GetInstance()->GetParameterCreator(
+    GetPrimitiveType(node->primitive_, schema_version), schema_version);
   if (parameter_gen == nullptr) {
     MS_LOG(ERROR) << "parameter generator is nullptr";
     return nullptr;
@@ -42,7 +41,8 @@ std::unique_ptr<OperatorCoder> CPUActivationINT8CoderCreator(const std::vector<T
   OpParameter *parameter = parameter_gen(node->primitive_);
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
-                  << schema::EnumNamePrimitiveType((schema::PrimitiveType)GetPrimitiveType(node->primitive_));
+                  << schema::EnumNamePrimitiveType(
+                       (schema::PrimitiveType)GetPrimitiveType(node->primitive_, schema_version));
     return nullptr;
   }
   auto type = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
@@ -50,13 +50,13 @@ std::unique_ptr<OperatorCoder> CPUActivationINT8CoderCreator(const std::vector<T
   std::unique_ptr<OperatorCoder> coder;
   switch (static_cast<schema::ActivationType>(type)) {
     case schema::ActivationType_SIGMOID:
-      coder = CPUOpCoderCreator<SigmodInt8Coder>(in_tensors, out_tensors, node, node_index, target);
+      coder = CPUOpCoderCreator<SigmodInt8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
       break;
     case schema::ActivationType_RELU:
-      coder = CPUOpCoderCreator<ReluInt8Coder>(in_tensors, out_tensors, node, node_index, target);
+      coder = CPUOpCoderCreator<ReluInt8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
       break;
     case schema::ActivationType_RELU6:
-      coder = CPUOpCoderCreator<Relu6Int8Coder>(in_tensors, out_tensors, node, node_index, target);
+      coder = CPUOpCoderCreator<Relu6Int8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
       break;
     default:
       break;

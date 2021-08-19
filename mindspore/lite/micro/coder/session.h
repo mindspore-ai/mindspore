@@ -56,6 +56,7 @@ class CoderSession {
   std::unique_ptr<CoderContext> context_{nullptr};
   MemoryAllocator *allocator_{nullptr};
   std::vector<std::unique_ptr<OperatorCoder>> op_coders_;
+  int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
 };
 
 std::shared_ptr<CoderSession> CreateCoderSession();

@@ -203,7 +203,7 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
     return RET_ERROR;
   }
 
-  auto ret = KernelInferShape(inputs, *outputs, prim, {});
+  auto ret = KernelInferShape(inputs, *outputs, prim, {}, SCHEMA_CUR);
   if (ret == lite::RET_NOT_SUPPORT) {
     auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), SCHEMA_CUR);
     if (parameter_gen == nullptr) {

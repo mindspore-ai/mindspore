@@ -51,6 +51,8 @@ class LiteModel : public Model {
 
   void set_keep_model_buf(bool keep) { this->keep_model_buf_ = keep; }
 
+  int GetSchemaVersion() const { return schema_version_; }
+
  private:
 #ifdef ENABLE_V0
   int ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor);
@@ -100,12 +102,11 @@ class LiteModel : public Model {
       node->primitive_ = c_node->primitive();
 #endif
       node->quant_type_ = c_node->quantType();
-      auto schema_version = VersionManager::GetInstance()->GetSchemaVersion();
-      if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
+      if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
         SetNodeDeviceType(node, *c_node);
       }
 #ifdef ENABLE_V0
-      if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
+      if (schema_version_ == SCHEMA_VERSION::SCHEMA_V0) {
         SetNodeDeviceType(node, *c_node);
       }
 #endif
@@ -269,6 +270,7 @@ class LiteModel : public Model {
  protected:
   std::vector<char *> attr_tensor_bufs_;
   bool keep_model_buf_ = false;
+  int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
 };
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);

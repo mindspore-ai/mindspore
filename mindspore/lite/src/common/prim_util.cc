@@ -24,25 +24,28 @@
 
 namespace mindspore {
 namespace lite {
-int GetPrimitiveType(const void *primitive) {
+int GetPrimitiveType(const void *primitive, int schema_version) {
   if (primitive == nullptr) {
     return -1;
   }
 #ifdef ENABLE_V0
-  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
+  if (schema_version == SCHEMA_V0) {
     return static_cast<const schema::v0::Primitive *>(primitive)->value_type();
   }
 #endif
   return static_cast<const schema::Primitive *>(primitive)->value_type();
 }
 
-const char *PrimitiveTypeName(int type) {
+const char *GetPrimitiveTypeName(const void *primitive, int schema_version) {
+  if (primitive == nullptr) {
+    return "NONE";
+  }
 #ifdef ENABLE_V0
-  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
-    return schema::v0::EnumNamePrimitiveType(static_cast<schema::v0::PrimitiveType>(type));
+  if (schema_version == SCHEMA_V0) {
+    return schema::v0::EnumNamePrimitiveType(static_cast<const schema::v0::Primitive *>(primitive)->value_type());
   }
 #endif
-  return schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type));
+  return schema::EnumNamePrimitiveType(static_cast<const schema::Primitive *>(primitive)->value_type());
 }
 
 const char *PrimitiveCurVersionTypeName(int type) {
@@ -51,9 +54,8 @@ const char *PrimitiveCurVersionTypeName(int type) {
 
 int GenPrimVersionKey(int primitive_type, int schema_version) { return primitive_type * 1000 + schema_version; }
 
-bool IsPartialNode(const void *primitive) {
+bool IsPartialNode(const void *primitive, int schema_version) {
   MS_ASSERT(primitive != nullptr);
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_PartialFusion;
   }
@@ -66,27 +68,31 @@ bool IsPartialNode(const void *primitive) {
   return false;
 }
 
-bool IsCallNode(const void *primitive) {
+bool IsCallNode(const void *primitive, int schema_version) {
   MS_ASSERT(primitive != nullptr);
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Call;
   }
   return false;
 }
 
-bool IsSwitchNode(const void *primitive) {
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+bool IsSwitchNode(const void *primitive, int schema_version) {
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Switch;
   }
   return false;
 }
 
-int GetPartialGraphIndex(const void *primitive) {
+bool IsCustomNode(const void *primitive, int schema_version) {
+  if (schema_version == SCHEMA_CUR) {
+    return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_Custom;
+  }
+  return false;
+}
+
+int GetPartialGraphIndex(const void *primitive, int schema_version) {
   MS_ASSERT(primitive != nullptr);
   int index = -1;
-  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version == SCHEMA_CUR) {
     auto partial_fusion = reinterpret_cast<const schema::Primitive *>(primitive)->value_as_PartialFusion();
     if (partial_fusion == nullptr) {

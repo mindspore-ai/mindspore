@@ -54,7 +54,8 @@ std::set<OperatorCoder *> FindInferenceOpcoders(OperatorCoder *edge) {
   return subgraph;
 }
 
-int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::unique_ptr<OperatorCoder>> &op_coders) {
+int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::unique_ptr<OperatorCoder>> &op_coders,
+                                  int schema_version) {
   if (context == nullptr) {
     MS_LOG(INFO) << "input context invalid";
     return RET_ERROR;
@@ -68,7 +69,7 @@ int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::
   OperatorCoder *loss_op = nullptr;
   for (const auto &opcoder : op_coders) {
     const Model::Node *node = opcoder->node();
-    int primitive_type = GetPrimitiveType(node->primitive_);
+    int primitive_type = GetPrimitiveType(node->primitive_, schema_version);
     auto item = std::find(loss_types.begin(), loss_types.end(), primitive_type);
     if (item != loss_types.end()) {
       loss_op = opcoder.get();
