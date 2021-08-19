@@ -141,6 +141,8 @@ bool InitDistribute(const std::map<std::string, std::string> &options);
 void ResetOpId();
 void InitHccl();
 void FinalizeHccl();
+uint32_t GetHcclRankId();
+uint32_t GetHcclRankSize();
 void InitPipeline();
 void FinalizeBackend();
 void ClearResAtexit();

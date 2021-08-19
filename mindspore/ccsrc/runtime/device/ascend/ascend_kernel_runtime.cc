@@ -78,7 +78,7 @@ constexpr size_t kPathMax = 4096;
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
 namespace {
-std::string GetRankId() {
+std::string GetRankIdStr() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
@@ -280,6 +280,24 @@ void AscendKernelRuntime::PreInit() {
     }
     MS_EXCEPTION(DeviceProcessError) << "StartupProfiling failed.";
   }
+}
+
+uint32_t AscendKernelRuntime::GetRankId() {
+  uint32_t rank_id;
+  auto ret = hccl::HcclAdapter::GetInstance().HcclGetRankId(&rank_id);
+  if (ret != HCCL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "HcclGetRankId failed, ret:" << ret;
+  }
+  return rank_id;
+}
+
+uint32_t AscendKernelRuntime::GetRankSize() {
+  uint32_t rank_size;
+  auto ret = hccl::HcclAdapter::GetInstance().HcclGetRankSize(&rank_size);
+  if (ret != HCCL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "HcclGetRankSize failed, ret:" << ret;
+  }
+  return rank_size;
 }
 
 bool AscendKernelRuntime::Init() {
@@ -874,7 +892,7 @@ bool AscendKernelRuntime::HcclInit() {
     MS_LOG(ERROR) << "File path oversize";
     return false;
   }
-  std::string rank_id_str = GetRankId();
+  std::string rank_id_str = GetRankIdStr();
   auto full_path = realpath(config_path_str, nullptr);
   if (full_path == nullptr) {
     MS_LOG(ERROR) << "File path " << config_path_str << " does not exist";

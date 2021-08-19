@@ -1239,6 +1239,32 @@ void FinalizeHccl() {
 #endif
 }
 
+auto GetAscendRuntimeInstance() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto backend = ms_context->backend_policy();
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == "ms" && device_target == kAscendDevice) {
+    return runtime_instance;
+  } else {
+    MS_LOG(EXCEPTION) << "Get MindSpore ascend runtime instance failed";
+  }
+}
+
+uint32_t GetHcclRankId() {
+  auto runtime_instance = GetAscendRuntimeInstance();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->GetRankId();
+}
+
+uint32_t GetHcclRankSize() {
+  auto runtime_instance = GetAscendRuntimeInstance();
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->GetRankSize();
+}
+
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase) {
 #if ((defined ENABLE_GE) || (defined ENABLE_D))
   ExportDFGraph(file_name, phase);
