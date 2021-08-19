@@ -194,7 +194,7 @@ void Parser::GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py
   block_fg->set_has_kwarg(!py::isinstance<py::none>(kw_arg_node));
 
   py::list kwonly_args = python_adapter::GetPyObjAttr(func_args, "kwonlyargs");
-  block_fg->set_kwonlyargs_count(SizeToLong(kwonly_args.size()));
+  block_fg->set_kwonlyargs_count(SizeToInt(kwonly_args.size()));
 
   MS_EXCEPTION_IF_NULL(ast_);
   py::list args = ast_->GetArgs(fn_node);

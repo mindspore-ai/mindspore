@@ -615,8 +615,9 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
     MS_LOG(DEBUG) << "Broaded_argvals: " << broaded_argvals.size() << ", " << ::mindspore::ToString(broaded_argvals);
   }
   if (choices.size() == 1) {
-    if (args_vector.size() < 2) {
-      MS_LOG(EXCEPTION) << "Should have 2 more choices, but: " << args_vector.size();
+    constexpr auto args_size = 2;
+    if (args_vector.size() < args_size) {
+      MS_LOG(EXCEPTION) << "Should have " << args_size << " or more choices, but: " << args_vector.size();
     }
     AbstractBasePtrList joined_argvals = args_vector[0];
     for (size_t i = 1; i < args_vector.size(); ++i) {
