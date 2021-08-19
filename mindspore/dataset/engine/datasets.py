@@ -3588,6 +3588,24 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
             logger.warning("Expected /dev/shm to exist.")
 
 
+def _watch_dog(pids, eof):
+    """
+    This thread is for get hang in SamplerFn.Process
+    """
+    exit_num = 0
+    while not eof.is_set():
+        for pid in pids:
+            if not psutil.pid_exists(pid):
+                exit_num += 1
+        if exit_num == 0:
+            continue
+        else:
+            ## multiprocessing.queue may hang in .get() forever when put() process was killed.
+            ## We have to exit main process otherwise main process will hang.
+            logger.error("The subprocess of GeneratorDataset may exit unexpected or be killed, main process will exit.")
+            os.kill(os.getpid(), signal.SIGTERM)
+
+
 class SamplerFn:
     """
     Multiprocessing or multithread generator function wrapper master process.
@@ -3640,6 +3658,10 @@ class SamplerFn:
                 worker = _GeneratorWorkerMt(dataset, self.eof)
                 worker.daemon = True
             self.workers.append(worker)
+        if multi_process is True:
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.pid, self.eof))
+            self.watch_dog.daemon = True
+            self.watch_dog.start()
 
     def process(self, indices):
         """
@@ -3661,6 +3683,9 @@ class SamplerFn:
         # Fetch results
         for i in range(len(indices)):
             if self.eof.is_set():
+                self._stop_subprocess()
+                return
+            if self.multi_process is True and not psutil.pid_exists(self.workers[i % self.num_worker].pid):
                 self._stop_subprocess()
                 return
             # Fetch result and put index
@@ -3687,7 +3712,9 @@ class SamplerFn:
             self.eof.set()
             self.need_join = False
             for w in self.workers:
-                w.join()
+                if psutil.pid_exists(w.pid):
+                    w.join()
+            self.watch_dog.join()
 
     def __del__(self):
         self._stop_subprocess()
