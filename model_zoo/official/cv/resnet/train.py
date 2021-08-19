@@ -28,7 +28,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.common import dtype as mstype
 from mindspore.common import set_seed
 from mindspore.parallel import set_algo_parameters
@@ -376,14 +376,13 @@ def train_net():
     cb = [time_cb, loss_cb]
     ckpt_save_dir = set_save_ckpt_dir()
     if config.save_checkpoint:
-        if not config.run_distribute:
-            ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": config.has_trained_epoch,
-                                                          "step_num": config.has_trained_step}]
-            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
-                                         keep_checkpoint_max=config.keep_checkpoint_max,
-                                         append_info=ckpt_append_info)
-            ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
-            cb += [ckpt_cb]
+        ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": config.has_trained_epoch,
+                                                      "step_num": config.has_trained_step}]
+        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
+                                     keep_checkpoint_max=config.keep_checkpoint_max,
+                                     append_info=ckpt_append_info)
+        ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
+        cb += [ckpt_cb]
     run_eval(target, model, ckpt_save_dir, cb)
     # train model
     if config.net_name == "se-resnet50":
