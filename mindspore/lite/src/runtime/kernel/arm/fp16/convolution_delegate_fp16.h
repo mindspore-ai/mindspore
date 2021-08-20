@@ -44,7 +44,6 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override {
-    fp16_conv_kernel_->set_name(name_);
     fp16_conv_kernel_->set_workspace(workspace());
     return fp16_conv_kernel_->Run();
   }
@@ -78,15 +77,14 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
   }
 
  private:
+  kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                               const lite::InnerContext *ctx, void *origin_weight, void *origin_bias);
   uint8_t need_free_ = 0b00;
   void *origin_weight_ = nullptr;
   void *origin_bias_ = nullptr;
   kernel::InnerKernel *fp16_conv_kernel_ = nullptr;
 };
-
-kernel::InnerKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const lite::InnerContext *ctx, void *origin_weight, void *origin_bias);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DELEGATE_FP16_H_

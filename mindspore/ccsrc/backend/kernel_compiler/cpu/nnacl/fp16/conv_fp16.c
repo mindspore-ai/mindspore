@@ -105,6 +105,77 @@ void ConvOutNc8hw8Fp16(const float16_t *input_data, float16_t *packed_input, con
   }
 }
 
+void Conv1x1OutNc8hw8MultiThreadByInputFp16(const float16_t *input, float16_t *pack_input, const float16_t *weight,
+                                            const float16_t *bias, float16_t *output, int task_id,
+                                            const MatMulParameter *param) {
+#ifdef ENABLE_ARM64
+  const int tile_n = 16;
+#else
+  const int tile_n = 12;
+#endif
+  int input_block = UP_DIV(param->row_, tile_n);
+  int weight_block = UP_DIV(param->col_, C8NUM);
+
+  int block_per_thread = UP_DIV(input_block, param->op_parameter_.thread_num_);
+  int input_start_block = block_per_thread * task_id;
+  int input_end_block = MSMIN(input_start_block + block_per_thread, input_block);
+  if (input_start_block >= input_end_block) {
+    return;
+  }
+  input += input_start_block * tile_n * param->deep_;
+  pack_input += input_start_block * tile_n * param->deep_;
+
+  int cur_row_cnt = MSMIN(block_per_thread * tile_n, param->row_ - input_start_block * tile_n);
+#ifdef ENABLE_ARM64
+  RowMajor2Col16MajorFp16Opt(input, pack_input, cur_row_cnt, param->deep_);
+#else
+  RowMajor2Col12MajorFp16Opt(input, pack_input, cur_row_cnt, param->deep_);
+#endif
+  for (int i = input_start_block; i < input_end_block; i++) {
+    int real_in_row = (i != input_block - 1) ? tile_n : param->row_ - i * tile_n;
+    const float16_t *cur_weight = weight;
+    const float16_t *cur_bias = bias;
+    for (int j = 0; j < weight_block; j++, cur_weight += C8NUM * param->deep_, cur_bias += C8NUM) {
+      int real_weight_row = (j != weight_block - 1) ? C8NUM : param->col_ - j * C8NUM;
+      int out_offset = j * param->row_ * C8NUM + i * tile_n * real_weight_row;
+      MatMulFp16(pack_input, cur_weight, output + out_offset, cur_bias, param->act_type_, param->deep_, real_in_row,
+                 real_weight_row, real_weight_row, OutType_Nhwc);
+    }
+    pack_input += real_in_row * param->deep_;
+  }
+}
+
+void Conv1x1OutNc8hw8MultiThreadByWeightFp16(const float16_t *input, float16_t *pack_input, const float16_t *weight,
+                                             const float16_t *bias, float16_t *output, int task_id,
+                                             const MatMulParameter *param) {
+#ifdef ENABLE_ARM64
+  const int tile_n = 16;
+#else
+  const int tile_n = 12;
+#endif
+  int input_block = UP_DIV(param->row_, tile_n);
+  int weight_block = UP_DIV(param->col_, C8NUM);
+
+  int block_per_thread = UP_DIV(weight_block, param->op_parameter_.thread_num_);
+  int weight_start_block = block_per_thread * task_id;
+  int weight_end_block = MSMIN(weight_start_block + block_per_thread, weight_block);
+  if (weight_start_block >= weight_end_block) {
+    return;
+  }
+  for (int i = 0; i < input_block; i++) {
+    int real_in_row = (i != input_block - 1) ? tile_n : param->row_ - i * tile_n;
+    const float16_t *cur_weight = weight + weight_start_block * C8NUM * param->deep_;
+    const float16_t *cur_bias = bias + weight_start_block * C8NUM;
+    for (int j = weight_start_block; j < weight_end_block; j++, cur_weight += C8NUM * param->deep_, cur_bias += C8NUM) {
+      int real_weight_row = (j != weight_block - 1) ? C8NUM : param->col_ - j * C8NUM;
+      int out_offset = j * param->row_ * C8NUM + i * tile_n * real_weight_row;
+      MatMulFp16(pack_input, cur_weight, output + out_offset, cur_bias, param->act_type_, param->deep_, real_in_row,
+                 real_weight_row, real_weight_row, OutType_Nhwc);
+    }
+    pack_input += real_in_row * param->deep_;
+  }
+}
+
 // fp16 convolution winograd
 void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight, const float16_t *bias_data,
                       float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id,

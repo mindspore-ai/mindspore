@@ -435,7 +435,7 @@ void PackNCHWFp16ToNC8HW8Fp16(const float16_t *src, float16_t *dst, int batch, i
   }
 }
 
-#ifdef ENABLE_DEBUG
+#ifdef Debug
 void PackNC8HW8ToNHWCFp16(const float16_t *src, float16_t *dst, int batch, int plane, int channel) {
   int block = UP_DIV(channel, C8NUM);
   int last_block_idx = block - 1;
