@@ -24,6 +24,12 @@ int ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, ConvP
   int dilate_w = param->dilation_w_;
   int dilate_h = param->dilation_h_;
 
+  if (stride_w == 0 || stride_h == 0) {
+    return NNACL_PARAM_INVALID;
+  }
+  if (INT_MUL_OVERFLOW(kernel_h, dilate_h) || INT_MUL_OVERFLOW(kernel_w, dilate_w)) {
+    return NNACL_ERRCODE_MUL_OVERFLOW;
+  }
   if (param->pad_mode_ == Pad_same) {  // maybe error
     *output_w = ceil((float)(input_w) / (float)(stride_w));
     *output_h = ceil((float)(input_h) / (float)(stride_h));

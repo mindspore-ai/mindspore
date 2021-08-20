@@ -49,6 +49,11 @@
 #define DOWN_ROUND(x, y) ((x) / (y) * (y))
 
 #define MSVALID(left, x, right) (MSMIN((MSMAX(left, x)), right))
+#define INT_MUL_OVERFLOW(x, y)                                                             \
+  ((x == 0) ? false                                                                        \
+            : ((x) > 0 ? ((y >= 0) ? (INT_MAX / (x)) < (y) : (INT_MAX / (x)) < (-1 * (y))) \
+                       : ((y >= 0) ? (INT_MAX / (x)) > (-1 * (y)) : (INT_MAX / (x)) > (y))))
+#define INT_ADD_OVERFLOW(x, y) (INT_MAX - (x)) < (y)
 
 #define COMM_SHAPE_SIZE 4
 #define MAX_SHAPE_SIZE 8
