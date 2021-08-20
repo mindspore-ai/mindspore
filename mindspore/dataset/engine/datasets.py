@@ -3502,11 +3502,11 @@ def _iter_fn(dataset, num_samples):
             except StopIteration:
                 return
             # convert output tensors to ndarrays
-            yield tuple([np.array(x, copy=False) for x in val])
+            yield _convert_row(val)
     else:
         for val in dataset:
             # convert output tensors to ndarrays
-            yield tuple([np.array(x, copy=False) for x in val])
+            yield _convert_row(val)
 
 
 def _generator_fn(generator, num_samples):
@@ -3539,7 +3539,7 @@ def _cpp_sampler_fn(sample_ids, dataset):
     for i in sample_ids:
         val = dataset[i]
         # convert output tensors to ndarrays
-        yield tuple([np.array(x, copy=False) for x in val])
+        yield _convert_row(val)
 
 
 def _cpp_sampler_fn_mp(sample_ids, sample_fn):
@@ -3604,6 +3604,17 @@ def _watch_dog(pids, eof):
             ## We have to exit main process otherwise main process will hang.
             logger.error("The subprocess of GeneratorDataset may exit unexpected or be killed, main process will exit.")
             os.kill(os.getpid(), signal.SIGTERM)
+
+
+def _convert_row(row):
+    value = []
+    # convert each column in row into numpy array
+    for x in row:
+        if isinstance(x, bytes):
+            value.append(np.frombuffer(x, np.uint8))
+        else:
+            value.append(np.array(x, copy=False))
+    return tuple(value)
 
 
 class SamplerFn:
@@ -3704,7 +3715,7 @@ class SamplerFn:
                 return
             if idx_cursor < len(indices):
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
-            yield tuple([np.array(x, copy=False) for x in result])
+            yield _convert_row(result)
 
     def _stop_subprocess(self):
         # Only the main process can call join
