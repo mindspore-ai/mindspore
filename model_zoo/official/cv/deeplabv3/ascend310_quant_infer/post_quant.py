@@ -87,7 +87,9 @@ def generate_batch_data():
 
     # evaluate
     batch_img_lst = []
-    img_path, _ = img_lst[0].strip().split(" ")
+    ori_img_path, _ = img_lst[0].strip().split(" ")
+    img_path = "VOCdevkit" + ori_img_path.split("VOCdevkit")[1]
+
     img_path = os.path.join(args.data_root, img_path)
     img_ = cv2.imread(img_path)
     batch_img_lst.append(img_)

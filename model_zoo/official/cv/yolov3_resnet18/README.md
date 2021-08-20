@@ -17,6 +17,7 @@
     - [Inference Process](#inference-process)
         - [Usage](#usage)
         - [result](#result)
+    - [Post Training Quantization](#post-training-quantization)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
@@ -357,6 +358,44 @@ Inference result is saved in current path, you can find result in acc.log file.
   class 0 precision is 88.18%, recall is 66.00%
   class 1 precision is 85.34%, recall is 79.13%
   ```
+
+## [Post Training Quantization](#contents)
+
+Relative executing script files reside in the directory "ascend310_quant_infer". Please implement following steps sequentially to complete post quantization.
+Note the precision and recall values are results of two-classification(person and face) used our own annotations with COCO2017 dataset.
+Note quantization-related config file utils.py is located in the directory ascend310_quant_infer.
+
+1. Generate data of .bin format required for AIR model inference at Ascend310 platform.
+
+```shell
+python export_bin.py --image_dir [COCO DATA PATH] --eval_mindrecord_dir [MINDRECORD PATH] --anno_path [LABEL PATH]
+```
+
+Note that image_dir is set as the parent directory of COCO dataset.
+
+2. Export quantized AIR model.
+
+Post quantization of model requires special toolkits for exporting quantized AIR model. Please refer to [official website](https://www.hiascend.com/software/cann/community).
+
+```shell
+python post_quant.py --image_dir [COCO DATA PATH] --eval_mindrecord_dir [MINDRECORD PATH] --anno_path [LABEL PATH] --ckpt_file [CKPT_PATH]
+```
+
+The quantized AIR file will be stored as "./results/yolov3_resnet_quant.air".
+
+3. Implement inference at Ascend310 platform.
+
+```shell
+# Ascend310 quant inference
+bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [SHAPE_PATH] [ANNOTATION_PATH]
+```
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+class 0 precision is 91.34%, recall is 64.92%
+class 1 precision is 94.61%, recall is 64.07%
+```
 
 # [Model Description](#contents)
 
