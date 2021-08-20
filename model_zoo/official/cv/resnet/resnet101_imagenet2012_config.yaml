@@ -67,6 +67,12 @@ file_format: "AIR"
 ckpt_file: ""
 network_dataset: "resnet101_imagenet2012"
 
+# Retrain options
+save_graphs: False
+save_graphs_path: "./graphs"
+has_trained_epoch: 0
+has_trained_step: 0
+
 ---
 # Help description for each configuration
 enable_modelarts: "Whether training on modelarts, default: False"

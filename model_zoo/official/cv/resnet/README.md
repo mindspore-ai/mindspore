@@ -318,6 +318,10 @@ Parameters for both training and evaluation can be set in config file.
 "lr_init": 0,                     # initial learning rate
 "lr_max": 1.0,                    # maximum learning rate
 "lr_end": 0.0,                    # minimum learning rate
+"save_graphs": False,             # save graph results
+"save_graphs_path": "./graphs",   # save graph results path
+"has_trained_epoch":0,            # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus has_trained_epoch
+"has_trained_step":0,             # step size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to step_size minus has_trained_step
 ```
 
 - Config for ResNet101, ImageNet2012 dataset
@@ -338,6 +342,10 @@ Parameters for both training and evaluation can be set in config file.
 "use_label_smooth": True,         # label_smooth
 "label_smooth_factor": 0.1,       # label_smooth_factor
 "lr": 0.1                         # base learning rate
+"save_graphs": False,             # save graph results
+"save_graphs_path": "./graphs",   # save graph results path
+"has_trained_epoch":0,            # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus has_trained_epoch
+"has_trained_step":0,             # step size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to step_size minus has_trained_step
 ```
 
 - Config for SE-ResNet50, ImageNet2012 dataset
@@ -361,6 +369,10 @@ Parameters for both training and evaluation can be set in config file.
 "lr_init": 0.0,                   # initial learning rate
 "lr_max": 0.3,                    # maximum learning rate
 "lr_end": 0.0001,                 # end learning rate
+"save_graphs": False,             # save graph results
+"save_graphs_path": "./graphs",   # save graph results path
+"has_trained_epoch":0,            # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus has_trained_epoch
+"has_trained_step":0,             # step size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to step_size minus has_trained_step
 ```
 
 ## [Training Process](#contents)
