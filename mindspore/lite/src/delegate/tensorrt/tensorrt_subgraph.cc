@@ -54,7 +54,9 @@ int TensorRTSubGraph::Init() {
     MS_LOG(ERROR) << "Get NPU subgraph input and output ops failed.";
     return RET_ERROR;
   }
-  runtime_ = TensorRTRuntime::GetInstance();
+  if (runtime_ == nullptr) {
+    runtime_ = new (std::nothrow) TensorRTRuntime();
+  }
   ret = runtime_->Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TensorRTRuntime init failed.";
@@ -98,9 +100,8 @@ int TensorRTSubGraph::SetDeviceConfig() {
   if (device_info_->GetEnableFP16() && SupportFP16()) {
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
   }
-
-  // config setMaxWorkspaceSize to 256 MB for max limit
-  config_->setMaxWorkspaceSize(256 * (1 << 20));
+  // config setMaxWorkspaceSize to 128 MB for max limit
+  config_->setMaxWorkspaceSize(32 * (1 << 20));
   return RET_OK;
 }
 
