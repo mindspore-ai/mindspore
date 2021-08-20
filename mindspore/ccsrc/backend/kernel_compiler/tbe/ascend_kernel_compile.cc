@@ -93,11 +93,10 @@ constexpr auto kDefPath = "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/b
 constexpr auto kBkPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/";
 constexpr int KSleepSeconds = 3;
 constexpr int KSleepInterval = 1000;
-constexpr int kFusionLogLevel = 1;
 
 namespace {
 inline bool Order(const nlohmann::json &json1, const nlohmann::json &json2) {
-  return json1[kIndex].dump() > json2[kIndex].dump();
+  return json1[kIndex].dump() < json2[kIndex].dump();
 }
 
 void PrintInfo(const nlohmann::json &info, const std::string &job_name, const int job_id, int adjust_log_level) {
@@ -209,7 +208,7 @@ void AscendKernelCompileManager::ResetOldTask() {
   job_list_.clear();
 }
 
-void AscendKernelCompileManager::PrintProcessLog(const nlohmann::json &json, int adjust_log_level = 3) {
+void AscendKernelCompileManager::PrintProcessLog(const nlohmann::json &json, int adjust_log_level = EXCEPTION) {
   auto logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
   auto job_id = GetJsonValue<int>(json, kJobId);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
@@ -250,7 +249,7 @@ void AscendKernelCompileManager::PrintFusionOpBuildResult(const nlohmann::json &
   auto job_type = GetJsonValue<std::string>(json, kJobType);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
   MS_LOG(DEBUG) << "Job: " << job_type << " post process";
-  PrintProcessLog(json, kFusionLogLevel);
+  PrintProcessLog(json, INFO);
   if (json.at(kStatus) == kFailed) {
     MS_LOG(INFO) << "Job fusion running failed, job_id: " << json.at(kJobId) << ", " << json_name;
     return;
@@ -264,12 +263,13 @@ std::string AscendKernelCompileManager::FormatSelectResultProcess(const nlohmann
   auto job_type = GetJsonValue<std::string>(json, kJobType);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
   MS_LOG(DEBUG) << "Job: " << job_type << " post process";
-  PrintProcessLog(json, kFusionLogLevel);
   if (json.at(kStatus) == kFailed) {
     if (job_type == kCheckSupport) {
+      PrintProcessLog(json, WARNING);
       MS_LOG(WARNING) << "Job:" << job_type << " running failed, job_id: " << json.at(kJobId) << ", " << json_name;
       return kFailed;
     } else {
+      PrintProcessLog(json);
       MS_LOG(EXCEPTION) << "Job:" << job_type << " running failed, job_id: " << json.at(kJobId) << ", " << json_name;
     }
   }
@@ -399,7 +399,7 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
       auto json_obj = TurnStrToJson(build_result);
       if (json_obj.at(kStatus) == kSuccess) {
         struct TargetJobStatus task_info;
-        QueryResultProcess(json_obj, &task_info, kFusionLogLevel);
+        QueryResultProcess(json_obj, &task_info, INFO);
         if (task_info.job_status == kSuccess) {
           MS_LOG(DEBUG) << "Job " << GetJsonValue<std::string>(json_obj, kJobType) << " running success.";
           std::string build_res = GetJsonValue<std::string>(json_obj, kResult);
