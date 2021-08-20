@@ -34,9 +34,6 @@ class Initializer:
 
     Args:
         kwargs (dict): Keyword arguments for Initializer.
-
-    Returns:
-        Array, an array after being initialized.
     """
     def __init__(self, **kwargs):
         self._kwargs = kwargs
@@ -94,13 +91,10 @@ def _assignment(arr, num):
 @_register('zeros')
 class Zero(Initializer):
     """
-    Initialize the array to zero.
+    Fills the input array with the values zero.
 
     Args:
         arr (Array): The array to be assigned.
-
-    Returns:
-        Array, an array after being assigned.
 
 
     Examples:
@@ -116,13 +110,10 @@ class Zero(Initializer):
 @_register('ones')
 class One(Initializer):
     """
-    Initialize the array to one.
+    Fills the input array with the values one.
 
     Args:
         arr (Array): The array to be assigned.
-
-    Returns:
-        Array, assigned array.
 
 
     Examples:
@@ -242,11 +233,12 @@ def _calculate_in_and_out(arr):
 class XavierUniform(Initializer):
     r"""
     Initialize the array with xavier uniform algorithm, and from a uniform distribution collect samples within
-    U[-boundary, boundary] The boundary is defined as:
+    :math:`{U}(-\text{boundary}, \text{boundary})`where:
 
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
 
+    - where :math:`gain` is an optional scaling factor.
     - where :math:`n_{in}` is the number of input units in the weight tensor.
     - where :math:`n_{out}` is the number of output units in the weight tensor.
 
@@ -255,9 +247,6 @@ class XavierUniform(Initializer):
 
     Args:
         gain (float): An optional scaling factor. Default: 1.
-
-    Returns:
-        Array, assigned array.
 
 
     Examples:
@@ -282,11 +271,17 @@ class XavierUniform(Initializer):
 @_register('he_uniform')
 class HeUniform(Initializer):
     r"""
-    Initialize the array with He kaiming uniform algorithm, and from a uniform distribution collect samples within
-    U[-boundary, boundary] The boundary is defined as:
+    Initialize the array with HeKaiming Uniform algorithm, and from a uniform distribution collect samples within
+    :math:`{U}(-\text{boundary}, \text{boundary})`where
 
     .. math::
         boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
+
+    - where :math:`-boundary` the lower bound of the HeUniform distribution.
+    - where :math:`boundary` the upper bound of the HeUniform distribution.
+
+    For details of HeUniform algorithm, please check
+    `<https://arxiv.org/abs/1502.01852>`_.
 
     Args:
         negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
@@ -296,9 +291,6 @@ class HeUniform(Initializer):
             in the backwards pass. Default: fan_in.
         nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
             Default: leaky_relu.
-
-    Returns:
-        Array, assigned array.
 
 
     Examples:
@@ -326,8 +318,17 @@ class HeUniform(Initializer):
 @_register('he_normal')
 class HeNormal(Initializer):
     r"""
-    Initialize the array with He kaiming Normal algorithm, and from a normal distribution collect samples within
-    N(0, sigma).
+    Initialize the array with HeKaiming Normal algorithm, and from a normal distribution collect samples within
+    :math:`{N}(0, \text{sigma}^2)`where
+
+    .. math::
+        sigma = \frac{gain} {\sqrt{mode}}
+
+    - where :math:`gain` is an optional scaling factor.
+    - where :math:`mode` is the number of input units or output units in the weight tensor.
+
+    For details of HeUniform algorithm, please check
+    `<https://arxiv.org/abs/1502.01852>`_.
 
     Args:
         negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
@@ -337,9 +338,6 @@ class HeNormal(Initializer):
             in the backwards pass. Default: fan_in.
         nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
             Default: leaky_relu.
-
-    Returns:
-        Array, assigned array.
 
 
     Examples:
@@ -370,9 +368,6 @@ class Constant(Initializer):
     Args:
         value (Union[int, numpy.ndarray]): The value to initialize.
 
-    Returns:
-        Array, an array after being assigned.
-
 
     Examples:
         >>> import mindspore
@@ -391,14 +386,11 @@ class Constant(Initializer):
 @_register()
 class Uniform(Initializer):
     """
-    Initialize a uniform array, and obtain values U(-scale, scale) from the uniform distribution
+    Initialize a uniform array, and obtain values :math:`{U}(-\text{scale}, \text{scale})`from the uniform distribution
     to fill the input tensor.
 
     Args:
         scale (float): The scale of the array. Default: 0.07.
-
-    Returns:
-        Array, uniform array.
 
 
     Examples:
@@ -419,15 +411,12 @@ class Uniform(Initializer):
 @_register()
 class Normal(Initializer):
     """
-    Initialize a normal array, and obtain values N(sigma, mean) from the normal distribution
+    Initialize a normal array, and obtain values :math:`{N}(\text{sigma}, \text{mean})` from the normal distribution
     to fill the input tensor.
 
     Args:
         sigma (float): The sigma of the array. Default: 0.01.
         mean (float): The mean of the array. Default: 0.0.
-
-    Returns:
-        Array, normal array.
 
 
     Examples:
@@ -452,13 +441,11 @@ class Normal(Initializer):
 @_register()
 class TruncatedNormal(Initializer):
     """
-    Initialize a truncated normal distribution which is a bounded normal distribution within N(low, high).
+    Initialize a truncated normal distribution which is a bounded normal distribution
+    within :math:`{N}(\text{low}, \text{high})`.
 
     Args:
         sigma (float): The sigma of the array. Default: 0.01.
-
-    Returns:
-        Array, truncated normal array.
 
 
     Examples:
@@ -484,7 +471,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         init (Union[Tensor, str, Initializer, numbers.Number]): Initialize value.
 
             - `str`: The `init` should be the alias of the class inheriting from `Initializer` and the corresponding
-              class will be called.
+              class will be called. The value of 'init' can be "normal", "ones" or "zeros", etc.
 
             - `Initializer`: The `init` should be the class inheriting from `Initializer` to initialize tensor.
 
