@@ -259,6 +259,7 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   memset(bias_, 0x00, div_co * C4NUM * data_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
+    MS_ASSERT(src_data);
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {

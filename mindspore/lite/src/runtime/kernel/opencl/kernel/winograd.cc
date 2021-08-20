@@ -18,6 +18,7 @@
 #include <memory>
 #include "src/runtime/kernel/opencl/cl/winograd.cl.inc"
 #include "nnacl/base/minimal_filtering_generator.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -131,6 +132,7 @@ int WinogradOpenCLKernel::InitFilter() {
   // rearrange filter
   auto filter_tensor = in_tensors_.at(1);
   void *src_filter_data = stored_filter_ == nullptr ? filter_tensor->data_c() : stored_filter_;
+  MS_ASSERT(src_filter_data);
 #ifndef ENABLE_ARM64
   auto winograd_filter = GenerateWinogradFilter(src_filter_data, filter_tensor->data_type(), CO_, CI_);
   void *src_data = winograd_filter.data();
@@ -140,9 +142,13 @@ int WinogradOpenCLKernel::InitFilter() {
     MS_LOG(ERROR) << "new winograd_filter failed.";
     return RET_ERROR;
   }
-  WinogradWeightTransform(reinterpret_cast<const float *>(src_filter_data),
-                          reinterpret_cast<float *>(winograd_filter.get()), nullptr, Gt, 1, 6, 3, CI_, CO_, false);
-
+  int trans_ret =
+    WinogradWeightTransform(reinterpret_cast<const float *>(src_filter_data),
+                            reinterpret_cast<float *>(winograd_filter.get()), nullptr, Gt, 1, 6, 3, CI_, CO_, false);
+  if (trans_ret != NNACL_OK) {
+    MS_LOG(ERROR) << "WinogradWeightTransform failed, nnacl error: " << trans_ret;
+    return RET_ERROR;
+  }
   void *src_data = winograd_filter.get();
 #endif
 
@@ -196,7 +202,11 @@ int WinogradOpenCLKernel::AllocateMemory() {
 }
 
 int WinogradOpenCLKernel::SetConstArgs() {
-  AllocateMemory();
+  int ret = AllocateMemory();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "AllocateMemory failed.";
+    return ret;
+  }
 
   int arg_cn = 1;
   cl_int4 input_shape = {batch_size_, OH_, OW_, CI_SLICES_};  // maybe pad=0, so use OH/OW
@@ -316,8 +326,8 @@ double WinogradOpenCLKernel::GetProfilingTimeMs() {
   if (!ocl_runtime_->isProfiling()) {
     return MAX_PROFILING_TIME_MILLI_SECOND;
   }
-  cl_ulong time_start;
-  cl_ulong time_end;
+  cl_ulong time_start = 0;
+  cl_ulong time_end = 0;
   event_.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
   event_.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
   cl_ulong time_ns = time_end - time_start;

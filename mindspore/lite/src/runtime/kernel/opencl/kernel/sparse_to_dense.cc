@@ -37,6 +37,7 @@ int SparseToDenseOpenCLKernel::InitOutputToDefault() {
   cl_float4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
   auto src_data = out_tensors_[0]->data_c();
+  MS_ASSERT(src_data);
   if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
     MS_LOG(ERROR) << "GetImageSize failed.";
     return RET_ERROR;
@@ -44,7 +45,11 @@ int SparseToDenseOpenCLKernel::InitOutputToDefault() {
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-  ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region);
+  if (ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region) !=
+      CL_SUCCESS) {
+    MS_LOG(ERROR) << "enqueueFillImage failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -55,6 +60,7 @@ int SparseToDenseOpenCLKernel::InitWeights() {
   for (int i = 0; i < weight_tensor->shape().size(); ++i) {
     size *= weight_tensor->shape()[i];
   }
+  MS_ASSERT(weight_tensor->data_c());
   if (weight_scalar_) {
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data_c()));
@@ -199,9 +205,18 @@ int SparseToDenseOpenCLKernel::Prepare() {
     } else {
       default_ = *reinterpret_cast<float *>(input_tensor3->data_c());
     }
+    MS_ASSERT(default_);
   }
-  InitWeights();
-  InferShapeTo4D();
+  ret = InitWeights();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitWeights failed.";
+    return ret;
+  }
+  ret = InferShapeTo4D();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InferShapeTo4D failed.";
+    return ret;
+  }
   SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
@@ -242,7 +257,11 @@ int SparseToDenseOpenCLKernel::InferShapeTo4D() {
 
 int SparseToDenseOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  InitOutputToDefault();
+  int ret = InitOutputToDefault();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitOutputToDefault failed.";
+    return ret;
+  }
   int arg_cn = 0;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";

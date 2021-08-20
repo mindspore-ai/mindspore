@@ -35,6 +35,7 @@ int FillOpenCLKernel::RunFill() {
   cl_int4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
   auto src_data = out_tensors_[0]->data_c();
+  MS_ASSERT(src_data);
   if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
     MS_LOG(ERROR) << "GetImageSize failed.";
     return RET_ERROR;
@@ -42,23 +43,33 @@ int FillOpenCLKernel::RunFill() {
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-  ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region);
+  if (ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region) !=
+      CL_SUCCESS) {
+    MS_LOG(ERROR) << "enqueueFillImage failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int FillOpenCLKernel::RunShape() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto src_data = out_tensors_[0]->data_c();
+  MS_ASSERT(src_data);
   cl_int4 fill_value = {default_, default_, default_, default_};
   auto tensor_shape = in_tensors_[0]->shape();
   void *tensor_shape_data = tensor_shape.data();
+  MS_ASSERT(tensor_shape_data);
   for (int i = 0; i < tensor_shape.size(); ++i) {
     fill_value.s[i] = reinterpret_cast<int *>(tensor_shape_data)[i];
   }
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto region = cl::array<cl::size_type, 3U>{1, 1, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
-  ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region);
+  if (ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region) !=
+      CL_SUCCESS) {
+    MS_LOG(ERROR) << "enqueueFillImage failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -90,12 +101,10 @@ int FillOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = this->op_parameter_;
   if (param->type_ == PrimitiveType_Fill) {
-    RunFill();
+    return RunFill();
   } else {
-    RunShape();
+    return RunShape();
   }
-
-  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Fill, OpenCLKernelCreator<FillOpenCLKernel>);
