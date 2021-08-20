@@ -356,10 +356,7 @@ bool LessBatchNormalization::MatchStructureNode(const CNodePtr &cnode, const int
   }
   const auto &use_pattern = std::get<1>(patternTuple);
   int32_t use_index = index % static_cast<int32_t>(use_pattern.size());
-  if (!IsPrimitiveCNode(cnode, use_pattern[use_index])) {
-    return false;
-  }
-  return true;
+  return IsPrimitiveCNode(cnode, use_pattern[IntToSize(use_index)]);
 }
 
 bool LessBatchNormalization::MatchGraphStructure(const CNodePtr &cnode,
@@ -410,7 +407,7 @@ AnfNodePtr LessBatchNormalization::operator()(const OptimizerPtr &optimizer, con
     Reset();
     const auto &current_pattern = kNeedMatchPattern.at(match_pattern_);
     size_t sum_match_node = 0;
-    std::for_each(current_pattern.begin(), current_pattern.end(), [&](const kStructureTuple &t) {
+    (void)std::for_each(current_pattern.begin(), current_pattern.end(), [&](const kStructureTuple &t) {
       sum_match_node += std::get<0>(t);
       (void)total_match_node_.emplace_back(sum_match_node);
     });
