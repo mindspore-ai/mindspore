@@ -128,7 +128,7 @@ After installing MindSpore via the official website, you can start training and 
 
 - Run on Ascend
 
-```python
+```shell
 # run training example
 python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
 OR
@@ -141,6 +141,26 @@ bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET] [CONFIG_PATH]
 python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
 OR
 bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
+```
+
+- Run on GPU
+
+```shell
+# run training example
+python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml --device_target=GPU > train.log 2>&1 &
+OR
+bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH] [DEVICE_ID](optional)
+
+# run distributed training example
+bash scripts/run_distribute_train.sh [RANKSIZE] [DATASET] [CONFIG_PATH] [CUDA_VISIBLE_DEVICES(0,1,2,3,4,5,6,7)](optional)
+
+# run evaluation example
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
+OR
+bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH] [DEVICE_ID](optional)
+
+# run export
+python export.py --config_path=[CONFIG_PATH] --checkpoint_file_path=[model_ckpt_path] --file_name=[air_model_name] --file_format=MINDIR --device_target=GPU
 ```
 
 - Run on docker
@@ -163,7 +183,7 @@ Then you can run everything just like on ascend.
 
 If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
 
-```python
+```text
 # run distributed training on modelarts example
 # (1) First, Perform a or b.
 #       a. Set "enable_modelarts=True" on yaml file.
@@ -192,33 +212,18 @@ If you want to run in modelarts, please check the official documentation of [mod
 # (7) Create your job.
 ```
 
-- Run on GPU
-
-  ```python
-  # run training example
-  python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
-  OR
-  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
-
-  # run distributed training example
-  bash scripts/run_distribute_train_gpu.sh [RANKSIZE] [DATASET] [CONFIG_PATH]
-
-  # run evaluation example
-  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/config/ > eval.log  2>&1 &
-  OR
-  bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
-  ```
-
 ## [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)
 
-```shell
+```text
 ├── model_zoo
     ├── README.md                           // descriptions about all the models
     ├── unet
         ├── README.md                       // descriptions about Unet
+        ├── README_CN.md                    // chinese descriptions about Unet
         ├── ascend310_infer                 // code of infer on ascend 310
+        ├── Dockerfile
         ├── scripts
         │   ├──docker_start.sh              // shell script for quick docker start
         │   ├──run_disribute_train.sh       // shell script for distributed on Ascend
@@ -229,7 +234,7 @@ If you want to run in modelarts, please check the official documentation of [mod
         │   ├──run_standalone_eval_gpu.sh       // shell script forevaluation on GPU
         │   ├──run_distribute_train_gpu.sh      // shell script for distributed on GPU
         ├── src
-        │   ├──config.py                    // parameter configuration
+        │   ├──__init__.py
         │   ├──data_loader.py               // creating dataset
         │   ├──loss.py                      // loss
         │   ├──eval_callback.py             // evaluation callback while training
@@ -237,18 +242,21 @@ If you want to run in modelarts, please check the official documentation of [mod
         │   ├──unet_medical                 // Unet medical architecture
                 ├──__init__.py              // init file
                 ├──unet_model.py            // unet model
-                ├──unet_parts.py            // unet part
+                └──unet_parts.py            // unet part
         │   ├──unet_nested                  // Unet++ architecture
                 ├──__init__.py              // init file
                 ├──unet_model.py            // unet model
-                ├──unet_parts.py            // unet part
-                ├── model_utils
-                │   ├── config.py          // parameter configuration
-                │   ├── device_adapter.py  // device adapter
-                │   ├── local_adapter.py   // local adapter
-                │   ├── moxing_adapter.py  // moxing adapter
+                └──unet_parts.py            // unet part
+        │   ├──model_utils
+                ├──__init__.py
+                ├── config.py               // parameter configuration
+                ├── device_adapter.py       // device adapter
+                ├── local_adapter.py        // local adapter
+                └── moxing_adapter.py       // moxing adapter
         ├── unet_medical_config.yaml        // parameter configuration
+        ├── unet_medicl_gpu_config.yaml     // parameter configuration
         ├── unet_nested_cell_config.yaml    // parameter configuration
+        ├── unet_nested_coco_config.yaml    // parameter configuration
         ├── unet_nested_config.yaml         // parameter configuration
         ├── unet_simple_config.yaml         // parameter configuration
         ├── unet_simple_coco_config.yaml    // parameter configuration
@@ -259,16 +267,16 @@ If you want to run in modelarts, please check the official documentation of [mod
         ├── postprocess.py                  // unet 310 infer postprocess.
         ├── preprocess.py                   // unet 310 infer preprocess dataset
         ├── preprocess_dataset.py           // the script to adapt MultiClass dataset
-        ├── requirements.txt                // Requirements of third party package.
+        └── requirements.txt                // Requirements of third party package.
 ```
 
 ### [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py
+Parameters for both training and evaluation can be set in *.yaml
 
 - config for Unet, ISBI dataset
 
-  ```python
+  ```yaml
   'name': 'Unet',                     # model name
   'lr': 0.0001,                       # learning rate
   'epochs': 400,                      # total training epochs when run 1p
@@ -299,7 +307,7 @@ Parameters for both training and evaluation can be set in config.py
 
 - config for Unet++, cell nuclei dataset
 
-  ```python
+  ```yaml
   'model': 'unet_nested',             # model name
   'dataset': 'Cell_nuclei',           # dataset name
   'img_size': [96, 96],               # image size
@@ -367,9 +375,9 @@ The model checkpoint will be saved in the current directory.
 #### running on GPU
 
 ```shell
-python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
+python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output --device_target GPU > train.log  2>&1 &
 OR
-bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
+bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH] [DEVICE_ID](optional)
 ```
 
 The python command above will run in the background, you can view the results through the file train.log. The model checkpoint will be saved in the current directory.
@@ -467,6 +475,25 @@ The above python command will run in the background. You can view the results th
 | Checkpoint for Fine tuning | 355.11M (.ckpt file)                                         | 355.11M (.ckpt file)                                         |
 | Scripts                    | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
 
+| Parameters | Ascend | GPU |
+| -----| ----- | ----- |
+| Model Version | U-Net nested(unet++) | U-Net nested(unet++) |
+| Resource | Ascend 910 ;CPU 2.60GHz,192cores; Memory,755G; OS Euler2.8 | NV SMX2 V100-32G |
+| uploaded Date | 2021-8-20 | 2021-8-20 |
+| MindSpore Version | 1.3.0 | 1.3.0 |
+| Dataset | Cell_nuclei | Cell_nuclei |
+| Training Parameters | 1pc: epoch=200, total steps=6700, batch_size=16, lr=0.0003, 8pc: epoch=1600, total steps=6560, batch_size=16*8, lr=0.0003 | 1pc: epoch=200, total steps=6700, batch_size=16, lr=0.0003, 8pc: epoch=1600, total steps=6560, batch_size=16*8, lr=0.0003 |
+| Optimizer | ADAM | ADAM |
+| Loss Function | Softmax Cross Entropy | Softmax Cross Entropy |
+| outputs | probability |  probability |
+| probability | cross valid dice coeff is 0.966, cross valid IOU is 0.936 | cross valid dice coeff is 0.976,cross valid IOU is 0.955 |
+| Loss | <0.1 | <0.1 |
+| Speed | 1pc: 150~200 fps | 1pc：230~280 fps, 8pc：(170~210)*8 fps |
+| Total time | 1pc: 10.8min | 1pc：8min |
+| Parameters (M)  | 27M | 27M |
+| Checkpoint for Fine tuning | 103.4M(.ckpt file) | 103.4M(.ckpt file) |
+| Scripts | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) | [unet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
+
 ## [How to use](#contents)
 
 ### Inference
@@ -490,7 +517,7 @@ The checkpoint_file_path parameter is required,
 
 Export on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start as follows)
 
-```python
+```text
 # Export on ModelArts
 # (1) Perform a or b.
 #       a. Set "enable_modelarts=True" on default_config.yaml file.
@@ -565,7 +592,7 @@ Cross valid dice coeff is: 0.9139793866877975
 
 Set options `resume` to True in `*.yaml`, and set `resume_ckpt` to the path of your checkpoint. e.g.
 
-```python
+```yaml
   'resume': True,
   'resume_ckpt': 'ckpt_unet_sample_adam_1-1_600.ckpt',
   'transfer_training': False,
@@ -576,7 +603,7 @@ Set options `resume` to True in `*.yaml`, and set `resume_ckpt` to the path of y
 
 Do the same thing as resuming traing above. In addition, set `transfer_training` to True. The `filter_weight` shows the weights which will be filtered for different dataset. Usually, the default value of `filter_weight` don't need to be changed. The default values includes the weights which depends on the class number. e.g.
 
-```python
+```yaml
   'resume': True,
   'resume_ckpt': 'ckpt_unet_sample_adam_1-1_600.ckpt',
   'transfer_training': True,
