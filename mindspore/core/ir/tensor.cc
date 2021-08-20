@@ -490,6 +490,7 @@ Tensor::Tensor(const Tensor &tensor)
       data_(tensor.data_),
       id_(tensor.id_),
       event_(tensor.event_),
+      need_wait_(tensor.need_wait_),
       sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
@@ -505,6 +506,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
       id_(tensor.id_),
       event_(tensor.event_),
+      need_wait_(tensor.need_wait_),
       sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
@@ -573,6 +575,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     data_ = tensor.data_;
     id_ = tensor.id_;
     event_ = tensor.event_;
+    need_wait_ = tensor.need_wait_;
     sync_status_ = tensor.sync_status_;
     padding_type_ = tensor.padding_type_;
     device_event_ = tensor.device_event_;

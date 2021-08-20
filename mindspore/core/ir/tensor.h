@@ -321,24 +321,22 @@ class MS_CORE_API Tensor : public MetaTensor {
   }
 
   void SetNeedWait(bool need_wait) {
-    if (event_ != nullptr) {
-      event_->set_need_wait(need_wait);
+    need_wait_ = need_wait;
+    auto event = event_;
+    if (event != nullptr) {
+      event->set_need_wait(need_wait);
     } else if (need_wait) {
       event_ = std::make_shared<WaitEvent>();
       event_->set_need_wait(need_wait);
     }
   }
 
-  bool NeedWait() const {
-    if (event_ != nullptr) {
-      return event_->need_wait();
-    }
-    return false;
-  }
+  bool NeedWait() const { return need_wait_; }
 
   void Wait() const {
-    if (event_ != nullptr) {
-      event_->Wait();
+    auto event = event_;
+    if (event != nullptr) {
+      event->Wait();
     }
     event_ = nullptr;
   }
@@ -378,6 +376,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   TensorDataPtr data_{nullptr};
   std::string id_{""};
   mutable std::shared_ptr<WaitEvent> event_{nullptr};
+  bool need_wait_{false};
   mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   bool graph_output_{false};
   bool updated_by_device_{false};
