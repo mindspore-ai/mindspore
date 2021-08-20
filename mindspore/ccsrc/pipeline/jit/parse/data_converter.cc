@@ -326,17 +326,7 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
     }
   }
   if (py::hasattr(obj, STAGE_NAME)) {
-    auto obj_stage = py::getattr(obj, STAGE_NAME);
-    if (py::isinstance<py::bool_>(obj_stage)) {
-      MS_LOG(EXCEPTION) << "The type of pipeline stage must be int, but got bool.";
-    }
-    if (!py::isinstance<py::int_>(obj_stage)) {
-      MS_LOG(EXCEPTION) << "The type of pipeline stage must be int.";
-    }
     auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
-    if (stage < 0) {
-      MS_LOG(EXCEPTION) << "Pipeline stage can't be less than 0, but got: " << stage;
-    }
     func_graph->set_stage(stage);
   }
   return func_graph;
