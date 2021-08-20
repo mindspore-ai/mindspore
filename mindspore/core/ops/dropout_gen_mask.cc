@@ -138,7 +138,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
-  CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), valid_types, op_name);
   return kUInt8;
 }
 }  // namespace

@@ -57,12 +57,12 @@ TypePtr BinaryCrossEntroyInferType(const PrimitivePtr &prim, const std::vector<A
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  types.emplace("x_shape", input_args[0]->BuildType());
-  types.emplace("y_shape", input_args[1]->BuildType());
+  (void)types.emplace("x_shape", input_args[0]->BuildType());
+  (void)types.emplace("y_shape", input_args[1]->BuildType());
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   if (input_args[3]->BuildType() != nullptr) {
-    types.emplace("x_shape", input_args[0]->BuildType());
-    types.emplace("weight_shape", input_args[2]->BuildType());
+    (void)types.emplace("x_shape", input_args[0]->BuildType());
+    (void)types.emplace("weight_shape", input_args[2]->BuildType());
     infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   }
   return infer_type;

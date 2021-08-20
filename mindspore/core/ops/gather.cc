@@ -33,10 +33,10 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   // check
   std::set<TypePtr> valid_params_types = {kTensorType};
-  CheckAndConvertUtils::CheckSubClass("params_type", input_args[0]->BuildType(), valid_params_types, op_name);
+  (void)CheckAndConvertUtils::CheckSubClass("params_type", input_args[0]->BuildType(), valid_params_types, op_name);
   std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[1]->BuildType(), int_types, op_name);
-  CheckAndConvertUtils::CheckTypeValid("axis_type", input_args[2]->BuildType(), int_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[1]->BuildType(), int_types, op_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("axis_type", input_args[2]->BuildType(), int_types, op_name);
 
   bool ind_dyn = (!indices->shape()->min_shape().empty() && !indices->shape()->max_shape().empty());
   bool param_dyn = (!params->shape()->min_shape().empty() && !params->shape()->max_shape().empty());
@@ -75,7 +75,7 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   }
   auto calc_shape = [axis_val](const ShapeVector &ind_vec, const ShapeVector &params_vec) -> ShapeVector {
     ShapeVector out_vec;
-    std::copy(params_vec.begin(), params_vec.begin() + axis_val, std::back_inserter(out_vec));
+    (void)std::copy(params_vec.begin(), params_vec.begin() + axis_val, std::back_inserter(out_vec));
     copy(ind_vec.begin(), ind_vec.end(), std::back_inserter(out_vec));
     copy(params_vec.begin() + axis_val + 1, params_vec.end(), std::back_inserter(out_vec));
     return out_vec;

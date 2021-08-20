@@ -37,7 +37,7 @@ AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto in_shape = shape_map[kShape];
   // infer type
   std::set<TypePtr> valid_params_types = {kTensorType};
-  CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
+  (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
   AbstractBasePtrList abs_list;
   (void)std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(abs_list),
                        [](int64_t item) -> std::shared_ptr<abstract::AbstractScalar> {
@@ -53,7 +53,7 @@ ValuePtr ShapeInferValue(const PrimitivePtr &primitive, const std::vector<Abstra
   (void)CheckAndConvertUtils::CheckInteger("shape infer", input_args.size(), kEqual, 1, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   std::set<TypePtr> valid_params_types = {kTensorType};
-  CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
+  (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto inshape = shape_map[kShape];
   auto value = MakeValue(inshape);

@@ -42,7 +42,7 @@ std::vector<int64_t> _get_pack_shape(std::vector<BaseShapePtr> x_shapes, std::ve
                                     "shape in input can't pack with first element.";
     }
   }
-  output_shape.insert(output_shape.begin() + axis, N);
+  (void)output_shape.insert(output_shape.begin() + axis, N);
   return output_shape;
 }
 }  // namespace

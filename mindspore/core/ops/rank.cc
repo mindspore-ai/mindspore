@@ -24,7 +24,7 @@ TypePtr RankInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   auto op_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_dtype = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, {kTensorType}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, {kTensorType}, op_name);
   return kTypeNone;
 }
 }  // namespace

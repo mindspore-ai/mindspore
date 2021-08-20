@@ -44,13 +44,13 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
     dim_val += x_shape.size() + 1;
   }
   auto out_shape = x_shape;
-  out_shape.insert(out_shape.begin() + dim_val, 1, 1);
+  (void)out_shape.insert(out_shape.begin() + dim_val, 1, 1);
 
   // Infer type
   const int64_t x_index = 0;
   auto x_type = CheckAndConvertUtils::GetInputTensorType(input_args, x_index, prim_name);
   std::set<TypePtr> valid_x_type = {kTensorType};
-  CheckAndConvertUtils::CheckSubClass("x_type", x_type, valid_x_type, prim_name);
+  (void)CheckAndConvertUtils::CheckSubClass("x_type", x_type, valid_x_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);
 }
 REGISTER_PRIMITIVE_C(kNameExpandDims, ExpandDims);

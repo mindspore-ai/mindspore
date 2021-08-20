@@ -61,7 +61,7 @@ AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const 
     MS_LOG(ERROR) << "ele_shape->data_c() is nullptr";
   }
   auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  input1_shape.insert(input1_shape.begin(), 1);
+  (void)input1_shape.insert(input1_shape.begin(), 1);
   return std::make_shared<abstract::AbstractTensor>(input_args[0]->BuildType(), input1_shape);
 }
 REGISTER_PRIMITIVE_C(kNameTensorListStack, TensorListStack);
