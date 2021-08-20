@@ -60,7 +60,7 @@ bool BaseRefToInt(const ValuePtr &v, int64_t *value) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<tensor::Tensor>()) {
     auto tensor = v->cast<tensor::TensorPtr>();
-    (void)tensor->data_sync();
+    tensor->data_sync();
     if (tensor->Dtype()->ToString() == "Int32") {
       auto *tensor_data = static_cast<int32_t *>(tensor->data_c());
       auto vb = tensor_data[0];
