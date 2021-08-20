@@ -41,8 +41,7 @@ void BinaryCrossEntropyCpuKernel::LaunchToScalar(const int &input_size, const in
 }
 
 template <typename T>
-void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
+void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y = reinterpret_cast<T *>(inputs[1]->addr);
@@ -63,7 +62,8 @@ void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &in
     }
   } else if (reduction_ == 0 && (!weight_defined_)) {
     for (size_t i = 0; i < input_size_; i++) {
-      T value = -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
+      T value = static_cast<T>(
+        -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
       loss[i] = value;
     }
   } else if ((reduction_ != 0) && weight_defined_) {
@@ -74,7 +74,8 @@ void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &in
     }
   } else {
     for (size_t i = 0; i < input_size_; i++) {
-      T value = -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
+      T value = static_cast<T>(
+        -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
       tmp_loss[i] = value;
     }
   }
