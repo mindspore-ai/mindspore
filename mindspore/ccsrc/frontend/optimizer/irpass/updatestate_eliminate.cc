@@ -37,6 +37,7 @@ constexpr size_t kInputIndex = 1;
 constexpr size_t kAttachIndex = 2;
 constexpr size_t kMakeTupleSize = 3;
 constexpr size_t kMinDependSize = 3;
+constexpr size_t kUpdateStateSize = 3;
 constexpr size_t kAssignSize = 4;
 constexpr size_t kAssignMonadInputIndex = 3;
 
@@ -110,22 +111,20 @@ bool CheckHasMonadInput(const CNodePtr &cnode) {
   return false;
 }
 
-AnfNodePtr EliminateUpdateStateForPureNode(const CNodePtr &update_state, const AnfNodePtr &attach) {
-  auto cnode = dyn_cast<CNode>(attach);
-  if (cnode == nullptr) {
-    // Skip value node or parameter.
+AnfNodePtr NewUpdateStateWithAttach(const CNodePtr &update_state, const AnfNodePtr &attach) {
+  auto fg = update_state->func_graph();
+  if (fg == nullptr) {
     return nullptr;
   }
-  if (CheckHasMonadInput(cnode)) {
-    return nullptr;
-  }
-
-  // Remove UpdateState by replace it with its input monad.
-  return update_state->input(kInputIndex);
+  auto new_update_state =
+    fg->NewCNode({update_state->input(kFirstInputIndex), update_state->input(kInputIndex), attach});
+  new_update_state->set_abstract(update_state->abstract());
+  new_update_state->set_scope(update_state->scope());
+  return new_update_state;
 }
 
-AnfNodePtr EliminateUpdateStateWithDepend(const OptimizerPtr &optimizer, const CNodePtr &update_state,
-                                          const CNodePtr &depend) {
+AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state) {
+  auto depend = update_state->input(kAttachIndex)->cast<CNodePtr>();
   auto input_monad = depend->inputs().back();
   if (!HasAbstractMonad(input_monad)) {
     // Skip if Depend attach input is not a monad.
@@ -153,7 +152,7 @@ AnfNodePtr EliminateUpdateStateWithDepend(const OptimizerPtr &optimizer, const C
   // Replace Depend with its input.
   if (depend->size() == kMinDependSize) {
     auto depend_input = depend->input(kInputIndex);
-    optimizer->SubstitutionReplace(mgr, depend, depend_input);
+    mgr->Replace(depend, depend_input);
   } else {
     auto inputs = depend->inputs();
     inputs.pop_back();
@@ -161,85 +160,35 @@ AnfNodePtr EliminateUpdateStateWithDepend(const OptimizerPtr &optimizer, const C
     MS_EXCEPTION_IF_NULL(fg);
     auto new_depend = fg->NewCNode(inputs);
     new_depend->set_abstract(depend->abstract());
-    optimizer->SubstitutionReplace(mgr, depend, new_depend);
+    mgr->Replace(depend, new_depend);
   }
   // Replace UpdateState node with the input monad of Depend.
   return input_monad;
 }
 
-// Eliminate useless make_tuple with 'Dead Node'.
-// Convert:
-//   t = make_tuple(input, "Dead Node")
-//   u = UpdateState(u, t)
-// To:
-//   u = UpdateState(u, input)
-AnfNodePtr EliminateMakeTupleWithDeadNode(const CNodePtr &update_state, const CNodePtr &make_tuple) {
+AnfNodePtr EliminateUpdateStateMakeTupleWithUselessNode(const CNodePtr &update_state, const CNodePtr &make_tuple) {
   if (make_tuple->size() != kMakeTupleSize) {
     return nullptr;
   }
-  auto &node = make_tuple->input(kAttachIndex);
-  auto node_abs = node->abstract();
-  if (node_abs == nullptr || !node_abs->isa<abstract::AbstractError>()) {
-    return nullptr;
-  }
-  auto fg = update_state->func_graph();
-  if (fg == nullptr) {
-    return nullptr;
-  }
-  // Create a new UpdateState to replace the old one.
-  const auto &attach = make_tuple->input(kInputIndex);
-  auto new_update_state = fg->NewCNode({update_state->input(0), update_state->input(1), attach});
-  new_update_state->set_abstract(update_state->abstract());
-  new_update_state->set_scope(update_state->scope());
-  return new_update_state;
-}
-
-// Return true if the func is only used by MakeTuple.
-bool OnlyMakeTupleUseFunc(const CNodePtr &make_tuple, const AnfNodePtr &func_node) {
-  auto mgr = GetManager(make_tuple);
-  if (mgr == nullptr) {
-    return false;
-  }
-  auto &node_users = mgr->node_users();
-  auto iter = node_users.find(func_node);
-  if (iter == node_users.end()) {
-    return false;
-  }
-  auto &partial_users = iter->second;
-  return (partial_users.size() == 1) && (partial_users.front().first == make_tuple);
-}
-
-// Eliminate UpdateState which the second input is MakeTuple, and the second input of MakeTuple is useless Function.
-// Convert:
-//   t = make_tuple(input, Function) or t = make_tuple(Function, input)
-//   u2 = UpdateState(u1, t)
-// To:
-//   t = make_tuple(input, Function) or t = make_tuple(Function, input)
-//   u2 = UpdateState(u1, input)
-AnfNodePtr EliminateUpdateStateWithMakeTupleFunc(const CNodePtr &update_state, const CNodePtr &make_tuple) {
-  if (make_tuple->size() != kMakeTupleSize) {
-    return nullptr;
-  }
-
-  // Get the other node that is not FuncGraph.
-  AnfNodePtr input_node = nullptr;
+  AnfNodePtr attach_node = nullptr;
   auto &first_input = make_tuple->input(kInputIndex);
   auto &second_input = make_tuple->input(kAttachIndex);
-  if (IsValueNode<FuncGraph>(first_input) && OnlyMakeTupleUseFunc(make_tuple, first_input)) {
-    input_node = make_tuple->input(kAttachIndex);
-  } else if (IsValueNode<FuncGraph>(second_input) && OnlyMakeTupleUseFunc(make_tuple, second_input)) {
-    input_node = make_tuple->input(kInputIndex);
+
+  // Eliminate useless make_tuple with 'Dead Node'.
+  // UpdateState(u, MakeTuple(input, "Dead Node")) -> UpdateState(u, input)
+  auto abs = second_input->abstract();
+  if (abs != nullptr && abs->isa<abstract::AbstractError>()) {
+    return NewUpdateStateWithAttach(update_state, first_input);
   }
 
-  // Create the new UpdateState node with `node_input`, replace the old UpdateStateNode.
-  if (input_node != nullptr) {
-    auto update_state_op = NewValueNode(prim::kPrimUpdateState);
-    auto fg = update_state->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    auto new_update_state = fg->NewCNode({update_state_op, update_state->input(kInputIndex), input_node});
-    new_update_state->set_abstract(update_state->abstract());
-    new_update_state->set_scope(update_state->scope());
-    return new_update_state;
+  // Eliminate useless make_tuple with useless Function.
+  // UpdateState(u, MakeTuple(Function, input) -> UpdateState(u, input)
+  // UpdateState(u, MakeTuple(input, Function) -> UpdateState(u, input)
+  if (IsValueNode<FuncGraph>(first_input) && OnlyUsedByOneNode(first_input, make_tuple)) {
+    return NewUpdateStateWithAttach(update_state, second_input);
+  }
+  if (IsValueNode<FuncGraph>(second_input) && OnlyUsedByOneNode(second_input, make_tuple)) {
+    return NewUpdateStateWithAttach(update_state, first_input);
   }
   return nullptr;
 }
@@ -319,7 +268,7 @@ AnfNodePtr MakeTupleForSameNodes(const FuncGraphPtr &fg, const CNodePtr &old_upd
 }
 
 // Remove all nodes related to UpdateStates, if they're redundant.
-void EliminateUselessNodesForUpdateStates(const OptimizerPtr &optimizer, const std::vector<CNodePtr> &update_states) {
+void EliminateUselessNodesForUpdateStates(const std::vector<CNodePtr> &update_states) {
   if (update_states.empty()) {
     return;
   }
@@ -331,7 +280,7 @@ void EliminateUselessNodesForUpdateStates(const OptimizerPtr &optimizer, const s
   // 1. Remove the use of UpdateState nodes, except the last one.
   for (auto i = update_states.size() - 1; i > 0; i--) {
     auto &us = update_states[i];
-    optimizer->SubstitutionReplace(mgr, us, us->input(kInputIndex));
+    mgr->Replace(us, us->input(kInputIndex));
   }
 
   // 2. Remove the Depend users of last UpdateState node.
@@ -365,7 +314,7 @@ void EliminateUselessNodesForUpdateStates(const OptimizerPtr &optimizer, const s
   for (ssize_t i = depend_nodes.size() - 1; i >= end; i--) {
     const auto &depend_node = depend_nodes[i];
     const auto &depend_cnode = depend_node->cast<CNodePtr>();
-    optimizer->SubstitutionReplace(mgr, depend_cnode, depend_cnode->input(kInputIndex));
+    mgr->Replace(depend_cnode, depend_cnode->input(kInputIndex));
   }
 }
 
@@ -385,8 +334,7 @@ void EliminateUselessNodesForUpdateStates(const OptimizerPtr &optimizer, const s
 //    xN = Load(xN, u)
 //    t = make_tuple(x1, x2, ... , xN)
 //    u1 = UpdateState(u, t)
-AnfNodePtr EliminateUpdateStateForLoads(const OptimizerPtr &optimizer, const CNodePtr &old_update_state,
-                                        const std::vector<CNodePtr> &update_states,
+AnfNodePtr EliminateUpdateStateForLoads(const CNodePtr &old_update_state, const std::vector<CNodePtr> &update_states,
                                         const std::vector<CNodePtr> &loads) {
   auto fg = old_update_state->func_graph();
   if (fg == nullptr) {
@@ -410,13 +358,14 @@ AnfNodePtr EliminateUpdateStateForLoads(const OptimizerPtr &optimizer, const CNo
       // Put Load node as a tuple element, if the parameter is not loaded by other Load.
       make_tuple_inputs.emplace_back(load);
     }
-    if (load->input(kAttachIndex) != input_monad) {
+    auto load_attach = load->input(kAttachIndex);
+    if (load_attach != input_monad) {
       // Set all load use same input monad.
-      mgr->SetEdge(load, kAttachIndex, input_monad);
+      mgr->Replace(load_attach, input_monad);
     }
   }
 
-  EliminateUselessNodesForUpdateStates(optimizer, update_states);
+  EliminateUselessNodesForUpdateStates(update_states);
 
   if (make_tuple_inputs.size() == 1) {
     // This should not happen.
@@ -443,39 +392,33 @@ AnfNodePtr EliminateUpdateStateForLoads(const OptimizerPtr &optimizer, const CNo
 // a2 = Assign(para2, value2, u1)
 // t = MakeTuple(a1, a2)
 // u3 = UpdateState(u1, t)
-AnfNodePtr EliminateUpdateStateBetweenAssigns(const OptimizerPtr &optimizer, const CNodePtr &update_state,
-                                              const AnfNodePtr &assign) {
+AnfNodePtr EliminateUpdateStateBetweenAssigns(const CNodePtr &update_state, const AnfNodePtr &assign) {
   auto a2_cnode = assign->cast<CNodePtr>();
-  if (a2_cnode->size() != kAssignSize) {
-    return nullptr;
-  }
-  auto para2 = a2_cnode->input(kInputIndex);
-  auto value2 = a2_cnode->input(kAttachIndex);
   auto u2 = a2_cnode->input(kAssignMonadInputIndex);
-  // u2 is UpdateState, u2 only be used by a2
-  if (IsPrimitiveCNode(u2, prim::kPrimUpdateState) && OnlyUsedByOneNode(u2, a2_cnode)) {
-    auto a1 = u2->cast<CNodePtr>()->input(kAttachIndex);
-    if (IsPrimitiveCNode(a1, prim::kPrimAssign)) {
-      auto a1_cnode = a1->cast<CNodePtr>();
-      if (a1_cnode->size() != kAssignSize) {
-        return nullptr;
-      }
-      auto para1 = a1_cnode->input(kInputIndex);
-      auto value1 = a1_cnode->input(kAttachIndex);
-      auto u1 = a1_cnode->input(kAssignMonadInputIndex);
-      if (para1 != para2 && para1 != value2 && para2 != value1) {
-        auto fg = update_state->func_graph();
-        MS_EXCEPTION_IF_NULL(fg);
-        auto mgr = fg->manager();
-        MS_EXCEPTION_IF_NULL(mgr);
-        optimizer->SubstitutionReplace(mgr, u2, u1);
-        AnfNodePtrList make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), a1, assign};
-        auto make_tuple = MakeTupleForSameNodes(fg, update_state, make_tuple_inputs);
-        auto new_update_state = fg->NewCNode({NewValueNode(prim::kPrimUpdateState), u1, make_tuple});
-        new_update_state->set_abstract(update_state->abstract());
-        new_update_state->set_scope(update_state->scope());
-        return new_update_state;
-      }
+  auto a1 = u2->cast<CNodePtr>()->input(kAttachIndex);
+  if (IsPrimitiveCNode(a1, prim::kPrimAssign)) {
+    auto a1_cnode = a1->cast<CNodePtr>();
+    if (a1_cnode->size() != kAssignSize) {
+      return nullptr;
+    }
+    auto para1 = a1_cnode->input(kInputIndex);
+    auto value1 = a1_cnode->input(kAttachIndex);
+    auto para2 = a2_cnode->input(kInputIndex);
+    auto value2 = a2_cnode->input(kAttachIndex);
+    auto u1 = a1_cnode->input(kAssignMonadInputIndex);
+    if (para1 != para2 && para1 != value2 && para2 != value1) {
+      auto fg = update_state->func_graph();
+      MS_EXCEPTION_IF_NULL(fg);
+      auto mgr = fg->manager();
+      MS_EXCEPTION_IF_NULL(mgr);
+      mgr->Replace(u2, u1);
+
+      AnfNodePtrList make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), a1, assign};
+      auto make_tuple = MakeTupleForSameNodes(fg, update_state, make_tuple_inputs);
+      auto new_update_state = fg->NewCNode({NewValueNode(prim::kPrimUpdateState), u1, make_tuple});
+      new_update_state->set_abstract(update_state->abstract());
+      new_update_state->set_scope(update_state->scope());
+      return new_update_state;
     }
   }
   return nullptr;
@@ -496,54 +439,49 @@ AnfNodePtr EliminateUpdateStateBetweenAssigns(const OptimizerPtr &optimizer, con
 // a3 = Assign(para3, value3, u1)
 // t = MakeTuple(a1, a2, a3)
 // u4 = UpdateState(u1, t)
-AnfNodePtr EliminateUpdateStateBetweenMakeTupleAssign(const OptimizerPtr &optimizer, const CNodePtr &update_state,
-                                                      const AnfNodePtr &assign) {
+AnfNodePtr EliminateUpdateStateBetweenAssignMakeTuple(const CNodePtr &update_state, const AnfNodePtr &assign) {
   auto a3_cnode = assign->cast<CNodePtr>();
-  if (a3_cnode->size() != kAssignSize) {
-    return nullptr;
-  }
-  auto para3 = a3_cnode->input(kInputIndex);
-  auto value3 = a3_cnode->input(kAttachIndex);
   auto u3 = a3_cnode->input(kAssignMonadInputIndex);
-  if (IsPrimitiveCNode(u3, prim::kPrimUpdateState) && OnlyUsedByOneNode(u3, a3_cnode)) {
-    auto u3_cnode = u3->cast<CNodePtr>();
-    auto make_tuple = u3_cnode->input(kAttachIndex);
-    if (IsPrimitiveCNode(make_tuple, prim::kPrimMakeTuple) && OnlyUsedByOneNode(make_tuple, u3_cnode)) {
-      auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
-      if (make_tuple_cnode->size() != kMakeTupleSize) {
+  auto u3_cnode = u3->cast<CNodePtr>();
+  auto make_tuple = u3_cnode->input(kAttachIndex);
+  if (IsPrimitiveCNode(make_tuple, prim::kPrimMakeTuple) && OnlyUsedByOneNode(make_tuple, u3_cnode)) {
+    auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
+    if (make_tuple_cnode->size() != kMakeTupleSize) {
+      return nullptr;
+    }
+    auto a1 = make_tuple_cnode->input(kInputIndex);
+    auto a2 = make_tuple_cnode->input(kAttachIndex);
+    if (IsPrimitiveCNode(a1, prim::kPrimAssign) && IsPrimitiveCNode(a2, prim::kPrimAssign)) {
+      auto a1_cnode = a1->cast<CNodePtr>();
+      auto a2_cnode = a2->cast<CNodePtr>();
+      if (a1_cnode->size() != kAssignSize || a2_cnode->size() != kAssignSize) {
         return nullptr;
       }
-      auto a1 = make_tuple_cnode->input(kInputIndex);
-      auto a2 = make_tuple_cnode->input(kAttachIndex);
-      if (IsPrimitiveCNode(a1, prim::kPrimAssign) && IsPrimitiveCNode(a2, prim::kPrimAssign)) {
-        auto a1_cnode = a1->cast<CNodePtr>();
-        auto a2_cnode = a2->cast<CNodePtr>();
-        if (a1_cnode->size() != kAssignSize || a2_cnode->size() != kAssignSize) {
-          return nullptr;
-        }
-        auto para1 = a1_cnode->input(kInputIndex);
-        auto value1 = a1_cnode->input(kAttachIndex);
-        auto u1 = a1_cnode->input(kAssignMonadInputIndex);
-        auto para2 = a2_cnode->input(kInputIndex);
-        auto value2 = a2_cnode->input(kAttachIndex);
-        auto u2 = a2_cnode->input(kAssignMonadInputIndex);
-        bool replace_judge = (u1 == u2) && (para1 != para3) && (para1 != value3) && (para2 != para3) &&
-                             (para2 != value3) && (value1 != para3) && (value2 != para3);
-        if (replace_judge) {
-          auto fg = update_state->func_graph();
-          MS_EXCEPTION_IF_NULL(fg);
-          auto mgr = fg->manager();
-          MS_EXCEPTION_IF_NULL(mgr);
-          optimizer->SubstitutionReplace(mgr, u3, u1);
-          AnfNodePtrList new_make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), make_tuple_cnode->input(kInputIndex),
-                                               make_tuple_cnode->input(kAttachIndex), assign};
-          auto new_make_tuple = MakeTupleForSameNodes(fg, update_state, new_make_tuple_inputs);
-          optimizer->SubstitutionReplace(mgr, make_tuple, new_make_tuple);
-          auto new_update_state = fg->NewCNode({NewValueNode(prim::kPrimUpdateState), u1, new_make_tuple});
-          new_update_state->set_abstract(update_state->abstract());
-          new_update_state->set_scope(update_state->scope());
-          return new_update_state;
-        }
+      auto para1 = a1_cnode->input(kInputIndex);
+      auto value1 = a1_cnode->input(kAttachIndex);
+      auto u1 = a1_cnode->input(kAssignMonadInputIndex);
+      auto para2 = a2_cnode->input(kInputIndex);
+      auto value2 = a2_cnode->input(kAttachIndex);
+      auto u2 = a2_cnode->input(kAssignMonadInputIndex);
+      auto para3 = a3_cnode->input(kInputIndex);
+      auto value3 = a3_cnode->input(kAttachIndex);
+      bool replace_judge = (u1 == u2) && (para1 != para3) && (para1 != value3) && (para2 != para3) &&
+                           (para2 != value3) && (value1 != para3) && (value2 != para3);
+      if (replace_judge) {
+        auto fg = update_state->func_graph();
+        MS_EXCEPTION_IF_NULL(fg);
+        auto mgr = fg->manager();
+        MS_EXCEPTION_IF_NULL(mgr);
+        mgr->Replace(u3, u1);
+
+        AnfNodePtrList new_make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), make_tuple_cnode->input(kInputIndex),
+                                             make_tuple_cnode->input(kAttachIndex), assign};
+        auto new_make_tuple = MakeTupleForSameNodes(fg, update_state, new_make_tuple_inputs);
+        mgr->Replace(make_tuple, new_make_tuple);
+        auto new_update_state = fg->NewCNode({NewValueNode(prim::kPrimUpdateState), u1, new_make_tuple});
+        new_update_state->set_abstract(update_state->abstract());
+        new_update_state->set_scope(update_state->scope());
+        return new_update_state;
       }
     }
   }
@@ -565,8 +503,7 @@ AnfNodePtr EliminateUpdateStateBetweenMakeTupleAssign(const OptimizerPtr &optimi
 // a3 = Assign(para3, value3, u1)
 // t = MakeTuple(a1, a2, a3)
 // u4 = UpdateState(u1, t)
-AnfNodePtr EliminateUpdateStateBetweenAssignMakeTuple(const OptimizerPtr &optimizer, const CNodePtr &update_state,
-                                                      const AnfNodePtr &make_tuple) {
+AnfNodePtr EliminateUpdateStateBetweenMakeTupleAssign(const CNodePtr &update_state, const AnfNodePtr &make_tuple) {
   auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
   if (make_tuple_cnode->size() != kMakeTupleSize || !OnlyUsedByOneNode(make_tuple, update_state)) {
     return nullptr;
@@ -609,12 +546,12 @@ AnfNodePtr EliminateUpdateStateBetweenAssignMakeTuple(const OptimizerPtr &optimi
           MS_EXCEPTION_IF_NULL(fg);
           auto mgr = fg->manager();
           MS_EXCEPTION_IF_NULL(mgr);
-          optimizer->SubstitutionReplace(mgr, u2, u1);
+          mgr->Replace(u2, u1);
           AnfNodePtrList new_make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), a1,
                                                make_tuple_cnode->input(kInputIndex),
                                                make_tuple_cnode->input(kAttachIndex)};
           auto new_make_tuple = MakeTupleForSameNodes(fg, update_state, new_make_tuple_inputs);
-          optimizer->SubstitutionReplace(mgr, make_tuple, new_make_tuple);
+          mgr->Replace(make_tuple, new_make_tuple);
           auto new_update_state = fg->NewCNode({NewValueNode(prim::kPrimUpdateState), u1, new_make_tuple});
           new_update_state->set_abstract(update_state->abstract());
           new_update_state->set_scope(update_state->scope());
@@ -625,29 +562,60 @@ AnfNodePtr EliminateUpdateStateBetweenAssignMakeTuple(const OptimizerPtr &optimi
   }
   return nullptr;
 }
+
+AnfNodePtr EliminateUpdateStateForAssign(const FuncGraphManagerPtr &manager, const CNodePtr &update_state) {
+  // UpdateState(u, MakeTuple)
+  auto &attach = update_state->input(kAttachIndex);
+  if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+    return EliminateUpdateStateBetweenMakeTupleAssign(update_state, attach);
+  }
+  // UpdateState(u, Assign(para, value, u))
+  if (IsPrimitiveCNode(attach, prim::kPrimAssign)) {
+    auto assign = attach->cast<CNodePtr>();
+    if (assign->size() != kAssignSize) {
+      return nullptr;
+    }
+    auto u = assign->input(kAssignMonadInputIndex);
+    // u is UpdateState, u only be used by assign and update_state.
+    if (IsPrimitiveCNode(u, prim::kPrimUpdateState) && OnlyUsedByTwoNode(u, assign, update_state)) {
+      auto u_attach = u->cast<CNodePtr>()->input(kAttachIndex);
+      if (IsPrimitiveCNode(u_attach, prim::kPrimAssign)) {
+        return EliminateUpdateStateBetweenAssigns(update_state, assign);
+      }
+      if (IsPrimitiveCNode(u_attach, prim::kPrimMakeTuple)) {
+        return EliminateUpdateStateBetweenAssignMakeTuple(update_state, assign);
+      }
+    }
+  }
+  return nullptr;
+}
 }  // namespace
 
 // Eliminate useless node that only used by associated update_state.
-// {prim::kPrimUpdateState, u, {prim::kPrimLoad, m, u}} -> u
-// {prim::kPrimUpdateState, u, {prim::kPrimPartial, m, u}} -> u
-// Convert:
-//   x1 = node(x, u)
-//   u1 = update_state(u, x1) # update_state is the only user of x1.
-//   user(u1)
-// To:
-//   user(u)
-AnfNodePtr UpdatestateOnlyUsedNodeEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+AnfNodePtr UpdatestateUselessNodeEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   auto update_state_node = dyn_cast<CNode>(node);
-  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
-    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
+  if (update_state_node == nullptr || update_state_node->size() != kUpdateStateSize) {
     return nullptr;
   }
+
+  // If update_state is the only user of partial/load, replace it with the input monad.
+  // UpdateState(u, Partial) -> u
+  // UpdateState(u, Load) -> u
   auto &attach = update_state_node->input(kAttachIndex);
   if (IsPrimitiveCNode(attach, prim::kPrimPartial) || IsPrimitiveCNode(attach, prim::kPrimLoad)) {
     // Replace UpdateState with the input monad.
     if (OnlyUsedByOneNode(attach, update_state_node)) {
       return update_state_node->input(kInputIndex);
     }
+    return nullptr;
+  }
+
+  // Handling the case where the second input of update_state is make_tuple which contains DeadNode or useless function.
+  // UpdateState(u, MakeTuple(input, "Dead Node")) -> UpdateState(u, input)
+  // UpdateState(u, MakeTuple(Function, input) -> UpdateState(u, input)
+  // UpdateState(u, MakeTuple(input, Function) -> UpdateState(u, input)
+  if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+    return EliminateUpdateStateMakeTupleWithUselessNode(update_state_node, attach->cast<CNodePtr>());
   }
   return nullptr;
 }
@@ -662,16 +630,24 @@ AnfNodePtr UpdatestateOnlyUsedNodeEliminater::operator()(const OptimizerPtr &, c
 //   user(u)
 AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   auto update_state_node = dyn_cast<CNode>(node);
-  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
-    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
+  if (update_state_node == nullptr || update_state_node->size() != kUpdateStateSize) {
     return nullptr;
   }
+
   auto &attach = update_state_node->input(kAttachIndex);
-  if (IsPrimitiveCNode(attach, prim::kPrimTupleGetItem) || IsPrimitiveCNode(attach, prim::kPrimDepend) ||
-      IsPrimitiveCNode(attach, prim::kPrimPartial) || IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+  auto cnode = dyn_cast<CNode>(attach);
+  if (cnode == nullptr) {
+    // Skip value node or parameter.
     return nullptr;
   }
-  return EliminateUpdateStateForPureNode(update_state_node, attach);
+  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
+      IsPrimitiveCNode(cnode, prim::kPrimPartial) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    return nullptr;
+  }
+  if (CheckHasMonadInput(cnode)) {
+    return nullptr;
+  }
+  return update_state_node->input(kInputIndex);
 }
 
 // Eliminate redundant UpdateState/Depend pair nodes caused by inline.
@@ -683,77 +659,111 @@ AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const
 // To:
 //    out = x_user(x)
 //    u2 = u_user(u)
-AnfNodePtr UpdatestateDependEliminater::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-  auto update_state_node = dyn_cast<CNode>(node);
-  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
-    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
-    return nullptr;
-  }
-  auto &attach = update_state_node->input(kAttachIndex);
-  if (IsPrimitiveCNode(attach, prim::kPrimDepend)) {
-    return EliminateUpdateStateWithDepend(optimizer, update_state_node, attach->cast<CNodePtr>());
-  }
-  return nullptr;
-}
-
-// Eliminate UpdateStates between Assign nodes.
-// Eliminate UpdateStates between Assign and MakeTuple.
-AnfNodePtr UpdatestateAssignEliminater::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-  auto update_state_node = dyn_cast<CNode>(node);
-  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
-    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
-    return nullptr;
-  }
-  auto &attach = update_state_node->input(kAttachIndex);
-  if (IsPrimitiveCNode(attach, prim::kPrimAssign)) {
-    auto new_node = EliminateUpdateStateBetweenAssigns(optimizer, update_state_node, attach);
-    if (new_node != nullptr) {
-      return new_node;
+bool UpdatestateDependEliminater::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+  // Filter nodes that do not match UpdateState(u, Depend).
+  auto filter = [](const AnfNodePtr &node) {
+    if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+      auto update_state = node->cast<CNodePtr>();
+      if (update_state->size() != kUpdateStateSize) {
+        return true;
+      }
+      auto &attach = update_state->input(kAttachIndex);
+      if (IsPrimitiveCNode(attach, prim::kPrimDepend)) {
+        return false;
+      }
     }
-    return EliminateUpdateStateBetweenMakeTupleAssign(optimizer, update_state_node, attach);
-  }
-  return nullptr;
-}
-
-// Eliminate UpdateStates which the second input is MakeTuple.
-AnfNodePtr UpdatestateMakeTupleEliminater::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-  PatternNode<AnfNodePtr> u, attach;
-  auto MakeTupleLambda = [&optimizer, &node, &u, &attach]() -> AnfNodePtr {
-    auto update_state_node = node->cast<CNodePtr>();
-    auto make_tuple = attach.GetNode(node)->cast<CNodePtr>();
-    auto new_node = EliminateMakeTupleWithDeadNode(update_state_node, make_tuple);
-    if (new_node != nullptr) {
-      return new_node;
-    }
-    new_node = EliminateUpdateStateWithMakeTupleFunc(update_state_node, make_tuple);
-    if (new_node != nullptr) {
-      return new_node;
-    }
-    return EliminateUpdateStateBetweenAssignMakeTuple(optimizer, update_state_node, make_tuple);
+    return true;
   };
 
-  MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimUpdateState, u, attach), MakeTupleLambda,
-                          IsPrimitiveCNode(attach.GetNode(node), prim::kPrimMakeTuple));
-  return nullptr;
+  bool change = false;
+  auto manager = optimizer->manager();
+  auto &all_nodes = manager->all_nodes();
+  std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  for (auto &node : todo) {
+    if (node == nullptr || !all_nodes.contains(node)) {
+      continue;
+    }
+    auto new_node = EliminateUpdateStateWithDepend(node->cast<CNodePtr>());
+    if (new_node != nullptr) {
+      manager->Replace(node, new_node);
+      change = true;
+    }
+  }
+  return change;
+}
+
+// Eliminate UpdateStates for consecutive Assign.
+bool UpdatestateAssignEliminater::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+  // Filter nodes that do not match UpdateState(u, Assign) or UpdateState(u, MakeTuple).
+  auto filter = [](const AnfNodePtr &node) {
+    if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+      auto update_state = node->cast<CNodePtr>();
+      if (update_state->size() != kUpdateStateSize) {
+        return true;
+      }
+      auto &attach = update_state->input(kAttachIndex);
+      if (IsPrimitiveCNode(attach, prim::kPrimAssign) || IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  bool change = false;
+  auto manager = optimizer->manager();
+  auto &all_nodes = manager->all_nodes();
+  std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  for (auto &node : todo) {
+    if (node == nullptr || !all_nodes.contains(node)) {
+      continue;
+    }
+    auto new_node = EliminateUpdateStateForAssign(manager, node->cast<CNodePtr>());
+    if (new_node != nullptr) {
+      manager->Replace(node, new_node);
+      change = true;
+    }
+  }
+  return change;
 }
 
 // Eliminate UpdateStates for consecutive Loads.
-AnfNodePtr UpdatestateLoadsEliminater::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
-  auto update_state_node = dyn_cast<CNode>(node);
-  if (update_state_node == nullptr || update_state_node->inputs().empty()) {
-    MS_LOG(WARNING) << "UpdatestateEliminater encounter invalid node: " << node->DebugString();
-    return nullptr;
-  }
-  auto &attach = update_state_node->input(kAttachIndex);
-  if (IsPrimitiveCNode(attach, prim::kPrimLoad) || IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+bool UpdatestateLoadsEliminater::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+  // Filter nodes that do not match UpdateState(u, Load) or UpdateState(u, MakeTuple).
+  auto filter = [](const AnfNodePtr &node) {
+    if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+      auto update_state = node->cast<CNodePtr>();
+      if (update_state->size() != kUpdateStateSize) {
+        return true;
+      }
+      auto &attach = update_state->input(kAttachIndex);
+      if (IsPrimitiveCNode(attach, prim::kPrimLoad) || IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  bool change = false;
+  auto manager = optimizer->manager();
+  auto &all_nodes = manager->all_nodes();
+  std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
+  for (auto &node : todo) {
+    if (node == nullptr || !all_nodes.contains(node)) {
+      continue;
+    }
     std::vector<CNodePtr> update_states;
     std::vector<CNodePtr> loads;
+    auto update_state_node = node->cast<CNodePtr>();
     GetLoadsFromUpdateState(update_state_node, &update_states, &loads);
     if (update_states.size() > 1 && loads.size() > 1) {
-      return EliminateUpdateStateForLoads(optimizer, update_state_node, update_states, loads);
+      auto new_node = EliminateUpdateStateForLoads(update_state_node, update_states, loads);
+      if (new_node != nullptr) {
+        manager->Replace(node, new_node);
+        change = true;
+      }
     }
   }
-  return nullptr;
+  return change;
 }
 
 // Eliminate Monad parameter for switch call.

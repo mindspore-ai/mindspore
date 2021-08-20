@@ -108,12 +108,8 @@ class OptimizeIRPassLib {
   SubstitutionPtr specialize_transform_;
 
   // Auto-monad related eliminaters.
-  SubstitutionPtr updatestate_only_used_node_eliminater_;
+  SubstitutionPtr updatestate_useless_node_eliminater_;
   SubstitutionPtr updatestate_pure_node_eliminater_;
-  SubstitutionPtr updatestate_depend_eliminater_;
-  SubstitutionPtr updatestate_assign_eliminater_;
-  SubstitutionPtr updatestate_maketuple_eliminater_;
-  SubstitutionPtr updatestate_loads_eliminater_;
   SubstitutionPtr switch_call_monad_eliminater_;
   SubstitutionPtr stopgrad_eliminater_;
   SubstitutionPtr load_eliminater_;

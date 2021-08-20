@@ -239,11 +239,7 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
 
     // Safe inlining
     irpass.inline_,
-    irpass.updatestate_depend_eliminater_,
-    irpass.updatestate_assign_eliminater_,
-    irpass.updatestate_maketuple_eliminater_,
-    irpass.updatestate_only_used_node_eliminater_,
-    irpass.updatestate_loads_eliminater_,
+    irpass.updatestate_useless_node_eliminater_,
     irpass.updatestate_pure_node_eliminater_,
     irpass.load_eliminater_,
     irpass.stopgrad_eliminater_,
@@ -279,11 +275,7 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
 
     // Safe inlining
     irpass.inline_,
-    irpass.updatestate_depend_eliminater_,
-    irpass.updatestate_assign_eliminater_,
-    irpass.updatestate_maketuple_eliminater_,
-    irpass.updatestate_only_used_node_eliminater_,
-    irpass.updatestate_loads_eliminater_,
+    irpass.updatestate_useless_node_eliminater_,
     irpass.updatestate_pure_node_eliminater_,
     irpass.load_eliminater_,
     irpass.stopgrad_eliminater_,
@@ -332,9 +324,15 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::OptPassConfig after_resolve_pass =
     opt::OptPassConfig({irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
+  opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
+  opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
+  opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
 
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"a_1", a_1},
+                         {"updatestate_depend_eliminate", updatestate_depend_eliminate},
+                         {"updatestate_assign_eliminate", updatestate_assign_eliminate},
+                         {"updatestate_loads_eliminate", updatestate_loads_eliminate},
                          {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
                          {"a_2", a_2},
                          {"accelerated_algorithm", accelerated_algorithm},
@@ -357,10 +355,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
 OptPassGroupMap GetA1A2(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
-  constexpr auto opt_a1_index = 0;
-  constexpr auto parameter_eliminate = 1;
-  constexpr auto opt_a2_index = 2;
-  OptPassGroupMap a1_a2({opt_a[opt_a1_index], opt_a[parameter_eliminate], opt_a[opt_a2_index]});
+  constexpr auto a1_a2_len = 6;
+  OptPassGroupMap a1_a2(opt_a.begin(), opt_a.begin() + a1_a2_len);
   return a1_a2;
 }
 
@@ -368,19 +364,21 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
   opt::OptPassConfig c_1 = opt::OptPassConfig({
     // Safe inlining,
     irpass.inline_,
-    irpass.updatestate_depend_eliminater_,
-    irpass.updatestate_assign_eliminater_,
-    irpass.updatestate_maketuple_eliminater_,
-    irpass.updatestate_only_used_node_eliminater_,
-    irpass.updatestate_loads_eliminater_,
+    irpass.updatestate_useless_node_eliminater_,
     irpass.updatestate_pure_node_eliminater_,
     irpass.load_eliminater_,
     irpass.switch_call_monad_eliminater_,
     irpass.stopgrad_eliminater_,
     irpass.partial_eliminate_,
   });
+  opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
+  opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
+  opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
 
   OptPassGroupMap map_a({{"c_1", c_1},
+                         {"updatestate_depend_eliminate", updatestate_depend_eliminate},
+                         {"updatestate_assign_eliminate", updatestate_assign_eliminate},
+                         {"updatestate_loads_eliminate", updatestate_loads_eliminate},
                          {"cse", opt::OptPassConfig(opt::CSEPass(false))},
                          {"renormalize", opt::OptPassConfig::Renormalize()}});
 
@@ -410,11 +408,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.float_tuple_getitem_switch_,
                                                irpass.reset_defer_inline_,
                                                irpass.inline_,
-                                               irpass.updatestate_depend_eliminater_,
-                                               irpass.updatestate_assign_eliminater_,
-                                               irpass.updatestate_maketuple_eliminater_,
-                                               irpass.updatestate_only_used_node_eliminater_,
-                                               irpass.updatestate_loads_eliminater_,
+                                               irpass.updatestate_useless_node_eliminater_,
                                                irpass.updatestate_pure_node_eliminater_,
                                                irpass.load_eliminater_,
                                                irpass.stopgrad_eliminater_,
@@ -438,9 +432,15 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.get_ref_param_eliminate_,
     irpass.row_tensor_eliminate_,
   });
+  opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
+  opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
+  opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
   OptPassGroupMap map({
     {"b_1", b_1},
     {"b_2", b_2},
+    {"updatestate_depend_eliminate", updatestate_depend_eliminate},
+    {"updatestate_assign_eliminate", updatestate_assign_eliminate},
+    {"updatestate_loads_eliminate", updatestate_loads_eliminate},
     {"renormalize", opt::OptPassConfig::Renormalize()},
     {"cse", opt::OptPassConfig(opt::CSEPass(false))},
   });
@@ -684,35 +684,25 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
   res->set_manager(func_graph->manager());
 
   // opt::irpass::OptimizeIRPassLib is not used here to avoid double free problems in external calls.
-  opt::SubstitutionPtr updatestate_depend_eliminater =
-    opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateDependEliminater>(), "updatestate_depend_eliminater",
-                          prim::kPrimUpdateState, true);
-  opt::SubstitutionPtr updatestate_assign_eliminater =
-    opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateAssignEliminater>(), "updatestate_assign_eliminater",
-                          prim::kPrimUpdateState, true);
-  opt::SubstitutionPtr updatestate_maketuple_eliminater =
-    opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateMakeTupleEliminater>(),
-                          "updatestate_maketuple_eliminater", prim::kPrimUpdateState, true);
-  opt::SubstitutionPtr updatestate_only_used_node_eliminater =
-    opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateOnlyUsedNodeEliminater>(),
-                          "updatestate_only_used_node_eliminater", prim::kPrimUpdateState);
-  opt::SubstitutionPtr updatestate_loads_eliminater =
-    opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateLoadsEliminater>(), "updatestate_loads_eliminater",
-                          prim::kPrimUpdateState, true);
+  opt::SubstitutionPtr updatestate_useless_node_eliminater =
+    opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestateUselessNodeEliminater>(),
+                          "updatestate_useless_node_eliminater", prim::kPrimUpdateState);
   opt::SubstitutionPtr updatestate_pure_node_eliminater =
     opt::MakeSubstitution(std::make_shared<opt::irpass::UpdatestatePureNodeEliminater>(),
                           "updatestate_pure_node_eliminater", prim::kPrimUpdateState);
 
   opt::OptPassConfig updatestate_eliminater = opt::OptPassConfig({
-    updatestate_depend_eliminater,
-    updatestate_assign_eliminater,
-    updatestate_maketuple_eliminater,
-    updatestate_only_used_node_eliminater,
-    updatestate_loads_eliminater,
+    updatestate_useless_node_eliminater,
     updatestate_pure_node_eliminater,
   });
+  opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
+  opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
+  opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
   opt::OptPassGroupMap elim_map({
     {"updatestate_eliminater", updatestate_eliminater},
+    {"updatestate_depend_eliminate", updatestate_depend_eliminate},
+    {"updatestate_assign_eliminate", updatestate_assign_eliminate},
+    {"updatestate_loads_eliminate", updatestate_loads_eliminate},
     {"auto_monad_eliminator", opt::OptPassConfig(opt::AutoMonadEliminator())},
   });
 

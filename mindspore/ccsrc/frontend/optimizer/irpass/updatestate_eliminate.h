@@ -22,7 +22,7 @@
 
 namespace mindspore::opt::irpass {
 // Eliminate useless node that only used by associated update_state.
-class UpdatestateOnlyUsedNodeEliminater : public AnfVisitor {
+class UpdatestateUselessNodeEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
 };
@@ -34,28 +34,22 @@ class UpdatestatePureNodeEliminater : public AnfVisitor {
 };
 
 // Eliminate redundant UpdateState/Depend pair nodes caused by inline.
-class UpdatestateDependEliminater : public AnfVisitor {
+class UpdatestateDependEliminater {
  public:
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 };
 
 // Eliminate UpdateStates between Assign nodes.
 // Eliminate UpdateStates between Assign and MakeTuple.
-class UpdatestateAssignEliminater : public AnfVisitor {
+class UpdatestateAssignEliminater {
  public:
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
-};
-
-// Eliminate UpdateStates which the second input is MakeTuple.
-class UpdatestateMakeTupleEliminater : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 };
 
 // Eliminate UpdateStates for consecutive Loads.
-class UpdatestateLoadsEliminater : public AnfVisitor {
+class UpdatestateLoadsEliminater {
  public:
-  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 };
 
 // SwitchCallMonadParameterEliminater eliminates Monad parameter in switch call.

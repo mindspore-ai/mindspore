@@ -42,19 +42,16 @@ class Substitution {
   OptimizerCallerPtr transform_;
   std::string name_;
   PredicateFuncType predicate_{nullptr};
-  // Determine whether there is a node replacement in the substitution, such as manager->Replace(old_node, new_node).
-  bool has_node_replacement_{false};
   // An enum to mark this Substitution relation to renormalize pass.
   RenormAction renorm_action_;
   // Determine whether it is a priority substitution, that is, some patterns need to be matched prior to others.
   bool has_priority_pattern_{false};
 
   Substitution(const OptimizerCallerPtr &transform, const std::string &name, const PredicateFuncType &predicate,
-               bool has_node_replacement, const RenormAction &renorm_action, bool has_priority_pattern)
+               const RenormAction &renorm_action, bool has_priority_pattern)
       : transform_(transform),
         name_(name),
         predicate_(predicate),
-        has_node_replacement_(has_node_replacement),
         renorm_action_(renorm_action),
         has_priority_pattern_(has_priority_pattern) {}
   ~Substitution() = default;
@@ -64,14 +61,13 @@ class Substitution {
 using SubstitutionPtr = std::shared_ptr<Substitution>;
 
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name, const PrimitivePtr &prim,
-                                 bool has_node_replacement = false, const RenormAction &action_renorm = CHECK_RENORM,
+                                 const RenormAction &action_renorm = CHECK_RENORM, bool has_priority_pattern = false);
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
+                                 const std::vector<PrimitivePtr> &prims,
+                                 const RenormAction &action_renorm = CHECK_RENORM, bool has_priority_pattern = false);
+SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
+                                 const PredicateFuncType &predicate, const RenormAction &action_renorm = CHECK_RENORM,
                                  bool has_priority_pattern = false);
-SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
-                                 const std::vector<PrimitivePtr> &prims, bool has_node_replacement = false,
-                                 const RenormAction &action_renorm = CHECK_RENORM, bool has_priority_pattern = false);
-SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
-                                 const PredicateFuncType &predicate, bool has_node_replacement = false,
-                                 const RenormAction &action_renorm = CHECK_RENORM, bool has_priority_pattern = false);
 
 enum OptTraverseSubstitutionsMode { kOptTraverseFromIRToSubstitutions = 0, kOptTraverseFromSubstitutionsToIR };
 
