@@ -26,6 +26,7 @@
 #include "acl/acl_tdt.h"
 #include "runtime/dev.h"
 #include "toolchain/plog.h"
+#include "common/util/error_manager/error_manager.h"
 #endif
 #ifdef ENABLE_GE
 #include "transform/graph_ir/df_graph_manager.h"
@@ -83,6 +84,10 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
   auto ret = rtSetDevice(static_cast<int32_t>(device_id));
   if (ret != RT_ERROR_NONE) {
+    const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+    if (!error_message.empty()) {
+      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    }
     MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
@@ -113,6 +118,10 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = rtDeviceReset(static_cast<int32_t>(device_id));
     if (ret != RT_ERROR_NONE) {
+      const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+      if (!error_message.empty()) {
+        MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+      }
       MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
       return false;
     }

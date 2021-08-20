@@ -93,6 +93,7 @@ const size_t kLoopSinkNextLoopIndex = 1;
 const size_t kLoopSinkEpochIndex = 2;
 constexpr char SR_TAG[] = "sr_tag";
 constexpr char BACKWARD[] = "backward";
+constexpr auto kUnknowErrorString = "Unknown error occurred";
 namespace {
 void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::string &tag = "") {
   MS_LOG(INFO) << "Dump execution_order size " << execution_order.size();
@@ -1546,6 +1547,9 @@ void AscendSession::ReportWarningMessage() {
 
 void AscendSession::ReportErrorMessage() {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+  if (error_message.find(kUnknowErrorString) != string::npos) {
+    return;
+  }
   if (!error_message.empty()) {
     MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
   }

@@ -384,7 +384,7 @@ class TbeJobManager:
                 if "except_msg" in new_job:
                     target_job.error("Query except_msg:{}".format(new_job["except_msg"]))
                 if "except_tuple_msg" in new_job:
-                    target_job.error("Query except_tuple_msg:{}".format(new_job["except_tuple_msg"]))
+                    target_job.exception(new_job["except_tuple_msg"])
                 target_job.error("\nOriginal compile json: \n {}\n".format(target_job.json_string))
             post_job(self._raw_finish_jobs, target_job)
             del_job(self._running_jobs, target_job.source_id, target_job.id)
@@ -437,6 +437,10 @@ class DummyLogger:
 
     @staticmethod
     def error(msg, *args, **kwargs):
+        pass
+
+    @staticmethod
+    def exception(msg, *args, **kwargs):
         pass
 
 
