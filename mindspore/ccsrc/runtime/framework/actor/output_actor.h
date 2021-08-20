@@ -41,7 +41,7 @@ using mindspore::tensor::TensorPtr;
 class OutputActor : public AbstractActor {
  public:
   OutputActor(std::string name, size_t loop_count, size_t outputs_num, bool need_loop_count)
-      : AbstractActor(name, nullptr),
+      : AbstractActor(name, KernelTransformType::kOutputActor, nullptr),
         loop_count_(loop_count),
         current_count_(0),
         outputs_num_(outputs_num),
