@@ -851,10 +851,12 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     branchAsyncResults.emplace_back(std::move(branchAsyncResult));
   }
 
+  constexpr auto async_evaluators_size = 2;
   MS_LOG(DEBUG) << GetInferThread()
-                << (evaluators.size() >= 2 ? "async : wait for one of async to finish.  " + evaluators[0]->ToString() +
-                                               " or  " + evaluators[1]->ToString() + "..."
-                                           : " ");
+                << (evaluators.size() >= async_evaluators_size
+                      ? "async : wait for one of async to finish.  " + evaluators[0]->ToString() + " or  " +
+                          evaluators[1]->ToString() + "..."
+                      : " ");
   HealthPointMgr::GetInstance().Add2Schedule(asyncResult_main);  // Third order
   auto firstResult = asyncResult_main->GetResult();
   MS_EXCEPTION_IF_NULL(firstResult);
