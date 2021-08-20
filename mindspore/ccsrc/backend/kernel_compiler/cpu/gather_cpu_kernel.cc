@@ -27,13 +27,33 @@ void GatherV2CPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  if (axis_ < 0) {
-    axis_ = axis_ + SizeToLong(input_shape_.size());
+  if (!is_dynamic_shape_) {
+    axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   }
-  axis_ += 4 - input_shape_.size();
-  CPUKernelUtils::ExpandDimsTo4(&input_shape_);
-  CPUKernelUtils::ExpandDimsTo4(&output_shape_);
+}
+
+template <typename T>
+bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
+  auto input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
+  indices_data_ = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
+  if (is_dynamic_shape_) {
+    axis_ = reinterpret_cast<int64_t *>(inputs[2]->addr)[0];
+  }
+
+  int dims = SizeToInt(input_shape_.size());
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(ERROR) << "axis must be in the range [-rank, rank)";
+    return false;
+  } else if (axis_ < 0) {
+    axis_ = axis_ + dims;
+  }
+
+  int max_thread_num = static_cast<int>(common::ThreadPool::GetInstance().GetSyncRunThreadNum());
+  ParallelRun(input_tensor, output_addr, max_thread_num);
+  return true;
 }
 
 template <typename T>
@@ -76,25 +96,14 @@ void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, 
 }
 
 template <typename T>
-bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
-  int8_t *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
-  indices_data_ = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  int8_t *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-  int max_thread_num = static_cast<int>(common::ThreadPool::GetInstance().GetSyncRunThreadNum());
-  ParallelRun(input_tensor, output_addr, max_thread_num);
-  return true;
-}
-
-template <typename T>
 void GatherV2CPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.size() > 4) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but GatherV2CPUKernel olny support 4d or lower.";
-  }
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
+  if (input_num == 3) {
+    is_dynamic_shape_ = true;
+    MS_LOG(DEBUG) << " GatherV2CPUKernel running in Dynamic Mode.";
+  } else if (input_num == 2) {
+    MS_LOG(DEBUG) << " GatherV2CPUKernel running in Normal Mode.";
+  } else {
     MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherV2CPUKernel needs 2.";
   }
 }
