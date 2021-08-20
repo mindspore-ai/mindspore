@@ -96,6 +96,10 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "tensor.h", tensor_header},
     {net_src_file_path_ + "tensor.cc", tensor_source},
     {net_src_file_path_ + "mmodel.h", model_header}};
+
+  if (config_->CustomFlag()) {
+    const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "custom_params.h", custom_params_source));
+  }
   if (config_->support_parallel()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + kThreadWrapper, thread_header));
   }

@@ -51,7 +51,9 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build(int schema_version) {
   op_coder->set_output_tensor_indices(output_indices_);
   int thread_num = support_parallel_ ? kMaxThreadNumSupported : 1;
   op_coder->set_thread_num(thread_num);
-  parameter_->thread_num_ = thread_num;
+  if (primitive_type != schema::PrimitiveType_Custom) {
+    parameter_->thread_num_ = thread_num;
+  }
   op_coder->set_parameter(parameter_);
   op_coder->set_type(primitive_type);
   return op_coder;

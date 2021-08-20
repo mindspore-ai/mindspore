@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MTENSOR_H_
-#define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MTENSOR_H_
+#include "coder/user_registry/user_kernel_register.h"
+#include "schema/ops_generated.h"
+
+using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore::lite::micro {
-
-extern const char tensor_header[];
-extern const char tensor_source[];
-extern const char custom_params_source[];
-
+REG_USER_KERNEL(kARM32A, kNumberTypeInt8, PrimitiveType_Custom, nnie_micro.h, NnieKernel, nniemicro)
+REG_USER_KERNEL(kARM32A, kNumberTypeUInt8, PrimitiveType_Custom, nnie_micro.h, NnieKernel, nniemicro)
+REG_USER_KERNEL(kARM32A, kNumberTypeFloat32, PrimitiveType_Custom, nnie_micro.h, NnieKernel, nniemicro)
 }  // namespace mindspore::lite::micro
-
-#endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MTENSOR_H_

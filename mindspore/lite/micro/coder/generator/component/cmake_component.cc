@@ -17,6 +17,7 @@
 #include "coder/generator/component/cmake_component.h"
 #include <set>
 #include <memory>
+#include "coder/user_registry/user_kernel_register.h"
 
 namespace mindspore::lite::micro {
 void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
@@ -58,5 +59,13 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
          "     ${CMAKE_CURRENT_SOURCE_DIR}/*.c\n"
          "     )\n"
          "add_library(net STATIC ${NET_SRC})\n";
+  auto user_libs = UserKernelFactory::GetInstance()->UserKernelLibNames();
+  if (config->CustomFlag() && !user_libs.empty()) {
+    ofs << "target_link_libraries(net";
+    for (auto lib : user_libs) {
+      ofs << " " << lib;
+    }
+    ofs << ")\n";
+  }
 }
 }  // namespace mindspore::lite::micro

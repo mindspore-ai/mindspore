@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_MICRO_CODER_TRANSPOSE_INT8_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_TRANSPOSE_INT8_CODER_H_
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_NCHW2FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_NCHW2FP32_CODER_H_
-
-#include <string>
 #include <vector>
 #include "coder/opcoders/op_coder.h"
-#include "nnacl/base/tile_base.h"
+#include "nnacl/transpose.h"
 
 namespace mindspore::lite::micro::nnacl {
-class Nchw2NhwcFP32Coder final : public OperatorCoder {
+class TransposeInt8Coder final : public OperatorCoder {
  public:
-  Nchw2NhwcFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+  TransposeInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                      const Model::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~Nchw2NhwcFP32Coder() override = default;
+  ~TransposeInt8Coder() override = default;
+
   int Prepare(CoderContext *const context) override;
 
   int DoCode(CoderContext *const context) override;
+
+ private:
+  TransposeParameter *param_{nullptr};
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_NCHW2FP32_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_TRANSPOSE_INT8_CODER_H_
