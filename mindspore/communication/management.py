@@ -137,8 +137,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group.
-        Default: WORLD_COMM_GROUP.
+                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
 
     Returns:
         int, the rank ID of the calling process within the group.
@@ -161,8 +160,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group.
-        Default: WORLD_COMM_GROUP.
+                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
 
     Returns:
         int, the local rank ID of the calling process within the group.
@@ -184,8 +182,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group.
-        Default: WORLD_COMM_GROUP.
+                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
 
     Returns:
         int, the rank size of the group.
@@ -208,7 +205,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
-                     or the default world communication group.
+                     or the default world communication group. Default: WORLD_COMM_GROUP.
 
     Returns:
         int, the local rank size where the calling process is within the group.
@@ -308,7 +305,7 @@ def create_group(group, rank_ids):
     Raises:
         TypeError: If group is not a string or `rank_ids` is not a list.
         ValueError: If `rank_ids` size is not larger than 1, or `rank_ids` has duplicate data, or backend is invalid.
-        RuntimeError: If hccl/nccl is not available or MindSpore is GPU version..
+        RuntimeError: If hccl is not available or MindSpore is GPU version.
 
     Examples:
         >>> from mindspore.context import set_context

@@ -422,7 +422,7 @@ def set_auto_parallel_context(**kwargs):
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
-                         distributed alone the pipeline. The total devices will be divided into 'pipeline_stags' stages.
+                        distributed alone the pipeline. The total devices will be divided into 'pipeline_stags' stages.
                         Currently this could only be used when parallel mode semi_auto_parallel is enabled. Default: 1.
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
                         This should be a positive int. Default: 1.
