@@ -505,6 +505,7 @@ inline const PrimitivePtr kPrimIdentityMath = std::make_shared<Primitive>("Ident
 inline const PrimitivePtr kPrimIsNan = std::make_shared<Primitive>("IsNan");
 inline const PrimitivePtr kPrimIsInf = std::make_shared<Primitive>("IsInf");
 inline const PrimitivePtr kPrimIsFinite = std::make_shared<Primitive>("IsFinite");
+inline const PrimitivePtr kPrimLerp = std::make_shared<Primitive>("Lerp");
 inline const PrimitivePtr kPrimSquareSumAll = std::make_shared<Primitive>("SquareSumAll");
 
 // Statements

@@ -1239,6 +1239,12 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.random.rand(24000, 4).astype(np.bool_))],
         'desc_bprop': [[256, 4], [256, 4]],
         'skip': ['backward']}),
+    ('Lerp', {
+        'block': P.Lerp(),
+        'desc_inputs': [Tensor(np.array([1., 2., 3., 4.]).astype(np.float32)),
+                        Tensor(np.array([10., 10., 10., 10.]).astype(np.float32)),
+                        Tensor(0.5, mstype.float32)],
+        'desc_bprop': [Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))]}),
     ('LessEqual', {
         'block': P.LessEqual(),
         'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),

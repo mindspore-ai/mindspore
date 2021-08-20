@@ -3529,6 +3529,53 @@ class GreaterEqual(_LogicBinaryOp):
         return None
 
 
+class Lerp(Primitive):
+    """
+    Does a linear interpolation of two tensors start and end based on a float or tensor weight.
+
+    If `weight` is a tensor, the shapes of three inputs need to be broadcast;
+    If `weight` is a float, the shapes of `start` and `end` need to be broadcast.
+
+    .. math::
+
+        output_{i} = start_{i} + weight_{i} * (end_{i} - start_{i})
+
+    Inputs:
+        - **start** (Tensor) - The tensor with the starting points. Data type must be float16 or float32.
+        - **end** (Tensor) - The tensor with the ending points. Data type must be float16 or float32.
+        - **weight** (Union[float, Tensor]) – The weight for the interpolation formula. Must be a float
+          or a scalar tensor with float16 or float32 data type.
+
+    Outputs:
+        Tensor, has the same type and shape as input `start`.
+
+    Raises:
+        TypeError: If `start` or `end` is not a tensor.
+        TypeError: If `weight` is neither float nor tensor.
+        TypeError: If dtype of `start` or `end` is neither float16 nor float32.
+        TypeError: If dtype of `weight` is neither float16 nor float32 when it is a tensor.
+        TypeError: If `start` and `end` have different data types.
+        TypeError: If `start`, `end` and `weight` have different data types when `weight` is a tensor.
+        ValueError: If `end` could not be broadcast to a tensor with shape of `start`.
+        ValueError: If `weight` could not be broadcast to tensors with shapes of `start` and `end` when it is a tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+        >>> end = Tensor(np.array([10., 10., 10., 10.]), mindspore.float32)
+        >>> lerp = ops.Lerp()
+        >>> output = lerp(start, end, 0.5)
+        >>> print(output)
+        [5.5 6. 6.5 7. ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['start', 'end', 'weight'], outputs=['output'])
+
+
 class Less(_LogicBinaryOp):
     r"""
     Computes the boolean value of :math:`x < y` element-wise.
