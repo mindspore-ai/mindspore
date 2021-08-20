@@ -72,9 +72,7 @@ class _ConvVariational(_Conv):
         self.group = group
         self.has_bias = has_bias
 
-        # distribution trainable parameters
-        self.shape = [self.out_channels,
-                      self.in_channels // self.group, *self.kernel_size]
+        self.shape = [self.out_channels, self.in_channels // self.group, *self.kernel_size]
 
         self.weight.requires_grad = False
         self.weight_prior = check_prior(weight_prior_fn, "weight_prior_fn")
@@ -108,6 +106,7 @@ class _ConvVariational(_Conv):
         return outputs
 
     def extend_repr(self):
+        """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, pad_mode={}, ' \
             'padding={}, dilation={}, group={}, weight_mean={}, weight_std={}, has_bias={}' \
             .format(self.in_channels, self.out_channels, self.kernel_size, self.stride, self.pad_mode, self.padding,
@@ -135,6 +134,7 @@ class _ConvVariational(_Conv):
         return kl_loss
 
     def apply_variational_bias(self, inputs):
+        """Calculate bias."""
         bias_posterior_tensor = self.bias_posterior("sample")
         return self.bias_add(inputs, bias_posterior_tensor)
 
@@ -261,6 +261,7 @@ class ConvReparam(_ConvVariational):
         )
 
     def apply_variational_weight(self, inputs):
+        """Calculate weight."""
         weight_posterior_tensor = self.weight_posterior("sample")
         outputs = self.conv2d(inputs, weight_posterior_tensor)
         return outputs
