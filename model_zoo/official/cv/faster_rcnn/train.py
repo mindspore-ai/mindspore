@@ -44,6 +44,7 @@ if config.backbone in ("resnet_v1.5_50", "resnet_v1_101", "resnet_v1_152"):
     from src.FasterRcnn.faster_rcnn_resnet import Faster_Rcnn_Resnet
 elif config.backbone == "resnet_v1_50":
     from src.FasterRcnn.faster_rcnn_resnet50v1 import Faster_Rcnn_Resnet
+    config.epoch_size = 20
 
 if config.device_target == "GPU":
     context.set_context(enable_graph_kernel=True)

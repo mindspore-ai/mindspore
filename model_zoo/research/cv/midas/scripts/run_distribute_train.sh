@@ -24,7 +24,7 @@ set -e
 
 RANK_SIZE=$1
 export RANK_SIZE
-
+export HCCL_CONNECT_TIMEOUT=600
 EXEC_PATH=$(pwd)
 echo "$EXEC_PATH"
 

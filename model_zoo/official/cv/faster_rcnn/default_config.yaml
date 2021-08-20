@@ -121,7 +121,7 @@ batch_size: 2
 loss_scale: 256
 momentum: 0.91
 weight_decay: 0.00001
-epoch_size: 20
+epoch_size: 12
 save_checkpoint: True
 save_checkpoint_epochs: 1
 keep_checkpoint_max: 5
@@ -162,7 +162,7 @@ device_num: 1
 rank_id: 0
 image_dir: ''
 anno_path: ''
-backbone: 'resnet_v1_50'
+backbone: 'resnet_v1.5_50'
 
 # eval.py FasterRcnn evaluation
 ann_file: '/cache/data/annotations/instances_val2017.json'
