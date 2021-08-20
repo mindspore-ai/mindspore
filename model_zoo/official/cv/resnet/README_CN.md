@@ -246,6 +246,10 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
 "lr_init":0.01,                  # 初始学习率
 "lr_end":0.0001,                  # 最终学习率
 "lr_max":0.1,                    # 最大学习率
+"save_graphs":False              # 是否保存图编译结果
+“save_graphs_path”:"./graphs"    # 图编译结果保存路径
+"has_trained_epoch":0,           # 加载已经训练好的模型的epoch大小；实际训练周期大小等于epoch_size减去has_trained_epoch
+"has_trained_step":0,            # 加载已经训练好的模型的step大小；实际训练周期大小等于step_size减去has_trained_step
 ```
 
 - 配置ResNet18、ResNet50和ImageNet2012数据集。
@@ -268,6 +272,10 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
 "lr_init":0,                     # 初始学习率
 "lr_max":0.8,                    # 最大学习率
 "lr_end":0.0,                    # 最小学习率
+"save_graphs":False              # 是否保存图编译结果
+“save_graphs_path”:"./graphs"    # 图编译结果保存路径
+"has_trained_epoch":0,           # 加载已经训练好的模型的epoch大小；实际训练周期大小等于epoch_size减去has_trained_epoch
+"has_trained_step":0,            # 加载已经训练好的模型的step大小；实际训练周期大小等于step_size减去has_trained_step
 ```
 
 - 配置ResNet34和ImageNet2012数据集。
@@ -409,6 +417,20 @@ bash run_standalone_train_gpu.sh [CONFIG_PATH] [RUN_EVAL](optional) [EVAL_DATASE
 默认情况下我们将启动一个独立的缓存服务器将推理数据集的图片以tensor的形式保存在内存中以带来推理性能的提升。用户在使用缓存前需确保内存大小足够缓存推理集中的图片（缓存ImageNet2012的推理集大约需要30GB的内存，缓存CIFAR-10的推理集约需要使用6GB的内存）。
 
 在训练结束后，可以选择关闭缓存服务器或不关闭它以继续为未来的推理提供缓存服务。
+
+## 续训过程
+
+### 用法
+
+#### Ascend处理器环境运行
+
+```text
+# 分布式训练
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]
+
+# 单机训练
+用法：bash run_standalone_train.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]
+```
 
 ### 结果
 
