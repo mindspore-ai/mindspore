@@ -475,73 +475,61 @@ LoopRow4:
             st1 {v14.4s}, [x11], #16
             b WriteEnd
         C4Write5:
-            add x19, x11, #16
-            st1 {v8.4s}, [x11]
-            add x11, x11, #20
-            str s9, [x19]
-            add x19, x19, #20
+            add x19, x11, x8
+            st1 {v8.4s}, [x11], #16
+            str s9, [x19], #4
             cmp x6, #1
             beq WriteEnd
-            st1 {v10.4s}, [x11]
-            add x11, x11, #20
-            str s11, [x19]
-            add x19, x19, #20
+            st1 {v10.4s}, [x11], #16
+            str s11, [x19], #4
             cmp x6, #2
             beq WriteEnd
-            st1 {v12.4s}, [x11]
-            add x11, x11, #20
-            str s13, [x19]
-            add x19, x19, #20
+            st1 {v12.4s}, [x11], #16
+            str s13, [x19], #4
             cmp x6, #3
             beq WriteEnd
-            st1 {v14.4s}, [x11]
-            str s15, [x19]
+            st1 {v14.4s}, [x11], #16
+            str s15, [x19], #4
             b WriteEnd
         C4Write6:
-            add x19, x11, #16
-            st1 {v8.4s}, [x11]
-            add x11, x11, #24
-            st1 {v9.2s}, [x19]
-            add x19, x19, #24
+            add x19, x11, x8
+            st1 {v8.4s}, [x11], #16
+            st1 {v9.2s}, [x19], #8
             cmp x6, #1
             beq WriteEnd
-            st1 {v10.4s}, [x11]
-            add x11, x11, #24
-            st1 {v11.2s}, [x19]
-            add x19, x19, #24
+            st1 {v10.4s}, [x11], #16
+            st1 {v11.2s}, [x19], #8
             cmp x6, #2
             beq WriteEnd
-            st1 {v12.4s}, [x11]
-            add x11, x11, #24
-            st1 {v13.2s}, [x19]
-            add x19, x19, #24
+            st1 {v12.4s}, [x11], #16
+            st1 {v13.2s}, [x19], #8
             cmp x6, #3
             beq WriteEnd
-            st1 {v14.4s}, [x11]
-            st1 {v15.2s}, [x19]
+            st1 {v14.4s}, [x11], #16
+            st1 {v15.2s}, [x19], #8
             b WriteEnd
         C4Write7:
-            add x19, x11, #16
-            add x16, x11, #24
-            mov x10, #28
-            st1 {v8.4s}, [x11], x10
-            st1 {v9.2s}, [x19], x10
-            st1 {v9.s}[2], [x16], x10
+            add x19, x11, x8
+            add x16, x19, #8
+            mov x15, #12
+            st1 {v8.4s}, [x11], #16
+            st1 {v9.2s}, [x19], x15
+            st1 {v9.s}[2], [x16], x15
             cmp x6, #1
             beq WriteEnd
-            st1 {v10.4s}, [x11], x10
-            st1 {v11.2s}, [x19], x10
-            st1 {v11.s}[2], [x16], x10
+            st1 {v10.4s}, [x11], #16
+            st1 {v11.2s}, [x19], x15
+            st1 {v11.s}[2], [x16], x15
             cmp x6, #2
             beq WriteEnd
-            st1 {v12.4s}, [x11], x10
-            st1 {v13.2s}, [x19], x10
-            st1 {v13.s}[2], [x16], x10
+            st1 {v12.4s}, [x11], #16
+            st1 {v13.2s}, [x19], x15
+            st1 {v13.s}[2], [x16], x15
             cmp x6, #3
             beq WriteEnd
-            st1 {v14.4s}, [x11], x10
-            st1 {v15.2s}, [x19], x10
-            st1 {v15.s}[2], [x16], x10
+            st1 {v14.4s}, [x11], #16
+            st1 {v15.2s}, [x19], x15
+            st1 {v15.s}[2], [x16], x15
             b WriteEnd
         C4Write8:
             add x19, x11, x8

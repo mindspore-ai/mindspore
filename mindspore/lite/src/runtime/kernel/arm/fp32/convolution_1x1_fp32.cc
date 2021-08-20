@@ -195,13 +195,14 @@ int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
       MatMulOpt(thread_pack_input, reinterpret_cast<float *>(packed_weight_), cur_output,
                 reinterpret_cast<float *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_rows,
                 matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
+      cur_output += row_tile_ * matmul_param_->col_;
     } else {
       MatMulOpt(thread_pack_input, reinterpret_cast<float *>(packed_weight_), cur_output,
                 reinterpret_cast<float *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_rows,
                 matmul_param_->col_, matmul_param_->row_, OutType_NC4HW4);
+      cur_output += row_tile_ * MSMIN(matmul_param_->col_, C4NUM);
     }
     cur_intput += row_tile_ * matmul_param_->deep_;
-    cur_output += row_tile_ * matmul_param_->col_;
   }
 
   return RET_OK;
