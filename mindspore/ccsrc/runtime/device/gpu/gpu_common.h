@@ -210,12 +210,44 @@ inline bool CheckNullInput(const std::vector<size_t> &input_shape) {
 }
 #define CHECK_NULL_INPUT(input_shape) mindspore::device::gpu::CheckNullInput(input_shape)
 
-#define CHECK_CURAND_RET_WITH_EXCEPT(expression, message)                                     \
-  {                                                                                           \
-    curandStatus_t status = (expression);                                                     \
-    if (status != CURAND_STATUS_SUCCESS) {                                                    \
-      MS_LOG(EXCEPTION) << "CUDA curand Error: " << message << " | curandStatus: " << status; \
-    }                                                                                         \
+inline const char *CurandGetErrorString(curandStatus_t status) {
+  switch (status) {
+    case CURAND_STATUS_VERSION_MISMATCH:
+      return "Header file and linked library version do not match.";
+    case CURAND_STATUS_NOT_INITIALIZED:
+      return "Generator not initialized.";
+    case CURAND_STATUS_ALLOCATION_FAILED:
+      return "Memory allocation failed.";
+    case CURAND_STATUS_TYPE_ERROR:
+      return "Generator is wrong type.";
+    case CURAND_STATUS_OUT_OF_RANGE:
+      return "Argument out of range.";
+    case CURAND_STATUS_LENGTH_NOT_MULTIPLE:
+      return "Length requested is not a multiple of dimension.";
+    case CURAND_STATUS_DOUBLE_PRECISION_REQUIRED:
+      return "GPU does not have double precision required by MRG32k3a.";
+    case CURAND_STATUS_LAUNCH_FAILURE:
+      return "Kernel launch failure.";
+    case CURAND_STATUS_PREEXISTING_FAILURE:
+      return "Preexisting failure on library entry.";
+    case CURAND_STATUS_INITIALIZATION_FAILED:
+      return "Initialization of CUDA failed.";
+    case CURAND_STATUS_ARCH_MISMATCH:
+      return "Architecture mismatch, GPU does not support requested feature.";
+    case CURAND_STATUS_INTERNAL_ERROR:
+      return "Internal library error.";
+    default:
+      return "Unknown the curandStatus.";
+  }
+}
+
+#define CHECK_CURAND_RET_WITH_EXCEPT(expression, message)                                           \
+  {                                                                                                 \
+    curandStatus_t status = (expression);                                                           \
+    if (status != CURAND_STATUS_SUCCESS) {                                                          \
+      MS_LOG(EXCEPTION) << "CUDA curand Error: " << message << " | curandStatus: " << status << " " \
+                        << mindspore::device::gpu::CurandGetErrorString(status);                    \
+    }                                                                                               \
   }
 }  // namespace gpu
 }  // namespace device
