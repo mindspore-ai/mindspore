@@ -28,8 +28,9 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._cost_model_context import _set_multi_subgraphs
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_distributed_checkpoint
-from src.pangu_alpha import PanguAlpha, EvalNet
-from src.pangu_alpha_config import PANGUALPHAConfig, set_parse
+from mindspore.parallel.nn.transformer import TransformerOpParallelConfig
+from src.pangu_alpha import EvalNet, PanguAlphaModel
+from src.pangu_alpha_config import set_parse, PanguAlphaConfig
 from src.utils import get_args
 
 
@@ -74,29 +75,31 @@ def load_model(args_opt):
     # Set model property
     model_parallel_num = args_opt.op_level_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
+
+    parallel_config = TransformerOpParallelConfig(data_parallel=data_parallel_num,
+                                                  model_parallel=model_parallel_num,
+                                                  pipeline_stage=args_opt.stage_num,
+                                                  micro_batch_num=args_opt.micro_size,
+                                                  recompute=True)
+
     per_batch_size = args_opt.per_batch_size
     batch_size = per_batch_size * data_parallel_num
     # Now only support single batch_size for predict
     if args_opt.run_type == "predict":
         batch_size = 1
-    config = PANGUALPHAConfig(
-        data_parallel_num=data_parallel_num,
-        model_parallel_num=model_parallel_num,
+    config = PanguAlphaConfig(
         batch_size=batch_size,
         seq_length=args_opt.seq_length,
         vocab_size=args_opt.vocab_size,
-        embedding_size=args_opt.embedding_size,
+        hidden_size=args_opt.embedding_size,
         num_layers=args_opt.num_layers,
         num_heads=args_opt.num_heads,
-        expand_ratio=4,
         post_layernorm_residual=False,
         dropout_rate=0.0,
-        compute_dtype=mstype.float16,
+        ffn_hidden_size=args_opt.embedding_size * 4,
         use_past=use_past,
-        stage_num=args_opt.stage_num,
-        micro_size=args_opt.micro_size,
         eod_reset=False,
-        word_emb_dp=True,
+        parallel_config=parallel_config,
         load_ckpt_path=args_opt.load_ckpt_path,
         param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16)
     print("===config is: ", config, flush=True)
@@ -104,7 +107,7 @@ def load_model(args_opt):
 
     ckpt_name = args_opt.load_ckpt_name
     # Define network
-    pangu_alpha = PanguAlpha(config)
+    pangu_alpha = PanguAlphaModel(config)
     eval_net = EvalNet(pangu_alpha)
     eval_net.set_train(False)
     model_predict = Model(eval_net)
