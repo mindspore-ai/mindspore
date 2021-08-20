@@ -31,7 +31,7 @@ class RootMeanSquareDistance(Metric):
                                   "euclidean", "chessboard" or "taxicab". Default: "euclidean".
         symmetric (bool): if calculate the symmetric average surface distance between `y_pred` and `y`. In addition,
                           if sets ``symmetric = True``, the average symmetric surface distance between these two inputs
-                          will be returned. Defaults: False.
+                          will be returned. Default: False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

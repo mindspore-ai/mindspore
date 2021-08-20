@@ -50,7 +50,7 @@ class LossBase(Cell):
         super(LossBase, self).__init__()
 
         if reduction not in ('mean', 'sum', 'none'):
-            raise ValueError(f"reduction method for {reduction} is not supported")
+            raise ValueError(f"The reduction method for {reduction} is not supported")
 
         self.average = True
         self.reduce = True
@@ -384,8 +384,8 @@ class SmoothL1Loss(LossBase):
     A loss class for learning region proposals.
 
     SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
-    L1Loss computes the element-wise absolute difference between two input Tensor while L2Loss computes the
-    squared difference between two input Tensor. L2Loss often leads to faster convergence but it is less
+    L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
+    squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
     robust to outliers.
 
     Given two input :math:`x,\  y` of length :math:`N`, the unreduced SmoothL1Loss can be described
@@ -400,7 +400,7 @@ class SmoothL1Loss(LossBase):
 
     Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
     Its default value is 1.0. :math:`N` is the batch size. This function returns an
-    unreduced loss Tensor.
+    unreduced loss tensor.
 
     Args:
         beta (float): A parameter used to control the point where the function will change from
@@ -587,7 +587,7 @@ def _check_label_dtype(labels_dtype, cls_name):
 class DiceLoss(LossBase):
     r"""
     The Dice coefficient is a set similarity loss. It is used to calculate the similarity between two samples. The
-    value of the Dice coefficient is 1 when the segmentation result is the best and 0 when the segmentation result
+    value of the Dice coefficient is 1 when the segmentation result is the best and is 0 when the segmentation result
     is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
     The function is shown as follows:
 
@@ -609,7 +609,7 @@ class DiceLoss(LossBase):
 
     Raises:
         ValueError: If the dimension of `logits` is different from `labels`.
-        TypeError: If the type of `logits` or `labels` are not Tensor.
+        TypeError: If the type of `logits` or `labels` is not a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -652,7 +652,7 @@ def _check_ndim_multi(logits_dim, label_dim):
     if logits_dim < 2:
         raise ValueError("Logits dimension should be greater than 1, but got {}".format(logits_dim))
     if label_dim < 2:
-        raise ValueError("label dimension should be greater than 1, but got {}".format(label_dim))
+        raise ValueError("Label dimension should be greater than 1, but got {}".format(label_dim))
 
 
 @constexpr
@@ -678,14 +678,14 @@ class MultiClassDiceLoss(LossBase):
         - **logits** (Tensor) - Tensor of shape :math:`(N, C, *)` where :math:`*` means, any number of additional
           dimensions. The logits dimension should be greater than 1. The data type must be float16 or float32.
         - **labels** (Tensor) - Tensor of shape :math:`(N, C, *)`, same shape as the `logits`.
-          The labels dimension should be greater than 1. The data type must be loat16 or float32.
+          The labels dimension should be greater than 1. The data type must be float16 or float32.
 
     Outputs:
         Tensor, a tensor of shape with the per-example sampled MultiClass Dice Losses.
 
     Raises:
         ValueError: If the shape of `logits` is different from `labels`.
-        TypeError: If the type of `logits` or `labels` is not a Tensor.
+        TypeError: If the type of `logits` or `labels` is not a tensor.
         ValueError: If the dimension of `logits` or `labels` is less than 2.
         ValueError: If the weights.shape[0] is not equal to labels.shape[1].
         ValueError: If `weights` is a tensor, but its dimension is not 2.
@@ -709,7 +709,7 @@ class MultiClassDiceLoss(LossBase):
         self.binarydiceloss = DiceLoss(smooth=1e-5)
         self.weights = weights if weights is None else validator.check_value_type("weights", weights, [Tensor])
         if isinstance(self.weights, Tensor) and self.weights.ndim != 2:
-            raise ValueError("The weight dim should be 2, but got {}.".format(self.weights.ndim))
+            raise ValueError("The weight dimension should be 2, but got {}.".format(self.weights.ndim))
         self.ignore_indiex = ignore_indiex if ignore_indiex is None else \
             validator.check_value_type("ignore_indiex", ignore_indiex, [int])
         if isinstance(activation, str) and activation not in activation_list:
@@ -743,7 +743,7 @@ class MultiClassDiceLoss(LossBase):
 
 class SampledSoftmaxLoss(LossBase):
     r"""
-    Computes the sampled softmax training loss. This operator can accelerate the trainging of the softmax classifier
+    Computes the sampled softmax training loss. This operator can accelerate the training of the softmax classifier
     over a large number of classes. It is generally an underestimate of the full softmax loss.
 
     Args:
@@ -754,7 +754,7 @@ class SampledSoftmaxLoss(LossBase):
             `sampled_expected_count`) returned by a `*CandidateSampler` function.
             Default to None, `UniformCandidateSampler` is applied.
         remove_accidental_hits (bool): Whether to remove "accidental hits"
-            where a sampled class equals one of the target classes.  Default is True.
+            where a sampled class equals to one of the target classes. Default: True.
         seed (int): Random seed for candidate sampling. Default: 0
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             If "none", do not perform reduction. Default: "none".
@@ -773,7 +773,7 @@ class SampledSoftmaxLoss(LossBase):
         TypeError: If `sampled_values` is not a list or tuple.
         TypeError: If dtype of `labels` is neither int32 not int64.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-        ValueError: If `num_sampled` or `num_true` is great than `num_classes`.
+        ValueError: If `num_sampled` or `num_true` is greater than `num_classes`.
         ValueError: If length of `sampled_values` is not equal to 3.
 
     Supported Platforms:
@@ -798,18 +798,18 @@ class SampledSoftmaxLoss(LossBase):
         super(SampledSoftmaxLoss, self).__init__(reduction)
 
         if num_true < 1:
-            raise ValueError(f"num_true {num_true} is less than 1.")
+            raise ValueError(f"The num_true {num_true} is less than 1.")
         if seed < 0:
-            raise ValueError(f"seed {seed} is less than 0.")
+            raise ValueError(f"The seed {seed} is less than 0.")
         if num_sampled > num_classes:
-            raise ValueError(f"num_sampled {num_sampled} is great than num_classes {num_classes}.")
+            raise ValueError(f"The num_sampled {num_sampled} is greater than num_classes {num_classes}.")
         if num_true > num_classes:
-            raise ValueError(f"num_true {num_true} is great than num_classes {num_classes}.")
+            raise ValueError(f"The num_true {num_true} is greater than num_classes {num_classes}.")
         if sampled_values is not None:
             if not isinstance(sampled_values, (list, tuple)):
-                raise TypeError(f"sampled_values {sampled_values} is not a list or tuple.")
+                raise TypeError(f"The sampled_values {sampled_values} is not a list or tuple.")
             if len(sampled_values) != 3:
-                raise ValueError(f"sampled_values size {len(sampled_values)} is not 3.")
+                raise ValueError(f"The sampled_values size {len(sampled_values)} is not 3.")
 
         self.num_sampled = num_sampled
         self.num_classes = num_classes
@@ -879,25 +879,24 @@ class SampledSoftmaxLoss(LossBase):
         Computes sampled output training logits and labels suitable
 
         Note: In the case where num_true > 1, we assign to each target class
-        the target probability 1 / num_true so that the target probabilities
+        with the target probability (1/num_true) so that the target probabilities
         sum to 1 per-example.
 
         Args:
             weights (Tensor): Tensor of shape `[num_classes, dim]`.
             biases (Tensor): Tensor of shape `[num_classes]`.
             labels (Tensor): Tensor of shape `[batch_size, num_true]`. The target classes.
-            inputs (Tensor): Tensor of shape `[batch_size, dim]`.  The forward
+            inputs (Tensor): Tensor of shape `[batch_size, dim]`. The forward
                 activations of the input network.
             num_true (int): The number of target classes per training example.
-            sampled_values: a tuple of (`sampled_candidates`, `true_expected_count`,
+            sampled_values: A tuple of (`sampled_candidates`, `true_expected_count`,
                 `sampled_expected_count`) returned by a `UniformCandidateSampler` function.
-            subtract_log_q: A `bool`.  whether to subtract the log expected count of
-                the labels in the sample to get the logits of the true labels.
-                Default is True.
+            subtract_log_q: A `bool`. whether to subtract the log expected count of
+                the labels in the sample to get the logits of the true labels. Default: True.
         Returns:
             out_logits: `Tensor` object with shape
                 `[batch_size, num_true + num_sampled]`
-            out_labels: A Tensor object with the same shape as `out_logits`.
+            out_labels: A tensor object with the same shape as `out_logits`.
         """
 
         if not labels.dtype == mstype.int32:
@@ -987,14 +986,14 @@ class BCELoss(LossBase):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            And it must have same shape and data type as `inputs`. Default: None
+            And it must have the same shape and data type as `inputs`. Default: None
         reduction (str): Specifies the reduction to be applied to the output.
             Its value must be one of 'none', 'mean', 'sum'. Default: 'none'.
 
     Inputs:
-        - **logits** (Tensor) - The input Tensor with shape :math:`(N, *)` where :math:`*` means, any number
+        - **logits** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The data type must be float16 or float32.
-        - **labels** (Tensor) - The label Tensor with shape :math:`(N, *)`, same shape and data type as `logits`.
+        - **labels** (Tensor) - The label tensor with shape :math:`(N, *)`, the same shape and data type as `logits`.
 
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
@@ -1147,7 +1146,7 @@ class BCEWithLogitsLoss(LossBase):
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none'.
             If 'none', do not perform reduction. Default:'mean'.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, it must can be broadcast to a tensor with shape of `logits`,
+            If not None, it can be broadcast to a tensor with shape of `logits`,
             data type must be float16 or float32. Default: None.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
             number of classes. If not None, it must can be broadcast to a tensor with shape of `logits`,
@@ -1164,7 +1163,7 @@ class BCEWithLogitsLoss(LossBase):
 
     Raises:
         TypeError: If data type of `logits` or `labels` is neither float16 nor float32.
-        TypeError: If `weight` or `pos_weight` is Parameter.
+        TypeError: If `weight` or `pos_weight` is a parameter.
         TypeError: If data type of `weight` or `pos_weight` is neither float16 nor float32.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
@@ -1186,9 +1185,9 @@ class BCEWithLogitsLoss(LossBase):
         super(BCEWithLogitsLoss, self).__init__()
         self.bce_with_logits_loss = P.BCEWithLogitsLoss(reduction=reduction)
         if isinstance(weight, Parameter):
-            raise TypeError(f"For {self.cls_name}, weight can not be Parameter.")
+            raise TypeError(f"For {self.cls_name}, the weight can not be a parameter.")
         if isinstance(pos_weight, Parameter):
-            raise TypeError(f"For {self.cls_name}, pos_weight can not be Parameter.")
+            raise TypeError(f"For {self.cls_name}, the pos_weight can not be a parameter.")
         self.weight = weight
         self.pos_weight = pos_weight
         self.ones = P.OnesLike()
@@ -1212,13 +1211,13 @@ class BCEWithLogitsLoss(LossBase):
 @constexpr
 def _check_ndim(predict_nidm, target_ndim):
     if predict_nidm < 2 or predict_nidm > 4:
-        raise ValueError("The dimensions of predict and target should be between 2 and 4, but got"
+        raise ValueError("The dimensions of predict should be between 2 and 4, but got"
                          "predict dim {}.".format(predict_nidm))
     if target_ndim < 2 or target_ndim > 4:
-        raise ValueError("The dimensions of target and target should be between 2 and 4, but got"
+        raise ValueError("The dimensions of target should be between 2 and 4, but got"
                          "target dim {}.".format(target_ndim))
     if predict_nidm != target_ndim:
-        raise ValueError("The dim of the predicted value and the dim of the target value must be equal, but got"
+        raise ValueError("The dimensions of predict and target must be equal, but got"
                          "predict dim {} and target dim {}.".format(predict_nidm, target_ndim))
 
 
@@ -1251,7 +1250,7 @@ class FocalLoss(LossBase):
     Args:
         gamma (float): Gamma is used to adjust the steepness of weight curve in focal loss. Default: 2.0.
         weight (Union[Tensor, None]): A rescaling weight applied to the loss of each batch element. The dimension of
-                                      weight should be 1. If None, no weights are applied. Default: None.
+                                      weight should be 1. If None, no weight is applied. Default: None.
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
                          If "none", do not perform reduction. Default: "mean".
 
@@ -1294,7 +1293,7 @@ class FocalLoss(LossBase):
 
         self.gamma = validator.check_value_type("gamma", gamma, [float])
         if weight is not None and not isinstance(weight, Tensor):
-            raise TypeError("The type of weight should be Tensor, but got {}.".format(type(weight)))
+            raise TypeError("The type of weight should be a tensor, but got {}.".format(type(weight)))
         if isinstance(weight, Tensor) and weight.ndim != 1:
             raise ValueError("The dimension of weight should be 1, but got {}.".format(weight.ndim))
         self.weight = weight
