@@ -24,6 +24,7 @@
 #include <vector>
 #include <thread>
 #include "acl/acl_tdt.h"
+#include "common/util/error_manager/error_manager.h"
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
 
 #include "minddata/dataset/core/data_type.h"
@@ -53,6 +54,8 @@ class TdtPlugin {
   Status getTdtType(DataType d_type, aclDataType &datatype);
 
   Status translate(acltdtTensorType tdt_type, const TensorRow &ts_row, acltdtDataset **output_acl_dataset);
+
+  void ReportErrorMessage();
 
   void *tdt_handle_ = nullptr;
 

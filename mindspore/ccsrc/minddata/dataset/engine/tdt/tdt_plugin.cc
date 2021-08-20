@@ -23,11 +23,19 @@
 
 namespace mindspore {
 namespace dataset {
+
+constexpr auto kUnknownErrorString = "Unknown error occurred";
+
 TdtPlugin::TdtPlugin(const std::string &channel_name, int32_t device_id) {
+  // init ErrorManager, 0 means success
+  if (ErrorManager::GetInstance().Init() != 0) {
+    MS_LOG(WARNING) << "[Internal Error] Init ErrorManager failed.";
+  }
   // create acl tdt handle
   acl_handle_ = acltdtCreateChannel(device_id, channel_name.c_str());
   if (acl_handle_ == nullptr) {
     MS_LOG(ERROR) << "Failed to create channel for tdt queue.";
+    ReportErrorMessage();
   }
   TdtHandle::AddHandle(&acl_handle_, nullptr);
 }
@@ -36,6 +44,7 @@ TdtPlugin::~TdtPlugin() {
   if (acl_handle_ != nullptr) {
     if (acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Failed to destroy channel for tdt queue.";
+      ReportErrorMessage();
     } else {
       TdtHandle::DelHandle(&acl_handle_);
       acl_handle_ = nullptr;
@@ -75,6 +84,7 @@ Status TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_n
   auto status = acltdtSendTensor(acl_handle_, acl_dataset, -1);
   DestroyAclDataset(acl_dataset);
   if (status != ACL_SUCCESS) {
+    ReportErrorMessage();
     RETURN_STATUS_UNEXPECTED("Tdt Send data failed.");
   }
   if (profiling) {
@@ -203,14 +213,24 @@ Status TdtPlugin::DestroyAclDataset(acltdtDataset *acl_dataset, bool include_dat
   if (include_data_item) {
     for (size_t i = 0; i < acltdtGetDatasetSize(acl_dataset); i++) {
       if (acltdtDestroyDataItem(acltdtGetDataItem(acl_dataset, i)) != ACL_SUCCESS) {
+        ReportErrorMessage();
         RETURN_STATUS_UNEXPECTED("Destroy data item failed when send data.");
       }
     }
   }
   if (acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+    ReportErrorMessage();
     RETURN_STATUS_UNEXPECTED("Destroy tdt dataset failed when send data.");
   }
   return Status::OK();
 }
+
+void TdtPlugin::ReportErrorMessage() {
+  const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+  if (!error_message.empty() && error_message.find(kUnknownErrorString) == std::string::npos) {
+    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+  }
+}
+
 }  // namespace dataset
 }  // namespace mindspore
