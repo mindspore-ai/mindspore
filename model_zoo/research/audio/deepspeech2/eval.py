@@ -29,7 +29,8 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 parser = argparse.ArgumentParser(description='DeepSpeech evaluation')
 parser.add_argument('--bidirectional', action="store_false", default=True, help='Use bidirectional RNN')
-parser.add_argument('--pretrain_ckpt', type=str, default='', help='Pretrained checkpoint path')
+parser.add_argument('--pretrain_ckpt', type=str,
+                    default='./checkpoint/ckpt_0/DeepSpeech0-70_1287.ckpt', help='Pretrained checkpoint path')
 parser.add_argument('--device_target', type=str, default="GPU", choices=("GPU", "CPU"),
                     help='Device target, support GPU and CPU, Default: GPU')
 args = parser.parse_args()
@@ -56,7 +57,6 @@ if __name__ == '__main__':
     param_dict = load_checkpoint(args.pretrain_ckpt)
     load_param_into_net(model, param_dict)
     print('Successfully loading the pre-trained model')
-
 
     if config.LMConfig.decoder_type == 'greedy':
         decoder = MSGreedyDecoder(labels=labels, blank_index=labels.index('_'))

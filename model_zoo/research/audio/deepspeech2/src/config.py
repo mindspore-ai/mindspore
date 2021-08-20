@@ -24,7 +24,7 @@ train_config = ed({
     },
 
     "DataConfig": {
-        "train_manifest": 'data/libri_train_manifest.csv',
+        "train_manifest": '../../deepspeech.pytorch/data/libri_train_manifest.csv',
         # "val_manifest": 'data/libri_val_manifest.csv',
         "batch_size": 20,
         "labels_path": "labels.json",
@@ -77,7 +77,7 @@ eval_config = ed({
     "verbose": True,
 
     "DataConfig": {
-        "test_manifest": 'data/libri_test_clean_manifest.csv',
+        "test_manifest": '../../deepspeech.pytorch/data/libri_test_clean_manifest.csv',
         # "test_manifest": 'data/libri_test_other_manifest.csv',
         # "test_manifest": 'data/libri_val_manifest.csv',
         "batch_size": 20,
