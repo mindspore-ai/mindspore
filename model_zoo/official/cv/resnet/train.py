@@ -376,8 +376,7 @@ def train_net():
     cb = [time_cb, loss_cb]
     ckpt_save_dir = set_save_ckpt_dir()
     if config.save_checkpoint:
-        ckpt_append_info = ["epoch_num", "step_num", {"epoch_num": config.has_trained_epoch,
-                                                      "step_num": config.has_trained_step}]
+        ckpt_append_info = [{"epoch_num": config.has_trained_epoch, "step_num": config.has_trained_step}]
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                      keep_checkpoint_max=config.keep_checkpoint_max,
                                      append_info=ckpt_append_info)
