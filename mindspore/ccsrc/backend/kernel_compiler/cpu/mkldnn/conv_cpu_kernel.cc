@@ -39,7 +39,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   std::vector<size_t> kernel_size;
   for (size_t i = kKernelStartAxis; i < src_dim; ++i) {
-    kernel_size.emplace_back(weight_shape[i]);
+    (void)kernel_size.emplace_back(weight_shape[i]);
   }
   size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
@@ -80,10 +80,10 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::dims strides;
   dnnl::memory::dims dilates;
   for (size_t i = kKernelStartAxis; i < src_dim; ++i) {
-    stride.emplace_back(stride_ori[i]);
-    strides.emplace_back(stride_ori[i]);
-    dilation.emplace_back(dilation_ori[i]);
-    dilates.emplace_back(dilation_ori[i] - 1);
+    (void)stride.emplace_back(stride_ori[i]);
+    (void)strides.emplace_back(stride_ori[i]);
+    (void)dilation.emplace_back(dilation_ori[i]);
+    (void)dilates.emplace_back(dilation_ori[i] - 1);
   }
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
@@ -95,8 +95,8 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   for (size_t i = 0; i < int_padding_l.size(); ++i) {
-    padding_l.emplace_back(int_padding_l[i]);
-    padding_r.emplace_back(int_padding_r[i]);
+    (void)padding_l.emplace_back(int_padding_l[i]);
+    (void)padding_r.emplace_back(int_padding_r[i]);
   }
   dnnl::convolution_forward::desc desc =
     dnnl::convolution_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc,
@@ -109,8 +109,7 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, dst_desc);
 }
 
-bool ConvCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool ConvCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < kConvInputTensorNum || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Error input output size!";
