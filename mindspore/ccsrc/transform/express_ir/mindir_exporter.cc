@@ -317,11 +317,10 @@ void IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
   } else if (type->isa<Tuple>()) {
     auto tup_shape = shape->cast<abstract::TupleShapePtr>();
     value_proto->set_denotation(type->type_name() + ":" + std::to_string(tup_shape->shape().size()));
-  } else if (type->isa<Number>() || type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
-    value_proto->set_denotation(type->type_name());
   } else {
-    MS_LOG(EXCEPTION) << "Value type: " << type->type_name() << " is not supported!";
+    value_proto->set_denotation(type->type_name());
   }
+  MS_LOG(DEBUG) << "Value type: " << type->type_name();
 }
 
 void IrExportBuilder::SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
@@ -366,7 +365,6 @@ void IrExportBuilder::SetParamToTensorProto(const ParameterPtr &param, mind_ir::
 
 void IrExportBuilder::BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
-  bool is_only_return = true;
   for (const AnfNodePtr &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -375,13 +373,9 @@ void IrExportBuilder::BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphP
     }
     auto cnode = node->cast<CNodePtr>();
     if (cnode == func_graph->get_return()) {
-      if (is_only_return) {
-        MS_LOG(EXCEPTION) << "Only has return node, can't convert to binary model!";
-      }
       BuildOutput(cnode, graph_proto);
     } else {
       BuildCNode(cnode, graph_proto);
-      is_only_return = false;
     }
   }
 }
@@ -393,11 +387,9 @@ void IrExportBuilder::BuildOutput(const CNodePtr &node, mind_ir::GraphProto *con
     MS_LOG(EXCEPTION) << "Number of inputs of return node is not equal to 2.";
   }
   AnfNodePtr arg = node->input(1);
+  std::string node_name = BuildInputNode(arg, graph_proto);
   mind_ir::ValueInfoProto *output_proto = graph_proto->add_output();
-  std::string output_name = GetUniqueNodeName(node);
-  output_proto->set_name(output_name);
-  MS_EXCEPTION_IF_NULL(last_node_);
-  last_node_->set_output(0, output_name);
+  output_proto->set_name(node_name);
   SetValueInfoProto(arg, output_proto);
 }
 

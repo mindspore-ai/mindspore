@@ -52,8 +52,7 @@ class MSANFModelParser {
   bool BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto);
   tensor::TensorPtr BuildTensorInfoForFuncGraph(const mind_ir::TensorProto &tensor_proto);
   CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::NodeProto &node_proto);
-  bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto,
-                               const CNodePtr &cnode_ptr);
+  bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool GetAttrValueForCNode(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   void ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
@@ -72,6 +71,7 @@ class MSANFModelParser {
   bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   std::unordered_map<std::string, abstract::AbstractBasePtr> GetAbstractForCNode(
     const mind_ir::AttributeProto &attr_proto);
+  AnfNodePtr GetAnfNode(const std::string &node_name);
 
   std::string producer_name_;
   std::string model_version_;
