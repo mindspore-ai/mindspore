@@ -75,7 +75,9 @@ def test_log_file():
     filename = ''
     os.makedirs(file_path, exist_ok=True)
     from mindspore import log as logger
+    _clear_logger(logger)
     logger.warning("test log message warning")
+    file_path += '/rank_0/logs'
     f_list = os.listdir(file_path)
     # print f_list
     for file_name in f_list:
@@ -114,11 +116,13 @@ def test_log_backup_count():
         shutil.rmtree(file_path)
     os.makedirs(file_path, exist_ok=True)
     from mindspore import log as logger
+    _clear_logger(logger)
 
     log_count = 100
     for i in range(0, log_count, 1):
         logger.warning("test log message warning %r", i)
 
+    file_path += '/rank_0/logs'
     cmd = f'cd {file_path};ls -l | grep \'mindspore.log.*\'|wc -l'
     backup_count = '11'
     file_count = os.popen(cmd).read().strip()
@@ -244,9 +248,10 @@ def test_log_getconfig():
     os.environ['logger_maxBytes'] = '1000'
     os.environ['logger_backupCount'] = '10'
     from mindspore import log as logger
-    logger.info("test log message info test ")
+    _clear_logger(logger)
+    logger.info("test log message info test")
     configdict = logger.get_log_config()
-    targetdict = {'GLOG_v': '3', 'GLOG_log_dir': '/tmp/log',
+    targetdict = {'GLOG_v': '3', 'GLOG_log_dir': '/tmp/log/rank_0/logs',
                   'GLOG_logtostderr': '0', 'logger_maxBytes': 1000,
                   'logger_backupCount': 10, 'GLOG_stderrthreshold': '2'}
     assert configdict == targetdict

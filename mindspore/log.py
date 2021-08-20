@@ -428,6 +428,46 @@ def _get_stack_info(frame):
     return sinfo
 
 
+def _get_rank_id():
+    """
+    get rank id
+    ascend, CPU: RANK_ID
+    GPU: OMPI_COMM_WORLD_RANK
+    Both RANK_ID and OMPI_COMM_WORLD_RANK exist, Report to the police, default: RANK_ID
+    Returns:
+        rank.
+    """
+    rank_id = os.getenv('RANK_ID')
+    gpu_rank_id = os.getenv('OMPI_COMM_WORLD_RANK')
+    rank = '0'
+    if rank_id and gpu_rank_id:
+        logger.warning("Environment variables RANK_ID and OMPI_COMM_WORLD_RANK both exist,"
+                       "RANK_ID will be used.")
+    if rank_id:
+        rank = rank_id
+    elif gpu_rank_id:
+        rank = gpu_rank_id
+    return rank
+
+
+def _create_logfile_dir(kwargs):
+    """
+    create logs dir
+    Args:
+        kwargs (dict): The dictionary of log configurations.
+    Returns:
+        Log_dir: Create subdirectory.
+        Examples:
+        >>> /rank_0/logs
+    """
+    log_dir = os.path.realpath(kwargs.get('filepath'))
+    rank_id = _get_rank_id()
+    log_dir += '/rank_' + rank_id + '/logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+    return log_dir
+
+
 def _setup_logger(kwargs):
     """
     Set up the logger.
@@ -484,7 +524,7 @@ def _setup_logger(kwargs):
         # Set rotatingFileHandler for the file appender
         else:
             # filepath cannot be null, checked in function _verify_config ()
-            logfile_dir = os.path.realpath(kwargs.get('filepath'))
+            logfile_dir = _create_logfile_dir(kwargs)
             file_name = f'{logfile_dir}/{log_name}'
             logfile_handler = _MultiCompatibleRotatingFileHandler(
                 filename=file_name,
