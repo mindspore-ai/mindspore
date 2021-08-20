@@ -265,6 +265,10 @@ Parameters for both training and evaluation can be set in config file.
 "lr_init": 0.01,                  # initial learning rate
 "lr_end": 0.00001,                # final learning rate
 "lr_max": 0.1,                    # maximum learning rate
+"save_graphs": False,             # save graph results
+"save_graphs_path": "./graphs",   # save graph results path
+"has_trained_epoch":0,            # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus has_trained_epoch
+"has_trained_step":0,             # step size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to step_size minus has_trained_step
 ```
 
 - Config for ResNet18 and ResNet50, ImageNet2012 dataset
@@ -287,6 +291,11 @@ Parameters for both training and evaluation can be set in config file.
 "lr_init": 0,                     # initial learning rate
 "lr_max": 0.8,                    # maximum learning rate
 "lr_end": 0.0,                    # minimum learning rate
+"save_graphs": False,             # save graph results
+"save_graphs_path": "./graphs",   # save graph results path
+"has_trained_epoch":0,            # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus has_trained_epoch
+"has_trained_step":0,             # step size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to step_size minus has_trained_step
+
 ```
 
 - Config for ResNet34, ImageNet2012 dataset
@@ -439,6 +448,20 @@ And you can also set these optional arguments: `save_best_ckpt`, `eval_start_epo
 By default, a standalone cache server would be started to cache all eval images in tensor format in memory to improve the evaluation performance. Please make sure the dataset fits in memory (Around 30GB of memory required for ImageNet2012 eval dataset, 6GB of memory required for CIFAR-10 eval dataset).
 
 Users can choose to shutdown the cache server after training or leave it alone for future usage.
+
+## [Resume Process](#contents)
+
+### Usage
+
+#### Running on Ascend
+
+```text
+# distributed training
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]
+
+# standalone training
+用法：bash run_standalone_train.sh [DATASET_PATH] [CONFIG_PATH] [PRETRAINED_CKPT_PATH]
+```
 
 ### Result
 

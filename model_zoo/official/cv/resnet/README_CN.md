@@ -244,10 +244,10 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
 "warmup_epochs":5,               # 热身周期数
 "lr_decay_mode":"poly”           # 衰减模式可为步骤、策略和默认
 "lr_init":0.01,                  # 初始学习率
-"lr_end":0.0001,                  # 最终学习率
+"lr_end":0.0001,                 # 最终学习率
 "lr_max":0.1,                    # 最大学习率
-"save_graphs":False              # 是否保存图编译结果
-“save_graphs_path”:"./graphs"    # 图编译结果保存路径
+"save_graphs":False,             # 是否保存图编译结果
+“save_graphs_path”:"./graphs",   # 图编译结果保存路径
 "has_trained_epoch":0,           # 加载已经训练好的模型的epoch大小；实际训练周期大小等于epoch_size减去has_trained_epoch
 "has_trained_step":0,            # 加载已经训练好的模型的step大小；实际训练周期大小等于step_size减去has_trained_step
 ```
@@ -272,8 +272,8 @@ bash run_eval_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]  [CONFIG_PATH]
 "lr_init":0,                     # 初始学习率
 "lr_max":0.8,                    # 最大学习率
 "lr_end":0.0,                    # 最小学习率
-"save_graphs":False              # 是否保存图编译结果
-“save_graphs_path”:"./graphs"    # 图编译结果保存路径
+"save_graphs":False,             # 是否保存图编译结果
+“save_graphs_path”:"./graphs",   # 图编译结果保存路径
 "has_trained_epoch":0,           # 加载已经训练好的模型的epoch大小；实际训练周期大小等于epoch_size减去has_trained_epoch
 "has_trained_step":0,            # 加载已经训练好的模型的step大小；实际训练周期大小等于step_size减去has_trained_step
 ```
