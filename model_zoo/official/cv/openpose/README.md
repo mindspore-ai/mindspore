@@ -79,7 +79,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - Download the VGG19 model of the MindSpore version:
-    - vgg19-0-97_5004.ckpt
+    - [vgg19-0-97_5004.ckpt](https://download.mindspore.cn/model_zoo/converted_pretrained/vgg/vgg19-0-97_5004.ckpt)
 - For more information, please check the resources below：
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
