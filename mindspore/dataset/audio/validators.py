@@ -208,3 +208,14 @@ def check_masking(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_complex_norm(method):
+    """Wrapper method to check the parameters of ComplexNorm."""
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [power], _ = parse_user_args(method, *args, **kwargs)
+        check_non_negative_float32(power, "power")
+        return method(self, *args, **kwargs)
+
+    return new_method

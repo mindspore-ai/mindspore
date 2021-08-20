@@ -16,6 +16,11 @@
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
+#include <complex>
+
+#include "mindspore/core/base/float16.h"
+#include "minddata/dataset/core/type_id.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 
@@ -411,6 +416,94 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   input->Reshape(input_shape);
   *output = input;
   return Status::OK();
+}
+
+template <typename T>
+Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
+  // calcutate total complex num
+  int32_t dim = input->shape().Size();
+  int32_t total_num = 1;
+  for (int32_t i = 0; i < (dim - 1); i++) {
+    total_num *= (input->shape()[i]);
+  }
+
+  // calculate the output dimension
+  auto input_size = input->shape().AsVector();
+  int32_t dim_back = input_size.back();
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    dim_back == 2, "ComplexNorm: expect complex input of shape <..., 2>, but got: " + std::to_string(dim_back));
+  input_size.pop_back();
+  int32_t complex_num = input_size.back();
+  int32_t iter_num = total_num / complex_num;
+  // TensorShape out_put_shape{}
+  input_size.pop_back();
+  input_size.emplace_back(2);
+  TensorShape out_shape = TensorShape(input_size);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, input->type(), output));
+
+  // slice input into real tensor and imaginary tensor
+  std::shared_ptr<Tensor> re_tensor;
+  std::shared_ptr<Tensor> im_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({total_num, 1}), input->type(), &re_tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({total_num, 1}), input->type(), &im_tensor));
+  std::vector<SliceOption> slice_re = {};
+  std::vector<SliceOption> slice_im = {};
+  for (int32_t i = 0; i < (dim - 1); i++) {
+    slice_re.emplace_back(SliceOption(true));
+    slice_im.emplace_back(SliceOption(true));
+  }
+  slice_re.emplace_back(SliceOption(std::vector<dsize_t>{0}));
+  slice_im.emplace_back(SliceOption(std::vector<dsize_t>{1}));
+  RETURN_IF_NOT_OK(input->Slice(&re_tensor, slice_re));
+  RETURN_IF_NOT_OK(input->Slice(&im_tensor, slice_im));
+
+  // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
+  auto itr_out = (*output)->begin<T>();
+  auto itr_re = re_tensor->begin<T>();
+  auto itr_im = im_tensor->begin<T>();
+  for (int32_t i = 0; i < iter_num; i++) {
+    double re = 0.0;
+    double im = 0.0;
+    for (int32_t j = complex_num * i; j < complex_num * (i + 1); j++) {
+      double a = static_cast<double>(*itr_re);
+      double b = static_cast<double>(*itr_im);
+      re = re + (pow(a, 2) - pow(b, 2));
+      im = im + (2 * a * b);
+      ++itr_re;
+      ++itr_im;
+    }
+    std::complex<double> comp(re, im);
+    comp = std::pow(comp, (0.5 * power));
+    *itr_out = static_cast<T>(comp.real());
+    ++itr_out;
+    *itr_out = static_cast<T>(comp.imag());
+    ++itr_out;
+  }
+  RETURN_IF_NOT_OK((*output)->Reshape(out_shape));
+  return Status::OK();
+}
+
+Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
+  try {
+    if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT16) {
+      // convert the data type to float
+      std::shared_ptr<Tensor> input_tensor;
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_FLOAT32), &input_tensor));
+      RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+
+      Norm<float>(input_tensor, output, power);
+    } else if (input->type().value() == DataType::DE_FLOAT32) {
+      Norm<float>(input, output, power);
+    } else if (input->type().value() == DataType::DE_FLOAT64) {
+      Norm<double>(input, output, power);
+    } else {
+      RETURN_STATUS_UNEXPECTED("ComplexNorm: input tensor type should be int, float or double, but got: " +
+                               input->type().ToString());
+    }
+    return Status::OK();
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("ComplexNorm: " + std::string(e.what()));
+  }
 }
 }  // namespace dataset
 }  // namespace mindspore

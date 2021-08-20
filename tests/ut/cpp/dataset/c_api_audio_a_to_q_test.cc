@@ -549,3 +549,61 @@ TEST_F(MindDataTestPipeline, TestFrequencyMaskingWrongArgs) {
   // Expect failure
   EXPECT_EQ(iter, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestComplexNormBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComplexNormBasic.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {3, 2, 4, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto ComplexNormOp = audio::ComplexNorm(3.0);
+
+  ds = ds->Map({ComplexNormOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by ComplexNorm
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {3, 2, 2};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestComplexNormWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComplexNormWrongArgs.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {3, 2, 4, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto ComplexNormOp = audio::ComplexNorm(-10);
+
+  ds = ds->Map({ComplexNormOp});
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_EQ(iter1, nullptr);
+}

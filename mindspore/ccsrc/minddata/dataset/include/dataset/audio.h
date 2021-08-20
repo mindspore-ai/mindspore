@@ -188,6 +188,27 @@ class BassBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief ComplexNorm TensorTransform.
+/// \notes Compute the norm of complex tensor input.
+class ComplexNorm final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
+  explicit ComplexNorm(float power = 1.0);
+
+  /// \brief Destructor.
+  ~ComplexNorm() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
 class FrequencyMasking final : public TensorTransform {
