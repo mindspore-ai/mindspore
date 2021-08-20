@@ -39,6 +39,7 @@
 #include "debug/debugger/debugger.h"
 #endif
 #include "profiler/device/profiling.h"
+#include "debug/common.h"
 
 namespace mindspore {
 namespace runtime {
@@ -2816,12 +2817,8 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   if (!save_graphs) {
     return;
   }
-  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
-  if (save_graphs_path.empty()) {
-    save_graphs_path = ".";
-  }
 
-  std::string filename = save_graphs_path + "/actor_set_" + actor_set->name_ + ".ir";
+  std::string filename = GetSaveGraphsPathName("actor_set_" + actor_set->name_ + ".ir");
   std::ofstream ofs(filename);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file [" << filename << "] failed!";

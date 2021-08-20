@@ -322,7 +322,19 @@ struct GlogLogDirRegister {
     if (logtostderr != nullptr && log_dir != nullptr) {
       std::string logtostderr_str = std::string(logtostderr);
       std::string log_dir_str = std::string(log_dir);
-
+      const char *rank_id = std::getenv("RANK_ID");
+      const char *gpu_rank_id = std::getenv("OMPI_COMM_WORLD_RANK");
+      std::string rank = "0";
+      bool both_exist = false;
+      if (rank_id != nullptr && gpu_rank_id == nullptr) {
+        rank = std::string(rank_id);
+      } else if (rank_id == nullptr && gpu_rank_id != nullptr) {
+        rank = std::string(gpu_rank_id);
+      } else if (rank_id != nullptr && gpu_rank_id != nullptr) {
+        rank = std::string(rank_id);
+        both_exist = true;
+      }
+      log_dir_str += "/rank_" + rank + "/logs";
       auto real_log_dir_str = Common::GetRealPath(log_dir_str);
       // While 'GLOG_logtostderr' = 0, logs output to files. 'GLOG_log_dir' must be specified as the path of log files.
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
@@ -337,6 +349,10 @@ struct GlogLogDirRegister {
       } else if (logtostderr_str == "0") {
         MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid.";
         exit(EXIT_FAILURE);
+      }
+      if (both_exist) {
+        MS_LOG(WARNING) << "Environment variables RANK_ID and OMPI_COMM_WORLD_RANK both exist, we will use RANK_ID to "
+                           "get rank id by default.";
       }
     }
   }

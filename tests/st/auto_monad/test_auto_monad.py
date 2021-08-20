@@ -1214,7 +1214,7 @@ def find_newest_validateir_file(folder_path):
 
 
 def read_file():
-    filename = find_newest_validateir_file('./')
+    filename = find_newest_validateir_file('./rank_0/ir_dump')
     with open((os.path.join(filename)), 'r') as f:
         content = f.read()
     return content

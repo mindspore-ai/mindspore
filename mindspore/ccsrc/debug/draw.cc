@@ -30,7 +30,6 @@
 #include "pipeline/jit/parse/resolve.h"
 #include "ir/tensor.h"
 #include "pipeline/jit/base.h"
-#include "debug/common.h"
 
 namespace mindspore {
 // namespace to support debug utils
@@ -189,7 +188,7 @@ void Draw(const std::string &filename, const FuncGraphPtr &func_graph) {
   const std::string dot_suffix = ".dot";
   const std::string filename_with_suffix =
     (filename.rfind(dot_suffix) != (filename.size() - dot_suffix.size())) ? (filename + dot_suffix) : filename;
-  const std::string filepath = pipeline::GetSaveGraphsPathName(Common::AddId(filename_with_suffix, dot_suffix));
+  const std::string filepath = GetSaveGraphsPathName(Common::AddId(filename_with_suffix, dot_suffix));
   auto real_filepath = Common::GetRealPath(filepath);
   if (!real_filepath.has_value()) {
     MS_LOG(EXCEPTION) << "The export ir path: " << filepath << " is not illegal.";
@@ -199,7 +198,7 @@ void Draw(const std::string &filename, const FuncGraphPtr &func_graph) {
 
 void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {
   const std::string dot_suffix = ".dot";
-  const std::string filepath = pipeline::GetSaveGraphsPathName(Common::AddId(filename, dot_suffix));
+  const std::string filepath = GetSaveGraphsPathName(Common::AddId(filename, dot_suffix));
   auto real_filepath = Common::GetRealPath(filepath);
   if (!real_filepath.has_value()) {
     MS_LOG(EXCEPTION) << "The export ir path: " << filepath << " is not illegal.";

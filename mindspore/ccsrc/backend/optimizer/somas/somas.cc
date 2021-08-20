@@ -124,8 +124,8 @@ bool Somas::LoadSomasCache(const session::KernelGraph *graph) {
 
   bool ret = CalcSomasModelHash(graph);
   if (ret) {
-    std::string filename =
-      save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
+    std::string filename = GetSaveGraphsPathName(
+      "/somas_meta/somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json", save_graphs_path_);
     ret = LoadSomasResult(graph, filename);
     if (ret) {
       MS_LOG(INFO) << "Load Somas Cache file " << filename << " Successfully.";
@@ -141,8 +141,8 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
   auto model_str = SomasInfo(true);
   hash_id_ = std::to_string(std::hash<std::string>()(model_str));
   MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model hash id is " << hash_id_;
-  std::string filename =
-    save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
+  std::string filename = GetSaveGraphsPathName(
+    "/somas_meta/somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info", save_graphs_path_);
   return Common::SaveStringToFile(filename, model_str);
 }
 
@@ -178,8 +178,8 @@ bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
   }
   somas_json[kTensors] = tensors_json;
 
-  std::string filename =
-    save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
+  std::string filename = GetSaveGraphsPathName(
+    "/somas_meta/somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json", save_graphs_path_);
   (void)Common::SaveStringToFile(filename, somas_json.dump());
   return true;
 }
@@ -364,12 +364,12 @@ bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
 #endif
 
   if (save_graphs_) {
-    std::string file_path =
-      save_graphs_path_ + "/" + "somas_pre_processed_info_" + std::to_string(graph->graph_id()) + ".ir";
+    std::string file_path = GetSaveGraphsPathName(
+      "/somas_pre_processed_info_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path_);
     DumpSomasInfoIR(file_path);
 
     std::string offline_file_path =
-      save_graphs_path_ + "/" + "somas_offline_log_" + std::to_string(graph->graph_id()) + ".ir";
+      GetSaveGraphsPathName("/somas_offline_log_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path_);
     DumpOfflineIR(offline_file_path);
   }
 
@@ -687,7 +687,8 @@ void Somas::InitBasicInfo(const session::KernelGraph *graph) {
     save_graphs_path_ = ".";
   }
   if (save_graphs_) {
-    std::string file_path = save_graphs_path_ + "/" + "somas_initial_info_" + std::to_string(graph->graph_id()) + ".ir";
+    std::string file_path =
+      GetSaveGraphsPathName("/somas_initial_info_" + std::to_string(graph->graph_id()) + ".ir", save_graphs_path_);
     DumpSomasInfoIR(file_path);
   }
 }
