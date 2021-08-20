@@ -13,14 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """
-Parallel Networks.
+Transformer Networks
 This is an experimental interface that is subject to change and/or deletion.
 """
 from .transformer import *
+from .layers import *
 from .loss import *
-from .config import *
+from .op_parallel_config import *
 
 __all__ = []
 __all__.extend(transformer.__all__)
 __all__.extend(loss.__all__)
-__all__.extend(config.__all__)
+__all__.extend(op_parallel_config.__all__)

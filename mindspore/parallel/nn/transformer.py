@@ -28,7 +28,7 @@ from mindspore._checkparam import Validator
 from mindspore.ops.primitive import constexpr
 from mindspore import log as logger
 from .layers import _LayerNorm, _Linear
-from ..config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config
+from .op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config
 
 __all__ = [
     "AttentionMask",
@@ -303,8 +303,9 @@ class FeedForward(Cell):
         hidden_size (int): The dimension of the inputs.
         ffn_hidden_size (int): The intermediate hidden size.
         dropout_rate (float): The dropout rate for the second linear's output.
-        hidden_act (str): The activate type of the first linear. Support `gelu`, `relu`, `sigmpid` and so on.
-                          Default: gelu.
+        hidden_act (str): The activation of the internal feedforward layer. Supports 'relu',
+                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         param_init_type (dtype.Number): The parameter initialization type. Can be dtype.float32 or dtype.float16.
         parallel_config(OpParallelConfig): the config of parallel setting, see `OpParallelConfig`
     Inputs:
@@ -903,8 +904,9 @@ class TransformerEncoderLayer(Cell):
         hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer. Support `gelu`, `relu`, `sigmpid` and so on.
-                         Default: gelu.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
         softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
@@ -1100,8 +1102,9 @@ class TransformerDecoderLayer(Cell):
         hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer. Support `gelu`, `relu`, `sigmpid` and so on.
-                         Default: gelu.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
         softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
@@ -1390,8 +1393,9 @@ class TransformerEncoder(Cell):
         hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer.  Support `gelu`, `relu`, `sigmpid` and so on.
-                          Default: gelu.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
         softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
@@ -1527,8 +1531,9 @@ class TransformerDecoder(Cell):
         hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer.  Support `gelu`, `relu`, `sigmpid` and so on.
-                          Default: gelu.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         layernorm_compute_type(dtype.Number): The computation type of the layernorm.
             Can be dtype.float32 or dtype.float16. Default dtype.float16.
         softmax_comptue_type(dtype.Number): The computation type of the softmax in the attention.
@@ -1668,8 +1673,8 @@ class TransformerDecoder(Cell):
 
 class Transformer(Cell):
     r"""
-    Transformer module. The difference is the module use the residual addition before the layernormalization. And the
-    default hidden act is `gelu`.
+    Transformer module including encoder and decoder. The difference with the original implements is the module use
+    the residual addition before the layernormalization. And the default hidden act is `gelu`.
      The detials can be found in `Attention is all you need
     <https://arxiv.org/pdf/1706.03762v5.pdf>`.
 
@@ -1689,8 +1694,9 @@ class Transformer(Cell):
         hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
         post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
-        hidden_act(str): The activation of the internal feedforward layer.  Support `gelu`, `relu`, `sigmpid` and so on.
-                          Default: gelu.
+        hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
+                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
+                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
         lambda_func: A function can specific the fusion index, pipeline stages and recompute attribute. If the user
             wants to specific the pipeline stage and gradient aggregation fusion, the user can pass a function
             that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
