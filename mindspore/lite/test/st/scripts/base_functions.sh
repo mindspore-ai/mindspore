@@ -187,7 +187,7 @@ function Run_Benchmark() {
           do
             cur_input_num=${input_seq%%,*}
             input_seq=${input_seq#*,}
-            input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$cur_input_num','
+            input_files=${input_files}${data_path}'input/oldinput_'${model_name}'.ms.bin_'$cur_input_num','
           done
         fi
       fi
