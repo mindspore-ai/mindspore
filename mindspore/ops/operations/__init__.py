@@ -83,7 +83,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, KLDivLoss, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad, SparseApplyAdagradV2, SparseApplyFtrlV2,
-                     FusedSparseFtrl, FusedSparseProximalAdagrad,
+                     FusedSparseFtrl, FusedSparseProximalAdagrad, SparseApplyRMSProp,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2, ApplyAdagradDA,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink)
@@ -412,6 +412,7 @@ __all__ = [
     "ApplyProximalAdagrad",
     "SparseApplyProximalAdagrad",
     "FusedSparseProximalAdagrad",
+    "SparseApplyRMSProp",
     "ApplyAdaMax",
     "ApplyAdadelta",
     "ApplyAdagrad",
