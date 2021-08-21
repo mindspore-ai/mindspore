@@ -43,7 +43,8 @@ class ReduceOp:
     - MIN: Take the minimum.
     - PROD: Take the product.
 
-    For more, refer to example. Note: This needs to run in an environment with multiple graphics cards.
+    Note:
+        For more, refer to example. This needs to run in an environment with multiple graphics cards.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
