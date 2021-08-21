@@ -190,7 +190,7 @@ bool Server::InitCommunicatorWithWorker() {
     MS_EXCEPTION_IF_NULL(http_comm);
     communicators_with_worker_.push_back(http_comm);
   }
-  g_communicator_with_worker = communicator_with_worker_;
+  g_communicators_with_worker = communicators_with_worker_;
   return true;
 }
 
