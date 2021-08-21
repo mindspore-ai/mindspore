@@ -91,6 +91,8 @@ class FusedPullWeightKernel : public CPUKernel {
         fl_iteration_ = pull_weight_rsp->iteration();
         MS_LOG(DEBUG) << "Server is not ready for downloading yet. Reason: " << pull_weight_rsp->reason()->str()
                       << ". Retry later.";
+        // Recreate fbb to avoid memory leak of FlatBuffers.
+        fbb = std::make_shared<fl::FBBuilder>();
         if (!BuildPullWeightReq(fbb)) {
           MS_LOG(EXCEPTION) << "Building request for FusedDownloadWeightsByKeys failed.";
           return false;
