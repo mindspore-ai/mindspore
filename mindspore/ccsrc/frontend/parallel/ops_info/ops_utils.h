@@ -57,6 +57,10 @@ constexpr size_t DROPOUT_DO_MASK_CNODE_INPUT_SIZE = 4;
 constexpr size_t DROPOUT_GEN_MASK_CNODE_INPUT_SIZE = 3;
 constexpr size_t DROPOUT_GEN_MASK_INDEX = 2;
 constexpr size_t DROPOUT_DO_MASK_KEEP_PROB_INDEX = 3;
+constexpr size_t DSD_MATMUL_INPUTS_SIZE = 3;
+constexpr size_t DSD_MATMUL_OUTPUTS_SIZE = 1;
+constexpr size_t DSD_MATMUL_STRATEGY_W_SIZE = 7;
+constexpr size_t DSD_MATMUL_STRATEGY_V_SIZE = 4;
 constexpr size_t SoftmaxCrossEntropyWithLogitsAttrSize = 1;
 constexpr size_t SoftmaxCrossEntropyWithLogitsInputsSize = 2;
 constexpr size_t SoftmaxCrossEntropyWithLogitsOutputsSize = 2;
@@ -388,6 +392,7 @@ constexpr char UNIQUE[] = "Unique";
 constexpr char GATHERND[] = "GatherNd";
 constexpr char SCATTER_UPDATE[] = "ScatterUpdate";
 constexpr char GATHERD[] = "GatherD";
+constexpr char DSD_MATMUL[] = "DSDMatmul";
 
 // pipeline
 constexpr char MICRO[] = "micro";
