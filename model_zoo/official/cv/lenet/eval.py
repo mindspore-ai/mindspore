@@ -36,7 +36,7 @@ def modelarts_process():
 
 @moxing_wrapper(pre_process=modelarts_process)
 def eval_lenet():
-
+    print('eval with config: ', config)
     context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 
     network = LeNet5(config.num_classes)
