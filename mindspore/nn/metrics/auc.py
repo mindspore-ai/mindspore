@@ -18,7 +18,7 @@ import numpy as np
 
 def auc(x, y, reorder=False):
     """
-    Computes the Area Under the Curve (AUC) using the trapezoidal rule. This is a general function, given points on a
+    Computes the AUC(Area Under the Curve) using the trapezoidal rule. This is a general function, given points on a
     curve. For computing the area under the ROC-curve.
 
     Args:
@@ -78,7 +78,7 @@ def auc(x, y, reorder=False):
 
 def _column_or_1d(y):
     """
-     Ravel column or 1d numpy array, otherwise raise an error.
+     Ravel column or 1D numpy array, otherwise raise a ValueError.
     """
     shape = np.shape(y)
     if len(shape) == 1 or(len(shape) == 2 and shape[1] == 1):

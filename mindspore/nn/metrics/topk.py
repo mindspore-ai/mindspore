@@ -73,7 +73,7 @@ class TopKCategoricalAccuracy(Metric):
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:
-            raise ValueError('Topk need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('The topk needs 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
@@ -93,7 +93,7 @@ class TopKCategoricalAccuracy(Metric):
             Float, computed result.
         """
         if self._samples_num == 0:
-            raise RuntimeError('Total samples num must not be 0.')
+            raise RuntimeError('The total number of samples must not be 0.')
         return self._correct_num / self._samples_num
 
 

@@ -25,11 +25,11 @@ class CosineSimilarity(Metric):
     Args:
         similarity (str): 'dot' or 'cosine'. Default: 'cosine'
         reduction (str): 'none', 'sum', 'mean' (all along dim -1). Default: 'none'
-        zero_diagonal (bool): if True, the diagonals are set to zero. Default: True
+        zero_diagonal (bool): If true, the diagonals are set to zero. Default: True
 
     Return:
         A square matrix (input1, input1) with the similarity scores between all elements.
-        If sum or mean are used, then returns (b, 1) with the reduced value for each row.
+        If sum or mean is used, then returns (b, 1) with the reduced value for each row.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
