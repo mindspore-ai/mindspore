@@ -360,11 +360,11 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   int start = 0;
   unsigned int end = (unsigned int)(iteration_.find(vertical_bar));
   while (iteration_.find(vertical_bar) != std::string::npos) {
-    std::string temp = iteration_.substr((size_t)start, (size_t)(end - start));
+    std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
     unsigned int range_idx = (unsigned int)(temp.find(dash));
     if (temp.find(dash) != std::string::npos) {
-      uint32_t low_range = std::stoul(temp.substr(0, (size_t)range_idx));
-      uint32_t high_range = std::stoul(temp.substr((size_t)(range_idx + 1), -1));
+      uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
+      uint32_t high_range = std::stoul(temp.substr(IntToSize((range_idx + 1)), -1));
       if ((low_range <= iteration) && (iteration <= high_range)) {
         return true;
       }
@@ -372,13 +372,13 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
       return true;
     }
     start = end + 1;
-    end = (unsigned int)(iteration_.find(vertical_bar, (size_t)start));
+    end = (unsigned int)(iteration_.find(vertical_bar, IntToSize(start)));
   }
-  std::string temp = iteration_.substr((size_t)start, (size_t)(end - start));
+  std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
   int range_idx = (unsigned int)(temp.find(dash));
   if (temp.find(dash) != std::string::npos) {
-    uint32_t low_range = std::stoul(temp.substr(0, (size_t)range_idx));
-    uint32_t high_range = std::stoul(temp.substr((size_t)(range_idx + 1), -1));
+    uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
+    uint32_t high_range = std::stoul(temp.substr(IntToSize(range_idx + 1), -1));
     if ((low_range <= iteration) && (iteration <= high_range)) {
       return true;
     }
@@ -460,9 +460,9 @@ void DumpJsonParser::JsonConfigToString() {
   cur_config.append(" input_output:");
   cur_config.append(std::to_string(input_output_));
   cur_config.append("e2e_enable:");
-  cur_config.append(std::to_string(e2e_dump_enabled_));
+  cur_config.append(std::to_string(static_cast<int>(e2e_dump_enabled_)));
   cur_config.append(" async_dump_enable:");
-  cur_config.append(std::to_string(async_dump_enabled_));
+  cur_config.append(std::to_string(static_cast<int>(async_dump_enabled_)));
   MS_LOG(INFO) << cur_config;
 }
 
