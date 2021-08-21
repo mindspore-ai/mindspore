@@ -26,6 +26,7 @@
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -174,6 +175,23 @@ DeemphBiquad::DeemphBiquad(int32_t sample_rate) : data_(std::make_shared<Data>(s
 
 std::shared_ptr<TensorOperation> DeemphBiquad::Parse() {
   return std::make_shared<DeemphBiquadOperation>(data_->sample_rate_);
+}
+
+// EqualizerBiquad Transform Operation.
+struct EqualizerBiquad::Data {
+  Data(int32_t sample_rate, float center_freq, float gain, float Q)
+      : sample_rate_(sample_rate), center_freq_(center_freq), gain_(gain), Q_(Q) {}
+  int32_t sample_rate_;
+  float center_freq_;
+  float gain_;
+  float Q_;
+};
+
+EqualizerBiquad::EqualizerBiquad(int32_t sample_rate, float center_freq, float gain, float Q)
+    : data_(std::make_shared<Data>(sample_rate, center_freq, gain, Q)) {}
+
+std::shared_ptr<TensorOperation> EqualizerBiquad::Parse() {
+  return std::make_shared<EqualizerBiquadOperation>(data_->sample_rate_, data_->center_freq_, data_->gain_, data_->Q_);
 }
 
 // FrequencyMasking Transform Operation.

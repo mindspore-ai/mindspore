@@ -26,7 +26,8 @@ from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, check_deemph_biquad, \
-    check_highpass_biquad, check_lowpass_biquad, check_masking, check_mu_law_decoding, check_time_stretch
+    check_equalizer_biquad, check_highpass_biquad, check_lowpass_biquad, check_masking, check_mu_law_decoding,\
+    check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -316,6 +317,36 @@ class DeemphBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.DeemphBiquadOperation(self.sample_rate)
+
+
+class EqualizerBiquad(AudioTensorOperation):
+    """
+    Design biquad equalizer filter and perform filtering. Similar to SoX implementation.
+
+    Args:
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        center_freq (float): Central frequency (in Hz).
+        gain (float): Desired gain at the boost (or attenuation) in dB.
+        Q (float, optional): https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.EqualizerBiquad(44100, 1500, 5.5, 0.7)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_equalizer_biquad
+    def __init__(self, sample_rate, center_freq, gain, Q=0.707):
+        self.sample_rate = sample_rate
+        self.center_freq = center_freq
+        self.gain = gain
+        self.Q = Q
+
+    def parse(self):
+        return cde.EqualizerBiquadOperation(self.sample_rate, self.center_freq, self.gain, self.Q)
 
 
 class FrequencyMasking(AudioTensorOperation):
