@@ -142,6 +142,7 @@ int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &
     MS_LOG(ERROR) << "New CheckTensor failed, tensor name: " << tensor_name;
     return RET_ERROR;
   }
+  this->benchmark_tensor_names_.push_back(tensor_name);
   this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
   return RET_OK;
 }
@@ -175,6 +176,11 @@ int Benchmark::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
   int total_size = 0;
+  // check the output tensor name.
+  if (this->benchmark_tensor_names_ != session_->GetOutputTensorNames()) {
+    MS_LOG(ERROR) << "The output tensor name is wrong.";
+    return RET_ERROR;
+  }
   for (const auto &calib_tensor : benchmark_data_) {
     std::string tensor_name = calib_tensor.first;
     tensor::MSTensor *tensor = session_->GetOutputByTensorName(tensor_name);

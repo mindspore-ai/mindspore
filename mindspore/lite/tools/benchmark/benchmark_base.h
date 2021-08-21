@@ -297,6 +297,7 @@ class MS_API BenchmarkBase {
 
  protected:
   BenchmarkFlags *flags_;
+  std::vector<std::string> benchmark_tensor_names_;
   std::unordered_map<std::string, CheckTensor *> benchmark_data_;
   std::unordered_map<std::string, int> data_type_map_{
     {"FLOAT", kNumberTypeFloat}, {"INT8", kNumberTypeInt8}, {"INT32", kNumberTypeInt32}, {"UINT8", kNumberTypeUInt8}};
