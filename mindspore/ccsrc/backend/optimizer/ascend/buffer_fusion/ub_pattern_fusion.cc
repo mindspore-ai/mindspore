@@ -70,11 +70,11 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
   MS_EXCEPTION_IF_NULL(fusion_op);
 
   std::vector<std::string> input_names;
-  for (uint8_t i = 0; i < inputs_list.size(); i++) {
+  for (size_t i = 0; i < inputs_list.size(); i++) {
     (void)input_names.emplace_back("input" + std::to_string(i));
   }
   std::vector<std::string> output_names;
-  for (uint8_t i = 0; i < outputs_list.size(); i++) {
+  for (size_t i = 0; i < outputs_list.size(); i++) {
     (void)output_names.emplace_back("output" + std::to_string(i));
   }
 
