@@ -50,6 +50,8 @@ namespace mindspore {
 namespace dataset {
 using DATA_INFO = std::vector<std::pair<DataType, TensorShape>>;
 using DATA_INFO_QUEUE = Queue<DATA_INFO>;
+
+constexpr int32_t kTimeOutMilliSeconds = 25000;
 const int kDataInfoQueueCapacity = 128;
 
 class DeviceQueueOp : public PipelineOp {
@@ -154,6 +156,14 @@ class DeviceQueueOp : public PipelineOp {
 #endif
 
   Status SendDataToCPU();
+
+  // Create async thread to detect whether it takes too long and unable to fetch first batch
+  Status DetectFirstBatch();
+
+  // Detect the cost time of each batch, present alarm message if cost too long
+  void DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time);
+
+  std::atomic<bool> first_fetch_flag_;
 
   std::unique_ptr<ChildIterator> child_iterator_;
   std::string channel_name_;
