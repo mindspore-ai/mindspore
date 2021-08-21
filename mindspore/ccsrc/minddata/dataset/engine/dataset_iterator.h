@@ -49,7 +49,7 @@ class DatasetIterator {
   // @return The string to column id mapping.
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const;
 
-  bool eof_handled() const { return eof_handled_; }
+  bool EofHandled() const { return eof_handled_; }
 
   // Fetches one row of data from the iterator.
   // the base class version simply performs error handling and returns empty row. Actual
@@ -108,11 +108,11 @@ class ChildIterator {
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const;
 
   // Return T/F if end of epoch
-  bool end_of_epoch() { return end_epoch_; }
+  bool EndOfEpoch() { return end_epoch_; }
 
   // Getter
   // @return T/F if this iterator is completely done after getting an eof
-  bool eof_handled() const { return eof_handled_; }
+  bool EofHandled() const { return eof_handled_; }
 
  private:
   DatasetOp *current_op_;  // The parent operator. We consume from it's children.

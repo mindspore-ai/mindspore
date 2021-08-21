@@ -63,8 +63,8 @@ Status CachePool::DoServiceStop() {
   if (!root_.toString().empty()) {
     Path spill = GetSpillPath();
     auto it = Path::DirIterator::OpenDirectory(&spill);
-    while (it->hasNext()) {
-      rc = it->next().Remove();
+    while (it->HasNext()) {
+      rc = it->Next().Remove();
       if (rc.IsError() && rc2.IsOk()) {
         rc2 = rc;
       }

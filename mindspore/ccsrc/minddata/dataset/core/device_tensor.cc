@@ -23,7 +23,10 @@
 
 namespace mindspore {
 namespace dataset {
-DeviceTensor::DeviceTensor(const TensorShape &shape, const DataType &type) : Tensor(shape, type) {
+const int kYuvDefaultChannels = 4;
+
+DeviceTensor::DeviceTensor(const TensorShape &shape, const DataType &type)
+    : Tensor(shape, type), device_data_(nullptr), size_(0) {
   // grab the mem pool from global context and create the allocator for char data area
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
   data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
@@ -34,6 +37,7 @@ DeviceTensor::DeviceTensor(const TensorShape &shape, const DataType &type) : Ten
 Status DeviceTensor::CreateEmpty(const TensorShape &shape, const DataType &type, std::shared_ptr<DeviceTensor> *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(shape.known(), "Invalid shape.");
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Invalid data type.");
+  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Invalid nullptr pointer.");
   const DeviceTensorAlloc *alloc = GlobalContext::Instance()->device_tensor_allocator();
   *out = std::allocate_shared<DeviceTensor>(*alloc, shape, type);
   // if it's a string tensor and it has no elements, Just initialize the shape and type.
@@ -42,6 +46,7 @@ Status DeviceTensor::CreateEmpty(const TensorShape &shape, const DataType &type,
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(type.IsNumeric(), "Number of elements is not 0. The type should be numeric.");
+  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory faiiled.");
 
   int64_t bytes = (*out)->SizeInBytes();
   // Don't allocate if we have a tensor with no elements.
@@ -58,9 +63,11 @@ Status DeviceTensor::CreateFromDeviceMemory(const TensorShape &shape, const Data
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Invalid data type.");
   CHECK_FAIL_RETURN_UNEXPECTED(data_ptr != nullptr, "Data pointer is NULL");
   CHECK_FAIL_RETURN_UNEXPECTED(dataSize > 0, "Invalid data size");
+  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Out pointer is NULL");
 
   const DeviceTensorAlloc *alloc = GlobalContext::Instance()->device_tensor_allocator();
   *out = std::allocate_shared<DeviceTensor>(*alloc, shape, type);
+  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
 
   // if it's a string tensor and it has no elements, Just initialize the shape and type.
   if (!type.IsNumeric() && shape.NumOfElements() == 0) {
@@ -76,6 +83,8 @@ Status DeviceTensor::CreateFromDeviceMemory(const TensorShape &shape, const Data
     RETURN_IF_NOT_OK((*out)->AllocateBuffer(byte_size));
   }
 
+  CHECK_FAIL_RETURN_UNEXPECTED(attributes.size() >= kYuvDefaultChannels,
+                               "Invalid attributes size, should be greater than 4.");
   CHECK_FAIL_RETURN_UNEXPECTED(
     (*out)->SetAttributes(data_ptr, dataSize, attributes[0], attributes[1], attributes[2], attributes[3]),
     "Fail to set attributes for DeviceTensor");
@@ -129,6 +138,7 @@ Status DeviceTensor::SetSize_(const uint32_t &new_size) {
 
 #ifdef ENABLE_ACL
 Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
+  CHECK_FAIL_RETURN_UNEXPECTED(host_tensor != nullptr, "host tensor pointer is NULL.");
   void *resHostBuf = nullptr;
   APP_ERROR ret = aclrtMallocHost(&resHostBuf, this->DeviceDataSize());
   if (ret != APP_ERR_OK) {
@@ -151,13 +161,18 @@ Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
 
   mindspore::dataset::dsize_t dvppDataSize = this->DeviceDataSize();
   const mindspore::dataset::TensorShape dvpp_shape({dvppDataSize, 1, 1});
+
+  CHECK_FAIL_RETURN_UNEXPECTED(this->GetYuvStrideShape().size() >= kYuvDefaultChannels,
+                               "Invalid YuvShape, should greater than 4");
+
   uint32_t _output_width_ = this->GetYuvStrideShape()[0];
   uint32_t _output_widthStride_ = this->GetYuvStrideShape()[1];
   uint32_t _output_height_ = this->GetYuvStrideShape()[2];
   uint32_t _output_heightStride_ = this->GetYuvStrideShape()[3];
   const mindspore::dataset::DataType dvpp_data_type(mindspore::dataset::DataType::DE_UINT8);
 
-  mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, host_tensor);
+  RETURN_IF_NOT_OK(mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, host_tensor));
+  CHECK_FAIL_RETURN_UNEXPECTED(host_tensor != nullptr, "Allocate memory failed.");
 
   (*host_tensor)->SetYuvShape(_output_width_, _output_widthStride_, _output_height_, _output_heightStride_);
   if (!(*host_tensor)->HasData()) {

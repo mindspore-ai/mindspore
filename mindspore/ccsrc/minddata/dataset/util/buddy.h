@@ -105,13 +105,7 @@ class BuddySpace {
 
   void FreeNoLock(const BSpaceDescriptor *desc);
 
-  uint32_t SizeToBlock(const uint64_t sz) const {
-    uint32_t reqSize = (sz / min_);
-    if (sz % min_) {
-      reqSize++;
-    }
-    return reqSize;
-  }
+  uint32_t SizeToBlock(const uint64_t sz) const;
 
   void GetBuddySegState(const rel_addr_t rel_addr, size_t *rel_sz, STATE *st) const;
 

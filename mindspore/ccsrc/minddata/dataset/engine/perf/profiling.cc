@@ -51,6 +51,7 @@ Status Tracing::SaveToFile() {
 }
 
 Status Sampling::ReadJson(nlohmann::json *output) {
+  RETURN_UNEXPECTED_IF_NULL(output);
   Path path = Path(file_path_);
   if (path.Exists()) {
     MS_LOG(DEBUG) << file_path_ << " exists";

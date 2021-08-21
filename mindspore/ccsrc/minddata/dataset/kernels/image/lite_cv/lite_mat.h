@@ -166,15 +166,9 @@ class LDataType {
   ~LDataType() = default;
 
   inline Type Value() const { return type_; }
-  inline bool operator==(const LDataType &ps) const {
-    if (this->type_ == ps.type_) return true;
-    return false;
-  }
+  inline bool operator==(const LDataType &ps) const { return this->type_ == ps.type_; }
 
-  inline bool operator!=(const LDataType &ps) const {
-    if (this->type_ != ps.type_) return true;
-    return false;
-  }
+  inline bool operator!=(const LDataType &ps) const { return this->type_ != ps.type_; }
 
   uint8_t SizeInBytes() const {
     if (type_ < LDataType::NUM_OF_TYPES)

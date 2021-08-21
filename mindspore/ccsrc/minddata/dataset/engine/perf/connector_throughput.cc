@@ -29,6 +29,9 @@ namespace dataset {
 
 // temporary helper
 int ConnectorThroughput::InitNodes() {
+  if (tree_ == nullptr) {
+    return 0;
+  }
   auto it = (*tree_).begin();
   return it.NumNodes();
 }
@@ -43,15 +46,16 @@ Status ConnectorThroughput::Sample() {
     out_row_count_row[col] = cur_out_rows_count;
     auto sz = timestamps_.size();
     cur_time = std::chrono::steady_clock::now();
-    double dt = 0;
+    double data_time = 0;
     if (sz > 1) {
-      auto _dt = std::chrono::duration_cast<std::chrono::microseconds>(timestamps_[0][sz - 1] - timestamps_[0][sz - 2]);
-      dt = std::chrono::duration<double>(_dt).count();
+      auto full_time =
+        std::chrono::duration_cast<std::chrono::microseconds>(timestamps_[0][sz - 1] - timestamps_[0][sz - 2]);
+      data_time = std::chrono::duration<double>(full_time).count();
     }
     auto prev_out_rows_count = out_row_count_table_[col][out_row_count_table_.size() - 1];
-    if (dt != 0) {
+    if (data_time != 0) {
       const int32_t multiplier = 1000;
-      auto thr = (cur_out_rows_count - prev_out_rows_count) / (multiplier * dt);
+      auto thr = (cur_out_rows_count - prev_out_rows_count) / (multiplier * data_time);
       throughput_row[col] = thr;
     } else {
       throughput_row[col] = 0;
@@ -70,7 +74,7 @@ json ConnectorThroughput::ParseOpInfo(const DatasetOp &node, const std::vector<d
   auto children = node.Children();
   std::vector<int32_t> children_id;
   std::transform(children.begin(), children.end(), std::back_inserter(children_id),
-                 [](std::shared_ptr<DatasetOp> op) -> int32_t { return op->id(); });
+                 [](const std::shared_ptr<DatasetOp> &op) -> int32_t { return op ? op->id() : 0; });
   json json_node;
   json_node["op_id"] = node.id();
   json_node["op_type"] = node.Name();
@@ -100,8 +104,10 @@ Status ConnectorThroughput::SaveToFile() {
   int col = 0;
   for (auto &node : *tree_) {
     std::vector<double> throughput;
-    for (auto i = 0; i < throughput_.size(); i++) {
-      throughput.push_back(throughput_[col][i]);
+    if (throughput_.size() > col) {
+      for (auto i = 0; i < throughput_[col].size(); i++) {
+        throughput.push_back(throughput_[col][i]);
+      }
     }
 
     if (!path.Exists()) {

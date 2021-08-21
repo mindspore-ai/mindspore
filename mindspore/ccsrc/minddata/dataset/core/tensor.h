@@ -414,6 +414,10 @@ class Tensor {
   /// \param[in] index_vector vector of indices
   /// \return std::vector<dsize_t> modified vector of indices
   static inline std::vector<dsize_t> HandleNegIndices(std::vector<dsize_t> index_vector, std::vector<dsize_t> length) {
+    if (length.size() < index_vector.size()) {
+      MS_LOG(ERROR) << "The size of length should be greater than the shape of index_vector";
+      return {};
+    }
     std::vector<dsize_t> indices(index_vector.size(), 0);
     for (int i = 0; i < index_vector.size(); i++) {
       indices[i] = HandleNeg(index_vector[i], length[i]);
@@ -780,12 +784,14 @@ inline Tensor::TensorIterator<std::string_view> Tensor::end<std::string_view>() 
 template <>
 inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::string> &items, const TensorShape &shape,
                                                     TensorPtr *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   CHECK_FAIL_RETURN_UNEXPECTED(
     items.size() == shape.NumOfElements(),
     "Number of elements in the vector does not match the number of elements of the shape required");
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(items.size())}),
                                       DataType(DataType::DE_STRING));
+  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
   if (items.size() == 0) {
     if (shape.known()) {
       return (*out)->Reshape(shape);
@@ -835,6 +841,7 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
 /// \return Status code
 template <>
 inline Status Tensor::CreateScalar<std::string>(const std::string &item, TensorPtr *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   return CreateFromVector<std::string>({item}, TensorShape::CreateScalar(), out);
 }
 }  // namespace dataset

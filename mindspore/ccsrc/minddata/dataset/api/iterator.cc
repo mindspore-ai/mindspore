@@ -27,7 +27,8 @@ Iterator::~Iterator() { Stop(); }
 
 // Get the next row from the data pipeline.
 Status Iterator::GetNextRowCharIF(MSTensorMapChar *row) {
-  // Clean data row
+  RETURN_UNEXPECTED_IF_NULL(row);
+  // Clean data buffer
   row->clear();
   std::unordered_map<std::string, std::shared_ptr<dataset::Tensor>> md_map;
   Status rc = consumer_->GetNextAsMap(&md_map);
@@ -47,6 +48,7 @@ Status Iterator::GetNextRowCharIF(MSTensorMapChar *row) {
 // Get the next row from the data pipeline.
 Status Iterator::GetNextRow(MSTensorVec *row) {
   // Clean data row
+  RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();
   // create a dataset tensor row and fetch. Then we convert the output to MSTensor
   std::vector<std::shared_ptr<dataset::Tensor>> md_row;
@@ -84,6 +86,7 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epo
 PullIterator::PullIterator() : pull_consumer_(nullptr) {}
 // Get the next row from the data pipeline.
 Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   for (int i = 0; i < num_rows; i++) {
     std::vector<std::shared_ptr<dataset::Tensor>> md_row;
     Status rc = pull_consumer_->GetNextAsVector(&md_row);
@@ -105,6 +108,7 @@ Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *const r
 }
 
 Status PullIterator::GetNextRow(MSTensorVec *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "Consumer is nullptr.");
   std::vector<std::shared_ptr<dataset::Tensor>> md_row;
   Status rc = pull_consumer_->GetNextAsVector(&md_row);

@@ -113,6 +113,7 @@ Status BarrierOp::blockCond() {
 
 // fetches next Barrier row
 Status BarrierOp::getNextTensorRow(TensorRow *new_row) {
+  RETURN_UNEXPECTED_IF_NULL(new_row);
   // iterate over all iterators and generate a row
   RETURN_IF_NOT_OK((child_iterator_)->FetchNextTensorRow(new_row));
   // add each new row to iterator, check if row is empty, if row from iterator is empty return empty row
@@ -122,7 +123,7 @@ Status BarrierOp::getNextTensorRow(TensorRow *new_row) {
     MS_LOG(INFO) << "Barrier operator child iterator produced empty row.";
     clean_up_ = true;
     // If we picked up an eof here, then we are completely done.
-    if ((child_iterator_)->eof_handled()) {
+    if ((child_iterator_)->EofHandled()) {
       MS_LOG(INFO) << "Barrier operator iterator got EOF.";
       eof_ = true;
     }

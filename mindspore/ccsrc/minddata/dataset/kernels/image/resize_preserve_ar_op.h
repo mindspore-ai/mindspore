@@ -34,9 +34,9 @@ namespace dataset {
 class ResizePreserveAROp : public TensorOp {
  public:
   // Default values, also used by python_bindings.cc
-  static const int32_t kDefImgorientation;
+  static const int32_t kDefImgOrientation;
 
-  ResizePreserveAROp(int32_t height, int32_t width, int32_t img_orientation = kDefImgorientation);
+  ResizePreserveAROp(int32_t height, int32_t width, int32_t img_orientation = kDefImgOrientation);
 
   ~ResizePreserveAROp() override = default;
 

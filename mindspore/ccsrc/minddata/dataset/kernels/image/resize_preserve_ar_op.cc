@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace dataset {
-const int32_t ResizePreserveAROp::kDefImgorientation = 0;
+const int32_t ResizePreserveAROp::kDefImgOrientation = 0;
 
 ResizePreserveAROp::ResizePreserveAROp(int32_t height, int32_t width, int32_t img_orientation)
     : height_(height), width_(width), img_orientation_(img_orientation) {}

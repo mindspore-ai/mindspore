@@ -106,8 +106,8 @@ Status AlbumNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_
   }
   std::set<std::string> extensions = {".json", ".JSON"};
 
-  while (dirItr->hasNext()) {
-    Path file = dirItr->next();
+  while (dirItr->HasNext()) {
+    Path file = dirItr->Next();
     if (extensions.empty() || extensions.find(file.Extension()) != extensions.end()) {
       num_rows += 1;
     }

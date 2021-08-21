@@ -109,19 +109,19 @@ int32_t SoftVpc::CheckParamter() {
 
   uint32_t out_width = out_width_;
   uint32_t out_height = out_height_;
-  bool flag = (out_width * 32 >= crop_width) ? true : false;  // A maximum of 32x zoom-out
+  bool flag = (out_width * 32 >= crop_width);  // A maximum of 32x zoom-out
   VPC_CHECK_COND_FAIL_PRINT_RETURN(flag, dpFail,
                                    "Max reduction multiple is 32. Please check left(%u), right(%u), out_width(%u).",
                                    left_, right_, out_width);  // Up to 16x magnification
-  flag = (crop_width * 16 >= out_width) ? true : false;
+  flag = (crop_width * 16 >= out_width);
   VPC_CHECK_COND_FAIL_PRINT_RETURN(flag, dpFail,
                                    "Max magnification is 16. Please check left(%u), right(%u), out_width(%u).", left_,
                                    right_, out_width);
-  flag = (out_height * 32 >= crop_height) ? true : false;  // A maximum of 32x zoom-out
+  flag = (out_height * 32 >= crop_height);  // A maximum of 32x zoom-out
   VPC_CHECK_COND_FAIL_PRINT_RETURN(flag, dpFail,
                                    "Max reduction multiple is 32. Please check up(%u), down(%u), out_height(%u).", up_,
                                    down_, out_height);
-  flag = (crop_height * 16 >= out_height) ? true : false;  // Up to 16x magnification
+  flag = (crop_height * 16 >= out_height);  // Up to 16x magnification
   VPC_CHECK_COND_FAIL_PRINT_RETURN(
     flag, dpFail, "Max magnification is 16. Please check up(%u), down(%u), out_height(%u).", up_, down_, out_height);
   return dpSucc;
