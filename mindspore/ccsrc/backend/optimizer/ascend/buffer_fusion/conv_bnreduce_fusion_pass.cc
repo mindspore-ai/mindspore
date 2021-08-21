@@ -33,8 +33,6 @@ void ConvBnReduceFusionPass::MatchConvBnreduce(const CNodePtr &cnode, const sess
                                                FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
   auto conv = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(conv);
   if (conv->isa<CNode>() && AnfAlgo::GetCNodeName(conv) == prim::kPrimConv2D->name() &&
