@@ -80,8 +80,7 @@ bool HttpServer::InitServer() {
   }
 
   struct sockaddr_in addr;
-  errno_t ret = memset_s(&addr, sizeof(addr), 0, sizeof(addr));
-  if (ret != EOK) {
+  if (memset_s(&addr, sizeof(addr), 0, sizeof(addr)) != EOK) {
     MS_LOG(EXCEPTION) << "Memset failed.";
   }
 
@@ -106,7 +105,7 @@ bool HttpServer::InitServer() {
   }
 
   int flags = 0;
-  if ((flags = fcntl(fd_, F_GETFL, 0)) < 0 || fcntl(fd_, F_SETFL, flags | O_NONBLOCK) < 0) {
+  if ((flags = fcntl(fd_, F_GETFL, 0)) < 0 || fcntl(fd_, F_SETFL, (unsigned int)flags | O_NONBLOCK) < 0) {
     MS_LOG(ERROR) << "Set fcntl O_NONBLOCK failed!";
     close(fd_);
     fd_ = -1;
