@@ -1,5 +1,8 @@
 # 目录
 
+<!-- TOC -->
+
+- [目录](#目录)
 - [Inception_ResNet_v2描述](#Inception_ResNet_v2描述)
 - [模型架构](#模型架构)
 - [数据集](#数据集)
@@ -24,11 +27,13 @@
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
+<!-- /TOC -->
+
 # Inception_ResNet_v2描述
 
 Inception_ResNet_v2是Google的深度学习卷积架构系列的一个版本。Inception_ResNet_v2主要通过修改以前的Inception架构来减少计算资源的消耗。该方法在2016年出版的Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning一文中提出的。
 
-[论文](https://arxiv.org/pdf/1512.00567.pdf)：(<https://arxiv.org/pdf/1602.07261.pdf>) Christian Szegedy, Sergey Ioffe, Vincent Vanhoucke, Alex Alemi. Computer Vision and Pattern Recognition[J]. 2016.
+[论文](https://arxiv.org/pdf/1512.00567.pdf)：(https://arxiv.org/pdf/1602.07261.pdf) Christian Szegedy, Sergey Ioffe, Vincent Vanhoucke, Alex Alemi. Computer Vision and Pattern Recognition[J]. 2016.
 
 # 模型架构
 
@@ -50,19 +55,19 @@ Inception_ResNet_v2的总体网络架构如下：
 
 ## 混合精度（Ascend）
 
-采用[混合精度](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
+采用[混合精度](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
 
 以FP16算子为例，如果输入数据类型为FP32，MindSpore后台会自动降低精度来处理数据。用户可打开INFO日志，搜索“reduce precision”查看精度降低的算子。
 
 # 环境要求
 
 - 硬件（Ascend）
-    - 使用Ascend来搭建硬件环境。
+- 使用Ascend来搭建硬件环境。
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install)
+- [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
+- [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
+- [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 # 脚本说明
 
@@ -77,13 +82,13 @@ Inception_ResNet_v2的总体网络架构如下：
     ├─run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
     └─run_eval_ascend.sh                # launch evaluating with ascend platform
   ├─src
-    ├─config.py                         # parameter configuration
-    ├─dataset.py                        # data preprocessing
-    ├─inception_resnet_v2.py.py         # network definition
-    └─callback.py                       # eval callback function
-  ├─eval.py                             # eval net
-  ├─export.py                           # export checkpoint, surpport .onnx, .air, .mindir convert
-  └─train.py                            # train net
+    ├─config.py                       # parameter configuration
+    ├─dataset.py                      # data preprocessing
+    ├─inception_resnet_v2.py.py       # network definition
+    └─callback.py                     # eval callback function
+  ├─eval.py                           # eval net
+  ├─export.py                         # export checkpoint, surpport .onnx, .air, .mindir convert
+  └─train.py                          # train net
 ```
 
 ## 脚本参数
@@ -121,12 +126,12 @@ Major parameters in train.py and config.py are:
 
     ```bash
     # distribute training example(8p)
-    bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_DIR
+    bash scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
     # standalone training
     bash scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
     ```
 
-> 注：RANK_TABLE_FILE可参考[链接](https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_ascend.html)。device_ip可以通过[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)获取
+> 注：RANK_TABLE_FILE可参考[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/distributed_training_ascend.html)。device_ip可以通过[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)获取
 
 ### 结果
 
@@ -191,8 +196,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 | 损失函数              | Softmax交叉熵                            |
 | 输出                    | 概率                                    |
 | 损失                       | 1.98                                           |
-| 速度 | 1卡：556 img/秒；8卡：4430 img/秒 |
-| 总时长            | 8卡：24小时                                         |
+| 总时长（8卡）            | 24小时                                            |
 
 #### 推理性能
 
@@ -212,3 +216,4 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 # ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
+
