@@ -232,7 +232,7 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
   auto new_abs_list = AddOutToAbsList(out, abs_list);
   level_2_graph_info = PrimBpropOptStep2(level_1_graph, new_abs_list);
   level_2_graph_info->TryFreeArgsValue(op_args, out);
-  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
     level_1_graph_info->graph_level_2_cache_[abs_list] = level_2_graph_info;
     return BasicClone(level_2_graph_info->opt_func_graph());
@@ -260,7 +260,7 @@ FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(const FuncGraphPtr &bprop_fg, c
   auto new_abs_list = AddOutToAbsList(out, abs_list);
   auto level_2_graph_info = PrimBpropOptStep2(level_1_graph_info->opt_func_graph_, new_abs_list);
   level_2_graph_info->TryFreeArgsValue(op_args, out);
-  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_GRAD_CACHE);
+  auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (!hook_flg && enable_grad_cache) {
     tuple_list_bprop_cache_[std::pair(prim, abs_list)] = BasicClone(level_2_graph_info->opt_func_graph());
   }

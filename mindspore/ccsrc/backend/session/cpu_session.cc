@@ -212,21 +212,27 @@ void CPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) 
   }
 }
 
-void CPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                             const std::vector<tensor::TensorPtr> &input_tensors,
-                             const std::vector<int64_t> &tensors_mask) {
+KernelGraphPtr CPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                                       const std::vector<tensor::TensorPtr> &input_tensors,
+                                       const std::vector<int64_t> &tensors_mask) {
   // Check if the graph cache exists.
-  if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
-    return;
+  auto it = run_op_graphs_.find(graph_info);
+  if (it != run_op_graphs_.end()) {
+    return it->second;
   }
+
   // Prepare the graph
-  auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
+  const auto &kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SetKernelInfo(kernel_graph.get());
   Optimize(kernel_graph);
   BuildKernel(kernel_graph.get());
   ProcessCast(kernel_graph);
-  run_op_graphs_[graph_info] = kernel_graph;
+  auto enable_op_graph_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
+  if (enable_op_graph_cache) {
+    run_op_graphs_[graph_info] = kernel_graph;
+  }
+  return kernel_graph;
 }
 
 void CPUSession::SetOutputFlags(const VectorRef &base_ref) {
@@ -260,12 +266,8 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                            const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
-  BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
+  const auto &kernel_graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
-
-  auto kernel_graph = run_op_graphs_[graph_info];
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = kernel_graph->execution_order();
   Reorder(&execution_order);
