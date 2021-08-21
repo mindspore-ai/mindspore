@@ -83,7 +83,7 @@ std::unordered_map<int32_t, std::vector<pid_t>> toIntMap(const py::dict input_di
 
 std::pair<int64_t, int64_t> toIntPair(const py::tuple tuple) {
   std::pair<int64_t, int64_t> pair;
-  if (!tuple.empty()) {
+  if (tuple.size() == 2) {
     pair = std::make_pair(toInt64((tuple)[0]), toInt64((tuple)[1]));
   }
   return pair;
