@@ -16,24 +16,19 @@
 
 #ifndef MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_
 #define MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_
-#include "schema/inner/model_generated.h"
+
 #include "backend/optimizer/common/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/converter/converter_flags.h"
 
-using mindspore::converter::FmkType;
 namespace mindspore::opt {
 class UpdateConv2DParamPass : public Pass {
  public:
-  UpdateConv2DParamPass() : Pass("update_conv2d_param_pass") {}
+  UpdateConv2DParamPass() : Pass("UpdateConv2DParamPass") {}
   ~UpdateConv2DParamPass() override = default;
-  lite::STATUS UpdateCommonConv2D(const CNodePtr &cnode);
-  static lite::STATUS UpdateDepthWiseConv2D(const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &graph) override;
-  void SetFmkType(FmkType fmk_type) { this->fmk_type_ = fmk_type; }
 
  private:
-  FmkType fmk_type_ = converter::kFmkTypeOnnx;
+  STATUS UpdateConv2DAttr(const CNodePtr &cnode);
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_

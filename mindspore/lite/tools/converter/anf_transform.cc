@@ -217,8 +217,6 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
-  auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
-  convert_pm->AddPass(infershape_pass);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
@@ -235,8 +233,9 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   if (!config->trainModel) {
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   }
+  auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
+  const_fold_pm->AddPass(infershape_pass);
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
-  update_conv2d_param_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(update_conv2d_param_pass);
   optimizer->AddPassManager(const_fold_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {

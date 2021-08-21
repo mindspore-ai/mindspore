@@ -43,13 +43,24 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   auto pad_list = value->pad_list();
   auto dilation = value->dilation();
   auto output_paddings = value->output_paddings();
-  if (kernel_size == nullptr || stride == nullptr || dilation == nullptr || output_paddings == nullptr) {
+  if (kernel_size != nullptr) {
+    if (kernel_size->size() < kMinShapeSizeTwo) {
+      MS_LOG(ERROR) << "kernel size is invalid.";
+      free(param);
+      return nullptr;
+    }
+    param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
+    param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
+  } else {
+    param->kernel_h_ = -1;
+    param->kernel_w_ = -1;
+  }
+  if (stride == nullptr || dilation == nullptr || output_paddings == nullptr) {
     MS_LOG(ERROR) << "nullptr";
     free(param);
     return nullptr;
   }
-  if (kernel_size->size() < kMinShapeSizeTwo || stride->size() < kMinShapeSizeTwo ||
-      dilation->size() < kMinShapeSizeTwo) {
+  if (stride->size() < kMinShapeSizeTwo || dilation->size() < kMinShapeSizeTwo) {
     MS_LOG(ERROR) << "Invalid shape size!kernel_size size: " << kernel_size->size()
                   << ", stride size: " << stride->size() << ", dilation size: " << dilation->size()
                   << ", output_paddings size:" << output_paddings->size();

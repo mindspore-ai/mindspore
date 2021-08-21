@@ -60,9 +60,6 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_out_channel(kernels[3]);
     prim->set_in_channel(kernels[2]);
   } else {
-    prim->set_kernel_size({0, 0});
-    prim->set_out_channel(1);
-    prim->set_in_channel(1);
     MS_LOG(WARNING) << "parsing of kernelH/W channelIn/Out is delayed";
   }
 
@@ -84,8 +81,10 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   if (tf_op.op() == "DepthwiseConv2dNative") {
     prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
-    prim->set_group(prim->get_in_channel());
-    prim->set_out_channel(prim->get_in_channel());
+    if (prim->GetAttr(ops::kInChannel) != nullptr) {
+      prim->set_group(prim->get_in_channel());
+      prim->set_out_channel(prim->get_in_channel());
+    }
   }
 
   return prim.release();

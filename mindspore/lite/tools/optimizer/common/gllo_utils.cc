@@ -496,13 +496,12 @@ int CheckLeastInputSize(const CNodePtr &node, const int size) {
   return lite::RET_OK;
 }
 
-ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num,
-                            const tensor::TensorPtr &weight_tensor) {
+ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, int kernel_num, TypeId type_id) {
   auto bias_parameter = func_graph->add_parameter();
   MS_ASSERT(bias_parameter != nullptr);
   std::vector<int64_t> shape_vector = {kernel_num};
-  auto tensor_info = lite::CreateTensorInfo(bias_data, kernel_num * sizeof(float) / sizeof(uint8_t), shape_vector,
-                                            weight_tensor->data_type());
+  auto tensor_info =
+    lite::CreateTensorInfo(bias_data, kernel_num * sizeof(float) / sizeof(uint8_t), shape_vector, type_id);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";
     return nullptr;
@@ -613,6 +612,9 @@ bool IsParamOrValueNodeWithData(const BaseRef &n) {
     }
   }
   if (utils::isa<ParameterPtr>(n)) {
+    if (!utils::cast<ParameterPtr>(n)->has_default()) {
+      return false;
+    }
     auto param = utils::cast<ParameterPtr>(n)->default_param();
     auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param);
     if (tensor == nullptr || tensor->data_c() == nullptr) {

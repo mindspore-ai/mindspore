@@ -28,6 +28,10 @@ class ConvBiasaddFusion : public PatternProcessPass {
   ~ConvBiasaddFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  bool CheckCanFusion(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  int DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

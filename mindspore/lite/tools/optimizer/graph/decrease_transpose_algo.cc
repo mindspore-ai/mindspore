@@ -130,15 +130,13 @@ bool JudgeCanOptimizerForMultiOp(const FuncGraphPtr &func_graph, const std::set<
   if (trans_info->pre_ == trans_info->post_) {
     return false;
   }
-  auto &dynamic_ops = GetDynamicFormatOpList();
   TransposeStrategy transpose_strategy;
   for (auto &middle_cnode : middle_nodes) {
     if (IsSpecialType(middle_cnode)) {
       continue;
     }
     auto middle_node_prim = GetValueNode<PrimitivePtr>(middle_cnode->input(0));
-    if (!lite::IsContain(dynamic_ops, middle_node_prim->name()) ||
-        !transpose_strategy.CanChangeOpAxis(func_graph, middle_cnode)) {
+    if (!transpose_strategy.CanChangeOpAxis(func_graph, middle_cnode)) {
       return false;
     }
   }
@@ -642,7 +640,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_ASSERT(prim != nullptr);
-    if (!lite::IsContain(GetDynamicFormatOpList(), prim->name())) {
+    if (!IsDynamicFormatOp(prim->name())) {
       continue;
     }
     TransTypePair trans_insert_info;

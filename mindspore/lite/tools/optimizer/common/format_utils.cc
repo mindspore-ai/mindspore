@@ -39,6 +39,7 @@
 #include "ops/fusion/div_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
 #include "ops/fusion/mul_fusion.h"
+#include "ops/fusion/pad_fusion.h"
 #include "ops/fusion/pow_fusion.h"
 #include "ops/fusion/prelu_fusion.h"
 #include "ops/fusion/slice_fusion.h"
@@ -98,18 +99,27 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
 
 static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {{ops::kNameInstanceNorm, {1}}};
 
-// a certain op whose input's format is not fixed.
-static const std::vector<std::string> DynamicFormatOpList = {
-  ops::kNameEltwise,      ops::kNameActivation, ops::kNameConcat,  ops::kNameDivFusion,      ops::kNamePowFusion,
-  ops::kNameStridedSlice, ops::kNameAddFusion,  ops::kNameAddN,    ops::kNameSplit,          ops::kNameSliceFusion,
-  ops::kNameCrop,         ops::kNameMulFusion,  ops::kNameMaximum, ops::kNameActivationGrad, ops::kNameQuantDTypeCast};
+// a certain op whose input's format is not fixed, bool value determines whether the op has axis attribute or not.
+static const std::unordered_map<std::string, bool> DynamicFormatOpList = {
+  {ops::kNameAddN, false},          {ops::kNameCrop, true},         {ops::kNameSplit, true},
+  {ops::kNameConcat, true},         {ops::kNameEltwise, false},     {ops::kNameMaximum, false},
+  {ops::kNameAddFusion, false},     {ops::kNameDivFusion, false},   {ops::kNameMulFusion, false},
+  {ops::kNamePadFusion, false},     {ops::kNamePowFusion, false},   {ops::kNameActivation, false},
+  {ops::kNameSliceFusion, true},    {ops::kNameStridedSlice, true}, {ops::kNameActivationGrad, false},
+  {ops::kNameQuantDTypeCast, false}};
 
 static const std::unordered_map<int, int> NC2NHAxisMap = {{0, 0}, {1, 3}, {2, 1}, {3, 2}};
 
 const std::unordered_map<std::string, std::vector<size_t>> &GetNHWCOpMap() { return NHWCOpMap; }
 const std::unordered_map<std::string, std::vector<size_t>> &GetNCHWOpMap() { return NCHWOpMap; }
 const std::unordered_map<int, int> &GetNC2NHAxisMap() { return NC2NHAxisMap; }
-const std::vector<std::string> &GetDynamicFormatOpList() { return DynamicFormatOpList; }
+bool IsDynamicFormatOp(const std::string &op_type) {
+  return DynamicFormatOpList.find(op_type) != DynamicFormatOpList.end();
+}
+bool IsDynamicFormatOpWithAxis(const std::string &op_type) {
+  auto iter = DynamicFormatOpList.find(op_type);
+  return iter != DynamicFormatOpList.end() && iter->second;
+}
 
 Format GetFormat(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
