@@ -1362,7 +1362,9 @@ void KernelGraph::SetOptimizerFlag() {
         continue;
       }
       auto param = real_node->cast<ParameterPtr>();
-      if (AnfAlgo::IsParameterWeight(param)) {
+      auto abstract = param->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      if (abstract->isa<abstract::AbstractRef>()) {
         has_optimizer_ = true;
         (void)updated_parameters_.insert(param);
       }
