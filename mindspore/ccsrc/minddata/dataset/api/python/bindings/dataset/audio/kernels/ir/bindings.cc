@@ -26,6 +26,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -114,6 +115,17 @@ PYBIND_REGISTER(
         auto bass_biquad = std::make_shared<audio::BassBiquadOperation>(sample_rate, gain, central_freq, Q);
         THROW_IF_ERROR(bass_biquad->ValidateParams());
         return bass_biquad;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  ComplexNormOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::ComplexNormOperation, TensorOperation, std::shared_ptr<audio::ComplexNormOperation>>(
+      *m, "ComplexNormOperation")
+      .def(py::init([](float power) {
+        auto complex_norm = std::make_shared<audio::ComplexNormOperation>(power);
+        THROW_IF_ERROR(complex_norm->ValidateParams());
+        return complex_norm;
       }));
   }));
 

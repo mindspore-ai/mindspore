@@ -245,6 +245,14 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 /// \return Status code.
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
                      int64_t mask_start, double mask_value, int axis);
+
+/// \brief Compute the norm of complex tensor input.
+/// \param power Power of the norm description (optional).
+/// \param input Tensor shape of <..., complex=2>.
+/// \param output Tensor shape of <..., complex=2>.
+/// \return Status code.
+Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

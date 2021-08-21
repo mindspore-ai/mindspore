@@ -641,3 +641,18 @@ TEST_F(MindDataTestExecute, TestRGB2BGREager) {
 
   EXPECT_EQ(rc, Status::OK());
 }
+
+TEST_F(MindDataTestExecute, TestComplexNormEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComplexNormEager.";
+  // testing
+  std::shared_ptr<Tensor> input_tensor_;
+  Tensor::CreateFromVector(std::vector<float>({1.0, 1.0, 2.0, 3.0, 4.0, 4.0}), TensorShape({3, 2}), &input_tensor_);
+
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> complex_norm_01 = std::make_shared<audio::ComplexNorm>(4.0);
+
+  // Filtered waveform by complexnorm
+  mindspore::dataset::Execute Transform01({complex_norm_01});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_TRUE(s01.IsOk());
+}

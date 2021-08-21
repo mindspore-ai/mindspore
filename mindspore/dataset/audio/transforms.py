@@ -25,7 +25,7 @@ import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_masking, check_time_stretch
+    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_masking, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -242,6 +242,29 @@ class BassBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.BassBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)
+
+
+class ComplexNorm(AudioTensorOperation):
+    """
+    Compute the norm of complex tensor input.
+
+    Args:
+        power (float, optional): Power of the norm, which must be non-negative (default=1.0).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([2, 4, 2])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.ComplexNorm()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+    @check_complex_norm
+    def __init__(self, power=1.0):
+        self.power = power
+
+    def parse(self):
+        return cde.ComplexNormOperation(self.power)
 
 
 class FrequencyMasking(AudioTensorOperation):
