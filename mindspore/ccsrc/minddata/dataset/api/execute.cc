@@ -454,6 +454,10 @@ std::vector<float> AippStdFilter(const std::vector<uint32_t> &normalize_para) {
   if (normalize_para.size() == 6) {  // If Normalize operator exist
     auto zeros = std::find(std::begin(normalize_para), std::end(normalize_para), 0);
     if (zeros == std::end(normalize_para)) {
+      if (std::any_of(normalize_para.begin() + 3, normalize_para.end(), [](uint32_t i) { return i == 0; })) {
+        MS_LOG(ERROR) << "value in normalize para got 0.";
+        return {};
+      }
       std::transform(normalize_para.begin() + 3, normalize_para.end(), std::back_inserter(aipp_std),
                      [](uint32_t i) { return 10000 / static_cast<float>(i); });
     } else {  // If 0 occurs in std vector

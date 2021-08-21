@@ -82,8 +82,8 @@ class DistributedSampler final : public Sampler {
   /// \param[in] offset The starting position where access to elements in the dataset begins (default=-1).
   /// \param[in] even_dist If true, each shard would return the same number of rows (default=true).
   ///     If false the total rows returned by all the shards would not have overlap.
-  explicit DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true, int64_t num_samples = 0,
-                              uint32_t seed = 1, int64_t offset = -1, bool even_dist = true);
+  DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true, int64_t num_samples = 0,
+                     uint32_t seed = 1, int64_t offset = -1, bool even_dist = true);
   /// \brief Destructor.
   ~DistributedSampler() = default;
 

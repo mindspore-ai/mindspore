@@ -64,6 +64,9 @@ class Iterator {
   /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered.
   Status GetNextRow(MSTensorMap *row) {
+    if (row == nullptr) {
+      return Status(kMDUnexpectedError, "Got nullptr when GetNext row.");
+    }
     MSTensorMapChar row_;
     row_.clear();
     row->clear();
