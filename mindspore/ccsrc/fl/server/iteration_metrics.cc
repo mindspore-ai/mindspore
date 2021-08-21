@@ -63,8 +63,6 @@ bool IterationMetrics::Initialize() {
 
     metrics_file_.open(metrics_file_path, std::ios::ate | std::ios::out);
   }
-
-  initialized_ = true;
   return true;
 }
 

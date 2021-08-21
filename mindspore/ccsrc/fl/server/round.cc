@@ -106,10 +106,10 @@ bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t 
   time_window_ = updated_time_window;
   threshold_count_ = updated_threshold_count;
   if (check_count_) {
-    auto first_count_handler = std::bind(&Round::OnFirstCountEvent, this, std::placeholders::_1);
-    auto last_count_handler = std::bind(&Round::OnLastCountEvent, this, std::placeholders::_1);
-    DistributedCountService::GetInstance().RegisterCounter(name_, threshold_count_,
-                                                           {first_count_handler, last_count_handler});
+    if (!DistributedCountService::GetInstance().ReInitCounter(name_, threshold_count_)) {
+      MS_LOG(ERROR) << "Reinitializing count for " << name_ << " failed.";
+      return false;
+    }
   }
 
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_, false);

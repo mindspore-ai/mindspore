@@ -63,6 +63,9 @@ class DistributedCountService {
   // first/last count event callbacks.
   void RegisterCounter(const std::string &name, size_t global_threshold_count, const CounterHandlers &counter_handlers);
 
+  // Reinitialize counter due to the change of threshold count.
+  bool ReInitCounter(const std::string &name, size_t global_threshold_count);
+
   // Report a count to the counting server. Parameter 'id' is in case of repeated counting. Parameter 'reason' is the
   // reason why counting failed.
   bool Count(const std::string &name, const std::string &id, std::string *reason = nullptr);

@@ -56,6 +56,7 @@ class Server {
   void SwitchToSafeMode();
   void CancelSafeMode();
   bool IsSafeMode() const;
+  void WaitExitSafeMode() const;
 
   // Whether the training job of the server is enabled.
   InstanceState instance_state() const;

@@ -29,6 +29,7 @@ class Server;
 
 Iteration::~Iteration() {
   move_to_next_thread_running_ = false;
+  next_iteration_cv_.notify_all();
   if (move_to_next_thread_.joinable()) {
     move_to_next_thread_.join();
   }
@@ -93,6 +94,9 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
     while (move_to_next_thread_running_.load()) {
       std::unique_lock<std::mutex> lock(next_iteration_mutex_);
       next_iteration_cv_.wait(lock);
+      if (!move_to_next_thread_running_.load()) {
+        break;
+      }
       MoveToNextIteration(is_last_iteration_valid_, move_to_next_reason_);
     }
   });
@@ -222,12 +226,12 @@ bool Iteration::EnableServerInstance(std::string *result) {
   std::unique_lock<std::mutex> lock(instance_mtx_);
   if (is_instance_being_updated_) {
     *result = "The instance is being updated. Please retry enabling server later.";
-    MS_LOG(WARNING) << result;
+    MS_LOG(WARNING) << *result;
     return false;
   }
   if (instance_state_.load() == InstanceState::kFinish) {
     *result = "The instance is completed. Please do not enabling server now.";
-    MS_LOG(WARNING) << result;
+    MS_LOG(WARNING) << *result;
     return false;
   }
 
@@ -236,6 +240,7 @@ bool Iteration::EnableServerInstance(std::string *result) {
 
   instance_state_ = InstanceState::kRunning;
   *result = "Enabling FL-Server succeeded.";
+  MS_LOG(INFO) << *result;
 
   // End enabling server instance.
   is_instance_being_updated_ = false;
@@ -259,7 +264,7 @@ bool Iteration::DisableServerInstance(std::string *result) {
   if (instance_state_.load() == InstanceState::kDisable) {
     *result = "Disabling FL-Server succeeded.";
     MS_LOG(INFO) << *result;
-    return false;
+    return true;
   }
 
   // Start disabling server instance.
@@ -272,6 +277,8 @@ bool Iteration::DisableServerInstance(std::string *result) {
     MS_LOG(ERROR) << result;
     return false;
   }
+  *result = "Disabling FL-Server succeeded.";
+  MS_LOG(INFO) << *result;
 
   // End disabling server instance.
   is_instance_being_updated_ = false;
@@ -293,8 +300,9 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
 
   // Reset current instance.
   instance_state_ = InstanceState::kFinish;
-  MS_LOG(INFO) << "Proceed to a new instance.";
+  Server::GetInstance().WaitExitSafeMode();
   WaitAllRoundsFinish();
+  MS_LOG(INFO) << "Proceed to a new instance.";
   for (auto &round : rounds_) {
     MS_ERROR_IF_NULL_W_RET_VAL(round, false);
     round->Reset();
@@ -705,7 +713,7 @@ bool Iteration::ReInitRounds() {
   std::vector<RoundConfig> new_round_config = {
     {"startFLJob", true, start_fl_job_time_window, true, start_fl_job_threshold},
     {"updateModel", true, update_model_time_window, true, update_model_threshold}};
-  if (!Iteration::GetInstance().ReInitForUpdatingHyperParams(new_round_config)) {
+  if (!ReInitForUpdatingHyperParams(new_round_config)) {
     MS_LOG(ERROR) << "Reinitializing for updating hyper-parameters failed.";
     return false;
   }
@@ -727,7 +735,6 @@ bool Iteration::ReInitRounds() {
   }
   return true;
 }
-
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore
