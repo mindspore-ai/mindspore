@@ -29,7 +29,7 @@ using PipelinePair = std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>>
 AnfNodePtr FindAccuGrad(const CNodePtr &cnode);
 bool IsLastStage();
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,
-                            const AnfNodePtr &accu_parameter);
+                            const AnfNodePtr &accu_parameter, const NodeUsersMap &node_user_map);
 void InsertVirtualAccuGrad(const AnfNodePtr &recv, const FuncGraphManagerPtr &manager, const AnfNodePtr &param);
 AnfNodePtr FindGradAccuParameter(const std::vector<AnfNodePtr> &parameters, const std::string &name);
 void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);

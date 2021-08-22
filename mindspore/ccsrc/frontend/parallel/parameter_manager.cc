@@ -453,6 +453,8 @@ void HandleFullySplitParameters(const FuncGraphPtr &root) {
 
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
+  auto grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
+
   for (auto &cloned_parameter_node : root->parameters()) {
     MS_EXCEPTION_IF_NULL(cloned_parameter_node);
     auto cloned_parameter = cloned_parameter_node->cast<ParameterPtr>();
@@ -512,11 +514,20 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
       // from pipeline or grad accumulation
       if (param_name.find(ACCU_GRADS) != std::string::npos) {
         auto slice_shape = cloned_from_parameter->user_data<TensorLayout>()->slice_shape().array();
-        std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(slice_shape);
+        auto opt_shard_group = tensor_layout->opt_shard_group();
+        auto opt_shard_shape = cloned_from_parameter->user_data<TensorLayout>()->opt_shard_slice_shape();
+        std::shared_ptr<abstract::BaseShape> parallel_shape = nullptr;
+        // set opt shard shape if the pipeline sharding is set
+        if (grad_accumulation_shard && !opt_shard_group.empty()) {
+          parallel_shape = std::make_shared<abstract::Shape>(opt_shard_shape);
+        } else {
+          parallel_shape = std::make_shared<abstract::Shape>(slice_shape);
+        }
         MS_EXCEPTION_IF_NULL(parallel_shape);
         cloned_abstract->set_shape(parallel_shape);
         // in opt shard, accu_grad's shape is different from the original param's shape
-        if (ParallelContext::GetInstance()->enable_parallel_optimizer()) {
+        // if the grad_accumulation_shard is enabled, the accu_grads will be a opt-sharded shape
+        if (!grad_accumulation_shard && ParallelContext::GetInstance()->enable_parallel_optimizer()) {
           TensorLayout new_layout = *tensor_layout;
           new_layout.set_opt_shard_group("");
           tensor_layout = std::make_shared<TensorLayout>(new_layout);
@@ -526,6 +537,13 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
       }
       cloned_parameter->set_user_data<TensorLayout>(tensor_layout);
       cloned_parameter_node->set_abstract(cloned_abstract);
+      // copy the fusion tag
+      auto cloned_param_info = cloned_parameter->param_info();
+      MS_EXCEPTION_IF_NULL(cloned_param_info);
+      auto cloned_from_param_info = cloned_from_parameter->param_info();
+      MS_EXCEPTION_IF_NULL(cloned_from_param_info);
+      cloned_param_info->set_comm_fusion(cloned_from_param_info->comm_fusion());
+
       MS_LOG(INFO) << "The parameter: " << cloned_parameter->name()
                    << " is cloned, the be cloned parameter is: " << cloned_from_parameter->name()
                    << ", clone index is:  " << cloned_index;

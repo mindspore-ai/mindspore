@@ -503,10 +503,11 @@ CNodePtr AscendStreamAssign::GetTargetOutputNode(const vector<CNodePtr> &moved_b
     return nullptr;
   }
 
-  for (; it < cnode_ptr_list.end() && AnfAlgo::GetGraphId((*it).get()) != subgraph_id; it++) {
+  for (; it < cnode_ptr_list.end(); it++) {
     auto inputs = GetInputKernels(*it);
     for (auto &input : inputs) {
-      if (find(moved_backward_cnodes.begin(), moved_backward_cnodes.end(), input) != moved_backward_cnodes.end()) {
+      if (find(moved_backward_cnodes.begin(), moved_backward_cnodes.end(), input) != moved_backward_cnodes.end() &&
+          AnfAlgo::GetGraphId((*it).get()) != subgraph_id) {
         MS_LOG(INFO) << "The nodes moved backward were used by nodes on different subgraphs, no need moved";
         return nullptr;
       }

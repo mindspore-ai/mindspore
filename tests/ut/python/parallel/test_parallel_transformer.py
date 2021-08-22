@@ -18,6 +18,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.context import set_auto_parallel_context, ParallelMode
+from mindspore import context
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 import mindspore.ops as P
@@ -250,11 +251,18 @@ def test_transformer_model_auto_parallel_no_support():
                                          mode=ParallelMode.AUTO_PARALLEL)
 
 
-def test_pipeline_single_transformer():
+def pipeline_single_transformer(grad_accumulation_shard=False):
+    """
+    Feature: Gradient Accumulation Shard for Pipeline and Gradient Accumulation
+    Description: Test a single transformer model with pipeline parallel with grad_accumulation_shard False
+    Expectation: The compile passed
+    """
     set_auto_parallel_context(device_num=32,
                               full_batch=True,
                               pipeline_stages=pipeline_config.pipeline_stage, global_rank=0,
                               parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    context.set_auto_parallel_context(parallel_optimizer_config=
+                                      {"gradient_accumulation_shard": grad_accumulation_shard})
 
     net = Transformer(batch_size=4 // pipeline_config.micro_batch_num,
                       src_seq_length=20,
@@ -284,6 +292,24 @@ def test_pipeline_single_transformer():
     model = Model(net_with_grad)
 
     model.train(1, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_transformer_gradient_shard_true():
+    """
+    Feature: Gradient Accumulation Shard for Pipeline and Gradient Accumulation
+    Description: Test a single transformer model with pipeline parallel with grad_accumulation_shard True
+    Expectation: The compile passed
+    """
+    pipeline_single_transformer(grad_accumulation_shard=True)
+
+
+def test_pipeline_transformer_gradient_shard_false():
+    """
+    Feature: Gradient Accumulation Shard for Pipeline and Gradient Accumulation
+    Description: Test a single transformer model with pipeline parallel with grad_accumulation_shard False
+    Expectation: The compile passed
+    """
+    pipeline_single_transformer(grad_accumulation_shard=False)
 
 
 def test_transformer_wrong_head():

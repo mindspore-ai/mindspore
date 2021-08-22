@@ -349,7 +349,8 @@ def _context():
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,
                  auto_parallel_search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
-                 all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int)
+                 all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
+                 parallel_optimizer_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
     Set auto parallel context, which is valid only for Ascend and GPU target.
@@ -375,7 +376,7 @@ def set_auto_parallel_context(**kwargs):
     parallel_mode                strategy_ckpt_load_file
     all_reduce_fusion_config     strategy_ckpt_save_file
     enable_parallel_optimizer    dataset_strategy
-               \                 pipeline_stages
+    parallel_optimizer_config    pipeline_stages
                \                 grad_accumulation_step
     ===========================  ===========================
 
@@ -432,6 +433,21 @@ def set_auto_parallel_context(**kwargs):
                         Default: 1.
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
                         This should be a positive int. Default: 1.
+        parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
+                        configure. The configure provides more detailed behavior control about parallel training
+                        when parallel optimizer is enabled. Currently it supports the key `gradient_accumulation_shard`.
+                        The configure will be effective when we use
+                        context.set_auto_parallel_context(enable_parallel_optimizer=True).
+                        It supports the following keys.
+
+                        - gradient_accumulation_shard: If ture, the accumulation gradient parameters will be
+                          sharded across the data parallel devices. This will
+                          introduce additional communication(ReduceScatter) at
+                          each step when accumulate the gradients, but saves a
+                          lot of device memories, thus can make model be trained
+                          with larger batch size. This configure is effective only
+                          when the model runs on pipeline training or gradient
+                          accumulation with data parallel.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -451,6 +467,8 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
         >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> context.set_auto_parallel_context(pipeline_stages=2)
+        >>> parallel_config = {"gradient_accumulation_shard": True}
+        >>> context.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
     """
     _set_auto_parallel_context(**kwargs)
 
