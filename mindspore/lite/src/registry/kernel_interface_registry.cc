@@ -15,17 +15,17 @@
  */
 #include "src/registry/kernel_interface_registry.h"
 #include <memory>
-#include "include/registry/kernel_interface.h"
+#include "include/registry/register_kernel_interface.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "schema/model_generated.h"
 
-using mindspore::kernel::KernelInterfaceCreator;
+using mindspore::registry::KernelInterfaceCreator;
 using mindspore::schema::PrimitiveType_MAX;
 using mindspore::schema::PrimitiveType_MIN;
 namespace mindspore {
-namespace lite {
+namespace registry {
 namespace {
 static const auto kMaxKernelNum = PrimitiveType_MAX - PrimitiveType_MIN;
 std::string GetCustomType(const schema::Primitive *primitive) {
@@ -35,10 +35,10 @@ std::string GetCustomType(const schema::Primitive *primitive) {
 }
 }  // namespace
 
-int KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
-                                       KernelInterfaceCreator creator) {
+Status KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
+                                          KernelInterfaceCreator creator) {
   custom_creators_[provider][type] = creator;
-  return RET_OK;
+  return kSuccess;
 }
 
 std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCacheInterface(const std::string &provider,
@@ -124,10 +124,10 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
   return nullptr;
 }
 
-int KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+Status KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
   if (op_type < PrimitiveType_MIN || op_type > kMaxKernelNum) {
     MS_LOG(ERROR) << "reg op_type invalid!op_type: " << op_type << ", max value: " << kMaxKernelNum;
-    return RET_ERROR;
+    return kLiteError;
   }
 
   std::unique_lock<std::mutex> lock(mutex_);
@@ -137,12 +137,12 @@ int KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, Kerne
       reinterpret_cast<KernelInterfaceCreator *>(calloc(kMaxKernelNum, sizeof(KernelInterfaceCreator)));
     if (kernel_creators_[provider] == nullptr) {
       MS_LOG(ERROR) << "malloc kernel dev delegate creator fail!";
-      return RET_ERROR;
+      return kLiteError;
     }
   }
 
   kernel_creators_[provider][op_type] = creator;
-  return RET_OK;
+  return kSuccess;
 }
 
 KernelInterfaceRegistry::~KernelInterfaceRegistry() {
@@ -151,5 +151,5 @@ KernelInterfaceRegistry::~KernelInterfaceRegistry() {
     item.second = nullptr;
   }
 }
-}  // namespace lite
+}  // namespace registry
 }  // namespace mindspore

@@ -25,7 +25,8 @@
 extern "C" {
 #endif
 void SoftmaxNormFp16(const float16_t *src, float16_t *dst, int batch, int channel);
-void SoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data, SoftmaxParameter *parameter);
+void SoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data,
+                 const SoftmaxParameter *parameter);
 void SoftmaxLastAxisFp16(const float16_t *src, float16_t *dst, int batch, int channel);
 #ifdef __cplusplus
 }

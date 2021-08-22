@@ -19,19 +19,15 @@
 
 #include <string>
 #include <vector>
-#include "include/registry/framework.h"
+#include "include/api/format.h"
+#include "include/registry/parser_context.h"
 #include "tools/common/flag_parser.h"
 #include "ir/dtype/type_id.h"
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
-namespace lite {
-using mindspore::schema::QuantType;
-using mindspore::schema::QuantType_AwareTraining;
-using mindspore::schema::QuantType_PostTraining;
-using mindspore::schema::QuantType_QUANT_NONE;
-using mindspore::schema::QuantType_WeightQuant;
 namespace converter {
+using mindspore::schema::QuantType;
 enum ParallelSplitType { SplitNo = 0, SplitByUserRatio = 1, SplitByUserAttr = 2 };
 constexpr auto kMaxSplitRatio = 10;
 constexpr auto kComputeRate = "computeRate";
@@ -64,6 +60,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitConfigFile();
 
   int InitInTensorShape();
+
+  int InitGraphInputFormat();
 
   int Init(int argc, const char **argv);
 
@@ -98,6 +96,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string inTensorShape;
   std::string dec_key = "";
   std::string dec_mode = "AES-GCM";
+  std::string graphInputFormatStr;
+  mindspore::Format graphInputFormat = mindspore::NHWC;
 };
 
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
@@ -106,7 +106,6 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
 
 std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
 }  // namespace converter
-}  // namespace lite
 }  // namespace mindspore
 
 #endif

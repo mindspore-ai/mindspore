@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplice = "Splice";
-class Splice : public PrimitiveC {
+class MS_CORE_API Splice : public PrimitiveC {
  public:
   Splice() : PrimitiveC(kNameSplice) { InitIOName({"inputs"}, {"outputs"}); }
   ~Splice() = default;

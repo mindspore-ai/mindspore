@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-class DType : public PrimitiveC {
+class MS_CORE_API DType : public PrimitiveC {
  public:
   DType() : PrimitiveC(prim::kPrimDType->name()) { InitIOName({"x"}, {"output"}); }
   ~DType() = default;

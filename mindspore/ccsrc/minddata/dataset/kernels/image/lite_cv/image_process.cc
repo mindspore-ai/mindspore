@@ -571,9 +571,8 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
 
   if (dst.IsEmpty()) {
     dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
-  } else if (src.width_ != dst.width_ || src.height_ != dst.height_ || src.channel_ != dst.channel_) {
-    return false;
-  } else if (dst.data_type_ != LDataType::FLOAT32) {
+  } else if (src.width_ != dst.width_ || src.height_ != dst.height_ || src.channel_ != dst.channel_ ||
+             dst.data_type_ != LDataType::FLOAT32) {
     return false;
   }
 
@@ -662,24 +661,16 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
 }
 
 static bool CheckZero(const std::vector<float> &vs) {
-  for (int i = 0; i < vs.size(); i++) {
-    if (Equal(vs[i], 0.0f)) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(vs.begin(), vs.end(), [](const float &v) { return Equal(v, 0.0f); });
 }
 
 static bool CheckZero(const std::vector<size_t> &vs) {
-  for (int i = 0; i < vs.size(); i++) {
-    if (vs[i] == 0) return true;
-  }
-  return false;
+  return std::any_of(vs.begin(), vs.end(), [](const float &v) { return v == 0; });
 }
 
 static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const std::vector<float> &mean,
                             const std::vector<float> &std) {
-  if (mean.size() == 0 && std.size() == 0) {
+  if (mean.empty() && std.empty()) {
     return false;
   }
   if (src.data_type_ != LDataType::FLOAT32) {
@@ -935,8 +926,8 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
   LDataType data_type = mv[0].data_type_;
 
   // The arrays in list must be single-channel
-  for (int i = 0; i < mv.size(); i++) {
-    if (mv[i].channel_ != 1) return false;
+  if (std::any_of(mv.begin(), mv.end(), [](const LiteMat &m) { return m.channel_ != 1; })) {
+    return false;
   }
 
   for (int i = 1; i < mv.size(); i++) {
@@ -962,16 +953,23 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
 
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
+  RETURN_FALSE_IF_LITEMAT_EMPTY(src);
   if (top < 0 || bottom < 0 || left < 0 || right < 0) {
     return false;
   }
-  if (src.IsEmpty()) {
+  if (src.width_ > std::numeric_limits<int>::max() - left ||
+      src.width_ + left > std::numeric_limits<int>::max() - right) {
+    return false;
+  }
+  if (src.height_ > std::numeric_limits<int>::max() - top ||
+      src.height_ + top > std::numeric_limits<int>::max() - bottom) {
     return false;
   }
   int dst_width = src.width_ + left + right;
   int dst_height = src.height_ + top + bottom;
   if (dst.IsEmpty()) {
     dst.Init(dst_width, dst_height, src.channel_, src.data_type_);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (dst.width_ != dst_width || dst.height_ != dst_height || src.channel_ != dst.channel_) {
     return false;
   } else if (src.data_type_ != dst.data_type_) {
@@ -991,7 +989,7 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
   return true;
 }
 
-std::vector<std::vector<float>> GetDefaultBoxes(BoxesConfig config) {
+std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config) {
   size_t size = config.num_default.size();
   if (size <= 1 || config.feature_size.size() != size || config.steps.size() != size ||
       config.aspect_rations.size() != size) {
@@ -1109,6 +1107,7 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
       }
     }
     std::vector<int> new_order;
+    new_order.reserve(inds.size());
     for (int k = 0; k < inds.size(); k++) {
       new_order.push_back(order[inds[k]]);
     }
@@ -1544,8 +1543,9 @@ bool GetAffineTransformImpl(LiteMat &src, LiteMat &dst) {
     }
 
     if (std::abs(src.ptr<double>(k)[i]) < DBL_EPSILON * 100) {
-      double x[6] = {0};
-      dst.Init(1, 6, x, LDataType(LDataType::DOUBLE));
+      dst.Init(1, 6, LDataType(LDataType::DOUBLE));
+      (void)memset(dst.data_ptr_, 0, 6 * sizeof(double));
+      RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       return false;
     }
     if (k != i) {

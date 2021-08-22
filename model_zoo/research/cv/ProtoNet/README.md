@@ -29,7 +29,7 @@ Proto-Net contains 2 parts named Encoder and Relation. The former one has 4 conv
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-The dataset omniglot can be obtained from (https://github.com/orobix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/blob/master/). You can obtain the dataset after running the scripts.
+The dataset omniglot can be obtained from (<https://github.com/orobix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/blob/master/>). You can obtain the dataset after running the scripts.
 
 ```bash
 cd src
@@ -65,8 +65,8 @@ python train.py
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/en/master/index.html)
 
 # [Quick Start](#contents)
 
@@ -165,7 +165,7 @@ Test Acc: 0.9954400658607483  Loss: 0.02102319709956646
 | Speed                      | 215 ms/step                          |
 | Total time                 | 3 h 23m (8p)                |
 | Checkpoint for Fine tuning | 440 KB (.ckpt file)                                         |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/research/cv/protonet |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ProtoNet> |
 
 # [ModelZoo Homepage](#contents)
 

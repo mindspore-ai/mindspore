@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_FP32_H_
 
 #include <vector>
 #include "src/inner_kernel.h"
@@ -37,8 +37,6 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   virtual int RunImpl(int task_id);
 
-  int Eval() override;
-
  protected:
   int MallocWeightBiasData() override;
   void PackWeight() override;
@@ -59,4 +57,4 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_FP32_H_

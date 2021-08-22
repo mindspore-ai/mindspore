@@ -33,15 +33,8 @@ Status TimeStretchOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   IO_CHECK(input, output);
 
   // check shape
-  if (input->shape().Rank() < 3) {
-    std::string err_msg = "TimeStretch: input tensor shape is not <..., freq, num_frame, complex=2>.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  // check complex
-  if (!input->IsComplex()) {
-    std::string err_msg = "TimeStretch: input tensor is not in shape of <..., 2>.";
+  if (input->shape().Rank() < 3 || !input->IsComplex()) {
+    std::string err_msg = "TimeStretch: input tensor is not in shape of <..., freq, num_frame, complex=2>.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -51,7 +44,7 @@ Status TimeStretchOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   float hop_length = std::isnan(hop_length_) ? (n_freq_ - 1) : hop_length_;
   // typecast
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "TimeStretch: input tensor type should be [int, float, double], but got string.");
+                               "TimeStretch: input tensor type should be int, float or double, but got: string.");
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
   } else {

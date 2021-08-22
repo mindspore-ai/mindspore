@@ -36,6 +36,17 @@ ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() 
 int ConvolutionDepthwiseIndirectCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (op_parameter_->is_train_session_) {
+    auto weight_tensor = in_tensors_[kWeightIndex];
+#ifdef ENABLE_AVX
+    int div_flag = C8NUM;
+#else
+    int div_flag = C4NUM;
+#endif
+    int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
+    int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
+    set_workspace_size(pack_weight_size * sizeof(float));
+  }
   auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise Indirect fp32 InitConvWeightBias failed.";
@@ -163,7 +174,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
 
 void ConvolutionDepthwiseIndirectCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   PackDepthwiseIndirectWeightC8Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
@@ -183,10 +194,12 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
 #endif
   int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
   int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
-  packed_weight_ = malloc(pack_weight_size * sizeof(float));
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+  if (!op_parameter_->is_train_session_) {
+    packed_weight_ = malloc(pack_weight_size * sizeof(float));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   bias_data_ = malloc(batch_flag * div_flag * sizeof(float));
   if (bias_data_ == nullptr) {
@@ -205,15 +218,4 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseIndirectCPUKernel::Eval() {
-  auto ret = InnerKernel::Eval();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "eval failed!";
-    return ret;
-  }
-  if (IsTrainable()) {
-    PackWeight();
-  }
-  return RET_OK;
-}
 }  // namespace mindspore::kernel

@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePadFusion = "PadFusion";
-class PadFusion : public Pad {
+class MS_CORE_API PadFusion : public Pad {
  public:
   PadFusion() : Pad(kNamePadFusion) { InitIOName({"x"}, {"y"}); }
   ~PadFusion() = default;

@@ -111,6 +111,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // weight: o, h, w, i; o == group, i == 1
   void *origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
+  MS_ASSERT(origin_weight);
   int CO4 = UP_DIV(out_info.C, C4NUM);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
@@ -200,6 +201,7 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
     auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
+    MS_ASSERT(src_data);
     ConvertBias(src_data, temp_bias.data(), element_size, dtype_size, src_type, dst_type);
   }
   bias_data_ = allocator->Malloc(bias_size, temp_bias.data());

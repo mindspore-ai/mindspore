@@ -15,17 +15,18 @@
  */
 
 #include "runtime/framework/actor/actor_common.h"
-#include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/framework/device_tensor_store.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
 namespace runtime {
-void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
+void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
   MS_EXCEPTION_IF_NULL(OMP_thread_num);
-  size_t cpu_core_num = std::thread::hardware_concurrency();
-
+  MS_EXCEPTION_IF_NULL(max_thread_num);
+  size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
+  const size_t kMaxThreadNum = 23;
   const size_t kActorThreadMaxNum = 5;
   // The MemoryManagerActor binds single thread, and the other actors share one thread at least, so the min num is 2.
   const size_t kActorThreadMinNum = 2;
@@ -41,6 +42,10 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num) {
 
   const size_t kOMPThreadMaxNum = 8;
   *OMP_thread_num = cpu_core_num < kOMPThreadMaxNum ? cpu_core_num : kOMPThreadMaxNum;
+  *max_thread_num = cpu_core_num > *actor_thread_num ? cpu_core_num : (*actor_thread_num + 1);
+  if (*max_thread_num > kMaxThreadNum) {
+    *max_thread_num = kMaxThreadNum;
+  }
 }
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
@@ -52,6 +57,38 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strateg
   if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
     return true;
   }
+  return false;
+}
+
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
+                        const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
+  MS_EXCEPTION_IF_NULL(node);
+
+  bool is_parameter_data = node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()));
+  if (!is_parameter_data) {
+    return false;
+  }
+
+  if (strategy == GraphExecutionStrategy::kStep) {
+    MS_EXCEPTION_IF_NULL(graph);
+    return graph->execution_order().size() > 1;
+  }
+
+  if (graph == nullptr) {
+    return true;
+  }
+
+  // In control flow, only the parameters of the root funcgraph are in the host data source.
+  const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
+  bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
+                  find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
+
+  //  Judge whether node is internal parameter.
+  const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(node);
+  if (internal_front_node.first == nullptr && is_host) {
+    return true;
+  }
+
   return false;
 }
 

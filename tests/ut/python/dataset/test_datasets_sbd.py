@@ -22,7 +22,6 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 import mindspore.dataset.vision.c_transforms as c_vision
 
-
 DATASET_DIR = "../data/dataset/testSBData/sbd"
 
 
@@ -193,6 +192,7 @@ def test_sbd_usage():
     """
     Validate SBDataset image readings
     """
+
     def test_config(usage):
         try:
             data = ds.SBDataset(DATASET_DIR, task='Segmentation', usage=usage)

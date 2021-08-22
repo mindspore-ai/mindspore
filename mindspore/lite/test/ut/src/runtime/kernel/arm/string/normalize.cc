@@ -32,6 +32,7 @@ class TestNormalize : public mindspore::CommonTest {
  public:
   TestNormalize() {}
   void NormalizeTestInit();
+  void TearDown() override;
 
  public:
   Tensor input_tensor_;
@@ -44,6 +45,12 @@ class TestNormalize : public mindspore::CommonTest {
   kernel::KernelCreator creator_ = nullptr;
   kernel::InnerKernel *kernel_ = nullptr;
 };
+
+void TestNormalize::TearDown() {
+  delete kernel_;
+  input_tensor_.set_data(nullptr);
+  output_tensor_.set_data(nullptr);
+}
 
 void TestNormalize::NormalizeTestInit() {
   input_tensor_.set_data_type(kObjectTypeString);
@@ -79,9 +86,6 @@ TEST_F(TestNormalize, TestSentence) {
     }
     printf("\n");
   }
-
-  input_tensor_.set_data(nullptr);
-  output_tensor_.set_data(nullptr);
 }
 
 }  // namespace mindspore

@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDivGrad = "DivGrad";
-class DivGrad : public PrimitiveC {
+class MS_CORE_API DivGrad : public PrimitiveC {
  public:
   DivGrad() : PrimitiveC(kNameDivGrad) {}
   ~DivGrad() = default;

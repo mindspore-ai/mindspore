@@ -28,12 +28,12 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/transpose_strategy.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
 class DecreaseTransposeAlgo : public Pass {
  public:
-  explicit DecreaseTransposeAlgo(FmkType fmk_type = FmkType::FmkType_MS, bool train_flag = false)
+  explicit DecreaseTransposeAlgo(FmkType fmk_type = FmkType::kFmkTypeMs, bool train_flag = false)
       : Pass("DecreaseTransposeAlgo"), fmk_type_(fmk_type), train_flag_(train_flag) {}
   ~DecreaseTransposeAlgo() override = default;
   void Init(FmkType fmk_type, bool train_flag) {
@@ -62,7 +62,8 @@ class DecreaseTransposeAlgo : public Pass {
   void ResetSubGraphInput();
   void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   void SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
-  FmkType fmk_type_{lite::converter::FmkType_MS};
+  void ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type);
+  FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;
   TransposeStrategy transpose_strategy_;

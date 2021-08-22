@@ -353,10 +353,10 @@ class Softplus(Primitive):
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If the dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``
+        ``Ascend``  ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)

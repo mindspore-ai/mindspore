@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
 
 
 class ForwardNet(nn.Cell):
@@ -56,7 +56,11 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_forward():
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -72,6 +76,7 @@ def test_forward():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

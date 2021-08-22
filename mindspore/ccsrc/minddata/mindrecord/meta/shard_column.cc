@@ -421,6 +421,12 @@ MSRStatus ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<
 
   auto data = reinterpret_cast<const unsigned char *>(array_data.get());
   *data_ptr = std::make_unique<unsigned char[]>(*num_bytes);
+
+  // field is none. for example: numpy is null
+  if (*num_bytes == 0) {
+    return SUCCESS;
+  }
+
   int ret_code = memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes);
   if (ret_code != 0) {
     MS_LOG(ERROR) << "Failed to copy data!";

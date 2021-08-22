@@ -16,20 +16,12 @@
 import math
 import os
 import time
-import threading
 import numpy as np
 from mindspore import ops, load_checkpoint, load_param_into_net, Tensor, nn
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-import mindspore.context as context
 import mindspore.common.dtype as mstype
-from mindspore.train.callback import Callback
-from mindspore.train.callback._callback import set_cur_net
-from mindspore.train.callback._checkpoint import _check_file_name_prefix, _cur_dir, CheckpointConfig, CheckpointManager, \
-    _chg_ckpt_file_name_if_same_exist
-from mindspore.train._utils import _make_directory
-from mindspore.train.serialization import save_checkpoint, _save_graph
-from mindspore.parallel._ps_context import _is_role_pserver, _get_ps_mode_rank
+from mindspore.train.callback import Callback, ModelCheckpoint
 from src.resnet import resnet50
 from src.config import config
 
@@ -321,7 +313,7 @@ class WithLossCell(nn.Cell):
         return self._backbone
 
 
-class ModelCheckpoint(Callback):
+class NtsnetModelCheckpoint(ModelCheckpoint):
     """
     The checkpoint callback class.
     It is called to combine with train process and save the model and network parameters after training.
@@ -339,142 +331,17 @@ class ModelCheckpoint(Callback):
 
     def __init__(self, prefix='CKP', directory=None, ckconfig=None,
                  device_num=1, device_id=0, args=None, run_modelart=False):
-        super(ModelCheckpoint, self).__init__()
-        self._latest_ckpt_file_name = ""
-        self._init_time = time.time()
-        self._last_time = time.time()
-        self._last_time_for_keep = time.time()
-        self._last_triggered_step = 0
+        super(NtsnetModelCheckpoint, self).__init__(prefix, directory, ckconfig)
         self.run_modelart = run_modelart
-        if _check_file_name_prefix(prefix):
-            self._prefix = prefix
-        else:
-            raise ValueError("Prefix {} for checkpoint file name invalid, "
-                             "please check and correct it and then continue.".format(prefix))
-        if directory is not None:
-            self._directory = _make_directory(directory)
-        else:
-            self._directory = _cur_dir
-        if ckconfig is None:
-            self._config = CheckpointConfig()
-        else:
-            if not isinstance(ckconfig, CheckpointConfig):
-                raise TypeError("ckconfig should be CheckpointConfig type.")
-            self._config = ckconfig
-        # get existing checkpoint files
-        self._manager = CheckpointManager()
-        self._prefix = _chg_ckpt_file_name_if_same_exist(self._directory, self._prefix)
-        self._graph_saved = False
-        self._need_flush_from_cache = True
         self.device_num = device_num
         self.device_id = device_id
         self.args = args
 
-    def step_end(self, run_context):
-        """
-        Save the checkpoint at the end of step.
-        Args:
-            run_context (RunContext): Context of the train running.
-        """
-        if _is_role_pserver():
-            self._prefix = "PServer_" + str(_get_ps_mode_rank()) + "_" + self._prefix
-        cb_params = run_context.original_args()
-        _make_directory(self._directory)
-        # save graph (only once)
-        if not self._graph_saved:
-            graph_file_name = os.path.join(self._directory, self._prefix + '-graph.meta')
-            if os.path.isfile(graph_file_name) and context.get_context("mode") == context.GRAPH_MODE:
-                os.remove(graph_file_name)
-            _save_graph(cb_params.train_network, graph_file_name)
-            self._graph_saved = True
-        thread_list = threading.enumerate()
-        for thread in thread_list:
-            if thread.getName() == "asyn_save_ckpt":
-                thread.join()
-        self._save_ckpt(cb_params)
-
-    def end(self, run_context):
-        """
-        Save the last checkpoint after training finished.
-        Args:
-            run_context (RunContext): Context of the train running.
-        """
-        cb_params = run_context.original_args()
-        _to_save_last_ckpt = True
-        self._save_ckpt(cb_params, _to_save_last_ckpt)
-        thread_list = threading.enumerate()
-        for thread in thread_list:
-            if thread.getName() == "asyn_save_ckpt":
-                thread.join()
-        from mindspore.parallel._cell_wrapper import destroy_allgather_cell
-        destroy_allgather_cell()
-
-    def _check_save_ckpt(self, cb_params, force_to_save):
-        """Check whether save checkpoint files or not."""
-        if self._config.save_checkpoint_steps and self._config.save_checkpoint_steps > 0:
-            if cb_params.cur_step_num >= self._last_triggered_step + self._config.save_checkpoint_steps \
-                    or force_to_save is True:
-                return True
-        elif self._config.save_checkpoint_seconds and self._config.save_checkpoint_seconds > 0:
-            self._cur_time = time.time()
-            if (self._cur_time - self._last_time) > self._config.save_checkpoint_seconds or force_to_save is True:
-                self._last_time = self._cur_time
-                return True
-        return False
-
     def _save_ckpt(self, cb_params, force_to_save=False):
-        """Save checkpoint files."""
-        if cb_params.cur_step_num == self._last_triggered_step:
-            return
-        save_ckpt = self._check_save_ckpt(cb_params, force_to_save)
-        step_num_in_epoch = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
-        if save_ckpt:
-            cur_ckpoint_file = self._prefix + "-" + str(cb_params.cur_epoch_num) + "_" \
-                               + str(step_num_in_epoch) + ".ckpt"
-            # update checkpoint file list.
-            self._manager.update_ckpoint_filelist(self._directory, self._prefix)
-            # keep checkpoint files number equal max number.
-            if self._config.keep_checkpoint_max and \
-                    0 < self._config.keep_checkpoint_max <= self._manager.ckpoint_num:
-                self._manager.remove_oldest_ckpoint_file()
-            elif self._config.keep_checkpoint_per_n_minutes and \
-                    self._config.keep_checkpoint_per_n_minutes > 0:
-                self._cur_time_for_keep = time.time()
-                if (self._cur_time_for_keep - self._last_time_for_keep) \
-                        < self._config.keep_checkpoint_per_n_minutes * 60:
-                    self._manager.keep_one_ckpoint_per_minutes(self._config.keep_checkpoint_per_n_minutes,
-                                                               self._cur_time_for_keep)
-            # generate the new checkpoint file and rename it.
-            cur_file = os.path.join(self._directory, cur_ckpoint_file)
-            self._last_time_for_keep = time.time()
-            self._last_triggered_step = cb_params.cur_step_num
-            if context.get_context("enable_ge"):
-                set_cur_net(cb_params.train_network)
-                cb_params.train_network.exec_checkpoint_graph()
-            network = self._config.saved_network if self._config.saved_network is not None \
-                else cb_params.train_network
-            save_checkpoint(network, cur_file, self._config.integrated_save,
-                            self._config.async_save)
-            self._latest_ckpt_file_name = cur_file
-            if self.run_modelart and (self.device_num == 1 or self.device_id == 0):
-                import moxing as mox
-                mox.file.copy_parallel(src_url=cur_file, dst_url=os.path.join(self.args.train_url, cur_ckpoint_file))
-
-    def _flush_from_cache(self, cb_params):
-        """Flush cache data to host if tensor is cache enable."""
-        has_cache_params = False
-        params = cb_params.train_network.get_parameters()
-        for param in params:
-            if param.cache_enable:
-                has_cache_params = True
-                Tensor(param).flush_from_cache()
-        if not has_cache_params:
-            self._need_flush_from_cache = False
-
-    @property
-    def latest_ckpt_file_name(self):
-        """Return the latest checkpoint path and file name."""
-        return self._latest_ckpt_file_name
+        super()._save_ckpt(cb_params, force_to_save)
+        if self.run_modelart and (self.device_num == 1 or self.device_id == 0):
+            import moxing as mox
+            mox.file.copy_parallel(src_url=cur_file, dst_url=os.path.join(self.args.train_url, cur_ckpoint_file))
 
 
 class LossCallBack(Callback):

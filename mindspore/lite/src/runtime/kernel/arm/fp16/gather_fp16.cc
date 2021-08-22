@@ -153,7 +153,7 @@ int GatherFp16CPUKernel::Run() {
   return ret;
 }
 
-int GatherFp16CPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lite::Tensor *indices_tensor) {
+int GatherFp16CPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, const lite::Tensor *indices_tensor) {
   MS_ASSERT(indices_tensor->data_c() != nullptr);
   if (!isIndicesInt32) {
     if (indices_num >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {

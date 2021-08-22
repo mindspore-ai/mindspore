@@ -17,10 +17,10 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iomanip>
 #include <set>
 #include <utility>
 
+#include "debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -94,7 +94,13 @@ void FlickrOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status FlickrOp::ParseFlickrData() {
-  std::ifstream file_handle(file_path_);
+  auto real_file_path = Common::GetRealPath(file_path_);
+  if (!real_file_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file_path_;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_path_);
+  }
+
+  std::ifstream file_handle(real_file_path.value());
   if (!file_handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Flickr annotation file: " + file_path_);
   }
@@ -129,7 +135,11 @@ Status FlickrOp::ParseFlickrData() {
       }
 
       bool valid = false;
-      RETURN_IF_NOT_OK(CheckImageType(image_file_path, &valid));
+      Status type_check = CheckImageType(image_file_path, &valid);
+      if (type_check.IsError()) {
+        file_handle.close();
+        RETURN_IF_NOT_OK(type_check);
+      }
       if (!valid) {
         continue;
       }
@@ -153,10 +163,16 @@ Status FlickrOp::ParseFlickrData() {
 // Optimization: Could take in a tensor
 // This function does not return status because we want to just skip bad input, not crash
 Status FlickrOp::CheckImageType(const std::string &file_name, bool *valid) {
+  auto real_file_name = Common::GetRealPath(file_name);
+  if (!real_file_name.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << file_name;
+    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
+  }
+
   std::ifstream file_handle;
   constexpr int read_num = 3;
   *valid = false;
-  file_handle.open(file_name, std::ios::binary | std::ios::in);
+  file_handle.open(real_file_name.value(), std::ios::binary | std::ios::in);
   if (!file_handle.is_open()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open image file: " + file_name);
   }
@@ -224,7 +240,7 @@ Status FlickrOp::ComputeColMap() {
   // Set the column name map (base class field)
   if (column_name_id_map_.empty()) {
     for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->column(i).name()] = i;
+      column_name_id_map_[data_schema_->Column(i).Name()] = i;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";

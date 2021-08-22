@@ -134,8 +134,10 @@ int StrassenOpenCLKernel::InitWeights() {
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
   memset(padWeight_, 0x00, NumA * NumB * dtype_size);
-  auto originWeightFp32 = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
-  auto originWeightFp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->data_c());
+  auto weight_tensor_data = in_tensors_.at(kWeightIndex)->data_c();
+  MS_ASSERT(weight_tensor_data);
+  auto originWeightFp32 = reinterpret_cast<float *>(weight_tensor_data);
+  auto originWeightFp16 = reinterpret_cast<float16_t *>(weight_tensor_data);
   bool isModelFp16 = in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16;
   if (AllocatorMemoryForStrassen(NumA / 2, NumB / 2) != RET_OK) {
     MS_LOG(ERROR) << "AllocatorMemoryForStrassen failed.";
@@ -192,9 +194,21 @@ void StrassenOpenCLKernel::SetGlobalLocal() {
   local_size_ = {32, 4, 1};
   global_size_ = {1, 1, 1};
   size_t strassen_size = outShape[3] / 2;
-  StrassenSetGlobalLocal(strassen_size, 0);  // set global_ and local
-  StrassenSetGlobalLocal(strassen_size, 1);  // set global_size_add_sub
-  StrassenSetGlobalLocal(strassen_size, 2);  // set global_size_weights
+  int ret = StrassenSetGlobalLocal(strassen_size, 0);  // set global_ and local
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "StrassenSetGlobalLocal 0 failed.";
+    return;
+  }
+  ret = StrassenSetGlobalLocal(strassen_size, 1);  // set global_size_add_sub
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "StrassenSetGlobalLocal 1 failed.";
+    return;
+  }
+  ret = StrassenSetGlobalLocal(strassen_size, 2);  // set global_size_weights
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "StrassenSetGlobalLocal 2 failed.";
+    return;
+  }
 }
 
 int StrassenOpenCLKernel::StrassenSetConstArgs(cl::Kernel *kernel, int index, int strassen_size,

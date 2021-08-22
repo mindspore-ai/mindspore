@@ -37,7 +37,8 @@ class OpTilingCalculateAdapter {
   ~OpTilingCalculateAdapter() = default;
 
   ge::NodePtr AnfNodeToGeNodeAdapter(const CNodePtr &node, ge::ComputeGraphPtr *ge_graph,
-                                     const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map);
+                                     const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                     const std::string &op_compile_info);
 
  private:
   void ConvertInputShapeAndType(const CNodePtr &node, ge::OpDescPtr *op_desc);
@@ -55,6 +56,7 @@ class OpTilingCalculateAdapter {
   std::string GetOutputName(const CNodePtr &node, size_t index);
   void InitOpIoName(const CNodePtr &node);
   std::string op_name_;
+  std::string op_compile_info_;
   std::vector<std::string> input_names_;
   std::vector<std::string> output_names_;
 };

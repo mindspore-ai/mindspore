@@ -37,7 +37,7 @@ from mindspore.train.callback import Callback
 
 
 def create_classification_dataset(batch_size=32, repeat_count=1,
-                                  data_file_path=None, schema_file_path=None, do_shuffle=True):
+                                  data_file_path=None, schema_file_path=None, do_shuffle=True, drop_remainder=False):
     """create finetune or evaluation dataset from mindrecord file"""
     type_cast_op = C.TypeCast(mstype.int32)
     data_set = ds.MindDataset([data_file_path],  \
@@ -48,7 +48,7 @@ def create_classification_dataset(batch_size=32, repeat_count=1,
     data_set = data_set.map(operations=type_cast_op, input_columns="segment_ids")
     data_set = data_set.map(operations=type_cast_op, input_columns="input_ids")
     #data_set = data_set.repeat(repeat_count)
-    data_set = data_set.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=drop_remainder)
     return data_set
 
 

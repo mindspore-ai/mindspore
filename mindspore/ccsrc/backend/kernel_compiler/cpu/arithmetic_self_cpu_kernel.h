@@ -20,8 +20,9 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
-const float MAX_NEG_SERIAL_SIZE = 20000;
-const float MAX_SQUARE_SERIAL_SIZE = 20000;
+const float MAX_NEG_SERIAL_SIZE = 5000;
+const float MAX_SQUARE_SERIAL_SIZE = 5000;
+const float MAX_EXP_SERIAL_SIZE = 15000;
 
 namespace mindspore {
 namespace kernel {
@@ -57,6 +58,10 @@ class IdentityCPUKernel : public ArithmeticSelfCPUKernel {
 };
 
 MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                  ArithmeticSelfCPUKernel);
+MS_REG_CPU_KERNEL(Square, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ArithmeticSelfCPUKernel);
+MS_REG_CPU_KERNEL(Exp, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ArithmeticSelfCPUKernel);
 MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ArithmeticSelfCPUKernel);

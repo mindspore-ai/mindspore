@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);

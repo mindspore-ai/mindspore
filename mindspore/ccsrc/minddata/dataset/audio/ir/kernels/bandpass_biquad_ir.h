@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "include/api/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -28,9 +29,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
-// Char arrays storing name of corresponding classes (in alphabetical order)
+
 constexpr char kBandpassBiquadOperation[] = "BandpassBiquad";
 
 class BandpassBiquadOperation : public TensorOperation {

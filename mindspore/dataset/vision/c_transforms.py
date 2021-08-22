@@ -109,7 +109,7 @@ def parse_padding(padding):
 
 class AdjustGamma(ImageTensorOperation):
     r"""
-    Apply gamma correction on input image. Input image is expected to be in [..., H, W, C] or [H, W, C] format.
+    Apply gamma correction on input image. Input image is expected to be in [..., H, W, C] or [H, W] format.
     .. math::
         I_{\text{out}} = 255 \times \text{gain} \times \left(\frac{I_{\text{in}}}{255}\right)^{\gamma}
 
@@ -1511,6 +1511,7 @@ class RgbToBgr(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import Inter
+        >>>
         >>> decode_op = c_vision.Decode()
         >>> rgb2bgr_op = c_vision.RgbToBgr()
         >>> transforms_list = [decode_op, rgb2bgr_op]

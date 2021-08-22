@@ -102,7 +102,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
                                 "Using shared memory queue, but rowsize is larger than allocated memory "
                                 + "max_rowsize "
                                 + str(self.seg_size)
-                                + " current rowwize "
+                                + " current rowsize "
                                 + str(start_bytes + r.nbytes)
                             )
                             self.print_error = False

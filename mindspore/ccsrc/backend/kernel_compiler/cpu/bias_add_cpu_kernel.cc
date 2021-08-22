@@ -90,7 +90,7 @@ bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
         ElementAdd(src_addr + n_offset, bias_addr, output_addr + n_offset, input_shape_[1]);
       }
     };
-    CPUKernelUtils::ParallelForAutoSearch(task, input_shape_[0], &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, input_shape_[0], this, &parallel_search_info_);
   }
   return true;
 }

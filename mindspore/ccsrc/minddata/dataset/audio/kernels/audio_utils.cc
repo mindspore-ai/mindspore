@@ -16,62 +16,27 @@
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
+#include <complex>
+
+#include "mindspore/core/base/float16.h"
+#include "minddata/dataset/core/type_id.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
+#include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 
-template <typename T>
-Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T multiplier, T amin,
-                     T db_multiplier, T top_db) {
-  TensorShape input_shape = input->shape();
-  TensorShape to_shape = input_shape.Rank() == 2
-                           ? TensorShape({1, 1, input_shape[-2], input_shape[-1]})
-                           : TensorShape({input->Size() / (input_shape[-3] * input_shape[-2] * input_shape[-1]),
-                                          input_shape[-3], input_shape[-2], input_shape[-1]});
-  RETURN_IF_NOT_OK(input->Reshape(to_shape));
-
-  std::vector<T> max_val;
-  int step = to_shape[-3] * input_shape[-2] * input_shape[-1];
-  int cnt = 0;
-  T temp_max = std::numeric_limits<T>::lowest();
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
-    // do clamp
-    *itr = *itr < amin ? log10(amin) * multiplier : log10(*itr) * multiplier;
-    *itr -= multiplier * db_multiplier;
-    // calculate max by axis
-    cnt++;
-    if ((*itr) > temp_max) temp_max = *itr;
-    if (cnt % step == 0) {
-      max_val.push_back(temp_max);
-      temp_max = std::numeric_limits<T>::lowest();
-    }
-  }
-
-  if (!std::isnan(top_db)) {
-    int ind = 0;
-    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
-      float lower_bound = max_val[ind / step] - top_db;
-      *itr = std::max((*itr), static_cast<T>(lower_bound));
-    }
-  }
-  RETURN_IF_NOT_OK(input->Reshape(input_shape));
-  *output = input;
-  return Status::OK();
-}
-template Status AmplitudeToDB<float>(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                                     float multiplier, float amin, float db_multiplier, float top_db);
-template Status AmplitudeToDB<double>(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                                      double multiplier, double amin, double db_multiplier, double top_db);
-
-/// \brief Generate linearly spaced vector
+/// \brief Generate linearly spaced vector.
 /// \param[in] start - Value of the startpoint.
 /// \param[in] end - Value of the endpoint.
 /// \param[in] n - N points in the output tensor.
 /// \param[out] output - Tensor has n points with linearly space. The spacing between the points is (end-start)/(n-1).
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
-Status Linespace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
+Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
   if (start > end) {
-    std::string err = "Linespace: input param end must be greater than start.";
+    std::string err = "Linspace: input param end must be greater than start.";
     RETURN_STATUS_UNEXPECTED(err);
   }
   n = std::isnan(n) ? 100 : n;
@@ -89,10 +54,10 @@ Status Linespace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
   return Status::OK();
 }
 
-/// \brief Calculate complex tensor angle
+/// \brief Calculate complex tensor angle.
 /// \param[in] input - Input tensor, must be complex, <channel, freq, time, complex=2>.
 /// \param[out] output - Complex tensor angle.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // check complex
@@ -121,10 +86,10 @@ Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   return Status::OK();
 }
 
-/// \brief Calculate complex tensor abs
+/// \brief Calculate complex tensor abs.
 /// \param[in] input - Input tensor, must be complex, <channel, freq, time, complex=2>.
 /// \param[out] output - Complex tensor abs.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // check complex
@@ -150,17 +115,17 @@ Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
   return Status::OK();
 }
 
-/// \brief Reconstruct complex tensor from norm and angle
+/// \brief Reconstruct complex tensor from norm and angle.
 /// \param[in] abs - The absolute value of the complex tensor.
 /// \param[in] angle - The angle of the complex tensor.
 /// \param[out] output - Complex tensor, <channel, freq, time, complex=2>.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &angle,
              std::shared_ptr<Tensor> *output) {
   // check shape
   if (abs->shape() != angle->shape()) {
-    std::string err_msg = "Polar: input shape of abs and angle must be same.";
+    std::string err_msg = "Polar: input tensor shape of abs and angle must be the same.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -183,12 +148,12 @@ Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &
   return Status::OK();
 }
 
-/// \brief Pad complex tensor
+/// \brief Pad complex tensor.
 /// \param[in] input - The complex tensor.
 /// \param[in] length - The length of padding.
 /// \param[in] dim - The dim index for padding.
 /// \param[out] output - Complex tensor, <channel, freq, time, complex=2>.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int length, int dim) {
   TensorShape input_shape = input->shape();
@@ -216,13 +181,13 @@ Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   return Status::OK();
 }
 
-/// \brief Calculate phase
+/// \brief Calculate phase.
 /// \param[in] angle_0 - The angle.
 /// \param[in] angle_1 - The angle.
 /// \param[in] phase_advance - The phase advance.
 /// \param[in] phase_time0 - The phase at time 0.
 /// \param[out] output - Phase tensor.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tensor> &angle_1,
              const std::shared_ptr<Tensor> &phase_advance, const std::shared_ptr<Tensor> &phase_time0,
@@ -267,12 +232,12 @@ Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tenso
   return Status::OK();
 }
 
-/// \brief Calculate magnitude
+/// \brief Calculate magnitude.
 /// \param[in] alphas - The alphas.
 /// \param[in] abs_0 - The norm.
 /// \param[in] abs_1 - The norm.
 /// \param[out] output - Magnitude tensor.
-/// \return Status return code
+/// \return Status return code.
 template <typename T>
 Status Mag(const std::shared_ptr<Tensor> &abs_0, const std::shared_ptr<Tensor> &abs_1, std::shared_ptr<Tensor> *output,
            const std::vector<T> &alphas) {
@@ -367,19 +332,178 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
   std::shared_ptr<Tensor> phase_advance;
   switch (input->type().value()) {
     case DataType::DE_FLOAT32:
-      RETURN_IF_NOT_OK(Linespace<float>(&phase_advance, 0, PI * hop_length, n_freq));
+      RETURN_IF_NOT_OK(Linspace<float>(&phase_advance, 0, PI * hop_length, n_freq));
       RETURN_IF_NOT_OK(TimeStretch<float>(input, output, rate, phase_advance));
       break;
     case DataType::DE_FLOAT64:
-      RETURN_IF_NOT_OK(Linespace<double>(&phase_advance, 0, PI * hop_length, n_freq));
+      RETURN_IF_NOT_OK(Linspace<double>(&phase_advance, 0, PI * hop_length, n_freq));
       RETURN_IF_NOT_OK(TimeStretch<double>(input, output, rate, phase_advance));
       break;
     default:
-      RETURN_STATUS_UNEXPECTED(
-        "TimeStretch: unsupported type, currently supported types include "
-        "[float, double].");
+      RETURN_STATUS_UNEXPECTED("TimeStretch: input tensor type should be float or double, but got: " +
+                               input->type().ToString());
   }
   return Status::OK();
+}
+
+Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_param,
+                           double mask_value, int axis, std::mt19937 rnd) {
+  std::uniform_int_distribution<int64_t> mask_width_value(0, mask_param);
+  TensorShape input_shape = input->shape();
+  int64_t mask_dim_size = axis == 1 ? input_shape[-2] : input_shape[-1];
+  int64_t mask_width = mask_width_value(rnd);
+  std::uniform_int_distribution<int64_t> min_freq_value(0, mask_dim_size - mask_width);
+  int64_t mask_start = min_freq_value(rnd);
+
+  return MaskAlongAxis(input, output, mask_width, mask_start, mask_value, axis);
+}
+
+Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
+                     int64_t mask_start, double mask_value, int axis) {
+  if (axis != 2 && axis != 1) {
+    RETURN_STATUS_UNEXPECTED("MaskAlongAxis: only support Time and Frequency masking, axis should be 1 or 2.");
+  }
+  TensorShape input_shape = input->shape();
+  // squeeze input
+  TensorShape squeeze_shape = TensorShape({-1, input_shape[-2], input_shape[-1]});
+  input->Reshape(squeeze_shape);
+
+  int check_dim_ind = (axis == 1) ? -2 : -1;
+  CHECK_FAIL_RETURN_UNEXPECTED(0 <= mask_start && mask_start <= input_shape[check_dim_ind],
+                               "MaskAlongAxis: mask_start should be less than the length of chosen dimension.");
+  CHECK_FAIL_RETURN_UNEXPECTED(mask_start + mask_width <= input_shape[check_dim_ind],
+                               "MaskAlongAxis: the sum of mask_start and mask_width is out of bounds.");
+
+  int64_t cell_size = input->type().SizeInBytes();
+
+  if (axis == 1) {
+    // freq
+    for (int ind = 0; ind < input->Size() / input_shape[-2] * mask_width; ind++) {
+      int block_num = ind / (mask_width * input_shape[-1]);
+      auto start_pos = ind % (mask_width * input_shape[-1]) + mask_start * input_shape[-1] +
+                       input_shape[-1] * input_shape[-2] * block_num;
+      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
+      if (input->type() != DataType::DE_FLOAT64) {
+        // tensor float 32
+        auto mask_val = static_cast<float>(mask_value);
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      } else {
+        // tensor float 64
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_value, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      }
+    }
+  } else {
+    // time
+    for (int ind = 0; ind < input->Size() / input_shape[-1] * mask_width; ind++) {
+      int row_num = ind / mask_width;
+      auto start_pos = ind % mask_width + mask_start + input_shape[-1] * row_num;
+      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
+      if (input->type() != DataType::DE_FLOAT64) {
+        // tensor float 32
+        auto mask_val = static_cast<float>(mask_value);
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      } else {
+        // tensor float 64
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_value, cell_size) == 0,
+                                     "MaskAlongAxis: mask failed, memory copy error.");
+      }
+    }
+  }
+  // unsqueeze input
+  input->Reshape(input_shape);
+  *output = input;
+  return Status::OK();
+}
+
+template <typename T>
+Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
+  // calcutate total complex num
+  int32_t dim = input->shape().Size();
+  int32_t total_num = 1;
+  for (int32_t i = 0; i < (dim - 1); i++) {
+    total_num *= (input->shape()[i]);
+  }
+
+  // calculate the output dimension
+  auto input_size = input->shape().AsVector();
+  int32_t dim_back = input_size.back();
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    dim_back == 2, "ComplexNorm: expect complex input of shape <..., 2>, but got: " + std::to_string(dim_back));
+  input_size.pop_back();
+  int32_t complex_num = input_size.back();
+  int32_t iter_num = total_num / complex_num;
+  // TensorShape out_put_shape{}
+  input_size.pop_back();
+  input_size.emplace_back(2);
+  TensorShape out_shape = TensorShape(input_size);
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, input->type(), output));
+
+  // slice input into real tensor and imaginary tensor
+  std::shared_ptr<Tensor> re_tensor;
+  std::shared_ptr<Tensor> im_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({total_num, 1}), input->type(), &re_tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({total_num, 1}), input->type(), &im_tensor));
+  std::vector<SliceOption> slice_re = {};
+  std::vector<SliceOption> slice_im = {};
+  for (int32_t i = 0; i < (dim - 1); i++) {
+    slice_re.emplace_back(SliceOption(true));
+    slice_im.emplace_back(SliceOption(true));
+  }
+  slice_re.emplace_back(SliceOption(std::vector<dsize_t>{0}));
+  slice_im.emplace_back(SliceOption(std::vector<dsize_t>{1}));
+  RETURN_IF_NOT_OK(input->Slice(&re_tensor, slice_re));
+  RETURN_IF_NOT_OK(input->Slice(&im_tensor, slice_im));
+
+  // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
+  auto itr_out = (*output)->begin<T>();
+  auto itr_re = re_tensor->begin<T>();
+  auto itr_im = im_tensor->begin<T>();
+  for (int32_t i = 0; i < iter_num; i++) {
+    double re = 0.0;
+    double im = 0.0;
+    for (int32_t j = complex_num * i; j < complex_num * (i + 1); j++) {
+      double a = static_cast<double>(*itr_re);
+      double b = static_cast<double>(*itr_im);
+      re = re + (pow(a, 2) - pow(b, 2));
+      im = im + (2 * a * b);
+      ++itr_re;
+      ++itr_im;
+    }
+    std::complex<double> comp(re, im);
+    comp = std::pow(comp, (0.5 * power));
+    *itr_out = static_cast<T>(comp.real());
+    ++itr_out;
+    *itr_out = static_cast<T>(comp.imag());
+    ++itr_out;
+  }
+  RETURN_IF_NOT_OK((*output)->Reshape(out_shape));
+  return Status::OK();
+}
+
+Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
+  try {
+    if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT16) {
+      // convert the data type to float
+      std::shared_ptr<Tensor> input_tensor;
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_FLOAT32), &input_tensor));
+      RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+
+      Norm<float>(input_tensor, output, power);
+    } else if (input->type().value() == DataType::DE_FLOAT32) {
+      Norm<float>(input, output, power);
+    } else if (input->type().value() == DataType::DE_FLOAT64) {
+      Norm<double>(input, output, power);
+    } else {
+      RETURN_STATUS_UNEXPECTED("ComplexNorm: input tensor type should be int, float or double, but got: " +
+                               input->type().ToString());
+    }
+    return Status::OK();
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("ComplexNorm: " + std::string(e.what()));
+  }
 }
 }  // namespace dataset
 }  // namespace mindspore

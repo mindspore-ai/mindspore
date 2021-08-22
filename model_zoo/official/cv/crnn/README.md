@@ -22,6 +22,7 @@
         - [Export MindIR](#export-mindir)
         - [Infer on Ascend310](#infer-on-ascend310)
         - [result](#result)
+        - [Post Training Quantization](#post-training-quantization)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Training Performance](#training-performance)
@@ -362,6 +363,41 @@ Inference result is saved in current path, you can find result like this in acc.
 ```shell
 correct num: 2042 , total num: 3000
 result CRNNAccuracy is: 0.806666666666
+```
+
+### [Post Training Quantization](#contents)
+
+Relative executing script files reside in the directory "ascend310_quant_infer". Please implement following steps sequentially to complete post quantization.
+Current quantization project bases on IIIT5K dataset.
+
+1. Generate data of .bin format required for AIR model inference at Ascend310 platform.
+
+```shell
+python export_bin.py --eval_dataset [DATASET NAME] --eval_dataset_path [DATA PATH]
+```
+
+2. Export quantized AIR model.
+
+Post quantization of model requires special toolkits for exporting quantized AIR model. Please refer to [official website](https://www.hiascend.com/software/cann/community).
+
+```shell
+python post_quant.py --eval_dataset [DATASET NAME] --eval_dataset_path [DATA PATH] --ckpt_file [CKPT_PATH]
+```
+
+The quantized AIR file will be stored as "./results/crnn_quant.air".
+
+3. Implement inference at Ascend310 platform.
+
+```shell
+# Ascend310 quant inference
+bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH]
+```
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+correct num: 2398 , total num: 3000
+result CRNNAccuracy is: 0.7933333333333
 ```
 
 ## [Model Description](#contents)

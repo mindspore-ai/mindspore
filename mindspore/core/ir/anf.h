@@ -96,7 +96,7 @@ using ParamInfoPtr = std::shared_ptr<ParamInfo>;
 // input of other CNodes, you can get the related info by this method.
 // debug_info: return the information retrieved from parser. Set it using set_debug_info.
 // fullname_with_scope: return the detailed debug info.
-class AnfNode : public Base {
+class MS_CORE_API AnfNode : public Base {
  public:
   explicit AnfNode(const FuncGraphPtr &func_graph)
       : func_graph_(FuncGraphWeakPtr(func_graph)),
@@ -117,7 +117,7 @@ class AnfNode : public Base {
   virtual void accept(AnfIrVisitor *) {}
   FuncGraphPtr func_graph() const { return func_graph_.lock(); }
 
-  void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
+  virtual void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
 
   ScopePtr scope() { return scope_; }
   void set_scope(const ScopePtr &scope) { scope_ = scope; }
@@ -234,7 +234,7 @@ class AnfNode : public Base {
 // stop_gradient_: a flag used to stop gradient.
 // Using stop_gradient() to get this flag, mainly used in ad.
 // Using set_stop_gradient() to set this flag.
-class CNode : public AnfNode, public EffectInfoHolder {
+class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
  public:
   CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph);
   CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
@@ -365,7 +365,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.
-class ANode : public AnfNode {
+class MS_CORE_API ANode : public AnfNode {
  public:
   ANode() : AnfNode(nullptr) {}
   explicit ANode(const FuncGraphPtr &func_graph) : AnfNode(func_graph) {}
@@ -377,7 +377,7 @@ class ANode : public AnfNode {
 // Parameter represents the parameter inputs of a function. They have no value.
 // Attributes:
 // default_param_value_: used to hold the inputting tensor of the model.
-class Parameter : public ANode {
+class MS_CORE_API Parameter : public ANode {
  public:
   explicit Parameter(const FuncGraphPtr &func_graph)
       : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), used_graph_count_(0) {}
@@ -443,7 +443,7 @@ using ParameterPtr = std::shared_ptr<Parameter>;
 
 // Value is used to represent the atomic expression mentioned in BNF.
 // It mainly be stored in ValueNode. Value and ValueNode is related definition.
-class Value : public Base {
+class MS_CORE_API Value : public Base {
  public:
   Value() = default;
   explicit Value(const TypePtr t) : type_(t) {}
@@ -469,11 +469,15 @@ class Value : public Base {
 
 // ValueNode is used to hold value. Unlike CNode and Parameter, ValueNode
 // does not belong to any particular function graph.
-class ValueNode : public ANode {
+class MS_CORE_API ValueNode : public ANode {
  public:
   explicit ValueNode(const ValuePtr &value) : value_(value) {}
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);
+
+  void set_func_graph(const FuncGraphPtr &func_graph) override {
+    MS_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
+  }
 
   void accept(AnfIrVisitor *v) override;
   void set_value(const ValuePtr &value) { value_ = value; }

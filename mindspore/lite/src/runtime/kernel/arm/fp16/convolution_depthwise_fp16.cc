@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 void ConvolutionDepthwiseFp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNCHWToNHWCFp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_), 1,
                      weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch(), 0, 0);
@@ -35,11 +35,13 @@ int ConvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
-  if (packed_weight_ == nullptr) {
-    packed_weight_ = malloc(pack_weight_size * sizeof(float16_t));
+  if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
+      packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
+      if (packed_weight_ == nullptr) {
+        MS_LOG(ERROR) << "Malloc buffer failed.";
+        return RET_ERROR;
+      }
     }
   }
   if (bias_data_ == nullptr) {
@@ -56,6 +58,12 @@ int ConvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
 int ConvolutionDepthwiseFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (op_parameter_->is_train_session_) {
+    auto weight_tensor = in_tensors_.at(kWeightIndex);
+    int channel = weight_tensor->Batch();
+    int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
+    set_workspace_size(pack_weight_size * sizeof(float16_t));
+  }
   auto ret = InitConvWeightBias();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitConvWeightBias failed.";
@@ -113,10 +121,4 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
   return ret;
 }
 
-int ConvolutionDepthwiseFp16CPUKernel::Eval() {
-  if (IsTrainable()) {
-    is_repack_ = true;
-  }
-  return InnerKernel::Eval();
-}
 }  // namespace mindspore::kernel

@@ -76,8 +76,8 @@ class LossBase(Cell):
 
         Args:
             weights (Union[float, Tensor]): Optional `Tensor` whose rank is either 0, or the same rank as inputs,
-            and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
-            or the same as the corresponding inputs dimension).
+                and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
+                or the same as the corresponding inputs dimension).
         """
         input_dtype = x.dtype
         x = self.cast(x, mstype.float32)

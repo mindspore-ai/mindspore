@@ -27,6 +27,14 @@ inline void *LoadLibrary(const char *name) {
 }
 
 inline void *GetNumaAdapterFunc(void *handle, const char *name) {
+  if (handle == nullptr) {
+    MS_LOG(ERROR) << "The pointer[handle] is null.";
+    return nullptr;
+  }
+  if (name == nullptr) {
+    MS_LOG(ERROR) << "The pointer[name] is null.";
+    return nullptr;
+  }
   void *func = dlsym(handle, name);
   return func;
 }

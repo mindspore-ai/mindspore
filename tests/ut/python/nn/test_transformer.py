@@ -14,41 +14,93 @@
 # ============================================================================
 """ test transformer"""
 import numpy as np
+import pytest
 from mindspore import Tensor
 from mindspore.common import dtype
-from mindspore.nn.parallel import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
-    TransformerDecoder, TransformerDecoderLayer, Transformer
+from mindspore.parallel.nn import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
+    TransformerDecoder, TransformerDecoderLayer, Transformer, CrossEntropyLoss, AttentionMask
 from mindspore.common.api import _executor
 
 
 def test_transformer_encoder_only():
-    model = Transformer(encoder_layers=2,
+    model = Transformer(batch_size=2,
+                        src_seq_length=20,
+                        tgt_seq_length=0,
+                        encoder_layers=2,
                         decoder_layers=0,
                         hidden_size=64,
-                        ffn_hidden_size=64,
-                        src_seq_length=16,
-                        tgt_seq_length=32)
+                        ffn_hidden_size=64)
 
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 1, 20, 20)), dtype.float16)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+
+    _executor.compile(model, encoder_input_value, encoder_input_mask)
+
+
+def test_transformer_encoder_log_softmax():
+    with pytest.raises(ValueError):
+        model = Transformer(batch_size=2,
+                            src_seq_length=20,
+                            tgt_seq_length=0,
+                            encoder_layers=2,
+                            decoder_layers=0,
+                            hidden_act='logsoftmax',
+                            hidden_size=64,
+                            ffn_hidden_size=64)
+
+        encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+        encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+
+        _executor.compile(model, encoder_input_value, encoder_input_mask)
+
+
+def test_transformer_encoder_leakyrelu():
+    model = Transformer(batch_size=2,
+                        src_seq_length=20,
+                        tgt_seq_length=0,
+                        encoder_layers=2,
+                        decoder_layers=0,
+                        hidden_act='leakyrelu',
+                        hidden_size=64,
+                        ffn_hidden_size=64)
+
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+
+    _executor.compile(model, encoder_input_value, encoder_input_mask)
+
+
+def test_transformer_encoder_logsigmoid():
+    model = Transformer(batch_size=2,
+                        src_seq_length=20,
+                        tgt_seq_length=0,
+                        encoder_layers=2,
+                        decoder_layers=0,
+                        hidden_act='logsigmoid',
+                        hidden_size=64,
+                        ffn_hidden_size=64)
+
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
     _executor.compile(model, encoder_input_value, encoder_input_mask)
 
 
 def test_encoder_and_decoder():
-    model = Transformer(encoder_layers=1,
+    model = Transformer(batch_size=2,
+                        src_seq_length=20,
+                        tgt_seq_length=10,
+                        encoder_layers=1,
                         decoder_layers=2,
                         hidden_size=64,
-                        ffn_hidden_size=64,
-                        src_seq_length=20,
-                        tgt_seq_length=20)
+                        ffn_hidden_size=64)
 
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 1, 20, 20)), dtype.float16)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
     decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
-    decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), dtype.float16)
-    memory_mask = Tensor(np.ones((2, 1, 10, 20)), dtype.float16)
+    decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+    memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
 
     _executor.compile(model, encoder_input_value, encoder_input_mask,
                       decoder_input_value,
@@ -57,14 +109,15 @@ def test_encoder_and_decoder():
 
 
 def test_transformer_encoder():
-    model = TransformerEncoder(num_layers=2,
+    model = TransformerEncoder(batch_size=2,
+                               seq_length=16,
+                               num_layers=2,
                                hidden_size=8,
                                ffn_hidden_size=64,
-                               seq_length=16,
                                num_heads=2)
 
     encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 1, 16, 16)), dtype.float16)
+    encoder_input_mask = Tensor(np.ones((2, 16, 16)), dtype.float16)
 
     _executor.compile(model,
                       encoder_input_value,
@@ -72,11 +125,11 @@ def test_transformer_encoder():
 
 
 def test_transformer_encoder_layer():
-    model = TransformerEncoderLayer(hidden_size=8, ffn_hidden_size=64, seq_length=16,
+    model = TransformerEncoderLayer(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
                                     num_heads=2)
 
     encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 1, 16, 16)), dtype.float16)
+    encoder_input_mask = Tensor(np.ones((2, 16, 16)), dtype.float16)
 
     _executor.compile(model,
                       encoder_input_value,
@@ -84,11 +137,13 @@ def test_transformer_encoder_layer():
 
 
 def test_transformer_encoder_layer_post_ture():
-    model = TransformerEncoderLayer(hidden_size=8, ffn_hidden_size=64, seq_length=16,
+    model = TransformerEncoderLayer(batch_size=2,
+                                    seq_length=16,
+                                    hidden_size=8, ffn_hidden_size=64,
                                     num_heads=2, post_layernorm_residual=True)
 
     encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
-    encoder_input_mask = Tensor(np.ones((2, 1, 16, 16)), dtype.float16)
+    encoder_input_mask = Tensor(np.ones((2, 16, 16)), dtype.float16)
 
     _executor.compile(model,
                       encoder_input_value,
@@ -97,16 +152,18 @@ def test_transformer_encoder_layer_post_ture():
 
 def test_transformer_decoder():
     model = TransformerDecoder(num_layers=1,
+                               batch_size=2,
+                               src_seq_length=20,
+                               tgt_seq_length=10,
                                hidden_size=64,
                                ffn_hidden_size=64,
-                               num_heads=2,
-                               seq_length=10)
+                               num_heads=2)
 
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
 
     decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
-    decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), dtype.float16)
-    memory_mask = Tensor(np.ones((2, 1, 10, 20)), dtype.float16)
+    decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+    memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
 
     _executor.compile(model, decoder_input_value, decoder_input_mask,
                       encoder_input_value,
@@ -115,16 +172,18 @@ def test_transformer_decoder():
 
 def test_transformer_decoder_layer():
     model = TransformerDecoderLayer(
+        batch_size=2,
+        src_seq_length=20,
+        tgt_seq_length=10,
         hidden_size=64,
         ffn_hidden_size=64,
-        num_heads=2,
-        seq_length=10)
+        num_heads=2)
 
     encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
 
     decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
-    decoder_input_mask = Tensor(np.ones((2, 1, 10, 10)), dtype.float16)
-    memory_mask = Tensor(np.ones((2, 1, 10, 20)), dtype.float16)
+    decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+    memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
 
     _executor.compile(model, decoder_input_value, decoder_input_mask,
                       encoder_input_value,
@@ -133,12 +192,15 @@ def test_transformer_decoder_layer():
 
 def test_multihead_attention():
     model = MultiHeadAttention(hidden_size=15,
+                               src_seq_length=20,
+                               tgt_seq_length=20,
+                               batch_size=2,
                                num_heads=3)
     from_tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
     to_tensor = Tensor(np.ones((2, 20, 15)), dtype.float16)
-    attention_mask = Tensor(np.ones((2, 1, 20, 20)), dtype.float16)
+    attention_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
 
-    _executor.compile(model, from_tensor, to_tensor, attention_mask)
+    _executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
 
 
 def test_feedforward_layer():
@@ -149,3 +211,18 @@ def test_feedforward_layer():
     tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
 
     _executor.compile(model, tensor)
+
+
+def test_cross_entroy():
+    model = CrossEntropyLoss()
+    logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), dtype.float32)
+    labels_np = np.array([1]).astype(np.int32)
+    input_mask = Tensor(np.ones(1).astype(np.float32))
+    labels = Tensor(labels_np)
+    _executor.compile(model, logits, labels, input_mask)
+
+
+def test_attention_mask():
+    model = AttentionMask(seq_length=19)
+    inputs = Tensor(np.ones((2, 19)), dtype.float32)
+    _executor.compile(model, inputs)

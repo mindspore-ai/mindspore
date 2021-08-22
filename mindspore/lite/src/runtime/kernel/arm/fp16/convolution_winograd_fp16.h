@@ -38,11 +38,11 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Eval() override;
   int RunImpl(int task_id);
   int InitTmpBuffer();
   int ConfigInputOutput();
-  int WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
+  int WinogradFilterTransformFp16(const float16_t *weight_data, const float *matrix_g, const float *matrix_gt,
+                                  int oc_block);
   int AdjustNumberOfThread();
 
  private:
@@ -66,6 +66,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
       col_buffer_ = nullptr;
     }
   }
+  int FilterWeight();
   int kernel_unit_ = 0;
   int input_unit_ = 0;
   int output_unit_;
@@ -75,7 +76,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   float16_t *col_buffer_ = nullptr;
   float matrix_g_[64];
   float matrix_gt_[64];
-  TmpBufferAddressFp16 tmp_buffer_address_list_[4];
+  TmpBufferAddressFp16 tmp_buffer_address_list_[4] = {0};
   InputTransFp16Func in_func_ = nullptr;
   OutputTransFp16Func out_func_ = nullptr;
   int col_tile_ = 0;

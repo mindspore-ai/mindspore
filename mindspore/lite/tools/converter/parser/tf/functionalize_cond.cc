@@ -79,7 +79,9 @@ STATUS FunctionalizeCond::BranchSubGraphAddNodes(const FuncGraphPtr &graph, cons
     } else {
       graph->AddNode(node);
     }
-    node->set_func_graph(graph);
+    if (!utils::isa<ValueNodePtr>(node)) {
+      node->set_func_graph(graph);
+    }
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = utils::cast<CNodePtr>(node);
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
@@ -133,7 +135,7 @@ STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, std::
 }
 
 FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::string name, BranchType branch_type) {
-  auto graph = FunctionalizeControlOpPass::NewFuncGraph(name, mindspore::lite::converter::FmkType_TF);
+  auto graph = FunctionalizeControlOpPass::NewFuncGraph(name, converter::kFmkTypeTf);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "new graph Partial Node return nullptr";
     return nullptr;

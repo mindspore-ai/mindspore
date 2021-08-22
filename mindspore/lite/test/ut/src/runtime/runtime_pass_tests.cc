@@ -59,23 +59,52 @@ void Nc4hw4PassConstruct(std::vector<kernel::LiteKernel *> *kernels, std::vector
                                                  transpose_param, &transpose_kernel, nullptr);
   kernels->push_back(transpose_kernel);
 
-  lite::Tensor *pad_param_tensor = new lite::Tensor();
-  tensors->push_back(pad_param_tensor);
-  lite::Tensor *pad_out_tensor = new lite::Tensor();
-  tensors->push_back(pad_out_tensor);
-  OpParameter *pad_param = new OpParameter();
-  kernel::KernelKey pad_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_PadFusion};
-  kernel::LiteKernel *pad_kernel = nullptr;
-  std::vector<lite::Tensor *> pad_in = {transpose_out_tensor, pad_param_tensor};
-  std::vector<lite::Tensor *> pad_out = {pad_out_tensor};
-  lite::KernelRegistry::GetInstance()->GetKernel(pad_in, pad_out, ctx, nullptr, pad_desc, pad_param, &pad_kernel,
-                                                 nullptr);
-  kernels->push_back(pad_kernel);
+  lite::Tensor *in_param_tensor = new lite::Tensor();
+  tensors->push_back(in_param_tensor);
+  lite::Tensor *in_out_tensor = new lite::Tensor();
+  tensors->push_back(in_out_tensor);
+  OpParameter *in_param = new OpParameter();
+  kernel::KernelKey in_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_InstanceNorm};
+  kernel::LiteKernel *in_kernel = nullptr;
+  std::vector<lite::Tensor *> in_in = {transpose_out_tensor, in_param_tensor};
+  std::vector<lite::Tensor *> in_out = {in_out_tensor};
+  lite::KernelRegistry::GetInstance()->GetKernel(in_in, in_out, ctx, nullptr, in_desc, in_param, &in_kernel, nullptr);
+  kernels->push_back(in_kernel);
+
+  lite::Tensor *transpose2_param_tensor = new lite::Tensor();
+  tensors->push_back(transpose_param_tensor);
+  lite::Tensor *transpose2_out_tensor = new lite::Tensor();
+  tensors->push_back(transpose_param_tensor);
+  OpParameter *transpose2_param = new OpParameter();
+  kernel::KernelKey transpose2_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
+  kernel::LiteKernel *transpose2_kernel = nullptr;
+  std::vector<lite::Tensor *> transpose2_in = {in_out_tensor, transpose2_param_tensor};
+  std::vector<lite::Tensor *> transpose2_out = {transpose2_out_tensor};
+  lite::KernelRegistry::GetInstance()->GetKernel(transpose2_in, transpose2_out, ctx, nullptr, transpose2_desc,
+                                                 transpose2_param, &transpose2_kernel, nullptr);
+  kernels->push_back(transpose2_kernel);
+
+  lite::Tensor *conv2_weight = new lite::Tensor();
+  tensors->push_back(conv2_weight);
+  lite::Tensor *conv2_out_tensor = new lite::Tensor();
+  tensors->push_back(conv2_out_tensor);
+  std::vector<lite::Tensor *> conv2_in = {transpose2_out_tensor, conv_weight};
+  std::vector<lite::Tensor *> conv2_out = {conv2_out_tensor};
+  OpParameter *conv2_param = new OpParameter();
+  kernel::KernelKey conv2_desc{kernel::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2DFusion};
+  kernel::LiteKernel *conv2_kernel = nullptr;
+  lite::KernelRegistry::GetInstance()->GetKernel(conv2_in, conv2_out, ctx, nullptr, conv2_desc, conv2_param,
+                                                 &conv2_kernel, nullptr);
+  kernels->push_back(conv2_kernel);
 
   conv_kernel->set_out_kernels({transpose_kernel});
   transpose_kernel->set_in_kernels({conv_kernel});
-  transpose_kernel->set_out_kernels({pad_kernel});
-  pad_kernel->set_in_kernels({transpose_kernel});
+  transpose_kernel->set_out_kernels({in_kernel});
+  in_kernel->set_in_kernels({transpose_kernel});
+  in_kernel->set_out_kernels({transpose2_kernel});
+  transpose2_kernel->set_in_kernels({in_kernel});
+  transpose2_kernel->set_out_kernels({conv2_kernel});
+  conv2_kernel->set_in_kernels({transpose2_kernel});
   return;
 }
 
@@ -85,11 +114,12 @@ TEST_F(RuntimePass, Nc4hw4Pass1) {
   std::vector<lite::Tensor *> tensors;
   Nc4hw4PassConstruct(&kernels, &tensors, ctx.get());
 
+  ASSERT_EQ(kernels.size(), 5);
+
   /* runtime pass */
   lite::Nc4hw4PassReplace(&kernels, &tensors, 0);
 
-  ASSERT_EQ(kernels.size(), 2);
-  ASSERT_EQ(tensors.size(), 5);
+  ASSERT_EQ(kernels.size(), 3);
 
   for (auto tensor : tensors) {
     delete tensor;

@@ -77,12 +77,12 @@ STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, Shap
 }
 int GetFormatByFmk(int32_t fmk_type) {
   switch (fmk_type) {
-    case converter::FmkType_ONNX:
-    case lite::converter::FmkType_CAFFE:
-    case lite::converter::FmkType_MS:
+    case converter::kFmkTypeOnnx:
+    case converter::kFmkTypeCaffe:
+    case converter::kFmkTypeMs:
       return mindspore::NCHW;
-    case lite::converter::FmkType_TF:
-    case lite::converter::FmkType_TFLITE:
+    case converter::kFmkTypeTf:
+    case converter::kFmkTypeTflite:
       return mindspore::NHWC;
     default:
       return -1;
@@ -286,14 +286,14 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
     return RET_ERROR;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim->GetAttr(ops::kFormat) == nullptr && !param_node->has_default()) {
+    data_info->format_ = mindspore::NHWC;
+  }
   if (prim->GetAttr(ops::kFormat) != nullptr && !opt::CheckPrimitiveType(cnode, prim::kPrimResize)) {
     auto value = prim->GetAttr(ops::kFormat);
     if (value->isa<mindspore::Int64Imm>()) {
       data_info->format_ = GetValue<int64_t>(value);
     }
-  }
-  if (!param_node->has_default()) {
-    data_info->format_ = NHWC;
   }
   // attr weightFormat is only used by conv-like ops' second input
   if ((opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||

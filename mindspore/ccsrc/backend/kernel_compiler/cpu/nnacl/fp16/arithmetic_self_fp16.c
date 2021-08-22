@@ -16,21 +16,21 @@
 #include <math.h>
 #include "nnacl/fp16/arithmetic_self_fp16.h"
 
-int ElementAbsFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementAbsFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = fabsf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementCosFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementCosFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = cosf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementLogFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementLogFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     if (input[i] <= 0) {
       return NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO;
@@ -40,14 +40,14 @@ int ElementLogFp16(float16_t *input, float16_t *output, int element_size) {
   return NNACL_OK;
 }
 
-int ElementSquareFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementSquareFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input[i] * input[i];
   }
   return NNACL_OK;
 }
 
-int ElementSqrtFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementSqrtFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     if (input[i] < 0) {
       return NNACL_ERRCODE_SQRT_NEGATIVE;
@@ -57,56 +57,56 @@ int ElementSqrtFp16(float16_t *input, float16_t *output, int element_size) {
   return NNACL_OK;
 }
 
-int ElementRsqrtFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementRsqrtFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = 1.f / sqrtf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementSinFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementSinFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = sinf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementLogicalNotFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementLogicalNotFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = (float)(!((bool)(input[i])));
   }
   return NNACL_OK;
 }
 
-int ElementRoundFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementRoundFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = roundf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementFloorFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementFloorFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = floorf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementCeilFp16(float16_t *input, float16_t *output, int number) {
+int ElementCeilFp16(const float16_t *input, float16_t *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = ceilf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementNegativeFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementNegativeFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; ++i) {
     output[i] = -input[i];
   }
   return NNACL_OK;
 }
 
-int ElementReciprocalFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementReciprocalFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; ++i) {
     if (input[i] == 0.0f) {
       return NNACL_ERR;
@@ -116,7 +116,7 @@ int ElementReciprocalFp16(float16_t *input, float16_t *output, int element_size)
   return NNACL_OK;
 }
 
-int ElementErfFp16(float16_t *input, float16_t *output, int element_size) {
+int ElementErfFp16(const float16_t *input, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = erff(input[i]);
   }

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAssign = "Assign";
-class Assign : public PrimitiveC {
+class MS_CORE_API Assign : public PrimitiveC {
  public:
   Assign() : PrimitiveC(kNameAssign) { InitIOName({"ref", "value"}, {"output"}); }
   ~Assign() = default;

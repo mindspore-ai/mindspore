@@ -24,6 +24,9 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
 #include "src/runtime/infer_manager.h"
+#include "mindspore/core/ops/switch.h"
+#include "mindspore/core/ops/call.h"
+#include "mindspore/core/ops/fusion/partial_fusion.h"
 
 namespace mindspore {
 namespace lite {
@@ -334,6 +337,78 @@ size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_
   } else {
     return 1;
   }
+}
+
+bool IsPartialFusion(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  if (node->isa<mindspore::CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    auto vnode_value = cnode->input(0)->cast<ValueNodePtr>()->value();
+    return GetValue<NamedPtr>(vnode_value)->name() == "PartialFusion";
+  }
+  return false;
+}
+
+bool IsCall(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  if (!utils::isa<CNodePtr>(node)) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode->inputs().empty()) {
+    return false;
+  }
+  auto cnode_first_input = cnode->input(0);
+  if (utils::isa<CNodePtr>(cnode_first_input)) {
+    return true;
+  }
+  if (utils::isa<ValueNode>(cnode_first_input)) {
+    auto vnode = cnode_first_input->cast<ValueNodePtr>();
+    return GetValueNode<FuncGraphPtr>(vnode) != nullptr;
+  }
+  return false;
+}
+
+bool IsSwitch(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  if (!utils::isa<CNodePtr>(node)) {
+    return false;
+  }
+  return opt::CheckPrimitiveType(node, prim::kPrimSwitch);
+}
+
+bool IsMakeTuple(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  if (!utils::isa<CNodePtr>(node)) {
+    return false;
+  }
+  return opt::CheckPrimitiveType(node, prim::kPrimMakeTuple);
+}
+
+ValueNodePtr GetPartialFusionPrim() {
+  auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
+  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
+  return partial_anf_prim;
+}
+
+ValueNodePtr GetSwitchAnfPrim() {
+  auto switch_prim = std::make_shared<mindspore::ops::Switch>();
+  ValueNodePtr switch_anf_prim = NewValueNode(switch_prim);
+  return switch_anf_prim;
+}
+
+ValueNodePtr GetCallAnfPrim() {
+  auto call_prim = std::make_shared<mindspore::ops::Call>();
+  ValueNodePtr call_anf_prim = NewValueNode(call_prim);
+  return call_anf_prim;
 }
 }  // namespace lite
 }  // namespace mindspore

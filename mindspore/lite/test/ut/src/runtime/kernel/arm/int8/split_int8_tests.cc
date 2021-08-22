@@ -112,6 +112,7 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   delete output1_tensor;
   delete output2_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
@@ -208,6 +209,7 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
   delete output2_tensor;
   delete output3_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
@@ -304,6 +306,7 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
   delete output2_tensor;
   delete output3_tensor;
   delete ctx;
+  delete kernel;
 }
 
 }  // namespace mindspore

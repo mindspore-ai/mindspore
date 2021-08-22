@@ -82,7 +82,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     MS_LOG(ERROR) << "graph is nullptr.";
     return kLiteNullptr;
   }
-  if (model_type != kFlatBuffer) {
+  if (model_type != kMindIR) {
     MS_LOG(ERROR) << "Unsupported IR.";
     return kLiteInputParamInvalid;
   }

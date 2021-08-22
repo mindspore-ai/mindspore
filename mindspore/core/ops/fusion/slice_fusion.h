@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSliceFusion = "SliceFusion";
-class SliceFusion : public PrimitiveC {
+class MS_CORE_API SliceFusion : public PrimitiveC {
  public:
   SliceFusion() : PrimitiveC(kNameSliceFusion) { InitIOName({"x", "begin", "size"}, {"output"}); }
   ~SliceFusion() = default;

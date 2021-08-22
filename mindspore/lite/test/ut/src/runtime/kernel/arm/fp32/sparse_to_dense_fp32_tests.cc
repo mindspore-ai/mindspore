@@ -114,6 +114,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {
   delete input_tensor4;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
@@ -200,6 +201,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
   delete input_tensor4;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test3) {
@@ -284,6 +286,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test3) {
   delete input_tensor4;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test4) {
@@ -368,6 +371,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test4) {
   delete input_tensor4;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 
 TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
@@ -454,5 +458,6 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
   delete input_tensor4;
   delete output0_tensor;
   delete ctx;
+  delete kernel;
 }
 }  // namespace mindspore

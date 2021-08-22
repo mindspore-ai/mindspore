@@ -179,12 +179,13 @@ https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 The script will launch the GPU training through `mpirun`, the user can run the following command on any machine to start training.
 
 ```bash
-bash scripts/run_distributed_train_gpu.sh RANK_SIZE HOSTFILE DATASET MOD
+bash scripts/run_distributed_train_gpu.sh RANK_SIZE HOSTFILE DATASET PER_BATCH MOD
 ```
 
 - RANK_SIZE: The device number. This can be your total device numbers. For example, 8, 16, 32 ...
 - HOSTFILE:  It's a text file describes the host ip and its devices. Please see our [tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/distributed_training_gpu.html) or [OpenMPI](https://www.open-mpi.org/) for more details.
 - DATASET: The path to the mindrecord files's parent directory . For example: `/home/work/mindrecord/`.
+- PER_BATCH: The batch size for each data parallel-way.
 - MODE: Can be `2.6B`, `13B` and `200B`.
 
 ### Incremental Training

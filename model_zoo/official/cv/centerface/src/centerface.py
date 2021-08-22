@@ -310,8 +310,8 @@ class TrainingWrapper(nn.Cell):
         else:
             cond = self.less_equal(self.base, flag_sum)
 
-        self.optimizer(grads)
-        return (loss, cond, sens)
+        ret = (loss, cond, sens)
+        return F.depend(ret, self.optimizer(grads))
 
 
 class CenterFaceWithNms(nn.Cell):

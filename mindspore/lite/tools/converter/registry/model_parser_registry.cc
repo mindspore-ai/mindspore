@@ -15,36 +15,30 @@
  */
 
 #include "include/registry/model_parser_registry.h"
-#include <string>
-#include <set>
-#include <unordered_map>
-#include "include/errorcode.h"
+#include <map>
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-namespace lite {
-ModelParserRegistry *ModelParserRegistry::GetInstance() {
-  static ModelParserRegistry instance;
-  return &instance;
+namespace registry {
+namespace {
+std::map<FmkType, ModelParserCreator> model_parser_room;
+}  // namespace
+
+ModelParserRegistry::ModelParserRegistry(FmkType fmk, ModelParserCreator creator) {
+  if (fmk < converter::kFmkTypeTf || fmk > converter::kFmkTypeTflite) {
+    MS_LOG(ERROR) << "ILLEGAL FMK: fmk must be in FmkType.";
+    return;
+  }
+  model_parser_room[fmk] = creator;
 }
 
-ModelParser *ModelParserRegistry::GetModelParser(const FmkType fmk) {
-  auto it = parsers_.find(fmk);
-  if (it != parsers_.end()) {
+converter::ModelParser *ModelParserRegistry::GetModelParser(FmkType fmk) {
+  auto it = model_parser_room.find(fmk);
+  if (it != model_parser_room.end()) {
     auto creator = it->second;
     return creator();
   }
   return nullptr;
 }
-
-int ModelParserRegistry::RegParser(const FmkType fmk, ModelParserCreator creator) {
-  if (fmk < converter::FmkType_TF || fmk > converter::FmkType_TFLITE) {
-    MS_LOG(ERROR) << "ILLEGAL FMK: fmk must be in FmkType.";
-    return RET_ERROR;
-  }
-  auto instance = ModelParserRegistry::GetInstance();
-  instance->parsers_[fmk] = creator;
-  return RET_OK;
-}
-}  // namespace lite
+}  // namespace registry
 }  // namespace mindspore

@@ -76,6 +76,7 @@ int OneHotOpenCLKernel::Prepare() {
 
 int OneHotOpenCLKernel::InitWeights() {
   depth_ = static_cast<int32_t *>(in_tensors_[1]->data_c())[0];
+  MS_ASSERT(depth_);
   // inputs num is 3 or 4.
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {  // onnx
     off_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
@@ -87,6 +88,8 @@ int OneHotOpenCLKernel::InitWeights() {
     off_value_ = static_cast<float *>(in_tensors_[3]->data_c())[0];
     param_->support_neg_index_ = false;
   }
+  MS_ASSERT(off_value_);
+  MS_ASSERT(on_value_);
   return RET_OK;
 }
 

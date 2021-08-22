@@ -16,7 +16,7 @@
 
 #include "src/custom_common.h"
 #include "include/errorcode.h"
-#include "include/registry/kernel_interface.h"
+#include "include/registry/register_kernel_interface.h"
 
 namespace mindspore {
 /**
@@ -28,17 +28,19 @@ class CustomAddInfer : public kernel::KernelInterface {
   CustomAddInfer() = default;
   ~CustomAddInfer() = default;
 
-  int Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-            const schema::Primitive *primitive) override {
+  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
+               const schema::Primitive *primitive) override {
     (*outputs)[0].SetFormat((*inputs)[0].format());
     (*outputs)[0].SetDataType((*inputs)[0].DataType());
     auto ret = common::CheckInputs(*inputs);
-    if (ret != lite::RET_OK) {
+    if (ret == lite::RET_INFER_INVALID) {
       (*outputs)[0].SetShape({-1});  // shape{-1} shows that shape need to be inferred when running.
-      return ret;
+      return kLiteInferInvalid;
+    } else if (ret != lite::RET_OK) {
+      return kLiteError;
     }
     (*outputs)[0].SetShape((*inputs)[0].Shape());
-    return lite::RET_OK;
+    return kSuccess;
   }
 };
 std::shared_ptr<kernel::KernelInterface> CustomAddInferCreator() { return std::make_shared<CustomAddInfer>(); }

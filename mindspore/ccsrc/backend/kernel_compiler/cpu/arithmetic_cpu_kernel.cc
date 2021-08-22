@@ -19,6 +19,7 @@
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "nnacl/fp32/power_fp32.h"
 #include "nnacl/fp32/sub_fp32.h"
+#include "nnacl/fp32/mul_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -54,7 +55,7 @@ void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
       auto task = [&](size_t start, size_t end) {
         ElementSub(input1 + start, input2 + start, out + start, end - start);
       };
-      CPUKernelUtils::ParallelFor(task, output_size_, MAX_SUB_SERIAL_SIZE);
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
     if (op_para.in_elements_num0_ == 1 || op_para.in_elements_num1_ == 1) {
@@ -65,7 +66,7 @@ void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
           ElementOptSub(input1 + start, input2, out + start, end - start, &op_para);
         }
       };
-      CPUKernelUtils::ParallelFor(task, output_size_, MAX_SUB_SERIAL_SIZE);
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
   }
@@ -84,6 +85,26 @@ void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
+  if constexpr (std::is_same_v<T, float>) {
+    if (input_shape1_ == input_shape2_) {
+      auto task = [&](size_t start, size_t end) {
+        ElementMul(input1 + start, input2 + start, out + start, end - start);
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+      return;
+    }
+    if (op_para.in_elements_num0_ == 1 || op_para.in_elements_num1_ == 1) {
+      auto task = [&](size_t start, size_t end) {
+        if (op_para.in_elements_num0_ == 1) {
+          ElementOptMul(input1, input2 + start, out + start, end - start, &op_para);
+        } else {
+          ElementOptMul(input1 + start, input2, out + start, end - start, &op_para);
+        }
+      };
+      ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+      return;
+    }
+  }
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -128,21 +149,21 @@ void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
     auto task = [&](size_t start, size_t end) {
       ElementRealDiv<T>(input1 + start, input2 + start, out + start, end - start, 1, 1);
     };
-    CPUKernelUtils::ParallelFor(task, output_size_, MAX_DIV_SERIAL_SIZE);
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
     return;
   }
   if (op_para.in_elements_num0_ == 1) {
     auto task = [&](size_t start, size_t end) {
       ElementRealDiv<T>(input1, input2 + start, out + start, end - start, 0, 1);
     };
-    CPUKernelUtils::ParallelFor(task, output_size_, MAX_DIV_SERIAL_SIZE);
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
     return;
   }
   if (op_para.in_elements_num1_ == 1) {
     auto task = [&](size_t start, size_t end) {
       ElementRealDiv<T>(input1 + start, input2, out + start, end - start, 1, 0);
     };
-    CPUKernelUtils::ParallelFor(task, output_size_, MAX_DIV_SERIAL_SIZE);
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
     return;
   }
 
@@ -339,7 +360,7 @@ void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2,
       iter.GenNextPos();
     }
   };
-  CPUKernelUtils::ParallelFor(task, output_size_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
 }
 
 template <typename T>

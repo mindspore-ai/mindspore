@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCrop = "Crop";
-class Crop : public PrimitiveC {
+class MS_CORE_API Crop : public PrimitiveC {
  public:
   Crop() : PrimitiveC(kNameCrop) {}
   ~Crop() = default;

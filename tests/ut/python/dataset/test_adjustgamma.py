@@ -31,8 +31,6 @@ MNIST_DATA_DIR = "../data/dataset/testMnistData"
 DATA_DIR_2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
-GENERATE_GOLDEN = False
-
 
 def generate_numpy_random_rgb(shape):
     """
@@ -90,26 +88,20 @@ def test_adjust_gamma_invalid_gamma_param_c():
     logger.info("Test AdjustGamma C Op with invalid ignore parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[C.Decode(),
-                                            C.Resize((224, 224)),
-                                            lambda img: np.array(img[:, :, 0])],
+        data_set = data_set.map(operations=[C.Decode(), C.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
                                 input_columns=["image"])
         # invalid gamma
-        data_set = data_set.map(operations=C.AdjustGamma(gamma=-10.0,
-                                                         gain=1.0),
+        data_set = data_set.map(operations=C.AdjustGamma(gamma=-10.0, gain=1.0),
                                 input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
         assert "Input is not within the required interval of " in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[C.Decode(),
-                                            C.Resize((224, 224)),
-                                            lambda img: np.array(img[:, :, 0])],
+        data_set = data_set.map(operations=[C.Decode(), C.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
                                 input_columns=["image"])
         # invalid gamma
-        data_set = data_set.map(operations=C.AdjustGamma(gamma=[1, 2],
-                                                         gain=1.0),
+        data_set = data_set.map(operations=C.AdjustGamma(gamma=[1, 2], gain=1.0),
                                 input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
@@ -129,8 +121,7 @@ def test_adjust_gamma_invalid_gamma_param_py():
             F.AdjustGamma(gamma=-10.0),
             F.ToTensor()
         ])
-        data_set = data_set.map(operations=[trans],
-                                input_columns=["image"])
+        data_set = data_set.map(operations=[trans], input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
         assert "Input is not within the required interval of " in str(error)
@@ -142,8 +133,7 @@ def test_adjust_gamma_invalid_gamma_param_py():
             F.AdjustGamma(gamma=[1, 2]),
             F.ToTensor()
         ])
-        data_set = data_set.map(operations=[trans],
-                                input_columns=["image"])
+        data_set = data_set.map(operations=[trans], input_columns=["image"])
     except TypeError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
         assert "is not of type [<class 'float'>, <class 'int'>], but got" in str(error)
@@ -156,13 +146,10 @@ def test_adjust_gamma_invalid_gain_param_c():
     logger.info("Test AdjustGamma C Op with invalid gain parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[C.Decode(),
-                                            C.Resize((224, 224)),
-                                            lambda img: np.array(img[:, :, 0])],
+        data_set = data_set.map(operations=[C.Decode(), C.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
                                 input_columns=["image"])
         # invalid gain
-        data_set = data_set.map(operations=C.AdjustGamma(gamma=10.0,
-                                                         gain=[1, 10]),
+        data_set = data_set.map(operations=C.AdjustGamma(gamma=10.0, gain=[1, 10]),
                                 input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
@@ -182,8 +169,7 @@ def test_adjust_gamma_invalid_gain_param_py():
             F.AdjustGamma(gamma=10.0, gain=[1, 10]),
             F.ToTensor()
         ])
-        data_set = data_set.map(operations=[trans],
-                                input_columns=["image"])
+        data_set = data_set.map(operations=[trans], input_columns=["image"])
     except TypeError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
         assert "is not of type [<class 'float'>, <class 'int'>], but got " in str(error)

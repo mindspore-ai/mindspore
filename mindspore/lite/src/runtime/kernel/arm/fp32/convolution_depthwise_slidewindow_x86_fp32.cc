@@ -62,6 +62,12 @@ int ConvolutionDepthwiseSWCPUKernelX86::Init() {
 #ifdef ENABLE_AVX
   oc_tile_ = C8NUM;
 #endif
+  if (op_parameter_->is_train_session_) {
+    auto weight_tensor = in_tensors_.at(kWeightIndex);
+    int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
+    int pack_weight_size = oc_algin * oc_tile_ * weight_tensor->Height() * weight_tensor->Width();
+    set_workspace_size(pack_weight_size * sizeof(float));
+  }
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
     MS_LOG(ERROR) << "new sliding window param failed.";
@@ -169,10 +175,12 @@ int ConvolutionDepthwiseSWCPUKernelX86::MallocWeightBiasData() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
   int pack_weight_size = oc_algin * oc_tile_ * weight_tensor->Height() * weight_tensor->Width();
-  packed_weight_ = malloc(pack_weight_size * sizeof(float));
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc packed_weight_ is failed!";
-    return RET_NULL_PTR;
+  if (!op_parameter_->is_train_session_) {
+    packed_weight_ = malloc(pack_weight_size * sizeof(float));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc packed_weight_ is failed!";
+      return RET_NULL_PTR;
+    }
   }
 
   if (in_tensors_.size() == kInputSize2) {
@@ -187,16 +195,5 @@ int ConvolutionDepthwiseSWCPUKernelX86::MallocWeightBiasData() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseSWCPUKernelX86::Eval() {
-  auto ret = InnerKernel::Eval();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "eval failed!";
-    return ret;
-  }
-  if (IsTrainable()) {
-    PackWeight();
-  }
-  return RET_OK;
-}
 }  // namespace mindspore::kernel
 #endif

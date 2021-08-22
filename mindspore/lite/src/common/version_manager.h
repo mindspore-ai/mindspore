@@ -22,24 +22,6 @@
 namespace mindspore {
 namespace lite {
 enum SCHEMA_VERSION : int { SCHEMA_INVALID = -1, SCHEMA_CUR = 0, SCHEMA_V0 = 1 };
-class VersionManager {
- public:
-  static VersionManager *GetInstance() {
-    static VersionManager instance;
-    return &instance;
-  }
-  virtual ~VersionManager() = default;
-
-  void SetSchemaVersion(const int schema_version) { schema_version_ = schema_version; }
-  int GetSchemaVersion() const { return schema_version_; }
-  bool CheckV0Schema() const { return schema_version_ == SCHEMA_VERSION::SCHEMA_V0; }
-
- private:
-  VersionManager() = default;
-
- private:
-  int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
-};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_COMMON_VERSION_MANAGER_H_

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePowerGrad = "PowerGrad";
-class PowerGrad : public PrimitiveC {
+class MS_CORE_API PowerGrad : public PrimitiveC {
  public:
   PowerGrad() : PrimitiveC(kNamePowerGrad) {}
   ~PowerGrad() = default;

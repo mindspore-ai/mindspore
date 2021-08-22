@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDeConv2DGradFilter = "DeConv2DGradFilter";
-class DeConv2DGradFilter : public PrimitiveC {
+class MS_CORE_API DeConv2DGradFilter : public PrimitiveC {
  public:
   DeConv2DGradFilter() : PrimitiveC(kNameDeConv2DGradFilter) {}
   ~DeConv2DGradFilter() = default;

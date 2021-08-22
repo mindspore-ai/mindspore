@@ -134,6 +134,7 @@ constexpr char FUSION[] = "fusion";
 constexpr char DO_MIRROR[] = "do_mirror";
 constexpr char RECOMPUTE[] = "recompute";
 constexpr char RECOMPUTE_COMM_OP[] = "recompute_comm_op";
+constexpr char NOT_RECOMPUTE[] = "not_recompute";
 constexpr char NUM_SAMPLED[] = "num_sampled";
 constexpr char NUM_TRUE[] = "num_true";
 constexpr char SEED[] = "seed";
@@ -193,7 +194,7 @@ constexpr char FORWARD_REDUCE_SCATTER[] = "forward_reduce_scatter";
 constexpr char FIELD_SIZE[] = "field_size";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
 constexpr char DEVICE[] = "Device";
-constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather";
+constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather_not_recompute";
 constexpr char CELLLIST_KEYWORD_PATTERN[] = "-CellList/(\\d+)-";
 
 constexpr char OUT_CHANNEL[] = "out_channel";

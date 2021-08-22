@@ -798,12 +798,12 @@ class CostModelSplitSchemer : public SplitSchemer {
       need_inline_.clear();
       return;
     } else if (split_plan_.size() == 1 && !NeedInline(0)) {
-      /*In this case, the CostModel decided to keep the whole graph unchanged.*/
+      // In this case, the CostModel decided to keep the whole graph unchanged.
       split_plan_.clear();
       need_inline_.clear();
       return;
     } else {
-      MS_LOG(INFO) << "CostModel split succeeded. The kernel is split to " << split_plan_.size() << " parts.";
+      MS_LOG(DEBUG) << "CostModel split succeeded. The kernel is split to " << split_plan_.size() << " parts.";
     }
     MapNodeGroup();
     GroupReturnNode();
@@ -894,11 +894,11 @@ class CostModelSplitSchemer : public SplitSchemer {
 };
 
 bool TrySplit(const CNodePtr &sub_root_cnode) {
-  MS_LOG(INFO) << "Split process node: " << sub_root_cnode->fullname_with_scope();
+  MS_LOG(DEBUG) << "Split process node: " << sub_root_cnode->fullname_with_scope();
   auto splitter = Splitter::MakeSplitter(sub_root_cnode, std::make_shared<CostModelSplitSchemer>());
   MS_EXCEPTION_IF_NULL(splitter);
   bool result = splitter->Split();
-  MS_LOG(INFO) << "Split node completed, result: " << result;
+  MS_LOG(DEBUG) << "Split node completed, result: " << result;
   return result;
 }
 }  // namespace

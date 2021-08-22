@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAttention = "Attention";
 // Attention MultiHeadAttention
-class Attention : public PrimitiveC {
+class MS_CORE_API Attention : public PrimitiveC {
  public:
   Attention() : PrimitiveC(kNameAttention) {
     InitIOName(

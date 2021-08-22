@@ -62,6 +62,15 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
 int ConvolutionCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (op_parameter_->is_train_session_) {
+    auto filter_tensor = in_tensors_.at(kWeightIndex);
+    size_t in_channel = filter_tensor->Channel();
+    size_t out_channel = filter_tensor->Batch();
+    size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
+    size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+    size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
+    set_workspace_size(pack_weight_size * sizeof(float));
+  }
   auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -87,8 +96,18 @@ int ConvolutionCPUKernel::ReSize() {
 int ConvolutionCPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
-  ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
-           reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+  if (out_tensors()[0]->format() != NC4HW4) {
+    ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+             reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+  } else {
+#if ENABLE_ARM64
+    ConvFp32OutNC4HW4(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+                      reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+#else
+    MS_LOG(ERROR) << "ConvFp32OutNC4HW4 not implemented.";
+    return RET_ERROR;
+#endif
+  }
   return RET_OK;
 }
 
@@ -139,7 +158,7 @@ void ConvolutionCPUKernel::PackWeight() {
     MS_LOG(ERROR) << "get height and width from filter_tensor failed.";
     return;
   }
-  void *origin_weight = IsTrainable() ? filter_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   RowMajor2Col16Major(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_), out_channel,
@@ -162,12 +181,14 @@ int ConvolutionCPUKernel::MallocWeightBiasData() {
   size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
   size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
   size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
-  packed_weight_ = malloc(pack_weight_size * sizeof(float));
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed weight failed.";
-    return RET_ERROR;
+  if (!op_parameter_->is_train_session_) {
+    packed_weight_ = malloc(pack_weight_size * sizeof(float));
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "malloc packed weight failed.";
+      return RET_ERROR;
+    }
+    memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   }
-  memset(packed_weight_, 0, pack_weight_size * sizeof(float));
 
   bias_data_ = malloc(oc_block_num * sizeof(float));
   if (bias_data_ == nullptr) {
@@ -178,11 +199,4 @@ int ConvolutionCPUKernel::MallocWeightBiasData() {
   return RET_OK;
 }
 
-int ConvolutionCPUKernel::Eval() {
-  InnerKernel::Eval();
-  if (IsTrainable()) {
-    PackWeight();
-  }
-  return RET_OK;
-}
 }  // namespace mindspore::kernel

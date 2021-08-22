@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-class Shape : public PrimitiveC {
+class MS_CORE_API Shape : public PrimitiveC {
  public:
   Shape() : PrimitiveC(prim::kPrimShape->name()) {}
   ~Shape() = default;

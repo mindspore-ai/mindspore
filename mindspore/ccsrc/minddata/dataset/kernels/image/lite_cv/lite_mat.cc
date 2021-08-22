@@ -283,9 +283,7 @@ void LiteMat::Release() {
     if (data_ptr_) {
       AlignFree(data_ptr_);
     }
-    if (ref_count_) {
-      delete[] ref_count_;
-    }
+    delete[] ref_count_;
   }
   data_ptr_ = nullptr;
   elem_size_ = 0;
@@ -293,7 +291,7 @@ void LiteMat::Release() {
   height_ = 0;
   channel_ = 0;
   c_step_ = 0;
-  ref_count_ = 0;
+  ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
 }
@@ -305,6 +303,7 @@ void *LiteMat::AlignMalloc(unsigned int size) {
   }
   void *p_raw = reinterpret_cast<void *>(malloc(size + length));
   if (p_raw) {
+    release_flag = true;
     void **p_algin = reinterpret_cast<void **>(((size_t)(p_raw) + length) & ~(ALIGN - 1));
     p_algin[-1] = p_raw;
     return p_algin;
@@ -313,8 +312,11 @@ void *LiteMat::AlignMalloc(unsigned int size) {
 }
 
 void LiteMat::AlignFree(void *ptr) {
-  (void)free(reinterpret_cast<void **>(ptr)[-1]);
-  ptr = nullptr;
+  if (release_flag) {
+    (void)free(reinterpret_cast<void **>(ptr)[-1]);
+    ptr = nullptr;
+    release_flag = false;
+  }
 }
 
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
@@ -414,7 +416,7 @@ inline void SubtractImpl(const uint32_t *src0, const uint32_t *src1, uint32_t *d
 }
 
 inline bool CheckSubstract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
-  if (dst == NULL) {
+  if (dst == nullptr) {
     return false;
   }
 
@@ -422,10 +424,7 @@ inline bool CheckSubstract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *
     return false;
   }
 
-  if (src_a.data_type_ != src_b.data_type_) {
-    return false;
-  }
-  return true;
+  return src_a.data_type_ == src_b.data_type_;
 }
 
 bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
@@ -581,7 +580,7 @@ inline void DivideImpl(const uint32_t *src0, const uint32_t *src1, uint32_t *dst
 }
 
 inline bool CheckDivide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
-  if (dst == NULL) {
+  if (dst == nullptr) {
     return false;
   }
 
@@ -589,10 +588,7 @@ inline bool CheckDivide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst
     return false;
   }
 
-  if (src_a.data_type_ != src_b.data_type_) {
-    return false;
-  }
-  return true;
+  return src_a.data_type_ == src_b.data_type_;
 }
 
 bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
@@ -689,7 +685,7 @@ inline void MultiplyImpl(const uint32_t *src0, const uint32_t *src1, uint32_t *d
 }
 
 inline bool CheckMultiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
-  if (dst == NULL) {
+  if (dst == nullptr) {
     return false;
   }
 
@@ -697,10 +693,7 @@ inline bool CheckMultiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *d
     return false;
   }
 
-  if (src_a.data_type_ != src_b.data_type_) {
-    return false;
-  }
-  return true;
+  return src_a.data_type_ == src_b.data_type_;
 }
 
 bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {

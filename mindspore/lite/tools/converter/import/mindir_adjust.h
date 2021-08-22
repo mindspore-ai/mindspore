@@ -21,7 +21,7 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 using mindspore::schema::QuantType;
 namespace mindspore::lite {
 class MindirAdjust {
@@ -38,7 +38,7 @@ class MindirAdjust {
   int ComputeQuantParams(AnfNodePtr anf_node);
 
   QuantType quant_type_ = QuantType::QuantType_QUANT_NONE;
-  FmkType fmk_type_ = FmkType::FmkType_MS;
+  FmkType fmk_type_ = FmkType::kFmkTypeMs;
   bool train_flag_ = false;
 };
 }  // namespace mindspore::lite

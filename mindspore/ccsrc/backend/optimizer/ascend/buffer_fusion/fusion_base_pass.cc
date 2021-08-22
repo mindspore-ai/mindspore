@@ -32,9 +32,9 @@ bool FusionBasePass::CheckEltWiseNode(const session::KernelGraph &kernel_graph, 
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto user_nodes = manager->node_users()[node];
+  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && user_nodes.size() == ELTWISE_USE &&
+         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && not_updatestate_nums == ELTWISE_USE &&
          cnode->inputs().size() == ELTWISE_INPUT_SIZE;
 }
 
@@ -47,9 +47,9 @@ bool FusionBasePass::CheckDoubleInEltWiseNode(const session::KernelGraph &kernel
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto user_nodes = manager->node_users()[node];
+  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && user_nodes.size() == ELTWISE_USE &&
+         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && not_updatestate_nums == ELTWISE_USE &&
          cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE;
 }
 
@@ -62,10 +62,25 @@ bool FusionBasePass::CheckMultiOutputEltWiseNode(const session::KernelGraph &ker
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto user_nodes = manager->node_users()[node];
+  size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && user_nodes.size() == ELTWISE_MULTI_USE &&
+         AnfAlgo::GetFusionType(node) == kernel::FusionType::ELEMWISE && not_updatestate_nums == ELTWISE_MULTI_USE &&
          cnode->inputs().size() == ELTWISE_INPUT_SIZE;
+}
+
+size_t FusionBasePass::GetNotUpdateStateUserNums(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto manager = kernel_graph.manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto user_nodes = manager->node_users()[node];
+  size_t not_updatestate_users = 0;
+  for (auto &user : user_nodes) {
+    auto user_node = user.first;
+    if (!AnfAlgo::CheckPrimitiveType(user_node, prim::kPrimUpdateState)) {
+      not_updatestate_users++;
+    }
+  }
+  return not_updatestate_users;
 }
 
 void FusionBasePass::SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record) {

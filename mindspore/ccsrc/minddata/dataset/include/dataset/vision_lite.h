@@ -89,39 +89,6 @@ class CenterCrop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RGB2BGR TensorTransform.
-/// \notes Convert the format of input image from RGB to BGR.
-class RGB2BGR final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  RGB2BGR() = default;
-
-  /// \brief Destructor.
-  ~RGB2BGR() = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-};
-
-/// \brief RGB2GRAY TensorTransform.
-/// \note Convert RGB image or color image to grayscale image.
-/// \brief Convert a RGB image or color image to a grayscale one.
-class RGB2GRAY final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  RGB2GRAY() = default;
-
-  /// \brief Destructor.
-  ~RGB2GRAY() = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-};
-
 /// \brief Crop an image based on location and crop size.
 class Crop final : public TensorTransform {
  public:
@@ -306,6 +273,39 @@ class ResizePreserveAR final : public TensorTransform {
  private:
   struct Data;
   std::shared_ptr<Data> data_;
+};
+
+/// \brief RGB2BGR TensorTransform.
+/// \notes Convert the format of input image from RGB to BGR.
+class RGB2BGR final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  RGB2BGR() = default;
+
+  /// \brief Destructor.
+  ~RGB2BGR() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+};
+
+/// \brief RGB2GRAY TensorTransform.
+/// \note Convert RGB image or color image to grayscale image.
+/// \brief Convert a RGB image or color image to a grayscale one.
+class RGB2GRAY final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  RGB2GRAY() = default;
+
+  /// \brief Destructor.
+  ~RGB2GRAY() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 };
 
 /// \brief Rotate the input image according to parameters.

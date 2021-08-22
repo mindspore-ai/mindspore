@@ -70,6 +70,17 @@ bool VectorErase(std::vector<T> *vec, T element) {
 }
 
 template <typename T>
+bool VectorSetNull(std::vector<T> *vec, T element) {
+  bool ret = false;
+  for (size_t i = 0; i < vec->size(); i++) {
+    if (vec->at(i) == element) {
+      vec->at(i) = nullptr;
+    }
+  }
+  return ret;
+}
+
+template <typename T>
 bool VectorReplace(std::vector<T> *vec, T srcElement, T dstElement) {
   bool ret = false;
   for (auto iter = vec->begin(); iter != vec->end(); iter++) {

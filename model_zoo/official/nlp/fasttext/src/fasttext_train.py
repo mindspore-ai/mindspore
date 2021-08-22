@@ -137,6 +137,4 @@ class FastTextTrainOneStepCell(nn.Cell):
         if self.reducer_flag:
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
-
-        self.optimizer(grads)
-        return loss
+        return F.depend(loss, self.optimizer(grads))

@@ -17,10 +17,10 @@
 #include "nnacl/fp16/deconv_winograd_fp16.h"
 #include "nnacl/base/minimal_filtering_generator.h"
 
-void DeConvWgInputPackFp16(float16_t *src_ptr, float16_t *dst_ptr, int channel, int stride) {
+void DeConvWgInputPackFp16(const float16_t *src_ptr, float16_t *dst_ptr, int channel, int stride) {
   int ic4div = channel / C4NUM;
   int ic4mod = channel % C4NUM;
-  float16_t *src = src_ptr;
+  const float16_t *src = src_ptr;
   float16_t *dst = dst_ptr;
 
   for (int ic = 0; ic < ic4div; ic++) {
@@ -172,10 +172,10 @@ void DeConvWgMergeFp16(const float16_t *src, float16_t *dst, size_t src_stride, 
   return;
 }
 
-void DeConvWgCalWgFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weight_buf, float16_t *tmp_buf,
-                       float16_t *at_buf, float16_t *a_mid_buf, float16_t *trans_a_buf, bool *transferred,
-                       float16_t *bt_buf, float16_t *b_tmp_buf, int unit_size, int w_start, int h_start,
-                       ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalWgFp16(const float16_t *tile_in, float16_t *tile_out, const float16_t *weight_buf, float16_t *tmp_buf,
+                       const float16_t *at_buf, float16_t *a_mid_buf, float16_t *trans_a_buf, bool *transferred,
+                       const float16_t *bt_buf, float16_t *b_tmp_buf, int unit_size, int w_start, int h_start,
+                       const ConvParameter *conv_param, const DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
   if (!transferred[unit_size]) {
     WinogradTransLeftFp16(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size,
@@ -188,7 +188,7 @@ void DeConvWgCalWgFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weigh
   for (int index = 0; index < winograd_plane; index++) {
     float16_t *src = trans_a_buf + index * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
     float16_t *dst = tmp_buf + index * deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
-    float16_t *weight = weight_buf + index * deconv_param->ic_up4_ * deconv_param->oc_up4_;
+    const float16_t *weight = weight_buf + index * deconv_param->ic_up4_ * deconv_param->oc_up4_;
     TiledC4MatmulFp16(dst, src, weight, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM, deconv_param->ic_div4_,
                       deconv_param->oc_div4_);
   }
@@ -213,15 +213,16 @@ void DeConvWgCalWgFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weigh
   return;
 }
 
-void DeConvWgCalCommFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weight, float16_t *tmp_buf, int h_start,
-                         int w_start, int h_size, int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalCommFp16(const float16_t *tile_in, float16_t *tile_out, const float16_t *weight, float16_t *tmp_buf,
+                         int h_start, int w_start, int h_size, int w_size, const ConvParameter *conv_param,
+                         const DeConvParam *deconv_param) {
   int count = deconv_param->oc_div4_ * w_size * h_size;
   int in_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
   int out_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;
 
   for (int hi = 0; hi < DECONV_WINOGRAD_DEFAULT_UNIT; hi++) {
     for (int wi = 0; wi < DECONV_WINOGRAD_DEFAULT_UNIT; wi++) {
-      float16_t *src_in = tile_in + (wi + hi * DECONV_WINOGRAD_DEFAULT_UNIT) * in_stride;
+      const float16_t *src_in = tile_in + (wi + hi * DECONV_WINOGRAD_DEFAULT_UNIT) * in_stride;
       TiledC4MatmulFp16(tmp_buf, src_in, weight, DECONV_WINOGRAD_DEFAULT_TILE * 4, deconv_param->ic_div4_, count);
 
       for (int uhi = 0; uhi < h_size; uhi++) {
@@ -238,8 +239,8 @@ void DeConvWgCalCommFp16(float16_t *tile_in, float16_t *tile_out, float16_t *wei
   return;
 }
 
-int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvParameter *conv_param,
-                         DeConvParam *deconv_param) {
+int PackDeConvWgDataFp16(const float16_t *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
+                         const DeConvParam *deconv_param) {
   int tmp_kernel_plane = unit->w_size_ * unit->h_size_;
   int output_channel = conv_param->output_channel_;
   int size = conv_param->input_channel_ * output_channel * tmp_kernel_plane;
@@ -248,13 +249,13 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
     return NNACL_NULL_PTR;
   }
   for (int ic = 0; ic < conv_param->input_channel_; ic++) {
-    float16_t *src_ic = nhwc_weight + deconv_param->kernel_plane_ * output_channel * ic;
+    const float16_t *src_ic = nhwc_weight + deconv_param->kernel_plane_ * output_channel * ic;
     float16_t *dst_ic = current_unit_weight + tmp_kernel_plane * output_channel * ic;
     for (int uhi = 0; uhi < unit->h_size_; uhi++) {
       for (int uwi = 0; uwi < unit->w_size_; uwi++) {
         int src_h_offset = unit->h_start_ + uhi * conv_param->stride_h_;
         int src_w_offset = unit->w_start_ + uwi * conv_param->stride_w_;
-        float16_t *src_hw = src_ic + (src_h_offset * conv_param->kernel_w_ + src_w_offset) * output_channel;
+        const float16_t *src_hw = src_ic + (src_h_offset * conv_param->kernel_w_ + src_w_offset) * output_channel;
         float16_t *dst_hw = dst_ic + (uhi * unit->w_size_ + uwi) * output_channel;
         memcpy(dst_hw, src_hw, output_channel * sizeof(float16_t));
       }
@@ -340,8 +341,8 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
   return NNACL_OK;
 }
 
-void DeconvWgFp16(float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_out, int start_index, int calculate_count,
-                  ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
+void DeconvWgFp16(const float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_out, int start_index,
+                  int calculate_count, const ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
   /* pack tile input */
   int tile_in_unit_stride = deconv_param->ic_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
   float16x4_t zero = vdup_n_f16(0.0f);
@@ -366,7 +367,7 @@ void DeconvWgFp16(float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_ou
           continue;
         }
 
-        float16_t *src = nhwc_input_ + (w_index + h_index * conv_param->input_w_) * conv_param->input_channel_;
+        const float16_t *src = nhwc_input_ + (w_index + h_index * conv_param->input_w_) * conv_param->input_channel_;
         DeConvWgInputPackFp16(src, dst, conv_param->input_channel_, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM);
       }
     }
@@ -402,8 +403,8 @@ void DeconvWgFp16(float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_ou
   return;
 }
 
-void DeconvWgPostFp16(float16_t *tile_out, float16_t *nc4hw4_output, ConvParameter *conv_param,
-                      DeConvParam *deconv_param, int calculate_count, int tile_index) {
+void DeconvWgPostFp16(const float16_t *tile_out, float16_t *nc4hw4_output, const ConvParameter *conv_param,
+                      const DeConvParam *deconv_param, int calculate_count, int tile_index) {
   /* merge */
   int src_unit_stride = deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
 
@@ -411,7 +412,7 @@ void DeconvWgPostFp16(float16_t *tile_out, float16_t *nc4hw4_output, ConvParamet
   int dst_stride = conv_param->output_w_ * conv_param->output_h_ * C4NUM;
 
   for (int index = 0; index < calculate_count; ++index) {
-    float16_t *src_start = tile_out + index * C4NUM;
+    const float16_t *src_start = tile_out + index * C4NUM;
 
     int plane_index = tile_index * DECONV_WINOGRAD_DEFAULT_TILE + index;
     int w_unit_index = plane_index % deconv_param->in_tile_w_count_;
@@ -427,7 +428,7 @@ void DeconvWgPostFp16(float16_t *tile_out, float16_t *nc4hw4_output, ConvParamet
 
     for (int hi = merge_h_start; hi < merge_h_end; hi++) {
       for (int wi = merge_w_start; wi < merge_w_end; wi++) {
-        float16_t *src = src_start + (hi * deconv_param->out_tile_w_ + wi) * src_unit_stride;
+        const float16_t *src = src_start + (hi * deconv_param->out_tile_w_ + wi) * src_unit_stride;
         float16_t *dst = dst_start + (hi * conv_param->output_w_ + wi) * C4NUM;
         DeConvWgMergeFp16(src, dst, src_stride, dst_stride, deconv_param->oc_div4_);
       }

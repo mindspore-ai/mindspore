@@ -18,13 +18,11 @@ python eval.py
 '''
 
 import numpy as np
-
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
 from src.model_utils.device_adapter import get_device_id
 from src.musictagger import MusicTaggerCNN
 from src.dataset import create_dataset
-
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore import Tensor
@@ -113,12 +111,15 @@ def validation(net, model_path, data_dir, filename, num_consumer, batch):
 def modelarts_process():
     pass
 
+
 @moxing_wrapper(pre_process=modelarts_process)
 def fcn4_eval():
     """
     eval network
     """
-    context.set_context(device_target=config.device_target, mode=context.GRAPH_MODE, device_id=get_device_id())
+    context.set_context(device_target=config.device_target, mode=context.GRAPH_MODE)
+    if config.device_target == 'Ascend':
+        context.set_context(device_id=get_device_id())
 
     network = MusicTaggerCNN(in_classes=[1, 128, 384, 768, 2048],
                              kernel_size=[3, 3, 3, 3, 3],

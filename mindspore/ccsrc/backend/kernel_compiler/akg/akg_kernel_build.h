@@ -47,7 +47,6 @@ class AkgKernelBuilder {
   bool AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
 
  private:
-  std::vector<std::string> GetNotCachedKernelJsons(const std::vector<JsonNodePair> &build_args);
   std::vector<JsonNodePair> GetNotCachedKernels(const std::vector<JsonNodePair> &build_args);
   std::vector<std::string> GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
                                                   std::set<size_t> fetched_ids);
@@ -91,7 +90,6 @@ class AkgKernelPool {
   int32_t UpdateAndWait(const std::set<size_t> &ids);
 
   constexpr inline static size_t kMaxKernelNum_{1000};
-  constexpr inline static key_t kSharedMemKey_{0x57565845};
 
   // allocate memory for todo_list, doing_list, done_list
   constexpr inline static size_t kListNum_{3};

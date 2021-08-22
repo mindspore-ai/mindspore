@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftmax = "Softmax";
-class Softmax : public PrimitiveC {
+class MS_CORE_API Softmax : public PrimitiveC {
  public:
   Softmax() : PrimitiveC(kNameSoftmax) { InitIOName({"x"}, {"output"}); }
   ~Softmax() = default;

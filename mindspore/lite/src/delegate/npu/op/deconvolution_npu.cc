@@ -108,14 +108,6 @@ int DeconvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_
     deconv_->set_input_bias(*bias_);
   }
   deconv_->set_input_x(*npu_inputs[0]);
-
-  if (act_type_ != schema::ActivationType_NO_ACTIVATION) {
-    ret = SetActivation(deconv_, act_type_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
-      return RET_ERROR;
-    }
-  }
   return RET_OK;
 }
 

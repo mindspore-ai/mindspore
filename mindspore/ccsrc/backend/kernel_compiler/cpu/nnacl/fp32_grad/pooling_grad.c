@@ -170,7 +170,7 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
           float delta = dyPtr[idx];
           for (int kh = kh_s; kh < kh_e; kh++) {
             int xh = yh * stride_h + kh - pad_h;
-            for (int kw = kw_e; kw < kw_s; kw++) {
+            for (int kw = kw_s; kw < kw_e; kw++) {
               int xw = yw * stride_w + kw - pad_w;
               int val_idx = (xw + in_w * xh) * channel + ic;
               float val = inPtr[val_idx];

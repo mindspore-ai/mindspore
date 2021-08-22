@@ -35,7 +35,9 @@
 #include "include/api/kernel.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/inner_kernel.h"
+#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
+#endif
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN = kCPU, kKernelArch_MAX = kAPU };
@@ -47,8 +49,9 @@ struct KernelKey {
   int type = 0;
   std::string kernel_arch;
   std::string provider{kBuiltin};
+#ifndef DELEGATE_CLIP
   std::shared_ptr<Delegate> delegate = nullptr;
-
+#endif
   bool operator<(const KernelKey &dst) const {
     if (provider != dst.provider) {
       return provider < dst.provider;

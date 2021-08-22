@@ -74,6 +74,28 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
   return true;
 }
 
+void LiteOpActor::ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_tensor, Tensor *new_tensor) {
+  int ref_count = 0;
+#ifndef DELEGATE_CLIP
+  /* set op input for calculate */
+  if (kernel->desc().delegate != nullptr) {
+    ref_count++;
+  } else {
+#endif
+    for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel)->in_nodes()) {
+      for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
+        if (old_tensor == in_node->in_tensors()[node_in_index]) {
+          in_node->set_in_tensor(new_tensor, node_in_index);
+          ref_count++;
+        }
+      }
+    }
+#ifndef DELEGATE_CLIP
+  }
+#endif
+  new_tensor->set_init_ref_count(ref_count);
+}
+
 void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
   std::vector<kernel::LiteKernel *> kernels{};
   std::transform(actors->begin(), actors->end(), std::back_inserter(kernels),
@@ -86,7 +108,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
       if (old_tensor->data_type() == kNumberTypeFloat16 || old_tensor->data_type() == kNumberTypeFloat32) {
         old_tensor->set_data_type(kernel_->desc().data_type);
       }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
       if (old_tensor->data_type() == kObjectTypeTensorType) {
         auto old_tensorlist = reinterpret_cast<TensorList *>(old_tensor);
         if (old_tensorlist->tensors_data_type() == kNumberTypeFloat16 ||
@@ -116,22 +138,7 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
       new_tensor->AddQuantParam(quant);
     }
     isolate_input_map_.insert(std::make_pair(new_tensor, old_tensor));
-
-    int ref_count = 0;
-    /* set op input for calculate */
-    if (kernel_->desc().delegate != nullptr) {
-      ref_count++;
-    } else {
-      for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel_)->in_nodes()) {
-        for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
-          if (old_tensor == in_node->in_tensors()[node_in_index]) {
-            in_node->set_in_tensor(new_tensor, node_in_index);
-            ref_count++;
-          }
-        }
-      }
-    }
-    new_tensor->set_init_ref_count(ref_count);
+    ReplaceNodeInTensor(kernel_, old_tensor, new_tensor);
     /* set subgraph input for copy data */
     kernel_->set_in_tensor(new_tensor, i);
   }
@@ -192,12 +199,14 @@ int LiteOpActor::CompileArrowThroughOutputKernels() {
   return RET_OK;
 }
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int LiteOpActor::CompileArrowThroughPartialCall() {
+#ifndef DELEGATE_CLIP
   if (kernel_->desc().delegate != nullptr) {
     MS_LOG(INFO) << "kernel is delegate subgraph kernel.";
     return RET_OK;
   }
+#endif
   auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(INFO) << "kernel is not subgraph kernel, no partial call.";
@@ -236,7 +245,7 @@ int LiteOpActor::CompileArrowThroughPartialCall() {
 int LiteOpActor::CompileArrow() {
   int ret;
   output_data_arrows_.clear();
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   ret = CompileArrowThroughPartialCall();
   if (ret != RET_OK) {
     output_data_arrows_.clear();
@@ -279,7 +288,7 @@ void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
     return;
   }
   MS_ASSERT(src_tensor->allocator() != nullptr);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (src_tensor->data_type() == kObjectTypeTensorType) {
     MoveTensorListInputData(reinterpret_cast<TensorList *>(dst_tensor), reinterpret_cast<TensorList *>(src_tensor));
   } else {
@@ -298,7 +307,7 @@ void LiteOpActor::SetInputData(Tensor *dst_tensor, Tensor *src_tensor) {
 
 int LiteOpActor::CastInputData(Tensor *dst, Tensor *src) {
   int ret = RET_OK;
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (src->data_type() != kObjectTypeTensorType) {
     ret = CastTensorInputData(dst, src);
   } else {
@@ -316,7 +325,7 @@ bool LiteOpActor::NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
       dst_tensor->data_type() != src_tensor->data_type()) {
     return true;
   }
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (dst_tensor->data_type() == kObjectTypeTensorType && src_tensor->data_type() == kObjectTypeTensorType &&
       reinterpret_cast<TensorList *>(dst_tensor)->tensors_data_type() !=
         reinterpret_cast<TensorList *>(src_tensor)->tensors_data_type()) {
@@ -353,7 +362,7 @@ int LiteOpActor::CastTensorInputData(Tensor *dst, Tensor *src) {
   return RET_ERROR;
 }
 
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 void LiteOpActor::MoveTensorListInputData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
   MS_ASSERT(src_tensorlist != nullptr);
   MS_ASSERT(dst_tensorlist != nullptr);
@@ -671,7 +680,7 @@ void LiteOpActor::SetInputShape() {
     MS_LOG(DEBUG) << "this->kernel_->name(): " << this->kernel_->name();
 
     if (input_tensor->data_type() == kObjectTypeTensorType) {
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
       auto input_tensorlist = reinterpret_cast<TensorList *>(input_tensor);
       auto input_data_tensorlist = reinterpret_cast<TensorList *>(inputs_data_[i]);
       input_tensorlist->FreeTensorListData();
@@ -755,7 +764,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
   for (auto &kernel : kernels) {
     /* make subgraph name (actor name) unique */
     kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if ((kernel::LiteKernelUtil::IsSwitchCall(kernel))) {
       auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernel);
       if (switch_actor == nullptr) {
@@ -777,7 +786,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
       actor->set_thread_pool(thread_pool);
       subgraph_name_AID_map[kernel] = actor->GetAID();
       actors.push_back(actor);
-#ifdef ENABLE_CONTROL_TENSORLIST
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
 #endif
   }

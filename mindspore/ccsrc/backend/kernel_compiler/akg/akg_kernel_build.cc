@@ -197,17 +197,37 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
 }
 
 AkgKernelPool::~AkgKernelPool() {
-  // Detach shared memory
-  auto ret = shmdt(reinterpret_cast<void *>(kernel_lists_[0]));
-  if (ret < 0) {
-    MS_LOG(EXCEPTION) << "Shared_mem detach failed, errno:" << strerror(errno);
-  }
+  {
+    LockMng lock(fd_);
+    if (!lock.locked_) {
+      MS_LOG(EXCEPTION) << "Failed to acquire lock.";
+    }
 
-  // Realse shared_memroy
-  if (is_creator_) {
-    ret = shmctl(shm_id_, IPC_RMID, nullptr);
+    struct shmid_ds buf;
+    auto ret = shmctl(shm_id_, IPC_STAT, &buf);
+    if (ret == -1) {
+      MS_LOG(EXCEPTION) << "Failed to get the info of shared memory, errno:" << strerror(errno);
+    }
+
+    bool need_delete_by_last = false;
+
+    // if the creator exits unexpectedly and fails to delete the shm, the last process will try to delete the shm
+    if (((buf.shm_perm.mode & SHM_DEST) == 0) && (buf.shm_nattch == 1)) {
+      need_delete_by_last = true;
+    }
+
+    // Detach shared memory
+    ret = shmdt(reinterpret_cast<void *>(kernel_lists_[0]));
     if (ret < 0) {
-      MS_LOG(EXCEPTION) << "Realse shared_mem failed, errno:" << strerror(errno);
+      MS_LOG(EXCEPTION) << "Shared_mem detach failed, errno:" << strerror(errno);
+    }
+
+    // Realse shared_memroy
+    if (is_creator_ || need_delete_by_last) {
+      ret = shmctl(shm_id_, IPC_RMID, nullptr);
+      if (ret < 0) {
+        MS_LOG(EXCEPTION) << "Realse shared_mem failed, errno:" << strerror(errno);
+      }
     }
   }
 
@@ -354,35 +374,6 @@ int32_t AkgKernelPool::Wait() {
   return -1;
 }
 
-std::vector<std::string> AkgKernelBuilder::GetNotCachedKernelJsons(const std::vector<JsonNodePair> &build_args) {
-  // Remove cached nodes, gether unique nodes, and collect repeated nodes which need postprecess.
-  std::vector<std::string> jsons;
-  std::unordered_set<std::string> kernel_name_set;
-  for (const auto &[json_generator, anf_node] : build_args) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto kernel_name = json_generator.kernel_name();
-    MS_LOG(DEBUG) << "Akg start compile op: " << kernel_name;
-
-    auto cached_kernel_pack = AkgSearchCache(kernel_name);
-    if (cached_kernel_pack != nullptr) {
-      MS_LOG(DEBUG) << "Use cached kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
-                    << anf_node->fullname_with_scope() << "].";
-      AkgSetKernelMod(cached_kernel_pack, json_generator, anf_node);
-      continue;
-    }
-
-    if (kernel_name_set.count(kernel_name) != 0) {
-      repeat_nodes_.push_back({json_generator, anf_node});
-      continue;
-    }
-    kernel_name_set.insert(kernel_name);
-    auto kernel_json = json_generator.kernel_json_str();
-    AkgSaveJsonInfo(kernel_name, kernel_json);
-    jsons.push_back(kernel_json);
-  }
-  return jsons;
-}
-
 std::vector<JsonNodePair> AkgKernelBuilder::GetNotCachedKernels(const std::vector<JsonNodePair> &build_args) {
   std::unordered_set<std::string> kernel_name_set;
   std::vector<JsonNodePair> new_build_args;
@@ -432,8 +423,8 @@ bool AkgKernelBuilder::HandleRepeatNodes() {
                     << anf_node->fullname_with_scope() << "].";
       return false;
     }
-    MS_LOG(INFO) << "Use just compiled kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
-                 << anf_node->fullname_with_scope() << "].";
+    MS_LOG(DEBUG) << "Use just compiled kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
+                  << anf_node->fullname_with_scope() << "].";
     AkgSetKernelMod(cached_kernel_pack, json_generator, anf_node);
   }
   return true;
@@ -555,7 +546,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
   }
 
   if (json_and_node.empty()) {
-    MS_LOG(DEBUG) << "There is no kernel needed to be compiled.";
+    MS_LOG(INFO) << "There is no akg kernel to be compiled.";
     return true;
   }
 

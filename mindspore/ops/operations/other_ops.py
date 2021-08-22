@@ -15,13 +15,14 @@
 
 """Other operators."""
 import functools
+from mindspore import log as logger
 from mindspore.common import monad
 from mindspore.common._decorator import deprecated
 from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
-
+from .._register_for_op import PyFuncRegistry
 
 class Assign(Primitive):
     """
@@ -842,3 +843,89 @@ class identity(Primitive):
 
     def __call__(self, x):
         return x
+
+pyfunc_register = PyFuncRegistry()
+def get_pyfunc(fn_id):
+    return pyfunc_register.get(fn_id)
+
+class PyFunc(PrimitiveWithInfer):
+    r"""
+    Execute Python function.
+
+    `PyFunc` encapsulates Python functions as an operator which could be compiled into computation graph.
+    Unlike normal operators, it cannot be exported to MindIR as it is executed in current Python context.
+    As only the weights of the network is stored in the checkpoint, network include `PyFunc` could save
+    checkpoint and load to the network again, but will lose any Python function state.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        fn (function): Python function which inputs and outputs should be Python built-in scalar or numpy ndarray.
+        in_types (list[:class:`mindspore.dtype`]): The type of the inputs.
+        in_shapes (list[tuple[int]]): The dimensionality of the inputs. An empty list represents a scalar, otherwise it
+                                      represent a numpy array.
+        out_types (list[:class:`mindspore.dtype`]): The type of the outputs.
+        out_shapes (list[tuple[int]]): The dimensionality of the outputs. An empty list represents a scalar, otherwise
+                                       it represent a numpy array.
+        stateful (bool): Whether the function is stateful or not.
+                         If True, the execution order is same with model definition.
+
+    Inputs:
+        - **input_x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
+          is made up of multiple tensors.
+
+    Outputs:
+        tuple[Tensor], execution results Python functions.
+
+    Raises:
+        TypeError: The Python function execution failed.
+        TypeError: The attributes(in_types/in_shapes/out_types/out_shapes) are inconsistent with Python function
+                   specifications.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> def func(x1, x2):
+        >>>     return x1 + x2
+        >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> x2 = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> op = P.PyFunc(func, [x1.dtype, x2.dtype], [x1.shape, x2.shape], [x1.dtype], [x1.dtype])
+        >>> output = op((x1, x2))
+        >>> print(output[0].asnumpy())
+        [2. 4. 6.]
+    """
+
+    def __init__(self, fn, in_types, in_shapes, out_types, out_shapes, stateful=True):
+        super(PyFunc, self).__init__(self.__class__.__name__)
+        pyfunc_register.register(id(fn), fn)
+        self.add_prim_attr('fn_id', id(fn))
+        self.add_prim_attr('in_types', in_types)
+        self.add_prim_attr('in_shapes', in_shapes)
+        self.add_prim_attr('out_types', out_types)
+        self.add_prim_attr('out_shapes', out_shapes)
+        validator.check_value_type("in_types", in_types, [list, tuple], self.name)
+        validator.check_value_type("in_shapes", in_shapes, [list, tuple], self.name)
+        validator.check("in_types length", len(in_types), "in_shapes length", len(in_shapes), Rel.EQ, self.name)
+        validator.check_value_type("out_types", out_types, [list, tuple], self.name)
+        validator.check_value_type("out_shapes", out_shapes, [list, tuple], self.name)
+        validator.check("out_types length", len(out_types), "out_shapes length", len(out_shapes), Rel.EQ, self.name)
+        self.add_prim_attr("side_effect_io", stateful)
+        self.add_prim_attr("primitive_target", "CPU")
+
+    def infer_shape(self, *args):
+        if self.out_shapes:
+            return tuple(self.out_shapes)
+
+        logger.warning("The function output are empty tuple. Add a placeholder instead. "
+                       "Do not use it as it could be any uninitialized data.")
+        return ((1,),)
+
+    def infer_dtype(self, *args):
+        if self.out_shapes:
+            return tuple(self.out_types)
+
+        logger.warning("The function output are empty tuple. Add a placeholder instead. "
+                       "Do not use it as it could be any uninitialized data.")
+        return (mstype.int32,)

@@ -20,7 +20,6 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
 grad_all = C.GradOperation(get_all=True)
-context.set_context(device_target="Ascend")
 
 
 class IfInIfNet(nn.Cell):
@@ -111,6 +110,23 @@ class IfInIfNet3(nn.Cell):
         return x
 
 
+# add a while to test if_in_if run with vm.Only should run in ascend.
+class IfInIfNet4(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+
+    def construct(self, x):
+        while x < 1:
+            x = x + 1
+        if self.param_a > self.param_b:
+            out = self.func(x)
+        else:
+            out = self.func(self.param_a)
+        out += self.param_b
+        return out
+
 class GradNet(nn.Cell):
     def __init__(self, net):
         super(GradNet, self).__init__()
@@ -125,37 +141,65 @@ def control_flow_if_in_if(input_net, x):
     context.set_context(mode=context.GRAPH_MODE)
     net = input_net()
     grad_net = GradNet(net)
-    graph_forward_res = net(x)
+
+    forward_net = input_net()
+    graph_forward_res = forward_net(x)
     graph_backward_res = grad_net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     net = input_net()
     grad_net = GradNet(net)
-    pynative_forward_res = net(x)
+
+    forward_net = input_net()
+    pynative_forward_res = forward_net(x)
     pynative_backward_res = grad_net(x)
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
 
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_in_if():
     x = Tensor(2, mstype.int32)
     control_flow_if_in_if(IfInIfNet, x)
 
-
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_in_if_01():
     x = Tensor(2, mstype.int32)
     control_flow_if_in_if(IfInIfNet1, x)
 
-
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.skip(reason="Ascend compile error in multigraph sink.")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_in_if_02():
     x = Tensor(2, mstype.int32)
     control_flow_if_in_if(IfInIfNet2, x)
 
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_in_if_03():
     x = Tensor(2, mstype.int32)
     control_flow_if_in_if(IfInIfNet3, x)
+
+@pytest.mark.skip(reason="Result not correct in ascend vm")
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_if_in_if_04():
+    x = Tensor(2, mstype.int32)
+    control_flow_if_in_if(IfInIfNet4, x)

@@ -46,7 +46,7 @@ class NetGatherDGrad(nn.Cell):
         return self.grad(self.network)(inputx, index, output_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gatherd_grad_fp32():
@@ -64,7 +64,7 @@ def test_gatherd_grad_fp32():
     print(output_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gatherd_grad_fp16():
@@ -82,7 +82,7 @@ def test_gatherd_grad_fp16():
     print(output_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gatherd_grad_int32():

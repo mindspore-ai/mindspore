@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFloorDiv = "FloorDiv";
-class FloorDiv : public PrimitiveC {
+class MS_CORE_API FloorDiv : public PrimitiveC {
  public:
   FloorDiv() : PrimitiveC(kNameFloorDiv) { InitIOName({"x", "y"}, {"output"}); }
   ~FloorDiv() = default;

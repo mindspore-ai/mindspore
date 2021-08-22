@@ -49,6 +49,8 @@ class UniformAugOperation : public TensorOperation {
 
   Status to_json(nlohmann::json *out_json) override;
 
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
   int32_t num_ops_;

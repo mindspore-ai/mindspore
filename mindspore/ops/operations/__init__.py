@@ -92,7 +92,7 @@ from ._quant_ops import *
 from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, PopulationCount, UpdateState, Load,
                         CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
-                        StartFLJob, UpdateModel, GetModel)
+                        StartFLJob, UpdateModel, GetModel, PyFunc)
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
                         CusMatMulCubeDenseRight,
@@ -110,16 +110,17 @@ from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAto
                          Dihedral14LJForceWithDirectCF, Dihedral14LJEnergy, Dihedral14LJCFForceWithAtomEnergy,
                          Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy,
                          GetCenterOfGeometry, MDTemperature, MDIterationLeapFrogLiujian,
-                         CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D)
+                         CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D, NeighborListUpdate)
 from .sponge_update_ops import (v0coordinaterefresh, v1coordinaterefresh, v2coordinaterefresh, v3coordinaterefresh,
                                 v0forceredistribute, v1forceredistribute, v2forceredistribute, v3forceredistribute,
                                 restrainenergy, restrainforcewithatomenergyandvirial, constrainforcecyclewithvirial,
                                 refreshuintcrd, lastcrdtodr, refreshcrdvel, calculatenowrapcrd, refreshboxmaptimes,
                                 totalc6get, copyfrctosystemgrad, CrdToUintCrdQuarter,
                                 MDIterationLeapFrogLiujianWithMaxVel, GetCenterOfMass, MapCenterOfMass,
-                                NeighborListUpdate, MDIterationLeapFrog,
+                                NeighborListUpdateNew, MDIterationLeapFrog,
                                 MDIterationLeapFrogWithMaxVel, MDIterationGradientDescent,
                                 BondForceWithAtomEnergyAndVirial, ConstrainForceCycle)
+from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 
 __all__ = [
     'Unique',
@@ -524,6 +525,11 @@ __all__ = [
     "MDIterationGradientDescent",
     "BondForceWithAtomEnergyAndVirial",
     "ConstrainForceCycle",
+    "PyFunc",
+    "BufferAppend",
+    "BufferGetItem",
+    "BufferSample",
+    "NeighborListUpdateNew",
 ]
 
 __all__.sort()

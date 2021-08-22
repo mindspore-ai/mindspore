@@ -17,6 +17,8 @@
 
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+
 #include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/amplitude_to_db_ir.h"
 #include "minddata/dataset/audio/ir/kernels/angle_ir.h"
@@ -24,8 +26,10 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
+#include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
+#include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
-#include "minddata/dataset/include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -111,6 +115,42 @@ PYBIND_REGISTER(
         auto bass_biquad = std::make_shared<audio::BassBiquadOperation>(sample_rate, gain, central_freq, Q);
         THROW_IF_ERROR(bass_biquad->ValidateParams());
         return bass_biquad;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  ComplexNormOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::ComplexNormOperation, TensorOperation, std::shared_ptr<audio::ComplexNormOperation>>(
+      *m, "ComplexNormOperation")
+      .def(py::init([](float power) {
+        auto complex_norm = std::make_shared<audio::ComplexNormOperation>(power);
+        THROW_IF_ERROR(complex_norm->ValidateParams());
+        return complex_norm;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  FrequencyMaskingOperation, 1, ([](const py::module *m) {
+    (void)
+      py::class_<audio::FrequencyMaskingOperation, TensorOperation, std::shared_ptr<audio::FrequencyMaskingOperation>>(
+        *m, "FrequencyMaskingOperation")
+        .def(py::init([](bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value) {
+          auto frequency_masking =
+            std::make_shared<audio::FrequencyMaskingOperation>(iid_masks, frequency_mask_param, mask_start, mask_value);
+          THROW_IF_ERROR(frequency_masking->ValidateParams());
+          return frequency_masking;
+        }));
+  }));
+
+PYBIND_REGISTER(
+  TimeMaskingOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::TimeMaskingOperation, TensorOperation, std::shared_ptr<audio::TimeMaskingOperation>>(
+      *m, "TimeMaskingOperation")
+      .def(py::init([](bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value) {
+        auto time_masking =
+          std::make_shared<audio::TimeMaskingOperation>(iid_masks, time_mask_param, mask_start, mask_value);
+        THROW_IF_ERROR(time_masking->ValidateParams());
+        return time_masking;
       }));
   }));
 

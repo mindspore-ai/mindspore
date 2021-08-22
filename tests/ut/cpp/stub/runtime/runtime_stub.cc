@@ -25,6 +25,10 @@
 
 rtError_t rtEventSynchronize(rtEvent_t event) { return RT_ERROR_NONE; }
 
+rtError_t rtEventCreateWithFlag(rtEvent_t *event, uint32_t flag) { return RT_ERROR_NONE; }
+
+rtError_t rtEventElapsedTime(float *time, rtEvent_t start, rtEvent_t end) { return RT_ERROR_NONE; }
+
 rtError_t rtMalloc(void **devPtr, uint64_t size, rtMemType_t type) { return RT_ERROR_NONE; }
 
 rtError_t rtMemcpy(void *dst, uint64_t destMax, const void *src, uint64_t count, rtMemcpyKind_t kind) {
@@ -197,3 +201,5 @@ RTS_API rtError_t rtKernelLaunchWithFlag(const void *stubFunc, uint32_t blockDim
 }
 
 RTS_API rtError_t rtMemGetInfoEx(rtMemInfoType_t memInfoType, size_t *free, size_t *total) { return RT_ERROR_NONE; }
+
+RTS_API rtError_t rtProfRegisterCtrlCallback(uint32_t moduleId, rtProfCtrlHandle callback) { return RT_ERROR_NONE; }

@@ -66,7 +66,7 @@ bool OneHotCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
       }
     }
   };
-  CPUKernelUtils::ParallelForAutoSearch(task, elem_num, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
 
   return true;
 }

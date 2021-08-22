@@ -118,8 +118,6 @@ getCommonFile() {
     mindspore/lite/src/runtime/infer_manager.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/pack.h
-    mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
     mindspore/lite/src/ops/populate/populate_register.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h
     mindspore/core/ir/dtype/type_id.h
@@ -129,7 +127,6 @@ getCommonFile() {
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions_fp16.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/tensor_c.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/errorcode.h
   )
   all_files_h=("${include_h[@]}" "${regist_include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
@@ -163,12 +160,10 @@ getCommonFile() {
   while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/assembly/*/*.S)
   others_files_c=(
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.c
-    mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc
     mindspore/lite/src/runtime/infer_manager.cc
     mindspore/lite/src/ops/populate/populate_register.cc
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.c
     mindspore/core/utils/status.cc
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.c
   )
   all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
     "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"

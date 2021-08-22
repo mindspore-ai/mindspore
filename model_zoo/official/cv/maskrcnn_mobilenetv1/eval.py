@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ from src.util import coco_eval, bbox2result_1image, results2json, get_seg_masks
 
 
 set_seed(1)
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=config.device_id)
 
 def maskrcnn_eval(dataset_path, ckpt_path, ann_file):
     """MaskRcnn evaluation."""

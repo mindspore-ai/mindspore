@@ -24,6 +24,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
+#include <functional>
 #include "thread/threadlog.h"
 #include "thread/core_affinity.h"
 
@@ -40,7 +41,7 @@ enum ThreadStatus {
 
 // used in scenarios with unequal division of task
 // the parameters indicate the start and end coefficients
-using Func = int (*)(void *, int, float, float);
+using Func = std::function<int(void *, int, float, float)>;
 using Content = void *;
 
 typedef struct Task {
@@ -113,6 +114,10 @@ class ThreadPool {
   int SetProcessAffinity(BindMode bind_mode) const;
 
   int ParallelLaunch(const Func &func, Content content, int task_num) const;
+  void DisableOccupiedActorThread() { occupied_actor_thread_ = false; }
+  void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
+  void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }
+  size_t GetKernelThreadNum() const { return kernel_thread_num_; }
 
  protected:
   ThreadPool() = default;
@@ -121,7 +126,7 @@ class ThreadPool {
 
   int InitAffinityInfo();
 
-  void SyncRunTask(Task *task, int task_num) const;
+  void SyncRunTask(Task *task, int start_num, int task_num) const;
 
   void DistributeTask(Task *task, int task_num) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
@@ -132,6 +137,9 @@ class ThreadPool {
   std::mutex pool_mutex_;
   std::vector<Worker *> workers_;
   CoreAffinity *affinity_{nullptr};
+  size_t actor_thread_num_{0};
+  size_t kernel_thread_num_{0};
+  bool occupied_actor_thread_{true};
 };
 
 }  // namespace mindspore

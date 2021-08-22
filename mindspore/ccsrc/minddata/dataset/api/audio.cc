@@ -23,6 +23,9 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
+#include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
+#include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
 namespace mindspore {
@@ -45,7 +48,7 @@ std::shared_ptr<TensorOperation> AllpassBiquad::Parse() {
   return std::make_shared<AllpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
 }
 
-// AmplitudeToDB Operation.
+// AmplitudeToDB Transform Operation.
 struct AmplitudeToDB::Data {
   Data(ScaleType stype, float ref_value, float amin, float top_db)
       : stype_(stype), ref_value_(ref_value), amin_(amin), top_db_(top_db) {}
@@ -134,7 +137,56 @@ std::shared_ptr<TensorOperation> BassBiquad::Parse() {
   return std::make_shared<BassBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
 }
 
-// TimeStretch Operation.
+// ComplexNorm Transform Operation.
+struct ComplexNorm::Data {
+  explicit Data(float power) : power_(power) {}
+  float power_;
+};
+
+ComplexNorm::ComplexNorm(float power) : data_(std::make_shared<Data>(power)) {}
+
+std::shared_ptr<TensorOperation> ComplexNorm::Parse() { return std::make_shared<ComplexNormOperation>(data_->power_); }
+
+// FrequencyMasking Transform Operation.
+struct FrequencyMasking::Data {
+  Data(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value)
+      : iid_masks_(iid_masks),
+        frequency_mask_param_(frequency_mask_param),
+        mask_start_(mask_start),
+        mask_value_(mask_value) {}
+  int32_t frequency_mask_param_;
+  int32_t mask_start_;
+  bool iid_masks_;
+  double mask_value_;
+};
+
+FrequencyMasking::FrequencyMasking(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, double mask_value)
+    : data_(std::make_shared<Data>(iid_masks, frequency_mask_param, mask_start, mask_value)) {}
+
+std::shared_ptr<TensorOperation> FrequencyMasking::Parse() {
+  return std::make_shared<FrequencyMaskingOperation>(data_->iid_masks_, data_->frequency_mask_param_,
+                                                     data_->mask_start_, data_->mask_value_);
+}
+
+// TimeMasking Transform Operation.
+struct TimeMasking::Data {
+  Data(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
+      : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {}
+  int64_t time_mask_param_;
+  int64_t mask_start_;
+  bool iid_masks_;
+  double mask_value_;
+};
+
+TimeMasking::TimeMasking(bool iid_masks, int64_t time_mask_param, int64_t mask_start, double mask_value)
+    : data_(std::make_shared<Data>(iid_masks, time_mask_param, mask_start, mask_value)) {}
+
+std::shared_ptr<TensorOperation> TimeMasking::Parse() {
+  return std::make_shared<TimeMaskingOperation>(data_->iid_masks_, data_->time_mask_param_, data_->mask_start_,
+                                                data_->mask_value_);
+}
+
+// TimeStretch Transform Operation.
 struct TimeStretch::Data {
   explicit Data(float hop_length, int n_freq, float fixed_rate)
       : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}

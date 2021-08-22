@@ -580,8 +580,9 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
       quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
     }
   }
+  auto weight_quant_type = perchanel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status = QuantFilter<int8_t>(tensor_info, primitive, QuantType_PostTraining, quant_max_t, quant_min_t, bit_num_t,
-                                    perchanel, kNumberTypeInt8);
+                                    weight_quant_type, kNumberTypeInt8);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;

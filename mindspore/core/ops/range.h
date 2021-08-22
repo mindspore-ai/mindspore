@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRange = "Range";
-class Range : public PrimitiveC {
+class MS_CORE_API Range : public PrimitiveC {
  public:
   Range() : PrimitiveC(kNameRange) {}
   ~Range() = default;

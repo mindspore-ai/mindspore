@@ -45,6 +45,10 @@ class SubsetRandomSamplerObj : public SubsetSamplerObj {
 
   Status to_json(nlohmann::json *const out_json) override;
 
+#ifndef ENABLE_ANDROID
+  static Status from_json(nlohmann::json json_obj, int64_t num_samples, std::shared_ptr<SamplerObj> *sampler);
+#endif
+
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override;

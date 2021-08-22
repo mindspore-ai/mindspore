@@ -115,6 +115,10 @@ class Conv2DInfo : public OperatorInfo {
   virtual void InferNewPadList();
   virtual int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
+
+ private:
+  Status CheckHWStrategySameMode(int64_t h_strategy, int64_t w_strategy);
+  Status CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy);
 };
 
 class Conv2DBackpropInputInfo : public Conv2DInfo {

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceASum = "ReduceASum";
-class ReduceASum : public Reduce {
+class MS_CORE_API ReduceASum : public Reduce {
  public:
   ReduceASum() : Reduce(kNameReduceASum) { InitIOName({"input_x", "axis"}, {"y"}); }
   ~ReduceASum() = default;

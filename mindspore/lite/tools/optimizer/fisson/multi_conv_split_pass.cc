@@ -23,7 +23,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {

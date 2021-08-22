@@ -235,12 +235,12 @@ def copy_(a):
 
     Args:
         a (Union[int, float, bool, list, tuple, Tensor]): Input data, in any form that can
-            be converted to a `Tensor`. This includes Tensor, list, tuple and numbers.
+            be converted to a Tensor. This includes Tensor, list, tuple and numbers.
 
     Returns:
         Tensor, has the same data as `a`.
 
-     Raises:
+    Raises:
         TypeError: If input `a` has type not specified above.
         ValueError: If input `a` has different sizes at different dimensions.
 

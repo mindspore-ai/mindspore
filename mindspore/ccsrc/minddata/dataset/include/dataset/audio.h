@@ -35,6 +35,7 @@ class TensorOperation;
 
 // Transform operations for performing computer audio.
 namespace audio {
+
 /// \brief Compute the angle of complex tensor input.
 class Angle final : public TensorTransform {
  public:
@@ -98,10 +99,10 @@ class AllpassBiquad final : public TensorTransform {
 class AmplitudeToDB final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] stype ['kPower', 'kMagnitude']
-  /// \param[in] ref_value Calculate db_multiplier
-  /// \param[in] amin Clamp the input waveform
-  /// \param[in] top_db Decibels cut-off value
+  /// \param[in] stype ['kPower', 'kMagnitude'].
+  /// \param[in] ref_value Calculate db_multiplier.
+  /// \param[in] amin Clamp the input waveform.
+  /// \param[in] top_db Decibels cut-off value.
   explicit AmplitudeToDB(ScaleType stype = ScaleType::kPower, float ref_value = 1.0, float amin = 1e-10,
                          float top_db = 80.0);
 
@@ -124,9 +125,9 @@ class BandpassBiquad final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
   /// \param[in] central_freq Central frequency (in Hz).
-  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor  (Default: 0.707).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor (Default: 0.707).
   /// \param[in] const_skirt_gain, If ``True``, uses a constant skirt gain (peak gain = Q). If ``False``, uses a
-  /// constant 0dB peak gain. (Default: False).
+  ///     constant 0dB peak gain (Default: False).
   explicit BandpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool const_skirt_gain = false);
 
   /// \brief Destructor.
@@ -176,6 +177,81 @@ class BassBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~BassBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief ComplexNorm TensorTransform.
+/// \notes Compute the norm of complex tensor input.
+class ComplexNorm final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
+  explicit ComplexNorm(float power = 1.0);
+
+  /// \brief Destructor.
+  ~ComplexNorm() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief FrequencyMasking TensorTransform.
+/// \notes Apply masking to a spectrogram in the frequency domain.
+class FrequencyMasking final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] iid_masks Whether to apply different masks to each example.
+  /// \param[in] frequency_mask_param Maximum possible length of the mask.
+  ///     Indices uniformly sampled from [0, frequency_mask_param].
+  ///     Mask width when iid_masks=true.
+  /// \param[in] mask_start Mask start when iid_masks=true.
+  /// \param[in] mask_value Mask value.
+  explicit FrequencyMasking(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
+                            double mask_value = 0.0);
+
+  /// \brief Destructor.
+  ~FrequencyMasking() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief TimeMasking TensorTransform.
+/// \notes Apply masking to a spectrogram in the time domain.
+class TimeMasking final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] iid_masks Whether to apply different masks to each example.
+  /// \param[in] time_mask_param Maximum possible length of the mask.
+  ///     Indices uniformly sampled from [0, time_mask_param].
+  ///     Mask width when iid_masks=true.
+  /// \param[in] mask_start Mask start when iid_masks=true.
+  /// \param[in] mask_value Mask value.
+  explicit TimeMasking(bool iid_masks = false, int64_t time_mask_param = 0, int64_t mask_start = 0,
+                       double mask_value = 0.0);
+
+  /// \brief Destructor.
+  ~TimeMasking() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.

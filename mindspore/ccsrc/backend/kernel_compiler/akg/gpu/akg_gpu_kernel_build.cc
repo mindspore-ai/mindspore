@@ -49,6 +49,5 @@ void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
 void AkgGpuKernelBuilder::AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) {
   kernel::SaveJsonInfo(kernel_name, kernel_json, kernel::KernelMeta::GetInstance()->kernel_meta_path());
 }
-
 }  // namespace kernel
 }  // namespace mindspore

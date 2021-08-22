@@ -28,7 +28,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/base.h"
-#include "debug/common.h"
 #include "debug/trace.h"
 #include "utils/trace_base.h"
 
@@ -582,7 +581,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   if (graph == nullptr) {
     return;
   }
-  auto path = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
+  auto path = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
   if (!target_file.empty()) {
     path = target_file;
   }

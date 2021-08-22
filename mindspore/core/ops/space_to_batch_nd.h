@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSpaceToBatchND = "SpaceToBatchND";
-class SpaceToBatchND : public PrimitiveC {
+class MS_CORE_API SpaceToBatchND : public PrimitiveC {
  public:
   SpaceToBatchND() : PrimitiveC(kNameSpaceToBatchND) {}
   ~SpaceToBatchND() = default;

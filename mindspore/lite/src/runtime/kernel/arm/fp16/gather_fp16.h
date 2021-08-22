@@ -39,7 +39,7 @@ class GatherFp16CPUKernel : public InnerKernel {
 
  private:
   int *indices_data_ = nullptr;
-  int AssignIndicesData(bool isIndicesInt32, int indices_num, lite::Tensor *indices_tensor);
+  int AssignIndicesData(bool isIndicesInt32, int indices_num, const lite::Tensor *indices_tensor);
   void FreeIndicesData();
   float16_t *input_data_ = nullptr;
   bool const_input_ = false;

@@ -155,21 +155,21 @@ int MatmulBaseFP16CPUKernel::InitBufferB() {
   return RET_OK;
 }
 
-void MatmulBaseFP16CPUKernel::InitMatrixA(void *src_ptr) {
+void MatmulBaseFP16CPUKernel::InitMatrixA(const void *src_ptr) {
   auto src_data_type = in_tensors_[0]->data_type();
 
   if (vec_matmul_) {
     if (src_data_type == kNumberTypeFloat32) {
-      Float32ToFloat16(reinterpret_cast<float *>(src_ptr), a_pack_ptr_, params_->batch * params_->deep_);
+      Float32ToFloat16(reinterpret_cast<const float *>(src_ptr), a_pack_ptr_, params_->batch * params_->deep_);
     } else {
       memcpy(a_pack_ptr_, src_ptr, params_->batch * params_->deep_ * sizeof(float16_t));
     }
     return;
   }
 
-  int8_t *int8_src = reinterpret_cast<int8_t *>(src_ptr);
+  const int8_t *int8_src = reinterpret_cast<const int8_t *>(src_ptr);
   for (int i = 0; i < params_->batch; i++) {
-    int8_t *src = int8_src + i * params_->deep_ * params_->row_ * lite::DataTypeSize(src_data_type);
+    const int8_t *src = int8_src + i * params_->deep_ * params_->row_ * lite::DataTypeSize(src_data_type);
     float16_t *dst = a_pack_ptr_ + i * params_->deep_ * params_->row_align_;
     if (params_->a_transpose_) {
 #ifdef ENABLE_ARM64
@@ -188,13 +188,13 @@ void MatmulBaseFP16CPUKernel::InitMatrixA(void *src_ptr) {
   return;
 }
 
-void MatmulBaseFP16CPUKernel::InitMatrixB(void *src_ptr, TypeId src_data_type) {
-  int8_t *int8_src = reinterpret_cast<int8_t *>(src_ptr);
+void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_type) {
+  const int8_t *int8_src = reinterpret_cast<const int8_t *>(src_ptr);
 
   if (vec_matmul_) {
     if (params_->b_transpose_) {
       if (src_data_type == kNumberTypeFloat32) {
-        Float32ToFloat16(reinterpret_cast<float *>(src_ptr), b_pack_ptr_,
+        Float32ToFloat16(reinterpret_cast<const float *>(src_ptr), b_pack_ptr_,
                          params_->batch * params_->col_ * params_->deep_);
       } else {
 #ifdef ENABLE_ARM64
@@ -220,7 +220,7 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(void *src_ptr, TypeId src_data_type) {
   }
 
   for (int i = 0; i < params_->batch; i++) {
-    int8_t *src = int8_src + i * params_->deep_ * params_->col_ * lite::DataTypeSize(src_data_type);
+    const int8_t *src = int8_src + i * params_->deep_ * params_->col_ * lite::DataTypeSize(src_data_type);
     float16_t *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
     if (params_->b_transpose_) {
       RowMajor2Col8MajorFp16(src, dst, params_->col_, params_->deep_, src_data_type == kNumberTypeFloat32);

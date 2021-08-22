@@ -25,9 +25,11 @@ def get_bprop_neighborexchange(self):
     send_rank_ids = self.recv_rank_ids
     recv_rank_ids = self.send_rank_ids
     recv_shapes = self.send_shapes
+    send_shapes = self.recv_shapes
     recv_type = self.recv_type
-    neighborexchange_grad = NeighborExchange(send_rank_ids, recv_rank_ids, recv_shapes, recv_shapes, recv_type, group)
+    neighborexchange_grad = NeighborExchange(send_rank_ids, recv_rank_ids, recv_shapes, send_shapes, recv_type, group)
 
     def bprop(x, out, dout):
         return (neighborexchange_grad(dout),)
+
     return bprop

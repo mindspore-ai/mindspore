@@ -26,7 +26,7 @@ from .._checkparam import Validator as validator
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
-            np.float32, np.float64, np.bool_)
+            np.float32, np.float64, np.bool_, np.complex64, np.complex128)
 
 
 class Tensor(Tensor_):
@@ -91,7 +91,7 @@ class Tensor(Tensor_):
             validator.check_value_type('input_data', input_data, (Tensor_, np.ndarray, list, tuple, float, int, bool),
                                        'Tensor')
             valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
-                            np.float16, np.float32, np.float64, np.bool_, np.str_)
+                            np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
             if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
                 input_data.dtype.kind != 'U':  # Support dtype np.str_
                 raise TypeError(f"For Tensor, the input_data is a numpy array, "
@@ -1232,7 +1232,7 @@ class Tensor(Tensor_):
             raise ValueError(msg)
 
         class seed_context:
-            '''set and restore seed'''
+            """Set and restore seed."""
 
             def __init__(self, init):
                 self.init = init

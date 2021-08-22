@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <stack>
+
 namespace mindspore {
 class Scope;
 using ScopePtr = std::shared_ptr<Scope>;

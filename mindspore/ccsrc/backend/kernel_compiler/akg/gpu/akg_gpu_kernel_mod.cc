@@ -15,8 +15,7 @@
  */
 
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_mod.h"
-#include <fstream>
-#include <algorithm>
+
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 
@@ -126,7 +125,7 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                        [](const AddressPtr &output) -> void * { return reinterpret_cast<void *>(&(output->addr)); });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) -> void * { return addr->addr; });
+                         [](const AddressPtr &addr) -> void * { return reinterpret_cast<void *>(&(addr->addr)); });
   }
   result = cuLaunchKernel(kernel_addr, thread_info[0], thread_info[1], thread_info[2], thread_info[3], thread_info[4],
                           thread_info[5], 0, reinterpret_cast<CUstream>(stream_ptr),

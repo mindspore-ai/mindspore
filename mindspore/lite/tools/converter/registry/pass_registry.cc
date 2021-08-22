@@ -19,16 +19,15 @@
 #include <mutex>
 #include <string>
 #include <vector>
-#include "tools/converter/registry/pass_content.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-namespace opt {
+namespace registry {
 namespace {
-std::map<std::string, PassPtr> pass_store_room;
-std::map<PassPosition, std::vector<std::string>> external_assigned_passes;
+std::map<std::string, opt::PassPtr> pass_store_room;
+std::map<registry::PassPosition, std::vector<std::string>> external_assigned_passes;
 std::mutex pass_mutex;
-void RegPass(const std::string &pass_name, const PassPtr &pass) {
+void RegPass(const std::string &pass_name, const opt::PassPtr &pass) {
   if (pass == nullptr) {
     MS_LOG(ERROR) << "pass is nullptr.";
     return;
@@ -38,15 +37,27 @@ void RegPass(const std::string &pass_name, const PassPtr &pass) {
 }
 }  // namespace
 
-PassRegistry::PassRegistry(const std::string &pass_name, const PassPtr &pass) { RegPass(pass_name, pass); }
+PassRegistry::PassRegistry(const std::string &pass_name, const opt::PassPtr &pass) { RegPass(pass_name, pass); }
 
-PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &assigned) {
+PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &names) {
   std::unique_lock<std::mutex> lock(pass_mutex);
-  external_assigned_passes[position] = assigned;
+  external_assigned_passes[position] = names;
 }
 
-std::map<std::string, PassPtr> &PassStoreRoomInfo() { return pass_store_room; }
+std::vector<std::string> PassRegistry::GetOuterScheduleTask(PassPosition position) {
+  return external_assigned_passes[position];
+}
 
-std::map<PassPosition, std::vector<std::string>> &ExternalAssignedPassesInfo() { return external_assigned_passes; }
-}  // namespace opt
+std::vector<opt::PassPtr> PassRegistry::GetPassFromStoreRoom(const std::vector<std::string> &pass_names) {
+  std::vector<opt::PassPtr> schedule_passes;
+  for (auto &name : pass_names) {
+    auto iter = pass_store_room.find(name);
+    if (iter == pass_store_room.end()) {
+      continue;
+    }
+    schedule_passes.push_back(iter->second);
+  }
+  return schedule_passes;
+}
+}  // namespace registry
 }  // namespace mindspore

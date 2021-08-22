@@ -16,7 +16,7 @@
 #include "nnacl/infer/conv2d_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-void ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, ConvParameter *param) {
+int ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, ConvParameter *param) {
   int kernel_w = param->kernel_w_;
   int kernel_h = param->kernel_h_;
   int stride_w = param->stride_w_;
@@ -52,6 +52,12 @@ void ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, Conv
     *output_w = ((input_w) + param->pad_l_ + param->pad_r_ - kernel_width) / stride_w + 1;
     *output_h = ((input_h) + param->pad_u_ + param->pad_d_ - kernel_height) / stride_h + 1;
   }
+
+  if (param->kernel_h_ > input_h + param->pad_u_ + param->pad_d_ ||
+      param->kernel_w_ > input_w + param->pad_l_ + param->pad_r_) {
+    return NNACL_PARAM_INVALID;
+  }
+  return NNACL_OK;
 }
 
 int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
@@ -89,9 +95,13 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (param->stride_h_ == 0 || param->stride_w_ == 0) {
     return NNACL_PARAM_INVALID;
   }
+
   param->kernel_h_ = param->kernel_h_ != -1 ? param->kernel_h_ : weight_tensor->shape_[1];
   param->kernel_w_ = param->kernel_w_ != -1 ? param->kernel_w_ : weight_tensor->shape_[2];
-  ConvInferShape(input_h, input_w, &output_h, &output_w, param);
+  int ret = ConvInferShape(input_h, input_w, &output_h, &output_w, param);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
 
   int out_shape[MAX_SHAPE_SIZE];
   size_t out_shape_size = 0;

@@ -27,6 +27,13 @@ namespace mindspore::kernel {
 int ConvolutionDepthwise3x3CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (op_parameter_->is_train_session_) {
+    auto weight_tensor = in_tensors_.at(kWeightIndex);
+    int channel = weight_tensor->Batch();
+    int c4 = UP_ROUND(channel, C4NUM);
+    int pack_weight_size = c4 * C12NUM;
+    set_workspace_size(pack_weight_size * sizeof(float));
+  }
   auto ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 InitConvWeightBias failed.";
@@ -104,25 +111,10 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
   return RET_OK;
 }
 
-int ConvolutionDepthwise3x3CPUKernel::Eval() {
-  auto ret = InnerKernel::Eval();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "eval failed!";
-    return ret;
-  }
-  if (IsTrainable()) {
-    if (InitConvWeightBias() != RET_OK) {
-      MS_LOG(ERROR) << "Convolution depthwise 3x3 fp32 Eval:InitWeightBias failed.";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
 void ConvolutionDepthwise3x3CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int channel = weight_tensor->Batch();
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackWeightConvDw3x3Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_), channel);
 }
@@ -131,12 +123,14 @@ int ConvolutionDepthwise3x3CPUKernel::MallocWeightBiasData() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int channel = weight_tensor->Batch();
   int c4 = UP_ROUND(channel, C4NUM);
-  if (packed_weight_ == nullptr) {
-    int pack_weight_size = c4 * C12NUM;
-    packed_weight_ = malloc(pack_weight_size * sizeof(float));
+  int pack_weight_size = c4 * C12NUM;
+  if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
+      packed_weight_ = malloc(pack_weight_size * sizeof(float));
+      if (packed_weight_ == nullptr) {
+        MS_LOG(ERROR) << "Malloc buffer failed.";
+        return RET_ERROR;
+      }
     }
   }
 

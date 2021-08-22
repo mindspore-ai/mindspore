@@ -18,7 +18,6 @@ from .addn import AddN
 from .assign_add import AssignAdd
 from .batchnorm import BatchNorm
 from .batchnorm_grad import BatchNormGrad
-from .bias_add import BiasAdd
 from .bias_add_grad import BiasAddGrad
 from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
 from .conv2d import Conv2D
@@ -26,7 +25,6 @@ from .complex import CAbs, CAdd, CDiv, CMul, CSub
 from .dropout_grad import DropoutGrad
 from .equal_count import EqualCount
 from .erfc import Erfc
-from .expand_dims import ExpandDims
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
 from .fused_mul_add import FusedMulAdd
@@ -51,6 +49,7 @@ from .sigmoid import Sigmoid
 from .sigmoid_cross_entropy_with_logits import SigmoidCrossEntropyWithLogits
 from .sigmoid_cross_entropy_with_logits_grad import SigmoidCrossEntropyWithLogitsGrad
 from .sigmoid_grad import SigmoidGrad
+from .slice import Slice
 from .softmax import Softmax
 from .softmax_cross_entropy_with_logits import SoftmaxCrossEntropyWithLogits
 from .softmax_grad_ext import SoftmaxGradExt

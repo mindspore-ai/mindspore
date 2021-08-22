@@ -25,7 +25,7 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/node_infershape.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore {
 namespace opt {
 class TransposeStrategy {
@@ -58,7 +58,7 @@ class TransposeStrategy {
   void TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
                            const std::vector<int> &axes, FormatTransNodeType trans_type);
   std::vector<int> TransformOpAxesAttr(const std::vector<int> &origin_axes, FormatTransNodeType trans_type);
-  FmkType fmk_type_{lite::converter::FmkType_MS};
+  FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;
 };

@@ -23,6 +23,7 @@
 #include "ps/core/communicator/communicator_base.h"
 #include "ps/core/communicator/tcp_communicator.h"
 #include "ps/core/communicator/task_executor.h"
+#include "ps/core/file_configuration.h"
 #include "fl/server/common.h"
 #include "fl/server/executor.h"
 #include "fl/server/iteration.h"
@@ -55,6 +56,10 @@ class Server {
   void SwitchToSafeMode();
   void CancelSafeMode();
   bool IsSafeMode() const;
+  void WaitExitSafeMode() const;
+
+  // Whether the training job of the server is enabled.
+  InstanceState instance_state() const;
 
  private:
   Server()
@@ -88,6 +93,9 @@ class Server {
   // Load variables which is set by ps_context.
   void InitServerContext();
 
+  // Try to recover server config from persistent storage.
+  void Recovery();
+
   // Initialize the server cluster, server node and communicators.
   void InitCluster();
   bool InitCommunicatorWithServer();
@@ -103,6 +111,9 @@ class Server {
   // Register cluster exception callbacks. This method is called in RegisterCommCallbacks.
   void RegisterExceptionEventCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator);
 
+  // Register message callbacks. These messages are mainly from scheduler.
+  void RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator);
+
   // Initialize executor according to the server mode.
   void InitExecutor();
 
@@ -111,6 +122,8 @@ class Server {
 
   // Create round kernels and bind these kernels with corresponding Round.
   void RegisterRoundKernel();
+
+  void InitMetrics();
 
   // The communicators should be started after all initializations are completed.
   void StartCommunicator();
@@ -122,6 +135,16 @@ class Server {
   // The handlers after scheduler's scaling operations are done.
   void ProcessAfterScalingOut();
   void ProcessAfterScalingIn();
+
+  // Handlers for enableFLS/disableFLS requests from the scheduler.
+  void HandleEnableServerRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
+  void HandleDisableServerRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
+
+  // Finish current instance and start a new one. FLPlan could be changed in this method.
+  void HandleNewInstanceRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
+
+  // Query current instance information.
+  void HandleQueryInstanceRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // The server node is initialized in Server.
   std::shared_ptr<ps::core::ServerNode> server_node_;

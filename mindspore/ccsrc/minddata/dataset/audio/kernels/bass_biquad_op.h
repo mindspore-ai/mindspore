@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
+
 class BassBiquadOp : public TensorOp {
  public:
   BassBiquadOp(int32_t sample_rate, float gain, float central_freq, float Q)
@@ -35,7 +36,7 @@ class BassBiquadOp : public TensorOp {
   ~BassBiquadOp() override = default;
 
   void Print(std::ostream &out) const override {
-    out << Name() << ": sample_rate: " << sample_rate_ << ", gain:" << gain_ << ", central_freq: " << central_freq_
+    out << Name() << ": sample_rate: " << sample_rate_ << ", gain: " << gain_ << ", central_freq: " << central_freq_
         << ", Q: " << Q_ << std::endl;
   }
 

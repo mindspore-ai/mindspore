@@ -43,6 +43,7 @@
 #include "frontend/parallel/ops_info/reshape_info.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "ir/anf.h"
 #include "ir/param_info.h"
@@ -874,8 +875,9 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     // get next node's strategy_cost_
     int64_t in_index = 0;
     OperatorInfoPtr next_operator_info;
+    bool is_next_reshape = false;
     std::vector<std::shared_ptr<StrategyWithCost>> next_stra_costs;
-    bool find_next_node = FindReshapeNextNodeStraCosts(cnode, &next_operator_info, &in_index, 0);
+    bool find_next_node = FindReshapeNextNodeStraCosts(cnode, &next_operator_info, &in_index, &is_next_reshape, 0);
     if (!find_next_node) {
       MS_LOG(INFO) << "FindReshapeNextNodeStraCosts for reshape failed";
     }
@@ -890,8 +892,8 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       reshape_info->set_next_operator_index(in_index);
     }
     bool is_prev_param = pre_node->isa<Parameter>();
-    if (reshape_info->GenetateStrategyCosts(pre_stra_costs, next_stra_costs, out_index, in_index, is_prev_param) !=
-        SUCCESS) {
+    if (reshape_info->GenetateStrategyCosts(pre_stra_costs, next_stra_costs, out_index, in_index, is_prev_param,
+                                            is_next_reshape) != SUCCESS) {
       MS_LOG(EXCEPTION) << "reshape generate strategy_costs failed!";
     }
   }

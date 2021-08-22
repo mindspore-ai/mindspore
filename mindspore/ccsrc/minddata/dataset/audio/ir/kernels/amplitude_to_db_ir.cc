@@ -15,15 +15,15 @@
  */
 
 #include "minddata/dataset/audio/ir/kernels/amplitude_to_db_ir.h"
-#include "minddata/dataset/audio/kernels/amplitude_to_db_op.h"
 
 #include "minddata/dataset/audio/ir/validators.h"
+#include "minddata/dataset/audio/kernels/amplitude_to_db_op.h"
 
 namespace mindspore {
 namespace dataset {
 namespace audio {
 
-// AmplitudeToDB
+// AmplitudeToDBOperation
 AmplitudeToDBOperation::AmplitudeToDBOperation(ScaleType stype, float ref_value, float amin, float top_db)
     : stype_(stype), ref_value_(ref_value), amin_(amin), top_db_(top_db) {}
 
@@ -32,9 +32,9 @@ AmplitudeToDBOperation::~AmplitudeToDBOperation() = default;
 std::string AmplitudeToDBOperation::Name() const { return kAmplitudeToDBOperation; }
 
 Status AmplitudeToDBOperation::ValidateParams() {
-  RETURN_IF_NOT_OK(CheckFloatScalarNonNegative("AmplitudeToDB", "top_db", top_db_));
-  RETURN_IF_NOT_OK(CheckFloatScalarPositive("AmplitudeToDB", "amin", amin_));
-  RETURN_IF_NOT_OK(CheckFloatScalarPositive("AmplitudeToDB", "ref_value", ref_value_));
+  RETURN_IF_NOT_OK(ValidateFloatScalarNonNegative("AmplitudeToDB", "top_db", top_db_));
+  RETURN_IF_NOT_OK(ValidateFloatScalarPositive("AmplitudeToDB", "amin", amin_));
+  RETURN_IF_NOT_OK(ValidateFloatScalarPositive("AmplitudeToDB", "ref_value", ref_value_));
 
   return Status::OK();
 }

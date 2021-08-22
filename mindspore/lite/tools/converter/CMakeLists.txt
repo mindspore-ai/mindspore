@@ -26,6 +26,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/node_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/lite_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/protobuf_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/func_graph_subgraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
@@ -39,9 +40,11 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unify_format.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/lstm_adjust_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindspore_importer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_control_flow_adjust.cc
 
         ../optimizer/common/node_pass_extends.cc
         ../optimizer/common/pass_manager_extends.cc
@@ -62,11 +65,11 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/conv_bn_fusion.cc
         ../optimizer/fusion/conv_tuplegetitem_fusion.cc
         ../optimizer/fusion/constant_folding_fusion.cc
-        ../optimizer/fusion/quant_dtype_cast_fusion.cc
         ../optimizer/fusion/norm_fusion.cc
         ../optimizer/fusion/batchmatmul_fusion.cc
         ../optimizer/fusion/sigmoid_mul_fusion.cc
         ../optimizer/fusion/conv_conv_fusion.cc
+        ../optimizer/fusion/conv_pad_fusion.cc
         ../optimizer/fusion/tflite_lstm_cell_fusion.cc
         ../optimizer/fusion/tf_lstm_cell_fusion.cc
         ../optimizer/fusion/tf_bidirection_gru_fusion.cc
@@ -114,6 +117,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/reduce_same_act_pass.cc
         ../optimizer/graph/split_one_pass.cc
         ../optimizer/graph/find_const_subgraph_pass.cc
+        ../optimizer/graph/specify_graph_input_format.cc
         )
 
 add_subdirectory(../anf_exporter anf_exporter)
@@ -133,6 +137,7 @@ set(LITE_SRC
         ${SRC_DIR}/common/context_util.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/string_util.cc
+        ${SRC_DIR}/common/lite_utils.cc
         ${SRC_DIR}/common/prim_util.cc
         ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/runtime/inner_allocator.cc
@@ -142,10 +147,6 @@ set(LITE_SRC
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
-        ${SRC_DIR}/registry/kernel_interface_registry.cc
-        ${SRC_DIR}/registry/register_utils.cc
-        ${SRC_DIR}/registry/register_kernel_impl.cc
-        ${SRC_DIR}/registry/kernel_interface.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/inner_kernel.cc
         ${SRC_DIR}/lite_kernel.cc

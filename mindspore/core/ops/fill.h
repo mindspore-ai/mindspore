@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFill = "Fill";
-class Fill : public PrimitiveC {
+class MS_CORE_API Fill : public PrimitiveC {
  public:
   Fill() : PrimitiveC(kNameFill) {}
   ~Fill() = default;

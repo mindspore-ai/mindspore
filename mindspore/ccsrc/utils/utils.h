@@ -129,6 +129,7 @@ constexpr auto kBNTrainingReduceGradOpName = "BNTrainingReduceGrad";
 constexpr auto kSquareSumV1OpName = "SquareSumV1";
 constexpr auto kSquareSumV2OpName = "SquareSumV2";
 constexpr auto kClipByNormNoDivSumOpName = "ClipByNormNoDivSum";
+constexpr auto kPReluOpName = "PReLU";
 constexpr auto kGreaterOpName = "Greater";
 constexpr auto kSqrtOpName = "Sqrt";
 constexpr auto kRsqrtOpName = "Rsqrt";
@@ -274,6 +275,7 @@ constexpr auto kDynamicRNNOpName = "DynamicRNN";
 constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
 constexpr auto kDynamicGRUV2OpName = "DynamicGRUV2";
 constexpr auto kGRUV2HiddenGradOpName = "GRUV2HiddenGrad";
+constexpr auto kGRUV2HiddenGradCellOpName = "GRUV2HiddenGradCell";
 constexpr auto kFusedSparseFtrlName = "FusedSparseFtrl";
 constexpr auto kFusedSparseProximalAdagradName = "FusedSparseProximalAdagrad";
 constexpr auto kFusedSparseLazyAdamName = "FusedSparseLazyAdam";
@@ -345,6 +347,7 @@ constexpr auto kAttrAtomicOutputIndexs = "atomic_output_clean_indexs";
 constexpr auto kAttrAtomicWorkspaceIndexs = "atomic_workspace_clean_indexs";
 constexpr auto kAttrSwitchCondition = "switch_condition";
 constexpr auto kAttrDataType = "data_type";
+constexpr auto kAttrDType = "dtype";
 constexpr auto kAttrActiveTarget = "active_target";
 constexpr auto kAttrActiveStreamId = "active_stream_id";
 constexpr auto kAttrActiveStreamList = "active_stream_list";
@@ -370,6 +373,7 @@ constexpr auto kAttrFpBpEnd = "fpbp_end";
 constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrGroup = "group";
 constexpr auto kAttrGroups = "groups";
+constexpr auto kAttrGroupBack = "group_back";
 constexpr auto kAttrFracZGroup = "fracz_group";
 constexpr auto kAttrFracZGroupIdx = "fracz_group_idx";
 constexpr auto kAttrOp = "op";
@@ -507,6 +511,8 @@ constexpr auto kUpdateStateRealInput = 2;
 // index define of Load
 constexpr auto kLoadRealInput = 1;
 constexpr auto kLoadStateInput = 2;
+// time transfer unit
+constexpr int kBasicTimeTransferUnit = 1000;
 // index of input or output
 enum Index : size_t {
   kIndex0 = 0,
@@ -630,6 +636,8 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,       kComputeAccid
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
+
+const std::set<std::string> kNoPaddingFormatSet = {kOpFormat_ChannelLast, kOpFormat_FRAC_NZ};
 
 const std::set<std::string> DynamicShapeConstInputToAttr = {
   kCastOpName,       kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kTransposeOpName, kReduceMinOpName,

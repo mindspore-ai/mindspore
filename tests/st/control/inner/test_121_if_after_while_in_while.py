@@ -19,10 +19,11 @@ from mindspore.common import dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 from mindspore import context
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="GPU")
+context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
 
 
 class ForwardNet(nn.Cell):
@@ -37,14 +38,14 @@ class ForwardNet(nn.Cell):
         out = self.zero
         i = self.i
         while x < y:
-            self.weight = x
+            F.assign(self.weight, out)
             while i < self.max_cycles:
                 out = x * y + out
                 i = i + 1
-                self.weight = i
+                F.assign(self.weight, i)
             x = x + 1
         if out < 20:
-            self.weight = out
+            F.assign(self.weight, out)
             out = out - 20
         return out, self.weight
 
@@ -59,7 +60,11 @@ class BackwardNet(nn.Cell):
         grads = self.grad(self.forward_net)(*inputs)
         return grads
 
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -74,7 +79,11 @@ def test_forward():
     assert graph_mode_out == pynative_mode_out
 
 
-@pytest.mark.skip(reason="not supported side effect")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
@@ -126,6 +135,8 @@ class BackwardNetNoAssign(nn.Cell):
 # This test case has a problem of evaluator endless loop.
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_backward_no_assign():
     x = Tensor(np.array(1), mstype.int32)

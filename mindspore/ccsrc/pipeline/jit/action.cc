@@ -36,6 +36,7 @@
 #include "pipeline/jit/static_analysis/remove_monad.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "pipeline/jit/static_analysis/program_specialize.h"
 #include "pipeline/jit/resource.h"
 #include "utils/ms_context.h"
@@ -108,7 +109,7 @@ void ExecuteActionForMindRT(const ResourcePtr &res) {
   // Construct the graph run function ptr.
   compile::VmEvalFuncPtr run =
     std::make_shared<compile::VmEvalFunc>([mindrt_bc_ptr, actor_info](const VectorRef &args) -> BaseRef {
-      MS_LOG(INFO) << "Execute args size " << args.size();
+      MS_LOG(DEBUG) << "Execute args size " << args.size();
       VectorRef outputs;
       mindrt_bc_ptr->RunGraph(actor_info, args, &outputs);
       MS_LOG(DEBUG) << "out size " << outputs.size();
@@ -121,28 +122,6 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 
-inline bool ResetCNodeFromLoad(const AnfNodePtr &node) {
-  if (node->isa<CNode>() && node->cast<CNodePtr>()->get_load_flag()) {
-    // Process partial("DeadNode",args) when the graph is loaded.
-    auto operatorPtr = node->cast<CNodePtr>()->input(0);
-    // Set abstract of switch(c,f,t) to null
-    auto prim = GetValueNode<PrimitivePtr>(operatorPtr);
-    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
-      node->set_abstract(nullptr);
-      return true;
-    }
-    // Set abstract of switch(c,f,t)() to null
-    prim = GetCNodePrimitive(operatorPtr);
-    if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
-      node->set_abstract(nullptr);
-      return true;
-    }
-    // Previous inferred value
-    return true;
-  }
-  return false;
-}
-
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_spec, bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
@@ -154,24 +133,22 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraph
     engine->Clear();
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
-      const AbstractBasePtr &prev_inferred = node->abstract();
-
-      // AbstractFunction has context,but contexts in cache have been cleaned.
-      if (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>()) {
-        node->set_abstract(nullptr);
-        MS_LOG(DEBUG) << "Abstract of node " << node->ToString() << " is set to nullptr";
-        continue;
-      }
 
       // Handle previous inferred value for CNode if is loaded from MindIR
-      if (res->is_load() && ResetCNodeFromLoad(node)) {
-        continue;
+      if (res->is_load()) {
+        // If the primitive is not defined in front end,keep the inferred value loaded from MindIR.
+        auto primitive = GetCNodePrimitive(node);
+        if (primitive != nullptr && abstract::GetPrimEvaluator(primitive, engine) == nullptr) {
+          MS_LOG(INFO) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
+          continue;
+        }
       }
 
+      const AbstractBasePtr &prev_inferred = node->abstract();
       // Keep previous inferred value for ValueNode if the inferred value is not AbstractFunction.
       if (!node->isa<ValueNode>() || (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>())) {
         node->set_abstract(nullptr);
-        MS_LOG(DEBUG) << "Abstract of node " << node->ToString() << " is set to nullptr";
+        MS_LOG(DEBUG) << "Abstract of node " << node->DebugString() << " is set to nullptr";
       }
     }
   }
@@ -217,80 +194,6 @@ FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
   MS_LOG(DEBUG) << "Renormalize end";
 
   return ret;
-}
-
-const FuncGraphPtr GetLoadedGraph(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  auto manager = res->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  FuncGraphPtr loaded_graph = nullptr;
-  size_t loaded_graph_num = 0;
-  auto all_graphs = manager->func_graphs();
-  for (auto &graph : all_graphs) {
-    MS_EXCEPTION_IF_NULL(graph);
-    if (graph->has_attr("is_load")) {
-      loaded_graph = graph;
-      loaded_graph_num += 1;
-      res->set_is_load(true);
-    }
-  }
-  if (loaded_graph_num == 0) {
-    return nullptr;
-  }
-  if (loaded_graph_num == 1) {
-    return loaded_graph;
-  }
-  MS_LOG(EXCEPTION) << "The loaded sub graph currently should less than 2, but got " << loaded_graph_num;
-}
-
-void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &loaded_graph) {
-  MS_EXCEPTION_IF_NULL(res);
-  auto manager = res->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  FuncGraphPtr root_graph = *(manager->roots().begin());
-  auto root_inputs = root_graph->get_inputs();
-  auto loaded_inputs = loaded_graph->get_inputs();
-  MS_LOG(DEBUG) << "root_graph: " << root_graph->ToString();
-  MS_LOG(DEBUG) << "loaded_graph: " << loaded_graph->ToString();
-
-  size_t root_inputs_num = root_inputs.size();
-  size_t loaded_inputs_num = loaded_inputs.size();
-  if (root_inputs_num != loaded_inputs_num) {
-    MS_LOG(EXCEPTION) << "The inputs number " << root_inputs_num << " not equal to the inputs number of loaded graph "
-                      << loaded_inputs_num;
-  }
-  for (size_t index = 0; index < root_inputs_num; index++) {
-    auto root_input = root_inputs[index];
-    auto loaded_input = loaded_inputs[index];
-
-    MS_LOG(DEBUG) << "root_input[" << index << "]: " << root_input->DebugString(1);
-    MS_LOG(DEBUG) << "loaded_input[" << index << "]: " << loaded_input->DebugString(1);
-    MS_LOG(DEBUG) << "root_input abstract[" << index
-                  << "]: " << (root_input->abstract() ? root_input->abstract()->ToString() : "NULL");
-    MS_LOG(DEBUG) << "loaded_input abstract [" << index
-                  << "]: " << (loaded_input->abstract() ? loaded_input->abstract()->ToString() : "NULL");
-
-    auto root_shape = root_input->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(root_input->Shape());
-    auto loaded_shape = loaded_input->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(loaded_input->Shape());
-    auto root_type = root_input->Type() == nullptr ? nullptr : dyn_cast<Type>(root_input->Type());
-    auto loaded_type = loaded_input->Type() == nullptr ? nullptr : dyn_cast<Type>(loaded_input->Type());
-
-    MS_EXCEPTION_IF_NULL(root_shape);
-    MS_EXCEPTION_IF_NULL(loaded_shape);
-    MS_EXCEPTION_IF_NULL(root_type);
-    MS_EXCEPTION_IF_NULL(loaded_type);
-
-    if (root_shape->shape() != loaded_shape->shape()) {
-      MS_EXCEPTION(ValueError) << "The " << index
-                               << " th input shape differ from loaded graph. Input shape: " << root_shape->ToString()
-                               << ", input shape of loaded graph: " << loaded_shape->ToString();
-    }
-    if (root_type->type_id() != loaded_type->type_id()) {
-      MS_EXCEPTION(TypeError) << "The " << std::to_string(index)
-                              << " th input type differ from loaded graph. Input type: " << root_type->ToString()
-                              << ", input type of loaded graph: " << loaded_type->ToString();
-    }
-  }
 }
 
 bool ParseAction(const ResourcePtr &res) {
@@ -475,8 +378,6 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   context->ParallelParameterContextInitShape(func_graph);
 
-  // get original loaded graph to check inputs later
-  auto loaded_graph_ptr = GetLoadedGraph(res);
   // suppose that there is not KeywordArgument for the top graph
   // get the hyper parameter
   for (const auto &param : func_graph->parameters()) {
@@ -512,10 +413,6 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
         fg->EraseUnusedNodeInOrder();
       }
     }
-  }
-  // check input after abstract when there is a loaded graph
-  if (loaded_graph_ptr != nullptr) {
-    CheckRootInputShapeAndType(res, loaded_graph_ptr);
   }
   MS_LOG(DEBUG) << "End graph: " << new_fg->ToString() << ", return: " << new_fg->get_return()->DebugString(true);
   return true;
@@ -636,9 +533,19 @@ bool TaskEmitAction(const ResourcePtr &res) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
   } else if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    if (device_target == kAscendDevice && backend != kMsVm) {
+    auto manager = func_graph->manager();
+    auto graphs = manager->func_graphs();
+    bool exist_while =
+      std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+    if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
+      MS_LOG(INFO) << "Run graph mode with multigraph sink.";
       bc_ptr->set_is_multi_graph_sink(true);
       context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
+    } else {
+      MS_LOG(INFO) << "Run graph mode with vm.";
+      bc_ptr->set_is_multi_graph_sink(false);
+      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+      context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
     }
   }
 
@@ -752,7 +659,8 @@ bool StartServerAction(const ResourcePtr &res) {
     {"updateModel", true, update_model_time_window, true, update_model_threshold},
     {"getModel"},
     {"pullWeight"},
-    {"pushWeight", false, 3000, true, server_num, true}};
+    {"pushWeight", false, 3000, true, server_num, true},
+    {"pushMetrics", false, 3000, true, 1}};
 
   float share_secrets_ratio = ps::PSContext::instance()->share_secrets_ratio();
   uint64_t cipher_time_window = ps::PSContext::instance()->cipher_time_window();
@@ -833,6 +741,66 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
 
 bool PipelineSplitAction(const ResourcePtr &res) { return PipelineSplitPass(res); }
 bool ValidateAction(const ResourcePtr &res) { return ValidatePass(res); }
+
+bool SetMindIRGraphAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  res->set_is_load(true);
+  auto cell = py::cast<CellPtr>(res->input());
+  if (cell == nullptr) {
+    MS_LOG(EXCEPTION) << "The graph loaded from mindir is null.";
+  }
+  const std::string mindir_graph = "graph_load_from_mindir";
+  auto obj = cell->GetAttr(mindir_graph);
+  if (obj == nullptr) {
+    MS_LOG(EXCEPTION) << "The graph loaded from mindir is null. The cell has not attribute: " << mindir_graph;
+  }
+  auto fg = GetValue<FuncGraphPtr>(obj);
+  if (fg == nullptr) {
+    MS_LOG(EXCEPTION) << "The graph loaded from mindir is null.";
+  }
+  res->set_func_graph(fg);
+  FuncGraphManagerPtr mng = fg->manager();
+  if (mng == nullptr) {
+    auto res_mng = res->manager();
+    MS_EXCEPTION_IF_NULL(res_mng);
+    res_mng->AddFuncGraph(fg);
+    fg->set_manager(res_mng);
+  }
+  abstract::AbstractBasePtrList broaded_args;
+  const auto &args_spec_list = res->args_spec();
+  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broaded_args),
+                       [](const AbstractBasePtr &arg) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg);
+                         if (arg->GetValueTrack() != kAnyValue) {
+                           return arg->Broaden();
+                         }
+                         return arg;
+                       });
+
+  // suppose that there is not KeywordArgument for the top graph
+  // get the hyper parameter
+  for (const auto &param : fg->parameters()) {
+    auto param_node = std::static_pointer_cast<Parameter>(param);
+    MS_EXCEPTION_IF_NULL(param_node);
+    if (param_node->has_default()) {
+      auto value = param_node->default_param();
+      MS_EXCEPTION_IF_NULL(value);
+      auto abs_value = value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
+      auto ref_key = std::make_shared<RefKey>(param_node->name());
+      auto abs_ref_key = ref_key->ToAbstract();
+      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
+      broaded_args.push_back(abs_ref);
+    }
+  }
+  auto result = AbstractAnalyze(res, res->func_graph(), broaded_args, true);
+  auto it = abstract::AnalysisResultCacheMgr::GetInstance().begin();
+  auto it_end = abstract::AnalysisResultCacheMgr::GetInstance().end();
+  for (; it != it_end; ++it) {
+    it->first->node()->set_abstract(it->second->abstract());
+  }
+  abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  return true;
+}
 
 bool ActionPyStub(const ResourcePtr &res, opt::python_pass::Phase phase) {
   MS_EXCEPTION_IF_NULL(res->manager());
@@ -974,7 +942,17 @@ std::vector<ActionItem> BackendPipeline() {
   (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
   return actions;
 }
-
+std::vector<ActionItem> MindIRPipeline() {
+  std::vector<ActionItem> actions;
+  // Set funcGraph loaded from MindIR to resource.
+  (void)actions.emplace_back(std::make_pair("load_mindir", SetMindIRGraphAction));
+  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+  // compile the ANF graph
+  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+  // to execute the graph
+  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
+  return actions;
+}
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 std::vector<ActionItem> ServerPipeline() {
   auto actions = CommonPipeline();

@@ -25,7 +25,7 @@
 #include "include/errorcode.h"
 #include "mindspore/core/ir/manager.h"
 
-using mindspore::lite::converter::FmkType;
+using mindspore::converter::FmkType;
 namespace mindspore::opt {
 using lite::RET_ERROR;
 using lite::RET_OK;
@@ -95,7 +95,7 @@ class SlicePreposePass : public Pass {
   static bool MergeParallelSlice(const FuncGraphPtr &graph, const NodeUsedListPtr &slices);
 
  private:
-  FmkType fmk_type = lite::converter::FmkType_ONNX;
+  FmkType fmk_type = converter::kFmkTypeOnnx;
 };
 }  // namespace mindspore::opt
 

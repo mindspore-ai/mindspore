@@ -17,6 +17,7 @@
 
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
 #include "backend/kernel_compiler/gpu/trt/trt_utils.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/gpu/trt_loader.h"
 
 namespace mindspore {

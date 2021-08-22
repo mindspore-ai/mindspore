@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DTranspose = "Conv2DTranspose";
-class Conv2DTranspose : public PrimitiveC {
+class MS_CORE_API Conv2DTranspose : public PrimitiveC {
  public:
   Conv2DTranspose() : PrimitiveC(kNameConv2DTranspose) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});

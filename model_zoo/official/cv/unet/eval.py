@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import logging
 from mindspore import context, Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -24,6 +23,7 @@ from src.unet_nested import NestedUNet, UNet
 from src.utils import UnetEval, TempLoss, dice_coeff
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
 @moxing_wrapper()
 def test_net(data_dir,
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
     context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
     if config.device_target == "Ascend":
-        device_id = int(os.getenv('DEVICE_ID'))
+        device_id = get_device_id()
         context.set_context(device_id=device_id)
     test_net(data_dir=config.data_path,
              ckpt_path=config.checkpoint_file_path,

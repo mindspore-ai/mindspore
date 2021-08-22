@@ -42,6 +42,7 @@ class TestResizeNearestNeighborFp32 : public mindspore::CommonTest {
 };
 
 void TestResizeNearestNeighborFp32::TearDown() {
+  delete kernel_;
   in_tensor_.set_data(nullptr);
   out_tensor_.set_data(nullptr);
 }

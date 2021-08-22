@@ -18,6 +18,7 @@
 #define MINDSPORE_NNACL_FP32_CONV_DEPTHWISE_H_
 
 #include "nnacl/conv_parameter.h"
+#include "nnacl/base/conv_common_base.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,8 +124,6 @@ void ConvDw3x3Line(float *dst, float **lines, const float *weight, const float *
                    bool relu, bool relu6);
 void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const float *weight_data,
                const float *bias_data, const ConvParameter *conv_param, int start_oh, int end_oh);
-
-bool CheckConvDw1DWinograd(const ConvParameter *conv_param, int thread_num);
 #endif
 
 void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,

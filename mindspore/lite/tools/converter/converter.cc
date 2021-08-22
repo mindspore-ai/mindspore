@@ -26,23 +26,22 @@
 #include "src/train/train_populate_parameter.h"
 #include "include/registry/model_parser_registry.h"
 #include "src/common/dynamic_library_loader.h"
-#include "tools/converter/export_model.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/mindspore_importer.h"
 namespace mindspore {
 namespace lite {
 namespace {
 void InitConverterParameters(const converter::Flags &flag, converter::ConverterParameters *converter_parameters) {
-  converter_parameters->fmk_ = flag.fmk;
-  converter_parameters->quant_type_ = flag.quantType;
-  converter_parameters->model_file_ = flag.modelFile;
-  converter_parameters->weight_file_ = flag.weightFile;
+  converter_parameters->fmk = flag.fmk;
+  converter_parameters->quant_type = flag.quantType;
+  converter_parameters->model_file = flag.modelFile;
+  converter_parameters->weight_file = flag.weightFile;
 }
 }  // namespace
 
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   FuncGraphPtr func_graph = nullptr;
-  if (flag.fmk == converter::FmkType::FmkType_MS) {
+  if (flag.fmk == converter::FmkType::kFmkTypeMs) {
     kernel::PopulateTrainParameters();
     MindsporeImporter ms_import;
     func_graph = ms_import.ImportMindIR(flag);
@@ -50,7 +49,7 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
       return nullptr;
     }
   } else {
-    model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmk);
+    model_parser_ = registry::ModelParserRegistry::GetModelParser(flag.fmk);
     if (model_parser_ == nullptr) {
       return nullptr;
     }
@@ -118,6 +117,14 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
+
+  // set output tensor names to the original names, the output_names is null in nnie converter.
+  auto output_names = ConverterContext::GetInstance()->GetGraphOutputTensorNames();
+  MS_ASSERT(output_names.size() == meta_graphT->outputIndex.size());
+  for (size_t idx = 0; idx < output_names.size(); idx++) {
+    auto &tensor = meta_graph->allTensors.at(meta_graph->outputIndex.at(idx));
+    tensor->name = output_names.at(idx);
+  }
   return meta_graph;
 }
 
@@ -141,8 +148,6 @@ int RunConverter(int argc, const char **argv) {
     }
     return status;
   }
-  // Init dump graph func
-  ExportModelInit(flags.get());
   // Load graph
   MS_LOG(DEBUG) << "start reading model file";
   Converter cvt;

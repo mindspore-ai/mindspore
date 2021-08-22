@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -19,8 +20,11 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
 grad_all = C.GradOperation(get_all=True)
-context.set_context(device_target="Ascend")
-
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_after_for_in_for():
     class IfAfterForInForNet(nn.Cell):
         def __init__(self):
@@ -53,14 +57,18 @@ def test_if_after_for_in_for():
     context.set_context(mode=context.GRAPH_MODE)
     if_after_for_in_for_net = IfAfterForInForNet()
     net = GradNet(if_after_for_in_for_net)
-    graph_forward_res = if_after_for_in_for_net(x)
+
+    forward_net = IfAfterForInForNet()
+    graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
     if_after_for_in_for_net = IfAfterForInForNet()
     net = GradNet(if_after_for_in_for_net)
-    pynative_forward_res = if_after_for_in_for_net(x)
+
+    forward_net = IfAfterForInForNet()
+    pynative_forward_res = forward_net(x)
     pynative_backward_res = net(x)
 
     assert graph_forward_res == pynative_forward_res

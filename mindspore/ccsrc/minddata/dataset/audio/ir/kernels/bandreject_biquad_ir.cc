@@ -15,19 +15,21 @@
  */
 
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
-#include "minddata/dataset/audio/kernels/bandreject_biquad_op.h"
+
 #include "minddata/dataset/audio/ir/validators.h"
+#include "minddata/dataset/audio/kernels/bandreject_biquad_op.h"
 
 namespace mindspore {
 namespace dataset {
 namespace audio {
+
 // BandrejectBiquadOperation
 BandrejectBiquadOperation::BandrejectBiquadOperation(int32_t sample_rate, float central_freq, float Q)
     : sample_rate_(sample_rate), central_freq_(central_freq), Q_(Q) {}
 
 Status BandrejectBiquadOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("BandrejectBiquad", "Q", Q_, {0, 1.0}, true, false));
-  RETURN_IF_NOT_OK(CheckScalarNotZero("BandrejectBiquad", "sample_rate", sample_rate_));
+  RETURN_IF_NOT_OK(ValidateScalarNotZero("BandrejectBiquad", "sample_rate", sample_rate_));
   return Status::OK();
 }
 

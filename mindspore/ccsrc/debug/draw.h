@@ -22,6 +22,7 @@
 #include <vector>
 #include "ir/anf.h"
 #include "utils/any.h"
+#include "debug/common.h"
 
 namespace mindspore {
 namespace draw {

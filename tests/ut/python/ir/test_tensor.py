@@ -74,6 +74,45 @@ def test_tensor_type_float16():
     assert t_float16.shape == (2, 3)
     assert t_float16.dtype == ms.float16
 
+def test_tensor_type_complex64():
+    np_input = np.array(
+        [[1+0.1j, 2j, 3+0.3j], [4-0.4j, 5, 6]], dtype=np.complex64)
+    t_complex64 = ms.Tensor(np_input)
+    assert isinstance(t_complex64, ms.Tensor)
+    assert t_complex64.shape == (2, 3)
+    assert t_complex64.dtype == ms.complex64
+    assert np.all(t_complex64.asnumpy() == np_input)
+
+
+def test_tensor_type_complex64_user_define():
+    np_input = np.zeros([1, 2, 3])
+    t_complex64 = ms.Tensor(np_input, ms.complex64)
+    assert isinstance(t_complex64, ms.Tensor)
+    assert t_complex64.shape == (1, 2, 3)
+    assert t_complex64.dtype == ms.complex64
+    assert np.all(t_complex64.asnumpy() == np_input)
+
+
+def test_tensor_type_complex128():
+    np_input = np.array(
+        [[1+0.1j, 2j, 3+0.3j], [4-0.4j, 5, 6]], dtype=np.complex128)
+    t_complex128 = ms.Tensor(np_input)
+    assert isinstance(t_complex128, ms.Tensor)
+    assert t_complex128.shape == (2, 3)
+    assert t_complex128.dtype == ms.complex128
+    assert np.all(t_complex128.asnumpy() == np_input)
+    np_input = (1, 2.22222222j, 3)
+    t_complex128 = ms.Tensor(np_input)
+    assert np.all(t_complex128.asnumpy() == np_input)
+
+
+def test_tensor_type_complex128_user_define():
+    np_input = np.zeros([1, 2, 3])
+    t_complex128 = ms.Tensor(np_input, ms.complex128)
+    assert isinstance(t_complex128, ms.Tensor)
+    assert t_complex128.shape == (1, 2, 3)
+    assert t_complex128.dtype == ms.complex128
+    assert np.all(t_complex128.asnumpy() == np_input)
 
 def test_tensor_type_float32():
     t_float32 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32))
@@ -332,13 +371,6 @@ def test_tensor_input_ndarray_bool():
     inp = np.array([False, 2, 4])
     ms.Tensor(inp)
 
-
-def test_tensor_input_ndarray_complex():
-    with pytest.raises(TypeError):
-        inp = np.array([20j, 2, 4])
-        ms.Tensor(inp)
-
-
 def test_tensor_input_ndarray_none():
     with pytest.raises(TypeError):
         inp = np.array([None, 2, 4])
@@ -445,6 +477,19 @@ def test_tensor_dtype_fp64_to_uint8():
     assert t.shape == (2, 3)
     assert t.dtype == ms.uint8
 
+def test_tensor_dtype_complex64_to_float32():
+    array = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.complex64)
+    t = ms.Tensor(array, ms.float32)
+    assert isinstance(t, ms.Tensor)
+    assert t.shape == (2, 3)
+    assert t.dtype == ms.float32
+
+def test_tensor_dtype_float32_to_complex64():
+    array = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
+    t = ms.Tensor(array, ms.complex64)
+    assert isinstance(t, ms.Tensor)
+    assert t.shape == (2, 3)
+    assert t.dtype == ms.complex64
 
 def test_tensor_operation():
     x = Tensor(np.ones((3, 3)) * 4)

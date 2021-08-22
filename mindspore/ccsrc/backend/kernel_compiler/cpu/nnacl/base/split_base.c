@@ -20,12 +20,12 @@
 #include "nnacl/errorcode.h"
 
 int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, int num_unit,
-            SplitParameter *split_param, int data_size) {
+            const SplitParameter *split_param, int data_size) {
   int8_t *int8_in = (int8_t *)in_data;
 
   int num_split = split_param->num_split_;
   int *split_sizes = split_param->split_sizes_;
-  int *strides = split_param->strides_;
+  const int *strides = split_param->strides_;
   int split_dim = split_param->split_dim_;
   int in_stride = strides[split_dim];
 

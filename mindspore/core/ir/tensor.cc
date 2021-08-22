@@ -31,6 +31,7 @@
 
 #include "abstract/utils.h"
 #include "abstract/abstract_value.h"
+#include "base/complex_storage.h"
 
 namespace mindspore {
 namespace tensor {
@@ -73,7 +74,10 @@ std::unique_ptr<T[]> NewData(const U *input, size_t size) {
     return nullptr;
   }
   auto data = std::make_unique<T[]>(size);
-  if constexpr (!std::is_same<T, U>::value && (std::is_same<T, float16>::value || std::is_same<U, float16>::value)) {
+  if constexpr (!std::is_same<T, U>::value &&
+                (std::is_same<T, float16>::value || std::is_same<U, float16>::value ||
+                 std::is_same<T, ComplexStorage<float>>::value || std::is_same<U, ComplexStorage<float>>::value ||
+                 std::is_same<T, ComplexStorage<double>>::value || std::is_same<U, ComplexStorage<double>>::value)) {
     // Because float16 do not support implicit cast from/to other types,
     // We can not use std::copy() on array of float16, use a loop here.
     for (size_t i = 0; i < size; ++i) {
@@ -146,7 +150,11 @@ std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, TypeId
       return NewData<T>(buf, size);
     }
     case kNumberTypeComplex64: {
-      auto buf = static_cast<double *>(data);
+      auto buf = static_cast<ComplexStorage<float> *>(data);
+      return NewData<T>(buf, size);
+    }
+    case kNumberTypeComplex128: {
+      auto buf = static_cast<ComplexStorage<double> *>(data);
       return NewData<T>(buf, size);
     }
     case kObjectTypeString: {
@@ -233,7 +241,8 @@ class TensorDataImpl : public TensorData {
       std::is_same<T, bool>::value || std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
       std::is_same<T, int16_t>::value || std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value ||
       std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value || std::is_same<T, uint64_t>::value ||
-      std::is_same<T, float16>::value || std::is_same<T, float>::value || std::is_same<T, double>::value;
+      std::is_same<T, float16>::value || std::is_same<T, float>::value || std::is_same<T, double>::value ||
+      std::is_same<T, ComplexStorage<float>>::value || std::is_same<T, ComplexStorage<double>>::value;
     static_assert(valid, "Type is invalid");
     if (data_size_ == 0) {
       return "";
@@ -302,10 +311,14 @@ class TensorDataImpl : public TensorData {
     constexpr auto isBool = std::is_same<T, bool>::value;
     constexpr auto isFloat =
       std::is_same<T, float16>::value || std::is_same<T, float>::value || std::is_same<T, double>::value;
+    constexpr auto isComplex =
+      std::is_same<T, ComplexStorage<float>>::value || std::is_same<T, ComplexStorage<double>>::value;
     constexpr int linefeedThreshold = isFloat ? kThreshold1DFloat : (isBool ? kThreshold1DBool : kThreshold1DInt);
     for (ssize_t i = start; i < end && (cursor + i) < static_cast<ssize_t>(data_size_); i++) {
       const auto value = data_[cursor + i];
-      if constexpr (isFloat) {
+      if constexpr (isComplex) {
+        ss << value;
+      } else if constexpr (isFloat) {
         OutputFloatDataString(ss, isScalar, value);
       } else if (isBool) {
         OutputBoolDataString(ss, isScalar, value);
@@ -458,7 +471,9 @@ TensorDataPtr MakeTensorData(TypeId data_type, const ShapeVector &shape, const A
     case kNumberTypeFloat64:
       return std::make_shared<TensorDataImpl<double>>(shape, args...);
     case kNumberTypeComplex64:
-      return std::make_shared<TensorDataImpl<double>>(shape, args...);
+      return std::make_shared<TensorDataImpl<ComplexStorage<float>>>(shape, args...);
+    case kNumberTypeComplex128:
+      return std::make_shared<TensorDataImpl<ComplexStorage<double>>>(shape, args...);
     case kObjectTypeString:
       return std::make_shared<TensorDataImpl<uint8_t>>(shape, args...);
     case kObjectTypeTensorType:

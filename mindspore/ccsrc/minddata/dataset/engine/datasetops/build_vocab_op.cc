@@ -107,7 +107,7 @@ Status BuildVocabOp::operator()() {
     }
   }
   bool eoe_warning = false;  // give out warning if receive more than 1 eoe
-  while (child_iterator_->eof_handled() == false) {
+  while (child_iterator_->EofHandled() == false) {
     while (new_row.empty() == false) {
       RETURN_IF_NOT_OK(distributor_queue_->EmplaceBack(new_row));
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));

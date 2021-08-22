@@ -71,7 +71,6 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     temp += 1;
     if (temp == input0->shape_size_) {
       SetShapeTensor(output, input);
-      output->data_type_ = input->data_type_;
       return NNACL_OK;
     }
   }

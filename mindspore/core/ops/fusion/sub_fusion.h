@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSubFusion = "SubFusion";
-class SubFusion : public Sub {
+class MS_CORE_API SubFusion : public Sub {
  public:
   SubFusion() : Sub(kNameSubFusion) {}
   ~SubFusion() = default;

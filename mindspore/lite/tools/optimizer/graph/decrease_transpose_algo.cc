@@ -343,6 +343,7 @@ STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph,
       return lite::RET_ERROR;
     }
   }
+  ModifyCNodeFormat(cnode, trans_insert_info->pre_);
   status = node_infer_shape_.InferShape(cnode);
 
   if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
@@ -442,6 +443,7 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
       MS_LOG(ERROR) << "change op attr failed.";
       return lite::RET_ERROR;
     }
+    ModifyCNodeFormat(middle_cnode, trans_info.post_);
     status = node_infer_shape_.InferShape(middle_cnode);
     if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
       MS_LOG(ERROR) << "infer shape failed.";
@@ -587,9 +589,22 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
   prim->AddAttr(kInferDone, MakeValue<bool>(infer_done));
 }
 
+void DecreaseTransposeAlgo::ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type) {
+  MS_ASSERT(cnode != nullptr);
+  if (pre_trans_type == kNONE) {
+    return;
+  }
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(primitive != nullptr);
+  if (pre_trans_type == kNHWC2NCHW) {
+    primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
+  } else {
+    primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NHWC));
+  }
+}
+
 bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  auto graph_name = GetValue<std::string>(func_graph->get_attr("graph_name"));
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";

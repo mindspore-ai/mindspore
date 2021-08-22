@@ -26,6 +26,7 @@
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "runtime/device/ascend/executor/tiling/op_tiling_adapter.h"
 #include "common/trans.h"
+#include "backend/kernel_compiler/tbe/tbe_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -71,20 +72,23 @@ void AiCoreDynamicKernel::ParseCompileJson() {
   if (!AnfAlgo::IsDynamicShape(cnode)) {
     return;
   }
-  if (!AnfAlgo::HasNodeAttr(kAttrCompileInfo, cnode)) {
-    MS_LOG(EXCEPTION) << "Get compile_info failed";
-  }
-  auto compile_info_attr = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrCompileInfo);
-  MS_LOG(INFO) << "Get compile_info:" << compile_info_attr;
-  op_compile_info_.str = compile_info_attr;
-  op_compile_info_.key = "";
 
-  if (AnfAlgo::HasNodeAttr(kAttrFusionType, cnode)) {
-    auto fusion_type = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFusionType);
-    MS_LOG(INFO) << "Get fusion_type:" << fusion_type;
-    (*compile_info_json_)["_pattern"] = fusion_type;
-    op_compile_info_.key = std::hash<std::string>{}(fusion_type);
+  MS_LOG(INFO) << "Get compile_info from attr start.";
+  std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
+  if (!old_build.empty()) {
+    if (!AnfAlgo::HasNodeAttr(kAttrCompileInfo, cnode)) {
+      MS_LOG(EXCEPTION) << "Get compile info failed.";
+    }
+    op_compile_info_ = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrCompileInfo);
+  } else {
+    bool get_flag = true;
+    TbeUtils::GetCompileInfo(cnode, &op_compile_info_, &get_flag);
+    if (!get_flag) {
+      MS_LOG(EXCEPTION) << "Get compile_info failed. The compile result of [" << AnfAlgo::GetCNodeName(cnode)
+                        << "]maybe not in the json file(dir:./kernel_meta/) or the file had been deleted";
+    }
   }
+  MS_LOG(INFO) << "Get compile_info:" << op_compile_info_;
 }
 
 void AiCoreDynamicKernel::Initialize() {
@@ -135,7 +139,7 @@ void AiCoreDynamicKernel::ComputeTiling() {
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   tiling::OpTilingCalculateAdapter converter;
   ge::ComputeGraphPtr ge_graph = std::make_shared<ge::ComputeGraph>("default");
-  auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map_);
+  auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map_, op_compile_info_);
   (void)optiling::OpParaCalculateV2(*ge_node, op_run_info_v2);
 
   block_dim_ = op_run_info_v2.GetBlockDim();

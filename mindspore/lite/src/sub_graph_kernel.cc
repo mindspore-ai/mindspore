@@ -16,7 +16,9 @@
 
 #include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
+#endif
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
@@ -102,17 +104,21 @@ int SubGraphKernel::ReSize() {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    auto ret =
-      lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders());
+    int ret;
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+    ret = lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders(),
+                                 schema_version_);
     if (ret == lite::RET_NOT_SUPPORT) {
+#endif
       auto parameter = kernel->op_parameter();
       if (parameter == nullptr) {
         MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
         return RET_ERROR;
       }
       ret = lite::KernelInferShape(inputs, outputs, parameter);
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
     }
-
+#endif
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))

@@ -39,18 +39,18 @@ namespace mindspore {
 DebugServices::DebugServices() { tensor_loader_ = std::make_shared<TensorLoader>(); }
 
 DebugServices::DebugServices(const DebugServices &other) {
-  wp_id_cache = other.wp_id_cache;
-  net_name = other.net_name;
-  dump_dir = other.dump_dir;
-  is_sync_mode = other.is_sync_mode;
+  wp_id_cache_ = other.wp_id_cache_;
+  net_name_ = other.net_name_;
+  dump_dir_ = other.dump_dir_;
+  is_sync_mode_ = other.is_sync_mode_;
   tensor_loader_ = other.tensor_loader_;
-  watchpoint_table = other.watchpoint_table;
+  watchpoint_table_ = other.watchpoint_table_;
 }
 
 DebugServices &DebugServices::operator=(const DebugServices &other) {
   if (this != &other) {
     tensor_loader_ = other.tensor_loader_;
-    watchpoint_table = other.watchpoint_table;
+    watchpoint_table_ = other.watchpoint_table_;
   }
   return *this;
 }
@@ -74,12 +74,12 @@ void DebugServices::AddWatchpoint(
     watchpoint_item.check_node_graph_list = *check_node_graph_list;
   }
   watchpoint_item.parameter_list = parameter_list;
-  watchpoint_table[id] = watchpoint_item;
+  watchpoint_table_[id] = watchpoint_item;
 }
 
 void DebugServices::RemoveWatchpoint(unsigned int id) {
   std::lock_guard<std::mutex> lg(lock_);
-  watchpoint_table.erase(id);
+  watchpoint_table_.erase(id);
 }
 
 std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> &tensor,
@@ -138,7 +138,7 @@ void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bo
   if (previous_iter_tensor_needed && tensor->GetIteration() >= 1) {
     // read data in offline mode
     std::vector<std::string> file_paths;
-    if (!is_sync_mode) {
+    if (!is_sync_mode_) {
       ConvertReadTensors(std::vector<std::string>{tensor->GetName()}, std::vector<size_t>{tensor->GetSlot()},
                          std::vector<unsigned int>{tensor->GetDeviceId()},
                          std::vector<unsigned int>{tensor->GetIteration() - 1},
@@ -165,7 +165,7 @@ void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, 
                                           const std::string &tensor_name, const std::string &tensor_name_no_slot,
                                           bool *previous_iter_tensor_needed, std::string *const qualified_tensor_name,
                                           std::vector<watchpoint_t> *const watchpoints_to_check) {
-  for (auto w_table_item : watchpoint_table) {
+  for (auto w_table_item : watchpoint_table_) {
     auto wp = std::get<1>(w_table_item);
     // check ONLY init conditions on initial suspended state.
     // skip other conditions on initial suspended state
@@ -178,7 +178,7 @@ void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, 
     // if not a recheck, check only unanalyzed tensors
     if (!recheck) {
       wp_lock_.lock();
-      bool wp_cache_hit = wp_id_cache[tensor_name].count(wp.id);
+      bool wp_cache_hit = wp_id_cache_[tensor_name].count(wp.id);
       wp_lock_.unlock();
       if (wp_cache_hit) continue;
     }
@@ -200,7 +200,7 @@ void DebugServices::AddAnalyzedTensorToCache(const bool recheck, const unsigned 
   // add analyzed tensor to cache
   if (!recheck) {
     wp_lock_.lock();
-    wp_id_cache[tensor_name].insert(id);
+    wp_id_cache_[tensor_name].insert(id);
     wp_lock_.unlock();
   }
 }
@@ -309,7 +309,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
                                      std::vector<unsigned int> *root_graph_id) {
   std::lock_guard<std::mutex> lg(lock_);
   auto t1 = std::chrono::high_resolution_clock::now();
-  if (watchpoint_table.empty()) return;
+  if (watchpoint_table_.empty()) return;
   // vector to store execution order of tensors hit
   std::vector<int> exec_order;
   int tensor_list_size = tensor_list->size();
@@ -505,7 +505,7 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
           }
         }
       }
-      closedir(d_handle);
+      (void)closedir(d_handle);
     }
   }
 }
@@ -556,7 +556,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
     std::string prefix_dump_file_name = dump_style_kernel_name;
     GetNodeNameWithoutScope(&prefix_dump_file_name);
 
-    std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
+    std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
@@ -586,7 +586,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
           }
         }
       }
-      closedir(d);
+      (void)closedir(d);
     }
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
@@ -627,7 +627,7 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
           }
         }
       }
-      closedir(d);
+      (void)closedir(d);
     }
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
@@ -753,7 +753,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     std::string prefix_dump_to_check = dump_style_kernel_name;
     GetNodeNameWithoutScope(&prefix_dump_to_check);
 
-    std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
+    std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id[i]) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
@@ -761,7 +761,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     std::string type_name = "";
     std::vector<int64_t> shape;
     uint64_t data_size = 0;
-    if (is_sync_mode) {
+    if (is_sync_mode_) {
       std::string abspath = RealPath(specific_dump_dir);
       DIR *d = opendir(abspath.c_str());
       bool found_file = false;
@@ -786,8 +786,8 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
             matched_paths.push_back(full_path);
             found_file = true;
           }
-          closedir(d);
         }
+        (void)closedir(d);
       }
 
       if (found_file) {
@@ -857,7 +857,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
   // get a list of nodes and the devices they are on to monitor
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> device_and_graph_to_nodes;
-  for (auto w_table_item : watchpoint_table) {
+  for (auto w_table_item : watchpoint_table_) {
     auto wp = std::get<1>(w_table_item);
     unsigned int index = 0;
     for (auto check_node : wp.check_node_list) {
@@ -883,7 +883,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     std::vector<std::tuple<std::string, bool>> wp_nodes = device_and_graph_item.second;
     std::vector<std::tuple<std::string, std::string>> proto_to_dump;
 
-    std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id) + "/" + net_name + "/" +
+    std::string specific_dump_dir = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
                                     std::to_string(root_graph_id) + "/" + IterationString(iteration);
 
     // convert node names to dump style
@@ -903,11 +903,11 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
       proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name));
     }
 
-    if (!is_sync_mode) {
+    if (!is_sync_mode_) {
       // convert all files in proto_to_dump to npy and add to pool of async file names
       ConvertWatchPointNodes(proto_to_dump, specific_dump_dir, async_file_pool);
     }
-    if (is_sync_mode) {
+    if (is_sync_mode_) {
       // search files in dir for the one that meets the filename prefix and read the file into memory
       std::string abspath = RealPath(specific_dump_dir);
       DIR *d = opendir(abspath.c_str());
@@ -940,7 +940,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
             }
           }
         }
-        closedir(d);
+        (void)closedir(d);
       }
     } else {
       GetTensorDataInfoAsync(proto_to_dump, specific_dump_dir, iteration, device_id, root_graph_id, *async_file_pool,
@@ -985,7 +985,7 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
 #ifdef ONLINE_DBG_MODE
 bool DebugServices::IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel) const {
   bool ret = false;
-  for (auto w_table_item : watchpoint_table) {
+  for (auto w_table_item : watchpoint_table_) {
     auto check_node_list = std::get<1>(w_table_item).check_node_list;
     for (auto check_node : check_node_list) {
       std::string w_name = std::get<0>(check_node);
@@ -1049,17 +1049,17 @@ bool DebugServices::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, boo
 }
 
 std::unordered_map<unsigned int, DebugServices::watchpoint_t> DebugServices::GetWatchpointTable() {
-  return watchpoint_table;
+  return watchpoint_table_;
 }
 
 void DebugServices::ResetLoadedTensors() {
-  wp_id_cache.clear();
+  wp_id_cache_.clear();
   MS_LOG(INFO) << "Resetting loaded tensors";
   tensor_loader_->MoveParametersCurrentToPrev();
   tensor_loader_->EmptyCurrentTensor();
   // will move parameters from previous to current map
   tensor_loader_->SwapCurrentPrev();
-  overflow_ops.clear();
+  overflow_ops_.clear();
 }
 
 #ifdef ONLINE_DBG_MODE
@@ -1093,7 +1093,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   }
   overflow_bin_path = realpath.value();
 #else
-  overflow_bin_path = dump_dir + "/rank_" + std::to_string(device_id) + "/" + net_name + "/" +
+  overflow_bin_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
                       std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
   overflow_bin_path = RealPath(overflow_bin_path);
 #endif
@@ -1101,10 +1101,10 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   overflow_wp_lock_.lock();
 
   MS_LOG(INFO) << "Searching for overflow in node " << node_name_to_find;
-  auto found_overflows = overflow_ops.find(overflow_bin_path);
-  if (found_overflows != overflow_ops.end()) {
+  auto found_overflows = overflow_ops_.find(overflow_bin_path);
+  if (found_overflows != overflow_ops_.end()) {
     MS_LOG(INFO) << "Found already computed overflows for " << overflow_bin_path;
-    op_names = overflow_ops[overflow_bin_path];
+    op_names = overflow_ops_[overflow_bin_path];
   } else {
     std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
     std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;
@@ -1169,7 +1169,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
           infile.close();
         }
       }
-      closedir(d);
+      (void)closedir(d);
     }
 
     // find the op_names with an overflow hit
@@ -1181,7 +1181,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
       }
     }
 
-    overflow_ops[overflow_bin_path] = op_names;
+    overflow_ops_[overflow_bin_path] = op_names;
   }
 
   overflow_wp_lock_.unlock();
@@ -1303,17 +1303,17 @@ void DebugServices::MoveTensorCurrentToPrev(const std::string &tensor_name) {
   tensor_loader_->MoveTensorCurrentToPrev(tensor_name);
 }
 
-void DebugServices::SetNetName(std::string net_name) { this->net_name = net_name; }
+void DebugServices::SetNetName(std::string net_name) { this->net_name_ = net_name; }
 
-std::string DebugServices::GetNetName() { return net_name; }
+std::string DebugServices::GetNetName() { return net_name_; }
 
-void DebugServices::SetDumpDir(std::string dump_dir) { this->dump_dir = dump_dir; }
+void DebugServices::SetDumpDir(std::string dump_dir) { this->dump_dir_ = dump_dir; }
 
-std::string DebugServices::GetDumpDir() { return dump_dir; }
+std::string DebugServices::GetDumpDir() { return dump_dir_; }
 
-void DebugServices::SetSyncMode(bool is_sync_mode) { this->is_sync_mode = is_sync_mode; }
+void DebugServices::SetSyncMode(bool is_sync_mode) { this->is_sync_mode_ = is_sync_mode; }
 
-bool DebugServices::GetSyncMode() { return is_sync_mode; }
+bool DebugServices::GetSyncMode() { return is_sync_mode_; }
 
 #ifdef ONLINE_DBG_MODE
 }  // namespace mindspore

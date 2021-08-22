@@ -16,13 +16,6 @@
 
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
 
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -34,11 +27,11 @@
 namespace mindspore {
 namespace kernel {
 KernelPackPtr AkgAscendKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
-  return tbe::TbeUtils::SearchCache(kernel_name, kProcessorAiCore);
+  return tbe::TbeUtils::SearchCache(kernel_name, true);
 }
 
 KernelPackPtr AkgAscendKernelBuilder::AkgInsertCache(const std::string &kernel_name) {
-  return tbe::TbeUtils::InsertCache(kernel_name, kProcessorAiCore);
+  return tbe::TbeUtils::InsertCache(kernel_name, kProcessorAiCore, true);
 }
 
 void AkgAscendKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,

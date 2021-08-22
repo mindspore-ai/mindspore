@@ -87,6 +87,7 @@ class TensorRow {
   /// \param[out] output TensorRow
   template <typename T>
   static Status ConvertToTensorRow(const std::vector<T> &o, TensorRow *output) {
+    RETURN_UNEXPECTED_IF_NULL(output);
     DataType data_type = DataType::FromCType<T>();
     if (data_type == DataType::DE_UNKNOWN) {
       RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type was not recognized.");
@@ -106,6 +107,7 @@ class TensorRow {
   /// \param[out] output TensorRow
   template <typename T>
   static Status ConvertToTensorRow(const T &o, TensorRow *output) {
+    RETURN_UNEXPECTED_IF_NULL(output);
     DataType data_type = DataType::FromCType<T>();
     if (data_type == DataType::DE_UNKNOWN) {
       RETURN_STATUS_UNEXPECTED("ConvertToTensorRow: Data type was not recognized.");
@@ -125,6 +127,7 @@ class TensorRow {
   /// \param[out] o the primitive variable
   template <typename T>
   static Status ConvertFromTensorRow(const TensorRow &input, T *o) {
+    RETURN_UNEXPECTED_IF_NULL(o);
     DataType data_type = DataType::FromCType<T>();
     RETURN_IF_NOT_OK(ValidateTensorRow(input, data_type));
     if (input.at(0)->type() != data_type) {
@@ -142,6 +145,7 @@ class TensorRow {
   /// \param[out] o vector of primitive variable
   template <typename T>
   static Status ConvertFromTensorRow(const TensorRow &input, std::vector<T> *o) {
+    RETURN_UNEXPECTED_IF_NULL(o);
     DataType data_type = DataType::FromCType<T>();
     RETURN_IF_NOT_OK(ValidateTensorRow(input, data_type));
     if (input.at(0)->Rank() != 1)

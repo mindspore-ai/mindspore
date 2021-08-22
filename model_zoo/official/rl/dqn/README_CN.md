@@ -35,10 +35,10 @@ DQN网络的模型结构见论文：
 - 硬件
     - Ascend或GPU处理器
 - 框架
-    - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/)
 - 通过下面网址可以获得更多信息：
-    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
 
 - 第三方库
 
@@ -115,7 +115,7 @@ pip install gym
 | 损失函数              | MSELoss                                                | MSELoss                                                |
 | 输出                    | 游戏得分值                                                 | 游戏得分值                                                 |
 | 参数量(M)                 | 7.3k                                                       | 7.3k                                                       |
-| 脚本 | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn |
+| 脚本 | <<<<https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn>>>> | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/rl/dqn |
 
 # 随机情况描述
 

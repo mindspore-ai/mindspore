@@ -78,7 +78,7 @@ int QuantDTypeCastFp16CPUKernel::Init() {
 int QuantDTypeCastFp16CPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
   num_unit_ = static_cast<int>(in_tensor->ElementsNum());
-  thread_n_num_ = MSMIN(thread_num_, num_unit_);
+  thread_n_num_ = MSMIN(ms_context_->thread_num_, num_unit_);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
   return RET_OK;
 }

@@ -112,7 +112,7 @@ class __attribute__((visibility("default"))) ShardWriter {
                           const std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> &row_bin_data,
                           std::shared_ptr<std::vector<uint8_t>> *output);
 
-  static MSRStatus initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
+  static MSRStatus Initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
                               const std::vector<std::string> &file_names);
 
  private:

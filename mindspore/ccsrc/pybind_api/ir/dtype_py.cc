@@ -109,6 +109,22 @@ REGISTER_PYBIND_DEFINE(
           Float data(t[0].cast<py::int_>());
           return data;
         }));
+    (void)py::class_<Complex, Number, std::shared_ptr<Complex>>(m_sub, "Complex")
+      .def(py::init())
+      .def(py::init<int>(), py::arg("nbits"))
+      .def(py::pickle(
+        [](const Complex &t) {  // __getstate__
+          /* Return a tuple that fully encodes the state of the object */
+          return py::make_tuple(py::int_(t.nbits()));
+        },
+        [](const py::tuple &t) {  // __setstate__
+          if (t.size() != 1) {
+            throw std::runtime_error("Invalid state!");
+          }
+          /* Create a new C++ instance */
+          Complex data(t[0].cast<py::int_>());
+          return data;
+        }));
     (void)py::class_<List, Type, std::shared_ptr<List>>(m_sub, "List")
       .def(py::init())
       .def(py::init<std::vector<TypePtr>>(), py::arg("elements"));

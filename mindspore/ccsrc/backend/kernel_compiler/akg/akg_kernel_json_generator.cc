@@ -16,12 +16,6 @@
 
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 
-#include <algorithm>
-#include <functional>
-#include <map>
-#include <set>
-#include <sstream>
-#include <tuple>
 #if ENABLE_GPU
 #include <cuda.h>
 #endif

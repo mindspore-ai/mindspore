@@ -48,11 +48,17 @@ class ScaleNPUOp : public NPUOp {
  private:
   int SetActivation(const ge::Operator *input);
 
+  int ConvertScaleToMul(const std::vector<ge::Operator *> &npu_inputs, ge::Operator *cur_op,
+                        const std::vector<mindspore::MSTensor> &in_tensors);
+
   int axis_ = 0;
+  bool use_mul_ = false;
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
-  hiai::op::Scale *op_ = nullptr;
+  ge::Operator *op_ = nullptr;
+  hiai::op::Reshape *reshape_ = nullptr;
   hiai::op::Const *scale_ = nullptr;
   hiai::op::Const *bias_ = nullptr;
+  hiai::op::Const *shape_ = nullptr;
   hiai::op::Activation *act_ = nullptr;
 };
 }  // namespace mindspore

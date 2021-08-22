@@ -127,7 +127,10 @@ int ReshapeOpenCLKernel::PreProcess() {
         MS_LOG(ERROR) << "SyncCommandQueue failed.";
         return RET_ERROR;
       }
-      shape_tensor->MutableData();
+      if (shape_tensor->MutableData() == nullptr) {
+        MS_LOG(ERROR) << "MutableData failed.";
+        return RET_ERROR;
+      }
     }
   }
   return OpenCLKernel::PreProcess();

@@ -52,7 +52,9 @@ class PerfData {
   void AddSample(const T &row) {
     auto i = 0;
     for (const auto &e : row) {
-      data_[i++].push_back(e);
+      if (data_.size() > i) {
+        data_[i++].push_back(e);
+      }
     }
     counter_++;
   }
@@ -62,7 +64,9 @@ class PerfData {
   auto Row(dsize_t idx) {
     std::vector<V> row(n_cols_);
     for (auto i = 0; i < n_cols_; i++) {
-      row[i] = data_[i][idx];
+      if (data_.size() > i && data_[i].size() > idx) {
+        row[i] = data_[i][idx];
+      }
     }
     return row;
   }

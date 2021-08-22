@@ -179,8 +179,6 @@ def get_options_info(job_content):
     options["op_debug_level"] = job_content["SocInfo"]["op_debug_level"]
     options["op_impl_mode"] = job_content["SocInfo"]["op_impl_mode"]
     options["op_debug_dir"] = job_content["SocInfo"]["op_debug_dir"]
-    options["op_compiler_cache_dir"] = job_content["SocInfo"]["op_compiler_cache_dir"]
-    options["op_compiler_cache_mode"] = job_content["SocInfo"]["op_compiler_cache_mode"]
     options["mdl_bank_path"] = job_content["SocInfo"]["op_debug_level"]
     options["op_bank_path"] = job_content["SocInfo"]["op_bank_path"]
     options["deviceId"] = job_content["SocInfo"]["deviceId"]
@@ -218,6 +216,19 @@ def get_func_names(job_content):
         if "func_name" in op:
             func_names.append(op["func_name"])
     return func_names
+
+
+def get_module_name(compute_op_info):
+    """
+    get compute_op_info
+    :param compute_op_info:
+    :return:
+    """
+    unknown_shape = compute_op_info["unknown_shape"]
+    op_module_name = compute_op_info["module_name"]
+    if unknown_shape:
+        op_module_name = op_module_name.split(".")[0] + ".dynamic." + op_module_name.split(".")[-1]
+    return op_module_name
 
 
 def adjust_custom_op_info(compute_op_info):

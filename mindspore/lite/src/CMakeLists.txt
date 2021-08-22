@@ -1,11 +1,30 @@
 add_compile_definitions(USE_ANDROID_LOG)
-if(ENABLE_V0)
+if(MSLITE_ENABLE_V0)
     add_definitions(-DENABLE_V0)
 endif()
 include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
-set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${LITE_DIR}/nnacl/)
-include_directories(${LITE_DIR}/nnacl/optimize)
+
+if(NOT MSLITE_STRING_KERNEL)
+    add_compile_definitions(STRING_KERNEL_CLIP)
+endif()
+if(NOT MSLITE_CONTROLFLOW_TENSORLIST)
+    add_compile_definitions(CONTROLFLOW_TENSORLIST_CLIP)
+endif()
+if(NOT MSLITE_AUTO_PARALLEL)
+    add_compile_definitions(AUTO_PARALLEL_CLIP)
+endif()
+if(NOT MSLITE_WEIGHT_DECODE)
+    add_compile_definitions(WEIGHT_DECODE_CLIP)
+endif()
+if(NOT MSLITE_CUSTOM_KERNEL_REGISTRY)
+    add_compile_definitions(CUSTOM_KERNEL_REGISTRY_CLIP)
+endif()
+if(NOT MSLITE_ENABLE_RUNTIME_PASS)
+    add_compile_definitions(RUNTIME_PASS_CLIP)
+endif()
+if(NOT MSLITE_DELEGATE_USE)
+    add_compile_definitions(DELEGATE_CLIP)
+endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
@@ -67,16 +86,12 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/lite_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ms_tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
@@ -90,21 +105,39 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
-if(MSLITE_CONTROL_TENSORLIST)
+
+if(MSLITE_STRING_KERNEL)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
+        )
+endif()
+if(MSLITE_ENABLE_RUNTIME_PASS)
     set(LITE_SRC
             ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
             )
 endif()
-if(MSLITE_HUFFMAN_DECODE)
+
+if(MSLITE_CONTROLFLOW_TENSORLIST)
+    set(LITE_SRC
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
+        )
+endif()
+
+if(MSLITE_WEIGHT_DECODE)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/quantizer/fse_decoder.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/quantizer/fse_bit_stream.cc
         )
 endif()
+
 if(MSLITE_AUTO_PARALLEL)
     set(LITE_SRC
             ${LITE_SRC}
@@ -112,8 +145,26 @@ if(MSLITE_AUTO_PARALLEL)
             )
 endif()
 
-file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
-set(LITE_SRC ${LITE_SRC} ${KERNEL_REG_SRC})
+if(MSLITE_CUSTOM_KERNEL_REGISTRY)
+    file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
+else()
+    set(KERNEL_REG_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/registry/register_kernel_interface.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/registry/register_kernel.cc
+            )
+endif()
+
+set(LITE_SRC
+    ${LITE_SRC}
+    ${KERNEL_REG_SRC}
+    )
+
+if(MSLITE_DELEGATE_USE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
+            )
+endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
@@ -152,21 +203,21 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/opt_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
         )
-if(ENABLE_V0)
+if(MSLITE_ENABLE_V0)
     set(TRAIN_SRC
             ${TRAIN_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter_v0.cc
             )
 endif()
 
-if(ENABLE_MINDRT)
+if(MSLITE_ENABLE_MINDRT)
     add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
-elseif(TARGET_HIMIX200 OR TARGET_OHOS_LITE)
+else()
     file(GLOB MINDRT_ACTOR ${CORE_DIR}/mindrt/src/actor/*.cc)
     set(LITE_SRC
         ${LITE_SRC}
@@ -223,7 +274,7 @@ if(MSVC)
     set_target_properties(mindspore-lite_static PROPERTIES PREFIX lib)
 endif()
 
-if(ENABLE_MINDRT)
+if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(mindspore-lite mindrt_mid)
     target_link_libraries(mindspore-lite_static mindrt_mid)
 endif()

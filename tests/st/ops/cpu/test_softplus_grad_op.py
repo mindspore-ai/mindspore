@@ -48,7 +48,7 @@ class Grad(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_softplus_grad():
+def test_softplus_grad_1d_fp32():
     x = np.array([0.58401114, 0.68800163, 0.9760397, 0.14702141, 0.46563736, 0.9607501,
                   0.14567593, 0.12261796, 0.37054458, 0.46421242]).astype(np.float32)
     dy = np.array([0.5559598, 0.96994054, 0.24770357, 0.34646875, 0.2984393, 0.03287048,
@@ -67,10 +67,24 @@ def test_softplus_grad():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_softplus_grad_fp16():
+def test_softplus_grad_3d_fp16():
     np.random.seed(42)
     x_np = np.random.randn(5, 3, 6).astype(np.float16)
     dy_np = np.random.randn(5, 3, 6).astype(np.float16)
+    net = SoftplusNet()
+    grad = Grad(net)
+    output = grad(Tensor(x_np), Tensor(dy_np))
+    expect = dy_np * np.exp(x_np) / (1 + np.exp(x_np))
+    assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_softplus_grad_7d_fp32():
+    np.random.seed(20)
+    x_np = np.random.randn(5, 3, 6, 3, 4, 5, 6).astype(np.float32)
+    dy_np = np.random.randn(5, 3, 6, 3, 4, 5, 6).astype(np.float32)
     net = SoftplusNet()
     grad = Grad(net)
     output = grad(Tensor(x_np), Tensor(dy_np))

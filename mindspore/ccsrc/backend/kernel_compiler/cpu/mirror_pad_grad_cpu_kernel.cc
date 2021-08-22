@@ -110,6 +110,8 @@ bool MirrorPadGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
     LaunchKernel<float16>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, workspace, outputs);
   } else {
@@ -130,6 +132,8 @@ void MirrorPadGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
     InitWorkspaceSize<float16>();
   } else if (dtype_ == kNumberTypeFloat32) {
     InitWorkspaceSize<float>();
+  } else if (dtype_ == kNumberTypeFloat64) {
+    InitWorkspaceSize<double>();
   } else if (dtype_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   }

@@ -56,5 +56,6 @@ TEST_F(SpaceToBatchTestInt8, test1) {
   }
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

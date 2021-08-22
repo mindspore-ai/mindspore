@@ -1545,60 +1545,6 @@ inline std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &
   return std::make_shared<ConcatDataset>(std::vector({datasets1, datasets2}));
 }
 
-class CmuArcticDataset : public Dataset {
- public:
-  explicit CmuArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
-  explicit CmuArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                        const std::shared_ptr<DatasetCache> &cache);
-  explicit CmuArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
-  ~CmuArcticDataset() = default;
-};
-
-/// \brief Function to create a CmuArcticDataset.
-/// \note The generated dataset has two columns ["audio", "samplerate", "label"].
-/// \param[in] dataset_dir Path to the root directory that contains the dataset.
-/// \param[in] usage Part of dataset of GTZAN, can be "training", "validation", "testing" or "all" (default = "all").
-/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
-///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
-/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-/// \return Shared pointer to the CmuArcticDataset.
-inline std::shared_ptr<CmuArcticDataset> CmuArctic(const std::string &dataset_dir, const std::string &usage = "all",
-                                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
-                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
-  return std::make_shared<CmuArcticDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
-}
-
-
-/// \brief Function to create a CmuArcticDataset.
-/// \note The generated dataset has two columns ["audio", "samplerate", "label"].
-/// \param[in] dataset_dir Path to the root directory that contains the dataset.
-/// \param[in] usage Part of dataset of GTZAN, can be "training", "validation", "testing" or "all" (default = "all").
-/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
-/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-/// \return Shared pointer to the CmuArcticDataset.
-inline std::shared_ptr<CmuArcticDataset> CmuArctic(const std::string &dataset_dir, const std::string &usage,
-                                           const Sampler *sampler,
-                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
-  return std::make_shared<CmuArcticDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
-}
-
-
-/// \brief Function to create a CmuArcticDataset.
-/// \note The generated dataset has two columns ["audio", "samplerate", "label"].
-/// \param[in] dataset_dir Path to the root directory that contains the dataset.
-/// \param[in] usage Part of dataset of GTZAN, can be "training", "validation", "testing" or "all" (default = "all").
-/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
-/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-/// \return Shared pointer to the CmuArcticDataset.
-inline std::shared_ptr<CmuArcticDataset> CmuArctic(const std::string &dataset_dir, const std::string &usage,
-                                           const std::reference_wrapper<Sampler> sampler,
-                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
-  return std::make_shared<CmuArcticDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
-}
-
-
 class RandomDataDataset : public Dataset {
  public:
   RandomDataDataset(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema,

@@ -23,10 +23,10 @@
 #include "ir/func_graph.h"
 
 namespace mindspore {
-namespace opt {
-bool RunOptimizerPass(const FuncGraphPtr &func_graph, std::vector<std::string> pass_names);
-bool RunExternalPass(const FuncGraphPtr &func_graph, PassPosition position);
-}  // namespace opt
+namespace lite {
+bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names);
+bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition position);
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H

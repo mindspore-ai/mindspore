@@ -78,6 +78,7 @@ TEST_F(TestLshProjectionFp32, Dense1DInputs) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestLshProjectionFp32, Sparse1DInputs) {
@@ -120,6 +121,7 @@ TEST_F(TestLshProjectionFp32, Sparse1DInputs) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 
 TEST_F(TestLshProjectionFp32, Sparse3DInputs) {
@@ -166,5 +168,6 @@ TEST_F(TestLshProjectionFp32, Sparse3DInputs) {
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
   out_tensor.set_data(nullptr);
+  delete kernel;
 }
 }  // namespace mindspore

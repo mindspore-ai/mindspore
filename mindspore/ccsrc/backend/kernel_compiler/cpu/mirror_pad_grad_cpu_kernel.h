@@ -92,6 +92,11 @@ MS_REG_CPU_KERNEL(
 
 MS_REG_CPU_KERNEL(
   MirrorPadGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  MirrorPadGradCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  MirrorPadGrad,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
   MirrorPadGradCPUKernel);
 
@@ -103,6 +108,11 @@ MS_REG_CPU_KERNEL(
 MS_REG_CPU_KERNEL(
   MirrorPadGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  MirrorPadGradCPUKernel);
+
+MS_REG_CPU_KERNEL(
+  MirrorPadGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
   MirrorPadGradCPUKernel);
 
 MS_REG_CPU_KERNEL(

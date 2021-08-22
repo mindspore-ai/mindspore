@@ -22,6 +22,9 @@
 #include <utility>
 #include <vector>
 
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/serdes.h"
+#endif
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
@@ -56,6 +59,7 @@ void MapNode::Print(std::ostream &out) const {
 }
 
 Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
+  RETURN_UNEXPECTED_IF_NULL(node_ops);
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
 
   // Build tensorOp from tensorOperation vector
@@ -128,12 +132,16 @@ Status MapNode::ValidateParams() {
 
 // Visitor accepting method for IRNodePass
 Status MapNode::Accept(IRNodePass *const p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<MapNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
 Status MapNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  RETURN_UNEXPECTED_IF_NULL(modified);
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<MapNode>(), modified);
 }
@@ -144,6 +152,7 @@ void MapNode::setOperations(const std::vector<std::shared_ptr<TensorOperation>> 
 std::vector<std::shared_ptr<TensorOperation>> MapNode::operations() { return operations_; }
 
 Status MapNode::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["num_parallel_workers"] = num_workers_;
   args["input_columns"] = input_columns_;
@@ -154,10 +163,10 @@ Status MapNode::to_json(nlohmann::json *out_json) {
     RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
     args["cache"] = cache_args;
   }
-
   std::vector<nlohmann::json> ops;
   std::vector<int32_t> cbs;
   for (auto op : operations_) {
+    RETURN_UNEXPECTED_IF_NULL(op);
     nlohmann::json op_args;
     RETURN_IF_NOT_OK(op->to_json(&op_args));
     if (op->Name() == "PyFuncOp") {
@@ -170,12 +179,32 @@ Status MapNode::to_json(nlohmann::json *out_json) {
     }
   }
   args["operations"] = ops;
-  std::transform(callbacks_.begin(), callbacks_.end(), std::back_inserter(cbs),
-                 [](std::shared_ptr<DSCallback> cb) -> int32_t { return cb->step_size(); });
+  (void)std::transform(callbacks_.begin(), callbacks_.end(), std::back_inserter(cbs),
+                       [](std::shared_ptr<DSCallback> cb) -> int32_t { return cb != nullptr ? cb->step_size() : 0; });
   args["callback"] = cbs;
   *out_json = args;
   return Status::OK();
 }
+
+#ifndef ENABLE_ANDROID
+Status MapNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> ds,
+                          std::shared_ptr<DatasetNode> *result) {
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("num_parallel_workers") != json_obj.end(),
+                               "Failed to find num_parallel_workers");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("input_columns") != json_obj.end(), "Failed to find input_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("output_columns") != json_obj.end(), "Failed to find output_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("project_columns") != json_obj.end(), "Failed to find project_columns");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("operations") != json_obj.end(), "Failed to find operations");
+  std::vector<std::string> input_columns = json_obj["input_columns"];
+  std::vector<std::string> output_columns = json_obj["output_columns"];
+  std::vector<std::string> project_columns = json_obj["project_columns"];
+  std::vector<std::shared_ptr<TensorOperation>> operations;
+  RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(json_obj["operations"], &operations));
+  *result = std::make_shared<MapNode>(ds, operations, input_columns, output_columns, project_columns);
+  (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  return Status::OK();
+}
+#endif
 
 // Gets the dataset size
 Status MapNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,

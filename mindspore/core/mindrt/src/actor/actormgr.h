@@ -48,12 +48,14 @@ class ActorMgr {
     (void)ActorMgr::GetActorMgrRef()->Send(AID(to), std::move(msg));
   }
 
+  ActorThreadPool *GetActorThreadPool() { return inner_pool_; }
+
   ActorMgr();
   ~ActorMgr();
 
   void Finalize();
   // initialize actor manager resource, do not create inner thread pool by default
-  void Initialize(bool use_inner_pool = false, size_t thread_num = 1);
+  void Initialize(bool use_inner_pool = false, size_t actor_thread_num = 1, size_t max_thread_num = 1);
 
   void RemoveActor(const std::string &name);
   ActorBase *GetActor(const AID &id);

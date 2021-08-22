@@ -80,6 +80,9 @@ class Expander:
 
 class ExpanderInfoValidator:
     """ExpanderInfoValidator is the utility class which defines the validator decorator for expanders"""
+
+    def __init__(self):
+        """Init"""
     @staticmethod
     def _add_check_function(kls, func):
         """
@@ -198,8 +201,8 @@ def to_frac_z_axis(ori_shape, ori_axis):
     return frac_z_axis
 
 
-def infer_shape_from_fractalNz(fractal):
-    "get original shape from fractalNz shape"
+def infer_shape_from_fractalnz(fractal):
+    "get original shape from fractalnz shape"
     shape = []
     dims = len(fractal)
     batch = dims - 4

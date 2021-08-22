@@ -58,9 +58,11 @@ class FileConfiguration : public Configuration {
 
   std::string GetString(const std::string &key, const std::string &defaultvalue) const override;
 
+  int64_t GetInt(const std::string &key, int64_t default_value) const override;
+
   void Put(const std::string &key, const std::string &value) override;
 
-  bool Exists(const std::string &key) override;
+  bool Exists(const std::string &key) const override;
 
  private:
   // The path of the configuration file.

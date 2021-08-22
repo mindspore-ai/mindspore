@@ -613,10 +613,12 @@ bash scripts/squad.sh
 
 ## 导出mindir模型
 
+由于预训练模型通常没有应用场景，需要经过下游任务的finetune之后才能使用，所以当前仅支持使用下游任务模型和yaml配置文件进行export操作。
+
 - 在本地导出
 
 ```shell
-python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [../../*.yaml] --export_ckpt_file [CKPT_PATH] --export_file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 - 在ModelArts上导出
@@ -647,7 +649,7 @@ python export.py --config_path [../../*.yaml] --ckpt_file [CKPT_PATH] --file_nam
 # 你将在{Output file path}下看到 'bert_ner.mindir'文件
 ```
 
-参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+参数`export_ckpt_file` 是必需的，`file_format` 必须在 ["AIR", "MINDIR"]中进行选择。
 
 ## 推理过程
 
@@ -746,6 +748,8 @@ run_pretrain.py中设置了随机种子，确保分布式训练中每个节点�
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
 
 # FAQ
+
+优先参考[ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ)来查找一些常见的公共问题。
 
 - **Q: 运行过程中发生持续溢出怎么办？**
   **A**： 持续溢出通常是因为使用了较高的学习率导致训练不收敛。可以考虑修改yaml配置文件中的参数，调低`learning_rate`来降低初始学习率或提高`power`加速学习率衰减。

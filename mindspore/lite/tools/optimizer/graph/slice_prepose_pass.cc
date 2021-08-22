@@ -1411,7 +1411,7 @@ bool SlicePreposePass::DoPrepose(const FuncGraphPtr &graph, const CNodePtr &slic
 }
 
 bool SlicePreposePass::Run(const FuncGraphPtr &graph) {
-  if (fmk_type != lite::converter::FmkType_TF && fmk_type != lite::converter::FmkType_TFLITE) {
+  if (fmk_type != converter::kFmkTypeTf && fmk_type != converter::kFmkTypeTflite) {
     MS_LOG(INFO) << "The framework type of model should be tf/tflite.";
     return false;
   }

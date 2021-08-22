@@ -28,12 +28,10 @@
 namespace mindspore {
 namespace opt {
 void MatmulConfusionTranposeFusionPass::MatchMatmulConfusionTranpose(const CNodePtr &cnode,
-                                                                     const session::KernelGraph &kernel_graph,
+                                                                     const session::KernelGraph & /*kernel_graph*/,
                                                                      FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto manager = kernel_graph.manager();
-  MS_EXCEPTION_IF_NULL(manager);
   auto matmul = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(matmul);
   if (matmul->isa<CNode>() && (AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul) ||

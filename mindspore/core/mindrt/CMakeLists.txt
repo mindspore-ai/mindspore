@@ -11,4 +11,8 @@ file(GLOB MINDRT_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/*.cc
     )
 
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    add_compile_definitions(BUILDING_DLL)
+endif()
+
 add_library(mindrt_mid OBJECT ${MINDRT_SRC})

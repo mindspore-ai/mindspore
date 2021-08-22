@@ -22,20 +22,9 @@
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore::opt {
-ValueNodePtr ControlFlowPass::GetSwitchAnfPrim() {
-  auto switch_prim = std::make_shared<mindspore::ops::Switch>();
-  ValueNodePtr switch_anf_prim = NewValueNode(switch_prim);
-  return switch_anf_prim;
-}
-
-ValueNodePtr ControlFlowPass::GetPartialAnfPrim() {
-  auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
-  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
-  return partial_anf_prim;
-}
-
 void ControlFlowPass::ReplaceNode(const FuncGraphPtr &fg,
                                   const std::unordered_map<AnfNodePtr, AnfNodePtr> &replace_pairs) {
   for (auto &node : fg->nodes()) {
@@ -199,7 +188,7 @@ int ControlFlowPass::CreateAfterGraph(const FuncGraphPtr &main_fg, const std::ve
   *after_fg = std::make_shared<FuncGraph>();
   auto manager = main_fg->manager();
   manager->AddFuncGraph(*after_fg);
-  (*after_fg)->set_attr("fmk", MakeValue(static_cast<int>(lite::converter::FmkType_TF)));
+  (*after_fg)->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
   (*after_fg)->set_attr("graph_name", MakeValue(aim_cnode->fullname_with_scope() + "_after_fg"));
   (*after_fg)->set_manager(main_fg->manager());
 
@@ -211,7 +200,9 @@ int ControlFlowPass::CreateAfterGraph(const FuncGraphPtr &main_fg, const std::ve
       continue;
     }
     (*after_fg)->AddNode(cur_node);
-    cur_node->set_func_graph(*after_fg);
+    if (!utils::isa<ValueNodePtr>(cur_node)) {
+      cur_node->set_func_graph(*after_fg);
+    }
     if (cur_node == main_fg->output()) {
       (*after_fg)->set_output(cur_node, false);
     }
@@ -233,9 +224,9 @@ int ControlFlowPass::CreateWhileCondCallNode(
   }
 
   // create after partial node
-  ValueNodePtr cond_partial_anf_primitive = GetPartialAnfPrim();
+  ValueNodePtr cond_partial_anf_primitive = lite::GetPartialFusionPrim();
   if (cond_partial_anf_primitive == nullptr) {
-    MS_LOG(ERROR) << "GetPartialAnfPrim failed.";
+    MS_LOG(ERROR) << "GetPartialFusionPrim failed.";
     return RET_FAILED;
   }
 
@@ -290,9 +281,9 @@ int ControlFlowPass::CreateWhileBodyPartialNode(const FuncGraphPtr &cond_fg, con
     return RET_FAILED;
   }
 
-  ValueNodePtr partial_anf_primitive = GetPartialAnfPrim();
+  ValueNodePtr partial_anf_primitive = lite::GetPartialFusionPrim();
   if (partial_anf_primitive == nullptr) {
-    MS_LOG(ERROR) << "GetPartialAnfPrim failed.";
+    MS_LOG(ERROR) << "GetPartialFusionPrim failed.";
     return RET_FAILED;
   }
 
@@ -358,9 +349,9 @@ int ControlFlowPass::CreateWhileAfterPartialNode(
   }
 
   auto after_value_node = NewValueNode(after_fg);
-  ValueNodePtr partial_anf_primitive = GetPartialAnfPrim();
+  ValueNodePtr partial_anf_primitive = lite::GetPartialFusionPrim();
   if (partial_anf_primitive == nullptr) {
-    MS_LOG(ERROR) << "GetPartialAnfPrim failed.";
+    MS_LOG(ERROR) << "GetPartialFusionPrim failed.";
     return RET_FAILED;
   }
 
@@ -463,7 +454,7 @@ int ControlFlowPass::ProcessWhileOp(const FuncGraphPtr &fg, const std::set<AnfNo
   }
 
   // create switch cnode
-  ValueNodePtr switch_anf_primitive = GetSwitchAnfPrim();
+  ValueNodePtr switch_anf_primitive = lite::GetSwitchAnfPrim();
   if (switch_anf_primitive == nullptr) {
     MS_LOG(ERROR) << "GetSwitchAnfPrim failed.";
     return false;
@@ -534,9 +525,9 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
   }
 
   // create then partial node
-  ValueNodePtr then_partial_anf_primitive = GetPartialAnfPrim();
+  ValueNodePtr then_partial_anf_primitive = lite::GetPartialFusionPrim();
   if (then_partial_anf_primitive == nullptr) {
-    MS_LOG(ERROR) << "GetPartialAnfPrim failed.";
+    MS_LOG(ERROR) << "GetPartialFusionPrim failed.";
     return RET_FAILED;
   }
   std::vector<AnfNodePtr> then_partial_cnode_inputs{then_partial_anf_primitive, then_vnode};
@@ -584,9 +575,9 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
   (*then_partial_cnode)->set_fullname_with_scope("partial_" + then_fg_name);
 
   // create after partial node
-  ValueNodePtr after_partial_anf_primitive = GetPartialAnfPrim();
+  ValueNodePtr after_partial_anf_primitive = lite::GetPartialFusionPrim();
   if (after_partial_anf_primitive == nullptr) {
-    MS_LOG(ERROR) << "GetPartialAnfPrim failed.";
+    MS_LOG(ERROR) << "GetPartialFusionPrim failed.";
     return RET_FAILED;
   }
   auto after_value_node = NewValueNode(*after_fg);
@@ -701,7 +692,7 @@ int ControlFlowPass::ProcessIfOp(const FuncGraphPtr &fg, const std::set<AnfNodeP
   }
 
   // create switch cnode
-  ValueNodePtr switch_anf_primitive = GetSwitchAnfPrim();
+  ValueNodePtr switch_anf_primitive = lite::GetSwitchAnfPrim();
   if (switch_anf_primitive == nullptr) {
     MS_LOG(ERROR) << "GetSwitchAnfPrim failed.";
     return false;

@@ -37,8 +37,8 @@ void PackWeightConvDw3x3Fp16(const void *src, void *dst, int channel) {
 }
 #endif
 
-void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
-                        int block_index) {
+void Im2ColPackUnitFp16(const float16_t *input_data, const ConvParameter *conv_param, float16_t *packed_input,
+                        int real_cal_num, int block_index) {
   // input format : nhwc
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -92,7 +92,8 @@ void PackHWCToWHCFp16(const float16_t *src, float16_t *dst, int height, int widt
   }
 }
 
-void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param) {
+void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data,
+                        const ConvParameter *conv_param) {
   // origin weight format : ohwi
   int input_channel = conv_param->input_channel_;
   int ic8 = UP_DIV(input_channel, C8NUM);
@@ -116,7 +117,8 @@ void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_w
   }
 }
 
-void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data, ConvParameter *conv_param) {
+void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data,
+                        const ConvParameter *conv_param) {
   // origin weight format : ohwi
   int input_channel = conv_param->input_channel_;
   int ic8 = UP_DIV(input_channel, C8NUM);
@@ -395,7 +397,7 @@ void PackNC4HW4ToNCHWFp16(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
-void PackNCHWFp32ToNC8HW8Fp16(float *src, float16_t *dst, int batch, int plane, int channel) {
+void PackNCHWFp32ToNC8HW8Fp16(const float *src, float16_t *dst, int batch, int plane, int channel) {
   int c8 = UP_DIV(channel, C8NUM);
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * channel;
@@ -414,7 +416,7 @@ void PackNCHWFp32ToNC8HW8Fp16(float *src, float16_t *dst, int batch, int plane, 
   }
 }
 
-void PackNCHWFp16ToNC8HW8Fp16(float16_t *src, float16_t *dst, int batch, int plane, int channel) {
+void PackNCHWFp16ToNC8HW8Fp16(const float16_t *src, float16_t *dst, int batch, int plane, int channel) {
   int c8 = UP_DIV(channel, C8NUM);
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * channel;
@@ -433,14 +435,31 @@ void PackNCHWFp16ToNC8HW8Fp16(float16_t *src, float16_t *dst, int batch, int pla
   }
 }
 
-void PackNHWCFp32ToNHWC8Fp16(float *src, float16_t *dst, int batch, int plane, int channel) {
+#ifdef ENABLE_DEBUG
+void PackNC8HW8ToNHWCFp16(const float16_t *src, float16_t *dst, int batch, int plane, int channel) {
+  int block = UP_DIV(channel, C8NUM);
+  int last_block_idx = block - 1;
+  int last_src_col = channel - last_block_idx * C8NUM;
+  for (size_t i = 0; i < block; i++) {
+    size_t src_col = (i != last_block_idx) ? C8NUM : last_src_col;
+    float16_t *dst_cur = dst + i * C8NUM;
+    for (size_t j = 0; j < plane; j++) {
+      memcpy(dst_cur, src, src_col * sizeof(float16_t));
+      src += src_col;
+      dst_cur += channel;
+    }
+  }
+}
+#endif
+
+void PackNHWCFp32ToNHWC8Fp16(const float *src, float16_t *dst, int batch, int plane, int channel) {
   int c8_channel = UP_DIV(channel, C8NUM) * C8NUM;
   for (int b = 0; b < batch; b++) {
     float16_t *dst_batch = dst + b * plane * c8_channel;
-    float *src_batch = src + b * plane * channel;
+    const float *src_batch = src + b * plane * channel;
     for (int i = 0; i < plane; i++) {
       float16_t *dst_plane = dst_batch + i * c8_channel;
-      float *src_plane = src_batch + i * channel;
+      const float *src_plane = src_batch + i * channel;
       for (int c = 0; c < channel; c++) {
         dst_plane[c] = (float16_t)(src_plane[c]);
       }
@@ -448,7 +467,7 @@ void PackNHWCFp32ToNHWC8Fp16(float *src, float16_t *dst, int batch, int plane, i
   }
 }
 
-void PackNHWCFp32ToC8HWN8Fp16(float *src, float16_t *dst, int batch, int plane, int channel) {
+void PackNHWCFp32ToC8HWN8Fp16(const float *src, float16_t *dst, int batch, int plane, int channel) {
   for (int n = 0; n < batch; n++) {
     for (int hw = 0; hw < plane; hw++) {
       for (int c = 0; c < channel; c++) {
@@ -463,7 +482,7 @@ void PackNHWCFp32ToC8HWN8Fp16(float *src, float16_t *dst, int batch, int plane, 
   return;
 }
 
-void PackNHWCFp16ToC8HWN8Fp16(float16_t *src, float16_t *dst, int batch, int plane, int channel) {
+void PackNHWCFp16ToC8HWN8Fp16(const float16_t *src, float16_t *dst, int batch, int plane, int channel) {
   for (int n = 0; n < batch; n++) {
     for (int hw = 0; hw < plane; hw++) {
       for (int c = 0; c < channel; c++) {
@@ -478,13 +497,13 @@ void PackNHWCFp16ToC8HWN8Fp16(float16_t *src, float16_t *dst, int batch, int pla
   return;
 }
 
-void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, int channel) {
+void PackNHWC8Fp16ToNHWCFp32(const float16_t *src, float *dst, int batch, int plane, int channel) {
   int c8_channel = UP_DIV(channel, C8NUM) * C8NUM;
   for (int b = 0; b < batch; b++) {
-    float16_t *src_batch = src + b * plane * c8_channel;
+    const float16_t *src_batch = src + b * plane * c8_channel;
     float *dst_batch = dst + b * plane * channel;
     for (int i = 0; i < plane; i++) {
-      float16_t *src_plane = src_batch + i * c8_channel;
+      const float16_t *src_plane = src_batch + i * c8_channel;
       float *dst_plane = dst_batch + i * channel;
       for (int c = 0; c < channel; c++) {
         dst_plane[c] = (float16_t)(src_plane[c]);
@@ -493,13 +512,13 @@ void PackNHWC8Fp16ToNHWCFp32(float16_t *src, float *dst, int batch, int plane, i
   }
 }
 
-void PackNHWC8ToNHWCFp16(float16_t *src, float16_t *dst, int batch, int plane, int channel) {
+void PackNHWC8ToNHWCFp16(const float16_t *src, float16_t *dst, int batch, int plane, int channel) {
   int c8_channel = UP_DIV(channel, C8NUM) * C8NUM;
   for (int b = 0; b < batch; b++) {
-    float16_t *src_batch = src + b * plane * c8_channel;
+    const float16_t *src_batch = src + b * plane * c8_channel;
     float16_t *dst_batch = dst + b * plane * channel;
     for (int i = 0; i < plane; i++) {
-      float16_t *src_plane = src_batch + i * c8_channel;
+      const float16_t *src_plane = src_batch + i * c8_channel;
       float16_t *dst_plane = dst_batch + i * channel;
       memcpy(dst_plane, src_plane, channel * sizeof(float16_t));
     }

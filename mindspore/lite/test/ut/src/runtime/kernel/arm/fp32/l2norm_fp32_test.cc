@@ -41,6 +41,7 @@ class TestL2NormFp32 : public mindspore::CommonTest {
 };
 
 void TestL2NormFp32::TearDown() {
+  delete kernel_;
   in_tensor_.set_data(nullptr);
   out_tensor_.set_data(nullptr);
 }

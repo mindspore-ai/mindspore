@@ -27,9 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for vision C++ API A to Q TensorTransform Operations (in alphabetical order)
 
-TEST_F(MindDataTestPipeline, TestAdjustGammaSuccess1) {
-  // pipeline 3-channel
-  MS_LOG(INFO) << "Pipeline Test.";
+TEST_F(MindDataTestPipeline, TestAdjustGamma3Channel) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustGamma3Channel.";
   std::string MindDataPath = "data/dataset";
   std::string folder_path = MindDataPath + "/testImageNetData/train/";
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
@@ -65,9 +64,8 @@ TEST_F(MindDataTestPipeline, TestAdjustGammaSuccess1) {
   iter2->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestAdjustGammaSuccess2) {
-  // pipeline 1-channel
-  MS_LOG(INFO) << "Pipeline Test.";
+TEST_F(MindDataTestPipeline, TestAdjustGamma1Channel) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustGamma1Channel.";
   std::string MindDataPath = "data/dataset";
   std::string folder_path = MindDataPath + "/testImageNetData/train/";
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
@@ -105,8 +103,7 @@ TEST_F(MindDataTestPipeline, TestAdjustGammaSuccess2) {
 }
 
 TEST_F(MindDataTestPipeline, TestAdjustGammaParamCheck) {
-  // pipeline 3-channel
-  MS_LOG(INFO) << "Pipeline Test.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustGammaParamCheck.";
   std::string MindDataPath = "data/dataset";
   std::string folder_path = MindDataPath + "/testImageNetData/train/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));

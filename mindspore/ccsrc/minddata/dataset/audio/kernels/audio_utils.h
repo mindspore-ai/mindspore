@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 
@@ -21,6 +20,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -29,21 +29,58 @@
 #include "minddata/dataset/util/status.h"
 
 constexpr double PI = 3.141592653589793;
+
 namespace mindspore {
 namespace dataset {
+
 /// \brief Turn a tensor from the power/amplitude scale to the decibel scale.
-/// \param input/output: Tensor of shape <...,freq,time>
-/// \param multiplier: power - 10, amplitude - 20
-/// \param amin: lower bound
-/// \param db_multiplier: multiplier for decibels
-/// \param top_db: the lower bound for decibels cut-off
-/// \return Status code
+/// \param input/output: Tensor of shape <..., freq, time>.
+/// \param multiplier: power - 10, amplitude - 20.
+/// \param amin: lower bound.
+/// \param db_multiplier: multiplier for decibels.
+/// \param top_db: the lower bound for decibels cut-off.
+/// \return Status code.
 template <typename T>
 Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T multiplier, T amin,
-                     T db_multiplier, T top_db);
+                     T db_multiplier, T top_db) {
+  TensorShape input_shape = input->shape();
+  TensorShape to_shape = input_shape.Rank() == 2
+                           ? TensorShape({1, 1, input_shape[-2], input_shape[-1]})
+                           : TensorShape({input->Size() / (input_shape[-3] * input_shape[-2] * input_shape[-1]),
+                                          input_shape[-3], input_shape[-2], input_shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(to_shape));
 
-/// \brief Calculate the angles of the complex numbers
-/// \param input/output: Tensor of shape <...,time>
+  std::vector<T> max_val;
+  int step = to_shape[-3] * input_shape[-2] * input_shape[-1];
+  int cnt = 0;
+  T temp_max = std::numeric_limits<T>::lowest();
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    // do clamp
+    *itr = *itr < amin ? log10(amin) * multiplier : log10(*itr) * multiplier;
+    *itr -= multiplier * db_multiplier;
+    // calculate max by axis
+    cnt++;
+    if ((*itr) > temp_max) temp_max = *itr;
+    if (cnt % step == 0) {
+      max_val.push_back(temp_max);
+      temp_max = std::numeric_limits<T>::lowest();
+    }
+  }
+
+  if (!std::isnan(top_db)) {
+    int ind = 0;
+    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
+      float lower_bound = max_val[ind / step] - top_db;
+      *itr = std::max((*itr), static_cast<T>(lower_bound));
+    }
+  }
+  RETURN_IF_NOT_OK(input->Reshape(input_shape));
+  *output = input;
+  return Status::OK();
+}
+
+/// \brief Calculate the angles of the complex numbers.
+/// \param input/output: Tensor of shape <..., time>.
 template <typename T>
 Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   TensorShape shape = input->shape();
@@ -68,14 +105,14 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
 }
 
 /// \brief Perform a biquad filter of input tensor.
-/// \param input/output: Tensor of shape <...,time>
-/// \param a0: denominator coefficient of current output y[n], typically 1
-/// \param a1: denominator coefficient of current output y[n-1]
-/// \param a2: denominator coefficient of current output y[n-2]
-/// \param b0: numerator coefficient of current input, x[n]
-/// \param b1: numerator coefficient of input one time step ago x[n-1]
-/// \param b2: numerator coefficient of input two time steps ago x[n-2]
-/// \return Status code
+/// \param input/output: Tensor of shape <..., time>.
+/// \param a0: denominator coefficient of current output y[n], typically 1.
+/// \param a1: denominator coefficient of current output y[n-1].
+/// \param a2: denominator coefficient of current output y[n-2].
+/// \param b0: numerator coefficient of current input, x[n].
+/// \param b1: numerator coefficient of input one time step ago x[n-1].
+/// \param b2: numerator coefficient of input two time steps ago x[n-2].
+/// \return Status code.
 template <typename T>
 Status Biquad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T b0, T b1, T b2, T a0, T a1,
               T a2) {
@@ -91,10 +128,10 @@ Status Biquad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 }
 
 /// \brief Perform an IIR filter by evaluating difference equation.
-/// \param input/output: Tensor of shape <...,time>
+/// \param input/output: Tensor of shape <..., time>
 /// \param a_coeffs: denominator coefficients of difference equation of dimension of (n_order + 1).
 /// \param b_coeffs: numerator coefficients of difference equation of dimension of (n_order + 1).
-/// \param clamp: If True, clamp the output signal to be in the range [-1, 1] (Default: True)
+/// \param clamp: If True, clamp the output signal to be in the range [-1, 1] (Default: True).
 /// \return Status code
 template <typename T>
 Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<T> a_coeffs,
@@ -112,7 +149,7 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   size_t channel_idx = 1;
   size_t m_num_order = b_coeffs.size() - 1;
   size_t m_den_order = a_coeffs.size() - 1;
-  // init  A_coeffs and B_coeffs by div(a0)
+  // init A_coeffs and B_coeffs by div(a0)
   for (size_t i = 1; i < a_coeffs.size(); i++) {
     a_coeffs[i] /= a_coeffs[0];
   }
@@ -172,19 +209,49 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   // unpack batch
   Tensor::CreateFromVector(out_vect, input_shape, &out);
   *output = out;
-  delete m_px;
-  delete m_py;
+  delete[] m_px;
+  delete[] m_py;
   return Status::OK();
 }
 
 /// \brief Stretch STFT in time at a given rate, without changing the pitch.
-/// \param[in] input - Tensor of shape <...,freq,time>.
+/// \param[in] input - Tensor of shape <..., freq, time>.
 /// \param[in] rate - Stretch factor.
 /// \param[in] phase_advance - Expected phase advance in each bin.
 /// \param[out] output - Tensor after stretch in time domain.
-/// \return Status return code
+/// \return Status return code.
 Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
                    float n_freq);
+
+/// \brief Apply a mask along axis.
+/// \param input: Tensor of shape <..., freq, time>.
+/// \param output: Tensor of shape <..., freq, time>.
+/// \param mask_param: Number of columns to be masked will be uniformly sampled from [0, mask_param].
+/// \param mask_value: Value to assign to the masked columns.
+/// \param axis: Axis to apply masking on (1 -> frequency, 2 -> time).
+/// \param rnd: Number generator.
+/// \return Status code.
+Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_param,
+                           double mask_value, int axis, std::mt19937 rnd);
+
+/// \brief Apply a mask along axis. All examples will have the same mask interval.
+/// \param input: Tensor of shape <..., freq, time>.
+/// \param output: Tensor of shape <..., freq, time>.
+/// \param mask_width: The width of the mask.
+/// \param mask_start: Starting position of the mask.
+///     Mask will be applied from indices [mask_start, mask_start + mask_width).
+/// \param mask_value: Value to assign to the masked columns.
+/// \param axis: Axis to apply masking on (1 -> frequency, 2 -> time).
+/// \return Status code.
+Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int64_t mask_width,
+                     int64_t mask_start, double mask_value, int axis);
+
+/// \brief Compute the norm of complex tensor input.
+/// \param power Power of the norm description (optional).
+/// \param input Tensor shape of <..., complex=2>.
+/// \param output Tensor shape of <..., complex=2>.
+/// \return Status code.
+Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power);
 
 }  // namespace dataset
 }  // namespace mindspore

@@ -48,9 +48,11 @@ void ConvolutionBaseCPUKernel::FreeAlignedData(void **ptr) {
 ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
   if (addr_map.find(reinterpret_cast<uintptr_t>(packed_weight_)) != addr_map.end()) {
     FreeAlignedData(reinterpret_cast<void **>(&packed_weight_));
-  } else if (packed_weight_ != nullptr) {
-    free(packed_weight_);
-    packed_weight_ = nullptr;
+  } else if (!op_parameter_->is_train_session_) {
+    if (packed_weight_ != nullptr) {
+      free(packed_weight_);
+      packed_weight_ = nullptr;
+    }
   }
   if (addr_map.find(reinterpret_cast<uintptr_t>(bias_data_)) != addr_map.end()) {
     FreeAlignedData(reinterpret_cast<void **>(&bias_data_));
@@ -134,11 +136,13 @@ int ConvolutionBaseCPUKernel::InitConvWeightBias() {
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
-  if (origin_weight_ != nullptr) {
-    PackWeight();
-  } else {
-    is_repack_ = true;
-    MS_LOG(WARNING) << "The weight is nullptr, will pack in runtime.";
+  if (!op_parameter_->is_train_session_) {
+    if (origin_weight_ != nullptr) {
+      PackWeight();
+    } else {
+      is_repack_ = true;
+      MS_LOG(WARNING) << "The weight is nullptr, will pack in runtime.";
+    }
   }
   return lite::RET_OK;
 }
@@ -149,8 +153,13 @@ int ConvolutionBaseCPUKernel::RepackWeight() {
     MS_LOG(ERROR) << "Malloc data for bias and weight failed.";
     return lite::RET_ERROR;
   }
-  if (IsRepack() || (IsTrain() && IsTrainable())) {
-    is_repack_ = (IsTrain() && IsTrainable()) ? IsRepack() : false;
+  if (IsRepack() || (op_parameter_->is_train_session_)) {
+    if (op_parameter_->is_train_session_) {
+      packed_weight_ = reinterpret_cast<float *>(workspace());
+      memset(packed_weight_, 0, workspace_size());
+    } else {
+      is_repack_ = false;
+    }
     PackWeight();
   }
   return RET_OK;

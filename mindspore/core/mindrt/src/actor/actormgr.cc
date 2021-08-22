@@ -44,9 +44,14 @@ ActorMgr::ActorMgr() : actors(), procotols(), urls() {
   urls.clear();
 }
 
-ActorMgr::~ActorMgr() {}
+ActorMgr::~ActorMgr() {
+  if (inner_pool_ != nullptr) {
+    delete inner_pool_;
+    inner_pool_ = nullptr;
+  }
+}
 
-void ActorMgr::Initialize(bool use_inner_pool, size_t thread_num) {
+void ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num) {
   bool expected = false;
   if (!initialized_.compare_exchange_strong(expected, true)) {
     MS_LOG(DEBUG) << "Actor Manager has been initialized before";
@@ -54,7 +59,14 @@ void ActorMgr::Initialize(bool use_inner_pool, size_t thread_num) {
   }
   // create inner thread pool only when specified use_inner_pool
   if (use_inner_pool) {
-    inner_pool_ = ActorThreadPool::CreateThreadPool(thread_num);
+    if (max_thread_num <= actor_thread_num) {
+      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num);
+    } else {
+      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, {});
+      inner_pool_->SetActorThreadNum(actor_thread_num);
+      inner_pool_->DisableOccupiedActorThread();
+      inner_pool_->SetKernelThreadNum(max_thread_num - actor_thread_num);
+    }
   }
 }
 
