@@ -193,7 +193,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                     async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM"):
     """
-    Saves checkpoint info to a specified file.
+    Save checkpoint info to a specified file.
 
     Args:
         save_obj (Union[Cell, list]): The cell object or data list(each element is a dictionary, like
@@ -370,7 +370,7 @@ def load(file_name, **kwargs):
 
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM"):
     """
-    Loads checkpoint info from a specified file.
+    Load checkpoint info from a specified file.
 
     Args:
         ckpt_file_name (str): Checkpoint file name.
@@ -499,7 +499,7 @@ def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
 
 def load_param_into_net(net, parameter_dict, strict_load=False):
     """
-    Loads parameters into network.
+    Load parameters into network.
 
     Args:
         net (Cell): Cell network.
@@ -824,6 +824,7 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
         os.makedirs(data_path, exist_ok=True)
+        os.chmod(data_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         index = 0
         graphproto = graph_proto()
         data_size = 0
@@ -980,7 +981,7 @@ def _quant_export(network, *inputs, file_format, **kwargs):
 
 def parse_print(print_file_name):
     """
-    Loads Print data from a specified file.
+    Load Print data from a specified file.
 
     Args:
         print_file_name (str): The file name of saved print data.
@@ -1373,7 +1374,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
 
 def async_ckpt_thread_status():
     """
-    Get async save checkpoint thread status.
+    Get the status of asynchronous save checkpoint thread.
 
     Returns:
         True, Asynchronous save checkpoint thread is running.

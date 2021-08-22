@@ -1727,7 +1727,6 @@ class Tensor(Tensor_):
             Numpy arguments `dtype`, `out` and `where` are not supported.
 
         Args:
-            self (Tensor): A Tensor to be calculated.
             axis (Union[None, int, tuple(int)]): Axis or axes along which the standard
                 deviation is computed. Default: `None`.
 
