@@ -34,17 +34,20 @@
 
 namespace mindspore {
 namespace lite {
+
+#define STATIC_ALLOCATION -271964
+#define IS_STATIC_ALLOCATOR(allocator) ((allocator != nullptr) && (allocator->RefCount(nullptr) == STATIC_ALLOCATION))
 struct LiteQuantParam {
   double scale;
   int32_t zeroPoint;
   float var_corr{1};
   float mean_corr{0};
-  bool inited;
+  bool inited{false};
   std::vector<float> clusters{};
-  int bitNum;
-  int roundType;
-  int multiplier;
-  int dstDtype;
+  int bitNum{8};
+  int roundType{1};
+  int multiplier{1};
+  int dstDtype{32};
 };
 
 class Tensor : public mindspore::tensor::MSTensor {
@@ -133,7 +136,6 @@ class Tensor : public mindspore::tensor::MSTensor {
   void set_format(mindspore::Format format) override { this->format_ = format; }
 
   mindspore::Format format() const override { return this->format_; }
-
   virtual int ref_count() const { return ref_count_; }
 
   virtual int init_ref_count() const { return this->init_ref_count_; }

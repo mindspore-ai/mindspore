@@ -39,8 +39,8 @@ class MulInt8CPUKernel : public InnerKernel {
   void CheckSameShapeSize(std::vector<int> in_tensor0_shape, std::vector<int> in_tensor1_shape);
   void CheckIfFastImpl();
   int Run() override;
-  int DoExecute(int task_id);
-  int FastDoExecute(int task_id);
+  void DoExecute(int task_id);
+  void FastDoExecute(int task_id);
 
  private:
   const lite::InnerContext *ctx_ = nullptr;

@@ -744,3 +744,11 @@ run_pretrain.py中设置了随机种子，确保分布式训练中每个节点�
 # ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
+
+# FAQ
+
+- **Q: 运行过程中发生持续溢出怎么办？**
+  **A**： 持续溢出通常是因为使用了较高的学习率导致训练不收敛。可以考虑修改yaml配置文件中的参数，调低`learning_rate`来降低初始学习率或提高`power`加速学习率衰减。
+
+- **Q: 运行报错shape不匹配是什么问题？**
+  **A**： Bert模型中的shape不匹配通常是因为模型参数配置和使用的数据集规格不匹配，主要是句长问题，可以考虑修改`seq_length`参数来匹配所使用的具体数据集。改变该参数不影响权重的规格，权重的规格仅与`max_position_embeddings`参数有关。

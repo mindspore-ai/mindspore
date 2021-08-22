@@ -52,8 +52,8 @@ BlockQueueStatus_T GpuBufferMgr::Create(unsigned int device_id, const std::strin
                                         const std::vector<size_t> &shape, const size_t &capacity) {
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (name_queue_map_.count(name)) {
-    MS_LOG(ERROR) << "Queue not exist " << name;
-    return QUEUE_NOT_EXIST;
+    MS_LOG(ERROR) << "Queue already exist: " << name;
+    return QUEUE_EXIST;
   }
   std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
   BlockQueueStatus_T rt = queue->Create(addr, shape, capacity);
@@ -205,6 +205,10 @@ size_t GpuBufferMgr::Size(unsigned int handle) {
     MS_LOG(ERROR) << "handle is invalid";
     return 0;
   }
+  if (handle_queue_map_.count(handle) == 0) {
+    MS_LOG(ERROR) << "Handle not exist " << handle;
+    return 0;
+  }
   return handle_queue_map_.at(handle)->Size();
 }
 
@@ -220,6 +224,10 @@ size_t GpuBufferMgr::Size(unsigned int device_id, const std::string &channel_nam
 size_t GpuBufferMgr::Capacity(unsigned int handle) {
   if (handle == HandleMgr::INVALID_HANDLE) {
     MS_LOG(ERROR) << "handle is invalid";
+    return 0;
+  }
+  if (handle_queue_map_.count(handle) == 0) {
+    MS_LOG(ERROR) << "Handle not exist " << handle;
     return 0;
   }
   return handle_queue_map_.at(handle)->Capacity();

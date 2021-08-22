@@ -51,19 +51,19 @@ ResNeXt整体网络架构如下：
 
 ## 混合精度
 
-采用[混合精度](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
+采用[混合精度](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
 
 以FP16算子为例，如果输入数据类型为FP32，MindSpore后台会自动降低精度来处理数据。用户可打开INFO日志，搜索“reduce precision”查看精度降低的算子。
 
 # 环境要求
 
 - 硬件（Ascend）
-    - 使用Ascend处理器来搭建硬件环境。
+    - 准备Ascend处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
 # 脚本说明
 
@@ -149,18 +149,18 @@ python train.py --data_dir ~/imagenet/train/ --platform Ascend --is_distributed 
 ```shell
 Ascend:
     # 分布式训练示例（8卡）
-    bash run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+    sh run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
     # 单机训练
-    bash run_standalone_train.sh DEVICE_ID DATA_PATH
+    sh run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
 ### 样例
 
 ```shell
 # Ascend分布式训练示例（8卡）
-bash scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
+sh scripts/run_distribute_train.sh RANK_TABLE_FILE /dataset/train
 # Ascend单机训练示例
-bash scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+sh scripts/run_standalone_train.sh 0 /dataset/train
 ```
 
 您可以在日志中找到检查点文件和结果。
@@ -179,7 +179,7 @@ python eval.py --data_dir ~/imagenet/val/ --platform Ascend --pretrained resnext
 
 ```shell
 # 评估
-bash run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
+sh run_eval.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH PLATFORM
 ```
 
 PLATFORM is Ascend, default is Ascend.
@@ -188,10 +188,10 @@ PLATFORM is Ascend, default is Ascend.
 
 ```shell
 # 检查点评估
-bash scripts/run_eval.sh DEVICE_ID PRETRAINED_CKPT_PATH PLATFORM
+sh scripts/run_eval.sh 0 /opt/npu/datasets/classification/val /resnext152_100.ckpt Ascend
 
 #或者直接使用脚本运行
-python eval.py --data_dir ~/imagenet/val/ --platform Ascend --pretrained ~/best_acc_0.ckpt
+python eval.py --data_dir /opt/npu/pvc/dataset/storage/imagenet/val/ --platform Ascend --pretrained /root/test/resnext152_64x4d/outputs_demo/best_acc_0.ckpt
 ```
 
 #### 结果
@@ -217,31 +217,31 @@ python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_forma
 
 ### 训练性能
 
-| 参数 | ResNeXt152 |
-| -------------------------- | ---------------------------------------------------------- |
-| 资源                   | Ascend 910；CPU：2.60GHz，192核；内存：755GB              |
-| 上传日期              | 2021-6-30                                          |
-| MindSpore版本          | 1.2                                                    |
-| 数据集 | ImageNet |
-| 训练参数        | src/config.py                                           |
-| 优化器                  | Momentum                                                        |
-| 损失函数             | Softmax交叉熵 |
-| 损失                       | 1.2892 |
-| 准确率 | 80.08%(TOP1)                                          |
-| 总时长                 | 7.8小时 （8卡） |
-| 调优检查点 | 192 M（.ckpt文件） |
+| 参数 | ResNeXt152 | |
+| -------------------------- | ---------------------------------------------------------- | ------------------------- |
+| 资源                   | Ascend 910；CPU：2.60GHz，192核；内存：755GB              |           |
+| 上传日期              | 2021-6-30                                          |       |
+| MindSpore版本          | 1.2                                                    |                      |
+| 数据集 | ImageNet |  |
+| 训练参数        | src/config.py                                           |           |
+| 优化器                  | Momentum                                                        |                  |
+| 损失函数             | Softmax交叉熵 |  |
+| 损失                       | 1.2892 |  |
+| 准确率 | 80.08%(TOP1)                                          |      |
+| 总时长                 | 7.8小时 （8卡） |  |
+| 调优检查点 | 192 M（.ckpt文件） |      |
 
 #### 推理性能
 
-| 参数                 |                      |
-| -------------------------- | -------------------- |
-| 资源                   | Ascend 910          |
-| 上传日期              | 2021-6-20 |
-| MindSpore版本         | 1.2             |
-| 数据集 | ImageNet， 1.2万 |
-| batch_size                 | 1                    |
-| 输出 | 概率 |
-| 准确率 | acc=80.08%(TOP1) |
+| 参数                 |                               |                           |                      |
+| -------------------------- | ----------------------------- | ------------------------- | -------------------- |
+| 资源                   |                     |  | Ascend 910          |
+| 上传日期              |                                            |    | 2021-6-20 |
+| MindSpore版本         |      |                      | 1.2             |
+| 数据集 |      |      | ImageNet， 1.2万 |
+| batch_size                 |      |      | 1                    |
+| 输出 |      |      | 概率 |
+| 准确率 |               |           | acc=80.08%(TOP1) |
 
 # 随机情况说明
 

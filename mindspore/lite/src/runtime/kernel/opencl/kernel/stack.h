@@ -29,7 +29,7 @@ class StackOpenCLKernel : public OpenCLKernel {
   ~StackOpenCLKernel() override{};
   int Prepare() override;
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  int SetConstArgs() override;
   void SetGlobalLocal() override;
 
   int Run() override;

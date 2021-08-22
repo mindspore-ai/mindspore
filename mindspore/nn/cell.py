@@ -1247,17 +1247,18 @@ class Cell(Cell_):
         for param in params:
             param.set_param_ps(init_in_server)
 
-    def set_param_fl(self, push_to_server=False, pull_from_server=False):
+    def set_param_fl(self, push_to_server=False, pull_from_server=False, requires_aggr=True):
         """
         Set the way of parameter and server interaction.
 
         Args:
             push_to_server (bool): Whether the parameter should be pushed to server. Default: False.
             pull_from_server (bool): Whether the parameter should be pulled from server. Default: False.
+            requires_aggr (bool): Whether the parameter should be aggregated in the server. Default: True.
         """
         params = self.parameters_and_names()
         for param in params:
-            param[1].set_param_fl(push_to_server, pull_from_server)
+            param[1].set_param_fl(push_to_server, pull_from_server, requires_aggr)
 
     def set_comm_fusion(self, fusion_type, recurse=True):
         """
@@ -1403,8 +1404,7 @@ class GraphCell(Cell):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore.train import export, load
+        >>> from mindspore import Tensor, export, load
         >>>
         >>> net = nn.Conv2d(1, 1, kernel_size=3, weight_init="ones")
         >>> input = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))

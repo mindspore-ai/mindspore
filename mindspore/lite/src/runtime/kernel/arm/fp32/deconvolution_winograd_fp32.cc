@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include "src/runtime/kernel/arm/fp32/deconvolution_winograd_fp32.h"
 
 using mindspore::lite::RET_ERROR;
@@ -192,7 +193,13 @@ int DeConvWgPostFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 
 int DeConvolutionWinogradCPUKernel::InitComputeParam() {
   auto weight_tensor = in_tensors_[1];
-
+  auto shape = weight_tensor->shape();
+  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
+    MS_LOG(WARNING) << "The shape of weight tensor is invalid.";
+    valid_weight_shape_ = false;
+    return RET_OK;
+  }
+  valid_weight_shape_ = true;
   conv_param_->input_channel_ = weight_tensor->Batch();
   conv_param_->output_channel_ = weight_tensor->Channel();
   conv_param_->kernel_w_ = weight_tensor->Width();
@@ -277,7 +284,11 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
 int DeConvolutionWinogradCPUKernel::InitDataParam() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto nhwc_weight = reinterpret_cast<float *>(weight_tensor->data_c());
-  MS_ASSERT(nhwc_weight != nullptr);
+  if (nhwc_weight == nullptr) {
+    MS_LOG(WARNING) << "The weight data is nullptr, will init data parameter in runtime.";
+    is_repack_ = true;
+    return RET_OK;
+  }
 
   /* unit data : weight & winograd data */
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
@@ -307,11 +318,30 @@ int DeConvolutionWinogradCPUKernel::InitDataParam() {
 int DeConvolutionWinogradCPUKernel::ReSize() {
   FreeResizeBuf();
   ConvolutionBaseCPUKernel::Init();
-  InitParameter();
+  if (!valid_weight_shape_) {
+    if (InitComputeParam() != RET_OK) {
+      MS_LOG(ERROR) << "InitComputeParam error!";
+      return RET_ERROR;
+    } else if (!valid_weight_shape_) {
+      return RET_OK;
+    }
+    if (InitDataParam() != RET_OK) {
+      MS_LOG(ERROR) << "InitDataParam error!";
+      return RET_ERROR;
+    }
+  }
+
+  int error_code = InitParameter();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "InitParameter error! ret: " << error_code;
+    return error_code;
+  }
   return RET_OK;
 }
 
 int DeConvolutionWinogradCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   deconv_param_ = new (std::nothrow) DeConvParam();
   if (deconv_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
@@ -320,16 +350,14 @@ int DeConvolutionWinogradCPUKernel::Init() {
   for (auto &wg : deconv_param_->a_buffer_) {
     wg.buf_init_ = false;
   }
-  int error_code = InitComputeParam();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "InitComputeParam error! ret: " << error_code;
-    return error_code;
-  }
 
-  error_code = InitDataParam();
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "InitWeightBias error! ret: " << error_code;
-    return error_code;
+  if (InitComputeParam() != RET_OK) {
+    MS_LOG(ERROR) << "InitDataParam error!";
+    return RET_ERROR;
+  }
+  if (valid_weight_shape_ && InitDataParam() != RET_OK) {
+    MS_LOG(ERROR) << "InitDataParam error!";
+    return RET_ERROR;
   }
 
   if (!InferShapeDone()) {
@@ -421,6 +449,20 @@ int DeConvolutionWinogradCPUKernel::Run() {
     return ret;
   }
 
+  if (!valid_weight_shape_) {
+    if (InitComputeParam() != RET_OK) {
+      MS_LOG(ERROR) << "InitDataParam error!";
+      return RET_ERROR;
+    }
+    if (!valid_weight_shape_ || InitParameter() != RET_OK) {
+      MS_LOG(ERROR) << "InitDataParam error!";
+      return RET_ERROR;
+    }
+  }
+  if (IsRepack() && InitDataParam() != RET_OK) {
+    MS_LOG(ERROR) << "InitDataParam error!";
+    return RET_ERROR;
+  }
   float *src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
   float *src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
   MS_ASSERT(src_in != nullptr);

@@ -146,18 +146,21 @@ function Run_Benchmark() {
       if [[ $6 == "arm64" && $7 == "CPU" && ! ${cfg_file_name} =~ "fp16" ]]; then
         benchmark_mode="calib+loop"
       fi
-      # adjust file name
-      infix=""
+      # adjust precision mode
       mode="fp32"
       if [[ ${cfg_file_name} =~ "fp16" ]]; then
         mode="fp16"
-      elif [[ ${cfg_file_name} =~ "bit" ]]; then
+      fi
+      # adjust file name
+      infix=""
+      if [[ ${cfg_file_name} =~ "bit" ]]; then
         infix="_${cfg_file##*_}"
         infix=${infix%.*}
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         infix="_train"
       elif [[ ${cfg_file_name} =~ "_weightquant" ]]; then
         infix="_weightquant"
+        benchmark_mode="calib"
       elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
         model_name=${model_name}"_posttraining"
       elif [[ ${cfg_file_name} =~ "_process_only" ]]; then
@@ -197,6 +200,9 @@ function Run_Benchmark() {
       enableFp16="false"
       if [[ ${mode} == "fp16" ]]; then
         enableFp16="true"
+      fi
+      if [[ ${extra_info} =~ "calib_only" ]]; then
+        benchmark_mode="calib"
       fi
       # start running benchmark
       echo "---------------------------------------------------------" >> "$4"

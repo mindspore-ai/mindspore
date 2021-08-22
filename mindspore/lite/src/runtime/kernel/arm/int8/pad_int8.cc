@@ -85,7 +85,7 @@ int PadInt8CPUKernel::SetQuantParam() {
 int PadInt8CPUKernel::InitPadParam() {
   auto in_dims = in_tensors_.at(0)->shape();
   auto out_dims = out_tensors_.at(0)->shape();
-  int ndims = in_dims.size();
+  int ndims = static_cast<size_t>(in_dims.size());
 
   int in[] = {1, 1, 1, 1};
   int out[] = {1, 1, 1, 1};
@@ -267,7 +267,8 @@ int PadInt8CPUKernel::Run() {
 
   int error_code;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
+    memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0],
+           static_cast<size_t>(out_tensors_[0]->ElementsNum()) * sizeof(int8_t));
     error_code = ParallelLaunch(this->ms_context_, PadInt8Impl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";

@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class AmplitudeToDBOp : public TensorOp {
  public:
   AmplitudeToDBOp(ScaleType stype, float ref_value, float amin, float top_db)

@@ -36,9 +36,10 @@ void ReluFp32C8(float *data, float *dst, int ele_num);
 void Relu6Fp32C8(float *data, float *dst, int ele_num);
 #endif
 #endif
-int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3);
-int offsetComm(const int *shape, const int dim0, const int dim1, const int dim2);
-int offset4d(const int *shape, const int *dims);
+int Offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3);
+int OffsetComm(const int *shape, const int dim0, const int dim1, const int dim2);
+int Offset4d(const int *shape, const int *dims);
+int Offset6d(const int *shape, const int *dims);
 
 static inline bool isAddOverflow(int32_t x, int32_t y) {
   int32_t sum = x + y;

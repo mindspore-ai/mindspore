@@ -138,6 +138,7 @@ typedef struct vvector {
   size_t size_;      // number of shapes
 } vvector;
 
+#ifdef ENABLE_CONTROL_TENSORLIST
 typedef struct TensorListC {
   bool is_ready_;
   int data_type_;
@@ -150,6 +151,7 @@ typedef struct TensorListC {
   size_t element_shape_size_;
   TensorC *tensors_;
 } TensorListC;
+#endif
 
 typedef struct VectorC {
   int *data_;
@@ -158,9 +160,11 @@ typedef struct VectorC {
   size_t per_malloc_size_;
 } VectorC;
 
+#ifdef ENABLE_CONTROL_TENSORLIST
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape);
 int TensorListMergeShape(int *element_shape, size_t *element_shape_size, const int *tmp, size_t tmp_size);
 bool TensorListIsFullyDefined(const int *shape, size_t shape_size);
+#endif
 
 int GetBatch(const TensorC *tensor);
 int GetHeight(const TensorC *tensor);
@@ -202,13 +206,6 @@ int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   const OpParameter *parameter);
 
-int VectorCInit(VectorC *vc, size_t per_malloc_size);
-int VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size);
-int VectorCPush(VectorC *vc, int value);
-int VectorCInsert(VectorC *vc, int index, int value);
-void VectorCErase(VectorC *vc, int index);
-bool VectorCEqual(const VectorC *vc1, const VectorC *vc2);
-void VectorCFree(VectorC *vc);
 bool InferFlag(const TensorC *const *inputs, size_t inputs_size);
 
 #ifdef __cplusplus

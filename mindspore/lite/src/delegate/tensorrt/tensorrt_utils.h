@@ -51,7 +51,7 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
                                                const mindspore::MSTensor &ms_tensor, size_t expand_shape_size);
 
-nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, void *value);
+nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value);
 
 nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **pack_weight);
 

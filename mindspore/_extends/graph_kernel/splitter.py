@@ -24,7 +24,7 @@ from . import utils
 
 
 def split_with_json(json_str, flags_str):
-    """Call costmodel to split GraphKernel"""
+    """Call cost model to split GraphKernel"""
     try:
         graph_desc = json.loads(json_str)
         flags = json.loads(flags_str)

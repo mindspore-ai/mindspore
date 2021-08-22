@@ -479,5 +479,4 @@ int Model::Export(Model *model, const char *filename) {
   return chmod(filename, S_IRUSR);
 #endif
 }
-
 }  // namespace mindspore::lite

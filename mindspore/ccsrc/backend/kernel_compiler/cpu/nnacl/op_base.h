@@ -61,6 +61,8 @@
 #define DIMENSION_6D 6
 #define DIMENSION_7D 7
 #define DIMENSION_8D 8
+#define DIMENSION_10D 10
+#define DIMENSION_11D 11
 #define kInputIndex 0
 #define kWeightIndex 1
 #define kBiasIndex 2

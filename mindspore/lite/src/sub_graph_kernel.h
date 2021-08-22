@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_SUB_GRAPH_H
-#define MINDSPORE_LITE_SRC_SUB_GRAPH_H
+#ifndef MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
+#define MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
 
 #include <atomic>
 #include <utility>
@@ -101,7 +101,7 @@ class SubGraphKernel : public LiteKernel {
   // called after Run
   int ReSize() override;
 
-  void InitOutTensorInitRefCount() override;
+  void InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) override;
 
   void InitInputTensorInitRefCount();
 
@@ -109,7 +109,7 @@ class SubGraphKernel : public LiteKernel {
 
   std::string ToString() const override;
 
-  std::vector<LiteKernel *> nodes() { return this->nodes_; }
+  std::vector<LiteKernel *> &nodes() { return this->nodes_; }
 
   void DropNode(LiteKernel *node);
 
@@ -226,4 +226,4 @@ class CustomSubGraph : public SubGraphKernel {
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_H
+#endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_

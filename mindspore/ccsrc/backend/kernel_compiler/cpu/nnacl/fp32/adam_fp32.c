@@ -152,17 +152,15 @@ int AdamDeltaFp32(float *delta, float *m, float *v, float lr, float beta1, float
   return NNACL_OK;
 }
 
-int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
-                        const float *gradient, size_t start, size_t end) {
+size_t AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
+                           float decay, const float *gradient, size_t start, size_t end) {
   size_t c1 = start;
 #ifdef ENABLE_AVX512
-  const float beta1_minus = 1 - beta1;
-  const float beta2_minus = 1 - beta2;
   struct AVX_Data beta1_r, beta2_r, beta1_minus_r, beta2_minus_r, lr_neg_r, epsilon_r, decay_r;
   beta1_r.data = _mm512_set1_ps(beta1);
   beta2_r.data = _mm512_set1_ps(beta2);
-  beta1_minus_r.data = _mm512_set1_ps(beta1_minus);
-  beta2_minus_r.data = _mm512_set1_ps(beta2_minus);
+  beta1_minus_r.data = _mm512_set1_ps(1.0f - beta1);
+  beta2_minus_r.data = _mm512_set1_ps(1.0f - beta2);
   lr_neg_r.data = _mm512_set1_ps(-lr);
   epsilon_r.data = _mm512_set1_ps(epsilon);
   decay_r.data = _mm512_set1_ps(decay);
@@ -260,17 +258,15 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
   return c1;
 }
 
-int FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
-                  const int16_t *gradient16, size_t start, size_t end) {
+size_t FusedAdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, float decay,
+                     const int16_t *gradient16, size_t start, size_t end) {
   size_t c1 = start;
 #ifdef ENABLE_AVX512
-  const float beta1_minus = 1 - beta1;
-  const float beta2_minus = 1 - beta2;
   struct AVX_Data beta1_r, beta2_r, beta1_minus_r, beta2_minus_r, lr_neg_r, epsilon_r, decay_r;
   beta1_r.data = _mm512_set1_ps(beta1);
   beta2_r.data = _mm512_set1_ps(beta2);
-  beta1_minus_r.data = _mm512_set1_ps(beta1_minus);
-  beta2_minus_r.data = _mm512_set1_ps(beta2_minus);
+  beta1_minus_r.data = _mm512_set1_ps(1.0f - beta1);
+  beta2_minus_r.data = _mm512_set1_ps(1.0f - beta2);
   lr_neg_r.data = _mm512_set1_ps(-lr);
   epsilon_r.data = _mm512_set1_ps(epsilon);
   decay_r.data = _mm512_set1_ps(decay);

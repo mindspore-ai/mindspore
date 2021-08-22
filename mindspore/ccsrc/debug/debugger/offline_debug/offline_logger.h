@@ -18,6 +18,8 @@
 
 #include <iostream>
 
+#define PATH_MAX 4096
+
 #define MS_LOG(level) MS_LOG_##level
 
 #define MS_LOG_INFO static_cast<void>(0), !(DbgLogger::verbose) ? void(0) : DbgLogger(DbgLoggerLvl::INFO) < std::cout
@@ -28,8 +30,7 @@
 
 #define MS_LOG_WARNING MS_LOG_INFO
 
-#define MS_LOG_EXCEPTION \
-  static_cast<void>(0), !(DbgLogger::verbose) ? void(0) : DbgLogger(DbgLoggerLvl::EXCEPTION) < std::cout
+#define MS_LOG_EXCEPTION static_cast<void>(0), DbgLogger(DbgLoggerLvl::EXCEPTION) < std::cout
 
 enum DbgLoggerLvl : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
 
@@ -38,17 +39,20 @@ class DbgLogger {
   explicit DbgLogger(DbgLoggerLvl lvl) : lvl_(lvl) {}
   ~DbgLogger() = default;
   void operator<(std::ostream &os) const {
-    char *dbg_log_path = getenv("OFFLINE_DBG_LOG");
-    if (dbg_log_path != NULL) {
-      FILE *fp;
-      fp = freopen(dbg_log_path, "a", stdout);
+    char *dbg_log_path = std::getenv("OFFLINE_DBG_LOG");
+    if (dbg_log_path != nullptr) {
+      char abspath[PATH_MAX];
+      if (sizeof(dbg_log_path) > PATH_MAX || NULL == realpath(dbg_log_path, abspath)) {
+        return;
+      }
+      FILE *fp = freopen(abspath, "a", stdout);
       if (fp == nullptr) {
         std::cout << "ERROR: DbgLogger could not redirect all stdout to a file";
       }
     }
     os << std::endl;
     if (lvl_ == DbgLoggerLvl::EXCEPTION) {
-      throw;
+      throw lvl_;
     }
   }
   static bool verbose;

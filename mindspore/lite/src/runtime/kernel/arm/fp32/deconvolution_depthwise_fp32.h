@@ -27,22 +27,23 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeconvolutionDepthwiseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data_c(),
+                                 inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data_c() : nullptr) {}
   ~DeconvolutionDepthwiseCPUKernel() override;
 
   int Init() override;
   int InitSlideParam();
   int ReSize() override;
   int Run() override;
-
-  int InitWeightBias();
   int Execute(int task_id);
 
  private:
   int InitPackedInputOutput();
   void FreePackedInputOutput();
+  int MallocWeightBiasData() override;
+  void PackWeight() override;
+
   SlidingWindowParam *sliding_ = nullptr;
-  float *packed_weight_ = nullptr;
   float *packed_input_ = nullptr;
   float *packed_output_ = nullptr;
   bool need_align_ = false;

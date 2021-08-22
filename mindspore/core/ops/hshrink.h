@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHShrink = "HShrink";
-class MS_CORE_API HShrink : public PrimitiveC {
+class HShrink : public PrimitiveC {
  public:
   HShrink() : PrimitiveC(kNameHShrink) { InitIOName({"input_x"}, {"output"}); }
   ~HShrink() = default;

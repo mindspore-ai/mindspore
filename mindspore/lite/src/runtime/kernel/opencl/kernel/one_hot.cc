@@ -48,7 +48,7 @@ int OneHotOpenCLKernel::Prepare() {
     kernel_name += "Axis" + std::to_string(axis_);
   }
   std::string source = one_hot_source;
-  std::string program_name = "OneHot";
+  const std::string program_name = "OneHot";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -65,7 +65,10 @@ int OneHotOpenCLKernel::Prepare() {
     return ret;
   }
   InitWeights();
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
@@ -87,18 +90,40 @@ int OneHotOpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
-void OneHotOpenCLKernel::SetConstArgs() {
+int OneHotOpenCLKernel::SetConstArgs() {
   cl_int2 cl_in_image2d_shape = {static_cast<cl_int>(in_shape_.width), static_cast<cl_int>(in_shape_.height)};
   cl_int4 cl_out_shape = {static_cast<cl_int>(out_shape_.N), static_cast<cl_int>(out_shape_.H),
                           static_cast<cl_int>(out_shape_.W), static_cast<cl_int>(out_shape_.Slice)};
   int arg_idx = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_in_image2d_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_out_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, depth_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, on_value_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, off_value_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<int>(out_shape_.C));
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(param_->support_neg_index_));
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_in_image2d_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_out_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, depth_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, on_value_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, off_value_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<int>(out_shape_.C)) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(param_->support_neg_index_)) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 void OneHotOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
@@ -108,9 +133,18 @@ void OneHotOpenCLKernel::SetGlobalLocal() {
 
 int OneHotOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

@@ -67,15 +67,31 @@ void LayerNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t
   local->push_back(z);
 }
 
-void LayerNormOpenCLKernel::SetConstArgs() {
+int LayerNormOpenCLKernel::SetConstArgs() {
   int arg_cn = 6;
   GpuTensorInfo img_info(in_tensors_.at(0));
   in_shape_.s[0] = img_info.N, in_shape_.s[1] = img_info.H, in_shape_.s[2] = img_info.W, in_shape_.s[3] = img_info.C;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, epsilon_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, normalized_axis_);
-  ocl_runtime_->SetKernelArg(kernel_mean_var_, 3, in_shape_);
-  ocl_runtime_->SetKernelArg(kernel_mean_var_, 4, normalized_shape_size_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, epsilon_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, normalized_axis_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, 3, in_shape_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, 4, normalized_shape_size_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void AlignMeanVarGlobalLocal(const std::vector<int> &global, const std::vector<int> &local, cl::NDRange *global_range,
@@ -106,9 +122,23 @@ int LayerNormOpenCLKernel::Initweight() {
   size_t weight_size = img_info.Image2DSize;
   // allocated memory for weight and init value
   gamma_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+  if (gamma_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   beta_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
-  allocator->MapBuffer(gamma_, CL_MAP_WRITE, nullptr, true);
-  allocator->MapBuffer(beta_, CL_MAP_WRITE, nullptr, true);
+  if (beta_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  if (allocator->MapBuffer(gamma_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
+  if (allocator->MapBuffer(beta_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
   memset(gamma_, 0x01, weight_size);
   memset(beta_, 0x00, weight_size);
 
@@ -143,8 +173,14 @@ int LayerNormOpenCLKernel::Initweight() {
       memcpy(beta_, in_tensors_.at(2)->data_c(), weight_size);
     }
   }
-  allocator->UnmapBuffer(gamma_);
-  allocator->UnmapBuffer(beta_);
+  if (allocator->UnmapBuffer(gamma_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
+  if (allocator->UnmapBuffer(beta_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -164,11 +200,19 @@ int LayerNormOpenCLKernel::Prepare() {
   size_t size_dtype = use_fp16_enable_ ? sizeof(float16_t) : sizeof(float);
   mean_size *= size_dtype;
   mean_ = allocator->Malloc(mean_size, lite::opencl::MemType::BUF);
+  if (mean_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
   var_ = allocator->Malloc(mean_size, lite::opencl::MemType::BUF);
-  std::string kernel_name = "LayerNormalization_NHWC4";
+  if (var_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  const std::string kernel_name = "LayerNormalization_NHWC4";
   std::string kernel_name_mean_var = "ComputeMeanVar";
   std::string source = layer_norm_source;
-  std::string program_name = "LayerNormalization";
+  const std::string program_name = "LayerNormalization";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -182,7 +226,10 @@ int LayerNormOpenCLKernel::Prepare() {
   kernel_name_mean_var += "Axis" + std::to_string(normalized_axis_) + "NHWC4";
   ocl_runtime_->BuildKernel(kernel_mean_var_, program_name, kernel_name_mean_var, build_options_ext);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
 
   return RET_OK;
@@ -191,21 +238,48 @@ int LayerNormOpenCLKernel::Prepare() {
 int LayerNormOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg1_cn = 0;
-  ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, in_tensors_.at(0)->data_c());        // input tensor
-  ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, mean_, lite::opencl::MemType::BUF);  // mean_
-  ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, var_, lite::opencl::MemType::BUF);   // var_  return RET_OK;
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // input tensor
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, mean_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, var_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   ocl_runtime_->RunKernel(kernel_mean_var_, global_mean_var_, local_mean_var_, nullptr, &event_);
 
   int arg_cn = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());         // input tensor
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c());        // out tensor
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, mean_, lite::opencl::MemType::BUF);   // mean_
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, var_, lite::opencl::MemType::BUF);    // var_
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, gamma_, lite::opencl::MemType::BUF);  // gamma_
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, beta_, lite::opencl::MemType::BUF);   // beta_
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // input tensor
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // out tensor
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, mean_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // mean_
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, var_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // var_
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, gamma_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // gamma_
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, beta_, lite::opencl::MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }  // beta_
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
-}
+}  // namespace mindspore::kernel
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LayerNormFusion, OpenCLKernelCreator<LayerNormOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LayerNormFusion, OpenCLKernelCreator<LayerNormOpenCLKernel>)

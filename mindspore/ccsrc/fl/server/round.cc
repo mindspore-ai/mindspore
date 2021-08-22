@@ -169,12 +169,11 @@ bool Round::check_timeout() const { return check_timeout_; }
 size_t Round::time_window() const { return time_window_; }
 
 void Round::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
-  MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
   MS_LOG(INFO) << "Round " << name_ << " first count event is triggered.";
   // The timer starts only after the first count event is triggered by DistributedCountService.
   if (check_timeout_) {
+    MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
     iter_timer_->Start(std::chrono::milliseconds(time_window_));
   }
 
@@ -184,12 +183,11 @@ void Round::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &m
 }
 
 void Round::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) {
-  MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
-  MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
   MS_LOG(INFO) << "Round " << name_ << " last count event is triggered.";
   // Same as the first count event, the timer must be stopped by DistributedCountService.
   if (check_timeout_) {
+    MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
     iter_timer_->Stop();
   }
 

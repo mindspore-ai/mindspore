@@ -117,6 +117,9 @@ Status TransferNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
 
 Status TransferNode::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
+  args["queue_name"] = queue_name_;
+  args["device_type"] = device_type_;
+  args["device_id"] = device_id_;
   args["send_epoch_end"] = send_epoch_end_;
   args["total_batch"] = total_batch_;
   args["create_data_info_queue"] = create_data_info_queue_;

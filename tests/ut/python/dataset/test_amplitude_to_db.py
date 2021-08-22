@@ -23,6 +23,7 @@ import mindspore.dataset.audio.transforms as c_audio
 from mindspore import log as logger
 from mindspore.dataset.audio.utils import ScaleType
 
+
 CHANNEL = 1
 FREQ = 20
 TIME = 15
@@ -31,18 +32,19 @@ TIME = 15
 def gen(shape):
     np.random.seed(0)
     data = np.random.random(shape)
-    yield (np.array(data, dtype=np.float32),)
+    yield(np.array(data, dtype=np.float32),)
 
 
-def count_unequal_element(data_expected, data_me, rtol, atol):
+def _count_unequal_element(data_expected, data_me, rtol, atol):
     """ Precision calculation func """
     assert data_expected.shape == data_me.shape
     total_count = len(data_expected.flatten())
     error = np.abs(data_expected - data_me)
     greater = np.greater(error, atol + np.abs(data_expected) * rtol)
     loss_count = np.count_nonzero(greater)
-    assert (loss_count / total_count) < rtol, "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}".format(
-        data_expected[greater], data_me[greater], error[greater])
+    assert (loss_count / total_count) < rtol, \
+        "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
+        format(data_expected[greater], data_me[greater], error[greater])
 
 
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
@@ -50,7 +52,9 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     if np.any(np.isnan(data_expected)):
         assert np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan)
     elif not np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan):
-        count_unequal_element(data_expected, data_me, rtol, atol)
+        _count_unequal_element(data_expected, data_me, rtol, atol)
+    else:
+        assert True
 
 
 def test_func_amplitude_to_db_eager():
@@ -87,7 +91,9 @@ def test_func_amplitude_to_db_pipeline():
 
     data1 = ds.GeneratorDataset(source=generator, column_names=["multi_dimensional_data"])
 
-    transforms = [c_audio.AmplitudeToDB()]
+    transforms = [
+        c_audio.AmplitudeToDB()
+    ]
     data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
 
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -96,6 +102,7 @@ def test_func_amplitude_to_db_pipeline():
 
 
 def test_amplitude_to_db_invalid_input():
+
     def test_invalid_input(test_name, stype, ref_value, amin, top_db, error, error_msg):
         logger.info("Test AmplitudeToDB with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

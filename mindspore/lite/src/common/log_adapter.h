@@ -16,6 +16,20 @@
 
 #ifndef MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_
 #define MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_
+namespace mindspore {
+const char *const unsupport_string_tensor_log =
+  "This mindspore-lite library does not support string tensors. Set environment variable MSLITE_STRING_KERNEL to on to "
+  "recompile it.";
+const char *const unsupport_control_tensorlist_log =
+  "This mindspore-lite library does not support control and tensorlist op. Set environment variable "
+  "MSLITE_CONTROL_TENSORLIST to on to recompile it.";
+const char *const unsupport_auto_parallel_log =
+  "The mindspore-lite library does not support auto parallel. Set environment variable MSLITE_AUTO_PARALLEL to on to "
+  "recompile it.";
+const char *const unsupport_huffman_decode_log =
+  "The mindspore-lite library does not support huffman decode. Set environment variable MSLITE_HUFFMAN_DECODE to on to "
+  "recompile it.";
+}  // namespace mindspore
 #ifdef USE_GLOG
 #include "utils/log_adapter.h"
 #else

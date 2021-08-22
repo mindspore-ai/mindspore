@@ -82,13 +82,13 @@ simple_baselines的总体网络架构如下：
 
 ```text
 # 分布式训练
-用法：sh run_distribute_train.sh --is_model_arts False --run_distribute True
+用法：bash run_distribute_train.sh RANK_TABLE
 
 # 单机训练
-用法：sh run_standalone_train.sh --device_id 0 --is_model_arts False --run_distribute False
+用法：bash run_standalone_train.sh DEVICE_ID
 
 # 运行评估示例
-用法：sh run_eval.sh
+用法：bash run_eval.sh
 ```
 
 # 脚本说明
@@ -183,13 +183,13 @@ config.TEST.NMS_THRE = 1.0                                       # nms阈值
 
 ```text
 # 分布式训练
-用法：sh run_distribute_train.sh --is_model_arts False --run_distribute True
+用法：bash run_distribute_train.sh RANK_TABLE
 
 # 单机训练
-用法：sh run_standalone_train.sh --device_id 0 --is_model_arts False --run_distribute False
+用法：bash run_standalone_train.sh DEVICE_ID
 
 # 运行评估示例
-用法：sh run_eval.sh
+用法：bash run_eval.sh
 ```
 
 ### 结果
@@ -219,7 +219,7 @@ epoch:140 step:2340, loss is 0.0003393
 
 ```bash
 # 评估
-sh eval.sh
+bash eval.sh
 ```
 
 ### 结果

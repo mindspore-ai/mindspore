@@ -643,29 +643,33 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   expressions_map_ = GetExpressions();
   for (auto node : func_graph->GetOrderedCnodes()) {
     if (AnfAlgo::IsGraphKernel(node)) {
-      auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-      graphkernel::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
-      bool find_pattern = true;
-      bool change_anf_graph = false;
-      while (find_pattern) {
-        find_pattern = false;
-        find_pattern = DoArithmeticTrans(lg) || find_pattern;
-        find_pattern = DoConstantFold(lg) || find_pattern;
-        change_anf_graph = change_anf_graph || find_pattern;
+      try {
+        auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+        graphkernel::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
+        bool find_pattern = true;
+        bool change_anf_graph = false;
+        while (find_pattern) {
+          find_pattern = false;
+          find_pattern = DoArithmeticTrans(lg) || find_pattern;
+          find_pattern = DoConstantFold(lg) || find_pattern;
+          change_anf_graph = change_anf_graph || find_pattern;
+        }
+        if (!change_anf_graph) continue;
+        ReorganizeEmptyGraph(lg);
+        AnfNodePtrList outputs;
+        auto new_funcgraph = LiteGraph2AnfGraph(lg, &outputs);
+        new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
+        auto cnode = node->cast<CNodePtr>();
+        AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
+        EliminateRedundantParameters(new_funcgraph, &inputs);
+        auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs, outputs);
+        SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
+        mng->Replace(node, new_node);
+        mng->AddFuncGraph(new_funcgraph);
+        do_simplify = true;
+      } catch (const graphkernel::GKException &e) {
+        MS_LOG(WARNING) << e.what() << ", so we undo airthmetic simplify for this graph";
       }
-      if (!change_anf_graph) continue;
-      ReorganizeEmptyGraph(lg);
-      AnfNodePtrList outputs;
-      auto new_funcgraph = LiteGraph2AnfGraph(lg, &outputs);
-      new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-      auto cnode = node->cast<CNodePtr>();
-      AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-      EliminateRedundantParameters(new_funcgraph, &inputs);
-      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs, outputs);
-      SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
-      mng->Replace(node, new_node);
-      mng->AddFuncGraph(new_funcgraph);
-      do_simplify = true;
     }
   }
   return do_simplify;

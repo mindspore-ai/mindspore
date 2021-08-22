@@ -64,8 +64,8 @@ function Run_Hi3516() {
   # cp files to nfs shared folder
   echo "start push files to hi3516"
   echo ${device_ip}
-  sshpass -p "mindspore@123" scp ${benchmark_test_path}/* root@${device_ip}:/user/nnie/benchmark_test/ || exit 1
-  sshpass -p "mindspore@123" ssh root@${device_ip} "cd /user/nnie/benchmark_test; sh run_benchmark_nnie.sh"
+  scp ${benchmark_test_path}/* root@${device_ip}:/user/nnie/benchmark_test/ || exit 1
+  ssh root@${device_ip} "cd /user/nnie/benchmark_test; sh run_benchmark_nnie.sh"
   if [ $? = 0 ]; then
     run_result='hi3516: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file};
   else

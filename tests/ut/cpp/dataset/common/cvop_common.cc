@@ -55,7 +55,7 @@ void CVOpCommon::GetInputImage(std::string filename) {
     Tensor::CreateFromFile(filename, &raw_input_tensor_);
     raw_cv_image_ = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
     std::shared_ptr<CVTensor> input_cv_tensor;
-    CVTensor::CreateFromMat(raw_cv_image_, &input_cv_tensor);
+    CVTensor::CreateFromMat(raw_cv_image_, 3, &input_cv_tensor);
     input_tensor_ = std::dynamic_pointer_cast<Tensor>(input_cv_tensor);
     SwapRedAndBlue(input_tensor_, &input_tensor_);
     if (raw_cv_image_.data) {
@@ -133,6 +133,10 @@ void CVOpCommon::CheckImageShapeAndData(const std::shared_ptr<Tensor> &output_te
     case kRandomAffine:
       expect_image_path = dir_path + "imagefolder/apple_expect_randomaffine.jpg";
       actual_image_path = dir_path + "imagefolder/apple_actual_randomaffine.jpg";
+      break;
+    case kAdjustGamma:
+      expect_image_path = dir_path + "imagefolder/apple_expect_adjustgamma.png";
+      actual_image_path = dir_path + "imagefolder/apple_actual_adjustgamma.png";
       break;
     case kAutoContrast:
       expect_image_path = dir_path + "imagefolder/apple_expect_autocontrast.jpg";

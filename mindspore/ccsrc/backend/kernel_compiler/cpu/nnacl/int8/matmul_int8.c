@@ -104,7 +104,7 @@ void RowMajor2Row16x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, 
 
   for (int ri = 0; ri < row_4div; ri += C4NUM) {
     for (int ci = 0; ci < col_16div; ci += C16NUM) {
-      size_t col_offset = col;
+      size_t col_offset = (size_t)col;
       int8_t *src_c = src_r + ci;
       int8_t *dst_c = dst_r + ci * C4NUM;
 #ifdef ENABLE_ARM64
@@ -207,7 +207,7 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
       int c2div = c / C2NUM, c2mod = c % C2NUM;
       size_t ci = r * stride + c;
       int32_t value = 0;
-      for (int d = 0; d < deep_16; d++) {
+      for (int d = 0; d < (int)deep_16; d++) {
         int d16div = d / C16NUM, d16mod = d % C16NUM;
         size_t ai = r4div * deep_16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
         size_t bi = c2div * deep_16 * C2NUM + d16div * C2NUM * C16NUM + c2mod * C16NUM + d16mod;
@@ -269,9 +269,9 @@ void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int c
 #endif
 
 void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
-                      size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
-                      int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                      size_t per_channel) {
+                      size_t stride, const int32_t *input_sum, const int32_t *bias, const int32_t *left_shift,
+                      const int32_t *right_shift, const int32_t *multiplier, int32_t output_zp, int32_t mini,
+                      int32_t maxi, size_t per_channel) {
   /*  row8x4-major * row4x8-major => (int8)row-major  */
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
@@ -279,7 +279,7 @@ void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
       int c8div = c / C8NUM, c8mod = c % C8NUM;
       size_t ci = r * stride + c;
       int32_t value = 0;
-      for (int d = 0; d < deep_4; d++) {
+      for (int d = 0; d < (int)deep_4; d++) {
         int d4div = d / C4NUM, d4mod = d % C4NUM;
         size_t ai = r8div * deep_4 * C8NUM + d4div * C8NUM * C4NUM + r8mod * C4NUM + d4mod;
         size_t bi = c8div * deep_4 * C8NUM + d4div * C8NUM * C4NUM + c8mod * C4NUM + d4mod;
@@ -302,9 +302,9 @@ void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
 }
 
 void MatMulInt8_4x16_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
-                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
-                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                       size_t per_channel, int32_t *filter_zp) {
+                       size_t stride, const int32_t *input_sum, const int32_t *bias, const int32_t *left_shift,
+                       const int32_t *right_shift, const int32_t *multiplier, int32_t output_zp, int32_t mini,
+                       int32_t maxi, size_t per_channel, const int32_t *filter_zp) {
   /*  row4x4-major * row4x16-major => (int8)row-major  */
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
@@ -312,7 +312,7 @@ void MatMulInt8_4x16_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row
       int c16div = c / C16NUM, c16mod = c % C16NUM;
       size_t ci = r * stride + c;
       int32_t value = 0;
-      for (int d = 0; d < deep_4; d++) {
+      for (int d = 0; d < (int)deep_4; d++) {
         int d4div = d / C4NUM, d4mod = d % C4NUM;
         size_t ai = r4div * deep_4 * C4NUM + d4div * C4NUM * C4NUM + r4mod * C4NUM + d4mod;
         size_t bi = c16div * deep_4 * C16NUM + d4div * C16NUM * C4NUM + c16mod * C4NUM + d4mod;
@@ -453,7 +453,7 @@ void PackInput4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, 
 #else
     int32_t tmp_sum_value[4] = {0};
     for (int ici = 0; ici < ic_4div; ici += C4NUM) {
-      for (int i = 0; i < C4NUM; i++) {
+      for (size_t i = 0; i < C4NUM; i++) {
         tmp_sum_value[i] += src_ic[0 + i * input_channel];
         tmp_sum_value[i] += src_ic[1 + i * input_channel];
         tmp_sum_value[i] += src_ic[2 + i * input_channel];

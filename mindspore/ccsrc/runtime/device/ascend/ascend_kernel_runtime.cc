@@ -22,6 +22,7 @@
 #include "utils/signal_util.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "runtime/device/ascend/ascend_device_address.h"
+#include "runtime/device/ascend/distribute/ascend_collective.h"
 #include "utils/ms_context.h"
 #include "utils/context/context_extends.h"
 #include "utils/mpi/mpi_config.h"
@@ -46,7 +47,6 @@
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include "debug/env_config_parser.h"
 #endif
-#include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
 #include "utils/config_manager.h"
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
@@ -64,6 +64,7 @@ using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::ge::model_runner::ModelRunner;
+using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 using mindspore::kernel::tbe::TbeUtils;
 using std::vector;
 
@@ -78,32 +79,17 @@ namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
 namespace {
 std::string GetRankId() {
-  std::string rank_id_str;
-#ifdef ENABLE_MPI
-  auto mpi_config_ptr = MpiConfig::GetInstance();
-  MS_EXCEPTION_IF_NULL(mpi_config_ptr);
-  if (mpi_config_ptr->enable_mpi()) {
-    int rank_id = GetMPIRankId();
-    const std::string offset = common::GetEnv("RANK_OFFSET");
-    if (offset.empty()) {
-      try {
-        int rank_offset = std::stoi(offset);
-        rank_id += rank_offset;
-      } catch (std::invalid_argument) {
-        MS_LOG(EXCEPTION) << "Call stoi invalid argument:" << offset;
-      } catch (std::out_of_range) {
-        MS_LOG(EXCEPTION) << "Call stoi out_of_range:" << offset;
-      }
-    }
-    rank_id_str = std::to_string(rank_id);
-  } else {
-    rank_id_str = common::GetEnv("RANK_ID");
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+    MS_LOG(INFO) << "Get hccl rankid from mpi";
+    auto rank = HcclCollectiveGroup::instance().GetRankId();
+    return std::to_string(rank);
   }
-#else
-  rank_id_str = common::GetEnv("RANK_ID");
-#endif
+  std::string rank_id_str;
+  rank_id_str = std::getenv("RANK_ID");
   if (rank_id_str.empty()) {
-    MS_LOG(ERROR) << "Get hccl rankid failed, please set env RANK_ID";
+    MS_LOG(EXCEPTION) << "Get hccl rankid failed, please set env RANK_ID";
   }
   return rank_id_str;
 }
@@ -246,7 +232,10 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 #ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->debugger_enabled()) {
     debugger_->SetTrainingDone(true);
-    debugger_->SendMetadata(false);
+    bool ret = debugger_->SendMetadata(false);
+    if (!ret) {
+      MS_LOG(ERROR) << "Failed to SendMetadata when finalize";
+    }
   }
 #endif
   if (!initialized_) {
@@ -304,9 +293,7 @@ bool AscendKernelRuntime::Init() {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
   try {
-    OpTilingCalculater::GetInstance().Init();
     // Start up profiling before rtSetDevice
-
     bool ret = InitDevice();
     if (!ret) {
       return ret;
@@ -744,6 +731,7 @@ bool AscendKernelRuntime::SyncStream() {
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
   }
+
   if (RT_ERROR_NONE != rtStreamSynchronize(communication_stream_)) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
@@ -832,7 +820,6 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
     }
     stream_ = nullptr;
   }
-
   if (communication_stream_ != nullptr) {
     ret = rtStreamDestroy(communication_stream_);
     if (ret != RT_ERROR_NONE) {
@@ -840,7 +827,6 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
     }
     communication_stream_ = nullptr;
   }
-
   ret = rtDeviceReset(device_id);
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtDeviceReset, ret[" << ret << "]";
@@ -857,6 +843,19 @@ bool AscendKernelRuntime::HcclInit() {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
   MS_LOG(INFO) << "Do hcom init";
+  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (!is_task_sink && mode == kGraphMode) {
+    hccl::HcclAdapter::GetInstance().InitHccl();
+    std::vector<unsigned int> ranks;
+    auto rank_size = HcclCollectiveGroup::instance().GetRankSize();
+    for (size_t i = 0; i < IntToSize(rank_size); ++i) {
+      ranks.push_back(i);
+    }
+    HcclCollectiveGroup::instance().CreateCommGroup(kHcclWorldGroup, ranks);
+    return true;
+  }
+
   auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
     config_path_str = std::getenv("RANK_TABLE_FILE");

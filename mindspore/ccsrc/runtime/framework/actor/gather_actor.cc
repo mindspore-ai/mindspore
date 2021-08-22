@@ -75,7 +75,7 @@ void GatherActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   }
 }
 
-void GatherActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context) {
+void GatherActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   input_branch_ids_[sequential_num] = branch_id;
@@ -97,7 +97,7 @@ void GatherActor::FetchBackendInputNode(const FuncGraphPtr &func_graph, const Co
   }
 }
 
-void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
+void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
   // Must be the execution order: send branch id --> send result --> send data --> send control, avoid the illegal
   // timing problem.
@@ -138,7 +138,7 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   }
 }
 
-void GatherActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
+void GatherActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto data_iter = input_data_.find(context->sequential_num_);
   if (data_iter != input_data_.end()) {
@@ -175,7 +175,7 @@ void GatherActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   }
 }
 
-bool GatherActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
+bool GatherActor::CheckLaunchCondition(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
 
   // Fetch input data.
@@ -214,7 +214,7 @@ bool GatherActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   return true;
 }
 
-void GatherActor::EraseInput(OpContext<DeviceTensor> *context) {
+void GatherActor::EraseInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
 
   // Erase input data.

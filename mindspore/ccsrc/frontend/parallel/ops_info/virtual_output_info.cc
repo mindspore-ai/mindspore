@@ -64,8 +64,14 @@ Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
   }
   for (auto &shape : inputs_shape_) {
     Shape temp;
-    temp.emplace_back(SizeToLong(total_dev_num));
-    (void)temp.insert(temp.end(), shape.size() - 1, 1);
+    if (!shape.empty()) {
+      if (shape[0] % total_dev_num == 0) {
+        temp.emplace_back(SizeToLong(total_dev_num));
+      } else {
+        temp.emplace_back(1);
+      }
+      (void)temp.insert(temp.end(), shape.size() - 1, 1);
+    }
     strategy.push_back(temp);
   }
   sp = std::make_shared<Strategy>(stage_id, strategy);

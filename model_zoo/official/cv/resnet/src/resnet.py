@@ -23,7 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.common.tensor import Tensor
 
 
-def _conv_variance_scaling_initializer(in_channel, out_channel, kernel_size):
+def conv_variance_scaling_initializer(in_channel, out_channel, kernel_size):
     fan_in = in_channel * kernel_size * kernel_size
     scale = 1.0
     scale /= max(1., fan_in)
@@ -108,7 +108,7 @@ def kaiming_uniform(inputs_shape, a=0., mode='fan_in', nonlinearity='leaky_relu'
 
 def _conv3x3(in_channel, out_channel, stride=1, use_se=False, res_base=False):
     if use_se:
-        weight = _conv_variance_scaling_initializer(in_channel, out_channel, kernel_size=3)
+        weight = conv_variance_scaling_initializer(in_channel, out_channel, kernel_size=3)
     else:
         weight_shape = (out_channel, in_channel, 3, 3)
         weight = Tensor(kaiming_normal(weight_shape, mode="fan_out", nonlinearity='relu'))
@@ -121,7 +121,7 @@ def _conv3x3(in_channel, out_channel, stride=1, use_se=False, res_base=False):
 
 def _conv1x1(in_channel, out_channel, stride=1, use_se=False, res_base=False):
     if use_se:
-        weight = _conv_variance_scaling_initializer(in_channel, out_channel, kernel_size=1)
+        weight = conv_variance_scaling_initializer(in_channel, out_channel, kernel_size=1)
     else:
         weight_shape = (out_channel, in_channel, 1, 1)
         weight = Tensor(kaiming_normal(weight_shape, mode="fan_out", nonlinearity='relu'))
@@ -134,7 +134,7 @@ def _conv1x1(in_channel, out_channel, stride=1, use_se=False, res_base=False):
 
 def _conv7x7(in_channel, out_channel, stride=1, use_se=False, res_base=False):
     if use_se:
-        weight = _conv_variance_scaling_initializer(in_channel, out_channel, kernel_size=7)
+        weight = conv_variance_scaling_initializer(in_channel, out_channel, kernel_size=7)
     else:
         weight_shape = (out_channel, in_channel, 7, 7)
         weight = Tensor(kaiming_normal(weight_shape, mode="fan_out", nonlinearity='relu'))
@@ -207,7 +207,7 @@ class ResidualBlock(nn.Cell):
             self.bn2 = _bn(channel)
 
         self.conv3 = _conv1x1(channel, out_channel, stride=1, use_se=self.use_se)
-        self.bn3 = _bn_last(out_channel)
+        self.bn3 = _bn(out_channel)
         if self.se_block:
             self.se_global_pool = P.ReduceMean(keep_dims=False)
             self.se_dense_0 = _fc(out_channel, int(out_channel / 4), use_se=self.use_se)

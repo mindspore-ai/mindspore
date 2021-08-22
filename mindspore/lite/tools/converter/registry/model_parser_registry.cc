@@ -46,6 +46,5 @@ int ModelParserRegistry::RegParser(const FmkType fmk, ModelParserCreator creator
   instance->parsers_[fmk] = creator;
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

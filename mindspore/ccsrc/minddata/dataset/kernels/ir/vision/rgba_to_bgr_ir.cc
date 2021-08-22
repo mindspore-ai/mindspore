@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
 #ifndef ENABLE_ANDROID
 // RgbaToBgrOperation.

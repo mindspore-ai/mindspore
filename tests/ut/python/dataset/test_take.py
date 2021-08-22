@@ -351,7 +351,7 @@ def test_take_19():
 
         data1 = data1.batch(2)
         data1 = data1.take(0)
-    assert "positive integer" in str(info.value)
+    assert "within the required interval" in str(info.value)
 
 if __name__ == '__main__':
     test_take_01()

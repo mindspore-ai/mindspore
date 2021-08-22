@@ -425,7 +425,12 @@ class AreaGraph {
         AnfNodePtrList getitem_inputs = {NewValueNode(prim::kPrimTupleGetItem), main_cnodes[input_area], idx};
         TraceGuard g_sub(std::make_shared<TraceOpt>(main_cnodes[input_area]->debug_info()));
         auto getitem_node = main_func_graph->NewCNode(getitem_inputs);
-        getitem_node->set_abstract(main_cnodes[input_area]->abstract());
+        auto abs_tuple = dyn_cast<abstract::AbstractTuple>(main_cnodes[input_area]->abstract());
+        if (idx_val < SizeToLong(abs_tuple->size())) {
+          getitem_node->set_abstract(abs_tuple->elements()[idx_val]);
+        } else {
+          getitem_node->set_abstract(main_cnodes[input_area]->abstract());
+        }
         main_cnode_inputs.emplace_back(getitem_node);
       } else {
         main_cnode_inputs.emplace_back(main_cnodes[input_area]);

@@ -20,10 +20,8 @@
 #include "nnacl/nnacl_utils.h"
 
 int Reverse(const float *input, float *output, size_t elem_size, int *index) {
-  for (int i = 0; i < elem_size; i++) {
+  for (size_t i = 0; i < elem_size; i++) {
     NNACL_ASSERT(index[i] >= 0);
-  }
-  for (int i = 0; i < elem_size; i++) {
     output[index[i]] = input[i];
   }
   return NNACL_OK;

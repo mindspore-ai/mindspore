@@ -29,7 +29,12 @@ Proto-Net contains 2 parts named Encoder and Relation. The former one has 4 conv
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-Dataset used: [omniglot](https://github.com/brendenlake/omniglot)
+The dataset omniglot can be obtained from (https://github.com/orobix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/blob/master/). You can obtain the dataset after running the scripts.
+
+```bash
+cd src
+python train.py
+```
 
 - Dataset size 4.02M，32462 28*28 in 1622 classes
     - Train 1,200 classes  
@@ -39,7 +44,7 @@ Dataset used: [omniglot](https://github.com/brendenlake/omniglot)
 
 - The directory structure is as follows:
 
-```text
+```shell
 └─Data
     ├─raw
     ├─spilts
@@ -67,13 +72,13 @@ Dataset used: [omniglot](https://github.com/brendenlake/omniglot)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-```shell
-# enter script dir, train ProtoNet in standalone
-sh run_standalone_train_ascend.sh dataset 1 20 20
-# enter script dir, train ProtoNet in distribution
-sh run_distribution_ascend.sh dataset rank_table dataset 20
+```python
+# enter script dir, train ProtoNet
+sh run_standalone_train_ascend.sh "../dataset" 1 60 500
 # enter script dir, evaluate ProtoNet
-sh run_standalone_eval_ascend.sh dataset best.ckpt 1 20
+sh run_standalone_eval_ascend.sh "../dataset" "./output/best_ck.ckpt" 1 5
+# enter script dir, train ProtoNet distributed
+sh run_distribution_ascend.sh "./rank_table.json" "../dataset" 60 500
 ```
 
 ## [Script and Sample Code](#contents)
@@ -120,8 +125,7 @@ Major parameters in train.py and config.py as follows:
 ### Training
 
 ```bash
-# enter script dir, train ProtoNet in standalone
-sh run_standalone_train_ascend.sh dataset 1 20 20
+sh run_standalone_train_ascend.sh "../dataset" 1 60 500
 ```
 
 The model checkpoint will be saved in the current directory.
@@ -133,11 +137,11 @@ The model checkpoint will be saved in the current directory.
 Before running the command below, please check the checkpoint path used for evaluation.
 
 ```bash
-# enter script dir, evaluate ProtoNet
-sh run_standalone_eval_ascend.sh dataset best.ckpt 1 20
+sh run_standalone_eval_ascend.sh "../dataset" "./output/best_ck.ckpt" 1 5
 ```
 
-```text
+```shell
+
 Test Acc: 0.9954400658607483  Loss: 0.02102319709956646
 ```
 
@@ -149,9 +153,9 @@ Test Acc: 0.9954400658607483  Loss: 0.02102319709956646
 
 | Parameters                 | ProtoNet                                                   |
 | -------------------------- | ---------------------------------------------------------- |
-| Resource                   | CentOs 8.2; Ascend 910; CPU 2.60GHz; 192cores; Memory 755G             |
+| Resource                   | CentOs 8.2; Ascend 910 ; CPU 2.60GHz，192cores；Memory 755G             |
 | uploaded Date              | 03/26/2021 (month/day/year)                                 |
-| MindSpore Version          | 1.2.0                                                     |
+| MindSpore Version          | 1.1.1                                                      |
 | Dataset                    | OMNIGLOT                                                    |
 | Training Parameters        | episode=500, class_num = 5, lr=0.001, classes_per_it_tr=60, num_support_tr=5, num_query_tr=5, classes_per_it_val=20, num_support_val=5, num_query_val=15         |
 | Optimizer                  | Adam                                                         |
@@ -161,7 +165,7 @@ Test Acc: 0.9954400658607483  Loss: 0.02102319709956646
 | Speed                      | 215 ms/step                          |
 | Total time                 | 3 h 23m (8p)                |
 | Checkpoint for Fine tuning | 440 KB (.ckpt file)                                         |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ProtoNet |
+| Scripts                    | https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/research/cv/protonet |
 
 # [ModelZoo Homepage](#contents)
 

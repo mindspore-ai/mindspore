@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHShrinkGrad = "HShrinkGrad";
-class MS_CORE_API HShrinkGrad : public PrimitiveC {
+class HShrinkGrad : public PrimitiveC {
  public:
   HShrinkGrad() : PrimitiveC(kNameHShrinkGrad) { InitIOName({"gradients", "features"}, {"backprops"}); }
   ~HShrinkGrad() = default;

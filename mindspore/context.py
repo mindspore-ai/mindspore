@@ -353,11 +353,11 @@ def set_auto_parallel_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        If a program has tasks with different parallel modes, then before setting new parallel mode for the
-        next task, interface mindspore.context.reset_auto_parallel_context() needs to be called to reset
+        If a program has tasks on different parallel modes, before setting a new parallel mode for the
+        next task, interface mindspore.context.reset_auto_parallel_context() should be called to reset
         the configuration.
-        Setting or changing parallel modes must be called before any creating Initializer, otherwise,
-        RuntimeError may be raised when compiling the network.
+        Setting or changing parallel modes must be called before creating any Initializer, otherwise,
+        it may have RuntimeError when compiling the network.
 
     Some configurations are parallel mode specific, see the below table for details:
 
@@ -410,7 +410,7 @@ def set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
-                       should be set with True. Default: False.
+                       should be set as True. Default: False.
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
                        parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
@@ -419,7 +419,7 @@ def set_auto_parallel_context(**kwargs):
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
                         the devices are distributed alone the pipeline. The total devices will be divided into
-                        'pipeline_stags' stages. This currently could only be used when
+                        'pipeline_stags' stages. Currently this could only be used when
                         parallel mode semi_auto_parallel is enabled. Default: 1.
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
                         This should be a positive int. Default: 1.
@@ -520,14 +520,14 @@ def set_context(**kwargs):
     Set context for running environment.
 
     Context should be configured before running your program. If there is no configuration,
-    it will automatic acquisition according to device target by default. GRAPH_MODE or
+    it will be automatically obtained according to the device target by default. GRAPH_MODE or
     PYNATIVE_MODE can be set by `mode` attribute and both modes support all backends, default
     mode is GRAPH_MODE.
 
-    When the `save_graphs` attribute is set to True, attribute of `save_graphs_path` is used to set the
+    When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
     intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
     For other configurations and arguments, please refer to the corresponding module
-    description, the configuration is optional and can be enabled when needed.
+    description. Additionally, the configuration is optional and can be enabled when needed.
 
     Note:
         Attribute name is required for setting attributes.
@@ -579,7 +579,7 @@ def set_context(**kwargs):
               equivalently by setting opt_level greater than 0.
             - dump_as_text: dump detail info as text files. Default: false.
 
-            More options can be referred from the implementation code.
+            More options can refer to the implementation code.
             These options can also be set by environment variable `MS_GRAPH_KERNEL_FLAGS`, without modifying
             network source code. For example, `export MS_GRAPH_KERNEL_FLAGS="--opt_level=2 --dump_as_text"`.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
@@ -597,15 +597,15 @@ def set_context(**kwargs):
         profiling_options (str): Set profiling collection options, operators can profiling data here.
             The values of profiling collection options are as follows, supporting the collection of multiple data.
 
-            - output: the saving the path of the profiling collection result file. The directory spectified by this
-              parameter needs to be created in advance on the training environment (container or host side) and ensure
+            - output: The saving path of the profiling collection result. The directory specified by this
+              parameter should be created in advance in the training environment (container or host side) and ensure
               that the running user configured during installation has read and write permissions.It supports the
               configuration of absolute or relative paths(relative to the current path when executing the command line).
               The absolute path configuration starts with '/', for example:/home/data/output.
-              The relative path configuration directly starts with the directory name,for example:output.
+              The relative path configuration starts with the directory name,for example:output.
 
             - training_trace: collect iterative trajectory data, that is, the training task and software information of
-              the AI software stack, to achieve performance analysis of the training task, focusing on data
+              the AI software stack, to realize performance analysis of the training task, focusing on data
               enhancement, forward and backward calculation, gradient aggregation update and other related data.
               The value is on/off.
 
@@ -640,11 +640,11 @@ def set_context(**kwargs):
         max_device_memory (str): Sets the maximum memory available for devices.
             Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
-            a file by default, and turns off printing to the screen. If the file already exists, add a timestamp
+            a file by default, and turns off printing to the screen. If the file exists already, add a timestamp
             suffix to the file. Default: ''.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
-            `<https://www.mindspore.cn/docs/programming_guide/zh-CN/master/tensor.html>`_.
+            `<https://www.mindspore.cn/doc/programming_guide/zh-CN/master/tensor.html>`_.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
         env_config_path (str): Config path for DFX.
         auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance,
@@ -652,7 +652,7 @@ def set_context(**kwargs):
             RL: rl_tune;
             GA: ga_tune;
             RL,GA: rl_tune/ga_tune(Automatic selection).
-            - rl_tune: Reinforecement Learning tune.
+            - rl_tune: Reinforcement Learning tune.
             - ga_tune: Genetic Algorithm tune.
         grad_for_scalar (bool): Whether to get gradient for scalar. If set, the gradient of scalar input parameter
             can be calculated. Now, only part of the scalar operators support this calculation. Default: False.
@@ -660,8 +660,8 @@ def set_context(**kwargs):
             This is an experimental prototype that is subject to change and/or deletion.
         load_compile_cache (bool): Whether to use the cache of the graph compiled by frontend.
             When it is true, the graph compilation will skip the frontend compilation process. It means that
-            you should make sure the network has not been changed since the last execution. Currently we have
-            not support automatic checking the changes yet. Default: False.
+            you should make sure the network has not been changed since the last execution. By now, we have
+            not support automatically checking the changes yet. Default: False.
             This is an experimental prototype that is subject to change and/or deletion.
 
     Raises:
@@ -715,7 +715,7 @@ def set_context(**kwargs):
 def get_context(attr_key):
     """
     Get context attribute value according to the input key.
-    If some attribute are not set, it will be automatically obtained.
+    If some attributes are not set, they will be automatically obtained.
 
     Args:
         attr_key (str): The key of the attribute.

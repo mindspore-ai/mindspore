@@ -223,7 +223,7 @@ MSRStatus ShardIndexGenerator::CreateShardNameTable(sqlite3 *db, const std::stri
   sql = "INSERT INTO SHARD_NAME (NAME) VALUES (:SHARD_NAME);";
   sqlite3_stmt *stmt = nullptr;
   if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
-    if (stmt) {
+    if (stmt != nullptr) {
       (void)sqlite3_finalize(stmt);
     }
     MS_LOG(ERROR) << "SQL error: could not prepare statement, sql: " << sql;

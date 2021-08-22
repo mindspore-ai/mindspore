@@ -58,16 +58,26 @@ int main(int argc, char **argv) {
   auto executor = Execute(decode);
   executor(image, &image);
 
-  LiteMat lite_mat_rgb(image.Shape()[1], image.Shape()[0], image.Shape()[2], const_cast<void *>(image.Data().get()),
-                       LDataType::UINT8);
+  constexpr int32_t image_h = 0;
+  constexpr int32_t image_w = 1;
+  constexpr int32_t image_c = 2;
+  LiteMat lite_mat_rgb(image.Shape()[image_w], image.Shape()[image_h], image.Shape()[image_c],
+                       const_cast<void *>(image.Data().get()), LDataType::UINT8);
   std::cout << "lite_mat_rgb: height=" << lite_mat_rgb.height_ << ", width=" << lite_mat_rgb.width_ << std::endl;
-  LiteMat lite_mat_resize;
 
-  ResizeBilinear(lite_mat_rgb, lite_mat_resize, 256, 256);
+  LiteMat lite_mat_resize;
+  constexpr target_size = 256;
+  ResizeBilinear(lite_mat_rgb, lite_mat_resize, target_size, target_size);
   std::cout << "lite_mat_resize: height=" << lite_mat_resize.height_ << ", width=" << lite_mat_resize.width_
             << std::endl;
 
   LiteMat lite_mat_pad;
-  Pad(lite_mat_resize, lite_mat_pad, 30, 30, 10, 10, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
+  constexpr int32_t pad_top = 30;
+  constexpr int32_t pad_bottom = 30;
+  constexpr int32_t pad_left = 10;
+  constexpr int32_t pad_right = 10;
+  constexpr int32_t pad_color = 255;
+  Pad(lite_mat_resize, lite_mat_pad, pad_top, pad_bottom, pad_left, pad_right, PaddBorderType::PADD_BORDER_CONSTANT,
+      pad_color, pad_color, pad_color);
   std::cout << "lite_mat_pad: height=" << lite_mat_pad.height_ << ", width=" << lite_mat_pad.width_ << std::endl;
 }

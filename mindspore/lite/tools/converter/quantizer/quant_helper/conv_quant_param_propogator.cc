@@ -58,5 +58,4 @@ STATUS ConvQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGra
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::lite

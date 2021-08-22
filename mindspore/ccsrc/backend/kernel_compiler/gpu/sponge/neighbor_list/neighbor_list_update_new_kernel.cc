@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(NeighborListUpdateNew,
+MS_REG_GPU_KERNEL_TWO(NeighborListUpdate,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)

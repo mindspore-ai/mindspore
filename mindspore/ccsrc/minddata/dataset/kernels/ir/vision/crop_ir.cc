@@ -63,6 +63,21 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
   std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(y, x, height, width);
   return tensor_op;
 }
+
+Status CropOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["coordinates"] = coordinates_;
+  (*out_json)["size"] = size_;
+  return Status::OK();
+}
+
+Status CropOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("coordinates") != op_params.end(), "Failed to find coordinates");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
+  std::vector<int32_t> coordinates = op_params["coordinates"];
+  std::vector<int32_t> size = op_params["size"];
+  *operation = std::make_shared<CropOperation>(coordinates, size);
+  return Status::OK();
+}
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

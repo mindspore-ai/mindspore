@@ -182,7 +182,7 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
                                const std::vector<tensor::TensorPtr> &input_tensors,
                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   auto &node = node_output_pair.first;
-  int output_index = SizeToInt(node_output_pair.second);
+  size_t output_index = node_output_pair.second;
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   auto tensor_from_input = GetNodeOutputTensorFromInputs(node_output_pair, graph, input_tensors);
@@ -434,6 +434,17 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
                         << "] of kernel: " << AnfAlgo::GetCNodeName(kernel);
     }
   }
+}
+
+void UpdateGraphAquireGilAttr(const NotNull<KernelGraphPtr> &root_graph) {
+  for (const auto &cnode : root_graph->execution_order()) {
+    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPyFunc)) {
+      MS_LOG(INFO) << "The Graph require GIL. Graph id: " << root_graph->graph_id();
+      root_graph->set_is_need_gil(true);
+      return;
+    }
+  }
+  return;
 }
 }  // namespace
 
@@ -1103,6 +1114,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   UnifyMindIR(graph);
   // Update Graph Dynamic Shape Attr
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+  UpdateGraphAquireGilAttr(NOT_NULL(graph));
   opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
   SetInputNodeUsage(graph, manager);
@@ -1566,8 +1578,8 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     if (AnfAlgo::IsDynamicShape(node)) {
       const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
       ShapeVector int_shape;
-      std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-      tensor->set_shape(int_shape);
+      (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+      (void)tensor->set_shape(int_shape);
     }
     if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       tensor->data_sync(false);
@@ -1596,8 +1608,18 @@ std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(const Graph
   if (!graph->has_optimizer()) {
     return {};
   }
+  auto input_nodes = graph->inputs();
+  bool check_monad = false;
+  if (input_nodes.size() == inputs.size()) {
+    check_monad = true;
+  }
   std::vector<tensor::TensorPtr> result;
-  for (auto &tensor : inputs) {
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (check_monad && HasAbstractMonad(input_nodes[i])) {
+      continue;
+    }
+    auto &tensor = inputs[i];
+    MS_EXCEPTION_IF_NULL(tensor);
     if (!tensor->IsGraphOutput()) {
       result.emplace_back(tensor);
     }
@@ -1868,8 +1890,7 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
 
 constexpr auto kMixTarget = "MixTarget";
 constexpr auto kNoTarget = "NoTarget";
-std::string SessionBasic::AddPartialParametersMap(const FuncGraphManagerPtr &front_func_graph_manager,
-                                                  const AnfNodePtr &partial_node) {
+std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node) {
   MS_EXCEPTION_IF_NULL(partial_node);
   auto iter = partial_target_map_.find(partial_node);
   if (iter != partial_target_map_.end()) {
@@ -1881,11 +1902,12 @@ std::string SessionBasic::AddPartialParametersMap(const FuncGraphManagerPtr &fro
   MS_EXCEPTION_IF_NULL(partial_graph);
   auto parameters = partial_graph->parameters();
   auto partial_inputs = partial_cnode->inputs();
-  if (parameters.size() + 2 != partial_inputs.size()) {
+  const size_t kNonParameterNum = 2;
+  if (parameters.size() + kNonParameterNum != partial_inputs.size()) {
     return kMixTarget;
   }
   for (size_t i = 0; i < parameters.size(); ++i) {
-    partial_parameters_map_[parameters[i]] = partial_inputs[2 + i];
+    partial_parameters_map_[parameters[i]] = partial_inputs[kNonParameterNum + i];
   }
   auto graph_nodes = TopoSort(partial_graph->get_return());
   std::string graph_target = kNoTarget;
@@ -1905,7 +1927,7 @@ std::string SessionBasic::AddPartialParametersMap(const FuncGraphManagerPtr &fro
       break;
     }
   }
-  (void)partial_target_map_.insert({partial_node, graph_target});
+  (void)partial_target_map_.emplace(std::pair<AnfNodePtr, std::string>(partial_node, graph_target));
   return graph_target;
 }
 
@@ -1937,7 +1959,7 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
     auto users = ExtendNodeUsers(front_func_graph_manager, front_node);
     for (auto &user : users) {
       if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice) {
-        auto partial_target = AddPartialParametersMap(front_func_graph_manager, user);
+        auto partial_target = AddPartialParametersMap(user);
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;
         }
@@ -2098,9 +2120,6 @@ KernelGraphPtr SessionBasic::NewKernelGraph() {
 AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) {
   MS_EXCEPTION_IF_NULL(push_node);
   for (auto &node : node_list) {
-    if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
-      continue;
-    }
     if (node != nullptr && node->isa<CNode>()) {
       for (auto input : node->cast<CNodePtr>()->inputs()) {
         if (push_node == AnfAlgo::VisitKernel(input, 0).first) {

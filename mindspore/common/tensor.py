@@ -40,13 +40,13 @@ class Tensor(Tensor_):
         input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): Input data of the tensor.
         dtype (:class:`mindspore.dtype`): Input data should be None, bool or numeric type defined in `mindspore.dtype`.
             The argument is used to define the data type of the output tensor. If it is None, the data type of the
-            output tensor will be as same as the `input_data`. Default: None.
+            output tensor will be the same as the `input_data`. Default: None.
         shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
             output. If `input_data` is available, `shape` doesn't need to be set. Default: None.
         init (Initializer): the information of init data.
             'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
             'init' interface to initialize parameters in other conditions. If 'init' interface is used to initialize
-            parameters, the `Tensor.init_data` API need to be called to convert `Tensor` to the actual data.
+            parameters, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
 
     Outputs:
         Tensor. If `dtype` and `shape` are not set, return a tensor with the same dtype and shape as `input_data`.
@@ -425,12 +425,12 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int)): Dimensions of reduction,
-                when axis is None or empty tuple, reduce all dimensions. Default: ().
+                when the axis is None or empty tuple, reduce all dimensions. Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
             Tensor, if all array elements along the given axis evaluate to True, its value is True,
-            otherwise its value is False. If axis is None or empty tuple, reduce all dimensions.
+            otherwise its value is False. If the axis is None or empty tuple, reduce all dimensions.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -454,12 +454,12 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int)): Dimensions of reduction,
-                when axis is None or empty tuple, reduce all dimensions. Default: ().
+                when the axis is None or empty tuple, reduce all dimensions. Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
             Tensor, if any array element along the given axis evaluates to True, its value is True,
-            otherwise its value is False. If axis is None or empty tuple, reduce all dimensions.
+            otherwise its value is False. If the axis is None or empty tuple, reduce all dimensions.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -536,7 +536,7 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
-                when axis is None or empty tuple, reduce all dimensions. Default: ().
+                when the axis is None or empty tuple, reduce all dimensions. Default: ().
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
@@ -772,7 +772,7 @@ class Tensor(Tensor_):
 
     def astype(self, dtype, copy=True):
         """
-        Return a copy of the tensor, casted to a specified type.
+        Return a copy of the tensor, cast to a specified type.
 
         Args:
             dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format
@@ -818,7 +818,7 @@ class Tensor(Tensor_):
             shape as self.shape with the dimension along axis removed.
 
         Raises:
-            ValueError: if axis is out of range.
+            ValueError: if the axis is out of range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -852,7 +852,7 @@ class Tensor(Tensor_):
             shape as self.shape with the dimension along axis removed.
 
         Raises:
-            ValueError: if axis is out of range.
+            ValueError: if the axis is out of range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -890,7 +890,7 @@ class Tensor(Tensor_):
                 In that case, :class:`float32` is used. Default: None.
 
         Raises:
-            ValueError: if axis is out of range.
+            ValueError: if the axis is out of range.
 
         Returns:
             Tensor.
@@ -1024,7 +1024,7 @@ class Tensor(Tensor_):
                 is passed, initial must also be provided. Default: True.
 
         Returns:
-            Tensor or scalar, minimum of input tensor. If axis is None, the result is a scalar
+            Tensor or scalar, minimum of input tensor. If the axis is None, the result is a scalar
             value. If `axis` is given, the result is an array of dimension ``self.ndim - 1``.
 
         Raises:
@@ -1533,7 +1533,7 @@ class Tensor(Tensor_):
 
         Args:
             choices (Union[tuple, list, Tensor]): Choice arrays. `a` and all of the `choices` must
-                be broadcastable to the same shape. If `choices` is itself an array, then
+                be broadcasted to the same shape. If `choices` is itself an array, then
                 its outermost dimension (i.e., the one corresponding to ``choices.shape[0]``)
                 is taken as defining the “sequence”.
             mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how indices outside
@@ -1764,8 +1764,8 @@ class Tensor(Tensor_):
         Args:
             axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
                 If None, sum all of the elements of the input array.
-                If axis is negative it counts from the last to the first axis.
-                If axis is a tuple of ints, a sum is performed on all of the axes specified in the tuple
+                If the axis is negative, it counts from the last to the first axis.
+                If the axis is a tuple of ints, a sum is performed on all of the axes specified in the tuple
                 instead of a single axis or all the axes as before.
             dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
                 output Tensor.
@@ -1778,7 +1778,7 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor. A tensor with the same shape as input, with the specified axis removed.
-            If input tensor is a 0-d array, or if axis is None, a scalar is returned.
+            If input tensor is a 0-d array, or if the axis is None, a scalar is returned.
 
         Raises:
             TypeError: If input is not array_like, or `axis` is not int or tuple of ints,
@@ -1798,7 +1798,8 @@ class Tensor(Tensor_):
             >>> print(input_x.sum(axis=1))
             [10. 35.]
         """
-        dtype = self.dtype if dtype is None else dtype
+        input_x = self.astype(mstype.int32) if self.dtype == mstype.bool_ else self
+        dtype = input_x.dtype if dtype is None else dtype
         if not isinstance(keepdims, int):
             raise TypeError(f"integer argument expected, but got {type(keepdims)}")
         if initial is not None and not isinstance(initial, (int, float, bool)):
@@ -1808,7 +1809,9 @@ class Tensor(Tensor_):
         else:
             axis = validator.check_and_canonicalize_axes(axis, self.ndim)
 
-        input_x = self.astype(mstype.int32) if self.dtype == mstype.bool_ else self
+        if not validator.check_type_support(input_x.dtype, 'GPU',
+                                            (mstype.float64, mstype.float32, mstype.float16)):
+            input_x = input_x.astype(mstype.float32)
         if 0 in self.shape:
             input_x = tensor_operator_registry.get('make_tensor')([0], self.dtype)
         res = tensor_operator_registry.get('sum')(bool(keepdims))(input_x, axis)
@@ -1830,7 +1833,7 @@ class Tensor(Tensor_):
             Tensor, has the same shape as input tensor except along the given axis.
 
         Raises:
-            ValueError: if axis is out of range.
+            ValueError: if the axis is out of range.
             TypeError: if arguments have types not specified above.
 
         Supported Platforms:

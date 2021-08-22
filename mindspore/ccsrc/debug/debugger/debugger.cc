@@ -59,12 +59,14 @@ using debugger::WatchpointHit;
 namespace mindspore {
 
 static constexpr auto g_chunk_size = 1024 * 1024 * 3;
+static constexpr int32_t heartbeat_period_second = 30;
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
 
 Debugger::Debugger()
     : grpc_client_(nullptr),
       debug_services_(nullptr),
+      heartbeat_thread_(nullptr),
       device_id_(0),
       device_target_(""),
       num_step_(0),
@@ -113,7 +115,7 @@ void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   device_id_ = device_id;
   MS_LOG(INFO) << "Debugger got device_target: " << device_target;
   device_target_ = device_target;
-  version_ = "1.3.0";
+  version_ = "1.4.0";
 }
 
 bool IsTypeDebuggerSupported(TypeId type) {
@@ -132,6 +134,7 @@ void Debugger::EnableDebugger() {
   partial_memory_ = false;
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
+  heartbeat_thread_ = nullptr;
 
   // see if dump using debugger backend is enabled
   bool dump_enabled = CheckDebuggerDumpEnabled();
@@ -147,8 +150,22 @@ void Debugger::EnableDebugger() {
   }
 
   if (debugger_enabled_) {
-    std::string host = "localhost";
-
+    // configure grpc host
+    std::string env_host_str = common::GetEnv("MS_DEBUGGER_HOST");
+    std::string host;
+    if (!env_host_str.empty()) {
+      if (CheckIp(env_host_str)) {
+        MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
+        host = env_host_str;
+      } else {
+        debugger_enabled_ = false;
+        MS_EXCEPTION(ValueError) << "Environment variable MS_DEBUGGER_HOST isn't a valid IP address. "
+                                    "Please set environment variable MS_DEBUGGER_HOST=x.x.x.x to a valid IP";
+      }
+    } else {
+      MS_LOG(INFO) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
+      host = "localhost";
+    }
     // configure grpc port
     std::string env_port_str = common::GetEnv("MS_DEBUGGER_PORT");
     std::string port;
@@ -170,6 +187,8 @@ void Debugger::EnableDebugger() {
     }
     // initialize grpc client
     grpc_client_ = std::make_unique<GrpcClient>(host, port);
+    // initialize sending heartbeat
+    heartbeat_thread_ = std::make_unique<std::thread>([&]() { SendHeartbeat(heartbeat_period_second); });
   }
   debug_services_ = std::make_unique<DebugServices>();
 }
@@ -561,6 +580,38 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
   return model.graph();
 }
+
+void Debugger::SendHeartbeat(int32_t period) {
+  bool heartbeat_enabled_ = true;
+  int num_heartbeat_fail = 0;
+  const int max_num_heartbeat_fail = 5;
+  const int retry_period = 500;
+
+  Heartbeat heartbeat;
+  heartbeat.set_message("Debugger is alive");
+  heartbeat.set_period(heartbeat_period_second);
+
+  bool run_ = CheckDebuggerEnabled() && heartbeat_enabled_;
+  while (run_) {
+    EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
+
+    if (reply.status() != reply.OK) {
+      MS_LOG(ERROR) << "Error: SendHeartbeat failed";
+      num_heartbeat_fail++;
+      if (num_heartbeat_fail >= max_num_heartbeat_fail) {
+        MS_LOG(ERROR) << "Maximum number of failure for SendHeartbeat reached : exiting training session.";
+        Exit();
+        run_ = false;
+      } else {
+        MS_LOG(ERROR) << "Number of consecutive SendHeartbeat fail:" << num_heartbeat_fail;
+        std::this_thread::sleep_for(std::chrono::milliseconds(retry_period));
+      }
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(period * 1000));
+    }
+  }
+}
+
 void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   if (SendMetadata(true)) {
     // send graph to Mindinsight server
@@ -1118,6 +1169,17 @@ bool Debugger::CheckPort(const std::string &port) const {
   }
   if (num < min_port_num) return false;
   return true;
+}
+
+bool Debugger::CheckIp(const std::string &host) const {
+  std::regex reg_ip(
+    "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
+  std::smatch smat;
+  std::string host_str = host;
+  return std::regex_match(host_str, smat, reg_ip);
 }
 
 uint32_t Debugger::GetFirstRunGraphId() const { return rungraph_id_list_.front(); }

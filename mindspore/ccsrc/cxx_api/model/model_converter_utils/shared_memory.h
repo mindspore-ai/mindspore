@@ -26,9 +26,11 @@ class SharedMemory {
   Status Attach();
   void Detach();
   void Destroy();
-  uint8_t *GetSharedMemoryAddr() { return shmat_addr_; }
 
  private:
+  friend class MultiProcess;
+  uint8_t *GetSharedMemoryAddr() { return shmat_addr_; }
+
   int shm_id_ = -1;
   uint8_t *shmat_addr_ = nullptr;
 };

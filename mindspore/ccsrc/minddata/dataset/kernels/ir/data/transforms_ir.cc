@@ -135,6 +135,13 @@ Status FillOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
+Status FillOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  std::shared_ptr<Tensor> fill_value;
+  RETURN_IF_NOT_OK(Tensor::from_json(op_params, &fill_value));
+  *operation = std::make_shared<transforms::FillOperation>(fill_value);
+  return Status::OK();
+}
+
 // MaskOperation
 MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype)
     : op_(op), constant_(constant), dtype_(dtype) {}
@@ -170,6 +177,13 @@ Status OneHotOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_classes"] = num_classes_;
   *out_json = args;
+  return Status::OK();
+}
+
+Status OneHotOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_classes") != op_params.end(), "Failed tofind num_classes");
+  int32_t num_classes = op_params["num_classes"];
+  *operation = std::make_shared<transforms::OneHotOperation>(num_classes);
   return Status::OK();
 }
 
@@ -270,6 +284,13 @@ Status TypeCastOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["data_type"] = data_type_.ToString();
   *out_json = args;
+  return Status::OK();
+}
+
+Status TypeCastOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("data_type") != op_params.end(), "Failed tofind data_type");
+  std::string data_type = op_params["data_type"];
+  *operation = std::make_shared<transforms::TypeCastOperation>(data_type);
   return Status::OK();
 }
 

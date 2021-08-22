@@ -16,12 +16,56 @@
 
 #include "minddata/dataset/include/dataset/audio.h"
 
+#include "minddata/dataset/audio/ir/kernels/allpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/amplitude_to_db_ir.h"
+#include "minddata/dataset/audio/ir/kernels/angle_ir.h"
 #include "minddata/dataset/audio/ir/kernels/band_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 
 namespace mindspore {
 namespace dataset {
 
 namespace audio {
+// AllpassBiquad Transform Operation.
+struct AllpassBiquad::Data {
+  Data(int32_t sample_rate, float central_freq, float Q)
+      : sample_rate_(sample_rate), central_freq_(central_freq), Q_(Q) {}
+  int32_t sample_rate_;
+  float central_freq_;
+  float Q_;
+};
+
+AllpassBiquad::AllpassBiquad(int32_t sample_rate, float central_freq, float Q)
+    : data_(std::make_shared<Data>(sample_rate, central_freq, Q)) {}
+
+std::shared_ptr<TensorOperation> AllpassBiquad::Parse() {
+  return std::make_shared<AllpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
+}
+
+// AmplitudeToDB Operation.
+struct AmplitudeToDB::Data {
+  Data(ScaleType stype, float ref_value, float amin, float top_db)
+      : stype_(stype), ref_value_(ref_value), amin_(amin), top_db_(top_db) {}
+  ScaleType stype_;
+  float ref_value_;
+  float amin_;
+  float top_db_;
+};
+
+AmplitudeToDB::AmplitudeToDB(ScaleType stype, float ref_value, float amin, float top_db)
+    : data_(std::make_shared<Data>(stype, ref_value, amin, top_db)) {}
+
+std::shared_ptr<TensorOperation> AmplitudeToDB::Parse() {
+  return std::make_shared<AmplitudeToDBOperation>(data_->stype_, data_->ref_value_, data_->amin_, data_->top_db_);
+}
+
+// Angle Transform Operation.
+Angle::Angle() {}
+
+std::shared_ptr<TensorOperation> Angle::Parse() { return std::make_shared<AngleOperation>(); }
 // BandBiquad Transform Operation.
 struct BandBiquad::Data {
   Data(int32_t sample_rate, float central_freq, float Q, bool noise)
@@ -38,6 +82,74 @@ BandBiquad::BandBiquad(int32_t sample_rate, float central_freq, float Q, bool no
 std::shared_ptr<TensorOperation> BandBiquad::Parse() {
   return std::make_shared<BandBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_, data_->noise_);
 }
+
+// BandpassBiquad Transform Operation.
+struct BandpassBiquad::Data {
+  Data(int32_t sample_rate, float central_freq, float Q, bool const_skirt_gain)
+      : sample_rate_(sample_rate), central_freq_(central_freq), Q_(Q), const_skirt_gain_(const_skirt_gain) {}
+  int32_t sample_rate_;
+  float central_freq_;
+  float Q_;
+  bool const_skirt_gain_;
+};
+
+BandpassBiquad::BandpassBiquad(int32_t sample_rate, float central_freq, float Q, bool const_skirt_gain)
+    : data_(std::make_shared<Data>(sample_rate, central_freq, Q, const_skirt_gain)) {}
+
+std::shared_ptr<TensorOperation> BandpassBiquad::Parse() {
+  return std::make_shared<BandpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_,
+                                                   data_->const_skirt_gain_);
+}
+
+// BandrejectBiquad Transform Operation.
+struct BandrejectBiquad::Data {
+  Data(int32_t sample_rate, float central_freq, float Q)
+      : sample_rate_(sample_rate), central_freq_(central_freq), Q_(Q) {}
+  int32_t sample_rate_;
+  float central_freq_;
+  float Q_;
+};
+
+BandrejectBiquad::BandrejectBiquad(int32_t sample_rate, float central_freq, float Q)
+    : data_(std::make_shared<Data>(sample_rate, central_freq, Q)) {}
+
+std::shared_ptr<TensorOperation> BandrejectBiquad::Parse() {
+  return std::make_shared<BandrejectBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
+}
+
+// BassBiquad Transform Operation.
+struct BassBiquad::Data {
+  Data(int32_t sample_rate, float gain, float central_freq, float Q)
+      : sample_rate_(sample_rate), gain_(gain), central_freq_(central_freq), Q_(Q) {}
+  int32_t sample_rate_;
+  float gain_;
+  float central_freq_;
+  float Q_;
+};
+
+BassBiquad::BassBiquad(int32_t sample_rate, float gain, float central_freq, float Q)
+    : data_(std::make_shared<Data>(sample_rate, gain, central_freq, Q)) {}
+
+std::shared_ptr<TensorOperation> BassBiquad::Parse() {
+  return std::make_shared<BassBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
+}
+
+// TimeStretch Operation.
+struct TimeStretch::Data {
+  explicit Data(float hop_length, int n_freq, float fixed_rate)
+      : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}
+  float hop_length_;
+  int n_freq_;
+  float fixed_rate_;
+};
+
+TimeStretch::TimeStretch(float hop_length, int n_freq, float fixed_rate)
+    : data_(std::make_shared<Data>(hop_length, n_freq, fixed_rate)) {}
+
+std::shared_ptr<TensorOperation> TimeStretch::Parse() {
+  return std::make_shared<TimeStretchOperation>(data_->hop_length_, data_->n_freq_, data_->fixed_rate_);
+}
+
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

@@ -12,6 +12,8 @@ set(CPACK_TEMPORARY_PACKAGE_FILE_NAME ${BUILD_PATH}/package/mindspore)
 set(CPACK_TEMPORARY_INSTALL_DIRECTORY ${BUILD_PATH}/package/mindspore)
 set(CPACK_PACK_ROOT_DIR ${BUILD_PATH}/package/)
 set(CPACK_CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+set(CPACK_ENABLE_SYM_FILE ${ENABLE_SYM_FILE})
+set(CPACK_CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 if(ENABLE_GE)
     set(CPACK_MS_BACKEND "ge")
     set(CPACK_MS_TARGET "ascend or cpu")
@@ -125,17 +127,6 @@ if(ENABLE_MINDDATA)
       DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.so.67 COMPONENT mindspore)
     install(FILES ${icu4c_LIBPATH}/libicui18n.so.67.1
       DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.so.67 COMPONENT mindspore)
-
-    install(FILES ${ffmpeg_LIBPATH}/libavcodec.so.58.91.100
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libavcodec.so.58 COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libavformat.so.58.45.100
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libavformat.so.58 COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libavutil.so.56.51.100
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libavutil.so.56 COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libswresample.so.3.7.100
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libswresample.so.3 COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libswscale.so.5.7.100
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libswscale.so.5 COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU)

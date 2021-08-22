@@ -27,7 +27,7 @@ from collections import defaultdict
 import numpy as np
 
 import mindspore.nn as nn
-import mindspore.context as context
+from mindspore import context
 from mindspore import log as logger
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.print_pb2 import Print
@@ -275,8 +275,6 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             data = param["data"].asnumpy().reshape(-1)
             data_list[key].append(data)
 
-    if not isinstance(ckpt_file_name, str):
-        raise ValueError("The ckpt_file_name must be string.")
     ckpt_file_name = os.path.realpath(ckpt_file_name)
     if async_save:
         thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list, enc_key, enc_mode), name="asyn_save_ckpt")
@@ -331,8 +329,7 @@ def load(file_name, **kwargs):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore.train import export, load
+        >>> from mindspore import Tensor, export, load
         >>>
         >>> net = nn.Conv2d(1, 1, kernel_size=3, weight_init="ones")
         >>> input = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
@@ -602,8 +599,6 @@ def _save_graph(network, file_name):
     """
     logger.info("Execute the process of saving graph.")
 
-    if not isinstance(file_name, str):
-        raise ValueError("The ckpt_file_name must be string.")
     file_name = os.path.realpath(file_name)
     graph_pb = network.get_func_graph_proto()
     if graph_pb:
@@ -719,7 +714,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Default: 127.5.
             - std_dev (float): The variance of input data after preprocessing,
               used for quantizing the first layer of network. Default: 127.5.
-            - enc_key (str): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
+            - enc_key (byte): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, take effect when enc_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
 
@@ -733,11 +728,8 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
-    if not isinstance(file_name, str):
-        raise ValueError("Args file_name {} must be string, please check it".format(file_name))
-    file_name = os.path.realpath(file_name)
-
     Validator.check_file_name_by_regular(file_name)
+    file_name = os.path.realpath(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
         if file_format != 'MINDIR':
@@ -1199,9 +1191,8 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor
+        >>> from mindspore import Tensor, merge_sliced_parameter
         >>> from mindspore.common.parameter import Parameter
-        >>> from mindspore.train import merge_sliced_parameter
         >>>
         >>> sliced_parameters = [
         ...                      Parameter(Tensor(np.array([0.00023915, 0.00013939, -0.00098059])),

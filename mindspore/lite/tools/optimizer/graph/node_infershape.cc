@@ -43,20 +43,6 @@ void FreeTensors(std::vector<lite::Tensor *> *tensors) {
   tensors->resize(0);
 }
 
-void SetConvWeightFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inputs) {
-  MS_ASSERT(cnode != nullptr);
-  if (!CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
-      !CheckPrimitiveType(cnode, kPrimConv2DBackpropInputFusion) &&
-      !CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
-    return;
-  }
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(prim != nullptr);
-  if (prim->GetAttr(ops::kFormat) != nullptr && inputs.size() > 1) {
-    inputs[1]->set_format(static_cast<mindspore::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat))));
-  }
-}
-
 void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) {
   MS_ASSERT(cnode != nullptr);
   if (fmk_type != lite::converter::FmkType_ONNX) {
@@ -114,7 +100,6 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "get inputs failed.";
     return lite::RET_ERROR;
   }
-  SetConvWeightFormat(cnode, inputs);
   if (GetCNodeOutputTensors(cnode, &outputs) != lite::RET_OK) {
     FreeTensors(&inputs);
     FreeTensors(&outputs);

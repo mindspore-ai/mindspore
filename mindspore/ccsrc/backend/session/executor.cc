@@ -380,8 +380,8 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   session->CreateOutputTensors(graph_id, inputs, outputs, &task->tensor_to_node_);
   // maintain a copy of output vector
   task->outputs_ = *outputs;
-  // sync run graph without output tensor(int dataset graph)
-  if (!TensorInVector(outputs) && !graph->HasPostGraph()) {
+  // sync run graph without output tensor(int dataset graph) or the graph require gil.
+  if ((!TensorInVector(outputs) && !graph->HasPostGraph()) || graph->is_need_gil()) {
     task->sync_run_ = true;
     RunTask(task, true, true);
     return;

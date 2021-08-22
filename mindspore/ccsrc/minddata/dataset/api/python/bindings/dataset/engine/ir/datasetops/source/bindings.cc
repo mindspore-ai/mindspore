@@ -34,7 +34,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/libri_speech_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cmu_arctic_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 
@@ -211,13 +211,13 @@ PYBIND_REGISTER(MnistNode, 2, ([](const py::module *m) {
 
 
 
-PYBIND_REGISTER(LibriSpeechNode, 2, ([](const py::module *m) {
-                  (void)py::class_<LibriSpeechNode, DatasetNode, std::shared_ptr<LibriSpeechNode>>(*m, "LibriSpeechNode",
-                                                                                       "to create an LibriSpeechNode")
+PYBIND_REGISTER(CmuArcticNode, 2, ([](const py::module *m) {
+                  (void)py::class_<CmuArcticNode, DatasetNode, std::shared_ptr<CmuArcticNode>>(*m, "CmuArcticNode",
+                                                                                       "to create an CmuArcticNode")
                     .def(py::init([](std::string dataset_dir, std::string usage, py::handle sampler) {
-                      auto librispeech = std::make_shared<LibriSpeechNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
-                      THROW_IF_ERROR(librispeech->ValidateParams());
-                      return librispeech;
+                      auto cmuarctic = std::make_shared<CmuArcticNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(cmuarctic->ValidateParams());
+                      return cmuarctic;
                     }));
                 }));
 

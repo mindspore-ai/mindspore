@@ -40,7 +40,7 @@ class DropoutGradCpuBwdKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   void DropoutBackwardKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                             size_t num_count, float keep_prob);
+                             float keep_prob);
 };
 
 MS_REG_CPU_KERNEL(DropoutGrad, KernelAttr(), DropoutGradCpuBwdKernel);

@@ -28,7 +28,7 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, nullptr, nullptr) {}
   ~ConvolutionInt8CPUKernel() override {
     FreeQuantParam();
     if (packed_weight_ != nullptr) {

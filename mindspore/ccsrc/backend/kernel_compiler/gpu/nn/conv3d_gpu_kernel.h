@@ -45,15 +45,12 @@ class Conv3dGpuKernel : public GpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *filter_addr = GetDeviceAddress<T>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *workspace_addr = nullptr;
-    if (workspace_size_ != 0) {
-      workspace_addr = GetDeviceAddress<T>(workspace, 0);
-    }
+    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
 
     const float alpha = 1;
     const float beta = 0;
     if (use_pad_) {
-      T *padded_addr = GetDeviceAddress<T>(workspace, 1);
+      T *padded_addr = GetPossiblyNullDeviceAddress<T>(workspace, 1);
       CalPad3d(padded_size_ / sizeof(T), input_addr, n_, c_, old_depth_, old_height_, old_width_,
                old_depth_ + pad_depth_, old_height_ + pad_height_, old_width_ + pad_width_, pad_head_, pad_top_,
                pad_left_, pad_value_, padded_addr, reinterpret_cast<cudaStream_t>(stream_ptr));

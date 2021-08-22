@@ -19,6 +19,10 @@
 namespace mindspore::lite {
 int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
+  if (!IsShapeKnown()) {
+    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
+    return RET_ERROR;
+  }
   auto reduce_op = primitive->value_as_ReduceFusion();
   if (reduce_op == nullptr) {
     MS_LOG(ERROR) << "convert failed";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 }
 
 bool DumpJsonParser::IsDumpEnabled() {
-  auto config_path = std::getenv(kMindsporeDumpConfig);
-  if (config_path == nullptr) {
+  auto config_path = common::GetEnv(kMindsporeDumpConfig);
+  if (config_path.empty()) {
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;
@@ -90,9 +90,14 @@ void DumpJsonParser::Parse() {
     MS_LOG(EXCEPTION) << "Get dump config file failed";
   }
 
-  std::ifstream json_file(dump_config_file.value());
+  auto dump_file_realpath = Common::GetRealPath(dump_config_file.value());
+  if (!dump_file_realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Get real path failed in Parse.";
+  }
+  std::ifstream json_file(dump_file_realpath.value());
   if (!json_file.is_open()) {
-    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed.";
+    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed."
+                      << " Errno:" << errno << " ErrInfo:" << strerror(errno);
   }
 
   nlohmann::json j;
@@ -100,6 +105,7 @@ void DumpJsonParser::Parse() {
     json_file >> j;
   } catch (nlohmann::json::parse_error &e) {
     MS_LOG(ERROR) << "Dump json contents:" << GetIfstreamString(json_file);
+    json_file.close();
     MS_LOG(EXCEPTION) << "Parse dump json failed, error:" << e.what();
   }
 
@@ -107,6 +113,7 @@ void DumpJsonParser::Parse() {
   std::stringstream ss;
   ss << j;
   std::string cfg = ss.str();
+  json_file.close();
   MS_LOG(INFO) << "Dump json:" << cfg;
 
   ParseE2eDumpSetting(j);
@@ -128,13 +135,14 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
     auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(rank_id) + "/.dump_metadata/data_dump.json");
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
+    } else {
+      const std::string file_path = realpath.value();
+      ChangeFileMode(file_path, S_IWUSR);
+      std::ofstream json_copy(file_path);
+      json_copy << json_file.rdbuf();
+      json_copy.close();
+      ChangeFileMode(file_path, S_IRUSR);
     }
-    const std::string file_path = realpath.value();
-    ChangeFileMode(file_path, S_IWUSR);
-    std::ofstream json_copy(file_path);
-    json_copy << json_file.rdbuf();
-    json_copy.close();
-    ChangeFileMode(file_path, S_IRUSR);
   }
 }
 
@@ -176,7 +184,7 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     ms_info["device_target"] = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    ms_info["ms_version"] = "1.3.0";
+    ms_info["ms_version"] = "1.4.0";
     const std::string file_path = realpath.value();
     ChangeFileMode(file_path, S_IWUSR);
     std::ofstream json_create(file_path);
@@ -204,7 +212,8 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   ChangeFileMode(file_path, S_IWUSR);
   std::ofstream fd(file_path, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {
-    MS_LOG(ERROR) << "Open file " << file_path << " failed.";
+    MS_LOG(ERROR) << "Open file " << file_path << " failed."
+                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
     return false;
   }
   std::string npy_header = GenerateNpyHeader(shape, type);

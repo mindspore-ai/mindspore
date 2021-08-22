@@ -74,7 +74,6 @@ class Evaluator:
             mask = self._mask_transform(mask)  # mask shape: (H,w)
 
             image = Tensor(image)
-            print(image)
 
             expand_dims = ops.ExpandDims()
             image = expand_dims(image, 0)
@@ -84,8 +83,8 @@ class Evaluator:
             end_time = time.time()
             step_time = end_time - start_time
 
-            expand_dims = ops.ExpandDims()
-            mask = expand_dims(mask, 0)
+            output = np.array(output)
+            mask = np.expand_dims(mask, axis=0)
             self.metric.update(output, mask)
             list_time.append(step_time)
 

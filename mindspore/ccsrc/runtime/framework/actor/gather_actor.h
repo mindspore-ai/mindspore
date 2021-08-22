@@ -67,7 +67,7 @@ class GatherActor : public OpActor<DeviceTensor> {
   // The gather actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
   // The gather actor run when receive the input branch id.
-  void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context);
+  void CollectBranchId(const int branch_id, OpContext<DeviceTensor> *const context);
   void Init() override;
 
  private:
@@ -75,12 +75,12 @@ class GatherActor : public OpActor<DeviceTensor> {
 
   // Collect the inputs of gather actor.
   void FetchBackendInputNode(const FuncGraphPtr &func_graph, const ControlNodeParserPtr &parser);
-  void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
+  void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
   // Check whether satisfy the condition for launch.
-  bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
-  void SendOutput(OpContext<DeviceTensor> *context) const;
+  bool CheckLaunchCondition(OpContext<DeviceTensor> *const context) const;
+  void SendOutput(OpContext<DeviceTensor> *const context) const;
   // Erase input data and input controls when finish gather launch.
-  void EraseInput(OpContext<DeviceTensor> *context);
+  void EraseInput(OpContext<DeviceTensor> *const context);
 
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;

@@ -739,6 +739,7 @@ class Unique(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tuple, containing Tensor objects `(y, idx), `y` is a tensor with the
@@ -1202,7 +1203,7 @@ class Size(PrimitiveWithInfer):
         else:
             size = functools.reduce(lambda x, y: x * y, x['shape'])
         out = {'shape': None,
-               'dtype': mstype.int32,
+               'dtype': mstype.int64,
                'value': size}
         return out
 
@@ -1285,7 +1286,6 @@ class Ones(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import operations as ops
         >>> ones = ops.Ones()
         >>> output = ones((2, 2), mindspore.float32)
         >>> print(output)
@@ -1347,7 +1347,6 @@ class Zeros(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import operations as ops
         >>> zeros = ops.Zeros()
         >>> output = zeros((2, 2), mindspore.float32)
         >>> print(output)
@@ -1369,6 +1368,7 @@ class OnesLike(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x` but filled with ones.
@@ -1401,6 +1401,7 @@ class ZerosLike(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. The data type is int32, int64, float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.
@@ -1655,7 +1656,7 @@ class Argmax(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        Support data type list as follows:
+          Support data type list as follows:
 
           - Ascend: Float16, Float32.
           - GPU: Float16, Float32.
@@ -1716,6 +1717,7 @@ class Argmin(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, indices of the min value of input tensor across the axis.
@@ -1860,7 +1862,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
         >>> output = ops.ArgMinWithValue()(input_x)
         >>> print(output)
-        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0.0))
+        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0))
         >>> output = ops.ArgMinWithValue(keep_dims=True)(input_x)
         >>> print(output)
         (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
@@ -2299,13 +2301,14 @@ class Concat(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (tuple, list) - A tuple or a list of input tensors.
-          `input_x`, `input_y` should has same data type.
-        - **input_y** (tuple, list) - A tuple or a list of input tensors.
-          `input_x`, `input_y` should has same data type.
+          Suppose there are two tensors in this tuple or list, namely x1 and x2.
+          To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
+          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]',
+          where the :math:`R' indicates the last axis.
 
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-          The data type is the same with `input_X` and `input_y`.
+          The data type is the same with `input_x`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -2314,17 +2317,17 @@ class Concat(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> input_y = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> op = ops.Concat()
-        >>> output = op((input_x, input_y))
+        >>> output = op((input_x1, input_x2))
         >>> print(output)
         [[0. 1.]
          [2. 1.]
          [0. 1.]
          [2. 1.]]
         >>> op = ops.Concat(1)
-        >>> output = op((input_x, input_y))
+        >>> output = op((input_x1, input_x2))
         >>> print(output)
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
@@ -2658,6 +2661,7 @@ class Slice(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor): The target tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
         - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
@@ -2733,6 +2737,7 @@ class ReverseV2(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The data type is Number except float64.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -2795,7 +2800,7 @@ class Rint(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor, which must be one of the following types:
-          float16, float32.
+          float16, float32. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.

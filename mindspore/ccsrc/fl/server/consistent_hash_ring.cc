@@ -38,6 +38,8 @@ bool ConsistentHashRing::Erase(uint32_t rank) {
   for (auto iterator = ring_.begin(); iterator != ring_.end();) {
     if (iterator->second == rank) {
       (void)ring_.erase(iterator++);
+    } else {
+      iterator++;
     }
   }
   return true;

@@ -16,7 +16,6 @@
 #include "tools/converter/quantizer/quant_helper/default_quant_all_quant_type_determiner.h"
 
 namespace mindspore::lite {
-
 bool DefaultQuantAllQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   return true;
 }

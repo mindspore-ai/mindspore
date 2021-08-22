@@ -39,8 +39,10 @@ KernelPackPtr AkgGpuKernelBuilder::AkgInsertCache(const std::string &kernel_name
 void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
                                           const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
   auto kernel_mod_ptr = std::make_shared<GpuKernelMod>(kernel_pack);
+  auto kernel_json_info = kernel_pack->kernel_json_info();
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
+  kernel_mod_ptr->SetWorkspaceSizeList(kernel_json_info.workspaces);
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 

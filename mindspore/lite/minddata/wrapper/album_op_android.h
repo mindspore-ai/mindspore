@@ -93,62 +93,62 @@ class AlbumOp {
   /// \param[in] col_num Column num in schema
   /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
-  Status LoadImageTensor(const std::string &image_file, uint32_t col_num, TensorPtr *tensor);
+  Status LoadImageTensor(const std::string &image_file, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load vector of ints to tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing multi-dimensional label
   /// \param[in] col_num Column num in schema
   /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
-  Status LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
+  Status LoadIntArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load vector of floatss to tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing array data
   /// \param[in] col_num Column num in schema
   /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
-  Status LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
+  Status LoadFloatArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load string array into a tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing string tensor
   /// \param[in] col_num Column num in schema
   /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
-  Status LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
+  Status LoadStringArrayTensor(const nlohmann::json &json_obj, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load string into a tensor, append tensor to tensor
   /// \param[in] json_obj Json object containing string tensor
   /// \param[in] col_num Column num in schema
   /// \param[in,out]  Tensor to push to
   /// \return Status The error code returned
-  Status LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
+  Status LoadStringTensor(const nlohmann::json &json_obj, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load float value to tensor
   /// \param[in] json_obj Json object containing float
   /// \param[in] col_num Column num in schema
   /// \param[in,out]  Tensor to push to
   /// \return Status The error code returned
-  Status LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
+  Status LoadFloatTensor(const nlohmann::json &json_obj, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load int value to tensor
   /// \param[in] json_obj Json object containing int
   /// \param[in] col_num Column num in schema
   /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
-  Status LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor);
+  Status LoadIntTensor(const nlohmann::json &json_obj, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load empty tensor to tensor
   /// \param[in] col_num Column num in schema
   /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
-  Status LoadEmptyTensor(uint32_t col_num, TensorPtr *tensor);
+  Status LoadEmptyTensor(int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load id from file name to tensor
   /// \param[in] file The file name to get ID from
   /// \param[in] col_num Column num in schema
   /// \param[in,out] Tensor to push to
   /// \return Status The error code returned
-  Status LoadIDTensor(const std::string &file, uint32_t col_num, TensorPtr *tensor);
+  Status LoadIDTensor(const std::string &file, int32_t col_num, TensorPtr *tensor);
 
   /// \brief Load a tensor according to a json file
   /// \param[in] row_id_type row_id - id for this tensor row

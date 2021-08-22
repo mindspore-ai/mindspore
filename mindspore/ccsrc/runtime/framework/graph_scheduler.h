@@ -195,8 +195,9 @@ class GraphScheduler {
   // The processing of actors link statically.
   // 1. The processing of linking data arrows.
   // The gather of linking data arrows of kernel, it will call following functions by the different from actor type.
-  void LinkDataArrow(KernelActor *to_actor, const GraphCompilerInfo &graph_compiler_info, const KernelGraphPtr &graph,
-                     KernelWithIndex from_kernel_with_output_idx, KernelWithIndex to_kernel_with_input_idx);
+  void LinkDataArrow(KernelActor *const to_actor, const GraphCompilerInfo &graph_compiler_info,
+                     const KernelGraphPtr &graph, const KernelWithIndex &from_kernel_with_output_idx,
+                     const KernelWithIndex &to_kernel_with_input_idx);
   // Link data arrows for internal parameter, convert internal parameter to actor by internal parameter cache to link.
   void LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter,
                                          const std::vector<AnfNodePtr> &host_parameters, const KernelGraphPtr &graph,
@@ -232,37 +233,38 @@ class GraphScheduler {
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
 
   // 4. The processing of control flow linking.
-  void LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set);
-  void LinkDataArrowForGatherActor(GatherActor *from_actor, KernelActor *to_actor,
+  void LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *const actor_set);
+  void LinkDataArrowForGatherActor(GatherActor *const from_actor, KernelActor *const to_actor,
                                    const KernelWithIndex &front_node_with_index,
                                    const KernelWithIndex &to_node_with_index);
-  void LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, SwitchActor *actor);
+  void LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, SwitchActor *const actor);
   // Connect the input of the actor.
   void LinkDataArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, const KernelWithIndex &input_node,
-                                  const FuncGraphPtr &from_func_graph, OpActor<DeviceTensor> *to_actor,
+                                  const FuncGraphPtr &from_func_graph, OpActor<DeviceTensor> *const to_actor,
                                   const size_t to_index);
   // When the input of the actor is a call node, the output of the funcgraph called by the call node needs to be
   // connected.
   void LinkDataArrowByCallInput(const KernelWithIndex &call_node_with_index, const ControlNodeParserPtr &parser,
-                                const FuncGraphPtr &from_func_graph, OpActor<DeviceTensor> *to_actor,
+                                const FuncGraphPtr &from_func_graph, OpActor<DeviceTensor> *const to_actor,
                                 const size_t to_index);
-  void LinkDataArrowForSwitchActor(SwitchActor *from_actor, const size_t from_index, OpActor<DeviceTensor> *to_actor,
-                                   const size_t to_index, const size_t branch_index = SIZE_MAX);
+  void LinkDataArrowForSwitchActor(SwitchActor *const from_actor, const size_t from_index,
+                                   OpActor<DeviceTensor> *const to_actor, const size_t to_index,
+                                   const size_t branch_index = SIZE_MAX);
 
-  void LinkControlArrowForGatherActor(std::vector<KernelActorPtr> *kernel_actors,
+  void LinkControlArrowForGatherActor(std::vector<KernelActorPtr> *const kernel_actors,
                                       const std::vector<KernelGraphPtr> &graphs, const ControlNodeParserPtr &parser);
 
-  void LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> *switch_actors, LoopCountActor *to_actor,
+  void LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> *const switch_actors, LoopCountActor *const to_actor,
                                       const KernelMapPosition &origin_outputs_order);
   // In control flow, there are scenarios where there are multi-branch outputs, and the gather actor needs to
   // send the branch id to the loop count actor.
   void LinkBranchArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info);
   void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info);
   void LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
-  void PrepareDataForControlNode(HostQueueDataSourceActor *host_data_source_actor,
+  void PrepareDataForControlNode(HostQueueDataSourceActor *const host_data_source_actor,
                                  const ControlNodeParserPtr &control_node_parser,
                                  const std::vector<AnfNodePtr> &origin_parameters,
-                                 const std::vector<TensorPtr> &tensors, std::vector<TensorPtr> *host_tensors);
+                                 const std::vector<TensorPtr> &tensors, std::vector<TensorPtr> *const host_tensors);
   // Add input for switch actor. Since part of the input of funcgraph is on call node, these inputs need to be added
   // to switch actor.
   void PrepareInputNodeForSwitchActor(const std::vector<AnfNodePtr> &control_nodes);
@@ -329,8 +331,6 @@ class GraphScheduler {
   AID memory_manager_aid_;
   const AID *recorder_aid_{nullptr};
   const AID *debug_aid_{nullptr};
-
-  ActorThreadPool *thread_pool_{nullptr};
 
   bool init_{false};
 };

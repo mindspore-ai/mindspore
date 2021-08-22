@@ -18,6 +18,7 @@
 #include <memory>
 #include "include/errorcode.h"
 #include "include/registry/register_kernel.h"
+#include "src/registry/register_utils.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "nnacl/pooling_parameter.h"
@@ -50,21 +51,21 @@ void KernelKeyToKernelDesc(const KernelKey &key, kernel::KernelDesc *desc) {
 }
 }  // namespace
 
-KernelRegistry *KernelRegistry::GetInstance() {
-  static KernelRegistry instance;
-
-  std::unique_lock<std::mutex> malloc_creator_array(instance.lock_);
-  if (instance.creator_arrays_ == nullptr) {
-    instance.creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(array_size_ * sizeof(KernelCreator)));
-    if (instance.creator_arrays_ == nullptr) {
-      return nullptr;
+void KernelRegistry::CreatorArraysInit() {
+  std::unique_lock<std::mutex> malloc_creator_array(lock_);
+  if (creator_arrays_ == nullptr) {
+    creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(array_size_ * sizeof(KernelCreator)));
+    if (creator_arrays_ != nullptr) {
+      memset(creator_arrays_, 0, array_size_ * sizeof(KernelCreator));
     }
-    memset(instance.creator_arrays_, 0, array_size_ * sizeof(KernelCreator));
   }
-  return &instance;
+  return;
 }
 
-int KernelRegistry::Init() { return RET_OK; }
+KernelRegistry *KernelRegistry::GetInstance() {
+  static KernelRegistry instance;
+  return &instance;
+}
 
 kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   if (desc.provider == kBuiltin) {
@@ -74,7 +75,9 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
                     << desc.type;
       return nullptr;
     }
-    return creator_arrays_[index];
+    if (creator_arrays_ != nullptr) {
+      return creator_arrays_[index];
+    }
   }
   MS_LOG(ERROR) << "Call wrong interface!provider: " << desc.provider;
   return nullptr;
@@ -89,16 +92,20 @@ int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
 }
 
 void KernelRegistry::RegKernel(const KernelKey desc, const kernel::KernelCreator creator) {
+  CreatorArraysInit();
   int index = GetCreatorFuncIndex(desc);
   if (index >= array_size_ || index < 0) {
     MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
                   << desc.type;
     return;
   }
-  creator_arrays_[index] = creator;
+  if (creator_arrays_ != nullptr) {
+    creator_arrays_[index] = creator;
+  }
 }
 
 void KernelRegistry::RegKernel(KERNEL_ARCH arch, TypeId data_type, int op_type, kernel::KernelCreator creator) {
+  CreatorArraysInit();
   KernelKey desc = {arch, data_type, op_type};
   int index = GetCreatorFuncIndex(desc);
   if (index >= array_size_ || index < 0) {
@@ -106,10 +113,10 @@ void KernelRegistry::RegKernel(KERNEL_ARCH arch, TypeId data_type, int op_type, 
                   << desc.type;
     return;
   }
-  creator_arrays_[index] = creator;
+  if (creator_arrays_ != nullptr) {
+    creator_arrays_[index] = creator;
+  }
 }
-
-bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &new_creators) { return false; }
 
 KernelRegistry::~KernelRegistry() {
   KernelRegistry *instance = GetInstance();
@@ -132,7 +139,7 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   MS_ASSERT(kernel != nullptr);
   kernel::KernelDesc desc;
   KernelKeyToKernelDesc(key, &desc);
-  CreateKernel creator = kernel::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
+  CreateKernel creator = kernel::RegisterUtils::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
   }

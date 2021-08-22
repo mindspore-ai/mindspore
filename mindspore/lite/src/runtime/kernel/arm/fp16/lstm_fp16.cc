@@ -96,6 +96,7 @@ int LstmFp16CPUKernel::InitInputWeightBias() {
   // result -- row: seq_len * batch; col: hidden_size
   auto weight_i = in_tensors_.at(1);
   MS_ASSERT(weight_i != nullptr);
+  MS_ASSERT(weight_i->data_c() != nullptr);
   weight_i_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * lstm_param_->input_col_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
   if (weight_i_ptr_ == nullptr) {
@@ -116,6 +117,7 @@ int LstmFp16CPUKernel::InitInputWeightBias() {
   // input bias
   auto bias = in_tensors_.at(3);
   MS_ASSERT(bias != nullptr);
+  MS_ASSERT(bias->data_c() != nullptr);
   input_bias_ =
     reinterpret_cast<float16_t *>(malloc(weight_batch_ * lstm_param_->input_col_align_ * sizeof(float16_t)));
   if (input_bias_ == nullptr) {
@@ -143,6 +145,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   // result -- row: batch; col: hidden_size
   auto weight_h = in_tensors_.at(2);
   MS_ASSERT(weight_h != nullptr);
+  MS_ASSERT(weight_h->data_c() != nullptr);
   weight_h_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
   if (weight_h_ptr_ == nullptr) {
@@ -175,6 +178,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   // state bias
   auto bias = in_tensors_.at(3);
   MS_ASSERT(bias != nullptr);
+  MS_ASSERT(bias->data_c() != nullptr);
   state_bias_ =
     reinterpret_cast<float16_t *>(malloc(weight_batch_ * lstm_param_->state_col_align_ * sizeof(float16_t)));
   if (state_bias_ == nullptr) {
@@ -198,6 +202,8 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
 }
 
 int LstmFp16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 6);
+  CHECK_LESS_RETURN(out_tensors_.size(), 3);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -286,23 +292,28 @@ int LstmFp16CPUKernel::Run() {
   MS_ASSERT(input != nullptr);
   auto hidden_state = in_tensors_.at(4);
   MS_ASSERT(hidden_state != nullptr);
+  MS_ASSERT(hidden_state->data_c() != nullptr);
   auto cell_state = in_tensors_.at(5);
   MS_ASSERT(cell_state != nullptr);
+  MS_ASSERT(cell_state->data_c() != nullptr);
   auto output = out_tensors_.at(0);
   MS_ASSERT(output != nullptr);
 
   auto input_ptr = reinterpret_cast<float16_t *>(input->data_c());
-  MS_ASSERT(input_ptr);
+  MS_ASSERT(input_ptr != nullptr);
   auto output_ptr = reinterpret_cast<float16_t *>(output->data_c());
-  MS_ASSERT(output_ptr);
+  MS_ASSERT(output_ptr != nullptr);
   auto output_hidden_state = out_tensors_[1];
+  MS_ASSERT(output_hidden_state->data_c() != nullptr);
   memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float16_t));
   auto output_cell_state = out_tensors_[2];
+  MS_ASSERT(output_cell_state->data_c());
   memcpy(output_cell_state->data_c(), cell_state->data_c(), cell_state->ElementsNum() * sizeof(float16_t));
 
   auto ret = MallocRunBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmFp16CPUKernel MallocRunBuffer error.";
+    FreeRunBuffer();
     return RET_ERROR;
   }
   MS_ASSERT(weight_i_ptr_);

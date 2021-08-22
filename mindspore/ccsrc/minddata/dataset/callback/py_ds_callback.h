@@ -44,12 +44,12 @@ class PyDSCallback : public DSCallback {
 
   ~PyDSCallback() = default;
 
-  void setBegin(py::function f);
-  void setEnd(py::function f);
-  void setEpochBegin(py::function f);
-  void setEpochEnd(py::function f);
-  void setStepBegin(py::function f);
-  void setStepEnd(py::function f);
+  void setBegin(const py::function &f);
+  void setEnd(const py::function &f);
+  void setEpochBegin(const py::function &f);
+  void setEpochEnd(const py::function &f);
+  void setStepBegin(const py::function &f);
+  void setStepEnd(const py::function &f);
 
   /// \brief actual callback function for begin, needs to be overridden in the derived class
   /// \param cb_param, callback parameter passed in from DatasetOp when calling the callback

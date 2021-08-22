@@ -242,6 +242,9 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
 void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type,
                             std::vector<std::string> *inputs_format, std::vector<std::string> *outputs_format,
                             std::string *origin_data_format) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(inputs_format);
+  MS_EXCEPTION_IF_NULL(outputs_format);
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   auto iter = kKernelFormatPositionMap.find(kernel_name);
   if (iter == kKernelFormatPositionMap.end()) {
@@ -351,6 +354,7 @@ void PrintUnsupportedTypeException(const CNodePtr &kernel_node, const std::vecto
 }  // namespace
 
 void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   // TensorCore can be used only in Volta or newer devices.
   const int marjor_sm = GET_MAJOR_SM;
   if (marjor_sm < RECOMMEND_SM) {
@@ -387,6 +391,7 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
 }
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   if (AnfAlgo::IsGraphKernel(kernel_node)) {
     auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(kernel_node);
     MS_EXCEPTION_IF_NULL(func_graph);

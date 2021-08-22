@@ -64,6 +64,8 @@ int GroupConvolutionFp32CPUKernel::PostConcat(int group_id) {
 }
 
 int GroupConvolutionFp32CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (group_conv_creator_ == nullptr) {
     return lite::RET_ERROR;
   }

@@ -37,6 +37,11 @@ Status RgbToBgrOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> RgbToBgrOperation::Build() { return std::make_shared<RgbToBgrOp>(); }
 
+Status RgbToBgrOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  *operation = std::make_shared<vision::RgbToBgrOperation>();
+  return Status::OK();
+}
+
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

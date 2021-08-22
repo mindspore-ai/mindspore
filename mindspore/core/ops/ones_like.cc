@@ -34,7 +34,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_type = input_args[0]->BuildType();
   auto valid_type = common_valid_types;
   valid_type.insert(kBool);

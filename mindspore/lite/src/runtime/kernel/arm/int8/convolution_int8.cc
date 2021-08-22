@@ -98,12 +98,12 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   memset(bias_data_, 0, bias_size);
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->data_c());
-    memcpy(bias_data_, ori_bias, output_channel * sizeof(int32_t));
+    memcpy(bias_data_, ori_bias, static_cast<size_t>(output_channel) * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   auto *bias_data = reinterpret_cast<int32_t *>(bias_data_);
-  bool filter_peroc = conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL;
+  bool filter_peroc = static_cast<bool>(conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL);
   if (filter_peroc) {
     filter_zp_ptr_ = reinterpret_cast<int32_t *>(malloc(output_channel * sizeof(int32_t)));
     if (filter_zp_ptr_ == nullptr) {
@@ -126,9 +126,9 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
 
   size_t input_sum_size;
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-    input_sum_size = up_round_oc * tile_num_ * thread_count_ * sizeof(int32_t);
+    input_sum_size = static_cast<size_t>(up_round_oc * tile_num_ * thread_count_) * sizeof(int32_t);
   } else {
-    input_sum_size = tile_num_ * thread_count_ * sizeof(int32_t);
+    input_sum_size = static_cast<size_t>(tile_num_ * thread_count_) * sizeof(int32_t);
   }
   input_sum_ = reinterpret_cast<int32_t *>(malloc(input_sum_size));
   if (input_sum_ == nullptr) {

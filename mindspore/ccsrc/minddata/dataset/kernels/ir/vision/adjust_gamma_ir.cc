@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
+
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 
 #ifndef ENABLE_ANDROID

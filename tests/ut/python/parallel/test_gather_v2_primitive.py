@@ -25,7 +25,6 @@ from mindspore.nn import Dense, Cell
 from mindspore.nn.loss.loss import LossBase
 from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.context import ParallelMode
@@ -121,7 +120,8 @@ class TrainOneStepCell(Cell):
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(data, sens)
 
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss
 
 
 def net_trains(criterion, rank):

@@ -73,6 +73,9 @@ int ConvolutionDelegateCPUKernel::GetWeightAndBias() {
 }
 
 int ConvolutionDelegateCPUKernel::GetWeightData() {
+  if (in_tensors_.at(kWeightIndex)->data_c() == nullptr) {
+    return RET_OK;
+  }
   if (InferShapeDone()) {
     origin_weight_ = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
     MS_ASSERT(origin_weight_ != nullptr);
@@ -107,6 +110,8 @@ int ConvolutionDelegateCPUKernel::GetBiasData() {
 }
 
 int ConvolutionDelegateCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = GetWeightAndBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get weight and bias failed.";

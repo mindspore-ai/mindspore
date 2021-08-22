@@ -18,6 +18,7 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 
+#include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/center_crop_ir.h"
@@ -66,6 +67,17 @@
 
 namespace mindspore {
 namespace dataset {
+
+PYBIND_REGISTER(
+  AdjustGammaOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::AdjustGammaOperation, TensorOperation, std::shared_ptr<vision::AdjustGammaOperation>>(
+      *m, "AdjustGammaOperation")
+      .def(py::init([](float gamma, float gain) {
+        auto ajust_gamma = std::make_shared<vision::AdjustGammaOperation>(gamma, gain);
+        THROW_IF_ERROR(ajust_gamma->ValidateParams());
+        return ajust_gamma;
+      }));
+  }));
 
 PYBIND_REGISTER(
   AutoContrastOperation, 1, ([](const py::module *m) {

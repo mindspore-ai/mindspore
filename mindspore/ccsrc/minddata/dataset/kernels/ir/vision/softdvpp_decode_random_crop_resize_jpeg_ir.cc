@@ -44,7 +44,7 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorSize("SoftDvppDecodeRandomCropResizeJpeg", size_));
   constexpr int32_t value_one = 1;
   constexpr int32_t value_two = 2;
-  for (int32_t i = 0; i < size_.size(); i++) {
+  for (size_t i = 0; i < size_.size(); i++) {
     if (size_[i] % value_two == value_one) {
       std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: size[" + std::to_string(i) +
                             "] must be even values, got: " + std::to_string(size_[i]);
@@ -96,10 +96,10 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::to_json(nlohmann::json *out_
 
 Status SoftDvppDecodeRandomCropResizeJpegOperation::from_json(nlohmann::json op_params,
                                                               std::shared_ptr<TensorOperation> *operation) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Fail to find size");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("scale") != op_params.end(), "Fail to find scale");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Fail to find ratio");
-  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("max_attempts") != op_params.end(), "Fail to find max_attempts");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("size") != op_params.end(), "Failed to find size");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("scale") != op_params.end(), "Failed to find scale");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("ratio") != op_params.end(), "Failed to find ratio");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("max_attempts") != op_params.end(), "Failed to find max_attempts");
   std::vector<int32_t> size = op_params["size"];
   std::vector<float> scale = op_params["scale"];
   std::vector<float> ratio = op_params["ratio"];

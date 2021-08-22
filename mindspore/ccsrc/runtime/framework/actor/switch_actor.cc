@@ -66,7 +66,7 @@ void SwitchActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   }
 }
 
-void SwitchActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context) {
+void SwitchActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   input_branch_ids_[sequential_num].push(branch_id);
@@ -262,7 +262,7 @@ void SwitchActor::AddInput(const AnfNodePtr &node, const size_t branch) {
   }
 }
 
-size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
+size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) {
   if (need_branch_id_input_) {
     if (input_branch_ids_.find(context->sequential_num_) == input_branch_ids_.end() ||
         input_branch_ids_[context->sequential_num_].empty()) {
@@ -313,7 +313,7 @@ size_t SwitchActor::GetIndex(OpContext<DeviceTensor> *context) {
   return static_cast<size_t>(index);
 }
 
-bool SwitchActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
+bool SwitchActor::CheckLaunchCondition(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     auto data_iter = input_data_.find(context->sequential_num_);
@@ -346,7 +346,7 @@ bool SwitchActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   return true;
 }
 
-void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
+void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   input_device_tensors_.resize(input_nodes_.size());
   auto data_iter = input_data_.find(context->sequential_num_);
@@ -452,7 +452,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
   }
 }
 
-void SwitchActor::EraseInput(OpContext<DeviceTensor> *context) {
+void SwitchActor::EraseInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto data_iter = input_data_.find(context->sequential_num_);
   if (data_iter != input_data_.end() && std::all_of(data_iter->second.begin(), data_iter->second.end(),

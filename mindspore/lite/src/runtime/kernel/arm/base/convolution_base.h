@@ -31,6 +31,7 @@
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/weight_decoder.h"
+#include "include/errorcode.h"
 
 using mindspore::lite::InnerContext;
 
@@ -38,8 +39,13 @@ namespace mindspore::kernel {
 class ConvolutionBaseCPUKernel : public InnerKernel {
  public:
   ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                           const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(op_parameter_->thread_num_) {
+                           const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx, void *origin_weight,
+                           void *origin_bias)
+      : InnerKernel(parameter, inputs, outputs, ctx),
+        ctx_(ctx),
+        thread_count_(op_parameter_->thread_num_),
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {
     conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter_);
   }
   ~ConvolutionBaseCPUKernel() override;
@@ -61,8 +67,14 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   void FreeAlignedData(void **ptr);
 
  protected:
+  int InitConvWeightBias();
+  int RepackWeight();
+
+  virtual int MallocWeightBiasData() { return RET_OK; }
+  virtual void PackWeight() {}
   bool IsRepack() { return is_repack_; }
   std::unordered_map<uintptr_t, void *> addr_map;
+  void *packed_weight_ = nullptr;
   void *bias_data_ = nullptr;
   const InnerContext *ctx_ = nullptr;
   ConvParameter *conv_param_ = nullptr;
@@ -70,6 +82,8 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   int tile_num_ = 0;
   int thread_count_ = 1;
   bool is_repack_ = false;
+  void *origin_weight_;  // do not free
+  void *origin_bias_;    // do not free
 };
 }  // namespace mindspore::kernel
 

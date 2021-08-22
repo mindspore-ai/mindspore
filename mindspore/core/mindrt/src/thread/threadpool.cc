@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#ifndef _MSC_VER
+#include <sched.h>
+#include <unistd.h>
+#endif
 #include "thread/threadpool.h"
 #include "thread/core_affinity.h"
 
@@ -31,7 +34,28 @@ Worker::~Worker() {
 
 void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
 
+void Worker::SetAffinity() {
+#ifdef BIND_CORE
+#ifdef __ANDROID__
+  int ret = sched_setaffinity(gettid(), sizeof(cpu_set_t), &mask_);
+  if (ret != THREAD_OK) {
+    THREAD_ERROR("bind thread %d to cpu failed. ERROR %d", gettid(), errno);
+  }
+  return;
+#else
+#if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
+  int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask_);
+  if (ret != THREAD_OK) {
+    THREAD_ERROR("bind thread %lu to cpu failed. ERROR %d", pthread_self(), errno);
+  }
+  return;
+#endif
+#endif
+#endif
+}
+
 void Worker::Run() {
+  SetAffinity();
 #if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
   static std::atomic_int index = {0};
   pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
@@ -105,7 +129,7 @@ ThreadPool::~ThreadPool() {
   THREAD_INFO("destruct success");
 }
 
-int ThreadPool::CreateThreads(size_t thread_num) {
+int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_list) {
   size_t core_num = std::thread::hardware_concurrency();
   thread_num = thread_num < core_num ? thread_num : core_num;
   THREAD_INFO("ThreadInfo, Num: [%zu], CoreNum: [%zu]", thread_num, core_num);
@@ -117,6 +141,14 @@ int ThreadPool::CreateThreads(size_t thread_num) {
   for (size_t i = 0; i < thread_num; ++i) {
     auto worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
+#ifdef BIND_CORE
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    if (core_list.size() > 0) {
+      CPU_SET(core_list[workers_.size() % core_list.size()], &mask);
+    }
+    worker->set_mask(mask);
+#endif
     worker->CreateThread();
     workers_.push_back(worker);
     THREAD_INFO("create kernel thread[%zu]", i);
@@ -127,7 +159,7 @@ int ThreadPool::CreateThreads(size_t thread_num) {
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
   // distribute task to the KernelThread and the idle ActorThread,
   // if the task num is greater than the KernelThread num
-  THREAD_INFO("launch: %d", task_num);
+  THREAD_DEBUG("launch: %d", task_num);
   Task task = {func, content};
 
   DistributeTask(&task, task_num);
@@ -266,12 +298,12 @@ int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
 #endif  // BIND_CORE
 }
 
-ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num) {
+ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<int> &core_list) {
   ThreadPool *pool = new (std::nothrow) ThreadPool();
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret = pool->CreateThreads(thread_num);
+  int ret = pool->CreateThreads(thread_num, core_list);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

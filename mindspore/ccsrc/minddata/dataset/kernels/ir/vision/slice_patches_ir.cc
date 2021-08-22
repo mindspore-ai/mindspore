@@ -57,6 +57,18 @@ Status SlicePatchesOperation::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
+Status SlicePatchesOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_height") != op_params.end(), "Failed to find num_height");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("num_width") != op_params.end(), "Failed to find num_width");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("slice_mode") != op_params.end(), "Failed to find slice_mode");
+  CHECK_FAIL_RETURN_UNEXPECTED(op_params.find("fill_value") != op_params.end(), "Failed to find fill_value");
+  int32_t num_height = op_params["num_height"];
+  int32_t num_width = op_params["num_width"];
+  SliceMode slice_mode = static_cast<SliceMode>(op_params["slice_mode"]);
+  uint8_t fill_value = op_params["fill_value"];
+  *operation = std::make_shared<vision::SlicePatchesOperation>(num_height, num_width, slice_mode, fill_value);
+  return Status::OK();
+}
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

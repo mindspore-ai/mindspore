@@ -23,7 +23,10 @@
 
 namespace mindspore {
 namespace ps {
-void OptimizerInfo::AddWorkspace(const AddressPtr &workspace) { workspaces_.push_back(workspace); }
+void OptimizerInfo::AddWorkspace(const AddressPtr &workspace) {
+  MS_EXCEPTION_IF_NULL(workspace);
+  workspaces_.push_back(workspace);
+}
 
 const std::vector<AddressPtr> &OptimizerInfo::inputs() const { return inputs_; }
 
@@ -42,6 +45,7 @@ size_t OptimizerInfo::indices_index() { return 0; }
 template <typename T>
 void OptimizerInfo::UpdateOptimInputValue(const std::string &optim_type, const std::string &input_name, void *data,
                                           const Lengths &lens) {
+  MS_EXCEPTION_IF_NULL(data);
   if (kOptimToOriginIdx.count(optim_type) == 0 || kOptimToPSSendIdx.count(optim_type) == 0) {
     MS_LOG(EXCEPTION) << "Optimizer type " << optim_type << " in not supported.";
   }
@@ -96,8 +100,8 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
 
 void DenseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &, size_t n, size_t, size_t) {
   if (n > 1) {
+    MS_EXCEPTION_IF_NULL(gradient()->addr);
     float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);
-    MS_EXCEPTION_IF_NULL(accum_grad_data);
     size_t size = gradient()->size / sizeof(float);
     for (size_t i = 0; i < size; i++) {
       accum_grad_data[i] /= n;
@@ -116,8 +120,8 @@ void DenseOptimInfo::Reset() {
 
 void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   // Append grad data to the end
+  MS_EXCEPTION_IF_NULL(gradient()->addr);
   float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);
-  MS_EXCEPTION_IF_NULL(accum_grad_data);
 
   size_t grad_index = this->grad_index();
   size_t grad_offset = 0;
@@ -143,6 +147,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   gradient()->size += incr_grad_size;
 
   // Append indice data to the end
+  MS_EXCEPTION_IF_NULL(indices()->addr);
   int *accum_indices_data = reinterpret_cast<int *>(indices()->addr);
   MS_EXCEPTION_IF_NULL(accum_indices_data);
 
@@ -153,10 +158,10 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   }
 
   void *incr_indice_data_temp = const_cast<float *>(values.data()) + indice_offset;
-  int *incr_indice_data = reinterpret_cast<int *>(incr_indice_data_temp);
-
   MS_EXCEPTION_IF_NULL(incr_indice_data_temp);
+  int *incr_indice_data = reinterpret_cast<int *>(incr_indice_data_temp);
   MS_EXCEPTION_IF_NULL(incr_indice_data);
+
   size_t incr_indice_size = lengths[indices_index];
   size_t incr_indice_data_size = incr_indice_size * sizeof(int);
   dst_size = incr_indice_data_size;
@@ -176,8 +181,9 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
 
 void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes, size_t n, size_t server_num,
                                   size_t rank_id) {
-  MS_EXCEPTION_IF_NULL(gradient());
-  MS_EXCEPTION_IF_NULL(indices());
+  if (n == 0 || indices()->size == 0) {
+    MS_LOG(EXCEPTION) << "The size of shapes or indices are 0.";
+  }
   size_t indices_size = static_cast<size_t>(indices()->size / sizeof(int));
   size_t segment_size = gradient()->size / indices()->size;
 
@@ -259,6 +265,11 @@ void SparseOptimInfo::Reset() {
 MomentumOptimInfo::MomentumOptimInfo(const AddressPtr &weight, const AddressPtr &accumulate,
                                      const AddressPtr &learning_rate, const AddressPtr &gradient,
                                      const AddressPtr &momentum) {
+  MS_EXCEPTION_IF_NULL(weight);
+  MS_EXCEPTION_IF_NULL(accumulate);
+  MS_EXCEPTION_IF_NULL(learning_rate);
+  MS_EXCEPTION_IF_NULL(gradient);
+  MS_EXCEPTION_IF_NULL(momentum);
   inputs_.push_back(weight);
   inputs_.push_back(accumulate);
   inputs_.push_back(learning_rate);
@@ -275,12 +286,14 @@ const size_t SparseOptimInfo::indice_size() const { return indices_offset_; }
 const AddressPtr &MomentumOptimInfo::gradient() {
   size_t origin_grad_index = kMomentumOriginIdx.at("grad");
   EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  MS_EXCEPTION_IF_NULL(inputs_[origin_grad_index]);
   return inputs_[origin_grad_index];
 }
 
 const AddressPtr &MomentumOptimInfo::indices() {
   size_t origin_grad_index = kMomentumOriginIdx.at("grad");
   EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  MS_EXCEPTION_IF_NULL(inputs_[origin_grad_index]);
   return inputs_[origin_grad_index];
 }
 
@@ -294,6 +307,17 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
                                          const AddressPtr &learning_rate, const AddressPtr &beta1,
                                          const AddressPtr &beta2, const AddressPtr &epsilon, const AddressPtr &grad,
                                          const AddressPtr &indices, bool sharded) {
+  MS_EXCEPTION_IF_NULL(weight);
+  MS_EXCEPTION_IF_NULL(m);
+  MS_EXCEPTION_IF_NULL(v);
+  MS_EXCEPTION_IF_NULL(beta1_power);
+  MS_EXCEPTION_IF_NULL(beta2_power);
+  MS_EXCEPTION_IF_NULL(learning_rate);
+  MS_EXCEPTION_IF_NULL(beta1);
+  MS_EXCEPTION_IF_NULL(beta2);
+  MS_EXCEPTION_IF_NULL(epsilon);
+  MS_EXCEPTION_IF_NULL(grad);
+  MS_EXCEPTION_IF_NULL(indices);
   inputs_.push_back(weight);
   inputs_.push_back(m);
   inputs_.push_back(v);
@@ -322,12 +346,14 @@ void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
 const AddressPtr &SparseAdamOptimInfo::gradient() {
   size_t origin_grad_index = kSparseAdamOriginIdx.at("grad");
   EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  MS_EXCEPTION_IF_NULL(inputs_[origin_grad_index]);
   return inputs_[origin_grad_index];
 }
 
 const AddressPtr &SparseAdamOptimInfo::indices() {
   size_t origin_indices_index = kSparseAdamOriginIdx.at("indices");
   EXC_IF_VEC_IDX_OOB(inputs_, origin_indices_index);
+  MS_EXCEPTION_IF_NULL(inputs_[origin_indices_index]);
   return inputs_[origin_indices_index];
 }
 
@@ -345,6 +371,11 @@ size_t SparseAdamOptimInfo::indices_index() {
 
 SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const AddressPtr &accum, const AddressPtr &linear,
                                          const AddressPtr &grad, const AddressPtr &indices, bool sharded) {
+  MS_EXCEPTION_IF_NULL(weight);
+  MS_EXCEPTION_IF_NULL(accum);
+  MS_EXCEPTION_IF_NULL(linear);
+  MS_EXCEPTION_IF_NULL(grad);
+  MS_EXCEPTION_IF_NULL(indices);
   inputs_.push_back(weight);
   inputs_.push_back(accum);
   inputs_.push_back(linear);
@@ -358,12 +389,14 @@ SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const Address
 const AddressPtr &SparseFtrlOptimInfo::gradient() {
   size_t origin_grad_index = kSparseFtrlOriginIdx.at("grad");
   EXC_IF_VEC_IDX_OOB(inputs_, origin_grad_index);
+  MS_EXCEPTION_IF_NULL(inputs_[origin_grad_index]);
   return inputs_[origin_grad_index];
 }
 
 const AddressPtr &SparseFtrlOptimInfo::indices() {
   size_t origin_indices_index = kSparseFtrlOriginIdx.at("indices");
   EXC_IF_VEC_IDX_OOB(inputs_, origin_indices_index);
+  MS_EXCEPTION_IF_NULL(inputs_[origin_indices_index]);
   return inputs_[origin_indices_index];
 }
 

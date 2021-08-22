@@ -39,6 +39,10 @@ namespace mindspore {
 DebugServices::DebugServices() { tensor_loader_ = std::make_shared<TensorLoader>(); }
 
 DebugServices::DebugServices(const DebugServices &other) {
+  wp_id_cache = other.wp_id_cache;
+  net_name = other.net_name;
+  dump_dir = other.dump_dir;
+  is_sync_mode = other.is_sync_mode;
   tensor_loader_ = other.tensor_loader_;
   watchpoint_table = other.watchpoint_table;
 }
@@ -313,14 +317,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   MS_LOG(INFO) << "tensor list size: " << tensor_list_size;
   if (tensor_list_size == 0) return;
   // default value for number of threads
-  int max_thread_num = 32;
-  auto thread_num = getenv("MS_dbg_num_thread");
-  if (thread_num != nullptr) {
-    max_thread_num = std::stoi(thread_num);
-  }
-  if (max_thread_num > tensor_list_size) {
-    max_thread_num = tensor_list_size;
-  }
+  const int max_thread_num = 32;
   MS_LOG(INFO) << "Number of threads used for checkwatchpoint: " << max_thread_num;
   int chunk_size = tensor_list_size / max_thread_num;
   int remainder = tensor_list_size % max_thread_num;
@@ -355,8 +352,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
     tensor_future_vec[i].wait();
     tensor_future_vec[i].get();
     for (unsigned int j = 0; j < chunk_exec_orders[i].size(); j++) {
-      std::vector<int>::iterator iter;
-      iter = std::lower_bound(exec_order.begin(), exec_order.end(), chunk_exec_orders[i][j]);
+      std::vector<int>::iterator iter = std::lower_bound(exec_order.begin(), exec_order.end(), chunk_exec_orders[i][j]);
       // if the execution order is repeated,inserts the new one before the others with same execution order.
       int position = iter - exec_order.begin();
       exec_order.insert(iter, chunk_exec_orders[i][j]);
@@ -399,7 +395,8 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
   MS_LOG(INFO) << "Reading in file: " << file_path;
   infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
   if (!infile.is_open()) {
-    MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path;
+    MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path << " Errno:" << errno
+                  << " ErrInfo:" << strerror(errno);
     return;
   }
   uint64_t file_size = infile.tellg();
@@ -409,11 +406,18 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
     MS_LOG(ERROR) << "Failed to read file (In ReadTensorFromNpy) " << file_path;
     return;
   }
-  constexpr int header_len_offset = 8;
+  const int substr_len = 2;
+  const int header_len_offset = 8;
+  const int header_offset = 9;
+  const int type_offset = 10;
   uint16_t header_len = *reinterpret_cast<uint16_t *>(buffer->data() + header_len_offset);
-  std::string header(buffer->data() + header_len_offset + 1, header_len);
-  std::size_t type_i = header.find("descr") + 10;
-  *tensor_type = header.substr(type_i, 2);
+  std::string header(buffer->data() + header_offset, header_len);
+  std::size_t type_i = header.find("descr") + type_offset;
+  if (header.length() < type_i + substr_len) {
+    MS_LOG(ERROR) << "Cannot get tensor_type, header length is " << header.length();
+    return;
+  }
+  *tensor_type = header.substr(type_i, substr_len);
   std::size_t shape_i_open = header.find("(");
   std::size_t shape_i_close = header.find(")");
   std::string shape_str = header.substr(shape_i_open + 1, shape_i_close - shape_i_open - 1);
@@ -426,7 +430,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string 
   std::size_t word_size = std::stoul(std::string(1, (*tensor_type)[1]));
   std::size_t data_len = std::accumulate(shape->begin(), shape->end(), 1, std::multiplies<uint64_t>());
   std::size_t data_size = data_len * word_size;
-  infile.seekg(header_len + 10);
+  infile.seekg(header_len + type_offset);
   *data_buffer = new std::vector<char>(data_size);
   if (data_buffer == nullptr || !infile.read((*data_buffer)->data(), data_size)) {
     MS_LOG(ERROR) << "Unable to get tensor data from npy";
@@ -479,25 +483,29 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
         MS_LOG(EXCEPTION) << "Can't find package mindspore.offline_debug.convert_async";
       }
 
-      DIR *d_handle = opendir(dump_key.c_str());
-      if (d_handle != nullptr) {
-        struct dirent *dir = nullptr;
-        while ((dir = readdir(d_handle)) != NULL) {
-          if (dir->d_type == DT_REG) {
-            std::string candidate = dir->d_name;
-            for (const std::string &file_to_find : files_to_convert_in_dir) {
-              std::string file_n = file_to_find.substr(file_to_find.find_last_of("\\/") + 1);
-              if (candidate.find(file_n) != std::string::npos && candidate.rfind(file_format) != std::string::npos) {
-                // we found a converted file for this op
-                std::string found_file = dump_key + "/" + candidate;
-                if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
-                  result_list->push_back(found_file);
-                }
+      std::string abspath = RealPath(dump_key);
+      DIR *d_handle = opendir(abspath.c_str());
+      if (d_handle == nullptr) {
+        MS_LOG(ERROR) << "Directory does not exit in ConvertToHostFormat.";
+        return;
+      }
+      struct dirent *dir = nullptr;
+      while ((dir = readdir(d_handle)) != NULL) {
+        if (dir->d_type == DT_REG) {
+          std::string candidate = dir->d_name;
+          for (const std::string &file_to_find : files_to_convert_in_dir) {
+            std::string file_n = file_to_find.substr(file_to_find.find_last_of("\\/") + 1);
+            if (candidate.find(file_n) != std::string::npos && candidate.rfind(file_format) != std::string::npos) {
+              // we found a converted file for this op
+              std::string found_file = dump_key + "/" + candidate;
+              if (std::find(result_list->begin(), result_list->end(), found_file) == result_list->end()) {
+                result_list->push_back(found_file);
               }
             }
           }
         }
       }
+      closedir(d_handle);
     }
   }
 }
@@ -552,9 +560,12 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
                                     std::to_string(root_graph_id[i]) + "/" + IterationString(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
-    DIR *d;
-    d = opendir(specific_dump_dir.c_str());
-    if (d != nullptr) {
+    std::string abspath = RealPath(specific_dump_dir);
+    DIR *d = opendir(abspath.c_str());
+    if (d == nullptr) {
+      MS_LOG(ERROR) << "Directory does not exist in ConvertReadTensors.";
+      return;
+    } else {
       struct dirent *dir = nullptr;
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG) {
@@ -575,8 +586,8 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
           }
         }
       }
+      closedir(d);
     }
-    closedir(d);
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
 }
@@ -590,9 +601,12 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
     std::string dump_name = std::get<1>(node);
     dump_name = dump_name.substr(0, dump_name.rfind("."));
     // search files in dir for the one that meets the filename prefix and read the file into memory
-    DIR *d;
-    d = opendir(specific_dump_dir.c_str());
-    if (d != nullptr) {
+    std::string abspath = RealPath(specific_dump_dir);
+    DIR *d = opendir(abspath.c_str());
+    if (d == nullptr) {
+      MS_LOG(ERROR) << "Directory " << specific_dump_dir.c_str() << " does not exist in ConvertWatchPointNodes.";
+      return;
+    } else {
       struct dirent *dir = nullptr;
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG) {
@@ -613,8 +627,8 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
           }
         }
       }
+      closedir(d);
     }
-    closedir(d);
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
 }
@@ -748,11 +762,13 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     std::vector<int64_t> shape;
     uint64_t data_size = 0;
     if (is_sync_mode) {
-      DIR *d;
-      d = opendir(specific_dump_dir.c_str());
+      std::string abspath = RealPath(specific_dump_dir);
+      DIR *d = opendir(abspath.c_str());
       bool found_file = false;
       std::vector<std::string> matched_paths;
-      if (d != nullptr) {
+      if (d == nullptr) {
+        MS_LOG(ERROR) << "Directory " << specific_dump_dir << " does not exist!";
+      } else {
         struct dirent *dir = nullptr;
         while ((dir = readdir(d)) != NULL) {
           if (dir->d_type == DT_REG) {
@@ -770,9 +786,8 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
             matched_paths.push_back(full_path);
             found_file = true;
           }
+          closedir(d);
         }
-      } else {
-        MS_LOG(INFO) << "Directory " << specific_dump_dir << " does not exist!";
       }
 
       if (found_file) {
@@ -786,7 +801,6 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
                         type_name, shape, buffer, result_list);
         MS_LOG(INFO) << "Target tensor has not been found.";
       }
-      closedir(d);
     } else {
       bool found = false;
       std::vector<std::string> matched_paths;
@@ -895,9 +909,11 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     }
     if (is_sync_mode) {
       // search files in dir for the one that meets the filename prefix and read the file into memory
-      DIR *d;
-      d = opendir(specific_dump_dir.c_str());
-      if (d != nullptr) {
+      std::string abspath = RealPath(specific_dump_dir);
+      DIR *d = opendir(abspath.c_str());
+      if (d == nullptr) {
+        MS_LOG(ERROR) << "Directory " << specific_dump_dir.c_str() << " does not exist in ReadNeededDumpedTensors.";
+      } else {
         struct dirent *dir = nullptr;
         while ((dir = readdir(d)) != NULL) {
           if (dir->d_type == DT_REG) {
@@ -924,6 +940,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
             }
           }
         }
+        closedir(d);
       }
     } else {
       GetTensorDataInfoAsync(proto_to_dump, specific_dump_dir, iteration, device_id, root_graph_id, *async_file_pool,
@@ -985,7 +1002,7 @@ bool DebugServices::IsWatchPoint(const std::string &kernel_name, const CNodePtr 
 }
 
 bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const {
-  if (kernel) {
+  if (kernel && w_name.length() > 0) {
     auto input_size = AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_size; ++j) {
       auto input_kernel = kernel->input(j + 1);
@@ -1095,8 +1112,11 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
 
     MS_LOG(INFO) << "Processing bin file path " << overflow_bin_path;
 
-    DIR *d = opendir(overflow_bin_path.c_str());
-    if (d != nullptr) {
+    std::string abspath = RealPath(overflow_bin_path);
+    DIR *d = opendir(abspath.c_str());
+    if (d == nullptr) {
+      MS_LOG(ERROR) << "OverFlow bin directory does not exist!";
+    } else {
       struct dirent *dir = nullptr;
       while ((dir = readdir(d)) != nullptr) {
         if (dir->d_type == DT_REG) {
@@ -1108,8 +1128,8 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
           std::ifstream infile;
           infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
           if (!infile.is_open()) {
-            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
-            MS_LOG(ERROR) << "Error: " << strerror(errno);
+            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name << " Errno:" << errno
+                          << " ErrInfo:" << strerror(errno);
             continue;
           }
 
@@ -1149,10 +1169,8 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
           infile.close();
         }
       }
-    } else {
-      MS_LOG(INFO) << "OverFlow bin directory does not exist!";
+      closedir(d);
     }
-    closedir(d);
 
     // find the op_names with an overflow hit
     for (auto &task_stream : task_stream_hit) {

@@ -52,7 +52,6 @@ enum class TcpUserCommand {
   kPrepareForNextIter,
   kProceedToNextIter,
   kEndLastIter,
-
   kStartFLJob,
   kUpdateModel,
   kGetModel
@@ -102,6 +101,7 @@ class TcpCommunicator : public CommunicatorBase {
                      std::shared_ptr<std::vector<unsigned char>> *output = nullptr) {
     const std::string &msg_str = pb_msg.SerializeAsString();
     std::shared_ptr<unsigned char[]> msg(new unsigned char[msg_str.size()]);
+    MS_ERROR_IF_NULL_W_RET_VAL(msg, false);
     size_t dest_size = msg_str.size();
     size_t src_size = msg_str.size();
     auto ret = memcpy_s(msg.get(), dest_size, msg_str.c_str(), src_size);

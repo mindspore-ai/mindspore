@@ -144,9 +144,9 @@ void SubGraphKernel::InitInputTensorInitRefCount() {
   }
 }
 
-void SubGraphKernel::InitOutTensorInitRefCount() {
+void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
   for (auto *node : nodes_) {
-    node->InitOutTensorInitRefCount();
+    node->InitOutTensorInitRefCount(mask_kernels);
   }
 }
 
@@ -221,14 +221,6 @@ int CpuSubGraph::Prepare() {
 
 int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(this->Context()->allocator.get() != nullptr);
-#ifdef SUPPORT_GPU
-  // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
-  if (this->Context()->IsGpuEnabled()) {
-    for (auto tensor : this->in_tensors()) {
-      tensor->MutableData();
-    }
-  }
-#endif
 
   for (auto *kernel : nodes_) {
     MS_ASSERT(kernel != nullptr);

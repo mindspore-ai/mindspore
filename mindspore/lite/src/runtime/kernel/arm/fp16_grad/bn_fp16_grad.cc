@@ -34,6 +34,16 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNormGrad;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kNumInputDim_0 = 0;
+constexpr int kNumInputDim_1 = 1;
+constexpr int kNumInputDim_2 = 2;
+constexpr int kNumInputDim_3 = 3;
+constexpr int kNumInputDim_4 = 4;
+constexpr int kNumInputDim_5 = 4;
+constexpr int kNumOutputDim_2 = 2;
+constexpr int kNumJobs = 4;
+}  // namespace
 int BNGradCPUKernelFp16::ReSize() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
@@ -52,16 +62,16 @@ int BNGradCPUKernelFp16::Init() {
 }
 
 int BNGradCPUKernelFp16::Execute(int task_id) {
-  auto *input_yt = in_tensors_.at(0);
-  auto *input_x = in_tensors_.at(1);
-  auto *input_scale = in_tensors_.at(2);
-  auto *input_mean = in_tensors_.at(3);
-  auto *input_var = in_tensors_.at(4);
+  auto *input_yt = in_tensors_.at(kNumInputDim_0);
+  auto *input_x = in_tensors_.at(kNumInputDim_1);
+  auto *input_scale = in_tensors_.at(kNumInputDim_2);
+  auto *input_mean = in_tensors_.at(kNumInputDim_3);
+  auto *input_var = in_tensors_.at(kNumInputDim_4);
 
   auto kernel_name = this->name();
   if (kernel_name.find("FusedBatchNormGradCPU") != std::string::npos) {
-    input_mean = in_tensors_.at(4);
-    input_var = in_tensors_.at(5);
+    input_mean = in_tensors_.at(kNumInputDim_4);
+    input_var = in_tensors_.at(kNumInputDim_5);
   }
   auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
   int stage = stage_;
@@ -71,7 +81,7 @@ int BNGradCPUKernelFp16::Execute(int task_id) {
 
   auto *output_dx = out_tensors_.at(0);
   auto *output_scale = out_tensors_.at(1);
-  auto *output_bias = out_tensors_.at(2);
+  auto *output_bias = out_tensors_.at(kNumOutputDim_2);
   int32_t batch = input_x->Batch();
   int32_t channels = input_x->Channel();
   int32_t spatial = input_x->Height() * input_x->Width();
@@ -91,7 +101,7 @@ int BNGradCPUKernelFp16::Execute(int task_id) {
   count = (count < 0) ? 0 : count;
   switch (stage) {
     case 0: {
-      for (int job = task_id; job < 4; job += thread_num) {
+      for (int job = task_id; job < kNumJobs; job += thread_num) {
         switch (job) {
           case 0:
             var2InvarFp16(save_var, input_var->ElementsNum(), bn_param->epsilon_);

@@ -76,17 +76,27 @@ int ArithmeticSelfFp16CPUKernel::DoExecute(int task_id) {
 int ArithmeticSelfFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-
+  MS_ASSERT(input_tensor != nullptr);
+  MS_ASSERT(output_tensor != nullptr);
   if (input_tensor->data_type() == kNumberTypeFloat32) {
-    input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, static_cast<const lite::InnerContext *>(this->ms_context_));
+    input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, static_cast<const lite::InnerContext *>(ms_context_));
+    if (input_fp16_ptr_ == nullptr) {
+      return RET_ERROR;
+    }
   } else {
     input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+    MS_ASSERT(input_fp16_ptr_ != nullptr);
   }
   output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  MS_ASSERT(output_fp16_ptr_ != nullptr);
 
-  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
+  }
+  if (input_tensor->data_type() == kNumberTypeFloat32) {
+    ms_context_->allocator->Free(input_fp16_ptr_);
+    input_fp16_ptr_ = nullptr;
   }
   return ret;
 }

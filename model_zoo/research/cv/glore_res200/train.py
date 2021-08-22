@@ -30,6 +30,7 @@ from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_group_size, get_rank
 import mindspore.nn as nn
+from mindspore.common import set_seed
 import mindspore.common.initializer as weight_init
 from src.lr_generator import get_lr
 from src.config import config1, config2
@@ -64,6 +65,7 @@ elif args_opt.device_target == "GPU":
 random.seed(1)
 np.random.seed(1)
 de.config.set_seed(1)
+set_seed(1)
 
 if __name__ == '__main__':
 

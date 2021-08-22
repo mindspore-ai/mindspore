@@ -18,11 +18,52 @@ import math
 
 class Dihedral:
     '''Dihedral'''
+
     def __init__(self, controller):
         self.CONSTANT_Pi = 3.1415926535897932
+        self.module_name = "dihedral"
+        self.h_atom_a = []
+        self.h_atom_b = []
+        self.h_atom_c = []
+        self.h_atom_d = []
+        self.h_ipn = []
+        self.h_pn = []
+        self.h_pk = []
+        self.h_gamc = []
+        self.h_gams = []
+        self.dihedral_numbers = 0
         if controller.amber_parm is not None:
             file_path = controller.amber_parm
             self.read_information_from_amberfile(file_path)
+            self.is_initialized = 1
+        else:
+            self.read_in_file(controller)
+
+    def read_in_file(self, controller):
+        """read_in_file"""
+        print("START INITIALIZING DIHEDRAL:")
+        name = self.module_name + "_in_file"
+        if name in controller.Command_Set:
+            path = controller.Command_Set[name]
+            file = open(path, 'r')
+            context = file.readlines()
+            self.dihedral_numbers = int(context[0].strip())
+            print("    dihedral_numbers is ", self.dihedral_numbers)
+            for i in range(self.dihedral_numbers):
+                val = list(map(float, context[i + 1].strip().split()))
+                self.h_atom_a.append(int(val[0]))
+                self.h_atom_b.append(int(val[1]))
+                self.h_atom_c.append(int(val[2]))
+                self.h_atom_d.append(int(val[3]))
+                self.h_ipn.append(val[4])
+                self.h_pn.append(val[4])
+                self.h_pk.append(val[5])
+                self.h_gamc.append(math.cos(val[6]) * val[5])
+                self.h_gams.append(math.sin(val[6]) * val[5])
+
+            self.is_initialized = 1
+            file.close()
+        print("END INITIALIZING DIHEDRAL")
 
     def read_information_from_amberfile(self, file_path):
         '''read amber file'''
@@ -108,11 +149,11 @@ class Dihedral:
         self.h_atom_b = [0] * self.dihedral_numbers
         self.h_atom_c = [0] * self.dihedral_numbers
         self.h_atom_d = [0] * self.dihedral_numbers
-        self.pk = []
-        self.gamc = []
-        self.gams = []
-        self.pn = []
-        self.ipn = []
+        self.h_pk = []
+        self.h_gamc = []
+        self.h_gams = []
+        self.h_pn = []
+        self.h_ipn = []
         for idx, val in enumerate(context):
             if "%FLAG DIHEDRALS_INC_HYDROGEN" in val:
                 count = 0
@@ -132,20 +173,20 @@ class Dihedral:
                     self.h_atom_c[i] = information[i * 5 + 2] / 3
                     self.h_atom_d[i] = abs(information[i * 5 + 3] / 3)
                     tmpi = information[i * 5 + 4] - 1
-                    self.pk.append(self.pk_type[tmpi])
+                    self.h_pk.append(self.pk_type[tmpi])
                     tmpf = self.phase_type[tmpi]
                     if abs(tmpf - self.CONSTANT_Pi) <= 0.001:
                         tmpf = self.CONSTANT_Pi
                     tmpf2 = math.cos(tmpf)
                     if abs(tmpf2) < 1e-6:
                         tmpf2 = 0
-                    self.gamc.append(tmpf2 * self.pk[i])
+                    self.h_gamc.append(tmpf2 * self.h_pk[i])
                     tmpf2 = math.sin(tmpf)
                     if abs(tmpf2) < 1e-6:
                         tmpf2 = 0
-                    self.gams.append(tmpf2 * self.pk[i])
-                    self.pn.append(abs(self.pn_type[tmpi]))
-                    self.ipn.append(int(self.pn[i] + 0.001))
+                    self.h_gams.append(tmpf2 * self.h_pk[i])
+                    self.h_pn.append(abs(self.pn_type[tmpi]))
+                    self.h_ipn.append(int(self.h_pn[i] + 0.001))
                 break
         for idx, val in enumerate(context):
             if "%FLAG DIHEDRALS_WITHOUT_HYDROGEN" in val:
@@ -166,20 +207,20 @@ class Dihedral:
                     self.h_atom_c[i] = information[(i - self.dihedral_with_hydrogen) * 5 + 2] / 3
                     self.h_atom_d[i] = abs(information[(i - self.dihedral_with_hydrogen) * 5 + 3] / 3)
                     tmpi = information[(i - self.dihedral_with_hydrogen) * 5 + 4] - 1
-                    self.pk.append(self.pk_type[tmpi])
+                    self.h_pk.append(self.pk_type[tmpi])
                     tmpf = self.phase_type[tmpi]
                     if abs(tmpf - self.CONSTANT_Pi) <= 0.001:
                         tmpf = self.CONSTANT_Pi
                     tmpf2 = math.cos(tmpf)
                     if abs(tmpf2) < 1e-6:
                         tmpf2 = 0
-                    self.gamc.append(tmpf2 * self.pk[i])
+                    self.h_gamc.append(tmpf2 * self.h_pk[i])
                     tmpf2 = math.sin(tmpf)
                     if abs(tmpf2) < 1e-6:
                         tmpf2 = 0
-                    self.gams.append(tmpf2 * self.pk[i])
-                    self.pn.append(abs(self.pn_type[tmpi]))
-                    self.ipn.append(int(self.pn[i] + 0.001))
+                    self.h_gams.append(tmpf2 * self.h_pk[i])
+                    self.h_pn.append(abs(self.pn_type[tmpi]))
+                    self.h_ipn.append(int(self.h_pn[i] + 0.001))
                 break
         for i in range(self.dihedral_numbers):
             if self.h_atom_c[i] < 0:

@@ -40,12 +40,21 @@ Status CVTensor::CreateEmpty(const TensorShape &shape, DataType type, CVTensorPt
   return (*out)->MatInit((*out)->GetMutableBuffer(), (*out)->shape_, (*out)->type_, &(*out)->mat_);
 }
 
-Status CVTensor::CreateFromMat(const cv::Mat &mat, CVTensorPtr *out) {
+Status CVTensor::CreateFromMat(const cv::Mat &mat, const dsize_t rank, CVTensorPtr *out) {
   TensorPtr out_tensor;
   cv::Mat mat_local = mat;
   // if the input Mat's memory is not continuous, copy it to one block of memory
-  if (!mat.isContinuous()) mat_local = mat.clone();
-  TensorShape shape(mat.size, mat_local.type());
+  if (!mat.isContinuous()) {
+    mat_local = mat.clone();
+  }
+  TensorShape shape({});
+  if (mat.dims == 2 && rank == 2) {
+    shape = TensorShape({mat.rows, mat.cols});
+  } else if (mat.dims == 2 && rank == 3) {
+    shape = TensorShape({mat.rows, mat.cols, mat.channels()});
+  } else {
+    RETURN_STATUS_UNEXPECTED("Error in creating CVTensor: Invalid input rank or cv::mat dimension.");
+  }
   DataType type = DataType::FromCVType(mat_local.type());
   RETURN_IF_NOT_OK(CreateFromMemory(shape, type, mat_local.data, &out_tensor));
   *out = AsCVTensor(out_tensor);
@@ -55,14 +64,13 @@ Status CVTensor::CreateFromMat(const cv::Mat &mat, CVTensorPtr *out) {
 std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(const TensorShape &shape, const DataType &type) {
   std::array<int, 2> size = {1, 1};
   if (shape.Rank() <= 2 || (shape.Rank() == 3 && shape[2] <= CV_CN_MAX)) {
-    uint8_t ch = 1;
+    uint16_t ch = 1;
     if (shape.Rank() == 3) {
-      ch = static_cast<uint8_t>(shape[2]);
+      ch = static_cast<uint16_t>(shape[2]);
     }
     if (shape.Rank() > 0) size[0] = static_cast<int>(shape[0]);
     if (shape.Rank() > 1) size[1] = static_cast<int>(shape[1]);
     if (type.AsCVType() == kCVInvalidType) return std::make_pair(size, -1);
-
     int cv_type = CV_MAKETYPE(type.AsCVType(), ch);
     return std::make_pair(size, cv_type);
   }

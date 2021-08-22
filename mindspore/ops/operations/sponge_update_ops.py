@@ -998,7 +998,7 @@ class MapCenterOfMass(PrimitiveWithInfer):
         return mstype.float32
 
 
-class NeighborListUpdateNew(PrimitiveWithInfer):
+class NeighborListUpdate(PrimitiveWithInfer):
     """
     Update (or construct if first time) the Verlet neighbor list for the
     calculation of short-ranged force. Assume the number of atoms is n,

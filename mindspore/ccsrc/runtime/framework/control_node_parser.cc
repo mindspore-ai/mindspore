@@ -157,7 +157,7 @@ void CreateDeviceTensorForValueNode(const AnfNodePtr &front_node, const AnfNodeP
   }
 
   // Get the select kernel build info.
-  auto kernel_info = static_cast<device::KernelInfo *>(backend_node->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(backend_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
   MS_EXCEPTION_IF_NULL(build_info);

@@ -39,9 +39,9 @@ class MultiProcess {
   MultiProcess();
   ~MultiProcess();
 
-  Status MainProcess(ProcessFuncCall parent_process, ProcessFuncCall child_process);
+  Status MainProcess(const ProcessFuncCall &parent_process, const ProcessFuncCall &child_process);
   Status SendMsg(const void *buffer, uint64_t msg_len);
-  Status ReceiveMsg(CreateBufferCall create_buffer_call);
+  Status ReceiveMsg(const CreateBufferCall &create_buffer_call);
 
  private:
   uint8_t *shmat_addr_ = nullptr;
@@ -56,8 +56,8 @@ class MultiProcess {
 
   static void HeartbeatThreadFunc(MultiProcess *multi_process);
   void HeartbeatThreadFuncInner();
-  Status ParentProcess(ProcessFuncCall parent_process);
-  void ChildProcess(ProcessFuncCall child_process);
+  Status ParentProcess(const ProcessFuncCall &parent_process);
+  void ChildProcess(const ProcessFuncCall &child_process);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXXAPI_MULTI_PROCESS_H

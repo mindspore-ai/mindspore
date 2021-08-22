@@ -18,7 +18,10 @@
 #include "nnacl/infer/infer_register.h"
 
 int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_t b_shape_size,
-                          MatMulParameter *param) {
+                          const MatMulParameter *param) {
+  if (a_shape_size < 2 || b_shape_size < 2) {
+    return NNACL_PARAM_INVALID;
+  }
   for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
     if (a_shape[i] != b_shape[i]) {
       return NNACL_INPUT_TENSOR_ERROR;

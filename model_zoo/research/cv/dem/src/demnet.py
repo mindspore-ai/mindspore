@@ -125,4 +125,5 @@ class MyTrainOneStepCell(nn.Cell):
         grads = self.grad(self.network, weights)(*inputs, sens)
         grads = self.grad_reducer(grads)
         grads = ops.clip_by_global_norm(grads, 0.2)
-        return F.depend(loss, self.optimizer(grads))
+        self.optimizer(grads)
+        return loss

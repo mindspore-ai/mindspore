@@ -19,6 +19,7 @@
 #include "src/tensorlist.h"
 
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NOT_SUPPORT;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
@@ -44,9 +45,14 @@ int CarryDataKernel::MoveData(const std::vector<lite::Tensor *>::iterator &dst_b
       MS_LOG(ERROR) << "Carry const data and graph inputs.";
     } else {
       if (src_tensor->data_type() == kObjectTypeTensorType && dst_tensor->data_type() == kObjectTypeTensorType) {
+#ifdef ENABLE_CONTROL_TENSORLIST
         MS_LOG(ERROR) << "Carry MoveTensorListData";
         ret = MoveTensorListData(reinterpret_cast<lite::TensorList *>(dst_tensor),
                                  reinterpret_cast<lite::TensorList *>(src_tensor));
+#else
+        MS_LOG(ERROR) << unsupport_control_tensorlist_log;
+        return RET_NOT_SUPPORT;
+#endif
       } else {
         MS_LOG(ERROR) << "Carry MoveTensorData";
         ret = MoveTensorData(dst_tensor, src_tensor);
@@ -81,7 +87,7 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
   memcpy(dst_tensor->data(), src_tensor->data(), src_tensor->Size());
   return RET_OK;
 }
-
+#ifdef ENABLE_CONTROL_TENSORLIST
 int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_tensorlist) {
   // shape may change, because tensors.size() can be change in RunGraph
   if (dst_tensorlist->data_type() != src_tensorlist->data_type() ||
@@ -126,4 +132,5 @@ int CarryDataKernel::MoveTensorListData(lite::TensorList *dst_tensorlist, lite::
   }
   return RET_OK;
 }
+#endif
 }  // namespace mindspore::kernel

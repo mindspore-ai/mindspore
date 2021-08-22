@@ -20,7 +20,6 @@ from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
 
@@ -67,10 +66,11 @@ class TrainOneStepWithLarsCell(nn.Cell):
         bias_grads = grads[self.slice_index: self.params_len]
         lars_grads = self.lars(non_bias_weights, non_bias_grads, self.weight_decay)
         new_grads = lars_grads + bias_grads
-        return F.depend(loss, self.optimizer(new_grads))
+        self.optimizer(new_grads)
+        return loss
 
 
-# fn is a funcation use i as input
+# fn is a function use i as input
 def lr_gen(fn, epoch_size):
     for i in range(epoch_size):
         yield fn(i)

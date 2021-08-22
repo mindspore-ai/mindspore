@@ -182,7 +182,7 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
     MS_LOG(INFO) << "Get output:" << output_num_ << " Shape";
     std::vector<int64_t> shape;
     TypeId type_id;
-    ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
+    (void)ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
 
     for (auto x : shape) {
       MS_LOG(INFO) << "Update output:" << i << " shape:" << x;

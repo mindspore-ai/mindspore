@@ -16,7 +16,6 @@
 
 if [ $# -lt 3 ]; then
     echo "Usage: bash run_quant_infer.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH]"
-    echo "Example: bash run_quant_infer.sh ./vgg_quant.air ./00_data ./cifar10_label_ids.npy"
 exit 1
 fi
 

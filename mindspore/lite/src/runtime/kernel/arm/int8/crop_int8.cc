@@ -57,21 +57,16 @@ int CropInt8CPUKernel::Run() {
 
 int CropInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto crop = reinterpret_cast<CropInt8CPUKernel *>(cdata);
-  auto ret = crop->DoExecute(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CropInt8Run task id " << task_id << " run failed.";
-    return ret;
-  }
+  crop->DoExecute(task_id);
   return RET_OK;
 }
 
-int CropInt8CPUKernel::DoExecute(int task_id) {
+void CropInt8CPUKernel::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto out_tensor = out_tensors_.at(kOutputIndex);
   int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->data_c());
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->data_c());
   Int8Crop(input_data, output_data, task_id, crop_para_);
-  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Crop, LiteKernelCreator<CropInt8CPUKernel>)

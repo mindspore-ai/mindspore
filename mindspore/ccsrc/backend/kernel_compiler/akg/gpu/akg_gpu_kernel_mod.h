@@ -60,6 +60,7 @@ class GpuKernelMod : public KernelMod {
 
   void SetInputSizeList(const std::vector<size_t> &size_list);
   void SetOutputSizeList(const std::vector<size_t> &size_list);
+  void SetWorkspaceSizeList(const std::vector<size_t> &size_list);
   const std::vector<size_t> &GetInputSizeList() const override;
   const std::vector<size_t> &GetOutputSizeList() const override;
   const std::vector<size_t> &GetWorkspaceSizeList() const override;

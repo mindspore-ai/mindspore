@@ -62,10 +62,10 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
     T *y_addr = GetDeviceAddress<T>(inputs, 1);
     T *dy_addr = GetDeviceAddress<T>(inputs, 2);
     T *dx_addr = GetDeviceAddress<T>(outputs, 0);
-    T *reduce_workspace_addr = GetDeviceAddress<T>(workspace, 0);
-    T *reduce_y_dy_workspace_addr = GetDeviceAddress<T>(workspace, 1);
-    T *workspace_addr = GetDeviceAddress<T>(workspace, 2);
-    T *workspace_y_dy_addr = GetDeviceAddress<T>(workspace, 3);
+    T *reduce_workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    T *reduce_y_dy_workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+    T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 2);
+    T *workspace_y_dy_addr = GetPossiblyNullDeviceAddress<T>(workspace, 3);
 
     const float alpha = 1;
     const float beta = 0;

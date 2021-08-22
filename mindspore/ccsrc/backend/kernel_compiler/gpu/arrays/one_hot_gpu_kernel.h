@@ -49,8 +49,10 @@ class OneHotGpuFwdKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     int64_t input_dims = static_cast<int64_t>(input_shape.size());
-    if (axis >= input_dims) {
-      MS_LOG(ERROR) << "invalid one hot axis value: " << axis << " for input dims size: " << input_shape.size();
+    int64_t output_dims = static_cast<int64_t>(output_shape.size());
+    if (axis >= input_dims || axis >= output_dims) {
+      MS_LOG(ERROR) << "invalid one hot axis value: " << axis << " for input dims size: " << input_shape.size()
+                    << " or output dims size: " << output_dims;
       return false;
     }
     const int64_t default_axis = -1;

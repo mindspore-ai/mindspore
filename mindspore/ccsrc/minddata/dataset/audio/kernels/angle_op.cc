@@ -25,10 +25,8 @@ namespace dataset {
 Status AngleOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // if If the last dimension is not 2, then it's not a complex number
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape()[-1] == 2, "Angle: input tensor is not in shape of <..., complex=2>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type().IsNumeric(),
-    "Angle: input tensor type should be int, float or double, but got: " + input->type().ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape()[-1] == 2, "Angle: The input is not several legal complex numbers");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type().IsNumeric(), "Angle: The input type should be numbers");
   if (input->type() == DataType(DataType::DE_FLOAT64)) {
     return Angle<double>(input, output);
   } else {

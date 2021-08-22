@@ -174,8 +174,14 @@ bool ParameterAggregator::IsOptimizingDone() const { return optimizing_done_; }
 
 bool ParameterAggregator::IsPullingDone() const { return pulling_done_; }
 
+bool ParameterAggregator::requires_aggr() const { return requires_aggr_; }
+
 bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
+  if (!JudgeRequiresAggr(cnode)) {
+    MS_LOG(WARNING) << "Aggregation for weight for kernel " << AnfAlgo::GetCNodeName(cnode) << " is not required.";
+  }
+
   std::vector<std::string> aggr_kernel_names = SelectAggregationAlgorithm(cnode);
   for (const std::string &name : aggr_kernel_names) {
     auto aggr_kernel = kernel::AggregationKernelFactory::GetInstance().Create(name, cnode);
@@ -333,11 +339,34 @@ std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const C
   } else if (ps::PSContext::instance()->server_mode() == ps::kServerModePS) {
     (void)aggregation_algorithm.emplace_back("DenseGradAccum");
   } else {
-    MS_LOG(ERROR) << "Server doesn't support mode " << ps::PSContext::instance()->server_mode();
+    MS_LOG(EXCEPTION) << "Server doesn't support mode " << ps::PSContext::instance()->server_mode();
+    return aggregation_algorithm;
   }
 
   MS_LOG(INFO) << "Aggregation algorithm selection result: " << aggregation_algorithm;
   return aggregation_algorithm;
+}
+
+bool ParameterAggregator::JudgeRequiresAggr(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
+  if (kNameToIdxMap.count(cnode_name) == 0 || kNameToIdxMap.at(cnode_name).count("inputs") == 0 ||
+      kNameToIdxMap.at(cnode_name).at("inputs").count("weight") == 0) {
+    MS_LOG(EXCEPTION) << "Can't find index info of weight for kernel " << cnode_name;
+    return false;
+  }
+  size_t cnode_weight_idx = kNameToIdxMap.at(cnode_name).at("inputs").at("weight");
+  auto weight_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cnode, cnode_weight_idx), 0).first;
+  MS_EXCEPTION_IF_NULL(weight_node);
+
+  if (!weight_node->isa<Parameter>()) {
+    MS_LOG(EXCEPTION) << weight_node->fullname_with_scope() << " is not a parameter node.";
+    return false;
+  }
+  auto param_info = weight_node->cast<ParameterPtr>()->param_info();
+  MS_EXCEPTION_IF_NULL(param_info);
+  requires_aggr_ = param_info->requires_aggr();
+  return requires_aggr_;
 }
 
 template bool ParameterAggregator::AssignMemory(std::shared_ptr<kernel::OptimizerKernel> server_kernel,

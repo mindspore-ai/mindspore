@@ -23,7 +23,7 @@
 
 namespace mindspore::lite::micro::nnacl {
 int ConvolutionDepthwiseFP32Coder::Prepare(CoderContext *const context) {
-  Conv2DBaseCoder::Init();
+  MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Conv2DBaseCoder::Init() failed!");
   MS_CHECK_RET_CODE(InitWeightBias(), "dwconvolution do init weightbais failed");
   conv_param_->thread_num_ = MSMIN(thread_num_, conv_param_->output_h_);
   return RET_OK;
@@ -83,5 +83,4 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::nnacl

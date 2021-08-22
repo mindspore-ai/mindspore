@@ -32,7 +32,7 @@ class InsertTensorMoveForHcclOp : public PatternProcessPass {
 
  private:
   void InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
-  bool NeedInsertTensorMove(const FuncGraphPtr &graph, const AnfNodePtr &input, const CNodePtr &cur_node) const;
+  bool NeedInsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &cur_node, size_t input_idx) const;
   KernelQueryPtr kernel_query_;
 };
 }  // namespace opt

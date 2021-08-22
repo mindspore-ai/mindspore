@@ -210,6 +210,11 @@ def check_2tuple(value, arg_name=""):
         raise ValueError("Value {0} needs to be a 2-tuple.".format(arg_name))
 
 
+def check_int32(value, arg_name=""):
+    type_check(value, (int,), arg_name)
+    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
+
+
 def check_uint8(value, arg_name=""):
     """
     Validates the value of a variable is within the range of uint8.
@@ -244,11 +249,6 @@ def check_pos_uint32(value, arg_name=""):
     """
     type_check(value, (int,), arg_name)
     check_value(value, [POS_INT_MIN, UINT32_MAX])
-
-
-def check_int32(value, arg_name=""):
-    type_check(value, (int,), arg_name)
-    check_value(value, [INT32_MIN, INT32_MAX], arg_name)
 
 
 def check_pos_int32(value, arg_name=""):
@@ -482,8 +482,6 @@ def check_filename(path):
     if filename.startswith(' ') or filename.endswith(' '):
         raise ValueError("filename should not start/end with space.")
 
-    return True
-
 
 def check_dir(dataset_dir):
     """
@@ -682,3 +680,4 @@ def check_c_tensor_op(param, param_name):
 def replace_none(value, default):
     """ replaces None with a default value."""
     return value if value is not None else default
+    

@@ -23,7 +23,7 @@
 
 ICNet(Image Cascade Network) propose a full convolution network which incorporates multi-resolution branches under proper label guidance to address the challenge of real-time semantic segmentation.
 
-[paper](https://arxiv.org/abs/1704.08545)ECCV2018
+[paper](https://arxiv.org/abs/1704.08545) from ECCV2018
 
 # [Model Architecture](#Contents)
 
@@ -31,7 +31,7 @@ ICNet takes cascade image inputs (i.e., low-, medium- and high resolution images
 
 # [Dataset](#Content)
 
-used Dataset :[Cityscape Dataset Website](https://www.cityscapes-dataset.com/)
+used Dataset :[Cityscape Dataset Website](https://www.cityscapes-dataset.com/) (please download 1st and 3rd zip)
 
 It contains 5,000 finely annotated images split into training, validation and testing sets with 2,975, 500, and 1,525 images respectively.
 
@@ -64,6 +64,16 @@ It contains 5,000 finely annotated images split into training, validation and te
     ├── export.py                                  # export mindir
     ├── postprocess.py                             # 310 infer calculate accuracy
     ├── README.md                                  # descriptions about ICNet
+    ├── Res50V1_PRE                                # scripts for pretrain
+    │   ├── scripts
+    │   │   └── run_distribute_train.sh
+    │   ├── src
+    │   │   ├── config.py
+    │   │   ├── CrossEntropySmooth.py
+    │   │   ├── dataset.py
+    │   │   ├── lr_generator.py
+    │   │   └── resnet50_v1.py
+    │   └── train.py
     ├── scripts
     │   ├── run_distribute_train8p.sh              # multi cards distributed training in ascend
     │   ├── run_eval.sh                            # validation script
@@ -95,7 +105,7 @@ Set script parameters in src/model_utils/icnet.yaml .
 
 ```bash
 name: "icnet"
-backbone: "resnet50"
+backbone: "resnet50v1"
 base_size: 1024    # during augmentation, shorter size will be resized between [base_size*0.5, base_size*2.0]
 crop_size: 960     # end of augmentation, crop to training
 ```
@@ -116,9 +126,8 @@ valid_batch_size: 1
 cityscapes_root: "/data/cityscapes/" # set dataset path
 epochs: 160
 val_epoch: 1
-ckpt_dir: "./ckpt/"                  # ckpt and training log will be saved here
 mindrecord_dir: ''                   # set mindrecord path
-pretrained_model_path: '/root/ResNet50V1B-150_625.ckpt' # set the pretrained model path correctly
+pretrained_model_path: '/root/ResNet50V1B-150_625.ckpt' # use the latest checkpoint file after pre-training
 save_checkpoint_epochs: 5
 keep_checkpoint_max: 10
 ```
@@ -137,17 +146,27 @@ keep_checkpoint_max: 10
 
 [MINDRCORD_PATH] in script should be consistent with 'mindrecord_dir' in config file.
 
-### Distributed Training
+### Pre-training
 
-- Run distributed train in ascend processor environment
+The folder Res50V1_PRE contains the scripts for pre-training and its dataset is [image net](https://image-net.org/). More details in [GENet_Res50](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/GENet_Res50)
+
+- Usage:
 
 ```shell
-    bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PROJECT_PATH]
+    bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
 ```
 
 - Notes:
 
 The hccl.json file specified by [RANK_TABLE_FILE] is used when running distributed tasks. You can use [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) to generate this file.
+
+### Distributed Training
+
+- Run distributed train in ascend processor environment
+
+```shell
+    bash scripts/run_distribute_train8p.sh [RANK_TABLE_FILE] [PROJECT_PATH]
+```
 
 ### Training Result
 
@@ -174,7 +193,7 @@ epoch time: 97117.785 ms, per step time: 1044.277 ms
 Check the checkpoint path used for evaluation before running the following command.
 
 ```shell
-    bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PROJECT_PATH]
+    bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PROJECT_PATH] [DEVICE_ID]
 ```
 
 ### Evaluation Result
@@ -196,7 +215,7 @@ avgtime 0.19648232793807982
     bash run_infer_310.sh [The path of the MINDIR for 310 infer] [The path of the dataset for 310 infer]  0
 ```
 
-Note:: Before executing 310 infer, create the MINDIR/AIR model using "python export.py --ckpt-file [The path of the CKPT for exporting]".
+- Note: Before executing 310 infer, create the MINDIR/AIR model using "python export.py --ckpt-file [The path of the CKPT for exporting]".
 
 # [Model Description](#Content)
 
@@ -204,7 +223,7 @@ Note:: Before executing 310 infer, create the MINDIR/AIR model using "python exp
 
 ### Training Performance
 
-|Parameter              | MaskRCNN                                                   |
+|Parameter              | ICNet                                                   |
 | ------------------- | --------------------------------------------------------- |
 |resources              | Ascend 910；CPU 2.60GHz, 192core；memory：755G |
 |Upload date            |2021.6.1                    |

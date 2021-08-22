@@ -325,7 +325,7 @@ endif()
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set_property(SOURCE "pipeline/jit/init.cc" PROPERTY
             COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PIPELINE)
-pybind11_add_module(_c_expression "pipeline/jit/init.cc")
+pybind11_add_module(_c_expression NO_EXTRAS "pipeline/jit/init.cc")
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")

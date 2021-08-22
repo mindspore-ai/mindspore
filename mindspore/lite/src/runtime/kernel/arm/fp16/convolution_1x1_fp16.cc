@@ -38,10 +38,6 @@ int Convolution1x1FP16CPUKernel::InitMatmulParam() {
 
 Convolution1x1FP16CPUKernel::~Convolution1x1FP16CPUKernel() {
   FreeTmpBuffer();
-  if (weight_ptr_ != nullptr) {
-    free(weight_ptr_);
-    weight_ptr_ = nullptr;
-  }
   if (matmul_param_ != nullptr) {
     delete matmul_param_;
     matmul_param_ = nullptr;
@@ -82,14 +78,23 @@ int Convolution1x1FP16CPUKernel::InitConv1x1Param() {
   return RET_OK;
 }
 
-int Convolution1x1FP16CPUKernel::InitWeightBias() {
+int Convolution1x1FP16CPUKernel::MallocWeightBiasData() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Channel();
   auto output_channel = weight_tensor->Batch();
 
-  if (in_tensors_.size() == 3) {
-    size_t size = UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
-    size_t bias_size = output_channel * sizeof(float16_t);
+  size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
+  if (packed_weight_ == nullptr) {
+    packed_weight_ = malloc(size);
+    if (packed_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
+      return RET_ERROR;
+    }
+  }
+  memset(reinterpret_cast<char *>(packed_weight_), 0, size);
+
+  if (in_tensors_.size() == kInputSize2) {
+    size = UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
     if (bias_data_ == nullptr) {
       bias_data_ = malloc(size);
       if (bias_data_ == nullptr) {
@@ -97,32 +102,29 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
         return RET_ERROR;
       }
     }
-    void *bias_origin_tmp = IsTrainable() ? in_tensors_.at(kBiasIndex)->data_c() : origin_bias_;
-    memcpy(bias_data_, bias_origin_tmp, output_channel * sizeof(float16_t));
-    memset(reinterpret_cast<char *>(bias_data_) + bias_size, 0, size - bias_size);
+    memset(reinterpret_cast<char *>(bias_data_), 0, size);
   }
-
-  size_t size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float16_t);
-  size_t down_size = input_channel * DOWN_DIV(output_channel, col_tile_) * col_tile_ * sizeof(float16_t);
-  if (weight_ptr_ == nullptr) {
-    weight_ptr_ = reinterpret_cast<float16_t *>(malloc(size));
-    if (weight_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "Conv1x1 Malloc weight_ptr_ error!";
-      return RET_ERROR;
-    }
-  }
-  void *weight_origin_tmp = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
-  memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
-#ifdef ENABLE_ARM64
-  RowMajor2Col16MajorFp16Opt(static_cast<const float16_t *>(weight_origin_tmp), weight_ptr_, output_channel,
-                             input_channel);
-#else
-  ColMajor2Row8MajorFp16(weight_origin_tmp, weight_ptr_, input_channel, output_channel, true);
-#endif
   return RET_OK;
 }
 
+void Convolution1x1FP16CPUKernel::PackWeight() {
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = weight_tensor->Channel();
+  auto output_channel = weight_tensor->Batch();
+  void *weight_origin = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  MS_ASSERT(weight_origin != nullptr);
+#ifdef ENABLE_ARM64
+  RowMajor2Col16MajorFp16Opt(static_cast<const float16_t *>(weight_origin),
+                             reinterpret_cast<float16_t *>(packed_weight_), output_channel, input_channel);
+#else
+  ColMajor2Row8MajorFp16(weight_origin, reinterpret_cast<float16_t *>(packed_weight_), input_channel, output_channel,
+                         true);
+#endif
+}
+
 int Convolution1x1FP16CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
   row_tile_ = C12NUM;
   col_tile_ = C16NUM;
@@ -135,7 +137,7 @@ int Convolution1x1FP16CPUKernel::Init() {
     MS_LOG(ERROR) << "Init matmul_param_ failed.";
     return RET_ERROR;
   }
-  int ret = InitWeightBias();
+  int ret = InitConvWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return ret;
@@ -180,11 +182,13 @@ int Convolution1x1FP16CPUKernel::RunOc(int task_id) {
 
   auto bias = (bias_data_ == nullptr) ? nullptr : reinterpret_cast<float16_t *>(bias_data_) + thread_stride_ * task_id;
 #ifdef ENABLE_ARM64
-  MatMul12x16Fp16Opt(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
+  MatMul12x16Fp16Opt(pack_input_,
+                     reinterpret_cast<float16_t *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
                      output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
                      matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
 #else
-  MatMul12x8A32Fp16(pack_input_, weight_ptr_ + task_id * thread_stride_ * matmul_param_->deep_,
+  MatMul12x8A32Fp16(pack_input_,
+                    reinterpret_cast<float16_t *>(packed_weight_) + task_id * thread_stride_ * matmul_param_->deep_,
                     output_ptr_ + task_id * thread_stride_, bias, matmul_param_->act_type_, matmul_param_->deep_,
                     matmul_param_->row_, cur_oc, matmul_param_->col_, OutType_Nhwc);
 #endif
@@ -204,13 +208,13 @@ int Convolution1x1FP16CPUKernel::RunHw(int task_id) {
 
   float16_t *thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
 #ifdef ENABLE_ARM64
-  MatMul12x16Fp16Opt(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
-                     matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
-                     OutType_Nhwc);
+  MatMul12x16Fp16Opt(thread_pack_input, reinterpret_cast<float16_t *>(packed_weight_), thread_output_ptr,
+                     reinterpret_cast<float16_t *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_hw_,
+                     matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
 #else
-  MatMul12x8A32Fp16(thread_pack_input, weight_ptr_, thread_output_ptr, reinterpret_cast<float16_t *>(bias_data_),
-                    matmul_param_->act_type_, matmul_param_->deep_, cur_hw_, matmul_param_->col_, matmul_param_->col_,
-                    OutType_Nhwc);
+  MatMul12x8A32Fp16(thread_pack_input, reinterpret_cast<float16_t *>(packed_weight_), thread_output_ptr,
+                    reinterpret_cast<float16_t *>(bias_data_), matmul_param_->act_type_, matmul_param_->deep_, cur_hw_,
+                    matmul_param_->col_, matmul_param_->col_, OutType_Nhwc);
 #endif
   return RET_OK;
 }
@@ -250,14 +254,9 @@ int Convolution1x1FP16CPUKernel::Run() {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;
   }
-
-  if (IsTrainable() && (IsTrain() || IsRepack())) {
-    auto ret = InitWeightBias();
-    if (ret != 0) {
-      MS_LOG(ERROR) << "Convolution 1x1 fp16 repack weight failure";
-      return RET_ERROR;
-    }
-    is_repack_ = false;
+  if (RepackWeight() != RET_OK) {
+    MS_LOG(ERROR) << "Repack weight failed.";
+    return RET_ERROR;
   }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {

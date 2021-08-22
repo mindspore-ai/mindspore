@@ -58,7 +58,7 @@ def train():
         context.set_context(device_id=config.device_id)
 
     # define network
-    net = ShuffleNetV1(model_size=config.model_size)
+    net = ShuffleNetV1(model_size=config.model_size, n_class=config.num_classes)
 
     # define loss
     loss = CrossEntropySmooth(sparse=True, reduction="mean", smooth_factor=config.label_smooth_factor,

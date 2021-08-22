@@ -185,7 +185,7 @@ class OpenCLKernel : public InnerKernel {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
   }
   ~OpenCLKernel() override = default;
-  int AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local);
+  void AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local);
 
   int Prepare() override { return RET_OK; }
   int PreProcess() override;
@@ -194,7 +194,7 @@ class OpenCLKernel : public InnerKernel {
 
   virtual int CheckSpecs();
   virtual int InitWeights() { return RET_OK; }
-  virtual void SetConstArgs() {}
+  virtual int SetConstArgs() { return RET_OK; }
   virtual void SetGlobalLocal() {}
   virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return RET_ERROR; }
   virtual int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) {

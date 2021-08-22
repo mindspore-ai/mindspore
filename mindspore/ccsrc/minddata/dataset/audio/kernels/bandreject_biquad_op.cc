@@ -20,17 +20,15 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status BandrejectBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // check input type and input shape
   TensorShape input_shape = input->shape();
-  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0,
-                               "BandrejectBiquad: input tensor is not in shape of <..., time>.");
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->type() == DataType(DataType::DE_FLOAT32) || input->type() == DataType(DataType::DE_FLOAT16) ||
-      input->type() == DataType(DataType::DE_FLOAT64),
-    "BandrejectBiquad: input tensor type should be float, but got: " + input->type().ToString());
+  CHECK_FAIL_RETURN_UNEXPECTED(input_shape.Size() > 0, "BandrejectBiquad: input dimension should be greater than 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType(DataType::DE_FLOAT32) ||
+                                 input->type() == DataType(DataType::DE_FLOAT16) ||
+                                 input->type() == DataType(DataType::DE_FLOAT64),
+                               "BandrejectBiquad: input type should be float, but got " + input->type().ToString());
   double w0 = 2 * PI * central_freq_ / sample_rate_;
   double alpha = sin(w0) / 2 / Q_;
   double b0 = 1;
@@ -39,16 +37,15 @@ Status BandrejectBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::sh
   double a0 = 1 + alpha;
   double a1 = b1;
   double a2 = 1 - alpha;
-  if (input->type() == DataType(DataType::DE_FLOAT32)) {
+  if (input->type() == DataType(DataType::DE_FLOAT32))
     return Biquad(input, output, static_cast<float>(b0), static_cast<float>(b1), static_cast<float>(b2),
                   static_cast<float>(a0), static_cast<float>(a1), static_cast<float>(a2));
-  } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
+  else if (input->type() == DataType(DataType::DE_FLOAT64))
     return Biquad(input, output, static_cast<double>(b0), static_cast<double>(b1), static_cast<double>(b2),
                   static_cast<double>(a0), static_cast<double>(a1), static_cast<double>(a2));
-  } else {
+  else
     return Biquad(input, output, static_cast<float16>(b0), static_cast<float16>(b1), static_cast<float16>(b2),
                   static_cast<float16>(a0), static_cast<float16>(a1), static_cast<float16>(a2));
-  }
 }
 }  // namespace dataset
 }  // namespace mindspore

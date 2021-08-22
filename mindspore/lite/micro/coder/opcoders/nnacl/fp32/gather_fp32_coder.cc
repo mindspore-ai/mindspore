@@ -30,7 +30,8 @@ int GatherFP32Coder::Prepare(CoderContext *const context) { return RET_OK; }
 int GatherFP32Coder::DoCode(CoderContext *context) {
   Tensor *input0 = input_tensors_.at(0);
   Tensor *input1 = input_tensors_.at(1);
-
+  MS_CHECK_PTR(input0);
+  MS_CHECK_PTR(input1);
   // generate code .h .c
   Collect(context,
           {
@@ -42,8 +43,9 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
 
   NNaclFp32Serializer code;
   std::vector<int> in_shape = input0->shape();
-  int in_rank = in_shape.size();
+  int in_rank = static_cast<int>(in_shape.size());
   int indices_element_size = input1->ElementsNum();
+  MS_CHECK_PTR(parameter_);
   int axis = (reinterpret_cast<GatherParameter *>(parameter_))->axis_;
   MS_CHECK_TRUE(static_cast<int>(in_shape.size()) >= axis, "invalid axis in gather parameter");
   const int limit = in_shape.at(axis);

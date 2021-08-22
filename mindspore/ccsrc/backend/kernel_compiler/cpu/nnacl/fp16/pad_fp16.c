@@ -19,16 +19,22 @@
 
 void PadFp16(const float16_t *input_data, float16_t *output_data, const int *input_shape, const int *output_shape,
              const int *paddings, const int tid, const int thread_num) {
-  int in[4], out[4];
+  int in[DEFAULT_PAD_NDIMS], out[DEFAULT_PAD_NDIMS];
   for (in[0] = 0; in[0] < input_shape[0]; in[0]++) {
     out[0] = in[0] + paddings[0];
     for (in[1] = tid; in[1] < input_shape[1]; in[1] += thread_num) {
       out[1] = in[1] + paddings[2];
       for (in[2] = 0; in[2] < input_shape[2]; in[2]++) {
         out[2] = in[2] + paddings[4];
-        float16_t *dst = output_data + offset(output_shape, out[0], out[1], out[2], paddings[6]);
-        const float16_t *src = input_data + offset(input_shape, in[0], in[1], in[2], 0);
-        memcpy(dst, src, input_shape[3] * sizeof(float16_t));
+        for (in[3] = 0; in[3] < input_shape[3]; in[3]++) {
+          out[3] = in[3] + paddings[6];
+          for (in[4] = 0; in[4] < input_shape[4]; in[4]++) {
+            out[4] = in[4] + paddings[8];
+            float16_t *dst = output_data + Offset6d(output_shape, out) + paddings[10];
+            const float16_t *src = input_data + Offset6d(input_shape, in);
+            memcpy(dst, src, input_shape[5] * sizeof(float16_t));
+          }
+        }
       }
     }
   }

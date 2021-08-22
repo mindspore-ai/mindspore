@@ -91,18 +91,6 @@ if(ENABLE_MINDDATA)
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
     )
-    file(GLOB_RECURSE FFMPEG_LIB_LIST
-            ${ffmpeg_LIBPATH}/libavcodec*
-            ${ffmpeg_LIBPATH}/libavformat*
-            ${ffmpeg_LIBPATH}/libavutil*
-            ${ffmpeg_LIBPATH}/libswresample*
-            ${ffmpeg_LIBPATH}/libswscale*
-            )
-    install(
-            FILES ${FFMPEG_LIB_LIST}
-            DESTINATION ${INSTALL_LIB_DIR}
-            COMPONENT mindspore
-    )
 endif()
 
 # CPU mode

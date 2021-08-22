@@ -23,6 +23,7 @@ from itertools import repeat, zip_longest
 from collections import deque
 from collections.abc import Iterable
 import numpy as np
+from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
@@ -845,6 +846,10 @@ class Validator:
     def empty_compile(dtype, shape):
         """Returns an empty Tensor."""
         return Tensor_(dtype, shape)
+
+    @staticmethod
+    def check_type_support(dtype, device, supported_dtypes):
+        return dtype in supported_dtypes or not context.get_context('device_target') == device
 
 
 def check_input_format(input_param):

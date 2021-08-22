@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterNdUpdate = "ScatterNdUpdate";
-class MS_CORE_API ScatterNdUpdate : public PrimitiveC {
+class ScatterNdUpdate : public PrimitiveC {
  public:
   ScatterNdUpdate() : PrimitiveC(kNameScatterNdUpdate) { InitIOName({"input_x", "indices", "update"}, {"output"}); }
   ~ScatterNdUpdate() = default;

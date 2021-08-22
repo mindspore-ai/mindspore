@@ -68,7 +68,7 @@ class Tensor {
   Tensor(const Tensor &other) = delete;
   Tensor &operator=(const Tensor &other) = delete;
 
-  /// Create a tensor using shape and type. This constructor should not be used directly, use CreateFromTensor instead
+  /// Create a tensor using shape and type. This constructor should not be used directly, use CreateFromTensor instead.
   /// \note The shape and type information should be known and valid
   /// \note The constructor does not allocate data
   /// \param shape TensorShape
@@ -219,6 +219,14 @@ class Tensor {
 
   Status to_json(nlohmann::json *out_json);
 
+  template <typename T>
+  Status to_json_convert(nlohmann::json *args);
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<Tensor> *tensor);
+
+  template <typename T>
+  static Status from_json_convert(nlohmann::json json_data, TensorShape shape, std::shared_ptr<Tensor> *tensor);
+
   /// Get item located at `index`, caller needs to provide the type.
   /// \tparam T
   /// \param[in] index vector<dsize_t>
@@ -305,6 +313,13 @@ class Tensor {
   /// Check if tensor has data
   /// \return bool - true if tensor is not empty
   bool HasData() const { return data_ != nullptr; }
+
+  /// Check if tensor is complex
+  /// \return bool - true if tensor is complex
+  bool IsComplex() const {
+    // check the last dim all be 2
+    return shape_[-1] == 2;
+  }
 
   /// Reshape the tensor. The given shape should have the same number of elements in the Tensor
   /// \param shape

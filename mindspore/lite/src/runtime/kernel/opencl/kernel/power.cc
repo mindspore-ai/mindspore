@@ -63,15 +63,21 @@ void PowerGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *l
   local->push_back(z);
 }
 
-void PowerOpenCLKernel::SetConstArgs() {
+int PowerOpenCLKernel::SetConstArgs() {
   float unalign_w = static_cast<float>(out_shape_.s[3]);
   out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
   int arg_cn = 2;
   if (!broadcast_) {
     arg_cn++;
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
   if (use_fp16_enable_) {
     auto x = static_cast<float16_t>(power_);
@@ -80,11 +86,18 @@ void PowerOpenCLKernel::SetConstArgs() {
     auto w = static_cast<float16_t>(unalign_w);
     cl_half4 parameter = {*(reinterpret_cast<uint16_t *>(&x)), *(reinterpret_cast<uint16_t *>(&y)),
                           *(reinterpret_cast<uint16_t *>(&z)), *(reinterpret_cast<uint16_t *>(&w))};
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
     cl_float4 parameter = {power_, shift_, scale_, unalign_w};
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
+  return RET_OK;
 }
 
 void PowerOpenCLKernel::SetGlobalLocal() {
@@ -111,7 +124,7 @@ int PowerOpenCLKernel::Prepare() {
   auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
   std::string kernel_name = "power";
   std::string source = power_source;
-  std::string program_name = "power";
+  const std::string program_name = "power";
   if (broadcast_) {
     power_ = param->power_;
     kernel_name += "_broadcast";
@@ -130,7 +143,10 @@ int PowerOpenCLKernel::Prepare() {
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetGlobalLocal();
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -138,13 +154,28 @@ int PowerOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg_cn = 0;
   if (broadcast_) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(1)->data_c());
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(1)->data_c()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
   }
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

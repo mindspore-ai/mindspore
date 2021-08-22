@@ -2119,6 +2119,11 @@ test_case_nn_ops = [
         'block': P.L2Loss(),
         'desc_inputs': [Tensor(np.array([[1, 1], [2, 2], [3, 3], [4, 4]]), mstype.float16)],
         'desc_bprop': []}),
+    ('SoftMarginLoss', {
+        'block': P.SoftMarginLoss(reduction="none"),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([[-1, 1], [1, -1]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))]}),
     ('BCEWithLogitsLoss', {
         'block': P.BCEWithLogitsLoss(),
         'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
@@ -2203,6 +2208,16 @@ test_case_nn_ops = [
         'block': P.HSigmoid(),
         'desc_inputs': [Tensor(np.array([[-4, 4, 1]]), mstype.float32)],
         'desc_bprop': [Tensor(np.array([[0, 1, 0.6666]]), mstype.float32)],
+        'skip': ['backward']}),
+    ('HardShrink', {
+        'block': P.HShrink(),
+        'desc_inputs': [Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mstype.float32)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
+    ('HShrinkGrad', {
+        'block': G.HShrinkGrad(),
+        'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), mstype.float16),
+                        Tensor(np.array([[-4, -3, -2], [1, 2, 4]]), mstype.float16)],
         'skip': ['backward']}),
 ]
 

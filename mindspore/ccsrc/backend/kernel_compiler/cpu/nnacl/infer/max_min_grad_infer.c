@@ -41,11 +41,11 @@ int MaxMinGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   ArithmeticParameter *param = (ArithmeticParameter *)parameter;
 
   param->ndim_ = dy->shape_size_;
-  param->in_elements_num0_ = param->ndim_;
-  param->in_elements_num1_ = param->ndim_;
-  param->out_elements_num_ = param->ndim_;
-  int fillDimNum0 = dy->shape_size_ - x1->shape_size_;
-  int fillDimNum1 = dy->shape_size_ - x2->shape_size_;
+  param->in_elements_num0_ = (int)(param->ndim_);
+  param->in_elements_num1_ = (int)(param->ndim_);
+  param->out_elements_num_ = (int)(param->ndim_);
+  int fillDimNum0 = (int)(dy->shape_size_ - x1->shape_size_);
+  int fillDimNum1 = (int)(dy->shape_size_ - x2->shape_size_);
   int j0 = 0;
   int j1 = 0;
   for (unsigned int i = 0; i < dy->shape_size_; i++) {

@@ -78,7 +78,7 @@ std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, si
 }  // namespace
 
 int WinogradOpenCLKernel::BuildKernel() {
-  std::string program_name = "winograd";
+  const std::string program_name = "winograd";
   if (!ocl_runtime_->LoadSource(program_name, GetActDefines() + winograd_source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -103,7 +103,7 @@ int WinogradOpenCLKernel::BuildKernel() {
   return RET_OK;
 }
 
-void WinogradOpenCLKernel::InitFilter() {
+int WinogradOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
 
   // allocate opencl memory: buffer or image2d
@@ -115,9 +115,17 @@ void WinogradOpenCLKernel::InitFilter() {
     size_t dtype = use_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
     size = width * height * CO_TILE * sizeof_FLT_;
     packed_filter_ = allocator->Malloc({width, height, dtype});
+    if (packed_filter_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
   } else {
     size = UP_DIV(CO_SLICES_, Ogroup) * 6 * 6 * CI_SLICES_ * Ogroup * CI_TILE * CO_TILE * sizeof_FLT_;
     packed_filter_ = allocator->Malloc(size, MemType::BUF);
+    if (packed_filter_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
   }
 
   // rearrange filter
@@ -128,6 +136,10 @@ void WinogradOpenCLKernel::InitFilter() {
   void *src_data = winograd_filter.data();
 #else
   auto winograd_filter = std::make_unique<float[]>(CO_ * 6 * 6 * CI_);
+  if (winograd_filter == nullptr) {
+    MS_LOG(ERROR) << "new winograd_filter failed.";
+    return RET_ERROR;
+  }
   WinogradWeightTransform(reinterpret_cast<const float *>(src_filter_data),
                           reinterpret_cast<float *>(winograd_filter.get()), nullptr, Gt, 1, 6, 3, CI_, CO_, false);
 
@@ -147,53 +159,121 @@ void WinogradOpenCLKernel::InitFilter() {
   if (filter_type_ == MemType::IMG) {
     ocl_runtime_->WriteImage(packed_filter_, tmp.data());
   } else {
-    allocator->MapBuffer(packed_filter_, CL_MAP_WRITE, nullptr, true);
+    if (allocator->MapBuffer(packed_filter_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+      MS_LOG(ERROR) << "Map Buffer failed.";
+      return RET_ERROR;
+    }
     memcpy(packed_filter_, tmp.data(), size);
-    allocator->UnmapBuffer(packed_filter_);
+    if (allocator->UnmapBuffer(packed_filter_) != RET_OK) {
+      MS_LOG(ERROR) << "UnmapBuffer failed.";
+      return RET_ERROR;
+    }
   }
   FreeStoredData(stored_filter_);
+  return RET_OK;
 }
 
-void WinogradOpenCLKernel::AllocateMemory() {
+int WinogradOpenCLKernel::AllocateMemory() {
   auto allocator = ocl_runtime_->GetAllocator();
   size_t img_dtype = use_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
 
   size_t width = TILE_HW_;
   size_t height = CI_SLICES_ * 36;
   winograd_mem0_ = allocator->Malloc({width, height, img_dtype});
+  if (winograd_mem0_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
 
   width = TILE_HW_;
   height = CO_SLICES_ * 36;
   winograd_mem1_ = allocator->Malloc({width, height, img_dtype});
+  if (winograd_mem1_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
-void WinogradOpenCLKernel::SetConstArgs() {
+int WinogradOpenCLKernel::SetConstArgs() {
   AllocateMemory();
 
   int arg_cn = 1;
   cl_int4 input_shape = {batch_size_, OH_, OW_, CI_SLICES_};  // maybe pad=0, so use OH/OW
-  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, winograd_mem0_);
-  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, input_shape);
-  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, TILE_HW_);
-  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, param_->pad_u_);
-  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn, param_->pad_l_);
+  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, winograd_mem0_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, input_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, TILE_HW_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, param_->pad_u_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn, param_->pad_l_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
 
   arg_cn = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, winograd_mem0_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, winograd_mem1_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_filter_, filter_type_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, TILE_HW_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, CI_SLICES_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn, CO_SLICES_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, winograd_mem0_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, winograd_mem1_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_filter_, filter_type_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, TILE_HW_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, CI_SLICES_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn, CO_SLICES_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
 
   arg_cn = 2;
   cl_int4 output_shape = {batch_size_, OH_, OW_, CO_SLICES_};
-  ocl_runtime_->SetKernelArg(kernel_36to4x4_, 0, winograd_mem1_);
-  ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, output_shape);
-  ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, TILE_HW_);
-  ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, param_->act_type_);
-  ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn, alpha_);
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, 0, winograd_mem1_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, MemType::BUF) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, output_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, TILE_HW_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, param_->act_type_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn, alpha_) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void WinogradOpenCLKernel::SetGlobalLocal() {
@@ -205,15 +285,30 @@ void WinogradOpenCLKernel::SetGlobalLocal() {
 int WinogradOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " winograd Running!";
   MS_LOG(DEBUG) << "winograd kernel0 Running!";
-  ocl_runtime_->SetKernelArg(kernel_4x4to36_, 0, in_tensors_.front()->data_c());
-  ocl_runtime_->RunKernel(kernel_4x4to36_, global_4x4to36_, local_4x4to36_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_4x4to36_, global_4x4to36_, local_4x4to36_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
 
   MS_LOG(DEBUG) << "winograd kernel1 Running!";
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &kernel2_event_);
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &kernel2_event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
 
   MS_LOG(DEBUG) << "winograd kernel2 Running!";
-  ocl_runtime_->SetKernelArg(kernel_36to4x4_, 1, out_tensors_.front()->data_c());
-  ocl_runtime_->RunKernel(kernel_36to4x4_, global_36to4x4_, local_36to4x4_, nullptr, &kernel3_event_);
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_36to4x4_, global_36to4x4_, local_36to4x4_, nullptr, &kernel3_event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

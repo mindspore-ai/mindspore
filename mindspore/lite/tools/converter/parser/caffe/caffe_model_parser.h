@@ -56,10 +56,6 @@ class CaffeModelParser : public ModelParser {
 
   std::string GetOriginLayerName(const std::string &layer_name);
 
-  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
-
-  STATUS HardCodeCaffe(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
-
   STATUS ConvertGraphInputsOfLayer();
 
   STATUS ConvertGraphInputsOfDim();

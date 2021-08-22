@@ -47,6 +47,13 @@ struct LossNodeInfo {
   CNodePtr loss_node = nullptr;
 };
 
+struct CommInfo {
+  int64_t device_num = 1;
+  int64_t global_rank = 0;
+  std::string world_group;
+  std::string communication_backend;
+};
+
 struct ParameterSliceInfo {
   Shape slice_shape;
   RankList group_ranks;
@@ -177,6 +184,8 @@ void FindLastNodesUniqueId(const FuncGraphPtr &root, std::vector<std::string> *u
 void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
 
 std::string MirrorOpName();
+
+CommInfo GetCommInfo();
 
 void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, int64_t pipeline_stages);
 }  // namespace parallel

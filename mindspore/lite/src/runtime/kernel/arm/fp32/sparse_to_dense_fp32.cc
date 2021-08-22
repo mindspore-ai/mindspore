@@ -30,6 +30,8 @@ using mindspore::schema::PrimitiveType_SparseToDense;
 
 namespace mindspore::kernel {
 int SparseToDenseCPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input2 = in_tensors_.at(2);
   MS_ASSERT(input2);
   auto input3 = in_tensors_.at(3);
@@ -49,7 +51,7 @@ int SparseToDenseCPUKernel::ReSize() {
   auto output0 = out_tensors_.at(0);
   std::vector<int> out_shape_tensor = output0->shape();
   auto output_shape_tmp = reinterpret_cast<int *>(out_shape_tensor.data());
-  int output_dim = output0->shape().size();
+  int output_dim = static_cast<int>(output0->shape().size());
   for (int i = 0; i < DIMENSION_4D - output_dim; i++) {
     output_shape[i] = 1;
   }
@@ -98,12 +100,13 @@ int SparseToDenseCPUKernel::GenerateIndices() {
     MS_LOG(ERROR) << "Input dim is invalid, dim: " << index_num;
     return RET_ERROR;
   }
-  sparse_indices_vect = reinterpret_cast<int **>(ctx_->allocator->Malloc(sizeof(int *) * index_num));
+  sparse_indices_vect =
+    reinterpret_cast<int **>(ctx_->allocator->Malloc(sizeof(int *) * static_cast<size_t>(index_num)));
   if (sparse_indices_vect == nullptr) {
     MS_LOG(ERROR) << "Null pointer reference: sparse_indices_vect.";
     return RET_ERROR;
   }
-  index_dim = input0->shape().size();
+  index_dim = static_cast<int>(input0->shape().size());
   int *sparse_indices = reinterpret_cast<int *>(input0->MutableData());
   switch (index_dim) {
     case 0:

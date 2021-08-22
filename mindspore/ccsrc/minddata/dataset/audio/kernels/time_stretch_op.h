@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class TimeStretchOp : public TensorOp {
  public:
   /// Default value
@@ -44,6 +43,9 @@ class TimeStretchOp : public TensorOp {
 
   std::string Name() const override { return kTimeStretchOp; }
 
+  /// \param[in] inputs
+  /// \param[out] outputs
+  /// \return  Status code
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
  private:

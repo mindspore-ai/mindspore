@@ -72,16 +72,21 @@ int InnerContext::Init() {
   }
   if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
     int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
-    thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_);
-    if (thread_pool_ == nullptr) {
-      MS_LOG(ERROR) << "Create ThreadPool failed";
-      return RET_NULL_PTR;
-    }
+
     if (this->affinity_core_list_.empty()) {
-      thread_pool_->SetCpuAffinity(
-        static_cast<BindMode>(this->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_));
+      auto bind_mode = static_cast<BindMode>(this->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_);
+      thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
+      if (thread_pool_ == nullptr) {
+        MS_LOG(ERROR) << "Create ThreadPool failed";
+        return RET_NULL_PTR;
+      }
     } else {
-      thread_pool_->SetCpuAffinity(this->affinity_core_list_);
+      thread_pool_ =
+        ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, this->affinity_core_list_);
+      if (thread_pool_ == nullptr) {
+        MS_LOG(ERROR) << "Create ThreadPool failed";
+        return RET_NULL_PTR;
+      }
     }
   }
   if (this->allocator == nullptr) {
@@ -115,7 +120,6 @@ int InnerContext::Init() {
 
 InnerContext::~InnerContext() {
   if (this->thread_pool_ != nullptr) {
-    thread_pool_->SetCpuAffinity(static_cast<BindMode>(NO_BIND));
     delete thread_pool_;
     this->thread_pool_ = nullptr;
   }
@@ -126,7 +130,7 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
   }
-  if (this->device_list_.size() > 2) {
+  if (this->device_list_.size() > kMaxDeviceNums) {
     MS_LOG(ERROR) << "Not support device list more than 2.";
     return RET_NOT_SUPPORT;
   }

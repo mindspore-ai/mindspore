@@ -117,10 +117,8 @@ int ScaleCPUKernel::CalculateParameter() {
 }
 
 int ScaleCPUKernel::Init() {
-  if (in_tensors_.size() < 2 || in_tensors_.size() > 3) {
-    MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << in_tensors_.size() << " is given.";
-    return RET_ERROR;
-  }
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = InitScaleOffset();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp32 InitScaleOffset failed.";

@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::lite::micro::nnacl {
 int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
-  SoftmaxBaseCoder::Init();
+  MS_CHECK_RET_CODE(SoftmaxBaseCoder::Init(), "Softmax base init failed.");
   std::vector<LiteQuantParam> in_quant_args = input_tensor_->quant_params();
   quant_params_.in_quant_args_.scale_ = in_quant_args.at(0).scale;
   quant_params_.in_quant_args_.zp_ = -in_quant_args.at(0).zeroPoint;
@@ -59,8 +59,7 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
   sum_data_size_ = inner_size * sizeof(int);
   sum_data_ = static_cast<int *>(allocator_->Malloc(kNumberTypeInt32, sum_data_size_, kWorkspace));
   MS_CHECK_PTR(sum_data_);
-  ReSize();
-  return RET_OK;
+  return ReSize();
 }
 
 int SoftMaxInt8Coder::DoCode(CoderContext *const context) {

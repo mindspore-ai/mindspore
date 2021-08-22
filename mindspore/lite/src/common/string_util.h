@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_LITE_SRC_COMMON_STRING_UTIL_H_
 #define MINDSPORE_LITE_SRC_COMMON_STRING_UTIL_H_
-
 #include <vector>
 #include <string>
 #include <utility>
@@ -26,6 +25,7 @@
 #include "include/errorcode.h"
 #include "include/lite_utils.h"
 
+#ifdef ENABLE_STRING_KERNEL
 namespace mindspore {
 namespace lite {
 typedef struct StringPack {
@@ -47,9 +47,8 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
 
 int GetStringCount(const void *data);
 int GetStringCount(Tensor *tensor);
-
 uint64_t StringHash64(const char *s, size_t len);
 }  // namespace lite
 }  // namespace mindspore
-
+#endif
 #endif  // MINDSPORE_LITE_SRC_COMMON_STRING_UTIL_H_

@@ -72,7 +72,6 @@
 #include "tools/optimizer/format/delete_redundant_transpose.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
-#include "tools/optimizer/format/conv_weight_format.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -389,8 +388,6 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
 void AnfTransform::AppendPassToStoreRoom(const converter::Flags *config) {
   auto fmk = config->fmk;
   auto is_train = config->trainModel;
-  opt::PassRegistry("ConvWeightToKHWC", std::make_shared<opt::ConvWeightToKHWC>());
-  opt::PassRegistry("ConvWeightToKCHW", std::make_shared<opt::ConvWeightToKCHW>());
   opt::PassRegistry("DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train));
   opt::PassRegistry("DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>());
   opt::PassRegistry("InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train));

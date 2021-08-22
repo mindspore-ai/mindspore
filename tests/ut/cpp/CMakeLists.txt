@@ -68,6 +68,7 @@ if(ENABLE_MINDDATA)
             ./ps/*.cc
             ./fl/*.cc
             ./cxx_api/*.cc
+            ./tbe/*.cc
             )
 
     if(NOT ENABLE_PYTHON)

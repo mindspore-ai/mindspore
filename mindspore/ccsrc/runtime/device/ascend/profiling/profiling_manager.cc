@@ -24,7 +24,6 @@
 #include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
-#include "toolchain/prof_acl_api.h"
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
 #include <nlohmann/json.hpp>
 

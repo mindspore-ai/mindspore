@@ -138,7 +138,7 @@ class AnalyzeFailExporter : public AnfExporter {
                    std::map<AnfNodePtr, int> *const apply_map) override;
   std::string GetNodeType(const AnfNodePtr &nd) override;
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
-  AnfNodeConfigPtr GetFordwardConfig(const AnfNodeConfigPtr &cfg);
+  AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
   std::unordered_map<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
@@ -157,7 +157,7 @@ std::unordered_map<FuncGraphPtr, TaggedNodeMap> AnalyzeFailExporter::CreateTagge
     MS_EXCEPTION_IF_NULL(node_config);
 
     // Record new config in set.
-    auto new_config = GetFordwardConfig(node_config);
+    auto new_config = GetForwardConfig(node_config);
     if (new_config != node_config) {
       MS_LOG(DEBUG) << "The node_config is forwarded, old config: " << node_config->ToString()
                     << ", new_config: " << new_config->ToString();
@@ -218,7 +218,7 @@ AbstractBasePtr AnalyzeFailExporter::GetNodeAbstract(const AnfNodePtr &node) {
   return nullptr;
 }
 
-AnfNodeConfigPtr AnalyzeFailExporter::GetFordwardConfig(const AnfNodeConfigPtr &cfg) {
+AnfNodeConfigPtr AnalyzeFailExporter::GetForwardConfig(const AnfNodeConfigPtr &cfg) {
   MS_EXCEPTION_IF_NULL(cfg);
   MS_EXCEPTION_IF_NULL(engine_);
   AnfNodeConfigPtr cur_cfg = cfg;
@@ -242,7 +242,7 @@ void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string
   try {
     FuncGraphPtr dummy_call_func_graph = nullptr;
     auto cfg = engine_->MakeConfig(node, current_context_, dummy_call_func_graph);
-    cfg = GetFordwardConfig(cfg);
+    cfg = GetForwardConfig(cfg);
     cnode = dyn_cast<CNode>(cfg->node());
   } catch (const std::exception &e) {
     MS_LOG(INFO) << "Exception: " << e.what();
@@ -346,9 +346,16 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     MS_LOG(DEBUG) << "Node configs is empty";
     return false;
   }
-  std::ofstream ofs(filename);
+  auto real_filepath = Common::GetRealPath(filename);
+  if (!real_filepath.has_value()) {
+    MS_LOG(ERROR) << "The export ir path: " << filename << " is not illegal.";
+    return false;
+  }
+  ChangeFileMode(real_filepath.value(), S_IWUSR);
+  std::ofstream ofs(real_filepath.value());
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
+    MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!"
+                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
     return false;
   }
 
@@ -389,6 +396,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
         << " internal frames).\n";
   }
   ofs.close();
+  ChangeFileMode(real_filepath.value(), S_IRUSR);
   return true;
 }
 

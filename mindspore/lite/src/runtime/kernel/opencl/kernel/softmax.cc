@@ -75,7 +75,7 @@ int SoftmaxOpenCLKernel::Prepare() {
     kernel_name += "Axis" + std::to_string(axis_);
   }
   kernel_name += "_NHWC4";
-  std::string program_name = "Softmax";
+  const std::string program_name = "Softmax";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -93,7 +93,10 @@ int SoftmaxOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return lite::RET_OK;
@@ -131,24 +134,40 @@ int SoftmaxOpenCLKernel::Tune() {
   return OpenCLKernel::Tune();
 }
 
-void SoftmaxOpenCLKernel::SetConstArgs() {
+int SoftmaxOpenCLKernel::SetConstArgs() {
   int arg_idx = 2;
   int channel = out_shape_.C;
   int c4 = out_shape_.Slice;
   auto mask_ = GetMaskForLastChannel(channel);
   cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, mask);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, mask) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
   cl_int4 input_shape = {static_cast<int>(out_shape_.N), static_cast<int>(out_shape_.H), static_cast<int>(out_shape_.W),
                          c4};
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, input_shape) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int SoftmaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return lite::RET_OK;
 }
 

@@ -26,6 +26,7 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 int ConcatCPUKernel::Init() {
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }

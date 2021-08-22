@@ -32,29 +32,22 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   ConvolutionWinogradFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx, int out_unit,
                                    void *origin_weight, void *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
-        output_unit_(out_unit),
-        origin_weight_(origin_weight),
-        origin_bias_(origin_bias) {}
-  ~ConvolutionWinogradFP16CPUKernel() override {
-    if (trans_weight_ != nullptr) {
-      free(trans_weight_);
-      trans_weight_ = nullptr;
-    }
-  }
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias), output_unit_(out_unit) {}
+  ~ConvolutionWinogradFP16CPUKernel() override {}
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int Eval() override;
   int RunImpl(int task_id);
-  int InitWeightBias();
   int InitTmpBuffer();
   int ConfigInputOutput();
   int WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
   int AdjustNumberOfThread();
 
  private:
+  int MallocWeightBiasData() override;
+  void PackWeight() override;
   void FreeTmpBuffer() {
     if (trans_input_ != nullptr) {
       ctx_->allocator->Free(trans_input_);
@@ -76,13 +69,12 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseCPUKernel {
   int kernel_unit_ = 0;
   int input_unit_ = 0;
   int output_unit_;
-  void *origin_weight_;  // do not free
-  void *origin_bias_;    // do not free
   float16_t *tmp_data_ = nullptr;
   float16_t *trans_input_ = nullptr;
   float16_t *gemm_out_ = nullptr;
-  float16_t *trans_weight_ = nullptr;
   float16_t *col_buffer_ = nullptr;
+  float matrix_g_[64];
+  float matrix_gt_[64];
   TmpBufferAddressFp16 tmp_buffer_address_list_[4];
   InputTransFp16Func in_func_ = nullptr;
   OutputTransFp16Func out_func_ = nullptr;

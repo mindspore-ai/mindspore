@@ -65,6 +65,14 @@ def test_gathernd_dim2():
     compile_net(net)
 
 
+def test_gathernd_dim2_default_batch_parallel():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    strategy1 = None
+    strategy2 = ((2, 8, 1),)
+    net = Net(2, _w1, strategy1, strategy2)
+    compile_net(net)
+
+
 def test_gathernd_auto_parallel():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
     net = Net(1, _w1)

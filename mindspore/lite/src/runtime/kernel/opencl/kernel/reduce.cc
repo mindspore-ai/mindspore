@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 #include <map>
+#include <algorithm>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/reduce.h"
@@ -179,7 +180,7 @@ int ReduceOpenCLKernel::Prepare() {
   }
   kernel_name += GetReduceTypeStr(reduce_param->mode_);
   std::string source = reduce_source;
-  std::string program_name = "Reduce";
+  const std::string program_name = "Reduce";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
     return RET_ERROR;
@@ -190,22 +191,32 @@ int ReduceOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
-void ReduceOpenCLKernel::SetConstArgs() {
+int ReduceOpenCLKernel::SetConstArgs() {
   int h = inShape.H;
   int w = inShape.W;
   int c = inShape.C;
   int c4 = UP_DIV(c, C4NUM);
   cl_int4 size = {h, w, c4, c};
   int arg_idx = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
-  if (wc_reduce_ || c_reduce_) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, GenC4Mask());
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
   }
+  if (wc_reduce_ || c_reduce_) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, GenC4Mask()) != CL_SUCCESS) {
+      MS_LOG(ERROR) << "SetKernelArg failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 void ReduceOpenCLKernel::SetGlobalLocal() {
   int h = inShape.H;
@@ -235,9 +246,18 @@ int ReduceOpenCLKernel::Tune() {
 int ReduceOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

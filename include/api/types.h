@@ -25,10 +25,16 @@
 #include "include/api/dual_abi_helper.h"
 #include "include/api/format.h"
 
+#ifndef MS_API
 #ifdef _WIN32
+#ifdef BUILDING_DLL
 #define MS_API __declspec(dllexport)
 #else
+#define MS_API __declspec(dllimport)
+#endif
+#else
 #define MS_API __attribute__((visibility("default")))
+#endif
 #endif
 
 namespace mindspore {
@@ -64,18 +70,64 @@ struct QuantParam {
 };
 
 class Allocator;
+/// \brief The MSTensor class defines a tensor in MindSpore.
 class MS_API MSTensor {
  public:
   class Impl;
-
+  /// \brief Creates a MSTensor object, whose data need to be copied before accessed by Model, must be used in pairs
+  /// with DestroyTensorPtr.
+  ///
+  /// \param[in] name The name of the MSTensor.
+  /// \param[in] type The data type of the MSTensor.
+  /// \param[in] shape The shape of the MSTensor.
+  /// \param[in] data The data pointer that points to allocated memory.
+  /// \param[in] data_len The length of the memory, in bytes.
+  ///
+  /// \return A pointer of MSTensor.
   static inline MSTensor *CreateTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
                                        const void *data, size_t data_len) noexcept;
+  /// \brief Creates a MSTensor object, whose data can be directly accessed by Model, must be used in pairs with
+  /// DestroyTensorPtr.
+  ///
+  /// \param[in] name The name of the MSTensor.
+  /// \param[in] type The data type of the MSTensor.
+  /// \param[in] shape The shape of the MSTensor.
+  /// \param[in] data The data pointer that points to allocated memory.
+  /// \param[in] data_len The length of the memory, in bytes.
+  ///
+  /// \return A pointer of MSTensor.
   static inline MSTensor *CreateRefTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
                                           const void *data, size_t data_len) noexcept;
+  /// \brief Creates a MSTensor object, whose device data can be directly accessed by Model, must be used in pairs with
+  /// DestroyTensorPtr.
+  ///
+  /// \param[in] name The name of the MSTensor.
+  /// \param[in] type The data type of the MSTensor.
+  /// \param[in] shape The shape of the MSTensor.
+  /// \param[in] data The data pointer that points to device memory.
+  /// \param[in] data_len The length of the memory, in bytes.
+  ///
+  /// \return A pointer of MSTensor.
   static inline MSTensor *CreateDevTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
                                           const void *data, size_t data_len) noexcept;
+  /// \brief Create a string type MSTensor object whose data can be accessed by Model only after being copied, must be
+  /// used in pair with DestroyTensorPtr.
+  ///
+  /// \param[in] name The name of the MSTensor.
+  /// \param[in] str A vector container containing several strings.
+  ///
+  /// \return A pointer of MSTensor.
   static inline MSTensor *StringsToTensor(const std::string &name, const std::vector<std::string> &str);
+  /// \brief Parse the string type MSTensor object into strings.
+  ///
+  /// \param[in] tensor A MSTensor object.
+  ///
+  /// \return A vector container containing several strings.
   static inline std::vector<std::string> TensorToStrings(const MSTensor &tensor);
+  /// \brief Destroy an object created by Clone, StringsToTensor, CreateRefTensor, CreateDevTensor or CreateTensor. Do
+  /// not use it to destroy MSTensor from other sources.
+  ///
+  /// \param[in] tensor A MSTensor object.
   static void DestroyTensorPtr(MSTensor *tensor) noexcept;
 
   MSTensor();
@@ -85,19 +137,51 @@ class MS_API MSTensor {
   explicit MSTensor(std::nullptr_t);
   ~MSTensor();
 
+  /// \brief Obtains the name of the MSTensor.
+  ///
+  /// \return The name of the MSTensor.
   inline std::string Name() const;
+  /// \brief Obtains the data type of the MSTensor.
+  ///
+  /// \return The data type of the MSTensor.
   enum DataType DataType() const;
+  /// \brief Obtains the shape of the MSTensor.
+  ///
+  /// \return The shape of the MSTensor.
   const std::vector<int64_t> &Shape() const;
+  /// \brief Obtains the number of elements of the MSTensor.
+  ///
+  /// \return The number of elements of the MSTensor.
   int64_t ElementNum() const;
 
+  /// \brief Obtains a shared pointer to the copy of data of the MSTensor. The data can be read on host.
+  ///
+  /// \return A shared pointer to the copy of data of the MSTensor.
   std::shared_ptr<const void> Data() const;
+  /// \brief Obtains the pointer to the data of the MSTensor. If the MSTensor is a device tensor, the data cannot be
+  /// accessed directly on host.
+  ///
+  /// \return A pointer to the data of the MSTensor.
   void *MutableData();
+  /// \brief Obtains the length of the data of the MSTensor, in bytes.
+  ///
+  /// \return The length of the data of the MSTensor, in bytes.
   size_t DataSize() const;
-
+  /// \brief Gets the boolean value that indicates whether the memory of MSTensor is on device.
+  ///
+  /// \return The boolean value that indicates whether the memory of MSTensor is on device.
   bool IsDevice() const;
-
+  /// \brief Gets a deep copy of the MSTensor, must be used in pair with DestroyTensorPtr.
+  ///
+  /// \return A pointer points to a deep copy of the MSTensor.
   MSTensor *Clone() const;
+  /// \brief Gets the boolean value that indicates whether the MSTensor is valid.
+  ///
+  /// \return The boolean value that indicates whether the MSTensor is valid.
   bool operator==(std::nullptr_t) const;
+  /// \brief Gets the boolean value that indicates whether the MSTensor is valid.
+  ///
+  /// \return The boolean value that indicates whether the MSTensor is valid.
   bool operator!=(std::nullptr_t) const;
   bool operator==(const MSTensor &tensor) const;
 

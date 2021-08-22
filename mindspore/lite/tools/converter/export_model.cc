@@ -193,7 +193,7 @@ STATUS ExportModel(const FuncGraphPtr &graph) {
     return RET_ERROR;
   }
   (void)Manage(mirror_graph, true);
-  if (!opt::RunOptimizerPass(mirror_graph, {"InferShapePass", "DecreaseTransposeAlgo"})) {
+  if (!opt::RunOptimizerPass(mirror_graph, {"InferShapePass", "DeleteRedundantTranspose", "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return RET_ERROR;
   }

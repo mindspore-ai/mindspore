@@ -17,8 +17,8 @@
 #include "nnacl/infer/transpose_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-bool CheckPermTransFormat(const int *perm, const int *perm_transformat, const size_t size) {
-  for (size_t i = 0; i < size; ++i) {
+bool CheckPermTransFormat(const int *perm, const int *perm_transformat, const int size) {
+  for (int i = 0; i < size; ++i) {
     if (perm[i] != perm_transformat[i]) {
       return false;
     }
@@ -64,7 +64,7 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   SetDataTypeFormat(output, input);
   const TensorC *perm_tensor = inputs[1];
   const int32_t *perm_data = (int32_t *)perm_tensor->data_;
-  const size_t perms_num = (size_t)perm_tensor->shape_[0];
+  const int perms_num = perm_tensor->shape_[0];
   if (perm_tensor->shape_size_ == 0) {
     return NNACL_INFER_INVALID;
   }
@@ -73,7 +73,7 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   }
   int perm[MAX_TRANSPOSE_DIM_SIZE] = {0};
   size_t perm_size = 0;
-  for (size_t i = 0; i < perms_num; i++) {
+  for (int i = 0; i < perms_num; i++) {
     if (perm_data[i] >= perms_num) {
       return NNACL_ERR;
     }

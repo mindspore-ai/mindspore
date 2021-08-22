@@ -391,7 +391,7 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       MS_EXCEPTION_IF_NULL(communication_op_node_item);
       tuple_getitem->set_abstract(communication_op_node_item->abstract());
       if (kernel_graph->IsInternalOutput(communication_op_node_item, 0)) {
-        kernel_graph->ReplaceInternalOutput(communication_op_node_item, new_communication_op, 0, offset);
+        kernel_graph->ReplaceInternalOutput(communication_op_node_item, new_communication_op, 0, LongToSize(offset));
       }
       if (!manager->Replace(communication_op_node_item, tuple_getitem)) {
         MS_LOG(EXCEPTION) << "manager replace node failed";

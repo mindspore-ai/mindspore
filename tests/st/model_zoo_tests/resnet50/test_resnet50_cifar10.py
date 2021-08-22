@@ -33,7 +33,7 @@ def test_resnet50_cifar10_ascend():
     new_list = ["total_epochs=10", "10"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
-    config_path = os.path.join(cur_model_path, "resnet50_cifar10_config.yaml")
+    config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
     exec_network_shell = "cd resnet/scripts; bash run_distribute_train.sh {} {} {}"\
         .format(utils.rank_table_path, dataset_path, config_path)
     os.system(exec_network_shell)
@@ -64,7 +64,7 @@ def test_resnet50_cifar10_gpu():
     new_list = ["total_epochs=10", "10"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
-    config_path = os.path.join(cur_model_path, "resnet50_cifar10_config.yaml")
+    config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
     os.system("nvidia-smi")
     exec_network_shell = "cd resnet/scripts; sh run_distribute_train_gpu.sh {} {}" \
         .format(dataset_path, config_path)

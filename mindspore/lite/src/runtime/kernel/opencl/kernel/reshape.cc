@@ -53,15 +53,22 @@ int ReshapeOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void ReshapeOpenCLKernel::SetConstArgs() {
+int ReshapeOpenCLKernel::SetConstArgs() {
   auto in = GpuTensorInfo(in_tensors_.front());
   auto out = GpuTensorInfo(out_tensors_.front());
   cl_int4 src_size = {cl_int(in.C), cl_int(in.W), cl_int(in.H), cl_int(in.N)};
   cl_int4 dst_size = {cl_int(out.width), cl_int(out.height), cl_int(out.C), cl_int(out.C * out.W)};
 
   int arg_idx = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, src_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, dst_size);
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, src_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, dst_size) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void ReshapeOpenCLKernel::SetGlobalLocal() {
@@ -72,9 +79,9 @@ void ReshapeOpenCLKernel::SetGlobalLocal() {
 }
 
 int ReshapeOpenCLKernel::Prepare() {
-  std::string kernel_name = "reshape_NHWC4";
+  const std::string kernel_name = "reshape_NHWC4";
   std::string source = reshape_source;
-  std::string program_name = "reshape";
+  const std::string program_name = "reshape";
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   if (!ocl_runtime_->LoadSource(program_name, source)) {
     MS_LOG(ERROR) << "Load source failed.";
@@ -87,16 +94,28 @@ int ReshapeOpenCLKernel::Prepare() {
   }
 
   SetGlobalLocal();
-  SetConstArgs();
+  if (SetConstArgs() != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return RET_ERROR;
+  }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
 int ReshapeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+  if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
+    MS_LOG(ERROR) << "RunKernel failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -104,7 +123,10 @@ int ReshapeOpenCLKernel::PreProcess() {
   if (type() == PrimitiveType_Reshape && !InferShapeDone()) {
     auto shape_tensor = in_tensors_[1];
     if (!shape_tensor->IsConst()) {
-      ocl_runtime_->SyncCommandQueue();
+      if (!ocl_runtime_->SyncCommandQueue()) {
+        MS_LOG(ERROR) << "SyncCommandQueue failed.";
+        return RET_ERROR;
+      }
       shape_tensor->MutableData();
     }
   }

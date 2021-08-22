@@ -55,6 +55,10 @@ std::set<OperatorCoder *> FindInferenceOpcoders(OperatorCoder *edge) {
 }
 
 int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::unique_ptr<OperatorCoder>> &op_coders) {
+  if (context == nullptr) {
+    MS_LOG(INFO) << "input context invalid";
+    return RET_ERROR;
+  }
   const std::array<int, 6> loss_types = {schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits,
                                          schema::PrimitiveType_BinaryCrossEntropy,
                                          schema::PrimitiveType_SmoothL1Loss,

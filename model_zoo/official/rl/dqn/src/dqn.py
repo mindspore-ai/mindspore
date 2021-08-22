@@ -17,8 +17,10 @@
 import mindspore.nn as nn
 import mindspore.ops as ops
 
-
-class DQN(nn. Cell):
+class DQN(nn.Cell):
+    """
+    DQN net
+    """
     def __init__(self, input_size, hidden_size, output_size):
         super(DQN, self).__init__()
         self.linear1 = nn.Dense(input_size, hidden_size)
@@ -26,6 +28,9 @@ class DQN(nn. Cell):
         self.relu = nn.ReLU()
 
     def construct(self, x):
+        """
+        model construct
+        """
         x = self.relu(self.linear1(x))
         return self.linear2(x)
 
@@ -40,8 +45,12 @@ class WithLossCell(nn.Cell):
         self._loss_fn = loss_fn
         self.gather = ops.GatherD()
 
-    def construct(self, x, act, label):
+    def construct(self, x, label, index):
+        """
+        compute loss
+        """
         out = self._backbone(x)
-        out = self.gather(out, 1, act)
+        out = self.gather(out, 1, index)
         loss = self._loss_fn(out, label)
         return loss
+        

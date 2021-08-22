@@ -44,14 +44,13 @@ constexpr char kNotEncryptType[] = "NOT_ENCRYPT";
 // 0: Server is in parameter server mode.
 // 1: Server is in federated learning mode.
 // 2: Server is in mixed training mode.
-// 3: Server enables sucure aggregation.
-// For example: 1010 stands for that the server is in federated learning mode and sucure aggregation  is enabled.
+// 3: Server enables pairwise encrypt algorithm.
+// For example: 1010 stands for that the server is in federated learning mode and pairwise encrypt algorithm is enabled.
 enum class ResetterRound { kNoNeedToReset, kUpdateModel, kReconstructSeccrets, kPushWeight };
 const std::map<uint32_t, ResetterRound> kServerContextToResetRoundMap = {{0b0010, ResetterRound::kUpdateModel},
                                                                          {0b1010, ResetterRound::kReconstructSeccrets},
                                                                          {0b1100, ResetterRound::kPushWeight},
-                                                                         {0b0100, ResetterRound::kPushWeight},
-                                                                         {0b0100, ResetterRound::kUpdateModel}};
+                                                                         {0b0100, ResetterRound::kPushWeight}};
 
 class PSContext {
  public:

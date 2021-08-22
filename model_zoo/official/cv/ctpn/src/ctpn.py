@@ -92,8 +92,8 @@ class CTPN(nn.Cell):
         self.num_step = config.num_step
         self.input_size = config.input_size
         self.hidden_size = config.hidden_size
-        self.vgg16_feature_extractor = VGG16FeatureExtraction()
-        self.conv = nn.Conv2d(512, 512, kernel_size=3, padding=0, pad_mode='same')
+        self.vgg16_feature_extractor = VGG16FeatureExtraction().to_float(mstype.float16)
+        self.conv = nn.Conv2d(512, 512, kernel_size=3, padding=0, pad_mode='same').to_float(mstype.float16)
         self.rnn = BiLSTM(self.config, batch_size=self.batch_size).to_float(mstype.float16)
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()

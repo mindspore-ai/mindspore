@@ -35,9 +35,11 @@ void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
     return;
   }
   auto last_cnt_handler = [&](std::shared_ptr<ps::core::MessageHandler>) {
-    MS_LOG(INFO) << "start FinishIteration";
-    FinishIteration();
-    MS_LOG(INFO) << "end FinishIteration";
+    if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kReconstructSeccrets) {
+      MS_LOG(INFO) << "start FinishIteration";
+      FinishIteration();
+      MS_LOG(INFO) << "end FinishIteration";
+    }
     return;
   };
   auto first_cnt_handler = [&](std::shared_ptr<ps::core::MessageHandler>) { return; };
@@ -146,6 +148,7 @@ void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<ps::core::
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     MS_LOG(INFO) << "end unmask";
+    Executor::GetInstance().set_unmasked(true);
     std::string worker_id = std::to_string(DistributedCountService::GetInstance().local_rank());
     DistributedCountService::GetInstance().Count(name_unmask_, worker_id);
   }
@@ -157,6 +160,7 @@ bool ReconstructSecretsKernel::Reset() {
   DistributedCountService::GetInstance().ResetCounter(name_);
   DistributedCountService::GetInstance().ResetCounter(name_unmask_);
   StopTimer();
+  Executor::GetInstance().set_unmasked(false);
   cipher_reconstruct_.ClearReconstructSecrets();
   return true;
 }

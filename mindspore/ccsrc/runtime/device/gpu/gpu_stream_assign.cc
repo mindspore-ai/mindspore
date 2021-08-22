@@ -61,6 +61,8 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
 
 bool FindAllReduceStreamSwitchPos(const std::shared_ptr<session::KernelGraph> &kernel_graph,
                                   std::vector<SendRecvPair> *send_recv_pairs) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(send_recv_pairs);
   auto execution_kernels = kernel_graph->execution_order();
   std::vector<CNodePtr>::iterator iter, iter_begin;
   iter = iter_begin = execution_kernels.begin();
@@ -126,6 +128,7 @@ std::vector<CNodePtr>::iterator FindRecvNodePos(std::vector<CNodePtr>::iterator 
   for (auto iter = begin; iter != end; iter++) {
     auto node = *iter;
     if (stream_switch_type == kAllReduceStreamSwitch) {
+      MS_EXCEPTION_IF_NULL(node);
       for (auto input : node->inputs()) {
         if (mock_send_node == AnfAlgo::VisitKernel(input, 0).first) {
           if (AnfAlgo::GetCNodeName(node) != kAllReduceOpName) {
@@ -142,6 +145,7 @@ std::vector<CNodePtr>::iterator FindRecvNodePos(std::vector<CNodePtr>::iterator 
 
 void InsertStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &kernel_graph,
                             const std::vector<SendRecvPair> &send_recv_pairs) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   std::set<StreamSwitchNode> ordered_stream_switch_nodes;
   for (SendRecvPair pair : send_recv_pairs) {
     StreamSwitchType stream_switch_type = pair.stream_switch_type;
@@ -194,6 +198,7 @@ bool GenSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &
 }
 
 CNodePtr CreateStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &name) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto op = std::make_shared<Primitive>(name);
   MS_EXCEPTION_IF_NULL(op);
   auto apply = std::make_shared<ValueNode>(op);

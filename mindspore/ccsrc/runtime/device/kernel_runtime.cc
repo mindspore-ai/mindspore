@@ -482,9 +482,12 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
     for (size_t j = i + 1; j < kernels.size(); ++j) {
       auto &child = kernels[j];
       MS_EXCEPTION_IF_NULL(child);
+      if (AnfAlgo::IsCommunicationOp(child)) {
+        continue;
+      }
       auto input_size = child->inputs().size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
+        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0, true);
         if (kernel_index.first == kernel) {
           found_nearest_child = true;
           break;
@@ -617,7 +620,6 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
   if (addr_size.empty()) {
     return;
   }
-
   if (type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
@@ -695,7 +697,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   std::vector<tensor::TensorPtr> tensors;
   TensorValueToTensor(node_value, &tensors);
   // Graph id should be passed to record static memory if profiling is enabled.
-  auto kernel_info = static_cast<device::KernelInfo *>(value_node->kernel_info());
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(value_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   uint32_t graph_id = kernel_info->graph_id();
   for (const auto &tensor : tensors) {
@@ -709,7 +711,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
                              value_node.get());
       continue;
     }
-    size_t tensor_size = tensor->data().nbytes();
+    size_t tensor_size = LongToSize(tensor->data().nbytes());
     auto node_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
     if (output_type_id == kTypeUnknown) {

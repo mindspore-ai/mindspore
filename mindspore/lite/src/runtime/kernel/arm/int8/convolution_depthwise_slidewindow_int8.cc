@@ -42,7 +42,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitWeightBias() {
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
-  packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
+  packed_weight_ = reinterpret_cast<int16_t *>(malloc(static_cast<size_t>(pack_weight_size) * sizeof(int16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -50,16 +50,16 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitWeightBias() {
   PackDepthwiseInt8Weight(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(),
                           weight_tensor->Batch(), &(conv_param_->conv_quant_arg_));
 
-  bias_data_ = reinterpret_cast<int32_t *>(malloc(C8NUM * OC8 * sizeof(int32_t)));
+  bias_data_ = reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(C8NUM * OC8) * sizeof(int32_t)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, C8NUM * OC8 * sizeof(int32_t));
+  memset(bias_data_, 0, static_cast<size_t>(C8NUM * OC8) * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->MutableData());
-    memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
+    memcpy(bias_data_, ori_bias, static_cast<size_t>(bias_tensor->ElementsNum()) * sizeof(int32_t));
   }
 
   conv_param_->thread_num_ = MSMIN(thread_count_, OC8);
@@ -72,7 +72,8 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitPackedInputOutput() {
 
     int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM *
                           UP_DIV(conv_param_->input_channel_, C8NUM);
-    packed_input_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(pack_input_size * sizeof(int8_t)));
+    packed_input_ =
+      reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(static_cast<size_t>(pack_input_size) * sizeof(int8_t)));
     if (packed_input_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -80,7 +81,8 @@ int ConvolutionDepthwiseSWInt8CPUKernel::InitPackedInputOutput() {
 
     int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * C8NUM *
                            UP_DIV(conv_param_->output_channel_, C8NUM);
-    packed_output_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(pack_output_size * sizeof(int8_t)));
+    packed_output_ = reinterpret_cast<int8_t *>(
+      ms_context_->allocator->Malloc(static_cast<size_t>(pack_output_size) * sizeof(int8_t)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
@@ -150,10 +152,10 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto channel = conv_param_->input_channel_;
-  input_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
+  input_scale_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(channel) * sizeof(float)));
   MSLITE_CHECK_PTR(input_scale_);
 
-  input_zp_ = reinterpret_cast<int8_t *>(malloc(channel * sizeof(int8_t)));
+  input_zp_ = reinterpret_cast<int8_t *>(malloc(static_cast<size_t>(channel) * sizeof(int8_t)));
   MSLITE_CHECK_PTR(input_zp_);
 
   if (input_tensor->quant_params().size() == kPerTensor) {
@@ -171,10 +173,10 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
+  output_scale_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(channel) * sizeof(float)));
   MSLITE_CHECK_PTR(output_scale_);
 
-  output_zp_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  output_zp_ = reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(channel) * sizeof(int32_t)));
   MSLITE_CHECK_PTR(output_zp_);
 
   if (output_tensor->quant_params().size() == kPerTensor) {
@@ -191,25 +193,26 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
     }
   }
 
-  conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(channel * sizeof(double)));
+  conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(static_cast<size_t>(channel) * sizeof(double)));
   MSLITE_CHECK_PTR(conv_quant_arg_->real_multiplier_);
 
-  conv_quant_arg_->left_shift_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  conv_quant_arg_->left_shift_ = reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(channel) * sizeof(int32_t)));
   MSLITE_CHECK_PTR(conv_quant_arg_->left_shift_);
 
-  conv_quant_arg_->right_shift_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  conv_quant_arg_->right_shift_ = reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(channel) * sizeof(int32_t)));
   MSLITE_CHECK_PTR(conv_quant_arg_->right_shift_);
 
-  conv_quant_arg_->quant_multiplier_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  conv_quant_arg_->quant_multiplier_ =
+    reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(channel) * sizeof(int32_t)));
   MSLITE_CHECK_PTR(conv_quant_arg_->quant_multiplier_);
 
-  conv_quant_arg_->out_act_min_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  conv_quant_arg_->out_act_min_ = reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(channel) * sizeof(int32_t)));
   MSLITE_CHECK_PTR(conv_quant_arg_->out_act_min_);
 
-  conv_quant_arg_->out_act_max_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
+  conv_quant_arg_->out_act_max_ = reinterpret_cast<int32_t *>(malloc(static_cast<size_t>(channel) * sizeof(int32_t)));
   MSLITE_CHECK_PTR(conv_quant_arg_->out_act_max_);
 
-  weight_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
+  weight_scale_ = reinterpret_cast<float *>(malloc(static_cast<size_t>(channel) * sizeof(float)));
   MSLITE_CHECK_PTR(weight_scale_);
 
   auto weight_tensor = in_tensors_.at(kWeightIndex);

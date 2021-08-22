@@ -92,8 +92,8 @@ def check_mnist_cifar_dataset(method):
     return new_method
 
 
-def check_libri_speech_dataset(method):
-    """A wrapper that wraps a parameter checker around the original LirbiSpeechDataset."""
+def check_cmu_arctic_dataset(method):
+    """A wrapper that wraps a parameter checker around the original CmuArcticDataset."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -107,7 +107,7 @@ def check_libri_speech_dataset(method):
 
         usage = param_dict.get('usage')
         if usage is not None:
-            check_valid_str(usage, ['dev-clean', 'dev-other', 'test-clean','test-other', 'train-clean-100', 'train-clean-360','train-other-500'], "usage")
+            check_valid_str(usage, ['aew', 'ahw', 'aup', 'awb', 'axb', 'bdl', 'clb', 'eey', 'fem', 'gka', 'jmk', 'ksp', 'ljm', 'lnh', 'rms', 'rxr', 'slp' , 'slt'], "usage")
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)

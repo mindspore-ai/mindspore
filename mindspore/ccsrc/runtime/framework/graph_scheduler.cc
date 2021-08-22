@@ -282,7 +282,7 @@ void PrepareDataForControlWeightNode(
 
 void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
                                        const AnfNodePtr &node, const TensorPtr &tensor,
-                                       std::vector<TensorPtr> *host_tensors) {
+                                       std::vector<TensorPtr> *const host_tensors) {
   MS_EXCEPTION_IF_NULL(tensor);
 
   // Fill the host tensors for non weighted parameters.
@@ -417,10 +417,6 @@ void GraphScheduler::Clear() {
   graph_output_to_actor_.clear();
   front_node_to_actor_.clear();
   copy_actors_.clear();
-
-  // Delete the thread pool.
-  delete thread_pool_;
-  thread_pool_ = nullptr;
 }
 
 void GraphScheduler::Initialize() {
@@ -434,16 +430,15 @@ void GraphScheduler::Initialize() {
   }
   init_ = true;
 
-  auto actorMgr = ActorMgr::GetActorMgrRef();
-  MS_EXCEPTION_IF_NULL(actorMgr);
-  actorMgr->Initialize();
-
   // Create the thread pool of actor runtime and Set the OMP_NUM_THREADS env.
   size_t actor_thread_num = 0;
   size_t OMP_thread_num = 0;
   ComputeThreadNums(&actor_thread_num, &OMP_thread_num);
-  thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num);
-  MS_EXCEPTION_IF_NULL(thread_pool_);
+
+  auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
+  actor_manager->Initialize(true, actor_thread_num);
+
   std::string OMP_env = std::to_string(OMP_thread_num);
   (void)common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
@@ -463,7 +458,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   memory_manager_aid_ = memory_manager_actor->GetAID();
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
-  base_actor->set_thread_pool(thread_pool_);
   // Bind single thread to response to memory alloc and free quickly.
   (void)actorMgr->Spawn(base_actor, false);
 
@@ -472,7 +466,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   MS_EXCEPTION_IF_NULL(recorder_actor);
   recorder_aid_ = &(recorder_actor->GetAID());
   auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
-  base_recorder_actor->set_thread_pool(thread_pool_);
   (void)actorMgr->Spawn(base_recorder_actor, true);
 
   // Create and schedule debug actor.
@@ -487,7 +480,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
     MS_EXCEPTION_IF_NULL(debug_actor);
     debug_aid_ = &(debug_actor->GetAID());
     auto base_debug_actor = static_cast<ActorReference>(debug_actor);
-    base_debug_actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(base_debug_actor, true);
   }
 }
@@ -561,7 +553,6 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   auto actorMgr = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actorMgr);
   for (auto actor : actors) {
-    actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(actor);
   }
 }
@@ -687,11 +678,11 @@ void GraphScheduler::PrepareRunOp(const ActorSet *actor_set, const GraphCompiler
   }
 }
 
-void GraphScheduler::PrepareDataForControlNode(HostQueueDataSourceActor *host_data_source_actor,
+void GraphScheduler::PrepareDataForControlNode(HostQueueDataSourceActor *const host_data_source_actor,
                                                const ControlNodeParserPtr &control_node_parser,
                                                const std::vector<AnfNodePtr> &origin_parameters,
                                                const std::vector<TensorPtr> &tensors,
-                                               std::vector<TensorPtr> *host_tensors) {
+                                               std::vector<TensorPtr> *const host_tensors) {
   const auto &control_node_parameters = control_node_parser->GetControlNodeParameter();
 
   for (size_t j = 0; j < control_node_parameters.size(); ++j) {
@@ -800,6 +791,10 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
 }
 
 void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_compiler_info) {
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) {
+    return;
+  }
+
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
@@ -808,6 +803,8 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       MS_EXCEPTION_IF_NULL(output_kernel);
       auto origin_output_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
       if (origin_output_with_index.first == nullptr) {
+        MS_LOG(WARNING) << "The graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
+                        << " with index: " << output_with_index.second << " has no actor.";
         continue;
       }
 
@@ -837,7 +834,9 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       MS_EXCEPTION_IF_NULL(actor);
       MS_LOG(INFO) << "Cache the graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
                    << " with index: " << output_with_index.second << " to actor:" << actor->GetAID().Name()
-                   << " with index:" << actor_output_index;
+                   << " with index:" << actor_output_index
+                   << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
+                   << " with index: " << origin_output_with_index.second;
       (void)graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(actor, actor_output_index));
     }
   }
@@ -968,7 +967,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       InsertActor(device_queue_ds_actor.get());
       (void)data_source_actors.emplace_back(device_queue_ds_actor);
       device_queue_ds_actor->data_kernel_ = *iter;
-      device_queue_ds_actor->kernel_info_ = static_cast<device::KernelInfo *>((*iter)->kernel_info());
+      device_queue_ds_actor->kernel_info_ = dynamic_cast<device::KernelInfo *>((*iter)->kernel_info());
     }
   }
 
@@ -1282,9 +1281,9 @@ std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompiler
   return gather_actors;
 }
 
-void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const GraphCompilerInfo &graph_compiler_info,
-                                   const KernelGraphPtr &graph, KernelWithIndex from_kernel_with_output_idx,
-                                   KernelWithIndex to_kernel_with_input_idx) {
+void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompilerInfo &graph_compiler_info,
+                                   const KernelGraphPtr &graph, const KernelWithIndex &from_kernel_with_output_idx,
+                                   const KernelWithIndex &to_kernel_with_input_idx) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -2063,7 +2062,7 @@ void GraphScheduler::PrepareInputNodeForSwitchActor(const std::vector<AnfNodePtr
   }
 }
 
-void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set) {
+void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *const actor_set) {
   PrepareInputNodeForSwitchActor(graph_compiler_info.control_nodes_);
 
   for (const auto &node : graph_compiler_info.control_nodes_) {
@@ -2161,7 +2160,7 @@ void GraphScheduler::LinkArrowByControlNode(const GraphCompilerInfo &graph_compi
   LinkOutputResultArrowForSwitchActor(graph_compiler_info, actor_set);
 }
 
-void GraphScheduler::LinkDataArrowForGatherActor(GatherActor *from_actor, KernelActor *to_actor,
+void GraphScheduler::LinkDataArrowForGatherActor(GatherActor *const from_actor, KernelActor *const to_actor,
                                                  const KernelWithIndex &front_node_with_index,
                                                  const KernelWithIndex &to_node_with_index) {
   MS_EXCEPTION_IF_NULL(from_actor);
@@ -2177,7 +2176,7 @@ void GraphScheduler::LinkDataArrowForGatherActor(GatherActor *from_actor, Kernel
 
 void GraphScheduler::LinkDataArrowByCallInput(const KernelWithIndex &call_node_with_index,
                                               const ControlNodeParserPtr &parser, const FuncGraphPtr &from_func_graph,
-                                              OpActor<DeviceTensor> *to_actor, const size_t to_index) {
+                                              OpActor<DeviceTensor> *const to_actor, const size_t to_index) {
   // Fetch all the funcgraph that call node would call.
   const auto cnode = call_node_with_index.first->cast<CNodePtr>();
   std::vector<FuncGraphPtr> func_graphs = FetchFuncGraphbyCallNode(cnode);
@@ -2233,8 +2232,8 @@ void GraphScheduler::LinkDataArrowForSwitchActor(SwitchActor *from_actor, const 
 
 void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_compiler_info,
                                                 const KernelWithIndex &input_with_index,
-                                                const FuncGraphPtr &from_func_graph, OpActor<DeviceTensor> *to_actor,
-                                                const size_t to_index) {
+                                                const FuncGraphPtr &from_func_graph,
+                                                OpActor<DeviceTensor> *const to_actor, const size_t to_index) {
   const auto &parameters = graph_compiler_info.origin_parameters_order_;
   const auto &front_to_backend_parameter = graph_compiler_info.control_node_parser_->front_to_backend_parameters_;
   const auto &input_node = input_with_index.first;
@@ -2314,7 +2313,8 @@ void GraphScheduler::LinkDataArrowByControlNode(const GraphCompilerInfo &graph_c
   }
 }
 
-void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, SwitchActor *actor) {
+void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info,
+                                                 SwitchActor *const actor) {
   // Link switch input.
   const auto &inputs = actor->input_nodes_;
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -2342,13 +2342,14 @@ void GraphScheduler::LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_
     auto to_actor = dynamic_cast<GatherActor *>(actor_name_to_actor_[gather_name]);
     for (size_t j = 0; j < actor->branch_inputs_pos_[i].size(); ++j) {
       auto pos = actor->branch_inputs_pos_[i][j];
-      auto op_arrow = std::make_shared<DataArrow>(pos, to_actor->GetAID(), j);
+      auto to_actor_index = j;
+      auto op_arrow = std::make_shared<DataArrow>(pos, to_actor->GetAID(), to_actor_index);
       (void)actor->output_branch_arrows_[i].emplace_back(op_arrow);
     }
   }
 }
 
-void GraphScheduler::LinkControlArrowForGatherActor(std::vector<KernelActorPtr> *kernel_actors,
+void GraphScheduler::LinkControlArrowForGatherActor(std::vector<KernelActorPtr> *const kernel_actors,
                                                     const std::vector<KernelGraphPtr> &graphs,
                                                     const ControlNodeParserPtr &parser) {
   // Link control arrow to kernel actor.
@@ -2426,8 +2427,8 @@ void GraphScheduler::LinkControlArrowForGatherActor(std::vector<KernelActorPtr> 
   }
 }
 
-void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> *switch_actors,
-                                                    LoopCountActor *to_actor,
+void GraphScheduler::LinkControlArrowForSwitchActor(std::vector<SwitchActorPtr> *const switch_actors,
+                                                    LoopCountActor *const to_actor,
                                                     const KernelMapPosition &origin_outputs_order) {
   if (to_actor == nullptr || (*switch_actors).empty()) {
     return;

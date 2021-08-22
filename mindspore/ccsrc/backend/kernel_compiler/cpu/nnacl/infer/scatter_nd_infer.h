@@ -17,7 +17,6 @@
 #define MINDSPORE_NNACL_SCATTER_ND_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/softmax_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -30,7 +30,9 @@ using mindspore::schema::PrimitiveType_MatMul;
 namespace mindspore::lite::micro::nnacl {
 int MatMulFP32BaseCoder::ReSize() {
   ResizeParameter();
+  MS_CHECK_TRUE(params_->col_align_ != 0, "params_->col_align_ = 0");
   thread_count_ = MSMIN(thread_num_, UP_DIV(params_->col_align_, col_tile_));
+  MS_CHECK_TRUE(thread_count_ != 0, "thread_count_ = 0");
   thread_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
   // can not call Malloc in DoCode,so move this runtime init to final resize
   if (!params_->a_const_) {

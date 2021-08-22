@@ -42,7 +42,7 @@ if(ENABLE_MPI)
     if(ENABLE_GPU)
         set_property(SOURCE "gpu/mpi/mpi_initializer.cc"
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-        pybind11_add_module(_ms_mpi "gpu/mpi/mpi_initializer.cc")
+        pybind11_add_module(_ms_mpi NO_EXTRAS "gpu/mpi/mpi_initializer.cc")
         target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
     endif()
 

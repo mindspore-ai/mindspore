@@ -19,14 +19,19 @@
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 namespace mindspore::lite {
+const size_t kWeightQueryIndex = 4;
+const size_t kWeightKeyIndex = 5;
+const size_t kWeightValueIndex = 6;
+const size_t kWeightOutputIndex = 10;
+
 bool AttentionQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema::MetaGraphT &graph,
                                                         mindspore::schema::CNodeT *node) {
   MS_ASSERT(node->inputIndex.size() >= 2);
   auto &input_tensor = graph.allTensors.at(node->inputIndex.at(kInputIndex));
-  auto &weight_query_tensor = graph.allTensors.at(node->inputIndex.at(4));
-  auto &weight_key_tensor = graph.allTensors.at(node->inputIndex.at(5));
-  auto &weight_value_tensor = graph.allTensors.at(node->inputIndex.at(6));
-  auto &weight_output_tensor = graph.allTensors.at(node->inputIndex.at(10));
+  auto &weight_query_tensor = graph.allTensors.at(node->inputIndex.at(kWeightQueryIndex));
+  auto &weight_key_tensor = graph.allTensors.at(node->inputIndex.at(kWeightKeyIndex));
+  auto &weight_value_tensor = graph.allTensors.at(node->inputIndex.at(kWeightValueIndex));
+  auto &weight_output_tensor = graph.allTensors.at(node->inputIndex.at(kWeightOutputIndex));
 
   if (!quant::TensorQuantParamsInited(*input_tensor) && quant::TensorQuantParamsInited(*weight_query_tensor) &&
       quant::TensorQuantParamsInited(*weight_key_tensor) && quant::TensorQuantParamsInited(*weight_value_tensor) &&

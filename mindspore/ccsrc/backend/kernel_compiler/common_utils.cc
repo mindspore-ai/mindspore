@@ -141,14 +141,8 @@ FusionType GetFusionTypeByName(const std::string &name) {
   return iter->first;
 }
 
-void KernelMeta::Initialize(int pid) {
-  if (pid == -1) {
-    kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(getpid()) + "/";
-  } else {
-    kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(pid) + "/";
-  }
-  // remove old kernel cache
-  RemoveKernelCache();
+void KernelMeta::Initialize() {
+  kernel_meta_path_ = std::string(kGpuKernelMeta) + "/";
 
 #if defined(_WIN32) || defined(_WIN64)
   auto ret = mkdir(kernel_meta_path_.c_str());
@@ -159,21 +153,6 @@ void KernelMeta::Initialize(int pid) {
     MS_LOG(INFO) << "kernel dir [" << kernel_meta_path_ << "], will be created later";
   }
   initialized_ = true;
-}
-
-void KernelMeta::RemoveKernelCache() {
-  DIR *dir = opendir(kernel_meta_path_.c_str());
-  if (dir == nullptr) {
-    return;
-  }
-  struct dirent *entry;
-  while ((entry = readdir(dir)) != nullptr) {
-    std::string kernel_file = entry->d_name;
-    std::string kernel_file_realpath = kernel_meta_path_ + kernel_file;
-    (void)remove(kernel_file_realpath.c_str());
-  }
-  (void)closedir(dir);
-  (void)rmdir(kernel_meta_path_.c_str());
 }
 
 std::string KernelMeta::Search(const std::string &kernel_name) const {
@@ -227,7 +206,7 @@ KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &pro
     KernelPackPtr kernel_pack = std::make_shared<KernelPack>();
     // just a tmp solution.
     if (!kernel_pack->ReadFromJsonFile(kernel_json, processor)) {
-      MS_LOG(DEBUG) << "Read cache json and bin file failed[" << kernel_json << "].";
+      MS_LOG(ERROR) << "Read cache json and bin file failed[" << kernel_json << "].";
       return nullptr;
     } else {
       return kernel_pack;
@@ -250,7 +229,7 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
   (void)kernel_json.append(kernel_name).append(kJsonSuffix);
   KernelPackPtr kernel_pack = std::make_shared<KernelPack>();
   if (!kernel_pack->ReadFromJsonFile(kernel_json, processor)) {
-    MS_LOG(DEBUG) << "Read json and bin file failed[" << kernel_json << "].";
+    MS_LOG(ERROR) << "Read json and bin file failed[" << kernel_json << "].";
     return nullptr;
   }
 
@@ -714,6 +693,9 @@ void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNode
       for (size_t input_idx = 1; input_idx < cnode->inputs().size(); ++input_idx) {
         auto input_node = cnode->input(input_idx);
         MS_EXCEPTION_IF_NULL(input_node);
+        if (input_node->isa<CNode>() && AnfAlgo::GetInputTensorNum(input_node) == 0) {
+          continue;
+        }
         output_list->push_back(AnfAlgo::VisitKernel(input_node, 0).first);
       }
     } else {

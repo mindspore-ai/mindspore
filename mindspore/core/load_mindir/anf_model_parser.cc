@@ -635,14 +635,12 @@ bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_
                                                   const mind_ir::AttributeProto &attr_proto) {
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
   if (ref_attr_name.find("UMonad") != std::string::npos) {
-    const ValuePtr kUMonad = std::make_shared<UMonad>();
     auto monad_abs = kUMonad->ToAbstract();
     auto new_value_node = NewValueNode(kUMonad);
     MS_EXCEPTION_IF_NULL(new_value_node);
     new_value_node->set_abstract(monad_abs);
     anfnode_build_map_[value_node_name] = new_value_node;
   } else if (ref_attr_name.find("IOMonad") != std::string::npos) {
-    const ValuePtr kIOMonad = std::make_shared<IOMonad>();
     auto monad_abs = kIOMonad->ToAbstract();
     auto new_value_node = NewValueNode(kIOMonad);
     MS_EXCEPTION_IF_NULL(new_value_node);
@@ -768,17 +766,22 @@ std::unordered_map<std::string, abstract::AbstractBasePtr> MSANFModelParser::Get
   return kv;
 }
 
-CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
-                                                  const mind_ir::NodeProto &node_proto) {
-  MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  if (!node_proto.has_op_type()) {
-    MS_LOG(ERROR) << "Get CNode op_type failed!";
-    return nullptr;
-  }
-  const std::string &node_name = node_proto.output(0);
-  const std::string &fullname_with_scope = node_proto.domain();
+AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_proto) {
+  const std::string kOperatorTypeFlag = std::string("REF::");
+  const size_t kOpTypeFlagSize = kOperatorTypeFlag.length();
   const std::string &node_type = node_proto.op_type();
+  MS_LOG(DEBUG) << "Process Operator :" << node_type;
+  // Operator maybe CNode,FuncGraph or Parameter.
 
+  if (node_type.size() > kOpTypeFlagSize && node_type.substr(0, kOpTypeFlagSize) == kOperatorTypeFlag) {
+    auto it = anfnode_build_map_.find(node_type.substr(kOpTypeFlagSize));
+    if (it != anfnode_build_map_.end()) {
+      return it->second;
+    }
+    MS_LOG(EXCEPTION) << "Can't find the ref:" << node_type;
+  }
+
+  // Operator is  primitive.
   std::shared_ptr<Primitive> prim;
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   if (op_primc_fns.find(node_type) != op_primc_fns.end()) {
@@ -794,52 +797,65 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     }
   }
   MS_EXCEPTION_IF_NULL(prim);
+  for (int i = 0; i < node_proto.attribute_size(); ++i) {
+    const mind_ir::AttributeProto &attr_proto = node_proto.attribute(i);
+    // CNode abstract
+    if (attr_proto.ref_attr_name().find("shape:") != string::npos) {
+      continue;
+    }
+    if (!GetAttrValueForCNode(prim, attr_proto)) {
+      MS_LOG(EXCEPTION) << "Parser prim: " << node_type << " attributes error : " << attr_proto.DebugString();
+    }
+  }
+  prim->set_attr("is_load", MakeValue(true));
+  return std::make_shared<ValueNode>(prim);
+}
+
+// Set CNode abstract.
+void MSANFModelParser::SetCNodeAbastract(const mind_ir::NodeProto &node_proto, CNodePtr cnode_ptr) {
+  const std::string &node_type = node_proto.op_type();
+  // Handle control flow operator.
+  auto operatorPtr = cnode_ptr->input(0);
+  // Set abstract of switch(c,f,t),switchLayer(c,tup) and
+  // partial(func,args) to null
+  auto prim = GetValueNode<PrimitivePtr>(operatorPtr);
+  if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim) ||
+      IsPrimitiveEquals(prim::kPrimPartial, prim)) {
+    cnode_ptr->set_abstract(nullptr);
+    return;
+  }
+  // Set abstract of switch(c,f,t)() to null
+  prim = GetCNodePrimitive(operatorPtr);
+  if (IsPrimitiveEquals(prim::kPrimSwitch, prim) || IsPrimitiveEquals(prim::kPrimSwitchLayer, prim)) {
+    cnode_ptr->set_abstract(nullptr);
+    return;
+  }
 
   std::unordered_map<std::string, abstract::AbstractBasePtr> kv;
   string shape_ref_attr_name;
+
   for (int i = 0; i < node_proto.attribute_size(); ++i) {
     const mind_ir::AttributeProto &attr_proto = node_proto.attribute(i);
     if (attr_proto.ref_attr_name().find("shape:") != string::npos) {
       shape_ref_attr_name = attr_proto.ref_attr_name();
       kv = GetAbstractForCNode(attr_proto);
-      continue;
-    }
-
-    if (!GetAttrValueForCNode(prim, attr_proto)) {
-      MS_LOG(ERROR) << "Get CNode attr failed!";
-      return nullptr;
+      break;
     }
   }
 
-  std::vector<AnfNodePtr> inputs;
-  inputs.clear();
-  for (int i = 0; i < node_proto.input_size(); ++i) {
-    const std::string &input_name = node_proto.input(i);
-    if (anfnode_build_map_.find(input_name) == anfnode_build_map_.end()) {
-      MS_LOG(ERROR) << node_name << " input " << i << input_name << "can't find in nodes have parsed";
-      return nullptr;
-    }
-
-    inputs.push_back(anfnode_build_map_[input_name]);
-  }
-  prim->set_attr("is_load", MakeValue(true));
-  CNodePtr cnode_ptr;
-  cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
-  MS_EXCEPTION_IF_NULL(cnode_ptr);
-
+  // Because there is not context in unit test,
+  // abstract->broaden() is replaced by abstract->set_value(kAnyValue).
   if (kv.size() == 0) {
     if (node_type == "UpdateState") {
-      const ValuePtr kUMonad = std::make_shared<UMonad>();
-      auto monad_abs = kUMonad->ToAbstract();
-      cnode_ptr->set_abstract(monad_abs);
+      cnode_ptr->set_abstract(kUMonad->ToAbstract());
     } else if (node_type == "Depend") {
-      const ValuePtr kBool = std::make_shared<BoolImm>(true);
       cnode_ptr->set_abstract(kBool->ToAbstract());
     } else {
       AbstractBasePtrList elem;
       for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
         auto abs = cnode_ptr->input(index)->abstract();
         if (abs != nullptr) {
+          abs->set_value(kAnyValue);
           elem.push_back(abs);
         }
       }
@@ -849,22 +865,56 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     }
   } else if (kv.size() == 1) {
     std::unordered_map<std::string, abstract::AbstractBasePtr>::iterator iter = kv.begin();
-    cnode_ptr->set_abstract(iter->second);
+    if (iter->second != nullptr) {
+      iter->second->set_value(kAnyValue);
+      cnode_ptr->set_abstract(iter->second);
+    }
   } else {
     auto abstract = ParserAttrShape(shape_ref_attr_name, kv);
     if (abstract == nullptr) {
+      cnode_ptr->set_abstract(nullptr);
       MS_LOG(ERROR) << "Node's attribute is nullptr.";
+    } else {
+      abstract->set_value(kAnyValue);
+      cnode_ptr->set_abstract(abstract);
+    }
+  }
+}
+
+CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
+                                                  const mind_ir::NodeProto &node_proto) {
+  MS_EXCEPTION_IF_NULL(outputFuncGraph);
+  if (!node_proto.has_op_type()) {
+    MS_LOG(ERROR) << "Get CNode op_type failed!";
+    return nullptr;
+  }
+  const std::string &node_name = node_proto.output(0);
+  MS_LOG(DEBUG) << "Process CNode: " << node_name;
+  // Build inputs.
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(BuildOperatorNode(node_proto));
+  for (int i = 0; i < node_proto.input_size(); ++i) {
+    const std::string &input_name = node_proto.input(i);
+    if (anfnode_build_map_.find(input_name) == anfnode_build_map_.end()) {
+      MS_LOG(ERROR) << node_name << " input " << i << input_name << "can't find in nodes have parsed";
       return nullptr;
     }
-    cnode_ptr->set_abstract(abstract);
+    inputs.push_back(anfnode_build_map_[input_name]);
   }
 
+  CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(cnode_ptr);
+  SetCNodeAbastract(node_proto, cnode_ptr);
+
+  const std::string &fullname_with_scope = node_proto.domain();
   string debug_info_name = ParseCNodeName(node_name);
   auto debug_info_ptr = std::make_shared<NodeDebugInfo>(debug_info_name);
   cnode_ptr->set_debug_info(debug_info_ptr);
   cnode_ptr->set_fullname_with_scope(fullname_with_scope);
   cnode_ptr->set_load_flag(true);
-
+  if (anfnode_build_map_.count(node_name) > 0) {
+    MS_LOG(EXCEPTION) << "Duplicate CNode name: " << node_name;
+  }
   anfnode_build_map_[node_name] = cnode_ptr;
   return cnode_ptr;
 }
@@ -992,11 +1042,41 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
   }
   const mind_ir::GraphProto &graphBuild = model_proto.graph();
+
+  // Forward declare FuncGraph name
+  // Compatible with the previous proto.
+  if (graphBuild.has_name()) {
+    anfnode_build_map_[graphBuild.name()] = std::make_shared<ValueNode>(dstGraph);
+  }
+  for (int i = 0; i < model_proto.functions_size(); ++i) {
+    FuncGraphPtr graph = std::make_shared<FuncGraph>();
+    const auto &graph_proto = model_proto.functions(i);
+    if (!graph_proto.has_name()) {
+      MS_LOG(EXCEPTION) << "The function has not a name. Please export mindIR again. ";
+    }
+    if (anfnode_build_map_.count(graph_proto.name()) > 0) {
+      MS_LOG(EXCEPTION) << "There is a duplication function graph name: " << graph_proto.name();
+    }
+    anfnode_build_map_[graph_proto.name()] = std::make_shared<ValueNode>(graph);
+  }
+
+  // Parser the proto.
   if (!BuildFuncGraph(dstGraph, graphBuild)) {
     MS_LOG(ERROR) << "Build funcgraph failed!";
     return nullptr;
   }
-  MS_LOG(INFO) << "Parse pb to build FuncGraph Success!";
+  MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! " << graphBuild.name();
+  for (int i = 0; i < model_proto.functions_size(); ++i) {
+    const auto &graph_proto = model_proto.functions(i);
+    FuncGraphPtr graph = GetValueNode<FuncGraphPtr>(anfnode_build_map_[graph_proto.name()]);
+    if (!BuildFuncGraph(graph, graph_proto)) {
+      MS_LOG(ERROR) << "Build funcgraph failed!";
+      return nullptr;
+    }
+    MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! " << graph_proto.name();
+  }
+  // Release resource
+  anfnode_build_map_.clear();
   return dstGraph;
 }
 }  // namespace mindspore

@@ -95,13 +95,6 @@ class TFModelParser : public ModelParser {
 
   STATUS ConnectNullInput();
 
-  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
-
-  STATUS HardCodeTF(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
-
-  int DoWeightFormatTransform(const CNodePtr &conv_node, const AnfNodePtr &weight_node, const FuncGraphPtr &graph,
-                              schema::Format weight_src_format, schema::Format weight_dst_format);
-
   std::unique_ptr<tensorflow::GraphDef> tf_root_graph_;                     // tf root graph def
   std::map<std::string, const tensorflow::NodeDef *> tf_root_graph_nodes_;  // tf root graph node map
   std::unordered_map<std::string, AnfNodePtr> anf_root_node_map_;

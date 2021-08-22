@@ -16,13 +16,13 @@
 
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 
-#include "minddata/dataset/audio/ir/validators.h"
 #include "minddata/dataset/audio/kernels/bandpass_biquad_op.h"
+
+#include "minddata/dataset/audio/ir/validators.h"
 
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // BandpassBiquadOperation
 BandpassBiquadOperation::BandpassBiquadOperation(int32_t sample_rate, float central_freq, float Q,
                                                  bool const_skirt_gain)
@@ -30,10 +30,9 @@ BandpassBiquadOperation::BandpassBiquadOperation(int32_t sample_rate, float cent
 
 Status BandpassBiquadOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("BandpassBiquad", "Q", Q_, {0, 1.0}, true, false));
-  RETURN_IF_NOT_OK(ValidateScalarNotZero("BandpassBiquad", "sample_rate", sample_rate_));
+  RETURN_IF_NOT_OK(CheckScalarNotZero("BandpassBiquad", "sample_rate", sample_rate_));
   return Status::OK();
 }
-
 std::shared_ptr<TensorOp> BandpassBiquadOperation::Build() {
   std::shared_ptr<BandpassBiquadOp> tensor_op =
     std::make_shared<BandpassBiquadOp>(sample_rate_, central_freq_, Q_, const_skirt_gain_);

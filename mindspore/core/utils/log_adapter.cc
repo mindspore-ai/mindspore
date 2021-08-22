@@ -437,7 +437,9 @@ void common_log_init(void) {
   if (logtostderr.empty()) {
     FLAGS_logtostderr = true;
   } else if (logtostderr == "0" && mindspore::GetEnv("GLOG_log_dir").empty()) {
-    MS_LOG(EXCEPTION) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
+    MS_LOG(ERROR) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
+    // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
+    exit(EXIT_FAILURE);
   }
 
   // default GLOG_stderrthreshold level to WARNING

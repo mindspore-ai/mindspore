@@ -29,7 +29,7 @@ int GroupConvolutionInt8CPUKernel::SeparateInput(int group_id) {
   int8_t *src_ptr = reinterpret_cast<int8_t *>(ori_in_data_) + group_id * sub_in_channel;
   int8_t *dst_ptr = sub_in_data;
   for (int i = 0; i < in_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_in_channel * sizeof(int8_t));
+    memcpy(dst_ptr, src_ptr, static_cast<size_t>(sub_in_channel) * sizeof(int8_t));
     src_ptr += ori_in_channel;
     dst_ptr += sub_in_channel;
   }
@@ -45,7 +45,7 @@ int GroupConvolutionInt8CPUKernel::PostConcat(int group_id) {
   int8_t *src_ptr = sub_out_data;
   int8_t *dst_ptr = reinterpret_cast<int8_t *>(ori_out_data_) + group_id * sub_out_channel;
   for (int i = 0; i < out_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_out_channel * sizeof(int8_t));
+    memcpy(dst_ptr, src_ptr, static_cast<size_t>(sub_out_channel) * sizeof(int8_t));
     src_ptr += sub_out_channel;
     dst_ptr += ori_out_channel;
   }
